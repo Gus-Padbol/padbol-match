@@ -135,6 +135,26 @@ if (!SUPABASE_SERVICE_ROLE_KEY) {
     '⚠️ SUPABASE_SERVICE_ROLE_KEY no configurada: escrituras del módulo clases usan SUPABASE_KEY (puede fallar con RLS).',
   );
 }
+
+/** Activo solo durante POST /api/crear-preferencia — traza queries Supabase (PA_UNAUTHORIZED). */
+let crearPreferenciaSupabaseLogActive = false;
+
+function supabaseClientLabelForLog(client) {
+  if (client === supabaseAdmin) return 'supabaseAdmin';
+  if (client === supabase) return 'supabase';
+  return 'unknown';
+}
+
+function logCrearPreferenciaSupabaseQuery(client, table, operation, params = {}) {
+  if (!crearPreferenciaSupabaseLogActive) return;
+  console.error('[crear-preferencia] Supabase query', {
+    client: supabaseClientLabelForLog(client),
+    table,
+    operation,
+    params,
+  });
+}
+
 const uploadContrato = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 const uploadHubFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
@@ -208,6 +228,11 @@ function reservaWallStartUtcMs(fechaYmd, horaStr, zone) {
 async function assertReservaHorarioNoPasadoParaSede(sedeNombre, fecha, hora) {
   const nombre = String(sedeNombre || '').trim();
   if (!nombre) return;
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
+    columns: 'timezone, ciudad, pais',
+    eq: { nombre },
+    context: { fecha, hora },
+  });
   const { data: row, error } = await supabaseAdmin
     .from('sedes')
     .select('timezone, ciudad, pais')
@@ -529,6 +554,10 @@ function normalizeMetodoPago(raw) {
 async function sedePaymentConfigBySedeId(sedeId) {
   const sid = Number(sedeId);
   if (!Number.isFinite(sid)) return null;
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
+    columns: 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones',
+    eq: { id: sid },
+  });
   const { data, error } = await supabaseAdmin
     .from('sedes')
     .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
@@ -545,6 +574,10 @@ async function sedePaymentConfigBySedeId(sedeId) {
 async function sedePaymentConfigByNombre(sedeNombre) {
   const n = String(sedeNombre || '').trim();
   if (!n) return null;
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
+    columns: 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones',
+    eq: { nombre: n },
+  });
   const { data, error } = await supabaseAdmin
     .from('sedes')
     .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
@@ -696,6 +729,11 @@ function canchasConNumeroReserva(rows) {
 async function fetchCanchasRowsForSede(sedeId) {
   const sid = Number(sedeId);
   if (!Number.isFinite(sid)) return [];
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'canchas', 'select', {
+    columns: '*',
+    eq: { sede_id: sid },
+    order: { id: 'asc' },
+  });
   const { data, error } = await supabaseAdmin
     .from('canchas')
     .select('*')
@@ -723,6 +761,11 @@ async function assertCanchaPermitidaParaReservaPorNombreSede(sedeNombre, canchaN
     e.status = 400;
     throw e;
   }
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
+    columns: 'id, cantidad_canchas',
+    eq: { nombre },
+    context: { canchaNum: n },
+  });
   const { data: sedeRow, error } = await supabaseAdmin
     .from('sedes')
     .select('id, cantidad_canchas')
@@ -3467,6 +3510,11 @@ async function fetchSedesDuracionesFromDb(supabaseClient, sedeId, { soloActivas 
     .eq('sede_id', sid)
     .order('duracion_minutos', { ascending: true });
   if (soloActivas) q = q.eq('activo', true);
+  logCrearPreferenciaSupabaseQuery(db, 'sedes_duraciones', 'select', {
+    columns: 'id,sede_id,duracion_minutos,precio,activo',
+    eq: { sede_id: sid, ...(soloActivas ? { activo: true } : {}) },
+    order: { duracion_minutos: 'asc' },
+  });
   const { data, error } = await q;
   if (sid === 1) {
     console.log('[sedes_duraciones] fetchSedesDuracionesFromDb sede_id=1', {
@@ -3591,6 +3639,11 @@ async function precioBaseReservaSedeDuracion(supabaseClient, sedeId, duracionMin
   if (hit && hit.precio != null) return Math.round(Number(hit.precio));
   let sede = sedePreciosRow;
   if (!sede) {
+    logCrearPreferenciaSupabaseQuery(supabaseClient, 'sedes', 'select.maybeSingle', {
+      columns: 'precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva',
+      eq: { id: sid },
+      context: { duracion_minutos: d },
+    });
     const { data, error } = await supabaseClient
       .from('sedes')
       .select('precio_60min,precio_90min,precio_120min,precio_turno,precio_por_reserva')
@@ -3796,6 +3849,11 @@ async function resolveExtrasLinesParaSede(supabaseClient, sedeId, extrasRaw) {
   }
   const ids = [...qtyById.keys()];
   if (ids.length === 0) return { lines: [], sum: 0 };
+  logCrearPreferenciaSupabaseQuery(supabaseClient, 'sede_extras', 'select', {
+    columns: 'id,nombre,precio,activo,aprobado_super,stock',
+    eq: { sede_id: sid },
+    in: { id: ids },
+  });
   const { data: rows, error } = await supabaseClient
     .from('sede_extras')
     .select('id,nombre,precio,activo,aprobado_super,stock')
@@ -4398,6 +4456,12 @@ async function assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duraci
     .eq('fecha', fecha)
     .eq('cancha', canchaNum);
   if (excludeId != null && String(excludeId).trim() !== '') q = q.neq('id', excludeId);
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'reservas', 'select', {
+    columns: 'id,hora,duracion,duracion_minutos,estado',
+    eq: { sede, fecha, cancha: canchaNum },
+    neq: excludeId != null && String(excludeId).trim() !== '' ? { id: excludeId } : undefined,
+    context: { duracionMin: duracion },
+  });
   const { data, error } = await q;
   if (error) throw error;
   const conflict = (data || []).find((row) => reservaEstadoBloqueaSlotBackend(row) && reservasSolapanBackend(inicioMin, duracion, row));
@@ -4715,6 +4779,12 @@ async function insertReservaHistorialEstado(client, { reserva_id, estado_anterio
   const next = estado_nuevo == null || String(estado_nuevo).trim() === '' ? null : String(estado_nuevo).trim();
   if (prev === next) return;
   const by = String(changed_by || 'sistema').trim().slice(0, 200) || 'sistema';
+  logCrearPreferenciaSupabaseQuery(client, 'reservas_historial', 'insert', {
+    reserva_id: rid,
+    estado_anterior: prev,
+    estado_nuevo: next,
+    changed_by: by,
+  });
   const { error } = await client.from('reservas_historial').insert({
     reserva_id: rid,
     estado_anterior: prev,
@@ -10542,6 +10612,10 @@ function buildJugadorConfirmadoPartido(payload) {
 
 async function publicarPartidoAbiertoDesdePayload(payload, reservaRow = null) {
   const shareToken = String(payload.share_token || '').trim() || crypto.randomBytes(12).toString('hex');
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'partidos_abiertos', 'select.maybeSingle', {
+    columns: '*',
+    eq: { share_token: shareToken },
+  });
   const { data: existente, error: exErr } = await supabaseAdmin
     .from('partidos_abiertos')
     .select('*')
@@ -10587,6 +10661,18 @@ async function publicarPartidoAbiertoDesdePayload(payload, reservaRow = null) {
     e.status = 400;
     throw e;
   }
+  logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'partidos_abiertos', 'insert.select.single', {
+    row: {
+      reserva_id: row.reserva_id,
+      sede_id: row.sede_id,
+      sede_nombre: row.sede_nombre,
+      cancha: row.cancha,
+      deporte: row.deporte,
+      fecha: row.fecha,
+      hora: row.hora,
+      share_token: row.share_token,
+    },
+  });
   const { data, error } = await supabaseAdmin.from('partidos_abiertos').insert([row]).select('*').single();
   if (error) throw error;
   return { ok: true, partido: data };
@@ -11037,6 +11123,7 @@ function logCrearPreferenciaError(phase, err, ctx = {}) {
 }
 
 const postCrearPreferenciaMercadoPago = async (req, res) => {
+  crearPreferenciaSupabaseLogActive = true;
   const ctx = {
     sedeId: req.body?.sedeId ?? req.body?.reservaData?.sede_id ?? null,
     titulo: req.body?.titulo ?? null,
@@ -11079,6 +11166,11 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       if (!eid || !tid) {
         return res.status(400).json({ error: 'torneo_inscripcion requiere equipo_id y torneo_id' });
       }
+      logCrearPreferenciaSupabaseQuery(db, 'torneos', 'select.maybeSingle', {
+        columns: 'fecha_inicio, sede_id',
+        eq: { id: tid },
+        context: { equipo_id: eid },
+      });
       const { data: torneoRow, error: tErr } = await db
         .from('torneos')
         .select('fecha_inicio, sede_id')
@@ -11229,6 +11321,9 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         const st = e.status || 400;
         return res.status(st).json({ error: e.message || String(e) });
       }
+      logCrearPreferenciaSupabaseQuery(db, 'reservas', 'insert.select.single', {
+        payload: payloadReserva,
+      });
       const { data: reservaCreada, error: resErr } = await db.from('reservas').insert([payloadReserva]).select().single();
       if (resErr) throw resErr;
       let partidoCreado = null;
@@ -11341,6 +11436,8 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
   } catch (err) {
     logCrearPreferenciaError('handler', err, ctx);
     res.status(500).json({ error: err.message || String(err) });
+  } finally {
+    crearPreferenciaSupabaseLogActive = false;
   }
 };
 app.post('/api/crear-preferencia', postCrearPreferenciaMercadoPago);
