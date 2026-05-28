@@ -8642,6 +8642,29 @@ app.get('/api/jugadores/disponibles-matchmaking', async (req, res) => {
   }
 });
 
+/** GET /api/jugadores/perfil-publico/:alias — perfil público por alias (no UUID). */
+app.get('/api/jugadores/perfil-publico/:alias', async (req, res) => {
+  try {
+    let raw = String(req.params.alias || '').trim();
+    if (!raw) return res.status(400).json({ error: 'Alias requerido' });
+    try {
+      raw = decodeURIComponent(raw);
+    } catch {
+      /* keep */
+    }
+    if (esUuidAuthProbableJugadorSlug(raw)) {
+      return res.status(400).json({ error: 'Use /api/jugador/perfil-publico/:userId para UUID' });
+    }
+    const perfil = await fetchJugadoresPerfilByAliasOnly(raw);
+    if (!perfil) return res.status(404).json({ error: 'Jugador no encontrado' });
+    const payload = await buildPerfilPublicoPayload(perfil);
+    res.json(payload);
+  } catch (err) {
+    console.error('❌ GET /api/jugadores/perfil-publico/:alias:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 app.get('/api/jugadores/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -9655,22 +9678,32 @@ function esUuidAuthProbableJugadorSlug(s) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || '').trim());
 }
 
-async function fetchJugadoresPerfilByAliasSlug(aliasDecoded) {
+async function fetchJugadoresPerfilByUserIdOnly(userIdRaw) {
+  const uid = String(userIdRaw || '').trim();
+  if (!esUuidAuthProbableJugadorSlug(uid)) return null;
+  const { data, error } = await supabase.from('jugadores_perfil').select('*').eq('user_id', uid).maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+async function fetchJugadoresPerfilByAliasOnly(aliasDecoded) {
   const a = String(aliasDecoded || '').trim();
-  if (!a) return null;
+  if (!a || esUuidAuthProbableJugadorSlug(a)) return null;
   const { data: rows, error } = await supabase.from('jugadores_perfil').select('*').ilike('alias', a).limit(8);
   if (error) throw error;
   const list = Array.isArray(rows) ? rows : [];
   const aLower = a.toLowerCase();
-  const byAlias =
-    list.find((r) => String(r.alias || '').trim().toLowerCase() === aLower) || (list.length === 1 ? list[0] : null);
-  if (byAlias) return byAlias;
-  if (esUuidAuthProbableJugadorSlug(a)) {
-    const { data: byUid, error: uErr } = await supabase.from('jugadores_perfil').select('*').eq('user_id', a).maybeSingle();
-    if (uErr) throw uErr;
-    return byUid || null;
-  }
-  return null;
+  return (
+    list.find((r) => String(r.alias || '').trim().toLowerCase() === aLower) ||
+    (list.length === 1 ? list[0] : null)
+  );
+}
+
+async function fetchJugadoresPerfilByAliasSlug(aliasDecoded) {
+  const a = String(aliasDecoded || '').trim();
+  if (!a) return null;
+  if (esUuidAuthProbableJugadorSlug(a)) return fetchJugadoresPerfilByUserIdOnly(a);
+  return fetchJugadoresPerfilByAliasOnly(a);
 }
 
 function partidoEquipoGanadorId(partido) {
@@ -10247,7 +10280,7 @@ async function buildPerfilPublicoPayload(perfil) {
   };
 }
 
-/** GET /api/jugador/perfil-publico/:userId — perfil público agregado (alias o UUID). */
+/** GET /api/jugador/perfil-publico/:userId — perfil público agregado por UUID. */
 app.get('/api/jugador/perfil-publico/:userId', async (req, res) => {
   try {
     let raw = String(req.params.userId || '').trim();
@@ -10257,7 +10290,10 @@ app.get('/api/jugador/perfil-publico/:userId', async (req, res) => {
     } catch {
       /* keep */
     }
-    const perfil = await fetchJugadoresPerfilByAliasSlug(raw);
+    if (!esUuidAuthProbableJugadorSlug(raw)) {
+      return res.status(400).json({ error: 'userId debe ser un UUID válido' });
+    }
+    const perfil = await fetchJugadoresPerfilByUserIdOnly(raw);
     if (!perfil) return res.status(404).json({ error: 'Jugador no encontrado' });
     const payload = await buildPerfilPublicoPayload(perfil);
     res.json(payload);

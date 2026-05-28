@@ -15,6 +15,7 @@ import { IconGeroUbicacion } from './components/icons/GeroIcons';
 import HubSponsorsTicker from './components/HubSponsorsTicker';
 import { useHubSponsors } from './hooks/useHubSponsors';
 import { useSafeTranslation as useTranslation } from './i18n/tSafe';
+import { buildPerfilPublicoFetchUrl } from './utils/perfilPublicoApi';
 
 const API_BASE_PERFIL =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -168,7 +169,14 @@ export default function PerfilPublico() {
     setResenasJugadorTodas([]);
 
     try {
-      const res = await fetch(`${API_BASE_PERFIL}/api/jugador/perfil-publico/${encodeURIComponent(a)}`);
+      const apiUrl = buildPerfilPublicoFetchUrl(a, API_BASE_PERFIL);
+      if (!apiUrl) {
+        setPerfil(null);
+        setPerfilPublicoApi(null);
+        setLoading(false);
+        return;
+      }
+      const res = await fetch(apiUrl);
       if (!res.ok) {
         setPerfil(null);
         setPerfilPublicoApi(null);
