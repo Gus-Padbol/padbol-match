@@ -494,6 +494,26 @@
     "tipoMedia": "Media type",
     "videoUrl": "Video URL (MP4)"
   },
+  "resenas": {
+    "title": "Reviews",
+    "loading": "Loading reviews…",
+    "totalCount": "{{count}} review",
+    "totalCount_plural": "{{count}} reviews",
+    "noReviewsYet": "No reviews yet",
+    "loginToReview": "Sign in",
+    "loginSuffix": "to leave your review.",
+    "alreadyReviewed": "You already reviewed this venue. Thanks!",
+    "needConfirmedBooking": "Only players with at least one confirmed booking at this venue can leave a review.",
+    "ratingLabel": "Rating",
+    "commentLabel": "Comment (optional, max {{max}} characters)",
+    "submit": "Submit",
+    "submitting": "Submitting…",
+    "submitSuccess": "Thanks for your review!",
+    "submitError": "Could not submit review",
+    "pickStars": "Choose a rating from 1 to 5 stars.",
+    "emptyList": "No reviews yet",
+    "clubReply": "Club reply"
+  },
   "campanita": {
     "sinAlertas": "No pending alerts",
     "marcarLeido": "Mark all as read",
@@ -758,6 +778,20 @@
       "sinInstructores": "No instructors loaded.",
       "instructorAprobado": "Instructor (approved)",
       "sinAprobadosClase": "No approved instructors."
+    },
+    "resenas": {
+      "intro": "Reply to player reviews. Your reply appears on the venue's public profile.",
+      "loading": "Loading reviews…",
+      "loadError": "Could not load reviews",
+      "empty": "No reviews on your venue yet.",
+      "noComment": "No comment",
+      "respond": "Reply",
+      "editReply": "Edit reply",
+      "replyPlaceholder": "Write the club's reply…",
+      "replyRequired": "Reply cannot be empty",
+      "saveReply": "Publish reply",
+      "savingReply": "Saving…",
+      "replyError": "Could not save reply"
     },
     "tabs": {
       "resumen": "📊 Overview",
@@ -1139,6 +1173,8 @@
       "nextChargeLabel": "Next charge:",
       "clubInfo": "Club info",
       "halftimeExtras": "Halftime extras",
+      "reviews": "Reviews",
+      "reviewsTitle": "Player reviews",
       "paymentSettings": "Payment settings",
       "images": "Images",
       "logoColorSaved": "✅ Logo color saved",

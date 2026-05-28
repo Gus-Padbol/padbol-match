@@ -3494,7 +3494,7 @@ app.get('/api/sedes/:id/resenas', async (req, res) => {
 
 /**
  * POST reseña (jugador logueado, una por sede).
- * Body: { estrellas: 1-5, comentario?: string (max 200) }
+ * Body: { estrellas: 1-5, comentario?: string (max 500) }
  */
 app.post('/api/sedes/:id/resenas', async (req, res) => {
   try {
@@ -3517,8 +3517,8 @@ app.post('/api/sedes/:id/resenas', async (req, res) => {
       return res.status(400).json({ error: 'Las estrellas deben ser un número entre 1 y 5' });
     }
     const comentario = String(req.body?.comentario ?? '').trim();
-    if (comentario.length > 200) {
-      return res.status(400).json({ error: 'El comentario no puede superar los 200 caracteres' });
+    if (comentario.length > 500) {
+      return res.status(400).json({ error: 'El comentario no puede superar los 500 caracteres' });
     }
 
     const { data: dup } = await supabase
@@ -3599,6 +3599,68 @@ app.delete('/api/sedes/:id/resenas/:resenaId', async (req, res) => {
     if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
     if (isResenasPublicTableConfigError(err)) return respondResenasPublicUnavailable(res, err);
     console.error('❌ Error DELETE /api/sedes/:id/resenas/:resenaId:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PATCH respuesta del club a una reseña (admin_club / super_admin).
+ * Body: { respuesta: string (max 1000) }
+ */
+app.patch('/api/admin/resenas/:id/respuesta', async (req, res) => {
+  try {
+    const resenaId = String(req.params.id || '').trim();
+    if (!resenaId) {
+      return res.status(400).json({ error: 'ID de reseña inválido' });
+    }
+
+    const respuesta = String(req.body?.respuesta ?? '').trim();
+    if (!respuesta) {
+      return res.status(400).json({ error: 'La respuesta no puede estar vacía' });
+    }
+    if (respuesta.length > 1000) {
+      return res.status(400).json({ error: 'La respuesta no puede superar los 1000 caracteres' });
+    }
+
+    const { data: row, error: fErr } = await supabase
+      .from(PUBLIC_RESENAS_TABLE)
+      .select('id, sede_id')
+      .eq('id', resenaId)
+      .maybeSingle();
+    if (fErr) throw fErr;
+    if (!row?.id) {
+      return res.status(404).json({ error: 'Reseña no encontrada' });
+    }
+
+    await assertUsuarioPuedeAdministrarSede(req, row.sede_id);
+
+    const patch = {
+      respuesta_admin: respuesta,
+      fecha_respuesta: new Date().toISOString(),
+    };
+    let { data: updated, error: uErr } = await supabase
+      .from(PUBLIC_RESENAS_TABLE)
+      .update(patch)
+      .eq('id', resenaId)
+      .select(RESENAS_SELECT_ROW)
+      .single();
+    if (uErr && String(uErr.message || '').includes('fecha_respuesta')) {
+      ({ data: updated, error: uErr } = await supabase
+        .from(PUBLIC_RESENAS_TABLE)
+        .update({ respuesta_admin: respuesta })
+        .eq('id', resenaId)
+        .select(RESENAS_SELECT_ROW_FALLBACK)
+        .single());
+    }
+    if (uErr) throw uErr;
+
+    const [enriched] = await enrichSedeResenasConPerfil(updated ? [updated] : []);
+    res.json(enriched || null);
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    if (isResenasPublicTableConfigError(err)) return respondResenasPublicUnavailable(res, err);
+    console.error('❌ Error PATCH /api/admin/resenas/:id/respuesta:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

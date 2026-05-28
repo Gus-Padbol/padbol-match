@@ -518,6 +518,26 @@
     "tipoMedia": "Tipo de media",
     "videoUrl": "URL del video (MP4)"
   },
+  "resenas": {
+    "title": "Reseñas",
+    "loading": "Cargando reseñas…",
+    "totalCount": "{{count}} reseña",
+    "totalCount_plural": "{{count}} reseñas",
+    "noReviewsYet": "Sin reseñas aún",
+    "loginToReview": "Inicia sesión",
+    "loginSuffix": "para dejar tu reseña.",
+    "alreadyReviewed": "Ya dejaste tu reseña en esta sede. ¡Gracias!",
+    "needConfirmedBooking": "Solo jugadores con al menos una reserva confirmada en esta sede pueden dejar una reseña.",
+    "ratingLabel": "Calificación",
+    "commentLabel": "Comentario (opcional, máx. {{max}} caracteres)",
+    "submit": "Enviar",
+    "submitting": "Enviando…",
+    "submitSuccess": "¡Gracias por tu reseña!",
+    "submitError": "No se pudo enviar la reseña",
+    "pickStars": "Elige una calificación de 1 a 5 estrellas.",
+    "emptyList": "Aún no hay reseñas",
+    "clubReply": "Respuesta del club"
+  },
   "campanita": {
     "sinAlertas": "No hay alertas pendientes",
     "marcarLeido": "Marcar todo como leído",
@@ -782,6 +802,20 @@
       "sinInstructores": "No hay instructores cargados.",
       "instructorAprobado": "Instructor (aprobado)",
       "sinAprobadosClase": "No hay instructores aprobados."
+    },
+    "resenas": {
+      "intro": "Responde a las reseñas de tus jugadores. La respuesta se muestra en el perfil público de la sede.",
+      "loading": "Cargando reseñas…",
+      "loadError": "No se pudieron cargar las reseñas",
+      "empty": "Todavía no hay reseñas en tu sede.",
+      "noComment": "Sin comentario",
+      "respond": "Responder",
+      "editReply": "Editar respuesta",
+      "replyPlaceholder": "Escribí la respuesta del club…",
+      "replyRequired": "La respuesta no puede estar vacía",
+      "saveReply": "Publicar respuesta",
+      "savingReply": "Guardando…",
+      "replyError": "No se pudo guardar la respuesta"
     },
     "tabs": {
       "resumen": "📊 Resumen",
@@ -1163,6 +1197,8 @@
       "nextChargeLabel": "Próximo cobro:",
       "clubInfo": "Info del club",
       "halftimeExtras": "Extras del tercer tiempo",
+      "reviews": "Reseñas",
+      "reviewsTitle": "Reseñas de jugadores",
       "paymentSettings": "Configuración de pagos",
       "images": "Imágenes",
       "logoColorSaved": "✅ Color del logo guardado",
