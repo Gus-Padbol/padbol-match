@@ -1,8 +1,8 @@
+import ws from 'ws';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { createClient } from '@supabase/supabase-js';
-import ws from 'ws';
 import pg from 'pg';
 import twilio from 'twilio';
 import dotenv from 'dotenv';
@@ -44,6 +44,8 @@ import {
   turnoCabeEnVentanasReserva,
   ventanasHorarioReserva,
 } from './lib/reservaSlotsHorarios.js';
+
+globalThis.WebSocket = ws;
 
 dotenv.config();
 
@@ -128,8 +130,11 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = String(
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY ?? '',
 ).trim();
+const SUPABASE_CLIENT_GLOBAL_OPTS = { global: { WebSocket: ws } };
+
 function createSupabaseAdminClient(url, serviceRoleKey) {
   const client = createClient(url, serviceRoleKey, {
+    ...SUPABASE_CLIENT_GLOBAL_OPTS,
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -143,7 +148,7 @@ function createSupabaseAdminClient(url, serviceRoleKey) {
   return client;
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, SUPABASE_CLIENT_GLOBAL_OPTS);
 /** Service role (sb_secret_…): REST/storage; Realtime desactivado (sin suscripciones). */
 const supabaseAdmin =
   SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
