@@ -66,6 +66,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from '../components/common/SportIcon';
+import { useJugadorReputacionReserva } from '../components/ReputacionJugadorPanel';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -710,6 +711,17 @@ export default function ReservaForm() {
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
   const [reservaStripeExitoOpen, setReservaStripeExitoOpen] = useState(false);
+
+  const {
+    suspendido: reputacionSuspendido,
+    advertencia: reputacionAdvertencia,
+    suspendidoMsg: reputacionSuspendidoMsg,
+    cancelaciones: reputacionCancelaciones,
+  } = useJugadorReputacionReserva({
+    apiBaseUrl: API_BASE,
+    accessToken: session?.access_token ?? null,
+    enabled: pantalla === 4 && Boolean(session?.access_token),
+  });
 
   const [formData, setFormData] = useState(() => {
     const p = readPrimedSedeReserva();
@@ -1406,6 +1418,14 @@ export default function ReservaForm() {
     reservaExtrasCantidad,
     reservaDeporteUrl,
   ]);
+
+  const gateReservaPago = useCallback(() => {
+    if (reputacionSuspendido) {
+      setError(reputacionSuspendidoMsg || t('reputacion.suspendedBanner', { date: '—' }));
+      return false;
+    }
+    return gateReservaAntesDePagar();
+  }, [reputacionSuspendido, reputacionSuspendidoMsg, gateReservaAntesDePagar, t]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -2140,7 +2160,7 @@ export default function ReservaForm() {
   };
 
   const handlePagarConMP = async () => {
-    if (!gateReservaAntesDePagar()) return;
+    if (!gateReservaPago()) return;
     const sesEm = session.user.email;
     const meta = session.user.user_metadata || {};
     const waPerfil = String(userProfile?.whatsapp || '').trim();
@@ -3085,6 +3105,16 @@ export default function ReservaForm() {
             </div>
           )}
 
+          {reputacionSuspendido ? (
+            <div className="reputacion-panel__banner reputacion-panel__banner--danger" role="alert" style={{ marginBottom: 14 }}>
+              {reputacionSuspendidoMsg}
+            </div>
+          ) : reputacionAdvertencia ? (
+            <div className="reputacion-panel__banner reputacion-panel__banner--warn" role="status" style={{ marginBottom: 14 }}>
+              {t('reputacion.warningBanner', { count: reputacionCancelaciones })}
+            </div>
+          ) : null}
+
           {metodoPagoEfectivo ? (
             <div
               style={{
@@ -3118,7 +3148,7 @@ export default function ReservaForm() {
               moneda={moneda}
               montoBaseMinor={montoBaseMinor}
               descripcion={`Reserva cancha ${formData.cancha} — ${sedeSeleccionada.nombre}`}
-              onRequireAuthForPay={gateReservaAntesDePagar}
+              onRequireAuthForPay={gateReservaPago}
               payload={{
                 sede: sedeSeleccionada.nombre,
                 fecha: formData.fecha,
@@ -3132,7 +3162,7 @@ export default function ReservaForm() {
                 duracion: duracionReservaMinP4,
                 ...(reservaExtrasPayload.length ? { extras: reservaExtrasPayload } : {}),
               }}
-              disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk}
+              disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk || reputacionSuspendido}
               onPaid={() => {
                 setReservaStripeExitoOpen(true);
               }}
@@ -3141,7 +3171,7 @@ export default function ReservaForm() {
             <button
               type="button"
               onClick={handlePagarConMP}
-              disabled={mpLoading}
+              disabled={mpLoading || reputacionSuspendido}
               style={{
                 width: '100%',
                 padding: '14px',

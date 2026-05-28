@@ -9231,6 +9231,13 @@ Si necesitas ayuda, escríbenos por WhatsApp.
     }
 
     console.log(`✓ Reserva ${reservaId} cancelada — crédito: ${credito ? credito.id : 'no'}`);
+
+    const uidCancel = reserva.user_id ? String(reserva.user_id).trim() : '';
+    const emCancel = String(email || reserva.email || '').trim().toLowerCase();
+    void maybeAutoSuspenderJugadorPorCancelaciones({ userId: uidCancel || null, email: emCancel || null }).catch((e) =>
+      console.warn('⚠️ Auto-suspensión reputación:', e?.message || e),
+    );
+
     res.json({ success: true, eligibleForCredit: credito !== null, credito });
   } catch (err) {
     console.error('❌ Error POST /api/cancelar-reserva:', err.message);
@@ -10004,6 +10011,21 @@ app.post('/api/stripe/crear-payment-intent', async (req, res) => {
     if (!descripcion) return res.status(400).json({ error: 'descripcion es requerida' });
     if (!payload || typeof payload !== 'object') {
       return res.status(400).json({ error: 'payload es requerido (datos de la reserva o inscripción)' });
+    }
+
+    if (tipo === 'reserva') {
+      try {
+        await assertJugadorNoSuspendidoParaReserva({
+          userId: authUser.id,
+          email: authUser.email,
+        });
+      } catch (e) {
+        const st = e.status || 403;
+        return res.status(st).json({
+          error: e.message || 'Cuenta suspendida',
+          ...(e.reputacion ? { reputacion: e.reputacion } : {}),
+        });
+      }
     }
 
     const emailUser = String(authUser.email).trim().toLowerCase();
@@ -11403,6 +11425,24 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos requeridos: titulo, precio o monto' });
     }
 
+    const emReservaCheck = String(
+      reservaDataIn?.email || email || '',
+    )
+      .trim()
+      .toLowerCase();
+    const tipoPre = String(reservaDataIn?.tipo || tipo || '').toLowerCase();
+    if (emReservaCheck && tipoPre !== 'torneo_inscripcion') {
+      try {
+        await assertJugadorNoSuspendidoParaReserva({ email: emReservaCheck });
+      } catch (e) {
+        const st = e.status || 403;
+        return res.status(st).json({
+          error: e.message || 'Cuenta suspendida',
+          ...(e.reputacion ? { reputacion: e.reputacion } : {}),
+        });
+      }
+    }
+
     let reservaData = reservaDataIn;
     const tipoEff = String(reservaDataIn?.tipo || tipo || '').toLowerCase();
     let torneoSedeIdForCfg = null;
@@ -12303,6 +12343,127 @@ async function countCancelacionesRecientesAdmin({ sedeNombre = null } = {}) {
   return count ?? 0;
 }
 
+const REPUTACION_DIAS_VENTANA = 30;
+const REPUTACION_ADVERTENCIA_MIN = 3;
+const REPUTACION_SUSPENSION_MIN = 5;
+const REPUTACION_SUSPENSION_DIAS = 7;
+
+async function countCancelacionesJugador30d({ userId = null, email = null } = {}) {
+  const since = new Date(Date.now() - REPUTACION_DIAS_VENTANA * 24 * 60 * 60 * 1000).toISOString();
+  const uid = userId ? String(userId).trim() : '';
+  const em = email ? String(email).trim().toLowerCase() : '';
+  if (!uid && !em) return 0;
+
+  const runCount = async (dateCol) => {
+    let q = supabaseAdmin
+      .from('reservas')
+      .select('id', { count: 'exact', head: true })
+      .eq('estado', 'cancelada')
+      .gte(dateCol, since);
+    if (uid) q = q.eq('user_id', uid);
+    else q = q.eq('email', em);
+    const { count, error } = await q;
+    if (error) throw error;
+    return count ?? 0;
+  };
+
+  try {
+    return await runCount('updated_at');
+  } catch {
+    try {
+      return await runCount('created_at');
+    } catch {
+      return 0;
+    }
+  }
+}
+
+async function fetchSuspendidoHastaJugador({ userId = null, email = null } = {}) {
+  const uid = userId ? String(userId).trim() : '';
+  const em = email ? String(email).trim().toLowerCase() : '';
+  if (!uid && !em) return null;
+
+  let q = supabaseAdmin.from('jugadores_perfil').select('suspendido_hasta, user_id, email, nombre, apellido, apodo');
+  if (uid) q = q.eq('user_id', uid);
+  else q = q.eq('email', em);
+  let { data, error } = await q.maybeSingle();
+  if (error && /suspendido_hasta|colum|column/i.test(String(error.message || ''))) {
+    return null;
+  }
+  if (error) throw error;
+  return data || null;
+}
+
+function buildReputacionPayload({ cancelaciones_30dias, suspendido_hasta }) {
+  const count = Number(cancelaciones_30dias) || 0;
+  const rawHasta = suspendido_hasta ? String(suspendido_hasta).trim() : '';
+  const hastaMs = rawHasta ? new Date(rawHasta).getTime() : NaN;
+  const suspendido = Number.isFinite(hastaMs) && hastaMs > Date.now();
+  const advertencia = !suspendido && count >= REPUTACION_ADVERTENCIA_MIN;
+  return {
+    cancelaciones_30dias: count,
+    suspendido: Boolean(suspendido),
+    advertencia: Boolean(advertencia),
+    suspendido_hasta: suspendido ? new Date(hastaMs).toISOString() : null,
+  };
+}
+
+async function fetchReputacionJugador({ userId = null, email = null } = {}) {
+  const perfil = await fetchSuspendidoHastaJugador({ userId, email });
+  const cancelaciones_30dias = await countCancelacionesJugador30d({
+    userId: userId || perfil?.user_id,
+    email: email || perfil?.email,
+  });
+  return buildReputacionPayload({
+    cancelaciones_30dias,
+    suspendido_hasta: perfil?.suspendido_hasta ?? null,
+  });
+}
+
+async function setSuspendidoHastaJugador({ userId = null, email = null, suspendido_hasta }) {
+  const uid = userId ? String(userId).trim() : '';
+  const em = email ? String(email).trim().toLowerCase() : '';
+  if (!uid && !em) return;
+
+  const patch = { suspendido_hasta: suspendido_hasta || null };
+  let q = supabaseAdmin.from('jugadores_perfil').update(patch);
+  if (uid) q = q.eq('user_id', uid);
+  else q = q.eq('email', em);
+  let { data, error } = await q.select('user_id, email, nombre, apellido, apodo, suspendido_hasta').maybeSingle();
+  if (error && /suspendido_hasta|colum|column/i.test(String(error.message || ''))) {
+    return;
+  }
+  if (error) throw error;
+  if (!data && uid) {
+    await supabaseAdmin.from('jugadores_perfil').insert([
+      { user_id: uid, email: em || null, suspendido_hasta: suspendido_hasta || null },
+    ]);
+  }
+}
+
+async function maybeAutoSuspenderJugadorPorCancelaciones({ userId = null, email = null } = {}) {
+  const rep = await fetchReputacionJugador({ userId, email });
+  if (rep.suspendido || rep.cancelaciones_30dias < REPUTACION_SUSPENSION_MIN) {
+    return rep;
+  }
+  const hasta = new Date(Date.now() + REPUTACION_SUSPENSION_DIAS * 24 * 60 * 60 * 1000).toISOString();
+  await setSuspendidoHastaJugador({ userId, email, suspendido_hasta: hasta });
+  return fetchReputacionJugador({ userId, email });
+}
+
+async function assertJugadorNoSuspendidoParaReserva({ userId = null, email = null } = {}) {
+  const rep = await fetchReputacionJugador({ userId, email });
+  if (rep.suspendido) {
+    const e = new Error(
+      `Tu cuenta está suspendida hasta ${rep.suspendido_hasta ? new Date(rep.suspendido_hasta).toLocaleDateString('es-AR') : 'próximamente'}. No podés hacer reservas.`,
+    );
+    e.status = 403;
+    e.reputacion = rep;
+    throw e;
+  }
+  return rep;
+}
+
 /** GET /api/admin/pagos-fallidos — super_admin o admin_club (alcance sede) */
 app.get('/api/admin/pagos-fallidos', async (req, res) => {
   try {
@@ -12347,6 +12508,86 @@ app.get('/api/admin/cancelaciones-recientes', async (req, res) => {
     const st = err.status || 500;
     if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
     console.error('❌ GET /api/admin/cancelaciones-recientes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/jugador/reputacion — jugador autenticado (cancelaciones 30 d + suspensión). */
+app.get('/api/jugador/reputacion', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'No autorizado' });
+    const rep = await fetchReputacionJugador({ userId: user.id, email: user.email });
+    res.json(rep);
+  } catch (err) {
+    console.error('❌ GET /api/jugador/reputacion:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/jugador/:userId/reputacion — admin_club / super_admin. */
+app.get('/api/admin/jugador/:userId/reputacion', async (req, res) => {
+  try {
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope) return res.status(401).json({ error: 'No autorizado' });
+    const userId = String(req.params.userId || '').trim();
+    if (!userId) return res.status(400).json({ error: 'userId inválido' });
+    const rep = await fetchReputacionJugador({ userId });
+    res.json({ userId, ...rep });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/admin/jugador/:userId/reputacion:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/suspensiones — super_admin: jugadores con suspensión activa. */
+app.get('/api/admin/suspensiones', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const nowIso = new Date().toISOString();
+    let { data, error } = await supabaseAdmin
+      .from('jugadores_perfil')
+      .select('user_id, email, nombre, apellido, apodo, suspendido_hasta')
+      .gt('suspendido_hasta', nowIso)
+      .order('suspendido_hasta', { ascending: true });
+    if (error && /suspendido_hasta|colum|column/i.test(String(error.message || ''))) {
+      return res.json({ suspensiones: [] });
+    }
+    if (error) throw error;
+    const rows = (data || []).map((row) => {
+      const nombrePartes = [row.nombre, row.apellido].filter(Boolean).join(' ').trim();
+      const displayName = String(row.apodo || nombrePartes || row.nombre || '').trim() || 'Jugador';
+      return {
+        user_id: row.user_id,
+        email: row.email,
+        nombre: displayName,
+        suspendido_hasta: row.suspendido_hasta,
+      };
+    });
+    res.json({ suspensiones: rows });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ GET /api/admin/suspensiones:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/admin/suspensiones/:userId/levantar — super_admin: quita suspensión. */
+app.post('/api/admin/suspensiones/:userId/levantar', async (req, res) => {
+  try {
+    await assertSuperAdminReq(req);
+    const userId = String(req.params.userId || '').trim();
+    if (!userId) return res.status(400).json({ error: 'userId inválido' });
+    await setSuspendidoHastaJugador({ userId, suspendido_hasta: null });
+    const rep = await fetchReputacionJugador({ userId });
+    res.json({ ok: true, userId, ...rep });
+  } catch (err) {
+    const st = err.status || 500;
+    if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+    console.error('❌ POST /api/admin/suspensiones/:userId/levantar:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

@@ -538,6 +538,25 @@
     "emptyList": "Aún no hay reseñas",
     "clubReply": "Respuesta del club"
   },
+  "reputacion": {
+    "suspendedBanner": "Tu cuenta está suspendida hasta {{date}}. No podés hacer reservas.",
+    "warningBanner": "Tenés {{count}} cancelaciones en los últimos 30 días. Si llegás a 5 tu cuenta será suspendida por 7 días.",
+    "recentCancellations": "Cancelaciones en los últimos 30 días: {{count}}",
+    "badgeManyCancellations": "⚠️ 3+ cancelaciones",
+    "badgeSuspended": "🚫 Suspendido",
+    "admin": {
+      "intro": "Jugadores con suspensión activa por cancelaciones repetidas.",
+      "loading": "Cargando suspensiones…",
+      "loadError": "No se pudieron cargar las suspensiones",
+      "empty": "No hay jugadores suspendidos en este momento.",
+      "colName": "Jugador",
+      "colEmail": "Email",
+      "colUntil": "Suspendido hasta",
+      "lift": "Levantar suspensión",
+      "lifting": "Levantando…",
+      "liftError": "No se pudo levantar la suspensión"
+    }
+  },
   "campanita": {
     "sinAlertas": "No hay alertas pendientes",
     "marcarLeido": "Marcar todo como leído",
@@ -821,6 +840,7 @@
       "resumen": "📊 Resumen",
       "sedes": "🏟️ Sedes",
       "profesoresTab": "🎓 Instructores",
+      "suspensiones": "🚫 Suspensiones",
       "solicitudes": "📝 Solicitudes",
       "personalizarHub": "🎨 Personalizar Hub",
       "sponsors": "🤝 Sponsors / Publicidades",

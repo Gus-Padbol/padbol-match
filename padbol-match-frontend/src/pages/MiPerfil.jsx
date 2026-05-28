@@ -73,6 +73,7 @@ import {
   normalizeDeportesPreferidosArray,
   hasDeportesPreferidosCargados,
 } from '../constants/deportesPreferidos';
+import ReputacionJugadorPanel from '../components/ReputacionJugadorPanel';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -2583,6 +2584,11 @@ export default function MiPerfil() {
           {avisoPerfilTorneoMsg}
         </div>
       ) : null}
+
+      <ReputacionJugadorPanel
+        apiBaseUrl={API_BASE_URL}
+        accessToken={session?.access_token ?? null}
+      />
 
       {errorMsg && !editando ? (
         <div

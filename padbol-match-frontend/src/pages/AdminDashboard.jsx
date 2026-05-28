@@ -88,6 +88,8 @@ import AdminSponsorsSection from '../components/AdminSponsorsSection';
 import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
 import AdminSedeResenasSection from '../components/AdminSedeResenasSection';
+import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
+import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
@@ -457,6 +459,7 @@ const ADMIN_TABS_ALLOWED = new Set([
   'profesores',
   'personalizar_hub',
   'sponsors',
+  'suspensiones',
 ]);
 
 const EDITOR_CONTENIDO_TABS_ALLOWED = new Set(['personalizar_hub', 'sponsors']);
@@ -501,7 +504,7 @@ function hrefPerfilPublicoDesdeReservaAdmin(reserva) {
 }
 
 /** Nombre + email + WhatsApp de ficha (`jugador_whatsapp_perfil`) en listado/detalle reservas admin. */
-function AdminReservaJugadorContacto({ reserva }) {
+function AdminReservaJugadorContacto({ reserva, apiBaseUrl, accessToken }) {
   const email = String(reserva.email || '').trim();
   const waPerfil = String(reserva.jugador_whatsapp_perfil || '').trim();
   const waUrl = adminReservaJugadorWhatsappWaMeUrl(waPerfil);
@@ -521,6 +524,13 @@ function AdminReservaJugadorContacto({ reserva }) {
       >
         {nombre}
       </div>
+      {reserva?.user_id && accessToken ? (
+        <JugadorReputacionBadges
+          userId={reserva.user_id}
+          apiBaseUrl={apiBaseUrl}
+          accessToken={accessToken}
+        />
+      ) : null}
       {email ? (
         <div style={{ fontSize: '12px', marginTop: '2px' }}>
           <a
@@ -6435,6 +6445,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
+        ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
@@ -8058,6 +8069,13 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         />
       ) : null}
 
+      {activeTab === 'suspensiones' && isSuperAdmin && session?.access_token ? (
+        <div className="section">
+          <h2>{t('admin.tabs.suspensiones')}</h2>
+          <AdminSuspensionesSection apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
+        </div>
+      ) : null}
+
       {activeTab === t('admin.metricas.venuesCount') && (esAdminNacional || isSuperAdmin) && (
         <div className="section">
           <h2>{isSuperAdmin ? t('admin.sedes.registeredVenues') : t('admin.sedes.venuesInCountry')}</h2>
@@ -9284,7 +9302,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             <span style={{ paddingTop: '2px' }}>{horarioReservaAdmin(r)}</span>
                             <span style={{ textAlign: 'center', paddingTop: '2px' }}>{r.cancha ?? '—'}</span>
                             <div style={{ minWidth: 0 }}>
-                              <AdminReservaJugadorContacto reserva={r} />
+                              <AdminReservaJugadorContacto reserva={r} apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
                             </div>
                             <span style={{ paddingTop: '2px' }}>
                               <EstadoBadge reserva={r} />
@@ -9699,7 +9717,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         ) : null}
                       </div>
                       <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
-                        <AdminReservaJugadorContacto reserva={r} />
+                        <AdminReservaJugadorContacto reserva={r} apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
                       </div>
                       <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
                         <EstadoBadge reserva={r} />
@@ -9918,7 +9936,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                               <td style={{ padding: '6px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sede}</td>
                             ) : null}
                             <td style={{ padding: '6px 8px', verticalAlign: 'top', overflow: 'hidden' }}>
-                              <AdminReservaJugadorContacto reserva={r} />
+                              <AdminReservaJugadorContacto reserva={r} apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} />
                             </td>
                             <td style={{ padding: '6px 8px' }}>
                               <EstadoBadge reserva={r} />

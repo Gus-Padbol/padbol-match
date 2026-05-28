@@ -1,0 +1,101 @@
+.reputacion-panel {
+  margin-bottom: 14px;
+}
+
+.reputacion-panel__banner {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+
+.reputacion-panel__banner--danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.reputacion-panel__banner--warn {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  color: #854d0e;
+}
+
+.reputacion-panel__counter {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reputacion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.reputacion-badge--warn {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  color: #854d0e;
+}
+
+.reputacion-badge--danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.admin-suspensiones {
+  max-width: 720px;
+}
+
+.admin-suspensiones__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-suspensiones__table th,
+.admin-suspensiones__table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-suspensiones__table th {
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.admin-suspensiones__btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-suspensiones__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-suspensiones__btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}

@@ -514,6 +514,25 @@
     "emptyList": "No reviews yet",
     "clubReply": "Club reply"
   },
+  "reputacion": {
+    "suspendedBanner": "Your account is suspended until {{date}}. You cannot make bookings.",
+    "warningBanner": "You have {{count}} cancellations in the last 30 days. If you reach 5, your account will be suspended for 7 days.",
+    "recentCancellations": "Cancellations in the last 30 days: {{count}}",
+    "badgeManyCancellations": "⚠️ 3+ cancellations",
+    "badgeSuspended": "🚫 Suspended",
+    "admin": {
+      "intro": "Players with an active suspension due to repeated cancellations.",
+      "loading": "Loading suspensions…",
+      "loadError": "Could not load suspensions",
+      "empty": "No suspended players at the moment.",
+      "colName": "Player",
+      "colEmail": "Email",
+      "colUntil": "Suspended until",
+      "lift": "Lift suspension",
+      "lifting": "Lifting…",
+      "liftError": "Could not lift suspension"
+    }
+  },
   "campanita": {
     "sinAlertas": "No pending alerts",
     "marcarLeido": "Mark all as read",
@@ -797,6 +816,7 @@
       "resumen": "📊 Overview",
       "sedes": "🏟️ Venues",
       "profesoresTab": "🎓 Instructors",
+      "suspensiones": "🚫 Suspensions",
       "solicitudes": "📝 Requests",
       "personalizarHub": "🎨 Customize Hub",
       "sponsors": "🤝 Sponsors / Ads",
