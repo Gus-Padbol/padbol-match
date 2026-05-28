@@ -23,3 +23,10 @@ export function pathJugadorPerfilPublico(p) {
   if (!slug) return null;
   return `/jugador/${encodeURIComponent(slug)}`;
 }
+
+/** Ruta `/perfil/:userId` con UUID del jugador autenticado. */
+export function pathPerfilPublicoPorUserId(userId) {
+  const uid = String(userId || '').trim();
+  if (!esUuidAuthProbable(uid)) return null;
+  return `/perfil/${encodeURIComponent(uid)}`;
+}

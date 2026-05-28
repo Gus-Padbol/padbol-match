@@ -436,6 +436,7 @@ function AppRoutes() {
         <Route path="/join" element={<Navigate to="/unirse" replace />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
         <Route path="/mi-perfil" element={<MiPerfil />} />
+        <Route path="/perfil/:userId" element={<PerfilPublico />} />
         <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
         <Route path="/login" element={<AuthEntryRoute />} />

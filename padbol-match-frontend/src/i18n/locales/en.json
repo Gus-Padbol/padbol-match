@@ -585,6 +585,7 @@
   },
   "perfil": {
     "titulo": "My profile",
+    "viewPublicProfile": "View my public profile",
     "editar": "Edit profile",
     "nivel": "Skill level",
     "pais": "Country",

@@ -1,0 +1,30 @@
+.mi-perfil-ver-publico-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px auto 14px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  max-width: 320px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.mi-perfil-ver-publico-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mi-perfil-ver-publico-btn svg {
+  flex-shrink: 0;
+  color: currentColor;
+}

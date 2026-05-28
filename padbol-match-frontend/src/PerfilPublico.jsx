@@ -109,7 +109,7 @@ function JugadorResenaCard({ row }) {
 
 export default function PerfilPublico() {
   const { t } = useTranslation();
-  const { alias: aliasParam } = useParams();
+  const { alias: aliasParam, userId: userIdParam } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState(null);
@@ -143,12 +143,13 @@ export default function PerfilPublico() {
   });
 
   const aliasDecoded = useMemo(() => {
+    const raw = String(userIdParam || aliasParam || '').trim();
     try {
-      return decodeURIComponent(String(aliasParam || '').trim());
+      return decodeURIComponent(raw);
     } catch {
-      return String(aliasParam || '').trim();
+      return raw;
     }
-  }, [aliasParam]);
+  }, [aliasParam, userIdParam]);
 
   const load = useCallback(async () => {
     const a = aliasDecoded;

@@ -75,6 +75,8 @@ import {
   hasDeportesPreferidosCargados,
 } from '../constants/deportesPreferidos';
 import ReputacionJugadorPanel from '../components/ReputacionJugadorPanel';
+import { pathPerfilPublicoPorUserId } from '../utils/jugadorPerfilPublicoUrl';
+import './MiPerfilVerPublicoBtn.css';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
 
@@ -346,6 +348,11 @@ export default function MiPerfil() {
   const [modalConfirmarCerrarSesion, setModalConfirmarCerrarSesion] = useState(false);
 
   const sessionOwnerEmail = useMemo(() => session?.user?.email?.trim() || null, [session?.user?.email]);
+
+  const pathMiPerfilPublico = useMemo(
+    () => pathPerfilPublicoPorUserId(session?.user?.id),
+    [session?.user?.id],
+  );
 
   /** Solo confirmadas/pendientes con inicio ≥ ahora; orden próximo → lejano. */
   const reservasProximasOrdenadas = useMemo(() => {
@@ -2754,6 +2761,20 @@ export default function MiPerfil() {
           >
             {formatAliasConArroba(aliasLineaSecundaria)}
           </p>
+        ) : null}
+
+        {pathMiPerfilPublico && !editando ? (
+          <button
+            type="button"
+            className="mi-perfil-ver-publico-btn"
+            onClick={() => navigate(pathMiPerfilPublico)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            {t('perfil.viewPublicProfile')}
+          </button>
         ) : null}
 
         {perfil?.pais && (
