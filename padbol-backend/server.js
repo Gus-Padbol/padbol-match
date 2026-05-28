@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { createClient } from '@supabase/supabase-js';
-import ws from 'ws';
 import twilio from 'twilio';
 import dotenv from 'dotenv';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
@@ -131,9 +130,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 // Sin validar formato/prefijo: acepta JWT legacy (eyJ…) y claves nuevas (sb_secret_…).
 const supabaseAdmin =
   SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-        realtime: { transport: ws },
-      })
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     : supabase;
 if (!SUPABASE_SERVICE_ROLE_KEY) {
   console.warn(
