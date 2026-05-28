@@ -76,6 +76,7 @@ import {
 } from '../constants/deportesPreferidos';
 import ReputacionJugadorPanel from '../components/ReputacionJugadorPanel';
 import { pathPerfilPublicoPorUserId } from '../utils/jugadorPerfilPublicoUrl';
+import { getPaisDisplay } from '../utils/paisDisplay';
 import './MiPerfilVerPublicoBtn.css';
 
 const API_BASE_URL = 'https://padbol-backend.onrender.com';
@@ -2494,9 +2495,7 @@ export default function MiPerfil() {
     );
   }
 
-  const paisParts = (perfil?.pais || '').split(' ');
-  const paisFlag = paisParts[0];
-  const paisNombre = paisParts.slice(1).join(' ');
+  const paisDisplay = getPaisDisplay(perfil?.pais);
   const categoriaColor = CATEGORIA_COLOR[perfil?.nivel] || '#999';
   const foto = perfil?.foto_url || cuentaDeSesion?.foto || null;
   const puedeEliminarFotoPerfil = Boolean(
@@ -2764,24 +2763,24 @@ export default function MiPerfil() {
         ) : null}
 
         {pathMiPerfilPublico && !editando ? (
-          <button
-            type="button"
-            className="mi-perfil-ver-publico-btn"
-            onClick={() => navigate(pathMiPerfilPublico)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            {t('perfil.viewPublicProfile')}
-          </button>
+          <div className="mi-perfil-ver-publico-wrap">
+            <button
+              type="button"
+              className="mi-perfil-ver-publico-btn"
+              onClick={() => navigate(pathMiPerfilPublico)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {t('perfil.viewPublicProfile')}
+            </button>
+          </div>
         ) : null}
 
-        {perfil?.pais && (
-          <p style={{ margin: '0 0 4px', fontSize: '16px', color: 'var(--text-primary)' }}>
-            {paisFlag} <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{paisNombre}</span>
-          </p>
-        )}
+        {paisDisplay ? (
+          <p style={{ margin: '0 0 4px', fontSize: '16px', color: 'var(--text-primary)' }}>{paisDisplay}</p>
+        ) : null}
         {perfil && !editando && String(perfil.localidad || perfil.ciudad_residencia || '').trim() ? (
           <p
             style={{
