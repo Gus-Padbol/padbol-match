@@ -1,0 +1,239 @@
+.pp-publico__header {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 20px 20px;
+  margin-bottom: 14px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pp-publico__avatar {
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--accent);
+  background: var(--bg-input);
+  box-sizing: border-box;
+}
+
+.pp-publico__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pp-publico__avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  color: var(--text-secondary);
+}
+
+.pp-publico__display-name {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.pp-publico__username {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.pp-publico__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pp-publico__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pp-publico__chip--nivel {
+  border-color: transparent;
+  color: #fff;
+}
+
+.pp-publico__actions {
+  display: grid;
+  gap: 8px;
+  max-width: 280px;
+  margin: 14px auto 0;
+  width: 100%;
+}
+
+.pp-publico__section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 18px 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pp-publico__section-title {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.pp-publico__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pp-publico__stat-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  text-align: center;
+  min-width: 0;
+}
+
+.pp-publico__stat-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.pp-publico__stat-value {
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.pp-publico__deportes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pp-publico__deporte-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pp-publico__torneos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pp-publico__torneo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+
+.pp-publico__torneo-item:hover {
+  border-color: var(--accent);
+}
+
+.pp-publico__torneo-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pp-publico__torneo-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.pp-publico__torneo-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.pp-publico__torneo-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pp-publico__torneo-badge--gold {
+  background: linear-gradient(135deg, #fef08a 0%, #facc15 100%);
+  color: #713f12;
+  border: 1px solid #eab308;
+}
+
+.pp-publico__torneo-badge--silver {
+  background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+  color: #334155;
+  border: 1px solid #94a3b8;
+}
+
+.pp-publico__torneo-badge--bronze {
+  background: linear-gradient(135deg, #fed7aa 0%, #fb923c 100%);
+  color: #7c2d12;
+  border: 1px solid #ea580c;
+}
+
+.pp-publico__torneo-badge--gray {
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.pp-publico__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}

@@ -9899,6 +9899,169 @@ async function computeEstadisticasJugadorPublico(perfil) {
   };
 }
 
+function displayNameFromPerfilPublico(perfil) {
+  const apodo = String(perfil?.apodo || perfil?.nombre_saludo || '').trim();
+  if (apodo) return apodo;
+  const partes = [perfil?.nombre, perfil?.apellido].filter(Boolean).join(' ').trim();
+  if (partes) return partes;
+  return String(perfil?.nombre || '').trim() || 'Jugador';
+}
+
+function deportesKeysParaPerfilPublico(perfil, stats) {
+  const rawPref = perfil?.deportes_preferidos;
+  const pref = Array.isArray(rawPref)
+    ? rawPref.map((k) => String(k || '').trim().toLowerCase()).filter(Boolean)
+    : [];
+  if (pref.length) return [...new Set(pref)];
+  const fromStats = (stats?.deportes_jugados || [])
+    .map((d) => String(d?.deporte || '').trim().toLowerCase())
+    .filter(Boolean);
+  return [...new Set(fromStats)];
+}
+
+function formatFechaTorneoPerfilPublico(fin, ini) {
+  const raw = String(fin || ini || '').trim();
+  if (!raw) return '';
+  const d = new Date(`${raw}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+async function fetchTorneosRecientesJugadorPublico(perfil, limit = 5) {
+  const { data: equiposRows, error: eqErr } = await supabase.from('equipos').select('id, torneo_id, jugadores');
+  if (eqErr) throw eqErr;
+  const misEquipos = (equiposRows || []).filter((eq) => jugadorEnEquipoStats(eq.jugadores, perfil));
+  const eqById = {};
+  misEquipos.forEach((e) => {
+    eqById[e.id] = e;
+  });
+  const equipoIds = Object.keys(eqById)
+    .map((x) => parseInt(x, 10))
+    .filter((n) => Number.isFinite(n));
+  if (!equipoIds.length) return [];
+
+  const { data: tpRows, error: tpErr } = await supabase
+    .from('tabla_puntos')
+    .select('torneo_id, equipo_id, posicion, puntos')
+    .in('equipo_id', equipoIds)
+    .gt('puntos', 0);
+  if (tpErr) throw tpErr;
+
+  const misFilas = [];
+  for (const pr of tpRows || []) {
+    const eq = eqById[pr.equipo_id];
+    if (!eq || !jugadorEnEquipoStats(eq.jugadores, perfil)) continue;
+    misFilas.push({
+      torneo_id: pr.torneo_id,
+      equipo_id: pr.equipo_id,
+      posicion: pr.posicion,
+      puntos: pr.puntos,
+    });
+  }
+  if (!misFilas.length) return [];
+
+  const tids = [...new Set(misFilas.map((r) => r.torneo_id).filter((x) => x != null))];
+  const { data: torneosRows, error: tErr } = await supabase
+    .from('torneos')
+    .select('id, nombre, fecha_inicio, fecha_fin, sede_id, deporte, estado')
+    .in('id', tids);
+  if (tErr) throw tErr;
+
+  const torById = {};
+  (torneosRows || []).forEach((t) => {
+    torById[t.id] = t;
+  });
+
+  const sedeIds = [...new Set((torneosRows || []).map((t) => t.sede_id).filter((x) => x != null))];
+  const sedeById = new Map();
+  if (sedeIds.length) {
+    const { data: sedesRows } = await supabase.from('sedes').select('id, nombre').in('id', sedeIds);
+    for (const s of sedesRows || []) {
+      if (s?.id != null) sedeById.set(s.id, String(s.nombre || '').trim());
+    }
+  }
+
+  const items = misFilas
+    .map((row) => {
+      const t = torById[row.torneo_id];
+      if (!t || String(t.estado || '').toLowerCase() !== 'finalizado') return null;
+      const depKey = normalizeTorneoDeporteForDb(t.deporte);
+      const fin = t.fecha_fin;
+      const ini = t.fecha_inicio;
+      const fechaSort = String(fin || ini || '').trim();
+      return {
+        torneo_id: row.torneo_id,
+        nombre: String(t.nombre || '').trim() || `Torneo #${row.torneo_id}`,
+        sede: sedeById.get(t.sede_id) || '',
+        deporte: formatDeporteEstadisticaSlug(depKey) || depKey,
+        deporte_key: depKey,
+        fecha: formatFechaTorneoPerfilPublico(fin, ini),
+        fecha_sort: fechaSort,
+        posicion: Number(row.posicion) || null,
+      };
+    })
+    .filter(Boolean);
+
+  items.sort((a, b) => {
+    const da = Date.parse(a.fecha_sort ? `${a.fecha_sort}T12:00:00` : '') || 0;
+    const db = Date.parse(b.fecha_sort ? `${b.fecha_sort}T12:00:00` : '') || 0;
+    if (db !== da) return db - da;
+    return (Number(b.torneo_id) || 0) - (Number(a.torneo_id) || 0);
+  });
+
+  return items.slice(0, limit).map(({ fecha_sort, ...rest }) => rest);
+}
+
+async function buildPerfilPublicoPayload(perfil) {
+  const stats = await computeEstadisticasJugadorPublico(perfil);
+  const torneos_recientes = await fetchTorneosRecientesJugadorPublico(perfil, 5);
+  const paisRaw = String(perfil.pais || '').trim();
+  const paisParts = paisRaw ? paisRaw.split(/\s+/) : [];
+
+  return {
+    user_id: perfil.user_id,
+    display_name: displayNameFromPerfilPublico(perfil),
+    username: String(perfil.alias || '').trim(),
+    avatar_url: String(perfil.foto_url || '').trim() || null,
+    pais: paisRaw || null,
+    pais_flag: paisParts[0] || null,
+    pais_nombre: paisParts.slice(1).join(' ') || null,
+    nivel: String(perfil.nivel || '').trim() || null,
+    lateralidad: String(perfil.lateralidad || '').trim() || null,
+    pendiente_validacion: Boolean(perfil.pendiente_validacion),
+    estadisticas: {
+      torneos_jugados: Number(stats.torneos_jugados_total ?? stats.torneos_jugados) || 0,
+      torneos_ganados: Number(stats.torneos_ganados) || 0,
+      partidos_jugados: Number(stats.partidos_jugados) || 0,
+      partidos_ganados: Number(stats.partidos_ganados) || 0,
+    },
+    deportes: deportesKeysParaPerfilPublico(perfil, stats),
+    torneos_recientes,
+    perfil,
+    estadisticas_completas: stats,
+  };
+}
+
+/** GET /api/jugador/perfil-publico/:userId — perfil público agregado (alias o UUID). */
+app.get('/api/jugador/perfil-publico/:userId', async (req, res) => {
+  try {
+    let raw = String(req.params.userId || '').trim();
+    if (!raw) return res.status(400).json({ error: 'userId requerido' });
+    try {
+      raw = decodeURIComponent(raw);
+    } catch {
+      /* keep */
+    }
+    const perfil = await fetchJugadoresPerfilByAliasSlug(raw);
+    if (!perfil) return res.status(404).json({ error: 'Jugador no encontrado' });
+    const payload = await buildPerfilPublicoPayload(perfil);
+    res.json(payload);
+  } catch (err) {
+    console.error('❌ GET /api/jugador/perfil-publico/:userId:', err?.message || err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 /** GET /api/jugador/:alias/resenas — reseñas públicas sobre el jugador (promedio + últimas). */
 app.get('/api/jugador/:alias/resenas', async (req, res) => {
   try {
