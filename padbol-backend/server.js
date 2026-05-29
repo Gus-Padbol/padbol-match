@@ -277,6 +277,23 @@ function logCrearPreferenciaSupabaseQuery(client, table, operation, params = {})
 const uploadContrato = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 const uploadHubFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
+/** Galería pública de sede: máximo de URLs en `fotos_urls`. */
+const SEDE_FOTOS_URLS_MAX = 20;
+/** Carrusel destacado (hero + orden): máximo de URLs en `fotos_destacadas`. */
+const SEDE_FOTOS_DESTACADAS_MAX = 4;
+
+function normalizeSedeFotosUrls(raw) {
+  return Array.isArray(raw)
+    ? raw.map((x) => String(x || '').trim()).filter(Boolean).slice(0, SEDE_FOTOS_URLS_MAX)
+    : [];
+}
+
+function normalizeSedeFotosDestacadas(raw) {
+  return Array.isArray(raw)
+    ? raw.map((x) => String(x || '').trim()).filter(Boolean).slice(0, SEDE_FOTOS_DESTACADAS_MAX)
+    : [];
+}
+
 const TZ_TORNEO_CALENDARIO = 'America/Argentina/Buenos_Aires';
 const MSG_TORNEO_INSCRIPCION_FECHA_PASADA =
   'Este torneo ya finalizó o su fecha de juego ha pasado';
@@ -2985,7 +3002,7 @@ app.get('/api/sedes/:id/perfil', async (req, res) => {
 
     res.json({
       sede: out,
-      fotos: Array.isArray(out.fotos_urls) ? out.fotos_urls : [],
+      fotos: normalizeSedeFotosUrls(out.fotos_urls),
       slogan: tagline,
       logo_url: out.logo_url ?? null,
       descripcion: historia,
@@ -3291,13 +3308,16 @@ app.patch('/api/sedes/:id', async (req, res) => {
     }
 
     if (hop('fotos_urls')) {
-      patch.fotos_urls = Array.isArray(b.fotos_urls)
+      const raw = Array.isArray(b.fotos_urls)
         ? b.fotos_urls.map((x) => String(x || '').trim()).filter(Boolean)
         : [];
+      if (raw.length > SEDE_FOTOS_URLS_MAX) {
+        return res.status(400).json({ error: `Máximo ${SEDE_FOTOS_URLS_MAX} fotos en la galería` });
+      }
+      patch.fotos_urls = normalizeSedeFotosUrls(raw);
     }
     if (hop('fotos_destacadas')) {
-      const raw = Array.isArray(b.fotos_destacadas) ? b.fotos_destacadas : [];
-      patch.fotos_destacadas = raw.map((x) => String(x || '').trim()).filter(Boolean).slice(0, 4);
+      patch.fotos_destacadas = normalizeSedeFotosDestacadas(b.fotos_destacadas);
     }
 
     if (hop('suscripcion_estado')) {

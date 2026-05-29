@@ -52,6 +52,7 @@ const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
+const SEDE_FOTOS_GALERIA_MAX = 20;
 const FOTOS_DESTACADAS_MAX = 4;
 
 const toHttps = (url) => (url ? url.replace(/^http:\/\//, 'https://') : url);
@@ -655,7 +656,10 @@ const CARRUSEL_SLIDE_BASIS = `calc((100% - ${2 * CARRUSEL_GAP_PX}px) / 3)`;
 
 function sedeFotosLista(sede) {
   return Array.isArray(sede?.fotos_urls)
-    ? sede.fotos_urls.map((u) => toHttps(String(u || '').trim())).filter(Boolean)
+    ? sede.fotos_urls
+        .map((u) => toHttps(String(u || '').trim()))
+        .filter(Boolean)
+        .slice(0, SEDE_FOTOS_GALERIA_MAX)
     : [];
 }
 

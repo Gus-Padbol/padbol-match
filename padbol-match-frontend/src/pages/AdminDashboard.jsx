@@ -261,6 +261,7 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
 }
 
 const MAX_FOTOS_SEDE = 20;
+const FOTOS_DESTACADAS_MAX = 4;
 const DIAS_SEMANA_FRANJA = [
   { id: 'lun' },
   { id: 'mar' },
@@ -5229,7 +5230,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             destRaw
               .map((u) => String(u || '').trim())
               .filter((u) => todasFotos.includes(u))
-              .slice(0, 4)
+              .slice(0, FOTOS_DESTACADAS_MAX)
           );
           setFranjasHorarias(normalizeFranjasHorarias(sedeData.franjas_horarias));
         }
@@ -6136,9 +6137,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     await Promise.all(toProcess.map((f, i) => uploadOne(f, i)));
     urlsOk.sort((a, b) => a.index - b.index);
     const merged = [...fotosUrls, ...urlsOk.map((x) => x.url)];
+    let persistOk = true;
     if (urlsOk.length) {
-      await supabase.from(t('admin.metricas.venuesCount')).update({ fotos_urls: merged }).eq('id', sedeId);
-      setFotosUrls(merged);
+      persistOk = await persistFotosUrls(merged);
     }
     setFotosUploading(false);
     setFotosUploadLabel('');
@@ -6146,12 +6147,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setFotosMsg(t('admin.sedes.photosPartialUploadFail', { details: failures.join(' · ') }));
     } else if (failures.length) {
       setFotosMsg(t('admin.sedes.photosUploadFail', { details: failures.join(' · ') }));
-    } else if (urlsOk.length) {
+    } else if (urlsOk.length && persistOk) {
       setFotosMsg(
         urlsOk.length === 1
           ? t('admin.sedes.onePhotoAdded')
           : t('admin.sedes.nPhotosAdded', { count: urlsOk.length }),
       );
+    } else if (urlsOk.length && !persistOk) {
+      setFotosMsg(t('admin.sedes.photosUploadFail', { details: t('admin.metricas.saveError') }));
     }
     if (failures.length || urlsOk.length) {
       setTimeout(() => setFotosMsg(''), 5000);
@@ -6186,13 +6189,48 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setTimeout(() => setFranjasMsg(''), 3000);
   };
 
+  const persistFotosUrls = async (nextUrls) => {
+    if (!sedeId || !session?.access_token) {
+      setFotosMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
+      setTimeout(() => setFotosMsg(''), 4000);
+      return false;
+    }
+    const arr = nextUrls.map((u) => String(u || '').trim()).filter(Boolean).slice(0, MAX_FOTOS_SEDE);
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(String(sedeId))}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ fotos_urls: arr }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setFotosMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
+        setTimeout(() => setFotosMsg(''), 5000);
+        return false;
+      }
+      const saved = Array.isArray(data.sede?.fotos_urls)
+        ? data.sede.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
+        : arr;
+      setFotosUrls(saved);
+      setMiSede((prev) => (prev ? { ...prev, fotos_urls: saved } : prev));
+      return true;
+    } catch (e) {
+      setFotosMsg(`⚠️ ${e?.message || String(e)}`);
+      setTimeout(() => setFotosMsg(''), 5000);
+      return false;
+    }
+  };
+
   const persistFotosDestacadas = async (nextDestacadas, { successMessage } = {}) => {
     if (!sedeId || !session?.access_token) {
       setFotosDestacadasMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setFotosDestacadasMsg(''), 4000);
       return false;
     }
-    const arr = nextDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, 4);
+    const arr = nextDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, FOTOS_DESTACADAS_MAX);
     setFotosDestacadasSaving(true);
     setFotosDestacadasMsg('');
     try {
@@ -6213,7 +6251,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       const saved = Array.isArray(data.sede?.fotos_destacadas)
         ? data.sede.fotos_destacadas.map((u) => String(u || '').trim()).filter(Boolean)
         : arr;
-      setFotosDestacadas(saved.filter((u) => fotosUrls.includes(u)).slice(0, 4));
+      setFotosDestacadas(saved.filter((u) => fotosUrls.includes(u)).slice(0, FOTOS_DESTACADAS_MAX));
       setMiSede((prev) =>
         prev
           ? {
@@ -6242,7 +6280,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const heroActual = fotosDestacadas[0] || null;
     if (heroActual && heroActual === heroKey) return;
     const prev = fotosDestacadas.filter((u) => fotosUrls.includes(u));
-    const next = [heroKey, ...prev.filter((u) => u !== heroKey)].slice(0, 4);
+    const next = [heroKey, ...prev.filter((u) => u !== heroKey)].slice(0, FOTOS_DESTACADAS_MAX);
     const ok = await persistFotosDestacadas(next);
     if (ok) {
       setHeroToast('Hero actualizado');
@@ -6258,7 +6296,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     setFotosDestacadas((prev) => {
       const i = prev.indexOf(url);
       if (i >= 0) return prev.filter((u) => u !== url);
-      if (prev.length >= 4) {
+      if (prev.length >= FOTOS_DESTACADAS_MAX) {
         window.setTimeout(() => {
           setFotosDestacadasMsg(t('admin.sedes.carouselMaxFour'));
           window.setTimeout(() => setFotosDestacadasMsg(''), 4000);
@@ -6277,8 +6315,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       await supabase.storage.from(t('admin.metricas.venuesCount')).remove([storagePath]);
     }
     const newFotos = fotosUrls.filter((u) => u !== url);
-    await supabase.from(t('admin.metricas.venuesCount')).update({ fotos_urls: newFotos }).eq('id', sedeId);
-    setFotosUrls(newFotos);
+    await persistFotosUrls(newFotos);
     setFotosDestacadas((prev) => prev.filter((u) => u !== url));
   };
 
@@ -13547,7 +13584,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 Tocá &quot;Usar como hero&quot; en la foto que querés mostrar de fondo en tu página pública.
               </p>
               <p style={{ margin: 0 }}>
-                Marcá hasta 4 fotos con ⭐ para el carrusel. Guardá los cambios del carrusel con el botón inferior.
+                Marcá hasta {FOTOS_DESTACADAS_MAX} fotos con ⭐ para el carrusel. Guardá los cambios del carrusel con el botón inferior.
               </p>
             </div>
             {heroToast ? (
@@ -13576,12 +13613,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         title={
                           destacada
                             ? 'Quitar del carrusel público'
-                            : 'Marcar para carrusel público (máx. 4)'
+                            : `Marcar para carrusel público (máx. ${FOTOS_DESTACADAS_MAX})`
                         }
                         aria-label={
                           destacada
                             ? 'Quitar del carrusel público'
-                            : 'Marcar para carrusel público (máx. 4)'
+                            : `Marcar para carrusel público (máx. ${FOTOS_DESTACADAS_MAX})`
                         }
                         style={{
                           position: 'absolute',
