@@ -536,13 +536,9 @@ function heroClubNameFontSizePx(nombreRaw) {
   return 20;
 }
 
-/** Frase bajo el hero si la sede no tiene descripción en BD. */
-const SEDE_HERO_FRASE_DEFAULT =
-  'El primer Club de Padbol del Mundo, donde todo comenzó...';
-
 /**
  * Margen extra bajo AppHeader + BottomNav + chrome del header (ref. hubLayout) + safe-area.
- * Incluye el mismo stack que {@link hubContentPaddingTopCss} más buffer de hero (`SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX`).
+ * Incluye el mismo stack que {@link hubContentPaddingTopCss} más buffer de hero.
  */
 const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 52;
 
@@ -1838,8 +1834,6 @@ export default function SedePublica() {
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
         const direccionChipLabel = formatSedeDireccionChipLabel(sede);
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
-        const heroSubtitulo =
-          String(sede.slogan || '').trim() || String(sede.descripcion || '').trim();
         const amenityChips = resolveSedeAmenityChips(sede.amenities);
         const canchasCount = resolveSedeCanchasCount(sede, sedePerfilCanchasCount);
         const canchasInfoChip = buildSedeCanchasInfoChip(deportesChips, canchasCount, sede);
@@ -1910,14 +1904,8 @@ export default function SedePublica() {
                     )}
                   </div>
                   <h1 className="sede-publica-hero-immersive__nombre">{sede.nombre || '(sin nombre)'}</h1>
-                  {heroSubtitulo ? (
-                    <p className="sede-publica-hero-immersive__subtitulo">{heroSubtitulo}</p>
-                  ) : null}
                   {direccionLinea ? (
-                    <p className="sede-publica-hero-immersive__direccion">
-                      <IconGeroUbicacion size={14} aria-hidden />
-                      <span>{direccionLinea}</span>
-                    </p>
+                    <p className="sede-publica-hero-immersive__direccion">{direccionLinea}</p>
                   ) : null}
                   {licenciaActiva ? (
                     <span className="sede-publica-hero-immersive__licencia">
