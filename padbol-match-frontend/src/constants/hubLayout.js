@@ -263,12 +263,12 @@ export function hubBottomNavFixedTopCss() {
 }
 
 /**
- * Rutas donde se muestra el botón flotante del asistente IA (solo hub / inicio / home).
+ * Rutas donde se muestra el botón flotante del asistente IA (hub / inicio / home / perfil público de sede).
  */
 export function isChatbotIAVisiblePathname(pathname) {
   let p = String(pathname || '/').split('?')[0].split('#')[0];
   p = p.replace(/\/+$/, '') || '/';
-  return p === '/hub' || p === '/inicio' || p === '/home';
+  return p === '/hub' || p === '/inicio' || p === '/home' || isSedeProfilePathname(pathname);
 }
 
 /** Altura aproximada del pie global de enlaces legales (padding + texto). */
