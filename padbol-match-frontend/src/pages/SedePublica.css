@@ -193,12 +193,18 @@
   max-width: 100%;
 }
 
+.sede-publica-hero-immersive__licencia-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-top: 4px;
+}
+
 .sede-publica-hero-immersive__licencia {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  margin-top: 4px;
   padding: 1px 6px;
   border-radius: 999px;
   font-size: 9px;
@@ -211,11 +217,12 @@
   box-shadow: 0 1px 4px rgba(245, 158, 11, 0.25);
 }
 
-.sede-publica-hero-immersive__licencia-check {
+.sede-publica-hero-immersive__licencia-status {
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1.2;
   color: #16a34a;
-  font-size: 10px;
-  line-height: 1;
-  font-weight: 900;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
 }
 
 /* Esquina inferior derecha del hero: deportes + redes */
@@ -716,6 +723,11 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sede-publica-hero-social__link svg {
+  width: 20px;
+  height: 20px;
 }
 
 .sede-publica-hero-social__link:hover {

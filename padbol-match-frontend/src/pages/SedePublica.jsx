@@ -1908,12 +1908,14 @@ export default function SedePublica() {
                     <p className="sede-publica-hero-immersive__direccion">{direccionLinea}</p>
                   ) : null}
                   {licenciaActiva ? (
-                    <span className="sede-publica-hero-immersive__licencia">
-                      <span className="sede-publica-hero-immersive__licencia-check" aria-hidden>
-                        ✓
+                    <div className="sede-publica-hero-immersive__licencia-wrap">
+                      <span className="sede-publica-hero-immersive__licencia">
+                        {t('sedes.publica.licenciaBadge', { defaultValue: 'PADBOL' })}
                       </span>
-                      {t('sedes.publica.licenciaActiva', { defaultValue: 'Licencia Padbol activa' })}
-                    </span>
+                      <span className="sede-publica-hero-immersive__licencia-status">
+                        {t('sedes.publica.licenciaActivaLine', { defaultValue: '✓ Licencia activa' })}
+                      </span>
+                    </div>
                   ) : null}
                 </div>
 
