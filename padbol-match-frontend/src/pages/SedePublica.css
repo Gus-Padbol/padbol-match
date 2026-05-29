@@ -19,6 +19,10 @@
   padding-bottom: 12px;
 }
 
+.sede-publica-page__column--sticky-reservar {
+  padding-bottom: calc(12px + 64px);
+}
+
 /* —— Hero inmersivo (foto full bleed + overlay + info superpuesta) —— */
 .sede-publica-hero-immersive {
   position: relative;
@@ -295,8 +299,50 @@
 
 /* —— Galería (miniaturas horizontales) —— */
 .sede-publica-galeria {
+  position: relative;
   padding: 4px 16px 14px;
   box-sizing: border-box;
+}
+
+.sede-publica-galeria__nav {
+  display: none;
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: rgba(15, 23, 42, 0.78);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sede-publica-galeria__nav {
+    display: flex;
+  }
+}
+
+.sede-publica-galeria__nav--prev {
+  left: 20px;
+}
+
+.sede-publica-galeria__nav--next {
+  right: 20px;
+}
+
+.sede-publica-galeria__nav:hover {
+  background: rgba(15, 23, 42, 0.92);
 }
 
 .sede-publica-galeria__track {
@@ -365,6 +411,25 @@
   background: var(--bg-card);
   color: var(--accent);
   border: 2px solid var(--accent);
+}
+
+/* —— CTA fijo «Reservar cancha» —— */
+.sede-publica-reservar-sticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 10040;
+  padding: 0 16px 8px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.sede-publica-reservar-sticky__inner {
+  pointer-events: auto;
+}
+
+.sede-publica-reservar-sticky__btn {
+  width: 100%;
 }
 
 /* —— Secciones —— */
@@ -1071,6 +1136,13 @@
   color: var(--accent);
   border: 1px solid var(--accent);
   box-shadow: none;
+}
+
+.sede-publica-proximo-torneo__ver-todos {
+  margin-top: 10px;
+  width: 100%;
+  font-size: 14px;
+  padding: 12px 16px;
 }
 
 .sede-publica-proximo-torneo__card--empty {

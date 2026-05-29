@@ -14,6 +14,8 @@ import {
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
   hubMainPaddingBottomCss,
+  HUB_BOTTOM_NAV_CONTENT_GAP_PX,
+  HUB_NAV_HEIGHT_PX,
   hubScrollChromeTopExtraPx,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
@@ -205,7 +207,7 @@ function pickProximoTorneoActivoApi(torneos) {
   candidatos.sort((a, b) =>
     String(a?.fecha_inicio || '').localeCompare(String(b?.fecha_inicio || ''))
   );
-  return candidatos[0] ?? torneos[0] ?? null;
+  return candidatos[0] ?? null;
 }
 
 function pickProximoTorneoInfoClub(torneos) {
@@ -721,11 +723,52 @@ function whatsappHrefSede(sede) {
 
 /** Fila de miniaturas (~100×80px), scroll horizontal; tap abre lightbox con swipe. */
 function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
+  const trackRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const syncScrollArrows = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(maxScroll > 4 && el.scrollLeft < maxScroll - 4);
+  }, []);
+
+  useEffect(() => {
+    syncScrollArrows();
+    const el = trackRef.current;
+    if (!el) return undefined;
+    el.addEventListener('scroll', syncScrollArrows, { passive: true });
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncScrollArrows) : null;
+    ro?.observe(el);
+    return () => {
+      el.removeEventListener('scroll', syncScrollArrows);
+      ro?.disconnect();
+    };
+  }, [fotos, syncScrollArrows]);
+
+  const scrollGallery = useCallback((direction) => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction * 108, behavior: 'smooth' });
+  }, []);
+
   if (!fotos.length) return null;
 
   return (
     <div className="sede-publica-galeria">
-      <div className="sede-publica-galeria__track">
+      {canScrollLeft ? (
+        <button
+          type="button"
+          className="sede-publica-galeria__nav sede-publica-galeria__nav--prev"
+          aria-label="Ver fotos anteriores"
+          onClick={() => scrollGallery(-1)}
+        >
+          ‹
+        </button>
+      ) : null}
+      <div ref={trackRef} className="sede-publica-galeria__track">
         {fotos.map((url, i) => (
           <button
             key={`${url}-${i}`}
@@ -738,11 +781,21 @@ function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
           </button>
         ))}
       </div>
+      {canScrollRight ? (
+        <button
+          type="button"
+          className="sede-publica-galeria__nav sede-publica-galeria__nav--next"
+          aria-label="Ver fotos siguientes"
+          onClick={() => scrollGallery(1)}
+        >
+          ›
+        </button>
+      ) : null}
     </div>
   );
 }
 
-function SedeProximoTorneoSection({ sedeIdNum, session, navigate, location, t, padbolLang, apiBase }) {
+function SedeProximoTorneoSection({ sedeId, sedeIdNum, session, navigate, location, t, padbolLang, apiBase }) {
   const [loading, setLoading] = useState(true);
   const [torneoActivo, setTorneoActivo] = useState(null);
   const [cuposDisponibles, setCuposDisponibles] = useState(null);
@@ -885,6 +938,17 @@ function SedeProximoTorneoSection({ sedeIdNum, session, navigate, location, t, p
     }
   }, [sedeIdNum, session?.access_token, enListaEspera, apiBase, navigate, location]);
 
+  const verTorneosBtn =
+    sedeId != null && String(sedeId).trim() !== '' ? (
+      <button
+        type="button"
+        className="sede-publica-btn sede-publica-btn--outline sede-publica-proximo-torneo__ver-todos"
+        onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+      >
+        {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
+      </button>
+    ) : null;
+
   if (loading) return null;
 
   if (torneoActivo) {
@@ -927,6 +991,7 @@ function SedeProximoTorneoSection({ sedeIdNum, session, navigate, location, t, p
             {t('sedes.publica.inscribirmeTorneo', { defaultValue: 'Inscribirme' })}
           </button>
         </div>
+        {verTorneosBtn}
       </section>
     );
   }
@@ -975,6 +1040,7 @@ function SedeProximoTorneoSection({ sedeIdNum, session, navigate, location, t, p
           </p>
         ) : null}
       </div>
+      {verTorneosBtn}
     </section>
   );
 }
@@ -2011,7 +2077,7 @@ export default function SedePublica() {
         return (
           <>
           <div
-            className="sede-publica-page__column"
+            className="sede-publica-page__column sede-publica-page__column--sticky-reservar"
             style={hubInstagramColumnWrapStyle}
           >
             <section
@@ -2148,6 +2214,7 @@ export default function SedePublica() {
             ) : null}
 
             <SedeProximoTorneoSection
+              sedeId={sedeId}
               sedeIdNum={sedeIdNumLoad}
               session={session}
               navigate={navigate}
@@ -2156,23 +2223,6 @@ export default function SedePublica() {
               padbolLang={padbolLang}
               apiBase={API_BASE_RESENAS}
             />
-
-            <div className="sede-publica-ctas">
-              <button
-                type="button"
-                className="sede-publica-btn sede-publica-btn--primary"
-                onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
-              >
-                {t('sedes.publica.reservarCancha', { defaultValue: 'Reservar cancha' })}
-              </button>
-              <button
-                type="button"
-                className="sede-publica-btn sede-publica-btn--outline"
-                onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
-              >
-                {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
-              </button>
-            </div>
 
             {amenityChips.length > 0 ? (
               <section className="sede-publica-section sede-publica-instalaciones">
@@ -2237,6 +2287,25 @@ export default function SedePublica() {
               onIndexChange={setFotosGalleryIndex}
             />
           ) : null}
+          <div
+            className="sede-publica-reservar-sticky"
+            style={{
+              bottom:
+                navDock === 'bottom'
+                  ? `calc(${HUB_NAV_HEIGHT_PX + HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
+                  : 'calc(8px + env(safe-area-inset-bottom, 0px))',
+            }}
+          >
+            <div className="sede-publica-reservar-sticky__inner" style={hubInstagramColumnWrapStyle}>
+              <button
+                type="button"
+                className="sede-publica-btn sede-publica-btn--primary sede-publica-reservar-sticky__btn"
+                onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
+              >
+                {t('sedes.publica.reservarCancha', { defaultValue: 'Reservar cancha' })}
+              </button>
+            </div>
+          </div>
           </>
         );
       })()}
