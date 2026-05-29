@@ -5043,6 +5043,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const logoCropPixelsRef = useRef(null);
   const adminTabsStripRef = useRef(null);
   const adminMainScrollRef = useRef(null);
+  const miSedeMainScrollRef = useRef(null);
   const [miSedeNavActive, setMiSedeNavActive] = useState('info');
   const miSedeNavItems = useMemo(() => {
     const items = [
@@ -5058,10 +5059,37 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     items.push({ id: 'contrato', label: t('admin.sedes.images') });
     return items;
   }, [esAdminClub, isSuperAdmin, t]);
-  const scrollToMiSedeSection = useCallback((sectionId) => {
-    if (typeof document === 'undefined') return;
-    document.getElementById(`admin-mi-sede-${sectionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const resolveMiSedeScrollRoot = useCallback(() => {
+    const main = miSedeMainScrollRef.current;
+    const outer = adminMainScrollRef.current;
+    if (main && main.scrollHeight > main.clientHeight + 1) return main;
+    return outer;
   }, []);
+
+  const miSedeScrollOffsetPx = useCallback(() => {
+    if (typeof window === 'undefined') return 16;
+    return window.matchMedia('(min-width: 768px)').matches ? 16 : 108;
+  }, []);
+
+  const scrollToMiSedeSection = useCallback(
+    (sectionId) => {
+      if (typeof document === 'undefined') return;
+      const target = document.getElementById(`admin-mi-sede-${sectionId}`);
+      if (!target) return;
+      const root = resolveMiSedeScrollRoot();
+      setMiSedeNavActive(sectionId);
+      if (!root) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      const offset = miSedeScrollOffsetPx();
+      const rootRect = root.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const nextTop = root.scrollTop + (targetRect.top - rootRect.top) - offset;
+      root.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+    },
+    [resolveMiSedeScrollRoot, miSedeScrollOffsetPx]
+  );
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
@@ -5105,32 +5133,35 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !miSede || miSedeLoading) return;
-    const root = adminMainScrollRef.current;
-    if (!root || typeof IntersectionObserver === 'undefined') return;
-    const elements = miSedeNavItems
-      .map((x) => document.getElementById(`admin-mi-sede-${x.id}`))
-      .filter(Boolean);
-    if (!elements.length) return;
-    const pickActive = (entries) => {
-      const visible = entries
-        .filter((e) => e.isIntersecting && e.target?.id)
-        .map((e) => ({
-          key: String(e.target.id).replace(/^admin-mi-sede-/, ''),
-          ratio: e.intersectionRatio,
-          top: e.boundingClientRect.top,
-        }));
-      if (!visible.length) return;
-      visible.sort((a, b) => b.ratio - a.ratio || a.top - b.top);
-      setMiSedeNavActive(visible[0].key);
+    const root = resolveMiSedeScrollRoot();
+    if (!root) return;
+
+    const syncActiveSection = () => {
+      const sections = miSedeNavItems
+        .map(({ id }) => {
+          const el = document.getElementById(`admin-mi-sede-${id}`);
+          return el ? { id, top: el.getBoundingClientRect().top } : null;
+        })
+        .filter(Boolean);
+      if (!sections.length) return;
+
+      const probeTop = root.getBoundingClientRect().top + miSedeScrollOffsetPx();
+      let current = sections[0].id;
+      for (const s of sections) {
+        if (s.top <= probeTop + 4) current = s.id;
+      }
+      setMiSedeNavActive((prev) => (prev === current ? prev : current));
     };
-    const obs = new IntersectionObserver(pickActive, {
-      root,
-      rootMargin: '-10% 0px -52% 0px',
-      threshold: [0, 0.08, 0.2, 0.35, 0.55],
-    });
-    elements.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
-  }, [activeTab, miSede, miSedeLoading, miSedeNavItems]);
+
+    const t0 = window.setTimeout(syncActiveSection, 80);
+    root.addEventListener('scroll', syncActiveSection, { passive: true });
+    window.addEventListener('resize', syncActiveSection);
+    return () => {
+      window.clearTimeout(t0);
+      root.removeEventListener('scroll', syncActiveSection);
+      window.removeEventListener('resize', syncActiveSection);
+    };
+  }, [activeTab, miSede, miSedeLoading, miSedeNavItems, resolveMiSedeScrollRoot, miSedeScrollOffsetPx]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
@@ -11706,7 +11737,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 </button>
               ))}
             </aside>
-            <div className="admin-mi-sede-main">
+            <div className="admin-mi-sede-main" ref={miSedeMainScrollRef}>
               <nav className="admin-mi-sede-nav-mobile" aria-label={t('admin.sedes.myVenueSectionsAria')}>
                 {miSedeNavItems.map((item) => (
                   <button
@@ -12365,6 +12396,216 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
 
+          {/* ── 5. Mis Canchas ── */}
+          <div id="admin-mi-sede-canchas" style={{ marginBottom: '32px' }}>
+            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.myCourtsTitle')}</h3>
+            <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
+              <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 14px', fontSize: '13px', lineHeight: 1.5 }}>
+                Las canchas <strong>inactivas</strong> no aparecen como opción en las reservas públicas. El número en
+                la primera columna es el que usa el sistema de reservas para esa cancha.
+              </p>
+              {canchas.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>No hay canchas registradas para esta sede.</p>
+              ) : (
+                <>
+                  <div className="admin-mi-sede-canchas-table-wrap">
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--accent)' }}>
+                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)', width: '48px' }}>#</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)' }}>{t('admin.formularios.name')}</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>{t('admin.metricas.sportLabel')}</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>Nota</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)', width: '100px' }}>{t('admin.metricas.statusCol')}</th>
+                      <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {canchas.map((c) => (
+                      <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '10px 10px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 700 }}>{c.orden ?? '—'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)' }}>{c.nombre}</td>
+                        <td style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                            <SportIcon deporte={c.deporte} size={18} color="var(--text-secondary)" />
+                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '180px' }}>
+                          {c.descripcion ? (
+                            <span title={c.descripcion}>{c.descripcion.length > 48 ? `${c.descripcion.slice(0, 48)}…` : c.descripcion}</span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <span
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              background: c.estado === 'activa' ? '#dcfce7' : '#fee2e2',
+                              color: c.estado === 'activa' ? '#16a34a' : '#dc2626',
+                            }}
+                          >
+                            {c.estado === 'activa' ? t('admin.sedes.subscriptionActive') : 'Inactiva'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => abrirModalCanchaEditar(c)}
+                            style={{
+                              padding: '4px 10px',
+                              marginRight: '6px',
+                              background: '#fee2e2',
+                              color: '#991b1b',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCanchaEstado(c)}
+                            style={{
+                              padding: '4px 10px',
+                              background: c.estado === 'activa' ? '#fee2e2' : '#dcfce7',
+                              color: c.estado === 'activa' ? '#dc2626' : '#16a34a',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {c.estado === 'activa' ? t('admin.sponsors.deactivateBtn') : 'Activar'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                  </div>
+                  <div className="admin-mi-sede-canchas-cards" role="list">
+                    {canchas.map((c) => (
+                      <div key={`card-${c.id}`} className="admin-mi-sede-cancha-card" role="listitem">
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">Orden</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.orden ?? '—'}</span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">{t('admin.formularios.name')}</span>
+                          <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{c.nombre}</span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">{t('admin.metricas.sportLabel')}</span>
+                          <span
+                            style={{
+                              color: 'var(--text-primary)',
+                              textAlign: 'right',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              justifyContent: 'flex-end',
+                            }}
+                          >
+                            <SportIcon deporte={c.deporte} size={18} color="var(--text-primary)" />
+                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                          </span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row" style={{ alignItems: 'flex-start' }}>
+                          <span className="admin-mi-sede-cancha-card__label">Nota</span>
+                          <span style={{ color: 'var(--text-secondary)', textAlign: 'right', fontSize: '13px', lineHeight: 1.4, wordBreak: 'break-word' }}>
+                            {c.descripcion ? (
+                              <span title={c.descripcion}>{c.descripcion.length > 120 ? `${c.descripcion.slice(0, 120)}…` : c.descripcion}</span>
+                            ) : (
+                              '—'
+                            )}
+                          </span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__row">
+                          <span className="admin-mi-sede-cancha-card__label">{t('admin.metricas.statusCol')}</span>
+                          <span
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              background: c.estado === 'activa' ? '#dcfce7' : '#fee2e2',
+                              color: c.estado === 'activa' ? '#16a34a' : '#dc2626',
+                            }}
+                          >
+                            {c.estado === 'activa' ? t('admin.sedes.subscriptionActive') : 'Inactiva'}
+                          </span>
+                        </div>
+                        <div className="admin-mi-sede-cancha-card__actions">
+                          <button
+                            type="button"
+                            onClick={() => abrirModalCanchaEditar(c)}
+                            style={{
+                              flex: '1 1 auto',
+                              minWidth: '120px',
+                              padding: '8px 12px',
+                              background: '#fee2e2',
+                              color: '#991b1b',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCanchaEstado(c)}
+                            style={{
+                              flex: '1 1 auto',
+                              minWidth: '120px',
+                              padding: '8px 12px',
+                              background: c.estado === 'activa' ? '#fee2e2' : '#dcfce7',
+                              color: c.estado === 'activa' ? '#dc2626' : '#16a34a',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                            }}
+                          >
+                            {c.estado === 'activa' ? t('admin.sponsors.deactivateBtn') : 'Activar'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={abrirModalCanchaNueva}
+                style={{
+                  padding: '10px 18px',
+                  background: 'linear-gradient(135deg, #E11B22, #991b1b)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                }}
+              >
+                + Agregar cancha
+              </button>
+            </div>
+          </div>
+
           <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
               {t('admin.franjas.slotsAndPricesTitle')}
@@ -12620,25 +12861,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
 
-          {/* ── Clases y profesores ── */}
-          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
-            <div id="admin-mi-sede-clases" style={{ marginBottom: '32px' }}>
-              <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
-                🎓 {t('admin.profesores.clasesYInstructores')}
-              </h3>
-              <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
-                <AdminModuloClasesSection
-                  apiBaseUrl={apiBaseUrl}
-                  accessToken={session.access_token}
-                  sedeId={Number(sedeId)}
-                  canchas={canchas}
-                  monedaSede={String(miSede?.moneda || 'ARS').trim().toUpperCase().slice(0, 8) || 'ARS'}
-                  isSuperAdmin={isSuperAdmin}
-                />
-              </div>
-            </div>
-          ) : null}
-
           {/* ── Extras tercer tiempo (opcional en checkout armar partido) ── */}
           {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-extras" style={{ marginBottom: '32px' }}>
@@ -12667,6 +12889,25 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   apiBaseUrl={apiBaseUrl}
                   accessToken={session.access_token}
                   sedeId={Number(sedeIdKey)}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── Clases y profesores ── */}
+          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
+            <div id="admin-mi-sede-clases" style={{ marginBottom: '32px' }}>
+              <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
+                🎓 {t('admin.profesores.clasesYInstructores')}
+              </h3>
+              <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
+                <AdminModuloClasesSection
+                  apiBaseUrl={apiBaseUrl}
+                  accessToken={session.access_token}
+                  sedeId={Number(sedeId)}
+                  canchas={canchas}
+                  monedaSede={String(miSede?.moneda || 'ARS').trim().toUpperCase().slice(0, 8) || 'ARS'}
+                  isSuperAdmin={isSuperAdmin}
                 />
               </div>
             </div>
@@ -13068,221 +13309,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           </div>
 
-          {/* ── 5. Mis Canchas ── */}
-          <div id="admin-mi-sede-canchas" style={{ marginBottom: '32px' }}>
-            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.myCourtsTitle')}</h3>
-            <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
-              <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 14px', fontSize: '13px', lineHeight: 1.5 }}>
-                Las canchas <strong>inactivas</strong> no aparecen como opción en las reservas públicas. El número en
-                la primera columna es el que usa el sistema de reservas para esa cancha.
-              </p>
-              {canchas.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>No hay canchas registradas para esta sede.</p>
-              ) : (
-                <>
-                  <div className="admin-mi-sede-canchas-table-wrap">
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ background: 'var(--accent)' }}>
-                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)', width: '48px' }}>#</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)' }}>{t('admin.formularios.name')}</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>{t('admin.metricas.sportLabel')}</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>Nota</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--bg-card)', width: '100px' }}>{t('admin.metricas.statusCol')}</th>
-                      <th style={{ padding: '8px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {canchas.map((c) => (
-                      <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td style={{ padding: '10px 10px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 700 }}>{c.orden ?? '—'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)' }}>{c.nombre}</td>
-                        <td style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                            <SportIcon deporte={c.deporte} size={18} color="var(--text-secondary)" />
-                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '180px' }}>
-                          {c.descripcion ? (
-                            <span title={c.descripcion}>{c.descripcion.length > 48 ? `${c.descripcion.slice(0, 48)}…` : c.descripcion}</span>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <span
-                            style={{
-                              padding: '3px 10px',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              background: c.estado === 'activa' ? '#dcfce7' : '#fee2e2',
-                              color: c.estado === 'activa' ? '#16a34a' : '#dc2626',
-                            }}
-                          >
-                            {c.estado === 'activa' ? t('admin.sedes.subscriptionActive') : 'Inactiva'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '10px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                          <button
-                            type="button"
-                            onClick={() => abrirModalCanchaEditar(c)}
-                            style={{
-                              padding: '4px 10px',
-                              marginRight: '6px',
-                              background: '#fee2e2',
-                              color: '#991b1b',
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                            }}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleCanchaEstado(c)}
-                            style={{
-                              padding: '4px 10px',
-                              background: c.estado === 'activa' ? '#fee2e2' : '#dcfce7',
-                              color: c.estado === 'activa' ? '#dc2626' : '#16a34a',
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                            }}
-                          >
-                            {c.estado === 'activa' ? t('admin.sponsors.deactivateBtn') : 'Activar'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                  </div>
-                  <div className="admin-mi-sede-canchas-cards" role="list">
-                    {canchas.map((c) => (
-                      <div key={`card-${c.id}`} className="admin-mi-sede-cancha-card" role="listitem">
-                        <div className="admin-mi-sede-cancha-card__row">
-                          <span className="admin-mi-sede-cancha-card__label">Orden</span>
-                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{c.orden ?? '—'}</span>
-                        </div>
-                        <div className="admin-mi-sede-cancha-card__row">
-                          <span className="admin-mi-sede-cancha-card__label">{t('admin.formularios.name')}</span>
-                          <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{c.nombre}</span>
-                        </div>
-                        <div className="admin-mi-sede-cancha-card__row">
-                          <span className="admin-mi-sede-cancha-card__label">{t('admin.metricas.sportLabel')}</span>
-                          <span
-                            style={{
-                              color: 'var(--text-primary)',
-                              textAlign: 'right',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 8,
-                              justifyContent: 'flex-end',
-                            }}
-                          >
-                            <SportIcon deporte={c.deporte} size={18} color="var(--text-primary)" />
-                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
-                          </span>
-                        </div>
-                        <div className="admin-mi-sede-cancha-card__row" style={{ alignItems: 'flex-start' }}>
-                          <span className="admin-mi-sede-cancha-card__label">Nota</span>
-                          <span style={{ color: 'var(--text-secondary)', textAlign: 'right', fontSize: '13px', lineHeight: 1.4, wordBreak: 'break-word' }}>
-                            {c.descripcion ? (
-                              <span title={c.descripcion}>{c.descripcion.length > 120 ? `${c.descripcion.slice(0, 120)}…` : c.descripcion}</span>
-                            ) : (
-                              '—'
-                            )}
-                          </span>
-                        </div>
-                        <div className="admin-mi-sede-cancha-card__row">
-                          <span className="admin-mi-sede-cancha-card__label">{t('admin.metricas.statusCol')}</span>
-                          <span
-                            style={{
-                              padding: '3px 10px',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              background: c.estado === 'activa' ? '#dcfce7' : '#fee2e2',
-                              color: c.estado === 'activa' ? '#16a34a' : '#dc2626',
-                            }}
-                          >
-                            {c.estado === 'activa' ? t('admin.sedes.subscriptionActive') : 'Inactiva'}
-                          </span>
-                        </div>
-                        <div className="admin-mi-sede-cancha-card__actions">
-                          <button
-                            type="button"
-                            onClick={() => abrirModalCanchaEditar(c)}
-                            style={{
-                              flex: '1 1 auto',
-                              minWidth: '120px',
-                              padding: '8px 12px',
-                              background: '#fee2e2',
-                              color: '#991b1b',
-                              border: 'none',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              fontSize: '13px',
-                              fontWeight: 700,
-                            }}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleCanchaEstado(c)}
-                            style={{
-                              flex: '1 1 auto',
-                              minWidth: '120px',
-                              padding: '8px 12px',
-                              background: c.estado === 'activa' ? '#fee2e2' : '#dcfce7',
-                              color: c.estado === 'activa' ? '#dc2626' : '#16a34a',
-                              border: 'none',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              fontSize: '13px',
-                              fontWeight: 700,
-                            }}
-                          >
-                            {c.estado === 'activa' ? t('admin.sponsors.deactivateBtn') : 'Activar'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={abrirModalCanchaNueva}
-                style={{
-                  padding: '10px 18px',
-                  background: 'linear-gradient(135deg, #E11B22, #991b1b)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                }}
-              >
-                + Agregar cancha
-              </button>
-            </div>
-          </div>
-
-            </div>
-          </div>
-
-        </>)}
-
         {/* ── 4. Fotos ── always visible when tab is active */}
         {!miSedeLoading && <div id="admin-mi-sede-contrato" style={{ marginBottom: '32px' }}>
           <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>📸 Fotos</h3>
@@ -13543,6 +13569,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </p>
           </div>
         </div>}
+
+            </div>
+          </div>
+
+        </>)}
 
       </div>}
       </div>
