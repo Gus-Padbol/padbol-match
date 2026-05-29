@@ -962,10 +962,41 @@ function EstadoBadge({ reserva }) {
   if (reserva.estado === 'reservada') {
     return <span style={{ background: '#f1f5f9', color: 'var(--text-secondary)', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>📋 Reservada</span>;
   }
+  if (est === 'confirmada') {
+    return (
+      <span
+        style={{
+          background: '#dcfce7',
+          color: '#1a1a2e',
+          borderRadius: '12px',
+          padding: '2px 8px',
+          fontSize: '11px',
+          whiteSpace: 'nowrap',
+          fontWeight: 700,
+        }}
+      >
+        {t('admin.reservas.badgeConfirmed')}
+      </span>
+    );
+  }
   if (reserva.estado === 'completada' || !esFutura(reserva)) {
     return <span style={{ background: '#e2e8f0', color: 'var(--text-secondary)', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>{t('admin.reservas.badgeCompleted')}</span>;
   }
-  return <span style={{ background: '#fef2f2', color: 'var(--text-primary)', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>{t('admin.reservas.badgeConfirmed')}</span>;
+  return (
+    <span
+      style={{
+        background: '#dcfce7',
+        color: '#1a1a2e',
+        borderRadius: '12px',
+        padding: '2px 8px',
+        fontSize: '11px',
+        whiteSpace: 'nowrap',
+        fontWeight: 700,
+      }}
+    >
+      {t('admin.reservas.badgeConfirmed')}
+    </span>
+  );
 }
 
 /** Pills filtro listado reservas (pestaña Reservas). */
