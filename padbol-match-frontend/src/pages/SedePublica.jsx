@@ -53,12 +53,12 @@ const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
 const SEDE_FOTOS_GALERIA_MAX = 20;
-const FOTOS_DESTACADAS_MAX = 4;
 
 const toHttps = (url) => (url ? url.replace(/^http:\/\//, 'https://') : url);
 
 const SEDE_HTTPS_SCALAR_KEYS = [
   'logo_url',
+  'foto_portada',
   'whatsapp_url',
   'whatsapp',
   'instagram',
@@ -86,11 +86,6 @@ function normalizeSedeHttps(sede) {
   }
   if (Array.isArray(out.fotos_urls)) {
     out.fotos_urls = out.fotos_urls
-      .map((u) => toHttps(String(u || '').trim()))
-      .filter(Boolean);
-  }
-  if (Array.isArray(out.fotos_destacadas)) {
-    out.fotos_destacadas = out.fotos_destacadas
       .map((u) => toHttps(String(u || '').trim()))
       .filter(Boolean);
   }
@@ -634,26 +629,6 @@ function resolveSedeCanchasCount(sede, perfilCanchasCount = null) {
 }
 
 
-/**
- * URLs del carrusel: `fotos_destacadas` en orden (máx. 4), solo si existen en `fotos_urls`;
- * si no, primeras 4 de la galería.
- */
-function urlsCarruselSedePublica(sede) {
-  const todas = Array.isArray(sede?.fotos_urls)
-    ? sede.fotos_urls.map((u) => toHttps(String(u || '').trim())).filter(Boolean)
-    : [];
-  const dest = Array.isArray(sede?.fotos_destacadas)
-    ? sede.fotos_destacadas.map((u) => toHttps(String(u || '').trim())).filter(Boolean)
-    : [];
-  const resolved = dest.filter((u) => todas.includes(u)).slice(0, FOTOS_DESTACADAS_MAX);
-  if (resolved.length > 0) return { urls: resolved, usarOrden: true };
-  return { urls: todas.slice(0, FOTOS_DESTACADAS_MAX), usarOrden: false };
-}
-
-/** Tres fotos visibles a la vez (~30% c/u + gap 8px); scroll horizontal si hay más. */
-const CARRUSEL_GAP_PX = 8;
-const CARRUSEL_SLIDE_BASIS = `calc((100% - ${2 * CARRUSEL_GAP_PX}px) / 3)`;
-
 function sedeFotosLista(sede) {
   return Array.isArray(sede?.fotos_urls)
     ? sede.fotos_urls
@@ -663,27 +638,34 @@ function sedeFotosLista(sede) {
     : [];
 }
 
-/** Hero: `fotos_destacadas[0]` (elegida en admin); si no hay o no está en galería, primera foto. */
+function sedeFotoPortadaKey(sede) {
+  const direct = sedePhotoUrlKey(sede?.foto_portada);
+  if (direct) return direct;
+  const legacy = Array.isArray(sede?.fotos_destacadas) ? sede.fotos_destacadas[0] : null;
+  return sedePhotoUrlKey(legacy);
+}
+
+/** Carrusel público: `fotos_urls` en orden de subida, sin la foto del hero. */
+function sedeFotosCarruselLista(sede) {
+  const portadaKey = sedeFotoPortadaKey(sede);
+  return sedeFotosLista(sede).filter((u) => sedePhotoUrlKey(u) !== portadaKey);
+}
+
+/** Hero: `foto_portada` elegida en admin; si no hay, primera foto de la galería. */
 function sedeHeroImageUrl(sede) {
-  const todas = sedeFotosLista(sede);
-  const keys = new Set(todas.map(sedePhotoUrlKey));
-  const dest = Array.isArray(sede?.fotos_destacadas)
-    ? sede.fotos_destacadas.map((u) => sedePhotoUrlKey(u)).filter(Boolean)
-    : [];
-  if (dest.length > 0) {
-    const heroKey = dest[0];
-    if (keys.has(heroKey)) return heroKey;
-    const loose = todas.find((u) => sedePhotoUrlKey(u) === heroKey);
-    if (loose) return sedePhotoUrlKey(loose);
+  const portadaKey = sedeFotoPortadaKey(sede);
+  if (portadaKey) {
+    const todas = sedeFotosLista(sede);
+    if (todas.some((u) => sedePhotoUrlKey(u) === portadaKey)) return portadaKey;
+    return portadaKey;
   }
-  return todas[0] || null;
+  return sedeFotosLista(sede)[0] || null;
 }
 
 function sedeHeroCacheBustToken(sede) {
-  const dest = Array.isArray(sede?.fotos_destacadas) ? sede.fotos_destacadas : [];
-  const heroKey = dest[0] ? sedePhotoUrlKey(dest[0]) : '';
+  const portadaKey = sedeFotoPortadaKey(sede);
   const updated = sede?.updated_at ? String(sede.updated_at) : '';
-  return [heroKey, updated, dest.join('|')].filter(Boolean).join('::') || String(Date.now());
+  return [portadaKey, updated].filter(Boolean).join('::') || String(Date.now());
 }
 
 /** Deportes activos: precios_por_deporte (activo) + canchas activas + API deportes_disponibles. */
@@ -2013,7 +1995,7 @@ export default function SedePublica() {
 
       {!loading && !error && sede && (() => {
         const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
-        const fotos = sedeFotosLista(sede);
+        const fotos = sedeFotosCarruselLista(sede);
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const heroImgRaw = sedeHeroImageUrl(sede);

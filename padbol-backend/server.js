@@ -3316,6 +3316,16 @@ app.patch('/api/sedes/:id', async (req, res) => {
       }
       patch.fotos_urls = normalizeSedeFotosUrls(raw);
     }
+    if (hop('foto_portada')) {
+      const u = String(b.foto_portada ?? '').trim();
+      if (!u) {
+        patch.foto_portada = null;
+      } else if (!/^https?:\/\//i.test(u)) {
+        return res.status(400).json({ error: 'foto_portada debe ser una URL http(s) válida' });
+      } else {
+        patch.foto_portada = u.slice(0, 2048);
+      }
+    }
     if (hop('fotos_destacadas')) {
       patch.fotos_destacadas = normalizeSedeFotosDestacadas(b.fotos_destacadas);
     }

@@ -261,7 +261,6 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
 }
 
 const MAX_FOTOS_SEDE = 20;
-const FOTOS_DESTACADAS_MAX = 4;
 const DIAS_SEMANA_FRANJA = [
   { id: 'lun' },
   { id: 'mar' },
@@ -5132,9 +5131,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [franjasHorarias, setFranjasHorarias] = useState([]);
   const [franjasSaving, setFranjasSaving] = useState(false);
   const [franjasMsg, setFranjasMsg] = useState('');
-  const [fotosDestacadas, setFotosDestacadas] = useState([]);
-  const [fotosDestacadasSaving, setFotosDestacadasSaving] = useState(false);
-  const [fotosDestacadasMsg, setFotosDestacadasMsg] = useState('');
+  const [fotoPortada, setFotoPortada] = useState('');
+  const [fotoPortadaSaving, setFotoPortadaSaving] = useState(false);
   const [heroToast, setHeroToast] = useState('');
   /** Cupos de sponsors con scope sede (Mi Sede, lectura). */
   const [miSedeSponsorSlots, setMiSedeSponsorSlots] = useState({
@@ -5225,12 +5223,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             ? sedeData.fotos_urls.map((u) => String(u || '').trim()).filter(Boolean)
             : [];
           setFotosUrls(todasFotos);
-          const destRaw = Array.isArray(sedeData.fotos_destacadas) ? sedeData.fotos_destacadas : [];
-          setFotosDestacadas(
-            destRaw
-              .map((u) => String(u || '').trim())
-              .filter((u) => todasFotos.includes(u))
-              .slice(0, FOTOS_DESTACADAS_MAX)
+          setFotoPortada(
+            String(sedeData.foto_portada || '').trim() ||
+              (Array.isArray(sedeData.fotos_destacadas)
+                ? String(sedeData.fotos_destacadas[0] || '').trim()
+                : ''),
           );
           setFranjasHorarias(normalizeFranjasHorarias(sedeData.franjas_horarias));
         }
@@ -6224,15 +6221,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
   };
 
-  const persistFotosDestacadas = async (nextDestacadas, { successMessage } = {}) => {
+  const persistFotoPortada = async (url) => {
     if (!sedeId || !session?.access_token) {
-      setFotosDestacadasMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
-      setTimeout(() => setFotosDestacadasMsg(''), 4000);
+      setFotosMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
+      setTimeout(() => setFotosMsg(''), 4000);
       return false;
     }
-    const arr = nextDestacadas.filter((u) => fotosUrls.includes(u)).slice(0, FOTOS_DESTACADAS_MAX);
-    setFotosDestacadasSaving(true);
-    setFotosDestacadasMsg('');
+    const heroUrl = url != null && String(url).trim() !== '' ? String(url).trim() : null;
+    if (heroUrl && !fotosUrls.includes(heroUrl)) {
+      setFotosMsg('⚠️ La foto debe estar en la galería');
+      setTimeout(() => setFotosMsg(''), 4000);
+      return false;
+    }
+    setFotoPortadaSaving(true);
     try {
       const res = await fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(String(sedeId))}`, {
         method: 'PATCH',
@@ -6240,71 +6241,46 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ fotos_destacadas: arr }),
+        body: JSON.stringify({ foto_portada: heroUrl }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setFotosDestacadasMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
-        setTimeout(() => setFotosDestacadasMsg(''), 4000);
+        setFotosMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
+        setTimeout(() => setFotosMsg(''), 5000);
         return false;
       }
-      const saved = Array.isArray(data.sede?.fotos_destacadas)
-        ? data.sede.fotos_destacadas.map((u) => String(u || '').trim()).filter(Boolean)
-        : arr;
-      setFotosDestacadas(saved.filter((u) => fotosUrls.includes(u)).slice(0, FOTOS_DESTACADAS_MAX));
+      const saved =
+        data.sede?.foto_portada != null && String(data.sede.foto_portada).trim() !== ''
+          ? String(data.sede.foto_portada).trim()
+          : '';
+      setFotoPortada(saved);
       setMiSede((prev) =>
         prev
           ? {
               ...prev,
-              fotos_destacadas: saved,
+              foto_portada: saved || null,
               updated_at: data.sede?.updated_at ?? prev.updated_at,
             }
           : prev,
       );
-      if (successMessage) {
-        setFotosDestacadasMsg(successMessage);
-        setTimeout(() => setFotosDestacadasMsg(''), 3000);
-      }
       return true;
     } catch (e) {
-      setFotosDestacadasMsg(`⚠️ ${e?.message || String(e)}`);
-      setTimeout(() => setFotosDestacadasMsg(''), 4000);
+      setFotosMsg(`⚠️ ${e?.message || String(e)}`);
+      setTimeout(() => setFotosMsg(''), 5000);
       return false;
     } finally {
-      setFotosDestacadasSaving(false);
+      setFotoPortadaSaving(false);
     }
   };
 
   const usarComoHero = async (url) => {
     const heroKey = String(url || '').trim();
-    const heroActual = fotosDestacadas[0] || null;
-    if (heroActual && heroActual === heroKey) return;
-    const prev = fotosDestacadas.filter((u) => fotosUrls.includes(u));
-    const next = [heroKey, ...prev.filter((u) => u !== heroKey)].slice(0, FOTOS_DESTACADAS_MAX);
-    const ok = await persistFotosDestacadas(next);
+    if (!heroKey || heroKey === fotoPortada) return;
+    const ok = await persistFotoPortada(heroKey);
     if (ok) {
-      setHeroToast('Hero actualizado');
+      setHeroToast('Foto del hero actualizada');
       window.setTimeout(() => setHeroToast(''), 2600);
     }
-  };
-
-  const guardarFotosDestacadas = async () => {
-    await persistFotosDestacadas(fotosDestacadas, { successMessage: '✅ Destacadas guardadas' });
-  };
-
-  const toggleDestacadaFoto = (url) => {
-    setFotosDestacadas((prev) => {
-      const i = prev.indexOf(url);
-      if (i >= 0) return prev.filter((u) => u !== url);
-      if (prev.length >= FOTOS_DESTACADAS_MAX) {
-        window.setTimeout(() => {
-          setFotosDestacadasMsg(t('admin.sedes.carouselMaxFour'));
-          window.setTimeout(() => setFotosDestacadasMsg(''), 4000);
-        }, 0);
-        return prev;
-      }
-      return [...prev, url];
-    });
   };
 
   const eliminarFoto = async (url) => {
@@ -6316,7 +6292,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
     const newFotos = fotosUrls.filter((u) => u !== url);
     await persistFotosUrls(newFotos);
-    setFotosDestacadas((prev) => prev.filter((u) => u !== url));
+    if (fotoPortada === url) {
+      await persistFotoPortada(null);
+    }
   };
 
   const abrirModalCanchaNueva = useCallback(() => {
@@ -13580,11 +13558,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 600, color: '#E11B22' }}>{fotosUploadLabel}</p>
             ) : null}
             <div style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-              <p style={{ margin: '0 0 6px' }}>
-                Tocá &quot;Usar como hero&quot; en la foto que querés mostrar de fondo en tu página pública.
-              </p>
               <p style={{ margin: 0 }}>
-                Marcá hasta {FOTOS_DESTACADAS_MAX} fotos con ⭐ para el carrusel. Guardá los cambios del carrusel con el botón inferior.
+                Elegí una foto del hero con el botón en cada imagen. El resto aparece en el carrusel público en el orden de subida.
               </p>
             </div>
             {heroToast ? (
@@ -13597,9 +13572,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 {fotosUrls.map((url, i) => {
-                  const destacada = fotosDestacadas.includes(url);
-                  const heroFotoUrl = fotosDestacadas[0] || fotosUrls[0] || null;
-                  const isHeroFoto = Boolean(heroFotoUrl && url === heroFotoUrl);
+                  const isHeroFoto = Boolean(fotoPortada && url === fotoPortada);
                   return (
                     <div key={url} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', background: '#f1f5f9' }}>
                       <img
@@ -13607,52 +13580,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                         alt={`Cancha ${i + 1}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
-                      <button
-                        type="button"
-                        onClick={() => toggleDestacadaFoto(url)}
-                        title={
-                          destacada
-                            ? 'Quitar del carrusel público'
-                            : `Marcar para carrusel público (máx. ${FOTOS_DESTACADAS_MAX})`
-                        }
-                        aria-label={
-                          destacada
-                            ? 'Quitar del carrusel público'
-                            : `Marcar para carrusel público (máx. ${FOTOS_DESTACADAS_MAX})`
-                        }
-                        style={{
-                          position: 'absolute',
-                          top: '6px',
-                          left: '6px',
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '50%',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '16px',
-                          lineHeight: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: destacada ? 'rgba(234,179,8,0.95)' : 'rgba(15,23,42,0.55)',
-                          color: destacada ? '#1e1b4b' : '#fef9c3',
-                        }}
-                      >
-                        ⭐
-                      </button>
                       {isHeroFoto ? (
                         <span className="admin-mi-sede-photo-hero-current" title="Fondo del hero en la página pública">
-                          ✓ Hero actual
+                          ✓ Foto del hero
                         </span>
                       ) : (
                         <button
                           type="button"
                           className="admin-mi-sede-photo-hero-btn"
                           onClick={() => void usarComoHero(url)}
-                          disabled={fotosDestacadasSaving}
-                          title="Usar como fondo del hero en la página pública"
+                          disabled={fotoPortadaSaving}
+                          title="Usar como foto del hero en la página pública"
                         >
-                          Usar como hero
+                          Usar como foto del hero
                         </button>
                       )}
                       <button
@@ -13675,32 +13615,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 })}
               </div>
             )}
-            {fotosUrls.length > 0 ? (
-              <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={guardarFotosDestacadas}
-                  disabled={fotosDestacadasSaving}
-                  style={{
-                    padding: '8px 20px',
-                    background: fotosDestacadasSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: fotosDestacadasSaving ? 'not-allowed' : 'pointer',
-                    fontWeight: 'bold',
-                    fontSize: '13px',
-                  }}
-                >
-                  {fotosDestacadasSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar destacadas'}
-                </button>
-                {fotosDestacadasMsg ? (
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: fotosDestacadasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>
-                    {fotosDestacadasMsg}
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
             {fotosMsg ? <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: fotosMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{fotosMsg}</p> : null}
             <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
               Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos. En iPhone, si varias a la vez no suben, usa «+ Agregar una foto».
