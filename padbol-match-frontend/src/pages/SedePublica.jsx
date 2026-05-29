@@ -14,8 +14,6 @@ import {
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
   hubMainPaddingBottomCss,
-  HUB_BOTTOM_NAV_CONTENT_GAP_PX,
-  HUB_NAV_HEIGHT_PX,
   hubScrollChromeTopExtraPx,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
@@ -2015,7 +2013,11 @@ export default function SedePublica() {
 
   return (
     <div
-      className={sedeViewReady ? 'sede-publica-root sede-publica-root--immersive' : undefined}
+      className={
+        sedeViewReady
+          ? `sede-publica-root sede-publica-root--immersive${navDock === 'bottom' ? ' sede-publica-root--nav-dock-bottom' : ''}`
+          : undefined
+      }
       style={rootPageStyle}
     >
       {!sedeViewReady ? (
@@ -2287,15 +2289,7 @@ export default function SedePublica() {
               onIndexChange={setFotosGalleryIndex}
             />
           ) : null}
-          <div
-            className="sede-publica-reservar-sticky"
-            style={{
-              bottom:
-                navDock === 'bottom'
-                  ? `calc(${HUB_NAV_HEIGHT_PX + HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
-                  : 'calc(8px + env(safe-area-inset-bottom, 0px))',
-            }}
-          >
+          <div className="sede-publica-reservar-sticky">
             <div className="sede-publica-reservar-sticky__inner" style={hubInstagramColumnWrapStyle}>
               <button
                 type="button"

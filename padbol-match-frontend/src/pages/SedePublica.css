@@ -305,7 +305,7 @@
 }
 
 .sede-publica-galeria__nav {
-  display: none;
+  display: flex;
   position: absolute;
   top: 50%;
   z-index: 2;
@@ -325,12 +325,6 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .sede-publica-galeria__nav {
-    display: flex;
-  }
 }
 
 .sede-publica-galeria__nav--prev {
@@ -418,10 +412,15 @@
   position: fixed;
   left: 0;
   right: 0;
+  bottom: 0;
   z-index: 10040;
-  padding: 0 16px 8px;
+  padding: 0 16px env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
   pointer-events: none;
+}
+
+.sede-publica-root--nav-dock-bottom .sede-publica-reservar-sticky {
+  padding-bottom: calc(54px + env(safe-area-inset-bottom, 0px));
 }
 
 .sede-publica-reservar-sticky__inner {
@@ -430,6 +429,7 @@
 
 .sede-publica-reservar-sticky__btn {
   width: 100%;
+  margin: 0;
 }
 
 /* —— Secciones —— */
