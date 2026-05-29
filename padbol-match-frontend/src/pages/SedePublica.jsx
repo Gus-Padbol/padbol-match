@@ -1025,7 +1025,7 @@ function SedeProximoTorneoSection({ sedeIdNum, session, navigate, location, t, p
         ) : (
           <button
             type="button"
-            className="sede-publica-proximo-torneo__cta sede-publica-proximo-torneo__cta--outline"
+            className="sede-publica-proximo-torneo__cta sede-publica-proximo-torneo__cta--waitlist"
             disabled={interesLoading || !interesChecked}
             onClick={() => void toggleListaEspera()}
           >
@@ -2193,6 +2193,26 @@ export default function SedePublica() {
               }}
             />
 
+            {!partidosSedeLoading && partidosSedeOrdenados.length > 0 ? (
+              <section className="sede-publica-section sede-publica-partidos">
+                <h2 className="sede-publica-section__title">Partidos abiertos</h2>
+                <div className="sede-publica-partidos__list">
+                  {partidosSedeVisibles.map((p) => (
+                    <PartidoAbiertoSedeRow key={p.id} partido={p} onJoin={() => navigate('/jugar/buscar')} />
+                  ))}
+                </div>
+                {partidosSedeOrdenados.length > PARTIDOS_ABIERTOS_PREVIEW_LIMIT && !partidosSedeVerTodos ? (
+                  <button
+                    type="button"
+                    className="partidos-abiertos-ver-mas"
+                    onClick={() => setPartidosSedeVerTodos(true)}
+                  >
+                    Ver más partidos →
+                  </button>
+                ) : null}
+              </section>
+            ) : null}
+
             <SedeProximoTorneoSection
               sedeIdNum={sedeIdNumLoad}
               session={session}
@@ -2219,26 +2239,6 @@ export default function SedePublica() {
                 {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
               </button>
             </div>
-
-            {!partidosSedeLoading && partidosSedeOrdenados.length > 0 ? (
-              <section className="sede-publica-section sede-publica-partidos">
-                <h2 className="sede-publica-section__title">Partidos abiertos</h2>
-                <div className="sede-publica-partidos__list">
-                  {partidosSedeVisibles.map((p) => (
-                    <PartidoAbiertoSedeRow key={p.id} partido={p} onJoin={() => navigate('/jugar/buscar')} />
-                  ))}
-                </div>
-                {partidosSedeOrdenados.length > PARTIDOS_ABIERTOS_PREVIEW_LIMIT && !partidosSedeVerTodos ? (
-                  <button
-                    type="button"
-                    className="partidos-abiertos-ver-mas"
-                    onClick={() => setPartidosSedeVerTodos(true)}
-                  >
-                    Ver más partidos →
-                  </button>
-                ) : null}
-              </section>
-            ) : null}
 
             {amenityChips.length > 0 ? (
               <section className="sede-publica-section sede-publica-instalaciones">

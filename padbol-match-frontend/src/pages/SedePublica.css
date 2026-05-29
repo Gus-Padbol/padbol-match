@@ -1090,10 +1090,16 @@
   box-shadow: 0 4px 14px rgba(225, 27, 34, 0.35);
 }
 
-.sede-publica-proximo-torneo__cta--outline {
-  background: var(--bg-card);
+.sede-publica-proximo-torneo__cta--waitlist {
+  width: auto;
+  max-width: 100%;
+  margin-top: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent;
   color: var(--accent);
-  border: 2px solid var(--accent);
+  border: 1px solid var(--accent);
   box-shadow: none;
 }
 
