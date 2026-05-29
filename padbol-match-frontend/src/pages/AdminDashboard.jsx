@@ -465,6 +465,7 @@ const ADMIN_TABS_ALLOWED = new Set([
 const EDITOR_CONTENIDO_TABS_ALLOWED = new Set(['personalizar_hub', 'sponsors']);
 
 const SEDES_SUPER_ADMIN_PAGE_SIZE = 10;
+const RESERVAS_ADMIN_PAGE_SIZE = 15;
 
 /** Torneos que siguen “en juego” a nivel operativo (no finalizados ni cancelados). */
 function torneoConsideradoActivoPanelNacional(t) {
@@ -637,6 +638,33 @@ function adminFilterPillButtonStyle(active, inactiveSurface = 'default') {
     color: 'var(--text-primary)',
     border: '1px solid var(--border)',
   };
+}
+
+function AdminReservasPagination({ page, totalPages, onPrev, onNext }) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="admin-reservas-pagination" role="navigation" aria-label="Paginación de reservas">
+      <button
+        type="button"
+        className="admin-reservas-pagination__btn"
+        disabled={page <= 1}
+        onClick={onPrev}
+      >
+        Anterior
+      </button>
+      <span className="admin-reservas-pagination__label">
+        Página {page} de {totalPages}
+      </span>
+      <button
+        type="button"
+        className="admin-reservas-pagination__btn"
+        disabled={page >= totalPages}
+        onClick={onNext}
+      >
+        Siguiente
+      </button>
+    </div>
+  );
 }
 
 const MS_48H = 48 * 60 * 60 * 1000;
@@ -2095,6 +2123,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   );
   const canchaDeporteAdminOptions = useMemo(() => getCanchaDeporteAdminOptions(t), [t, i18n.language]);
   const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
+  const [reservasAdminPagina, setReservasAdminPagina] = useState(1);
   const [sedesMap, setSedesMap] = useState({});
   const [contratosBySedeId, setContratosBySedeId] = useState({});
   const [sedeDetalleAbiertoId, setSedeDetalleAbiertoId] = useState(null);
@@ -2922,6 +2951,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       setRankingDetalleSedeKey(null);
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    setReservasAdminPagina(1);
+  }, [filtroPillReservas, superAdminPeriodo, superAdminFechaDesde, superAdminFechaHasta, finanzasAnclaISO, activeTab]);
 
   useEffect(() => {
     try {
@@ -9574,6 +9607,19 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 isInPeriodoClub(fechaReservaDiaISO(r?.fecha))
             )
           );
+          const totalReservasPages =
+            sortedRows.length === 0 ? 1 : Math.max(1, Math.ceil(sortedRows.length / RESERVAS_ADMIN_PAGE_SIZE));
+          const reservasPageSafe = Math.min(Math.max(1, reservasAdminPagina), totalReservasPages);
+          const reservasPageStart = (reservasPageSafe - 1) * RESERVAS_ADMIN_PAGE_SIZE;
+          const paginatedRows = sortedRows.slice(reservasPageStart, reservasPageStart + RESERVAS_ADMIN_PAGE_SIZE);
+          const reservasPaginationEl = (
+            <AdminReservasPagination
+              page={reservasPageSafe}
+              totalPages={totalReservasPages}
+              onPrev={() => setReservasAdminPagina((p) => Math.max(1, p - 1))}
+              onNext={() => setReservasAdminPagina((p) => Math.min(totalReservasPages, p + 1))}
+            />
+          );
 
           const BTN = (extra) => ({
             padding: '4px 10px', border: 'none', borderRadius: '3px',
@@ -9783,7 +9829,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               {reservaManualPanel}
               {usarTarjetasReservasClub ? (
                 <div style={{ display: 'grid', gap: '12px' }}>
-                  {sortedRows.map((r) => (
+                  {paginatedRows.map((r) => (
                     <div
                       key={r.id}
                       style={{
@@ -9844,7 +9890,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                       </tr>
                     </thead>
                     <tbody>
-                      {sortedRows.map((r) =>
+                      {paginatedRows.map((r) =>
                         editandoId === r.id ? (
                           <React.Fragment key={r.id}>
                           <tr>
@@ -10046,6 +10092,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   </table>
                 </div>
               )}
+              {reservasPaginationEl}
             </>
           );
         })()}
