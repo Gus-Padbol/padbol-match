@@ -532,14 +532,6 @@ function SedeSocialLinks({ sede, t, variant = 'hero' }) {
   );
 }
 
-/** Tamaño del título del club en el hero según longitud del nombre. */
-function heroClubNameFontSizePx(nombreRaw) {
-  const len = String(nombreRaw ?? '').trim().length;
-  if (len < 15) return 28;
-  if (len <= 25) return 24;
-  return 20;
-}
-
 /**
  * Margen extra bajo AppHeader + BottomNav + chrome del header (ref. hubLayout) + safe-area.
  * Incluye el mismo stack que {@link hubContentPaddingTopCss} más buffer de hero.
@@ -741,68 +733,25 @@ function whatsappHrefSede(sede) {
   return `https://wa.me/${n}`;
 }
 
-/** Galería horizontal: ~3 fotos visibles, flecha para ver más. */
+/** Fila de miniaturas (~100×80px), scroll horizontal; tap abre lightbox con swipe. */
 function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
-  const trackRef = useRef(null);
-  const [canScrollMore, setCanScrollMore] = useState(false);
-
-  const syncScroll = useCallback(() => {
-    const el = trackRef.current;
-    if (!el) {
-      setCanScrollMore(false);
-      return;
-    }
-    setCanScrollMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 6);
-  }, []);
-
-  useEffect(() => {
-    syncScroll();
-    const el = trackRef.current;
-    if (!el) return undefined;
-    el.addEventListener('scroll', syncScroll, { passive: true });
-    window.addEventListener('resize', syncScroll);
-    return () => {
-      el.removeEventListener('scroll', syncScroll);
-      window.removeEventListener('resize', syncScroll);
-    };
-  }, [fotos.length, syncScroll]);
-
   if (!fotos.length) return null;
-
-  const scrollNext = () => {
-    const el = trackRef.current;
-    if (!el) return;
-    const slide = el.querySelector('.sede-publica-galeria__slide');
-    const step = (slide?.offsetWidth || 110) + 8;
-    el.scrollBy({ left: step, behavior: 'smooth' });
-  };
 
   return (
     <div className="sede-publica-galeria">
-      <div ref={trackRef} className="sede-publica-galeria__track">
+      <div className="sede-publica-galeria__track">
         {fotos.map((url, i) => (
           <button
             key={`${url}-${i}`}
             type="button"
-            className="sede-publica-galeria__slide"
+            className="sede-publica-galeria__thumb"
             onClick={() => onOpenAtIndex(i)}
-            aria-label={`Ver foto ${i + 1}`}
+            aria-label={`Ver foto ${i + 1} de ${fotos.length}`}
           >
             <img src={toHttps(url)} alt="" loading="lazy" decoding="async" />
           </button>
         ))}
       </div>
-      {fotos.length > 3 ? (
-        <button
-          type="button"
-          className="sede-publica-galeria__more"
-          onClick={scrollNext}
-          disabled={!canScrollMore}
-          aria-label="Ver más fotos"
-        >
-          ›
-        </button>
-      ) : null}
     </div>
   );
 }
@@ -1310,7 +1259,7 @@ function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
         background: 'rgba(0,0,0,0.92)',
         display: 'flex',
         flexDirection: 'column',
-        touchAction: 'pan-y',
+        touchAction: 'none',
       }}
       onTouchStart={(e) => {
         touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -2139,10 +2088,7 @@ export default function SedePublica() {
                       </span>
                     )}
                   </div>
-                  <h1
-                    className="sede-publica-hero-immersive__nombre"
-                    style={{ fontSize: `${heroClubNameFontSizePx(sede.nombre)}px` }}
-                  >
+                  <h1 className="sede-publica-hero-immersive__nombre">
                     {sede.nombre || '(sin nombre)'}
                   </h1>
                   {direccionLinea ? (
