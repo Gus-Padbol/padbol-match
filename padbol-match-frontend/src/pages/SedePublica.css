@@ -197,6 +197,9 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  align-self: flex-start;
+  width: max-content;
+  max-width: 100%;
   gap: 2px;
   margin-top: 4px;
 }
@@ -205,6 +208,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: flex-start;
   padding: 1px 6px;
   border-radius: 999px;
   font-size: 9px;
@@ -218,6 +222,10 @@
 }
 
 .sede-publica-hero-immersive__licencia-status {
+  display: block;
+  align-self: flex-start;
+  width: 100%;
+  text-align: left;
   font-size: 8px;
   font-weight: 600;
   line-height: 1.2;

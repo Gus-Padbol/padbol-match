@@ -17,6 +17,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
+import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
+import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
 import './ChatbotIA.css';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
@@ -668,14 +670,20 @@ function QuickSuggestionBar({ items, disabled, onPick, isDark }) {
   );
 }
 
-function ChiviFabAvatar({ size = 44 }) {
-  const [src] = useState(() => `/chivi.png?v=${Date.now()}`);
+function ChiviFabAvatar({ size = 44, src = CHIVI_AVATAR_DEFAULT_SRC }) {
+  const [imgSrc, setImgSrc] = useState(src);
+  useEffect(() => {
+    setImgSrc(src || CHIVI_AVATAR_DEFAULT_SRC);
+  }, [src]);
   return (
     <img
-      src={src}
+      src={imgSrc}
       alt="Chivi"
       className="chatbot-fab-chivi-avatar"
       style={{ width: size, height: size }}
+      onError={() => {
+        if (imgSrc !== CHIVI_AVATAR_DEFAULT_SRC) setImgSrc(CHIVI_AVATAR_DEFAULT_SRC);
+      }}
     />
   );
 }
@@ -733,6 +741,7 @@ export default function ChatbotIA() {
   const padbolLang = usePadbolLang();
   usePadbolLangVersion();
   const ui = useMemo(() => chatUiStrings(padbolLang, t), [padbolLang, t]);
+  const { avatarUrl: chiviAvatarUrl } = useHubChiviAvatar();
 
   const chatWelcomeFirstName = useMemo(() => {
     const ns = userProfile?.nombre_saludo != null ? String(userProfile.nombre_saludo).trim() : '';
@@ -1408,7 +1417,7 @@ export default function ChatbotIA() {
         >
           {fabCollapsed ? (
             <>
-              <ChiviFabAvatar size={44} />
+              <ChiviFabAvatar size={44} src={chiviAvatarUrl} />
               <span
                 style={{
                   color: '#fff',
@@ -1426,7 +1435,7 @@ export default function ChatbotIA() {
             </>
           ) : (
             <>
-              <ChiviFabAvatar size={36} />
+              <ChiviFabAvatar size={36} src={chiviAvatarUrl} />
               <span
                 style={{
                   display: 'flex',
@@ -1544,25 +1553,7 @@ export default function ChatbotIA() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                <div
-                  aria-hidden
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: '#e53935',
-                    color: '#fff',
-                    fontWeight: 800,
-                    fontSize: 12,
-                    letterSpacing: '-0.02em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  PM
-                </div>
+                <ChiviFabAvatar size={36} src={chiviAvatarUrl} />
                 <span
                   style={{
                     fontWeight: 500,
