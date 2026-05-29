@@ -3871,7 +3871,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
             {puedeVerFinanzas ? <div>
               <div className="admin-resumen-hoy-kicker" style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Ingresos del día (por moneda de cada sede)
+                Ingresos del día
+                {isSuperAdmin ? (
+                  <span style={{ fontWeight: 700 }}> (por moneda de cada sede)</span>
+                ) : esAdminClub ? (
+                  <span style={{ fontWeight: 700 }}> (de hoy)</span>
+                ) : null}
               </div>
               <p className="admin-resumen-hoy-ingresos-valor" style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>{p.ingresosHoyTexto}</p>
               <p style={{ margin: '6px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
@@ -3927,6 +3932,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     resumenPanelDiario,
     puedeVerFinanzas,
     isSuperAdmin,
+    esAdminClub,
+    t,
   ]);
 
   const fetchPendientes = async () => {
