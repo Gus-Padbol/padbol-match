@@ -1011,7 +1011,9 @@ function SedeProximoTorneoSection({ sedeId, sedeIdNum, session, navigate, locati
         {enListaEspera ? (
           <div className="sede-publica-proximo-torneo__waitlist-ok">
             <p className="sede-publica-proximo-torneo__waitlist-ok-text">
-              {t('sedes.publica.enListaEsperaTorneo', { defaultValue: '✓ Estás en lista de espera' })}
+              {t('sedes.publica.enListaEsperaTorneo', {
+                defaultValue: '✓ Estás en lista de espera — te avisaremos cuando haya un torneo',
+              })}
             </p>
             <button
               type="button"
