@@ -497,8 +497,9 @@ function buildSedeSocialItems(sede) {
 function SedeSocialLinks({ sede, t, variant = 'hero' }) {
   const items = buildSedeSocialItems(sede);
   if (!items.length) return null;
-  const label = t('sedes.publica.seguinosEn', { defaultValue: 'Seguinos en' });
   const isHero = variant === 'hero';
+  const labelRaw = t('sedes.publica.seguinosEn', { defaultValue: 'Seguinos en' });
+  const label = isHero ? labelRaw.toUpperCase() : labelRaw;
   const rootClass = isHero ? 'sede-publica-hero-social' : 'sede-publica-section sede-publica-social';
   const labelClass = isHero ? 'sede-publica-hero-social__label' : 'sede-publica-social__label';
   const iconsClass = isHero ? 'sede-publica-hero-social__icons' : 'sede-publica-social__icons';
@@ -1903,7 +1904,12 @@ export default function SedePublica() {
                       </span>
                     )}
                   </div>
-                  <h1 className="sede-publica-hero-immersive__nombre">{sede.nombre || '(sin nombre)'}</h1>
+                  <h1
+                    className="sede-publica-hero-immersive__nombre"
+                    style={{ fontSize: `${heroClubNameFontSizePx(sede.nombre)}px` }}
+                  >
+                    {sede.nombre || '(sin nombre)'}
+                  </h1>
                   {direccionLinea ? (
                     <p className="sede-publica-hero-immersive__direccion">{direccionLinea}</p>
                   ) : null}
