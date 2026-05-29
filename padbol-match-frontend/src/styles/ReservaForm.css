@@ -733,6 +733,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   animation-delay: var(--reserva-stagger, 0ms);
 }
 
+.reserva-sede-seleccion .reserva-sede-card--clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .reserva-sede-seleccion .reserva-sede-card--clickable:hover {
+    border-color: var(--accent);
+    box-shadow: 0 6px 22px rgba(225, 27, 34, 0.12);
+    transform: translateY(-1px);
+  }
+}
+
+.reserva-sede-seleccion .reserva-sede-card-open-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
 @keyframes reservaSedeCardIn {
   from {
     opacity: 0;

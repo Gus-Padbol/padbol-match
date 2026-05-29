@@ -45,7 +45,6 @@ import {
   inferPaisReservaDesdeCoordenadas,
   matchPaisReservaEnCatalogo,
 } from '../utils/paisI18n';
-import { fetchCoordsFromIp } from '../utils/userApproxLocation';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
 import {
@@ -794,26 +793,18 @@ export default function ReservaForm() {
       });
     };
 
-    const tryIpFallback = async () => {
-      const ip = await fetchCoordsFromIp();
-      if (cancelled) return;
-      if (ip) {
-        applyPos(ip.lat, ip.lon, 'ip', ip.country || ip.countryCode || '');
-      } else {
-        setGeoReserva({ status: 'denied', pos: null, source: null, countryHint: '' });
-      }
-    };
-
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => applyPos(pos.coords.latitude, pos.coords.longitude, 'gps'),
         () => {
-          void tryIpFallback();
+          if (!cancelled) {
+            setGeoReserva({ status: 'denied', pos: null, source: null, countryHint: '' });
+          }
         },
         { timeout: 8000, maximumAge: 600000 }
       );
-    } else {
-      void tryIpFallback();
+    } else if (!cancelled) {
+      setGeoReserva({ status: 'denied', pos: null, source: null, countryHint: '' });
     }
 
     return () => {
@@ -873,30 +864,25 @@ export default function ReservaForm() {
     return sedes.filter((sede) => String(sede.pais || '').trim() === String(filtros.pais).trim());
   }, [sedes, filtros.pais]);
 
-  const reservaVariasCiudadesEnPais = useMemo(() => {
-    if (sedesFiltradasPorPais.length < 2) return false;
-    const ciudades = new Set(
-      sedesFiltradasPorPais.map((s) => String(s.ciudad || '').trim()).filter(Boolean)
-    );
-    return ciudades.size > 1;
-  }, [sedesFiltradasPorPais]);
-
-  /** Con varias ciudades en el país, ordenar por distancia (GPS o IP). */
+  /** Ordenar por distancia (GPS) si hay permiso; si no, alfabético por nombre. */
   const sedesFiltradasPorPaisOrdenadas = useMemo(() => {
-    if (!reservaVariasCiudadesEnPais) return sedesFiltradasPorPais;
-    if (geoReserva.status !== 'granted' || !geoReserva.pos) return sedesFiltradasPorPais;
-    const { lat, lon } = geoReserva.pos;
-    return [...sedesFiltradasPorPais].sort((a, b) => {
-      const da = getDistanceKm(lat, lon, a.latitud, a.longitud);
-      const db = getDistanceKm(lat, lon, b.latitud, b.longitud);
-      const aOk = Number.isFinite(da);
-      const bOk = Number.isFinite(db);
-      if (!aOk && !bOk) return 0;
-      if (!aOk) return 1;
-      if (!bOk) return -1;
-      return da - db;
-    });
-  }, [sedesFiltradasPorPais, reservaVariasCiudadesEnPais, geoReserva]);
+    if (geoReserva.status === 'granted' && geoReserva.pos) {
+      const { lat, lon } = geoReserva.pos;
+      return [...sedesFiltradasPorPais].sort((a, b) => {
+        const da = getDistanceKm(lat, lon, a.latitud, a.longitud);
+        const db = getDistanceKm(lat, lon, b.latitud, b.longitud);
+        const aOk = Number.isFinite(da);
+        const bOk = Number.isFinite(db);
+        if (!aOk && !bOk) return 0;
+        if (!aOk) return 1;
+        if (!bOk) return -1;
+        return da - db;
+      });
+    }
+    return [...sedesFiltradasPorPais].sort((a, b) =>
+      String(a.nombre || '').localeCompare(String(b.nombre || ''), undefined, { sensitivity: 'base' })
+    );
+  }, [sedesFiltradasPorPais, geoReserva]);
 
   const sedeReservaMasCercanaId = useMemo(() => {
     if (geoReserva.status !== 'granted' || !geoReserva.pos || sedesFiltradasPorPaisOrdenadas.length === 0) {
@@ -1856,29 +1842,6 @@ export default function ReservaForm() {
     [navigate, applyGeoIntentReservaSedeCard],
   );
 
-  const iniciarReservaDesdeSedeCard = useCallback(
-    (sede) => {
-      sedeSeleccionadaCacheRef.current = sede;
-      applyGeoIntentReservaSedeCard(sede);
-      const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
-      setCiudades(ciudadesDelPais);
-      setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
-      setFormData((prev) => ({
-        ...prev,
-        fecha: ymdHoyParaReservaSede(sede),
-        hora: '',
-        cancha: '',
-      }));
-      reservaOmitirAutoCanchaUnicaRef.current = false;
-      setPantalla(2);
-      setError('');
-      const params = { sedeId: String(sede.id) };
-      if (reservaDeporteUrl) params.deporte = reservaDeporteUrl;
-      navigate({ pathname: '/reservar', search: `?${createSearchParams(params).toString()}` });
-    },
-    [navigate, sedes, reservaDeporteUrl, applyGeoIntentReservaSedeCard],
-  );
-
   const prevPaisCardsRef = useRef(null);
   const [reservaCardsWave, setReservaCardsWave] = useState(0);
 
@@ -2529,8 +2492,17 @@ export default function ReservaForm() {
                     return (
                       <li
                         key={sede.id}
-                        className="reserva-sede-card"
+                        className="reserva-sede-card reserva-sede-card--clickable"
                         style={{ '--reserva-stagger': `${idx * 80}ms` }}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => abrirPerfilPublicoSedeDesdeCard(sede)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            abrirPerfilPublicoSedeDesdeCard(sede);
+                          }
+                        }}
                       >
                         <div className="reserva-sede-card-photo-wrap">
                           {foto ? (
@@ -2575,23 +2547,7 @@ export default function ReservaForm() {
                             </strong>{' '}
                             {t('reservas.perSlot')}
                           </p>
-                          <div className="reserva-sede-card-actions">
-                            <button
-                              type="button"
-                              className="reserva-sede-card-btn"
-                              onClick={() => iniciarReservaDesdeSedeCard(sede)}
-                            >
-                              {t('reservas.book')}
-                            </button>
-                            <button
-                              type="button"
-                              className="reserva-sede-card-btn reserva-sede-card-btn-secondary"
-                              onClick={() => abrirPerfilPublicoSedeDesdeCard(sede)}
-                              aria-label={t('reservas.verSede')}
-                            >
-                              <span aria-hidden>👁</span> {t('reservas.verSede')}
-                            </button>
-                          </div>
+                          <p className="reserva-sede-card-open-hint">{t('reservas.verSede')} →</p>
                         </div>
                       </li>
                     );
