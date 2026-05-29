@@ -44,6 +44,7 @@ import {
   sortPartidosAbiertosPorFechaHora,
 } from '../components/PartidoAbiertoCard';
 import PartidoAbiertoSedeRow from '../components/PartidoAbiertoSedeRow';
+import ResenasSede from '../components/ResenasSede';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import './SedePublica.css';
 
