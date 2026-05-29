@@ -981,49 +981,6 @@ function ReservaEstadoChip({ est, children }) {
   );
 }
 
-/** Pills filtro «Estado de la reserva»: paleta por bucket (texto oscuro sobre fondos claros). */
-function reservaFiltroEstadoPillButtonStyle(pillId, active) {
-  const palettes = {
-    confirmadas: {
-      bg: '#dcfce7',
-      color: '#1a1a2e',
-      activeBg: '#bbf7d0',
-      activeColor: '#14532d',
-      border: '#16a34a',
-    },
-    pendientes: {
-      bg: '#fef9c3',
-      color: '#854d0e',
-      activeBg: '#fde68a',
-      activeColor: '#713f12',
-      border: '#ca8a04',
-    },
-    canceladas: {
-      bg: '#fee2e2',
-      color: '#991b1b',
-      activeBg: '#fecaca',
-      activeColor: '#7f1d1d',
-      border: '#dc2626',
-    },
-  };
-  const p = palettes[pillId];
-  if (!p) return adminFilterPillButtonStyle(active);
-  if (active) {
-    return {
-      ...ADMIN_FILTER_PILL_BASE,
-      background: p.activeBg,
-      color: p.activeColor,
-      border: `2px solid ${p.border}`,
-    };
-  }
-  return {
-    ...ADMIN_FILTER_PILL_BASE,
-    background: p.bg,
-    color: p.color,
-    border: `1px solid ${p.border}`,
-  };
-}
-
 // Returns a JSX status badge for a reserva
 function EstadoBadge({ reserva }) {
   const { t } = useTranslation();
@@ -8748,7 +8705,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFiltroPillReservas(id)}
-                  style={reservaFiltroEstadoPillButtonStyle(id, active)}
+                  style={adminFilterPillButtonStyle(active, adminPillInactiveSurface)}
                 >
                   {label}
                 </button>
