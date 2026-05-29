@@ -670,7 +670,7 @@ function QuickSuggestionBar({ items, disabled, onPick, isDark }) {
   );
 }
 
-function ChiviFabAvatar({ size = 44, src = CHIVI_AVATAR_DEFAULT_SRC }) {
+function ChiviFabAvatar({ size = 44, fill = false, src = CHIVI_AVATAR_DEFAULT_SRC }) {
   const [imgSrc, setImgSrc] = useState(src);
   useEffect(() => {
     setImgSrc(src || CHIVI_AVATAR_DEFAULT_SRC);
@@ -679,8 +679,8 @@ function ChiviFabAvatar({ size = 44, src = CHIVI_AVATAR_DEFAULT_SRC }) {
     <img
       src={imgSrc}
       alt="Chivi"
-      className="chatbot-fab-chivi-avatar"
-      style={{ width: size, height: size }}
+      className={`chatbot-fab-chivi-avatar${fill ? ' chatbot-fab-chivi-avatar--fill' : ''}`}
+      style={fill ? undefined : { width: size, height: size }}
       onError={() => {
         if (imgSrc !== CHIVI_AVATAR_DEFAULT_SRC) setImgSrc(CHIVI_AVATAR_DEFAULT_SRC);
       }}
@@ -1417,7 +1417,9 @@ export default function ChatbotIA() {
         >
           {fabCollapsed ? (
             <>
-              <ChiviFabAvatar size={44} src={chiviAvatarUrl} />
+              <span className="chatbot-fab-circle-btn">
+                <ChiviFabAvatar fill src={chiviAvatarUrl} />
+              </span>
               <span
                 style={{
                   color: '#fff',
