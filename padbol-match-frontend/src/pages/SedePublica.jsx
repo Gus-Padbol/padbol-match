@@ -494,17 +494,19 @@ function buildSedeSocialItems(sede) {
   }).filter(Boolean);
 }
 
-function SedeSocialLinks({ sede, t, className = 'sede-publica-social' }) {
+function SedeSocialLinks({ sede, t, variant = 'hero' }) {
   const items = buildSedeSocialItems(sede);
   if (!items.length) return null;
   const label = t('sedes.publica.seguinosEn', { defaultValue: 'Seguinos en' });
+  const isHero = variant === 'hero';
+  const rootClass = isHero ? 'sede-publica-hero-social' : 'sede-publica-section sede-publica-social';
+  const labelClass = isHero ? 'sede-publica-hero-social__label' : 'sede-publica-social__label';
+  const iconsClass = isHero ? 'sede-publica-hero-social__icons' : 'sede-publica-social__icons';
+  const linkClass = isHero ? 'sede-publica-hero-social__link' : 'sede-publica-social__link';
   return (
-    <section
-      className={`sede-publica-section ${className}`}
-      aria-label={label}
-    >
-      <p className="sede-publica-social__label">{label}</p>
-      <div className="sede-publica-social__icons">
+    <div className={rootClass} aria-label={label}>
+      <p className={labelClass}>{label}</p>
+      <div className={iconsClass}>
         {items.map((m) => {
           const Icon = m.Icon;
           return (
@@ -513,7 +515,7 @@ function SedeSocialLinks({ sede, t, className = 'sede-publica-social' }) {
               href={m.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="sede-publica-social__link"
+              className={linkClass}
               aria-label={m.label}
               title={m.label}
             >
@@ -522,7 +524,7 @@ function SedeSocialLinks({ sede, t, className = 'sede-publica-social' }) {
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -1919,12 +1921,18 @@ export default function SedePublica() {
                   ) : null}
                   {licenciaActiva ? (
                     <span className="sede-publica-hero-immersive__licencia">
+                      <span className="sede-publica-hero-immersive__licencia-check" aria-hidden>
+                        ✓
+                      </span>
                       {t('sedes.publica.licenciaActiva', { defaultValue: 'Licencia Padbol activa' })}
                     </span>
                   ) : null}
                 </div>
 
-                <SedeDeportesChipsHero deportes={deportesChips} t={t} />
+                <div className="sede-publica-hero-immersive__br-stack">
+                  <SedeDeportesChipsHero deportes={deportesChips} t={t} />
+                  <SedeSocialLinks sede={sede} t={t} variant="hero" />
+                </div>
             </section>
 
             <article className="sede-publica-page">
@@ -1972,8 +1980,6 @@ export default function SedePublica() {
                 {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
               </button>
             </div>
-
-            <SedeSocialLinks sede={sede} t={t} />
 
             {!partidosSedeLoading && partidosSedeOrdenados.length > 0 ? (
               <section className="sede-publica-section sede-publica-partidos">
