@@ -36,8 +36,9 @@ import {
 import { torneoFechaInicioYmd, ymdTodayTorneoTz } from '../utils/torneoFechaInicioArt';
 import { fetchProfesores } from '../utils/clasesApi';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
-import PartidoAbiertoSedeRow from '../components/PartidoAbiertoSedeRow';
-import ResenasSede from '../components/ResenasSede';
+import { authLoginRedirectPath } from '../utils/authLoginRedirect';
+import { formatNivelTorneo } from '../utils/torneoFormatters';
+import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
 import {
   PARTIDOS_ABIERTOS_PREVIEW_LIMIT,
   sortPartidosAbiertosPorFechaHora,
@@ -196,6 +197,19 @@ function esEstadoTorneoProximoInfo(estadoRaw) {
   );
 }
 
+function pickProximoTorneoActivoApi(torneos) {
+  const hoy = ymdTodayTorneoTz();
+  if (!Array.isArray(torneos)) return null;
+  const candidatos = torneos.filter((t) => {
+    const ymd = torneoFechaInicioYmd(t?.fecha_inicio);
+    return ymd && (!hoy || ymd >= hoy);
+  });
+  candidatos.sort((a, b) =>
+    String(a?.fecha_inicio || '').localeCompare(String(b?.fecha_inicio || ''))
+  );
+  return candidatos[0] ?? torneos[0] ?? null;
+}
+
 function pickProximoTorneoInfoClub(torneos) {
   const hoy = ymdTodayTorneoTz();
   if (!hoy || !Array.isArray(torneos)) return null;
@@ -208,19 +222,6 @@ function pickProximoTorneoInfoClub(torneos) {
     String(a?.fecha_inicio || '').localeCompare(String(b?.fecha_inicio || ''))
   );
   return candidatos[0] ?? null;
-}
-
-function pickTorneosProximosSede(torneos, max = 3) {
-  const hoy = ymdTodayTorneoTz();
-  if (!hoy || !Array.isArray(torneos)) return [];
-  return torneos
-    .filter((t) => {
-      if (String(t?.estado || '').toLowerCase() === 'finalizado') return false;
-      const ymd = torneoFechaInicioYmd(t?.fecha_inicio);
-      return ymd && ymd >= hoy;
-    })
-    .sort((a, b) => String(a?.fecha_inicio || '').localeCompare(String(b?.fecha_inicio || '')))
-    .slice(0, max);
 }
 
 const SEDE_INFO_CHIP_ICON_SIZE = 16;
@@ -801,6 +802,243 @@ function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
         </button>
       ) : null}
     </div>
+  );
+}
+
+function SedeProximoTorneoSection({ sedeIdNum, session, navigate, location, t, padbolLang, apiBase }) {
+  const [loading, setLoading] = useState(true);
+  const [torneoActivo, setTorneoActivo] = useState(null);
+  const [cuposDisponibles, setCuposDisponibles] = useState(null);
+  const [interesLoading, setInteresLoading] = useState(false);
+  const [interesChecked, setInteresChecked] = useState(false);
+  const [enListaEspera, setEnListaEspera] = useState(false);
+  const [interesError, setInteresError] = useState('');
+
+  useEffect(() => {
+    if (!sedeIdNum) {
+      setTorneoActivo(null);
+      setLoading(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(
+          `${apiBase}/api/torneos?sede_id=${encodeURIComponent(String(sedeIdNum))}&estado=activo`
+        );
+        const data = await res.json().catch(() => []);
+        if (cancelled) return;
+        if (!res.ok || !Array.isArray(data)) {
+          setTorneoActivo(null);
+          return;
+        }
+        setTorneoActivo(pickProximoTorneoActivoApi(data));
+      } catch {
+        if (!cancelled) setTorneoActivo(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sedeIdNum, apiBase]);
+
+  useEffect(() => {
+    if (!torneoActivo?.id) {
+      setCuposDisponibles(null);
+      return undefined;
+    }
+    let cancelled = false;
+    (async () => {
+      const max =
+        torneoActivo.cupos_maximos != null && String(torneoActivo.cupos_maximos).trim() !== ''
+          ? Number(torneoActivo.cupos_maximos)
+          : NaN;
+      if (!Number.isFinite(max) || max <= 0) {
+        if (!cancelled) setCuposDisponibles(null);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('equipos')
+        .select('inscripcion_estado')
+        .eq('torneo_id', torneoActivo.id);
+      if (cancelled) return;
+      if (error) {
+        setCuposDisponibles(null);
+        return;
+      }
+      const conf = (data || []).filter(
+        (r) => String(r.inscripcion_estado || '').toLowerCase() === 'confirmado'
+      ).length;
+      setCuposDisponibles(Math.max(0, max - conf));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [torneoActivo?.id, torneoActivo?.cupos_maximos]);
+
+  useEffect(() => {
+    if (torneoActivo || !sedeIdNum) {
+      setEnListaEspera(false);
+      setInteresChecked(true);
+      return undefined;
+    }
+    if (!session?.access_token) {
+      setEnListaEspera(false);
+      setInteresChecked(true);
+      return undefined;
+    }
+    let cancelled = false;
+    setInteresChecked(false);
+    (async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/sedes/${encodeURIComponent(String(sedeIdNum))}/torneo-interes/me`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled) setEnListaEspera(Boolean(res.ok && data.enrolled));
+      } catch {
+        if (!cancelled) setEnListaEspera(false);
+      } finally {
+        if (!cancelled) setInteresChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [torneoActivo, sedeIdNum, session?.access_token, apiBase]);
+
+  const toggleListaEspera = useCallback(async () => {
+    if (!sedeIdNum) return;
+    if (!session?.access_token) {
+      const dest = authLoginRedirectPath(location);
+      navigate(`/acceso?redirect=${encodeURIComponent(dest)}`);
+      return;
+    }
+    setInteresLoading(true);
+    setInteresError('');
+    try {
+      if (enListaEspera) {
+        const res = await fetch(`${apiBase}/api/sedes/${encodeURIComponent(String(sedeIdNum))}/torneo-interes`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'No se pudo salir de la lista');
+        setEnListaEspera(false);
+      } else {
+        const res = await fetch(`${apiBase}/api/sedes/${encodeURIComponent(String(sedeIdNum))}/torneo-interes`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: '{}',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'No se pudo anotar en la lista');
+        setEnListaEspera(true);
+      }
+    } catch (e) {
+      setInteresError(e?.message || String(e));
+    } finally {
+      setInteresLoading(false);
+    }
+  }, [sedeIdNum, session?.access_token, enListaEspera, apiBase, navigate, location]);
+
+  if (loading) return null;
+
+  if (torneoActivo) {
+    const fechaLabel = formatFechaDiaMesPublica(torneoActivo.fecha_inicio, padbolLang) || '—';
+    const deporteLabel = etiquetaDeporteTorneo(torneoActivo.deporte);
+    const nivelLabel = formatNivelTorneo(torneoActivo.nivel_torneo);
+    return (
+      <section className="sede-publica-section sede-publica-proximo-torneo" aria-labelledby="sede-proximo-torneo-title">
+        <h2 id="sede-proximo-torneo-title" className="sede-publica-section__title">
+          {t('sedes.publica.proximoTorneo', { defaultValue: 'Próximo torneo' })}
+        </h2>
+        <div className="sede-publica-proximo-torneo__card sede-publica-proximo-torneo__card--activo">
+          <h3 className="sede-publica-proximo-torneo__nombre">{torneoActivo.nombre || 'Torneo'}</h3>
+          <ul className="sede-publica-proximo-torneo__meta">
+            <li>
+              <span aria-hidden>📅</span> {fechaLabel}
+            </li>
+            <li>
+              <SportIcon deporte={torneoActivo.deporte} size={14} color="var(--text-secondary)" />
+              {deporteLabel}
+            </li>
+            <li>
+              <span aria-hidden>⭐</span> {nivelLabel}
+            </li>
+            {cuposDisponibles != null ? (
+              <li>
+                <span aria-hidden>🎫</span>{' '}
+                {t('torneos.listado.cupos', {
+                  count: cuposDisponibles,
+                  defaultValue: `${cuposDisponibles} cupo${cuposDisponibles === 1 ? '' : 's'} disponible${cuposDisponibles === 1 ? '' : 's'}`,
+                })}
+              </li>
+            ) : null}
+          </ul>
+          <button
+            type="button"
+            className="sede-publica-proximo-torneo__cta"
+            onClick={() => navigate(`/torneo/${encodeURIComponent(String(torneoActivo.id))}`)}
+          >
+            {t('sedes.publica.inscribirmeTorneo', { defaultValue: 'Inscribirme' })}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="sede-publica-section sede-publica-proximo-torneo" aria-labelledby="sede-proximo-torneo-title">
+      <h2 id="sede-proximo-torneo-title" className="sede-publica-section__title">
+        {t('sedes.publica.proximoTorneo', { defaultValue: 'Próximo torneo' })}
+      </h2>
+      <div className="sede-publica-proximo-torneo__card sede-publica-proximo-torneo__card--empty">
+        <p className="sede-publica-proximo-torneo__empty-icon" aria-hidden>
+          🏆
+        </p>
+        <p className="sede-publica-proximo-torneo__empty-text">
+          {t('sedes.publica.sinTorneoProximo', {
+            defaultValue: 'No hay torneos próximos — ¿querés jugar uno?',
+          })}
+        </p>
+        {enListaEspera ? (
+          <div className="sede-publica-proximo-torneo__waitlist-ok">
+            <p className="sede-publica-proximo-torneo__waitlist-ok-text">
+              {t('sedes.publica.enListaEsperaTorneo', { defaultValue: '✓ Estás en lista de espera' })}
+            </p>
+            <button
+              type="button"
+              className="sede-publica-proximo-torneo__waitlist-remove"
+              disabled={interesLoading || !interesChecked}
+              onClick={() => void toggleListaEspera()}
+            >
+              {t('sedes.publica.salirListaEsperaTorneo', { defaultValue: 'Salir de la lista' })}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="sede-publica-proximo-torneo__cta sede-publica-proximo-torneo__cta--outline"
+            disabled={interesLoading || !interesChecked}
+            onClick={() => void toggleListaEspera()}
+          >
+            {t('sedes.publica.anotarmeListaEspera', { defaultValue: 'Anotarme en lista de espera' })}
+          </button>
+        )}
+        {interesError ? (
+          <p className="sede-publica-proximo-torneo__error" role="alert">
+            {interesError}
+          </p>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -1509,11 +1747,6 @@ export default function SedePublica() {
     [torneosSedeLista]
   );
 
-  const torneosProximosSede = useMemo(
-    () => pickTorneosProximosSede(torneosSedeLista, 3),
-    [torneosSedeLista]
-  );
-
   const sedeIdNumLoad = useMemo(() => {
     const n = parseInt(String(sedeId), 10);
     return Number.isFinite(n) && n > 0 ? n : null;
@@ -1960,6 +2193,16 @@ export default function SedePublica() {
               }}
             />
 
+            <SedeProximoTorneoSection
+              sedeIdNum={sedeIdNumLoad}
+              session={session}
+              navigate={navigate}
+              location={location}
+              t={t}
+              padbolLang={padbolLang}
+              apiBase={API_BASE_RESENAS}
+            />
+
             <div className="sede-publica-ctas">
               <button
                 type="button"
@@ -1994,27 +2237,6 @@ export default function SedePublica() {
                     Ver más partidos →
                   </button>
                 ) : null}
-              </section>
-            ) : null}
-
-            {torneosProximosSede.length > 0 ? (
-              <section className="sede-publica-section sede-publica-torneos-list">
-                <h2 className="sede-publica-section__title">Próximos torneos</h2>
-                <div className="sede-publica-torneos-list__items">
-                  {torneosProximosSede.map((tor) => (
-                    <button
-                      key={tor.id}
-                      type="button"
-                      className="sede-publica-torneo-row"
-                      onClick={() => navigate(`/torneo/${encodeURIComponent(String(tor.id))}`)}
-                    >
-                      <span className="sede-publica-torneo-row__name">{tor.nombre || 'Torneo'}</span>
-                      <span className="sede-publica-torneo-row__date">
-                        {formatFechaDiaMesPublica(tor.fecha_inicio, padbolLang) || '—'}
-                      </span>
-                    </button>
-                  ))}
-                </div>
               </section>
             ) : null}
 

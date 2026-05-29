@@ -1038,6 +1038,118 @@
   gap: 8px;
 }
 
+.sede-publica-proximo-torneo__card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  padding: 16px;
+  box-shadow: var(--pm-shadow-card, 0 2px 10px rgba(15, 23, 42, 0.06));
+}
+
+.sede-publica-proximo-torneo__card--activo {
+  display: grid;
+  gap: 10px;
+}
+
+.sede-publica-proximo-torneo__nombre {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.sede-publica-proximo-torneo__meta {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.sede-publica-proximo-torneo__meta li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.sede-publica-proximo-torneo__cta {
+  margin-top: 4px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e11b22 0%, #b91c1c 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(225, 27, 34, 0.35);
+}
+
+.sede-publica-proximo-torneo__cta--outline {
+  background: var(--bg-card);
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  box-shadow: none;
+}
+
+.sede-publica-proximo-torneo__card--empty {
+  text-align: center;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.sede-publica-proximo-torneo__empty-icon {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.sede-publica-proximo-torneo__empty-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  max-width: 28rem;
+}
+
+.sede-publica-proximo-torneo__waitlist-ok {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.sede-publica-proximo-torneo__waitlist-ok-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.sede-publica-proximo-torneo__waitlist-remove {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sede-publica-proximo-torneo__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pm-color-error, #dc2626);
+}
+
 .sede-publica-torneos-list__items {
   display: grid;
   gap: 8px;

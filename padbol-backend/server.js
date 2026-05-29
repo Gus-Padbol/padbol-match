@@ -3003,6 +3003,112 @@ app.get('/api/sedes/:id/perfil', async (req, res) => {
   }
 });
 
+function parseSedeIdParam(raw) {
+  const id = parseInt(String(raw), 10);
+  return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+/** ¿El usuario autenticado está en la lista de espera de torneo de la sede? */
+app.get('/api/sedes/:id/torneo-interes/me', async (req, res) => {
+  try {
+    const sid = parseSedeIdParam(req.params.id);
+    if (!sid) return res.status(400).json({ error: 'ID de sede inválido' });
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const { data, error } = await supabase
+      .from('sede_torneo_interes')
+      .select('id')
+      .eq('sede_id', sid)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ enrolled: Boolean(data) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** Cantidad de jugadores en lista de espera (admin de la sede). */
+app.get('/api/sedes/:id/torneo-interes/count', async (req, res) => {
+  try {
+    const sid = parseSedeIdParam(req.params.id);
+    if (!sid) return res.status(400).json({ error: 'ID de sede inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+    const { count, error } = await supabase
+      .from('sede_torneo_interes')
+      .select('id', { count: 'exact', head: true })
+      .eq('sede_id', sid);
+    if (error) throw error;
+    res.json({ count: count ?? 0 });
+  } catch (err) {
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message });
+  }
+});
+
+/** Anotarse en lista de espera de torneo a nivel sede. */
+app.post('/api/sedes/:id/torneo-interes', async (req, res) => {
+  try {
+    const sid = parseSedeIdParam(req.params.id);
+    if (!sid) return res.status(400).json({ error: 'ID de sede inválido' });
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const email = String(user.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email requerido' });
+
+    const { data: exist } = await supabase
+      .from('sede_torneo_interes')
+      .select('id')
+      .eq('sede_id', sid)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (exist) return res.json({ ok: true, already: true });
+
+    let nombre = '';
+    const { data: perfil } = await supabase
+      .from('jugadores_perfil')
+      .select('nombre, apellido')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (perfil) {
+      nombre = [perfil.nombre, perfil.apellido].filter(Boolean).join(' ').trim();
+    }
+
+    const { error: insErr } = await supabase.from('sede_torneo_interes').insert({
+      sede_id: sid,
+      user_id: user.id,
+      email,
+      nombre: nombre || null,
+    });
+    if (insErr) {
+      if (String(insErr.code) === '23505') return res.json({ ok: true, already: true });
+      throw insErr;
+    }
+    res.json({ ok: true, already: false });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** Salir de la lista de espera de torneo de la sede. */
+app.delete('/api/sedes/:id/torneo-interes', async (req, res) => {
+  try {
+    const sid = parseSedeIdParam(req.params.id);
+    if (!sid) return res.status(400).json({ error: 'ID de sede inválido' });
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
+    const { error } = await supabase
+      .from('sede_torneo_interes')
+      .delete()
+      .eq('sede_id', sid)
+      .eq('user_id', user.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** Partidos abiertos próximos de una sede (vista pública /sede/:id). */
 app.get('/api/sedes/:id/partidos', async (req, res) => {
   try {
@@ -6571,6 +6677,24 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
 
 app.get('/api/torneos', async (req, res) => {
   try {
+    const sedeIdRaw = req.query.sede_id != null ? parseInt(String(req.query.sede_id), 10) : NaN;
+    const estadoQ =
+      req.query.estado != null
+        ? String(req.query.estado)
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+        : '';
+
+    /** Listado público filtrado (p. ej. ficha de sede). */
+    if (Number.isFinite(sedeIdRaw) && sedeIdRaw > 0) {
+      let query = supabase.from('torneos').select('*').eq('sede_id', sedeIdRaw);
+      if (estadoQ) query = query.ilike('estado', estadoQ);
+      const { data, error } = await query.order('fecha_inicio', { ascending: true });
+      if (error) throw error;
+      return res.json(data || []);
+    }
+
     const scope = await adminListScopeFromRequest(req);
     const logLine = scope
       ? { rol: scope.rol, alcance: scope.alcance, email: scope.email, sedeId: scope.sedeId }

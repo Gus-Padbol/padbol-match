@@ -2111,6 +2111,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [reservas, setReservas] = useState([]);
   const [torneos, setTorneos] = useState([]);
   const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
+  const [sedeTorneoInteresCount, setSedeTorneoInteresCount] = useState(0);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
   const [filtroDeporteTorneoAdmin, setFiltroDeporteTorneoAdmin] = useState('todos');
   const filtrosEstadoTorneoPillsAdmin = useMemo(() => getFiltrosEstadoTorneoPills(t), [t, i18n.language]);
@@ -5275,6 +5276,57 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [activeTab, sedeId, apiBaseUrl, session?.access_token]);
 
   useEffect(() => {
+    if (!sedeId || !session?.access_token) {
+      setSedeTorneoInteresCount(0);
+      return undefined;
+    }
+    if (activeTab !== 'mi_sede' && activeTab !== 'torneos') return undefined;
+    let cancelled = false;
+    fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(String(sedeId))}/torneo-interes/count`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!res.ok) {
+          setSedeTorneoInteresCount(0);
+          return;
+        }
+        setSedeTorneoInteresCount(Math.max(0, Number(data.count) || 0));
+      })
+      .catch(() => {
+        if (!cancelled) setSedeTorneoInteresCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, sedeId, apiBaseUrl, session?.access_token]);
+
+  const abrirCrearTorneoDesdeInteres = useCallback(() => {
+    setActiveTab('torneos');
+    sessionStorage.setItem('adminActiveTab', 'torneos');
+    navigate('/admin?tab=torneos', { replace: true });
+    setCrearTorneoEmbedOpen(true);
+  }, [navigate]);
+
+  const sedeTorneoInteresBannerEl =
+    sedeTorneoInteresCount > 0 && (activeTab === 'mi_sede' || activeTab === 'torneos') ? (
+      <div className="admin-sede-torneo-interes-banner" role="status">
+        <span className="admin-sede-torneo-interes-banner__text">
+          {t('admin.sedes.torneoInteresCount', {
+            count: sedeTorneoInteresCount,
+            defaultValue: `${sedeTorneoInteresCount} jugador${sedeTorneoInteresCount === 1 ? '' : 'es'} esperando un torneo`,
+          })}
+        </span>
+        {!esEmpleado ? (
+          <button type="button" className="admin-sede-torneo-interes-banner__cta" onClick={abrirCrearTorneoDesdeInteres}>
+            {t('admin.sedes.crearTorneoDesdeInteres', { defaultValue: 'Crear torneo' })}
+          </button>
+        ) : null}
+      </div>
+    ) : null;
+
+  useEffect(() => {
     const next = {};
     for (const r of miSedeDuraciones) {
       next[r.id] = {
@@ -7595,6 +7647,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       ))}
 
       {activeTab === 'torneos' && <>
+        {sedeTorneoInteresBannerEl}
         {crearTorneoEmbedOpen ? (
           <div className="section admin-torneo-crear-embed" style={{ marginBottom: '18px' }}>
             <TorneoCrear
@@ -11335,6 +11388,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         ) : !miSede ? (
           <p style={{ color: 'var(--pm-color-error, #f87171)' }}>{t('admin.sedes.venueInfoNotFound')}</p>
         ) : (<>
+          {sedeTorneoInteresBannerEl}
           {editarSedeModalOpen ? (
             <div
               role="presentation"

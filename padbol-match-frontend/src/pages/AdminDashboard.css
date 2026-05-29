@@ -224,6 +224,37 @@
   text-align: center;
 }
 
+.admin-sede-torneo-interes-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: rgba(254, 243, 199, 0.35);
+}
+
+.admin-sede-torneo-interes-banner__text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-sede-torneo-interes-banner__cta {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e11b22 0%, #b91c1c 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(225, 27, 34, 0.28);
+}
+
 .status {
   padding: 4px 12px;
   border-radius: 20px;
