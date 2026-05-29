@@ -43,6 +43,7 @@ import {
   PARTIDOS_ABIERTOS_PREVIEW_LIMIT,
   sortPartidosAbiertosPorFechaHora,
 } from '../components/PartidoAbiertoCard';
+import PartidoAbiertoSedeRow from '../components/PartidoAbiertoSedeRow';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import './SedePublica.css';
 
