@@ -191,8 +191,13 @@
 }
 
 .status.confirmed {
-  background: #d4edda;
-  color: #155724;
+  background: #dcfce7;
+  color: #1a1a2e;
+}
+
+/* Chips de estado en tabla de reservas: colores fijos, legibles en tema claro y oscuro */
+.admin-reserva-estado-chip {
+  color: inherit;
 }
 
 .btn-edit {

@@ -946,57 +946,107 @@ function horarioReservaAdmin(r) {
   return `${horaRango(r?.hora, duracion)} (${duracion} min)`;
 }
 
+/** Colores fijos (sin variables de tema) para chips de estado en tabla de reservas. */
+const RESERVA_ESTADO_CHIP_STYLES = {
+  confirmada: { bg: '#dcfce7', color: '#1a1a2e' },
+  completada: { bg: '#e2e8f0', color: '#334155' },
+  cancelada: { bg: '#fee2e2', color: '#991b1b' },
+  reservada: { bg: '#f1f5f9', color: '#475569' },
+  pendiente_pago_manual: { bg: '#fef3c7', color: '#92400e' },
+  pendiente_pago_efectivo: { bg: '#d1fae5', color: '#065f46' },
+  pendiente: { bg: '#fef9c3', color: '#854d0e' },
+  default: { bg: '#f1f5f9', color: '#475569' },
+};
+
+const RESERVA_ESTADO_CHIP_BASE = {
+  borderRadius: '12px',
+  padding: '2px 8px',
+  fontSize: '11px',
+  whiteSpace: 'nowrap',
+  fontWeight: 700,
+  display: 'inline-block',
+};
+
+function reservaEstadoChipInlineStyle(est) {
+  const key = String(est || '').toLowerCase();
+  return RESERVA_ESTADO_CHIP_STYLES[key] || RESERVA_ESTADO_CHIP_STYLES.default;
+}
+
+function ReservaEstadoChip({ est, children }) {
+  const { bg, color } = reservaEstadoChipInlineStyle(est);
+  return (
+    <span className="admin-reserva-estado-chip" style={{ ...RESERVA_ESTADO_CHIP_BASE, background: bg, color }}>
+      {children}
+    </span>
+  );
+}
+
+/** Pills filtro «Estado de la reserva»: paleta por bucket (texto oscuro sobre fondos claros). */
+function reservaFiltroEstadoPillButtonStyle(pillId, active) {
+  const palettes = {
+    confirmadas: {
+      bg: '#dcfce7',
+      color: '#1a1a2e',
+      activeBg: '#bbf7d0',
+      activeColor: '#14532d',
+      border: '#16a34a',
+    },
+    pendientes: {
+      bg: '#fef9c3',
+      color: '#854d0e',
+      activeBg: '#fde68a',
+      activeColor: '#713f12',
+      border: '#ca8a04',
+    },
+    canceladas: {
+      bg: '#fee2e2',
+      color: '#991b1b',
+      activeBg: '#fecaca',
+      activeColor: '#7f1d1d',
+      border: '#dc2626',
+    },
+  };
+  const p = palettes[pillId];
+  if (!p) return adminFilterPillButtonStyle(active);
+  if (active) {
+    return {
+      ...ADMIN_FILTER_PILL_BASE,
+      background: p.activeBg,
+      color: p.activeColor,
+      border: `2px solid ${p.border}`,
+    };
+  }
+  return {
+    ...ADMIN_FILTER_PILL_BASE,
+    background: p.bg,
+    color: p.color,
+    border: `1px solid ${p.border}`,
+  };
+}
+
 // Returns a JSX status badge for a reserva
 function EstadoBadge({ reserva }) {
   const { t } = useTranslation();
   const est = String(reserva.estado || '').toLowerCase();
   if (est === 'pendiente_pago_manual') {
-    return <span style={{ background: '#fef3c7', color: '#92400e', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap', fontWeight: 700 }}>{t('admin.reservas.badgeManualPaymentPending')}</span>;
+    return <ReservaEstadoChip est={est}>{t('admin.reservas.badgeManualPaymentPending')}</ReservaEstadoChip>;
   }
   if (est === 'pendiente_pago_efectivo') {
-    return <span style={{ background: '#d1fae5', color: '#065f46', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap', fontWeight: 700 }}>{t('admin.reservas.badgeVenuePaymentPending')}</span>;
+    return <ReservaEstadoChip est={est}>{t('admin.reservas.badgeVenuePaymentPending')}</ReservaEstadoChip>;
   }
-  if (reserva.estado === 'cancelada' || reserva.cancelada) {
-    return <span style={{ background: '#fee2e2', color: '#991b1b', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>❌ Cancelada</span>;
+  if (est === 'cancelada' || reserva.cancelada) {
+    return <ReservaEstadoChip est="cancelada">❌ Cancelada</ReservaEstadoChip>;
   }
-  if (reserva.estado === 'reservada') {
-    return <span style={{ background: '#f1f5f9', color: 'var(--text-secondary)', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>📋 Reservada</span>;
+  if (est === 'reservada') {
+    return <ReservaEstadoChip est="reservada">📋 Reservada</ReservaEstadoChip>;
   }
   if (est === 'confirmada') {
-    return (
-      <span
-        style={{
-          background: '#dcfce7',
-          color: '#1a1a2e',
-          borderRadius: '12px',
-          padding: '2px 8px',
-          fontSize: '11px',
-          whiteSpace: 'nowrap',
-          fontWeight: 700,
-        }}
-      >
-        {t('admin.reservas.badgeConfirmed')}
-      </span>
-    );
+    return <ReservaEstadoChip est="confirmada">{t('admin.reservas.badgeConfirmed')}</ReservaEstadoChip>;
   }
-  if (reserva.estado === 'completada' || !esFutura(reserva)) {
-    return <span style={{ background: '#e2e8f0', color: 'var(--text-secondary)', borderRadius: '12px', padding: '2px 8px', fontSize: '11px', whiteSpace: 'nowrap' }}>{t('admin.reservas.badgeCompleted')}</span>;
+  if (est === 'completada' || !esFutura(reserva)) {
+    return <ReservaEstadoChip est="completada">{t('admin.reservas.badgeCompleted')}</ReservaEstadoChip>;
   }
-  return (
-    <span
-      style={{
-        background: '#dcfce7',
-        color: '#1a1a2e',
-        borderRadius: '12px',
-        padding: '2px 8px',
-        fontSize: '11px',
-        whiteSpace: 'nowrap',
-        fontWeight: 700,
-      }}
-    >
-      {t('admin.reservas.badgeConfirmed')}
-    </span>
-  );
+  return <ReservaEstadoChip est="confirmada">{t('admin.reservas.badgeConfirmed')}</ReservaEstadoChip>;
 }
 
 /** Pills filtro listado reservas (pestaña Reservas). */
@@ -8698,7 +8748,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFiltroPillReservas(id)}
-                  style={adminFilterPillButtonStyle(active)}
+                  style={reservaFiltroEstadoPillButtonStyle(id, active)}
                 >
                   {label}
                 </button>
