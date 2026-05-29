@@ -945,6 +945,17 @@ function sedeResponseConCanchasActivas(sedeRow, canchasRows) {
   };
 }
 
+const SEDE_REDES_SOCIALES_KEYS = ['instagram', 'facebook', 'tiktok', 'twitter', 'youtube', 'website'];
+
+function pickSedeRedesSocialesPublicas(sedeRow) {
+  const out = {};
+  for (const k of SEDE_REDES_SOCIALES_KEYS) {
+    const v = sedeRow?.[k];
+    out[k] = v != null && String(v).trim() !== '' ? String(v).trim() : null;
+  }
+  return out;
+}
+
 function enrichSingleCanchaAdminDto(row, allRowsSameSede) {
   const enriched = canchasConNumeroReserva(allRowsSameSede);
   const hit = enriched.find((c) => Number(c.id) === Number(row.id));
@@ -2913,7 +2924,7 @@ app.get('/api/sedes/:id', async (req, res) => {
     } catch (e) {
       console.warn('GET /api/sedes/:id duraciones_oferta:', e?.message || e);
     }
-    res.json({ ...out, estadisticas_publicas, duraciones_oferta });
+    res.json({ ...out, estadisticas_publicas, duraciones_oferta, redes_sociales: pickSedeRedesSocialesPublicas(out) });
   } catch (err) {
     console.error('❌ Error GET /api/sedes/:id:', err.message);
     res.status(500).json({ error: err.message });
@@ -2984,6 +2995,7 @@ app.get('/api/sedes/:id/perfil', async (req, res) => {
       canchas_count: canchasCount,
       deportes_disponibles: Array.isArray(out.deportes_disponibles) ? out.deportes_disponibles : [],
       coords,
+      redes_sociales: pickSedeRedesSocialesPublicas(out),
     });
   } catch (err) {
     console.error('❌ Error GET /api/sedes/:id/perfil:', err.message);

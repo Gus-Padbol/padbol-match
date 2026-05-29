@@ -459,6 +459,73 @@ const SEDE_INFO_SOCIAL_META = [
   { key: 'website', Icon: IconWorld, label: 'Web' },
 ];
 
+/** Normaliza URL/handle guardado en Mi Sede a href https clickeable. */
+function ensureSedeSocialHref(key, raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return toHttps(s);
+  if (/^www\./i.test(s)) return `https://${s}`;
+  const handle = s.startsWith('@') ? s.slice(1) : null;
+  if (handle) {
+    if (key === 'instagram') return `https://www.instagram.com/${handle}/`;
+    if (key === 'tiktok') return `https://www.tiktok.com/@${handle}`;
+    if (key === 'twitter') return `https://x.com/${handle}`;
+    if (key === 'youtube') return `https://www.youtube.com/@${handle}`;
+  }
+  if (key === 'website' && /^[a-z0-9.-]+\.[a-z]{2,}/i.test(s)) {
+    return `https://${s.replace(/^\/\//, '')}`;
+  }
+  if (/^[a-z0-9._-]+$/i.test(s) && !s.includes('.')) {
+    if (key === 'instagram') return `https://www.instagram.com/${s}/`;
+    if (key === 'tiktok') return `https://www.tiktok.com/@${s}`;
+    if (key === 'twitter') return `https://x.com/${s}`;
+    if (key === 'youtube') return `https://www.youtube.com/@${s}`;
+  }
+  if (s.includes('.') && !/\s/.test(s)) return `https://${s.replace(/^\/\//, '')}`;
+  return null;
+}
+
+function buildSedeSocialItems(sede) {
+  if (!sede || typeof sede !== 'object') return [];
+  return SEDE_INFO_SOCIAL_META.map((m) => {
+    const href = ensureSedeSocialHref(m.key, sede[m.key]);
+    if (!href) return null;
+    return { ...m, href };
+  }).filter(Boolean);
+}
+
+function SedeSocialLinks({ sede, t, className = 'sede-publica-social' }) {
+  const items = buildSedeSocialItems(sede);
+  if (!items.length) return null;
+  const label = t('sedes.publica.seguinosEn', { defaultValue: 'Seguinos en' });
+  return (
+    <section
+      className={`sede-publica-section ${className}`}
+      aria-label={label}
+    >
+      <p className="sede-publica-social__label">{label}</p>
+      <div className="sede-publica-social__icons">
+        {items.map((m) => {
+          const Icon = m.Icon;
+          return (
+            <a
+              key={m.key}
+              href={m.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sede-publica-social__link"
+              aria-label={m.label}
+              title={m.label}
+            >
+              <Icon />
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 /** Tamaño del título del club en el hero según longitud del nombre. */
 function heroClubNameFontSizePx(nombreRaw) {
   const len = String(nombreRaw ?? '').trim().length;
@@ -872,11 +939,6 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, lang, t, canchasCou
       : proximoTorneoNombre || proximoTorneoFecha || null;
   const proximoTorneoBanner = torneoImagenPublicaUrl(proximoTorneo);
 
-  const socialItems = SEDE_INFO_SOCIAL_META.filter((m) => {
-    const v = sede?.[m.key];
-    return v != null && String(v).trim() !== '';
-  });
-
   const canchasValor =
     canchasCount > 0
       ? t('sedes.publica.canchasDisponibles', {
@@ -941,28 +1003,6 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, lang, t, canchasCou
           }
         />
       </div>
-      {socialItems.length > 0 ? (
-        <div className="sede-publica-info-club__social">
-          <div className="sede-publica-info-club__social-icons">
-            {socialItems.map((m) => {
-              const Icon = m.Icon;
-              const href = toHttps(String(sede[m.key]).trim());
-              return (
-                <a
-                  key={m.key}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sede-publica-info-club__social-link"
-                  aria-label={m.label}
-                >
-                  <Icon />
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -1932,6 +1972,8 @@ export default function SedePublica() {
                 {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
               </button>
             </div>
+
+            <SedeSocialLinks sede={sede} t={t} />
 
             {!partidosSedeLoading && partidosSedeOrdenados.length > 0 ? (
               <section className="sede-publica-section sede-publica-partidos">
