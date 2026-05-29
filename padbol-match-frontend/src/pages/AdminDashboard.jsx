@@ -471,6 +471,11 @@ function torneoConsideradoActivoPanelNacional(t) {
   return !esEstadoFinalizadoTorneo(t?.estado) && !esEstadoCanceladoTorneo(t?.estado);
 }
 
+/** Evita .map/.filter sobre null cuando la API aún no devolvió un array. */
+function asAdminDataArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
 function sanitizeAdminActiveTab(raw, rolUsuario = null) {
   if (rolUsuario === 'editor_contenido') {
     const t0 = String(raw || '').trim();
@@ -2006,6 +2011,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   // Role-based access flags
   const esAdminNacional = rol === 'admin_nacional';
   const esAdminClub     = rol === 'admin_club';
+  /** Clave estable para sedesMap / canchasDetallePorSede (prop puede llegar tarde). */
+  const sedeIdKey =
+    sedeId != null && sedeId !== '' && String(sedeId).trim() !== '' ? String(sedeId) : '';
   const puedeVerConfig  = isSuperAdmin;
   const puedeVerFinanzas = !esEmpleado;
 
@@ -2907,21 +2915,24 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         finanzasAnclaISO
       );
 
-    const reservasFiltradas = reservas.filter((r) => inP(fechaReservaDiaISO(r?.fecha)));
+    const reservasList = asAdminDataArray(reservas);
+    const torneosList = asAdminDataArray(torneos);
+    const equiposList = asAdminDataArray(equiposInscripcionRows);
+    const reservasFiltradas = reservasList.filter((r) => inP(fechaReservaDiaISO(r?.fecha)));
 
     const fechaInscripcionEquipo = (eq) => {
       const u = eq?.updated_at || eq?.created_at;
       if (!u) return '';
       return String(u).slice(0, 10);
     };
-    const equiposInsFiltrados = equiposInscripcionRows.filter(
+    const equiposInsFiltrados = equiposList.filter(
       (eq) =>
         String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado' &&
         inP(fechaInscripcionEquipo(eq))
     );
 
     const torneoById = {};
-    torneos.forEach((t) => {
+    torneosList.forEach((t) => {
       torneoById[t.id] = t;
     });
 
@@ -2956,8 +2967,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     }
 
     const monedaSede =
-      esAdminClub && sedeId != null && sedeId !== ''
-        ? bucketMonedaAdmin(sedesMap[String(sedeId)]?.moneda || 'ARS')
+      esAdminClub && sedeIdKey
+        ? bucketMonedaAdmin(sedesMap?.[sedeIdKey]?.moneda || 'ARS')
         : 'ARS';
 
     let reservasSum = 0;
@@ -2992,6 +3003,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   ]);
 
   const dashboardFinanciero = useMemo(() => {
+    const reservasList = asAdminDataArray(reservas);
+    const torneosList = asAdminDataArray(torneos);
+    const equiposList = asAdminDataArray(equiposInscripcionRows);
     const inP = (iso) =>
       fechaDentroDePeriodoFinanzas(
         iso,
@@ -3001,7 +3015,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         finanzasAnclaISO
       );
     const torneoById = {};
-    torneos.forEach((t) => {
+    torneosList.forEach((t) => {
       torneoById[t.id] = t;
     });
     const sedeByNombreLower = {};
@@ -3009,9 +3023,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       const k = String(s?.nombre || '').trim().toLowerCase();
       if (k) sedeByNombreLower[k] = s;
     });
-    const reservasPeriodo = reservas.filter((r) => inP(fechaReservaDiaISO(r?.fecha)));
+    const reservasPeriodo = reservasList.filter((r) => inP(fechaReservaDiaISO(r?.fecha)));
     const fechaInscripcionEquipo = (eq) => String(eq?.updated_at || eq?.created_at || '').slice(0, 10);
-    const inscripcionesPeriodo = equiposInscripcionRows.filter(
+    const inscripcionesPeriodo = equiposList.filter(
       (eq) => String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado' && inP(fechaInscripcionEquipo(eq))
     );
     const porDia = {};
@@ -3144,15 +3158,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   }, [superAdminPeriodo, isSuperAdmin, cifrasFinanzasResumen, dashboardFinanciero, finanzasAnclaISO]);
 
   const resumenPanelDiario = useMemo(() => {
+    const reservasList = asAdminDataArray(reservas);
+    const torneosList = asAdminDataArray(torneos);
+    const equiposList = asAdminDataArray(equiposInscripcionRows);
     const ctx = ahoraArgentinaPartes();
     const hoyISO = ctx.hoyISO;
     const now = new Date();
     const torneoById = {};
-    torneos.forEach((t) => {
+    torneosList.forEach((t) => {
       torneoById[t.id] = t;
     });
 
-    const reservasHoyLista = reservas.filter((r) => String(r?.fecha || '').trim().slice(0, 10) === hoyISO);
+    const reservasHoyLista = reservasList.filter((r) => String(r?.fecha || '').trim().slice(0, 10) === hoyISO);
     const reservasHoy = reservasHoyLista.length;
     const reservasHoyOrdenadas = sortReservasHoyAsc(reservasHoyLista);
 
@@ -3160,8 +3177,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     for (const r of reservasHoyLista) {
       const est = String(r?.estado || '').trim().toLowerCase();
       if (est === 'cancelada') continue;
-      const sid = sedeIdDesdeNombreReserva(r.sede, sedesMap);
-      const sedeRow = sid != null ? sedesMap[String(sid)] : null;
+      const sid = sedeIdDesdeNombreReserva(r?.sede, sedesMap);
+      const sedeRow = sid != null ? sedesMap?.[String(sid)] : null;
       const mon = bucketMonedaAdmin(sedeRow?.moneda || 'ARS');
       ingresosHoyPorMoneda[mon] += Number(r.precio) || 0;
     }
@@ -3207,7 +3224,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       { ocupadas: 0, totalActivas: 0 }
     );
 
-    const equiposPendientePago = equiposInscripcionRows.filter((eq) => {
+    const equiposPendientePago = equiposList.filter((eq) => {
       if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') return false;
       const t = torneoById[eq.torneo_id];
       if (!t) return false;
@@ -3215,7 +3232,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     });
 
     const pendientesSinConfirmarPorTorneo = {};
-    for (const eq of equiposInscripcionRows) {
+    for (const eq of equiposList) {
       if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') continue;
       const t = torneoById[eq.torneo_id];
       if (!t || !torneoEstadoInscripcionAbiertaAdmin(t)) continue;
@@ -3237,7 +3254,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       .filter((a) => a.count > 0);
 
     const sinConfirmProximos = {};
-    for (const eq of equiposInscripcionRows) {
+    for (const eq of equiposList) {
       if (String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado') continue;
       const t = torneoById[eq.torneo_id];
       if (!t || !torneoProximoSinEmpezar(t)) continue;
@@ -3259,12 +3276,12 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
     const confirmadosPorTorneo = {};
-    for (const eq of equiposInscripcionRows) {
+    for (const eq of equiposList) {
       if (String(eq?.inscripcion_estado || '').toLowerCase() !== 'confirmado') continue;
       confirmadosPorTorneo[eq.torneo_id] = (confirmadosPorTorneo[eq.torneo_id] || 0) + 1;
     }
     const alertasTorneosMenosDosConfirmados = [];
-    for (const t of torneos) {
+    for (const t of torneosList) {
       if (!torneoEstadoInscripcionAbiertaAdmin(t)) continue;
       const c = confirmadosPorTorneo[t.id] || 0;
       if (c < 2) {
@@ -3278,7 +3295,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     alertasTorneosMenosDosConfirmados.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
     const alertasTorneoSinSorteo48h = [];
-    for (const t of torneos) {
+    for (const t of torneosList) {
       const inicio = parseLocalDayStartFromIsoDate(t.fecha_inicio);
       if (!inicio) continue;
       const ms = inicio.getTime() - now.getTime();
@@ -3323,7 +3340,9 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   /** Métricas extra admin_club: ocupación horaria, semana vs semana, cancelación, deportes (solo `reservas` cargadas). */
   const adminClubMetricasExtra = useMemo(() => {
     if (!esAdminClub && !isSuperAdmin) return null;
-    if (esAdminClub && (sedeId == null || sedeId === '')) return null;
+    if (esAdminClub && !sedeIdKey) return null;
+
+    const reservasList = asAdminDataArray(reservas);
 
     const inPeriodo = (r) =>
       fechaDentroDePeriodoFinanzas(
@@ -3334,7 +3353,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         finanzasAnclaISO
       );
 
-    const reservasPeriodo = reservas.filter(inPeriodo);
+    const reservasPeriodo = reservasList.filter(inPeriodo);
     const confirmadasPeriodo = reservasPeriodo.filter(
       (r) => String(r?.estado || '').trim().toLowerCase() === 'confirmada'
     );
@@ -3369,8 +3388,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const enSemana = (r, start, end) => diaCalendarioEnRangoLocal(fechaReservaDiaOCreatedISO(r), start, end);
     const activasNoCancel = (r) => String(r?.estado || '').trim().toLowerCase() !== 'cancelada';
 
-    const resActual = reservas.filter((r) => enSemana(r, semActualStart, semActualEnd) && activasNoCancel(r));
-    const resAnterior = reservas.filter((r) => enSemana(r, semAnteriorStart, semAnteriorEnd) && activasNoCancel(r));
+    const resActual = reservasList.filter((r) => enSemana(r, semActualStart, semActualEnd) && activasNoCancel(r));
+    const resAnterior = reservasList.filter((r) => enSemana(r, semAnteriorStart, semAnteriorEnd) && activasNoCancel(r));
     const ingresosActual = resActual.reduce((s, r) => s + (Number(r?.precio) || 0), 0);
     const ingresosAnterior = resAnterior.reduce((s, r) => s + (Number(r?.precio) || 0), 0);
 
@@ -3383,18 +3402,18 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     const depMap = {};
     activasPeriodo.forEach((r) => {
       const sidRes =
-        esAdminClub && sedeId != null && sedeId !== ''
-          ? String(sedeId)
+        esAdminClub && sedeIdKey
+          ? sedeIdKey
           : (() => {
               const id = sedeIdDesdeNombreReserva(r?.sede, sedesMap);
               return id != null ? String(id) : '';
             })();
-      const sedeNombre =
-        (sidRes && String(sedesMap[sidRes]?.nombre || '').trim()) ||
+      const sedeNombreRow =
+        (sidRes && String(sedesMap?.[sidRes]?.nombre || '').trim()) ||
         String(r?.sede || '').trim() ||
         'Sin sede';
       const dk =
-        resolveDeporteKeyReservaAdmin(r, sidRes, canchasDetallePorSede) || `sede:${sedeNombre}`;
+        resolveDeporteKeyReservaAdmin(r, sidRes, canchasDetallePorSede) || `sede:${sedeNombreRow}`;
       depMap[dk] = (depMap[dk] || 0) + 1;
     });
     const depTotal = activasPeriodo.length;
@@ -3403,7 +3422,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       .slice(0, 3)
       .map(([key, count]) => {
         const label = key.startsWith('sede:')
-          ? sedeNombre
+          ? (key.slice(5).trim() || 'Sin sede')
           : deporteLabelAdminDash(key, t);
         const pct = depTotal > 0 ? Math.round((count / depTotal) * 100) : 0;
         return { key, label, count, pct };
@@ -3445,14 +3464,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
   /** Vista cancha por cancha (admin_club): solo datos ya en `reservas`, `sedesMap` y `canchasDetallePorSede`. */
   const misCanchasHoyAdminClub = useMemo(() => {
-    if (!esAdminClub || sedeId == null || sedeId === '') return null;
+    if (!esAdminClub || !sedeIdKey) return null;
     const ctx = ahoraArgentinaPartes();
     const hoyISO = ctx.hoyISO;
-    const sid = String(sedeId);
-    const sedeRow = sedesMap[sid];
+    const sid = sedeIdKey;
+    const sedeRow = sedesMap?.[sid];
     if (!sedeRow) return null;
 
-    const reservasHoySede = reservas.filter((r) => {
+    const reservasList = asAdminDataArray(reservas);
+    const reservasHoySede = reservasList.filter((r) => {
       if (String(r?.fecha || '').trim().slice(0, 10) !== hoyISO) return false;
       const rSid = sedeIdDesdeNombreReserva(r.sede, sedesMap);
       if (rSid == null || String(rSid) !== sid) return false;
@@ -3462,8 +3482,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       (r) => String(r?.estado || '').trim().toLowerCase() !== 'cancelada'
     );
 
-    const stats = canchasResumenPorSede[sid] || { total: 0, activas: 0 };
-    const detalleRaw = canchasDetallePorSede[sid] || [];
+    const stats = canchasResumenPorSede?.[sid] || { total: 0, activas: 0 };
+    const detalleRaw = Array.isArray(canchasDetallePorSede?.[sid]) ? canchasDetallePorSede[sid] : [];
     let filasCancha = detalleRaw
       .filter((c) => normalizeEstadoCanchaAdminDash(c.estado) !== 'inactiva')
       .map((c) => ({
@@ -4921,7 +4941,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   };
 
   // ── Mi Sede (admin_club + admin_nacional only) ──
-  const puedeVerMiSede = (esAdminClub || esAdminNacional || isSuperAdmin) && sedeId;
+  const puedeVerMiSede = (esAdminClub || esAdminNacional || isSuperAdmin) && Boolean(sedeIdKey || sedeId);
   const [miSede,        setMiSede]        = useState(null);
   const [miSedeLoading, setMiSedeLoading] = useState(false);
   const [miSedeForm,    setMiSedeForm]    = useState({});
@@ -7084,8 +7104,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           <AdminClubMetricasExtras
             metricas={adminClubMetricasExtra}
             moneda={
-              esAdminClub && sedeId != null && sedeId !== ''
-                ? bucketMonedaAdmin(sedesMap[String(sedeId)]?.moneda || 'ARS')
+              esAdminClub && sedeIdKey
+                ? bucketMonedaAdmin(sedesMap?.[sedeIdKey]?.moneda || 'ARS')
                 : 'ARS'
             }
           />
@@ -12556,7 +12576,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           </div>
 
           {/* ── Clases y profesores ── */}
-          {(esAdminClub || isSuperAdmin) && sedeId && session?.access_token ? (
+          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-clases" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
                 🎓 {t('admin.profesores.clasesYInstructores')}
@@ -12575,7 +12595,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           ) : null}
 
           {/* ── Extras tercer tiempo (opcional en checkout armar partido) ── */}
-          {(esAdminClub || isSuperAdmin) && sedeId && session?.access_token ? (
+          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-extras" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
                 🍕 Extras del tercer tiempo
@@ -12592,7 +12612,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             </div>
           ) : null}
 
-          {(esAdminClub || isSuperAdmin) && sedeId && session?.access_token ? (
+          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-resenas" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
                 {t('admin.sedes.reviewsTitle')}
@@ -12601,7 +12621,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                 <AdminSedeResenasSection
                   apiBaseUrl={apiBaseUrl}
                   accessToken={session.access_token}
-                  sedeId={Number(sedeId)}
+                  sedeId={Number(sedeIdKey)}
                 />
               </div>
             </div>

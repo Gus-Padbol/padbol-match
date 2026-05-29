@@ -17,11 +17,14 @@ export default class GlobalErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
-    console.error('[PM ErrorBoundary] Error de render:', error);
-    console.error('[PM ErrorBoundary] Mensaje:', error?.message);
-    console.error('[PM ErrorBoundary] Stack:', error?.stack);
-    if (errorInfo?.componentStack) {
-      console.error('[PM ErrorBoundary] Component stack:', errorInfo.componentStack);
+    console.error('[PM ErrorBoundary] Uncaught error (full):', error);
+    console.error('[PM ErrorBoundary] error.message:', error?.message);
+    console.error('[PM ErrorBoundary] error.stack:', error?.stack);
+    if (errorInfo) {
+      console.error('[PM ErrorBoundary] errorInfo (full):', errorInfo);
+      if (errorInfo.componentStack) {
+        console.error('[PM ErrorBoundary] componentStack:\n', errorInfo.componentStack);
+      }
     }
   }
 
