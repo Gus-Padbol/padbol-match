@@ -90,6 +90,8 @@ export default function TorneoVista() {
   const [error, setError] = useState(null);
   const [iniciando, setIniciando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [generarFixtureLoading, setGenerarFixtureLoading] = useState(false);
+  const [fixtureToast, setFixtureToast] = useState(null);
   const [buscaDuplaList, setBuscaDuplaList] = useState([]);
   const [buscaDuplaEnrolled, setBuscaDuplaEnrolled] = useState(false);
   const [buscaDuplaInvRecibidas, setBuscaDuplaInvRecibidas] = useState([]);
@@ -636,6 +638,49 @@ export default function TorneoVista() {
     isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
   const puedeMostrarAbrirInscripcionAdmin = isAdmin && esListaEsperaTorneo;
 
+  const showFixtureToast = useCallback((type, message) => {
+    setFixtureToast({ type, message: String(message || '').trim() });
+    window.setTimeout(() => setFixtureToast(null), 3200);
+  }, []);
+
+  const tipoTorneoLower = String(torneo?.tipo_torneo || '').toLowerCase();
+  const puedeMostrarGenerarFixture =
+    isAdminGestionEnEstaVista &&
+    !loading &&
+    partidos.length === 0 &&
+    (tipoTorneoLower === 'round_robin' || tipoTorneoLower === 'knockout') &&
+    estadoTorneoLower !== 'finalizado' &&
+    estadoTorneoLower !== 'cancelado';
+
+  const generarFixture = async () => {
+    if (generarFixtureLoading || !puedeMostrarGenerarFixture) return;
+    setGenerarFixtureLoading(true);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/generar-partidos`, {
+        method: 'POST',
+        headers,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (Array.isArray(data.partidos)) {
+          setPartidos(data.partidos);
+        } else {
+          await recargarDatosTorneo();
+        }
+        setTorneo((prev) => (prev ? { ...prev, estado: 'en_curso' } : prev));
+        showFixtureToast('success', t('torneos.admin.fixtureGenerado'));
+      } else {
+        showFixtureToast('error', data?.error || t('torneos.admin.errorGenerarFixture'));
+      }
+    } catch (err) {
+      showFixtureToast('error', err?.message || t('torneos.admin.errorGenerarFixture'));
+    } finally {
+      setGenerarFixtureLoading(false);
+    }
+  };
+
   const miEquipoEnTorneo = useMemo(() => {
     if (!session?.user || !Array.isArray(equipos) || equipos.length === 0) return null;
     const uid = session.user.id;
@@ -792,6 +837,18 @@ export default function TorneoVista() {
         </button>
       </div>
     ) : null;
+  const adminBarGenerarFixture = puedeMostrarGenerarFixture ? (
+    <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+      <button
+        type="button"
+        className="btn-agregar-jugadores btn-generar-fixture"
+        onClick={() => void generarFixture()}
+        disabled={generarFixtureLoading}
+      >
+        {generarFixtureLoading ? t('common.loading') : t('torneos.admin.generarFixture')}
+      </button>
+    </div>
+  ) : null;
   const adminBarIniciarTorneo = isAdminGestionEnEstaVista && puedeMostrarIniciarTorneo ? (
     <div className="torneo-acciones torneo-acciones--sobre-violeta">
       {!loading && !puedeIniciarTorneoEnCurso ? (
@@ -832,9 +889,12 @@ export default function TorneoVista() {
       </div>
     ) : null;
   const adminTorneoBar =
-    torneo && isAdminGestionEnEstaVista && (adminBarFilaEquiposGestión || adminBarIniciarTorneo || adminBarFinalizarTorneo) ? (
+    torneo &&
+    isAdminGestionEnEstaVista &&
+    (adminBarFilaEquiposGestión || adminBarGenerarFixture || adminBarIniciarTorneo || adminBarFinalizarTorneo) ? (
       <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
         {adminBarFilaEquiposGestión}
+        {adminBarGenerarFixture}
         {adminBarIniciarTorneo}
         {adminBarFinalizarTorneo}
       </div>
@@ -1222,6 +1282,14 @@ export default function TorneoVista() {
 
   return (
     <>
+    {fixtureToast ? (
+      <div
+        className={`torneo-fixture-toast torneo-fixture-toast--${fixtureToast.type === 'error' ? 'error' : 'success'}`}
+        role="status"
+      >
+        {fixtureToast.message}
+      </div>
+    ) : null}
     <div
       className="torneo-vista-container"
       style={{

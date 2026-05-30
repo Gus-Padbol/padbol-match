@@ -325,6 +325,52 @@
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
+.btn-generar-fixture:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.torneo-fixture-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 19050;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: none;
+  animation: torneo-fixture-toast-in 0.2s ease-out;
+  max-width: min(92vw, 420px);
+  text-align: center;
+  line-height: 1.35;
+}
+
+.torneo-fixture-toast--success {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.torneo-fixture-toast--error {
+  background: var(--danger, #dc2626);
+  color: #fff;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--danger, #dc2626) 40%, transparent);
+}
+
+@keyframes torneo-fixture-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 .btn-iniciar-torneo {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: #ffffff;

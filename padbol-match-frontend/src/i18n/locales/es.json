@@ -312,6 +312,11 @@
       "knockout": "Eliminación directa",
       "eliminatoria": "Eliminación directa"
     },
+    "admin": {
+      "generarFixture": "Generar fixture",
+      "fixtureGenerado": "Fixture generado",
+      "errorGenerarFixture": "No se pudo generar el fixture"
+    },
     "listado": {
       "titleAvailable": "Torneos disponibles",
       "titleNear": "Torneos cerca de ti",

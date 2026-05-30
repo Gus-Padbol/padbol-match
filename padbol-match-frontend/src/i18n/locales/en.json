@@ -288,6 +288,11 @@
       "knockout": "Single elimination",
       "eliminatoria": "Single elimination"
     },
+    "admin": {
+      "generarFixture": "Generate fixture",
+      "fixtureGenerado": "Fixture generated",
+      "errorGenerarFixture": "Could not generate fixture"
+    },
     "listado": {
       "titleAvailable": "Available tournaments",
       "titleNear": "Tournaments near you",
