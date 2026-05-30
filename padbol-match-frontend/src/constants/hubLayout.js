@@ -69,8 +69,8 @@ export const hubInstagramColumnWrapStyle = {
 /** Ancho máximo de la barra hub inferior (alineado con columna contenido). */
 export const hubBottomNavMaxWidthPx = HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX;
 
-/** CTA fijo «Reservar cancha» en perfil público `/sede/*` (padding 8×2 + botón pill). */
-export const SEDE_PUBLICA_RESERVAR_STICKY_FOOTER_PX = 62;
+/** CTA flotante «Reservar cancha» en perfil público `/sede/*` (bottom 80px + botón pill). */
+export const SEDE_PUBLICA_RESERVAR_STICKY_FOOTER_PX = 126;
 
 /**
  * Rutas sin barra hub bajo el header (auth, reserva full-bleed, admin, listado sedes).

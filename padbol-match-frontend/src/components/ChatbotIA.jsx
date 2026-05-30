@@ -825,7 +825,7 @@ export default function ChatbotIA() {
         ? `(${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
         : 'env(safe-area-inset-bottom, 0px)';
     if (isSedeProfilePathname(pathOnly)) {
-      return `calc(${liftForBottomNav} + ${SEDE_PUBLICA_RESERVAR_STICKY_FOOTER_PX}px + 12px)`;
+      return `calc(${SEDE_PUBLICA_RESERVAR_STICKY_FOOTER_PX}px + 12px + env(safe-area-inset-bottom, 0px))`;
     }
     if (hubShell) {
       return `calc(${liftForBottomNav} + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + 8px)`;

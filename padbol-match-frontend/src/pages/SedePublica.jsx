@@ -2293,15 +2293,13 @@ export default function SedePublica() {
               onIndexChange={setFotosGalleryIndex}
             />
           ) : null}
-          <div className="sede-publica-reservar-sticky">
-            <button
-              type="button"
-              className="sede-publica-btn sede-publica-btn--primary sede-publica-reservar-sticky__btn"
-              onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
-            >
-              {t('sedes.publica.reservarCancha', { defaultValue: 'Reservar cancha' })}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="sede-publica-btn sede-publica-btn--primary sede-publica-reservar-sticky__btn"
+            onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
+          >
+            {t('sedes.publica.reservarCancha', { defaultValue: 'Reservar cancha' })}
+          </button>
           </>
         );
       })()}
