@@ -27,6 +27,7 @@ import {
 import { DateTime } from 'luxon';
 import { registerModuloClasesRoutes } from './lib/moduloClases.js';
 import { registerModuloSponsorsRoutes } from './lib/moduloSponsors.js';
+import { registerAdminPushRoutes } from './lib/adminPushNotifications.js';
 import {
   isMercadoPagoTestAccessToken,
   mercadoPagoGlobalAccessToken,
@@ -16997,6 +16998,13 @@ registerModuloSponsorsRoutes(app, {
   adminListScopeFromRequest,
   assertEsEditorContenidoOSuperAdmin,
   assertUsuarioPuedeAdministrarSede,
+});
+
+registerAdminPushRoutes(app, {
+  supabase,
+  authUserFromBearer,
+  adminListScopeFromRequest,
+  sedesPermitidasPorScope,
 });
 
 cron.schedule('*/10 * * * *', async () => {

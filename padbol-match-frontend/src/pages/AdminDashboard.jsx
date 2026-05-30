@@ -89,6 +89,7 @@ import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
 import AdminSedeResenasSection from '../components/AdminSedeResenasSection';
 import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
+import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
@@ -460,6 +461,7 @@ const ADMIN_TABS_ALLOWED = new Set([
   'personalizar_hub',
   'sponsors',
   'suspensiones',
+  'notificaciones',
 ]);
 
 const EDITOR_CONTENIDO_TABS_ALLOWED = new Set(['personalizar_hub', 'sponsors']);
@@ -2098,6 +2100,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [totalJugadoresPais, setTotalJugadoresPais] = useState(0);
   const [nacionalJugadoresLoading, setNacionalJugadoresLoading] = useState(false);
   const puedeVerSedesPendientes = isSuperAdmin;
+  const puedeEnviarNotificacionesPush = isSuperAdmin || esAdminNacional || esAdminClub;
   const puedeCrearTorneosOficiales = isSuperAdmin || (!esAdminClub);
 
   const ROLE_BADGE = {
@@ -6633,6 +6636,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         { id: 'torneos', label: t('torneos.titulo') },
         { id: t('admin.metricas.venuesCount'), label: t('admin.tabs.sedes') },
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
+        ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
       ]
     : [
         { id: 'resumen', label: t('admin.tabs.resumen') },
@@ -6646,6 +6650,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
+        ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         ...(puedeVerMiSede ? [{ id: 'mi_sede', label: t('admin.tabs.miSede') }] : []),
         ...(puedeVerConfig
           ? [
@@ -8270,6 +8275,38 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         <div className="section">
           <h2>{t('admin.tabs.suspensiones')}</h2>
           <AdminSuspensionesSection apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
+        </div>
+      ) : null}
+
+      {activeTab === 'notificaciones' && puedeEnviarNotificacionesPush && session?.access_token ? (
+        <div className="section">
+          <h2>{t('admin.tabs.notificacionesPush')}</h2>
+          <AdminNotificacionesSection
+            apiBaseUrl={apiBaseUrl}
+            accessToken={session.access_token}
+            isSuperAdmin={isSuperAdmin}
+            esAdminNacional={esAdminNacional}
+            esAdminClub={esAdminClub}
+            sedeId={sedeId}
+            sedesOptions={
+              isSuperAdmin
+                ? sedesSuperAdminLista
+                : esAdminNacional
+                  ? sedesNacionalLista
+                  : esAdminClub && sedeId
+                    ? [
+                        {
+                          id: Number(sedeId),
+                          nombre:
+                            sedeClubHeader?.nombre ||
+                            miSede?.nombre ||
+                            t('admin.tabs.miSede'),
+                        },
+                      ]
+                    : []
+            }
+            paisesOptions={sedesSuperAdminPaisesUnicos}
+          />
         </div>
       ) : null}
 
