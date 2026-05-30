@@ -2,6 +2,7 @@
 
 .sede-publica-root--immersive {
   padding-top: 0;
+  --sede-publica-reservar-sticky-height: 62px;
 }
 
 .sede-publica-page {
@@ -20,7 +21,7 @@
 }
 
 .sede-publica-page__column--sticky-reservar {
-  padding-bottom: calc(12px + 64px);
+  padding-bottom: calc(12px + var(--sede-publica-reservar-sticky-height));
 }
 
 /* —— Hero inmersivo (foto full bleed + overlay + info superpuesta) —— */
@@ -414,22 +415,25 @@
   right: 0;
   bottom: 0;
   z-index: 10040;
-  padding: 0 16px env(safe-area-inset-bottom, 0px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   pointer-events: none;
 }
 
 .sede-publica-root--nav-dock-bottom .sede-publica-reservar-sticky {
-  padding-bottom: calc(54px + env(safe-area-inset-bottom, 0px));
-}
-
-.sede-publica-reservar-sticky__inner {
-  pointer-events: auto;
+  padding-bottom: calc(54px + 8px + env(safe-area-inset-bottom, 0px));
 }
 
 .sede-publica-reservar-sticky__btn {
+  pointer-events: auto;
   width: 100%;
-  margin: 0;
+  max-width: 280px;
+  margin: 0 auto;
+  border-radius: 30px;
 }
 
 /* —— Secciones —— */
