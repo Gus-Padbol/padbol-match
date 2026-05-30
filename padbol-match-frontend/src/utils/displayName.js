@@ -10,6 +10,12 @@ function capitalizarPrimeraLetraSaludo(s) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+/** Primera letra mayúscula y el resto minúsculas (ej. «juampi» → «Juampi», «GUS» → «Gus»). */
+export function capitalizeName(str) {
+  const t = String(str || '').trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : '';
+}
+
 function looksLikeEmailStr(s) {
   return typeof s === 'string' && s.includes('@');
 }

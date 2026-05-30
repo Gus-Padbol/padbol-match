@@ -20,6 +20,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
 import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
+import { capitalizeName } from '../utils/displayName';
 import './ChatbotIA.css';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
@@ -269,7 +270,7 @@ function navigatorLanguageToChatCode(nav) {
 function chatUiStringsFromI18n(tr, loc) {
   const l = normalizeUiLocale(loc);
   const welcomeAssistant = (firstName) => {
-    const n = String(firstName || '').trim();
+    const n = capitalizeName(firstName);
     const lead = n ? tr('chatbot.welcomeLeadNamed', { name: n }) : tr('chatbot.welcomeLead');
     return tr('chatbot.welcomeAssistant', { lead });
   };
@@ -371,7 +372,7 @@ function chatUiStrings(loc, tr) {
       franjaTarde: '☀️ Afternoon',
       franjaNoche: '🌙 Evening',
       welcomeAssistant: (firstName) => {
-        const n = String(firstName || '').trim();
+        const n = capitalizeName(firstName);
         const lead = n ? `Hi ${n} 👋` : 'Hi 👋';
         return `${lead} I'm Chivi, your Padbol Match assistant. I can help you book a court, find a game nearby, or check tournaments. What do you need?`;
       },
@@ -426,7 +427,7 @@ function chatUiStrings(loc, tr) {
       franjaTarde: '☀️ Tarde',
       franjaNoche: '🌙 Noite',
       welcomeAssistant: (firstName) => {
-        const n = String(firstName || '').trim();
+        const n = capitalizeName(firstName);
         const lead = n ? `Olá ${n} 👋` : 'Olá 👋';
         return `${lead} Sou a Chivi, sua assistente Padbol Match. Posso ajudar a reservar quadra, buscar partida perto ou consultar torneios. O que você precisa?`;
       },
@@ -480,7 +481,7 @@ function chatUiStrings(loc, tr) {
     franjaTarde: '☀️ Tarde',
     franjaNoche: '🌙 Noche',
     welcomeAssistant: (firstName) => {
-      const n = String(firstName || '').trim();
+      const n = capitalizeName(firstName);
       const lead = n ? `Hola ${n} 👋` : 'Hola 👋';
       return `${lead} Soy Chivi, tu asistente de Padbol Match. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitas?`;
     },
@@ -745,16 +746,21 @@ export default function ChatbotIA() {
   const { avatarUrl: chiviAvatarUrl } = useHubChiviAvatar();
 
   const chatWelcomeFirstName = useMemo(() => {
+    const apodo = userProfile?.apodo != null ? String(userProfile.apodo).trim() : '';
+    if (apodo) return capitalizeName(apodo);
     const ns = userProfile?.nombre_saludo != null ? String(userProfile.nombre_saludo).trim() : '';
-    if (ns) return ns;
+    if (ns) return capitalizeName(ns);
     const nom = userProfile?.nombre != null ? String(userProfile.nombre).trim() : '';
     if (nom) {
       const first = nom.split(/\s+/).filter(Boolean)[0];
-      return first || nom;
+      return capitalizeName(first || nom);
     }
     const meta = session?.user?.user_metadata || {};
     const full = String(meta.full_name || meta.name || '').trim();
-    if (full) return full.split(/\s+/).filter(Boolean)[0] || full;
+    if (full) {
+      const first = full.split(/\s+/).filter(Boolean)[0] || full;
+      return capitalizeName(first);
+    }
     return '';
   }, [userProfile, session?.user]);
 
