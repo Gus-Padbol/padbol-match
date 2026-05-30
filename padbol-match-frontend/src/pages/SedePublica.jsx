@@ -342,9 +342,9 @@ function SedeInfoTablerIcon({ children, size = 20 }) {
   );
 }
 
-function IconTrophy() {
+function IconTrophy({ size = 20 }) {
   return (
-    <SedeInfoTablerIcon>
+    <SedeInfoTablerIcon size={size}>
       <path d="M8 21h8" />
       <path d="M12 17v4" />
       <path d="M7 4h10l1 7a4 4 0 0 1 -4 4h-4a4 4 0 0 1 -4 -4l1 -7z" />
@@ -938,13 +938,16 @@ function SedeProximoTorneoSection({ sedeId, sedeIdNum, session, navigate, locati
 
   const verTorneosBtn =
     sedeId != null && String(sedeId).trim() !== '' ? (
-      <button
-        type="button"
-        className="sede-publica-btn sede-publica-btn--outline sede-publica-proximo-torneo__ver-todos"
-        onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
-      >
-        {t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}
-      </button>
+      <div className="sede-publica-proximo-torneo__ver-todos-wrap">
+        <button
+          type="button"
+          className="sede-publica-proximo-torneo__ver-todos"
+          onClick={() => navigate(`/torneos?sedeId=${encodeURIComponent(String(sedeId))}`)}
+        >
+          <IconTrophy size={16} />
+          <span>{t('sedes.publica.verTorneos', { defaultValue: 'Ver torneos' })}</span>
+        </button>
+      </div>
     ) : null;
 
   if (loading) return null;

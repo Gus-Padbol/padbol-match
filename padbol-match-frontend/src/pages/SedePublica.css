@@ -1142,11 +1142,39 @@
   box-shadow: none;
 }
 
-.sede-publica-proximo-torneo__ver-todos {
+.sede-publica-proximo-torneo__ver-todos-wrap {
+  display: flex;
+  justify-content: center;
   margin-top: 10px;
-  width: 100%;
-  font-size: 14px;
-  padding: 12px 16px;
+}
+
+.sede-publica-proximo-torneo__ver-todos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 200px;
+  width: auto;
+  margin: 0 auto;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 30px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.sede-publica-proximo-torneo__ver-todos:hover {
+  opacity: 0.85;
+}
+
+.sede-publica-proximo-torneo__ver-todos svg {
+  flex-shrink: 0;
 }
 
 .sede-publica-proximo-torneo__card--empty {
