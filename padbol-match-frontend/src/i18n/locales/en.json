@@ -498,7 +498,8 @@
       "whatsappCta": "Message us on WhatsApp",
       "instructoresCertificados": "{{count}} certified instructor(s)",
       "seguinosEn": "Follow us on",
-      "resenas": "★ {{rating}} ({{count}} reviews)"
+      "resenas": "★ {{rating}} ({{count}} reviews)",
+      "clubTiene": "The club has"
     }
   },
   "sponsors": {

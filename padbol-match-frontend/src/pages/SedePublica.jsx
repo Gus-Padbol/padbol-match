@@ -2191,6 +2191,28 @@ export default function SedePublica() {
               ) : null}
             </div>
 
+            {amenityChips.length > 0 ? (
+              <div className="sede-publica-amenities">
+                <h2 className="sede-publica-section__title sede-publica-amenities__title">
+                  {t('sedes.publica.clubTiene', { defaultValue: 'El club tiene' })}
+                </h2>
+                <div
+                  className="sede-publica-amenities__chips-row"
+                  role="list"
+                  aria-label={t('sedes.publica.clubTiene', { defaultValue: 'El club tiene' })}
+                >
+                  {amenityChips.map((item) => (
+                    <span key={item.key} className="sede-publica-amenities__chip" role="listitem">
+                      <span className="sede-publica-amenities__chip-icon" aria-hidden>
+                        {item.icon}
+                      </span>
+                      <span className="sede-publica-amenities__chip-label">{item.label}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <SedeGaleriaHorizontal
               fotos={fotos}
               onOpenAtIndex={(i) => {
@@ -2229,20 +2251,6 @@ export default function SedePublica() {
               padbolLang={padbolLang}
               apiBase={API_BASE_RESENAS}
             />
-
-            {amenityChips.length > 0 ? (
-              <section className="sede-publica-section sede-publica-instalaciones">
-                <h2 className="sede-publica-section__title">Instalaciones</h2>
-                <div className="sede-publica-instalaciones__pills">
-                  {amenityChips.map((item) => (
-                    <span key={item.key} className="sede-publica-instalaciones__pill">
-                      <span aria-hidden>{item.icon}</span>
-                      <span>{item.label}</span>
-                    </span>
-                  ))}
-                </div>
-              </section>
-            ) : null}
 
             {sedeTieneSeccionEnNumeros(estadisticasPublicas) ? (
               <SedeEnNumerosBloque stats={estadisticasPublicas} />

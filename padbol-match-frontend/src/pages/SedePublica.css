@@ -841,6 +841,66 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sede-publica-info-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.sede-publica-amenities {
+  padding: 10px 10px 0;
+  box-sizing: border-box;
+}
+
+.sede-publica-amenities__title {
+  margin: 0 0 6px;
+  padding: 0 4px;
+}
+
+.sede-publica-amenities__chips-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sede-publica-amenities__chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.sede-publica-amenities__chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.sede-publica-amenities__chip-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sede-publica-amenities__chip-label {
+  white-space: nowrap;
 }
 
 .sede-publica-info-chip {
@@ -1265,23 +1325,4 @@
   line-height: 1.55;
   color: var(--text-secondary);
   white-space: pre-wrap;
-}
-
-.sede-publica-instalaciones__pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.sede-publica-instalaciones__pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
 }

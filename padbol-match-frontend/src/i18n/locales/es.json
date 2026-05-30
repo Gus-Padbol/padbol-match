@@ -522,7 +522,8 @@
       "whatsappCta": "Escribinos por WhatsApp",
       "instructoresCertificados": "{{count}} instructor(es) certificado(s)",
       "seguinosEn": "Seguinos en",
-      "resenas": "★ {{rating}} ({{count}} reseñas)"
+      "resenas": "★ {{rating}} ({{count}} reseñas)",
+      "clubTiene": "El club tiene"
     }
   },
   "sponsors": {
