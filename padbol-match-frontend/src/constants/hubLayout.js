@@ -69,8 +69,25 @@ export const hubInstagramColumnWrapStyle = {
 /** Ancho máximo de la barra hub inferior (alineado con columna contenido). */
 export const hubBottomNavMaxWidthPx = HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX;
 
-/** CTA flotante «Reservar cancha» en perfil público `/sede/*` (bottom 80px + botón pill). */
-export const SEDE_PUBLICA_RESERVAR_STICKY_FOOTER_PX = 126;
+/** CTA flotante «Reservar cancha» en perfil público `/sede/*`: gap sobre la barra inferior. */
+export const SEDE_PUBLICA_RESERVAR_GAP_ABOVE_NAV_PX = 16;
+/** Altura aprox. del pill (padding 14×2 + texto 15px × 1.2). */
+export const SEDE_PUBLICA_RESERVAR_BTN_HEIGHT_PX = 46;
+/** Separación entre el CTA y el FAB de Chivi. */
+export const SEDE_PUBLICA_RESERVAR_CHIVI_GAP_PX = 16;
+/** Espacio reservado bajo el scroll (gap + nav + botón). */
+export const SEDE_PUBLICA_RESERVAR_STICKY_FOOTER_PX =
+  SEDE_PUBLICA_RESERVAR_GAP_ABOVE_NAV_PX + HUB_NAV_HEIGHT_PX + SEDE_PUBLICA_RESERVAR_BTN_HEIGHT_PX;
+
+/** `bottom` del CTA flotante en `/sede/*` (16px sobre {@link HUB_NAV_HEIGHT_PX}). */
+export function sedePublicaReservarStickyBottomCss() {
+  return `calc(${SEDE_PUBLICA_RESERVAR_GAP_ABOVE_NAV_PX}px + ${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`;
+}
+
+/** `bottom` del FAB Chivi en `/sede/*` (CTA + gap). */
+export function sedePublicaChiviFabBottomCss() {
+  return `calc(${SEDE_PUBLICA_RESERVAR_GAP_ABOVE_NAV_PX}px + ${SEDE_PUBLICA_RESERVAR_BTN_HEIGHT_PX}px + ${SEDE_PUBLICA_RESERVAR_CHIVI_GAP_PX}px + ${HUB_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`;
+}
 
 /**
  * Rutas sin barra hub bajo el header (auth, reserva full-bleed, admin, listado sedes).

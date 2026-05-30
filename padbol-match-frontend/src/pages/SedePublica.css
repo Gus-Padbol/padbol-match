@@ -2,8 +2,13 @@
 
 .sede-publica-root--immersive {
   padding-top: 0;
-  /* bottom: 80px + altura aprox. del botón flotante (padding 14×2 + texto) */
-  --sede-publica-reservar-sticky-height: 126px;
+  --sede-publica-reservar-gap-nav: 16px;
+  --sede-publica-reservar-btn-height: 46px;
+  /* gap (16px) + nav (54px) + botón pill */
+  --sede-publica-reservar-sticky-height: calc(
+    var(--sede-publica-reservar-gap-nav) + 54px + var(--sede-publica-reservar-btn-height) +
+      env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .sede-publica-page {
@@ -412,7 +417,7 @@
 /* —— CTA flotante «Reservar cancha» —— */
 .sede-publica-reservar-sticky__btn {
   position: fixed;
-  bottom: 80px;
+  bottom: calc(var(--sede-publica-reservar-gap-nav, 16px) + 54px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 10040;
