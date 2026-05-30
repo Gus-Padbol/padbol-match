@@ -1043,7 +1043,6 @@ function SedeProximoTorneoSection({ sedeId, sedeIdNum, session, navigate, locati
           </p>
         ) : null}
       </div>
-      {verTorneosBtn}
     </section>
   );
 }
