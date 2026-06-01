@@ -627,6 +627,9 @@ export default function AdminProfesoresSuperSection({
                 <ProfesorAvatar row={row} />
                 <div className="admin-profesores-super__pending-meta">
                   <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)' }}>{nombreProfesor(row)}</div>
+                  <span className="admin-profesores-super__estado-pill admin-profesores-super__estado-pill--pendiente" style={{ marginTop: 6 }}>
+                    {t('admin.profesores.estadoPendiente')}
+                  </span>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
                     {t('admin.profesores.colSede')}: {row.sede_nombre || `ID ${row.sede_id}`}
                   </div>
@@ -805,11 +808,11 @@ export default function AdminProfesoresSuperSection({
                         <span
                           className={
                             activo
-                              ? 'admin-profesores-super__estado-pill admin-profesores-super__estado-pill--activo'
+                              ? 'admin-profesores-super__estado-pill admin-profesores-super__estado-pill--aprobado'
                               : 'admin-profesores-super__estado-pill admin-profesores-super__estado-pill--inactivo'
                           }
                         >
-                          {activo ? t('admin.profesores.estadoActivo') : t('admin.profesores.estadoInactivo')}
+                          {activo ? t('admin.profesores.estadoAprobado') : t('admin.profesores.estadoInactivo')}
                         </span>
                       </td>
                       <td style={TD_STYLE}>

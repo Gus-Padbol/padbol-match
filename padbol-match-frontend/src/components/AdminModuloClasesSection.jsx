@@ -10,13 +10,17 @@ export default function AdminModuloClasesSection({
   canchas = [],
   monedaSede = 'ARS',
   isSuperAdmin = false,
+  /** Super admin gestiona instructores en tab global Profesores; aquí solo clases. */
+  hideProfesores = false,
 }) {
   const { t } = useTranslation();
-  const subTabs = [
-    { id: 'profesores', label: t('clases.profesores') },
-    { id: 'clases', label: t('clases.titulo') },
-  ];
-  const [sub, setSub] = useState('profesores');
+  const subTabs = hideProfesores
+    ? [{ id: 'clases', label: t('clases.titulo') }]
+    : [
+        { id: 'profesores', label: t('clases.profesores') },
+        { id: 'clases', label: t('clases.titulo') },
+      ];
+  const [sub, setSub] = useState(hideProfesores ? 'clases' : 'profesores');
   const [canchasLocal, setCanchasLocal] = useState(() => (Array.isArray(canchas) ? canchas : []));
   const sid = Number(sedeId);
 
@@ -51,6 +55,7 @@ export default function AdminModuloClasesSection({
 
   return (
     <div style={{ maxWidth: 640, width: '100%' }}>
+      {subTabs.length > 1 ? (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         {subTabs.map((tab) => {
           const active = sub === tab.id;
@@ -76,6 +81,7 @@ export default function AdminModuloClasesSection({
           );
         })}
       </div>
+      ) : null}
       {sub === 'profesores' ? (
         <AdminProfesoresClubSection
           apiBaseUrl={apiBaseUrl}

@@ -8636,7 +8636,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                             color: 'var(--text-primary)',
                           }}
                         >
-                          🎓 {t('admin.profesores.clasesYInstructores')}
+                          🎓 {t('clases.titulo')}
                         </h4>
                         <AdminModuloClasesSection
                           apiBaseUrl={apiBaseUrl}
@@ -8644,6 +8644,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                           sedeId={Number(sedeSuperAdminDetalleModal.id)}
                           monedaSede={String(sedeSuperAdminDetalleModal.moneda || 'ARS').trim().toUpperCase().slice(0, 8) || 'ARS'}
                           isSuperAdmin
+                          hideProfesores
                         />
                       </div>
                     ) : null}
@@ -13036,7 +13037,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-clases" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
-                🎓 {t('admin.profesores.clasesYInstructores')}
+                🎓 {isSuperAdmin ? t('clases.titulo') : t('admin.profesores.clasesYInstructores')}
               </h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
                 <AdminModuloClasesSection
@@ -13046,6 +13047,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                   canchas={canchas}
                   monedaSede={String(miSede?.moneda || 'ARS').trim().toUpperCase().slice(0, 8) || 'ARS'}
                   isSuperAdmin={isSuperAdmin}
+                  hideProfesores={isSuperAdmin}
                 />
               </div>
             </div>

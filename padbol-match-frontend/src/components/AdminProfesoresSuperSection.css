@@ -152,9 +152,15 @@
   white-space: nowrap;
 }
 
-.admin-profesores-super__estado-pill--activo {
+.admin-profesores-super__estado-pill--activo,
+.admin-profesores-super__estado-pill--aprobado {
   background: #dcfce7;
   color: #166534;
+}
+
+.admin-profesores-super__estado-pill--pendiente {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .admin-profesores-super__estado-pill--inactivo {

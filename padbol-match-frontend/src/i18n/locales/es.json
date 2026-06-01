@@ -818,6 +818,8 @@
       "colFechaRegistro": "Fecha de registro",
       "certificadoSi": "Cert. FIPA",
       "estadoActivo": "Activo",
+      "estadoAprobado": "Aprobado",
+      "estadoPendiente": "Pendiente",
       "estadoInactivo": "Inactivo",
       "desactivar": "Desactivar",
       "confirmarRechazar": "¿Rechazar este instructor? No aparecerá en el hub de clases.",
