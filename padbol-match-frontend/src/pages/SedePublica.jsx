@@ -48,7 +48,6 @@ import ResenasSede from '../components/ResenasSede';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import './SedePublica.css';
 
-const PHOTO_STRIP_H = 120;
 const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
@@ -678,6 +677,7 @@ function deportesActivosSedePublica(sede, preciosDeporteRows) {
   return DEPORTES_CANCHA_SEDE_OPTIONS.filter((o) => keys.has(o.key));
 }
 
+function whatsappHrefSede(sede) {
   const link = String(sede?.whatsapp_url ?? sede?.whatsapp ?? '').trim();
   if (/^https?:\/\//i.test(link)) return toHttps(link);
   if (!sede?.telefono) return null;
