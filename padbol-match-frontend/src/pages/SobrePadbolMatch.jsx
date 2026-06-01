@@ -44,8 +44,7 @@ export default function SobrePadbolMatch() {
         <h1 style={{ margin: '0 0 16px', fontSize: 24, fontWeight: 900, lineHeight: 1.2 }}>¿Qué es Padbol Match?</h1>
         <p style={{ margin: '0 0 14px', fontSize: 15, lineHeight: 1.55, color: MUTED, fontWeight: 500 }}>
           Padbol Match es la plataforma oficial para descubrir sedes, reservar canchas y vivir la red de clubes Padbol en
-          todo el mundo. Nació con el deporte Padbol y hoy también conecta jugadores y clubes de Pádel, Pickleball,
-          Fútbol y más deportes de cancha.
+          todo el mundo. Nació con el deporte Padbol y hoy también conecta jugadores y clubes de Pádel, Pickleball y Tenis.
         </p>
         <p style={{ margin: '0 0 14px', fontSize: 15, lineHeight: 1.55, color: MUTED, fontWeight: 500 }}>
           Desde un mismo lugar podés explorar clubes, ver disponibilidad, reservar turno y gestionar tu experiencia con

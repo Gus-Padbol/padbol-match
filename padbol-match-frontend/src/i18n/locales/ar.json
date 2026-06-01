@@ -219,7 +219,6 @@
     "bookOnBehalf": "الحجز باسم :",
     "slotPrice": "سعر التحول:",
     "sportLabel": "رياضة",
-    "sportFutbolGroup": "كرة القدم",
     "venueLabel": "المقر الرئيسي",
     "searchVenuePlaceholder": "البحث عن المقر الرئيسي أو المدينة...",
     "searchResultsHint": "النتائج حسب بحثك.",
@@ -352,9 +351,7 @@
       "padbol": "com.padbol",
       "padel": "باديل",
       "pickleball": "بيكلبول",
-      "tenis": "التنس",
-      "futbol_5": "كرة القدم 5",
-      "futbol_7": "كرة القدم 7"
+      "tenis": "التنس"
     },
     "vista": {
       "tabEquipos": "الفرق",
@@ -1472,7 +1469,7 @@
   "landing": {
     "heroLine1": "ولد مع بادبول.",
     "heroLine2": "اليوم لجميع الألعاب الرياضية.",
-    "heroSub": "المنصة التي تجلب لعبة Padball إلى العالم، تفتح أبوابها أمام Paddleball وPickleball وSoccer والمزيد.",
+    "heroSub": "المنصة التي تجلب Padbol إلى العالم تفتح أبوابها أمام Padel وPickleball وTenis.",
     "bookSlot": "حجز موعد",
     "enterPlay": "ادخل وابدأ اللعب",
     "createAccount": "إنشاء حساب",

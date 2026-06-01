@@ -40,20 +40,6 @@ export const FOTOS_POR_DEPORTE = {
     torneos: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=800&q=80',
     armar_partido: 'https://images.unsplash.com/photo-1544298621-35a989e4e54a?w=800&q=80',
   },
-  futbol_5: {
-    reservar: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
-    buscar_partido: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80',
-    torneos: 'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=800&q=80',
-    /* Mensaje original cortado en "photo-1…"; misma imagen que padbol.armar_partido del set pedido. */
-    armar_partido: 'https://images.unsplash.com/photo-1543357480-c60d40fafa5f?w=800&q=80',
-  },
-  /* Bloque no incluido en el mensaje; variación del set fútbol 5 para cancha 7. */
-  futbol_7: {
-    reservar: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&q=80',
-    buscar_partido: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
-    torneos: 'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=800&q=80',
-    armar_partido: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&q=80',
-  },
 };
 
 /**

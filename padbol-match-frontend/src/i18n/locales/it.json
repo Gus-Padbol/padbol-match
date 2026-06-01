@@ -219,7 +219,6 @@
     "bookOnBehalf": "Prenotazione a nome di:",
     "slotPrice": "Prezzo del turno:",
     "sportLabel": "Sport",
-    "sportFutbolGroup": "Calcio",
     "venueLabel": "Sede",
     "searchVenuePlaceholder": "Cerca sede o città…",
     "searchResultsHint": "Risultati in base alla ricerca.",
@@ -323,9 +322,7 @@
       "padbol": "Padbol",
       "padel": "Padel",
       "pickleball": "Pickleball",
-      "tenis": "Tennis",
-      "futbol_5": "Calcio 5",
-      "futbol_7": "Calcio 7"
+      "tenis": "Tennis"
     },
     "vista": {
       "tabEquipos": "SQUADRE",
@@ -1443,7 +1440,7 @@
   "landing": {
     "heroLine1": "È nato con Padbol.",
     "heroLine2": "Oggi è per tutti gli sport.",
-    "heroSub": "La piattaforma che porta Padball nel mondo, apre le sue porte a Paddleball, Pickleball, Calcio e altro ancora.",
+    "heroSub": "La piattaforma che porta Padbol nel mondo apre le sue porte a Padel, Pickleball e Tennis.",
     "bookSlot": "Prenota un appuntamento",
     "enterPlay": "Entra e inizia a giocare",
     "createAccount": "Creare un account",

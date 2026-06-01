@@ -61,12 +61,8 @@ import {
 import {
   TORNEO_DEPORTE_OPTIONS,
   TORNEO_DEPORTE_PADBOL,
-  TORNEO_DEPORTE_FUTBOL5,
-  TORNEO_DEPORTE_FUTBOL7,
   TORNEO_FORMATO_DOBLES,
   TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS,
-  TORNEO_FORMATO_EQUIPO_5,
-  TORNEO_FORMATO_EQUIPO_7,
   torneoDeportePermiteSinglesDobles,
   formatoEquipoDefaultParaDeporte,
   formatoEquipoPayloadParaApi,
@@ -1326,8 +1322,6 @@ const CANCHA_DEPORTE_ADMIN_VALUES = [
   'padel',
   'tenis',
   'pickleball',
-  'futbol_5',
-  'futbol_7',
 ];
 
 function getCanchaDeporteAdminOptions(tr) {
@@ -7880,14 +7874,6 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                   {o.label}
                                 </option>
                               ))}
-                            </select>
-                          ) : editTorneoForm.deporte === TORNEO_DEPORTE_FUTBOL5 ? (
-                            <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_EQUIPO_5} disabled>
-                              <option value={TORNEO_FORMATO_EQUIPO_5}>{t('admin.metricas.teamFormat5')}</option>
-                            </select>
-                          ) : editTorneoForm.deporte === TORNEO_DEPORTE_FUTBOL7 ? (
-                            <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_EQUIPO_7} disabled>
-                              <option value={TORNEO_FORMATO_EQUIPO_7}>{t('admin.metricas.teamFormat7')}</option>
                             </select>
                           ) : (
                             <select style={{ ...inp, opacity: 0.92, cursor: 'not-allowed' }} value={TORNEO_FORMATO_DOBLES} disabled>

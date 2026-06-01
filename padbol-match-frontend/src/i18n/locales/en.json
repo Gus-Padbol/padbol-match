@@ -220,7 +220,6 @@
     "bookOnBehalf": "Booking for:",
     "slotPrice": "Slot price:",
     "sportLabel": "Sport",
-    "sportFutbolGroup": "Soccer",
     "venueLabel": "Venue",
     "searchVenuePlaceholder": "Search venue or city…",
     "searchResultsHint": "Results for your search.",
@@ -341,9 +340,7 @@
       "padbol": "Padbol",
       "padel": "Padel",
       "pickleball": "Pickleball",
-      "tenis": "Tennis",
-      "futbol_5": "5v5 Soccer",
-      "futbol_7": "7v7 Soccer"
+      "tenis": "Tennis"
     },
     "vista": {
       "tabEquipos": "TEAMS",
@@ -1718,7 +1715,7 @@
   "landing": {
     "heroLine1": "Born with Padbol.",
     "heroLine2": "Now for every sport.",
-    "heroSub": "The platform that brought Padbol to the world opens its doors to padel, pickleball, soccer and more.",
+    "heroSub": "The platform that brought Padbol to the world opens its doors to padel, pickleball and tennis.",
     "bookSlot": "Book a court",
     "enterPlay": "Jump in and play",
     "createAccount": "Create an account",

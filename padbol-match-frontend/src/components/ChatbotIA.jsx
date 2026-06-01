@@ -166,24 +166,18 @@ function deporteSlugDisplayLabel(slug, loc) {
       padel: 'Pádel',
       tenis: 'Tenis',
       pickleball: 'Pickleball',
-      futbol_5: 'Fútbol 5',
-      futbol_7: 'Fútbol 7',
     },
     en: {
       padbol: 'Padbol',
       padel: 'Padel',
       tenis: 'Tennis',
       pickleball: 'Pickleball',
-      futbol_5: '5v5 Soccer',
-      futbol_7: '7v7 Soccer',
     },
     pt: {
       padbol: 'Padbol',
       padel: 'Padel',
       tenis: 'Tênis',
       pickleball: 'Pickleball',
-      futbol_5: 'Futebol 5',
-      futbol_7: 'Futebol 7',
     },
   };
   const m = maps[l] || maps.es;

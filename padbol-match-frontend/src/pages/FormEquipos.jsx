@@ -1761,8 +1761,7 @@ export default function FormEquipos() {
             lineHeight: 1.45,
           }}
         >
-          Este torneo es de <strong>fútbol {minJugadoresTorneoCrearUi === 5 ? '5' : '7'}</strong>: cada equipo debe tener exactamente{' '}
-          <strong>{minJugadoresTorneoCrearUi} jugadores</strong>.
+          Este torneo requiere equipos de <strong>{minJugadoresTorneoCrearUi} jugadores</strong> por plantilla.
         </div>
       ) : (
         <div style={{ marginTop: '14px' }}>
@@ -1843,7 +1842,7 @@ export default function FormEquipos() {
           {torneo && esTorneoSingles(torneo)
             ? 'En singles no aplica equipo abierto (no hay plaza para un compañero).'
             : torneo && minJugadoresTorneoCrearUi >= 5
-              ? 'En fútbol 5/7 el equipo cerrado con plantilla fija no usa modalidad abierta.'
+              ? 'En torneos con plantilla fija grande el equipo cerrado no usa modalidad abierta.'
               : 'Abierto: otros jugadores pueden solicitar unirse; el capitán sigue aprobando cada ingreso.'}
         </p>
       </div>

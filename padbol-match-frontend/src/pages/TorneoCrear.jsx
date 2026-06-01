@@ -23,16 +23,12 @@ import { mapEstadoTorneoFormParaApi } from '../utils/torneoEstadoAdminApi';
 import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDistribucionModal';
 import {
   TORNEO_DEPORTE_PADBOL,
-  TORNEO_DEPORTE_FUTBOL5,
-  TORNEO_DEPORTE_FUTBOL7,
   TORNEO_FORMATO_DOBLES,
   TORNEO_DEPORTE_OPTIONS,
   TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS,
   torneoDeportePermiteSinglesDobles,
   formatoEquipoDefaultParaDeporte,
   formatoEquipoPayloadParaApi,
-  TORNEO_FORMATO_EQUIPO_5,
-  TORNEO_FORMATO_EQUIPO_7,
   normalizeTorneoDeporte,
 } from '../utils/torneoDeporteFormato';
 
@@ -357,21 +353,13 @@ export default function TorneoCrear({
                       </option>
                     ))}
                   </select>
-                ) : formData.deporte === TORNEO_DEPORTE_FUTBOL5 ? (
-                  <select name="formato_equipo" value={TORNEO_FORMATO_EQUIPO_5} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
-                    <option value={TORNEO_FORMATO_EQUIPO_5}>Equipos de 5</option>
-                  </select>
-                ) : formData.deporte === TORNEO_DEPORTE_FUTBOL7 ? (
-                  <select name="formato_equipo" value={TORNEO_FORMATO_EQUIPO_7} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
-                    <option value={TORNEO_FORMATO_EQUIPO_7}>Equipos de 7</option>
-                  </select>
                 ) : (
                   <select name="formato_equipo" value={TORNEO_FORMATO_DOBLES} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
                     <option value={TORNEO_FORMATO_DOBLES}>Dobles (2v2)</option>
                   </select>
                 )}
                 <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Padbol y Pádel: dobles. Pickleball y tenis: singles o dobles. Fútbol 5 y 7: tamaño de equipo fijo.
+                  Padbol y Pádel: dobles. Pickleball y tenis: singles o dobles.
                 </small>
               </div>
 

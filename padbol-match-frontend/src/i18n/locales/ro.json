@@ -219,7 +219,6 @@
     "bookOnBehalf": "Rezervare pe numele:",
     "slotPrice": "Prețul intervalului:",
     "sportLabel": "Sport",
-    "sportFutbolGroup": "Fotbal",
     "venueLabel": "Sediu",
     "searchVenuePlaceholder": "Caută sediu sau oraș…",
     "searchResultsHint": "Rezultate după căutarea ta.",
@@ -323,9 +322,7 @@
       "padbol": "Padbol",
       "padel": "Padel",
       "pickleball": "Pickleball",
-      "tenis": "Tenis",
-      "futbol_5": "Fotbal 5",
-      "futbol_7": "Fotbal 7"
+      "tenis": "Tenis"
     },
     "vista": {
       "tabEquipos": "ECHIPELE",
@@ -1443,7 +1440,7 @@
   "landing": {
     "heroLine1": "S-a născut cu Padbol.",
     "heroLine2": "Astăzi este pentru toate sporturile.",
-    "heroSub": "Platforma care aduce Padball-ul în lume, își deschide porțile către Paddleball, Pickleball, Fotbal și multe altele.",
+    "heroSub": "Platforma care aduce Padbol în lume își deschide porțile către Padel, Pickleball și Tenis.",
     "bookSlot": "Rezervă o programare",
     "enterPlay": "Intră și începe să te joci",
     "createAccount": "Creați un cont",

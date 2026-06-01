@@ -73,8 +73,6 @@ export const DEPORTE_LABEL_PARTIDO_ABIERTO = {
   padel: 'Pádel',
   tenis: 'Tenis',
   pickleball: 'Pickleball',
-  futbol_5: 'Fútbol 5',
-  futbol_7: 'Fútbol 7',
 };
 
 export function fechaPartidoLabel(fecha) {

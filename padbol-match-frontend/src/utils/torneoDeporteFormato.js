@@ -3,12 +3,10 @@ export const TORNEO_DEPORTE_PADBOL = 'padbol';
 export const TORNEO_DEPORTE_PADEL = 'padel';
 export const TORNEO_DEPORTE_PICKLEBALL = 'pickleball';
 export const TORNEO_DEPORTE_TENIS = 'tenis';
-export const TORNEO_DEPORTE_FUTBOL5 = 'futbol_5';
-export const TORNEO_DEPORTE_FUTBOL7 = 'futbol_7';
 
 export const TORNEO_FORMATO_SINGLES = 'singles';
 export const TORNEO_FORMATO_DOBLES = 'dobles';
-/** Fútbol: jugadores por equipo en cancha (persistido en `formato_equipo`). */
+/** Legacy en DB (torneos históricos): jugadores por equipo en cancha. */
 export const TORNEO_FORMATO_EQUIPO_5 = 'equipo_5';
 export const TORNEO_FORMATO_EQUIPO_7 = 'equipo_7';
 
@@ -17,8 +15,6 @@ const DEPORTE_ORDER = [
   TORNEO_DEPORTE_PADEL,
   TORNEO_DEPORTE_PICKLEBALL,
   TORNEO_DEPORTE_TENIS,
-  TORNEO_DEPORTE_FUTBOL5,
-  TORNEO_DEPORTE_FUTBOL7,
 ];
 
 export function normalizeTorneoDeporte(raw) {
@@ -26,8 +22,6 @@ export function normalizeTorneoDeporte(raw) {
   if (s === 'pádel' || s === 'padel') return TORNEO_DEPORTE_PADEL;
   if (s === 'pickleball') return TORNEO_DEPORTE_PICKLEBALL;
   if (s === 'tenis' || s === 'tennis') return TORNEO_DEPORTE_TENIS;
-  if (s === 'futbol_5' || s === 'futbol5') return TORNEO_DEPORTE_FUTBOL5;
-  if (s === 'futbol_7' || s === 'futbol7') return TORNEO_DEPORTE_FUTBOL7;
   if (DEPORTE_ORDER.includes(s)) return s;
   return TORNEO_DEPORTE_PADBOL;
 }
@@ -39,9 +33,6 @@ export function torneoDeportePermiteSinglesDobles(deporte) {
 }
 
 export function formatoEquipoDefaultParaDeporte(deporte) {
-  const d = normalizeTorneoDeporte(deporte);
-  if (d === TORNEO_DEPORTE_FUTBOL5) return TORNEO_FORMATO_EQUIPO_5;
-  if (d === TORNEO_DEPORTE_FUTBOL7) return TORNEO_FORMATO_EQUIPO_7;
   return TORNEO_FORMATO_DOBLES;
 }
 
@@ -53,12 +44,10 @@ export function formatoEquipoPayloadParaApi(deporte, formatoSeleccionado) {
     if (f === TORNEO_FORMATO_SINGLES || f === '1v1') return TORNEO_FORMATO_SINGLES;
     return TORNEO_FORMATO_DOBLES;
   }
-  if (d === TORNEO_DEPORTE_FUTBOL5) return TORNEO_FORMATO_EQUIPO_5;
-  if (d === TORNEO_DEPORTE_FUTBOL7) return TORNEO_FORMATO_EQUIPO_7;
   return TORNEO_FORMATO_DOBLES;
 }
 
-/** Formato de partido por equipo: singles | dobles | equipo_5 | equipo_7. */
+/** Formato de partido por equipo: singles | dobles | equipo_5 | equipo_7 (legacy). */
 export function resolveFormatoEquipoTorneo(torneo) {
   if (!torneo || typeof torneo !== 'object') return TORNEO_FORMATO_DOBLES;
   const f = String(torneo.formato_equipo || '').trim().toLowerCase();
@@ -92,10 +81,6 @@ export function etiquetaDeporteTorneo(deporte) {
       return 'Pickleball';
     case TORNEO_DEPORTE_TENIS:
       return 'Tenis';
-    case TORNEO_DEPORTE_FUTBOL5:
-      return 'Fútbol 5';
-    case TORNEO_DEPORTE_FUTBOL7:
-      return 'Fútbol 7';
     default:
       return 'Padbol';
   }
@@ -129,8 +114,6 @@ export const TORNEO_DEPORTE_OPTIONS = [
   { value: TORNEO_DEPORTE_PADEL, label: 'Pádel' },
   { value: TORNEO_DEPORTE_PICKLEBALL, label: 'Pickleball' },
   { value: TORNEO_DEPORTE_TENIS, label: 'Tenis' },
-  { value: TORNEO_DEPORTE_FUTBOL5, label: 'Fútbol 5' },
-  { value: TORNEO_DEPORTE_FUTBOL7, label: 'Fútbol 7' },
 ];
 
 export const TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS = [
