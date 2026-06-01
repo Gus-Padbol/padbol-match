@@ -2161,6 +2161,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
   const [reservaHistorialUi, setReservaHistorialUi] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
+  const campanitaWrapRef = useRef(null);
   const [campanitaData, setCampanitaData] = useState(null);
   const [campanitaLoading, setCampanitaLoading] = useState(false);
   const [notificacionesLeidas, setNotificacionesLeidas] = useState(() => {
@@ -2396,13 +2397,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       if (isSuperAdmin) {
         setSnapPendienteProfesores(data.instructoresPendientes);
         setSnapPendienteSedes(data.sedesPendientes);
+        void refreshSnapPendientesOnly();
       }
     } catch (e) {
       console.warn('[AdminDashboard] campanita:', e?.message || e);
     } finally {
       setCampanitaLoading(false);
     }
-  }, [puedeUsarCampanita, isSuperAdmin]);
+  }, [puedeUsarCampanita, isSuperAdmin, refreshSnapPendientesOnly]);
 
   useEffect(() => {
     if (!puedeUsarCampanita) return undefined;
@@ -3675,6 +3677,10 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       sessionStorage.setItem('adminActiveTab', tabId);
       navigate(`/admin?tab=${encodeURIComponent(tabId)}`, { replace: true });
     };
+    const irASolicitudesPendientes = () => {
+      setSolicitudesFiltroEstado('pendiente');
+      irATab('solicitudes');
+    };
     const campanitaTs = campanitaData?.updatedAt ? new Date(campanitaData.updatedAt) : new Date();
     const campanitaTimeLabel = Number.isNaN(campanitaTs.getTime())
       ? ''
@@ -3715,7 +3721,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
           t('admin.tabs.sedes'),
           campanitaData.sedesPendientes,
           'campanita.sedesPendientes',
-          () => irATab('sedes'),
+          irASolicitudesPendientes,
         );
       }
       pushCampanita(
@@ -3741,6 +3747,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       const count = snapPendienteLic;
       items.push({
         id: `solicitudes-licencia-${count}`,
+        category: 'solicitudes',
+        categoryLabel: t('admin.tabs.solicitudes'),
         tone: 'danger',
         title:
           count === 1
@@ -3748,15 +3756,14 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             : t('admin.notif.pendingRequestsTitleMany', { count }),
         body: t('admin.notif.pendingRequestsBody'),
         actionLabel: t('admin.notif.goToRequests'),
-        onClick: () => {
-          setSolicitudesFiltroEstado('pendiente');
-          irATab('solicitudes');
-        },
+        onClick: irASolicitudesPendientes,
       });
     }
     (p.alertasEquiposTorneoProximoSinConfirmar || []).forEach((a) => {
       items.push({
         id: `torneo-proximo-${a.torneoId}-${a.count}`,
+        category: 'torneos',
+        categoryLabel: t('admin.tabs.torneos'),
         tone: 'warning',
         title: t('admin.notif.tournamentSoonTitle'),
         body: t('admin.notif.tournamentSoonBody', { count: a.count, name: a.nombre }),
@@ -3767,6 +3774,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     (p.alertasTorneosMenosDosConfirmados || []).forEach((a) => {
       items.push({
         id: `torneo-menos2-${a.torneoId}-${a.confirmados}`,
+        category: 'torneos',
+        categoryLabel: t('admin.tabs.torneos'),
         tone: 'warning',
         title: t('admin.notif.registrationOpenTitle'),
         body: t('admin.notif.registrationOpenBody', { name: a.nombre, confirmed: a.confirmados }),
@@ -3777,6 +3786,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     (p.alertasTorneoSinSorteo48h || []).forEach((a) => {
       items.push({
         id: `torneo-sin-sorteo-${a.torneoId}`,
+        category: 'torneos',
+        categoryLabel: t('admin.tabs.torneos'),
         tone: 'danger',
         title: t('admin.notif.startsSoonTitle'),
         body: t('admin.notif.startsSoonBody', { name: a.nombre, date: formatFecha(a.fecha_inicio) }),
@@ -3787,6 +3798,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     if ((p.equiposPendientePagoCount || 0) > 0) {
       items.push({
         id: `equipos-pago-pendiente-${p.equiposPendientePagoCount}`,
+        category: 'torneos',
+        categoryLabel: t('admin.tabs.torneos'),
         tone: 'warning',
         title: t('admin.notif.pendingRegistrationsTitle'),
         body: t('admin.notif.pendingRegistrationsBody', { count: p.equiposPendientePagoCount }),
@@ -3797,6 +3810,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     (p.alertasEquiposSinConfirmarCierre48h || []).forEach((a) => {
       items.push({
         id: `cierre-inscripcion-${a.torneoId}-${a.count}`,
+        category: 'torneos',
+        categoryLabel: t('admin.tabs.torneos'),
         tone: 'warning',
         title: t('admin.notif.registrationClosingTitle'),
         body: t('admin.notif.registrationClosingBody', { count: a.count, name: a.nombre }),
@@ -3808,6 +3823,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       alertasContratosPorVencer.forEach((a) => {
         items.push({
           id: `contrato-vencer-${a.sedeId}-${a.fecha_vencimiento}`,
+          category: 'finanzas',
+          categoryLabel: t('admin.tabs.config'),
           tone: 'warning',
           title: t('admin.notif.contractExpiringTitle'),
           body: t('admin.notif.contractExpiringBody', {
@@ -3815,12 +3832,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             date: formatFecha(a.fecha_vencimiento),
             days: a.days,
           }),
+          actionLabel: t('admin.notif.goToVenues'),
+          onClick: () => irATab(t('admin.metricas.venuesCount')),
         });
       });
       alertasSuscripcionBilling.forEach((a) => {
         if (a.tipo === 'vencida') {
           items.push({
             id: `suscripcion-vencida-${a.sedeId}`,
+            category: 'finanzas',
+            categoryLabel: t('admin.tabs.config'),
             tone: 'danger',
             title: t('admin.notif.subscriptionExpiredTitle'),
             body: t('admin.notif.subscriptionExpiredBody', { venue: a.sedeNombre }),
@@ -3830,12 +3851,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         } else {
           items.push({
             id: `suscripcion-proxima-${a.sedeId}-${a.fecha}`,
+            category: 'finanzas',
+            categoryLabel: t('admin.tabs.config'),
             tone: 'info',
             title: t('admin.notif.subscriptionDueTitle'),
             body: t('admin.notif.subscriptionDueBody', {
               venue: a.sedeNombre,
               date: formatProximoCobroAdmin(a.fecha),
             }),
+            actionLabel: t('admin.notif.goToVenues'),
+            onClick: () => irATab(t('admin.metricas.venuesCount')),
           });
         }
       });
@@ -3857,10 +3882,15 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
     t,
   ]);
 
+  const adminNotificacionesUnread = useMemo(() => {
+    const leidas = new Set(notificacionesLeidas);
+    return adminNotificaciones.filter((n) => !leidas.has(String(n.id)));
+  }, [adminNotificaciones, notificacionesLeidas]);
+
   const adminNotificacionesAgrupadas = useMemo(() => {
     const groups = new Map();
     const otros = [];
-    for (const n of adminNotificaciones) {
+    for (const n of adminNotificacionesUnread) {
       if (n.category) {
         const key = n.category;
         if (!groups.has(key)) {
@@ -3872,22 +3902,68 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       }
     }
     const ordered = [];
-    for (const k of ['instructores', 'sedes', 'pagos', 'cancelaciones']) {
+    for (const k of ['instructores', 'sedes', 'solicitudes', 'pagos', 'cancelaciones', 'torneos', 'finanzas']) {
       if (groups.has(k)) ordered.push(groups.get(k));
     }
     for (const [k, g] of groups) {
-      if (!['instructores', 'sedes', 'pagos', 'cancelaciones'].includes(k)) ordered.push(g);
+      if (!['instructores', 'sedes', 'solicitudes', 'pagos', 'cancelaciones', 'torneos', 'finanzas'].includes(k)) {
+        ordered.push(g);
+      }
     }
     if (otros.length) {
-      ordered.push({ key: 'otros', label: t('admin.notifications.title'), items: otros });
+      ordered.push({ key: 'otros', label: t('admin.notifications.otherAlerts'), items: otros });
     }
     return ordered;
-  }, [adminNotificaciones, t]);
+  }, [adminNotificacionesUnread, t]);
 
-  const notificacionesNoLeidas = useMemo(() => {
-    const leidas = new Set(notificacionesLeidas);
-    return adminNotificaciones.filter((n) => !leidas.has(String(n.id))).length;
-  }, [adminNotificaciones, notificacionesLeidas]);
+  const notificacionesNoLeidas = adminNotificacionesUnread.length;
+
+  useEffect(() => {
+    const valid = new Set(adminNotificaciones.map((n) => String(n.id)));
+    setNotificacionesLeidas((prev) => {
+      const next = prev.filter((id) => valid.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [adminNotificaciones]);
+
+  useEffect(() => {
+    if (!notificacionesOpen) return undefined;
+    const onDoc = (e) => {
+      if (campanitaWrapRef.current && !campanitaWrapRef.current.contains(e.target)) {
+        setNotificacionesOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [notificacionesOpen]);
+
+  useEffect(() => {
+    if (!__DEV__ || !isSuperAdmin) return;
+    const resumenGrupos = adminNotificacionesAgrupadas
+      .map((g) => `${g.label} (${g.items.length})`)
+      .join(' · ');
+    console.info(
+      `[AdminDashboard · campanita super_admin]\n` +
+        `Badge rojo en header: ${notificacionesNoLeidas} alerta(s) no leída(s).\n` +
+        `Panel al tocar: agrupadas por tipo → ${resumenGrupos || 'sin alertas pendientes de revisar'}.\n` +
+        `API GET /api/admin/alertas-campanita: instructores pendientes, sedes nuevas (sedes_pendientes), pagos fallidos 7d, cancelaciones 24h.\n` +
+        `Alertas locales extra: solicitudes licencia web, torneos operativos, contratos/suscripciones.\n` +
+        `Clic en fila: marca leída (desaparece del badge y del panel), cierra panel y navega.\n` +
+        `Navegación: Profesores→tab profesores | Sedes nuevas/solicitudes web→tab solicitudes (pendiente) | Pagos/cancelaciones→reservas | Torneos→detalle o tab torneos | Finanzas→tab sedes.`,
+      {
+        campanitaData,
+        totalAlertas: adminNotificaciones.length,
+        noLeidas: notificacionesNoLeidas,
+        grupos: adminNotificacionesAgrupadas,
+      },
+    );
+  }, [
+    isSuperAdmin,
+    adminNotificacionesAgrupadas,
+    notificacionesNoLeidas,
+    campanitaData,
+    adminNotificaciones.length,
+  ]);
 
   const marcarNotificacionLeida = useCallback((id) => {
     const key = String(id || '');
@@ -6742,7 +6818,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
             {fechaActualLarga}
           </p>
           {puedeUsarCampanita ? (
-          <div className={`admin-campanita-wrap${campanitaLoading ? ' admin-campanita-wrap--loading' : ''}`} style={{ position: 'relative', marginBottom: '12px' }}>
+          <div ref={campanitaWrapRef} className={`admin-campanita-wrap${campanitaLoading ? ' admin-campanita-wrap--loading' : ''}`} style={{ position: 'relative', marginBottom: '12px' }}>
             <button
               type="button"
               className="admin-super-header__bell admin-campanita-bell"
@@ -6762,7 +6838,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
               <div className="admin-campanita-panel" role="dialog" aria-label={t('nav.notificaciones')}>
                 <div className="admin-campanita-panel__header">
                   <strong className="admin-campanita-panel__title">{t('admin.notifications.title')}</strong>
-                  {adminNotificaciones.length > 0 ? (
+                  {adminNotificacionesUnread.length > 0 ? (
                     <button
                       type="button"
                       className="admin-campanita-panel__mark-all"
@@ -6772,7 +6848,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     </button>
                   ) : null}
                 </div>
-                {adminNotificaciones.length === 0 ? (
+                {adminNotificacionesUnread.length === 0 ? (
                   <div className="admin-campanita-panel__empty">
                     <span className="admin-campanita-panel__empty-icon" aria-hidden>
                       ✓
@@ -6784,13 +6860,11 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                     {adminNotificacionesAgrupadas.map((group) => (
                       <section key={group.key} className="admin-campanita-group">
                         <h4 className="admin-campanita-group__title">{group.label}</h4>
-                        {group.items.map((n) => {
-                          const leida = notificacionesLeidas.includes(String(n.id));
-                          return (
+                        {group.items.map((n) => (
                             <button
                               key={n.id}
                               type="button"
-                              className={`admin-campanita-row admin-campanita-row--${n.tone || 'info'}${leida ? ' admin-campanita-row--read' : ''}`}
+                              className={`admin-campanita-row admin-campanita-row--${n.tone || 'info'}`}
                               onClick={() => {
                                 marcarNotificacionLeida(n.id);
                                 setNotificacionesOpen(false);
@@ -6802,10 +6876,16 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                   ? '🎓'
                                   : n.category === 'sedes'
                                     ? '🏟️'
+                                    : n.category === 'solicitudes'
+                                      ? '📝'
                                     : n.category === 'pagos'
                                       ? '💳'
                                       : n.category === 'cancelaciones'
                                         ? '❌'
+                                        : n.category === 'torneos'
+                                          ? '🏆'
+                                          : n.category === 'finanzas'
+                                            ? '💳'
                                         : '🔔'}
                               </span>
                               <span className="admin-campanita-row__main">
@@ -6819,8 +6899,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
                                 →
                               </span>
                             </button>
-                          );
-                        })}
+                          ))}
                       </section>
                     ))}
                   </div>

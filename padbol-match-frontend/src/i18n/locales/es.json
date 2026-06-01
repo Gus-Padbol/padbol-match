@@ -914,6 +914,7 @@
     },
     "notifications": {
       "title": "Notificaciones",
+      "otherAlerts": "Otras alertas",
       "markAllRead": "Marcar todas leídas",
       "empty": "Sin notificaciones prioritarias.",
       "new": "Nuevo",

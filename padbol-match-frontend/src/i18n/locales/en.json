@@ -890,6 +890,7 @@
     },
     "notifications": {
       "title": "Notifications",
+      "otherAlerts": "Other alerts",
       "markAllRead": "Mark all as read",
       "empty": "No priority notifications.",
       "new": "New",
