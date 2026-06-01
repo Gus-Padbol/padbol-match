@@ -3127,6 +3127,105 @@ app.delete('/api/sedes/:id/torneo-interes', async (req, res) => {
   }
 });
 
+const LISTA_ESPERA_GENERAL_DEPORTES = ['padbol', 'padel', 'pickleball', 'tenis'];
+
+function normalizeListaEsperaDeporte(raw) {
+  const d = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  return LISTA_ESPERA_GENERAL_DEPORTES.includes(d) ? d : null;
+}
+
+async function fetchListaEsperaGeneralRowsForSede(sedeId) {
+  const sid = Number(sedeId);
+  const { data: modern, error: modernErr } = await supabase
+    .from('lista_espera_general')
+    .select('id, user_id, email, deporte, created_at')
+    .eq('sede_id', sid)
+    .order('created_at', { ascending: true });
+  if (modernErr) {
+    if (!/relation.*lista_espera_general|schema cache/i.test(String(modernErr.message || ''))) {
+      throw modernErr;
+    }
+  } else if (Array.isArray(modern) && modern.length) {
+    return modern.map((r) => ({
+      id: r.id,
+      user_id: r.user_id,
+      email: r.email,
+      deporte: r.deporte,
+      created_at: r.created_at,
+      nombre: null,
+    }));
+  }
+
+  const { data: legacy, error: legacyErr } = await supabase
+    .from('sede_torneo_interes')
+    .select('id, user_id, email, nombre, created_at')
+    .eq('sede_id', sid)
+    .order('created_at', { ascending: true });
+  if (legacyErr) throw legacyErr;
+  return (legacy || []).map((r) => ({
+    id: r.id,
+    user_id: r.user_id,
+    email: r.email,
+    deporte: null,
+    created_at: r.created_at,
+    nombre: r.nombre,
+  }));
+}
+
+/** GET /api/admin/lista-espera-general/:sede_id — lista de espera de torneos por deporte (admin sede). */
+app.get('/api/admin/lista-espera-general/:sede_id', async (req, res) => {
+  try {
+    const sid = parseSedeIdParam(req.params.sede_id);
+    if (!sid) return res.status(400).json({ error: 'ID de sede inválido' });
+    await assertUsuarioPuedeAdministrarSede(req, sid);
+
+    const rows = await fetchListaEsperaGeneralRowsForSede(sid);
+    const uids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+    const perfilByUid = {};
+    if (uids.length) {
+      const { data: perfiles, error: pErr } = await supabase
+        .from('jugadores_perfil')
+        .select('user_id, nombre, apellido, apodo')
+        .in('user_id', uids);
+      if (pErr) throw pErr;
+      (perfiles || []).forEach((p) => {
+        if (p?.user_id) perfilByUid[String(p.user_id)] = p;
+      });
+    }
+
+    const conteos_por_deporte = Object.fromEntries(LISTA_ESPERA_GENERAL_DEPORTES.map((d) => [d, 0]));
+    const items = rows.map((r) => {
+      const p = perfilByUid[String(r.user_id)] || null;
+      const nombrePerfil = p ? [p.nombre, p.apellido].filter(Boolean).join(' ').trim() : '';
+      const nombre =
+        String(r.nombre || nombrePerfil || '').trim() ||
+        String(r.email || '').split('@')[0] ||
+        '—';
+      const apodoRaw = p?.apodo != null ? String(p.apodo).trim() : '';
+      const apodo = apodoRaw || null;
+      const deporte = normalizeListaEsperaDeporte(r.deporte);
+      if (deporte) conteos_por_deporte[deporte] += 1;
+      return {
+        id: r.id,
+        nombre,
+        apodo,
+        deporte,
+        created_at: r.created_at,
+      };
+    });
+
+    res.json({ items, conteos_por_deporte });
+  } catch (err) {
+    const status = err.status || 500;
+    console.error('❌ GET /api/admin/lista-espera-general/:sede_id:', err?.message || err);
+    res.status(status).json({ error: err.message || String(err) });
+  }
+});
+
 /** Partidos abiertos próximos de una sede (vista pública /sede/:id). */
 app.get('/api/sedes/:id/partidos', async (req, res) => {
   try {

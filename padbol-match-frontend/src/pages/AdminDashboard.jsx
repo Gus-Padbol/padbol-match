@@ -84,6 +84,7 @@ import AdminSponsorsSection from '../components/AdminSponsorsSection';
 import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
 import AdminSedeResenasSection from '../components/AdminSedeResenasSection';
+import AdminSedeListaEsperaTorneosSection from '../components/AdminSedeListaEsperaTorneosSection';
 import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
 import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
@@ -5157,6 +5158,7 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
       { id: 'precios', label: t('admin.sedes.pricesByDuration') },
       { id: 'canchas', label: t('admin.formularios.courtsCol') },
       { id: 'horarios', label: t('admin.franjas.slotsAndPricesTitle') },
+      { id: 'lista-espera', label: t('admin.sedes.listaEsperaTorneos') },
     ];
     if (esAdminClub || isSuperAdmin) items.push({ id: 'extras', label: t('admin.sedes.halftimeExtras') });
     if (esAdminClub || isSuperAdmin) items.push({ id: 'resenas', label: t('admin.sedes.reviews') });
@@ -13078,6 +13080,21 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
 
             </div>
           </div>
+
+          {sedeIdKey && session?.access_token ? (
+            <div id="admin-mi-sede-lista-espera" style={{ marginBottom: '32px' }}>
+              <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
+                {t('admin.sedes.listaEsperaTorneosTitle')}
+              </h3>
+              <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '720px' }}>
+                <AdminSedeListaEsperaTorneosSection
+                  apiBaseUrl={apiBaseUrl}
+                  accessToken={session.access_token}
+                  sedeId={Number(sedeIdKey)}
+                />
+              </div>
+            </div>
+          ) : null}
 
           {/* ── Extras tercer tiempo (opcional en checkout armar partido) ── */}
           {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (

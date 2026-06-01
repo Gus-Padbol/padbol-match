@@ -1,0 +1,50 @@
+.admin-sede-lista-espera {
+  width: 100%;
+}
+
+.admin-sede-lista-espera__conteos {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.admin-sede-lista-espera__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-sede-lista-espera__filter-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.admin-sede-lista-espera__filter-select {
+  min-width: 160px;
+  max-width: 100%;
+}
+
+.admin-sede-lista-espera__error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pm-color-error, #dc2626);
+}
+
+.admin-sede-lista-espera__table-wrap {
+  overflow-x: auto;
+}
+
+.admin-sede-lista-espera__table {
+  min-width: 520px;
+  width: 100%;
+}
+
+.admin-sede-lista-espera__table th,
+.admin-sede-lista-espera__table td {
+  font-size: 13px;
+}
