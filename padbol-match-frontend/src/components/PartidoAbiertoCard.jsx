@@ -233,6 +233,58 @@ export default function PartidoAbiertoCard({
         ? 'Partido completo'
         : 'Quiero jugar';
 
+  const sedeLayout = isSede ? (
+    <>
+      <div className="partido-abierto-card__row partido-abierto-card__sede-row">
+        <div className="partido-abierto-card__row partido-abierto-card__row--meta partido-abierto-card__sede-deporte">
+          <span className="partido-abierto-card__sport-icon-wrap partido-abierto-card__sport-icon-wrap--accent">
+            <SportIcon deporte={dep} size={14} color="var(--accent)" />
+          </span>
+          <span className="partido-abierto-card__meta-item partido-abierto-card__sede-deporte-label">{depLabel}</span>
+        </div>
+        <div className="partido-abierto-card__row partido-abierto-card__row--meta partido-abierto-card__sede-datetime">
+          <span className="partido-abierto-card__meta-item">{fechaPartidoLabel(partido?.fecha)}</span>
+          <span className="partido-abierto-card__meta-sep" aria-hidden>
+            ·
+          </span>
+          <span className="partido-abierto-card__meta-item">{horaPartidoLabel(partido?.hora)}</span>
+        </div>
+      </div>
+
+      <div className="partido-abierto-card__row partido-abierto-card__sede-row">
+        <span className="partido-abierto-card__chip">{nivel}</span>
+      </div>
+
+      <div className="partido-abierto-card__row partido-abierto-card__sede-row">
+        <span
+          className={[
+            'partido-abierto-card__badge',
+            faltan <= 0 ? 'partido-abierto-card__badge--full' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {lugaresLabel}
+        </span>
+        {onJoin ? (
+          <button
+            type="button"
+            className={[
+              'partido-abierto-card__cta',
+              yaEnPartido ? 'partido-abierto-card__cta--member' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            onClick={() => onJoin(partido)}
+            disabled={ctaDisabled}
+          >
+            {ctaLabel}
+          </button>
+        ) : null}
+      </div>
+    </>
+  ) : null;
+
   return (
     <article
       className={[
@@ -256,100 +308,88 @@ export default function PartidoAbiertoCard({
       role={onCardClick ? 'button' : undefined}
       tabIndex={onCardClick ? 0 : undefined}
     >
-      <div className="partido-abierto-card__row partido-abierto-card__row--head">
-        <div className="partido-abierto-card__head-main">
-          <span
-            className="partido-abierto-card__sport-icon-wrap"
-            style={{ color: SPORT_ICON_WHITE, display: 'inline-flex', flexShrink: 0 }}
-          >
-            <SportIcon
-              deporte={dep}
-              size={20}
-              color={SPORT_ICON_WHITE}
-              style={{ color: SPORT_ICON_WHITE }}
-            />
-          </span>
-          <span className="partido-abierto-card__title">
-            {depLabel} · {sedeNombre}
-          </span>
-        </div>
-        {isSede ? null : (
-          <span
-            className={[
-              'partido-abierto-card__badge',
-              faltan <= 0 ? 'partido-abierto-card__badge--full' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            {lugaresLabel}
-          </span>
-        )}
-      </div>
-
-      <div className="partido-abierto-card__row partido-abierto-card__row--meta">
-        <span className="partido-abierto-card__meta-item">{fechaPartidoLabel(partido?.fecha)}</span>
-        <span className="partido-abierto-card__meta-sep" aria-hidden>
-          ·
-        </span>
-        <span className="partido-abierto-card__meta-item">{horaPartidoLabel(partido?.hora)}</span>
-        <span className="partido-abierto-card__chip">{nivel}</span>
-        {canchaLabel ? (
-          <span className="partido-abierto-card__meta-item">{canchaLabel}</span>
-        ) : null}
-        <span className="partido-abierto-card__meta-item">{duracion} min</span>
-      </div>
+      {sedeLayout}
 
       {!isSede ? (
-        <div className="partido-abierto-card__row partido-abierto-card__row--players">
-          <div className="partido-abierto-card__organizer">
-            {capitanFoto ? (
-              <img
-                src={capitanFoto}
-                alt=""
-                className="partido-abierto-card__avatar"
-              />
-            ) : (
-              <div className="partido-abierto-card__avatar-fallback" aria-hidden>
-                {capitanNombre.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="partido-abierto-card__organizer-text">
-              {capitanNombre} <span>· Organizador</span>
+        <>
+          <div className="partido-abierto-card__row partido-abierto-card__row--head">
+            <div className="partido-abierto-card__head-main">
+              <span
+                className="partido-abierto-card__sport-icon-wrap"
+                style={{ color: SPORT_ICON_WHITE, display: 'inline-flex', flexShrink: 0 }}
+              >
+                <SportIcon
+                  deporte={dep}
+                  size={20}
+                  color={SPORT_ICON_WHITE}
+                  style={{ color: SPORT_ICON_WHITE }}
+                />
+              </span>
+              <span className="partido-abierto-card__title">
+                {depLabel} · {sedeNombre}
+              </span>
+            </div>
+            <span
+              className={[
+                'partido-abierto-card__badge',
+                faltan <= 0 ? 'partido-abierto-card__badge--full' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {lugaresLabel}
             </span>
           </div>
-          <PartidoSlots
-            capitanNombre={capitanNombre}
-            capitanFoto={capitanFoto}
-            capitanId={capitanId}
-            confirmados={confirmados}
-            requeridos={requeridos}
-          />
-        </div>
-      ) : null}
 
-      {!isSede && sedeId ? (
-        <Link
-          to={`/sede/${encodeURIComponent(String(sedeId))}`}
-          className="partido-abierto-card__ver-sede"
-          onClick={(e) => e.stopPropagation()}
-        >
-          Ver sede →
-        </Link>
-      ) : null}
+          <div className="partido-abierto-card__row partido-abierto-card__row--meta">
+            <span className="partido-abierto-card__meta-item">{fechaPartidoLabel(partido?.fecha)}</span>
+            <span className="partido-abierto-card__meta-sep" aria-hidden>
+              ·
+            </span>
+            <span className="partido-abierto-card__meta-item">{horaPartidoLabel(partido?.hora)}</span>
+            <span className="partido-abierto-card__chip">{nivel}</span>
+            {canchaLabel ? (
+              <span className="partido-abierto-card__meta-item">{canchaLabel}</span>
+            ) : null}
+            <span className="partido-abierto-card__meta-item">{duracion} min</span>
+          </div>
 
-      {isSede ? (
-        <div className="partido-abierto-card__sede-actions">
-          <span
-            className={[
-              'partido-abierto-card__badge',
-              faltan <= 0 ? 'partido-abierto-card__badge--full' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            {lugaresLabel}
-          </span>
+          <div className="partido-abierto-card__row partido-abierto-card__row--players">
+            <div className="partido-abierto-card__organizer">
+              {capitanFoto ? (
+                <img
+                  src={capitanFoto}
+                  alt=""
+                  className="partido-abierto-card__avatar"
+                />
+              ) : (
+                <div className="partido-abierto-card__avatar-fallback" aria-hidden>
+                  {capitanNombre.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="partido-abierto-card__organizer-text">
+                {capitanNombre} <span>· Organizador</span>
+              </span>
+            </div>
+            <PartidoSlots
+              capitanNombre={capitanNombre}
+              capitanFoto={capitanFoto}
+              capitanId={capitanId}
+              confirmados={confirmados}
+              requeridos={requeridos}
+            />
+          </div>
+
+          {sedeId ? (
+            <Link
+              to={`/sede/${encodeURIComponent(String(sedeId))}`}
+              className="partido-abierto-card__ver-sede"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Ver sede →
+            </Link>
+          ) : null}
+
           {onJoin ? (
             <button
               type="button"
@@ -365,23 +405,7 @@ export default function PartidoAbiertoCard({
               {ctaLabel}
             </button>
           ) : null}
-        </div>
-      ) : null}
-
-      {onJoin && !isSede ? (
-        <button
-          type="button"
-          className={[
-            'partido-abierto-card__cta',
-            yaEnPartido ? 'partido-abierto-card__cta--member' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          onClick={() => onJoin(partido)}
-          disabled={ctaDisabled}
-        >
-          {ctaLabel}
-        </button>
+        </>
       ) : null}
     </article>
   );
