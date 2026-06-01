@@ -678,28 +678,6 @@ function deportesActivosSedePublica(sede, preciosDeporteRows) {
   return DEPORTES_CANCHA_SEDE_OPTIONS.filter((o) => keys.has(o.key));
 }
 
-/** Chips de deportes sobre el hero (esquina inferior derecha). */
-function SedeDeportesChipsHero({ deportes, t }) {
-  if (!deportes.length) return null;
-  const aria = t('sedes.publica.deportesDisponibles', { defaultValue: 'Deportes disponibles' });
-  return (
-    <div className="sede-publica-hero-immersive__deportes" role="list" aria-label={aria}>
-      {deportes.map((d) => (
-        <span key={d.key} className="sede-publica-hero-immersive__deporte-chip" role="listitem">
-          <SportIcon
-            deporte={d.key}
-            size={14}
-            color="var(--text-secondary)"
-            className="sede-publica-hero-immersive__deporte-icon"
-          />
-          {d.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function whatsappHrefSede(sede) {
   const link = String(sede?.whatsapp_url ?? sede?.whatsapp ?? '').trim();
   if (/^https?:\/\//i.test(link)) return toHttps(link);
   if (!sede?.telefono) return null;
@@ -709,8 +687,45 @@ function whatsappHrefSede(sede) {
   return `https://wa.me/${n}`;
 }
 
-/** Hero: scroll horizontal manual con snap (85% ancho, peek 15%). */
-function SedeHeroFotosScroll({ fotos, cacheBust, onOpenAtIndex }) {
+/** Hero: scroll horizontal manual con snap (85% ancho, peek 15%) + overlay identidad. */
+function SedeHeroOverlayIdentity({ sede, direccionLinea, licenciaActiva, t }) {
+  return (
+    <div className="sede-publica-hero-fotos__identity">
+      <div className="sede-publica-hero-fotos__identity-head">
+        <div className="sede-publica-hero-fotos__identity-brand">
+          <div className="sede-publica-hero-fotos__logo">
+            {sede.logo_url ? (
+              <img src={toHttps(sede.logo_url)} alt="" />
+            ) : (
+              <span className="sede-publica-hero-fotos__logo-fallback" aria-hidden>
+                ⚽
+              </span>
+            )}
+          </div>
+          <h1 className="sede-publica-hero-fotos__nombre">
+            {sede.nombre || '(sin nombre)'}
+          </h1>
+        </div>
+        <SedeSocialLinks sede={sede} t={t} variant="hero" />
+      </div>
+      {direccionLinea ? (
+        <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
+      ) : null}
+      {licenciaActiva ? (
+        <div className="sede-publica-hero-fotos__licencia-wrap">
+          <span className="sede-publica-hero-fotos__licencia">
+            {t('sedes.publica.licenciaBadge', { defaultValue: 'PADBOL' })}
+          </span>
+          <span className="sede-publica-hero-fotos__licencia-status">
+            {t('sedes.publica.licenciaActivaLine', { defaultValue: '✓ Licencia activa' })}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SedeHeroFotosScroll({ fotos, cacheBust, onOpenAtIndex, overlay }) {
   const trackRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -741,49 +756,54 @@ function SedeHeroFotosScroll({ fotos, cacheBust, onOpenAtIndex }) {
     };
   }, [fotos, syncActiveIndex]);
 
-  if (!fotos.length) return null;
-
   return (
     <div className="sede-publica-hero-fotos">
-      <div
-        ref={trackRef}
-        className="sede-publica-hero-fotos__track"
-        role="list"
-        aria-label="Fotos del club"
-      >
-        {fotos.map((url, i) => (
-          <button
-            key={`${url}-${i}`}
-            type="button"
-            data-hero-slide
-            className="sede-publica-hero-fotos__slide"
-            role="listitem"
-            onClick={() => onOpenAtIndex(i)}
-            aria-label={`Ver foto ${i + 1} de ${fotos.length}`}
-          >
-            <img
-              src={sedePhotoUrlWithCacheBust(url, cacheBust)}
-              alt=""
-              loading={i === 0 ? 'eager' : 'lazy'}
-              decoding="async"
-            />
-          </button>
-        ))}
-      </div>
-      {fotos.length > 1 ? (
-        <div className="sede-publica-hero-fotos__dots" aria-hidden>
-          {fotos.map((_, i) => (
-            <span
-              key={`dot-${i}`}
-              className={
-                i === activeIndex
-                  ? 'sede-publica-hero-fotos__dot sede-publica-hero-fotos__dot--active'
-                  : 'sede-publica-hero-fotos__dot'
-              }
-            />
+      {fotos.length > 0 ? (
+        <div
+          ref={trackRef}
+          className="sede-publica-hero-fotos__track"
+          role="list"
+          aria-label="Fotos del club"
+        >
+          {fotos.map((url, i) => (
+            <button
+              key={`${url}-${i}`}
+              type="button"
+              data-hero-slide
+              className="sede-publica-hero-fotos__slide"
+              role="listitem"
+              onClick={() => onOpenAtIndex(i)}
+              aria-label={`Ver foto ${i + 1} de ${fotos.length}`}
+            >
+              <img
+                src={sedePhotoUrlWithCacheBust(url, cacheBust)}
+                alt=""
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+              />
+            </button>
           ))}
         </div>
-      ) : null}
+      ) : (
+        <div className="sede-publica-hero-fotos__placeholder" aria-hidden />
+      )}
+      <div className="sede-publica-hero-fotos__overlay">
+        {fotos.length > 1 ? (
+          <div className="sede-publica-hero-fotos__dots" aria-hidden>
+            {fotos.map((_, i) => (
+              <span
+                key={`dot-${i}`}
+                className={
+                  i === activeIndex
+                    ? 'sede-publica-hero-fotos__dot sede-publica-hero-fotos__dot--active'
+                    : 'sede-publica-hero-fotos__dot'
+                }
+              />
+            ))}
+          </div>
+        ) : null}
+        {overlay}
+      </div>
     </div>
   );
 }
@@ -2117,51 +2137,22 @@ export default function SedePublica() {
                   ) : null}
                 </div>
 
-                {heroFotos.length > 0 ? (
-                  <SedeHeroFotosScroll
-                    fotos={heroFotos}
-                    cacheBust={heroFotoCacheBust}
-                    onOpenAtIndex={(i) => {
-                      setFotosGalleryIndex(i);
-                      setFotosGalleryOpen(true);
-                    }}
-                  />
-                ) : (
-                  <div className="sede-publica-hero-fotos__placeholder" aria-hidden />
-                )}
-
-                <div className="sede-publica-hero-immersive__bottom">
-                  <div className="sede-publica-hero-immersive__logo">
-                    {sede.logo_url ? (
-                      <img src={toHttps(sede.logo_url)} alt="" />
-                    ) : (
-                      <span className="sede-publica-hero-immersive__logo-fallback" aria-hidden>
-                        ⚽
-                      </span>
-                    )}
-                  </div>
-                  <h1 className="sede-publica-hero-immersive__nombre">
-                    {sede.nombre || '(sin nombre)'}
-                  </h1>
-                  {direccionLinea ? (
-                    <p className="sede-publica-hero-immersive__direccion">{direccionLinea}</p>
-                  ) : null}
-                  {licenciaActiva ? (
-                    <div className="sede-publica-hero-immersive__licencia-wrap">
-                      <span className="sede-publica-hero-immersive__licencia">
-                        {t('sedes.publica.licenciaBadge', { defaultValue: 'PADBOL' })}
-                      </span>
-                      <span className="sede-publica-hero-immersive__licencia-status">
-                        {t('sedes.publica.licenciaActivaLine', { defaultValue: '✓ Licencia activa' })}
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="sede-publica-hero-immersive__br-stack">
-                  <SedeDeportesChipsHero deportes={deportesChips} t={t} />
-                  <SedeSocialLinks sede={sede} t={t} variant="hero" />
-                </div>
+                <SedeHeroFotosScroll
+                  fotos={heroFotos}
+                  cacheBust={heroFotoCacheBust}
+                  onOpenAtIndex={(i) => {
+                    setFotosGalleryIndex(i);
+                    setFotosGalleryOpen(true);
+                  }}
+                  overlay={
+                    <SedeHeroOverlayIdentity
+                      sede={sede}
+                      direccionLinea={direccionLinea}
+                      licenciaActiva={licenciaActiva}
+                      t={t}
+                    />
+                  }
+                />
             </section>
 
             <article className="sede-publica-page">
