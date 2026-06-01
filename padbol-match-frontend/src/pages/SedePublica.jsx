@@ -53,6 +53,7 @@ const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
 const SEDE_FOTOS_GALERIA_MAX = 20;
+const SEDE_FOTOS_HERO_MAX = 5;
 
 const toHttps = (url) => (url ? url.replace(/^http:\/\//, 'https://') : url);
 
@@ -638,34 +639,23 @@ function sedeFotosLista(sede) {
     : [];
 }
 
-function sedeFotoPortadaKey(sede) {
-  const direct = sedePhotoUrlKey(sede?.foto_portada);
-  if (direct) return direct;
-  const legacy = Array.isArray(sede?.fotos_destacadas) ? sede.fotos_destacadas[0] : null;
-  return sedePhotoUrlKey(legacy);
+function sedeFotosDestacadasLista(sede) {
+  if (!Array.isArray(sede?.fotos_destacadas)) return [];
+  return sede.fotos_destacadas
+    .map((u) => toHttps(String(u || '').trim()))
+    .filter(Boolean)
+    .slice(0, SEDE_FOTOS_HERO_MAX);
 }
 
-/** Carrusel público: `fotos_urls` en orden de subida, sin la foto del hero. */
-function sedeFotosCarruselLista(sede) {
-  const portadaKey = sedeFotoPortadaKey(sede);
-  return sedeFotosLista(sede).filter((u) => sedePhotoUrlKey(u) !== portadaKey);
+/** Hero público: `fotos_destacadas` (máx. 5) o primeras de `fotos_urls`. */
+function sedeFotosHeroLista(sede) {
+  const destacadas = sedeFotosDestacadasLista(sede);
+  if (destacadas.length) return destacadas;
+  return sedeFotosLista(sede).slice(0, SEDE_FOTOS_HERO_MAX);
 }
 
-/** Hero: `foto_portada` elegida en admin; si no hay, primera foto de la galería. */
-function sedeHeroImageUrl(sede) {
-  const portadaKey = sedeFotoPortadaKey(sede);
-  if (portadaKey) {
-    const todas = sedeFotosLista(sede);
-    if (todas.some((u) => sedePhotoUrlKey(u) === portadaKey)) return portadaKey;
-    return portadaKey;
-  }
-  return sedeFotosLista(sede)[0] || null;
-}
-
-function sedeHeroCacheBustToken(sede) {
-  const portadaKey = sedeFotoPortadaKey(sede);
-  const updated = sede?.updated_at ? String(sede.updated_at) : '';
-  return [portadaKey, updated].filter(Boolean).join('::') || String(Date.now());
+function sedePhotoCacheBustToken(sede) {
+  return sede?.updated_at ? String(sede.updated_at) : '';
 }
 
 /** Deportes activos: precios_por_deporte (activo) + canchas activas + API deportes_disponibles. */
@@ -699,7 +689,7 @@ function SedeDeportesChipsHero({ deportes, t }) {
           <SportIcon
             deporte={d.key}
             size={14}
-            color="#ffffff"
+            color="var(--text-secondary)"
             className="sede-publica-hero-immersive__deporte-icon"
           />
           {d.label}
@@ -719,75 +709,80 @@ function whatsappHrefSede(sede) {
   return `https://wa.me/${n}`;
 }
 
-/** Fila de miniaturas (~100×80px), scroll horizontal; tap abre lightbox con swipe. */
-function SedeGaleriaHorizontal({ fotos, onOpenAtIndex }) {
+/** Hero: scroll horizontal manual con snap (85% ancho, peek 15%). */
+function SedeHeroFotosScroll({ fotos, cacheBust, onOpenAtIndex }) {
   const trackRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const syncScrollArrows = useCallback(() => {
+  const syncActiveIndex = useCallback(() => {
     const el = trackRef.current;
-    if (!el) return;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(maxScroll > 4 && el.scrollLeft < maxScroll - 4);
-  }, []);
+    if (!el || fotos.length <= 1) {
+      setActiveIndex(0);
+      return;
+    }
+    const slide = el.querySelector('[data-hero-slide]');
+    if (!slide) return;
+    const gap = 8;
+    const slideSpan = slide.offsetWidth + gap;
+    const idx = Math.round(el.scrollLeft / slideSpan);
+    setActiveIndex(Math.min(fotos.length - 1, Math.max(0, idx)));
+  }, [fotos.length]);
 
   useEffect(() => {
-    syncScrollArrows();
+    syncActiveIndex();
     const el = trackRef.current;
     if (!el) return undefined;
-    el.addEventListener('scroll', syncScrollArrows, { passive: true });
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncScrollArrows) : null;
+    el.addEventListener('scroll', syncActiveIndex, { passive: true });
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncActiveIndex) : null;
     ro?.observe(el);
     return () => {
-      el.removeEventListener('scroll', syncScrollArrows);
+      el.removeEventListener('scroll', syncActiveIndex);
       ro?.disconnect();
     };
-  }, [fotos, syncScrollArrows]);
-
-  const scrollGallery = useCallback((direction) => {
-    const el = trackRef.current;
-    if (!el) return;
-    el.scrollBy({ left: direction * 108, behavior: 'smooth' });
-  }, []);
+  }, [fotos, syncActiveIndex]);
 
   if (!fotos.length) return null;
 
   return (
-    <div className="sede-publica-galeria">
-      {canScrollLeft ? (
-        <button
-          type="button"
-          className="sede-publica-galeria__nav sede-publica-galeria__nav--prev"
-          aria-label="Ver fotos anteriores"
-          onClick={() => scrollGallery(-1)}
-        >
-          ‹
-        </button>
-      ) : null}
-      <div ref={trackRef} className="sede-publica-galeria__track">
+    <div className="sede-publica-hero-fotos">
+      <div
+        ref={trackRef}
+        className="sede-publica-hero-fotos__track"
+        role="list"
+        aria-label="Fotos del club"
+      >
         {fotos.map((url, i) => (
           <button
             key={`${url}-${i}`}
             type="button"
-            className="sede-publica-galeria__thumb"
+            data-hero-slide
+            className="sede-publica-hero-fotos__slide"
+            role="listitem"
             onClick={() => onOpenAtIndex(i)}
             aria-label={`Ver foto ${i + 1} de ${fotos.length}`}
           >
-            <img src={toHttps(url)} alt="" loading="lazy" decoding="async" />
+            <img
+              src={sedePhotoUrlWithCacheBust(url, cacheBust)}
+              alt=""
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
           </button>
         ))}
       </div>
-      {canScrollRight ? (
-        <button
-          type="button"
-          className="sede-publica-galeria__nav sede-publica-galeria__nav--next"
-          aria-label="Ver fotos siguientes"
-          onClick={() => scrollGallery(1)}
-        >
-          ›
-        </button>
+      {fotos.length > 1 ? (
+        <div className="sede-publica-hero-fotos__dots" aria-hidden>
+          {fotos.map((_, i) => (
+            <span
+              key={`dot-${i}`}
+              className={
+                i === activeIndex
+                  ? 'sede-publica-hero-fotos__dot sede-publica-hero-fotos__dot--active'
+                  : 'sede-publica-hero-fotos__dot'
+              }
+            />
+          ))}
+        </div>
       ) : null}
     </div>
   );
@@ -2067,13 +2062,10 @@ export default function SedePublica() {
 
       {!loading && !error && sede && (() => {
         const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
-        const fotos = sedeFotosCarruselLista(sede);
+        const heroFotos = sedeFotosHeroLista(sede);
+        const heroFotoCacheBust = sedePhotoCacheBustToken(sede);
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
-        const heroImgRaw = sedeHeroImageUrl(sede);
-        const heroImg = heroImgRaw
-          ? sedePhotoUrlWithCacheBust(heroImgRaw, sedeHeroCacheBustToken(sede))
-          : null;
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
         const direccionChipLabel = formatSedeDireccionChipLabel(sede);
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
@@ -2086,18 +2078,7 @@ export default function SedePublica() {
             className="sede-publica-page__column sede-publica-page__column--sticky-reservar"
             style={hubInstagramColumnWrapStyle}
           >
-            <section
-              className={`sede-publica-hero-immersive${heroImg ? '' : ' sede-publica-hero-immersive--placeholder'}`}
-              aria-label={sede.nombre || 'Sede'}
-            >
-                <div
-                  className="sede-publica-hero-immersive__media"
-                  style={heroImg ? { backgroundImage: `url(${heroImg})` } : undefined}
-                  role="img"
-                  aria-hidden
-                />
-                <div className="sede-publica-hero-immersive__overlay" aria-hidden />
-
+            <section className="sede-publica-hero-immersive" aria-label={sede.nombre || 'Sede'}>
                 <div className="sede-publica-hero-immersive__top">
                   <button
                     type="button"
@@ -2135,6 +2116,19 @@ export default function SedePublica() {
                     </div>
                   ) : null}
                 </div>
+
+                {heroFotos.length > 0 ? (
+                  <SedeHeroFotosScroll
+                    fotos={heroFotos}
+                    cacheBust={heroFotoCacheBust}
+                    onOpenAtIndex={(i) => {
+                      setFotosGalleryIndex(i);
+                      setFotosGalleryOpen(true);
+                    }}
+                  />
+                ) : (
+                  <div className="sede-publica-hero-fotos__placeholder" aria-hidden />
+                )}
 
                 <div className="sede-publica-hero-immersive__bottom">
                   <div className="sede-publica-hero-immersive__logo">
@@ -2213,14 +2207,6 @@ export default function SedePublica() {
               </div>
             ) : null}
 
-            <SedeGaleriaHorizontal
-              fotos={fotos}
-              onOpenAtIndex={(i) => {
-                setFotosGalleryIndex(i);
-                setFotosGalleryOpen(true);
-              }}
-            />
-
             {!partidosSedeLoading && partidosSedeOrdenados.length > 0 ? (
               <section className="sede-publica-section sede-publica-partidos">
                 <h2 className="sede-publica-section__title">Partidos abiertos</h2>
@@ -2295,7 +2281,7 @@ export default function SedePublica() {
 
           {fotosGalleryOpen ? (
             <SedeFotosLightbox
-              fotos={fotos}
+              fotos={heroFotos}
               index={fotosGalleryIndex}
               onClose={() => setFotosGalleryOpen(false)}
               onIndexChange={setFotosGalleryIndex}
