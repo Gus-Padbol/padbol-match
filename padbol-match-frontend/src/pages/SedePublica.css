@@ -101,56 +101,32 @@
 }
 
 .sede-publica-hero-fotos {
-  position: relative;
   width: 100%;
-  height: 220px;
-  box-sizing: border-box;
-}
-
-.sede-publica-hero-fotos__track {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  gap: 8px;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  scroll-padding-inline: 16px;
   padding: 0 16px;
   box-sizing: border-box;
 }
 
-.sede-publica-hero-fotos__track::-webkit-scrollbar {
-  display: none;
-}
-
-.sede-publica-hero-fotos__slide {
-  flex: 0 0 85%;
-  scroll-snap-align: start;
-  height: 100%;
-  padding: 0;
-  border: none;
+.sede-publica-hero-fotos__frame {
+  position: relative;
+  width: 100%;
+  height: 220px;
   border-radius: 16px;
   overflow: hidden;
-  cursor: pointer;
-  background: color-mix(in srgb, var(--text-primary) 8%, var(--bg-card));
   box-sizing: border-box;
 }
 
-.sede-publica-hero-fotos__slide img {
+.sede-publica-hero-fotos__img {
   width: 100%;
-  height: 100%;
+  height: 220px;
+  border-radius: 16px;
   object-fit: cover;
   display: block;
+  cursor: pointer;
 }
 
 .sede-publica-hero-fotos__placeholder {
-  height: 100%;
-  margin: 0 16px;
+  width: 100%;
+  height: 220px;
   border-radius: 16px;
   background: linear-gradient(
     145deg,
@@ -176,28 +152,6 @@
 
 .sede-publica-hero-fotos__overlay > * {
   pointer-events: auto;
-}
-
-.sede-publica-hero-fotos__dots {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding-bottom: 2px;
-}
-
-.sede-publica-hero-fotos__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--bg-card) 45%, transparent);
-  flex-shrink: 0;
-}
-
-.sede-publica-hero-fotos__dot--active {
-  width: 8px;
-  height: 8px;
-  background: var(--accent);
 }
 
 .sede-publica-hero-fotos__identity {

@@ -51,8 +51,6 @@ import './SedePublica.css';
 const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
-const SEDE_FOTOS_GALERIA_MAX = 20;
-const SEDE_FOTOS_HERO_MAX = 5;
 
 const toHttps = (url) => (url ? url.replace(/^http:\/\//, 'https://') : url);
 
@@ -629,28 +627,15 @@ function resolveSedeCanchasCount(sede, perfilCanchasCount = null) {
 }
 
 
-function sedeFotosLista(sede) {
-  return Array.isArray(sede?.fotos_urls)
-    ? sede.fotos_urls
-        .map((u) => toHttps(String(u || '').trim()))
-        .filter(Boolean)
-        .slice(0, SEDE_FOTOS_GALERIA_MAX)
-    : [];
-}
-
-function sedeFotosDestacadasLista(sede) {
-  if (!Array.isArray(sede?.fotos_destacadas)) return [];
-  return sede.fotos_destacadas
-    .map((u) => toHttps(String(u || '').trim()))
-    .filter(Boolean)
-    .slice(0, SEDE_FOTOS_HERO_MAX);
-}
-
-/** Hero público: `fotos_destacadas` (máx. 5) o primeras de `fotos_urls`. */
-function sedeFotosHeroLista(sede) {
-  const destacadas = sedeFotosDestacadasLista(sede);
-  if (destacadas.length) return destacadas;
-  return sedeFotosLista(sede).slice(0, SEDE_FOTOS_HERO_MAX);
+/** Hero público: primera `fotos_destacadas` o `foto_portada`. */
+function sedeHeroImagenUrl(sede) {
+  const destacadas = Array.isArray(sede?.fotos_destacadas) ? sede.fotos_destacadas : [];
+  for (const raw of destacadas) {
+    const url = toHttps(String(raw || '').trim());
+    if (url) return url;
+  }
+  const portada = toHttps(String(sede?.foto_portada || '').trim());
+  return portada || null;
 }
 
 function sedePhotoCacheBustToken(sede) {
@@ -687,7 +672,7 @@ function whatsappHrefSede(sede) {
   return `https://wa.me/${n}`;
 }
 
-/** Hero: scroll horizontal manual con snap (85% ancho, peek 15%) + overlay identidad. */
+/** Overlay identidad sobre la foto del hero. */
 function SedeHeroOverlayIdentity({ sede, direccionLinea, licenciaActiva, t }) {
   return (
     <div className="sede-publica-hero-fotos__identity">
@@ -725,84 +710,24 @@ function SedeHeroOverlayIdentity({ sede, direccionLinea, licenciaActiva, t }) {
   );
 }
 
-function SedeHeroFotosScroll({ fotos, cacheBust, onOpenAtIndex, overlay }) {
-  const trackRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const syncActiveIndex = useCallback(() => {
-    const el = trackRef.current;
-    if (!el || fotos.length <= 1) {
-      setActiveIndex(0);
-      return;
-    }
-    const slide = el.querySelector('[data-hero-slide]');
-    if (!slide) return;
-    const gap = 8;
-    const slideSpan = slide.offsetWidth + gap;
-    const idx = Math.round(el.scrollLeft / slideSpan);
-    setActiveIndex(Math.min(fotos.length - 1, Math.max(0, idx)));
-  }, [fotos.length]);
-
-  useEffect(() => {
-    syncActiveIndex();
-    const el = trackRef.current;
-    if (!el) return undefined;
-    el.addEventListener('scroll', syncActiveIndex, { passive: true });
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncActiveIndex) : null;
-    ro?.observe(el);
-    return () => {
-      el.removeEventListener('scroll', syncActiveIndex);
-      ro?.disconnect();
-    };
-  }, [fotos, syncActiveIndex]);
-
+/** Hero: imagen fija + overlay identidad. */
+function SedeHeroFoto({ imageUrl, cacheBust, overlay, onOpen }) {
   return (
     <div className="sede-publica-hero-fotos">
-      {fotos.length > 0 ? (
-        <div
-          ref={trackRef}
-          className="sede-publica-hero-fotos__track"
-          role="list"
-          aria-label="Fotos del club"
-        >
-          {fotos.map((url, i) => (
-            <button
-              key={`${url}-${i}`}
-              type="button"
-              data-hero-slide
-              className="sede-publica-hero-fotos__slide"
-              role="listitem"
-              onClick={() => onOpenAtIndex(i)}
-              aria-label={`Ver foto ${i + 1} de ${fotos.length}`}
-            >
-              <img
-                src={sedePhotoUrlWithCacheBust(url, cacheBust)}
-                alt=""
-                loading={i === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-              />
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="sede-publica-hero-fotos__placeholder" aria-hidden />
-      )}
-      <div className="sede-publica-hero-fotos__overlay">
-        {fotos.length > 1 ? (
-          <div className="sede-publica-hero-fotos__dots" aria-hidden>
-            {fotos.map((_, i) => (
-              <span
-                key={`dot-${i}`}
-                className={
-                  i === activeIndex
-                    ? 'sede-publica-hero-fotos__dot sede-publica-hero-fotos__dot--active'
-                    : 'sede-publica-hero-fotos__dot'
-                }
-              />
-            ))}
-          </div>
-        ) : null}
-        {overlay}
+      <div className="sede-publica-hero-fotos__frame">
+        {imageUrl ? (
+          <img
+            className="sede-publica-hero-fotos__img"
+            src={sedePhotoUrlWithCacheBust(imageUrl, cacheBust)}
+            alt=""
+            loading="eager"
+            decoding="async"
+            onClick={onOpen}
+          />
+        ) : (
+          <div className="sede-publica-hero-fotos__placeholder" aria-hidden />
+        )}
+        <div className="sede-publica-hero-fotos__overlay">{overlay}</div>
       </div>
     </div>
   );
@@ -2082,7 +2007,7 @@ export default function SedePublica() {
 
       {!loading && !error && sede && (() => {
         const licenciaActiva = sede.licencia_activa === true && sede.numero_licencia;
-        const heroFotos = sedeFotosHeroLista(sede);
+        const heroFotoUrl = sedeHeroImagenUrl(sede);
         const heroFotoCacheBust = sedePhotoCacheBustToken(sede);
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
@@ -2137,13 +2062,17 @@ export default function SedePublica() {
                   ) : null}
                 </div>
 
-                <SedeHeroFotosScroll
-                  fotos={heroFotos}
+                <SedeHeroFoto
+                  imageUrl={heroFotoUrl}
                   cacheBust={heroFotoCacheBust}
-                  onOpenAtIndex={(i) => {
-                    setFotosGalleryIndex(i);
-                    setFotosGalleryOpen(true);
-                  }}
+                  onOpen={
+                    heroFotoUrl
+                      ? () => {
+                          setFotosGalleryIndex(0);
+                          setFotosGalleryOpen(true);
+                        }
+                      : undefined
+                  }
                   overlay={
                     <SedeHeroOverlayIdentity
                       sede={sede}
@@ -2270,9 +2199,9 @@ export default function SedePublica() {
             </article>
           </div>
 
-          {fotosGalleryOpen ? (
+          {fotosGalleryOpen && heroFotoUrl ? (
             <SedeFotosLightbox
-              fotos={heroFotos}
+              fotos={[heroFotoUrl]}
               index={fotosGalleryIndex}
               onClose={() => setFotosGalleryOpen(false)}
               onIndexChange={setFotosGalleryIndex}
