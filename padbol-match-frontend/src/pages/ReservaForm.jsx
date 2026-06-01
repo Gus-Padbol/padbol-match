@@ -543,7 +543,7 @@ function ReservaStripeSection({
 /** Solo se ofrecen / muestran las primeras 2 canchas en el flujo de reserva. */
 const MAX_CANCHAS_RESERVA_UI = 2;
 
-const RESERVA_CANCHA_DEPORTES = new Set(['padbol', 'padel', 'tenis', 'pickleball', 'squash', 'futbol_5', 'futbol_7']);
+const RESERVA_CANCHA_DEPORTES = new Set(['padbol', 'padel', 'tenis', 'pickleball', 'futbol_5', 'futbol_7']);
 
 const RESERVA_FUTBOL_VARIANT_KEYS = ['futbol_5', 'futbol_7'];
 

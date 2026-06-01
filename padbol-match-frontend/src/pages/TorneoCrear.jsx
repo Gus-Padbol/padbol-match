@@ -371,7 +371,7 @@ export default function TorneoCrear({
                   </select>
                 )}
                 <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Padbol y Pádel: dobles. Pickleball, squash y tenis: singles o dobles. Fútbol 5 y 7: tamaño de equipo fijo.
+                  Padbol y Pádel: dobles. Pickleball y tenis: singles o dobles. Fútbol 5 y 7: tamaño de equipo fijo.
                 </small>
               </div>
 

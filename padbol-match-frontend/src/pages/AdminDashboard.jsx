@@ -1326,7 +1326,6 @@ const CANCHA_DEPORTE_ADMIN_VALUES = [
   'padel',
   'tenis',
   'pickleball',
-  'squash',
   'futbol_5',
   'futbol_7',
 ];

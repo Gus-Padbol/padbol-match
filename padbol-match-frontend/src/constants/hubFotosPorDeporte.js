@@ -34,12 +34,6 @@ export const FOTOS_POR_DEPORTE = {
     torneos: 'https://images.unsplash.com/photo-1686311613705-b4ed85c94a7b?w=800&q=80',
     armar_partido: 'https://images.unsplash.com/photo-1686311613713-24c63e5c83f4?w=800&q=80',
   },
-  squash: {
-    reservar: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
-    buscar_partido: 'https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?w=800&q=80',
-    torneos: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80',
-    armar_partido: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
-  },
   tenis: {
     reservar: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&q=80',
     buscar_partido: 'https://images.unsplash.com/photo-1542144582-1ba00456b5e3?w=800&q=80',

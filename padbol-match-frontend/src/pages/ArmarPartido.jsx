@@ -71,7 +71,6 @@ const DEPORTES = [
   { id: 'padbol', label: 'Padbol', jugadores: 4 },
   { id: 'padel', label: 'Pádel', jugadores: 4 },
   { id: 'pickleball', label: 'Pickleball', jugadores: 4 },
-  { id: 'squash', label: 'Squash', jugadores: 4 },
   { id: 'tenis', label: 'Tenis', jugadores: 4 },
   { id: 'futbol_5', label: 'Fútbol 5', jugadores: 10 },
   { id: 'futbol_7', label: 'Fútbol 7', jugadores: 14 },

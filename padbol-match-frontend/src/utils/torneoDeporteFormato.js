@@ -2,7 +2,6 @@
 export const TORNEO_DEPORTE_PADBOL = 'padbol';
 export const TORNEO_DEPORTE_PADEL = 'padel';
 export const TORNEO_DEPORTE_PICKLEBALL = 'pickleball';
-export const TORNEO_DEPORTE_SQUASH = 'squash';
 export const TORNEO_DEPORTE_TENIS = 'tenis';
 export const TORNEO_DEPORTE_FUTBOL5 = 'futbol_5';
 export const TORNEO_DEPORTE_FUTBOL7 = 'futbol_7';
@@ -17,7 +16,6 @@ const DEPORTE_ORDER = [
   TORNEO_DEPORTE_PADBOL,
   TORNEO_DEPORTE_PADEL,
   TORNEO_DEPORTE_PICKLEBALL,
-  TORNEO_DEPORTE_SQUASH,
   TORNEO_DEPORTE_TENIS,
   TORNEO_DEPORTE_FUTBOL5,
   TORNEO_DEPORTE_FUTBOL7,
@@ -27,7 +25,6 @@ export function normalizeTorneoDeporte(raw) {
   const s = String(raw || '').trim().toLowerCase();
   if (s === 'pádel' || s === 'padel') return TORNEO_DEPORTE_PADEL;
   if (s === 'pickleball') return TORNEO_DEPORTE_PICKLEBALL;
-  if (s === 'squash') return TORNEO_DEPORTE_SQUASH;
   if (s === 'tenis' || s === 'tennis') return TORNEO_DEPORTE_TENIS;
   if (s === 'futbol_5' || s === 'futbol5') return TORNEO_DEPORTE_FUTBOL5;
   if (s === 'futbol_7' || s === 'futbol7') return TORNEO_DEPORTE_FUTBOL7;
@@ -35,12 +32,10 @@ export function normalizeTorneoDeporte(raw) {
   return TORNEO_DEPORTE_PADBOL;
 }
 
-/** Pickleball, squash y tenis: singles o dobles. */
+/** Pickleball y tenis: singles o dobles. */
 export function torneoDeportePermiteSinglesDobles(deporte) {
   const d = normalizeTorneoDeporte(deporte);
-  return (
-    d === TORNEO_DEPORTE_PICKLEBALL || d === TORNEO_DEPORTE_SQUASH || d === TORNEO_DEPORTE_TENIS
-  );
+  return d === TORNEO_DEPORTE_PICKLEBALL || d === TORNEO_DEPORTE_TENIS;
 }
 
 export function formatoEquipoDefaultParaDeporte(deporte) {
@@ -95,8 +90,6 @@ export function etiquetaDeporteTorneo(deporte) {
       return 'Pádel';
     case TORNEO_DEPORTE_PICKLEBALL:
       return 'Pickleball';
-    case TORNEO_DEPORTE_SQUASH:
-      return 'Squash';
     case TORNEO_DEPORTE_TENIS:
       return 'Tenis';
     case TORNEO_DEPORTE_FUTBOL5:
@@ -135,7 +128,6 @@ export const TORNEO_DEPORTE_OPTIONS = [
   { value: TORNEO_DEPORTE_PADBOL, label: 'Padbol' },
   { value: TORNEO_DEPORTE_PADEL, label: 'Pádel' },
   { value: TORNEO_DEPORTE_PICKLEBALL, label: 'Pickleball' },
-  { value: TORNEO_DEPORTE_SQUASH, label: 'Squash' },
   { value: TORNEO_DEPORTE_TENIS, label: 'Tenis' },
   { value: TORNEO_DEPORTE_FUTBOL5, label: 'Fútbol 5' },
   { value: TORNEO_DEPORTE_FUTBOL7, label: 'Fútbol 7' },

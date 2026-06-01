@@ -4,7 +4,6 @@ export const DEPORTES_PREFERIDOS_OPCIONES = [
   { key: 'padel', label: 'Pádel' },
   { key: 'tenis', label: 'Tenis' },
   { key: 'pickleball', label: 'Pickleball' },
-  { key: 'squash', label: 'Squash' },
   { key: 'futbol_5', label: 'Fútbol 5' },
   { key: 'futbol_7', label: 'Fútbol 7' },
 ];
