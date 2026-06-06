@@ -76,10 +76,12 @@
 }
 
 .sb-panel--left {
+  z-index: 1;
   clip-path: polygon(0 0, 88% 0, 100% 5%, 100% 95%, 88% 100%, 0 100%);
 }
 
 .sb-panel--right {
+  z-index: 1;
   clip-path: polygon(0% 5%, 12% 0, 100% 0, 100% 100%, 12% 100%, 0% 95%);
 }
 
@@ -208,7 +210,6 @@
   background: var(--sb-center-bg);
   z-index: 10;
   position: relative;
-  overflow: hidden;
   gap: 2vh;
   min-width: 0;
 }
@@ -233,14 +234,14 @@
 
 .sb-center__block {
   position: relative;
-  z-index: 10;
+  z-index: 50;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
   margin-top: 5vh;
 }
@@ -345,6 +346,7 @@
   width: 100%;
   gap: 1.5vw;
   justify-content: center;
+  overflow: visible;
   flex-shrink: 0;
   margin-top: 2vh;
 }
