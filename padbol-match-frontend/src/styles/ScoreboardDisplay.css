@@ -114,6 +114,18 @@
   z-index: 0;
 }
 
+.sb-panel--left::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(20, 40, 120, 0.5) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .sb-panel--right {
   z-index: 1;
   background: linear-gradient(135deg, rgba(255, 60, 60, 0.12) 0%, #0a0a0a 60%);
@@ -147,6 +159,18 @@
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sb-panel--right::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(120, 20, 20, 0.5) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -229,10 +253,15 @@
   flex: 1;
 }
 
+.sb-panel--left .sb-players {
+  padding-left: 1.5vw;
+}
+
 .sb-panel--right .sb-players {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  padding-left: 1.5vw;
 }
 
 .sb-player {
@@ -366,30 +395,35 @@
 }
 
 .sb-score {
-  font-family: var(--sb-font-display);
+  font-family: 'Oswald', sans-serif;
   font-size: max(22vw, 12rem);
   line-height: 1;
   min-width: 2ch;
   text-align: center;
   font-weight: 900;
+  letter-spacing: -0.02em;
   color: #ffffff;
   text-shadow:
-    0 0 60px rgba(255, 255, 255, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.8),
-    0 2px 4px rgba(0, 0, 0, 0.9);
+    0 0 80px rgba(255, 255, 255, 0.12),
+    0 4px 40px rgba(0, 0, 0, 0.95),
+    0 1px 0 rgba(255, 255, 255, 0.8),
+    0 2px 0 rgba(255, 255, 255, 0.15);
   animation: floatScore 4s ease-in-out infinite;
 }
 
 .sb-score--deuce,
 .sb-score--vent,
 .sb-score--special {
+  font-family: 'Oswald', sans-serif;
   color: #ffffff;
   font-size: max(14vw, 9rem);
   font-weight: 900;
+  letter-spacing: -0.02em;
   text-shadow:
-    0 0 60px rgba(255, 255, 255, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.8),
-    0 2px 4px rgba(0, 0, 0, 0.9);
+    0 0 80px rgba(255, 255, 255, 0.12),
+    0 4px 40px rgba(0, 0, 0, 0.95),
+    0 1px 0 rgba(255, 255, 255, 0.8),
+    0 2px 0 rgba(255, 255, 255, 0.15);
   animation: floatScore 4s ease-in-out infinite;
 }
 
