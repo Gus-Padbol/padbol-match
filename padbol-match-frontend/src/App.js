@@ -70,6 +70,8 @@ import {
   normalizeUserRole,
 } from './utils/adminPanelRoles';
 import { fetchUserRoleFromSupabase } from './utils/fetchUserRoleSupabase';
+import ScoreboardDisplay from './pages/ScoreboardDisplay';
+import ScoreboardControl from './pages/ScoreboardControl';
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -525,9 +527,34 @@ function App() {
       <HubNavLayoutProvider>
         <GlobalErrorBoundary>
           <AppLanguageGate>
-            <div className="pm-app-shell-column">
-              <AppShell />
-            </div>
+            <Routes>
+              <Route
+                path="/display/:sedeId/scoreboard/:partidoId"
+                element={(
+                  <ErrorBoundary label="la pantalla TV del scoreboard">
+                    <ScoreboardDisplay />
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
+                path="/admin/scoreboard/:partidoId"
+                element={(
+                  <ProtectedRoute>
+                    <ErrorBoundary label="el panel del árbitro">
+                      <ScoreboardControl />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="*"
+                element={(
+                  <div className="pm-app-shell-column">
+                    <AppShell />
+                  </div>
+                )}
+              />
+            </Routes>
           </AppLanguageGate>
         </GlobalErrorBoundary>
       </HubNavLayoutProvider>

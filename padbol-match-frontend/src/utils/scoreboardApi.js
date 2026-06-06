@@ -25,6 +25,13 @@ export async function fetchSedes(accessToken) {
   return Array.isArray(data) ? data : [];
 }
 
+export async function fetchPartido(partidoId) {
+  const res = await fetch(`${API_BASE}/api/scoreboard/partidos/${partidoId}`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error al cargar partido');
+  return data;
+}
+
 export async function createPartido(payload) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/api/scoreboard/partidos`, {
