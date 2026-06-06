@@ -64,7 +64,7 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
     const completed = completedSets.find((s, idx) => (s.set ?? idx + 1) === setNum);
     const isCurrent = matchOngoing && setNum === currentSetNum && !completed;
 
-    let content = '—';
+    let content = '–';
     let chipClass = 'sb-set-box sb-set-box--future';
     let itemClass = 'sb-set-history-item sb-set-history-item--future';
 
@@ -75,7 +75,7 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
       content = (
         <>
           <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.a}</span>
-          {' — '}
+          {' – '}
           <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.b}</span>
         </>
       );
@@ -85,7 +85,7 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
       content = (
         <>
           <span>{gamesA}</span>
-          {' — '}
+          {' – '}
           <span>{gamesB}</span>
         </>
       );
