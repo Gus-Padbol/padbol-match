@@ -1,7 +1,5 @@
 import React from 'react';
 
-const IS_DEV = process.env.NODE_ENV === 'development';
-
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -57,10 +55,10 @@ export default class ErrorBoundary extends React.Component {
             Hubo un problema al cargar {label}. Podés reintentar o volver al inicio.
           </p>
 
-          {IS_DEV && error && (
+          {error && (
             <details open style={{ marginBottom: '1rem' }}>
               <summary style={{ cursor: 'pointer', color: '#fbbf24', marginBottom: '0.5rem' }}>
-                Detalle del error (solo desarrollo)
+                Detalle del error
               </summary>
               <pre style={{
                 background: '#0a0a0a',
@@ -71,10 +69,12 @@ export default class ErrorBoundary extends React.Component {
                 fontSize: '12px',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
+                maxHeight: '50vh',
               }}
               >
                 {error.toString()}
-                {errorInfo?.componentStack ? `\n${errorInfo.componentStack}` : ''}
+                {error?.stack ? `\n\n${error.stack}` : ''}
+                {errorInfo?.componentStack ? `\n\nComponent stack:${errorInfo.componentStack}` : ''}
               </pre>
             </details>
           )}
