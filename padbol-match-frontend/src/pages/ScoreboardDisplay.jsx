@@ -98,42 +98,55 @@ export default function ScoreboardDisplay() {
     setPartido(payload);
   }, []);
 
-  const wsConnected = useScoreboardSocket(partidoId, handleUpdate);
+  const { connected: wsConnected, reconnect: reconnectWs } = useScoreboardSocket(partidoId, handleUpdate);
   const timerSeconds = useServerCronometro(partido);
 
+  const fetchPartidoNow = useCallback(async () => {
+    if (!partidoId) return;
+    try {
+      const p = await fetchPartido(partidoId);
+      handleUpdate(p);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Error loading match');
+    }
+  }, [partidoId, handleUpdate]);
+
   useEffect(() => {
+    void fetchPartidoNow();
+  }, [fetchPartidoNow]);
+
+  useEffect(() => {
+    if (!sedeId) return undefined;
     let cancelled = false;
     (async () => {
       try {
-        const [p, s] = await Promise.all([
-          fetchPartido(partidoId),
-          fetchSponsors(sedeId),
-        ]);
-        if (!cancelled) {
-          setPartido(p);
-          setSponsors(s);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
+        const s = await fetchSponsors(sedeId);
+        if (!cancelled) setSponsors(s);
+      } catch {
+        /* sponsors opcionales */
       }
     })();
     return () => { cancelled = true; };
-  }, [partidoId, sedeId]);
+  }, [sedeId]);
 
   useEffect(() => {
     if (wsConnected || !partidoId) return undefined;
-    const poll = async () => {
-      try {
-        const p = await fetchPartido(partidoId);
-        handleUpdate(p);
-      } catch {
-        /* polling silencioso */
-      }
-    };
-    poll();
-    const id = setInterval(poll, 3000);
+    void fetchPartidoNow();
+    const id = setInterval(() => {
+      void fetchPartidoNow();
+    }, 3000);
     return () => clearInterval(id);
-  }, [wsConnected, partidoId, handleUpdate]);
+  }, [wsConnected, partidoId, fetchPartidoNow]);
+
+  useEffect(() => {
+    if (!partidoId || wsConnected) return undefined;
+    reconnectWs();
+    const id = setInterval(() => {
+      reconnectWs();
+    }, 30000);
+    return () => clearInterval(id);
+  }, [partidoId, wsConnected, reconnectWs]);
 
   if (error) {
     return <div className="sb-error">{error}</div>;
