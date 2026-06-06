@@ -30,6 +30,27 @@
   display: flex;
   flex-direction: column;
   font-family: var(--sb-font-condensed);
+  position: relative;
+}
+
+.sb-connection {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  z-index: 100;
+}
+
+.sb-connection--ws {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e, 0 0 16px rgba(34, 197, 94, 0.4);
+}
+
+.sb-connection--poll {
+  background: #eab308;
+  box-shadow: 0 0 8px #eab308, 0 0 16px rgba(234, 179, 8, 0.4);
 }
 
 .sb-display__main {

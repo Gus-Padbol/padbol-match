@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSafeTranslation } from '../i18n/tSafe';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
+import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchSponsors } from '../utils/scoreboardApi';
 import '../styles/ScoreboardDisplay.css';
 
@@ -89,16 +90,13 @@ export default function ScoreboardDisplay() {
   const [partido, setPartido] = useState(null);
   const [sponsors, setSponsors] = useState([]);
   const [error, setError] = useState('');
-  const [timerSeconds, setTimerSeconds] = useState(0);
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
-    if (payload?.display?.cronometroSegundos != null) {
-      setTimerSeconds(payload.display.cronometroSegundos);
-    }
   }, []);
 
-  useScoreboardSocket(partidoId, handleUpdate);
+  const wsConnected = useScoreboardSocket(partidoId, handleUpdate);
+  const timerSeconds = useServerCronometro(partido);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,7 +109,6 @@ export default function ScoreboardDisplay() {
         if (!cancelled) {
           setPartido(p);
           setSponsors(s);
-          setTimerSeconds(p?.display?.cronometroSegundos ?? 0);
         }
       } catch (err) {
         if (!cancelled) setError(err.message);
@@ -121,12 +118,19 @@ export default function ScoreboardDisplay() {
   }, [partidoId, sedeId]);
 
   useEffect(() => {
-    if (!partido?.display?.cronometroActivo) return undefined;
-    const id = setInterval(() => {
-      setTimerSeconds((prev) => prev + 1);
-    }, 1000);
+    if (wsConnected || !partidoId) return undefined;
+    const poll = async () => {
+      try {
+        const p = await fetchPartido(partidoId);
+        handleUpdate(p);
+      } catch {
+        /* polling silencioso */
+      }
+    };
+    poll();
+    const id = setInterval(poll, 3000);
     return () => clearInterval(id);
-  }, [partido?.display?.cronometroActivo, partido?.cronometro_inicio]);
+  }, [wsConnected, partidoId, handleUpdate]);
 
   if (error) {
     return <div className="sb-error">{error}</div>;
@@ -152,6 +156,11 @@ export default function ScoreboardDisplay() {
 
   return (
     <div className="sb-display">
+      <div
+        className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
+        title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
+        aria-label={wsConnected ? 'Conexión en tiempo real activa' : 'Conexión por polling'}
+      />
       <div className="sb-display__main">
         <aside className="sb-panel sb-panel--left">
           <div className="sb-panel__streak" />

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import { getDisplayName } from '../utils/displayName';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
+import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
 import '../styles/ScoreboardControl.css';
 
@@ -53,16 +54,13 @@ export default function ScoreboardControl() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
-    if (payload?.display?.cronometroSegundos != null) {
-      setTimerSeconds(payload.display.cronometroSegundos);
-    }
   }, []);
 
   useScoreboardSocket(partidoId, handleUpdate);
+  const timerSeconds = useServerCronometro(partido);
 
   useEffect(() => {
     if (roleLoading) return undefined;
@@ -77,7 +75,6 @@ export default function ScoreboardControl() {
             return;
           }
           setPartido(p);
-          setTimerSeconds(p?.display?.cronometroSegundos ?? 0);
         }
       } catch (err) {
         if (!cancelled) setError(err.message);
@@ -88,19 +85,12 @@ export default function ScoreboardControl() {
     return () => { cancelled = true; };
   }, [partidoId, rol, userSedeId, roleLoading, t]);
 
-  useEffect(() => {
-    if (!partido?.display?.cronometroActivo) return undefined;
-    const id = setInterval(() => setTimerSeconds((prev) => prev + 1), 1000);
-    return () => clearInterval(id);
-  }, [partido?.display?.cronometroActivo]);
-
   const runAction = async (path) => {
     setActionLoading(true);
     setError('');
     try {
       const data = await scoreboardAction(path);
       setPartido(data);
-      setTimerSeconds(data?.display?.cronometroSegundos ?? 0);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -134,6 +124,7 @@ export default function ScoreboardControl() {
   const display = partido.display || {};
   const terminado = partido.estado === 'terminado';
   const cronometroActivo = partido.display?.cronometroActivo;
+  const canScorePoints = partido.estado === 'en_curso' && partido.cronometro_pausado === false;
   const canUndo = Array.isArray(partido.historial_puntos) && partido.historial_puntos.length > 0;
 
   const winnerName = partido.sets_a >= 2
@@ -215,7 +206,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-point-btn sc-point-btn--a"
-            disabled={actionLoading || terminado}
+            disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/A`)}
           >
             + {t('scoreboard.pointBtn', 'PUNTO')}
@@ -240,7 +231,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-point-btn sc-point-btn--b"
-            disabled={actionLoading || terminado}
+            disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/B`)}
           >
             + {t('scoreboard.pointBtn', 'PUNTO')}
