@@ -55,18 +55,23 @@
 
 .sc-timer-bar {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
   flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 0.75rem;
+  width: 100%;
 }
 
 .sc-timer {
+  display: block;
+  width: 100%;
+  text-align: center;
   font-size: clamp(1.3rem, 5vw, 1.6rem);
   font-weight: 700;
   letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums;
-  min-width: 7rem;
+  flex: 1 1 100%;
 }
 
 .sc-timer-btn {
@@ -95,7 +100,15 @@
   color: var(--sc-yellow);
 }
 
+.sc-timer-btn--start,
+.sc-timer-btn--pause {
+  flex: 0 0 auto;
+}
+
 .sc-timer-btn--reset {
+  display: block;
+  flex: 1 1 100%;
+  margin: 8px auto 0;
   border-color: var(--sc-border);
   color: var(--sc-text);
 }
