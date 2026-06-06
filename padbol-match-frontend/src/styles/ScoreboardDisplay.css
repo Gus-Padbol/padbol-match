@@ -76,6 +76,17 @@
   background: #0a0a0a;
 }
 
+.sb-panel--left,
+.sb-panel--right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 4vh;
+  padding-bottom: 0;
+  padding-left: 2vw;
+  padding-right: 1vw;
+}
+
 .sb-panel--left {
   z-index: 1;
   background: linear-gradient(135deg, rgba(60, 120, 255, 0.12) 0%, #0a0a0a 60%);
@@ -204,13 +215,10 @@
   width: 100%;
 }
 
+.sb-panel--left .sb-team-name-row,
 .sb-panel--right .sb-team-name-row {
-  justify-content: flex-start;
-  align-items: flex-start;
-  flex-direction: row;
-  padding-left: 1.5vw;
-  padding-right: 0;
-  margin-right: 0;
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .sb-team-serve-dot {
@@ -258,20 +266,13 @@
   flex: 1;
 }
 
-.sb-panel--left .sb-players {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding-left: 1.5vw;
-}
-
+.sb-panel--left .sb-players,
 .sb-panel--right .sb-players {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding-left: 1.5vw;
-  padding-right: 0;
-  margin-right: 0;
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .sb-player {
@@ -373,9 +374,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.2vw;
+  font-size: 0.9vw;
   font-weight: 700;
-  color: var(--sb-point-red);
+  color: rgba(255, 60, 60, 0.6);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   min-height: 1.5rem;
@@ -392,7 +393,7 @@
   height: 0;
   border-left: 0.45vw solid transparent;
   border-right: 0.45vw solid transparent;
-  border-bottom: 0.7vw solid var(--sb-point-red);
+  border-bottom: 0.7vw solid rgba(255, 60, 60, 0.6);
 }
 
 .sb-score-row {
