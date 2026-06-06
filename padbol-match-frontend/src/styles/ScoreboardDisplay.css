@@ -75,11 +75,11 @@
 }
 
 .sb-panel--left {
-  clip-path: polygon(0 0, 92% 0, 100% 8%, 100% 100%, 0 100%);
+  clip-path: polygon(0 0, 88% 0, 100% 5%, 100% 95%, 88% 100%, 0 100%);
 }
 
 .sb-panel--right {
-  clip-path: polygon(0% 8%, 8% 0, 100% 0, 100% 100%, 0 100%);
+  clip-path: polygon(0% 5%, 12% 0, 100% 0, 100% 100%, 12% 100%, 0% 95%);
 }
 
 .sb-panel__inner {
@@ -202,12 +202,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2vh 1vw 0;
+  padding: 0 1vw;
   background: var(--sb-center-bg);
   z-index: 10;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   gap: 0;
 }
 
@@ -218,18 +217,30 @@
   width: 100%;
   max-width: 100%;
   flex-shrink: 0;
+  position: relative;
+  padding-top: 10vh;
+  margin-bottom: 140px;
 }
 
 .sb-center__top {
+  position: absolute;
+  top: 4vh;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   max-width: 100%;
   flex-shrink: 0;
+  pointer-events: none;
 }
 
 .sb-tournament {
+  position: absolute;
+  top: 1.5vh;
+  left: 0;
+  right: 0;
   font-size: 1.6vw;
   font-weight: 600;
   letter-spacing: 0.3em;
@@ -238,13 +249,14 @@
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
   text-align: center;
   padding: 0 1vw;
-  margin: 4vh 0 0;
+  margin: 0;
   width: 100%;
   max-width: 100%;
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  z-index: 2;
 }
 
 .sb-point-indicator {
@@ -280,7 +292,7 @@
   gap: 2vw;
   width: 100%;
   flex-shrink: 0;
-  margin-top: 1vh;
+  margin-top: 0;
 }
 
 .sb-games-row {
@@ -421,6 +433,7 @@
   letter-spacing: 0.12em;
   flex-shrink: 0;
   margin-top: 1.5vh;
+  margin-bottom: 1vh;
 }
 
 /* ── Sponsors footer ── */
