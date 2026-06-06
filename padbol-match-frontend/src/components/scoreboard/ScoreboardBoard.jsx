@@ -190,16 +190,14 @@ export default function ScoreboardBoard({
         <section className="sb-center">
           <div className="sb-tournament">{torneoLabel}</div>
 
-          <div className="sb-center__content">
-            <div className="sb-center__top">
-              {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
+          <div className="sb-center__block">
+            {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
 
-              <div
-                className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
-              >
-                <span className="sb-point-indicator__triangle" aria-hidden="true" />
-                <span>PUNTO</span>
-              </div>
+            <div
+              className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
+            >
+              <span className="sb-point-indicator__triangle" aria-hidden="true" />
+              <span>PUNTO</span>
             </div>
 
             {isSingleCenterScore ? (
