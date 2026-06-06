@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import {
   resolveTeamColors,
@@ -93,6 +93,40 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
   return <div className="sb-sets-history">{chips}</div>;
 }
 
+const DEMO_SPONSOR_NAMES = [
+  'PADBOL',
+  'FIPA',
+  'BULLPADEL',
+  'GATORADE',
+  'POWERADE',
+  'NOBLEX',
+  'ESPN',
+  'ADIDAS',
+];
+
+function SponsorTicker({ names }) {
+  const items = useMemo(() => {
+    const list = (Array.isArray(names) ? names : [])
+      .map((name) => String(name || '').trim())
+      .filter(Boolean);
+    return list.length > 0 ? list : DEMO_SPONSOR_NAMES;
+  }, [names]);
+
+  const trackItems = [...items, ...items];
+
+  return (
+    <div className="sb-ticker" aria-label="Sponsors">
+      <div className="sb-ticker__track">
+        {trackItems.map((name, index) => (
+          <span key={`${name}-${index}`} className="sb-ticker__item">
+            {name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ScoreboardBoard({
   partido,
   sponsors = [],
@@ -118,6 +152,12 @@ export default function ScoreboardBoard({
   const scoreClassA = isDeuce ? 'sb-score sb-score--deuce' : display.displayA === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
   const scoreClassB = isDeuce ? 'sb-score sb-score--deuce' : display.displayB === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
   const { colorA, colorB } = resolveTeamColors(partido);
+  const sponsorNames = useMemo(
+    () => (sponsors.length > 0
+      ? sponsors.map((sp) => sp.nombre).filter(Boolean)
+      : DEMO_SPONSOR_NAMES),
+    [sponsors],
+  );
 
   if (terminado && winnerName) {
     return (
@@ -148,10 +188,10 @@ export default function ScoreboardBoard({
         </aside>
 
         <section className="sb-center">
+          <div className="sb-tournament">{torneoLabel}</div>
+
           <div className="sb-center__content">
             <div className="sb-center__top">
-              <div className="sb-tournament">{torneoLabel}</div>
-
               {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
 
               <div
@@ -206,17 +246,8 @@ export default function ScoreboardBoard({
         </aside>
       </div>
 
-      <footer className={`sb-footer ${sponsors.length === 0 ? 'sb-footer--empty' : ''}`}>
-        {sponsors.length > 0 ? (
-          <div className="sb-sponsors">
-            {sponsors.map((sp) => (
-              <div key={sp.id} className="sb-sponsor">
-                <span className="sb-sponsor__name">{sp.nombre}</span>
-                {sp.categoria && <span className="sb-sponsor__cat">{sp.categoria}</span>}
-              </div>
-            ))}
-          </div>
-        ) : null}
+      <footer className="sb-footer">
+        <SponsorTicker names={sponsorNames} />
       </footer>
     </div>
   );
