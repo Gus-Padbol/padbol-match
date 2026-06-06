@@ -1,10 +1,5 @@
 import React, { useMemo } from 'react';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
-import {
-  resolveTeamColors,
-  teamAccentStyle,
-  teamPanelStyle,
-} from '../../utils/scoreboardTeamColors';
 import '../../styles/ScoreboardDisplay.css';
 
 function formatTimerFromSeconds(totalSeconds) {
@@ -15,16 +10,15 @@ function formatTimerFromSeconds(totalSeconds) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-function PlayerList({ jugadores, accentColor }) {
+function PlayerList({ jugadores }) {
   const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
   while (list.length < 4) list.push({ numero: list.length + 1, nombre: '—' });
-  const accentStyle = teamAccentStyle(accentColor);
 
   return (
     <ul className="sb-players">
       {list.map((j, i) => (
         <li key={i} className="sb-player">
-          <span className="sb-player__num" style={accentStyle}>{j.numero ?? j.number ?? i + 1}</span>
+          <span className="sb-player__num">{j.numero ?? j.number ?? i + 1}</span>
           <span className="sb-player__name">{j.nombre ?? j.name ?? '—'}</span>
         </li>
       ))}
@@ -151,7 +145,6 @@ export default function ScoreboardBoard({
 
   const scoreClassA = isDeuce ? 'sb-score sb-score--deuce' : display.displayA === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
   const scoreClassB = isDeuce ? 'sb-score sb-score--deuce' : display.displayB === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
-  const { colorA, colorB } = resolveTeamColors(partido);
   const sponsorNames = useMemo(
     () => (sponsors.length > 0
       ? sponsors.map((sp) => sp.nombre).filter(Boolean)
@@ -170,7 +163,7 @@ export default function ScoreboardBoard({
   }
 
   return (
-    <div className="sb-display" style={{ '--sb-color-a': colorA, '--sb-color-b': colorB }}>
+    <div className="sb-display">
       <div
         className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
         title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
@@ -178,10 +171,10 @@ export default function ScoreboardBoard({
       />
 
       <div className="sb-display__main">
-        <aside className="sb-panel sb-panel--left" style={teamPanelStyle(colorA, 'left')}>
+        <aside className="sb-panel sb-panel--left">
           <div className="sb-panel__inner">
             <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
-            <PlayerList jugadores={partido.equipo_a_jugadores} accentColor={colorA} />
+            <PlayerList jugadores={partido.equipo_a_jugadores} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -228,10 +221,10 @@ export default function ScoreboardBoard({
           </div>
         </section>
 
-        <aside className="sb-panel sb-panel--right" style={teamPanelStyle(colorB, 'right')}>
+        <aside className="sb-panel sb-panel--right">
           <div className="sb-panel__inner">
             <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
-            <PlayerList jugadores={partido.equipo_b_jugadores} accentColor={colorB} />
+            <PlayerList jugadores={partido.equipo_b_jugadores} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />

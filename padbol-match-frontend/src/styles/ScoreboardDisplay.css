@@ -72,17 +72,76 @@
   height: 100%;
   padding: 4vh 2.5vw 0;
   overflow: hidden;
+  border: none;
   background: #0a0a0a;
 }
 
 .sb-panel--left {
   z-index: 1;
+  background: linear-gradient(135deg, rgba(60, 120, 255, 0.12) 0%, #0a0a0a 60%);
+  box-shadow:
+    inset 0 0 30px rgba(60, 120, 255, 0.15),
+    0 0 20px rgba(60, 120, 255, 0.2);
   clip-path: polygon(0 0, 88% 0, 100% 5%, 100% 95%, 88% 100%, 0 100%);
+}
+
+.sb-panel--left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(100, 160, 255, 0.9) 0%,
+    rgba(40, 80, 200, 0.4) 40%,
+    rgba(20, 50, 150, 0.1) 60%,
+    rgba(100, 160, 255, 0.7) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .sb-panel--right {
   z-index: 1;
+  background: linear-gradient(135deg, rgba(255, 60, 60, 0.12) 0%, #0a0a0a 60%);
+  box-shadow:
+    inset 0 0 30px rgba(255, 60, 60, 0.15),
+    0 0 20px rgba(255, 60, 60, 0.2);
   clip-path: polygon(0% 5%, 12% 0, 100% 0, 100% 100%, 12% 100%, 0% 95%);
+}
+
+.sb-panel--right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 100, 100, 0.9) 0%,
+    rgba(200, 40, 40, 0.4) 40%,
+    rgba(150, 20, 20, 0.1) 60%,
+    rgba(255, 100, 100, 0.7) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .sb-panel__inner {
@@ -192,6 +251,14 @@
   border: 2px solid currentColor;
   background: transparent;
   color: #ffffff;
+}
+
+.sb-panel--left .sb-player__num {
+  border-color: rgba(100, 160, 255, 0.9);
+}
+
+.sb-panel--right .sb-player__num {
+  border-color: rgba(255, 100, 100, 0.9);
 }
 
 .sb-player__name {
