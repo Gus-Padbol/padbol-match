@@ -3945,7 +3945,7 @@ export default function AdminDashboard({
   }, [notificacionesOpen]);
 
   useEffect(() => {
-    if (!__DEV__ || !isSuperAdmin) return;
+    if (process.env.NODE_ENV === 'production' || !isSuperAdmin) return;
     const resumenGrupos = adminNotificacionesAgrupadas
       .map((g) => `${g.label} (${g.items.length})`)
       .join(' · ');
