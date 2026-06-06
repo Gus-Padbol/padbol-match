@@ -210,28 +210,29 @@
 }
 
 .sb-team-serve-dot {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   background: #00ff88;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0, 255, 136, 0.6);
   animation: sb-serve-dot-pulse 1.2s ease-in-out infinite;
 }
 
 @keyframes sb-serve-dot-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 8px #00ff88;
+    box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0, 255, 136, 0.6);
   }
   50% {
-    transform: scale(1.25);
-    box-shadow: 0 0 16px #00ff88, 0 0 24px rgba(0, 255, 136, 0.5);
+    transform: scale(1.5);
+    box-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0, 255, 136, 0.8);
   }
 }
 
 .sb-panel .sb-team-name {
   font-family: var(--sb-font-condensed);
-  font-size: 4.5vw;
+  font-size: 3.2vw;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -403,7 +404,7 @@
 
 .sb-score {
   font-family: 'Oswald', sans-serif;
-  font-size: max(22vw, 12rem);
+  font-size: max(16vw, 12rem);
   line-height: 1;
   min-width: 2ch;
   text-align: center;
@@ -423,7 +424,7 @@
 .sb-score--special {
   font-family: 'Oswald', sans-serif;
   color: #ffffff;
-  font-size: max(14vw, 9rem);
+  font-size: max(10vw, 8rem);
   font-weight: 900;
   letter-spacing: -0.02em;
   text-shadow:
