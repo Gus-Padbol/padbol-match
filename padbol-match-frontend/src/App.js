@@ -71,6 +71,7 @@ import {
 } from './utils/adminPanelRoles';
 import { fetchUserRoleFromSupabase } from './utils/fetchUserRoleSupabase';
 import ScoreboardDisplay from './pages/ScoreboardDisplay';
+import ScoreboardCanchaDisplay from './pages/ScoreboardCanchaDisplay';
 import ScoreboardControl from './pages/ScoreboardControl';
 
 function LegacyPerfilRedirect() {
@@ -533,6 +534,14 @@ function App() {
                 element={(
                   <ErrorBoundary label="la pantalla TV del scoreboard">
                     <ScoreboardDisplay />
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
+                path="/display/:sedeId/cancha/:cancha"
+                element={(
+                  <ErrorBoundary label="la pantalla TV del scoreboard por cancha">
+                    <ScoreboardCanchaDisplay />
                   </ErrorBoundary>
                 )}
               />

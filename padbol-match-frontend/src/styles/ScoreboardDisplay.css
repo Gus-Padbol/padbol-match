@@ -471,6 +471,42 @@
   margin-top: 2px;
 }
 
+.sb-waiting {
+  width: 100vw;
+  height: 100vh;
+  background: #06060a;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.sb-waiting__logo {
+  width: clamp(140px, 22vw, 220px);
+  height: auto;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+.sb-waiting__text {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.sb-waiting__cancha {
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .sb-loading,
 .sb-error {
   width: 100vw;
