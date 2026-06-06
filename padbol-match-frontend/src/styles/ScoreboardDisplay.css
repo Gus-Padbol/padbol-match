@@ -35,10 +35,10 @@
 
 .sb-connection {
   position: fixed;
-  top: 12px;
+  bottom: 12px;
   right: 12px;
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   z-index: 100;
 }
@@ -72,17 +72,13 @@
 }
 
 .sb-panel--left {
-  background: linear-gradient(135deg, rgba(10, 30, 80, 0.95), rgba(5, 15, 45, 0.98));
   margin-left: -2vw;
   padding-left: 4vw;
-  border-right: 2px solid rgba(30, 100, 255, 0.5);
 }
 
 .sb-panel--right {
-  background: linear-gradient(135deg, rgba(80, 5, 5, 0.95), rgba(40, 2, 2, 0.98));
   margin-right: -2vw;
   padding-right: 4vw;
-  border-left: 2px solid rgba(255, 51, 51, 0.5);
 }
 
 .sb-panel__inner {
@@ -104,16 +100,16 @@
   z-index: 1;
 }
 
-.sb-panel--left .sb-panel__streak {
+.sb-panel__streak--a {
   right: 0;
-  background: linear-gradient(180deg, transparent, var(--sb-cyan), transparent);
-  box-shadow: 0 0 30px var(--sb-cyan), 0 0 60px rgba(0, 170, 255, 0.5);
+  background: linear-gradient(180deg, transparent, var(--sb-color-a, #1a3a6e), transparent);
+  box-shadow: 0 0 30px var(--sb-color-a, #1a3a6e), 0 0 60px color-mix(in srgb, var(--sb-color-a, #1a3a6e) 50%, transparent);
 }
 
-.sb-panel--right .sb-panel__streak {
+.sb-panel__streak--b {
   left: 0;
-  background: linear-gradient(180deg, transparent, var(--sb-red-accent), transparent);
-  box-shadow: 0 0 30px var(--sb-red-accent), 0 0 60px rgba(255, 51, 51, 0.5);
+  background: linear-gradient(180deg, transparent, var(--sb-color-b, #6e1a1a), transparent);
+  box-shadow: 0 0 30px var(--sb-color-b, #6e1a1a), 0 0 60px color-mix(in srgb, var(--sb-color-b, #6e1a1a) 50%, transparent);
 }
 
 .sb-particles {
@@ -223,16 +219,8 @@
   flex-shrink: 0;
 }
 
-.sb-panel--left .sb-player__num {
-  color: var(--sb-cyan);
-  border: 2px solid #00aaff;
-  background: rgba(0, 150, 255, 0.1);
-}
-
-.sb-panel--right .sb-player__num {
-  color: var(--sb-red-accent);
-  border: 2px solid #ff3333;
-  background: rgba(255, 51, 51, 0.1);
+.sb-player__num {
+  border: 2px solid currentColor;
 }
 
 .sb-center {
@@ -248,14 +236,17 @@
 
 .sb-tournament {
   position: absolute;
-  top: 2.5vh;
+  top: 5vh;
   left: 0;
   right: 0;
-  font-size: clamp(1.05rem, 2vw, 1.4rem);
+  font-size: 2.2vh;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow:
+    0 0 20px rgba(255, 255, 255, 0.6),
+    0 0 40px rgba(255, 255, 255, 0.3);
   text-align: center;
   padding: 0 1rem;
   z-index: 3;
@@ -415,22 +406,26 @@
 }
 
 .sb-set-label {
-  font-size: 11px;
+  font-size: 1.1vh;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
 }
 
 .sb-set-box {
-  padding: 0.4rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  font-size: clamp(0.9rem, 1.4vw, 1.2rem);
-  font-weight: 600;
-  min-width: 5rem;
+  min-width: 90px;
+  padding: 10px 16px;
+  font-size: 1.6vh;
+  font-weight: 700;
   text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .sb-set-box--active {

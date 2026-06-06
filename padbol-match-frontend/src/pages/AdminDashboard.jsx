@@ -2208,6 +2208,8 @@ export default function AdminDashboard({
   const [sbCancha, setSbCancha] = useState('');
   const [sbEquipoA, setSbEquipoA] = useState('');
   const [sbEquipoB, setSbEquipoB] = useState('');
+  const [sbColorA, setSbColorA] = useState('#1a3a6e');
+  const [sbColorB, setSbColorB] = useState('#6e1a1a');
   const [sbJugadoresA, setSbJugadoresA] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
   const [sbJugadoresB, setSbJugadoresB] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
   const [sbCreating, setSbCreating] = useState(false);
@@ -6616,6 +6618,8 @@ export default function AdminDashboard({
           numero: j.numero,
           nombre: j.nombre.trim() || `Jugador ${j.numero}`,
         })),
+        color_a: sbColorA,
+        color_b: sbColorB,
       });
       setSbCreated({ id: partido.id, sede_id: partido.sede_id });
       setMensajeExito(t('admin.scoreboard.created', '✅ Partido de scoreboard creado'));
@@ -10484,6 +10488,27 @@ export default function AdminDashboard({
                   onChange={(e) => setSbCancha(e.target.value)}
                   placeholder={t('admin.scoreboard.courtPlaceholder', 'Ej: Cancha 1')}
                   style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '18px' }}>
+              <label style={{ display: 'grid', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>{t('admin.scoreboard.colorA', 'Color Equipo A')}</span>
+                <input
+                  type="color"
+                  value={sbColorA}
+                  onChange={(e) => setSbColorA(e.target.value)}
+                  style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
+                />
+              </label>
+              <label style={{ display: 'grid', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>{t('admin.scoreboard.colorB', 'Color Equipo B')}</span>
+                <input
+                  type="color"
+                  value={sbColorB}
+                  onChange={(e) => setSbColorB(e.target.value)}
+                  style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
                 />
               </label>
             </div>

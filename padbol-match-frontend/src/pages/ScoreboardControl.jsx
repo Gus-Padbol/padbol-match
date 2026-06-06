@@ -7,6 +7,7 @@ import { getDisplayName } from '../utils/displayName';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
+import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
 import '../styles/ScoreboardControl.css';
 
 function formatTimer(seconds) {
@@ -159,6 +160,7 @@ export default function ScoreboardControl() {
   const canScorePoints = partido.estado === 'en_curso' && partido.cronometro_pausado === false;
   const canUndo = Array.isArray(partido.historial_puntos) && partido.historial_puntos.length > 0;
   const torneoLabel = getTorneoLabel(partido);
+  const { colorA, colorB } = resolveTeamColors(partido);
 
   const winnerName = partido.sets_a >= 2
     ? partido.equipo_a_nombre
@@ -222,7 +224,7 @@ export default function ScoreboardControl() {
       )}
 
       <div className="sc-columns">
-        <div className="sc-team-card sc-team-card--a">
+        <div className="sc-team-card sc-team-card--a" style={{ borderTopColor: colorA }}>
           <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_a_jugadores)}</p>
           <div className="sc-game-score">
@@ -241,6 +243,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-point-btn sc-point-btn--a"
+            style={teamButtonStyle(colorA)}
             disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/A`, { refetchAfter: true })}
           >
@@ -248,7 +251,7 @@ export default function ScoreboardControl() {
           </button>
         </div>
 
-        <div className="sc-team-card sc-team-card--b">
+        <div className="sc-team-card sc-team-card--b" style={{ borderTopColor: colorB }}>
           <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_b_jugadores)}</p>
           <div className="sc-game-score">
@@ -267,6 +270,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-point-btn sc-point-btn--b"
+            style={teamButtonStyle(colorB)}
             disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/B`, { refetchAfter: true })}
           >
