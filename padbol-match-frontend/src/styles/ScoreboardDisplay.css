@@ -69,6 +69,8 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
+  align-self: start;
+  height: 72vh;
   padding: 4vh 2.5vw 0;
   overflow: hidden;
   background: #0a0a0a;
