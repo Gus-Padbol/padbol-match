@@ -121,18 +121,20 @@
 
 .sc-team-card--a {
   border: 2px solid #3a7bd5;
+  border-radius: 12px;
+  background: rgba(58, 123, 213, 0.08);
   box-shadow:
-    0 0 20px rgba(58, 123, 213, 0.5),
-    inset 0 0 15px rgba(58, 123, 213, 0.1);
+    0 0 20px rgba(58, 123, 213, 0.6),
+    inset 0 0 20px rgba(58, 123, 213, 0.15);
 }
 
 .sc-team-card--b {
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  border-top: 4px solid var(--sc-red);
-  border-right: 3px solid var(--sc-red);
+  border: 2px solid #d53a3a;
+  border-radius: 12px;
+  background: rgba(213, 58, 58, 0.08);
   box-shadow:
-    0 0 24px rgba(239, 68, 68, 0.3),
-    inset -3px 0 18px rgba(239, 68, 68, 0.1);
+    0 0 20px rgba(213, 58, 58, 0.6),
+    inset 0 0 20px rgba(213, 58, 58, 0.15);
 }
 
 .sc-team-name-row {
@@ -230,15 +232,17 @@
 }
 
 .sc-point-btn--a {
-  border-color: var(--sc-blue);
-  color: var(--sc-blue);
-  background: rgba(59, 130, 246, 0.08);
+  border: 2px solid #3a7bd5 !important;
+  color: #3a7bd5 !important;
+  background: rgba(58, 123, 213, 0.08) !important;
+  box-shadow: 0 0 20px rgba(58, 123, 213, 0.4);
 }
 
 .sc-point-btn--b {
-  border-color: var(--sc-red);
-  color: var(--sc-red);
-  background: rgba(239, 68, 68, 0.08);
+  border: 2px solid #d53a3a !important;
+  color: #d53a3a !important;
+  background: rgba(213, 58, 58, 0.08) !important;
+  box-shadow: 0 0 20px rgba(213, 58, 58, 0.4);
 }
 
 .sc-secondary {
