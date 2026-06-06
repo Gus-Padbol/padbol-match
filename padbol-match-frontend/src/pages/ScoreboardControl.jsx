@@ -131,7 +131,7 @@ export default function ScoreboardControl() {
   const handleCronometro = (accion) => {
     runAction(
       `/api/scoreboard/partidos/${partidoId}/cronometro/${accion}`,
-      { refetchAfter: accion === 'reset' },
+      { refetchAfter: true },
     );
   };
 
@@ -157,7 +157,7 @@ export default function ScoreboardControl() {
   const display = partido.display || {};
   const terminado = partido.estado === 'terminado';
   const cronometroActivo = partido.display?.cronometroActivo;
-  const canScorePoints = partido.estado === 'en_curso' && partido.cronometro_pausado === false;
+  const canScorePoints = !terminado;
   const canUndo = Array.isArray(partido.historial_puntos) && partido.historial_puntos.length > 0;
   const torneoLabel = getTorneoLabel(partido);
   const { colorA, colorB } = resolveTeamColors(partido);
