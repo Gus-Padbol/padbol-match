@@ -42,6 +42,7 @@ import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
+import ErrorBoundary from './components/ErrorBoundary';
 import AppLanguageGate from './components/AppLanguageGate';
 import ChatbotIASafe from './components/ChatbotIASafe';
 import LegalFooterBar from './components/LegalFooterBar';
@@ -209,7 +210,7 @@ function WildcardFallback() {
 
 function AdminDashboardGate() {
   const navigate = useNavigate();
-  const { session, userProfile } = useAuth();
+  const { session, userProfile, signOutAndClear } = useAuth();
   const [gateSupabaseRol, setGateSupabaseRol] = useState(null);
   const [gateSupabaseLoading, setGateSupabaseLoading] = useState(false);
 
@@ -342,7 +343,11 @@ function AdminDashboardGate() {
 
   if (canAccessFinal) {
     const rolPanel = rolEffectiveAdmin || normalizeUserRole(gateSupabaseRol) || normalizeUserRole(rol);
-    return <AdminDashboard rol={rolPanel} sedeId={sedeId} />;
+    return (
+      <ErrorBoundary label="el panel de administración">
+        <AdminDashboard rol={rolPanel} sedeId={sedeId} handleLogout={signOutAndClear} />
+      </ErrorBoundary>
+    );
   }
 
   /* Rol resuelto (API + Supabase + caché) sin permiso de panel → denegar. */

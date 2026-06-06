@@ -2052,7 +2052,12 @@ function SemanaCompareDelta({ pct }) {
   );
 }
 
-export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.onrender.com', rol = null, sedeId = null }) {
+export default function AdminDashboard({
+  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  rol = null,
+  sedeId = null,
+  handleLogout = () => {},
+}) {
   const { t, i18n } = useTranslation();
   console.log('AdminDashboard montado', { rol, sedeId });
   const navigate = useNavigate();
@@ -4743,6 +4748,8 @@ export default function AdminDashboard({ apiBaseUrl = 'https://padbol-backend.on
         if (Array.isArray(parsed)) {
           tornData = parsed;
         } else {
+          console.warn('[Admin] GET /api/torneos: respuesta no es array', parsed);
+          tornData = [];
           tornParseError = { invalidPayload: parsed };
         }
       } catch (e) {
