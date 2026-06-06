@@ -158,19 +158,9 @@ export function preciosDuracionToApiPatch(form) {
   };
 }
 
-/** Body parcial Surge — opcional por sede, off por defecto. */
+/** Body parcial Surge — master toggle en sedes (min/max por deporte vía POST /api/surge-config). */
 export function surgePreciosToApiPatch(form) {
-  const surgeActivo = Boolean(form?.surge_activo);
-  if (!surgeActivo) {
-    return { surge_activo: false };
-  }
-  const minimo = parsePrecioDuracionField(form?.surge_precio_minimo);
-  const maximo = parsePrecioDuracionField(form?.surge_precio_maximo);
-  return {
-    surge_activo: true,
-    surge_precio_minimo: minimo,
-    surge_precio_maximo: maximo,
-  };
+  return { surge_activo: Boolean(form?.surge_activo) };
 }
 
 /** Estado de inputs Mi Sede tras guardar (mantiene dígitos visibles en los campos). */
@@ -186,7 +176,5 @@ export function miSedeFormPreciosFromSedeRow(sedeRow) {
     precio_120min: toDigits(sedeRow.precio_120min),
     precio_turno: toDigits(sedeRow.precio_turno ?? sedeRow.precio_90min),
     surge_activo: sedeRow.surge_activo === true,
-    surge_precio_minimo: toDigits(sedeRow.surge_precio_minimo),
-    surge_precio_maximo: toDigits(sedeRow.surge_precio_maximo),
   };
 }

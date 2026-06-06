@@ -1198,7 +1198,7 @@ export default function ReservaForm() {
     }
     let cancelled = false;
     setSurgeQuote((prev) => ({ ...prev, loading: true }));
-    fetchSurgePrecio(sedeId, duracionSeleccionadaMin)
+    fetchSurgePrecio(sedeId, reservaDeporteUrl, duracionSeleccionadaMin)
       .then((data) => {
         if (!cancelled) {
           setSurgeQuote({ ...data, loading: false });
@@ -1210,7 +1210,7 @@ export default function ReservaForm() {
         }
       });
     return () => { cancelled = true; };
-  }, [filtros.sede_id, formData.hora, duracionSeleccionadaMin, pantalla]);
+  }, [filtros.sede_id, formData.hora, duracionSeleccionadaMin, reservaDeporteUrl, pantalla]);
 
   const precioReservaTurnoBase = useMemo(() => {
     if (

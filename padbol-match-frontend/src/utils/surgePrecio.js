@@ -5,17 +5,20 @@ function apiBaseUrl() {
 }
 
 /**
- * Consulta precio Surge para una sede y duración (minutos).
+ * Consulta precio Surge para una sede, deporte y duración (minutos).
  * @returns {Promise<{ precio: number|null, ocupacion_porcentaje: number, surge_activo: boolean }>}
  */
-export async function fetchSurgePrecio(sedeId, duracionMin) {
+export async function fetchSurgePrecio(sedeId, deporte, duracionMin) {
   const sid = parseInt(String(sedeId), 10);
   const dur = parseInt(String(duracionMin), 10);
+  const dep = String(deporte || 'padbol').trim().toLowerCase();
   if (!Number.isFinite(sid) || sid <= 0 || !Number.isFinite(dur) || dur < 15) {
     return { precio: null, ocupacion_porcentaje: 0, surge_activo: false };
   }
 
-  const res = await fetch(`${apiBaseUrl()}/api/surge/${encodeURIComponent(sid)}/${encodeURIComponent(dur)}`);
+  const res = await fetch(
+    `${apiBaseUrl()}/api/surge/${encodeURIComponent(sid)}/${encodeURIComponent(dep)}/${encodeURIComponent(dur)}`,
+  );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.error || 'No se pudo obtener el precio dinámico');
