@@ -120,12 +120,10 @@
 }
 
 .sc-team-card--a {
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  border-top: 4px solid var(--sc-blue);
-  border-left: 3px solid var(--sc-blue);
+  border: 2px solid #3a7bd5;
   box-shadow:
-    0 0 24px rgba(59, 130, 246, 0.3),
-    inset 3px 0 18px rgba(59, 130, 246, 0.1);
+    0 0 20px rgba(58, 123, 213, 0.5),
+    inset 0 0 15px rgba(58, 123, 213, 0.1);
 }
 
 .sc-team-card--b {
@@ -185,8 +183,8 @@
 }
 
 .sc-game-score {
-  font-size: clamp(2rem, 10vw, 3rem);
-  font-weight: 700;
+  font-size: clamp(72px, 14vw, 96px);
+  font-weight: 900;
   margin: 0.35rem 0;
   color: var(--sc-yellow);
   line-height: 1;
