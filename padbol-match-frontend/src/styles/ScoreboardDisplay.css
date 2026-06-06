@@ -274,19 +274,26 @@
 }
 
 .sb-player__num {
-  width: 2.8vw;
-  height: 2.8vw;
-  min-width: 2.8vw;
+  width: auto;
+  height: auto;
+  min-width: 2.2vw;
+  min-height: 2.2vw;
+  padding: 0 0.35vw;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.2vw;
+  font-size: 0.9vw;
   flex-shrink: 0;
   border: 2px solid currentColor;
   background: transparent;
   color: #ffffff;
+  line-height: 1;
+}
+
+.sb-player__num--two-digit {
+  font-size: 0.75vw;
 }
 
 .sb-panel--left .sb-player__num {

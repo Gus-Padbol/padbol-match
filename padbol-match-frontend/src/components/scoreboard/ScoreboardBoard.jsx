@@ -10,18 +10,33 @@ function formatTimerFromSeconds(totalSeconds) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
+function resolvePlayerJersey(jugador, index) {
+  const raw = jugador?.jersey ?? jugador?.numero ?? jugador?.number;
+  const parsed = parseInt(raw, 10);
+  if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 99) return parsed;
+  return index + 1;
+}
+
 function PlayerList({ jugadores }) {
   const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
-  while (list.length < 4) list.push({ numero: list.length + 1, nombre: '—' });
+  while (list.length < 4) list.push({ nombre: '—' });
 
   return (
     <ul className="sb-players">
-      {list.map((j, i) => (
-        <li key={i} className="sb-player">
-          <span className="sb-player__num">{j.numero ?? j.number ?? i + 1}</span>
-          <span className="sb-player__name">{j.nombre ?? j.name ?? '—'}</span>
-        </li>
-      ))}
+      {list.map((j, i) => {
+        const jersey = resolvePlayerJersey(j, i);
+        const jerseyLabel = String(jersey);
+        const isTwoDigit = jerseyLabel.length >= 2;
+
+        return (
+          <li key={i} className="sb-player">
+            <span className={`sb-player__num ${isTwoDigit ? 'sb-player__num--two-digit' : ''}`}>
+              {jerseyLabel}
+            </span>
+            <span className="sb-player__name">{j.nombre ?? j.name ?? '—'}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

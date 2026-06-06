@@ -110,11 +110,19 @@ import i18n from '../i18n';
 import { createPartido, fetchSedes } from '../utils/scoreboardApi';
 
 const SCOREBOARD_JUGADORES_VACIOS = () => ([
-  { numero: 1, nombre: '' },
-  { numero: 2, nombre: '' },
-  { numero: 3, nombre: '' },
-  { numero: 4, nombre: '' },
+  { numero: 1, nombre: '', jersey: '' },
+  { numero: 2, nombre: '', jersey: '' },
+  { numero: 3, nombre: '', jersey: '' },
+  { numero: 4, nombre: '', jersey: '' },
 ]);
+
+function resolveScoreboardJerseyInput(value, fallback) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return fallback;
+  const n = parseInt(raw, 10);
+  if (Number.isFinite(n) && n >= 1 && n <= 99) return n;
+  return fallback;
+}
 
 const STRIPE_PUBLISHABLE_ADMIN =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -6573,6 +6581,11 @@ export default function AdminDashboard({
     setter((prev) => prev.map((j, i) => (i === index ? { ...j, nombre } : j)));
   };
 
+  const updateSbJugadorJersey = (equipo, index, jersey) => {
+    const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
+    setter((prev) => prev.map((j, i) => (i === index ? { ...j, jersey } : j)));
+  };
+
   const copiarLinkScoreboard = async (url, key) => {
     try {
       await navigator.clipboard.writeText(url);
@@ -6610,14 +6623,24 @@ export default function AdminDashboard({
         cancha: sbCancha.trim() || null,
         equipo_a_nombre: sbEquipoA.trim(),
         equipo_b_nombre: sbEquipoB.trim(),
-        equipo_a_jugadores: sbJugadoresA.map((j) => ({
-          numero: j.numero,
-          nombre: j.nombre.trim() || `Jugador ${j.numero}`,
+        equipo_a_jugadores: sbJugadoresA.map((j, idx) => ({
+          numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+          jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+          nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
         })),
-        equipo_b_jugadores: sbJugadoresB.map((j) => ({
-          numero: j.numero,
-          nombre: j.nombre.trim() || `Jugador ${j.numero}`,
+        equipo_b_jugadores: sbJugadoresB.map((j, idx) => ({
+          numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+          jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+          nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
         })),
+        jersey_a1: resolveScoreboardJerseyInput(sbJugadoresA[0]?.jersey, 1),
+        jersey_a2: resolveScoreboardJerseyInput(sbJugadoresA[1]?.jersey, 2),
+        jersey_a3: resolveScoreboardJerseyInput(sbJugadoresA[2]?.jersey, 3),
+        jersey_a4: resolveScoreboardJerseyInput(sbJugadoresA[3]?.jersey, 4),
+        jersey_b1: resolveScoreboardJerseyInput(sbJugadoresB[0]?.jersey, 1),
+        jersey_b2: resolveScoreboardJerseyInput(sbJugadoresB[1]?.jersey, 2),
+        jersey_b3: resolveScoreboardJerseyInput(sbJugadoresB[2]?.jersey, 3),
+        jersey_b4: resolveScoreboardJerseyInput(sbJugadoresB[3]?.jersey, 4),
         color_a: sbColorA,
         color_b: sbColorB,
       });
@@ -10562,6 +10585,23 @@ export default function AdminDashboard({
                         >
                           {j.numero}
                         </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={99}
+                          value={j.jersey}
+                          onChange={(e) => updateSbJugadorJersey(equipo, idx, e.target.value)}
+                          placeholder="#"
+                          title={t('admin.scoreboard.jerseyNumber', 'Número de camiseta')}
+                          style={{
+                            width: '52px',
+                            padding: '8px 6px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--border)',
+                            fontSize: '14px',
+                            textAlign: 'center',
+                          }}
+                        />
                         <input
                           type="text"
                           value={j.nombre}
