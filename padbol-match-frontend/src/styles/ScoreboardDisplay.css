@@ -243,7 +243,7 @@
   min-width: 0;
   overflow: visible;
   flex-shrink: 0;
-  margin-top: 5vh;
+  margin-top: 2vh;
 }
 
 .sb-point-indicator {
@@ -276,37 +276,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2vw;
+  gap: 0;
   width: 100%;
   flex-shrink: 0;
   margin-top: 0;
 }
 
-.sb-games-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2.5vw;
-  font-size: 2.5vw;
-  font-weight: 700;
-  color: #ffffff;
-  flex-shrink: 0;
-  margin-top: 2vh;
-}
-
-.sb-games-row__score {
-  min-width: 1.5ch;
-  text-align: center;
-}
-
-.sb-games-row__label {
-  letter-spacing: 0.15em;
-  padding: 0 0.5vw;
-}
-
 .sb-score {
   font-family: var(--sb-font-display);
-  font-size: max(18vw, 12rem);
+  font-size: max(22vw, 12rem);
   line-height: 1;
   min-width: 2ch;
   text-align: center;
@@ -324,7 +302,9 @@
 
 .sb-score-divider {
   width: 2px;
-  height: max(14vw, 9rem);
+  height: 60%;
+  align-self: center;
+  margin: 0 2vw;
   background: rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
 }
@@ -359,7 +339,7 @@
 }
 
 .sb-set-label {
-  font-size: 1.3vw;
+  font-size: 1.5vw;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -373,10 +353,9 @@
   align-items: center;
   justify-content: center;
   min-width: 12vw;
-  max-width: 13vw;
-  min-height: 9vh;
+  min-height: 11vh;
   padding: 1.5vh 1.5vw;
-  font-size: 2.6vw;
+  font-size: 3.2vw;
   font-weight: 800;
   text-align: center;
   background: rgba(255, 255, 255, 0.08);
@@ -418,12 +397,12 @@
 
 .sb-timer {
   font-family: var(--sb-font-condensed);
-  font-size: 1.8vw;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 2vw;
+  color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.12em;
   flex-shrink: 0;
   margin-top: 1.5vh;
-  margin-bottom: 1vh;
+  margin-bottom: 0;
 }
 
 /* ── Sponsors footer ── */

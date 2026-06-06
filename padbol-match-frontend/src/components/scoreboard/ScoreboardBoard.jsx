@@ -214,10 +214,8 @@ export default function ScoreboardBoard({
               </div>
             )}
 
-            <div className="sb-games-row">
-              <span className="sb-games-row__score">{partido.games_a}</span>
-              <span className="sb-games-row__label">GAMES</span>
-              <span className="sb-games-row__score">{partido.games_b}</span>
+            <div className="sb-timer">
+              {formatTimerFromSeconds(timerSeconds)}
             </div>
 
             <SetHistory
@@ -227,10 +225,6 @@ export default function ScoreboardBoard({
               setsA={partido.sets_a}
               setsB={partido.sets_b}
             />
-
-            <div className="sb-timer">
-              {formatTimerFromSeconds(timerSeconds)}
-            </div>
           </div>
         </section>
 
