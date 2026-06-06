@@ -69,8 +69,7 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  align-self: start;
-  height: 72vh;
+  height: 100%;
   padding: 4vh 2.5vw 0;
   overflow: hidden;
   background: #0a0a0a;
@@ -232,6 +231,8 @@
 }
 
 .sb-center__block {
+  position: relative;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
