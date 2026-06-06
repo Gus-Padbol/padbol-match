@@ -69,6 +69,11 @@ const OPTION_ACTIONS = {
     path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/tiebreak`,
     refetchAfter: false,
   },
+  reset: {
+    label: '🔄 Resetear partido',
+    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/cronometro/reset`,
+    refetchAfter: true,
+  },
 };
 
 function OptionsModal({
@@ -84,7 +89,9 @@ function OptionsModal({
   if (!open) return null;
 
   const isOptionDisabled = (key) => {
-    if (actionLoading || terminado) return true;
+    if (actionLoading) return true;
+    if (key === 'reset') return false;
+    if (terminado) return true;
     if (key === 'undo') return !canUndo;
     if (key === 'tiebreak') return isTiebreak;
     return false;
@@ -263,7 +270,7 @@ export default function ScoreboardControl() {
           )}
         </p>
         <div className="sc-timer-bar">
-          <span className="sc-timer">⏱ {formatTimer(timerSeconds)}</span>
+          <span className="sc-timer">{formatTimer(timerSeconds)}</span>
           <button
             type="button"
             className="sc-timer-btn sc-timer-btn--start"
@@ -279,14 +286,6 @@ export default function ScoreboardControl() {
             onClick={() => handleCronometro('pause')}
           >
             Pause
-          </button>
-          <button
-            type="button"
-            className="sc-timer-btn sc-timer-btn--reset"
-            disabled={actionLoading}
-            onClick={() => handleCronometro('reset')}
-          >
-            Reset
           </button>
         </div>
       </header>

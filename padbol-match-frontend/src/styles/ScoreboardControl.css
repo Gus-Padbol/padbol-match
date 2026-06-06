@@ -103,14 +103,9 @@
 .sc-timer-btn--start,
 .sc-timer-btn--pause {
   flex: 0 0 auto;
-}
-
-.sc-timer-btn--reset {
-  display: block;
-  flex: 1 1 100%;
-  margin: 8px auto 0;
-  border-color: var(--sc-border);
-  color: var(--sc-text);
+  padding: 14px 32px;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .sc-columns {
