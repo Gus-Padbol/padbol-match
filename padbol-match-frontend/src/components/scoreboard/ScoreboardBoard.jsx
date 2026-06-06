@@ -1,6 +1,11 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
-import { resolveTeamColors, teamAccentStyle, teamPanelStyle } from '../../utils/scoreboardTeamColors';
+import {
+  resolveTeamColors,
+  teamAccentStyle,
+  teamBarStyle,
+  teamPanelStyle,
+} from '../../utils/scoreboardTeamColors';
 import '../../styles/ScoreboardDisplay.css';
 
 function formatTimerFromSeconds(totalSeconds) {
@@ -21,34 +26,10 @@ function PlayerList({ jugadores, accentColor }) {
       {list.map((j, i) => (
         <li key={i} className="sb-player">
           <span className="sb-player__num" style={accentStyle}>{j.numero ?? j.number ?? i + 1}</span>
-          <span>{j.nombre ?? j.name ?? '—'}</span>
+          <span className="sb-player__name">{j.nombre ?? j.name ?? '—'}</span>
         </li>
       ))}
     </ul>
-  );
-}
-
-function Particles({ count = 12 }) {
-  const items = useMemo(
-    () => Array.from({ length: count }, (_, i) => ({
-      id: i,
-      left: `${10 + Math.random() * 80}%`,
-      delay: `${Math.random() * 6}s`,
-      duration: `${4 + Math.random() * 4}s`,
-    })),
-    [count],
-  );
-
-  return (
-    <div className="sb-particles">
-      {items.map((p) => (
-        <span
-          key={p.id}
-          className="sb-particle"
-          style={{ left: p.left, animationDelay: p.delay, animationDuration: p.duration }}
-        />
-      ))}
-    </div>
   );
 }
 
@@ -67,41 +48,47 @@ function TeamNameRow({ name, serving }) {
 }
 
 function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
-  const sets = Array.isArray(historial) ? historial : [];
-  const boxes = [];
+  const completedSets = Array.isArray(historial) ? historial : [];
+  const currentSetNum = completedSets.length + 1;
+  const matchOngoing = setsA < 2 && setsB < 2;
 
-  sets.forEach((s, idx) => {
-    const aWins = s.a > s.b;
-    const setNum = s.set ?? idx + 1;
-    boxes.push(
-      <div key={`done-${setNum}`} className="sb-set-history-item">
-        <span className="sb-set-label">{`SET ${setNum}`}</span>
-        <div className="sb-set-box sb-set-box--done">
-          <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{s.a}</span>
+  const chips = [1, 2, 3].map((setNum) => {
+    const completed = completedSets.find((s, idx) => (s.set ?? idx + 1) === setNum);
+    const isCurrent = matchOngoing && setNum === currentSetNum && !completed;
+
+    let content = '—';
+    let chipClass = 'sb-set-box sb-set-box--empty';
+
+    if (completed) {
+      const aWins = completed.a > completed.b;
+      chipClass = 'sb-set-box sb-set-box--done';
+      content = (
+        <>
+          <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.a}</span>
           {' — '}
-          <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{s.b}</span>
-        </div>
-      </div>,
-    );
-  });
-
-  if (setsA < 2 && setsB < 2) {
-    const currentSetNum = sets.length + 1;
-    boxes.push(
-      <div key="current" className="sb-set-history-item">
-        <span className="sb-set-label">{`SET ${currentSetNum}`}</span>
-        <div className="sb-set-box sb-set-box--active">
+          <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.b}</span>
+        </>
+      );
+    } else if (isCurrent) {
+      chipClass = 'sb-set-box sb-set-box--active';
+      content = (
+        <>
           <span>{gamesA}</span>
           {' — '}
           <span>{gamesB}</span>
-        </div>
-      </div>,
+        </>
+      );
+    }
+
+    return (
+      <div key={`set-${setNum}`} className="sb-set-history-item">
+        <span className="sb-set-label">{`SET ${setNum}`}</span>
+        <div className={chipClass}>{content}</div>
+      </div>
     );
-  }
+  });
 
-  if (!boxes.length) return null;
-
-  return <div className="sb-sets-history">{boxes.slice(0, 3)}</div>;
+  return <div className="sb-sets-history">{chips}</div>;
 }
 
 export default function ScoreboardBoard({
@@ -147,10 +134,9 @@ export default function ScoreboardBoard({
         title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
         aria-label={wsConnected ? 'Conexión en tiempo real activa' : 'Conexión por polling'}
       />
+
       <div className="sb-display__main">
         <aside className="sb-panel sb-panel--left" style={teamPanelStyle(colorA, 'left')}>
-          <div className="sb-panel__streak sb-panel__streak--a" />
-          <Particles />
           <div className="sb-panel__inner">
             <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
             <PlayerList jugadores={partido.equipo_a_jugadores} accentColor={colorA} />
@@ -158,47 +144,43 @@ export default function ScoreboardBoard({
         </aside>
 
         <section className="sb-center">
-          <div className="sb-tournament">{torneoLabel}</div>
+          <div className="sb-center__top">
+            <div className="sb-tournament">{torneoLabel}</div>
 
-          {isTiebreak && (
-            <div className="sb-tiebreak-badge">Tie-Break</div>
-          )}
+            {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
 
-          <div
-            className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''} ${ultimoPunto === 'A' ? 'sb-point-indicator--left' : 'sb-point-indicator--right'}`}
-          >
-            <span>POINT</span>
-            <span className="sb-point-indicator__arrow">▼</span>
+            <div
+              className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
+            >
+              <span className="sb-point-indicator__triangle" aria-hidden="true" />
+              <span>PUNTO</span>
+            </div>
           </div>
 
           {isSingleCenterScore ? (
-            <div className="sb-score-row sb-score-row--centered">
+            <div className="sb-score-row">
               <span className="sb-score sb-score--special">
                 {isDeuce ? 'DEUCE' : ventajaText}
               </span>
             </div>
           ) : (
             <div className="sb-score-row">
-              <span className={scoreClassA}>
-                {display.displayA ?? '0'}
-              </span>
+              <span className={scoreClassA}>{display.displayA ?? '0'}</span>
               <div className="sb-score-divider" />
-              <span className={scoreClassB}>
-                {display.displayB ?? '0'}
-              </span>
+              <span className={scoreClassB}>{display.displayB ?? '0'}</span>
             </div>
           )}
 
           <div className="sb-sets-bar">
-            <div className="sb-sets-badge sb-sets-badge--blue">
+            <div className="sb-sets-badge sb-sets-badge--a" style={teamBarStyle(colorA)}>
               Sets {partido.sets_a}
             </div>
             <div className="sb-games-center">
               <strong>{partido.games_a}</strong>
-              {' '}Games{' '}
+              {' '}GAMES{' '}
               <strong>{partido.games_b}</strong>
             </div>
-            <div className="sb-sets-badge sb-sets-badge--red">
+            <div className="sb-sets-badge sb-sets-badge--b" style={teamBarStyle(colorB)}>
               {partido.sets_b} Sets
             </div>
           </div>
@@ -212,13 +194,11 @@ export default function ScoreboardBoard({
           />
 
           <div className="sb-timer">
-            ⏱ {formatTimerFromSeconds(timerSeconds)}
+            {formatTimerFromSeconds(timerSeconds)}
           </div>
         </section>
 
         <aside className="sb-panel sb-panel--right" style={teamPanelStyle(colorB, 'right')}>
-          <div className="sb-panel__streak sb-panel__streak--b" />
-          <Particles />
           <div className="sb-panel__inner">
             <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
             <PlayerList jugadores={partido.equipo_b_jugadores} accentColor={colorB} />
@@ -227,7 +207,7 @@ export default function ScoreboardBoard({
       </div>
 
       <footer className={`sb-footer ${sponsors.length === 0 ? 'sb-footer--empty' : ''}`}>
-        {sponsors.length > 0 && (
+        {sponsors.length > 0 ? (
           <div className="sb-sponsors">
             {sponsors.map((sp) => (
               <div key={sp.id} className="sb-sponsor">
@@ -236,7 +216,7 @@ export default function ScoreboardBoard({
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </footer>
     </div>
   );

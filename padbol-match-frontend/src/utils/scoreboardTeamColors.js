@@ -7,12 +7,18 @@ function normalizeHex(hex, fallback) {
   return fallback;
 }
 
-function hexWithAlpha(hex, alpha) {
-  const base = normalizeHex(hex, DEFAULT_SCOREBOARD_COLOR_A);
-  const a = Math.round(Math.max(0, Math.min(1, alpha)) * 255)
-    .toString(16)
-    .padStart(2, '0');
-  return `${base}${a}`;
+function hexToRgb(hex) {
+  const base = normalizeHex(hex, DEFAULT_SCOREBOARD_COLOR_A).slice(1);
+  return {
+    r: parseInt(base.slice(0, 2), 16),
+    g: parseInt(base.slice(2, 4), 16),
+    b: parseInt(base.slice(4, 6), 16),
+  };
+}
+
+export function rgbaFromHex(hex, alpha, fallback = DEFAULT_SCOREBOARD_COLOR_A) {
+  const { r, g, b } = hexToRgb(normalizeHex(hex, fallback));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export function resolveTeamColors(partido) {
@@ -24,25 +30,39 @@ export function resolveTeamColors(partido) {
 
 export function teamPanelStyle(hex, side) {
   const color = normalizeHex(hex, DEFAULT_SCOREBOARD_COLOR_A);
-  const gradient = `linear-gradient(135deg, ${hexWithAlpha(color, 0.95)}, ${hexWithAlpha(color, 0.55)})`;
+  const tint = rgbaFromHex(color, 0.15, color);
+  const glow = rgbaFromHex(color, 0.3, color);
+  const base = {
+    background: `linear-gradient(135deg, ${tint} 0%, #0a0a0a 60%)`,
+  };
   if (side === 'left') {
     return {
-      background: gradient,
-      borderRight: `2px solid ${hexWithAlpha(color, 0.5)}`,
+      ...base,
+      borderLeft: `3px solid ${color}`,
+      boxShadow: `inset 3px 0 20px ${glow}`,
     };
   }
   return {
-    background: gradient,
-    borderLeft: `2px solid ${hexWithAlpha(color, 0.5)}`,
+    ...base,
+    borderRight: `3px solid ${color}`,
+    boxShadow: `inset -3px 0 20px ${glow}`,
   };
 }
 
 export function teamAccentStyle(hex) {
   const color = normalizeHex(hex, DEFAULT_SCOREBOARD_COLOR_A);
   return {
-    color,
+    color: '#ffffff',
     borderColor: color,
-    background: hexWithAlpha(color, 0.1),
+    background: 'transparent',
+  };
+}
+
+export function teamBarStyle(hex) {
+  const color = normalizeHex(hex, DEFAULT_SCOREBOARD_COLOR_A);
+  return {
+    background: color,
+    color: '#ffffff',
   };
 }
 
@@ -51,6 +71,6 @@ export function teamButtonStyle(hex) {
   return {
     borderColor: color,
     color,
-    background: hexWithAlpha(color, 0.08),
+    background: rgbaFromHex(color, 0.08, color),
   };
 }
