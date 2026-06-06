@@ -39,6 +39,14 @@ export async function fetchPartido(partidoId) {
   return data;
 }
 
+export async function scoreboardAction(path, method = 'POST') {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API_BASE}${path}`, { method, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error en la acción');
+  return data;
+}
+
 export async function createPartido(payload) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/api/scoreboard/partidos`, {
