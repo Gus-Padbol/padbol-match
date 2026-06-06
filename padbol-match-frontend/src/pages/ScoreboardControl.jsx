@@ -53,6 +53,133 @@ function canAdminScoreboard(rol, sedeIdPartido, sedeIdUser) {
   return false;
 }
 
+const OPTION_ACTIONS = {
+  undo: {
+    label: '↩ Deshacer último punto',
+    confirm: '¿Deshacer el último punto?',
+    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/deshacer`,
+    refetchAfter: true,
+  },
+  saque: {
+    label: '⇄ Cambiar saque',
+    confirm: '¿Cambiar el saque?',
+    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/saque`,
+    refetchAfter: false,
+  },
+  tiebreak: {
+    label: 'Tie-Break',
+    confirm: '¿Activar Tie-Break?',
+    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/tiebreak`,
+    refetchAfter: false,
+  },
+};
+
+function OptionsModal({
+  open,
+  onClose,
+  partidoId,
+  terminado,
+  canUndo,
+  isTiebreak,
+  actionLoading,
+  onRunAction,
+}) {
+  const [pendingAction, setPendingAction] = useState(null);
+
+  useEffect(() => {
+    if (!open) setPendingAction(null);
+  }, [open]);
+
+  if (!open) return null;
+
+  const closeAll = () => {
+    setPendingAction(null);
+    onClose();
+  };
+
+  const handleOverlayClick = () => {
+    closeAll();
+  };
+
+  const handleConfirm = async () => {
+    const config = OPTION_ACTIONS[pendingAction];
+    if (!config) return;
+    await onRunAction(config.path(partidoId), { refetchAfter: config.refetchAfter });
+    closeAll();
+  };
+
+  const isOptionDisabled = (key) => {
+    if (actionLoading || terminado) return true;
+    if (key === 'undo') return !canUndo;
+    if (key === 'tiebreak') return isTiebreak;
+    return false;
+  };
+
+  return (
+    <div
+      className="sc-modal-overlay"
+      role="presentation"
+      onClick={handleOverlayClick}
+    >
+      <div
+        className="sc-modal-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sc-options-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {pendingAction ? (
+          <div className="sc-modal-confirm">
+            <p className="sc-modal-confirm__text">{OPTION_ACTIONS[pendingAction].confirm}</p>
+            <div className="sc-modal-confirm__actions">
+              <button
+                type="button"
+                className="sc-modal-btn sc-modal-btn--primary"
+                disabled={actionLoading}
+                onClick={handleConfirm}
+              >
+                Confirmar
+              </button>
+              <button
+                type="button"
+                className="sc-modal-btn sc-modal-btn--ghost"
+                disabled={actionLoading}
+                onClick={closeAll}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h2 id="sc-options-title" className="sc-modal-sheet__title">Opciones</h2>
+            <div className="sc-modal-options">
+              {Object.entries(OPTION_ACTIONS).map(([key, config]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className="sc-modal-option-btn"
+                  disabled={isOptionDisabled(key)}
+                  onClick={() => setPendingAction(key)}
+                >
+                  {config.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="sc-modal-btn sc-modal-btn--ghost sc-modal-sheet__close"
+              onClick={closeAll}
+            >
+              Cancelar
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ScoreboardControl() {
   const { t } = useSafeTranslation();
   const { partidoId } = useParams();
@@ -74,6 +201,7 @@ export default function ScoreboardControl() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
@@ -279,32 +407,25 @@ export default function ScoreboardControl() {
         </div>
       </div>
 
-      <div className="sc-secondary">
-        <button
-          type="button"
-          className="sc-secondary-btn"
-          disabled={actionLoading || terminado || !canUndo}
-          onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/deshacer`, { refetchAfter: true })}
-        >
-          ↩ Undo
-        </button>
-        <button
-          type="button"
-          className="sc-secondary-btn"
-          disabled={actionLoading || terminado}
-          onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/saque`)}
-        >
-          ⇄ Change Serve
-        </button>
-        <button
-          type="button"
-          className="sc-secondary-btn sc-secondary-btn--tiebreak"
-          disabled={actionLoading || terminado || partido.es_tiebreak}
-          onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/tiebreak`)}
-        >
-          Tie-Break
-        </button>
-      </div>
+      <button
+        type="button"
+        className="sc-options-btn"
+        disabled={actionLoading}
+        onClick={() => setOptionsOpen(true)}
+      >
+        ⚙️ Opciones
+      </button>
+
+      <OptionsModal
+        open={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        partidoId={partidoId}
+        terminado={terminado}
+        canUndo={canUndo}
+        isTiebreak={partido.es_tiebreak}
+        actionLoading={actionLoading}
+        onRunAction={runAction}
+      />
     </div>
   );
 }
