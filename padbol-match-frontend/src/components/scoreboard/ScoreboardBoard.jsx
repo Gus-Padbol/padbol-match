@@ -153,7 +153,11 @@ export default function ScoreboardBoard({
   const torneoLabel = getTorneoLabel(partido);
   const isDeuce = display.mode === 'deuce';
   const isVentaja = display.displayA === 'VENT.' || display.displayB === 'VENT.';
-  const ventajaText = display.displayA === 'VENT.' || display.displayB === 'VENT.' ? 'ADV' : null;
+  const ventajaTeamName = display.displayA === 'VENT.'
+    ? partido.equipo_a_nombre
+    : display.displayB === 'VENT.'
+      ? partido.equipo_b_nombre
+      : null;
   const isTiebreak = partido.es_tiebreak;
   const isSingleCenterScore = isDeuce || isVentaja;
   const ultimoPunto = partido.ultimo_punto;
@@ -216,9 +220,36 @@ export default function ScoreboardBoard({
 
             {isSingleCenterScore ? (
               <div className="sb-score-row">
-                <span className="sb-score sb-score--special">
-                  {isDeuce ? 'DEUCE' : ventajaText}
-                </span>
+                {isDeuce ? (
+                  <span className="sb-score sb-score--special">DEUCE</span>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <span className="sb-score sb-score--special">ADV</span>
+                    {ventajaTeamName ? (
+                      <span
+                        style={{
+                          fontSize: '2vw',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          textAlign: 'center',
+                          marginTop: '1vh',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {ventajaTeamName}
+                      </span>
+                    ) : null}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="sb-score-row">
