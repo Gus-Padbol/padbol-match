@@ -3,7 +3,6 @@ import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import {
   resolveTeamColors,
   teamAccentStyle,
-  teamBarStyle,
   teamPanelStyle,
 } from '../../utils/scoreboardTeamColors';
 import '../../styles/ScoreboardDisplay.css';
@@ -57,11 +56,13 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
     const isCurrent = matchOngoing && setNum === currentSetNum && !completed;
 
     let content = '—';
-    let chipClass = 'sb-set-box sb-set-box--empty';
+    let chipClass = 'sb-set-box sb-set-box--future';
+    let itemClass = 'sb-set-history-item sb-set-history-item--future';
 
     if (completed) {
       const aWins = completed.a > completed.b;
       chipClass = 'sb-set-box sb-set-box--done';
+      itemClass = 'sb-set-history-item';
       content = (
         <>
           <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.a}</span>
@@ -71,6 +72,7 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
       );
     } else if (isCurrent) {
       chipClass = 'sb-set-box sb-set-box--active';
+      itemClass = 'sb-set-history-item';
       content = (
         <>
           <span>{gamesA}</span>
@@ -81,7 +83,7 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
     }
 
     return (
-      <div key={`set-${setNum}`} className="sb-set-history-item">
+      <div key={`set-${setNum}`} className={itemClass}>
         <span className="sb-set-label">{`SET ${setNum}`}</span>
         <div className={chipClass}>{content}</div>
       </div>
@@ -173,32 +175,22 @@ export default function ScoreboardBoard({
             </div>
           )}
 
-          <div className="sb-center__lower">
-            <div className="sb-sets-bar">
-              <div className="sb-sets-badge sb-sets-badge--a" style={teamBarStyle(colorA)}>
-                Sets {partido.sets_a}
-              </div>
-              <div className="sb-games-center">
-                <strong>{partido.games_a}</strong>
-                {' '}GAMES{' '}
-                <strong>{partido.games_b}</strong>
-              </div>
-              <div className="sb-sets-badge sb-sets-badge--b" style={teamBarStyle(colorB)}>
-                {partido.sets_b} Sets
-              </div>
-            </div>
+          <div className="sb-games-row">
+            <span className="sb-games-row__score">{partido.games_a}</span>
+            <span className="sb-games-row__label">GAMES</span>
+            <span className="sb-games-row__score">{partido.games_b}</span>
+          </div>
 
-            <SetHistory
-              historial={partido.historial_sets}
-              gamesA={partido.games_a}
-              gamesB={partido.games_b}
-              setsA={partido.sets_a}
-              setsB={partido.sets_b}
-            />
+          <SetHistory
+            historial={partido.historial_sets}
+            gamesA={partido.games_a}
+            gamesB={partido.games_b}
+            setsA={partido.sets_a}
+            setsB={partido.sets_b}
+          />
 
-            <div className="sb-timer">
-              {formatTimerFromSeconds(timerSeconds)}
-            </div>
+          <div className="sb-timer">
+            {formatTimerFromSeconds(timerSeconds)}
           </div>
         </section>
 
