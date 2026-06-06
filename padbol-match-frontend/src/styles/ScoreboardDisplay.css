@@ -3,7 +3,8 @@
 :root {
   --sb-bg: #06060a;
   --sb-footer-bg: #0a0a0a;
-  --sb-footer-height: 80px;
+  --sb-footer-height: 90px;
+  --sb-branding-height: 80px;
   --sb-point-red: #E11B22;
   --sb-text: #ffffff;
   --sb-text-muted: rgba(255, 255, 255, 0.35);
@@ -31,7 +32,7 @@
 
 .sb-connection {
   position: fixed;
-  bottom: 12px;
+  bottom: calc(var(--sb-footer-height) + 12px);
   right: 12px;
   width: 8px;
   height: 8px;
@@ -66,7 +67,7 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 4vh 2.5vw;
+  padding: 4vh 2.5vw 0;
   overflow: hidden;
   background: #0a0a0a;
 }
@@ -76,8 +77,17 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   z-index: 1;
+}
+
+.sb-panel__branding {
+  flex-shrink: 0;
+  width: 100%;
+  height: var(--sb-branding-height);
+  margin-top: auto;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .sb-team-name-row {
@@ -185,13 +195,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2vh 2vw;
+  justify-content: flex-start;
+  padding: 3vh 2vw 0;
   background: var(--sb-center-bg);
   z-index: 2;
   position: relative;
   overflow: hidden;
-  gap: 2.5vh;
+  gap: 0;
 }
 
 .sb-center__top {
@@ -199,19 +209,19 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin-top: 2vh;
+  flex-shrink: 0;
 }
 
 .sb-tournament {
-  font-size: 1.4vw;
+  font-size: 1.6vw;
   font-weight: 600;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.85);
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
   text-align: center;
   padding: 0 1rem;
-  margin: 0 0 1.5vh;
+  margin: 2vh 0 0;
 }
 
 .sb-point-indicator {
@@ -247,6 +257,17 @@
   gap: 2vw;
   width: 100%;
   flex-shrink: 0;
+  margin-top: 1.5vh;
+}
+
+.sb-center__lower {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 1.5vh;
+  gap: 0;
 }
 
 .sb-score {
@@ -342,6 +363,7 @@
   gap: 2vw;
   justify-content: center;
   flex-shrink: 0;
+  margin-top: 1vh;
 }
 
 .sb-set-history-item {
@@ -402,6 +424,7 @@
   color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.12em;
   flex-shrink: 0;
+  margin-top: 1.5vh;
 }
 
 /* ── Sponsors footer ── */
@@ -418,7 +441,7 @@
   align-items: center;
   justify-content: center;
   padding: 0 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 50;
 }
 
@@ -429,7 +452,8 @@
 .sb-sponsors {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
+  gap: 3rem;
   width: 100%;
   max-width: 1200px;
   overflow: hidden;

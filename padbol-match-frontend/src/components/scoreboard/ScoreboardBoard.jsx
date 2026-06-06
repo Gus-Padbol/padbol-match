@@ -141,6 +141,8 @@ export default function ScoreboardBoard({
             <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
             <PlayerList jugadores={partido.equipo_a_jugadores} accentColor={colorA} />
           </div>
+          {/* Reserved for future team logo / banner */}
+          <div className="sb-panel__branding" aria-hidden="true" />
         </aside>
 
         <section className="sb-center">
@@ -171,30 +173,32 @@ export default function ScoreboardBoard({
             </div>
           )}
 
-          <div className="sb-sets-bar">
-            <div className="sb-sets-badge sb-sets-badge--a" style={teamBarStyle(colorA)}>
-              Sets {partido.sets_a}
+          <div className="sb-center__lower">
+            <div className="sb-sets-bar">
+              <div className="sb-sets-badge sb-sets-badge--a" style={teamBarStyle(colorA)}>
+                Sets {partido.sets_a}
+              </div>
+              <div className="sb-games-center">
+                <strong>{partido.games_a}</strong>
+                {' '}GAMES{' '}
+                <strong>{partido.games_b}</strong>
+              </div>
+              <div className="sb-sets-badge sb-sets-badge--b" style={teamBarStyle(colorB)}>
+                {partido.sets_b} Sets
+              </div>
             </div>
-            <div className="sb-games-center">
-              <strong>{partido.games_a}</strong>
-              {' '}GAMES{' '}
-              <strong>{partido.games_b}</strong>
-            </div>
-            <div className="sb-sets-badge sb-sets-badge--b" style={teamBarStyle(colorB)}>
-              {partido.sets_b} Sets
-            </div>
-          </div>
 
-          <SetHistory
-            historial={partido.historial_sets}
-            gamesA={partido.games_a}
-            gamesB={partido.games_b}
-            setsA={partido.sets_a}
-            setsB={partido.sets_b}
-          />
+            <SetHistory
+              historial={partido.historial_sets}
+              gamesA={partido.games_a}
+              gamesB={partido.games_b}
+              setsA={partido.sets_a}
+              setsB={partido.sets_b}
+            />
 
-          <div className="sb-timer">
-            {formatTimerFromSeconds(timerSeconds)}
+            <div className="sb-timer">
+              {formatTimerFromSeconds(timerSeconds)}
+            </div>
           </div>
         </section>
 
@@ -203,6 +207,8 @@ export default function ScoreboardBoard({
             <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
             <PlayerList jugadores={partido.equipo_b_jugadores} accentColor={colorB} />
           </div>
+          {/* Reserved for future team logo / banner */}
+          <div className="sb-panel__branding" aria-hidden="true" />
         </aside>
       </div>
 
