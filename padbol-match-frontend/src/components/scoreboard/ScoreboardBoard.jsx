@@ -91,9 +91,15 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
       );
     }
 
+    const labelClass = isCurrent
+      ? 'sb-set-label sb-set-label--active'
+      : !completed && itemClass.includes('future')
+        ? 'sb-set-label sb-set-label--future'
+        : 'sb-set-label';
+
     return (
       <div key={`set-${setNum}`} className={itemClass}>
-        <span className="sb-set-label">{`SET ${setNum}`}</span>
+        <span className={labelClass}>{`SET ${setNum}`}</span>
         <div className={chipClass}>{content}</div>
       </div>
     );
@@ -222,10 +228,6 @@ export default function ScoreboardBoard({
               </div>
             )}
 
-            <div className="sb-timer">
-              {formatTimerFromSeconds(timerSeconds)}
-            </div>
-
             <SetHistory
               historial={partido.historial_sets}
               gamesA={partido.games_a}
@@ -233,6 +235,10 @@ export default function ScoreboardBoard({
               setsA={partido.sets_a}
               setsB={partido.sets_b}
             />
+
+            <div className="sb-timer">
+              {formatTimerFromSeconds(timerSeconds)}
+            </div>
           </div>
         </section>
 
