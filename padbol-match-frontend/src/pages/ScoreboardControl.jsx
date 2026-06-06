@@ -224,7 +224,7 @@ export default function ScoreboardControl() {
       )}
 
       <div className="sc-columns">
-        <div className="sc-team-card sc-team-card--a" style={{ borderTopColor: colorA }}>
+        <div className="sc-team-card sc-team-card--a">
           <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_a_jugadores)}</p>
           <div className="sc-game-score">
@@ -251,7 +251,7 @@ export default function ScoreboardControl() {
           </button>
         </div>
 
-        <div className="sc-team-card sc-team-card--b" style={{ borderTopColor: colorB }}>
+        <div className="sc-team-card sc-team-card--b">
           <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_b_jugadores)}</p>
           <div className="sc-game-score">

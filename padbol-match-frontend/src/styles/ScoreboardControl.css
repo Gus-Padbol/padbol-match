@@ -108,6 +108,7 @@
 }
 
 .sc-team-card {
+  position: relative;
   background: var(--sc-card);
   border: 1px solid var(--sc-border);
   border-radius: 12px;
@@ -119,11 +120,21 @@
 }
 
 .sc-team-card--a {
-  border-top: 3px solid var(--sc-blue);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-top: 4px solid var(--sc-blue);
+  border-left: 3px solid var(--sc-blue);
+  box-shadow:
+    0 0 24px rgba(59, 130, 246, 0.3),
+    inset 3px 0 18px rgba(59, 130, 246, 0.1);
 }
 
 .sc-team-card--b {
-  border-top: 3px solid var(--sc-red);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-top: 4px solid var(--sc-red);
+  border-right: 3px solid var(--sc-red);
+  box-shadow:
+    0 0 24px rgba(239, 68, 68, 0.3),
+    inset -3px 0 18px rgba(239, 68, 68, 0.1);
 }
 
 .sc-team-name-row {
