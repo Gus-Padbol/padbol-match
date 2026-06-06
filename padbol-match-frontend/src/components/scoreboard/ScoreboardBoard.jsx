@@ -55,27 +55,44 @@ function getTorneoLabel(partido) {
   return name || 'Partido amistoso';
 }
 
+function TeamNameRow({ name, serving }) {
+  return (
+    <div className="sb-team-name-row">
+      {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
+      <h1 className="sb-team-name">{name}</h1>
+    </div>
+  );
+}
+
 function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
   const sets = Array.isArray(historial) ? historial : [];
   const boxes = [];
 
-  sets.forEach((s) => {
+  sets.forEach((s, idx) => {
     const aWins = s.a > s.b;
+    const setNum = s.set ?? idx + 1;
     boxes.push(
-      <div key={`done-${s.set}`} className="sb-set-box sb-set-box--done">
-        <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{s.a}</span>
-        {' — '}
-        <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{s.b}</span>
+      <div key={`done-${setNum}`} className="sb-set-history-item">
+        <span className="sb-set-label">{`SET ${setNum}`}</span>
+        <div className="sb-set-box sb-set-box--done">
+          <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{s.a}</span>
+          {' — '}
+          <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{s.b}</span>
+        </div>
       </div>,
     );
   });
 
   if (setsA < 2 && setsB < 2) {
+    const currentSetNum = sets.length + 1;
     boxes.push(
-      <div key="current" className="sb-set-box sb-set-box--active">
-        <span>{gamesA}</span>
-        {' — '}
-        <span>{gamesB}</span>
+      <div key="current" className="sb-set-history-item">
+        <span className="sb-set-label">{`SET ${currentSetNum}`}</span>
+        <div className="sb-set-box sb-set-box--active">
+          <span>{gamesA}</span>
+          {' — '}
+          <span>{gamesB}</span>
+        </div>
       </div>,
     );
   }
@@ -95,7 +112,10 @@ export default function ScoreboardBoard({
   const display = partido.display || {};
   const torneoLabel = getTorneoLabel(partido);
   const isDeuce = display.mode === 'deuce';
+  const isVentaja = display.displayA === 'VENT.' || display.displayB === 'VENT.';
+  const ventajaText = display.displayA === 'VENT.' || display.displayB === 'VENT.' ? 'ADV' : null;
   const isTiebreak = partido.es_tiebreak;
+  const isSingleCenterScore = isDeuce || isVentaja;
   const ultimoPunto = partido.ultimo_punto;
   const terminado = partido.estado === 'terminado';
   const winnerName = partido.sets_a >= 2
@@ -129,9 +149,8 @@ export default function ScoreboardBoard({
           <div className="sb-panel__streak" />
           <Particles />
           <div className="sb-panel__inner">
-            <h1 className="sb-team-name">{partido.equipo_a_nombre}</h1>
+            <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
             <PlayerList jugadores={partido.equipo_a_jugadores} />
-            {partido.saque_actual === 'A' ? <div className="sb-serve sb-serve--active" /> : null}
           </div>
         </aside>
 
@@ -149,15 +168,23 @@ export default function ScoreboardBoard({
             <span className="sb-point-indicator__arrow">▼</span>
           </div>
 
-          <div className="sb-score-row">
-            <span className={scoreClassA}>
-              {isDeuce ? 'DEUCE' : display.displayA ?? '0'}
-            </span>
-            <div className="sb-score-divider" />
-            <span className={scoreClassB}>
-              {isDeuce ? '' : display.displayB ?? '0'}
-            </span>
-          </div>
+          {isSingleCenterScore ? (
+            <div className="sb-score-row sb-score-row--centered">
+              <span className="sb-score sb-score--special">
+                {isDeuce ? 'DEUCE' : ventajaText}
+              </span>
+            </div>
+          ) : (
+            <div className="sb-score-row">
+              <span className={scoreClassA}>
+                {display.displayA ?? '0'}
+              </span>
+              <div className="sb-score-divider" />
+              <span className={scoreClassB}>
+                {display.displayB ?? '0'}
+              </span>
+            </div>
+          )}
 
           <div className="sb-sets-bar">
             <div className="sb-sets-badge sb-sets-badge--blue">
@@ -190,15 +217,14 @@ export default function ScoreboardBoard({
           <div className="sb-panel__streak" />
           <Particles />
           <div className="sb-panel__inner">
-            <h1 className="sb-team-name">{partido.equipo_b_nombre}</h1>
+            <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
             <PlayerList jugadores={partido.equipo_b_jugadores} />
-            {partido.saque_actual === 'B' ? <div className="sb-serve sb-serve--active" /> : null}
           </div>
         </aside>
       </div>
 
-      {sponsors.length > 0 && (
-        <footer className="sb-footer">
+      <footer className={`sb-footer ${sponsors.length === 0 ? 'sb-footer--empty' : ''}`}>
+        {sponsors.length > 0 && (
           <div className="sb-sponsors">
             {sponsors.map((sp) => (
               <div key={sp.id} className="sb-sponsor">
@@ -207,8 +233,8 @@ export default function ScoreboardBoard({
               </div>
             ))}
           </div>
-        </footer>
-      )}
+        )}
+      </footer>
     </div>
   );
 }

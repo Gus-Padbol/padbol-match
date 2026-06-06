@@ -37,8 +37,8 @@ function getTorneoLabel(partido) {
 function TeamNameRow({ name, serving }) {
   return (
     <div className="sc-team-name-row">
-      <h2 className="sc-team-name">{name}</h2>
       {serving ? <span className="sc-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
+      <h2 className="sc-team-name">{name}</h2>
     </div>
   );
 }
