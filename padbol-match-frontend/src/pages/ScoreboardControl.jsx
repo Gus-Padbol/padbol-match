@@ -34,6 +34,15 @@ function getTorneoLabel(partido) {
   return name || 'Partido amistoso';
 }
 
+function TeamNameRow({ name, serving }) {
+  return (
+    <div className="sc-team-name-row">
+      <h2 className="sc-team-name">{name}</h2>
+      {serving ? <span className="sc-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
+    </div>
+  );
+}
+
 function canAdminScoreboard(rol, sedeIdPartido, sedeIdUser) {
   if (!rol) return false;
   if (rol === 'super_admin' || rol === 'admin_nacional') return true;
@@ -95,12 +104,22 @@ export default function ScoreboardControl() {
     return () => { cancelled = true; };
   }, [partidoId, rol, userSedeId, roleLoading, t]);
 
-  const runAction = async (path) => {
+  const refreshPartido = useCallback(async () => {
+    const p = await fetchPartido(partidoId);
+    setPartido(p);
+    return p;
+  }, [partidoId]);
+
+  const runAction = async (path, { refetchAfter = false } = {}) => {
     setActionLoading(true);
     setError('');
     try {
       const data = await scoreboardAction(path);
-      setPartido(data);
+      if (refetchAfter) {
+        await refreshPartido();
+      } else {
+        setPartido(data);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -109,7 +128,10 @@ export default function ScoreboardControl() {
   };
 
   const handleCronometro = (accion) => {
-    runAction(`/api/scoreboard/partidos/${partidoId}/cronometro/${accion}`);
+    runAction(
+      `/api/scoreboard/partidos/${partidoId}/cronometro/${accion}`,
+      { refetchAfter: accion === 'reset' },
+    );
   };
 
   if (roleLoading || loading) {
@@ -201,7 +223,7 @@ export default function ScoreboardControl() {
 
       <div className="sc-columns">
         <div className="sc-team-card sc-team-card--a">
-          <h2 className="sc-team-name">{partido.equipo_a_nombre}</h2>
+          <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_a_jugadores)}</p>
           <div className="sc-game-score">
             {formatGameScore(display, 'A')}
@@ -220,14 +242,14 @@ export default function ScoreboardControl() {
             type="button"
             className="sc-point-btn sc-point-btn--a"
             disabled={actionLoading || terminado || !canScorePoints}
-            onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/A`)}
+            onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/A`, { refetchAfter: true })}
           >
             + POINT
           </button>
         </div>
 
         <div className="sc-team-card sc-team-card--b">
-          <h2 className="sc-team-name">{partido.equipo_b_nombre}</h2>
+          <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_b_jugadores)}</p>
           <div className="sc-game-score">
             {formatGameScore(display, 'B')}
@@ -246,7 +268,7 @@ export default function ScoreboardControl() {
             type="button"
             className="sc-point-btn sc-point-btn--b"
             disabled={actionLoading || terminado || !canScorePoints}
-            onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/B`)}
+            onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/B`, { refetchAfter: true })}
           >
             + POINT
           </button>
@@ -258,7 +280,7 @@ export default function ScoreboardControl() {
           type="button"
           className="sc-secondary-btn"
           disabled={actionLoading || terminado || !canUndo}
-          onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/deshacer`)}
+          onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/deshacer`, { refetchAfter: true })}
         >
           ↩ Undo
         </button>
