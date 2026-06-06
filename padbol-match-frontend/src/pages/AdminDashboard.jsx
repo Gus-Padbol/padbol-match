@@ -3320,10 +3320,10 @@ export default function AdminDashboard({
     const alertasEquiposSinConfirmarCierre48h = Object.entries(pendientesSinConfirmarPorTorneo)
       .map(([tidStr, count]) => {
         const tid = Number(tidStr);
-        const t = torneoById[tid];
+        const torneoRow = torneoById[tid];
         return {
           torneoId: tid,
-          nombre: String(t?.nombre || t('admin.formularios.tournament')).trim() || t('admin.formularios.tournament'),
+          nombre: String(torneoRow?.nombre || '').trim() || t('admin.formularios.tournament'),
           count: Number(count) || 0,
         };
       })
@@ -3341,10 +3341,10 @@ export default function AdminDashboard({
     const alertasEquiposTorneoProximoSinConfirmar = Object.entries(sinConfirmProximos)
       .map(([tidStr, count]) => {
         const tid = Number(tidStr);
-        const t = torneoById[tid];
+        const torneoRow = torneoById[tid];
         return {
           torneoId: tid,
-          nombre: String(t?.nombre || t('admin.formularios.tournament')).trim() || t('admin.formularios.tournament'),
+          nombre: String(torneoRow?.nombre || '').trim() || t('admin.formularios.tournament'),
           count: Number(count) || 0,
         };
       })
@@ -3357,13 +3357,13 @@ export default function AdminDashboard({
       confirmadosPorTorneo[eq.torneo_id] = (confirmadosPorTorneo[eq.torneo_id] || 0) + 1;
     }
     const alertasTorneosMenosDosConfirmados = [];
-    for (const t of torneosList) {
-      if (!torneoEstadoInscripcionAbiertaAdmin(t)) continue;
-      const c = confirmadosPorTorneo[t.id] || 0;
+    for (const torneo of torneosList) {
+      if (!torneoEstadoInscripcionAbiertaAdmin(torneo)) continue;
+      const c = confirmadosPorTorneo[torneo.id] || 0;
       if (c < 2) {
         alertasTorneosMenosDosConfirmados.push({
-          torneoId: t.id,
-          nombre: String(t.nombre || '').trim() || t('admin.formularios.tournament'),
+          torneoId: torneo.id,
+          nombre: String(torneo.nombre || '').trim() || t('admin.formularios.tournament'),
           confirmados: c,
         });
       }
@@ -3371,20 +3371,20 @@ export default function AdminDashboard({
     alertasTorneosMenosDosConfirmados.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
     const alertasTorneoSinSorteo48h = [];
-    for (const t of torneosList) {
-      const inicio = parseLocalDayStartFromIsoDate(t.fecha_inicio);
+    for (const torneo of torneosList) {
+      const inicio = parseLocalDayStartFromIsoDate(torneo.fecha_inicio);
       if (!inicio) continue;
       const ms = inicio.getTime() - now.getTime();
       if (ms <= 0 || ms > MS_48H) continue;
       const pc =
-        partidosCountByTorneoId[t.id] ??
-        partidosCountByTorneoId[String(t.id)] ??
+        partidosCountByTorneoId[torneo.id] ??
+        partidosCountByTorneoId[String(torneo.id)] ??
         0;
       if (pc < 1) {
         alertasTorneoSinSorteo48h.push({
-          torneoId: t.id,
-          nombre: String(t.nombre || '').trim() || t('admin.formularios.tournament'),
-          fecha_inicio: t.fecha_inicio,
+          torneoId: torneo.id,
+          nombre: String(torneo.nombre || '').trim() || t('admin.formularios.tournament'),
+          fecha_inicio: torneo.fecha_inicio,
         });
       }
     }
@@ -3411,6 +3411,7 @@ export default function AdminDashboard({
     sedesMap,
     canchasResumenPorSede,
     partidosCountByTorneoId,
+    t,
   ]);
 
   /** Métricas extra admin_club: ocupación horaria, semana vs semana, cancelación, deportes (solo `reservas` cargadas). */
