@@ -148,49 +148,51 @@ export default function ScoreboardBoard({
         </aside>
 
         <section className="sb-center">
-          <div className="sb-center__top">
-            <div className="sb-tournament">{torneoLabel}</div>
+          <div className="sb-center__content">
+            <div className="sb-center__top">
+              <div className="sb-tournament">{torneoLabel}</div>
 
-            {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
+              {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
 
-            <div
-              className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
-            >
-              <span className="sb-point-indicator__triangle" aria-hidden="true" />
-              <span>PUNTO</span>
+              <div
+                className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
+              >
+                <span className="sb-point-indicator__triangle" aria-hidden="true" />
+                <span>PUNTO</span>
+              </div>
             </div>
-          </div>
 
-          {isSingleCenterScore ? (
-            <div className="sb-score-row">
-              <span className="sb-score sb-score--special">
-                {isDeuce ? 'DEUCE' : ventajaText}
-              </span>
+            {isSingleCenterScore ? (
+              <div className="sb-score-row">
+                <span className="sb-score sb-score--special">
+                  {isDeuce ? 'DEUCE' : ventajaText}
+                </span>
+              </div>
+            ) : (
+              <div className="sb-score-row">
+                <span className={scoreClassA}>{display.displayA ?? '0'}</span>
+                <div className="sb-score-divider" />
+                <span className={scoreClassB}>{display.displayB ?? '0'}</span>
+              </div>
+            )}
+
+            <div className="sb-games-row">
+              <span className="sb-games-row__score">{partido.games_a}</span>
+              <span className="sb-games-row__label">GAMES</span>
+              <span className="sb-games-row__score">{partido.games_b}</span>
             </div>
-          ) : (
-            <div className="sb-score-row">
-              <span className={scoreClassA}>{display.displayA ?? '0'}</span>
-              <div className="sb-score-divider" />
-              <span className={scoreClassB}>{display.displayB ?? '0'}</span>
+
+            <SetHistory
+              historial={partido.historial_sets}
+              gamesA={partido.games_a}
+              gamesB={partido.games_b}
+              setsA={partido.sets_a}
+              setsB={partido.sets_b}
+            />
+
+            <div className="sb-timer">
+              {formatTimerFromSeconds(timerSeconds)}
             </div>
-          )}
-
-          <div className="sb-games-row">
-            <span className="sb-games-row__score">{partido.games_a}</span>
-            <span className="sb-games-row__label">GAMES</span>
-            <span className="sb-games-row__score">{partido.games_b}</span>
-          </div>
-
-          <SetHistory
-            historial={partido.historial_sets}
-            gamesA={partido.games_a}
-            gamesB={partido.games_b}
-            setsA={partido.sets_a}
-            setsB={partido.sets_b}
-          />
-
-          <div className="sb-timer">
-            {formatTimerFromSeconds(timerSeconds)}
           </div>
         </section>
 
