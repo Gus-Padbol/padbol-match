@@ -11,6 +11,20 @@ export async function getAuthHeaders() {
   return headers;
 }
 
+export async function fetchSedes(accessToken) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  const res = await fetch(`${API_BASE}/api/sedes`, { headers });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const msg = data?.error || res.statusText || 'Error al cargar sedes';
+    throw new Error(msg);
+  }
+  return Array.isArray(data) ? data : [];
+}
+
 export async function createPartido(payload) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/api/scoreboard/partidos`, {

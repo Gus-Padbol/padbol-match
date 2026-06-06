@@ -107,7 +107,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import i18n from '../i18n';
-import { createPartido } from '../utils/scoreboardApi';
+import { createPartido, fetchSedes } from '../utils/scoreboardApi';
 
 const SCOREBOARD_JUGADORES_VACIOS = () => ([
   { numero: 1, nombre: '' },
@@ -2213,6 +2213,9 @@ export default function AdminDashboard({
   const [sbError, setSbError] = useState('');
   const [sbCreated, setSbCreated] = useState(null);
   const [sbCopied, setSbCopied] = useState('');
+  const [scoreboardSedes, setScoreboardSedes] = useState([]);
+  const [scoreboardSedesLoading, setScoreboardSedesLoading] = useState(false);
+  const [scoreboardSedesError, setScoreboardSedesError] = useState('');
 
   useEffect(() => {
     if (sedeIdKey && !sbSedeId) setSbSedeId(String(sedeIdKey));
@@ -6523,14 +6526,44 @@ export default function AdminDashboard({
     }
   };
 
-  const sedesListScoreboard = useMemo(() => {
-    const all = Object.values(sedesMap || {})
-      .sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
-    if (esAdminClub && sedeIdKey) {
-      return all.filter((s) => mismoIdSede(s.id, sedeIdKey));
+  const fetchScoreboardSedes = useCallback(async () => {
+    if (!session?.access_token) {
+      const msg = 'Sin token de sesión para cargar sedes';
+      console.warn('[Scoreboard] fetch sedes:', msg);
+      setScoreboardSedesError(msg);
+      setScoreboardSedes([]);
+      return;
     }
-    return all;
-  }, [sedesMap, esAdminClub, sedeIdKey]);
+    setScoreboardSedesLoading(true);
+    setScoreboardSedesError('');
+    try {
+      const rows = await fetchSedes(session.access_token);
+      console.log('[Scoreboard] GET /api/sedes OK —', rows.length, 'sedes');
+      let filtered = rows;
+      if (esAdminClub && sedeIdKey) {
+        filtered = rows.filter((s) => mismoIdSede(s.id, sedeIdKey));
+        console.log('[Scoreboard] sedes filtradas admin_club:', filtered.length, 'sedeIdKey:', sedeIdKey);
+      }
+      const sorted = [...filtered].sort((a, b) =>
+        String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es')
+      );
+      setScoreboardSedes(sorted);
+      if (sorted.length === 1 && !sbSedeId) {
+        setSbSedeId(String(sorted[0].id));
+      }
+    } catch (err) {
+      console.error('[Scoreboard] GET /api/sedes error:', err);
+      setScoreboardSedesError(err?.message || String(err));
+      setScoreboardSedes([]);
+    } finally {
+      setScoreboardSedesLoading(false);
+    }
+  }, [session?.access_token, esAdminClub, sedeIdKey, sbSedeId]);
+
+  useEffect(() => {
+    if (!puedeVerScoreboard || activeTab !== 'scoreboard') return;
+    void fetchScoreboardSedes();
+  }, [activeTab, puedeVerScoreboard, fetchScoreboardSedes]);
 
   const updateSbJugador = (equipo, index, nombre) => {
     const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
@@ -10406,13 +10439,26 @@ export default function AdminDashboard({
                   value={sbSedeId}
                   onChange={(e) => setSbSedeId(e.target.value)}
                   required
+                  disabled={scoreboardSedesLoading}
                   style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
                 >
-                  <option value="">{t('admin.scoreboard.selectSede', 'Seleccionar sede...')}</option>
-                  {sedesListScoreboard.map((s) => (
+                  <option value="">
+                    {scoreboardSedesLoading
+                      ? t('admin.scoreboard.loadingSedes', 'Cargando sedes...')
+                      : t('admin.scoreboard.selectSede', 'Seleccionar sede...')}
+                  </option>
+                  {scoreboardSedes.map((s) => (
                     <option key={s.id} value={s.id}>{sedeFlag(s)} {s.nombre}</option>
                   ))}
                 </select>
+                {scoreboardSedesError ? (
+                  <span style={{ color: '#dc2626', fontSize: '13px' }}>{scoreboardSedesError}</span>
+                ) : null}
+                {!scoreboardSedesLoading && !scoreboardSedesError && scoreboardSedes.length === 0 ? (
+                  <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                    {t('admin.scoreboard.noSedes', 'No hay sedes disponibles')}
+                  </span>
+                ) : null}
               </label>
 
               <label style={{ display: 'grid', gap: '6px' }}>
