@@ -55,7 +55,7 @@
 .sb-display__main {
   flex: 1;
   display: grid;
-  grid-template-columns: 28% 44% 28%;
+  grid-template-columns: 24% 52% 24%;
   min-height: 0;
   height: calc(100vh - var(--sb-footer-height));
   overflow: hidden;
@@ -205,8 +205,9 @@
 }
 
 .sb-panel--right .sb-team-name-row {
-  justify-content: flex-end;
-  flex-direction: row-reverse;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-direction: row;
 }
 
 .sb-team-serve-dot {
@@ -243,7 +244,7 @@
 }
 
 .sb-panel--right .sb-team-name {
-  text-align: right;
+  text-align: left;
 }
 
 .sb-players {
@@ -404,7 +405,7 @@
 
 .sb-score {
   font-family: 'Oswald', sans-serif;
-  font-size: max(16vw, 12rem);
+  font-size: max(19vw, 12rem);
   line-height: 1;
   min-width: 2ch;
   text-align: center;
@@ -424,7 +425,7 @@
 .sb-score--special {
   font-family: 'Oswald', sans-serif;
   color: #ffffff;
-  font-size: max(10vw, 8rem);
+  font-size: max(12vw, 8rem);
   font-weight: 900;
   letter-spacing: -0.02em;
   text-shadow:
