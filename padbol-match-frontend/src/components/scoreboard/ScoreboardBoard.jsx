@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import '../../styles/ScoreboardDisplay.css';
 
 function formatTimerFromSeconds(totalSeconds) {
@@ -89,6 +90,7 @@ export default function ScoreboardBoard({
   sponsors = [],
   wsConnected = false,
   timerSeconds = 0,
+  onWinnerDismiss,
 }) {
   const display = partido.display || {};
   const torneoLabel = getTorneoLabel(partido);
@@ -104,6 +106,16 @@ export default function ScoreboardBoard({
 
   const scoreClassA = isDeuce ? 'sb-score sb-score--deuce' : display.displayA === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
   const scoreClassB = isDeuce ? 'sb-score sb-score--deuce' : display.displayB === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
+
+  if (terminado && winnerName) {
+    return (
+      <ScoreboardWinnerScreen
+        partido={partido}
+        timerSeconds={timerSeconds}
+        onDismiss={onWinnerDismiss}
+      />
+    );
+  }
 
   return (
     <div className="sb-display">
@@ -172,13 +184,6 @@ export default function ScoreboardBoard({
           <div className="sb-timer">
             ⏱ {formatTimerFromSeconds(timerSeconds)}
           </div>
-
-          {terminado && winnerName && (
-            <div className="sb-finished">
-              <div className="sb-finished__title">MATCH OVER</div>
-              <div className="sb-finished__winner">{winnerName}</div>
-            </div>
-          )}
         </section>
 
         <aside className="sb-panel sb-panel--right">

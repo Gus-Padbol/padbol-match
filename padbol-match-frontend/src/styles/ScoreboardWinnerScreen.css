@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700;900&display=swap');
+
+.sb-winner {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #06060a;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sb-winner-fade-in 1s ease-out forwards;
+}
+
+@keyframes sb-winner-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sb-winner-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sb-winner-confetti__piece {
+  position: absolute;
+  top: -12px;
+  border-radius: 2px;
+  opacity: 0.9;
+  animation-name: sb-confetti-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes sb-confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(var(--sb-confetti-rot, 0deg));
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(calc(var(--sb-confetti-rot, 0deg) + 720deg));
+    opacity: 0.35;
+  }
+}
+
+.sb-winner__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  max-width: 90vw;
+}
+
+.sb-winner-trophy {
+  width: clamp(100px, 18vw, 160px);
+  height: auto;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 0 24px rgba(255, 215, 0, 0.55));
+  animation: sb-trophy-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes sb-trophy-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.sb-winner__label {
+  margin: 0 0 1rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(3rem, 10vw, 80px);
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.sb-winner__name {
+  margin: 0 0 1.25rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(3.5rem, 12vw, 120px);
+  font-weight: 900;
+  line-height: 1.05;
+  color: #FFD700;
+  text-shadow:
+    0 0 20px rgba(255, 215, 0, 0.8),
+    0 0 48px rgba(255, 215, 0, 0.45),
+    0 4px 24px rgba(0, 0, 0, 0.6);
+  word-break: break-word;
+}
+
+.sb-winner__sets-score {
+  margin: 0 0 0.75rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1.75rem, 6vw, 40px);
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.15em;
+}
+
+.sb-winner__duration {
+  margin: 0 0 1.5rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.12em;
+}
+
+.sb-winner-sets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.sb-winner-set-box {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sb-winner-set-box__winner {
+  color: #ffffff;
+}
+
+.sb-winner-set-box__loser {
+  color: rgba(255, 255, 255, 0.35);
+}

@@ -35,6 +35,11 @@ export default function ScoreboardCanchaDisplay() {
     setPartido(payload);
   }, []);
 
+  const handleWinnerDismiss = useCallback(() => {
+    setPartido(null);
+    setPolling(false);
+  }, []);
+
   const { connected: wsConnected, reconnect: reconnectWs } = useScoreboardSocket(
     activePartidoId,
     handleUpdate,
@@ -128,6 +133,7 @@ export default function ScoreboardCanchaDisplay() {
       sponsors={sponsors}
       wsConnected={wsConnected}
       timerSeconds={timerSeconds}
+      onWinnerDismiss={handleWinnerDismiss}
     />
   );
 }
