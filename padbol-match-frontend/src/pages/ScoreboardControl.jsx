@@ -20,8 +20,18 @@ function formatTimer(seconds) {
 function formatGameScore(display, side) {
   if (display.mode === 'deuce') return 'DEUCE';
   const val = side === 'A' ? display.displayA : display.displayB;
-  if (val === 'VENT.') return 'VENTAJA';
+  if (val === 'VENT.') return 'ADV';
   return val ?? '0';
+}
+
+function formatPlayersLine(jugadores) {
+  const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
+  return list.map((j) => j.nombre ?? j.name ?? '—').join(' · ');
+}
+
+function getTorneoLabel(partido) {
+  const name = String(partido?.torneo_nombre || '').trim();
+  return name || 'Partido amistoso';
 }
 
 function canAdminScoreboard(rol, sedeIdPartido, sedeIdUser) {
@@ -105,7 +115,7 @@ export default function ScoreboardControl() {
   if (roleLoading || loading) {
     return (
       <div className="sc-control">
-        <div className="sc-loading">{t('scoreboard.loading', 'Cargando...')}</div>
+        <div className="sc-loading">Loading...</div>
       </div>
     );
   }
@@ -126,6 +136,7 @@ export default function ScoreboardControl() {
   const cronometroActivo = partido.display?.cronometroActivo;
   const canScorePoints = partido.estado === 'en_curso' && partido.cronometro_pausado === false;
   const canUndo = Array.isArray(partido.historial_puntos) && partido.historial_puntos.length > 0;
+  const torneoLabel = getTorneoLabel(partido);
 
   const winnerName = partido.sets_a >= 2
     ? partido.equipo_a_nombre
@@ -136,17 +147,18 @@ export default function ScoreboardControl() {
   return (
     <div className="sc-control">
       <header className="sc-header">
+        <p className="sc-header__torneo">{torneoLabel}</p>
         <h1 className="sc-header__title">
           {partido.equipo_a_nombre} vs {partido.equipo_b_nombre}
         </h1>
         <p className="sc-header__meta">
           {partido.cancha && `${partido.cancha} · `}
-          {t('scoreboard.sede', 'Sede')} #{partido.sede_id}
+          Sede #{partido.sede_id}
           {partido.saque_actual === 'A' && (
-            <span className="sc-serve-indicator" title={t('scoreboard.serveA', 'Saque equipo A')} />
+            <span className="sc-serve-indicator" title="Team A serving" />
           )}
           {partido.saque_actual === 'B' && (
-            <span className="sc-serve-indicator" title={t('scoreboard.serveB', 'Saque equipo B')} />
+            <span className="sc-serve-indicator" title="Team B serving" />
           )}
         </p>
         <div className="sc-timer-bar">
@@ -157,7 +169,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading || terminado || cronometroActivo}
             onClick={() => handleCronometro('start')}
           >
-            {t('scoreboard.start', 'START')}
+            Start
           </button>
           <button
             type="button"
@@ -165,7 +177,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading || terminado || !cronometroActivo}
             onClick={() => handleCronometro('pause')}
           >
-            {t('scoreboard.pause', 'PAUSE')}
+            Pause
           </button>
           <button
             type="button"
@@ -173,7 +185,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading}
             onClick={() => handleCronometro('reset')}
           >
-            {t('scoreboard.reset', 'RESET')}
+            Reset
           </button>
         </div>
       </header>
@@ -182,7 +194,7 @@ export default function ScoreboardControl() {
 
       {terminado && winnerName && (
         <div className="sc-finished-banner">
-          <h2>{t('scoreboard.finished', 'PARTIDO TERMINADO')}</h2>
+          <h2>MATCH OVER</h2>
           <p className="sc-finished-banner__winner">{winnerName}</p>
         </div>
       )}
@@ -190,17 +202,18 @@ export default function ScoreboardControl() {
       <div className="sc-columns">
         <div className="sc-team-card sc-team-card--a">
           <h2 className="sc-team-name">{partido.equipo_a_nombre}</h2>
+          <p className="sc-players-line">{formatPlayersLine(partido.equipo_a_jugadores)}</p>
           <div className="sc-game-score">
             {formatGameScore(display, 'A')}
           </div>
           <div className="sc-stats">
             <div>
               <strong>{partido.games_a}</strong>
-              {t('scoreboard.gamesShort', 'Games')}
+              Games
             </div>
             <div>
               <strong>{partido.sets_a}</strong>
-              {t('scoreboard.setsShort', 'Sets')}
+              Sets
             </div>
           </div>
           <button
@@ -209,23 +222,24 @@ export default function ScoreboardControl() {
             disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/A`)}
           >
-            + {t('scoreboard.pointBtn', 'PUNTO')}
+            + POINT
           </button>
         </div>
 
         <div className="sc-team-card sc-team-card--b">
           <h2 className="sc-team-name">{partido.equipo_b_nombre}</h2>
+          <p className="sc-players-line">{formatPlayersLine(partido.equipo_b_jugadores)}</p>
           <div className="sc-game-score">
             {formatGameScore(display, 'B')}
           </div>
           <div className="sc-stats">
             <div>
               <strong>{partido.games_b}</strong>
-              {t('scoreboard.gamesShort', 'Games')}
+              Games
             </div>
             <div>
               <strong>{partido.sets_b}</strong>
-              {t('scoreboard.setsShort', 'Sets')}
+              Sets
             </div>
           </div>
           <button
@@ -234,7 +248,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/B`)}
           >
-            + {t('scoreboard.pointBtn', 'PUNTO')}
+            + POINT
           </button>
         </div>
       </div>
@@ -246,7 +260,7 @@ export default function ScoreboardControl() {
           disabled={actionLoading || terminado || !canUndo}
           onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/deshacer`)}
         >
-          ↩ {t('scoreboard.undo', 'Deshacer')}
+          ↩ Undo
         </button>
         <button
           type="button"
@@ -254,7 +268,7 @@ export default function ScoreboardControl() {
           disabled={actionLoading || terminado}
           onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/saque`)}
         >
-          ⇄ {t('scoreboard.changeServe', 'Cambiar saque')}
+          ⇄ Change Serve
         </button>
         <button
           type="button"
@@ -262,7 +276,7 @@ export default function ScoreboardControl() {
           disabled={actionLoading || terminado || partido.es_tiebreak}
           onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/tiebreak`)}
         >
-          {t('scoreboard.tiebreak', 'TIE-BREAK')}
+          Tie-Break
         </button>
       </div>
     </div>

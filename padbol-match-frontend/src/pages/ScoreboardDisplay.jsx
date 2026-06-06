@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSafeTranslation } from '../i18n/tSafe';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchSponsors } from '../utils/scoreboardApi';
@@ -54,6 +53,11 @@ function Particles({ count = 12 }) {
   );
 }
 
+function getTorneoLabel(partido) {
+  const name = String(partido?.torneo_nombre || '').trim();
+  return name || 'Partido amistoso';
+}
+
 function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
   const sets = Array.isArray(historial) ? historial : [];
   const boxes = [];
@@ -85,7 +89,6 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
 }
 
 export default function ScoreboardDisplay() {
-  const { t } = useSafeTranslation();
   const { sedeId, partidoId } = useParams();
   const [partido, setPartido] = useState(null);
   const [sponsors, setSponsors] = useState([]);
@@ -137,10 +140,11 @@ export default function ScoreboardDisplay() {
   }
 
   if (!partido) {
-    return <div className="sb-loading">{t('scoreboard.loading', 'Cargando scoreboard...')}</div>;
+    return <div className="sb-loading">Loading scoreboard...</div>;
   }
 
   const display = partido.display || {};
+  const torneoLabel = getTorneoLabel(partido);
   const isDeuce = display.mode === 'deuce';
   const isTiebreak = partido.es_tiebreak;
   const ultimoPunto = partido.ultimo_punto;
@@ -168,19 +172,21 @@ export default function ScoreboardDisplay() {
           <div className="sb-panel__inner">
             <h1 className="sb-team-name">{partido.equipo_a_nombre}</h1>
             <PlayerList jugadores={partido.equipo_a_jugadores} />
-            <div className={`sb-serve ${partido.saque_actual === 'A' ? 'sb-serve--active' : ''}`} />
+            {partido.saque_actual === 'A' ? <div className="sb-serve sb-serve--active" /> : null}
           </div>
         </aside>
 
         <section className="sb-center">
+          <div className="sb-tournament">{torneoLabel}</div>
+
           {isTiebreak && (
-            <div className="sb-tiebreak-badge">{t('scoreboard.tiebreak', 'TIE-BREAK')}</div>
+            <div className="sb-tiebreak-badge">Tie-Break</div>
           )}
 
           <div
             className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''} ${ultimoPunto === 'A' ? 'sb-point-indicator--left' : 'sb-point-indicator--right'}`}
           >
-            <span>{t('scoreboard.point', 'PUNTO')}</span>
+            <span>POINT</span>
             <span className="sb-point-indicator__arrow">▼</span>
           </div>
 
@@ -196,15 +202,15 @@ export default function ScoreboardDisplay() {
 
           <div className="sb-sets-bar">
             <div className="sb-sets-badge sb-sets-badge--blue">
-              {t('scoreboard.sets', 'SETS')} {partido.sets_a}
+              Sets {partido.sets_a}
             </div>
             <div className="sb-games-center">
               <strong>{partido.games_a}</strong>
-              {' '}{t('scoreboard.games', 'GAMES')}{' '}
+              {' '}Games{' '}
               <strong>{partido.games_b}</strong>
             </div>
             <div className="sb-sets-badge sb-sets-badge--red">
-              {partido.sets_b} {t('scoreboard.sets', 'SETS')}
+              {partido.sets_b} Sets
             </div>
           </div>
 
@@ -222,7 +228,7 @@ export default function ScoreboardDisplay() {
 
           {terminado && winnerName && (
             <div className="sb-finished">
-              <div className="sb-finished__title">{t('scoreboard.finished', 'PARTIDO TERMINADO')}</div>
+              <div className="sb-finished__title">MATCH OVER</div>
               <div className="sb-finished__winner">{winnerName}</div>
             </div>
           )}
@@ -234,7 +240,7 @@ export default function ScoreboardDisplay() {
           <div className="sb-panel__inner">
             <h1 className="sb-team-name">{partido.equipo_b_nombre}</h1>
             <PlayerList jugadores={partido.equipo_b_jugadores} />
-            <div className={`sb-serve ${partido.saque_actual === 'B' ? 'sb-serve--active' : ''}`} />
+            {partido.saque_actual === 'B' ? <div className="sb-serve sb-serve--active" /> : null}
           </div>
         </aside>
       </div>

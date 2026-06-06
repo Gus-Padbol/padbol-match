@@ -29,6 +29,15 @@
   margin-bottom: 0.75rem;
 }
 
+.sc-header__torneo {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .sc-header__title {
   font-size: clamp(1.1rem, 4vw, 1.4rem);
   font-weight: 700;
@@ -118,9 +127,17 @@
 .sc-team-name {
   font-size: clamp(0.85rem, 3.5vw, 1.25rem);
   font-weight: 700;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.2rem;
   text-transform: uppercase;
   line-height: 1.15;
+  word-break: break-word;
+}
+
+.sc-players-line {
+  margin: 0 0 0.5rem;
+  font-size: 11px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.4);
   word-break: break-word;
 }
 

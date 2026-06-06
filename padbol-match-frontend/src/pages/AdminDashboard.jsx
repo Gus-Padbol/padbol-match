@@ -2203,6 +2203,7 @@ export default function AdminDashboard({
   const [busquedaRolesAdmin, setBusquedaRolesAdmin] = useState('');
   // keyed by player email: { open: bool, categoria: string, saving: bool }
   const [validacionState, setValidacionState] = useState({});
+  const [sbTorneoNombre, setSbTorneoNombre] = useState('');
   const [sbSedeId, setSbSedeId] = useState(sedeIdKey || (sedeId != null ? String(sedeId) : ''));
   const [sbCancha, setSbCancha] = useState('');
   const [sbEquipoA, setSbEquipoA] = useState('');
@@ -6603,6 +6604,7 @@ export default function AdminDashboard({
     try {
       const partido = await createPartido({
         sede_id,
+        torneo_nombre: sbTorneoNombre.trim() || null,
         cancha: sbCancha.trim() || null,
         equipo_a_nombre: sbEquipoA.trim(),
         equipo_b_nombre: sbEquipoB.trim(),
@@ -10433,6 +10435,19 @@ export default function AdminDashboard({
             }}
           >
             <div style={{ display: 'grid', gap: '14px', marginBottom: '18px' }}>
+              <label style={{ display: 'grid', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                  {t('admin.scoreboard.tournamentName', 'Nombre del torneo (opcional)')}
+                </span>
+                <input
+                  type="text"
+                  value={sbTorneoNombre}
+                  onChange={(e) => setSbTorneoNombre(e.target.value)}
+                  placeholder={t('admin.scoreboard.tournamentNamePlaceholder', 'Ej: Copa Verano 2026')}
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
+                />
+              </label>
+
               <label style={{ display: 'grid', gap: '6px' }}>
                 <span style={{ fontWeight: 600, fontSize: '14px' }}>{t('admin.scoreboard.sede', 'Sede')}</span>
                 <select
