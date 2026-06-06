@@ -154,6 +154,22 @@ export function preciosDuracionToApiPatch(form) {
     precio_90min: p90,
     precio_120min: p120,
     precio_turno: p90,
+    ...surgePreciosToApiPatch(form),
+  };
+}
+
+/** Body parcial Surge — opcional por sede, off por defecto. */
+export function surgePreciosToApiPatch(form) {
+  const surgeActivo = Boolean(form?.surge_activo);
+  if (!surgeActivo) {
+    return { surge_activo: false };
+  }
+  const minimo = parsePrecioDuracionField(form?.surge_precio_minimo);
+  const maximo = parsePrecioDuracionField(form?.surge_precio_maximo);
+  return {
+    surge_activo: true,
+    surge_precio_minimo: minimo,
+    surge_precio_maximo: maximo,
   };
 }
 
@@ -169,5 +185,8 @@ export function miSedeFormPreciosFromSedeRow(sedeRow) {
     precio_90min: toDigits(sedeRow.precio_90min ?? sedeRow.precio_turno),
     precio_120min: toDigits(sedeRow.precio_120min),
     precio_turno: toDigits(sedeRow.precio_turno ?? sedeRow.precio_90min),
+    surge_activo: sedeRow.surge_activo === true,
+    surge_precio_minimo: toDigits(sedeRow.surge_precio_minimo),
+    surge_precio_maximo: toDigits(sedeRow.surge_precio_maximo),
   };
 }

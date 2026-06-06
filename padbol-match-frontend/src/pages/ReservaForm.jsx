@@ -54,6 +54,7 @@ import {
 } from '../utils/sedePreciosDuracion';
 import { generarSlotsHorarioReserva } from '../utils/reservaSlotsHorarios';
 import { precioBaseReservaConDeporte } from '../utils/sedePreciosDeporte';
+import { fetchSurgePrecio } from '../utils/surgePrecio';
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -1076,6 +1077,12 @@ export default function ReservaForm() {
   const reservaExtrasSedeIdRef = useRef(null);
   const reservaExtrasFetchDoneRef = useRef(null);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
+  const [surgeQuote, setSurgeQuote] = useState({
+    precio: null,
+    ocupacion_porcentaje: 0,
+    surge_activo: false,
+    loading: false,
+  });
 
   useEffect(() => {
     const rawId = filtros.sede_id;
@@ -1162,7 +1169,7 @@ export default function ReservaForm() {
     return s;
   }, [reservaExtrasDisponibles, reservaExtrasCantidad]);
 
-  const precioReservaTurnoBase = useMemo(() => {
+  const precioFijoTurno = useMemo(() => {
     if (!sedeSeleccionada) return 0;
     const p = getPrecio(
       sedeSeleccionada,
@@ -1181,6 +1188,40 @@ export default function ReservaForm() {
     reservaDeporteUrl,
     preciosDeporteRows,
   ]);
+
+  useEffect(() => {
+    const sedeId = filtros.sede_id;
+    const hora = formData.hora;
+    if (!sedeId || !hora || pantalla < 2) {
+      setSurgeQuote({ precio: null, ocupacion_porcentaje: 0, surge_activo: false, loading: false });
+      return undefined;
+    }
+    let cancelled = false;
+    setSurgeQuote((prev) => ({ ...prev, loading: true }));
+    fetchSurgePrecio(sedeId, duracionSeleccionadaMin)
+      .then((data) => {
+        if (!cancelled) {
+          setSurgeQuote({ ...data, loading: false });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSurgeQuote({ precio: null, ocupacion_porcentaje: 0, surge_activo: false, loading: false });
+        }
+      });
+    return () => { cancelled = true; };
+  }, [filtros.sede_id, formData.hora, duracionSeleccionadaMin, pantalla]);
+
+  const precioReservaTurnoBase = useMemo(() => {
+    if (
+      surgeQuote.surge_activo
+      && surgeQuote.precio != null
+      && Number.isFinite(Number(surgeQuote.precio))
+    ) {
+      return Number(surgeQuote.precio);
+    }
+    return precioFijoTurno;
+  }, [surgeQuote, precioFijoTurno]);
 
   const reservaFeeRateDisplay = useMemo(
     () => reservaPlatformFeeRateForSede(sedeSeleccionada),
@@ -2639,21 +2680,27 @@ export default function ReservaForm() {
 
             {/* Price badge — shown as soon as a time is selected */}
             {formData.hora && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '12px 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
                   💰{' '}
-                  {Number(
-                    getPrecio(
-                      sedeSeleccionada,
-                      formData.hora,
-                      formData.fecha,
-                      duracionSeleccionadaMin,
-                      reservaDeporteUrl,
-                      preciosDeporteRows,
-                    ),
-                  ).toLocaleString('es-AR')}{' '}
+                  {Number(precioReservaTurnoBase).toLocaleString('es-AR')}{' '}
                   {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
+                {surgeQuote.surge_activo && surgeQuote.precio != null ? (
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#f59e0b',
+                      background: 'rgba(245, 158, 11, 0.12)',
+                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      borderRadius: '999px',
+                      padding: '3px 8px',
+                    }}
+                  >
+                    ⚡ Precio dinámico
+                  </span>
+                ) : null}
                 {(() => {
                   const subEtiqueta =
                     nombreFranjaActiva(sedeSeleccionada, formData.hora, formData.fecha) ||

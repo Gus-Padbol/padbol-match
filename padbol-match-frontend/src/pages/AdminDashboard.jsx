@@ -367,6 +367,9 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     precio_120min: sedeData.precio_120min ?? '',
     precio_turno: sedeData.precio_turno ?? sedeData.precio_90min ?? '',
     moneda: sedeData.moneda || 'ARS',
+    surge_activo: sedeData.surge_activo === true,
+    surge_precio_minimo: sedeData.surge_precio_minimo ?? '',
+    surge_precio_maximo: sedeData.surge_precio_maximo ?? '',
     descripcion: sedeData.descripcion || '',
     slogan: sedeData.slogan != null ? String(sedeData.slogan) : '',
     historia: sedeData.historia != null ? String(sedeData.historia) : '',
@@ -12911,6 +12914,64 @@ export default function AdminDashboard({
               <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 {t('admin.sedes.pricesDurationHint')}
               </p>
+
+              <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+                <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
+                  💥 Surge — Precios Dinámicos
+                </h4>
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginBottom: '14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!miSedeForm.surge_activo}
+                    onChange={(e) => setMiSedeForm((p) => ({ ...p, surge_activo: e.target.checked }))}
+                  />
+                  Activar Surge
+                </label>
+                {miSedeForm.surge_activo ? (
+                  <>
+                    {[
+                      { field: 'surge_precio_minimo', label: 'Precio mínimo (ARS)' },
+                      { field: 'surge_precio_maximo', label: 'Precio máximo (ARS)' },
+                    ].map(({ field, label }) => (
+                      <div
+                        key={field}
+                        className="admin-mi-sede-field-row admin-mi-sede-precio-base"
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}
+                      >
+                        <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '180px' }}>{label}</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '100%' }}>
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>ARS</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={precioDuracionInputDisplay(miSedeForm[field])}
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                              setMiSedeForm((p) => ({ ...p, [field]: digits }));
+                            }}
+                            placeholder="0"
+                            style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : null}
+                <p style={{ margin: miSedeForm.surge_activo ? '4px 0 0' : 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  El sistema ajusta el precio automáticamente según la ocupación de canchas.
+                </p>
+              </div>
 
               {isSuperAdmin ? (
                 <>
