@@ -404,6 +404,9 @@
   width: 100%;
   flex-shrink: 0;
   margin-top: 0;
+  min-height: 38vh;
+  max-height: 38vh;
+  overflow: hidden;
 }
 
 @keyframes floatScore {
@@ -437,7 +440,7 @@
 .sb-score--special {
   font-family: 'Oswald', sans-serif;
   color: #ffffff;
-  font-size: max(12vw, 8rem);
+  font-size: 10vw;
   font-weight: 900;
   letter-spacing: -0.02em;
   text-shadow:
@@ -473,6 +476,8 @@
 }
 
 .sb-sets-history {
+  position: relative;
+  z-index: 10;
   display: flex;
   width: 100%;
   gap: 1.5vw;
