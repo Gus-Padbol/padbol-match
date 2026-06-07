@@ -212,7 +212,7 @@
 
 .sb-join__success {
   display: grid;
-  gap: 16px;
+  gap: 20px;
   text-align: center;
 }
 
@@ -220,6 +220,68 @@
   margin: 0;
   font-size: 20px;
   font-weight: 700;
+}
+
+.sb-join__live {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sb-join__live-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sb-join__live-btn {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 17px;
+  font-weight: 700;
+  font-family: inherit;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  line-height: 1.25;
+  min-height: 52px;
+}
+
+.sb-join__live-btn--primary {
+  background: #00ff88;
+  color: #04120b;
+}
+
+.sb-join__live-btn--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sb-join__live-fallback {
+  display: grid;
+  gap: 10px;
+}
+
+.sb-join__live-url {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-all;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: left;
 }
 
 .sb-join__cta {

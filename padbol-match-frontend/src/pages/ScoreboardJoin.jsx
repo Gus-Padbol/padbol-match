@@ -3,10 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import { useSafeTranslation } from '../i18n/tSafe';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
+import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import { fetchCanchaActiva, postJugadorTemp } from '../utils/scoreboardApi';
 import '../styles/ScoreboardJoin.css';
 
 const FOTO_BUCKET = 'scoreboard-fotos';
+const PUBLIC_BASE = 'https://padbolmatch.com';
 
 function normalizeEquipo(raw) {
   const eq = String(raw || '').trim().toLowerCase();
@@ -48,6 +50,7 @@ export default function ScoreboardJoin() {
   const [fotoPreview, setFotoPreview] = useState('');
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const loadCancha = useCallback(async () => {
     setLoading(true);
@@ -176,6 +179,53 @@ export default function ScoreboardJoin() {
     setSlot('');
   };
 
+  const displayPath = activo?.partido_id
+    ? `/display/${sedeId}/scoreboard/${activo.partido_id}`
+    : '';
+  const displayPublicUrl = activo?.partido_id
+    ? `${PUBLIC_BASE}/display/${sedeId}/scoreboard/${activo.partido_id}`
+    : '';
+
+  const copyDisplayLink = async () => {
+    if (!displayPublicUrl) return;
+    try {
+      await navigator.clipboard.writeText(displayPublicUrl);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2200);
+      return;
+    } catch {
+      /* legacy */
+    }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = displayPublicUrl;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2200);
+    } catch {
+      window.prompt(t('scoreboard.join.copyPrompt', 'Copiá este link:'), displayPublicUrl);
+    }
+  };
+
+  const onShareDisplay = async () => {
+    if (!displayPublicUrl) return;
+    const title = t('scoreboard.join.shareTitle', 'Seguí el partido en vivo');
+    const text = t('scoreboard.join.shareText', 'Mirá el marcador en tiempo real');
+    try {
+      await navigator.share({ title, text, url: displayPublicUrl });
+    } catch (e) {
+      if (e?.name !== 'AbortError') {
+        await copyDisplayLink();
+      }
+    }
+  };
+
   return (
     <div className="sb-join">
       <div className="sb-join__card">
@@ -211,6 +261,43 @@ export default function ScoreboardJoin() {
             <p className="sb-join__success-msg">
               {t('scoreboard.join.success', '¡Listo! Ya aparecés en el marcador 🎉')}
             </p>
+
+            <div className="sb-join__live">
+              <p className="sb-join__live-title">
+                {t('scoreboard.join.liveTitle', 'Seguí el partido en vivo')}
+              </p>
+              <a
+                className="sb-join__live-btn sb-join__live-btn--primary"
+                href={displayPath}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('scoreboard.join.watchLive', '📺 Ver marcador en vivo')}
+              </a>
+              {canUseNavigatorShare() ? (
+                <button
+                  type="button"
+                  className="sb-join__live-btn sb-join__live-btn--secondary"
+                  onClick={() => void onShareDisplay()}
+                >
+                  {t('scoreboard.join.shareLive', '📤 Compartir marcador')}
+                </button>
+              ) : (
+                <div className="sb-join__live-fallback">
+                  <p className="sb-join__live-url">{displayPublicUrl}</p>
+                  <button
+                    type="button"
+                    className="sb-join__live-btn sb-join__live-btn--secondary"
+                    onClick={() => void copyDisplayLink()}
+                  >
+                    {linkCopied
+                      ? t('scoreboard.join.linkCopied', '¡Link copiado!')
+                      : t('scoreboard.join.copyLink', 'Copiar link')}
+                  </button>
+                </div>
+              )}
+            </div>
+
             <a
               className="sb-join__cta"
               href="https://padbolmatch.com"
