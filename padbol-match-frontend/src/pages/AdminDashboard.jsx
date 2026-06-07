@@ -444,6 +444,22 @@ function buildSurgeConfigsFromApi(configs) {
   return map;
 }
 
+function extractSurgeDeportesFromCanchas(canchas) {
+  const list = Array.isArray(canchas) ? canchas : [];
+  const deportes = [...new Set(list.map((c) => c.deporte).filter(Boolean))];
+  console.log('Surge deportes from canchas:', deportes);
+  return deportes.map((raw) => String(raw).trim().toLowerCase()).filter(Boolean);
+}
+
+function surgeDeporteRowsFromCanchas(canchas) {
+  const deportes = extractSurgeDeportesFromCanchas(canchas);
+  const labelByKey = Object.fromEntries(DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => [o.key, o.label]));
+  return deportes.map((key) => ({
+    key,
+    label: labelByKey[key] || key.charAt(0).toUpperCase() + key.slice(1),
+  }));
+}
+
 function defaultSurgeConfig(overrides = {}) {
   return {
     activo: false,
@@ -5441,30 +5457,18 @@ export default function AdminDashboard({
     }
     let cancelled = false;
     const headers = { Authorization: `Bearer ${session.access_token}` };
-    const canchasPrimaryUrl = `${apiBaseUrl}/api/canchas?sede_id=${encodeURIComponent(String(sedeId))}`;
-    const canchasFallbackUrl = `${apiBaseUrl}/api/sedes/${encodeURIComponent(String(sedeId))}/canchas`;
-
     const loadCanchasForSurge = async () => {
       try {
-        let res = await fetch(canchasPrimaryUrl, { headers });
-        let j = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          res = await fetch(canchasFallbackUrl, { headers });
-          j = await res.json().catch(() => ({}));
-          if (!res.ok) return [];
-        }
-        if (Array.isArray(j?.canchas)) return j.canchas;
-        if (Array.isArray(j)) return j;
-        return [];
+        const res = await fetch(
+          `${apiBaseUrl}/api/canchas?sede_id=${encodeURIComponent(String(sedeId))}`,
+          { headers },
+        );
+        const response = await res.json().catch(() => ({}));
+        if (!res.ok) return [];
+        const canchas = Array.isArray(response?.canchas) ? response.canchas : [];
+        return canchas;
       } catch {
-        try {
-          const res = await fetch(canchasFallbackUrl, { headers });
-          const j = await res.json().catch(() => ({}));
-          if (!res.ok || !Array.isArray(j?.canchas)) return [];
-          return j.canchas;
-        } catch {
-          return [];
-        }
+        return [];
       }
     };
 
@@ -5488,11 +5492,6 @@ export default function AdminDashboard({
       });
     return () => { cancelled = true; };
   }, [sedeId, session?.access_token, apiBaseUrl]);
-
-  useEffect(() => {
-    if (activeTab !== 'mi_sede' || !sedeId || miSedeLoading) return;
-    setSurgeCanchasList(canchas);
-  }, [activeTab, sedeId, canchas, miSedeLoading]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
@@ -5849,17 +5848,10 @@ export default function AdminDashboard({
   };
 
 
-  const surgeDeportesOptions = useMemo(() => {
-    const list = activeTab === 'mi_sede' && !miSedeLoading ? canchas : surgeCanchasList;
-    const deportesSet = new Set();
-    for (const c of list) {
-      const dep = String(c?.deporte || '').trim().toLowerCase();
-      if (dep) deportesSet.add(dep);
-    }
-    return DEPORTES_CANCHA_SEDE_OPTIONS.filter(({ key }) => deportesSet.has(key));
-  }, [activeTab, miSedeLoading, canchas, surgeCanchasList]);
-
-  const surgeCanchasDataReady = activeTab === 'mi_sede' ? !miSedeLoading : surgeCanchasReady;
+  const surgeDeportesOptions = useMemo(
+    () => surgeDeporteRowsFromCanchas(surgeCanchasList),
+    [surgeCanchasList],
+  );
 
   const persistSurgeConfigDeporte = async (deporteKey, cfgOverride, { trackSaving = true } = {}) => {
     if (!sedeId || !session?.access_token) return false;
@@ -13216,7 +13208,7 @@ export default function AdminDashboard({
                   Activar Surge
                 </label>
                 {miSedeForm.surge_activo ? (
-                    surgeCanchasDataReady && surgeDeportesOptions.length === 0 ? (
+                    surgeCanchasReady && surgeDeportesOptions.length === 0 ? (
                       <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                         Configurá el deporte de tus canchas para activar Surge por deporte.
                       </p>
