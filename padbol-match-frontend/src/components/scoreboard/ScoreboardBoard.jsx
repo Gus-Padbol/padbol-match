@@ -44,8 +44,38 @@ function PlayerList({ jugadores }) {
   );
 }
 
+function formatTorneoNombreLines(text) {
+  const normalized = String(text || '').trim().toUpperCase();
+  if (!normalized) return [];
+  if (normalized.length <= 20) return [normalized];
+
+  const words = normalized.split(/\s+/).filter(Boolean);
+  if (words.length <= 1) {
+    const mid = Math.ceil(normalized.length / 2);
+    return [normalized.slice(0, mid), normalized.slice(mid)].filter(Boolean);
+  }
+
+  const totalLen = normalized.length;
+  let bestSplit = 1;
+  let bestDiff = Infinity;
+  for (let i = 1; i < words.length; i += 1) {
+    const line1 = words.slice(0, i).join(' ');
+    const diff = Math.abs(line1.length - totalLen / 2);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestSplit = i;
+    }
+  }
+
+  const line1 = words.slice(0, bestSplit).join(' ');
+  const line2 = words.slice(bestSplit).join(' ');
+  return line2 ? [line1, line2] : [line1];
+}
+
 function TournamentBrand({ torneoNombre }) {
   const hasTorneoNombre = Boolean(torneoNombre);
+  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre) : [];
+
   return (
     <div className="sb-tournament-brand">
       <img
@@ -54,12 +84,16 @@ function TournamentBrand({ torneoNombre }) {
         className="sb-tournament-brand__logo"
         style={{
           mixBlendMode: 'screen',
-          width: hasTorneoNombre ? '200px' : '280px',
+          width: hasTorneoNombre ? '420px' : '500px',
           height: 'auto',
         }}
       />
       {hasTorneoNombre ? (
-        <div className="sb-tournament-brand__name">{torneoNombre}</div>
+        <div className="sb-tournament-brand__name">
+          {torneoLines.map((line) => (
+            <span key={line} className="sb-tournament-brand__name-line">{line}</span>
+          ))}
+        </div>
       ) : null}
     </div>
   );
