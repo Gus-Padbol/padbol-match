@@ -2,8 +2,31 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
+import { fetchJugadoresTemp } from '../../utils/scoreboardApi';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardDisplay.css';
+
+function mergeJugadoresWithTemp(jugadores, equipo, tempList) {
+  const side = String(equipo || 'A').toLowerCase();
+  const base = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
+  const temps = (Array.isArray(tempList) ? tempList : []).filter(
+    (j) => String(j.equipo || '').toLowerCase() === side,
+  );
+
+  return [0, 1, 2, 3].map((idx) => {
+    const slot = idx + 1;
+    const temp = temps.find((t) => Number(t.slot) === slot);
+    const baseJ = base[idx] || {};
+    if (!temp) return baseJ;
+    return {
+      ...baseJ,
+      nombre: temp.nombre || baseJ.nombre || baseJ.name,
+      jersey: temp.numero ?? baseJ.jersey ?? baseJ.numero,
+      numero: temp.numero ?? baseJ.numero ?? baseJ.jersey,
+      foto_url: temp.foto_url || baseJ.foto_url,
+    };
+  });
+}
 
 function formatTimerFromSeconds(totalSeconds) {
   const s = Math.max(0, Number(totalSeconds) || 0);
@@ -36,7 +59,12 @@ function PlayerList({ jugadores }) {
             <span className={`sb-player__num ${isTwoDigit ? 'sb-player__num--two-digit' : ''}`}>
               {jerseyLabel}
             </span>
-            <span className="sb-player__name">{j.nombre ?? j.name ?? '—'}</span>
+            <span className="sb-player__name-wrap">
+              {j.foto_url ? (
+                <img src={j.foto_url} alt="" className="sb-player__photo" />
+              ) : null}
+              <span className="sb-player__name">{j.nombre ?? j.name ?? '—'}</span>
+            </span>
           </li>
         );
       })}
@@ -235,7 +263,41 @@ export default function ScoreboardBoard({
   );
   const uniformA = resolveUniformJerseyColors(partido, 'A');
   const uniformB = resolveUniformJerseyColors(partido, 'B');
+  const [jugadoresTemp, setJugadoresTemp] = useState([]);
   const [showConfettiWinner, setShowConfettiWinner] = useState(false);
+
+  const jugadoresA = useMemo(
+    () => mergeJugadoresWithTemp(partido.equipo_a_jugadores, 'A', jugadoresTemp),
+    [partido.equipo_a_jugadores, jugadoresTemp],
+  );
+  const jugadoresB = useMemo(
+    () => mergeJugadoresWithTemp(partido.equipo_b_jugadores, 'B', jugadoresTemp),
+    [partido.equipo_b_jugadores, jugadoresTemp],
+  );
+
+  useEffect(() => {
+    if (!partido?.id || terminado) {
+      setJugadoresTemp([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const loadTempJugadores = async () => {
+      try {
+        const rows = await fetchJugadoresTemp(partido.id);
+        if (!cancelled) setJugadoresTemp(rows);
+      } catch {
+        /* polling silencioso */
+      }
+    };
+
+    void loadTempJugadores();
+    const intervalId = window.setInterval(loadTempJugadores, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [partido?.id, terminado]);
 
   useEffect(() => {
     if (!terminado || !winnerName) {
@@ -277,7 +339,7 @@ export default function ScoreboardBoard({
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <PlayerList jugadores={partido.equipo_a_jugadores} />
+            <PlayerList jugadores={jugadoresA} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -359,7 +421,7 @@ export default function ScoreboardBoard({
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <PlayerList jugadores={partido.equipo_b_jugadores} />
+            <PlayerList jugadores={jugadoresB} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />

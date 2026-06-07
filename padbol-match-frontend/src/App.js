@@ -70,6 +70,7 @@ import {
 import ScoreboardDisplay from './pages/ScoreboardDisplay';
 import ScoreboardCanchaDisplay from './pages/ScoreboardCanchaDisplay';
 import ScoreboardControl from './pages/ScoreboardControl';
+import ScoreboardJoin from './pages/ScoreboardJoin';
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -461,6 +462,14 @@ function App() {
         <GlobalErrorBoundary>
           <AppLanguageGate>
             <Routes>
+              <Route
+                path="/scoreboard/join/:sedeId/:cancha/:equipo"
+                element={(
+                  <ErrorBoundary label="carga de jugador por QR">
+                    <ScoreboardJoin />
+                  </ErrorBoundary>
+                )}
+              />
               <Route
                 path="/display/:sedeId/scoreboard/:partidoId"
                 element={(

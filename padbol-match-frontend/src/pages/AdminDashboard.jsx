@@ -5,6 +5,7 @@ import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPartidoPreview';
+import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
 import {
@@ -2390,6 +2391,7 @@ export default function AdminDashboard({
   const [sbCopied, setSbCopied] = useState('');
   const [sbEditingId, setSbEditingId] = useState(null);
   const [sbPreviewPartidoId, setSbPreviewPartidoId] = useState(null);
+  const [sbQrPartido, setSbQrPartido] = useState(null);
   const [sbPartidosList, setSbPartidosList] = useState([]);
   const [sbPartidosLoading, setSbPartidosLoading] = useState(false);
   const [sbPartidosError, setSbPartidosError] = useState('');
@@ -11199,6 +11201,13 @@ export default function AdminDashboard({
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                             <button
                               type="button"
+                              onClick={() => setSbQrPartido(p)}
+                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+                            >
+                              📱 {t('admin.scoreboard.qrCourtBtn', 'QR Cancha')}
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => toggleSbPartidoPreview(p.id)}
                               aria-expanded={sbPreviewPartidoId === p.id}
                               style={{
@@ -11309,6 +11318,13 @@ export default function AdminDashboard({
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {sbQrPartido ? (
+        <ScoreboardCanchaQrModal
+          partido={sbQrPartido}
+          onClose={() => setSbQrPartido(null)}
+        />
       ) : null}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">

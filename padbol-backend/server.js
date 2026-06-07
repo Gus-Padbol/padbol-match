@@ -27,6 +27,7 @@ import {
 import { DateTime } from 'luxon';
 import { registerModuloClasesRoutes } from './lib/moduloClases.js';
 import { registerModuloSponsorsRoutes } from './lib/moduloSponsors.js';
+import { mountScoreboardRoutes } from './routes/scoreboard.js';
 import { registerAdminPushRoutes } from './lib/adminPushNotifications.js';
 import {
   isMercadoPagoTestAccessToken,
@@ -554,6 +555,14 @@ async function authUserFromBearer(req) {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user?.email) return null;
   return data.user;
+}
+
+async function getAuthenticatedUser(req) {
+  const user = await authUserFromBearer(req);
+  if (!user) {
+    return { user: null, status: 401, error: 'Token inválido o expirado' };
+  }
+  return { user, status: null, error: null };
 }
 
 async function fetchUserRoleRow(email) {
@@ -17097,6 +17106,14 @@ registerModuloSponsorsRoutes(app, {
   adminListScopeFromRequest,
   assertEsEditorContenidoOSuperAdmin,
   assertUsuarioPuedeAdministrarSede,
+});
+
+mountScoreboardRoutes(app, {
+  supabaseAdmin,
+  getAuthenticatedUser,
+  fetchUserRoleRowForAuthUser,
+  legacySuperAdminEmails: LEGACY_SUPER_ADMIN_EMAILS_API,
+  io: null,
 });
 
 registerAdminPushRoutes(app, {

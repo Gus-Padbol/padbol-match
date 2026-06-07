@@ -80,6 +80,36 @@ export async function createPartido(payload) {
   return data;
 }
 
+export async function fetchCanchaActiva(sedeId, cancha) {
+  const encodedCancha = encodeURIComponent(String(cancha || '').trim());
+  const res = await fetch(
+    `${API_BASE}/api/scoreboard/cancha-activa/${encodeURIComponent(String(sedeId))}/${encodedCancha}`,
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error al cargar cancha activa');
+  return data;
+}
+
+export async function fetchJugadoresTemp(partidoId) {
+  const res = await fetch(
+    `${API_BASE}/api/scoreboard/jugadores-temp/${encodeURIComponent(String(partidoId))}`,
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error al cargar jugadores temporales');
+  return data.jugadores || [];
+}
+
+export async function postJugadorTemp(payload) {
+  const res = await fetch(`${API_BASE}/api/scoreboard/jugador-temp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error al guardar jugador');
+  return data.jugador || data;
+}
+
 export async function updatePartido(partidoId, payload) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}`, {
