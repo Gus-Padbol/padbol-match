@@ -11121,8 +11121,8 @@ export default function AdminDashboard({
             </button>
           </form>
 
-          <div style={{ marginTop: '28px', maxWidth: '960px' }}>
-            <h3 style={{ margin: '0 0 12px' }}>
+          <div className="admin-scoreboard-partidos-list" style={{ marginTop: '28px', maxWidth: '960px' }}>
+            <h3 className="admin-scoreboard-partidos-list__title">
               {t('admin.scoreboard.partidosListTitle', 'Partidos de la sede')}
             </h3>
             {!sbSedeId ? (
@@ -11163,14 +11163,14 @@ export default function AdminDashboard({
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', alignItems: 'baseline', justifyContent: 'space-between' }}>
                           <div style={{ minWidth: 0 }}>
                             {torneo ? (
-                              <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              <p className="admin-scoreboard-partidos-list__meta admin-scoreboard-partidos-list__meta--torneo">
                                 {torneo}
                               </p>
                             ) : null}
-                            <p style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
+                            <p className="admin-scoreboard-partidos-list__match">
                               {p.equipo_a_nombre} vs {p.equipo_b_nombre}
                             </p>
-                            <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                            <p className="admin-scoreboard-partidos-list__meta">
                               {formatScoreboardPartidoFecha(p.created_at)}
                             </p>
                           </div>

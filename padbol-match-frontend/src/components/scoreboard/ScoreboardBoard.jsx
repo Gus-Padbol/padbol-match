@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
@@ -181,8 +182,22 @@ export default function ScoreboardBoard({
   );
   const uniformA = resolveUniformJerseyColors(partido, 'A');
   const uniformB = resolveUniformJerseyColors(partido, 'B');
+  const [showConfettiWinner, setShowConfettiWinner] = useState(false);
+
+  useEffect(() => {
+    if (!terminado || !winnerName) {
+      setShowConfettiWinner(false);
+      return undefined;
+    }
+    setShowConfettiWinner(false);
+    const id = window.setTimeout(() => setShowConfettiWinner(true), 4000);
+    return () => window.clearTimeout(id);
+  }, [terminado, winnerName, partido?.id]);
 
   if (terminado && winnerName) {
+    if (!showConfettiWinner) {
+      return <ScoreboardDramaticResultScreen partido={partido} />;
+    }
     return (
       <ScoreboardWinnerScreen
         partido={partido}

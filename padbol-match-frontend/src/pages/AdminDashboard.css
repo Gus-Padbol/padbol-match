@@ -1967,3 +1967,29 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 #admin-scoreboard-form h3 {
   color: var(--text-primary);
 }
+
+/* Scoreboard admin: lista de partidos de la sede */
+.admin-scoreboard-partidos-list__title {
+  margin: 0 0 12px;
+  color: var(--text-primary);
+}
+
+.admin-scoreboard-partidos-list__match {
+  margin: 0;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.admin-scoreboard-partidos-list__meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.admin-scoreboard-partidos-list__meta--torneo {
+  margin: 0 0 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
