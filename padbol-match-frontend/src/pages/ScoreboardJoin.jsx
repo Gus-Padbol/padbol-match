@@ -13,6 +13,13 @@ function normalizeEquipo(raw) {
   return eq === 'b' ? 'b' : 'a';
 }
 
+function ladoLabel(equipo, t) {
+  if (equipo === 'b') {
+    return t('scoreboard.join.sideRed', '🔴 Lado Rojo');
+  }
+  return t('scoreboard.join.sideBlue', '🔵 Lado Azul');
+}
+
 function playerInitials(name) {
   const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
@@ -156,9 +163,7 @@ export default function ScoreboardJoin() {
         <p className="sb-join__meta">
           {cancha}
           {' · '}
-          {t('scoreboard.join.team', 'Equipo')}
-          {' '}
-          {equipo.toUpperCase()}
+          {ladoLabel(equipo, t)}
         </p>
 
         {loading ? (
