@@ -557,7 +557,7 @@
   align-items: center;
   width: 100%;
   flex-shrink: 0;
-  margin-top: auto;
+  margin-top: -6vh;
   padding-bottom: var(--sb-sets-timer-footer-pad);
   position: relative;
   z-index: 60;
@@ -572,7 +572,7 @@
   justify-content: center;
   overflow: visible;
   flex-shrink: 0;
-  margin-top: 1.5vh;
+  margin-top: 0;
 }
 
 .sb-set-history-item {
