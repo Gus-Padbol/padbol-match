@@ -359,16 +359,6 @@
 
 .sb-tournament-brand__logo {
   display: block;
-  height: auto;
-  mix-blend-mode: screen;
-}
-
-.sb-tournament-brand__logo--sm {
-  width: 120px;
-}
-
-.sb-tournament-brand__logo--md {
-  width: 160px;
 }
 
 .sb-tournament-brand__name {

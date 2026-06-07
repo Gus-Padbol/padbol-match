@@ -51,7 +51,12 @@ function TournamentBrand({ torneoNombre }) {
       <img
         src="/padbol-match-logo.png"
         alt="Padbol Match"
-        className={`sb-tournament-brand__logo ${hasTorneoNombre ? 'sb-tournament-brand__logo--sm' : 'sb-tournament-brand__logo--md'}`}
+        className="sb-tournament-brand__logo"
+        style={{
+          mixBlendMode: 'screen',
+          width: hasTorneoNombre ? '120px' : '160px',
+          height: 'auto',
+        }}
       />
       {hasTorneoNombre ? (
         <div className="sb-tournament-brand__name">{torneoNombre}</div>
