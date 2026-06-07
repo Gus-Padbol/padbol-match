@@ -60,9 +60,10 @@ export default function ScoreboardDramaticResultScreen({ partido }) {
             <UniformJerseyStrip
               color1={winnerUniform.color1}
               color2={winnerUniform.color2}
+              size="tv-vertical"
             />
           ) : (
-            <UniformJerseyStrip color1="#ffffff" color2="#cbd5e1" size="tv" />
+            <UniformJerseyStrip color1="#ffffff" color2="#cbd5e1" size="tv-vertical" />
           )}
         </div>
         <h1 className="sb-dramatic__winner-name">{winnerName}</h1>

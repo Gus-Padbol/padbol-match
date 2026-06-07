@@ -1,16 +1,38 @@
 .sb-uniform-strip {
   position: relative;
   display: inline-flex;
-  flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   vertical-align: middle;
 }
 
 .sb-uniform-strip--tv {
+  flex-direction: row;
+  width: 56px;
+  height: 8px;
+  border-radius: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.sb-uniform-strip--tv .sb-uniform-strip__band {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+
+.sb-uniform-strip--tv .sb-uniform-strip__sheen {
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+}
+
+.sb-uniform-strip--tv-vertical,
+.sb-uniform-strip--compact {
+  flex-direction: column;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.sb-uniform-strip--tv-vertical {
   width: 20px;
   height: 64px;
 }
@@ -20,15 +42,20 @@
   height: 44px;
 }
 
-.sb-uniform-strip__band {
+.sb-uniform-strip--tv-vertical .sb-uniform-strip__band,
+.sb-uniform-strip--compact .sb-uniform-strip__band {
   flex: 1 1 50%;
   min-height: 0;
+}
+
+.sb-uniform-strip--tv-vertical .sb-uniform-strip__sheen,
+.sb-uniform-strip--compact .sb-uniform-strip__sheen {
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
 }
 
 .sb-uniform-strip__sheen {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  border-radius: 6px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
 }

@@ -51,10 +51,12 @@ function getTorneoLabel(partido) {
 
 function TeamNameRow({ name, serving, color1, color2 }) {
   return (
-    <div className="sb-team-name-row">
-      {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
-      <UniformJerseyStrip color1={color1} color2={color2} />
+    <div className="sb-team-name-block">
       <h1 className="sb-team-name">{name}</h1>
+      <div className="sb-team-name-meta">
+        {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
+        <UniformJerseyStrip color1={color1} color2={color2} size="tv" />
+      </div>
     </div>
   );
 }

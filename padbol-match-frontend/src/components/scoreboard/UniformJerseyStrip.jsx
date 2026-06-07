@@ -2,6 +2,12 @@ import React from 'react';
 import { hasUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardUniformStrip.css';
 
+const SIZE_CLASS = {
+  tv: 'sb-uniform-strip--tv',
+  'tv-vertical': 'sb-uniform-strip--tv-vertical',
+  compact: 'sb-uniform-strip--compact',
+};
+
 export default function UniformJerseyStrip({
   color1,
   color2,
@@ -12,7 +18,7 @@ export default function UniformJerseyStrip({
 
   const isDual = Boolean(color1 && color2 && color1 !== color2);
   const solidColor = color1 || color2;
-  const sizeClass = size === 'compact' ? 'sb-uniform-strip--compact' : 'sb-uniform-strip--tv';
+  const sizeClass = SIZE_CLASS[size] || SIZE_CLASS.tv;
   const rootClass = ['sb-uniform-strip', sizeClass, className].filter(Boolean).join(' ');
 
   return (
