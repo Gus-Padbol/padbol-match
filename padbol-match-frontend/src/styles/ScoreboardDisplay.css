@@ -18,6 +18,8 @@
   --sb-tournament-brand-gap: 0.75rem;
   --sb-tournament-name-offset: 12px;
   --sb-tournament-name-lines-height: calc(2 * 1.25 * 1.6vw);
+  --sb-panel-offset-up: 6cm;
+  --sb-timer-footer-gap: 1cm;
 }
 
 * {
@@ -88,7 +90,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding-top: calc(var(--sb-tournament-header-top) + var(--sb-tournament-logo-solo));
+  padding-top: max(
+    0px,
+    calc(var(--sb-tournament-header-top) + var(--sb-tournament-logo-solo) - var(--sb-panel-offset-up))
+  );
   padding-bottom: 0;
   padding-left: 2vw;
   padding-right: 1vw;
@@ -96,12 +101,16 @@
 
 .sb-display--has-torneo .sb-panel--left,
 .sb-display--has-torneo .sb-panel--right {
-  padding-top: calc(
-    var(--sb-tournament-header-top)
-    + var(--sb-tournament-logo-with-name)
-    + var(--sb-tournament-brand-gap)
-    + var(--sb-tournament-name-offset)
-    + var(--sb-tournament-name-lines-height)
+  padding-top: max(
+    0px,
+    calc(
+      var(--sb-tournament-header-top)
+      + var(--sb-tournament-logo-with-name)
+      + var(--sb-tournament-brand-gap)
+      + var(--sb-tournament-name-offset)
+      + var(--sb-tournament-name-lines-height)
+      - var(--sb-panel-offset-up)
+    )
   );
 }
 
@@ -355,11 +364,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  height: 100%;
   padding: 0 1vw;
   background: var(--sb-center-bg);
   z-index: 10;
   position: relative;
-  gap: 2vh;
+  gap: 1vh;
   min-width: 0;
 }
 
@@ -413,9 +423,10 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: 0;
   overflow: visible;
-  flex-shrink: 0;
-  margin-top: 2vh;
+  flex: 1;
+  margin-top: 0;
 }
 
 .sb-point-indicator {
@@ -452,8 +463,8 @@
   width: 100%;
   flex-shrink: 0;
   margin-top: 0;
-  min-height: 38vh;
-  max-height: 38vh;
+  min-height: 30vh;
+  max-height: 30vh;
   overflow: hidden;
 }
 
@@ -549,7 +560,7 @@
   justify-content: center;
   overflow: visible;
   flex-shrink: 0;
-  margin-top: 4vh;
+  margin-top: 1.5vh;
 }
 
 .sb-set-history-item {
@@ -632,8 +643,8 @@
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.12em;
   flex-shrink: 0;
-  margin-top: 2.5vh;
-  margin-bottom: 0;
+  margin-top: auto;
+  margin-bottom: var(--sb-timer-footer-gap);
 }
 
 /* ── Sponsors footer ── */
