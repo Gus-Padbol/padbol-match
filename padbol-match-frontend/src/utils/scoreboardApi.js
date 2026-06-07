@@ -39,6 +39,19 @@ export async function fetchPartido(partidoId) {
   return data;
 }
 
+export async function fetchPartidosBySede(sedeId) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(
+    `${API_BASE}/api/scoreboard/partidos?sede_id=${encodeURIComponent(String(sedeId))}`,
+    { headers },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error al cargar partidos');
+  if (Array.isArray(data.partidos)) return data.partidos;
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
 export async function fetchPartidoByCancha(sedeId, cancha) {
   const encodedCancha = encodeURIComponent(String(cancha || '').trim());
   const res = await fetch(`${API_BASE}/api/scoreboard/cancha/${sedeId}/${encodedCancha}`);

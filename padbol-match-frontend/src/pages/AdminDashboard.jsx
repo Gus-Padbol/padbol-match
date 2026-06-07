@@ -109,7 +109,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import i18n from '../i18n';
-import { createPartido, fetchSedes } from '../utils/scoreboardApi';
+import { createPartido, fetchPartido, fetchPartidosBySede, fetchSedes, updatePartido } from '../utils/scoreboardApi';
+import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../utils/scoreboardTeamColors';
+import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
 
 const SCOREBOARD_JUGADORES_VACIOS = () => ([
   { numero: 1, nombre: '', jersey: '' },
@@ -124,6 +126,80 @@ function resolveScoreboardJerseyInput(value, fallback) {
   const n = parseInt(raw, 10);
   if (Number.isFinite(n) && n >= 1 && n <= 99) return n;
   return fallback;
+}
+
+function scoreboardColorPickerValue(raw, fallback) {
+  return normalizeUniformColor(raw) || fallback;
+}
+
+function jugadoresScoreboardFromPartido(jugadores) {
+  const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
+  return [0, 1, 2, 3].map((idx) => {
+    const j = list[idx] || {};
+    const jerseyRaw = j.jersey ?? j.numero ?? '';
+    return {
+      numero: idx + 1,
+      nombre: String(j.nombre ?? j.name ?? '').trim(),
+      jersey: jerseyRaw === '' || jerseyRaw == null ? '' : String(jerseyRaw),
+    };
+  });
+}
+
+function formatScoreboardPartidoFecha(raw) {
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return String(raw);
+  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function buildScoreboardPartidoBody({
+  sede_id,
+  sbTorneoNombre,
+  sbCancha,
+  sbEquipoA,
+  sbEquipoB,
+  sbJugadoresA,
+  sbJugadoresB,
+  sbUniformA1,
+  sbUniformA2,
+  sbUniformB1,
+  sbUniformB2,
+}) {
+  const colorUniformeA1 = normalizeUniformColor(sbUniformA1);
+  const colorUniformeA2 = normalizeUniformColor(sbUniformA2);
+  const colorUniformeB1 = normalizeUniformColor(sbUniformB1);
+  const colorUniformeB2 = normalizeUniformColor(sbUniformB2);
+  return {
+    sede_id,
+    torneo_nombre: sbTorneoNombre.trim() || null,
+    cancha: sbCancha.trim() || null,
+    equipo_a_nombre: sbEquipoA.trim(),
+    equipo_b_nombre: sbEquipoB.trim(),
+    equipo_a_jugadores: sbJugadoresA.map((j, idx) => ({
+      numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+      jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+      nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
+    })),
+    equipo_b_jugadores: sbJugadoresB.map((j, idx) => ({
+      numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+      jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
+      nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
+    })),
+    jersey_a1: resolveScoreboardJerseyInput(sbJugadoresA[0]?.jersey, 1),
+    jersey_a2: resolveScoreboardJerseyInput(sbJugadoresA[1]?.jersey, 2),
+    jersey_a3: resolveScoreboardJerseyInput(sbJugadoresA[2]?.jersey, 3),
+    jersey_a4: resolveScoreboardJerseyInput(sbJugadoresA[3]?.jersey, 4),
+    jersey_b1: resolveScoreboardJerseyInput(sbJugadoresB[0]?.jersey, 1),
+    jersey_b2: resolveScoreboardJerseyInput(sbJugadoresB[1]?.jersey, 2),
+    jersey_b3: resolveScoreboardJerseyInput(sbJugadoresB[2]?.jersey, 3),
+    jersey_b4: resolveScoreboardJerseyInput(sbJugadoresB[3]?.jersey, 4),
+    color_uniforme_a1: colorUniformeA1,
+    color_uniforme_a2: colorUniformeA2,
+    color_uniforme_b1: colorUniformeB1,
+    color_uniforme_b2: colorUniformeB2,
+    color_a: colorUniformeA1 || DEFAULT_SCOREBOARD_COLOR_A,
+    color_b: colorUniformeB1 || DEFAULT_SCOREBOARD_COLOR_B,
+  };
 }
 
 const STRIPE_PUBLISHABLE_ADMIN =
@@ -2301,14 +2377,21 @@ export default function AdminDashboard({
   const [sbCancha, setSbCancha] = useState('');
   const [sbEquipoA, setSbEquipoA] = useState('');
   const [sbEquipoB, setSbEquipoB] = useState('');
-  const [sbColorA, setSbColorA] = useState('#1a3a6e');
-  const [sbColorB, setSbColorB] = useState('#6e1a1a');
+  const [sbUniformA1, setSbUniformA1] = useState(DEFAULT_SCOREBOARD_COLOR_A);
+  const [sbUniformA2, setSbUniformA2] = useState('');
+  const [sbUniformB1, setSbUniformB1] = useState(DEFAULT_SCOREBOARD_COLOR_B);
+  const [sbUniformB2, setSbUniformB2] = useState('');
   const [sbJugadoresA, setSbJugadoresA] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
   const [sbJugadoresB, setSbJugadoresB] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
   const [sbCreating, setSbCreating] = useState(false);
   const [sbError, setSbError] = useState('');
   const [sbCreated, setSbCreated] = useState(null);
   const [sbCopied, setSbCopied] = useState('');
+  const [sbEditingId, setSbEditingId] = useState(null);
+  const [sbPartidosList, setSbPartidosList] = useState([]);
+  const [sbPartidosLoading, setSbPartidosLoading] = useState(false);
+  const [sbPartidosError, setSbPartidosError] = useState('');
+  const [sbPartidosRefreshKey, setSbPartidosRefreshKey] = useState(0);
   const [scoreboardSedes, setScoreboardSedes] = useState([]);
   const [scoreboardSedesLoading, setScoreboardSedesLoading] = useState(false);
   const [scoreboardSedesError, setScoreboardSedesError] = useState('');
@@ -6813,6 +6896,78 @@ export default function AdminDashboard({
     void fetchScoreboardSedes();
   }, [activeTab, puedeVerScoreboard, fetchScoreboardSedes]);
 
+  const refreshScoreboardPartidos = useCallback(() => {
+    setSbPartidosRefreshKey((n) => n + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!puedeVerScoreboard || activeTab !== 'scoreboard') return undefined;
+    const sede_id = parseInt(sbSedeId, 10);
+    if (!Number.isFinite(sede_id) || sede_id <= 0) {
+      setSbPartidosList([]);
+      setSbPartidosError('');
+      setSbPartidosLoading(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setSbPartidosLoading(true);
+    setSbPartidosError('');
+    fetchPartidosBySede(sede_id)
+      .then((list) => {
+        if (!cancelled) setSbPartidosList(list);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setSbPartidosList([]);
+          setSbPartidosError(err?.message || 'Error al cargar partidos');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSbPartidosLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab, puedeVerScoreboard, sbSedeId, sbPartidosRefreshKey]);
+
+  const resetScoreboardForm = useCallback(() => {
+    setSbEditingId(null);
+    setSbTorneoNombre('');
+    setSbCancha('');
+    setSbEquipoA('');
+    setSbEquipoB('');
+    setSbUniformA1(DEFAULT_SCOREBOARD_COLOR_A);
+    setSbUniformA2('');
+    setSbUniformB1(DEFAULT_SCOREBOARD_COLOR_B);
+    setSbUniformB2('');
+    setSbJugadoresA(SCOREBOARD_JUGADORES_VACIOS());
+    setSbJugadoresB(SCOREBOARD_JUGADORES_VACIOS());
+    setSbError('');
+  }, []);
+
+  const loadScoreboardFormForEdit = useCallback(async (partidoId) => {
+    setSbError('');
+    try {
+      const partido = await fetchPartido(partidoId);
+      setSbEditingId(partido.id);
+      setSbTorneoNombre(partido.torneo_nombre || '');
+      setSbSedeId(String(partido.sede_id ?? sbSedeId));
+      setSbCancha(partido.cancha || '');
+      setSbEquipoA(partido.equipo_a_nombre || '');
+      setSbEquipoB(partido.equipo_b_nombre || '');
+      setSbUniformA1(partido.color_uniforme_a1 || partido.color_a || DEFAULT_SCOREBOARD_COLOR_A);
+      setSbUniformA2(partido.color_uniforme_a2 || '');
+      setSbUniformB1(partido.color_uniforme_b1 || partido.color_b || DEFAULT_SCOREBOARD_COLOR_B);
+      setSbUniformB2(partido.color_uniforme_b2 || '');
+      setSbJugadoresA(jugadoresScoreboardFromPartido(partido.equipo_a_jugadores));
+      setSbJugadoresB(jugadoresScoreboardFromPartido(partido.equipo_b_jugadores));
+      setSbCreated(null);
+      if (typeof document !== 'undefined') {
+        document.getElementById('admin-scoreboard-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch (err) {
+      setSbError(err?.message || 'No se pudo cargar el partido');
+    }
+  }, [sbSedeId]);
+
   const updateSbJugador = (equipo, index, nombre) => {
     const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
     setter((prev) => prev.map((j, i) => (i === index ? { ...j, nombre } : j)));
@@ -6833,7 +6988,7 @@ export default function AdminDashboard({
     }
   };
 
-  const crearPartidoScoreboard = async (e) => {
+  const guardarPartidoScoreboard = async (e) => {
     e.preventDefault();
     setSbError('');
     setSbCreated(null);
@@ -6852,40 +7007,36 @@ export default function AdminDashboard({
       return;
     }
 
+    const body = buildScoreboardPartidoBody({
+      sede_id,
+      sbTorneoNombre,
+      sbCancha,
+      sbEquipoA,
+      sbEquipoB,
+      sbJugadoresA,
+      sbJugadoresB,
+      sbUniformA1,
+      sbUniformA2,
+      sbUniformB1,
+      sbUniformB2,
+    });
+
     setSbCreating(true);
     try {
-      const partido = await createPartido({
-        sede_id,
-        torneo_nombre: sbTorneoNombre.trim() || null,
-        cancha: sbCancha.trim() || null,
-        equipo_a_nombre: sbEquipoA.trim(),
-        equipo_b_nombre: sbEquipoB.trim(),
-        equipo_a_jugadores: sbJugadoresA.map((j, idx) => ({
-          numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
-        })),
-        equipo_b_jugadores: sbJugadoresB.map((j, idx) => ({
-          numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
-        })),
-        jersey_a1: resolveScoreboardJerseyInput(sbJugadoresA[0]?.jersey, 1),
-        jersey_a2: resolveScoreboardJerseyInput(sbJugadoresA[1]?.jersey, 2),
-        jersey_a3: resolveScoreboardJerseyInput(sbJugadoresA[2]?.jersey, 3),
-        jersey_a4: resolveScoreboardJerseyInput(sbJugadoresA[3]?.jersey, 4),
-        jersey_b1: resolveScoreboardJerseyInput(sbJugadoresB[0]?.jersey, 1),
-        jersey_b2: resolveScoreboardJerseyInput(sbJugadoresB[1]?.jersey, 2),
-        jersey_b3: resolveScoreboardJerseyInput(sbJugadoresB[2]?.jersey, 3),
-        jersey_b4: resolveScoreboardJerseyInput(sbJugadoresB[3]?.jersey, 4),
-        color_a: sbColorA,
-        color_b: sbColorB,
-      });
-      setSbCreated({ id: partido.id, sede_id: partido.sede_id });
-      setMensajeExito(t('admin.scoreboard.created', '✅ Partido de scoreboard creado'));
+      const partido = sbEditingId
+        ? await updatePartido(sbEditingId, body)
+        : await createPartido(body);
+      if (sbEditingId) {
+        setMensajeExito(t('admin.scoreboard.updated', '✅ Partido actualizado'));
+        setSbEditingId(null);
+      } else {
+        setSbCreated({ id: partido.id, sede_id: partido.sede_id });
+        setMensajeExito(t('admin.scoreboard.created', '✅ Partido de scoreboard creado'));
+      }
+      refreshScoreboardPartidos();
       setTimeout(() => setMensajeExito(''), 4000);
     } catch (err) {
-      setSbError(err.message || t('admin.scoreboard.createError', 'Error al crear el partido'));
+      setSbError(err.message || t('admin.scoreboard.createError', 'Error al guardar el partido'));
     } finally {
       setSbCreating(false);
     }
@@ -10698,15 +10849,30 @@ export default function AdminDashboard({
           </p>
 
           <form
-            onSubmit={crearPartidoScoreboard}
+            id="admin-scoreboard-form"
+            onSubmit={guardarPartidoScoreboard}
             style={{
               background: 'var(--bg-card)',
               borderRadius: '12px',
               padding: '20px',
               maxWidth: '720px',
-              border: '1px solid var(--border)',
+              border: `1px solid ${sbEditingId ? 'var(--accent)' : 'var(--border)'}`,
             }}
           >
+            {sbEditingId ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                <p style={{ margin: 0, fontWeight: 700, color: 'var(--accent)' }}>
+                  {t('admin.scoreboard.editing', 'Editando partido')} #{sbEditingId}
+                </p>
+                <button
+                  type="button"
+                  onClick={resetScoreboardForm}
+                  style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                >
+                  {t('admin.scoreboard.cancelEdit', 'Cancelar edición')}
+                </button>
+              </div>
+            ) : null}
             <div style={{ display: 'grid', gap: '14px', marginBottom: '18px' }}>
               <label style={{ display: 'grid', gap: '6px' }}>
                 <span style={{ fontWeight: 600, fontSize: '14px' }}>
@@ -10761,25 +10927,74 @@ export default function AdminDashboard({
               </label>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '18px' }}>
-              <label style={{ display: 'grid', gap: '6px' }}>
-                <span style={{ fontWeight: 600, fontSize: '14px' }}>{t('admin.scoreboard.colorA', 'Color Equipo A')}</span>
-                <input
-                  type="color"
-                  value={sbColorA}
-                  onChange={(e) => setSbColorA(e.target.value)}
-                  style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
-                />
-              </label>
-              <label style={{ display: 'grid', gap: '6px' }}>
-                <span style={{ fontWeight: 600, fontSize: '14px' }}>{t('admin.scoreboard.colorB', 'Color Equipo B')}</span>
-                <input
-                  type="color"
-                  value={sbColorB}
-                  onChange={(e) => setSbColorB(e.target.value)}
-                  style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
-                />
-              </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '18px' }}>
+              {[
+                {
+                  equipo: 'A',
+                  label: t('admin.scoreboard.teamA', 'Nombre Equipo A'),
+                  color1: sbUniformA1,
+                  color2: sbUniformA2,
+                  setColor1: setSbUniformA1,
+                  setColor2: setSbUniformA2,
+                  fallback1: DEFAULT_SCOREBOARD_COLOR_A,
+                },
+                {
+                  equipo: 'B',
+                  label: t('admin.scoreboard.teamB', 'Nombre Equipo B'),
+                  color1: sbUniformB1,
+                  color2: sbUniformB2,
+                  setColor1: setSbUniformB1,
+                  setColor2: setSbUniformB2,
+                  fallback1: DEFAULT_SCOREBOARD_COLOR_B,
+                },
+              ].map(({ equipo, label, color1, color2, setColor1, setColor2, fallback1 }) => (
+                <div
+                  key={equipo}
+                  style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: '10px',
+                    padding: '12px',
+                    display: 'grid',
+                    gap: '10px',
+                  }}
+                >
+                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700 }}>
+                    {t('admin.scoreboard.uniformTeam', 'Uniforme Equipo')} {equipo}
+                  </h4>
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.scoreboard.uniformColor1', 'Color 1')}
+                    </span>
+                    <input
+                      type="color"
+                      value={scoreboardColorPickerValue(color1, fallback1)}
+                      onChange={(e) => setColor1(e.target.value)}
+                      style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
+                    />
+                  </label>
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.scoreboard.uniformColor2', 'Color 2 (opcional)')}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="color"
+                        value={scoreboardColorPickerValue(color2, '#ffffff')}
+                        onChange={(e) => setColor2(e.target.value)}
+                        style={{ flex: 1, height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setColor2('')}
+                        style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
+                      >
+                        {t('admin.scoreboard.clearColor', 'Limpiar')}
+                      </button>
+                    </div>
+                  </label>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{label}</span>
+                </div>
+              ))}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '18px' }}>
@@ -10881,10 +11096,96 @@ export default function AdminDashboard({
               }}
             >
               {sbCreating
-                ? t('admin.scoreboard.creating', 'Creando...')
-                : t('admin.scoreboard.createBtn', 'Crear partido')}
+                ? t('admin.scoreboard.saving', 'Guardando...')
+                : sbEditingId
+                  ? t('admin.scoreboard.saveBtn', 'Guardar cambios')
+                  : t('admin.scoreboard.createBtn', 'Crear partido')}
             </button>
           </form>
+
+          <div style={{ marginTop: '28px', maxWidth: '960px' }}>
+            <h3 style={{ margin: '0 0 12px' }}>
+              {t('admin.scoreboard.partidosListTitle', 'Partidos de la sede')}
+            </h3>
+            {!sbSedeId ? (
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                {t('admin.scoreboard.selectSedeForList', 'Seleccioná una sede para ver los partidos creados.')}
+              </p>
+            ) : sbPartidosLoading ? (
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                {t('admin.scoreboard.loadingPartidos', 'Cargando partidos...')}
+              </p>
+            ) : sbPartidosError ? (
+              <p style={{ margin: 0, color: '#dc2626', fontSize: '14px', fontWeight: 600 }}>{sbPartidosError}</p>
+            ) : sbPartidosList.length === 0 ? (
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                {t('admin.scoreboard.noPartidos', 'No hay partidos creados para esta sede.')}
+              </p>
+            ) : (
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '10px' }}>
+                {[...sbPartidosList]
+                  .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+                  .map((p) => {
+                    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                    const tvLink = `${origin}/display/${p.sede_id}/scoreboard/${p.id}`;
+                    const arbiterLink = `${origin}/admin/scoreboard/${p.id}`;
+                    const torneo = String(p.torneo_nombre || '').trim();
+                    return (
+                      <li
+                        key={p.id}
+                        style={{
+                          border: '1px solid var(--border)',
+                          borderRadius: '10px',
+                          padding: '14px 16px',
+                          background: 'var(--bg-card)',
+                          display: 'grid',
+                          gap: '10px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                          <div style={{ minWidth: 0 }}>
+                            {torneo ? (
+                              <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                {torneo}
+                              </p>
+                            ) : null}
+                            <p style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
+                              {p.equipo_a_nombre} vs {p.equipo_b_nombre}
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                              {formatScoreboardPartidoFecha(p.created_at)}
+                            </p>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            <a
+                              href={tvLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', background: 'var(--bg-input)' }}
+                            >
+                              📺 TV
+                            </a>
+                            <a
+                              href={arbiterLink}
+                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', background: 'var(--bg-input)' }}
+                            >
+                              🎮 Árbitro
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => void loadScoreboardFormForEdit(p.id)}
+                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+                            >
+                              ✏️ Editar
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
+          </div>
 
           {sbCreated ? (
             <div style={{
