@@ -337,16 +337,18 @@ export default function ScoreboardBoard({
               </div>
             )}
 
-            <SetHistory
-              historial={partido.historial_sets}
-              gamesA={partido.games_a}
-              gamesB={partido.games_b}
-              setsA={partido.sets_a}
-              setsB={partido.sets_b}
-            />
+            <div className="sb-center__sets-timer">
+              <SetHistory
+                historial={partido.historial_sets}
+                gamesA={partido.games_a}
+                gamesB={partido.games_b}
+                setsA={partido.sets_a}
+                setsB={partido.sets_b}
+              />
 
-            <div className="sb-timer">
-              {formatTimerFromSeconds(timerSeconds)}
+              <div className="sb-timer">
+                {formatTimerFromSeconds(timerSeconds)}
+              </div>
             </div>
           </div>
         </section>

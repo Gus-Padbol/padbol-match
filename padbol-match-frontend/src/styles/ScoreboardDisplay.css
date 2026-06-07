@@ -18,8 +18,8 @@
   --sb-tournament-brand-gap: 0.75rem;
   --sb-tournament-name-offset: 12px;
   --sb-tournament-name-lines-height: calc(2 * 1.25 * 1.6vw);
-  --sb-panel-offset-up: 6cm;
-  --sb-timer-footer-gap: 1cm;
+  --sb-panel-offset-up: 4cm;
+  --sb-sets-timer-footer-pad: 60px;
 }
 
 * {
@@ -551,6 +551,18 @@
   border-radius: 4px;
 }
 
+.sb-center__sets-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-bottom: var(--sb-sets-timer-footer-pad);
+  position: relative;
+  z-index: 60;
+}
+
 .sb-sets-history {
   position: relative;
   z-index: 10;
@@ -643,8 +655,10 @@
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.12em;
   flex-shrink: 0;
-  margin-top: auto;
-  margin-bottom: var(--sb-timer-footer-gap);
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 60;
 }
 
 /* ── Sponsors footer ── */
