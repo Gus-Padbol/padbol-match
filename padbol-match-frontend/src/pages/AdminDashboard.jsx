@@ -404,13 +404,35 @@ function precioDuracionInputDisplay(raw) {
   return n != null ? Number(n).toLocaleString('es-AR') : '';
 }
 
-function surgeConfigBandError(cfg) {
-  const min = parsePrecioDuracionField(cfg?.precio_minimo);
-  const max = parsePrecioDuracionField(cfg?.precio_maximo);
-  if (min != null && max != null && max <= min) {
-    return 'El precio máximo debe ser mayor al mínimo';
-  }
+function parseSurgePctField(raw, { min = 0, max = 100, fallback = 0 } = {}) {
+  if (raw === '' || raw == null) return fallback;
+  const n = parseInt(String(raw).replace(/\D/g, ''), 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function defaultSurgeConfig(overrides = {}) {
+  return {
+    activo: false,
+    descuento_max_pct: '20',
+    aumento_max_pct: '40',
+    ...overrides,
+  };
+}
+
+function surgeConfigBandError() {
   return null;
+}
+
+function formatSurgePricePreview(baseRaw, descuentoPctRaw, aumentoPctRaw) {
+  const base = parsePrecioDuracionField(baseRaw);
+  if (base == null) return null;
+  const desc = parseSurgePctField(descuentoPctRaw, { min: 0, max: 50, fallback: 20 });
+  const aum = parseSurgePctField(aumentoPctRaw, { min: 0, max: 100, fallback: 40 });
+  const min = Math.round(base * (1 - desc / 100));
+  const max = Math.round(base * (1 + aum / 100));
+  const fmt = (n) => Number(n).toLocaleString('es-AR');
+  return `90 min: $${fmt(base)} → entre $${fmt(min)} y $${fmt(max)}`;
 }
 
 /** Body para PATCH /api/sedes/:id (campos alineados con el panel). */
@@ -5205,6 +5227,7 @@ export default function AdminDashboard({
   const [surgeConfigs, setSurgeConfigs] = useState({});
   const [surgeConfigSaving, setSurgeConfigSaving] = useState({});
   const [surgeActivoSaving, setSurgeActivoSaving] = useState(false);
+  const [surgeCanchas, setSurgeCanchas] = useState([]);
   const [miSedeDuraciones, setMiSedeDuraciones] = useState([]);
   const [miSedeDuracionesLoading, setMiSedeDuracionesLoading] = useState(false);
   const [miSedeDuracionesMsg, setMiSedeDuracionesMsg] = useState('');
@@ -5376,32 +5399,49 @@ export default function AdminDashboard({
   useEffect(() => {
     if (!sedeId || !session?.access_token) {
       setSurgeConfigs({});
+      setSurgeCanchas([]);
       return undefined;
     }
     let cancelled = false;
-    fetch(`${apiBaseUrl}/api/surge-config/${encodeURIComponent(String(sedeId))}`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const headers = { Authorization: `Bearer ${session.access_token}` };
+    Promise.all([
+      fetch(`${apiBaseUrl}/api/surge-config/${encodeURIComponent(String(sedeId))}`, { headers })
+        .then((r) => r.json())
+        .catch(() => ({})),
+      fetch(`${apiBaseUrl}/api/canchas?sede_id=${encodeURIComponent(String(sedeId))}`, { headers })
+        .then((r) => r.json())
+        .catch(() => ({})),
+    ])
+      .then(([surgeData, canchasData]) => {
         if (cancelled) return;
         const map = {};
-        for (const row of Array.isArray(d.configs) ? d.configs : []) {
+        for (const row of Array.isArray(surgeData.configs) ? surgeData.configs : []) {
           const dep = String(row.deporte || '').trim().toLowerCase();
           if (!dep) continue;
-          map[dep] = {
+          map[dep] = defaultSurgeConfig({
             activo: row.activo === true,
-            precio_minimo: row.precio_minimo != null ? String(row.precio_minimo) : '',
-            precio_maximo: row.precio_maximo != null ? String(row.precio_maximo) : '',
-          };
+            descuento_max_pct:
+              row.descuento_max_pct != null ? String(row.descuento_max_pct) : '20',
+            aumento_max_pct:
+              row.aumento_max_pct != null ? String(row.aumento_max_pct) : '40',
+          });
         }
         setSurgeConfigs(map);
+        const canchasList = Array.isArray(canchasData?.canchas)
+          ? canchasData.canchas
+          : Array.isArray(canchasData)
+            ? canchasData
+            : [];
+        setSurgeCanchas(canchasList);
       })
       .catch(() => {
-        if (!cancelled) setSurgeConfigs({});
+        if (!cancelled) {
+          setSurgeConfigs({});
+          setSurgeCanchas([]);
+        }
       });
     return () => { cancelled = true; };
-  }, [sedeId, session?.access_token]);
+  }, [sedeId, session?.access_token, apiBaseUrl]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
@@ -5758,13 +5798,21 @@ export default function AdminDashboard({
   };
 
 
+  const surgeDeportesOptions = useMemo(() => {
+    const keys = new Set();
+    for (const cancha of surgeCanchas) {
+      const dep = String(cancha?.deporte ?? '').trim().toLowerCase();
+      if (dep) keys.add(dep);
+    }
+    return DEPORTES_CANCHA_SEDE_OPTIONS.filter((o) => keys.has(o.key));
+  }, [surgeCanchas]);
+
   const persistSurgeConfigDeporte = async (deporteKey, cfgOverride) => {
     if (!sedeId || !session?.access_token) return;
-    const cfg = cfgOverride ?? surgeConfigs[deporteKey] ?? { activo: false, precio_minimo: '', precio_maximo: '' };
+    const cfg = cfgOverride ?? surgeConfigs[deporteKey] ?? defaultSurgeConfig();
     if (surgeConfigBandError(cfg)) return;
-    const minimo = parsePrecioDuracionField(cfg.precio_minimo);
-    const maximo = parsePrecioDuracionField(cfg.precio_maximo);
-    if (cfg.activo && (minimo == null || maximo == null || maximo <= minimo)) return;
+    const descuentoMaxPct = parseSurgePctField(cfg.descuento_max_pct, { min: 0, max: 50, fallback: 20 });
+    const aumentoMaxPct = parseSurgePctField(cfg.aumento_max_pct, { min: 0, max: 100, fallback: 40 });
     setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: true }));
     try {
       const res = await fetch(`${apiBaseUrl}/api/surge-config`, {
@@ -5776,8 +5824,8 @@ export default function AdminDashboard({
         body: JSON.stringify({
           sede_id: Number(sedeId),
           deporte: deporteKey,
-          precio_minimo: minimo ?? 0,
-          precio_maximo: maximo ?? 0,
+          descuento_max_pct: descuentoMaxPct,
+          aumento_max_pct: aumentoMaxPct,
           activo: !!cfg.activo,
         }),
       });
@@ -5787,11 +5835,13 @@ export default function AdminDashboard({
       if (saved) {
         setSurgeConfigs((prev) => ({
           ...prev,
-          [deporteKey]: {
+          [deporteKey]: defaultSurgeConfig({
             activo: saved.activo === true,
-            precio_minimo: saved.precio_minimo != null ? String(saved.precio_minimo) : '',
-            precio_maximo: saved.precio_maximo != null ? String(saved.precio_maximo) : '',
-          },
+            descuento_max_pct:
+              saved.descuento_max_pct != null ? String(saved.descuento_max_pct) : String(descuentoMaxPct),
+            aumento_max_pct:
+              saved.aumento_max_pct != null ? String(saved.aumento_max_pct) : String(aumentoMaxPct),
+          }),
         }));
       }
     } catch {
@@ -13103,11 +13153,21 @@ export default function AdminDashboard({
                   Activar Surge
                 </label>
                 {miSedeForm.surge_activo ? (
+                    surgeDeportesOptions.length === 0 ? (
+                      <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        Configurá el deporte de tus canchas para activar Surge por deporte.
+                      </p>
+                    ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
-                      {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => {
-                        const cfg = surgeConfigs[key] || { activo: false, precio_minimo: '', precio_maximo: '' };
-                        const bandError = surgeConfigBandError(cfg);
+                      {surgeDeportesOptions.map(({ key, label }) => {
+                        const cfg = surgeConfigs[key] || defaultSurgeConfig();
                         const saving = !!surgeConfigSaving[key];
+                        const basePrecio90 = miSedeForm.precio_90min ?? miSede?.precio_90min ?? miSede?.precio_turno;
+                        const previewLine = formatSurgePricePreview(
+                          basePrecio90,
+                          cfg.descuento_max_pct,
+                          cfg.aumento_max_pct,
+                        );
                         return (
                           <div
                             key={key}
@@ -13142,43 +13202,66 @@ export default function AdminDashboard({
                               </label>
                             </div>
                             {[
-                              { field: 'precio_minimo', label: 'Precio mínimo ARS' },
-                              { field: 'precio_maximo', label: 'Precio máximo ARS' },
-                            ].map(({ field, label: fieldLabel }) => (
+                              {
+                                field: 'descuento_max_pct',
+                                label: 'Descuento máximo (%)',
+                                helper: 'precio mínimo posible',
+                                min: 0,
+                                max: 50,
+                                fallback: 20,
+                              },
+                              {
+                                field: 'aumento_max_pct',
+                                label: 'Aumento máximo (%)',
+                                helper: 'precio máximo posible',
+                                min: 0,
+                                max: 100,
+                                fallback: 40,
+                              },
+                            ].map(({ field, label: fieldLabel, helper, min, max, fallback }) => (
                               <div
                                 key={field}
-                                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}
+                                style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}
                               >
-                                <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '150px' }}>
-                                  {fieldLabel}
-                                </label>
+                                <div style={{ flexShrink: 0, minWidth: '170px' }}>
+                                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                    {fieldLabel}
+                                  </label>
+                                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.85, marginTop: '2px' }}>
+                                    {helper}
+                                  </span>
+                                </div>
                                 <input
-                                  type="text"
+                                  type="number"
                                   inputMode="numeric"
-                                  value={precioDuracionInputDisplay(cfg[field])}
+                                  min={min}
+                                  max={max}
+                                  step={1}
+                                  value={cfg[field] ?? String(fallback)}
                                   onChange={(e) => {
-                                    const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                                    const digits = e.target.value.replace(/[^\d]/g, '');
+                                    const parsed = digits === '' ? '' : String(parseSurgePctField(digits, { min, max, fallback }));
                                     setSurgeConfigs((prev) => ({
                                       ...prev,
-                                      [key]: { ...(prev[key] || cfg), [field]: digits },
+                                      [key]: { ...(prev[key] || cfg), [field]: parsed },
                                     }));
                                   }}
                                   onBlur={() => persistSurgeConfigDeporte(key)}
-                                  placeholder="0"
-                                  style={{ width: '100%', maxWidth: '200px', padding: '7px 10px', border: `1px solid ${bandError ? '#fca5a5' : 'var(--border)'}`, borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
+                                  style={{ width: '100%', maxWidth: '120px', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
                                 />
                               </div>
                             ))}
-                            {bandError ? (
-                              <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: 600, color: '#fca5a5' }}>{bandError}</p>
-                            ) : null}
+                            <p style={{ margin: '6px 0 0', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
+                              {previewLine ?? '90 min: configurá el precio base de 90 min arriba para ver la vista previa'}
+                            </p>
                           </div>
                         );
                       })}
                     </div>
+                    )
                 ) : null}
                 <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo.
+                  El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo (% sobre el precio base).
                 </p>
                 <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
                   0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
