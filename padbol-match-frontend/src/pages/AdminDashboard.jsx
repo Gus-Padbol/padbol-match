@@ -390,9 +390,6 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     twitter: sedeData.twitter || '',
     youtube: sedeData.youtube || '',
     website: sedeData.website || '',
-    color_hero_primario: normalizeHexSedeAdmin(sedeData.color_hero_primario) || '#4C1D95',
-    color_hero_secundario: normalizeHexSedeAdmin(sedeData.color_hero_secundario) || '#7C3AED',
-    color_borde_hero: normalizeHexSedeAdmin(sedeData.color_borde_hero) || '#6D28D9',
     amenities: normalizeSedeAmenities(sedeData.amenities),
   };
 }
@@ -530,9 +527,6 @@ function miSedeFormToApiPatchBody(form) {
     twitter: form.twitter || null,
     youtube: form.youtube || null,
     website: form.website || null,
-    color_hero_primario: normalizeHexSedeAdmin(form.color_hero_primario) || '#4C1D95',
-    color_hero_secundario: normalizeHexSedeAdmin(form.color_hero_secundario) || '#7C3AED',
-    color_borde_hero: normalizeHexSedeAdmin(form.color_borde_hero) || '#6D28D9',
     amenities: normalizeSedeAmenities(form.amenities),
   };
   if (mpTrim) out.mp_access_token = mpTrim;
@@ -820,32 +814,6 @@ function torneoCierreInscripcionDentroDe48h(torneo, now = new Date()) {
 function torneoEstadoInscripcionAbiertaAdmin(t) {
   const e = String(t?.estado || '').toLowerCase();
   return e === 'abierto' || e === 'inscripcion_abierta';
-}
-
-function hexToRgbSedeHero(hex) {
-  const h = normalizeHexSedeAdmin(hex);
-  if (!h || h.length < 7) return { r: 76, g: 29, b: 149 };
-  return {
-    r: parseInt(h.slice(1, 3), 16),
-    g: parseInt(h.slice(3, 5), 16),
-    b: parseInt(h.slice(5, 7), 16),
-  };
-}
-
-function luminanciaRelativaSedeHero(hex) {
-  const { r, g, b } = hexToRgbSedeHero(hex);
-  const lin = (v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  };
-  const R = lin(r);
-  const G = lin(g);
-  const B = lin(b);
-  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
-}
-
-function textoAutoDesdePrimarioSedeHero(hexPrim) {
-  return luminanciaRelativaSedeHero(hexPrim) < 0.5 ? '#ffffff' : '#0f172a';
 }
 
 /** Muestra "3ra" en lugar de "3" en validaciones y fichas. */
@@ -5349,7 +5317,7 @@ export default function AdminDashboard({
     const main = miSedeMainScrollRef.current;
     const outer = adminMainScrollRef.current;
     if (main && main.scrollHeight > main.clientHeight + 1) return main;
-    return outer;
+    return outer || main;
   }, []);
 
   const miSedeScrollOffsetPx = useCallback(() => {
@@ -5362,19 +5330,27 @@ export default function AdminDashboard({
       if (typeof document === 'undefined') return;
       const target = document.getElementById(`admin-mi-sede-${sectionId}`);
       if (!target) return;
-      const root = resolveMiSedeScrollRoot();
       setMiSedeNavActive(sectionId);
-      if (!root) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const main = miSedeMainScrollRef.current;
+      const offset = miSedeScrollOffsetPx();
+      if (main && main.scrollHeight > main.clientHeight + 1) {
+        const rootRect = main.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const nextTop = main.scrollTop + (targetRect.top - rootRect.top) - offset;
+        main.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
         return;
       }
-      const offset = miSedeScrollOffsetPx();
-      const rootRect = root.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      const nextTop = root.scrollTop + (targetRect.top - rootRect.top) - offset;
-      root.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+      const root = adminMainScrollRef.current;
+      if (root && root.scrollHeight > root.clientHeight + 1) {
+        const rootRect = root.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const nextTop = root.scrollTop + (targetRect.top - rootRect.top) - offset;
+        root.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+        return;
+      }
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
-    [resolveMiSedeScrollRoot, miSedeScrollOffsetPx]
+    [miSedeScrollOffsetPx]
   );
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
@@ -12792,88 +12768,6 @@ export default function AdminDashboard({
 
           {(esAdminClub || isSuperAdmin) && sedeId ? <AdminHubPromoSedeSection sedeId={Number(sedeId)} /> : null}
 
-          {/* ── Colores del hero (página pública de la sede) ── */}
-          <div style={{ marginBottom: '32px' }}>
-            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.heroColorsTitle')}</h3>
-            <div className="admin-mi-sede-theme-panel">
-              <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
-                El bloque derecho del hero público usa siempre un degradado del color principal al secundario. El texto se ajusta solo según la luminosidad del color principal.
-              </p>
-              {[
-                { label: 'Color principal (degradado inicio)', field: 'color_hero_primario' },
-                { label: 'Color secundario (degradado fin)', field: 'color_hero_secundario' },
-                { label: t('admin.sedes.heroBorderColorLabel'), field: 'color_borde_hero' },
-              ].map(({ label, field }) => (
-                <div key={field} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                  <label className="admin-mi-sede-field-label" style={{ width: '200px', flexShrink: 0, fontSize: '13px', fontWeight: 600, paddingTop: '4px' }}>{label}</label>
-                  <input
-                    type="color"
-                    value={normalizeHexSedeAdmin(miSedeForm[field]) || (field === 'color_hero_primario' ? '#4C1D95' : field === 'color_hero_secundario' ? '#7C3AED' : '#6D28D9')}
-                    onChange={(e) => setMiSedeForm((p) => ({ ...p, [field]: e.target.value }))}
-                    style={{ width: 48, height: 36, padding: 0, border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer' }}
-                  />
-                  <input
-                    type="text"
-                    className="admin-mi-sede-theme-input"
-                    value={miSedeForm[field] || ''}
-                    onChange={(e) => setMiSedeForm((p) => ({ ...p, [field]: e.target.value }))}
-                    style={{ flex: 1, minWidth: '120px', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', fontFamily: 'monospace', boxSizing: 'border-box' }}
-                  />
-                </div>
-              ))}
-              <div
-                style={{
-                  marginTop: '18px',
-                  borderRadius: '14px',
-                  border: `3px solid ${normalizeHexSedeAdmin(miSedeForm.color_borde_hero) || '#6D28D9'}`,
-                  overflow: 'hidden',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'stretch',
-                    minHeight: '88px',
-                    background: `linear-gradient(135deg, ${normalizeHexSedeAdmin(miSedeForm.color_hero_primario) || '#4C1D95'} 0%, ${normalizeHexSedeAdmin(miSedeForm.color_hero_secundario) || '#7C3AED'} 100%)`,
-                  }}
-                >
-                  <div style={{ width: '72px', flexShrink: 0, background: 'rgba(15, 23, 42, 0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(248, 250, 252, 0.45)', fontSize: '22px' }}>⚽</div>
-                  <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
-                    <div
-                      style={{
-                        fontWeight: 800,
-                        fontSize: '17px',
-                        color: textoAutoDesdePrimarioSedeHero(miSedeForm.color_hero_primario),
-                        textAlign: 'center',
-                        textShadow: '0 1px 6px rgba(0,0,0,0.25)',
-                      }}
-                    >
-                      {miSedeForm.nombre || t('admin.sedes.yourClub')}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        fontStyle: 'italic',
-                        textAlign: 'center',
-                        color:
-                          textoAutoDesdePrimarioSedeHero(miSedeForm.color_hero_primario) === '#ffffff'
-                            ? 'rgba(255,255,255,0.9)'
-                            : 'rgba(15,23,42,0.85)',
-                      }}
-                    >
-                      Vista previa del hero público
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="admin-mi-sede-theme-muted" style={{ margin: '14px 0 0', fontSize: '12px' }}>
-                Guarda los cambios con «Guardar cambios» en Información general.
-              </p>
-            </div>
-          </div>
-
           {/* ── 1. Info General ── */}
           <div style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.generalInfoTitle')}</h3>
@@ -13181,178 +13075,6 @@ export default function AdminDashboard({
               <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 {t('admin.sedes.pricesDurationHint')}
               </p>
-
-              <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
-                <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                  ⚡ Surge — Precios Dinámicos
-                </h4>
-                <label
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    marginBottom: '14px',
-                    cursor: surgeActivoSaving ? 'wait' : 'pointer',
-                    opacity: surgeActivoSaving ? 0.7 : 1,
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!miSedeForm.surge_activo}
-                    disabled={surgeActivoSaving}
-                    onChange={(e) => patchSurgeActivoMaster(e.target.checked)}
-                  />
-                  Activar Surge
-                </label>
-                {miSedeForm.surge_activo ? (
-                    surgeCanchasReady && surgeDeportesOptions.length === 0 ? (
-                      <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        Configurá el deporte de tus canchas para activar Surge por deporte.
-                      </p>
-                    ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
-                      {surgeDeportesOptions.map(({ key, label }) => {
-                        const cfg = surgeConfigs[key] ?? defaultSurgeConfig();
-                        const saving = !!surgeConfigSaving[key];
-                        const basePrecio90 = miSedeForm.precio_90min ?? miSede?.precio_90min ?? miSede?.precio_turno;
-                        const previewLine = formatSurgePricePreview(
-                          basePrecio90,
-                          cfg.descuento_max_pct,
-                          cfg.aumento_max_pct,
-                        );
-                        return (
-                          <div
-                            key={key}
-                            style={{
-                              padding: '12px 14px',
-                              border: '1px solid var(--border)',
-                              borderRadius: '8px',
-                              background: 'var(--bg-card)',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                <SportIcon deporte={key} size={18} color="var(--text-primary)" />
-                                {label}
-                              </span>
-                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={parseSurgeActivo(cfg.activo)}
-                                  onChange={(e) => {
-                                    const next = { ...(surgeConfigs[key] ?? cfg), activo: e.target.checked };
-                                    setSurgeConfigs((prev) => ({ ...prev, [key]: next }));
-                                    persistSurgeConfigDeporte(key, next);
-                                  }}
-                                />
-                                Activo
-                                {saving ? (
-                                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    {t('admin.metricas.savingEllipsis')}
-                                  </span>
-                                ) : null}
-                              </label>
-                            </div>
-                            {[
-                              {
-                                field: 'descuento_max_pct',
-                                label: 'Descuento máximo (%)',
-                                helper: 'precio mínimo posible',
-                                min: 0,
-                                max: 50,
-                                fallback: 20,
-                              },
-                              {
-                                field: 'aumento_max_pct',
-                                label: 'Aumento máximo (%)',
-                                helper: 'precio máximo posible',
-                                min: 0,
-                                max: 100,
-                                fallback: 40,
-                              },
-                            ].map(({ field, label: fieldLabel, helper, min, max, fallback }) => (
-                              <div
-                                key={field}
-                                style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}
-                              >
-                                <div style={{ flexShrink: 0, minWidth: '170px' }}>
-                                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                                    {fieldLabel}
-                                  </label>
-                                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.85, marginTop: '2px' }}>
-                                    {helper}
-                                  </span>
-                                </div>
-                                <input
-                                  type="number"
-                                  inputMode="numeric"
-                                  min={min}
-                                  max={max}
-                                  step={1}
-                                  value={cfg[field] ?? String(fallback)}
-                                  onChange={(e) => {
-                                    const digits = e.target.value.replace(/[^\d]/g, '');
-                                    const parsed = digits === '' ? '' : String(parseSurgePctField(digits, { min, max, fallback }));
-                                    setSurgeConfigs((prev) => ({
-                                      ...prev,
-                                      [key]: { ...(prev[key] || cfg), [field]: parsed },
-                                    }));
-                                  }}
-                                  style={{ width: '100%', maxWidth: '120px', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
-                                />
-                              </div>
-                            ))}
-                            <p style={{ margin: '6px 0 0', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
-                              {previewLine ?? '90 min: configurá el precio base de 90 min arriba para ver la vista previa'}
-                            </p>
-                          </div>
-                        );
-                      })}
-                      {surgeDeportesOptions.length > 0 ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
-                          <button
-                            type="button"
-                            onClick={guardarSurgeConfigs}
-                            disabled={surgeSaveAllBusy}
-                            style={{
-                              padding: '8px 20px',
-                              background: surgeSaveAllBusy ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '8px',
-                              cursor: surgeSaveAllBusy ? 'not-allowed' : 'pointer',
-                              fontWeight: 'bold',
-                              fontSize: '13px',
-                            }}
-                          >
-                            {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : '💾 Guardar Surge'}
-                          </button>
-                          {surgeSaveMsg ? (
-                            <span
-                              style={{
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: surgeSaveMsg.startsWith('✅') ? '#4ade80' : '#fca5a5',
-                              }}
-                            >
-                              {surgeSaveMsg}
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-                    )
-                ) : null}
-                <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo (% sobre el precio base).
-                </p>
-                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
-                  0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
-                </p>
-              </div>
 
               {isSuperAdmin ? (
                 <>
@@ -14357,6 +14079,178 @@ export default function AdminDashboard({
                 >
                   {pagosParcialSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.savePaymentMethodBtn')}
                 </button>
+
+                <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+                  <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
+                    ⚡ Surge — Precios Dinámicos
+                  </h4>
+                  <label
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      marginBottom: '14px',
+                      cursor: surgeActivoSaving ? 'wait' : 'pointer',
+                      opacity: surgeActivoSaving ? 0.7 : 1,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!miSedeForm.surge_activo}
+                      disabled={surgeActivoSaving}
+                      onChange={(e) => patchSurgeActivoMaster(e.target.checked)}
+                    />
+                    Activar Surge
+                  </label>
+                  {miSedeForm.surge_activo ? (
+                      surgeCanchasReady && surgeDeportesOptions.length === 0 ? (
+                        <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                          Configurá el deporte de tus canchas para activar Surge por deporte.
+                        </p>
+                      ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
+                        {surgeDeportesOptions.map(({ key, label }) => {
+                          const cfg = surgeConfigs[key] ?? defaultSurgeConfig();
+                          const saving = !!surgeConfigSaving[key];
+                          const basePrecio90 = miSedeForm.precio_90min ?? miSede?.precio_90min ?? miSede?.precio_turno;
+                          const previewLine = formatSurgePricePreview(
+                            basePrecio90,
+                            cfg.descuento_max_pct,
+                            cfg.aumento_max_pct,
+                          );
+                          return (
+                            <div
+                              key={key}
+                              style={{
+                                padding: '12px 14px',
+                                border: '1px solid var(--border)',
+                                borderRadius: '8px',
+                                background: 'var(--bg-card)',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                  <SportIcon deporte={key} size={18} color="var(--text-primary)" />
+                                  {label}
+                                </span>
+                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={parseSurgeActivo(cfg.activo)}
+                                    onChange={(e) => {
+                                      const next = { ...(surgeConfigs[key] ?? cfg), activo: e.target.checked };
+                                      setSurgeConfigs((prev) => ({ ...prev, [key]: next }));
+                                      persistSurgeConfigDeporte(key, next);
+                                    }}
+                                  />
+                                  Activo
+                                  {saving ? (
+                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                      {t('admin.metricas.savingEllipsis')}
+                                    </span>
+                                  ) : null}
+                                </label>
+                              </div>
+                              {[
+                                {
+                                  field: 'descuento_max_pct',
+                                  label: 'Descuento máximo (%)',
+                                  helper: 'precio mínimo posible',
+                                  min: 0,
+                                  max: 50,
+                                  fallback: 20,
+                                },
+                                {
+                                  field: 'aumento_max_pct',
+                                  label: 'Aumento máximo (%)',
+                                  helper: 'precio máximo posible',
+                                  min: 0,
+                                  max: 100,
+                                  fallback: 40,
+                                },
+                              ].map(({ field, label: fieldLabel, helper, min, max, fallback }) => (
+                                <div
+                                  key={field}
+                                  style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}
+                                >
+                                  <div style={{ flexShrink: 0, minWidth: '170px' }}>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                      {fieldLabel}
+                                    </label>
+                                    <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.85, marginTop: '2px' }}>
+                                      {helper}
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    min={min}
+                                    max={max}
+                                    step={1}
+                                    value={cfg[field] ?? String(fallback)}
+                                    onChange={(e) => {
+                                      const digits = e.target.value.replace(/[^\d]/g, '');
+                                      const parsed = digits === '' ? '' : String(parseSurgePctField(digits, { min, max, fallback }));
+                                      setSurgeConfigs((prev) => ({
+                                        ...prev,
+                                        [key]: { ...(prev[key] || cfg), [field]: parsed },
+                                      }));
+                                    }}
+                                    style={{ width: '100%', maxWidth: '120px', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+                              ))}
+                              <p style={{ margin: '6px 0 0', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
+                                {previewLine ?? '90 min: configurá el precio base de 90 min en Precios por duración para ver la vista previa'}
+                              </p>
+                            </div>
+                          );
+                        })}
+                        {surgeDeportesOptions.length > 0 ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={guardarSurgeConfigs}
+                              disabled={surgeSaveAllBusy}
+                              style={{
+                                padding: '8px 20px',
+                                background: surgeSaveAllBusy ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: surgeSaveAllBusy ? 'not-allowed' : 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '13px',
+                              }}
+                            >
+                              {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : '💾 Guardar Surge'}
+                            </button>
+                            {surgeSaveMsg ? (
+                              <span
+                                style={{
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  color: surgeSaveMsg.startsWith('✅') ? '#4ade80' : '#fca5a5',
+                                }}
+                              >
+                                {surgeSaveMsg}
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                      )
+                  ) : null}
+                  <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo (% sobre el precio base).
+                  </p>
+                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
+                    0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
+                  </p>
+                </div>
               </div>
             </div>
           )}

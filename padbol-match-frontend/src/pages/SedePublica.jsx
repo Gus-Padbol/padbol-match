@@ -466,6 +466,7 @@ function ensureSedeSocialHref(key, raw) {
   const handle = s.startsWith('@') ? s.slice(1) : null;
   if (handle) {
     if (key === 'instagram') return `https://www.instagram.com/${handle}/`;
+    if (key === 'facebook') return `https://www.facebook.com/${handle}`;
     if (key === 'tiktok') return `https://www.tiktok.com/@${handle}`;
     if (key === 'twitter') return `https://x.com/${handle}`;
     if (key === 'youtube') return `https://www.youtube.com/@${handle}`;
@@ -475,6 +476,7 @@ function ensureSedeSocialHref(key, raw) {
   }
   if (/^[a-z0-9._-]+$/i.test(s) && !s.includes('.')) {
     if (key === 'instagram') return `https://www.instagram.com/${s}/`;
+    if (key === 'facebook') return `https://www.facebook.com/${s}`;
     if (key === 'tiktok') return `https://www.tiktok.com/@${s}`;
     if (key === 'twitter') return `https://x.com/${s}`;
     if (key === 'youtube') return `https://www.youtube.com/@${s}`;
@@ -485,11 +487,16 @@ function ensureSedeSocialHref(key, raw) {
 
 function buildSedeSocialItems(sede) {
   if (!sede || typeof sede !== 'object') return [];
-  return SEDE_INFO_SOCIAL_META.map((m) => {
+  const items = SEDE_INFO_SOCIAL_META.map((m) => {
     const href = ensureSedeSocialHref(m.key, sede[m.key]);
     if (!href) return null;
     return { ...m, href };
   }).filter(Boolean);
+  const waHref = whatsappHrefSede(sede);
+  if (waHref) {
+    items.push({ key: 'whatsapp', Icon: IconBrandWhatsapp, label: 'WhatsApp', href: waHref });
+  }
+  return items;
 }
 
 function SedeSocialLinks({ sede, t, variant = 'hero' }) {
@@ -674,7 +681,8 @@ function whatsappHrefSede(sede) {
 }
 
 /** Overlay identidad sobre la foto del hero. */
-function SedeHeroOverlayIdentity({ sede, ubicacionLinea, ubicacionFlag, licenciaActiva, t }) {
+function SedeHeroOverlayIdentity({ sede, direccionLinea, ubicacionLinea, ubicacionFlag, licenciaActiva, t }) {
+  const mapsHref = direccionLinea ? toHttps(buildMapsSearchHref(sede?.direccion, sede?.ciudad, sede?.pais)) : null;
   return (
     <div className="sede-publica-hero-fotos__identity">
       <div className="sede-publica-hero-fotos__identity-head">
@@ -694,7 +702,20 @@ function SedeHeroOverlayIdentity({ sede, ubicacionLinea, ubicacionFlag, licencia
         </div>
         <SedeSocialLinks sede={sede} t={t} variant="hero" />
       </div>
-      {ubicacionLinea ? (
+      {direccionLinea ? (
+        mapsHref ? (
+          <a
+            className="sede-publica-hero-fotos__direccion sede-publica-hero-fotos__direccion--link"
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {direccionLinea}
+          </a>
+        ) : (
+          <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
+        )
+      ) : ubicacionLinea ? (
         <p className="sede-publica-hero-fotos__direccion">
           {ubicacionFlag ? <span style={{ marginRight: '4px' }}>{ubicacionFlag}</span> : null}
           {ubicacionLinea}
@@ -2081,6 +2102,7 @@ export default function SedePublica() {
                   overlay={
                     <SedeHeroOverlayIdentity
                       sede={sede}
+                      direccionLinea={direccionLinea}
                       ubicacionLinea={ubicacionLinea}
                       ubicacionFlag={ubicacionFlag}
                       licenciaActiva={licenciaActiva}
@@ -2153,17 +2175,6 @@ export default function SedePublica() {
               </section>
             ) : null}
 
-            <SedeProximoTorneoSection
-              sedeId={sedeId}
-              sedeIdNum={sedeIdNumLoad}
-              session={session}
-              navigate={navigate}
-              location={location}
-              t={t}
-              padbolLang={padbolLang}
-              apiBase={API_BASE_RESENAS}
-            />
-
             {sedeTieneSeccionEnNumeros(estadisticasPublicas) ? (
               <SedeEnNumerosBloque stats={estadisticasPublicas} />
             ) : null}
@@ -2178,6 +2189,17 @@ export default function SedePublica() {
             />
 
             <SedeInstructoresSection instructores={instructoresAprobados} t={t} />
+
+            <SedeProximoTorneoSection
+              sedeId={sedeId}
+              sedeIdNum={sedeIdNumLoad}
+              session={session}
+              navigate={navigate}
+              location={location}
+              t={t}
+              padbolLang={padbolLang}
+              apiBase={API_BASE_RESENAS}
+            />
 
             {sedeTickerSponsorsHttps?.length > 0 ? (
               <div className="sede-publica-sponsors">

@@ -478,8 +478,7 @@ export default function AccesoCuenta() {
     >
       <AppHeader
         title={t('auth.access')}
-        showBack={muestreBotonVolverAcceso}
-        onBack={handleAccesoBack}
+        showBack={false}
         contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}
       />
       <div
