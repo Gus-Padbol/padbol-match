@@ -1962,3 +1962,8 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
     padding-left: 58px;
   }
 }
+
+/* Scoreboard admin: títulos de jugadores legibles en tema oscuro */
+#admin-scoreboard-form h3 {
+  color: var(--text-primary);
+}

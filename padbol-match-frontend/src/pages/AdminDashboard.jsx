@@ -11043,7 +11043,7 @@ export default function AdminDashboard({
                 const jugadores = equipo === 'A' ? sbJugadoresA : sbJugadoresB;
                 return (
                   <div key={equipo}>
-                    <h3 style={{ margin: '0 0 10px', fontSize: '15px' }}>
+                    <h3 style={{ margin: '0 0 10px', fontSize: '15px', color: 'var(--text-primary)' }}>
                       {t('admin.scoreboard.playersTeam', 'Jugadores Equipo')} {equipo}
                     </h3>
                     {jugadores.map((j, idx) => (
