@@ -73,28 +73,16 @@ function formatTorneoNombreLines(text) {
 }
 
 function TournamentBrand({ torneoNombre }) {
-  const hasTorneoNombre = Boolean(torneoNombre);
-  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre) : [];
+  const label = String(torneoNombre || '').trim() || 'Partido amistoso';
+  const torneoLines = formatTorneoNombreLines(label);
 
   return (
     <div className="sb-tournament-brand">
-      <img
-        src="/padbol-match-logo.png"
-        alt="Padbol Match"
-        className="sb-tournament-brand__logo"
-        style={{
-          mixBlendMode: 'screen',
-          width: hasTorneoNombre ? '420px' : '500px',
-          height: 'auto',
-        }}
-      />
-      {hasTorneoNombre ? (
-        <div className="sb-tournament-brand__name">
-          {torneoLines.map((line) => (
-            <span key={line} className="sb-tournament-brand__name-line">{line}</span>
-          ))}
-        </div>
-      ) : null}
+      <div className="sb-tournament-brand__name">
+        {torneoLines.map((line, index) => (
+          <span key={`${line}-${index}`} className="sb-tournament-brand__name-line">{line}</span>
+        ))}
+      </div>
     </div>
   );
 }
