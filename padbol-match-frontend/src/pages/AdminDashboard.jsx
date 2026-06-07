@@ -5232,25 +5232,6 @@ export default function AdminDashboard({
   const [editarSedeDraft, setEditarSedeDraft] = useState({});
   const [editarSedeModalMsg, setEditarSedeModalMsg] = useState('');
   const [canchas,       setCanchas]       = useState([]);
-
-  const surgeDeportesSede = useMemo(() => {
-    const keys = new Set();
-    for (const c of canchas || []) {
-      if (c?.activo === false || c?.estado === 'inactiva') continue;
-      const d = String(c.deporte || 'padbol').trim().toLowerCase();
-      if (DEPORTES_CANCHA_SEDE_OPTIONS.some((o) => o.key === d)) keys.add(d);
-    }
-    if (keys.size === 0 && Array.isArray(miSede?.deportes_disponibles)) {
-      for (const d of miSede.deportes_disponibles) {
-        const k = String(d || '').trim().toLowerCase();
-        if (DEPORTES_CANCHA_SEDE_OPTIONS.some((o) => o.key === k)) keys.add(k);
-      }
-    }
-    const order = DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => o.key);
-    return DEPORTES_CANCHA_SEDE_OPTIONS
-      .filter((o) => keys.has(o.key))
-      .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-  }, [canchas, miSede?.deportes_disponibles]);
   const [canchaModalOpen, setCanchaModalOpen] = useState(false);
   const [canchaModalMode, setCanchaModalMode] = useState('add');
   const [canchaEditId, setCanchaEditId] = useState(null);
@@ -13122,13 +13103,8 @@ export default function AdminDashboard({
                   Activar Surge
                 </label>
                 {miSedeForm.surge_activo ? (
-                  surgeDeportesSede.length === 0 ? (
-                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      Agregá canchas con deporte en esta sede para configurar Surge por deporte.
-                    </p>
-                  ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
-                      {surgeDeportesSede.map(({ key, label }) => {
+                      {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => {
                         const cfg = surgeConfigs[key] || { activo: false, precio_minimo: '', precio_maximo: '' };
                         const bandError = surgeConfigBandError(cfg);
                         const saving = !!surgeConfigSaving[key];
@@ -13200,7 +13176,6 @@ export default function AdminDashboard({
                         );
                       })}
                     </div>
-                  )
                 ) : null}
                 <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo.
