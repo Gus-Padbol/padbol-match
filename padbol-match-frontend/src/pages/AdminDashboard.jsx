@@ -154,6 +154,109 @@ function formatScoreboardPartidoFecha(raw) {
   return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
+function sortSbPartidosRecent(list) {
+  return [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+}
+
+function partidoSearchHaystack(partido) {
+  const fecha = formatScoreboardPartidoFecha(partido.created_at);
+  return [
+    String(partido.torneo_nombre || ''),
+    String(partido.equipo_a_nombre || ''),
+    String(partido.equipo_b_nombre || ''),
+    fecha,
+    String(partido.created_at || ''),
+  ].join(' ').toLowerCase();
+}
+
+function filterSbPartidosSearch(list, query, max = 20) {
+  const sorted = sortSbPartidosRecent(list);
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return sorted.slice(0, max);
+  return sorted.filter((p) => partidoSearchHaystack(p).includes(q)).slice(0, max);
+}
+
+function AdminScoreboardPartidoListItem({
+  partido,
+  previewPartidoId,
+  onTogglePreview,
+  onQr,
+  onEdit,
+  t,
+}) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const tvLink = `${origin}/display/${partido.sede_id}/scoreboard/${partido.id}`;
+  const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
+  const torneo = String(partido.torneo_nombre || '').trim();
+  const isPreviewOpen = previewPartidoId === partido.id;
+
+  return (
+    <li className="admin-scoreboard-partidos-list__item">
+      <div className="admin-scoreboard-partidos-list__item-head">
+        <div className="admin-scoreboard-partidos-list__item-info">
+          {torneo ? (
+            <p className="admin-scoreboard-partidos-list__meta admin-scoreboard-partidos-list__meta--torneo">
+              {torneo}
+            </p>
+          ) : null}
+          <p className="admin-scoreboard-partidos-list__match">
+            {partido.equipo_a_nombre} vs {partido.equipo_b_nombre}
+          </p>
+          <p className="admin-scoreboard-partidos-list__meta">
+            {formatScoreboardPartidoFecha(partido.created_at)}
+          </p>
+        </div>
+        <div className="admin-scoreboard-partidos-list__actions">
+          <button
+            type="button"
+            onClick={() => onQr(partido)}
+            className="admin-scoreboard-partidos-list__action-btn"
+          >
+            📱 {t('admin.scoreboard.qrCourtBtn', 'QR Cancha')}
+          </button>
+          <button
+            type="button"
+            onClick={() => onTogglePreview(partido.id)}
+            aria-expanded={isPreviewOpen}
+            className={`admin-scoreboard-partidos-list__action-btn${isPreviewOpen ? ' admin-scoreboard-partidos-list__action-btn--active' : ''}`}
+          >
+            {isPreviewOpen
+              ? t('admin.scoreboard.hidePreview', '👁 Ocultar')
+              : t('admin.scoreboard.showPreview', '👁 Ver')}
+          </button>
+          <a
+            href={tvLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
+          >
+            📺 TV
+          </a>
+          <a
+            href={arbiterLink}
+            className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
+          >
+            🎮 Árbitro
+          </a>
+          <button
+            type="button"
+            onClick={() => onEdit(partido.id)}
+            className="admin-scoreboard-partidos-list__action-btn"
+          >
+            ✏️ Editar
+          </button>
+        </div>
+      </div>
+      {isPreviewOpen ? (
+        <AdminScoreboardPartidoPreview
+          partido={partido}
+          onEdit={onEdit}
+        />
+      ) : null}
+    </li>
+  );
+}
+
 function buildScoreboardPartidoBody({
   sede_id,
   sbTorneoNombre,
@@ -2396,6 +2499,8 @@ export default function AdminDashboard({
   const [sbPartidosLoading, setSbPartidosLoading] = useState(false);
   const [sbPartidosError, setSbPartidosError] = useState('');
   const [sbPartidosRefreshKey, setSbPartidosRefreshKey] = useState(0);
+  const [sbPartidosExpanded, setSbPartidosExpanded] = useState(false);
+  const [sbPartidosSearch, setSbPartidosSearch] = useState('');
   const [scoreboardSedes, setScoreboardSedes] = useState([]);
   const [scoreboardSedesLoading, setScoreboardSedesLoading] = useState(false);
   const [scoreboardSedesError, setScoreboardSedesError] = useState('');
@@ -6904,6 +7009,30 @@ export default function AdminDashboard({
     setSbPartidosRefreshKey((n) => n + 1);
   }, []);
 
+  const sbPartidosSorted = useMemo(
+    () => sortSbPartidosRecent(sbPartidosList),
+    [sbPartidosList],
+  );
+  const sbPartidosRecentVisible = useMemo(
+    () => sbPartidosSorted.slice(0, 3),
+    [sbPartidosSorted],
+  );
+  const sbPartidosSearchResults = useMemo(
+    () => filterSbPartidosSearch(sbPartidosList, sbPartidosSearch, 20),
+    [sbPartidosList, sbPartidosSearch],
+  );
+  const sbPartidosSearchHasMore = useMemo(() => {
+    const sorted = sortSbPartidosRecent(sbPartidosList);
+    const q = String(sbPartidosSearch || '').trim().toLowerCase();
+    if (!q) return sorted.length > 20;
+    return sorted.filter((p) => partidoSearchHaystack(p).includes(q)).length > 20;
+  }, [sbPartidosList, sbPartidosSearch]);
+
+  useEffect(() => {
+    setSbPartidosExpanded(false);
+    setSbPartidosSearch('');
+  }, [sbSedeId]);
+
   useEffect(() => {
     if (!puedeVerScoreboard || activeTab !== 'scoreboard') return undefined;
     const sede_id = parseInt(sbSedeId, 10);
@@ -11164,100 +11293,91 @@ export default function AdminDashboard({
                 {t('admin.scoreboard.noPartidos', 'No hay partidos creados para esta sede.')}
               </p>
             ) : (
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '10px' }}>
-                {[...sbPartidosList]
-                  .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-                  .map((p) => {
-                    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-                    const tvLink = `${origin}/display/${p.sede_id}/scoreboard/${p.id}`;
-                    const arbiterLink = `${origin}/admin/scoreboard/${p.id}`;
-                    const torneo = String(p.torneo_nombre || '').trim();
-                    return (
-                      <li
-                        key={p.id}
-                        style={{
-                          border: '1px solid var(--border)',
-                          borderRadius: '10px',
-                          padding: '14px 16px',
-                          background: 'var(--bg-card)',
-                          display: 'grid',
-                          gap: '10px',
+              <>
+                <ul className="admin-scoreboard-partidos-list__items">
+                  {sbPartidosRecentVisible.map((p) => (
+                    <AdminScoreboardPartidoListItem
+                      key={p.id}
+                      partido={p}
+                      previewPartidoId={sbPreviewPartidoId}
+                      onTogglePreview={toggleSbPartidoPreview}
+                      onQr={setSbQrPartido}
+                      onEdit={(id) => void loadScoreboardFormForEdit(id)}
+                      t={t}
+                    />
+                  ))}
+                </ul>
+
+                {sbPartidosSorted.length > 3 && !sbPartidosExpanded ? (
+                  <button
+                    type="button"
+                    className="admin-scoreboard-partidos-list__expand-btn"
+                    onClick={() => setSbPartidosExpanded(true)}
+                  >
+                    {t('admin.scoreboard.viewAllPartidos', 'Ver todos los partidos')}
+                    {' '}
+                    ({sbPartidosSorted.length})
+                  </button>
+                ) : null}
+
+                {sbPartidosExpanded ? (
+                  <div className="admin-scoreboard-partidos-list__expanded">
+                    <div className="admin-scoreboard-partidos-list__expanded-head">
+                      <label className="admin-scoreboard-partidos-list__search-label" htmlFor="sb-partidos-search">
+                        {t('admin.scoreboard.searchPartidos', 'Buscar partidos')}
+                      </label>
+                      <input
+                        id="sb-partidos-search"
+                        type="text"
+                        className="admin-scoreboard-partidos-list__search"
+                        value={sbPartidosSearch}
+                        onChange={(e) => setSbPartidosSearch(e.target.value)}
+                        placeholder={t(
+                          'admin.scoreboard.searchPartidosPlaceholder',
+                          'Torneo, equipo o fecha...',
+                        )}
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        className="admin-scoreboard-partidos-list__collapse-btn"
+                        onClick={() => {
+                          setSbPartidosExpanded(false);
+                          setSbPartidosSearch('');
                         }}
                       >
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                          <div style={{ minWidth: 0 }}>
-                            {torneo ? (
-                              <p className="admin-scoreboard-partidos-list__meta admin-scoreboard-partidos-list__meta--torneo">
-                                {torneo}
-                              </p>
-                            ) : null}
-                            <p className="admin-scoreboard-partidos-list__match">
-                              {p.equipo_a_nombre} vs {p.equipo_b_nombre}
-                            </p>
-                            <p className="admin-scoreboard-partidos-list__meta">
-                              {formatScoreboardPartidoFecha(p.created_at)}
-                            </p>
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            <button
-                              type="button"
-                              onClick={() => setSbQrPartido(p)}
-                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
-                            >
-                              📱 {t('admin.scoreboard.qrCourtBtn', 'QR Cancha')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => toggleSbPartidoPreview(p.id)}
-                              aria-expanded={sbPreviewPartidoId === p.id}
-                              style={{
-                                padding: '7px 12px',
-                                borderRadius: '8px',
-                                border: '1px solid var(--border)',
-                                fontSize: '13px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                background: sbPreviewPartidoId === p.id ? 'var(--accent)' : 'var(--bg-input)',
-                                color: sbPreviewPartidoId === p.id ? '#fff' : 'var(--text-primary)',
-                              }}
-                            >
-                              {sbPreviewPartidoId === p.id
-                                ? t('admin.scoreboard.hidePreview', '👁 Ocultar')
-                                : t('admin.scoreboard.showPreview', '👁 Ver')}
-                            </button>
-                            <a
-                              href={tvLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', background: 'var(--bg-input)' }}
-                            >
-                              📺 TV
-                            </a>
-                            <a
-                              href={arbiterLink}
-                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', textDecoration: 'none', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', background: 'var(--bg-input)' }}
-                            >
-                              🎮 Árbitro
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => void loadScoreboardFormForEdit(p.id)}
-                              style={{ padding: '7px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
-                            >
-                              ✏️ Editar
-                            </button>
-                          </div>
-                        </div>
-                        {sbPreviewPartidoId === p.id ? (
-                          <AdminScoreboardPartidoPreview
-                            partido={p}
-                            onEdit={(id) => void loadScoreboardFormForEdit(id)}
-                          />
-                        ) : null}
-                      </li>
-                    );
-                  })}
-              </ul>
+                        {t('admin.scoreboard.collapsePartidos', 'Ocultar listado')}
+                      </button>
+                    </div>
+                    <div className="admin-scoreboard-partidos-list__expanded-scroll">
+                      {sbPartidosSearchResults.length === 0 ? (
+                        <p className="admin-scoreboard-partidos-list__search-empty">
+                          {t('admin.scoreboard.noSearchResults', 'No hay partidos que coincidan con la búsqueda.')}
+                        </p>
+                      ) : (
+                        <ul className="admin-scoreboard-partidos-list__items">
+                          {sbPartidosSearchResults.map((p) => (
+                            <AdminScoreboardPartidoListItem
+                              key={p.id}
+                              partido={p}
+                              previewPartidoId={sbPreviewPartidoId}
+                              onTogglePreview={toggleSbPartidoPreview}
+                              onQr={setSbQrPartido}
+                              onEdit={(id) => void loadScoreboardFormForEdit(id)}
+                              t={t}
+                            />
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {sbPartidosSearchHasMore ? (
+                      <p className="admin-scoreboard-partidos-list__search-limit">
+                        {t('admin.scoreboard.searchLimit', 'Mostrando los primeros 20 resultados.')}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
             )}
           </div>
 
