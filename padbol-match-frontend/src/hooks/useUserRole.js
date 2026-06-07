@@ -1,8 +1,7 @@
 import { useState, useEffect, useLayoutEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { fetchMiRol } from '../utils/fetchMiRol';
-import { fetchUserRoleFromSupabase } from '../utils/fetchUserRoleSupabase';
-import { mergeUserRoleResults, readCachedUserRoleForEmail } from '../utils/mergeUserRoleResult';
+import { readCachedUserRoleForEmail } from '../utils/mergeUserRoleResult';
 import {
   USER_ROLE_STORAGE_KEY,
   normalizeUserRole,
@@ -24,6 +23,18 @@ function roleDataFromCached(email) {
   };
 }
 
+function roleDataFromApi(apiResult, emailKey) {
+  if (!apiResult?.rol) return null;
+  return {
+    email: apiResult.email || emailKey,
+    rol: normalizeUserRole(apiResult.rol),
+    nombre: apiResult.nombre ?? null,
+    pais: apiResult.pais ?? null,
+    sedeId: apiResult.sedeId ?? null,
+    torneosOficialesHabilitados: apiResult.torneosOficialesHabilitados ?? false,
+  };
+}
+
 export default function useUserRole(currentCliente) {
   const email = currentCliente?.email ? String(currentCliente.email).trim() : null;
   const emailKey = email ? email.toLowerCase() : null;
@@ -31,7 +42,7 @@ export default function useUserRole(currentCliente) {
   const [roleData, setRoleData] = useState(() =>
     emailKey ? roleDataFromCached(emailKey) : null
   );
-  /** true mientras no hay email; con email, true hasta resolver rol vía API + respaldo Supabase. */
+  /** true mientras no hay email; con email, true hasta resolver rol vía GET /api/auth/mi-rol. */
   const [loading, setLoading] = useState(() => Boolean(emailKey));
 
   useLayoutEffect(() => {
@@ -55,13 +66,11 @@ export default function useUserRole(currentCliente) {
       try {
         const { data: sessWrap } = await supabase.auth.getSession();
         const token = sessWrap?.session?.access_token;
-        const authUser = sessWrap?.session?.user;
 
-        if (!token || !authUser) {
+        if (!token) {
           if (!cancelled) {
-            const cachedOnly = roleDataFromCached(emailKey);
-            setRoleData(cachedOnly);
-            if (!cachedOnly) localStorage.removeItem(STORAGE_KEY);
+            setRoleData(null);
+            localStorage.removeItem(STORAGE_KEY);
             setLoading(false);
           }
           return;
@@ -74,81 +83,21 @@ export default function useUserRole(currentCliente) {
           console.warn('useUserRole: /api/auth/mi-rol error:', apiErr?.message || apiErr);
         }
 
-        let supabaseResult = null;
-        if (!normalizeUserRole(apiResult?.rol)) {
-          try {
-            supabaseResult = await fetchUserRoleFromSupabase(authUser);
-          } catch (supaErr) {
-            console.warn('useUserRole: Supabase user_roles fallback error:', supaErr?.message || supaErr);
-          }
-        }
-
         if (cancelled) return;
 
-        const merged = mergeUserRoleResults({
-          apiResult,
-          supabaseResult,
-          email: emailKey,
-        });
-
-        const result = merged?.rol
-          ? {
-              email: merged.email || emailKey,
-              rol: normalizeUserRole(merged.rol),
-              nombre: merged.nombre,
-              pais: merged.pais,
-              sedeId: merged.sedeId,
-              torneosOficialesHabilitados: merged.torneosOficialesHabilitados ?? false,
-            }
-          : merged
-            ? {
-                email: merged.email || emailKey,
-                rol: null,
-                nombre: merged.nombre,
-                pais: merged.pais,
-                sedeId: merged.sedeId,
-                torneosOficialesHabilitados: false,
-              }
-            : null;
-
+        const result = roleDataFromApi(apiResult, emailKey);
         setRoleData(result);
-        if (result?.rol && userCanAccessAdminPanel(result.rol)) {
+
+        if (result?.rol) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
-        } else if (!result?.rol) {
-          const cached = readCachedUserRoleForEmail(emailKey);
-          if (cached?.rol && userCanAccessAdminPanel(cached.rol)) {
-            const keep = {
-              email: emailKey,
-              rol: cached.rol,
-              nombre: cached.nombre ?? result?.nombre ?? null,
-              pais: cached.pais ?? result?.pais ?? null,
-              sedeId: cached.sedeId ?? result?.sedeId ?? null,
-              torneosOficialesHabilitados:
-                cached.torneosOficialesHabilitados ?? result?.torneosOficialesHabilitados ?? false,
-            };
-            setRoleData(keep);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(keep));
-          } else {
-            localStorage.removeItem(STORAGE_KEY);
-          }
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
         }
       } catch (err) {
         if (!cancelled) {
           console.error('useUserRole fetch error:', err?.message || err);
-          const cached = roleDataFromCached(emailKey);
-          if (cached) {
-            setRoleData({
-              email: cached.email || emailKey,
-              rol: normalizeUserRole(cached.rol),
-              nombre: cached.nombre ?? null,
-              pais: cached.pais ?? null,
-              sedeId: cached.sedeId ?? null,
-              torneosOficialesHabilitados: cached.torneosOficialesHabilitados ?? false,
-            });
-          } else {
-            setRoleData(null);
-            localStorage.removeItem(STORAGE_KEY);
-          }
+          setRoleData(null);
+          localStorage.removeItem(STORAGE_KEY);
         }
       } finally {
         if (!cancelled) setLoading(false);

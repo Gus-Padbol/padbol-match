@@ -38,8 +38,9 @@ export function userCanAccessAdminPanel(rol) {
 }
 
 /**
- * Rol efectivo: API (`/api/auth/mi-rol`) → caché local → JWT metadata.
- * @param {{ rolFromApi?: string|null, session?: object|null }} params
+ * Rol efectivo para UI secundaria (header): API primero, luego caché/JWT.
+ * El gate `/admin` usa solo `normalizeUserRole(rol)` del hook (GET /api/auth/mi-rol).
+ * @param {{ rolFromApi?: string|null, session?: object|null, rolFallback?: string|null }} params
  */
 export function resolveEffectiveUserRole({ rolFromApi, session, rolFallback }) {
   const fromHook = normalizeUserRole(rolFromApi);

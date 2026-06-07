@@ -102,6 +102,7 @@ import {
   miSedeFormPreciosFromSedeRow,
 } from '../utils/sedePreciosDuracion';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { normalizeUserRole } from '../utils/adminPanelRoles';
 import { generarIniciosMinutosSlotReserva, minutosAHoraReserva } from '../utils/reservaSlotsHorarios';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
@@ -491,6 +492,18 @@ const ADMIN_TABS_ALLOWED = new Set([
 
 const EDITOR_CONTENIDO_TABS_ALLOWED = new Set(['personalizar_hub', 'sponsors']);
 
+const ADMIN_CLUB_TABS_ALLOWED = new Set([
+  'mi_sede',
+  'reservas',
+  'torneos',
+  'validaciones',
+  'scoreboard',
+  'notificaciones',
+  'resumen',
+]);
+
+const ADMIN_NACIONAL_TABS_ALLOWED = new Set(['resumen', 'torneos', 'sedes', 'jugadores', 'notificaciones']);
+
 const SEDES_SUPER_ADMIN_PAGE_SIZE = 10;
 const RESERVAS_ADMIN_PAGE_SIZE = 15;
 
@@ -504,14 +517,34 @@ function asAdminDataArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function defaultAdminTabForRole(rolUsuario) {
+  const rol = normalizeUserRole(rolUsuario);
+  if (rol === 'empleado') return 'reservas';
+  if (rol === 'editor_contenido') return 'personalizar_hub';
+  if (rol === 'admin_club') return 'mi_sede';
+  if (rol === 'admin_nacional') return 'resumen';
+  return 'resumen';
+}
+
 function sanitizeAdminActiveTab(raw, rolUsuario = null) {
-  if (rolUsuario === 'editor_contenido') {
-    const t0 = String(raw || '').trim();
-    return EDITOR_CONTENIDO_TABS_ALLOWED.has(t0) ? t0 : 'personalizar_hub';
-  }
+  const rol = normalizeUserRole(rolUsuario);
   const t0 = String(raw || '').trim();
   const t = t0 === 'sedes_pendientes' ? 'solicitudes' : t0;
-  return ADMIN_TABS_ALLOWED.has(t) ? t : 'resumen';
+
+  if (rol === 'editor_contenido') {
+    return EDITOR_CONTENIDO_TABS_ALLOWED.has(t) ? t : 'personalizar_hub';
+  }
+  if (rol === 'empleado') {
+    return t === 'reservas' || t === 'torneos' ? t : 'reservas';
+  }
+  if (rol === 'admin_club') {
+    return ADMIN_CLUB_TABS_ALLOWED.has(t) ? t : 'mi_sede';
+  }
+  if (rol === 'admin_nacional') {
+    const nacionalTab = t === 'sedes' ? 'sedes' : t;
+    return ADMIN_NACIONAL_TABS_ALLOWED.has(nacionalTab) ? nacionalTab : 'resumen';
+  }
+  return ADMIN_TABS_ALLOWED.has(t) ? t : defaultAdminTabForRole(rol);
 }
 
 /** Valor de query `estado` para GET admin (todas = sin filtro). */
@@ -2097,15 +2130,16 @@ export default function AdminDashboard({
   const currentEmail = (session?.user?.email || '').trim().toLowerCase();
   const adminPillInactiveSurface = theme === 'light' ? 'lightMuted' : 'default';
 
-  const isSuperAdmin = rol === 'super_admin';
-  const esEmpleado = rol === 'empleado';
-  const esEditorContenido = rol === 'editor_contenido';
+  const rolPanel = normalizeUserRole(rol);
+  const isSuperAdmin = rolPanel === 'super_admin';
+  const esEmpleado = rolPanel === 'empleado';
+  const esEditorContenido = rolPanel === 'editor_contenido';
   const isAdmin =
-    isSuperAdmin || rol === 'admin_nacional' || rol === 'admin_club' || esEmpleado;
+    isSuperAdmin || rolPanel === 'admin_nacional' || rolPanel === 'admin_club' || esEmpleado;
 
   // Role-based access flags
-  const esAdminNacional = rol === 'admin_nacional';
-  const esAdminClub     = rol === 'admin_club';
+  const esAdminNacional = rolPanel === 'admin_nacional';
+  const esAdminClub     = rolPanel === 'admin_club';
   /** Clave estable para sedesMap / canchasDetallePorSede (prop puede llegar tarde). */
   const sedeIdKey =
     sedeId != null && sedeId !== '' && String(sedeId).trim() !== '' ? String(sedeId) : '';
@@ -2138,6 +2172,7 @@ export default function AdminDashboard({
     empleado:       `👤 ${t('admin.role.employee')}`,
     editor_contenido: `📝 ${t('admin.role.editor')}`,
   };
+  const roleBadgeLabel = ROLE_BADGE[rolPanel] || ROLE_BADGE[rol] || 'Admin';
 
   const [reservas, setReservas] = useState([]);
   const [torneos, setTorneos] = useState([]);
@@ -2208,7 +2243,7 @@ export default function AdminDashboard({
       return [];
     }
   });
-  const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab'), rol));
+  const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab'), rolPanel));
   const [nuevaSedeModalOpen, setNuevaSedeModalOpen] = useState(false);
   const [editorContenidoEmail, setEditorContenidoEmail] = useState('');
   const [editorContenidoNombre, setEditorContenidoNombre] = useState('');
@@ -2306,7 +2341,7 @@ export default function AdminDashboard({
 
   const applyOnboardingTab = useCallback(
     (tabId) => {
-      const id = sanitizeAdminActiveTab(tabId, rol);
+      const id = sanitizeAdminActiveTab(tabId, rolPanel);
       setActiveTab(id);
       try {
         sessionStorage.setItem('adminActiveTab', id);
@@ -2315,7 +2350,7 @@ export default function AdminDashboard({
       }
       navigate(`/admin?tab=${encodeURIComponent(id)}`, { replace: true });
     },
-    [navigate, rol]
+    [navigate, rolPanel]
   );
 
   const [vistaReservasAdminTarjetas, setVistaReservasAdminTarjetas] = useState(false);
@@ -2989,16 +3024,16 @@ export default function AdminDashboard({
   useEffect(() => {
     const raw = searchParams.get('tab');
     if (raw == null || String(raw).trim() === '') {
-      setActiveTab(esEmpleado ? 'reservas' : esEditorContenido ? 'personalizar_hub' : 'resumen');
+      setActiveTab(defaultAdminTabForRole(rolPanel));
       return;
     }
-    const t = sanitizeAdminActiveTab(raw, rol);
+    const t = sanitizeAdminActiveTab(raw, rolPanel);
     setActiveTab((prev) => {
       if (prev === t) return prev;
       sessionStorage.setItem('adminActiveTab', t);
       return t;
     });
-  }, [searchParams, esEmpleado, esEditorContenido, rol]);
+  }, [searchParams, rolPanel, esEmpleado, esEditorContenido]);
 
   useEffect(() => {
     if (activeTab !== 'reservas') {
@@ -4363,9 +4398,16 @@ export default function AdminDashboard({
   }, [esAdminNacional, paisAdminNacional, session?.access_token]);
 
   useEffect(() => {
+    if (!esAdminClub || isSuperAdmin) return;
+    if (ADMIN_CLUB_TABS_ALLOWED.has(activeTab)) return;
+    const fallback = 'mi_sede';
+    setActiveTab(fallback);
+    navigate(`/admin?tab=${fallback}`, { replace: true });
+  }, [esAdminClub, isSuperAdmin, activeTab, navigate]);
+
+  useEffect(() => {
     if (!esAdminNacional) return;
-    const permitidas = new Set(['resumen', 'torneos', t('admin.metricas.venuesCount'), 'jugadores']);
-    if (permitidas.has(activeTab)) return;
+    if (ADMIN_NACIONAL_TABS_ALLOWED.has(activeTab)) return;
     setActiveTab('resumen');
     navigate('/admin?tab=resumen', { replace: true });
   }, [esAdminNacional, activeTab, navigate]);
@@ -6998,6 +7040,16 @@ export default function AdminDashboard({
         { id: 'reservas', label: t('admin.tabs.reservas') },
         { id: 'torneos', label: t('admin.tabs.torneos') },
       ]
+    : esAdminClub && !isSuperAdmin
+    ? [
+        { id: 'mi_sede', label: t('admin.tabs.miSede') },
+        { id: 'reservas', label: t('admin.tabs.reservas') },
+        { id: 'torneos', label: t('admin.tabs.torneos') },
+        { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
+        ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: '📺 Scoreboard' }] : []),
+        ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
+        { id: 'resumen', label: t('nav.admin.resumen') },
+      ]
     : esAdminNacional
     ? [
         { id: 'resumen', label: t('nav.admin.resumen') },
@@ -7044,9 +7096,8 @@ export default function AdminDashboard({
     if (esAdminNacional) {
       return t('admin.panel.nationalTitle');
     }
-    const badge = ROLE_BADGE[rol] || 'Admin';
     return t('admin.panel.genericTitle', {
-      role: badge.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '').trim(),
+      role: roleBadgeLabel.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '').trim(),
     });
   })();
   const logoPanelSrc = (() => {
