@@ -504,32 +504,37 @@ function SedeSocialLinks({ sede, t, variant = 'hero' }) {
   if (!items.length) return null;
   const isHero = variant === 'hero';
   const labelRaw = t('sedes.publica.seguinosEn', { defaultValue: 'Seguinos en' });
-  const label = isHero ? labelRaw.toUpperCase() : labelRaw;
   const rootClass = isHero ? 'sede-publica-hero-social' : 'sede-publica-section sede-publica-social';
   const labelClass = isHero ? 'sede-publica-hero-social__label' : 'sede-publica-social__label';
   const iconsClass = isHero ? 'sede-publica-hero-social__icons' : 'sede-publica-social__icons';
   const linkClass = isHero ? 'sede-publica-hero-social__link' : 'sede-publica-social__link';
-  return (
-    <div className={rootClass} aria-label={label}>
-      <p className={labelClass}>{label}</p>
-      <div className={iconsClass}>
-        {items.map((m) => {
-          const Icon = m.Icon;
-          return (
-            <a
-              key={m.key}
-              href={m.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={linkClass}
-              aria-label={m.label}
-              title={m.label}
-            >
-              <Icon />
-            </a>
-          );
-        })}
+  const iconLinks = items.map((m) => {
+    const Icon = m.Icon;
+    return (
+      <a
+        key={m.key}
+        href={m.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+        aria-label={m.label}
+        title={m.label}
+      >
+        <Icon />
+      </a>
+    );
+  });
+  if (isHero) {
+    return (
+      <div className={rootClass} role="group" aria-label={labelRaw}>
+        <div className={iconsClass}>{iconLinks}</div>
       </div>
+    );
+  }
+  return (
+    <div className={rootClass} aria-label={labelRaw}>
+      <p className={labelClass}>{labelRaw}</p>
+      <div className={iconsClass}>{iconLinks}</div>
     </div>
   );
 }
@@ -684,54 +689,56 @@ function whatsappHrefSede(sede) {
 function SedeHeroOverlayIdentity({ sede, direccionLinea, ubicacionLinea, ubicacionFlag, licenciaActiva, t }) {
   const mapsHref = direccionLinea ? toHttps(buildMapsSearchHref(sede?.direccion, sede?.ciudad, sede?.pais)) : null;
   return (
-    <div className="sede-publica-hero-fotos__identity">
-      <div className="sede-publica-hero-fotos__identity-head">
-        <div className="sede-publica-hero-fotos__identity-brand">
-          <div className="sede-publica-hero-fotos__logo">
-            {sede.logo_url ? (
-              <img src={toHttps(sede.logo_url)} alt="" />
-            ) : (
-              <span className="sede-publica-hero-fotos__logo-fallback" aria-hidden>
-                ⚽
-              </span>
-            )}
+    <>
+      <div className="sede-publica-hero-fotos__identity">
+        <div className="sede-publica-hero-fotos__identity-head">
+          <div className="sede-publica-hero-fotos__identity-brand">
+            <div className="sede-publica-hero-fotos__logo">
+              {sede.logo_url ? (
+                <img src={toHttps(sede.logo_url)} alt="" />
+              ) : (
+                <span className="sede-publica-hero-fotos__logo-fallback" aria-hidden>
+                  ⚽
+                </span>
+              )}
+            </div>
+            <h1 className="sede-publica-hero-fotos__nombre">
+              {sede.nombre || '(sin nombre)'}
+            </h1>
           </div>
-          <h1 className="sede-publica-hero-fotos__nombre">
-            {sede.nombre || '(sin nombre)'}
-          </h1>
         </div>
-        <SedeSocialLinks sede={sede} t={t} variant="hero" />
+        {direccionLinea ? (
+          mapsHref ? (
+            <a
+              className="sede-publica-hero-fotos__direccion sede-publica-hero-fotos__direccion--link"
+              href={mapsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {direccionLinea}
+            </a>
+          ) : (
+            <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
+          )
+        ) : ubicacionLinea ? (
+          <p className="sede-publica-hero-fotos__direccion">
+            {ubicacionFlag ? <span style={{ marginRight: '4px' }}>{ubicacionFlag}</span> : null}
+            {ubicacionLinea}
+          </p>
+        ) : null}
+        {licenciaActiva ? (
+          <div className="sede-publica-hero-fotos__licencia-wrap">
+            <span className="sede-publica-hero-fotos__licencia">
+              {t('sedes.publica.licenciaBadge', { defaultValue: 'PADBOL' })}
+            </span>
+            <span className="sede-publica-hero-fotos__licencia-status">
+              {t('sedes.publica.licenciaActivaLine', { defaultValue: '✓ Licencia activa' })}
+            </span>
+          </div>
+        ) : null}
       </div>
-      {direccionLinea ? (
-        mapsHref ? (
-          <a
-            className="sede-publica-hero-fotos__direccion sede-publica-hero-fotos__direccion--link"
-            href={mapsHref}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {direccionLinea}
-          </a>
-        ) : (
-          <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
-        )
-      ) : ubicacionLinea ? (
-        <p className="sede-publica-hero-fotos__direccion">
-          {ubicacionFlag ? <span style={{ marginRight: '4px' }}>{ubicacionFlag}</span> : null}
-          {ubicacionLinea}
-        </p>
-      ) : null}
-      {licenciaActiva ? (
-        <div className="sede-publica-hero-fotos__licencia-wrap">
-          <span className="sede-publica-hero-fotos__licencia">
-            {t('sedes.publica.licenciaBadge', { defaultValue: 'PADBOL' })}
-          </span>
-          <span className="sede-publica-hero-fotos__licencia-status">
-            {t('sedes.publica.licenciaActivaLine', { defaultValue: '✓ Licencia activa' })}
-          </span>
-        </div>
-      ) : null}
-    </div>
+      <SedeSocialLinks sede={sede} t={t} variant="hero" />
+    </>
   );
 }
 
