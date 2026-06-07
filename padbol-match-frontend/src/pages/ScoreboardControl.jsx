@@ -6,8 +6,10 @@ import useUserRole from '../hooks/useUserRole';
 import { getDisplayName } from '../utils/displayName';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
-import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
+import { fetchPartido, scoreboardAction, updatePartido } from '../utils/scoreboardApi';
 import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
+import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
+import UniformJerseyStrip from '../components/scoreboard/UniformJerseyStrip';
 import '../styles/ScoreboardControl.css';
 
 function formatTimer(seconds) {
@@ -51,6 +53,98 @@ function canAdminScoreboard(rol, sedeIdPartido, sedeIdUser) {
     return Number(sedeIdUser) === Number(sedeIdPartido);
   }
   return false;
+}
+
+function colorPickerValue(raw) {
+  return normalizeUniformColor(raw) || '#ffffff';
+}
+
+function UniformColorField({ label, value, onChange, onClear }) {
+  return (
+    <label className="sc-config-color">
+      <span className="sc-config-color__label">{label}</span>
+      <div className="sc-config-color__row">
+        <input
+          type="color"
+          className="sc-config-color__picker"
+          value={colorPickerValue(value)}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <input
+          type="text"
+          className="sc-config-color__text"
+          value={value || ''}
+          placeholder="#RRGGBB"
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button type="button" className="sc-config-color__clear" onClick={onClear}>
+          Limpiar
+        </button>
+      </div>
+    </label>
+  );
+}
+
+function MatchUniformConfig({
+  partido,
+  draft,
+  onDraftChange,
+  saving,
+  message,
+  onSave,
+}) {
+  return (
+    <section className="sc-config" aria-labelledby="sc-config-title">
+      <h2 id="sc-config-title" className="sc-config__title">Configuración del partido</h2>
+      <p className="sc-config__hint">
+        Colores de camiseta en el scoreboard TV (franja vertical junto al nombre del equipo).
+      </p>
+      <div className="sc-config__teams">
+        <div className="sc-config-team">
+          <div className="sc-config-team__head">
+            <UniformJerseyStrip color1={draft.a1} color2={draft.a2} className="sc-config-team__preview" />
+            <h3 className="sc-config-team__name">{partido.equipo_a_nombre}</h3>
+          </div>
+          <UniformColorField
+            label="Color 1 uniforme"
+            value={draft.a1}
+            onChange={(v) => onDraftChange('a1', v)}
+            onClear={() => onDraftChange('a1', '')}
+          />
+          <UniformColorField
+            label="Color 2 uniforme"
+            value={draft.a2}
+            onChange={(v) => onDraftChange('a2', v)}
+            onClear={() => onDraftChange('a2', '')}
+          />
+        </div>
+        <div className="sc-config-team">
+          <div className="sc-config-team__head">
+            <UniformJerseyStrip color1={draft.b1} color2={draft.b2} className="sc-config-team__preview" />
+            <h3 className="sc-config-team__name">{partido.equipo_b_nombre}</h3>
+          </div>
+          <UniformColorField
+            label="Color 1 uniforme"
+            value={draft.b1}
+            onChange={(v) => onDraftChange('b1', v)}
+            onClear={() => onDraftChange('b1', '')}
+          />
+          <UniformColorField
+            label="Color 2 uniforme"
+            value={draft.b2}
+            onChange={(v) => onDraftChange('b2', v)}
+            onClear={() => onDraftChange('b2', '')}
+          />
+        </div>
+      </div>
+      <div className="sc-config__actions">
+        <button type="button" className="sc-config__save" disabled={saving} onClick={onSave}>
+          {saving ? 'Guardando…' : 'Guardar colores'}
+        </button>
+        {message ? <span className="sc-config__msg">{message}</span> : null}
+      </div>
+    </section>
+  );
 }
 
 const OPTION_ACTIONS = {
@@ -158,6 +252,9 @@ export default function ScoreboardControl() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [uniformDraft, setUniformDraft] = useState({ a1: '', a2: '', b1: '', b2: '' });
+  const [uniformSaving, setUniformSaving] = useState(false);
+  const [uniformMsg, setUniformMsg] = useState('');
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
@@ -165,6 +262,22 @@ export default function ScoreboardControl() {
 
   useScoreboardSocket(partidoId, handleUpdate);
   const timerSeconds = useServerCronometro(partido);
+
+  useEffect(() => {
+    if (!partido) return;
+    setUniformDraft({
+      a1: partido.color_uniforme_a1 || '',
+      a2: partido.color_uniforme_a2 || '',
+      b1: partido.color_uniforme_b1 || '',
+      b2: partido.color_uniforme_b2 || '',
+    });
+  }, [
+    partido?.id,
+    partido?.color_uniforme_a1,
+    partido?.color_uniforme_a2,
+    partido?.color_uniforme_b1,
+    partido?.color_uniforme_b2,
+  ]);
 
   useEffect(() => {
     if (roleLoading) return undefined;
@@ -217,6 +330,32 @@ export default function ScoreboardControl() {
       `/api/scoreboard/partidos/${partidoId}/cronometro/${accion}`,
       { refetchAfter: true },
     );
+  };
+
+  const handleUniformDraftChange = (field, value) => {
+    setUniformDraft((prev) => ({ ...prev, [field]: value }));
+    setUniformMsg('');
+  };
+
+  const handleSaveUniformColors = async () => {
+    setUniformSaving(true);
+    setUniformMsg('');
+    setError('');
+    try {
+      const updated = await updatePartido(partidoId, {
+        color_uniforme_a1: normalizeUniformColor(uniformDraft.a1),
+        color_uniforme_a2: normalizeUniformColor(uniformDraft.a2),
+        color_uniforme_b1: normalizeUniformColor(uniformDraft.b1),
+        color_uniforme_b2: normalizeUniformColor(uniformDraft.b2),
+      });
+      setPartido(updated);
+      setUniformMsg('✅ Colores guardados');
+      setTimeout(() => setUniformMsg(''), 3000);
+    } catch (err) {
+      setUniformMsg(`⚠️ ${err.message}`);
+    } finally {
+      setUniformSaving(false);
+    }
   };
 
   if (roleLoading || loading) {
@@ -354,6 +493,15 @@ export default function ScoreboardControl() {
           </button>
         </div>
       </div>
+
+      <MatchUniformConfig
+        partido={partido}
+        draft={uniformDraft}
+        onDraftChange={handleUniformDraftChange}
+        saving={uniformSaving}
+        message={uniformMsg}
+        onSave={handleSaveUniformColors}
+      />
 
       <button
         type="button"

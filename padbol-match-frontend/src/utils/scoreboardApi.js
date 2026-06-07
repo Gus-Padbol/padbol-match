@@ -67,4 +67,16 @@ export async function createPartido(payload) {
   return data;
 }
 
+export async function updatePartido(partidoId, payload) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API_BASE}/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error al actualizar partido');
+  return data;
+}
+
 export { API_BASE };

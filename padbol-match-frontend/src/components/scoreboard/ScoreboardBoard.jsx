@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
+import UniformJerseyStrip from './UniformJerseyStrip';
+import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardDisplay.css';
 
 function formatTimerFromSeconds(totalSeconds) {
@@ -46,10 +48,11 @@ function getTorneoLabel(partido) {
   return name || 'Partido amistoso';
 }
 
-function TeamNameRow({ name, serving }) {
+function TeamNameRow({ name, serving, color1, color2 }) {
   return (
     <div className="sb-team-name-row">
       {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
+      <UniformJerseyStrip color1={color1} color2={color2} />
       <h1 className="sb-team-name">{name}</h1>
     </div>
   );
@@ -176,6 +179,8 @@ export default function ScoreboardBoard({
       : DEMO_SPONSOR_NAMES),
     [sponsors],
   );
+  const uniformA = resolveUniformJerseyColors(partido, 'A');
+  const uniformB = resolveUniformJerseyColors(partido, 'B');
 
   if (terminado && winnerName) {
     return (
@@ -198,7 +203,12 @@ export default function ScoreboardBoard({
       <div className="sb-display__main">
         <aside className="sb-panel sb-panel--left">
           <div className="sb-panel__inner">
-            <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
+            <TeamNameRow
+              name={partido.equipo_a_nombre}
+              serving={partido.saque_actual === 'A'}
+              color1={uniformA.color1}
+              color2={uniformA.color2}
+            />
             <PlayerList jugadores={partido.equipo_a_jugadores} />
           </div>
           {/* Reserved for future team logo / banner */}
@@ -275,7 +285,12 @@ export default function ScoreboardBoard({
 
         <aside className="sb-panel sb-panel--right">
           <div className="sb-panel__inner">
-            <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
+            <TeamNameRow
+              name={partido.equipo_b_nombre}
+              serving={partido.saque_actual === 'B'}
+              color1={uniformB.color1}
+              color2={uniformB.color2}
+            />
             <PlayerList jugadores={partido.equipo_b_jugadores} />
           </div>
           {/* Reserved for future team logo / banner */}
