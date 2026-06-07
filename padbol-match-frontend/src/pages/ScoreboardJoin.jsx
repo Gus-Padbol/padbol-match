@@ -10,7 +10,7 @@ const FOTO_BUCKET = 'scoreboard-fotos';
 
 function normalizeEquipo(raw) {
   const eq = String(raw || '').trim().toLowerCase();
-  return eq === 'b' ? 'b' : 'a';
+  return eq === 'b' ? 'b' : eq === 'a' ? 'a' : null;
 }
 
 function ladoLabel(equipo, t) {
@@ -31,8 +31,11 @@ export default function ScoreboardJoin() {
   const { t } = useSafeTranslation();
   const { sedeId, cancha: canchaParam, equipo: equipoParam } = useParams();
   const { session, userProfile } = useAuth();
-  const equipo = normalizeEquipo(equipoParam);
+  const equipoFromUrl = normalizeEquipo(equipoParam);
   const cancha = decodeURIComponent(String(canchaParam || '').trim());
+
+  const [selectedEquipo, setSelectedEquipo] = useState(equipoFromUrl);
+  const equipo = equipoFromUrl || selectedEquipo;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -69,6 +72,12 @@ export default function ScoreboardJoin() {
   }, [loadCancha]);
 
   useEffect(() => {
+    if (equipoFromUrl) {
+      setSelectedEquipo(equipoFromUrl);
+    }
+  }, [equipoFromUrl]);
+
+  useEffect(() => {
     if (!session?.user) return;
     const profileNombre = String(
       userProfile?.nombre || userProfile?.alias || '',
@@ -82,6 +91,7 @@ export default function ScoreboardJoin() {
   }, [session?.user, userProfile, nombre, fotoUrl, fotoPreview]);
 
   const ocupadosEquipo = useMemo(() => {
+    if (!equipo) return [];
     const list = Array.isArray(activo?.jugadores) ? activo.jugadores : [];
     return list
       .filter((j) => String(j.equipo || '').toLowerCase() === equipo)
@@ -95,13 +105,14 @@ export default function ScoreboardJoin() {
   );
 
   useEffect(() => {
+    if (!equipo) return;
     if (!slot && slotsLibres.length > 0) {
       setSlot(String(slotsLibres[0]));
     }
     if (slot && !slotsLibres.includes(Number(slot))) {
       setSlot(slotsLibres[0] ? String(slotsLibres[0]) : '');
     }
-  }, [slot, slotsLibres]);
+  }, [equipo, slot, slotsLibres]);
 
   const equipoNombre = equipo === 'b' ? activo?.nombre_b : activo?.nombre_a;
 
@@ -114,7 +125,7 @@ export default function ScoreboardJoin() {
   };
 
   const uploadFoto = async () => {
-    if (!fotoFile || !activo?.partido_id) return fotoUrl || null;
+    if (!fotoFile || !activo?.partido_id || !equipo) return fotoUrl || null;
     const ext = (fotoFile.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${activo.partido_id}/${equipo}/${slot || '0'}-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from(FOTO_BUCKET).upload(path, fotoFile, {
@@ -128,7 +139,7 @@ export default function ScoreboardJoin() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!activo?.partido_id || !slot) return;
+    if (!activo?.partido_id || !slot || !equipo) return;
     setSaving(true);
     setError('');
     try {
@@ -153,6 +164,18 @@ export default function ScoreboardJoin() {
     }
   };
 
+  const onPickSide = (side) => {
+    setError('');
+    setSelectedEquipo(side);
+  };
+
+  const onChangeSide = () => {
+    if (equipoFromUrl) return;
+    setError('');
+    setSelectedEquipo(null);
+    setSlot('');
+  };
+
   return (
     <div className="sb-join">
       <div className="sb-join__card">
@@ -162,8 +185,12 @@ export default function ScoreboardJoin() {
         </h1>
         <p className="sb-join__meta">
           {cancha}
-          {' · '}
-          {ladoLabel(equipo, t)}
+          {equipo ? (
+            <>
+              {' · '}
+              {ladoLabel(equipo, t)}
+            </>
+          ) : null}
         </p>
 
         {loading ? (
@@ -172,7 +199,10 @@ export default function ScoreboardJoin() {
 
         {!loading && !activo?.partido_id ? (
           <p className="sb-join__empty">
-            {t('scoreboard.join.noMatch', 'No hay partido activo en esta cancha ahora mismo')}
+            {t(
+              'scoreboard.join.noMatch',
+              'No hay partido activo ahora. Volvé cuando sea tu turno.',
+            )}
           </p>
         ) : null}
 
@@ -192,7 +222,38 @@ export default function ScoreboardJoin() {
           </div>
         ) : null}
 
-        {!loading && activo?.partido_id && !done ? (
+        {!loading && activo?.partido_id && !done && !equipo ? (
+          <>
+            <p className="sb-join__match">
+              {activo.nombre_a}
+              {' '}
+              <span>vs</span>
+              {' '}
+              {activo.nombre_b}
+            </p>
+            <p className="sb-join__pick-label">
+              {t('scoreboard.join.pickSide', '¿De qué lado jugás?')}
+            </p>
+            <div className="sb-join__side-pick">
+              <button
+                type="button"
+                className="sb-join__side-btn sb-join__side-btn--blue"
+                onClick={() => onPickSide('a')}
+              >
+                {t('scoreboard.join.sideBlueBtn', '🔵 Soy del lado azul')}
+              </button>
+              <button
+                type="button"
+                className="sb-join__side-btn sb-join__side-btn--red"
+                onClick={() => onPickSide('b')}
+              >
+                {t('scoreboard.join.sideRedBtn', '🔴 Soy del lado rojo')}
+              </button>
+            </div>
+          </>
+        ) : null}
+
+        {!loading && activo?.partido_id && !done && equipo ? (
           <>
             <p className="sb-join__match">
               {activo.nombre_a}
@@ -206,6 +267,12 @@ export default function ScoreboardJoin() {
               {' '}
               <strong>{equipoNombre}</strong>
             </p>
+
+            {!equipoFromUrl ? (
+              <button type="button" className="sb-join__change-side" onClick={onChangeSide}>
+                {t('scoreboard.join.changeSide', 'Cambiar lado')}
+              </button>
+            ) : null}
 
             {slotsLibres.length === 0 ? (
               <p className="sb-join__empty">

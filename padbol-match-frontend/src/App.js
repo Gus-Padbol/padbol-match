@@ -471,6 +471,14 @@ function App() {
                 )}
               />
               <Route
+                path="/scoreboard/join/:sedeId/:cancha"
+                element={(
+                  <ErrorBoundary label="carga de jugador por QR">
+                    <ScoreboardJoin />
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
                 path="/display/:sedeId/scoreboard/:partidoId"
                 element={(
                   <ErrorBoundary label="la pantalla TV del scoreboard">

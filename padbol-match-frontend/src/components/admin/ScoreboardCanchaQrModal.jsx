@@ -4,9 +4,9 @@ import { useSafeTranslation } from '../../i18n/tSafe';
 
 const QR_PUBLIC_BASE = 'https://padbolmatch.com';
 
-function buildJoinUrl(sedeId, cancha, equipo) {
+function buildJoinUrl(sedeId, cancha) {
   const encodedCancha = encodeURIComponent(String(cancha || '').trim());
-  return `${QR_PUBLIC_BASE}/scoreboard/join/${encodeURIComponent(String(sedeId))}/${encodedCancha}/${equipo}`;
+  return `${QR_PUBLIC_BASE}/scoreboard/join/${encodeURIComponent(String(sedeId))}/${encodedCancha}`;
 }
 
 export default function ScoreboardCanchaQrModal({ partido, onClose }) {
@@ -15,8 +15,7 @@ export default function ScoreboardCanchaQrModal({ partido, onClose }) {
 
   const sedeId = partido.sede_id;
   const cancha = String(partido.cancha || '').trim() || t('admin.scoreboard.defaultCourt', 'Cancha 1');
-  const urlA = buildJoinUrl(sedeId, cancha, 'a');
-  const urlB = buildJoinUrl(sedeId, cancha, 'b');
+  const joinUrl = buildJoinUrl(sedeId, cancha);
 
   return (
     <div
@@ -35,7 +34,7 @@ export default function ScoreboardCanchaQrModal({ partido, onClose }) {
           ×
         </button>
         <h3 id="sb-cancha-qr-title" className="sb-cancha-qr-modal__title">
-          {t('admin.scoreboard.qrTitle', 'QR fijos de cancha')}
+          {t('admin.scoreboard.qrTitle', 'QR fijo de cancha')}
         </h3>
         <p className="sb-cancha-qr-modal__subtitle">
           {partido.equipo_a_nombre}
@@ -45,33 +44,21 @@ export default function ScoreboardCanchaQrModal({ partido, onClose }) {
           {cancha}
         </p>
 
-        <div className="sb-cancha-qr-modal__grid">
-          <div className="sb-cancha-qr-modal__item">
-            <p className="sb-cancha-qr-modal__label">
-              {t('admin.scoreboard.qrTeamA', '🔵 Lado Azul')}
-            </p>
-            <QRCodeCanvas value={urlA} size={180} level="M" includeMargin />
-            <p className="sb-cancha-qr-modal__url">{urlA}</p>
-          </div>
-          <div className="sb-cancha-qr-modal__item">
-            <p className="sb-cancha-qr-modal__label">
-              {t('admin.scoreboard.qrTeamB', '🔴 Lado Rojo')}
-            </p>
-            <QRCodeCanvas value={urlB} size={180} level="M" includeMargin />
-            <p className="sb-cancha-qr-modal__url">{urlB}</p>
-          </div>
+        <div className="sb-cancha-qr-modal__single">
+          <QRCodeCanvas value={joinUrl} size={220} level="M" includeMargin />
+          <p className="sb-cancha-qr-modal__url">{joinUrl}</p>
         </div>
 
         <p className="sb-cancha-qr-modal__hint">
           {t(
-            'admin.scoreboard.qrSideHint',
-            'Cada equipo escanea el QR de su lado de la cancha',
+            'admin.scoreboard.qrScanHint',
+            'Escaneá este QR al llegar a la cancha',
           )}
         </p>
         <p className="sb-cancha-qr-modal__hint">
           {t(
             'admin.scoreboard.qrHint',
-            'Imprimí estos QR y pegálos en la cancha. Son permanentes.',
+            'Imprimí este QR y pegalo en la cancha. Es permanente.',
           )}
         </p>
       </div>
