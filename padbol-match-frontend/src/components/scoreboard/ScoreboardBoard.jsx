@@ -207,6 +207,7 @@ export default function ScoreboardBoard({
 }) {
   const display = partido.display || {};
   const torneoNombre = String(partido?.torneo_nombre || '').trim();
+  const hasTorneoNombre = Boolean(torneoNombre);
   const isDeuce = display.mode === 'deuce';
   const isVentaja = display.displayA === 'VENT.' || display.displayB === 'VENT.';
   const ventajaTeamName = display.displayA === 'VENT.'
@@ -260,7 +261,7 @@ export default function ScoreboardBoard({
   }
 
   return (
-    <div className="sb-display">
+    <div className={`sb-display${hasTorneoNombre ? ' sb-display--has-torneo' : ''}`}>
       <div
         className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
         title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
