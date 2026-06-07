@@ -54,7 +54,7 @@ import {
 } from '../utils/sedePreciosDuracion';
 import { generarSlotsHorarioReserva } from '../utils/reservaSlotsHorarios';
 import { precioBaseReservaConDeporte } from '../utils/sedePreciosDeporte';
-import { fetchSurgePrecio } from '../utils/surgePrecio';
+import { fetchSurgePrecio, surgeBadgeFromQuote } from '../utils/surgePrecio';
 import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -1081,6 +1081,7 @@ export default function ReservaForm() {
     precio: null,
     ocupacion_porcentaje: 0,
     surge_activo: false,
+    last_minute_discount: false,
     loading: false,
   });
 
@@ -1192,13 +1193,20 @@ export default function ReservaForm() {
   useEffect(() => {
     const sedeId = filtros.sede_id;
     const hora = formData.hora;
-    if (!sedeId || !hora || pantalla < 2) {
-      setSurgeQuote({ precio: null, ocupacion_porcentaje: 0, surge_activo: false, loading: false });
+    const fecha = formData.fecha;
+    if (!sedeId || !hora || !fecha || pantalla < 2) {
+      setSurgeQuote({
+        precio: null,
+        ocupacion_porcentaje: 0,
+        surge_activo: false,
+        last_minute_discount: false,
+        loading: false,
+      });
       return undefined;
     }
     let cancelled = false;
     setSurgeQuote((prev) => ({ ...prev, loading: true }));
-    fetchSurgePrecio(sedeId, reservaDeporteUrl, duracionSeleccionadaMin)
+    fetchSurgePrecio(sedeId, reservaDeporteUrl, duracionSeleccionadaMin, fecha, hora)
       .then((data) => {
         if (!cancelled) {
           setSurgeQuote({ ...data, loading: false });
@@ -1206,11 +1214,19 @@ export default function ReservaForm() {
       })
       .catch(() => {
         if (!cancelled) {
-          setSurgeQuote({ precio: null, ocupacion_porcentaje: 0, surge_activo: false, loading: false });
+          setSurgeQuote({
+            precio: null,
+            ocupacion_porcentaje: 0,
+            surge_activo: false,
+            last_minute_discount: false,
+            loading: false,
+          });
         }
       });
     return () => { cancelled = true; };
-  }, [filtros.sede_id, formData.hora, duracionSeleccionadaMin, reservaDeporteUrl, pantalla]);
+  }, [filtros.sede_id, formData.fecha, formData.hora, duracionSeleccionadaMin, reservaDeporteUrl, pantalla]);
+
+  const surgePrecioBadge = useMemo(() => surgeBadgeFromQuote(surgeQuote), [surgeQuote]);
 
   const precioReservaTurnoBase = useMemo(() => {
     if (
@@ -2686,19 +2702,19 @@ export default function ReservaForm() {
                   {Number(precioReservaTurnoBase).toLocaleString('es-AR')}{' '}
                   {sedeSeleccionada?.moneda || 'ARS'}
                 </span>
-                {surgeQuote.surge_activo && surgeQuote.precio != null ? (
+                {surgePrecioBadge ? (
                   <span
                     style={{
                       fontSize: '11px',
                       fontWeight: 700,
-                      color: '#f59e0b',
-                      background: 'rgba(245, 158, 11, 0.12)',
-                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      color: surgePrecioBadge.color,
+                      background: surgePrecioBadge.background,
+                      border: `1px solid ${surgePrecioBadge.borderColor}`,
                       borderRadius: '999px',
                       padding: '3px 8px',
                     }}
                   >
-                    ⚡ Precio dinámico
+                    {surgePrecioBadge.label}
                   </span>
                 ) : null}
                 {(() => {
@@ -2890,8 +2906,25 @@ export default function ReservaForm() {
                 </p>
               ) : (
                 <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
-                  <p style={{ margin: '0 0 4px' }}>
-                    <strong>{t('reservas.labelSlot')}</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
+                  <p style={{ margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span>
+                      <strong>{t('reservas.labelSlot')}</strong> {formatMoneyMain(precioTurnoResumen, moneda)}
+                    </span>
+                    {surgePrecioBadge ? (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: surgePrecioBadge.color,
+                          background: surgePrecioBadge.background,
+                          border: `1px solid ${surgePrecioBadge.borderColor}`,
+                          borderRadius: '999px',
+                          padding: '2px 8px',
+                        }}
+                      >
+                        {surgePrecioBadge.label}
+                      </span>
+                    ) : null}
                   </p>
                   {reservaExtrasSubtotal > 0 ? (
                     <p style={{ margin: '0 0 4px' }}>

@@ -403,6 +403,15 @@ function precioDuracionInputDisplay(raw) {
   return n != null ? Number(n).toLocaleString('es-AR') : '';
 }
 
+function surgeConfigBandError(cfg) {
+  const min = parsePrecioDuracionField(cfg?.precio_minimo);
+  const max = parsePrecioDuracionField(cfg?.precio_maximo);
+  if (min != null && max != null && max <= min) {
+    return 'El precio máximo debe ser mayor al mínimo';
+  }
+  return null;
+}
+
 /** Body para PATCH /api/sedes/:id (campos alineados con el panel). */
 function miSedeFormToApiPatchBody(form) {
   const duracionPrecios = preciosDuracionToApiPatch(form);
@@ -5153,7 +5162,7 @@ export default function AdminDashboard({
   const [miSedePreciosMsg, setMiSedePreciosMsg] = useState('');
   const [surgeConfigs, setSurgeConfigs] = useState({});
   const [surgeConfigSaving, setSurgeConfigSaving] = useState({});
-  const [surgeConfigMsg, setSurgeConfigMsg] = useState({});
+  const [surgeActivoSaving, setSurgeActivoSaving] = useState(false);
   const [miSedeDuraciones, setMiSedeDuraciones] = useState([]);
   const [miSedeDuracionesLoading, setMiSedeDuracionesLoading] = useState(false);
   const [miSedeDuracionesMsg, setMiSedeDuracionesMsg] = useState('');
@@ -5181,6 +5190,25 @@ export default function AdminDashboard({
   const [editarSedeDraft, setEditarSedeDraft] = useState({});
   const [editarSedeModalMsg, setEditarSedeModalMsg] = useState('');
   const [canchas,       setCanchas]       = useState([]);
+
+  const surgeDeportesSede = useMemo(() => {
+    const keys = new Set();
+    for (const c of canchas || []) {
+      if (c?.activo === false || c?.estado === 'inactiva') continue;
+      const d = String(c.deporte || 'padbol').trim().toLowerCase();
+      if (DEPORTES_CANCHA_SEDE_OPTIONS.some((o) => o.key === d)) keys.add(d);
+    }
+    if (keys.size === 0 && Array.isArray(miSede?.deportes_disponibles)) {
+      for (const d of miSede.deportes_disponibles) {
+        const k = String(d || '').trim().toLowerCase();
+        if (DEPORTES_CANCHA_SEDE_OPTIONS.some((o) => o.key === k)) keys.add(k);
+      }
+    }
+    const order = DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => o.key);
+    return DEPORTES_CANCHA_SEDE_OPTIONS
+      .filter((o) => keys.has(o.key))
+      .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  }, [canchas, miSede?.deportes_disponibles]);
   const [canchaModalOpen, setCanchaModalOpen] = useState(false);
   const [canchaModalMode, setCanchaModalMode] = useState('add');
   const [canchaEditId, setCanchaEditId] = useState(null);
@@ -5707,20 +5735,14 @@ export default function AdminDashboard({
   };
 
 
-  const guardarSurgeConfigDeporte = async (deporteKey) => {
-    if (!sedeId || !session?.access_token) {
-      setSurgeConfigMsg((m) => ({ ...m, [deporteKey]: `⚠️ ${t('admin.formularios.loginAgainAlt')}` }));
-      return;
-    }
-    const cfg = surgeConfigs[deporteKey] || { activo: false, precio_minimo: '', precio_maximo: '' };
+  const persistSurgeConfigDeporte = async (deporteKey, cfgOverride) => {
+    if (!sedeId || !session?.access_token) return;
+    const cfg = cfgOverride ?? surgeConfigs[deporteKey] ?? { activo: false, precio_minimo: '', precio_maximo: '' };
+    if (surgeConfigBandError(cfg)) return;
     const minimo = parsePrecioDuracionField(cfg.precio_minimo);
     const maximo = parsePrecioDuracionField(cfg.precio_maximo);
-    if (cfg.activo && (minimo == null || maximo == null || maximo < minimo)) {
-      setSurgeConfigMsg((m) => ({ ...m, [deporteKey]: '⚠️ Precio máximo debe ser ≥ mínimo' }));
-      return;
-    }
+    if (cfg.activo && (minimo == null || maximo == null || maximo <= minimo)) return;
     setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: true }));
-    setSurgeConfigMsg((m) => ({ ...m, [deporteKey]: '' }));
     try {
       const res = await fetch(`${apiBaseUrl}/api/surge-config`, {
         method: 'POST',
@@ -5737,10 +5759,7 @@ export default function AdminDashboard({
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setSurgeConfigMsg((m) => ({ ...m, [deporteKey]: `⚠️ ${data.error || res.statusText}` }));
-        return;
-      }
+      if (!res.ok) return;
       const saved = data.config;
       if (saved) {
         setSurgeConfigs((prev) => ({
@@ -5752,14 +5771,37 @@ export default function AdminDashboard({
           },
         }));
       }
-      setSurgeConfigMsg((m) => ({ ...m, [deporteKey]: '✅ Guardado' }));
-      setTimeout(() => {
-        setSurgeConfigMsg((m) => ({ ...m, [deporteKey]: '' }));
-      }, 3000);
-    } catch (e) {
-      setSurgeConfigMsg((m) => ({ ...m, [deporteKey]: `⚠️ ${e?.message || String(e)}` }));
+    } catch {
+      // auto-save silencioso
     } finally {
       setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: false }));
+    }
+  };
+
+  const patchSurgeActivoMaster = async (activo) => {
+    setMiSedeForm((p) => ({ ...p, surge_activo: activo }));
+    if (!sedeId || !session?.access_token) return;
+    setSurgeActivoSaving(true);
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ surge_activo: activo }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data.sede ?? data)?.id != null) {
+        const updated = data.sede ?? data;
+        setMiSede(updated);
+        setMiSedeForm((f) => ({ ...f, surge_activo: updated.surge_activo === true }));
+      }
+    } catch {
+      // revert on failure
+      setMiSedeForm((p) => ({ ...p, surge_activo: !activo }));
+    } finally {
+      setSurgeActivoSaving(false);
     }
   };
 
@@ -13005,7 +13047,7 @@ export default function AdminDashboard({
 
               <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                 <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                  💥 Surge — Precios Dinámicos
+                  ⚡ Surge — Precios Dinámicos
                 </h4>
                 <label
                   style={{
@@ -13016,62 +13058,73 @@ export default function AdminDashboard({
                     fontWeight: 600,
                     color: 'var(--text-primary)',
                     marginBottom: '14px',
-                    cursor: 'pointer',
+                    cursor: surgeActivoSaving ? 'wait' : 'pointer',
+                    opacity: surgeActivoSaving ? 0.7 : 1,
                   }}
                 >
                   <input
                     type="checkbox"
                     checked={!!miSedeForm.surge_activo}
-                    onChange={(e) => setMiSedeForm((p) => ({ ...p, surge_activo: e.target.checked }))}
+                    disabled={surgeActivoSaving}
+                    onChange={(e) => patchSurgeActivoMaster(e.target.checked)}
                   />
-                  Activar Surge para esta sede
+                  Activar Surge
                 </label>
                 {miSedeForm.surge_activo ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
-                    {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => {
-                      const cfg = surgeConfigs[key] || { activo: false, precio_minimo: '', precio_maximo: '' };
-                      const saving = !!surgeConfigSaving[key];
-                      const msg = surgeConfigMsg[key] || '';
-                      return (
-                        <div
-                          key={key}
-                          style={{
-                            padding: '12px 14px',
-                            border: '1px solid var(--border)',
-                            borderRadius: '8px',
-                            background: 'var(--bg-card)',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{label}</span>
-                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                              <input
-                                type="checkbox"
-                                checked={!!cfg.activo}
-                                onChange={(e) => {
-                                  const activo = e.target.checked;
-                                  setSurgeConfigs((prev) => ({
-                                    ...prev,
-                                    [key]: { ...(prev[key] || cfg), activo },
-                                  }));
-                                }}
-                              />
-                              Surge activo
-                            </label>
-                          </div>
-                          {[
-                            { field: 'precio_minimo', label: 'Precio mínimo' },
-                            { field: 'precio_maximo', label: 'Precio máximo' },
-                          ].map(({ field, label: fieldLabel }) => (
-                            <div
-                              key={field}
-                              style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}
-                            >
-                              <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '120px' }}>
-                                {fieldLabel}
+                  surgeDeportesSede.length === 0 ? (
+                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      Agregá canchas con deporte en esta sede para configurar Surge por deporte.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
+                      {surgeDeportesSede.map(({ key, label }) => {
+                        const cfg = surgeConfigs[key] || { activo: false, precio_minimo: '', precio_maximo: '' };
+                        const bandError = surgeConfigBandError(cfg);
+                        const saving = !!surgeConfigSaving[key];
+                        return (
+                          <div
+                            key={key}
+                            style={{
+                              padding: '12px 14px',
+                              border: '1px solid var(--border)',
+                              borderRadius: '8px',
+                              background: 'var(--bg-card)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                <SportIcon deporte={key} size={18} color="var(--text-primary)" />
+                                {label}
+                              </span>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!cfg.activo}
+                                  onChange={(e) => {
+                                    const next = { ...(surgeConfigs[key] || cfg), activo: e.target.checked };
+                                    setSurgeConfigs((prev) => ({ ...prev, [key]: next }));
+                                    persistSurgeConfigDeporte(key, next);
+                                  }}
+                                />
+                                Activo
+                                {saving ? (
+                                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    {t('admin.metricas.savingEllipsis')}
+                                  </span>
+                                ) : null}
                               </label>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '220px' }}>
-                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>ARS</span>
+                            </div>
+                            {[
+                              { field: 'precio_minimo', label: 'Precio mínimo ARS' },
+                              { field: 'precio_maximo', label: 'Precio máximo ARS' },
+                            ].map(({ field, label: fieldLabel }) => (
+                              <div
+                                key={field}
+                                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}
+                              >
+                                <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '150px' }}>
+                                  {fieldLabel}
+                                </label>
                                 <input
                                   type="text"
                                   inputMode="numeric"
@@ -13083,32 +13136,26 @@ export default function AdminDashboard({
                                       [key]: { ...(prev[key] || cfg), [field]: digits },
                                     }));
                                   }}
+                                  onBlur={() => persistSurgeConfigDeporte(key)}
                                   placeholder="0"
-                                  style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
+                                  style={{ width: '100%', maxWidth: '200px', padding: '7px 10px', border: `1px solid ${bandError ? '#fca5a5' : 'var(--border)'}`, borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
                                 />
                               </div>
-                            </div>
-                          ))}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                            <button
-                              type="button"
-                              onClick={() => guardarSurgeConfigDeporte(key)}
-                              disabled={saving}
-                              style={{ padding: '6px 14px', background: saving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)', color: 'white', border: 'none', borderRadius: '6px', cursor: saving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                            >
-                              {saving ? t('admin.metricas.savingEllipsis') : 'Guardar'}
-                            </button>
-                            {msg ? (
-                              <span style={{ fontSize: '12px', fontWeight: 600, color: msg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{msg}</span>
+                            ))}
+                            {bandError ? (
+                              <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: 600, color: '#fca5a5' }}>{bandError}</p>
                             ) : null}
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )
                 ) : null}
-                <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  El precio se ajusta automáticamente según la ocupación de canchas por deporte.
+                <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo.
+                </p>
+                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
+                  0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
                 </p>
               </div>
 
