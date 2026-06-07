@@ -4,6 +4,7 @@ import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPartidoPreview';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
 import {
@@ -2388,6 +2389,7 @@ export default function AdminDashboard({
   const [sbCreated, setSbCreated] = useState(null);
   const [sbCopied, setSbCopied] = useState('');
   const [sbEditingId, setSbEditingId] = useState(null);
+  const [sbPreviewPartidoId, setSbPreviewPartidoId] = useState(null);
   const [sbPartidosList, setSbPartidosList] = useState([]);
   const [sbPartidosLoading, setSbPartidosLoading] = useState(false);
   const [sbPartidosError, setSbPartidosError] = useState('');
@@ -6943,8 +6945,13 @@ export default function AdminDashboard({
     setSbError('');
   }, []);
 
+  const toggleSbPartidoPreview = useCallback((partidoId) => {
+    setSbPreviewPartidoId((prev) => (prev === partidoId ? null : partidoId));
+  }, []);
+
   const loadScoreboardFormForEdit = useCallback(async (partidoId) => {
     setSbError('');
+    setSbPreviewPartidoId(null);
     try {
       const partido = await fetchPartido(partidoId);
       setSbEditingId(partido.id);
@@ -7022,19 +7029,30 @@ export default function AdminDashboard({
     });
 
     setSbCreating(true);
+    const wasEditing = Boolean(sbEditingId);
     try {
-      const partido = sbEditingId
+      const partido = wasEditing
         ? await updatePartido(sbEditingId, body)
         : await createPartido(body);
-      if (sbEditingId) {
-        setMensajeExito(t('admin.scoreboard.updated', '✅ Partido actualizado'));
-        setSbEditingId(null);
+      if (wasEditing) {
+        resetScoreboardForm();
+        setMensajeExito(t('admin.scoreboard.savedOk', '✅ Cambios guardados correctamente'));
+        refreshScoreboardPartidos();
+        setTimeout(() => setMensajeExito(''), 3000);
+        if (typeof document !== 'undefined') {
+          requestAnimationFrame(() => {
+            document.getElementById('admin-scoreboard-partidos-list')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+          });
+        }
       } else {
         setSbCreated({ id: partido.id, sede_id: partido.sede_id });
         setMensajeExito(t('admin.scoreboard.created', '✅ Partido de scoreboard creado'));
+        refreshScoreboardPartidos();
+        setTimeout(() => setMensajeExito(''), 4000);
       }
-      refreshScoreboardPartidos();
-      setTimeout(() => setMensajeExito(''), 4000);
     } catch (err) {
       setSbError(err.message || t('admin.scoreboard.createError', 'Error al guardar el partido'));
     } finally {
@@ -11121,7 +11139,11 @@ export default function AdminDashboard({
             </button>
           </form>
 
-          <div className="admin-scoreboard-partidos-list" style={{ marginTop: '28px', maxWidth: '960px' }}>
+          <div
+            id="admin-scoreboard-partidos-list"
+            className="admin-scoreboard-partidos-list"
+            style={{ marginTop: '28px', maxWidth: '960px' }}
+          >
             <h3 className="admin-scoreboard-partidos-list__title">
               {t('admin.scoreboard.partidosListTitle', 'Partidos de la sede')}
             </h3>
@@ -11175,6 +11197,25 @@ export default function AdminDashboard({
                             </p>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => toggleSbPartidoPreview(p.id)}
+                              aria-expanded={sbPreviewPartidoId === p.id}
+                              style={{
+                                padding: '7px 12px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border)',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                background: sbPreviewPartidoId === p.id ? 'var(--accent)' : 'var(--bg-input)',
+                                color: sbPreviewPartidoId === p.id ? '#fff' : 'var(--text-primary)',
+                              }}
+                            >
+                              {sbPreviewPartidoId === p.id
+                                ? t('admin.scoreboard.hidePreview', '👁 Ocultar')
+                                : t('admin.scoreboard.showPreview', '👁 Ver')}
+                            </button>
                             <a
                               href={tvLink}
                               target="_blank"
@@ -11198,6 +11239,12 @@ export default function AdminDashboard({
                             </button>
                           </div>
                         </div>
+                        {sbPreviewPartidoId === p.id ? (
+                          <AdminScoreboardPartidoPreview
+                            partido={p}
+                            onEdit={(id) => void loadScoreboardFormForEdit(id)}
+                          />
+                        ) : null}
                       </li>
                     );
                   })}

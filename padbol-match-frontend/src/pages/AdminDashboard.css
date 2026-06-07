@@ -1993,3 +1993,113 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+.admin-sb-partido-preview {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 14px;
+}
+
+.admin-sb-partido-preview__teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px 16px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .admin-sb-partido-preview__teams {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sb-partido-preview__vs {
+    justify-self: center;
+  }
+}
+
+.admin-sb-partido-preview__team {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.admin-sb-partido-preview__uniform .sb-uniform-strip {
+  width: 12px;
+  height: 52px;
+}
+
+.admin-sb-partido-preview__team-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-sb-partido-preview__team-name {
+  margin: 0 0 8px;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.admin-sb-partido-preview__vs {
+  align-self: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-sb-partido-preview__players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-sb-partido-preview__players li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.admin-sb-partido-preview__jersey {
+  font-weight: 800;
+  color: var(--text-secondary);
+  min-width: 2ch;
+}
+
+.admin-sb-partido-preview__player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-sb-partido-preview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-sb-partido-preview__action-btn {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.admin-sb-partido-preview__action-btn:hover {
+  border-color: var(--accent);
+}
