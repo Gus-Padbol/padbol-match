@@ -54,7 +54,7 @@ function TournamentBrand({ torneoNombre }) {
         className="sb-tournament-brand__logo"
         style={{
           mixBlendMode: 'screen',
-          width: hasTorneoNombre ? '120px' : '160px',
+          width: hasTorneoNombre ? '200px' : '280px',
           height: 'auto',
         }}
       />
