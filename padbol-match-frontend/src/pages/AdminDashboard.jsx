@@ -10927,11 +10927,10 @@ export default function AdminDashboard({
               </label>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '18px' }}>
+            <div style={{ display: 'grid', gap: '10px', marginBottom: '18px' }}>
               {[
                 {
                   equipo: 'A',
-                  label: t('admin.scoreboard.teamA', 'Nombre Equipo A'),
                   color1: sbUniformA1,
                   color2: sbUniformA2,
                   setColor1: setSbUniformA1,
@@ -10940,59 +10939,78 @@ export default function AdminDashboard({
                 },
                 {
                   equipo: 'B',
-                  label: t('admin.scoreboard.teamB', 'Nombre Equipo B'),
                   color1: sbUniformB1,
                   color2: sbUniformB2,
                   setColor1: setSbUniformB1,
                   setColor2: setSbUniformB2,
                   fallback1: DEFAULT_SCOREBOARD_COLOR_B,
                 },
-              ].map(({ equipo, label, color1, color2, setColor1, setColor2, fallback1 }) => (
+              ].map(({ equipo, color1, color2, setColor1, setColor2, fallback1 }) => (
                 <div
                   key={equipo}
                   style={{
-                    border: '1px solid var(--border)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    display: 'grid',
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: '10px',
+                    flexWrap: 'wrap',
                   }}
                 >
-                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700 }}>
+                  <span style={{ fontWeight: 700, fontSize: '13px', minWidth: '72px', flexShrink: 0 }}>
                     {t('admin.scoreboard.uniformTeam', 'Uniforme Equipo')} {equipo}
-                  </h4>
-                  <label style={{ display: 'grid', gap: '6px' }}>
-                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
-                      {t('admin.scoreboard.uniformColor1', 'Color 1')}
-                    </span>
-                    <input
-                      type="color"
-                      value={scoreboardColorPickerValue(color1, fallback1)}
-                      onChange={(e) => setColor1(e.target.value)}
-                      style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
-                    />
-                  </label>
-                  <label style={{ display: 'grid', gap: '6px' }}>
-                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
-                      {t('admin.scoreboard.uniformColor2', 'Color 2 (opcional)')}
-                    </span>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <input
-                        type="color"
-                        value={scoreboardColorPickerValue(color2, '#ffffff')}
-                        onChange={(e) => setColor2(e.target.value)}
-                        style={{ flex: 1, height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setColor2('')}
-                        style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
-                      >
-                        {t('admin.scoreboard.clearColor', 'Limpiar')}
-                      </button>
-                    </div>
-                  </label>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{label}</span>
+                  </span>
+                  <input
+                    type="color"
+                    value={scoreboardColorPickerValue(color1, fallback1)}
+                    onChange={(e) => setColor1(e.target.value)}
+                    aria-label={`${t('admin.scoreboard.uniformColor1', 'Color 1')} ${equipo}`}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      padding: '2px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                    {t('admin.scoreboard.uniformColor1', 'Color 1')}
+                  </span>
+                  <input
+                    type="color"
+                    value={scoreboardColorPickerValue(color2, '#ffffff')}
+                    onChange={(e) => setColor2(e.target.value)}
+                    aria-label={`${t('admin.scoreboard.uniformColor2', 'Color 2')} ${equipo}`}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      padding: '2px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                    {t('admin.scoreboard.uniformColor2', 'Color 2')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setColor2('')}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {t('admin.scoreboard.clearColor', 'Limpiar')}
+                  </button>
                 </div>
               ))}
             </div>
