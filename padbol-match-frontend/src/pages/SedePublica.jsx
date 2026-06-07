@@ -46,6 +46,7 @@ import {
 import PartidoAbiertoSedeRow from '../components/PartidoAbiertoSedeRow';
 import ResenasSede from '../components/ResenasSede';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
+import { formatSedeCiudadPaisLinea } from '../utils/paisI18n';
 import './SedePublica.css';
 
 const MAP_THUMB_MAX_H = 120;
@@ -673,7 +674,7 @@ function whatsappHrefSede(sede) {
 }
 
 /** Overlay identidad sobre la foto del hero. */
-function SedeHeroOverlayIdentity({ sede, direccionLinea, licenciaActiva, t }) {
+function SedeHeroOverlayIdentity({ sede, ubicacionLinea, ubicacionFlag, licenciaActiva, t }) {
   return (
     <div className="sede-publica-hero-fotos__identity">
       <div className="sede-publica-hero-fotos__identity-head">
@@ -693,8 +694,11 @@ function SedeHeroOverlayIdentity({ sede, direccionLinea, licenciaActiva, t }) {
         </div>
         <SedeSocialLinks sede={sede} t={t} variant="hero" />
       </div>
-      {direccionLinea ? (
-        <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
+      {ubicacionLinea ? (
+        <p className="sede-publica-hero-fotos__direccion">
+          {ubicacionFlag ? <span style={{ marginRight: '4px' }}>{ubicacionFlag}</span> : null}
+          {ubicacionLinea}
+        </p>
       ) : null}
       {licenciaActiva ? (
         <div className="sede-publica-hero-fotos__licencia-wrap">
@@ -2012,6 +2016,7 @@ export default function SedePublica() {
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
+        const { flag: ubicacionFlag, linea: ubicacionLinea } = formatSedeCiudadPaisLinea(sede, t);
         const direccionChipLabel = formatSedeDireccionChipLabel(sede);
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
         const amenityChips = resolveSedeAmenityChips(sede.amenities);
@@ -2076,7 +2081,8 @@ export default function SedePublica() {
                   overlay={
                     <SedeHeroOverlayIdentity
                       sede={sede}
-                      direccionLinea={direccionLinea}
+                      ubicacionLinea={ubicacionLinea}
+                      ubicacionFlag={ubicacionFlag}
                       licenciaActiva={licenciaActiva}
                       t={t}
                     />

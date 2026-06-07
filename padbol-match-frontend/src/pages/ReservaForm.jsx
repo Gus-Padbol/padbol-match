@@ -34,9 +34,7 @@ import { authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName, nombreRealDesdePerfilOauth } from '../utils/displayName';
 import {
   getDistanceKm,
-  horarioDisponibleTexto,
   precioBaseTurnoDesdeSede,
-  precioDesdeCard,
   primeraFotoSede,
 } from '../utils/sedeCardUi';
 import {
@@ -46,7 +44,7 @@ import {
   matchPaisReservaEnCatalogo,
 } from '../utils/paisI18n';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
-import { precioDesdeFranjas, nombreFranjaActiva, textoLineaTarifasReserva } from '../utils/franjasHorarias';
+import { precioDesdeFranjas, nombreFranjaActiva } from '../utils/franjasHorarias';
 import {
   duracionesReservaDisponibles,
   precioReservaTurno,
@@ -2444,8 +2442,6 @@ export default function ReservaForm() {
                   {sedesFiltradasPorPaisOrdenadas.map((sede, idx) => {
                     const foto = primeraFotoSede(sede);
                     const { flag, linea } = formatSedeCiudadPaisLinea(sede, t);
-                    const precio = precioDesdeCard(sede);
-                    const moneda = String(sede.moneda || 'ARS').trim() || 'ARS';
                     const esMasCercana =
                       geoReserva.status === 'granted' &&
                       sedeReservaMasCercanaId != null &&
@@ -2500,14 +2496,6 @@ export default function ReservaForm() {
                           <p className="reserva-sede-card-loc">
                             {flag ? <span className="reserva-sede-card-flag">{flag}</span> : null}
                             <span>{linea}</span>
-                          </p>
-                          <p className="reserva-sede-card-hours">{horarioDisponibleTexto(sede)}</p>
-                          <p className="reserva-sede-card-price">
-                            {t('reservas.priceFrom')}{' '}
-                            <strong>
-                              {Number(precio || 0).toLocaleString('es-AR')} {moneda}
-                            </strong>{' '}
-                            {t('reservas.perSlot')}
                           </p>
                           <p className="reserva-sede-card-open-hint">{t('reservas.verSede')} →</p>
                         </div>
@@ -2578,7 +2566,6 @@ export default function ReservaForm() {
                 </>
               );
             })()}
-            {textoLineaTarifasReserva(sedeSeleccionada)}
           </p>
           )}
 
