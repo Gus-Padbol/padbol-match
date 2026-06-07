@@ -44,9 +44,20 @@ function PlayerList({ jugadores }) {
   );
 }
 
-function getTorneoLabel(partido) {
-  const name = String(partido?.torneo_nombre || '').trim();
-  return name || 'Partido amistoso';
+function TournamentBrand({ torneoNombre }) {
+  const hasTorneoNombre = Boolean(torneoNombre);
+  return (
+    <div className="sb-tournament-brand">
+      <img
+        src="/padbol-match-logo.png"
+        alt="Padbol Match"
+        className={`sb-tournament-brand__logo ${hasTorneoNombre ? 'sb-tournament-brand__logo--sm' : 'sb-tournament-brand__logo--md'}`}
+      />
+      {hasTorneoNombre ? (
+        <div className="sb-tournament-brand__name">{torneoNombre}</div>
+      ) : null}
+    </div>
+  );
 }
 
 function TeamNameRow({ name, serving, color1, color2 }) {
@@ -156,7 +167,7 @@ export default function ScoreboardBoard({
   onWinnerDismiss,
 }) {
   const display = partido.display || {};
-  const torneoLabel = getTorneoLabel(partido);
+  const torneoNombre = String(partido?.torneo_nombre || '').trim();
   const isDeuce = display.mode === 'deuce';
   const isVentaja = display.displayA === 'VENT.' || display.displayB === 'VENT.';
   const ventajaTeamName = display.displayA === 'VENT.'
@@ -233,7 +244,7 @@ export default function ScoreboardBoard({
         </aside>
 
         <section className="sb-center">
-          <div className="sb-tournament">{torneoLabel}</div>
+          <TournamentBrand torneoNombre={torneoNombre} />
 
           <div className="sb-center__block">
             {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
