@@ -28,7 +28,7 @@ export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
   const renderTeam = (side, nombre, uniform, accentColor, jugadores) => (
     <div className="admin-sb-partido-preview__team">
       <div className="admin-sb-partido-preview__uniform">
-        <UniformJerseyStrip color1={uniform.color1} color2={uniform.color2} />
+        <UniformJerseyStrip color1={uniform.color1} color2={uniform.color2} size="compact" />
       </div>
       <div className="admin-sb-partido-preview__team-body">
         <p

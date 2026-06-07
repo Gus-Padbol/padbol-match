@@ -102,7 +102,7 @@ function MatchUniformConfig({
       <div className="sc-config__teams">
         <div className="sc-config-team">
           <div className="sc-config-team__head">
-            <UniformJerseyStrip color1={draft.a1} color2={draft.a2} className="sc-config-team__preview" />
+            <UniformJerseyStrip color1={draft.a1} color2={draft.a2} size="compact" />
             <h3 className="sc-config-team__name">{partido.equipo_a_nombre}</h3>
           </div>
           <UniformColorField
@@ -120,7 +120,7 @@ function MatchUniformConfig({
         </div>
         <div className="sc-config-team">
           <div className="sc-config-team__head">
-            <UniformJerseyStrip color1={draft.b1} color2={draft.b2} className="sc-config-team__preview" />
+            <UniformJerseyStrip color1={draft.b1} color2={draft.b2} size="compact" />
             <h3 className="sc-config-team__name">{partido.equipo_b_nombre}</h3>
           </div>
           <UniformColorField

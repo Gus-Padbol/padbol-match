@@ -3,7 +3,6 @@ import UniformJerseyStrip from './UniformJerseyStrip';
 import { hasUniformJerseyColors, resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import { playVictoryFanfare } from '../../utils/scoreboardVictoryFanfare';
 import '../../styles/ScoreboardDramaticResultScreen.css';
-import '../../styles/ScoreboardUniformStrip.css';
 
 function hexToRgb(hex) {
   const h = String(hex || '').trim();
@@ -63,11 +62,7 @@ export default function ScoreboardDramaticResultScreen({ partido }) {
               color2={winnerUniform.color2}
             />
           ) : (
-            <span
-              className="sb-uniform-strip sb-uniform-strip--solid"
-              style={{ background: 'linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%)' }}
-              aria-hidden="true"
-            />
+            <UniformJerseyStrip color1="#ffffff" color2="#cbd5e1" size="tv" />
           )}
         </div>
         <h1 className="sb-dramatic__winner-name">{winnerName}</h1>

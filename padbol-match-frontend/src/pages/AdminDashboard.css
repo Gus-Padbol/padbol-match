@@ -2026,11 +2026,6 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   min-width: 0;
 }
 
-.admin-sb-partido-preview__uniform .sb-uniform-strip {
-  width: 12px;
-  height: 52px;
-}
-
 .admin-sb-partido-preview__team-body {
   min-width: 0;
   flex: 1;
