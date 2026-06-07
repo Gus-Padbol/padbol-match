@@ -369,7 +369,7 @@ function sedeDbRowToMiSedeFormState(sedeData) {
     precio_120min: sedeData.precio_120min ?? '',
     precio_turno: sedeData.precio_turno ?? sedeData.precio_90min ?? '',
     moneda: sedeData.moneda || 'ARS',
-    surge_activo: sedeData.surge_activo === true,
+    surge_activo: parseSurgeActivo(sedeData.surge_activo),
     descripcion: sedeData.descripcion || '',
     slogan: sedeData.slogan != null ? String(sedeData.slogan) : '',
     historia: sedeData.historia != null ? String(sedeData.historia) : '',
@@ -409,6 +409,39 @@ function parseSurgePctField(raw, { min = 0, max = 100, fallback = 0 } = {}) {
   const n = parseInt(String(raw).replace(/\D/g, ''), 10);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, n));
+}
+
+function parseSurgeActivo(raw) {
+  return raw === true || raw === 'true' || raw === 1 || raw === '1';
+}
+
+function surgeConfigFromApiRow(row) {
+  const dep = String(row?.deporte || '').trim().toLowerCase();
+  if (!dep) return null;
+  return {
+    deporte: dep,
+    config: defaultSurgeConfig({
+      activo: parseSurgeActivo(row.activo),
+      descuento_max_pct:
+        row.descuento_max_pct != null ? String(row.descuento_max_pct) : '20',
+      aumento_max_pct:
+        row.aumento_max_pct != null ? String(row.aumento_max_pct) : '40',
+    }),
+  };
+}
+
+function buildSurgeConfigsFromApi(configs) {
+  const map = {};
+  for (const { key } of DEPORTES_CANCHA_SEDE_OPTIONS) {
+    map[key] = defaultSurgeConfig();
+  }
+  for (const row of Array.isArray(configs) ? configs : []) {
+    const parsed = surgeConfigFromApiRow(row);
+    if (parsed && map[parsed.deporte] != null) {
+      map[parsed.deporte] = parsed.config;
+    }
+  }
+  return map;
 }
 
 function defaultSurgeConfig(overrides = {}) {
@@ -5227,7 +5260,6 @@ export default function AdminDashboard({
   const [surgeConfigs, setSurgeConfigs] = useState({});
   const [surgeConfigSaving, setSurgeConfigSaving] = useState({});
   const [surgeActivoSaving, setSurgeActivoSaving] = useState(false);
-  const [surgeCanchas, setSurgeCanchas] = useState([]);
   const [miSedeDuraciones, setMiSedeDuraciones] = useState([]);
   const [miSedeDuracionesLoading, setMiSedeDuracionesLoading] = useState(false);
   const [miSedeDuracionesMsg, setMiSedeDuracionesMsg] = useState('');
@@ -5398,47 +5430,19 @@ export default function AdminDashboard({
 
   useEffect(() => {
     if (!sedeId || !session?.access_token) {
-      setSurgeConfigs({});
-      setSurgeCanchas([]);
+      setSurgeConfigs(buildSurgeConfigsFromApi([]));
       return undefined;
     }
     let cancelled = false;
     const headers = { Authorization: `Bearer ${session.access_token}` };
-    Promise.all([
-      fetch(`${apiBaseUrl}/api/surge-config/${encodeURIComponent(String(sedeId))}`, { headers })
-        .then((r) => r.json())
-        .catch(() => ({})),
-      fetch(`${apiBaseUrl}/api/canchas?sede_id=${encodeURIComponent(String(sedeId))}`, { headers })
-        .then((r) => r.json())
-        .catch(() => ({})),
-    ])
-      .then(([surgeData, canchasData]) => {
+    fetch(`${apiBaseUrl}/api/surge-config/${encodeURIComponent(String(sedeId))}`, { headers })
+      .then((r) => r.json())
+      .then((surgeData) => {
         if (cancelled) return;
-        const map = {};
-        for (const row of Array.isArray(surgeData.configs) ? surgeData.configs : []) {
-          const dep = String(row.deporte || '').trim().toLowerCase();
-          if (!dep) continue;
-          map[dep] = defaultSurgeConfig({
-            activo: row.activo === true,
-            descuento_max_pct:
-              row.descuento_max_pct != null ? String(row.descuento_max_pct) : '20',
-            aumento_max_pct:
-              row.aumento_max_pct != null ? String(row.aumento_max_pct) : '40',
-          });
-        }
-        setSurgeConfigs(map);
-        const canchasList = Array.isArray(canchasData?.canchas)
-          ? canchasData.canchas
-          : Array.isArray(canchasData)
-            ? canchasData
-            : [];
-        setSurgeCanchas(canchasList);
+        setSurgeConfigs(buildSurgeConfigsFromApi(surgeData?.configs));
       })
       .catch(() => {
-        if (!cancelled) {
-          setSurgeConfigs({});
-          setSurgeCanchas([]);
-        }
+        if (!cancelled) setSurgeConfigs(buildSurgeConfigsFromApi([]));
       });
     return () => { cancelled = true; };
   }, [sedeId, session?.access_token, apiBaseUrl]);
@@ -5798,19 +5802,11 @@ export default function AdminDashboard({
   };
 
 
-  const surgeDeportesOptions = useMemo(() => {
-    const keys = new Set();
-    for (const cancha of surgeCanchas) {
-      const dep = String(cancha?.deporte ?? '').trim().toLowerCase();
-      if (dep) keys.add(dep);
-    }
-    return DEPORTES_CANCHA_SEDE_OPTIONS.filter((o) => keys.has(o.key));
-  }, [surgeCanchas]);
-
   const persistSurgeConfigDeporte = async (deporteKey, cfgOverride) => {
     if (!sedeId || !session?.access_token) return;
     const cfg = cfgOverride ?? surgeConfigs[deporteKey] ?? defaultSurgeConfig();
     if (surgeConfigBandError(cfg)) return;
+    const activo = parseSurgeActivo(cfg.activo);
     const descuentoMaxPct = parseSurgePctField(cfg.descuento_max_pct, { min: 0, max: 50, fallback: 20 });
     const aumentoMaxPct = parseSurgePctField(cfg.aumento_max_pct, { min: 0, max: 100, fallback: 40 });
     setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: true }));
@@ -5824,26 +5820,13 @@ export default function AdminDashboard({
         body: JSON.stringify({
           sede_id: Number(sedeId),
           deporte: deporteKey,
+          activo,
           descuento_max_pct: descuentoMaxPct,
           aumento_max_pct: aumentoMaxPct,
-          activo: !!cfg.activo,
         }),
       });
-      const data = await res.json().catch(() => ({}));
       if (!res.ok) return;
-      const saved = data.config;
-      if (saved) {
-        setSurgeConfigs((prev) => ({
-          ...prev,
-          [deporteKey]: defaultSurgeConfig({
-            activo: saved.activo === true,
-            descuento_max_pct:
-              saved.descuento_max_pct != null ? String(saved.descuento_max_pct) : String(descuentoMaxPct),
-            aumento_max_pct:
-              saved.aumento_max_pct != null ? String(saved.aumento_max_pct) : String(aumentoMaxPct),
-          }),
-        }));
-      }
+      // Mantener el estado local actual (incl. activo) tras guardar; no reemplazar desde la respuesta.
     } catch {
       // auto-save silencioso
     } finally {
@@ -5868,7 +5851,7 @@ export default function AdminDashboard({
       if (res.ok && (data.sede ?? data)?.id != null) {
         const updated = data.sede ?? data;
         setMiSede(updated);
-        setMiSedeForm((f) => ({ ...f, surge_activo: updated.surge_activo === true }));
+        setMiSedeForm((f) => ({ ...f, surge_activo: parseSurgeActivo(updated.surge_activo) }));
       }
     } catch {
       // revert on failure
@@ -13153,14 +13136,9 @@ export default function AdminDashboard({
                   Activar Surge
                 </label>
                 {miSedeForm.surge_activo ? (
-                    surgeDeportesOptions.length === 0 ? (
-                      <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        Configurá el deporte de tus canchas para activar Surge por deporte.
-                      </p>
-                    ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
-                      {surgeDeportesOptions.map(({ key, label }) => {
-                        const cfg = surgeConfigs[key] || defaultSurgeConfig();
+                      {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => {
+                        const cfg = surgeConfigs[key] ?? defaultSurgeConfig();
                         const saving = !!surgeConfigSaving[key];
                         const basePrecio90 = miSedeForm.precio_90min ?? miSede?.precio_90min ?? miSede?.precio_turno;
                         const previewLine = formatSurgePricePreview(
@@ -13186,9 +13164,9 @@ export default function AdminDashboard({
                               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                                 <input
                                   type="checkbox"
-                                  checked={!!cfg.activo}
+                                  checked={parseSurgeActivo(cfg.activo)}
                                   onChange={(e) => {
-                                    const next = { ...(surgeConfigs[key] || cfg), activo: e.target.checked };
+                                    const next = { ...(surgeConfigs[key] ?? cfg), activo: e.target.checked };
                                     setSurgeConfigs((prev) => ({ ...prev, [key]: next }));
                                     persistSurgeConfigDeporte(key, next);
                                   }}
@@ -13258,7 +13236,6 @@ export default function AdminDashboard({
                         );
                       })}
                     </div>
-                    )
                 ) : null}
                 <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo (% sobre el precio base).
