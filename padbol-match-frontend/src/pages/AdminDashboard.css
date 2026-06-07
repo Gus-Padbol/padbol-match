@@ -1407,6 +1407,43 @@ html.theme-dark .admin-mi-sede-theme-panel {
   color: var(--text-primary) !important;
 }
 
+/* Chips de días (franjas horarias): texto legible en activo/inactivo; anula color de label del panel */
+.admin-mi-sede-theme-panel .admin-franja-dia-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155 !important;
+  -webkit-text-fill-color: #334155 !important;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-mi-sede-theme-panel .admin-franja-dia-chip--checked {
+  border-color: #e11b22;
+  background: #eef2ff;
+  color: #312e81 !important;
+  -webkit-text-fill-color: #312e81 !important;
+}
+
+html.theme-dark .admin-mi-sede-theme-panel .admin-franja-dia-chip {
+  border-color: #475569;
+  background: #1e293b;
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+html.theme-dark .admin-mi-sede-theme-panel .admin-franja-dia-chip--checked {
+  border-color: #e11b22;
+  background: #312e81;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
 .admin-mi-sede-theme-muted,
 .admin-mi-sede-theme-panel .admin-mi-sede-theme-muted {
   color: var(--text-secondary) !important;

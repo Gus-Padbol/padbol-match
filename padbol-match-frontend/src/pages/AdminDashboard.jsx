@@ -13789,19 +13789,7 @@ export default function AdminDashboard({
                           return (
                             <label
                               key={dia.id}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '6px 8px',
-                                borderRadius: '999px',
-                                border: checked ? '1px solid #E11B22' : '1px solid #cbd5e1',
-                                background: checked ? '#eef2ff' : '#f8fafc',
-                                color: checked ? '#312e81' : '#475569',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                              }}
+                              className={`admin-franja-dia-chip${checked ? ' admin-franja-dia-chip--checked' : ''}`}
                             >
                               <input
                                 type="checkbox"
