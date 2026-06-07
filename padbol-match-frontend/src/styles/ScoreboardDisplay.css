@@ -215,6 +215,10 @@
   width: 100%;
 }
 
+.sb-team-name-row .sb-uniform-strip {
+  margin-right: 12px;
+}
+
 .sb-panel--left .sb-team-name-row,
 .sb-panel--right .sb-team-name-row {
   margin-left: 0;
