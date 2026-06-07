@@ -689,61 +689,59 @@ function whatsappHrefSede(sede) {
 function SedeHeroOverlayIdentity({ sede, direccionLinea, ubicacionLinea, ubicacionFlag, licenciaActiva, t }) {
   const mapsHref = direccionLinea ? toHttps(buildMapsSearchHref(sede?.direccion, sede?.ciudad, sede?.pais)) : null;
   return (
-    <>
-      <div className="sede-publica-hero-fotos__identity">
-        <div className="sede-publica-hero-fotos__identity-head">
-          <div className="sede-publica-hero-fotos__identity-brand">
-            <div className="sede-publica-hero-fotos__logo">
-              {sede.logo_url ? (
-                <img src={toHttps(sede.logo_url)} alt="" />
-              ) : (
-                <span className="sede-publica-hero-fotos__logo-fallback" aria-hidden>
-                  ⚽
-                </span>
-              )}
-            </div>
-            <h1 className="sede-publica-hero-fotos__nombre">
-              {sede.nombre || '(sin nombre)'}
-            </h1>
+    <div className="sede-publica-hero-fotos__identity">
+      <div className="sede-publica-hero-fotos__identity-head">
+        <div className="sede-publica-hero-fotos__identity-brand">
+          <div className="sede-publica-hero-fotos__logo">
+            {sede.logo_url ? (
+              <img src={toHttps(sede.logo_url)} alt="" />
+            ) : (
+              <span className="sede-publica-hero-fotos__logo-fallback" aria-hidden>
+                ⚽
+              </span>
+            )}
           </div>
+          <h1 className="sede-publica-hero-fotos__nombre">
+            {sede.nombre || '(sin nombre)'}
+          </h1>
         </div>
-        {direccionLinea ? (
-          mapsHref ? (
-            <a
-              className="sede-publica-hero-fotos__direccion sede-publica-hero-fotos__direccion--link"
-              href={mapsHref}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {direccionLinea}
-            </a>
-          ) : (
-            <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
-          )
-        ) : ubicacionLinea ? (
-          <p className="sede-publica-hero-fotos__direccion">
-            {ubicacionFlag ? <span style={{ marginRight: '4px' }}>{ubicacionFlag}</span> : null}
-            {ubicacionLinea}
-          </p>
-        ) : null}
-        {licenciaActiva ? (
-          <div className="sede-publica-hero-fotos__licencia-wrap">
-            <span className="sede-publica-hero-fotos__licencia">
-              {t('sedes.publica.licenciaBadge', { defaultValue: 'PADBOL' })}
-            </span>
-            <span className="sede-publica-hero-fotos__licencia-status">
-              {t('sedes.publica.licenciaActivaLine', { defaultValue: '✓ Licencia activa' })}
-            </span>
-          </div>
-        ) : null}
       </div>
-      <SedeSocialLinks sede={sede} t={t} variant="hero" />
-    </>
+      {direccionLinea ? (
+        mapsHref ? (
+          <a
+            className="sede-publica-hero-fotos__direccion sede-publica-hero-fotos__direccion--link"
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {direccionLinea}
+          </a>
+        ) : (
+          <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
+        )
+      ) : ubicacionLinea ? (
+        <p className="sede-publica-hero-fotos__direccion">
+          {ubicacionFlag ? <span style={{ marginRight: '4px' }}>{ubicacionFlag}</span> : null}
+          {ubicacionLinea}
+        </p>
+      ) : null}
+      {licenciaActiva ? (
+        <div className="sede-publica-hero-fotos__licencia-wrap">
+          <span className="sede-publica-hero-fotos__licencia">
+            {t('sedes.publica.licenciaBadge', { defaultValue: 'PADBOL' })}
+          </span>
+          <span className="sede-publica-hero-fotos__licencia-status">
+            {t('sedes.publica.licenciaActivaLine', { defaultValue: '✓ Licencia activa' })}
+          </span>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
-/** Hero: imagen fija + overlay identidad. */
-function SedeHeroFoto({ imageUrl, cacheBust, overlay, onOpen }) {
+/** Hero: imagen fija + overlay identidad + redes (desktop en hero, mobile debajo). */
+function SedeHeroFoto({ imageUrl, cacheBust, overlay, sede, t, onOpen }) {
+  const hasSocial = buildSedeSocialItems(sede).length > 0;
   return (
     <div className="sede-publica-hero-fotos">
       <div className="sede-publica-hero-fotos__frame">
@@ -760,7 +758,17 @@ function SedeHeroFoto({ imageUrl, cacheBust, overlay, onOpen }) {
           <div className="sede-publica-hero-fotos__placeholder" aria-hidden />
         )}
         <div className="sede-publica-hero-fotos__overlay">{overlay}</div>
+        {hasSocial ? (
+          <div className="sede-publica-hero-fotos__social-slot sede-publica-hero-fotos__social-slot--in-hero">
+            <SedeSocialLinks sede={sede} t={t} variant="hero" />
+          </div>
+        ) : null}
       </div>
+      {hasSocial ? (
+        <div className="sede-publica-hero-fotos__social-slot sede-publica-hero-fotos__social-slot--below">
+          <SedeSocialLinks sede={sede} t={t} variant="hero" />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -2098,6 +2106,8 @@ export default function SedePublica() {
                 <SedeHeroFoto
                   imageUrl={heroFotoUrl}
                   cacheBust={heroFotoCacheBust}
+                  sede={sede}
+                  t={t}
                   onOpen={
                     heroFotoUrl
                       ? () => {
