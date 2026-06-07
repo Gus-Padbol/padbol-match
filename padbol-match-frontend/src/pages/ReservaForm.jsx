@@ -39,7 +39,7 @@ import {
 } from '../utils/sedeCardUi';
 import {
   formatPaisReservaLabel,
-  formatSedeCiudadPaisLinea,
+  formatSedeUbicacionSubtitulo,
   inferPaisReservaDesdeCoordenadas,
   matchPaisReservaEnCatalogo,
 } from '../utils/paisI18n';
@@ -80,6 +80,36 @@ function getPrecio(sede, hora, fecha, duracionMin, deporteCanon, preciosDeporteR
       ? precioBaseReservaConDeporte(sede, duracionMin, deporteCanon, preciosDeporteRows)
       : null;
   return precioReservaTurno(sede, hora, fecha, duracionMin, precioDesdeFranjas, baseDeporte);
+}
+
+function formatDuracionCardPrecio({
+  duracion,
+  sede,
+  fecha,
+  hora,
+  deporte,
+  preciosDeporteRows,
+  surgeQuotesByDuracion,
+  surgeQuotesLoading,
+}) {
+  const surgeActivo = sede?.surge_activo === true;
+  const hasSlot = Boolean(String(fecha || '').trim() && String(hora || '').trim());
+  const fmt = (n) => `$${Number(n).toLocaleString('es-AR')}`;
+
+  if (!hasSlot) {
+    if (surgeActivo) return '⚡ Precio dinámico';
+    return fmt(getPrecio(sede, '', fecha, duracion, deporte, preciosDeporteRows));
+  }
+
+  if (surgeActivo) {
+    const quote = surgeQuotesByDuracion?.[duracion];
+    if (surgeQuotesLoading && !quote) return '…';
+    if (quote?.surge_activo && quote.precio != null && Number.isFinite(Number(quote.precio))) {
+      return fmt(quote.precio);
+    }
+  }
+
+  return fmt(getPrecio(sede, hora, fecha, duracion, deporte, preciosDeporteRows));
 }
 
 /** Igual que ArmarPartido paso 3: líneas para `extras` en crear-preferencia / reservaData. */
@@ -1075,13 +1105,8 @@ export default function ReservaForm() {
   const reservaExtrasSedeIdRef = useRef(null);
   const reservaExtrasFetchDoneRef = useRef(null);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
-  const [surgeQuote, setSurgeQuote] = useState({
-    precio: null,
-    ocupacion_porcentaje: 0,
-    surge_activo: false,
-    last_minute_discount: false,
-    loading: false,
-  });
+  const [surgeQuotesByDuracion, setSurgeQuotesByDuracion] = useState({});
+  const [surgeQuotesLoading, setSurgeQuotesLoading] = useState(false);
 
   useEffect(() => {
     const rawId = filtros.sede_id;
@@ -1192,37 +1217,59 @@ export default function ReservaForm() {
     const sedeId = filtros.sede_id;
     const hora = formData.hora;
     const fecha = formData.fecha;
-    if (!sedeId || !hora || !fecha || pantalla < 2) {
-      setSurgeQuote({
-        precio: null,
-        ocupacion_porcentaje: 0,
-        surge_activo: false,
-        last_minute_discount: false,
-        loading: false,
-      });
+    const surgeActivo = sedeSeleccionada?.surge_activo === true;
+    if (
+      !sedeId
+      || !hora
+      || !fecha
+      || pantalla < 2
+      || !surgeActivo
+      || duracionesOfrecidas.length === 0
+    ) {
+      setSurgeQuotesByDuracion({});
+      setSurgeQuotesLoading(false);
       return undefined;
     }
     let cancelled = false;
-    setSurgeQuote((prev) => ({ ...prev, loading: true }));
-    fetchSurgePrecio(sedeId, reservaDeporteUrl, duracionSeleccionadaMin, fecha, hora)
-      .then((data) => {
-        if (!cancelled) {
-          setSurgeQuote({ ...data, loading: false });
-        }
+    setSurgeQuotesLoading(true);
+    Promise.all(
+      duracionesOfrecidas.map((dur) =>
+        fetchSurgePrecio(sedeId, reservaDeporteUrl, dur, fecha, hora)
+          .then((data) => [dur, data])
+          .catch(() => [dur, { precio: null, surge_activo: false, ocupacion_porcentaje: 0, last_minute_discount: false }]),
+      ),
+    )
+      .then((entries) => {
+        if (cancelled) return;
+        const map = {};
+        for (const [dur, data] of entries) map[dur] = data;
+        setSurgeQuotesByDuracion(map);
       })
-      .catch(() => {
-        if (!cancelled) {
-          setSurgeQuote({
-            precio: null,
-            ocupacion_porcentaje: 0,
-            surge_activo: false,
-            last_minute_discount: false,
-            loading: false,
-          });
-        }
+      .finally(() => {
+        if (!cancelled) setSurgeQuotesLoading(false);
       });
     return () => { cancelled = true; };
-  }, [filtros.sede_id, formData.fecha, formData.hora, duracionSeleccionadaMin, reservaDeporteUrl, pantalla]);
+  }, [
+    filtros.sede_id,
+    formData.fecha,
+    formData.hora,
+    duracionesOfrecidas,
+    reservaDeporteUrl,
+    pantalla,
+    sedeSeleccionada?.surge_activo,
+  ]);
+
+  const surgeQuote = useMemo(() => {
+    const selected = surgeQuotesByDuracion[duracionSeleccionadaMin];
+    if (selected) return { ...selected, loading: surgeQuotesLoading };
+    return {
+      precio: null,
+      ocupacion_porcentaje: 0,
+      surge_activo: false,
+      last_minute_discount: false,
+      loading: surgeQuotesLoading,
+    };
+  }, [surgeQuotesByDuracion, duracionSeleccionadaMin, surgeQuotesLoading]);
 
   const surgePrecioBadge = useMemo(() => surgeBadgeFromQuote(surgeQuote), [surgeQuote]);
 
@@ -2441,7 +2488,7 @@ export default function ReservaForm() {
                 <ul className="reserva-sede-cards-list">
                   {sedesFiltradasPorPaisOrdenadas.map((sede, idx) => {
                     const foto = primeraFotoSede(sede);
-                    const { flag, linea } = formatSedeCiudadPaisLinea(sede, t);
+                    const ubicacionSubtitulo = formatSedeUbicacionSubtitulo(sede, t);
                     const esMasCercana =
                       geoReserva.status === 'granted' &&
                       sedeReservaMasCercanaId != null &&
@@ -2494,8 +2541,7 @@ export default function ReservaForm() {
                             <p className="reserva-sede-card-nearby">{t('reservas.nearestVenue')}</p>
                           ) : null}
                           <p className="reserva-sede-card-loc">
-                            {flag ? <span className="reserva-sede-card-flag">{flag}</span> : null}
-                            <span>{linea}</span>
+                            <span>{ubicacionSubtitulo}</span>
                           </p>
                           <p className="reserva-sede-card-open-hint">{t('reservas.verSede')} →</p>
                         </div>
@@ -2557,15 +2603,7 @@ export default function ReservaForm() {
 
           {sedeSeleccionada && (
           <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', textAlign: 'center' }}>
-            {(() => {
-              const { flag, linea } = formatSedeCiudadPaisLinea(sedeSeleccionada, t);
-              return (
-                <>
-                  {flag ? <span style={{ marginRight: '6px' }}>{flag}</span> : null}
-                  {linea}
-                </>
-              );
-            })()}
+            {formatSedeUbicacionSubtitulo(sedeSeleccionada, t)}
           </p>
           )}
 
@@ -2599,14 +2637,16 @@ export default function ReservaForm() {
                   >
                     {duracionesOfrecidas.map((duracion) => {
                       const active = duracionSeleccionadaMin === duracion;
-                      const precioDur = getPrecio(
-                        sedeSeleccionada,
-                        '',
-                        formData.fecha,
+                      const precioDurLabel = formatDuracionCardPrecio({
                         duracion,
-                        reservaDeporteUrl,
+                        sede: sedeSeleccionada,
+                        fecha: formData.fecha,
+                        hora: formData.hora,
+                        deporte: reservaDeporteUrl,
                         preciosDeporteRows,
-                      );
+                        surgeQuotesByDuracion,
+                        surgeQuotesLoading,
+                      });
                       return (
                         <button
                           key={duracion}
@@ -2630,7 +2670,7 @@ export default function ReservaForm() {
                             ⏱ {duracion} {t('reservas.minutos', { defaultValue: 'min' })}
                           </span>
                           <span style={{ fontSize: 11, fontWeight: 700, opacity: active ? 0.95 : 0.85 }}>
-                            ${Number(precioDur).toLocaleString('es-AR')}
+                            {precioDurLabel}
                           </span>
                         </button>
                       );

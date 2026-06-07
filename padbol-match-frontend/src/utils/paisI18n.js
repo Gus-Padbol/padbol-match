@@ -253,3 +253,12 @@ export function formatSedeCiudadPaisLinea(sede, t) {
   const linea = [ciudad, paisLabel].filter(Boolean).join(' · ') || paisLabel || ciudad || '—';
   return { flag, linea };
 }
+
+/** Subtítulo sede sin bandera; opcional sufijo Surge si la sede lo tiene activo. */
+export function formatSedeUbicacionSubtitulo(sede, t) {
+  const { linea } = formatSedeCiudadPaisLinea(sede, t);
+  if (sede?.surge_activo === true) {
+    return `${linea} · ⚡ Precios dinámicos`;
+  }
+  return linea;
+}

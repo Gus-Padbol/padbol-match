@@ -46,7 +46,7 @@ import {
 import PartidoAbiertoSedeRow from '../components/PartidoAbiertoSedeRow';
 import ResenasSede from '../components/ResenasSede';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
-import { formatSedeCiudadPaisLinea } from '../utils/paisI18n';
+import { formatSedeUbicacionSubtitulo } from '../utils/paisI18n';
 import './SedePublica.css';
 
 const MAP_THUMB_MAX_H = 120;
@@ -686,7 +686,7 @@ function whatsappHrefSede(sede) {
 }
 
 /** Overlay identidad sobre la foto del hero. */
-function SedeHeroOverlayIdentity({ sede, direccionLinea, ubicacionLinea, ubicacionFlag, licenciaActiva, t }) {
+function SedeHeroOverlayIdentity({ sede, direccionLinea, ubicacionLinea, licenciaActiva, t }) {
   const mapsHref = direccionLinea ? toHttps(buildMapsSearchHref(sede?.direccion, sede?.ciudad, sede?.pais)) : null;
   return (
     <div className="sede-publica-hero-fotos__identity">
@@ -719,12 +719,11 @@ function SedeHeroOverlayIdentity({ sede, direccionLinea, ubicacionLinea, ubicaci
         ) : (
           <p className="sede-publica-hero-fotos__direccion">{direccionLinea}</p>
         )
-      ) : ubicacionLinea ? (
-        <p className="sede-publica-hero-fotos__direccion">
-          {ubicacionFlag ? <span style={{ marginRight: '4px' }}>{ubicacionFlag}</span> : null}
-          {ubicacionLinea}
-        </p>
-      ) : null}
+        ) : ubicacionLinea ? (
+          <p className="sede-publica-hero-fotos__direccion">
+            {ubicacionLinea}
+          </p>
+        ) : null}
       {licenciaActiva ? (
         <div className="sede-publica-hero-fotos__licencia-wrap">
           <span className="sede-publica-hero-fotos__licencia">
@@ -2052,7 +2051,7 @@ export default function SedePublica() {
         const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
         const hasAddress = Boolean(sede.direccion || sede.ciudad || sede.pais);
         const direccionLinea = [sede.direccion, sede.ciudad, sede.pais].filter(Boolean).join(', ');
-        const { flag: ubicacionFlag, linea: ubicacionLinea } = formatSedeCiudadPaisLinea(sede, t);
+        const ubicacionLinea = formatSedeUbicacionSubtitulo(sede, t);
         const direccionChipLabel = formatSedeDireccionChipLabel(sede);
         const deportesChips = deportesActivosSedePublica(sede, preciosDeporteRows);
         const amenityChips = resolveSedeAmenityChips(sede.amenities);
@@ -2121,7 +2120,6 @@ export default function SedePublica() {
                       sede={sede}
                       direccionLinea={direccionLinea}
                       ubicacionLinea={ubicacionLinea}
-                      ubicacionFlag={ubicacionFlag}
                       licenciaActiva={licenciaActiva}
                       t={t}
                     />
