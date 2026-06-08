@@ -409,8 +409,8 @@ export default function ScoreboardBoard({
       <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
       <div
         className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
-        title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
-        aria-label={wsConnected ? 'Conexión en tiempo real activa' : 'Conexión por polling'}
+        title={wsConnected ? 'WebSocket active' : 'Updating via polling'}
+        aria-label={wsConnected ? 'Real-time connection active' : 'Polling connection'}
       />
 
       <div className="sb-display__main">
@@ -438,7 +438,7 @@ export default function ScoreboardBoard({
               className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
             >
               <span className="sb-point-indicator__triangle" aria-hidden="true" />
-              <span>PUNTO</span>
+              <span>POINT</span>
             </div>
 
             {isSingleCenterScore ? (
@@ -455,7 +455,7 @@ export default function ScoreboardBoard({
                       textAlign: 'center',
                     }}
                   >
-                    <span className="sb-score sb-score--special">ADV</span>
+                    <span className="sb-score sb-score--special">ADVANTAGE</span>
                     {ventajaTeamName ? (
                       <span
                         style={{

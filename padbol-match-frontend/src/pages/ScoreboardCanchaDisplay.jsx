@@ -11,7 +11,7 @@ function ScoreboardWaitingScreen({ canchaLabel }) {
   return (
     <div className="sb-waiting">
       <img src={logo} alt="Padbol Match" className="sb-waiting__logo" />
-      <p className="sb-waiting__text">Esperando partido...</p>
+      <p className="sb-waiting__text">Waiting for match...</p>
       <p className="sb-waiting__cancha">{canchaLabel}</p>
     </div>
   );
