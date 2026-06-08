@@ -87,12 +87,12 @@ function getSetCells(partido, side) {
   return [1, 2, 3].map((setNum) => {
     const completedRow = completed.find((row, idx) => (row.set ?? idx + 1) === setNum);
     if (completedRow) {
-      return { value: String(completedRow[key] ?? ''), active: false, future: false };
+      return { value: String(completedRow[key] ?? ''), active: false, future: false, completed: true };
     }
     if (currentSetNum === setNum) {
-      return { value: String(currentGames ?? 0), active: true, future: false };
+      return { value: String(currentGames ?? 0), active: true, future: false, completed: false };
     }
-    return { value: '—', active: false, future: true };
+    return { value: '—', active: false, future: true, completed: false };
   });
 }
 
@@ -122,6 +122,7 @@ function TeamRow({ partido, side, display, serving }) {
             'sb-scorebug__set',
             cell.active ? 'sb-scorebug__set--active' : '',
             cell.future ? 'sb-scorebug__set--future' : '',
+            cell.completed ? 'sb-scorebug__set--completed' : '',
           ].filter(Boolean).join(' ')}
         >
           {cell.value}
