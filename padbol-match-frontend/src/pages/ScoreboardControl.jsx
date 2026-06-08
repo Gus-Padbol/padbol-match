@@ -87,6 +87,8 @@ function OptionsModal({
   isTiebreak,
   actionLoading,
   onRunAction,
+  undoCount,
+  onUndo,
 }) {
   if (!open) return null;
 
@@ -98,6 +100,8 @@ function OptionsModal({
     return false;
   };
 
+  const canUndo = undoCount > 0;
+
   const handleOptionClick = async (key) => {
     const config = OPTION_ACTIONS[key];
     if (!config || isOptionDisabled(key)) return;
@@ -106,6 +110,12 @@ function OptionsModal({
       refetchAfter: config.refetchAfter,
       refreshHistorial: config.refreshHistorial,
     });
+  };
+
+  const handleUndoClick = async () => {
+    if (actionLoading || terminado || !canUndo) return;
+    onClose();
+    await onUndo();
   };
 
   return (
@@ -134,6 +144,14 @@ function OptionsModal({
               {config.label}
             </button>
           ))}
+          <button
+            type="button"
+            className="sc-modal-option-btn sc-modal-option-btn--undo"
+            disabled={actionLoading || terminado || !canUndo}
+            onClick={handleUndoClick}
+          >
+            {`↩ Undo (${undoCount})`}
+          </button>
         </div>
       </div>
     </div>
@@ -272,7 +290,6 @@ export default function ScoreboardControl() {
   const terminado = partido.estado === 'terminado';
   const cronometroActivo = partido.display?.cronometroActivo;
   const canScorePoints = !terminado;
-  const canUndo = undoCount > 0;
   const torneoLabel = getTorneoLabel(partido);
   const { colorA, colorB } = resolveTeamColors(partido);
 
@@ -393,15 +410,6 @@ export default function ScoreboardControl() {
 
       <button
         type="button"
-        className="sc-undo-btn"
-        disabled={actionLoading || terminado || !canUndo}
-        onClick={handleUndo}
-      >
-        ↩ Undo ({undoCount})
-      </button>
-
-      <button
-        type="button"
         className="sc-options-btn"
         disabled={actionLoading}
         onClick={() => setOptionsOpen(true)}
@@ -417,6 +425,8 @@ export default function ScoreboardControl() {
         isTiebreak={partido.es_tiebreak}
         actionLoading={actionLoading}
         onRunAction={runAction}
+        undoCount={undoCount}
+        onUndo={handleUndo}
       />
     </div>
   );
