@@ -6,7 +6,7 @@ import useUserRole from '../hooks/useUserRole';
 import { getDisplayName } from '../utils/displayName';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
-import { fetchPartido, scoreboardAction, updatePartido } from '../utils/scoreboardApi';
+import { fetchPartido, fetchPartidoHistorial, scoreboardAction, updatePartido } from '../utils/scoreboardApi';
 import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
 import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
 import UniformJerseyStrip from '../components/scoreboard/UniformJerseyStrip';
@@ -148,11 +148,6 @@ function MatchUniformConfig({
 }
 
 const OPTION_ACTIONS = {
-  undo: {
-    label: '↩ Deshacer punto',
-    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/deshacer`,
-    refetchAfter: true,
-  },
   saque: {
     label: '⇄ Cambiar saque',
     path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/saque`,
@@ -167,6 +162,7 @@ const OPTION_ACTIONS = {
     label: '🔄 Resetear partido',
     path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/cronometro/reset`,
     refetchAfter: true,
+    refreshHistorial: true,
   },
 };
 
@@ -175,7 +171,6 @@ function OptionsModal({
   onClose,
   partidoId,
   terminado,
-  canUndo,
   isTiebreak,
   actionLoading,
   onRunAction,
@@ -186,7 +181,6 @@ function OptionsModal({
     if (actionLoading) return true;
     if (key === 'reset') return false;
     if (terminado) return true;
-    if (key === 'undo') return !canUndo;
     if (key === 'tiebreak') return isTiebreak;
     return false;
   };
@@ -195,7 +189,10 @@ function OptionsModal({
     const config = OPTION_ACTIONS[key];
     if (!config || isOptionDisabled(key)) return;
     onClose();
-    await onRunAction(config.path(partidoId), { refetchAfter: config.refetchAfter });
+    await onRunAction(config.path(partidoId), {
+      refetchAfter: config.refetchAfter,
+      refreshHistorial: config.refreshHistorial,
+    });
   };
 
   return (
@@ -255,6 +252,7 @@ export default function ScoreboardControl() {
   const [uniformDraft, setUniformDraft] = useState({ a1: '', a2: '', b1: '', b2: '' });
   const [uniformSaving, setUniformSaving] = useState(false);
   const [uniformMsg, setUniformMsg] = useState('');
+  const [undoCount, setUndoCount] = useState(0);
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
@@ -308,7 +306,22 @@ export default function ScoreboardControl() {
     return p;
   }, [partidoId]);
 
-  const runAction = async (path, { refetchAfter = false } = {}) => {
+  const refreshHistorialCount = useCallback(async () => {
+    try {
+      const { count } = await fetchPartidoHistorial(partidoId);
+      setUndoCount(Math.max(0, Number(count) || 0));
+    } catch {
+      setUndoCount(0);
+    }
+  }, [partidoId]);
+
+  useEffect(() => {
+    if (!partido) return undefined;
+    void refreshHistorialCount();
+    return undefined;
+  }, [partido?.id, refreshHistorialCount]);
+
+  const runAction = async (path, { refetchAfter = false, refreshHistorial = false } = {}) => {
     setActionLoading(true);
     setError('');
     try {
@@ -318,11 +331,21 @@ export default function ScoreboardControl() {
       } else {
         setPartido(data);
       }
+      if (refreshHistorial) {
+        await refreshHistorialCount();
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleUndo = () => {
+    runAction(
+      `/api/scoreboard/partidos/${partidoId}/undo`,
+      { refetchAfter: true, refreshHistorial: true },
+    );
   };
 
   const handleCronometro = (accion) => {
@@ -381,7 +404,7 @@ export default function ScoreboardControl() {
   const terminado = partido.estado === 'terminado';
   const cronometroActivo = partido.display?.cronometroActivo;
   const canScorePoints = !terminado;
-  const canUndo = Array.isArray(partido.historial_puntos) && partido.historial_puntos.length > 0;
+  const canUndo = undoCount > 0;
   const torneoLabel = getTorneoLabel(partido);
   const { colorA, colorB } = resolveTeamColors(partido);
 
@@ -460,7 +483,10 @@ export default function ScoreboardControl() {
             className="sc-point-btn sc-point-btn--a"
             style={teamButtonStyle(colorA)}
             disabled={actionLoading || terminado || !canScorePoints}
-            onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/A`, { refetchAfter: true })}
+            onClick={() => runAction(
+              `/api/scoreboard/partidos/${partidoId}/punto/A`,
+              { refetchAfter: true, refreshHistorial: true },
+            )}
           >
             + POINT
           </button>
@@ -487,7 +513,10 @@ export default function ScoreboardControl() {
             className="sc-point-btn sc-point-btn--b"
             style={teamButtonStyle(colorB)}
             disabled={actionLoading || terminado || !canScorePoints}
-            onClick={() => runAction(`/api/scoreboard/partidos/${partidoId}/punto/B`, { refetchAfter: true })}
+            onClick={() => runAction(
+              `/api/scoreboard/partidos/${partidoId}/punto/B`,
+              { refetchAfter: true, refreshHistorial: true },
+            )}
           >
             + POINT
           </button>
@@ -505,6 +534,15 @@ export default function ScoreboardControl() {
 
       <button
         type="button"
+        className="sc-undo-btn"
+        disabled={actionLoading || terminado || !canUndo}
+        onClick={handleUndo}
+      >
+        ↩ Undo ({undoCount})
+      </button>
+
+      <button
+        type="button"
         className="sc-options-btn"
         disabled={actionLoading}
         onClick={() => setOptionsOpen(true)}
@@ -517,7 +555,6 @@ export default function ScoreboardControl() {
         onClose={() => setOptionsOpen(false)}
         partidoId={partidoId}
         terminado={terminado}
-        canUndo={canUndo}
         isTiebreak={partido.es_tiebreak}
         actionLoading={actionLoading}
         onRunAction={runAction}

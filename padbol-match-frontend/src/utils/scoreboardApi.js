@@ -61,6 +61,24 @@ export async function fetchPartidoByCancha(sedeId, cancha) {
   return data;
 }
 
+export async function fetchPartidoHistorial(partidoId) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(
+    `${API_BASE}/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/historial`,
+    { headers },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error al cargar historial');
+  if (Array.isArray(data.historial)) {
+    return { historial: data.historial, count: data.historial.length };
+  }
+  const count = Number(data.count);
+  return {
+    historial: Array.isArray(data.historial) ? data.historial : [],
+    count: Number.isFinite(count) ? count : 0,
+  };
+}
+
 export async function scoreboardAction(path, method = 'POST') {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}${path}`, { method, headers });

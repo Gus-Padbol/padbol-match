@@ -183,7 +183,6 @@ export function registrarPunto(partido, equipo) {
   const snapshot = snapshotPartido(partido);
   const historial = Array.isArray(partido.historial_puntos) ? [...partido.historial_puntos] : [];
   historial.push(snapshot);
-  if (historial.length > 1) historial.shift();
   partido.historial_puntos = historial;
 
   if (partido.estado === 'pendiente') partido.estado = 'en_curso';

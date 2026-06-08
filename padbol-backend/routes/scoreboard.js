@@ -506,7 +506,7 @@ export function mountScoreboardRoutes(app, {
     }
   });
 
-  app.post('/api/scoreboard/partidos/:id/deshacer', async (req, res) => {
+  const postUndoPartido = async (req, res) => {
     try {
       const { user, status, error: authError } = await getAuthenticatedUser(req);
       if (!user) return res.status(status).json({ error: authError });
@@ -523,10 +523,31 @@ export function mountScoreboardRoutes(app, {
       return res.json(enriched);
     } catch (err) {
       const st = err.status || 500;
-      console.error('❌ POST /api/scoreboard/partidos/:id/deshacer:', err.message);
+      console.error('❌ POST /api/scoreboard/partidos/:id/undo:', err.message);
       return res.status(st).json({ error: err.message || 'Error al deshacer punto' });
     }
+  };
+
+  app.get('/api/scoreboard/partidos/:id/historial', async (req, res) => {
+    try {
+      const { user, status, error: authError } = await getAuthenticatedUser(req);
+      if (!user) return res.status(status).json({ error: authError });
+
+      const partido = await fetchPartido(supabaseAdmin, req.params.id);
+      const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
+      assertCanControlScoreboard(role, partido.sede_id);
+
+      const historial = Array.isArray(partido.historial_puntos) ? partido.historial_puntos : [];
+      return res.json({ historial, count: historial.length });
+    } catch (err) {
+      const st = err.status || 500;
+      console.error('❌ GET /api/scoreboard/partidos/:id/historial:', err.message);
+      return res.status(st).json({ error: err.message || 'Error al obtener historial' });
+    }
   });
+
+  app.post('/api/scoreboard/partidos/:id/deshacer', postUndoPartido);
+  app.post('/api/scoreboard/partidos/:id/undo', postUndoPartido);
 
   app.post('/api/scoreboard/partidos/:id/saque', async (req, res) => {
     try {
