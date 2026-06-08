@@ -694,7 +694,7 @@
   flex-shrink: 0;
   margin-top: 2.5vh;
   margin-bottom: var(--sb-timer-footer-gap);
-  transform: translateY(-20px);
+  transform: translateY(-25px);
 }
 
 /* ── Sponsors footer ── */
