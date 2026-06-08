@@ -65,7 +65,6 @@ html:has(.sb-scorebug-page) #root {
 .sb-scorebug__name-text {
   font-size: 14px;
   font-weight: 900;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #ffffff;
   white-space: nowrap;
@@ -89,7 +88,7 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug__set--active {
-  background: #3a3a3a;
+  background: #2a2a2a;
 }
 
 .sb-scorebug__set--future {

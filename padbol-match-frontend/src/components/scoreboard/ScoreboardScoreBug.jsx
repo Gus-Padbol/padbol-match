@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardScoreBug.css';
 
-const SCOREBUG_DEFAULT_NAME_BG = {
-  A: '#1e5bb5',
-  B: DEFAULT_SCOREBOARD_COLOR_B,
-};
+const SCOREBUG_NAME_BG_A = '#1565c0';
+const SCOREBUG_DEFAULT_NAME_BG_B = DEFAULT_SCOREBOARD_COLOR_B;
 
 const DARK_COLOR_LUMINANCE_THRESHOLD = 100;
 
@@ -60,9 +58,14 @@ function isCompactGameScore(score) {
   return score === 'D' || score === 'AD' || score === 'DEUCE' || score === 'ADV';
 }
 
+function formatTeamDisplayName(name) {
+  return String(name ?? '').trim().toLocaleUpperCase('es');
+}
+
 function resolveTeamNameBg(partido, side) {
+  if (side === 'A') return SCOREBUG_NAME_BG_A;
   const uniform = resolveUniformJerseyColors(partido, side);
-  let bg = uniform.color1 || SCOREBUG_DEFAULT_NAME_BG[side];
+  let bg = uniform.color1 || SCOREBUG_DEFAULT_NAME_BG_B;
   if (isColorTooDark(bg)) {
     bg = lightenHexColor(bg, 0.3);
   }
@@ -89,7 +92,8 @@ function getSetCells(partido, side) {
 }
 
 function TeamRow({ partido, side, display, serving }) {
-  const name = side === 'A' ? partido.equipo_a_nombre : partido.equipo_b_nombre;
+  const rawName = side === 'A' ? partido.equipo_a_nombre : partido.equipo_b_nombre;
+  const name = formatTeamDisplayName(rawName);
   const nameBg = resolveTeamNameBg(partido, side);
   const setCells = getSetCells(partido, side);
   const gameScore = formatPointScore(display, side);
@@ -133,6 +137,10 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
   const torneoLabel = String(partido?.torneo_nombre || '').trim();
   const servingA = partido?.saque_actual === 'A';
   const servingB = partido?.saque_actual === 'B';
+
+  useEffect(() => {
+    console.log('[ScoreboardScoreBug] nombre_a:', partido?.equipo_a_nombre);
+  }, [partido?.equipo_a_nombre]);
 
   return (
     <div className="sb-scorebug">
