@@ -100,19 +100,29 @@ function formatTorneoNombreLines(text) {
   return line2 ? [line1, line2] : [line1];
 }
 
-function TournamentBrand({ torneoNombre }) {
+function TournamentBrand({ torneoNombre, logoTorneoUrl }) {
   const hasTorneoNombre = Boolean(String(torneoNombre || '').trim());
-  if (!hasTorneoNombre) return null;
+  const hasTorneoLogo = Boolean(String(logoTorneoUrl || '').trim());
+  if (!hasTorneoNombre && !hasTorneoLogo) return null;
 
-  const torneoLines = formatTorneoNombreLines(torneoNombre);
+  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre) : [];
 
   return (
-    <div className="sb-tournament-brand">
-      <div className="sb-tournament-brand__name">
-        {torneoLines.map((line, index) => (
-          <span key={`${line}-${index}`} className="sb-tournament-brand__name-line">{line}</span>
-        ))}
-      </div>
+    <div className={`sb-tournament-brand${hasTorneoLogo && hasTorneoNombre ? ' sb-tournament-brand--logo-and-name' : ''}`}>
+      {hasTorneoLogo ? (
+        <img
+          src={logoTorneoUrl}
+          alt=""
+          className="sb-tournament-brand__torneo-logo"
+        />
+      ) : null}
+      {hasTorneoNombre ? (
+        <div className={`sb-tournament-brand__name${hasTorneoLogo ? ' sb-tournament-brand__name--small' : ''}`}>
+          {torneoLines.map((line, index) => (
+            <span key={`${line}-${index}`} className="sb-tournament-brand__name-line">{line}</span>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -217,7 +227,8 @@ export default function ScoreboardBoard({
 }) {
   const display = partido.display || {};
   const torneoNombre = String(partido?.torneo_nombre || '').trim();
-  const hasTorneoNombre = Boolean(torneoNombre);
+  const logoTorneoUrl = String(partido?.logo_torneo_url || '').trim();
+  const hasTorneoBrand = Boolean(torneoNombre || logoTorneoUrl);
   const isDeuce = display.mode === 'deuce';
   const isVentaja = display.displayA === 'VENT.' || display.displayB === 'VENT.';
   const ventajaTeamName = display.displayA === 'VENT.'
@@ -299,7 +310,7 @@ export default function ScoreboardBoard({
   }
 
   return (
-    <div className={`sb-display${hasTorneoNombre ? ' sb-display--has-torneo' : ''}`}>
+    <div className={`sb-display${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
       <div
         className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
         title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
@@ -322,7 +333,7 @@ export default function ScoreboardBoard({
         </aside>
 
         <section className="sb-center">
-          <TournamentBrand torneoNombre={torneoNombre} />
+          <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} />
 
           <div className="sb-center__block">
             {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}

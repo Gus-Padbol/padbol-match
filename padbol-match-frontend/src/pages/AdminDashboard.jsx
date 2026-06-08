@@ -260,6 +260,7 @@ function AdminScoreboardPartidoListItem({
 function buildScoreboardPartidoBody({
   sede_id,
   sbTorneoNombre,
+  sbTorneoLogoUrl,
   sbCancha,
   sbEquipoA,
   sbEquipoB,
@@ -277,6 +278,7 @@ function buildScoreboardPartidoBody({
   return {
     sede_id,
     torneo_nombre: sbTorneoNombre.trim() || null,
+    logo_torneo_url: sbTorneoLogoUrl ? String(sbTorneoLogoUrl).trim() : null,
     cancha: sbCancha.trim() || null,
     equipo_a_nombre: sbEquipoA.trim(),
     equipo_b_nombre: sbEquipoB.trim(),
@@ -2478,6 +2480,9 @@ export default function AdminDashboard({
   // keyed by player email: { open: bool, categoria: string, saving: bool }
   const [validacionState, setValidacionState] = useState({});
   const [sbTorneoNombre, setSbTorneoNombre] = useState('');
+  const [sbTorneoLogoUrl, setSbTorneoLogoUrl] = useState('');
+  const [sbTorneoLogoFile, setSbTorneoLogoFile] = useState(null);
+  const [sbTorneoLogoPreview, setSbTorneoLogoPreview] = useState('');
   const [sbSedeId, setSbSedeId] = useState(sedeIdKey || (sedeId != null ? String(sedeId) : ''));
   const [sbCancha, setSbCancha] = useState('');
   const [sbEquipoA, setSbEquipoA] = useState('');
@@ -7064,6 +7069,9 @@ export default function AdminDashboard({
   const resetScoreboardForm = useCallback(() => {
     setSbEditingId(null);
     setSbTorneoNombre('');
+    setSbTorneoLogoUrl('');
+    setSbTorneoLogoFile(null);
+    setSbTorneoLogoPreview('');
     setSbCancha('');
     setSbEquipoA('');
     setSbEquipoB('');
@@ -7087,6 +7095,10 @@ export default function AdminDashboard({
       const partido = await fetchPartido(partidoId);
       setSbEditingId(partido.id);
       setSbTorneoNombre(partido.torneo_nombre || '');
+      const logoUrl = String(partido.logo_torneo_url || '').trim();
+      setSbTorneoLogoUrl(logoUrl);
+      setSbTorneoLogoFile(null);
+      setSbTorneoLogoPreview(logoUrl);
       setSbSedeId(String(partido.sede_id ?? sbSedeId));
       setSbCancha(partido.cancha || '');
       setSbEquipoA(partido.equipo_a_nombre || '');
@@ -7145,9 +7157,28 @@ export default function AdminDashboard({
       return;
     }
 
+    let finalTorneoLogoUrl = sbTorneoLogoUrl ? String(sbTorneoLogoUrl).trim() : null;
+    if (sbTorneoLogoFile) {
+      try {
+        const ext = (sbTorneoLogoFile.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = `torneos/${sbEditingId || `sede-${sede_id}`}-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('scoreboard-fotos').upload(path, sbTorneoLogoFile, {
+          upsert: true,
+          contentType: sbTorneoLogoFile.type || 'image/jpeg',
+        });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('scoreboard-fotos').getPublicUrl(path);
+        finalTorneoLogoUrl = pub?.publicUrl || finalTorneoLogoUrl;
+      } catch (uploadErr) {
+        setSbError(uploadErr?.message || t('admin.scoreboard.torneoLogoUploadError', 'No se pudo subir el logo del torneo'));
+        return;
+      }
+    }
+
     const body = buildScoreboardPartidoBody({
       sede_id,
       sbTorneoNombre,
+      sbTorneoLogoUrl: finalTorneoLogoUrl,
       sbCancha,
       sbEquipoA,
       sbEquipoB,
@@ -11034,6 +11065,61 @@ export default function AdminDashboard({
                   placeholder={t('admin.scoreboard.tournamentNamePlaceholder', 'Ej: Copa Verano 2026')}
                   style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
                 />
+              </label>
+
+              <label style={{ display: 'grid', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                  {t('admin.scoreboard.torneoLogo', 'Logo del torneo (opcional)')}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  {sbTorneoLogoPreview ? (
+                    <img
+                      src={sbTorneoLogoPreview}
+                      alt=""
+                      style={{
+                        height: '48px',
+                        width: 'auto',
+                        maxWidth: '160px',
+                        objectFit: 'contain',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-input)',
+                      }}
+                    />
+                  ) : null}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setSbTorneoLogoFile(file);
+                      setSbTorneoLogoPreview(URL.createObjectURL(file));
+                    }}
+                    style={{ fontSize: '13px' }}
+                  />
+                  {sbTorneoLogoPreview ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSbTorneoLogoFile(null);
+                        setSbTorneoLogoUrl('');
+                        setSbTorneoLogoPreview('');
+                      }}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {t('admin.scoreboard.torneoLogoRemove', 'Quitar logo')}
+                    </button>
+                  ) : null}
+                </div>
               </label>
 
               <label style={{ display: 'grid', gap: '6px' }}>

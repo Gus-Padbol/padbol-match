@@ -43,7 +43,7 @@ function parseSedeId(raw) {
 }
 
 const SCOREBOARD_PARTIDO_SELECT = [
-  'id', 'sede_id', 'torneo_id', 'torneo_nombre', 'cancha',
+  'id', 'sede_id', 'torneo_id', 'torneo_nombre', 'logo_torneo_url', 'cancha',
   'equipo_a_nombre', 'equipo_b_nombre', 'equipo_a_jugadores', 'equipo_b_jugadores',
   'jersey_a1', 'jersey_a2', 'jersey_a3', 'jersey_a4',
   'jersey_b1', 'jersey_b2', 'jersey_b3', 'jersey_b4',
@@ -165,6 +165,7 @@ export function mountScoreboardRoutes(app, {
         sede_id,
         torneo_id = null,
         torneo_nombre = null,
+        logo_torneo_url = null,
         cancha = null,
         equipo_a_nombre,
         equipo_b_nombre,
@@ -207,6 +208,7 @@ export function mountScoreboardRoutes(app, {
         sede_id: sid,
         torneo_id: torneo_id || null,
         torneo_nombre: torneo_nombre ? String(torneo_nombre).trim() : null,
+        logo_torneo_url: logo_torneo_url ? String(logo_torneo_url).trim() : null,
         cancha,
         equipo_a_nombre: String(equipo_a_nombre).trim(),
         equipo_b_nombre: String(equipo_b_nombre).trim(),
@@ -305,7 +307,7 @@ export function mountScoreboardRoutes(app, {
 
       const passthrough = [
         'equipo_a_nombre', 'equipo_b_nombre', 'equipo_a_jugadores', 'equipo_b_jugadores',
-        'cancha', 'torneo_nombre', 'torneo_id', 'saque_actual', 'color_a', 'color_b',
+        'cancha', 'torneo_nombre', 'logo_torneo_url', 'torneo_id', 'saque_actual', 'color_a', 'color_b',
         'jersey_a1', 'jersey_a2', 'jersey_a3', 'jersey_a4',
         'jersey_b1', 'jersey_b2', 'jersey_b3', 'jersey_b4',
       ];
