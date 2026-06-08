@@ -40,8 +40,8 @@ html:has(.sb-scorebug-page) #root {
   grid-template-columns: subgrid;
   grid-column: 1 / -1;
   align-items: stretch;
-  height: 38px;
-  min-height: 38px;
+  height: 44px;
+  min-height: 44px;
 }
 
 .sb-scorebug__row + .sb-scorebug__row {
@@ -77,9 +77,9 @@ html:has(.sb-scorebug-page) #root {
 
 .sb-scorebug__name-text {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 1.5px;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
