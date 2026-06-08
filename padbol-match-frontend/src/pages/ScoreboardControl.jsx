@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSafeTranslation } from '../i18n/tSafe';
 import { useAuth } from '../context/AuthContext';
@@ -120,10 +121,20 @@ function OptionsModal({
     });
   };
 
+  const undoBlocked = actionLoading || terminado || !canUndo;
+
   const handleUndoClick = async (event) => {
     event?.stopPropagation?.();
     event?.preventDefault?.();
-    if (actionLoading || terminado || !canUndo) return;
+    if (undoBlocked) {
+      console.warn('[ScoreboardControl] undo blocked:', {
+        actionLoading,
+        terminado,
+        canUndo,
+        undoCount,
+      });
+      return;
+    }
     const undoPath = `/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/undo`;
     const ok = await onRunAction(undoPath, { refetchAfter: true });
     if (ok) {
@@ -131,11 +142,13 @@ function OptionsModal({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="sc-modal-overlay"
       role="presentation"
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="sc-modal-sheet"
@@ -159,15 +172,25 @@ function OptionsModal({
           ))}
           <button
             type="button"
-            className="sc-modal-option-btn sc-modal-option-btn--undo"
-            disabled={actionLoading || terminado || !canUndo}
-            onClick={(e) => { void handleUndoClick(e); }}
+            className={[
+              'sc-modal-option-btn',
+              'sc-modal-option-btn--undo',
+              undoBlocked ? 'sc-modal-option-btn--disabled' : '',
+            ].filter(Boolean).join(' ')}
+            aria-disabled={undoBlocked}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              console.log('UNDO CLICKED');
+              e.stopPropagation();
+              void handleUndoClick(e);
+            }}
           >
             {`↩ Undo (${undoCount})`}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
