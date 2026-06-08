@@ -88,7 +88,6 @@ function OptionsModal({
   actionLoading,
   onRunAction,
   undoCount,
-  onUndo,
 }) {
   if (!open) return null;
 
