@@ -126,6 +126,11 @@ import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
 
 const SCOREBOARD_PUBLIC_BASE = 'https://padbolmatch.com';
 
+function buildScoreboardTvCanchaUrl(sedeId, cancha) {
+  const encodedCancha = encodeURIComponent(String(cancha || '').trim() || 'Cancha 1');
+  return `${SCOREBOARD_PUBLIC_BASE}/display/${sedeId}/cancha/${encodedCancha}`;
+}
+
 const SCOREBOARD_JUGADORES_VACIOS = () => ([
   { numero: 1, nombre: '', jersey: '', foto_url: '' },
   { numero: 2, nombre: '', jersey: '', foto_url: '' },
@@ -210,9 +215,8 @@ function AdminScoreboardPartidoListItem({
 }) {
   const [copiedKey, setCopiedKey] = useState('');
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const tvLink = `${origin}/display/${partido.sede_id}/scoreboard/${partido.id}`;
+  const tvCanchaUrl = buildScoreboardTvCanchaUrl(partido.sede_id, partido.cancha);
   const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
-  const tvPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/display/${partido.sede_id}/scoreboard/${partido.id}`;
   const arbiterPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/admin/scoreboard/${partido.id}`;
   const torneo = String(partido.torneo_nombre || '').trim();
   const isPreviewOpen = previewPartidoId === partido.id;
@@ -263,7 +267,7 @@ function AdminScoreboardPartidoListItem({
           </button>
           <span className="admin-scoreboard-partidos-list__action-group">
             <a
-              href={tvLink}
+              href={tvCanchaUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
@@ -272,9 +276,9 @@ function AdminScoreboardPartidoListItem({
             </a>
             <button
               type="button"
-              onClick={() => { void copiarLinkPublico(tvPublicUrl, 'tv'); }}
+              onClick={() => { void copiarLinkPublico(tvCanchaUrl, 'tv'); }}
               className="admin-scoreboard-partidos-list__copy-btn"
-              title={t('admin.scoreboard.copyTvLink', 'Copiar link TV público')}
+              title={t('admin.scoreboard.copyTvLink', 'Copiar link TV por cancha')}
             >
               {copiedKey === 'tv' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
             </button>

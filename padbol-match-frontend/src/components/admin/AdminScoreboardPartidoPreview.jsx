@@ -3,6 +3,13 @@ import UniformJerseyStrip from '../scoreboard/UniformJerseyStrip';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 
+const SCOREBOARD_PUBLIC_BASE = 'https://padbolmatch.com';
+
+function buildScoreboardTvCanchaUrl(sedeId, cancha) {
+  const encodedCancha = encodeURIComponent(String(cancha || '').trim() || 'Cancha 1');
+  return `${SCOREBOARD_PUBLIC_BASE}/display/${sedeId}/cancha/${encodedCancha}`;
+}
+
 function jugadoresPreviewList(jugadores) {
   const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
   return [0, 1, 2, 3].map((idx) => {
@@ -15,7 +22,7 @@ function jugadoresPreviewList(jugadores) {
 
 export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const tvLink = `${origin}/display/${partido.sede_id}/scoreboard/${partido.id}`;
+  const tvLink = buildScoreboardTvCanchaUrl(partido.sede_id, partido.cancha);
   const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
 
   const uniformA = resolveUniformJerseyColors(partido, 'A');
