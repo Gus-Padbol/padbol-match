@@ -11,11 +11,15 @@ html:has(.sb-scorebug-page) #root {
   padding: 0;
   background: transparent;
   min-height: 0;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .sb-scorebug {
-  max-width: 520px;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  flex-direction: column;
   background: transparent;
   color: #ffffff;
   font-family: 'Oswald', sans-serif;
@@ -23,15 +27,20 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug__board {
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  flex-direction: column;
   background: #0a0a14;
   border-radius: 4px;
   overflow: hidden;
 }
 
 .sb-scorebug__row {
-  display: flex;
+  display: inline-flex;
   align-items: stretch;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
   height: 38px;
   min-height: 38px;
 }
@@ -48,12 +57,12 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug__name {
-  width: 160px;
-  min-width: 160px;
+  width: auto;
+  min-width: 0;
   max-width: 160px;
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 8px;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -91,8 +100,7 @@ html:has(.sb-scorebug-page) #root {
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
-  margin-left: 10px;
-  margin-right: 10px;
+  margin-left: 8px;
 }
 
 .sb-scorebug__set {
@@ -133,6 +141,7 @@ html:has(.sb-scorebug-page) #root {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+  margin-left: 0;
 }
 
 .sb-scorebug__game--compact {
@@ -144,11 +153,12 @@ html:has(.sb-scorebug-page) #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
   height: 20px;
   min-height: 20px;
-  padding: 0 10px;
-  box-sizing: border-box;
+  padding: 0 8px;
   border-top: 1px solid #1a1a2e;
 }
 
