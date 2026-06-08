@@ -131,6 +131,10 @@ function buildScoreboardTvCanchaUrl(sedeId, cancha) {
   return `${SCOREBOARD_PUBLIC_BASE}/display/${sedeId}/cancha/${encodedCancha}`;
 }
 
+function buildScoreboardObsUrl(partidoId) {
+  return `${SCOREBOARD_PUBLIC_BASE}/scorebug/${partidoId}`;
+}
+
 const SCOREBOARD_JUGADORES_VACIOS = () => ([
   { numero: 1, nombre: '', jersey: '', foto_url: '' },
   { numero: 2, nombre: '', jersey: '', foto_url: '' },
@@ -218,6 +222,11 @@ function AdminScoreboardPartidoListItem({
   const tvCanchaUrl = buildScoreboardTvCanchaUrl(partido.sede_id, partido.cancha);
   const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
   const arbiterPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/admin/scoreboard/${partido.id}`;
+  const obsPublicUrl = buildScoreboardObsUrl(partido.id);
+  const obsCopyTitle = t(
+    'admin.scoreboard.obsCopyHint',
+    'Usá Browser Source en OBS con fondo transparente',
+  );
   const torneo = String(partido.torneo_nombre || '').trim();
   const isPreviewOpen = previewPartidoId === partido.id;
 
@@ -297,6 +306,25 @@ function AdminScoreboardPartidoListItem({
               title={t('admin.scoreboard.copyArbiterLink', 'Copiar link panel árbitro')}
             >
               {copiedKey === 'arbiter' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
+            </button>
+          </span>
+          <span className="admin-scoreboard-partidos-list__action-group">
+            <a
+              href={obsPublicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
+              title={obsCopyTitle}
+            >
+              📡 OBS
+            </a>
+            <button
+              type="button"
+              onClick={() => { void copiarLinkPublico(obsPublicUrl, 'obs'); }}
+              className="admin-scoreboard-partidos-list__copy-btn"
+              title={obsCopyTitle}
+            >
+              {copiedKey === 'obs' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
             </button>
           </span>
           <button

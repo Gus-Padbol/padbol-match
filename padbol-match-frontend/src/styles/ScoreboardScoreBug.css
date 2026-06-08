@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap');
+
+html:has(.sb-scorebug-page),
+html:has(.sb-scorebug-page) body,
+html:has(.sb-scorebug-page) #root {
+  background: transparent !important;
+}
+
+.sb-scorebug-page {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  min-height: 0;
+}
+
+.sb-scorebug {
+  max-width: 400px;
+  width: 100%;
+  background: transparent;
+  color: #ffffff;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sb-scorebug__pill {
+  display: inline-block;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+.sb-scorebug__main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.sb-scorebug__team {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.sb-scorebug__team--a {
+  justify-content: flex-end;
+}
+
+.sb-scorebug__team--b {
+  justify-content: flex-start;
+}
+
+.sb-scorebug__uniform {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.sb-scorebug__serve {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ff88;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px #00ff88, 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+.sb-scorebug__name {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.sb-scorebug__score {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.sb-scorebug__score--special {
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+
+.sb-scorebug__divider {
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+  opacity: 0.85;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.sb-scorebug__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.sb-scorebug__loading,
+.sb-scorebug__error {
+  font-family: 'Oswald', sans-serif;
+  font-size: 14px;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  background: transparent;
+  padding: 8px;
+}
