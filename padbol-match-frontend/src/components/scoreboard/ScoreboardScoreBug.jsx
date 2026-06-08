@@ -1,7 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardScoreBug.css';
+
+const FADE_OUT_DELAY_MS = 3000;
+const FADE_OUT_DURATION_MS = 1000;
 
 function formatTimerFromSeconds(totalSeconds) {
   const s = Math.max(0, Number(totalSeconds) || 0);
@@ -48,19 +51,6 @@ function getWinnerSide(partido) {
   if (Number(partido?.sets_a) >= 2) return 'A';
   if (Number(partido?.sets_b) >= 2) return 'B';
   return null;
-}
-
-function WinnerBanner({ partido, side }) {
-  const teamColor = resolveTeamColor(partido, side);
-  return (
-    <div
-      className="sb-scorebug__winner-banner"
-      style={{ backgroundColor: teamColor }}
-      aria-label="Winner"
-    >
-      WINNER
-    </div>
-  );
 }
 
 function getSetCells(partido, side) {
@@ -132,18 +122,44 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
   const torneoLabel = String(partido?.torneo_nombre || '').trim();
   const matchFinished = isMatchFinished(partido);
   const winnerSide = getWinnerSide(partido);
-  const showWinnerState = matchFinished && winnerSide;
-  const servingA = !showWinnerState && partido.saque_actual === 'A';
-  const servingB = !showWinnerState && partido.saque_actual === 'B';
+  const servingA = !matchFinished && partido.saque_actual === 'A';
+  const servingB = !matchFinished && partido.saque_actual === 'B';
+  const [fadePhase, setFadePhase] = useState('visible');
 
   useEffect(() => {
-    console.log('nombres:', partido?.equipo_a_nombre, partido?.equipo_b_nombre);
-  }, [partido?.equipo_a_nombre, partido?.equipo_b_nombre]);
+    if (!matchFinished) {
+      setFadePhase('visible');
+      return undefined;
+    }
+
+    const delayTimer = window.setTimeout(() => {
+      setFadePhase('fading');
+    }, FADE_OUT_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(delayTimer);
+    };
+  }, [matchFinished, partido?.id]);
+
+  useEffect(() => {
+    if (fadePhase !== 'fading') return undefined;
+
+    const hideTimer = window.setTimeout(() => {
+      setFadePhase('hidden');
+    }, FADE_OUT_DURATION_MS);
+
+    return () => {
+      window.clearTimeout(hideTimer);
+    };
+  }, [fadePhase]);
+
+  if (fadePhase === 'hidden') {
+    return null;
+  }
 
   return (
-    <div className="sb-scorebug">
-      <div className={['sb-scorebug__board', showWinnerState ? 'sb-scorebug__board--finished' : ''].filter(Boolean).join(' ')}>
-        {showWinnerState && winnerSide === 'A' ? <WinnerBanner partido={partido} side="A" /> : null}
+    <div className={['sb-scorebug', fadePhase === 'fading' ? 'sb-scorebug--fading' : ''].filter(Boolean).join(' ')}>
+      <div className={['sb-scorebug__board', matchFinished ? 'sb-scorebug__board--finished' : ''].filter(Boolean).join(' ')}>
         <TeamRow
           partido={partido}
           side="A"
@@ -152,7 +168,6 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
           isWinner={winnerSide === 'A'}
           isLoser={winnerSide === 'B'}
         />
-        {showWinnerState && winnerSide === 'B' ? <WinnerBanner partido={partido} side="B" /> : null}
         <TeamRow
           partido={partido}
           side="B"

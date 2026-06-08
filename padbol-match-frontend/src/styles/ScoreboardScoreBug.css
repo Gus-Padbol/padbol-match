@@ -23,6 +23,12 @@ html:has(.sb-scorebug-page) #root {
   color: #ffffff;
   font-family: 'Oswald', sans-serif;
   line-height: 1;
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+.sb-scorebug--fading {
+  opacity: 0;
 }
 
 .sb-scorebug__board {
@@ -55,26 +61,6 @@ html:has(.sb-scorebug-page) #root {
 
 .sb-scorebug__board--finished .sb-scorebug__row--winner {
   opacity: 1;
-}
-
-.sb-scorebug__winner-banner {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 16px;
-  min-height: 16px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  color: #ffffff;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.sb-scorebug__winner-banner + .sb-scorebug__row {
-  border-top: none;
 }
 
 .sb-scorebug__team {
