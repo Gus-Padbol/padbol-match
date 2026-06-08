@@ -114,9 +114,16 @@ function HexClusterSvg({ variant, stroke }) {
   );
 }
 
-function PlayerList({ jugadores }) {
+function playerInitial(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts[0].slice(0, 1).toUpperCase();
+}
+
+function PlayerList({ jugadores, teamSide = 'left' }) {
   const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
   while (list.length < 4) list.push({ nombre: '—' });
+  const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
 
   return (
     <ul className="sb-players">
@@ -124,17 +131,25 @@ function PlayerList({ jugadores }) {
         const jersey = resolvePlayerJersey(j, i);
         const jerseyLabel = String(jersey);
         const isTwoDigit = jerseyLabel.length >= 2;
+        const displayName = j.nombre ?? j.name ?? '—';
+        const fotoUrl = String(j.foto_url || '').trim();
 
         return (
           <li key={i} className="sb-player">
+            <span className={`sb-player__avatar ${avatarClass}`}>
+              {fotoUrl ? (
+                <img src={fotoUrl} alt="" className="sb-player__avatar-img" />
+              ) : (
+                <span className="sb-player__avatar-initial" aria-hidden="true">
+                  {playerInitial(displayName)}
+                </span>
+              )}
+            </span>
             <span className={`sb-player__num ${isTwoDigit ? 'sb-player__num--two-digit' : ''}`}>
               {jerseyLabel}
             </span>
             <span className="sb-player__name-wrap">
-              {j.foto_url ? (
-                <img src={j.foto_url} alt="" className="sb-player__photo" />
-              ) : null}
-              <span className="sb-player__name">{j.nombre ?? j.name ?? '—'}</span>
+              <span className="sb-player__name">{displayName}</span>
             </span>
           </li>
         );
@@ -407,7 +422,7 @@ export default function ScoreboardBoard({
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <PlayerList jugadores={jugadoresA} />
+            <PlayerList jugadores={jugadoresA} teamSide="left" />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -489,7 +504,7 @@ export default function ScoreboardBoard({
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <PlayerList jugadores={jugadoresB} />
+            <PlayerList jugadores={jugadoresB} teamSide="right" />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
