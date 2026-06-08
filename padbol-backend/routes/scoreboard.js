@@ -42,6 +42,45 @@ function parseSedeId(raw) {
   return Number.isFinite(sid) && sid > 0 ? sid : null;
 }
 
+function scoreboardPlayerName(jugador) {
+  return String(jugador?.nombre ?? jugador?.name ?? '').trim();
+}
+
+function buildNamedJugadoresPayload(jugadores, jerseyInputs) {
+  const list = Array.isArray(jugadores) ? jugadores : [];
+  return list
+    .slice(0, 4)
+    .flatMap((j, idx) => {
+      const nombre = scoreboardPlayerName(j);
+      if (!nombre) return [];
+
+      const slotRaw = Number(j?.slot);
+      const slot = Number.isFinite(slotRaw) && slotRaw >= 1 && slotRaw <= 4
+        ? slotRaw
+        : idx + 1;
+      const jersey = resolveJerseyNumber(
+        jerseyInputs[slot - 1] ?? j?.jersey ?? j?.numero,
+        slot,
+      );
+
+      return [{
+        ...j,
+        slot,
+        numero: jersey,
+        jersey,
+        nombre,
+      }];
+    });
+}
+
+function resolveJerseyFieldsForTeam(jugadores, jerseyInputs) {
+  const named = buildNamedJugadoresPayload(jugadores, jerseyInputs);
+  return [1, 2, 3, 4].map((slot) => {
+    const jugador = named.find((j) => Number(j.slot) === slot);
+    return jugador ? jugador.jersey : null;
+  });
+}
+
 const SCOREBOARD_PARTIDO_SELECT = [
   'id', 'sede_id', 'torneo_id', 'torneo_nombre', 'logo_torneo_url', 'cancha',
   'equipo_a_nombre', 'equipo_b_nombre', 'equipo_a_jugadores', 'equipo_b_jugadores',
@@ -195,14 +234,12 @@ export function mountScoreboardRoutes(app, {
 
       const jugadoresA = Array.isArray(equipo_a_jugadores) ? equipo_a_jugadores : [];
       const jugadoresB = Array.isArray(equipo_b_jugadores) ? equipo_b_jugadores : [];
-      const resolvedJerseysA = [1, 2, 3, 4].map((slot, idx) => resolveJerseyNumber(
-        [jersey_a1, jersey_a2, jersey_a3, jersey_a4][idx] ?? jugadoresA[idx]?.jersey ?? jugadoresA[idx]?.numero,
-        slot,
-      ));
-      const resolvedJerseysB = [1, 2, 3, 4].map((slot, idx) => resolveJerseyNumber(
-        [jersey_b1, jersey_b2, jersey_b3, jersey_b4][idx] ?? jugadoresB[idx]?.jersey ?? jugadoresB[idx]?.numero,
-        slot,
-      ));
+      const jerseyInputsA = [jersey_a1, jersey_a2, jersey_a3, jersey_a4];
+      const jerseyInputsB = [jersey_b1, jersey_b2, jersey_b3, jersey_b4];
+      const namedJugadoresA = buildNamedJugadoresPayload(jugadoresA, jerseyInputsA);
+      const namedJugadoresB = buildNamedJugadoresPayload(jugadoresB, jerseyInputsB);
+      const resolvedJerseysA = resolveJerseyFieldsForTeam(jugadoresA, jerseyInputsA);
+      const resolvedJerseysB = resolveJerseyFieldsForTeam(jugadoresB, jerseyInputsB);
 
       const row = {
         sede_id: sid,
@@ -212,18 +249,8 @@ export function mountScoreboardRoutes(app, {
         cancha,
         equipo_a_nombre: String(equipo_a_nombre).trim(),
         equipo_b_nombre: String(equipo_b_nombre).trim(),
-        equipo_a_jugadores: jugadoresA.map((j, idx) => ({
-          ...j,
-          numero: resolvedJerseysA[idx],
-          jersey: resolvedJerseysA[idx],
-          nombre: String(j?.nombre ?? j?.name ?? `Jugador ${idx + 1}`).trim() || `Jugador ${idx + 1}`,
-        })),
-        equipo_b_jugadores: jugadoresB.map((j, idx) => ({
-          ...j,
-          numero: resolvedJerseysB[idx],
-          jersey: resolvedJerseysB[idx],
-          nombre: String(j?.nombre ?? j?.name ?? `Jugador ${idx + 1}`).trim() || `Jugador ${idx + 1}`,
-        })),
+        equipo_a_jugadores: namedJugadoresA,
+        equipo_b_jugadores: namedJugadoresB,
         jersey_a1: resolvedJerseysA[0],
         jersey_a2: resolvedJerseysA[1],
         jersey_a3: resolvedJerseysA[2],

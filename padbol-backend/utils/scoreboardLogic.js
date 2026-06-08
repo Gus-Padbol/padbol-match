@@ -342,19 +342,37 @@ export function resolveJerseyNumber(value, fallback) {
   return fallback;
 }
 
-function applyJerseysToJugadores(jugadores, jerseyValues) {
-  const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
-  while (list.length < 4) list.push({ nombre: '—' });
+function scoreboardPlayerName(jugador) {
+  return String(jugador?.nombre ?? jugador?.name ?? '').trim();
+}
 
-  return list.map((jugador, idx) => {
-    const fallback = idx + 1;
-    const jersey = resolveJerseyNumber(jerseyValues[idx], fallback);
-    return {
-      ...jugador,
-      numero: jersey,
-      jersey,
-    };
-  });
+function applyJerseysToJugadores(jugadores, jerseyValues) {
+  const list = Array.isArray(jugadores) ? jugadores : [];
+
+  return list
+    .map((jugador, idx) => {
+      const nombre = scoreboardPlayerName(jugador);
+      if (!nombre) return null;
+
+      const slot = Number(jugador?.slot);
+      const slotIdx = Number.isFinite(slot) && slot >= 1 && slot <= 4
+        ? slot - 1
+        : idx;
+      const fallback = slotIdx + 1;
+      const jersey = resolveJerseyNumber(
+        jerseyValues[slotIdx] ?? jugador?.jersey ?? jugador?.numero,
+        fallback,
+      );
+
+      return {
+        ...jugador,
+        nombre,
+        numero: jersey,
+        jersey,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (Number(a.slot) || 0) - (Number(b.slot) || 0));
 }
 
 export function enrichPartidoResponse(partido) {

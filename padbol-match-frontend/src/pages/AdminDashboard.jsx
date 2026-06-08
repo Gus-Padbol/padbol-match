@@ -155,17 +155,41 @@ function scoreboardColorPickerValue(raw, fallback) {
 }
 
 function jugadoresScoreboardFromPartido(jugadores) {
-  const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
-  return [0, 1, 2, 3].map((idx) => {
-    const j = list[idx] || {};
+  const list = Array.isArray(jugadores) ? jugadores : [];
+  const bySlot = new Map();
+  list.forEach((j, idx) => {
+    const slot = Number(j?.slot);
+    const key = Number.isFinite(slot) && slot >= 1 && slot <= 4 ? slot : idx + 1;
+    if (key >= 1 && key <= 4) bySlot.set(key, j);
+  });
+  return [1, 2, 3, 4].map((slot) => {
+    const j = bySlot.get(slot) || {};
     const jerseyRaw = j.jersey ?? j.numero ?? '';
     return {
-      numero: idx + 1,
+      numero: slot,
       nombre: String(j.nombre ?? j.name ?? '').trim(),
       jersey: jerseyRaw === '' || jerseyRaw == null ? '' : String(jerseyRaw),
       foto_url: String(j.foto_url ?? '').trim(),
     };
   });
+}
+
+function resolveSlotJerseyForSave(jugador, slot) {
+  const nombre = String(jugador?.nombre ?? '').trim();
+  if (!nombre) return null;
+  return resolveScoreboardJerseyInput(jugador?.jersey, slot);
+}
+
+function buildEquipoJugadoresPayload(jugadores) {
+  return (Array.isArray(jugadores) ? jugadores : [])
+    .slice(0, 4)
+    .flatMap((j, idx) => {
+      const nombre = String(j?.nombre ?? '').trim();
+      if (!nombre) return [];
+      const slot = idx + 1;
+      const jersey = resolveScoreboardJerseyInput(j.jersey, slot);
+      return [{ slot, numero: jersey, jersey, nombre }];
+    });
 }
 
 function mergeJugadoresTempFotos(jugadores, equipoLetter, temps) {
@@ -371,24 +395,16 @@ function buildScoreboardPartidoBody({
     cancha: sbCancha.trim() || null,
     equipo_a_nombre: sbEquipoA.trim(),
     equipo_b_nombre: sbEquipoB.trim(),
-    equipo_a_jugadores: sbJugadoresA.map((j, idx) => ({
-      numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-      jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-      nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
-    })),
-    equipo_b_jugadores: sbJugadoresB.map((j, idx) => ({
-      numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-      jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-      nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
-    })),
-    jersey_a1: resolveScoreboardJerseyInput(sbJugadoresA[0]?.jersey, 1),
-    jersey_a2: resolveScoreboardJerseyInput(sbJugadoresA[1]?.jersey, 2),
-    jersey_a3: resolveScoreboardJerseyInput(sbJugadoresA[2]?.jersey, 3),
-    jersey_a4: resolveScoreboardJerseyInput(sbJugadoresA[3]?.jersey, 4),
-    jersey_b1: resolveScoreboardJerseyInput(sbJugadoresB[0]?.jersey, 1),
-    jersey_b2: resolveScoreboardJerseyInput(sbJugadoresB[1]?.jersey, 2),
-    jersey_b3: resolveScoreboardJerseyInput(sbJugadoresB[2]?.jersey, 3),
-    jersey_b4: resolveScoreboardJerseyInput(sbJugadoresB[3]?.jersey, 4),
+    equipo_a_jugadores: buildEquipoJugadoresPayload(sbJugadoresA),
+    equipo_b_jugadores: buildEquipoJugadoresPayload(sbJugadoresB),
+    jersey_a1: resolveSlotJerseyForSave(sbJugadoresA[0], 1),
+    jersey_a2: resolveSlotJerseyForSave(sbJugadoresA[1], 2),
+    jersey_a3: resolveSlotJerseyForSave(sbJugadoresA[2], 3),
+    jersey_a4: resolveSlotJerseyForSave(sbJugadoresA[3], 4),
+    jersey_b1: resolveSlotJerseyForSave(sbJugadoresB[0], 1),
+    jersey_b2: resolveSlotJerseyForSave(sbJugadoresB[1], 2),
+    jersey_b3: resolveSlotJerseyForSave(sbJugadoresB[2], 3),
+    jersey_b4: resolveSlotJerseyForSave(sbJugadoresB[3], 4),
     color_uniforme_a1: colorUniformeA1,
     color_uniforme_a2: colorUniformeA2,
     color_uniforme_b1: colorUniformeB1,
@@ -7217,9 +7233,7 @@ export default function AdminDashboard({
     }
   }, [sbSedeId]);
 
-  const resolveSbJugadorNombre = (jugador, slot) => (
-    String(jugador?.nombre || '').trim() || `Jugador ${slot}`
-  );
+  const resolveSbJugadorNombre = (jugador) => String(jugador?.nombre || '').trim();
 
   const saveSbJugadorFotoViaApi = async (equipo, index, fotoUrl) => {
     if (!sbEditingId) {
@@ -7230,7 +7244,11 @@ export default function AdminDashboard({
     const slot = index + 1;
     const jugadores = equipo === 'A' ? sbJugadoresA : sbJugadoresB;
     const jugador = jugadores[index];
-    const nombre = resolveSbJugadorNombre(jugador, slot);
+    const nombre = resolveSbJugadorNombre(jugador);
+    if (!nombre) {
+      setSbError(t('admin.scoreboard.playerNameRequiredForPhoto', 'Ingresá el nombre del jugador antes de subir una foto'));
+      return;
+    }
     await postJugadorTemp({
       partido_id: sbEditingId,
       equipo: equipoApi,
@@ -11447,16 +11465,25 @@ export default function AdminDashboard({
                       {t('admin.scoreboard.playersTeam', 'Jugadores Equipo')} {equipo}
                     </h3>
                     {jugadores.map((j, idx) => {
+                      const isOptionalSlot = idx >= 2;
                       const fotoUploadKey = `${equipo}-${idx}`;
                       const fotoUrl = String(j.foto_url || '').trim();
                       const isFotoUploading = sbJugadorFotoUploading === fotoUploadKey;
-                      const canUploadFoto = Boolean(sbEditingId) && !isFotoUploading;
+                      const hasNombre = Boolean(String(j.nombre || '').trim());
+                      const canUploadFoto = Boolean(sbEditingId) && !isFotoUploading && hasNombre;
                       const fotoInputId = `sb-jugador-foto-${equipo}-${idx}`;
                       return (
                         <div key={j.numero} className="admin-scoreboard-jugador-row">
                           <span className={`admin-scoreboard-jugador-row__slot admin-scoreboard-jugador-row__slot--${equipo.toLowerCase()}`}>
                             {j.numero}
                           </span>
+                          {isOptionalSlot ? (
+                            <span className="admin-scoreboard-jugador-row__optional-label">
+                              {t('admin.scoreboard.playerOptional', 'opcional')}
+                            </span>
+                          ) : (
+                            <span className="admin-scoreboard-jugador-row__optional-label admin-scoreboard-jugador-row__optional-label--spacer" aria-hidden="true" />
+                          )}
                           <input
                             type="number"
                             min={1}
@@ -11471,7 +11498,11 @@ export default function AdminDashboard({
                             type="text"
                             value={j.nombre}
                             onChange={(e) => updateSbJugador(equipo, idx, e.target.value)}
-                            placeholder={`${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero}`}
+                            placeholder={
+                              isOptionalSlot
+                                ? `${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero} (${t('admin.scoreboard.playerOptional', 'opcional')})`
+                                : `${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero}`
+                            }
                             className="admin-scoreboard-jugador-row__nombre"
                           />
                           <div className="admin-scoreboard-jugador-row__foto">

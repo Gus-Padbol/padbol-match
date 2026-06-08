@@ -3,28 +3,38 @@ import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
 import { fetchJugadoresTemp } from '../../utils/scoreboardApi';
+import { hasScoreboardPlayerName, scoreboardPlayerName } from '../../utils/scoreboardPlayers';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardDisplay.css';
 
 function mergeJugadoresWithTemp(jugadores, equipo, tempList) {
   const side = String(equipo || 'A').toLowerCase();
-  const base = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
+  const list = Array.isArray(jugadores) ? jugadores : [];
+  const bySlot = new Map();
+  list.forEach((j, idx) => {
+    const slot = Number(j?.slot);
+    const key = Number.isFinite(slot) && slot >= 1 && slot <= 4 ? slot : idx + 1;
+    if (key >= 1 && key <= 4) bySlot.set(key, j);
+  });
   const temps = (Array.isArray(tempList) ? tempList : []).filter(
     (j) => String(j.equipo || '').toLowerCase() === side,
   );
 
-  return [0, 1, 2, 3].map((idx) => {
-    const slot = idx + 1;
+  return [1, 2, 3, 4].flatMap((slot) => {
+    const baseJ = bySlot.get(slot) || {};
     const temp = temps.find((t) => Number(t.slot) === slot);
-    const baseJ = base[idx] || {};
-    if (!temp) return baseJ;
-    return {
+    const nombre = scoreboardPlayerName(temp) || scoreboardPlayerName(baseJ);
+    if (!nombre) return [];
+
+    if (!temp) return [{ ...baseJ, nombre }];
+
+    return [{
       ...baseJ,
-      nombre: temp.nombre || baseJ.nombre || baseJ.name,
+      nombre,
       jersey: temp.numero ?? baseJ.jersey ?? baseJ.numero,
       numero: temp.numero ?? baseJ.numero ?? baseJ.jersey,
       foto_url: temp.foto_url || baseJ.foto_url,
-    };
+    }];
   });
 }
 
@@ -121,8 +131,9 @@ function playerInitial(name) {
 }
 
 function PlayerList({ jugadores, teamSide = 'left' }) {
-  const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
-  while (list.length < 4) list.push({ nombre: '—' });
+  const list = (Array.isArray(jugadores) ? jugadores : [])
+    .slice(0, 4)
+    .filter(hasScoreboardPlayerName);
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
 
   return (
@@ -131,11 +142,11 @@ function PlayerList({ jugadores, teamSide = 'left' }) {
         const jersey = resolvePlayerJersey(j, i);
         const jerseyLabel = String(jersey);
         const isTwoDigit = jerseyLabel.length >= 2;
-        const displayName = j.nombre ?? j.name ?? '—';
+        const displayName = scoreboardPlayerName(j);
         const fotoUrl = String(j.foto_url || '').trim();
 
         return (
-          <li key={i} className="sb-player">
+          <li key={`${displayName}-${i}`} className="sb-player">
             <span className={`sb-player__avatar ${avatarClass}`}>
               {fotoUrl ? (
                 <img src={fotoUrl} alt="" className="sb-player__avatar-img" />

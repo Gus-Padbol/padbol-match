@@ -11,13 +11,16 @@ function buildScoreboardTvCanchaUrl(sedeId, cancha) {
 }
 
 function jugadoresPreviewList(jugadores) {
-  const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
-  return [0, 1, 2, 3].map((idx) => {
-    const j = list[idx] || {};
-    const jersey = j.jersey ?? j.numero ?? idx + 1;
-    const nombre = String(j.nombre ?? j.name ?? '').trim() || `Jugador ${idx + 1}`;
-    return { jersey, nombre };
-  });
+  const list = Array.isArray(jugadores) ? jugadores : [];
+  return list
+    .map((j, idx) => {
+      const nombre = String(j.nombre ?? j.name ?? '').trim();
+      if (!nombre) return null;
+      const slot = Number(j?.slot);
+      const jersey = j.jersey ?? j.numero ?? (Number.isFinite(slot) && slot >= 1 ? slot : idx + 1);
+      return { jersey, nombre };
+    })
+    .filter(Boolean);
 }
 
 export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
