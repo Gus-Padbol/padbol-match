@@ -114,15 +114,6 @@ function HexClusterSvg({ variant, stroke }) {
   );
 }
 
-function ScoreboardHexBackground() {
-  return (
-    <>
-      <HexClusterSvg variant="top-right" stroke="rgba(100,180,255,0.12)" />
-      <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
-    </>
-  );
-}
-
 function PlayerList({ jugadores }) {
   const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
   while (list.length < 4) list.push({ nombre: '—' });
@@ -399,7 +390,8 @@ export default function ScoreboardBoard({
 
   return (
     <div className={`sb-display${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
-      <ScoreboardHexBackground />
+      <HexClusterSvg variant="top-right" stroke="rgba(100,180,255,0.12)" />
+      <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
       <div
         className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
         title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
