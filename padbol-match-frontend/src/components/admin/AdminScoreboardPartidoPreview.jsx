@@ -10,17 +10,25 @@ function buildScoreboardTvCanchaUrl(sedeId, cancha) {
   return `${SCOREBOARD_PUBLIC_BASE}/display/${sedeId}/cancha/${encodedCancha}`;
 }
 
-function jugadoresPreviewList(jugadores) {
+function jugadoresPreviewList(jugadores, jerseyFields = []) {
   const list = Array.isArray(jugadores) ? jugadores : [];
-  return list
-    .map((j, idx) => {
-      const nombre = String(j.nombre ?? j.name ?? '').trim();
-      if (!nombre) return null;
-      const slot = Number(j?.slot);
-      const jersey = j.jersey ?? j.numero ?? (Number.isFinite(slot) && slot >= 1 ? slot : idx + 1);
-      return { jersey, nombre };
-    })
-    .filter(Boolean);
+  const bySlot = new Map();
+  list.forEach((j, idx) => {
+    const slot = Number(j?.slot);
+    const key = Number.isFinite(slot) && slot >= 1 && slot <= 4 ? slot : idx + 1;
+    if (key >= 1 && key <= 4) bySlot.set(key, j);
+  });
+
+  return [1, 2, 3, 4].flatMap((slot, idx) => {
+    const j = bySlot.get(slot) || {};
+    const nombre = String(j.nombre ?? j.name ?? '').trim();
+    const jerseyField = jerseyFields[idx];
+    const jerseyRaw = j.jersey ?? j.numero ?? jerseyField;
+    const hasJersey = jerseyRaw != null && jerseyRaw !== '' && Number(jerseyRaw) !== 0;
+    if (!nombre && !hasJersey) return [];
+    const jersey = hasJersey ? jerseyRaw : slot;
+    return [{ jersey, nombre: nombre || '—' }];
+  });
 }
 
 export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
@@ -32,8 +40,14 @@ export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
   const uniformB = resolveUniformJerseyColors(partido, 'B');
   const colorA = uniformA.color1 || partido.color_a || DEFAULT_SCOREBOARD_COLOR_A;
   const colorB = uniformB.color1 || partido.color_b || DEFAULT_SCOREBOARD_COLOR_B;
-  const jugadoresA = jugadoresPreviewList(partido.equipo_a_jugadores);
-  const jugadoresB = jugadoresPreviewList(partido.equipo_b_jugadores);
+  const jugadoresA = jugadoresPreviewList(
+    partido.equipo_a_jugadores,
+    [partido.jersey_a1, partido.jersey_a2, partido.jersey_a3, partido.jersey_a4],
+  );
+  const jugadoresB = jugadoresPreviewList(
+    partido.equipo_b_jugadores,
+    [partido.jersey_b1, partido.jersey_b2, partido.jersey_b3, partido.jersey_b4],
+  );
 
   const renderTeam = (side, nombre, uniform, accentColor, jugadores) => (
     <div className="admin-sb-partido-preview__team">

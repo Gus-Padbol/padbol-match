@@ -121,6 +121,7 @@ import {
   updatePartido,
   uploadScoreboardJugadorFoto,
 } from '../utils/scoreboardApi';
+import { isScoreboardSlotEmptyForSave } from '../utils/scoreboardPlayers';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../utils/scoreboardTeamColors';
 import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
 
@@ -154,7 +155,7 @@ function scoreboardColorPickerValue(raw, fallback) {
   return normalizeUniformColor(raw) || fallback;
 }
 
-function jugadoresScoreboardFromPartido(jugadores) {
+function jugadoresScoreboardFromPartido(jugadores, jerseyFields = []) {
   const list = Array.isArray(jugadores) ? jugadores : [];
   const bySlot = new Map();
   list.forEach((j, idx) => {
@@ -164,7 +165,10 @@ function jugadoresScoreboardFromPartido(jugadores) {
   });
   return [1, 2, 3, 4].map((slot) => {
     const j = bySlot.get(slot) || {};
-    const jerseyRaw = j.jersey ?? j.numero ?? '';
+    const jerseyFromField = jerseyFields[slot - 1];
+    const jerseyRaw = j.jersey ?? j.numero ?? (
+      jerseyFromField != null && jerseyFromField !== 0 ? jerseyFromField : ''
+    );
     return {
       numero: slot,
       nombre: String(j.nombre ?? j.name ?? '').trim(),
@@ -175,8 +179,9 @@ function jugadoresScoreboardFromPartido(jugadores) {
 }
 
 function resolveSlotJerseyForSave(jugador, slot) {
-  const nombre = String(jugador?.nombre ?? '').trim();
-  if (!nombre) return null;
+  if (isScoreboardSlotEmptyForSave(jugador)) return null;
+  const jerseyRaw = String(jugador?.jersey ?? '').trim();
+  if (!jerseyRaw) return null;
   return resolveScoreboardJerseyInput(jugador?.jersey, slot);
 }
 
@@ -184,11 +189,17 @@ function buildEquipoJugadoresPayload(jugadores) {
   return (Array.isArray(jugadores) ? jugadores : [])
     .slice(0, 4)
     .flatMap((j, idx) => {
-      const nombre = String(j?.nombre ?? '').trim();
-      if (!nombre) return [];
+      if (isScoreboardSlotEmptyForSave(j)) return [];
       const slot = idx + 1;
-      const jersey = resolveScoreboardJerseyInput(j.jersey, slot);
-      return [{ slot, numero: jersey, jersey, nombre }];
+      const nombre = String(j?.nombre ?? '').trim();
+      const jerseyRaw = String(j?.jersey ?? '').trim();
+      const payload = { slot, nombre };
+      if (jerseyRaw) {
+        const jersey = resolveScoreboardJerseyInput(j.jersey, slot);
+        payload.numero = jersey;
+        payload.jersey = jersey;
+      }
+      return [payload];
     });
 }
 
@@ -7214,8 +7225,14 @@ export default function AdminDashboard({
       setSbUniformA2(partido.color_uniforme_a2 || '');
       setSbUniformB1(partido.color_uniforme_b1 || partido.color_b || DEFAULT_SCOREBOARD_COLOR_B);
       setSbUniformB2(partido.color_uniforme_b2 || '');
-      const jugadoresA = jugadoresScoreboardFromPartido(partido.equipo_a_jugadores);
-      const jugadoresB = jugadoresScoreboardFromPartido(partido.equipo_b_jugadores);
+      const jugadoresA = jugadoresScoreboardFromPartido(
+        partido.equipo_a_jugadores,
+        [partido.jersey_a1, partido.jersey_a2, partido.jersey_a3, partido.jersey_a4],
+      );
+      const jugadoresB = jugadoresScoreboardFromPartido(
+        partido.equipo_b_jugadores,
+        [partido.jersey_b1, partido.jersey_b2, partido.jersey_b3, partido.jersey_b4],
+      );
       let temps = [];
       try {
         temps = await fetchJugadoresTemp(partido.id);
@@ -7309,6 +7326,38 @@ export default function AdminDashboard({
   const updateSbJugadorJersey = (equipo, index, jersey) => {
     const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
     setter((prev) => prev.map((j, i) => (i === index ? { ...j, jersey } : j)));
+  };
+
+  const clearSbJugadorSlot = async (equipo, index) => {
+    const jugadores = equipo === 'A' ? sbJugadoresA : sbJugadoresB;
+    const jugador = jugadores[index];
+    const prevNombre = String(jugador?.nombre || '').trim();
+    const hadFoto = Boolean(String(jugador?.foto_url || '').trim());
+    const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
+
+    setter((prev) => prev.map((row, i) => (
+      i === index ? { ...row, nombre: '', jersey: '', foto_url: '' } : row
+    )));
+
+    if (!sbEditingId || !hadFoto || !prevNombre) return;
+
+    const uploadKey = `${equipo}-${index}`;
+    setSbJugadorFotoUploading(uploadKey);
+    try {
+      const equipoApi = equipo === 'A' ? 'a' : 'b';
+      await postJugadorTemp({
+        partido_id: sbEditingId,
+        equipo: equipoApi,
+        slot: index + 1,
+        nombre: prevNombre,
+        numero: null,
+        foto_url: null,
+      }, session?.access_token);
+    } catch {
+      /* limpieza local aunque falle el temp */
+    } finally {
+      setSbJugadorFotoUploading(null);
+    }
   };
 
   const copiarLinkScoreboard = async (url, key) => {
@@ -11551,6 +11600,16 @@ export default function AdminDashboard({
                               {isFotoUploading ? '…' : '📷'}
                             </button>
                           </div>
+                          <button
+                            type="button"
+                            className="admin-scoreboard-jugador-row__clear"
+                            onClick={() => { void clearSbJugadorSlot(equipo, idx); }}
+                            disabled={isFotoUploading}
+                            title={t('admin.scoreboard.playerSlotClear', 'Vaciar jugador')}
+                            aria-label={t('admin.scoreboard.playerSlotClear', 'Vaciar jugador')}
+                          >
+                            ✕
+                          </button>
                         </div>
                       );
                     })}

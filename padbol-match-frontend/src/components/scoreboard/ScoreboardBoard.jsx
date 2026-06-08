@@ -3,11 +3,14 @@ import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
 import { fetchJugadoresTemp } from '../../utils/scoreboardApi';
-import { hasScoreboardPlayerName, scoreboardPlayerName } from '../../utils/scoreboardPlayers';
+import {
+  isScoreboardSlotEmptyForDisplay,
+  scoreboardPlayerName,
+} from '../../utils/scoreboardPlayers';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardDisplay.css';
 
-function mergeJugadoresWithTemp(jugadores, equipo, tempList) {
+function mergeJugadoresWithTemp(jugadores, equipo, tempList, jerseyFields = []) {
   const side = String(equipo || 'A').toLowerCase();
   const list = Array.isArray(jugadores) ? jugadores : [];
   const bySlot = new Map();
@@ -24,20 +27,16 @@ function mergeJugadoresWithTemp(jugadores, equipo, tempList) {
     const baseJ = bySlot.get(slot) || {};
     const temp = temps.find((t) => Number(t.slot) === slot);
     const nombre = scoreboardPlayerName(temp) || scoreboardPlayerName(baseJ);
-
-    if (!temp && !nombre) {
-      return { slot, nombre: '', foto_url: '', jersey: null, numero: null };
-    }
-
-    if (!temp) return { ...baseJ, slot, nombre };
+    const partidoJersey = jerseyFields[slot - 1];
+    const jersey = temp?.numero ?? baseJ.jersey ?? baseJ.numero ?? partidoJersey ?? null;
 
     return {
       ...baseJ,
       slot,
       nombre,
-      jersey: temp.numero ?? baseJ.jersey ?? baseJ.numero,
-      numero: temp.numero ?? baseJ.numero ?? baseJ.jersey,
-      foto_url: temp.foto_url || baseJ.foto_url,
+      jersey,
+      numero: jersey,
+      foto_url: temp?.foto_url || baseJ.foto_url || '',
     };
   });
 }
@@ -134,12 +133,7 @@ function playerInitial(name) {
   return parts[0].slice(0, 1).toUpperCase();
 }
 
-function isEmptyPlayerSlot(jugador) {
-  const fotoUrl = String(jugador?.foto_url || '').trim();
-  return !hasScoreboardPlayerName(jugador) && !fotoUrl;
-}
-
-function PlayerList({ jugadores, teamSide = 'left' }) {
+function PlayerList({ jugadores, teamSide = 'left', jerseyFields = [] }) {
   const list = (Array.isArray(jugadores) ? jugadores : []).slice(0, 4);
   while (list.length < 4) list.push({});
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
@@ -147,7 +141,9 @@ function PlayerList({ jugadores, teamSide = 'left' }) {
   return (
     <ul className="sb-players">
       {list.map((j, i) => {
-        if (isEmptyPlayerSlot(j)) {
+        const slotIdx = (Number(j.slot) || i + 1) - 1;
+        const jerseyFieldValue = jerseyFields[slotIdx];
+        if (isScoreboardSlotEmptyForDisplay(j, jerseyFieldValue)) {
           return (
             <li key={`empty-${i}`} className="sb-player sb-player--empty" aria-hidden="true">
               <span className={`sb-player__avatar sb-player__avatar--placeholder ${avatarClass}`} />
@@ -348,13 +344,22 @@ export default function ScoreboardBoard({
   const [jugadoresTemp, setJugadoresTemp] = useState([]);
   const [showConfettiWinner, setShowConfettiWinner] = useState(false);
 
+  const jerseyFieldsA = useMemo(
+    () => [partido.jersey_a1, partido.jersey_a2, partido.jersey_a3, partido.jersey_a4],
+    [partido.jersey_a1, partido.jersey_a2, partido.jersey_a3, partido.jersey_a4],
+  );
+  const jerseyFieldsB = useMemo(
+    () => [partido.jersey_b1, partido.jersey_b2, partido.jersey_b3, partido.jersey_b4],
+    [partido.jersey_b1, partido.jersey_b2, partido.jersey_b3, partido.jersey_b4],
+  );
+
   const jugadoresA = useMemo(
-    () => mergeJugadoresWithTemp(partido.equipo_a_jugadores, 'A', jugadoresTemp),
-    [partido.equipo_a_jugadores, jugadoresTemp],
+    () => mergeJugadoresWithTemp(partido.equipo_a_jugadores, 'A', jugadoresTemp, jerseyFieldsA),
+    [partido.equipo_a_jugadores, jugadoresTemp, jerseyFieldsA],
   );
   const jugadoresB = useMemo(
-    () => mergeJugadoresWithTemp(partido.equipo_b_jugadores, 'B', jugadoresTemp),
-    [partido.equipo_b_jugadores, jugadoresTemp],
+    () => mergeJugadoresWithTemp(partido.equipo_b_jugadores, 'B', jugadoresTemp, jerseyFieldsB),
+    [partido.equipo_b_jugadores, jugadoresTemp, jerseyFieldsB],
   );
 
   useEffect(() => {
@@ -425,7 +430,7 @@ export default function ScoreboardBoard({
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <PlayerList jugadores={jugadoresA} teamSide="left" />
+            <PlayerList jugadores={jugadoresA} teamSide="left" jerseyFields={jerseyFieldsA} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -507,7 +512,7 @@ export default function ScoreboardBoard({
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <PlayerList jugadores={jugadoresB} teamSide="right" />
+            <PlayerList jugadores={jugadoresB} teamSide="right" jerseyFields={jerseyFieldsB} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />

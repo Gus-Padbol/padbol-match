@@ -2075,6 +2075,28 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   color: #dc2626;
 }
 
+.admin-scoreboard-jugador-row__clear {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+
+.admin-scoreboard-jugador-row__clear:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* Scoreboard admin: lista de partidos de la sede */
 .admin-scoreboard-partidos-list__title {
   margin: 0 0 12px;

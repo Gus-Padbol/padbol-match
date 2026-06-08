@@ -46,39 +46,58 @@ function scoreboardPlayerName(jugador) {
   return String(jugador?.nombre ?? jugador?.name ?? '').trim();
 }
 
-function buildNamedJugadoresPayload(jugadores, jerseyInputs) {
+function hasScoreboardJerseyInput(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return false;
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 1 && n <= 99;
+}
+
+function hasScoreboardJerseyField(value) {
+  if (value == null || value === '') return false;
+  const n = Number(value);
+  return Number.isFinite(n) && n !== 0;
+}
+
+function isScoreboardSlotEmptyForSave(jugador) {
+  const nombre = scoreboardPlayerName(jugador);
+  if (nombre) return false;
+  return !hasScoreboardJerseyInput(jugador?.jersey ?? jugador?.numero);
+}
+
+function buildNamedJugadoresPayload(jugadores) {
   const list = Array.isArray(jugadores) ? jugadores : [];
   return list
     .slice(0, 4)
     .flatMap((j, idx) => {
-      const nombre = scoreboardPlayerName(j);
-      if (!nombre) return [];
+      if (isScoreboardSlotEmptyForSave(j)) return [];
 
       const slotRaw = Number(j?.slot);
       const slot = Number.isFinite(slotRaw) && slotRaw >= 1 && slotRaw <= 4
         ? slotRaw
         : idx + 1;
-      const jersey = resolveJerseyNumber(
-        jerseyInputs[slot - 1] ?? j?.jersey ?? j?.numero,
-        slot,
-      );
-
-      return [{
+      const nombre = scoreboardPlayerName(j);
+      const jerseyRaw = String(j?.jersey ?? j?.numero ?? '').trim();
+      const entry = {
         ...j,
         slot,
-        numero: jersey,
-        jersey,
         nombre,
-      }];
+      };
+
+      if (hasScoreboardJerseyInput(j?.jersey ?? j?.numero)) {
+        const jersey = resolveJerseyNumber(j?.jersey ?? j?.numero, slot);
+        entry.numero = jersey;
+        entry.jersey = jersey;
+      }
+
+      return [entry];
     });
 }
 
-function resolveJerseyFieldsForTeam(jugadores, jerseyInputs) {
-  const named = buildNamedJugadoresPayload(jugadores, jerseyInputs);
-  return [1, 2, 3, 4].map((slot) => {
-    const jugador = named.find((j) => Number(j.slot) === slot);
-    return jugador ? jugador.jersey : null;
-  });
+function resolveJerseyFieldsFromInputs(jerseyInputs) {
+  return jerseyInputs.map((value, idx) => (
+    hasScoreboardJerseyField(value) ? resolveJerseyNumber(value, idx + 1) : null
+  ));
 }
 
 const SCOREBOARD_PARTIDO_SELECT = [
@@ -236,10 +255,10 @@ export function mountScoreboardRoutes(app, {
       const jugadoresB = Array.isArray(equipo_b_jugadores) ? equipo_b_jugadores : [];
       const jerseyInputsA = [jersey_a1, jersey_a2, jersey_a3, jersey_a4];
       const jerseyInputsB = [jersey_b1, jersey_b2, jersey_b3, jersey_b4];
-      const namedJugadoresA = buildNamedJugadoresPayload(jugadoresA, jerseyInputsA);
-      const namedJugadoresB = buildNamedJugadoresPayload(jugadoresB, jerseyInputsB);
-      const resolvedJerseysA = resolveJerseyFieldsForTeam(jugadoresA, jerseyInputsA);
-      const resolvedJerseysB = resolveJerseyFieldsForTeam(jugadoresB, jerseyInputsB);
+      const namedJugadoresA = buildNamedJugadoresPayload(jugadoresA);
+      const namedJugadoresB = buildNamedJugadoresPayload(jugadoresB);
+      const resolvedJerseysA = resolveJerseyFieldsFromInputs(jerseyInputsA);
+      const resolvedJerseysB = resolveJerseyFieldsFromInputs(jerseyInputsB);
 
       const row = {
         sede_id: sid,

@@ -346,33 +346,42 @@ function scoreboardPlayerName(jugador) {
   return String(jugador?.nombre ?? jugador?.name ?? '').trim();
 }
 
+function hasJerseyField(value) {
+  if (value == null || value === '') return false;
+  const n = Number(value);
+  return Number.isFinite(n) && n !== 0;
+}
+
 function applyJerseysToJugadores(jugadores, jerseyValues) {
   const list = Array.isArray(jugadores) ? jugadores : [];
+  const bySlot = new Map();
+  list.forEach((jugador, idx) => {
+    const slot = Number(jugador?.slot);
+    const key = Number.isFinite(slot) && slot >= 1 && slot <= 4 ? slot : idx + 1;
+    if (key >= 1 && key <= 4) bySlot.set(key, jugador);
+  });
 
-  return list
-    .map((jugador, idx) => {
-      const nombre = scoreboardPlayerName(jugador);
-      if (!nombre) return null;
+  return [1, 2, 3, 4].flatMap((slot) => {
+    const jugador = bySlot.get(slot) || {};
+    const nombre = scoreboardPlayerName(jugador);
+    const jerseyValue = jerseyValues[slot - 1];
+    const hasJersey = hasJerseyField(jugador?.jersey ?? jugador?.numero)
+      || hasJerseyField(jerseyValue);
+    if (!nombre && !hasJersey) return [];
 
-      const slot = Number(jugador?.slot);
-      const slotIdx = Number.isFinite(slot) && slot >= 1 && slot <= 4
-        ? slot - 1
-        : idx;
-      const fallback = slotIdx + 1;
-      const jersey = resolveJerseyNumber(
-        jerseyValues[slotIdx] ?? jugador?.jersey ?? jugador?.numero,
-        fallback,
-      );
+    const jersey = resolveJerseyNumber(
+      jugador?.jersey ?? jugador?.numero ?? jerseyValue,
+      slot,
+    );
 
-      return {
-        ...jugador,
-        nombre,
-        numero: jersey,
-        jersey,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => (Number(a.slot) || 0) - (Number(b.slot) || 0));
+    return [{
+      ...jugador,
+      slot,
+      nombre,
+      numero: jersey,
+      jersey,
+    }];
+  });
 }
 
 export function enrichPartidoResponse(partido) {
