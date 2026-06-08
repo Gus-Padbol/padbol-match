@@ -5,8 +5,6 @@ import '../../styles/ScoreboardScoreBug.css';
 
 const SCOREBUG_NAME_BG_A = '#1565c0';
 const SCOREBUG_DEFAULT_NAME_BG_B = DEFAULT_SCOREBOARD_COLOR_B;
-const SCOREBUG_SPONSOR_LOGO = '/padbol-match-logo.png';
-
 const DARK_COLOR_LUMINANCE_THRESHOLD = 100;
 
 function hexToRgb(hex) {
@@ -80,17 +78,6 @@ function getCurrentSetNumber(partido) {
   return completed.length + 1;
 }
 
-function getMatchStatus(partido) {
-  if (partido?.estado === 'terminado') {
-    return { label: 'FINAL', tone: 'done' };
-  }
-  const currentSet = getCurrentSetNumber(partido);
-  if (currentSet) {
-    return { label: `SET ${currentSet}`, tone: 'set' };
-  }
-  return { label: 'EN JUEGO', tone: 'live' };
-}
-
 function getSetCells(partido, side) {
   const completed = Array.isArray(partido?.historial_sets) ? partido.historial_sets : [];
   const key = side === 'A' ? 'a' : 'b';
@@ -126,18 +113,20 @@ function TeamRow({ partido, side, display, serving }) {
       <div className={`sb-scorebug__serve${serving ? ' sb-scorebug__serve--on' : ''}`} aria-hidden="true">
         {serving ? '▶' : null}
       </div>
-      {setCells.map((cell, idx) => (
-        <div
-          key={`set-${side}-${idx + 1}`}
-          className={[
-            'sb-scorebug__set',
-            cell.active ? 'sb-scorebug__set--active' : '',
-            cell.future ? 'sb-scorebug__set--future' : '',
-          ].filter(Boolean).join(' ')}
-        >
-          {cell.value}
-        </div>
-      ))}
+      <div className="sb-scorebug__sets">
+        {setCells.map((cell, idx) => (
+          <div
+            key={`set-${side}-${idx + 1}`}
+            className={[
+              'sb-scorebug__set',
+              cell.active ? 'sb-scorebug__set--active' : '',
+              cell.future ? 'sb-scorebug__set--future' : '',
+            ].filter(Boolean).join(' ')}
+          >
+            {cell.value}
+          </div>
+        ))}
+      </div>
       <div className={['sb-scorebug__game', compactGame ? 'sb-scorebug__game--compact' : ''].filter(Boolean).join(' ')}>
         {gameScore}
       </div>
@@ -149,31 +138,18 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
   const display = partido?.display || {};
   const timerLabel = formatTimerFromSeconds(timerSeconds);
   const torneoLabel = String(partido?.torneo_nombre || '').trim();
-  const status = getMatchStatus(partido);
   const servingA = partido?.saque_actual === 'A';
   const servingB = partido?.saque_actual === 'B';
 
   return (
     <div className="sb-scorebug">
       <div className="sb-scorebug__board">
-        <div className="sb-scorebug__header">
-          <span className={`sb-scorebug__status sb-scorebug__status--${status.tone}`}>
-            {status.label}
-          </span>
-          <span className="sb-scorebug__timer">{timerLabel}</span>
-        </div>
-
         <TeamRow partido={partido} side="A" display={display} serving={servingA} />
         <TeamRow partido={partido} side="B" display={display} serving={servingB} />
 
         <div className="sb-scorebug__footer">
-          {torneoLabel ? <span className="sb-scorebug__torneo">{torneoLabel}</span> : <span />}
-          <img
-            className="sb-scorebug__sponsor-logo"
-            src={SCOREBUG_SPONSOR_LOGO}
-            alt=""
-            aria-hidden="true"
-          />
+          <span className="sb-scorebug__footer-torneo">{torneoLabel}</span>
+          <span className="sb-scorebug__footer-timer">{timerLabel}</span>
         </div>
       </div>
     </div>
