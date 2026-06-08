@@ -126,7 +126,7 @@
   align-items: flex-start;
   align-self: stretch;
   height: 100%;
-  transform: translateY(20px);
+  transform: translateY(40px);
   padding-top: max(
     0px,
     calc(var(--sb-tournament-header-top) + var(--sb-tournament-logo-solo) - var(--sb-panel-offset-up) - 1.5cm)
@@ -512,7 +512,7 @@
   min-height: 38vh;
   max-height: 38vh;
   overflow: hidden;
-  transform: translateY(20px);
+  transform: translateY(40px);
 }
 
 @keyframes floatScore {
