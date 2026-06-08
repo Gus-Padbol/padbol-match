@@ -102,27 +102,17 @@ function formatTorneoNombreLines(text) {
 
 function TournamentBrand({ torneoNombre }) {
   const hasTorneoNombre = Boolean(String(torneoNombre || '').trim());
-  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre) : [];
+  if (!hasTorneoNombre) return null;
+
+  const torneoLines = formatTorneoNombreLines(torneoNombre);
 
   return (
     <div className="sb-tournament-brand">
-      <img
-        src="/padbol-match-logo.png"
-        alt="Padbol Match"
-        className="sb-tournament-brand__logo"
-        style={{
-          mixBlendMode: 'screen',
-          width: hasTorneoNombre ? '200px' : '280px',
-          height: 'auto',
-        }}
-      />
-      {hasTorneoNombre ? (
-        <div className="sb-tournament-brand__name">
-          {torneoLines.map((line, index) => (
-            <span key={`${line}-${index}`} className="sb-tournament-brand__name-line">{line}</span>
-          ))}
-        </div>
-      ) : null}
+      <div className="sb-tournament-brand__name">
+        {torneoLines.map((line, index) => (
+          <span key={`${line}-${index}`} className="sb-tournament-brand__name-line">{line}</span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -192,33 +182,25 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
   return <div className="sb-sets-history">{chips}</div>;
 }
 
-const DEMO_SPONSOR_NAMES = [
-  'PADBOL',
-  'FIPA',
-  'BULLPADEL',
-  'GATORADE',
-  'POWERADE',
-  'NOBLEX',
-  'ESPN',
-  'ADIDAS',
-];
+const TICKER_LOGO_SLOTS = 8;
 
-function SponsorTicker({ names }) {
-  const items = useMemo(() => {
-    const list = (Array.isArray(names) ? names : [])
-      .map((name) => String(name || '').trim())
-      .filter(Boolean);
-    return list.length > 0 ? list : DEMO_SPONSOR_NAMES;
-  }, [names]);
-
+function SponsorTicker() {
+  const items = useMemo(
+    () => Array.from({ length: TICKER_LOGO_SLOTS }, (_, index) => index),
+    [],
+  );
   const trackItems = [...items, ...items];
 
   return (
-    <div className="sb-ticker" aria-label="Sponsors">
+    <div className="sb-ticker" aria-label="Padbol Match">
       <div className="sb-ticker__track">
-        {trackItems.map((name, index) => (
-          <span key={`${name}-${index}`} className="sb-ticker__item">
-            {name}
+        {trackItems.map((slot, index) => (
+          <span key={`padbol-logo-${slot}-${index}`} className="sb-ticker__item">
+            <img
+              src="/padbol-match-logo.png"
+              alt="Padbol Match"
+              className="sb-ticker__logo"
+            />
           </span>
         ))}
       </div>
@@ -255,12 +237,6 @@ export default function ScoreboardBoard({
 
   const scoreClassA = isDeuce ? 'sb-score sb-score--deuce' : display.displayA === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
   const scoreClassB = isDeuce ? 'sb-score sb-score--deuce' : display.displayB === 'VENT.' ? 'sb-score sb-score--vent' : 'sb-score';
-  const sponsorNames = useMemo(
-    () => (sponsors.length > 0
-      ? sponsors.map((sp) => sp.nombre).filter(Boolean)
-      : DEMO_SPONSOR_NAMES),
-    [sponsors],
-  );
   const uniformA = resolveUniformJerseyColors(partido, 'A');
   const uniformB = resolveUniformJerseyColors(partido, 'B');
   const [jugadoresTemp, setJugadoresTemp] = useState([]);
@@ -429,7 +405,7 @@ export default function ScoreboardBoard({
       </div>
 
       <footer className="sb-footer">
-        <SponsorTicker names={sponsorNames} />
+        <SponsorTicker />
       </footer>
     </div>
   );

@@ -401,15 +401,11 @@
   gap: 0.75rem;
 }
 
-.sb-tournament-brand__logo {
-  display: block;
-}
-
 .sb-tournament-brand__name {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 0;
   font-size: 1.6vw;
   font-weight: 600;
   letter-spacing: 0.3em;
@@ -697,13 +693,17 @@
 
 .sb-ticker__item {
   flex-shrink: 0;
-  font-size: 1.6vw;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.15em;
   padding: 0 4vw;
-  text-transform: uppercase;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.sb-ticker__logo {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  display: block;
 }
 
 @keyframes scrollTicker {
