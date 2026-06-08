@@ -20,21 +20,25 @@ function mergeJugadoresWithTemp(jugadores, equipo, tempList) {
     (j) => String(j.equipo || '').toLowerCase() === side,
   );
 
-  return [1, 2, 3, 4].flatMap((slot) => {
+  return [1, 2, 3, 4].map((slot) => {
     const baseJ = bySlot.get(slot) || {};
     const temp = temps.find((t) => Number(t.slot) === slot);
     const nombre = scoreboardPlayerName(temp) || scoreboardPlayerName(baseJ);
-    if (!nombre) return [];
 
-    if (!temp) return [{ ...baseJ, nombre }];
+    if (!temp && !nombre) {
+      return { slot, nombre: '', foto_url: '', jersey: null, numero: null };
+    }
 
-    return [{
+    if (!temp) return { ...baseJ, slot, nombre };
+
+    return {
       ...baseJ,
+      slot,
       nombre,
       jersey: temp.numero ?? baseJ.jersey ?? baseJ.numero,
       numero: temp.numero ?? baseJ.numero ?? baseJ.jersey,
       foto_url: temp.foto_url || baseJ.foto_url,
-    }];
+    };
   });
 }
 
@@ -130,15 +134,31 @@ function playerInitial(name) {
   return parts[0].slice(0, 1).toUpperCase();
 }
 
+function isEmptyPlayerSlot(jugador) {
+  const fotoUrl = String(jugador?.foto_url || '').trim();
+  return !hasScoreboardPlayerName(jugador) && !fotoUrl;
+}
+
 function PlayerList({ jugadores, teamSide = 'left' }) {
-  const list = (Array.isArray(jugadores) ? jugadores : [])
-    .slice(0, 4)
-    .filter(hasScoreboardPlayerName);
+  const list = (Array.isArray(jugadores) ? jugadores : []).slice(0, 4);
+  while (list.length < 4) list.push({});
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
 
   return (
     <ul className="sb-players">
       {list.map((j, i) => {
+        if (isEmptyPlayerSlot(j)) {
+          return (
+            <li key={`empty-${i}`} className="sb-player sb-player--empty" aria-hidden="true">
+              <span className={`sb-player__avatar sb-player__avatar--placeholder ${avatarClass}`} />
+              <span className="sb-player__num sb-player__num--placeholder" />
+              <span className="sb-player__name-wrap">
+                <span className="sb-player__name sb-player__name--placeholder">—</span>
+              </span>
+            </li>
+          );
+        }
+
         const jersey = resolvePlayerJersey(j, i);
         const jerseyLabel = String(jersey);
         const isTwoDigit = jerseyLabel.length >= 2;

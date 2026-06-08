@@ -394,6 +394,31 @@
   overflow-wrap: anywhere;
 }
 
+.sb-player--empty {
+  pointer-events: none;
+}
+
+.sb-player__avatar--placeholder {
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none;
+}
+
+.sb-player__num--placeholder {
+  min-width: 3.6vw;
+  min-height: 3.6vw;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.04);
+  color: transparent;
+  box-shadow: none;
+}
+
+.sb-player__name--placeholder {
+  color: rgba(255, 255, 255, 0.18);
+  font-weight: 600;
+}
+
 /* ── Center panel ── */
 
 .sb-center {
