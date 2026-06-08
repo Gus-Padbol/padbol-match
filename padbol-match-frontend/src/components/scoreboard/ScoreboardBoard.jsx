@@ -43,6 +43,78 @@ function resolvePlayerJersey(jugador, index) {
   return index + 1;
 }
 
+const HEX_SPARKLES_LEFT = [
+  { x: 14, y: 16, delay: '0s' },
+  { x: 38, y: 34, delay: '1.4s' },
+  { x: 22, y: 58, delay: '2.8s' },
+  { x: 48, y: 72, delay: '0.6s' },
+  { x: 30, y: 88, delay: '3.6s' },
+];
+
+const HEX_SPARKLES_RIGHT = [
+  { x: 86, y: 18, delay: '0.8s' },
+  { x: 62, y: 36, delay: '2.2s' },
+  { x: 78, y: 54, delay: '1.1s' },
+  { x: 52, y: 70, delay: '3.2s' },
+  { x: 70, y: 86, delay: '1.9s' },
+];
+
+function hexSparklePath(cx, cy, size = 1.8) {
+  const s = size;
+  return `M ${cx} ${cy - s} L ${cx + s * 0.866} ${cy - s * 0.5} L ${cx + s * 0.866} ${cy + s * 0.5} L ${cx} ${cy + s} L ${cx - s * 0.866} ${cy + s * 0.5} L ${cx - s * 0.866} ${cy - s * 0.5} Z`;
+}
+
+function PanelHexMesh({ variant }) {
+  const patternId = `sb-hex-pattern-${variant}`;
+  const sparkles = variant === 'left' ? HEX_SPARKLES_LEFT : HEX_SPARKLES_RIGHT;
+
+  return (
+    <div className="sb-panel__hex-mesh" aria-hidden="true">
+      <svg className="sb-panel__hex-mesh-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <defs>
+          <pattern
+            id={patternId}
+            x="0"
+            y="0"
+            width="20"
+            height="34.64"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M10,0 L20,5.77 L20,17.32 L10,23.09 L0,17.32 L0,5.77 Z"
+              fill="none"
+              stroke="rgba(255,255,255,0.04)"
+              strokeWidth="0.65"
+            />
+            <path
+              d="M10,17.32 L20,23.09 L20,34.64 L10,40.41 L0,34.64 L0,23.09 Z"
+              fill="none"
+              stroke="rgba(255,255,255,0.04)"
+              strokeWidth="0.65"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+      </svg>
+      <svg
+        className="sb-panel__hex-sparkles-svg"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        {sparkles.map((sparkle, index) => (
+          <path
+            key={`${variant}-sparkle-${index}`}
+            className="sb-hex-sparkle"
+            d={hexSparklePath(sparkle.x, sparkle.y)}
+            style={{ animationDelay: sparkle.delay }}
+          />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 function PlayerList({ jugadores }) {
   const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
   while (list.length < 4) list.push({ nombre: '—' });
@@ -319,6 +391,7 @@ export default function ScoreboardBoard({
 
       <div className="sb-display__main">
         <aside className="sb-panel sb-panel--left">
+          <PanelHexMesh variant="left" />
           <div className="sb-panel__inner">
             <TeamNameRow
               name={partido.equipo_a_nombre}
@@ -401,6 +474,7 @@ export default function ScoreboardBoard({
         </section>
 
         <aside className="sb-panel sb-panel--right">
+          <PanelHexMesh variant="right" />
           <div className="sb-panel__inner">
             <TeamNameRow
               name={partido.equipo_b_nombre}
