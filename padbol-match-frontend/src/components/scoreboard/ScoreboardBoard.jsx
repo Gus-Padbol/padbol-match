@@ -43,74 +43,52 @@ function resolvePlayerJersey(jugador, index) {
   return index + 1;
 }
 
-const HEX_SPARKLES_LEFT = [
-  { x: 14, y: 16, delay: '0s' },
-  { x: 38, y: 34, delay: '1.4s' },
-  { x: 22, y: 58, delay: '2.8s' },
-  { x: 48, y: 72, delay: '0.6s' },
-  { x: 30, y: 88, delay: '3.6s' },
-];
-
-const HEX_SPARKLES_RIGHT = [
-  { x: 86, y: 18, delay: '0.8s' },
-  { x: 62, y: 36, delay: '2.2s' },
-  { x: 78, y: 54, delay: '1.1s' },
-  { x: 52, y: 70, delay: '3.2s' },
-  { x: 70, y: 86, delay: '1.9s' },
-];
-
-function hexSparklePath(cx, cy, size = 1.8) {
-  const s = size;
-  return `M ${cx} ${cy - s} L ${cx + s * 0.866} ${cy - s * 0.5} L ${cx + s * 0.866} ${cy + s * 0.5} L ${cx} ${cy + s} L ${cx - s * 0.866} ${cy + s * 0.5} L ${cx - s * 0.866} ${cy - s * 0.5} Z`;
+function HoneycombClusterSvg({ patternId }) {
+  return (
+    <svg
+      className="sb-hex-bg__svg"
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <pattern
+          id={patternId}
+          x="0"
+          y="0"
+          width="20.784"
+          height="36"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M10.392,0 L20.784,6 L20.784,18 L10.392,24 L0,18 L0,6 Z"
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="0.65"
+          />
+          <path
+            d="M10.392,18 L20.784,24 L20.784,36 L10.392,42 L0,36 L0,24 Z"
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="0.65"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+    </svg>
+  );
 }
 
-function PanelHexMesh({ variant }) {
-  const patternId = `sb-hex-pattern-${variant}`;
-  const sparkles = variant === 'left' ? HEX_SPARKLES_LEFT : HEX_SPARKLES_RIGHT;
-
+function ScoreboardHexBackground() {
   return (
-    <div className="sb-panel__hex-mesh" aria-hidden="true">
-      <svg className="sb-panel__hex-mesh-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-        <defs>
-          <pattern
-            id={patternId}
-            x="0"
-            y="0"
-            width="20"
-            height="34.64"
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d="M10,0 L20,5.77 L20,17.32 L10,23.09 L0,17.32 L0,5.77 Z"
-              fill="none"
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="0.65"
-            />
-            <path
-              d="M10,17.32 L20,23.09 L20,34.64 L10,40.41 L0,34.64 L0,23.09 Z"
-              fill="none"
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="0.65"
-            />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
-      </svg>
-      <svg
-        className="sb-panel__hex-sparkles-svg"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-      >
-        {sparkles.map((sparkle, index) => (
-          <path
-            key={`${variant}-sparkle-${index}`}
-            className="sb-hex-sparkle"
-            d={hexSparklePath(sparkle.x, sparkle.y)}
-            style={{ animationDelay: sparkle.delay }}
-          />
-        ))}
-      </svg>
+    <div className="sb-hex-bg" aria-hidden="true">
+      <div className="sb-hex-bg__cluster sb-hex-bg__cluster--top-right">
+        <HoneycombClusterSvg patternId="sb-honeycomb-top-right" />
+      </div>
+      <div className="sb-hex-bg__cluster sb-hex-bg__cluster--bottom-left">
+        <HoneycombClusterSvg patternId="sb-honeycomb-bottom-left" />
+      </div>
     </div>
   );
 }
@@ -391,6 +369,7 @@ export default function ScoreboardBoard({
 
   return (
     <div className={`sb-display${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
+      <ScoreboardHexBackground />
       <div
         className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
         title={wsConnected ? 'WebSocket activo' : 'Actualizando por polling'}
@@ -399,7 +378,6 @@ export default function ScoreboardBoard({
 
       <div className="sb-display__main">
         <aside className="sb-panel sb-panel--left">
-          <PanelHexMesh variant="left" />
           <div className="sb-panel__inner">
             <TeamNameRow
               name={partido.equipo_a_nombre}
@@ -482,7 +460,6 @@ export default function ScoreboardBoard({
         </section>
 
         <aside className="sb-panel sb-panel--right">
-          <PanelHexMesh variant="right" />
           <div className="sb-panel__inner">
             <TeamNameRow
               name={partido.equipo_b_nombre}
