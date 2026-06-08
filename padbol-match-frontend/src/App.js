@@ -72,6 +72,7 @@ import ScoreboardCanchaDisplay from './pages/ScoreboardCanchaDisplay';
 import ScoreboardControl from './pages/ScoreboardControl';
 import ScoreboardJoin from './pages/ScoreboardJoin';
 import ScoreboardScoreBugPage from './pages/ScoreboardScoreBugPage';
+import ScoreboardScoreBugCanchaPage from './pages/ScoreboardScoreBugCanchaPage';
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -492,6 +493,14 @@ function App() {
                 element={(
                   <ErrorBoundary label="la pantalla TV del scoreboard por cancha">
                     <ScoreboardCanchaDisplay />
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
+                path="/scorebug/cancha/:sedeId/:cancha"
+                element={(
+                  <ErrorBoundary label="el scorebug OBS por cancha">
+                    <ScoreboardScoreBugCanchaPage />
                   </ErrorBoundary>
                 )}
               />
