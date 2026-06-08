@@ -26,10 +26,10 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug__board {
-  width: fit-content;
-  max-width: 100%;
+  width: 446px;
+  max-width: 446px;
   display: inline-grid;
-  grid-template-columns: max-content 56px 56px 56px 76px;
+  grid-template-columns: 202px 56px 56px 56px 76px;
   background: rgba(0, 0, 0, 0.72);
   border-radius: 4px;
   overflow: hidden;
@@ -52,9 +52,9 @@ html:has(.sb-scorebug-page) #root {
 .sb-scorebug__team {
   display: flex;
   align-items: stretch;
-  width: max-content;
+  width: 202px;
+  min-width: 202px;
   max-width: 202px;
-  min-width: 0;
   overflow: hidden;
 }
 

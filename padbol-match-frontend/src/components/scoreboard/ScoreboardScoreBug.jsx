@@ -1,41 +1,7 @@
 import React, { useEffect } from 'react';
-import { DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
+import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardScoreBug.css';
-
-const SCOREBUG_NAME_BG_A = '#1565c0';
-const SCOREBUG_DEFAULT_NAME_BG_B = DEFAULT_SCOREBOARD_COLOR_B;
-const DARK_COLOR_LUMINANCE_THRESHOLD = 100;
-
-function hexToRgb(hex) {
-  const normalized = String(hex || '').trim().replace('#', '');
-  if (!/^[0-9A-Fa-f]{6}$/.test(normalized)) return null;
-  return {
-    r: parseInt(normalized.slice(0, 2), 16),
-    g: parseInt(normalized.slice(2, 4), 16),
-    b: parseInt(normalized.slice(4, 6), 16),
-  };
-}
-
-function colorLuminance(hex) {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return 255;
-  return (0.299 * rgb.r) + (0.587 * rgb.g) + (0.114 * rgb.b);
-}
-
-function isColorTooDark(hex) {
-  return colorLuminance(hex) < DARK_COLOR_LUMINANCE_THRESHOLD;
-}
-
-function lightenHexColor(hex, amount = 0.3) {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return hex;
-  const mix = (channel) => Math.round(channel + ((255 - channel) * amount));
-  const r = mix(rgb.r);
-  const g = mix(rgb.g);
-  const b = mix(rgb.b);
-  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
-}
 
 function formatTimerFromSeconds(totalSeconds) {
   const s = Math.max(0, Number(totalSeconds) || 0);
@@ -58,13 +24,9 @@ function isCompactGameScore(score) {
 }
 
 function resolveTeamColor(partido, side) {
-  if (side === 'A') return SCOREBUG_NAME_BG_A;
   const uniform = resolveUniformJerseyColors(partido, side);
-  let bg = uniform.color1 || SCOREBUG_DEFAULT_NAME_BG_B;
-  if (isColorTooDark(bg)) {
-    bg = lightenHexColor(bg, 0.3);
-  }
-  return bg;
+  const fallback = side === 'A' ? DEFAULT_SCOREBOARD_COLOR_A : DEFAULT_SCOREBOARD_COLOR_B;
+  return uniform.color1 || fallback;
 }
 
 function getCurrentSetNumber(partido) {
