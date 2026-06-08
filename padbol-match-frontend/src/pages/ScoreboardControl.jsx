@@ -111,10 +111,18 @@ function OptionsModal({
     });
   };
 
-  const handleUndoClick = async () => {
+  const handleUndoClick = async (event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
     if (actionLoading || terminado || !canUndo) return;
-    onClose();
-    await onUndo();
+    try {
+      await onRunAction(`/api/scoreboard/partidos/${partidoId}/undo`, {
+        refetchAfter: true,
+        refreshHistorial: true,
+      });
+    } finally {
+      onClose();
+    }
   };
 
   return (
@@ -147,7 +155,7 @@ function OptionsModal({
             type="button"
             className="sc-modal-option-btn sc-modal-option-btn--undo"
             disabled={actionLoading || terminado || !canUndo}
-            onClick={handleUndoClick}
+            onClick={(e) => { void handleUndoClick(e); }}
           >
             {`↩ Undo (${undoCount})`}
           </button>
@@ -250,13 +258,6 @@ export default function ScoreboardControl() {
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const handleUndo = () => {
-    runAction(
-      `/api/scoreboard/partidos/${partidoId}/undo`,
-      { refetchAfter: true, refreshHistorial: true },
-    );
   };
 
   const handleCronometro = (accion) => {
@@ -425,7 +426,6 @@ export default function ScoreboardControl() {
         actionLoading={actionLoading}
         onRunAction={runAction}
         undoCount={undoCount}
-        onUndo={handleUndo}
       />
     </div>
   );
