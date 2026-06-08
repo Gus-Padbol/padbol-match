@@ -1968,6 +1968,98 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   color: var(--text-primary);
 }
 
+.admin-scoreboard-jugador-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.admin-scoreboard-jugador-row__slot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.admin-scoreboard-jugador-row__slot--a {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.admin-scoreboard-jugador-row__slot--b {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.admin-scoreboard-jugador-row__jersey {
+  width: 52px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  text-align: center;
+}
+
+.admin-scoreboard-jugador-row__nombre {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.admin-scoreboard-jugador-row__foto {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.admin-scoreboard-jugador-row__foto-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.admin-scoreboard-jugador-row__foto-input {
+  display: none;
+}
+
+.admin-scoreboard-jugador-row__foto-btn,
+.admin-scoreboard-jugador-row__foto-remove {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-scoreboard-jugador-row__foto-btn:disabled,
+.admin-scoreboard-jugador-row__foto-remove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-scoreboard-jugador-row__foto-remove {
+  color: #dc2626;
+}
+
 /* Scoreboard admin: lista de partidos de la sede */
 .admin-scoreboard-partidos-list__title {
   margin: 0 0 12px;

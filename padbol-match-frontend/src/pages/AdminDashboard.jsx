@@ -111,16 +111,26 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import i18n from '../i18n';
-import { createPartido, fetchPartido, fetchPartidosBySede, fetchSedes, updatePartido } from '../utils/scoreboardApi';
+import {
+  createPartido,
+  fetchJugadoresTemp,
+  fetchPartido,
+  fetchPartidosBySede,
+  fetchSedes,
+  postJugadorTemp,
+  updatePartido,
+} from '../utils/scoreboardApi';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../utils/scoreboardTeamColors';
 import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
 
 const SCOREBOARD_JUGADORES_VACIOS = () => ([
-  { numero: 1, nombre: '', jersey: '' },
-  { numero: 2, nombre: '', jersey: '' },
-  { numero: 3, nombre: '', jersey: '' },
-  { numero: 4, nombre: '', jersey: '' },
+  { numero: 1, nombre: '', jersey: '', foto_url: '' },
+  { numero: 2, nombre: '', jersey: '', foto_url: '' },
+  { numero: 3, nombre: '', jersey: '', foto_url: '' },
+  { numero: 4, nombre: '', jersey: '', foto_url: '' },
 ]);
+
+const SCOREBOARD_FOTO_BUCKET = 'scoreboard-fotos';
 
 function resolveScoreboardJerseyInput(value, fallback) {
   const raw = String(value ?? '').trim();
@@ -143,7 +153,20 @@ function jugadoresScoreboardFromPartido(jugadores) {
       numero: idx + 1,
       nombre: String(j.nombre ?? j.name ?? '').trim(),
       jersey: jerseyRaw === '' || jerseyRaw == null ? '' : String(jerseyRaw),
+      foto_url: String(j.foto_url ?? '').trim(),
     };
+  });
+}
+
+function mergeJugadoresTempFotos(jugadores, equipoLetter, temps) {
+  const eq = equipoLetter === 'A' ? 'a' : 'b';
+  return jugadores.map((j, idx) => {
+    const slot = idx + 1;
+    const temp = (Array.isArray(temps) ? temps : []).find(
+      (row) => String(row.equipo || '').toLowerCase() === eq && Number(row.slot) === slot,
+    );
+    const fotoUrl = String(temp?.foto_url ?? j.foto_url ?? '').trim();
+    return { ...j, foto_url: fotoUrl };
   });
 }
 
@@ -2498,6 +2521,7 @@ export default function AdminDashboard({
   const [sbCreated, setSbCreated] = useState(null);
   const [sbCopied, setSbCopied] = useState('');
   const [sbEditingId, setSbEditingId] = useState(null);
+  const [sbJugadorFotoUploading, setSbJugadorFotoUploading] = useState(null);
   const [sbPreviewPartidoId, setSbPreviewPartidoId] = useState(null);
   const [sbQrPartido, setSbQrPartido] = useState(null);
   const [sbPartidosList, setSbPartidosList] = useState([]);
@@ -7081,6 +7105,7 @@ export default function AdminDashboard({
     setSbUniformB2('');
     setSbJugadoresA(SCOREBOARD_JUGADORES_VACIOS());
     setSbJugadoresB(SCOREBOARD_JUGADORES_VACIOS());
+    setSbJugadorFotoUploading(null);
     setSbError('');
   }, []);
 
@@ -7107,8 +7132,16 @@ export default function AdminDashboard({
       setSbUniformA2(partido.color_uniforme_a2 || '');
       setSbUniformB1(partido.color_uniforme_b1 || partido.color_b || DEFAULT_SCOREBOARD_COLOR_B);
       setSbUniformB2(partido.color_uniforme_b2 || '');
-      setSbJugadoresA(jugadoresScoreboardFromPartido(partido.equipo_a_jugadores));
-      setSbJugadoresB(jugadoresScoreboardFromPartido(partido.equipo_b_jugadores));
+      const jugadoresA = jugadoresScoreboardFromPartido(partido.equipo_a_jugadores);
+      const jugadoresB = jugadoresScoreboardFromPartido(partido.equipo_b_jugadores);
+      let temps = [];
+      try {
+        temps = await fetchJugadoresTemp(partido.id);
+      } catch {
+        temps = [];
+      }
+      setSbJugadoresA(mergeJugadoresTempFotos(jugadoresA, 'A', temps));
+      setSbJugadoresB(mergeJugadoresTempFotos(jugadoresB, 'B', temps));
       setSbCreated(null);
       if (typeof document !== 'undefined') {
         document.getElementById('admin-scoreboard-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -7117,6 +7150,78 @@ export default function AdminDashboard({
       setSbError(err?.message || 'No se pudo cargar el partido');
     }
   }, [sbSedeId]);
+
+  const resolveSbJugadorNombre = (jugador, slot) => (
+    String(jugador?.nombre || '').trim() || `Jugador ${slot}`
+  );
+
+  const upsertSbJugadorTempFoto = async (equipo, index, fotoUrl) => {
+    if (!sbEditingId) {
+      setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores'));
+      return;
+    }
+    const equipoApi = equipo === 'A' ? 'a' : 'b';
+    const slot = index + 1;
+    const jugadores = equipo === 'A' ? sbJugadoresA : sbJugadoresB;
+    const jugador = jugadores[index];
+    const nombre = resolveSbJugadorNombre(jugador, slot);
+    await postJugadorTemp({
+      partido_id: sbEditingId,
+      equipo: equipoApi,
+      slot,
+      nombre,
+      numero: resolveScoreboardJerseyInput(jugador?.jersey, slot),
+      foto_url: fotoUrl ? String(fotoUrl).trim() : null,
+    }, session?.access_token);
+    const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
+    setter((prev) => prev.map((row, i) => (
+      i === index ? { ...row, foto_url: fotoUrl ? String(fotoUrl).trim() : '' } : row
+    )));
+  };
+
+  const handleSbJugadorFotoUpload = async (equipo, index, file) => {
+    if (!file || !sbEditingId) {
+      if (!sbEditingId) {
+        setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores'));
+      }
+      return;
+    }
+    const uploadKey = `${equipo}-${index}`;
+    setSbJugadorFotoUploading(uploadKey);
+    setSbError('');
+    try {
+      const equipoApi = equipo === 'A' ? 'a' : 'b';
+      const slot = index + 1;
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `jugadores/${sbEditingId}/${equipoApi}/${slot}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from(SCOREBOARD_FOTO_BUCKET).upload(path, file, {
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from(SCOREBOARD_FOTO_BUCKET).getPublicUrl(path);
+      const fotoUrl = pub?.publicUrl || '';
+      if (!fotoUrl) throw new Error(t('admin.scoreboard.playerPhotoUploadError', 'No se pudo obtener la URL de la foto'));
+      await upsertSbJugadorTempFoto(equipo, index, fotoUrl);
+    } catch (err) {
+      setSbError(err?.message || t('admin.scoreboard.playerPhotoUploadError', 'No se pudo subir la foto del jugador'));
+    } finally {
+      setSbJugadorFotoUploading(null);
+    }
+  };
+
+  const handleSbJugadorFotoRemove = async (equipo, index) => {
+    const uploadKey = `${equipo}-${index}`;
+    setSbJugadorFotoUploading(uploadKey);
+    setSbError('');
+    try {
+      await upsertSbJugadorTempFoto(equipo, index, null);
+    } catch (err) {
+      setSbError(err?.message || t('admin.scoreboard.playerPhotoRemoveError', 'No se pudo quitar la foto del jugador'));
+    } finally {
+      setSbJugadorFotoUploading(null);
+    }
+  };
 
   const updateSbJugador = (equipo, index, nombre) => {
     const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
@@ -11281,50 +11386,83 @@ export default function AdminDashboard({
                     <h3 style={{ margin: '0 0 10px', fontSize: '15px', color: 'var(--text-primary)' }}>
                       {t('admin.scoreboard.playersTeam', 'Jugadores Equipo')} {equipo}
                     </h3>
-                    {jugadores.map((j, idx) => (
-                      <div key={j.numero} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: equipo === 'A' ? 'rgba(59,130,246,0.15)' : 'rgba(239,68,68,0.15)',
-                          color: equipo === 'A' ? '#2563eb' : '#dc2626',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          fontSize: '13px',
-                          flexShrink: 0,
-                        }}
-                        >
-                          {j.numero}
-                        </span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={99}
-                          value={j.jersey}
-                          onChange={(e) => updateSbJugadorJersey(equipo, idx, e.target.value)}
-                          placeholder="#"
-                          title={t('admin.scoreboard.jerseyNumber', 'Número de camiseta')}
-                          style={{
-                            width: '52px',
-                            padding: '8px 6px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--border)',
-                            fontSize: '14px',
-                            textAlign: 'center',
-                          }}
-                        />
-                        <input
-                          type="text"
-                          value={j.nombre}
-                          onChange={(e) => updateSbJugador(equipo, idx, e.target.value)}
-                          placeholder={`${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero}`}
-                          style={{ flex: 1, padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
-                        />
-                      </div>
-                    ))}
+                    {jugadores.map((j, idx) => {
+                      const fotoUploadKey = `${equipo}-${idx}`;
+                      const fotoUrl = String(j.foto_url || '').trim();
+                      const isFotoUploading = sbJugadorFotoUploading === fotoUploadKey;
+                      const canUploadFoto = Boolean(sbEditingId) && !isFotoUploading;
+                      const fotoInputId = `sb-jugador-foto-${equipo}-${idx}`;
+                      return (
+                        <div key={j.numero} className="admin-scoreboard-jugador-row">
+                          <span className={`admin-scoreboard-jugador-row__slot admin-scoreboard-jugador-row__slot--${equipo.toLowerCase()}`}>
+                            {j.numero}
+                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={99}
+                            value={j.jersey}
+                            onChange={(e) => updateSbJugadorJersey(equipo, idx, e.target.value)}
+                            placeholder="#"
+                            title={t('admin.scoreboard.jerseyNumber', 'Número de camiseta')}
+                            className="admin-scoreboard-jugador-row__jersey"
+                          />
+                          <input
+                            type="text"
+                            value={j.nombre}
+                            onChange={(e) => updateSbJugador(equipo, idx, e.target.value)}
+                            placeholder={`${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero}`}
+                            className="admin-scoreboard-jugador-row__nombre"
+                          />
+                          <div className="admin-scoreboard-jugador-row__foto">
+                            {fotoUrl ? (
+                              <>
+                                <img
+                                  src={fotoUrl}
+                                  alt=""
+                                  className="admin-scoreboard-jugador-row__foto-preview"
+                                />
+                                <button
+                                  type="button"
+                                  className="admin-scoreboard-jugador-row__foto-remove"
+                                  onClick={() => { void handleSbJugadorFotoRemove(equipo, idx); }}
+                                  disabled={!canUploadFoto}
+                                  title={t('admin.scoreboard.playerPhotoRemove', 'Quitar foto')}
+                                  aria-label={t('admin.scoreboard.playerPhotoRemove', 'Quitar foto')}
+                                >
+                                  ✕
+                                </button>
+                              </>
+                            ) : null}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              id={fotoInputId}
+                              className="admin-scoreboard-jugador-row__foto-input"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = '';
+                                if (file) void handleSbJugadorFotoUpload(equipo, idx, file);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="admin-scoreboard-jugador-row__foto-btn"
+                              onClick={() => document.getElementById(fotoInputId)?.click()}
+                              disabled={!canUploadFoto}
+                              title={
+                                sbEditingId
+                                  ? t('admin.scoreboard.playerPhotoUpload', 'Subir foto del jugador')
+                                  : t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores')
+                              }
+                              aria-label={t('admin.scoreboard.playerPhotoUpload', 'Subir foto del jugador')}
+                            >
+                              {isFotoUploading ? '…' : '📷'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}

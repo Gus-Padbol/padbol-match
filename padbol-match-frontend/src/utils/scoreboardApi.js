@@ -99,10 +99,14 @@ export async function fetchJugadoresTemp(partidoId) {
   return data.jugadores || [];
 }
 
-export async function postJugadorTemp(payload) {
+export async function postJugadorTemp(payload, accessToken) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
   const res = await fetch(`${API_BASE}/api/scoreboard/jugador-temp`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
