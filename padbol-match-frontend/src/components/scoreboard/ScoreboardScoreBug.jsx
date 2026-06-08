@@ -13,14 +13,16 @@ function formatTimerFromSeconds(totalSeconds) {
 
 function formatPointScore(display, side) {
   if (!display) return '0';
-  if (display.mode === 'deuce') return 'D';
+  if (display.mode === 'deuce') return 'DEUCE';
   const val = side === 'A' ? display.displayA : display.displayB;
-  if (val === 'VENT.') return 'AD';
+  if (val === 'VENT.') return 'ADV';
   return String(val ?? '0');
 }
 
-function isCompactGameScore(score) {
-  return score === 'D' || score === 'AD' || score === 'DEUCE' || score === 'ADV';
+function getGameScoreModifier(score) {
+  if (score === 'DEUCE') return 'sb-scorebug__game--deuce';
+  if (score === 'ADV') return 'sb-scorebug__game--adv';
+  return '';
 }
 
 function resolveTeamColor(partido, side) {
@@ -59,7 +61,7 @@ function TeamRow({ partido, side, display, serving }) {
   const teamColor = resolveTeamColor(partido, side);
   const setCells = getSetCells(partido, side);
   const gameScore = formatPointScore(display, side);
-  const compactGame = isCompactGameScore(gameScore);
+  const gameScoreModifier = getGameScoreModifier(gameScore);
 
   return (
     <div className={`sb-scorebug__row sb-scorebug__row--${side.toLowerCase()}`}>
@@ -85,7 +87,7 @@ function TeamRow({ partido, side, display, serving }) {
           {cell.value}
         </div>
       ))}
-      <div className={['sb-scorebug__game', compactGame ? 'sb-scorebug__game--compact' : ''].filter(Boolean).join(' ')}>
+      <div className={['sb-scorebug__game', gameScoreModifier].filter(Boolean).join(' ')}>
         {gameScore}
       </div>
     </div>

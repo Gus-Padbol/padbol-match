@@ -198,6 +198,20 @@
   margin: 0.35rem 0;
   color: var(--sc-yellow);
   line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sc-game-score--deuce {
+  font-size: clamp(18px, 4.5vw, 30px);
+  letter-spacing: 0.08em;
+}
+
+.sc-game-score--adv {
+  font-size: clamp(40px, 9vw, 64px);
+  letter-spacing: 0.04em;
 }
 
 .sc-stats {

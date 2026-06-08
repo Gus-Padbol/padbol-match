@@ -147,11 +147,19 @@ html:has(.sb-scorebug-page) #root {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   box-sizing: border-box;
+  overflow: hidden;
+  padding: 0 2px;
+  white-space: nowrap;
 }
 
-.sb-scorebug__game--compact {
-  font-size: 20px;
-  letter-spacing: 0.02em;
+.sb-scorebug__game--deuce {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+}
+
+.sb-scorebug__game--adv {
+  font-size: 13px;
+  letter-spacing: 0.04em;
 }
 
 .sb-scorebug__footer {

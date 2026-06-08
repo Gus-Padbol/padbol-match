@@ -27,6 +27,13 @@ function formatGameScore(display, side) {
   return val ?? '0';
 }
 
+function gameScoreClassName(display, side) {
+  const score = formatGameScore(display, side);
+  if (score === 'DEUCE') return 'sc-game-score sc-game-score--deuce';
+  if (score === 'ADV') return 'sc-game-score sc-game-score--adv';
+  return 'sc-game-score';
+}
+
 function formatPlayersLine(jugadores) {
   const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
   return list.map((j) => j.nombre ?? j.name ?? '—').join(' · ');
@@ -465,7 +472,7 @@ export default function ScoreboardControl() {
         <div className="sc-team-card sc-team-card--a">
           <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_a_jugadores)}</p>
-          <div className="sc-game-score">
+          <div className={gameScoreClassName(display, 'A')}>
             {formatGameScore(display, 'A')}
           </div>
           <div className="sc-stats">
@@ -495,7 +502,7 @@ export default function ScoreboardControl() {
         <div className="sc-team-card sc-team-card--b">
           <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
           <p className="sc-players-line">{formatPlayersLine(partido.equipo_b_jugadores)}</p>
-          <div className="sc-game-score">
+          <div className={gameScoreClassName(display, 'B')}>
             {formatGameScore(display, 'B')}
           </div>
           <div className="sc-stats">
