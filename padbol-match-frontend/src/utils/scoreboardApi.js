@@ -1,6 +1,7 @@
 import { supabase } from '../supabaseClient';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'https://padbol-backend.onrender.com';
+const SCOREBOARD_FOTOS_BUCKET = 'scoreboard-fotos';
 
 export async function getAuthHeaders() {
   const { data: { session } } = await supabase.auth.getSession();
@@ -99,6 +100,20 @@ export async function fetchJugadoresTemp(partidoId) {
   return data.jugadores || [];
 }
 
+/** Sube foto al bucket público; no escribe en scoreboard_jugadores_temp. */
+export async function uploadScoreboardJugadorFoto(file, partidoId, equipo, slot) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `jugadores/${partidoId}/${equipo}/${slot}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from(SCOREBOARD_FOTOS_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: file.type || 'image/jpeg',
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from(SCOREBOARD_FOTOS_BUCKET).getPublicUrl(path);
+  return data?.publicUrl || '';
+}
+
+/** Persiste jugador temporal vía backend (service_role); nunca escribir la tabla desde el cliente. */
 export async function postJugadorTemp(payload, accessToken) {
   const headers = { 'Content-Type': 'application/json' };
   if (accessToken) {

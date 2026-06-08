@@ -119,6 +119,7 @@ import {
   fetchSedes,
   postJugadorTemp,
   updatePartido,
+  uploadScoreboardJugadorFoto,
 } from '../utils/scoreboardApi';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../utils/scoreboardTeamColors';
 import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
@@ -129,8 +130,6 @@ const SCOREBOARD_JUGADORES_VACIOS = () => ([
   { numero: 3, nombre: '', jersey: '', foto_url: '' },
   { numero: 4, nombre: '', jersey: '', foto_url: '' },
 ]);
-
-const SCOREBOARD_FOTO_BUCKET = 'scoreboard-fotos';
 
 function resolveScoreboardJerseyInput(value, fallback) {
   const raw = String(value ?? '').trim();
@@ -7155,7 +7154,7 @@ export default function AdminDashboard({
     String(jugador?.nombre || '').trim() || `Jugador ${slot}`
   );
 
-  const upsertSbJugadorTempFoto = async (equipo, index, fotoUrl) => {
+  const saveSbJugadorFotoViaApi = async (equipo, index, fotoUrl) => {
     if (!sbEditingId) {
       setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores'));
       return;
@@ -7192,17 +7191,11 @@ export default function AdminDashboard({
     try {
       const equipoApi = equipo === 'A' ? 'a' : 'b';
       const slot = index + 1;
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `jugadores/${sbEditingId}/${equipoApi}/${slot}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from(SCOREBOARD_FOTO_BUCKET).upload(path, file, {
-        upsert: true,
-        contentType: file.type || 'image/jpeg',
-      });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from(SCOREBOARD_FOTO_BUCKET).getPublicUrl(path);
-      const fotoUrl = pub?.publicUrl || '';
-      if (!fotoUrl) throw new Error(t('admin.scoreboard.playerPhotoUploadError', 'No se pudo obtener la URL de la foto'));
-      await upsertSbJugadorTempFoto(equipo, index, fotoUrl);
+      const fotoUrl = await uploadScoreboardJugadorFoto(file, sbEditingId, equipoApi, slot);
+      if (!fotoUrl) {
+        throw new Error(t('admin.scoreboard.playerPhotoUploadError', 'No se pudo obtener la URL de la foto'));
+      }
+      await saveSbJugadorFotoViaApi(equipo, index, fotoUrl);
     } catch (err) {
       setSbError(err?.message || t('admin.scoreboard.playerPhotoUploadError', 'No se pudo subir la foto del jugador'));
     } finally {
@@ -7215,7 +7208,7 @@ export default function AdminDashboard({
     setSbJugadorFotoUploading(uploadKey);
     setSbError('');
     try {
-      await upsertSbJugadorTempFoto(equipo, index, null);
+      await saveSbJugadorFotoViaApi(equipo, index, null);
     } catch (err) {
       setSbError(err?.message || t('admin.scoreboard.playerPhotoRemoveError', 'No se pudo quitar la foto del jugador'));
     } finally {
