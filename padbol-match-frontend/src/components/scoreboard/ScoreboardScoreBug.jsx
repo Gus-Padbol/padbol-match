@@ -106,27 +106,27 @@ function TeamRow({ partido, side, display, serving }) {
 
   return (
     <div className={`sb-scorebug__row sb-scorebug__row--${side.toLowerCase()}`}>
-      <div className="sb-scorebug__flag" style={{ backgroundColor: teamColor }} aria-hidden="true" />
-      <div className="sb-scorebug__name" style={{ backgroundColor: teamColor }}>
-        <span className="sb-scorebug__name-text" lang="es">{name}</span>
+      <div className="sb-scorebug__team">
+        <div className="sb-scorebug__flag" style={{ backgroundColor: teamColor }} aria-hidden="true" />
+        <div className="sb-scorebug__name" style={{ backgroundColor: teamColor }}>
+          <span className="sb-scorebug__name-text" lang="es">{name}</span>
+        </div>
+        <div className={`sb-scorebug__serve${serving ? ' sb-scorebug__serve--on' : ''}`} aria-hidden="true">
+          {serving ? '▶' : null}
+        </div>
       </div>
-      <div className={`sb-scorebug__serve${serving ? ' sb-scorebug__serve--on' : ''}`} aria-hidden="true">
-        {serving ? '▶' : null}
-      </div>
-      <div className="sb-scorebug__sets">
-        {setCells.map((cell, idx) => (
-          <div
-            key={`set-${side}-${idx + 1}`}
-            className={[
-              'sb-scorebug__set',
-              cell.active ? 'sb-scorebug__set--active' : '',
-              cell.future ? 'sb-scorebug__set--future' : '',
-            ].filter(Boolean).join(' ')}
-          >
-            {cell.value}
-          </div>
-        ))}
-      </div>
+      {setCells.map((cell, idx) => (
+        <div
+          key={`set-${side}-${idx + 1}`}
+          className={[
+            'sb-scorebug__set',
+            cell.active ? 'sb-scorebug__set--active' : '',
+            cell.future ? 'sb-scorebug__set--future' : '',
+          ].filter(Boolean).join(' ')}
+        >
+          {cell.value}
+        </div>
+      ))}
       <div className={['sb-scorebug__game', compactGame ? 'sb-scorebug__game--compact' : ''].filter(Boolean).join(' ')}>
         {gameScore}
       </div>
