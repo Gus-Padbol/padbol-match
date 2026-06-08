@@ -405,8 +405,10 @@ export default function ScoreboardBoard({
 
   return (
     <div className={`sb-display${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
-      <HexClusterSvg variant="top-right" stroke="rgba(100,180,255,0.12)" />
-      <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
+      <div className="sb-display__overlay" aria-hidden="true">
+        <HexClusterSvg variant="top-right" stroke="rgba(100,180,255,0.12)" />
+        <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
+      </div>
       <div
         className={`sb-connection ${wsConnected ? 'sb-connection--ws' : 'sb-connection--poll'}`}
         title={wsConnected ? 'WebSocket active' : 'Updating via polling'}
