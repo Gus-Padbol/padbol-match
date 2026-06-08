@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardScoreBug.css';
@@ -136,6 +136,10 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
   const torneoLabel = String(partido?.torneo_nombre || '').trim();
   const servingA = partido?.saque_actual === 'A';
   const servingB = partido?.saque_actual === 'B';
+
+  useEffect(() => {
+    console.log('nombres:', partido?.nombre_a, partido?.nombre_b);
+  }, [partido?.nombre_a, partido?.nombre_b]);
 
   return (
     <div className="sb-scorebug">
