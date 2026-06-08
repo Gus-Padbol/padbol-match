@@ -131,15 +131,15 @@ function TeamRow({ partido, side, display, serving }) {
 }
 
 export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
-  const display = partido?.display || {};
+  const display = partido.display || {};
   const timerLabel = formatTimerFromSeconds(timerSeconds);
   const torneoLabel = String(partido?.torneo_nombre || '').trim();
-  const servingA = partido?.saque_actual === 'A';
-  const servingB = partido?.saque_actual === 'B';
+  const servingA = partido.saque_actual === 'A';
+  const servingB = partido.saque_actual === 'B';
 
   useEffect(() => {
-    console.log('nombres:', partido?.nombre_a, partido?.nombre_b);
-  }, [partido?.nombre_a, partido?.nombre_b]);
+    console.log('nombres:', partido?.equipo_a_nombre, partido?.equipo_b_nombre);
+  }, [partido?.equipo_a_nombre, partido?.equipo_b_nombre]);
 
   return (
     <div className="sb-scorebug">
