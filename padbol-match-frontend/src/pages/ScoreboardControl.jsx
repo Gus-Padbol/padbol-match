@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSafeTranslation } from '../i18n/tSafe';
 import { useAuth } from '../context/AuthContext';
@@ -63,6 +62,12 @@ function isCronometroRunning(partido) {
   return Boolean(partido?.display?.cronometroActivo) && !isCronometroPausado(partido);
 }
 
+function isMatchFinished(partido) {
+  const estado = String(partido?.estado || '').toLowerCase();
+  if (estado === 'terminado' || estado === 'finalizado') return true;
+  return Number(partido?.sets_a) >= 2 || Number(partido?.sets_b) >= 2;
+}
+
 function canAdminScoreboard(rol, sedeIdPartido, sedeIdUser) {
   if (!rol) return false;
   if (rol === 'super_admin' || rol === 'admin_nacional') return true;
@@ -98,6 +103,7 @@ function OptionsModal({
   isTiebreak,
   actionLoading,
   onRunAction,
+  onUndo,
   undoCount,
 }) {
   if (!open) return null;
@@ -110,8 +116,6 @@ function OptionsModal({
     return false;
   };
 
-  const canUndo = undoCount > 0;
-
   const handleOptionClick = async (key) => {
     const config = OPTION_ACTIONS[key];
     if (!config || isOptionDisabled(key)) return;
@@ -121,34 +125,11 @@ function OptionsModal({
     });
   };
 
-  const undoBlocked = actionLoading || terminado || !canUndo;
-
-  const handleUndoClick = async (event) => {
-    event?.stopPropagation?.();
-    event?.preventDefault?.();
-    if (undoBlocked) {
-      console.warn('[ScoreboardControl] undo blocked:', {
-        actionLoading,
-        terminado,
-        canUndo,
-        undoCount,
-      });
-      return;
-    }
-    const undoPath = `/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/undo`;
-    const ok = await onRunAction(undoPath, { refetchAfter: true });
-    if (ok) {
-      onClose();
-    }
-  };
-
-  return createPortal(
+  return (
     <div
       className="sc-modal-overlay"
       role="presentation"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={onClose}
     >
       <div
         className="sc-modal-sheet"
@@ -172,25 +153,18 @@ function OptionsModal({
           ))}
           <button
             type="button"
-            className={[
-              'sc-modal-option-btn',
-              'sc-modal-option-btn--undo',
-              undoBlocked ? 'sc-modal-option-btn--disabled' : '',
-            ].filter(Boolean).join(' ')}
-            aria-disabled={undoBlocked}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
+            className="sc-modal-option-btn sc-modal-option-btn--undo"
+            disabled={undoCount <= 0}
+            onClick={() => {
               console.log('UNDO CLICKED');
-              e.stopPropagation();
-              void handleUndoClick(e);
+              onUndo();
             }}
           >
             {`↩ Undo (${undoCount})`}
           </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
 
@@ -217,6 +191,8 @@ export default function ScoreboardControl() {
   const [actionLoading, setActionLoading] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [undoCount, setUndoCount] = useState(0);
+  const autoPauseDoneRef = useRef(null);
+  const runActionRef = useRef(null);
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
@@ -291,6 +267,38 @@ export default function ScoreboardControl() {
     }
   }, [partido?.id, partidoId, refreshPartido]);
 
+  runActionRef.current = runAction;
+
+  useEffect(() => {
+    if (!partido?.id) return undefined;
+    if (!isMatchFinished(partido)) {
+      autoPauseDoneRef.current = null;
+      return undefined;
+    }
+    if (!isCronometroRunning(partido)) return undefined;
+    if (autoPauseDoneRef.current === partido.id) return undefined;
+
+    autoPauseDoneRef.current = partido.id;
+    const path = `/api/scoreboard/partidos/${encodeURIComponent(partido.id)}/cronometro/pause`;
+    void runActionRef.current?.(path, { refetchAfter: false });
+    return undefined;
+  }, [
+    partido?.id,
+    partido?.estado,
+    partido?.sets_a,
+    partido?.sets_b,
+    partido?.display?.cronometroActivo,
+    partido?.cronometro_pausado,
+    partido?.cronometro_inicio,
+  ]);
+
+  const handleUndo = useCallback(async () => {
+    if (!partido?.id || undoCount <= 0) return;
+    const path = `/api/scoreboard/partidos/${encodeURIComponent(partido.id)}/undo`;
+    const ok = await runAction(path, { refetchAfter: true });
+    if (ok) setOptionsOpen(false);
+  }, [partido?.id, undoCount, runAction]);
+
   const handleCronometro = (accion) => {
     const path = `/api/scoreboard/partidos/${resolvePartidoApiId()}/cronometro/${accion}`;
     runAction(path, { refetchAfter: accion === 'reset' });
@@ -316,7 +324,7 @@ export default function ScoreboardControl() {
   }
 
   const display = partido.display || {};
-  const terminado = partido.estado === 'terminado';
+  const terminado = isMatchFinished(partido);
   const cronometroActivo = isCronometroRunning(partido);
   const canScorePoints = !terminado;
   const torneoLabel = getTorneoLabel(partido);
@@ -454,6 +462,7 @@ export default function ScoreboardControl() {
         isTiebreak={partido.es_tiebreak}
         actionLoading={actionLoading}
         onRunAction={runAction}
+        onUndo={handleUndo}
         undoCount={undoCount}
       />
     </div>
