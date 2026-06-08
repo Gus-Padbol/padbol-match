@@ -11,13 +11,13 @@ html:has(.sb-scorebug-page) #root {
   padding: 0;
   background: transparent;
   min-height: 0;
-  width: 640px;
-  max-width: 640px;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .sb-scorebug {
-  width: 640px;
-  max-width: 640px;
+  width: fit-content;
+  max-width: 100%;
   display: inline-grid;
   background: transparent;
   color: #ffffff;
@@ -26,10 +26,10 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug__board {
-  width: 640px;
-  max-width: 640px;
+  width: fit-content;
+  max-width: 100%;
   display: inline-grid;
-  grid-template-columns: 396px 56px 56px 56px 76px;
+  grid-template-columns: max-content 56px 56px 56px 76px;
   background: rgba(0, 0, 0, 0.72);
   border-radius: 4px;
   overflow: hidden;
@@ -52,6 +52,8 @@ html:has(.sb-scorebug-page) #root {
 .sb-scorebug__team {
   display: flex;
   align-items: stretch;
+  width: max-content;
+  max-width: 202px;
   min-width: 0;
   overflow: hidden;
 }
@@ -64,7 +66,8 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug__name {
-  flex: 1;
+  flex: 0 1 auto;
+  max-width: 180px;
   min-width: 0;
   display: flex;
   align-items: center;
