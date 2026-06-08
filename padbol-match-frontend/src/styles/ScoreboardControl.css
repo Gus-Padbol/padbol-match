@@ -205,12 +205,14 @@
 }
 
 .sc-game-score--deuce {
-  font-size: clamp(18px, 4.5vw, 30px);
-  letter-spacing: 0.08em;
+  font-size: clamp(40px, 8vw, 48px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
 }
 
 .sc-game-score--adv {
-  font-size: clamp(40px, 9vw, 64px);
+  font-size: clamp(36px, 7.5vw, 42px);
+  font-weight: 900;
   letter-spacing: 0.04em;
 }
 
