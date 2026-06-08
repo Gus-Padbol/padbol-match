@@ -606,7 +606,7 @@
   overflow: visible;
   flex-shrink: 0;
   margin-top: calc(4vh + 1cm);
-  transform: translateY(-10px);
+  transform: translateY(-20px);
 }
 
 .sb-set-history-item {
