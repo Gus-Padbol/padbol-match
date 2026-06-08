@@ -406,6 +406,7 @@
   position: relative;
   gap: 2vh;
   min-width: 0;
+  transform: translateY(-20px);
 }
 
 .sb-tournament-brand {
