@@ -55,14 +55,6 @@ html:has(.sb-scorebug-page) #root {
   border-top: 1px solid #222222;
 }
 
-.sb-scorebug__board--finished .sb-scorebug__row--loser {
-  opacity: 0.42;
-}
-
-.sb-scorebug__board--finished .sb-scorebug__row--winner {
-  opacity: 1;
-}
-
 .sb-scorebug__team {
   display: flex;
   align-items: stretch;

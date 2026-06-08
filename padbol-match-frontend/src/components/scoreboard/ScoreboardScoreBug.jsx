@@ -47,12 +47,6 @@ function isMatchFinished(partido) {
   return Number(partido?.sets_a) >= 2 || Number(partido?.sets_b) >= 2;
 }
 
-function getWinnerSide(partido) {
-  if (Number(partido?.sets_a) >= 2) return 'A';
-  if (Number(partido?.sets_b) >= 2) return 'B';
-  return null;
-}
-
 function getSetCells(partido, side) {
   const completed = Array.isArray(partido?.historial_sets) ? partido.historial_sets : [];
   const key = side === 'A' ? 'a' : 'b';
@@ -71,7 +65,7 @@ function getSetCells(partido, side) {
   });
 }
 
-function TeamRow({ partido, side, display, serving, isWinner = false, isLoser = false }) {
+function TeamRow({ partido, side, display, serving }) {
   const name = side === 'A' ? partido.equipo_a_nombre : partido.equipo_b_nombre;
   const teamColor = resolveTeamColor(partido, side);
   const setCells = getSetCells(partido, side);
@@ -79,14 +73,7 @@ function TeamRow({ partido, side, display, serving, isWinner = false, isLoser = 
   const gameScoreModifier = getGameScoreModifier(gameScore);
 
   return (
-    <div
-      className={[
-        'sb-scorebug__row',
-        `sb-scorebug__row--${side.toLowerCase()}`,
-        isWinner ? 'sb-scorebug__row--winner' : '',
-        isLoser ? 'sb-scorebug__row--loser' : '',
-      ].filter(Boolean).join(' ')}
-    >
+    <div className={['sb-scorebug__row', `sb-scorebug__row--${side.toLowerCase()}`].join(' ')}>
       <div className="sb-scorebug__team">
         <div className="sb-scorebug__flag" style={{ backgroundColor: teamColor }} aria-hidden="true" />
         <div className="sb-scorebug__name" style={{ backgroundColor: teamColor }}>
@@ -121,7 +108,6 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
   const timerLabel = formatTimerFromSeconds(timerSeconds);
   const torneoLabel = String(partido?.torneo_nombre || '').trim();
   const matchFinished = isMatchFinished(partido);
-  const winnerSide = getWinnerSide(partido);
   const servingA = !matchFinished && partido.saque_actual === 'A';
   const servingB = !matchFinished && partido.saque_actual === 'B';
   const [fadePhase, setFadePhase] = useState('visible');
@@ -159,22 +145,18 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
 
   return (
     <div className={['sb-scorebug', fadePhase === 'fading' ? 'sb-scorebug--fading' : ''].filter(Boolean).join(' ')}>
-      <div className={['sb-scorebug__board', matchFinished ? 'sb-scorebug__board--finished' : ''].filter(Boolean).join(' ')}>
+      <div className="sb-scorebug__board">
         <TeamRow
           partido={partido}
           side="A"
           display={display}
           serving={servingA}
-          isWinner={winnerSide === 'A'}
-          isLoser={winnerSide === 'B'}
         />
         <TeamRow
           partido={partido}
           side="B"
           display={display}
           serving={servingB}
-          isWinner={winnerSide === 'B'}
-          isLoser={winnerSide === 'A'}
         />
 
         <div className="sb-scorebug__footer">
