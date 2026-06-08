@@ -57,10 +57,6 @@ function isCompactGameScore(score) {
   return score === 'D' || score === 'AD' || score === 'DEUCE' || score === 'ADV';
 }
 
-function formatTeamDisplayName(name) {
-  return String(name ?? '').trim();
-}
-
 function resolveTeamColor(partido, side) {
   if (side === 'A') return SCOREBUG_NAME_BG_A;
   const uniform = resolveUniformJerseyColors(partido, side);
@@ -97,8 +93,7 @@ function getSetCells(partido, side) {
 }
 
 function TeamRow({ partido, side, display, serving }) {
-  const rawName = side === 'A' ? partido.equipo_a_nombre : partido.equipo_b_nombre;
-  const name = formatTeamDisplayName(rawName);
+  const name = side === 'A' ? partido.equipo_a_nombre : partido.equipo_b_nombre;
   const teamColor = resolveTeamColor(partido, side);
   const setCells = getSetCells(partido, side);
   const gameScore = formatPointScore(display, side);
@@ -109,7 +104,7 @@ function TeamRow({ partido, side, display, serving }) {
       <div className="sb-scorebug__team">
         <div className="sb-scorebug__flag" style={{ backgroundColor: teamColor }} aria-hidden="true" />
         <div className="sb-scorebug__name" style={{ backgroundColor: teamColor }}>
-          <span className="sb-scorebug__name-text" lang="es">{name}</span>
+          <span className="sb-scorebug__name-text sb-bug-team-name" lang="es">{name}</span>
         </div>
         <div className={`sb-scorebug__serve${serving ? ' sb-scorebug__serve--on' : ''}`} aria-hidden="true">
           {serving ? '▶' : null}

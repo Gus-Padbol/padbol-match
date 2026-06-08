@@ -71,12 +71,15 @@ html:has(.sb-scorebug-page) #root {
   box-sizing: border-box;
 }
 
+.sb-bug-team-name {
+  text-transform: uppercase;
+}
+
 .sb-scorebug__name-text {
   font-size: 14px;
   font-weight: 900;
   letter-spacing: 0.04em;
   color: #ffffff;
-  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
