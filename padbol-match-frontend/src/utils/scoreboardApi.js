@@ -53,12 +53,22 @@ export async function fetchPartidosBySede(sedeId) {
   return [];
 }
 
+/** Normaliza GET /api/scoreboard/cancha (bare partido, null, o { partido }). */
+export function normalizeCanchaPartidoResponse(data) {
+  if (data == null) return null;
+  if (Object.prototype.hasOwnProperty.call(data, 'partido')) {
+    return data.partido ?? null;
+  }
+  if (data.id != null) return data;
+  return null;
+}
+
 export async function fetchPartidoByCancha(sedeId, cancha) {
   const encodedCancha = encodeURIComponent(String(cancha || '').trim());
   const res = await fetch(`${API_BASE}/api/scoreboard/cancha/${sedeId}/${encodedCancha}`);
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(data?.error || 'Error al cargar partido por cancha');
-  return data;
+  return normalizeCanchaPartidoResponse(data);
 }
 
 export async function fetchPartidoHistorial(partidoId) {

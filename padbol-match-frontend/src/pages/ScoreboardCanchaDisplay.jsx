@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import ScoreboardBoard from '../components/scoreboard/ScoreboardBoard';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
@@ -6,6 +6,8 @@ import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchPartidoByCancha, fetchSponsors } from '../utils/scoreboardApi';
 import logo from '../logo.svg';
 import '../styles/ScoreboardDisplay.css';
+
+const CANCHA_POLL_MS = 10000;
 
 function ScoreboardWaitingScreen({ canchaLabel }) {
   return (
@@ -25,19 +27,21 @@ export default function ScoreboardCanchaDisplay() {
   );
 
   const [partido, setPartido] = useState(null);
+  const [activePartidoId, setActivePartidoId] = useState(null);
   const [sponsors, setSponsors] = useState([]);
   const [error, setError] = useState('');
   const [polling, setPolling] = useState(true);
 
-  const activePartidoId = partido?.id ?? null;
+  const activePartidoIdRef = useRef(null);
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
   }, []);
 
   const handleWinnerDismiss = useCallback(() => {
+    activePartidoIdRef.current = null;
+    setActivePartidoId(null);
     setPartido(null);
-    setPolling(false);
   }, []);
 
   const { connected: wsConnected, reconnect: reconnectWs } = useScoreboardSocket(
@@ -46,26 +50,46 @@ export default function ScoreboardCanchaDisplay() {
   );
   const timerSeconds = useServerCronometro(partido);
 
+  const loadPartidoById = useCallback(async (partidoId) => {
+    const full = await fetchPartido(partidoId);
+    setPartido(full);
+    setError('');
+    return full;
+  }, []);
+
   const pollCancha = useCallback(async () => {
     if (!sedeId || !canchaLabel) return;
     try {
-      const p = await fetchPartidoByCancha(sedeId, canchaLabel);
-      setPartido(p);
-      setError('');
+      const canchaPartido = await fetchPartidoByCancha(sedeId, canchaLabel);
+      const nextPartidoId = canchaPartido?.id ?? null;
+
+      if (!nextPartidoId) {
+        activePartidoIdRef.current = null;
+        setActivePartidoId(null);
+        setPartido(null);
+        setError('');
+        return;
+      }
+
+      if (nextPartidoId !== activePartidoIdRef.current) {
+        activePartidoIdRef.current = nextPartidoId;
+        setActivePartidoId(nextPartidoId);
+        await loadPartidoById(nextPartidoId);
+      }
     } catch (err) {
       setError(err.message || 'Error loading court match');
     } finally {
       setPolling(false);
     }
-  }, [sedeId, canchaLabel]);
+  }, [sedeId, canchaLabel, loadPartidoById]);
 
   useEffect(() => {
     setPolling(true);
     void pollCancha();
-    const id = setInterval(() => {
+    const id = window.setInterval(() => {
       void pollCancha();
-    }, 10000);
-    return () => clearInterval(id);
+    }, CANCHA_POLL_MS);
+    return () => window.clearInterval(id);
   }, [pollCancha]);
 
   useEffect(() => {
@@ -95,24 +119,25 @@ export default function ScoreboardCanchaDisplay() {
   useEffect(() => {
     if (!activePartidoId) return undefined;
     void refreshActivePartido();
+    return undefined;
   }, [activePartidoId, refreshActivePartido]);
 
   useEffect(() => {
     if (!activePartidoId || wsConnected) return undefined;
     void refreshActivePartido();
-    const id = setInterval(() => {
+    const id = window.setInterval(() => {
       void refreshActivePartido();
     }, 3000);
-    return () => clearInterval(id);
+    return () => window.clearInterval(id);
   }, [activePartidoId, wsConnected, refreshActivePartido]);
 
   useEffect(() => {
     if (!activePartidoId || wsConnected) return undefined;
     reconnectWs();
-    const id = setInterval(() => {
+    const id = window.setInterval(() => {
       reconnectWs();
     }, 30000);
-    return () => clearInterval(id);
+    return () => window.clearInterval(id);
   }, [activePartidoId, wsConnected, reconnectWs]);
 
   if (error && !partido) {
@@ -129,6 +154,7 @@ export default function ScoreboardCanchaDisplay() {
 
   return (
     <ScoreboardBoard
+      key={partido.id}
       partido={partido}
       sponsors={sponsors}
       wsConnected={wsConnected}
