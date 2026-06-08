@@ -60,39 +60,26 @@
   box-shadow: 0 0 8px #eab308, 0 0 16px rgba(234, 179, 8, 0.4);
 }
 
-.sb-hex-bg {
+.sb-hex-cluster {
   position: absolute;
-  inset: 0;
-  z-index: 0;
+  width: 320px;
+  height: 320px;
+  z-index: 1;
   pointer-events: none;
-  overflow: hidden;
 }
 
-.sb-hex-bg__cluster {
-  position: absolute;
-  width: min(58vw, 920px);
-  height: min(58vh, 720px);
-  opacity: 0.9;
-}
-
-.sb-hex-bg__cluster--top-right {
+.sb-hex-cluster--top-right {
   top: 0;
   right: 0;
-  mask-image: radial-gradient(ellipse 125% 125% at 100% 0%, #000 0%, #000 30%, transparent 72%);
-  -webkit-mask-image: radial-gradient(ellipse 125% 125% at 100% 0%, #000 0%, #000 30%, transparent 72%);
+  mask-image: radial-gradient(circle at top right, rgba(0, 0, 0, 0.8) 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at top right, rgba(0, 0, 0, 0.8) 0%, transparent 70%);
 }
 
-.sb-hex-bg__cluster--bottom-left {
-  bottom: 0;
+.sb-hex-cluster--bottom-left {
+  bottom: 110px;
   left: 0;
-  mask-image: radial-gradient(ellipse 125% 125% at 0% 100%, #000 0%, #000 30%, transparent 72%);
-  -webkit-mask-image: radial-gradient(ellipse 125% 125% at 0% 100%, #000 0%, #000 30%, transparent 72%);
-}
-
-.sb-hex-bg__svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+  mask-image: radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.8) 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.8) 0%, transparent 70%);
 }
 
 .sb-display__main {
@@ -662,7 +649,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  min-height: 100px;
+  min-height: 110px;
   height: var(--sb-footer-height);
   background: #0a0a0a;
   flex-shrink: 0;
@@ -709,8 +696,7 @@
 }
 
 .sb-ticker__logo {
-  height: 100%;
-  max-height: 88px;
+  height: 80px;
   width: auto;
   object-fit: contain;
   mix-blend-mode: screen;

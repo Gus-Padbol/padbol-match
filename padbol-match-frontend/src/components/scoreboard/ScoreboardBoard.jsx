@@ -43,53 +43,83 @@ function resolvePlayerJersey(jugador, index) {
   return index + 1;
 }
 
-function HoneycombClusterSvg({ patternId }) {
+const HEX_CLUSTER_SIZE = 320;
+const HEX_RADIUS = 18;
+const HEX_GRID_COLS = 7;
+const HEX_GRID_ROWS = 7;
+
+function hexagonPath(cx, cy, radius) {
+  const points = Array.from({ length: 6 }, (_, index) => {
+    const angle = ((Math.PI * 2) / 6) * index - Math.PI / 2;
+    return [
+      cx + radius * Math.cos(angle),
+      cy + radius * Math.sin(angle),
+    ];
+  });
+  return `M ${points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' L ')} Z`;
+}
+
+function buildHexClusterGrid(anchor) {
+  const horizStep = Math.sqrt(3) * HEX_RADIUS;
+  const vertStep = 1.5 * HEX_RADIUS;
+  const margin = HEX_RADIUS;
+  const hexes = [];
+
+  for (let row = 0; row < HEX_GRID_ROWS; row += 1) {
+    for (let col = 0; col < HEX_GRID_COLS; col += 1) {
+      const rowOffset = (row % 2) * (horizStep / 2);
+      let cx;
+      let cy;
+
+      if (anchor === 'top-right') {
+        cx = HEX_CLUSTER_SIZE - margin - col * horizStep - rowOffset;
+        cy = margin + row * vertStep;
+      } else {
+        cx = margin + col * horizStep + rowOffset;
+        cy = HEX_CLUSTER_SIZE - margin - row * vertStep;
+      }
+
+      hexes.push({ key: `${anchor}-${row}-${col}`, cx, cy });
+    }
+  }
+
+  return hexes;
+}
+
+function HexClusterSvg({ variant, stroke }) {
+  const hexes = useMemo(
+    () => buildHexClusterGrid(variant),
+    [variant],
+  );
+
   return (
     <svg
-      className="sb-hex-bg__svg"
+      className={`sb-hex-cluster sb-hex-cluster--${variant}`}
       xmlns="http://www.w3.org/2000/svg"
-      width="100%"
-      height="100%"
-      preserveAspectRatio="xMidYMid slice"
+      width={HEX_CLUSTER_SIZE}
+      height={HEX_CLUSTER_SIZE}
+      viewBox={`0 0 ${HEX_CLUSTER_SIZE} ${HEX_CLUSTER_SIZE}`}
+      aria-hidden="true"
     >
-      <defs>
-        <pattern
-          id={patternId}
-          x="0"
-          y="0"
-          width="20.784"
-          height="36"
-          patternUnits="userSpaceOnUse"
-        >
-          <path
-            d="M10.392,0 L20.784,6 L20.784,18 L10.392,24 L0,18 L0,6 Z"
-            fill="none"
-            stroke="rgba(255,255,255,0.06)"
-            strokeWidth="0.65"
-          />
-          <path
-            d="M10.392,18 L20.784,24 L20.784,36 L10.392,42 L0,36 L0,24 Z"
-            fill="none"
-            stroke="rgba(255,255,255,0.06)"
-            strokeWidth="0.65"
-          />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+      {hexes.map((hex) => (
+        <path
+          key={hex.key}
+          d={hexagonPath(hex.cx, hex.cy, HEX_RADIUS)}
+          fill="none"
+          stroke={stroke}
+          strokeWidth="0.8"
+        />
+      ))}
     </svg>
   );
 }
 
 function ScoreboardHexBackground() {
   return (
-    <div className="sb-hex-bg" aria-hidden="true">
-      <div className="sb-hex-bg__cluster sb-hex-bg__cluster--top-right">
-        <HoneycombClusterSvg patternId="sb-honeycomb-top-right" />
-      </div>
-      <div className="sb-hex-bg__cluster sb-hex-bg__cluster--bottom-left">
-        <HoneycombClusterSvg patternId="sb-honeycomb-bottom-left" />
-      </div>
-    </div>
+    <>
+      <HexClusterSvg variant="top-right" stroke="rgba(100,180,255,0.12)" />
+      <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
+    </>
   );
 }
 
