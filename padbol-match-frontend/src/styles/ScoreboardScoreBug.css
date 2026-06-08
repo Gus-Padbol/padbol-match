@@ -67,6 +67,7 @@ html:has(.sb-scorebug-page) #root {
   font-weight: 900;
   letter-spacing: 0.04em;
   color: #ffffff;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -95,9 +96,29 @@ html:has(.sb-scorebug-page) #root {
   color: #555555;
 }
 
+.sb-scorebug__sponsor {
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111111;
+  flex-shrink: 0;
+}
+
+.sb-scorebug__sponsor-logo {
+  height: 20px;
+  width: auto;
+  max-width: 52px;
+  object-fit: contain;
+  mix-blend-mode: screen;
+}
+
 .sb-scorebug__game {
   width: 60px;
   min-width: 60px;
+  max-width: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,7 +128,7 @@ html:has(.sb-scorebug-page) #root {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   border-radius: 0;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .sb-scorebug__game--active-set {

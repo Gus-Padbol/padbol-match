@@ -58,8 +58,10 @@ function isCompactGameScore(score) {
   return score === 'D' || score === 'AD' || score === 'DEUCE' || score === 'ADV';
 }
 
+const SCOREBUG_SPONSOR_LOGO = '/padbol-match-logo.png';
+
 function formatTeamDisplayName(name) {
-  return String(name ?? '').trim().toLocaleUpperCase('es');
+  return String(name ?? '').trim();
 }
 
 function resolveTeamNameBg(partido, side) {
@@ -104,7 +106,7 @@ function TeamRow({ partido, side, display, serving }) {
     <div className={`sb-scorebug__row sb-scorebug__row--${side.toLowerCase()}`}>
       <div className="sb-scorebug__name" style={{ backgroundColor: nameBg }}>
         {serving ? <span className="sb-scorebug__serve" aria-hidden="true">▶</span> : null}
-        <span className="sb-scorebug__name-text">{name}</span>
+        <span className="sb-scorebug__name-text" lang="es">{name}</span>
       </div>
       {setCells.map((cell, idx) => (
         <div
@@ -118,6 +120,13 @@ function TeamRow({ partido, side, display, serving }) {
           {cell.value}
         </div>
       ))}
+      <div className="sb-scorebug__sponsor" aria-hidden="true">
+        <img
+          className="sb-scorebug__sponsor-logo"
+          src={SCOREBUG_SPONSOR_LOGO}
+          alt=""
+        />
+      </div>
       <div
         className={[
           'sb-scorebug__game',
