@@ -266,25 +266,33 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
 
 const TICKER_LOGO_SLOTS = 8;
 
+function TickerLogoGroup({ groupId, items, ariaHidden = false }) {
+  return (
+    <div className="sb-ticker__group" aria-hidden={ariaHidden || undefined}>
+      {items.map((slot) => (
+        <span key={`${groupId}-logo-${slot}`} className="sb-ticker__item">
+          <img
+            src="/padbol-match-logo.png"
+            alt={ariaHidden ? '' : 'Padbol Match'}
+            className="sb-ticker__logo"
+          />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function SponsorTicker() {
   const items = useMemo(
     () => Array.from({ length: TICKER_LOGO_SLOTS }, (_, index) => index),
     [],
   );
-  const trackItems = [...items, ...items];
 
   return (
     <div className="sb-ticker" aria-label="Padbol Match">
       <div className="sb-ticker__track">
-        {trackItems.map((slot, index) => (
-          <span key={`padbol-logo-${slot}-${index}`} className="sb-ticker__item">
-            <img
-              src="/padbol-match-logo.png"
-              alt="Padbol Match"
-              className="sb-ticker__logo"
-            />
-          </span>
-        ))}
+        <TickerLogoGroup groupId="a" items={items} />
+        <TickerLogoGroup groupId="b" items={items} ariaHidden />
       </div>
     </div>
   );
