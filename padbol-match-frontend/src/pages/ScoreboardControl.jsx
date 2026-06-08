@@ -6,7 +6,7 @@ import useUserRole from '../hooks/useUserRole';
 import { getDisplayName } from '../utils/displayName';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
-import { fetchPartido, fetchPartidoHistorial, scoreboardAction } from '../utils/scoreboardApi';
+import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
 import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
 import '../styles/ScoreboardControl.css';
 
@@ -51,6 +51,17 @@ function TeamNameRow({ name, serving }) {
   );
 }
 
+function isCronometroPausado(partido) {
+  const raw = partido?.cronometro_pausado;
+  if (raw === true || raw === 'true' || raw === 1 || raw === '1') return true;
+  if (raw === false || raw === 'false' || raw === 0 || raw === '0') return false;
+  return Boolean(raw);
+}
+
+function isCronometroRunning(partido) {
+  return Boolean(partido?.display?.cronometroActivo) && !isCronometroPausado(partido);
+}
+
 function canAdminScoreboard(rol, sedeIdPartido, sedeIdUser) {
   if (!rol) return false;
   if (rol === 'super_admin' || rol === 'admin_nacional') return true;
@@ -63,19 +74,18 @@ function canAdminScoreboard(rol, sedeIdPartido, sedeIdUser) {
 const OPTION_ACTIONS = {
   saque: {
     label: '⇄ Cambiar saque',
-    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/saque`,
+    path: (id) => `/api/scoreboard/partidos/${encodeURIComponent(String(id))}/saque`,
     refetchAfter: false,
   },
   tiebreak: {
     label: 'Tie-Break',
-    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/tiebreak`,
+    path: (id) => `/api/scoreboard/partidos/${encodeURIComponent(String(id))}/tiebreak`,
     refetchAfter: false,
   },
   reset: {
     label: '🔄 Resetear partido',
-    path: (partidoId) => `/api/scoreboard/partidos/${partidoId}/cronometro/reset`,
+    path: (partidoId) => `/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/cronometro/reset`,
     refetchAfter: true,
-    refreshHistorial: true,
   },
 };
 
@@ -107,7 +117,6 @@ function OptionsModal({
     onClose();
     await onRunAction(config.path(partidoId), {
       refetchAfter: config.refetchAfter,
-      refreshHistorial: config.refreshHistorial,
     });
   };
 
@@ -115,12 +124,9 @@ function OptionsModal({
     event?.stopPropagation?.();
     event?.preventDefault?.();
     if (actionLoading || terminado || !canUndo) return;
-    try {
-      await onRunAction(`/api/scoreboard/partidos/${partidoId}/undo`, {
-        refetchAfter: true,
-        refreshHistorial: true,
-      });
-    } finally {
+    const undoPath = `/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/undo`;
+    const ok = await onRunAction(undoPath, { refetchAfter: true });
+    if (ok) {
       onClose();
     }
   };
@@ -225,46 +231,46 @@ export default function ScoreboardControl() {
     return p;
   }, [partidoId]);
 
-  const refreshHistorialCount = useCallback(async () => {
-    try {
-      const { count } = await fetchPartidoHistorial(partidoId);
-      setUndoCount(Math.max(0, Number(count) || 0));
-    } catch {
-      setUndoCount(0);
-    }
-  }, [partidoId]);
-
   useEffect(() => {
     if (!partido) return undefined;
-    void refreshHistorialCount();
+    const count = Array.isArray(partido.historial_puntos) ? partido.historial_puntos.length : 0;
+    setUndoCount(count);
     return undefined;
-  }, [partido?.id, refreshHistorialCount]);
+  }, [partido?.historial_puntos, partido?.id]);
 
-  const runAction = async (path, { refetchAfter = false, refreshHistorial = false } = {}) => {
+  const resolvePartidoApiId = useCallback(() => {
+    const id = partido?.id ?? partidoId;
+    return encodeURIComponent(String(id || '').trim());
+  }, [partido?.id, partidoId]);
+
+  const runAction = useCallback(async (path, { refetchAfter = false } = {}) => {
     setActionLoading(true);
     setError('');
     try {
+      console.log('[ScoreboardControl] action:', path);
       const data = await scoreboardAction(path);
       if (refetchAfter) {
         await refreshPartido();
       } else {
         setPartido(data);
       }
-      if (refreshHistorial) {
-        await refreshHistorialCount();
-      }
+      return true;
     } catch (err) {
-      setError(err.message);
+      console.error('[ScoreboardControl] action failed:', {
+        path,
+        partidoId: partido?.id ?? partidoId,
+        message: err?.message || err,
+      });
+      setError(err?.message || 'Error en la acción');
+      return false;
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [partido?.id, partidoId, refreshPartido]);
 
   const handleCronometro = (accion) => {
-    runAction(
-      `/api/scoreboard/partidos/${partidoId}/cronometro/${accion}`,
-      { refetchAfter: true },
-    );
+    const path = `/api/scoreboard/partidos/${resolvePartidoApiId()}/cronometro/${accion}`;
+    runAction(path, { refetchAfter: accion === 'reset' });
   };
 
   if (roleLoading || loading) {
@@ -288,7 +294,7 @@ export default function ScoreboardControl() {
 
   const display = partido.display || {};
   const terminado = partido.estado === 'terminado';
-  const cronometroActivo = partido.display?.cronometroActivo;
+  const cronometroActivo = isCronometroRunning(partido);
   const canScorePoints = !terminado;
   const torneoLabel = getTorneoLabel(partido);
   const { colorA, colorB } = resolveTeamColors(partido);
@@ -369,8 +375,8 @@ export default function ScoreboardControl() {
             style={teamButtonStyle(colorA)}
             disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(
-              `/api/scoreboard/partidos/${partidoId}/punto/A`,
-              { refetchAfter: true, refreshHistorial: true },
+              `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/A`,
+              { refetchAfter: true },
             )}
           >
             + POINT
@@ -399,8 +405,8 @@ export default function ScoreboardControl() {
             style={teamButtonStyle(colorB)}
             disabled={actionLoading || terminado || !canScorePoints}
             onClick={() => runAction(
-              `/api/scoreboard/partidos/${partidoId}/punto/B`,
-              { refetchAfter: true, refreshHistorial: true },
+              `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/B`,
+              { refetchAfter: true },
             )}
           >
             + POINT
@@ -420,7 +426,7 @@ export default function ScoreboardControl() {
       <OptionsModal
         open={optionsOpen}
         onClose={() => setOptionsOpen(false)}
-        partidoId={partidoId}
+        partidoId={partido?.id ?? partidoId}
         terminado={terminado}
         isTiebreak={partido.es_tiebreak}
         actionLoading={actionLoading}
