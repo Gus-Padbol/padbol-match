@@ -11,13 +11,13 @@ html:has(.sb-scorebug-page) #root {
   padding: 0;
   background: transparent;
   min-height: 0;
-  width: fit-content;
-  max-width: 100%;
+  width: 640px;
+  max-width: 640px;
 }
 
 .sb-scorebug {
-  width: fit-content;
-  max-width: 100%;
+  width: 640px;
+  max-width: 640px;
   display: inline-grid;
   background: transparent;
   color: #ffffff;
@@ -26,11 +26,11 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug__board {
-  width: fit-content;
-  max-width: 100%;
+  width: 640px;
+  max-width: 640px;
   display: inline-grid;
-  grid-template-columns: 160px 52px 52px 52px 64px;
-  background: #0a0a14;
+  grid-template-columns: 396px 56px 56px 56px 76px;
+  background: rgba(0, 0, 0, 0.72);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -40,8 +40,9 @@ html:has(.sb-scorebug-page) #root {
   grid-template-columns: subgrid;
   grid-column: 1 / -1;
   align-items: stretch;
-  height: 44px;
-  min-height: 44px;
+  height: 36px;
+  max-height: 36px;
+  min-height: 36px;
 }
 
 .sb-scorebug__row + .sb-scorebug__row {
@@ -77,9 +78,9 @@ html:has(.sb-scorebug-page) #root {
 
 .sb-scorebug__name-text {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
@@ -138,14 +139,14 @@ html:has(.sb-scorebug-page) #root {
   background: #0d0d1a;
   color: #ffffff;
   font-family: 'Oswald', sans-serif;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   box-sizing: border-box;
 }
 
 .sb-scorebug__game--compact {
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: 0.02em;
 }
 
@@ -156,10 +157,11 @@ html:has(.sb-scorebug-page) #root {
   justify-content: space-between;
   gap: 8px;
   box-sizing: border-box;
-  height: 20px;
-  min-height: 20px;
+  height: 18px;
+  max-height: 18px;
+  min-height: 18px;
   padding: 0 8px;
-  border-top: 1px solid #1a1a2e;
+  border-top: 1px solid rgba(26, 26, 46, 0.6);
 }
 
 .sb-scorebug__footer-torneo,
