@@ -699,54 +699,43 @@
 
 .sb-footer {
   flex: 0 0 auto;
+  overflow: hidden;
+  width: 100%;
   height: 110px;
   min-height: 110px;
-  width: 100%;
-  overflow: hidden;
-  position: relative;
-  background: var(--sb-footer-bg);
   display: flex;
   align-items: center;
-  justify-content: center;
+  position: relative;
+  background: var(--sb-footer-bg);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 3;
 }
 
-.sb-ticker {
+.sb-ticker-track {
+  display: flex;
   width: 100%;
-  height: 100%;
   overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 1%, #000 99%, transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 1%, #000 99%, transparent);
 }
 
-.sb-ticker__track {
+.sb-ticker-content {
   display: flex;
-  flex-wrap: nowrap;
   align-items: center;
-  height: 100%;
-  width: max-content;
+  gap: 60px;
+  animation: ticker-scroll 20s linear infinite;
+  white-space: nowrap;
   will-change: transform;
-  animation: scrollTicker 28s linear infinite;
 }
 
-.sb-ticker__item {
-  flex-shrink: 0;
-  height: 100%;
-  padding: 0 4vw;
-  display: flex;
-  align-items: center;
-}
-
-.sb-ticker__logo {
+.sb-ticker-logo {
   height: 64px;
   width: auto;
+  flex-shrink: 0;
   object-fit: contain;
   mix-blend-mode: screen;
   display: block;
 }
 
-@keyframes scrollTicker {
+@keyframes ticker-scroll {
   0% {
     transform: translateX(0);
   }

@@ -278,35 +278,9 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
   return <div className="sb-sets-history">{chips}</div>;
 }
 
-const TICKER_LOGO_SLOTS = 8;
+const TICKER_LOGO_COUNT = 4;
 
-function SponsorTicker() {
-  const logos = useMemo(
-    () => Array.from({ length: TICKER_LOGO_SLOTS }, (_, index) => index),
-    [],
-  );
-
-  const seamlessLogos = useMemo(
-    () => [...logos, ...logos],
-    [logos],
-  );
-
-  return (
-    <div className="sb-ticker" aria-label="Padbol Match">
-      <div className="sb-ticker__track">
-        {seamlessLogos.map((slot, index) => (
-          <span key={`ticker-logo-${slot}-${index}`} className="sb-ticker__item">
-            <img
-              src="/padbol-match-logo.png"
-              alt={index === 0 ? 'Padbol Match' : ''}
-              className="sb-ticker__logo"
-            />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
+const TICKER_LOGOS = Array.from({ length: TICKER_LOGO_COUNT * 2 }, (_, index) => index);
 
 export default function ScoreboardBoard({
   partido,
@@ -509,8 +483,19 @@ export default function ScoreboardBoard({
         </aside>
       </div>
 
-      <footer className="sb-footer">
-        <SponsorTicker />
+      <footer className="sb-footer" aria-label="Padbol Match">
+        <div className="sb-ticker-track">
+          <div className="sb-ticker-content">
+            {TICKER_LOGOS.map((index) => (
+              <img
+                key={`ticker-logo-${index}`}
+                src="/padbol-match-logo.png"
+                alt={index === 0 ? 'Padbol Match' : ''}
+                className="sb-ticker-logo"
+              />
+            ))}
+          </div>
+        </div>
       </footer>
     </div>
   );
