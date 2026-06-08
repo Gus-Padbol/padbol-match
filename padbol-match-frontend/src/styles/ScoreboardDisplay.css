@@ -437,7 +437,7 @@
   min-width: 0;
   overflow: visible;
   flex-shrink: 0;
-  margin-top: calc(2vh - 3cm);
+  margin-top: calc(2vh - 1cm);
 }
 
 .sb-point-indicator {
