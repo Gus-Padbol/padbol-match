@@ -730,13 +730,6 @@
   animation: scrollTicker 28s linear infinite;
 }
 
-.sb-ticker__group {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  height: 100%;
-}
-
 .sb-ticker__item {
   flex-shrink: 0;
   height: 100%;
@@ -754,11 +747,11 @@
 }
 
 @keyframes scrollTicker {
-  from {
-    transform: translate3d(0, 0, 0);
+  0% {
+    transform: translateX(0);
   }
-  to {
-    transform: translate3d(-50%, 0, 0);
+  100% {
+    transform: translateX(-50%);
   }
 }
 
