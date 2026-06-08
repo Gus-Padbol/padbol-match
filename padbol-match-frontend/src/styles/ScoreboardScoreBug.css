@@ -49,6 +49,34 @@ html:has(.sb-scorebug-page) #root {
   border-top: 1px solid #222222;
 }
 
+.sb-scorebug__board--finished .sb-scorebug__row--loser {
+  opacity: 0.42;
+}
+
+.sb-scorebug__board--finished .sb-scorebug__row--winner {
+  opacity: 1;
+}
+
+.sb-scorebug__winner-banner {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  min-height: 16px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: #ffffff;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.sb-scorebug__winner-banner + .sb-scorebug__row {
+  border-top: none;
+}
+
 .sb-scorebug__team {
   display: flex;
   align-items: stretch;
