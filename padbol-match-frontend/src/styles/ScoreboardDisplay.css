@@ -607,6 +607,7 @@
   overflow: visible;
   flex-shrink: 0;
   margin-top: calc(4vh + 1cm);
+  transform: translateY(-10px);
 }
 
 .sb-set-history-item {
@@ -694,6 +695,7 @@
   flex-shrink: 0;
   margin-top: 2.5vh;
   margin-bottom: var(--sb-timer-footer-gap);
+  transform: translateY(-10px);
 }
 
 /* ── Sponsors footer ── */
