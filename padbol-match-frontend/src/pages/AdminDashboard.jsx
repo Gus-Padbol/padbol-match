@@ -124,6 +124,8 @@ import {
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../utils/scoreboardTeamColors';
 import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
 
+const SCOREBOARD_PUBLIC_BASE = 'https://padbolmatch.com';
+
 const SCOREBOARD_JUGADORES_VACIOS = () => ([
   { numero: 1, nombre: '', jersey: '', foto_url: '' },
   { numero: 2, nombre: '', jersey: '', foto_url: '' },
@@ -206,11 +208,24 @@ function AdminScoreboardPartidoListItem({
   onEdit,
   t,
 }) {
+  const [copiedKey, setCopiedKey] = useState('');
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const tvLink = `${origin}/display/${partido.sede_id}/scoreboard/${partido.id}`;
   const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
+  const tvPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/display/${partido.sede_id}/scoreboard/${partido.id}`;
+  const arbiterPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/admin/scoreboard/${partido.id}`;
   const torneo = String(partido.torneo_nombre || '').trim();
   const isPreviewOpen = previewPartidoId === partido.id;
+
+  const copiarLinkPublico = async (url, key) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(''), 2000);
+    } catch {
+      window.prompt('Copiá este link:', url);
+    }
+  };
 
   return (
     <li className="admin-scoreboard-partidos-list__item">
@@ -246,20 +261,40 @@ function AdminScoreboardPartidoListItem({
               ? t('admin.scoreboard.hidePreview', '👁 Ocultar')
               : t('admin.scoreboard.showPreview', '👁 Ver')}
           </button>
-          <a
-            href={tvLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
-          >
-            📺 TV
-          </a>
-          <a
-            href={arbiterLink}
-            className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
-          >
-            🎮 Árbitro
-          </a>
+          <span className="admin-scoreboard-partidos-list__action-group">
+            <a
+              href={tvLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
+            >
+              📺 TV
+            </a>
+            <button
+              type="button"
+              onClick={() => { void copiarLinkPublico(tvPublicUrl, 'tv'); }}
+              className="admin-scoreboard-partidos-list__copy-btn"
+              title={t('admin.scoreboard.copyTvLink', 'Copiar link TV público')}
+            >
+              {copiedKey === 'tv' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
+            </button>
+          </span>
+          <span className="admin-scoreboard-partidos-list__action-group">
+            <a
+              href={arbiterLink}
+              className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
+            >
+              🎮 Árbitro
+            </a>
+            <button
+              type="button"
+              onClick={() => { void copiarLinkPublico(arbiterPublicUrl, 'arbiter'); }}
+              className="admin-scoreboard-partidos-list__copy-btn"
+              title={t('admin.scoreboard.copyArbiterLink', 'Copiar link panel árbitro')}
+            >
+              {copiedKey === 'arbiter' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
+            </button>
+          </span>
           <button
             type="button"
             onClick={() => onEdit(partido.id)}
