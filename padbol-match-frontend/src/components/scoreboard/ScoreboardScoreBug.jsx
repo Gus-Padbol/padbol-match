@@ -1,6 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
+import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import '../../styles/ScoreboardScoreBug.css';
+
+const DEFAULT_NAME_BG = {
+  A: DEFAULT_SCOREBOARD_COLOR_A,
+  B: DEFAULT_SCOREBOARD_COLOR_B,
+};
 
 function formatTimerFromSeconds(totalSeconds) {
   const s = Math.max(0, Number(totalSeconds) || 0);
@@ -12,76 +18,92 @@ function formatTimerFromSeconds(totalSeconds) {
 
 function formatPointScore(display, side) {
   if (!display) return '0';
-  if (display.mode === 'deuce') return 'DEUCE';
+  if (display.mode === 'deuce') return 'D';
   const val = side === 'A' ? display.displayA : display.displayB;
-  if (val === 'VENT.') return 'ADV';
+  if (val === 'VENT.') return 'AD';
   return String(val ?? '0');
 }
 
-function isSpecialScore(display) {
-  return display?.mode === 'deuce' || display?.displayA === 'VENT.' || display?.displayB === 'VENT.';
+function isCompactGameScore(score) {
+  return score === 'D' || score === 'AD' || score === 'DEUCE' || score === 'ADV';
 }
 
-function buildSetsMeta(partido) {
+function resolveTeamNameBg(partido, side) {
+  const uniform = resolveUniformJerseyColors(partido, side);
+  return uniform.color1 || DEFAULT_NAME_BG[side];
+}
+
+function getSetCells(partido, side) {
   const completed = Array.isArray(partido?.historial_sets) ? partido.historial_sets : [];
-  const parts = completed.map((setRow, idx) => {
-    const setNum = setRow.set ?? idx + 1;
-    return `SET ${setNum}: ${setRow.a}-${setRow.b}`;
-  });
-
+  const key = side === 'A' ? 'a' : 'b';
+  const currentGames = side === 'A' ? partido.games_a : partido.games_b;
   const matchOngoing = Number(partido?.sets_a) < 2 && Number(partido?.sets_b) < 2;
-  if (matchOngoing) {
-    const currentSet = completed.length + 1;
-    parts.push(`SET ${currentSet}: ${partido.games_a ?? 0}-${partido.games_b ?? 0}`);
-  }
+  const currentSetNum = matchOngoing ? completed.length + 1 : null;
 
-  return parts.join(' | ');
+  return [1, 2, 3].map((setNum) => {
+    const completedRow = completed.find((row, idx) => (row.set ?? idx + 1) === setNum);
+    if (completedRow) {
+      return { value: String(completedRow[key] ?? ''), active: false };
+    }
+    if (currentSetNum === setNum) {
+      return { value: String(currentGames ?? 0), active: true };
+    }
+    return { value: '', active: false };
+  });
 }
 
-function UniformBar({ partido, side }) {
-  const { color1, color2 } = resolveUniformJerseyColors(partido, side);
-  const color = color1 || color2;
-  if (!color) return null;
-  return <span className="sb-scorebug__uniform" style={{ background: color }} aria-hidden="true" />;
+function TeamRow({ partido, side, display, serving }) {
+  const name = side === 'A' ? partido.equipo_a_nombre : partido.equipo_b_nombre;
+  const nameBg = resolveTeamNameBg(partido, side);
+  const setCells = getSetCells(partido, side);
+  const gameScore = formatPointScore(display, side);
+  const hasActiveSet = setCells.some((cell) => cell.active);
+  const compactGame = isCompactGameScore(gameScore);
+
+  return (
+    <div className={`sb-scorebug__row sb-scorebug__row--${side.toLowerCase()}`}>
+      <div className="sb-scorebug__name" style={{ backgroundColor: nameBg }}>
+        {serving ? <span className="sb-scorebug__serve" aria-hidden="true">▶</span> : null}
+        <span className="sb-scorebug__name-text">{name}</span>
+      </div>
+      {setCells.map((cell, idx) => (
+        <div
+          key={`set-${side}-${idx + 1}`}
+          className={`sb-scorebug__set${cell.active ? ' sb-scorebug__set--active' : ''}`}
+        >
+          {cell.value}
+        </div>
+      ))}
+      <div
+        className={[
+          'sb-scorebug__game',
+          hasActiveSet ? 'sb-scorebug__game--active-set' : '',
+          compactGame ? 'sb-scorebug__game--compact' : '',
+        ].filter(Boolean).join(' ')}
+      >
+        {gameScore}
+      </div>
+    </div>
+  );
 }
 
 export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
   const display = partido?.display || {};
-  const scoreA = formatPointScore(display, 'A');
-  const scoreB = formatPointScore(display, 'B');
-  const specialScore = isSpecialScore(display);
-  const setsMeta = useMemo(() => buildSetsMeta(partido), [partido]);
   const timerLabel = formatTimerFromSeconds(timerSeconds);
+  const torneoLabel = String(partido?.torneo_nombre || '').trim();
   const servingA = partido?.saque_actual === 'A';
   const servingB = partido?.saque_actual === 'B';
 
   return (
     <div className="sb-scorebug">
-      <div className="sb-scorebug__pill">
-        <div className="sb-scorebug__main">
-          <div className="sb-scorebug__team sb-scorebug__team--a">
-            <UniformBar partido={partido} side="A" />
-            {servingA ? <span className="sb-scorebug__serve" aria-label="Serving" title="Serving" /> : null}
-            <span className="sb-scorebug__name">{partido.equipo_a_nombre}</span>
-          </div>
-          <span className={`sb-scorebug__score${specialScore ? ' sb-scorebug__score--special' : ''}`}>
-            {scoreA}
-          </span>
-          <span className="sb-scorebug__divider">-</span>
-          <span className={`sb-scorebug__score${specialScore ? ' sb-scorebug__score--special' : ''}`}>
-            {scoreB}
-          </span>
-          <div className="sb-scorebug__team sb-scorebug__team--b">
-            <span className="sb-scorebug__name">{partido.equipo_b_nombre}</span>
-            {servingB ? <span className="sb-scorebug__serve" aria-label="Serving" title="Serving" /> : null}
-            <UniformBar partido={partido} side="B" />
-          </div>
-        </div>
-        <p className="sb-scorebug__meta">
-          {setsMeta}
-          {setsMeta ? ' | ' : ''}
-          {timerLabel}
-        </p>
+      <div className="sb-scorebug__board">
+        <TeamRow partido={partido} side="A" display={display} serving={servingA} />
+        <div className="sb-scorebug__row-sep" aria-hidden="true" />
+        <TeamRow partido={partido} side="B" display={display} serving={servingB} />
+      </div>
+      <div className="sb-scorebug__footer">
+        {torneoLabel ? <span className="sb-scorebug__torneo">{torneoLabel}</span> : null}
+        <span className="sb-scorebug__timer">{timerLabel}</span>
       </div>
     </div>
   );

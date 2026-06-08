@@ -14,106 +14,132 @@ html:has(.sb-scorebug-page) #root {
 }
 
 .sb-scorebug {
-  max-width: 400px;
+  max-width: 480px;
   width: 100%;
   background: transparent;
   color: #ffffff;
   font-family: 'Oswald', sans-serif;
-  font-weight: 700;
-  line-height: 1.2;
+  line-height: 1;
 }
 
-.sb-scorebug__pill {
-  display: inline-block;
-  width: 100%;
-  padding: 6px 10px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.4);
-  box-sizing: border-box;
-}
-
-.sb-scorebug__main {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.sb-scorebug__team {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  flex: 1 1 0;
-}
-
-.sb-scorebug__team--a {
-  justify-content: flex-end;
-}
-
-.sb-scorebug__team--b {
-  justify-content: flex-start;
-}
-
-.sb-scorebug__uniform {
-  width: 4px;
-  height: 18px;
+.sb-scorebug__board {
+  background: rgba(0, 0, 0, 0.88);
   border-radius: 2px;
-  flex-shrink: 0;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
 }
 
-.sb-scorebug__serve {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #00ff88;
+.sb-scorebug__row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+}
+
+.sb-scorebug__row-sep {
+  height: 2px;
+  background: #333333;
   flex-shrink: 0;
-  box-shadow: 0 0 6px #00ff88, 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
 .sb-scorebug__name {
-  font-size: 15px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 0;
+}
+
+.sb-scorebug__serve {
+  color: #ffffff;
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sb-scorebug__name-text {
+  font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+  min-width: 0;
 }
 
-.sb-scorebug__score {
-  font-size: 22px;
+.sb-scorebug__set {
+  width: 36px;
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111111;
+  color: #ffffff;
+  font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.6);
+  border-radius: 0;
 }
 
-.sb-scorebug__score--special {
-  font-size: 14px;
-  letter-spacing: 0.06em;
+.sb-scorebug__set--active {
+  background: #3a3a3a;
 }
 
-.sb-scorebug__divider {
-  font-size: 18px;
+.sb-scorebug__game {
+  width: 60px;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #222222;
+  color: #ffffff;
+  font-size: 28px;
   font-weight: 700;
-  flex-shrink: 0;
-  opacity: 0.85;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  font-variant-numeric: tabular-nums;
+  border-radius: 0;
+  margin-left: auto;
 }
 
-.sb-scorebug__meta {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+.sb-scorebug__game--active-set {
+  background: #2e2e2e;
+}
+
+.sb-scorebug__game--compact {
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+
+.sb-scorebug__footer {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
   text-align: center;
+}
+
+.sb-scorebug__torneo {
+  font-size: 10px;
+  font-weight: 600;
+  color: #888888;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.sb-scorebug__timer {
+  font-size: 10px;
+  font-weight: 600;
+  color: #888888;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
 }
 
 .sb-scorebug__loading,
@@ -121,7 +147,6 @@ html:has(.sb-scorebug-page) #root {
   font-family: 'Oswald', sans-serif;
   font-size: 14px;
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   background: transparent;
   padding: 8px;
 }
