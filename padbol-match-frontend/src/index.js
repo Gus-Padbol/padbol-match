@@ -1,3 +1,4 @@
+// Padbol Match frontend entry point.
 import './utils/ignoreResizeObserver';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
