@@ -244,6 +244,97 @@ function filterSbPartidosSearch(list, query, max = 20) {
   return sorted.filter((p) => partidoSearchHaystack(p).includes(q)).slice(0, max);
 }
 
+function SbActionIcon({ size = 14, children }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function SbIconPlay({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M7 4v16l13 -8z" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconLink({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M9 15l6 -6" />
+      <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
+      <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconEye({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconTv({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M16 3l-4 4l-4 -4" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconQr({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <path d="M7 7l0 .01" />
+      <path d="M17 7l0 .01" />
+      <path d="M7 17l0 .01" />
+      <path d="M14 14l3 0" />
+      <path d="M20 14l0 .01" />
+      <path d="M14 17l0 3" />
+      <path d="M17 17l3 3" />
+      <path d="M20 17l0 .01" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconBroadcast({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M18.364 19.364a9 9 0 1 0 -12.728 0" />
+      <path d="M15.536 16.536a5 5 0 1 0 -7.072 0" />
+      <path d="M12 13m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconPencil({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+    </SbActionIcon>
+  );
+}
+
 function AdminScoreboardPartidoListItem({
   partido,
   previewPartidoId,
@@ -258,6 +349,7 @@ function AdminScoreboardPartidoListItem({
   const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
   const arbiterPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/admin/scoreboard/${partido.id}`;
   const obsPublicUrl = buildScoreboardObsUrl(partido.id);
+  const verPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/display/${partido.sede_id}/scoreboard/${partido.id}`;
   const obsCopyTitle = t(
     'admin.scoreboard.obsCopyHint',
     'Usá Browser Source en OBS con fondo transparente',
@@ -291,85 +383,110 @@ function AdminScoreboardPartidoListItem({
             {formatScoreboardPartidoFecha(partido.created_at)}
           </p>
         </div>
-        <div className="admin-scoreboard-partidos-list__actions">
+        <div className="admin-sb-actions">
+          <a href={arbiterLink} className="admin-sb-actions__arbitro">
+            <SbIconPlay size={14} />
+            Árbitro
+          </a>
           <button
             type="button"
-            onClick={() => onQr(partido)}
-            className="admin-scoreboard-partidos-list__action-btn"
+            onClick={() => { void copiarLinkPublico(arbiterPublicUrl, 'arbiter'); }}
+            className="admin-sb-actions__arbitro-link"
+            title={t('admin.scoreboard.copyArbiterLink', 'Copiar link árbitro')}
           >
-            📱 {t('admin.scoreboard.qrCourtBtn', 'QR Cancha')}
+            <SbIconLink size={14} />
           </button>
-          <button
-            type="button"
-            onClick={() => onTogglePreview(partido.id)}
-            aria-expanded={isPreviewOpen}
-            className={`admin-scoreboard-partidos-list__action-btn${isPreviewOpen ? ' admin-scoreboard-partidos-list__action-btn--active' : ''}`}
-          >
-            {isPreviewOpen
-              ? t('admin.scoreboard.hidePreview', '👁 Ocultar')
-              : t('admin.scoreboard.showPreview', '👁 Ver')}
-          </button>
-          <span className="admin-scoreboard-partidos-list__action-group">
+
+          <span className="admin-sb-actions__divider" aria-hidden="true" />
+
+          <span className="admin-sb-actions__split">
+            <button
+              type="button"
+              onClick={() => onTogglePreview(partido.id)}
+              aria-expanded={isPreviewOpen}
+              className={`admin-sb-actions__split-main${isPreviewOpen ? ' admin-sb-actions__split-main--active' : ''}`}
+            >
+              <SbIconEye size={14} />
+              {isPreviewOpen
+                ? t('admin.scoreboard.hidePreview', 'Ocultar')
+                : t('admin.scoreboard.showPreview', 'Ver')}
+            </button>
+            <button
+              type="button"
+              onClick={() => { void copiarLinkPublico(verPublicUrl, 'ver'); }}
+              className="admin-sb-actions__split-link"
+              title={t('admin.scoreboard.copyVerLink', 'Copiar link vista pública')}
+            >
+              <SbIconLink size={14} />
+            </button>
+          </span>
+
+          <span className="admin-sb-actions__split">
             <a
               href={tvCanchaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
+              className="admin-sb-actions__split-main"
             >
-              📺 TV
+              <SbIconTv size={14} />
+              TV
             </a>
             <button
               type="button"
               onClick={() => { void copiarLinkPublico(tvCanchaUrl, 'tv'); }}
-              className="admin-scoreboard-partidos-list__copy-btn"
+              className="admin-sb-actions__split-link"
               title={t('admin.scoreboard.copyTvLink', 'Copiar link TV por cancha')}
             >
-              {copiedKey === 'tv' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
+              <SbIconLink size={14} />
             </button>
           </span>
-          <span className="admin-scoreboard-partidos-list__action-group">
-            <a
-              href={arbiterLink}
-              className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
-            >
-              🎮 Árbitro
-            </a>
-            <button
-              type="button"
-              onClick={() => { void copiarLinkPublico(arbiterPublicUrl, 'arbiter'); }}
-              className="admin-scoreboard-partidos-list__copy-btn"
-              title={t('admin.scoreboard.copyArbiterLink', 'Copiar link panel árbitro')}
-            >
-              {copiedKey === 'arbiter' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
-            </button>
-          </span>
-          <span className="admin-scoreboard-partidos-list__action-group">
+
+          <button
+            type="button"
+            onClick={() => onQr(partido)}
+            className="admin-sb-actions__single"
+          >
+            <SbIconQr size={14} />
+            {t('admin.scoreboard.qrBtn', 'QR')}
+          </button>
+
+          <span className="admin-sb-actions__split">
             <a
               href={obsPublicUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="admin-scoreboard-partidos-list__action-btn admin-scoreboard-partidos-list__action-link"
+              className="admin-sb-actions__split-main"
               title={obsCopyTitle}
             >
-              📡 OBS
+              <SbIconBroadcast size={14} />
+              OBS
             </a>
             <button
               type="button"
               onClick={() => { void copiarLinkPublico(obsPublicUrl, 'obs'); }}
-              className="admin-scoreboard-partidos-list__copy-btn"
+              className="admin-sb-actions__split-link"
               title={obsCopyTitle}
             >
-              {copiedKey === 'obs' ? t('admin.scoreboard.copiedShort', '¡Copiado!') : '🔗'}
+              <SbIconLink size={14} />
             </button>
           </span>
+
+          <span className="admin-sb-actions__divider" aria-hidden="true" />
+
           <button
             type="button"
             onClick={() => onEdit(partido.id)}
-            className="admin-scoreboard-partidos-list__action-btn"
+            className="admin-sb-actions__edit"
           >
-            ✏️ Editar
+            <SbIconPencil size={14} />
+            Editar
           </button>
         </div>
+        {copiedKey ? (
+          <div className="admin-sb-toast" role="status">
+            {t('admin.scoreboard.linkCopied', '¡Link copiado!')}
+          </div>
+        ) : null}
       </div>
       {isPreviewOpen ? (
         <AdminScoreboardPartidoPreview

@@ -2132,54 +2132,129 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   min-width: 0;
 }
 
-.admin-scoreboard-partidos-list__actions {
+.admin-sb-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
-.admin-scoreboard-partidos-list__action-btn {
-  padding: 7px 12px;
+.admin-sb-actions__arbitro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8001c;
+  border: none;
   border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  background: var(--bg-input);
-  color: var(--text-primary);
-  font-family: inherit;
-}
-
-.admin-scoreboard-partidos-list__action-btn--active {
-  background: var(--accent);
+  padding: 8px 16px;
   color: #fff;
-  border-color: var(--accent);
-}
-
-.admin-scoreboard-partidos-list__action-link {
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-}
-
-.admin-scoreboard-partidos-list__action-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.admin-scoreboard-partidos-list__copy-btn {
-  padding: 7px 8px;
-  min-width: 36px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  background: var(--bg-input);
-  color: var(--text-primary);
+  text-decoration: none;
   font-family: inherit;
-  line-height: 1;
+}
+
+.admin-sb-actions__arbitro-link {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid #e8001c50;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #e8001c;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-sb-actions__divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 4px;
+}
+
+.admin-sb-actions__split {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.admin-sb-actions__split-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px 0 0 8px;
+  padding: 8px 12px;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.admin-sb-actions__split-main--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.admin-sb-actions__split-link {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding: 8px 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-sb-actions__single {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-sb-actions__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.admin-sb-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #1e293b;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .admin-scoreboard-partidos-list__expand-btn {
