@@ -5617,7 +5617,7 @@ export default function AdminDashboard({
     }
     setReservaManualSaving(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/reservas/manual`, {
+      const res = await fetch(`${apiBaseUrl}/api/reservas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
