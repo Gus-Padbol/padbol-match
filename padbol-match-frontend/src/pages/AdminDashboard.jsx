@@ -5601,14 +5601,30 @@ export default function AdminDashboard({
       setReservaManualError(t('admin.formularios.loginAgainAgain'));
       return;
     }
+    const telefono = String(reservaManualForm.telefono || '').trim() || null;
+    const sedeIdResolved = String(
+      reservaManualForm.sede_id || (esAdminClub && sedeId != null ? sedeId : '') || '',
+    );
+    const sedeRow = sedeIdResolved ? sedesMap[sedeIdResolved] : null;
+    const sedeNombre = String(sedeRow?.nombre || miSede?.nombre || '').trim() || null;
+    const deporte = resolveDeporteKeyReservaAdmin(
+      { cancha: reservaManualForm.cancha },
+      sedeIdResolved,
+      canchasDetallePorSede,
+    ) || 'padbol';
     const payload = {
       sede_id: reservaManualForm.sede_id,
+      sede: sedeNombre,
       cancha: reservaManualForm.cancha,
       fecha: reservaManualForm.fecha,
       hora: reservaManualForm.hora,
       duracion: reservaManualForm.duracion,
       nombre: String(reservaManualForm.nombre || '').trim(),
-      telefono: String(reservaManualForm.telefono || '').trim() || null,
+      telefono,
+      email: 'admin@padbolmatch.com',
+      whatsapp: telefono || '',
+      nivel: 'intermedio',
+      deporte,
       estado: reservaManualForm.estado || 'confirmada',
     };
     if (!payload.sede_id || !payload.cancha || !payload.fecha || !payload.hora || !payload.nombre) {
