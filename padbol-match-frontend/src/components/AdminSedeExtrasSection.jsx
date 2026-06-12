@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ConfirmModal from './ConfirmModal';
+import { supabase } from '../supabaseClient';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /**
@@ -16,6 +17,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
   const [edits, setEdits] = useState({});
   const [editRow, setEditRow] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [uploadingImagen, setUploadingImagen] = useState(null); // 'draft' | 'edit' | null
 
   const load = useCallback(async () => {
     if (!sedeId || !accessToken) {
@@ -59,6 +61,119 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
     if (!s) return null;
     const n = parseInt(s, 10);
     return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+
+  /** Sube imagen al bucket "sponsors" y entrega la URL pública via assign(url). */
+  const subirImagenExtra = async (file, target, assign) => {
+    if (!file) return;
+    if (!String(file.type || '').startsWith('image/')) {
+      setMsg(t('admin.formularios.chooseImageFormats'));
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setMsg(t('admin.formularios.logoMax4mb'));
+      return;
+    }
+    setUploadingImagen(target);
+    setMsg('');
+    const safe = String(file.name || 'extra').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `extras/${sedeId}/${Date.now()}_${safe}`;
+    try {
+      const { data: uploadData, error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+        cacheControl: '3600',
+      });
+      if (upErr) {
+        setMsg(`⚠️ ${upErr.message}`);
+        return;
+      }
+      const filePath = uploadData?.path != null && String(uploadData.path).trim() !== '' ? String(uploadData.path).trim() : path;
+      const { data } = supabase.storage.from('sponsors').getPublicUrl(filePath);
+      const publicUrl = data?.publicUrl != null ? String(data.publicUrl).trim() : '';
+      if (!publicUrl) {
+        setMsg('⚠️ No se obtuvo URL pública de la imagen');
+        return;
+      }
+      assign(publicUrl);
+    } finally {
+      setUploadingImagen(null);
+    }
+  };
+
+  const imagenUploadControl = ({ target, value, onChangeUrl }) => {
+    const busy = uploadingImagen === target;
+    const url = String(value || '').trim();
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+        {url ? (
+          <img
+            src={url}
+            alt=""
+            style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 8,
+              border: '1px dashed var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 22,
+            }}
+          >
+            🏷️
+          </div>
+        )}
+        <label
+          style={{
+            display: 'inline-block',
+            padding: '8px 14px',
+            borderRadius: 8,
+            background: busy ? '#9ca3af' : 'var(--accent)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: busy ? 'wait' : 'pointer',
+          }}
+        >
+          {busy ? '⏳ Subiendo…' : url ? 'Cambiar imagen' : '📤 Subir imagen'}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: 'none' }}
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              void subirImagenExtra(f, target, onChangeUrl);
+            }}
+          />
+        </label>
+        {url ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onChangeUrl('')}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'var(--bg-page)',
+              color: 'var(--text-secondary)',
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: busy ? 'wait' : 'pointer',
+            }}
+          >
+            Quitar
+          </button>
+        ) : null}
+      </div>
+    );
   };
 
   const crear = async () => {
@@ -159,6 +274,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
             descripcion: String(editRow.descripcion || '').trim() || null,
             precio: editRow.precio,
             stock: stockPayload(editRow.stock),
+            imagen_url: String(editRow.imagen_url || '').trim() || null,
           }),
         },
       );
@@ -247,7 +363,16 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
             const pendiente = !row.aprobado_super;
             return (
               <div key={row.id} style={card}>
-                <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>{row.nombre}</div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 4 }}>
+                  {String(row.imagen_url || '').trim() ? (
+                    <img
+                      src={String(row.imagen_url).trim()}
+                      alt=""
+                      style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)', flexShrink: 0 }}
+                    />
+                  ) : null}
+                  <div style={{ fontWeight: 800, fontSize: 15 }}>{row.nombre}</div>
+                </div>
                 {row.descripcion ? (
                   <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--text-secondary)' }}>{row.descripcion}</p>
                 ) : null}
@@ -322,6 +447,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                         descripcion: row.descripcion || '',
                         precio: ed.precio,
                         stock: ed.stock ?? '',
+                        imagen_url: row.imagen_url || '',
                       })
                     }
                     style={{
@@ -432,13 +558,12 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               min={0}
               placeholder="Ilimitado"
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>URL de imagen (opcional)</label>
-            <input
-              className="admin-mi-sede-theme-input"
-              style={{ width: '100%', maxWidth: 360, marginBottom: 12 }}
-              value={draft.imagen_url}
-              onChange={(e) => setDraft((d) => ({ ...d, imagen_url: e.target.value }))}
-            />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Imagen (opcional)</label>
+            {imagenUploadControl({
+              target: 'draft',
+              value: draft.imagen_url,
+              onChangeUrl: (url) => setDraft((d) => ({ ...d, imagen_url: url })),
+            })}
             <button
               type="button"
               disabled={creating}
@@ -529,6 +654,12 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               onChange={(e) => setEditRow((r) => ({ ...r, stock: e.target.value }))}
               inputMode="numeric"
             />
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Imagen (opcional)</label>
+            {imagenUploadControl({
+              target: 'edit',
+              value: editRow.imagen_url,
+              onChangeUrl: (url) => setEditRow((r) => ({ ...r, imagen_url: url })),
+            })}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setEditRow(null)} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
                 Cancelar
