@@ -5607,15 +5607,17 @@ export default function AdminDashboard({
     );
     const sedeRow = sedeIdResolved ? sedesMap[sedeIdResolved] : null;
     const sedeNombre = String(sedeRow?.nombre || miSede?.nombre || '').trim() || null;
+    const selectedCancha = String(reservaManualForm.cancha || '');
+    const canchaNum = parseInt(selectedCancha?.replace(/\D/g, '')) || 1;
     const deporte = resolveDeporteKeyReservaAdmin(
-      { cancha: reservaManualForm.cancha },
+      { cancha: canchaNum },
       sedeIdResolved,
       canchasDetallePorSede,
     ) || 'padbol';
     const payload = {
       sede_id: reservaManualForm.sede_id,
       sede: sedeNombre,
-      cancha: reservaManualForm.cancha,
+      cancha: canchaNum,
       fecha: reservaManualForm.fecha,
       hora: reservaManualForm.hora,
       duracion: reservaManualForm.duracion,
@@ -5627,7 +5629,7 @@ export default function AdminDashboard({
       deporte,
       estado: reservaManualForm.estado || 'confirmada',
     };
-    if (!payload.sede_id || !payload.cancha || !payload.fecha || !payload.hora || !payload.nombre) {
+    if (!payload.sede_id || !selectedCancha || !payload.fecha || !payload.hora || !payload.nombre) {
       setReservaManualError(t('admin.reservas.completeManualBookingFields'));
       return;
     }
