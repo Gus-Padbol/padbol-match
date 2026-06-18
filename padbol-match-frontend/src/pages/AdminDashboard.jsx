@@ -111,7 +111,19 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import i18n from '../i18n';
-import { createPartido, fetchSedes } from '../utils/scoreboardApi';
+import {
+  createPartido,
+  fetchJugadoresTemp,
+  fetchPartido,
+  fetchPartidosBySede,
+  fetchSedes,
+  postJugadorTemp,
+  updatePartido,
+  uploadScoreboardJugadorFoto,
+} from '../utils/scoreboardApi';
+import { isScoreboardSlotEmptyForSave } from '../utils/scoreboardPlayers';
+import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../utils/scoreboardTeamColors';
+import { normalizeUniformColor } from '../utils/scoreboardUniformJersey';
 
 const SCOREBOARD_PUBLIC_BASE = 'https://padbolmatch.com';
 
@@ -137,6 +149,397 @@ function resolveScoreboardJerseyInput(value, fallback) {
   const n = parseInt(raw, 10);
   if (Number.isFinite(n) && n >= 1 && n <= 99) return n;
   return fallback;
+}
+
+function scoreboardColorPickerValue(raw, fallback) {
+  return normalizeUniformColor(raw) || fallback;
+}
+
+function jugadoresScoreboardFromPartido(jugadores, jerseyFields = []) {
+  const list = Array.isArray(jugadores) ? jugadores : [];
+  const bySlot = new Map();
+  list.forEach((j, idx) => {
+    const slot = Number(j?.slot);
+    const key = Number.isFinite(slot) && slot >= 1 && slot <= 4 ? slot : idx + 1;
+    if (key >= 1 && key <= 4) bySlot.set(key, j);
+  });
+  return [1, 2, 3, 4].map((slot) => {
+    const j = bySlot.get(slot) || {};
+    const jerseyFromField = jerseyFields[slot - 1];
+    const jerseyRaw = j.jersey ?? j.numero ?? (
+      jerseyFromField != null && jerseyFromField !== 0 ? jerseyFromField : ''
+    );
+    return {
+      numero: slot,
+      nombre: String(j.nombre ?? j.name ?? '').trim(),
+      jersey: jerseyRaw === '' || jerseyRaw == null ? '' : String(jerseyRaw),
+      foto_url: String(j.foto_url ?? '').trim(),
+    };
+  });
+}
+
+function resolveSlotJerseyForSave(jugador, slot) {
+  if (isScoreboardSlotEmptyForSave(jugador)) return null;
+  const jerseyRaw = String(jugador?.jersey ?? '').trim();
+  if (!jerseyRaw) return null;
+  return resolveScoreboardJerseyInput(jugador?.jersey, slot);
+}
+
+function buildEquipoJugadoresPayload(jugadores) {
+  return (Array.isArray(jugadores) ? jugadores : [])
+    .slice(0, 4)
+    .flatMap((j, idx) => {
+      if (isScoreboardSlotEmptyForSave(j)) return [];
+      const slot = idx + 1;
+      const nombre = String(j?.nombre ?? '').trim();
+      const jerseyRaw = String(j?.jersey ?? '').trim();
+      const payload = { slot, nombre };
+      if (jerseyRaw) {
+        const jersey = resolveScoreboardJerseyInput(j.jersey, slot);
+        payload.numero = jersey;
+        payload.jersey = jersey;
+      }
+      return [payload];
+    });
+}
+
+function mergeJugadoresTempFotos(jugadores, equipoLetter, temps) {
+  const eq = equipoLetter === 'A' ? 'a' : 'b';
+  return jugadores.map((j, idx) => {
+    const slot = idx + 1;
+    const temp = (Array.isArray(temps) ? temps : []).find(
+      (row) => String(row.equipo || '').toLowerCase() === eq && Number(row.slot) === slot,
+    );
+    const fotoUrl = String(temp?.foto_url ?? j.foto_url ?? '').trim();
+    return { ...j, foto_url: fotoUrl };
+  });
+}
+
+function formatScoreboardPartidoFecha(raw) {
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return String(raw);
+  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function sortSbPartidosRecent(list) {
+  return [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+}
+
+function partidoSearchHaystack(partido) {
+  const fecha = formatScoreboardPartidoFecha(partido.created_at);
+  return [
+    String(partido.torneo_nombre || ''),
+    String(partido.equipo_a_nombre || ''),
+    String(partido.equipo_b_nombre || ''),
+    fecha,
+    String(partido.created_at || ''),
+  ].join(' ').toLowerCase();
+}
+
+function filterSbPartidosSearch(list, query, max = 20) {
+  const sorted = sortSbPartidosRecent(list);
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return sorted.slice(0, max);
+  return sorted.filter((p) => partidoSearchHaystack(p).includes(q)).slice(0, max);
+}
+
+function SbActionIcon({ size = 14, children }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+function SbIconPlay({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M7 4v16l13 -8z" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconLink({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M9 15l6 -6" />
+      <path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464" />
+      <path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconEye({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconTv({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M16 3l-4 4l-4 -4" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconQr({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <path d="M7 7l0 .01" />
+      <path d="M17 7l0 .01" />
+      <path d="M7 17l0 .01" />
+      <path d="M14 14l3 0" />
+      <path d="M20 14l0 .01" />
+      <path d="M14 17l0 3" />
+      <path d="M17 17l3 3" />
+      <path d="M20 17l0 .01" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconBroadcast({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M18.364 19.364a9 9 0 1 0 -12.728 0" />
+      <path d="M15.536 16.536a5 5 0 1 0 -7.072 0" />
+      <path d="M12 13m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    </SbActionIcon>
+  );
+}
+
+function SbIconPencil({ size }) {
+  return (
+    <SbActionIcon size={size}>
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+    </SbActionIcon>
+  );
+}
+
+function AdminScoreboardPartidoListItem({
+  partido,
+  previewPartidoId,
+  onTogglePreview,
+  onQr,
+  onEdit,
+  t,
+}) {
+  const [copiedKey, setCopiedKey] = useState('');
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const tvCanchaUrl = buildScoreboardTvCanchaUrl(partido.sede_id, partido.cancha);
+  const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
+  const arbiterPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/admin/scoreboard/${partido.id}`;
+  const obsPublicUrl = buildScoreboardObsUrl(partido.id);
+  const verPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/display/${partido.sede_id}/scoreboard/${partido.id}`;
+  const obsCopyTitle = t(
+    'admin.scoreboard.obsCopyHint',
+    'Usá Browser Source en OBS con fondo transparente',
+  );
+  const torneo = String(partido.torneo_nombre || '').trim();
+  const isPreviewOpen = previewPartidoId === partido.id;
+
+  const copiarLinkPublico = async (url, key) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(''), 2000);
+    } catch {
+      window.prompt('Copiá este link:', url);
+    }
+  };
+
+  return (
+    <li className="admin-scoreboard-partidos-list__item">
+      <div className="admin-scoreboard-partidos-list__item-head">
+        <div className="admin-scoreboard-partidos-list__item-info">
+          {torneo ? (
+            <p className="admin-scoreboard-partidos-list__meta admin-scoreboard-partidos-list__meta--torneo">
+              {torneo}
+            </p>
+          ) : null}
+          <p className="admin-scoreboard-partidos-list__match">
+            {partido.equipo_a_nombre} vs {partido.equipo_b_nombre}
+          </p>
+          <p className="admin-scoreboard-partidos-list__meta">
+            {formatScoreboardPartidoFecha(partido.created_at)}
+          </p>
+        </div>
+        <div className="admin-sb-actions">
+          <a href={arbiterLink} className="admin-sb-actions__arbitro">
+            <SbIconPlay size={14} />
+            Árbitro
+          </a>
+          <button
+            type="button"
+            onClick={() => { void copiarLinkPublico(arbiterPublicUrl, 'arbiter'); }}
+            className="admin-sb-actions__arbitro-link"
+            title={t('admin.scoreboard.copyArbiterLink', 'Copiar link árbitro')}
+          >
+            <SbIconLink size={14} />
+          </button>
+
+          <span className="admin-sb-actions__divider" aria-hidden="true" />
+
+          <span className="admin-sb-actions__split">
+            <button
+              type="button"
+              onClick={() => onTogglePreview(partido.id)}
+              aria-expanded={isPreviewOpen}
+              className={`admin-sb-actions__split-main${isPreviewOpen ? ' admin-sb-actions__split-main--active' : ''}`}
+            >
+              <SbIconEye size={14} />
+              {isPreviewOpen
+                ? t('admin.scoreboard.hidePreview', 'Ocultar')
+                : t('admin.scoreboard.showPreview', 'Ver')}
+            </button>
+            <button
+              type="button"
+              onClick={() => { void copiarLinkPublico(verPublicUrl, 'ver'); }}
+              className="admin-sb-actions__split-link"
+              title={t('admin.scoreboard.copyVerLink', 'Copiar link vista pública')}
+            >
+              <SbIconLink size={14} />
+            </button>
+          </span>
+
+          <span className="admin-sb-actions__split">
+            <a
+              href={tvCanchaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-sb-actions__split-main"
+            >
+              <SbIconTv size={14} />
+              TV
+            </a>
+            <button
+              type="button"
+              onClick={() => { void copiarLinkPublico(tvCanchaUrl, 'tv'); }}
+              className="admin-sb-actions__split-link"
+              title={t('admin.scoreboard.copyTvLink', 'Copiar link TV por cancha')}
+            >
+              <SbIconLink size={14} />
+            </button>
+          </span>
+
+          <button
+            type="button"
+            onClick={() => onQr(partido)}
+            className="admin-sb-actions__single"
+          >
+            <SbIconQr size={14} />
+            {t('admin.scoreboard.qrBtn', 'QR')}
+          </button>
+
+          <span className="admin-sb-actions__split">
+            <a
+              href={obsPublicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-sb-actions__split-main"
+              title={obsCopyTitle}
+            >
+              <SbIconBroadcast size={14} />
+              OBS
+            </a>
+            <button
+              type="button"
+              onClick={() => { void copiarLinkPublico(obsPublicUrl, 'obs'); }}
+              className="admin-sb-actions__split-link"
+              title={obsCopyTitle}
+            >
+              <SbIconLink size={14} />
+            </button>
+          </span>
+
+          <span className="admin-sb-actions__divider" aria-hidden="true" />
+
+          <button
+            type="button"
+            onClick={() => onEdit(partido.id)}
+            className="admin-sb-actions__edit"
+          >
+            <SbIconPencil size={14} />
+            Editar
+          </button>
+        </div>
+        {copiedKey ? (
+          <div className="admin-sb-toast" role="status">
+            {t('admin.scoreboard.linkCopied', '¡Link copiado!')}
+          </div>
+        ) : null}
+      </div>
+      {isPreviewOpen ? (
+        <AdminScoreboardPartidoPreview
+          partido={partido}
+          onEdit={onEdit}
+        />
+      ) : null}
+    </li>
+  );
+}
+
+function buildScoreboardPartidoBody({
+  sede_id,
+  sbTorneoNombre,
+  sbTorneoLogoUrl,
+  sbCancha,
+  sbEquipoA,
+  sbEquipoB,
+  sbJugadoresA,
+  sbJugadoresB,
+  sbUniformA1,
+  sbUniformA2,
+  sbUniformB1,
+  sbUniformB2,
+}) {
+  const colorUniformeA1 = normalizeUniformColor(sbUniformA1);
+  const colorUniformeA2 = normalizeUniformColor(sbUniformA2);
+  const colorUniformeB1 = normalizeUniformColor(sbUniformB1);
+  const colorUniformeB2 = normalizeUniformColor(sbUniformB2);
+  return {
+    sede_id,
+    torneo_nombre: sbTorneoNombre.trim() || null,
+    logo_torneo_url: sbTorneoLogoUrl ? String(sbTorneoLogoUrl).trim() : null,
+    cancha: sbCancha.trim() || null,
+    equipo_a_nombre: sbEquipoA.trim(),
+    equipo_b_nombre: sbEquipoB.trim(),
+    equipo_a_jugadores: buildEquipoJugadoresPayload(sbJugadoresA),
+    equipo_b_jugadores: buildEquipoJugadoresPayload(sbJugadoresB),
+    jersey_a1: resolveSlotJerseyForSave(sbJugadoresA[0], 1),
+    jersey_a2: resolveSlotJerseyForSave(sbJugadoresA[1], 2),
+    jersey_a3: resolveSlotJerseyForSave(sbJugadoresA[2], 3),
+    jersey_a4: resolveSlotJerseyForSave(sbJugadoresA[3], 4),
+    jersey_b1: resolveSlotJerseyForSave(sbJugadoresB[0], 1),
+    jersey_b2: resolveSlotJerseyForSave(sbJugadoresB[1], 2),
+    jersey_b3: resolveSlotJerseyForSave(sbJugadoresB[2], 3),
+    jersey_b4: resolveSlotJerseyForSave(sbJugadoresB[3], 4),
+    color_uniforme_a1: colorUniformeA1,
+    color_uniforme_a2: colorUniformeA2,
+    color_uniforme_b1: colorUniformeB1,
+    color_uniforme_b2: colorUniformeB2,
+    color_a: colorUniformeA1 || DEFAULT_SCOREBOARD_COLOR_A,
+    color_b: colorUniformeB1 || DEFAULT_SCOREBOARD_COLOR_B,
+  };
 }
 
 const STRIPE_PUBLISHABLE_ADMIN =
@@ -414,13 +817,84 @@ function precioDuracionInputDisplay(raw) {
   return n != null ? Number(n).toLocaleString('es-AR') : '';
 }
 
-function surgeConfigBandError(cfg) {
-  const min = parsePrecioDuracionField(cfg?.precio_minimo);
-  const max = parsePrecioDuracionField(cfg?.precio_maximo);
-  if (min != null && max != null && max <= min) {
-    return 'El precio máximo debe ser mayor al mínimo';
+function parseSurgePctField(raw, { min = 0, max = 100, fallback = 0 } = {}) {
+  if (raw === '' || raw == null) return fallback;
+  const n = parseInt(String(raw).replace(/\D/g, ''), 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function parseSurgeActivo(raw) {
+  return raw === true || raw === 'true' || raw === 1 || raw === '1';
+}
+
+function surgeConfigFromApiRow(row) {
+  const dep = String(row?.deporte || '').trim().toLowerCase();
+  if (!dep) return null;
+  return {
+    deporte: dep,
+    config: defaultSurgeConfig({
+      activo: parseSurgeActivo(row.activo),
+      descuento_max_pct:
+        row.descuento_max_pct != null ? String(row.descuento_max_pct) : '20',
+      aumento_max_pct:
+        row.aumento_max_pct != null ? String(row.aumento_max_pct) : '40',
+    }),
+  };
+}
+
+function buildSurgeConfigsFromApi(configs) {
+  const map = {};
+  for (const { key } of DEPORTES_CANCHA_SEDE_OPTIONS) {
+    map[key] = defaultSurgeConfig();
   }
+  for (const row of Array.isArray(configs) ? configs : []) {
+    const parsed = surgeConfigFromApiRow(row);
+    if (parsed && map[parsed.deporte] != null) {
+      map[parsed.deporte] = parsed.config;
+    }
+  }
+  return map;
+}
+
+function extractSurgeDeportesFromCanchas(canchas) {
+  const list = Array.isArray(canchas) ? canchas : [];
+  const deportes = [...new Set(list.map((c) => c.deporte).filter(Boolean))];
+  console.log('Surge deportes from canchas:', deportes);
+  return deportes.map((raw) => String(raw).trim().toLowerCase()).filter(Boolean);
+}
+
+function surgeDeporteRowsFromCanchas(canchas) {
+  const deportes = extractSurgeDeportesFromCanchas(canchas);
+  const labelByKey = Object.fromEntries(DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => [o.key, o.label]));
+  return deportes.map((key) => ({
+    key,
+    label: labelByKey[key] || key.charAt(0).toUpperCase() + key.slice(1),
+  }));
+}
+
+function defaultSurgeConfig(overrides = {}) {
+  return {
+    activo: false,
+    descuento_max_pct: '20',
+    aumento_max_pct: '40',
+    ...overrides,
+  };
+}
+
+function surgeConfigBandError() {
   return null;
+}
+
+function formatSurgePricePreview(baseRaw, descuentoPctRaw, aumentoPctRaw) {
+  const base = parsePrecioDuracionField(baseRaw);
+  if (base == null) return null;
+  const desc = parseSurgePctField(descuentoPctRaw, { min: 0, max: 50, fallback: 20 });
+  const aum = parseSurgePctField(aumentoPctRaw, { min: 0, max: 100, fallback: 40 });
+  const min = Math.round(base * (1 - desc / 100));
+  const max = Math.round(base * (1 + aum / 100));
+  const fmt = (n) => Number(n).toLocaleString('es-AR');
+  return `90 min: $${fmt(base)} → entre $${fmt(min)} y $${fmt(max)}`;
 }
 
 /** Body para PATCH /api/sedes/:id (campos alineados con el panel). */
@@ -2246,14 +2720,24 @@ export default function AdminDashboard({
   const [sbCancha, setSbCancha] = useState('');
   const [sbEquipoA, setSbEquipoA] = useState('');
   const [sbEquipoB, setSbEquipoB] = useState('');
-  const [sbColorA, setSbColorA] = useState('#1a3a6e');
-  const [sbColorB, setSbColorB] = useState('#6e1a1a');
+  const [sbUniformA1, setSbUniformA1] = useState(DEFAULT_SCOREBOARD_COLOR_A);
+  const [sbUniformA2, setSbUniformA2] = useState('');
+  const [sbUniformB1, setSbUniformB1] = useState(DEFAULT_SCOREBOARD_COLOR_B);
+  const [sbUniformB2, setSbUniformB2] = useState('');
   const [sbJugadoresA, setSbJugadoresA] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
   const [sbJugadoresB, setSbJugadoresB] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
   const [sbCreating, setSbCreating] = useState(false);
   const [sbError, setSbError] = useState('');
   const [sbCreated, setSbCreated] = useState(null);
   const [sbCopied, setSbCopied] = useState('');
+  const [sbEditingId, setSbEditingId] = useState(null);
+  const [sbJugadorFotoUploading, setSbJugadorFotoUploading] = useState(null);
+  const [sbPreviewPartidoId, setSbPreviewPartidoId] = useState(null);
+  const [sbQrPartido, setSbQrPartido] = useState(null);
+  const [sbPartidosList, setSbPartidosList] = useState([]);
+  const [sbPartidosLoading, setSbPartidosLoading] = useState(false);
+  const [sbPartidosError, setSbPartidosError] = useState('');
+  const [sbPartidosRefreshKey, setSbPartidosRefreshKey] = useState(0);
   const [sbPartidosExpanded, setSbPartidosExpanded] = useState(false);
   const [sbPartidosSearch, setSbPartidosSearch] = useState('');
   const [scoreboardSedes, setScoreboardSedes] = useState([]);
@@ -5117,14 +5601,32 @@ export default function AdminDashboard({
       setReservaManualError(t('admin.formularios.loginAgainAgain'));
       return;
     }
+    const telefono = String(reservaManualForm.telefono || '').trim() || null;
+    const sedeIdResolved = String(
+      reservaManualForm.sede_id || (esAdminClub && sedeId != null ? sedeId : '') || '',
+    );
+    const sedeRow = sedeIdResolved ? sedesMap[sedeIdResolved] : null;
+    const sedeNombre = String(sedeRow?.nombre || miSede?.nombre || '').trim() || null;
+    const selectedCancha = String(reservaManualForm.cancha || '');
+    const canchaNum = parseInt(selectedCancha?.replace(/\D/g, '')) || 1;
+    const deporte = resolveDeporteKeyReservaAdmin(
+      { cancha: canchaNum },
+      sedeIdResolved,
+      canchasDetallePorSede,
+    ) || 'padbol';
     const payload = {
       sede_id: reservaManualForm.sede_id,
-      cancha: reservaManualForm.cancha,
+      sede: sedeNombre,
+      cancha: canchaNum,
       fecha: reservaManualForm.fecha,
       hora: reservaManualForm.hora,
       duracion: reservaManualForm.duracion,
       nombre: String(reservaManualForm.nombre || '').trim(),
-      telefono: String(reservaManualForm.telefono || '').trim() || null,
+      telefono,
+      email: 'admin@padbolmatch.com',
+      whatsapp: telefono || '',
+      nivel: 'intermedio',
+      deporte,
       estado: reservaManualForm.estado || 'confirmada',
     };
     if (!payload.sede_id || !selectedCancha || !payload.fecha || !payload.hora || !payload.nombre) {
@@ -5133,7 +5635,7 @@ export default function AdminDashboard({
     }
     setReservaManualSaving(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/reservas/manual`, {
+      const res = await fetch(`${apiBaseUrl}/api/reservas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -5196,6 +5698,10 @@ export default function AdminDashboard({
   const [franjasMsg, setFranjasMsg] = useState('');
   const [franjaDraft, setFranjaDraft] = useState({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
   const [franjaSaving, setFranjaSaving] = useState(false);
+  const [surgeCanchasList, setSurgeCanchasList] = useState([]);
+  const [surgeCanchasReady, setSurgeCanchasReady] = useState(false);
+  const [surgeSaveAllBusy, setSurgeSaveAllBusy] = useState(false);
+  const [surgeSaveMsg, setSurgeSaveMsg] = useState('');
   const [miSedeDuraciones, setMiSedeDuraciones] = useState([]);
   const [miSedeDuracionesLoading, setMiSedeDuracionesLoading] = useState(false);
   const [miSedeDuracionesMsg, setMiSedeDuracionesMsg] = useState('');
@@ -5374,35 +5880,50 @@ export default function AdminDashboard({
 
   useEffect(() => {
     if (!sedeId || !session?.access_token) {
-      setSurgeConfigs({});
+      setSurgeConfigs(buildSurgeConfigsFromApi([]));
+      setSurgeCanchasList([]);
+      setSurgeCanchasReady(false);
       setFranjasPrecios([]);
       return undefined;
     }
     let cancelled = false;
     loadFranjasPrecios(sedeId);
-    fetch(`${apiBaseUrl}/api/surge-config/${encodeURIComponent(String(sedeId))}`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const headers = { Authorization: `Bearer ${session.access_token}` };
+    const loadCanchasForSurge = async () => {
+      try {
+        const res = await fetch(
+          `${apiBaseUrl}/api/canchas?sede_id=${encodeURIComponent(String(sedeId))}`,
+          { headers },
+        );
+        const response = await res.json().catch(() => ({}));
+        if (!res.ok) return [];
+        const canchas = Array.isArray(response?.canchas) ? response.canchas : [];
+        return canchas;
+      } catch {
+        return [];
+      }
+    };
+
+    setSurgeCanchasReady(false);
+    Promise.all([
+      fetch(`${apiBaseUrl}/api/surge-config/${encodeURIComponent(String(sedeId))}`, { headers }).then((r) => r.json()),
+      loadCanchasForSurge(),
+    ])
+      .then(([surgeData, canchasList]) => {
         if (cancelled) return;
-        const map = {};
-        for (const row of Array.isArray(d.configs) ? d.configs : []) {
-          const dep = String(row.deporte || '').trim().toLowerCase();
-          if (!dep) continue;
-          map[dep] = {
-            activo: row.activo === true,
-            precio_minimo: row.precio_minimo != null ? String(row.precio_minimo) : '',
-            precio_maximo: row.precio_maximo != null ? String(row.precio_maximo) : '',
-          };
-        }
-        setSurgeConfigs(map);
+        setSurgeConfigs(buildSurgeConfigsFromApi(surgeData?.configs));
+        setSurgeCanchasList(Array.isArray(canchasList) ? canchasList : []);
+        setSurgeCanchasReady(true);
       })
       .catch(() => {
-        if (!cancelled) setSurgeConfigs({});
+        if (!cancelled) {
+          setSurgeConfigs(buildSurgeConfigsFromApi([]));
+          setSurgeCanchasList([]);
+          setSurgeCanchasReady(true);
+        }
       });
     return () => { cancelled = true; };
-  }, [sedeId, session?.access_token, loadFranjasPrecios]);
+  }, [sedeId, session?.access_token, apiBaseUrl, loadFranjasPrecios]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId) return;
@@ -5759,14 +6280,19 @@ export default function AdminDashboard({
   };
 
 
-  const persistSurgeConfigDeporte = async (deporteKey, cfgOverride) => {
-    if (!sedeId || !session?.access_token) return;
-    const cfg = cfgOverride ?? surgeConfigs[deporteKey] ?? { activo: false, precio_minimo: '', precio_maximo: '' };
-    if (surgeConfigBandError(cfg)) return;
-    const minimo = parsePrecioDuracionField(cfg.precio_minimo);
-    const maximo = parsePrecioDuracionField(cfg.precio_maximo);
-    if (cfg.activo && (minimo == null || maximo == null || maximo <= minimo)) return;
-    setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: true }));
+  const surgeDeportesOptions = useMemo(
+    () => surgeDeporteRowsFromCanchas(surgeCanchasList),
+    [surgeCanchasList],
+  );
+
+  const persistSurgeConfigDeporte = async (deporteKey, cfgOverride, { trackSaving = true } = {}) => {
+    if (!sedeId || !session?.access_token) return false;
+    const cfg = cfgOverride ?? surgeConfigs[deporteKey] ?? defaultSurgeConfig();
+    if (surgeConfigBandError(cfg)) return false;
+    const activo = parseSurgeActivo(cfg.activo);
+    const descuentoMaxPct = parseSurgePctField(cfg.descuento_max_pct, { min: 0, max: 50, fallback: 20 });
+    const aumentoMaxPct = parseSurgePctField(cfg.aumento_max_pct, { min: 0, max: 100, fallback: 40 });
+    if (trackSaving) setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: true }));
     try {
       const res = await fetch(`${apiBaseUrl}/api/surge-config`, {
         method: 'POST',
@@ -5777,28 +6303,38 @@ export default function AdminDashboard({
         body: JSON.stringify({
           sede_id: Number(sedeId),
           deporte: deporteKey,
-          precio_minimo: minimo ?? 0,
-          precio_maximo: maximo ?? 0,
-          activo: !!cfg.activo,
+          activo,
+          descuento_max_pct: descuentoMaxPct,
+          aumento_max_pct: aumentoMaxPct,
         }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return;
-      const saved = data.config;
-      if (saved) {
-        setSurgeConfigs((prev) => ({
-          ...prev,
-          [deporteKey]: {
-            activo: saved.activo === true,
-            precio_minimo: saved.precio_minimo != null ? String(saved.precio_minimo) : '',
-            precio_maximo: saved.precio_maximo != null ? String(saved.precio_maximo) : '',
-          },
-        }));
-      }
+      return res.ok;
     } catch {
-      // auto-save silencioso
+      return false;
     } finally {
-      setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: false }));
+      if (trackSaving) setSurgeConfigSaving((s) => ({ ...s, [deporteKey]: false }));
+    }
+  };
+
+  const guardarSurgeConfigs = async () => {
+    if (!sedeId || !session?.access_token || surgeDeportesOptions.length === 0) return;
+    setSurgeSaveAllBusy(true);
+    setSurgeSaveMsg('');
+    try {
+      const results = await Promise.all(
+        surgeDeportesOptions.map(({ key }) =>
+          persistSurgeConfigDeporte(key, surgeConfigs[key], { trackSaving: false }),
+        ),
+      );
+      if (results.every(Boolean)) {
+        setSurgeSaveMsg('✅ Surge guardado');
+        setTimeout(() => setSurgeSaveMsg(''), 3000);
+      } else {
+        setSurgeSaveMsg('⚠️ No se pudo guardar Surge');
+        setTimeout(() => setSurgeSaveMsg(''), 5000);
+      }
+    } finally {
+      setSurgeSaveAllBusy(false);
     }
   };
 
@@ -6795,6 +7331,197 @@ export default function AdminDashboard({
     void fetchScoreboardSedes();
   }, [activeTab, puedeVerScoreboard, fetchScoreboardSedes]);
 
+  const refreshScoreboardPartidos = useCallback(() => {
+    setSbPartidosRefreshKey((n) => n + 1);
+  }, []);
+
+  const sbPartidosSorted = useMemo(
+    () => sortSbPartidosRecent(sbPartidosList),
+    [sbPartidosList],
+  );
+  const sbPartidosRecentVisible = useMemo(
+    () => sbPartidosSorted.slice(0, 3),
+    [sbPartidosSorted],
+  );
+  const sbPartidosSearchResults = useMemo(
+    () => filterSbPartidosSearch(sbPartidosList, sbPartidosSearch, 20),
+    [sbPartidosList, sbPartidosSearch],
+  );
+  const sbPartidosSearchHasMore = useMemo(() => {
+    const sorted = sortSbPartidosRecent(sbPartidosList);
+    const q = String(sbPartidosSearch || '').trim().toLowerCase();
+    if (!q) return sorted.length > 20;
+    return sorted.filter((p) => partidoSearchHaystack(p).includes(q)).length > 20;
+  }, [sbPartidosList, sbPartidosSearch]);
+
+  useEffect(() => {
+    setSbPartidosExpanded(false);
+    setSbPartidosSearch('');
+  }, [sbSedeId]);
+
+  useEffect(() => {
+    if (!puedeVerScoreboard || activeTab !== 'scoreboard') return undefined;
+    const sede_id = parseInt(sbSedeId, 10);
+    if (!Number.isFinite(sede_id) || sede_id <= 0) {
+      setSbPartidosList([]);
+      setSbPartidosError('');
+      setSbPartidosLoading(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setSbPartidosLoading(true);
+    setSbPartidosError('');
+    fetchPartidosBySede(sede_id)
+      .then((list) => {
+        if (!cancelled) setSbPartidosList(list);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setSbPartidosList([]);
+          setSbPartidosError(err?.message || 'Error al cargar partidos');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setSbPartidosLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab, puedeVerScoreboard, sbSedeId, sbPartidosRefreshKey]);
+
+  const resetScoreboardForm = useCallback(() => {
+    setSbEditingId(null);
+    setSbTorneoNombre('');
+    setSbTorneoLogoUrl('');
+    setSbTorneoLogoFile(null);
+    setSbTorneoLogoPreview('');
+    setSbCancha('');
+    setSbEquipoA('');
+    setSbEquipoB('');
+    setSbUniformA1(DEFAULT_SCOREBOARD_COLOR_A);
+    setSbUniformA2('');
+    setSbUniformB1(DEFAULT_SCOREBOARD_COLOR_B);
+    setSbUniformB2('');
+    setSbJugadoresA(SCOREBOARD_JUGADORES_VACIOS());
+    setSbJugadoresB(SCOREBOARD_JUGADORES_VACIOS());
+    setSbJugadorFotoUploading(null);
+    setSbError('');
+  }, []);
+
+  const toggleSbPartidoPreview = useCallback((partidoId) => {
+    setSbPreviewPartidoId((prev) => (prev === partidoId ? null : partidoId));
+  }, []);
+
+  const loadScoreboardFormForEdit = useCallback(async (partidoId) => {
+    setSbError('');
+    setSbPreviewPartidoId(null);
+    try {
+      const partido = await fetchPartido(partidoId);
+      setSbEditingId(partido.id);
+      setSbTorneoNombre(partido.torneo_nombre || '');
+      const logoUrl = String(partido.logo_torneo_url || '').trim();
+      setSbTorneoLogoUrl(logoUrl);
+      setSbTorneoLogoFile(null);
+      setSbTorneoLogoPreview(logoUrl);
+      setSbSedeId(String(partido.sede_id ?? sbSedeId));
+      setSbCancha(partido.cancha || '');
+      setSbEquipoA(partido.equipo_a_nombre || '');
+      setSbEquipoB(partido.equipo_b_nombre || '');
+      setSbUniformA1(partido.color_uniforme_a1 || partido.color_a || DEFAULT_SCOREBOARD_COLOR_A);
+      setSbUniformA2(partido.color_uniforme_a2 || '');
+      setSbUniformB1(partido.color_uniforme_b1 || partido.color_b || DEFAULT_SCOREBOARD_COLOR_B);
+      setSbUniformB2(partido.color_uniforme_b2 || '');
+      const jugadoresA = jugadoresScoreboardFromPartido(
+        partido.equipo_a_jugadores,
+        [partido.jersey_a1, partido.jersey_a2, partido.jersey_a3, partido.jersey_a4],
+      );
+      const jugadoresB = jugadoresScoreboardFromPartido(
+        partido.equipo_b_jugadores,
+        [partido.jersey_b1, partido.jersey_b2, partido.jersey_b3, partido.jersey_b4],
+      );
+      let temps = [];
+      try {
+        temps = await fetchJugadoresTemp(partido.id);
+      } catch {
+        temps = [];
+      }
+      setSbJugadoresA(mergeJugadoresTempFotos(jugadoresA, 'A', temps));
+      setSbJugadoresB(mergeJugadoresTempFotos(jugadoresB, 'B', temps));
+      setSbCreated(null);
+      if (typeof document !== 'undefined') {
+        document.getElementById('admin-scoreboard-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch (err) {
+      setSbError(err?.message || 'No se pudo cargar el partido');
+    }
+  }, [sbSedeId]);
+
+  const resolveSbJugadorNombre = (jugador) => String(jugador?.nombre || '').trim();
+
+  const saveSbJugadorFotoViaApi = async (equipo, index, fotoUrl) => {
+    if (!sbEditingId) {
+      setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores'));
+      return;
+    }
+    const equipoApi = equipo === 'A' ? 'a' : 'b';
+    const slot = index + 1;
+    const jugadores = equipo === 'A' ? sbJugadoresA : sbJugadoresB;
+    const jugador = jugadores[index];
+    const nombre = resolveSbJugadorNombre(jugador);
+    if (!nombre) {
+      setSbError(t('admin.scoreboard.playerNameRequiredForPhoto', 'Ingresá el nombre del jugador antes de subir una foto'));
+      return;
+    }
+    await postJugadorTemp({
+      partido_id: sbEditingId,
+      equipo: equipoApi,
+      slot,
+      nombre,
+      numero: resolveScoreboardJerseyInput(jugador?.jersey, slot),
+      foto_url: fotoUrl ? String(fotoUrl).trim() : null,
+    }, session?.access_token);
+    const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
+    setter((prev) => prev.map((row, i) => (
+      i === index ? { ...row, foto_url: fotoUrl ? String(fotoUrl).trim() : '' } : row
+    )));
+  };
+
+  const handleSbJugadorFotoUpload = async (equipo, index, file) => {
+    if (!file || !sbEditingId) {
+      if (!sbEditingId) {
+        setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores'));
+      }
+      return;
+    }
+    const uploadKey = `${equipo}-${index}`;
+    setSbJugadorFotoUploading(uploadKey);
+    setSbError('');
+    try {
+      const equipoApi = equipo === 'A' ? 'a' : 'b';
+      const slot = index + 1;
+      const fotoUrl = await uploadScoreboardJugadorFoto(file, sbEditingId, equipoApi, slot);
+      if (!fotoUrl) {
+        throw new Error(t('admin.scoreboard.playerPhotoUploadError', 'No se pudo obtener la URL de la foto'));
+      }
+      await saveSbJugadorFotoViaApi(equipo, index, fotoUrl);
+    } catch (err) {
+      setSbError(err?.message || t('admin.scoreboard.playerPhotoUploadError', 'No se pudo subir la foto del jugador'));
+    } finally {
+      setSbJugadorFotoUploading(null);
+    }
+  };
+
+  const handleSbJugadorFotoRemove = async (equipo, index) => {
+    const uploadKey = `${equipo}-${index}`;
+    setSbJugadorFotoUploading(uploadKey);
+    setSbError('');
+    try {
+      await saveSbJugadorFotoViaApi(equipo, index, null);
+    } catch (err) {
+      setSbError(err?.message || t('admin.scoreboard.playerPhotoRemoveError', 'No se pudo quitar la foto del jugador'));
+    } finally {
+      setSbJugadorFotoUploading(null);
+    }
+  };
+
   const updateSbJugador = (equipo, index, nombre) => {
     const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
     setter((prev) => prev.map((j, i) => (i === index ? { ...j, nombre } : j)));
@@ -6847,7 +7574,7 @@ export default function AdminDashboard({
     }
   };
 
-  const crearPartidoScoreboard = async (e) => {
+  const guardarPartidoScoreboard = async (e) => {
     e.preventDefault();
     setSbError('');
     setSbCreated(null);
@@ -6866,40 +7593,66 @@ export default function AdminDashboard({
       return;
     }
 
+    let finalTorneoLogoUrl = sbTorneoLogoUrl ? String(sbTorneoLogoUrl).trim() : null;
+    if (sbTorneoLogoFile) {
+      try {
+        const ext = (sbTorneoLogoFile.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = `torneos/${sbEditingId || `sede-${sede_id}`}-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('scoreboard-fotos').upload(path, sbTorneoLogoFile, {
+          upsert: true,
+          contentType: sbTorneoLogoFile.type || 'image/jpeg',
+        });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from('scoreboard-fotos').getPublicUrl(path);
+        finalTorneoLogoUrl = pub?.publicUrl || finalTorneoLogoUrl;
+      } catch (uploadErr) {
+        setSbError(uploadErr?.message || t('admin.scoreboard.torneoLogoUploadError', 'No se pudo subir el logo del torneo'));
+        return;
+      }
+    }
+
+    const body = buildScoreboardPartidoBody({
+      sede_id,
+      sbTorneoNombre,
+      sbTorneoLogoUrl: finalTorneoLogoUrl,
+      sbCancha,
+      sbEquipoA,
+      sbEquipoB,
+      sbJugadoresA,
+      sbJugadoresB,
+      sbUniformA1,
+      sbUniformA2,
+      sbUniformB1,
+      sbUniformB2,
+    });
+
     setSbCreating(true);
+    const wasEditing = Boolean(sbEditingId);
     try {
-      const partido = await createPartido({
-        sede_id,
-        torneo_nombre: sbTorneoNombre.trim() || null,
-        cancha: sbCancha.trim() || null,
-        equipo_a_nombre: sbEquipoA.trim(),
-        equipo_b_nombre: sbEquipoB.trim(),
-        equipo_a_jugadores: sbJugadoresA.map((j, idx) => ({
-          numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
-        })),
-        equipo_b_jugadores: sbJugadoresB.map((j, idx) => ({
-          numero: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          jersey: resolveScoreboardJerseyInput(j.jersey, idx + 1),
-          nombre: j.nombre.trim() || `Jugador ${idx + 1}`,
-        })),
-        jersey_a1: resolveScoreboardJerseyInput(sbJugadoresA[0]?.jersey, 1),
-        jersey_a2: resolveScoreboardJerseyInput(sbJugadoresA[1]?.jersey, 2),
-        jersey_a3: resolveScoreboardJerseyInput(sbJugadoresA[2]?.jersey, 3),
-        jersey_a4: resolveScoreboardJerseyInput(sbJugadoresA[3]?.jersey, 4),
-        jersey_b1: resolveScoreboardJerseyInput(sbJugadoresB[0]?.jersey, 1),
-        jersey_b2: resolveScoreboardJerseyInput(sbJugadoresB[1]?.jersey, 2),
-        jersey_b3: resolveScoreboardJerseyInput(sbJugadoresB[2]?.jersey, 3),
-        jersey_b4: resolveScoreboardJerseyInput(sbJugadoresB[3]?.jersey, 4),
-        color_a: sbColorA,
-        color_b: sbColorB,
-      });
-      setSbCreated({ id: partido.id, sede_id: partido.sede_id });
-      setMensajeExito(t('admin.scoreboard.created', '✅ Partido de scoreboard creado'));
-      setTimeout(() => setMensajeExito(''), 4000);
+      const partido = wasEditing
+        ? await updatePartido(sbEditingId, body)
+        : await createPartido(body);
+      if (wasEditing) {
+        resetScoreboardForm();
+        setMensajeExito(t('admin.scoreboard.savedOk', '✅ Cambios guardados correctamente'));
+        refreshScoreboardPartidos();
+        setTimeout(() => setMensajeExito(''), 3000);
+        if (typeof document !== 'undefined') {
+          requestAnimationFrame(() => {
+            document.getElementById('admin-scoreboard-partidos-list')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+          });
+        }
+      } else {
+        setSbCreated({ id: partido.id, sede_id: partido.sede_id });
+        setMensajeExito(t('admin.scoreboard.created', '✅ Partido de scoreboard creado'));
+        refreshScoreboardPartidos();
+        setTimeout(() => setMensajeExito(''), 4000);
+      }
     } catch (err) {
-      setSbError(err.message || t('admin.scoreboard.createError', 'Error al crear el partido'));
+      setSbError(err.message || t('admin.scoreboard.createError', 'Error al guardar el partido'));
     } finally {
       setSbCreating(false);
     }
@@ -10712,15 +11465,30 @@ export default function AdminDashboard({
           </p>
 
           <form
-            onSubmit={crearPartidoScoreboard}
+            id="admin-scoreboard-form"
+            onSubmit={guardarPartidoScoreboard}
             style={{
               background: 'var(--bg-card)',
               borderRadius: '12px',
               padding: '20px',
               maxWidth: '720px',
-              border: '1px solid var(--border)',
+              border: `1px solid ${sbEditingId ? 'var(--accent)' : 'var(--border)'}`,
             }}
           >
+            {sbEditingId ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                <p style={{ margin: 0, fontWeight: 700, color: 'var(--accent)' }}>
+                  {t('admin.scoreboard.editing', 'Editando partido')} #{sbEditingId}
+                </p>
+                <button
+                  type="button"
+                  onClick={resetScoreboardForm}
+                  style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                >
+                  {t('admin.scoreboard.cancelEdit', 'Cancelar edición')}
+                </button>
+              </div>
+            ) : null}
             <div style={{ display: 'grid', gap: '14px', marginBottom: '18px' }}>
               <label style={{ display: 'grid', gap: '6px' }}>
                 <span style={{ fontWeight: 600, fontSize: '14px' }}>
@@ -10830,25 +11598,92 @@ export default function AdminDashboard({
               </label>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '18px' }}>
-              <label style={{ display: 'grid', gap: '6px' }}>
-                <span style={{ fontWeight: 600, fontSize: '14px' }}>{t('admin.scoreboard.colorA', 'Color Equipo A')}</span>
-                <input
-                  type="color"
-                  value={sbColorA}
-                  onChange={(e) => setSbColorA(e.target.value)}
-                  style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
-                />
-              </label>
-              <label style={{ display: 'grid', gap: '6px' }}>
-                <span style={{ fontWeight: 600, fontSize: '14px' }}>{t('admin.scoreboard.colorB', 'Color Equipo B')}</span>
-                <input
-                  type="color"
-                  value={sbColorB}
-                  onChange={(e) => setSbColorB(e.target.value)}
-                  style={{ width: '100%', height: '42px', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
-                />
-              </label>
+            <div style={{ display: 'grid', gap: '10px', marginBottom: '18px' }}>
+              {[
+                {
+                  equipo: 'A',
+                  color1: sbUniformA1,
+                  color2: sbUniformA2,
+                  setColor1: setSbUniformA1,
+                  setColor2: setSbUniformA2,
+                  fallback1: DEFAULT_SCOREBOARD_COLOR_A,
+                },
+                {
+                  equipo: 'B',
+                  color1: sbUniformB1,
+                  color2: sbUniformB2,
+                  setColor1: setSbUniformB1,
+                  setColor2: setSbUniformB2,
+                  fallback1: DEFAULT_SCOREBOARD_COLOR_B,
+                },
+              ].map(({ equipo, color1, color2, setColor1, setColor2, fallback1 }) => (
+                <div
+                  key={equipo}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <span style={{ fontWeight: 700, fontSize: '13px', minWidth: '72px', flexShrink: 0 }}>
+                    {t('admin.scoreboard.uniformTeam', 'Uniforme Equipo')} {equipo}
+                  </span>
+                  <input
+                    type="color"
+                    value={scoreboardColorPickerValue(color1, fallback1)}
+                    onChange={(e) => setColor1(e.target.value)}
+                    aria-label={`${t('admin.scoreboard.uniformColor1', 'Color 1')} ${equipo}`}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      padding: '2px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                    {t('admin.scoreboard.uniformColor1', 'Color 1')}
+                  </span>
+                  <input
+                    type="color"
+                    value={scoreboardColorPickerValue(color2, '#ffffff')}
+                    onChange={(e) => setColor2(e.target.value)}
+                    aria-label={`${t('admin.scoreboard.uniformColor2', 'Color 2')} ${equipo}`}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      padding: '2px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                    {t('admin.scoreboard.uniformColor2', 'Color 2')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setColor2('')}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {t('admin.scoreboard.clearColor', 'Limpiar')}
+                  </button>
+                </div>
+              ))}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '18px' }}>
@@ -10883,16 +11718,25 @@ export default function AdminDashboard({
                       {t('admin.scoreboard.playersTeam', 'Jugadores Equipo')} {equipo}
                     </h3>
                     {jugadores.map((j, idx) => {
+                      const isOptionalSlot = idx >= 2;
                       const fotoUploadKey = `${equipo}-${idx}`;
                       const fotoUrl = String(j.foto_url || '').trim();
                       const isFotoUploading = sbJugadorFotoUploading === fotoUploadKey;
-                      const canUploadFoto = Boolean(sbEditingId) && !isFotoUploading;
+                      const hasNombre = Boolean(String(j.nombre || '').trim());
+                      const canUploadFoto = Boolean(sbEditingId) && !isFotoUploading && hasNombre;
                       const fotoInputId = `sb-jugador-foto-${equipo}-${idx}`;
                       return (
                         <div key={j.numero} className="admin-scoreboard-jugador-row">
                           <span className={`admin-scoreboard-jugador-row__slot admin-scoreboard-jugador-row__slot--${equipo.toLowerCase()}`}>
                             {j.numero}
                           </span>
+                          {isOptionalSlot ? (
+                            <span className="admin-scoreboard-jugador-row__optional-label">
+                              {t('admin.scoreboard.playerOptional', 'opcional')}
+                            </span>
+                          ) : (
+                            <span className="admin-scoreboard-jugador-row__optional-label admin-scoreboard-jugador-row__optional-label--spacer" aria-hidden="true" />
+                          )}
                           <input
                             type="number"
                             min={1}
@@ -10907,7 +11751,11 @@ export default function AdminDashboard({
                             type="text"
                             value={j.nombre}
                             onChange={(e) => updateSbJugador(equipo, idx, e.target.value)}
-                            placeholder={`${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero}`}
+                            placeholder={
+                              isOptionalSlot
+                                ? `${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero} (${t('admin.scoreboard.playerOptional', 'opcional')})`
+                                : `${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero}`
+                            }
                             className="admin-scoreboard-jugador-row__nombre"
                           />
                           <div className="admin-scoreboard-jugador-row__foto">
@@ -10993,10 +11841,123 @@ export default function AdminDashboard({
               }}
             >
               {sbCreating
-                ? t('admin.scoreboard.creating', 'Creando...')
-                : t('admin.scoreboard.createBtn', 'Crear partido')}
+                ? t('admin.scoreboard.saving', 'Guardando...')
+                : sbEditingId
+                  ? t('admin.scoreboard.saveBtn', 'Guardar cambios')
+                  : t('admin.scoreboard.createBtn', 'Crear partido')}
             </button>
           </form>
+
+          <div
+            id="admin-scoreboard-partidos-list"
+            className="admin-scoreboard-partidos-list"
+            style={{ marginTop: '28px', maxWidth: '960px' }}
+          >
+            <h3 className="admin-scoreboard-partidos-list__title">
+              {t('admin.scoreboard.partidosListTitle', 'Partidos de la sede')}
+            </h3>
+            {!sbSedeId ? (
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                {t('admin.scoreboard.selectSedeForList', 'Seleccioná una sede para ver los partidos creados.')}
+              </p>
+            ) : sbPartidosLoading ? (
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                {t('admin.scoreboard.loadingPartidos', 'Cargando partidos...')}
+              </p>
+            ) : sbPartidosError ? (
+              <p style={{ margin: 0, color: '#dc2626', fontSize: '14px', fontWeight: 600 }}>{sbPartidosError}</p>
+            ) : sbPartidosList.length === 0 ? (
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                {t('admin.scoreboard.noPartidos', 'No hay partidos creados para esta sede.')}
+              </p>
+            ) : (
+              <>
+                <ul className="admin-scoreboard-partidos-list__items">
+                  {sbPartidosRecentVisible.map((p) => (
+                    <AdminScoreboardPartidoListItem
+                      key={p.id}
+                      partido={p}
+                      previewPartidoId={sbPreviewPartidoId}
+                      onTogglePreview={toggleSbPartidoPreview}
+                      onQr={setSbQrPartido}
+                      onEdit={(id) => void loadScoreboardFormForEdit(id)}
+                      t={t}
+                    />
+                  ))}
+                </ul>
+
+                {sbPartidosSorted.length > 3 && !sbPartidosExpanded ? (
+                  <button
+                    type="button"
+                    className="admin-scoreboard-partidos-list__expand-btn"
+                    onClick={() => setSbPartidosExpanded(true)}
+                  >
+                    {t('admin.scoreboard.viewAllPartidos', 'Ver todos los partidos')}
+                    {' '}
+                    ({sbPartidosSorted.length})
+                  </button>
+                ) : null}
+
+                {sbPartidosExpanded ? (
+                  <div className="admin-scoreboard-partidos-list__expanded">
+                    <div className="admin-scoreboard-partidos-list__expanded-head">
+                      <label className="admin-scoreboard-partidos-list__search-label" htmlFor="sb-partidos-search">
+                        {t('admin.scoreboard.searchPartidos', 'Buscar partidos')}
+                      </label>
+                      <input
+                        id="sb-partidos-search"
+                        type="text"
+                        className="admin-scoreboard-partidos-list__search"
+                        value={sbPartidosSearch}
+                        onChange={(e) => setSbPartidosSearch(e.target.value)}
+                        placeholder={t(
+                          'admin.scoreboard.searchPartidosPlaceholder',
+                          'Torneo, equipo o fecha...',
+                        )}
+                        autoComplete="off"
+                      />
+                      <button
+                        type="button"
+                        className="admin-scoreboard-partidos-list__collapse-btn"
+                        onClick={() => {
+                          setSbPartidosExpanded(false);
+                          setSbPartidosSearch('');
+                        }}
+                      >
+                        {t('admin.scoreboard.collapsePartidos', 'Ocultar listado')}
+                      </button>
+                    </div>
+                    <div className="admin-scoreboard-partidos-list__expanded-scroll">
+                      {sbPartidosSearchResults.length === 0 ? (
+                        <p className="admin-scoreboard-partidos-list__search-empty">
+                          {t('admin.scoreboard.noSearchResults', 'No hay partidos que coincidan con la búsqueda.')}
+                        </p>
+                      ) : (
+                        <ul className="admin-scoreboard-partidos-list__items">
+                          {sbPartidosSearchResults.map((p) => (
+                            <AdminScoreboardPartidoListItem
+                              key={p.id}
+                              partido={p}
+                              previewPartidoId={sbPreviewPartidoId}
+                              onTogglePreview={toggleSbPartidoPreview}
+                              onQr={setSbQrPartido}
+                              onEdit={(id) => void loadScoreboardFormForEdit(id)}
+                              t={t}
+                            />
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {sbPartidosSearchHasMore ? (
+                      <p className="admin-scoreboard-partidos-list__search-limit">
+                        {t('admin.scoreboard.searchLimit', 'Mostrando los primeros 20 resultados.')}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
 
           {sbCreated ? (
             <div style={{
@@ -13195,210 +14156,6 @@ export default function AdminDashboard({
                 {t('admin.sedes.pricesDurationHint')}
               </p>
 
-              <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
-                <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                  ⚡ Surge — Precios Dinámicos
-                </h4>
-                <label
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    marginBottom: '14px',
-                    cursor: surgeActivoSaving ? 'wait' : 'pointer',
-                    opacity: surgeActivoSaving ? 0.7 : 1,
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={!!miSedeForm.surge_activo}
-                    disabled={surgeActivoSaving}
-                    onChange={(e) => patchSurgeActivoMaster(e.target.checked)}
-                  />
-                  Activar Surge
-                </label>
-                {miSedeForm.surge_activo ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
-                      {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => {
-                        const cfg = surgeConfigs[key] || { activo: false, precio_minimo: '', precio_maximo: '' };
-                        const bandError = surgeConfigBandError(cfg);
-                        const saving = !!surgeConfigSaving[key];
-                        return (
-                          <div
-                            key={key}
-                            style={{
-                              padding: '12px 14px',
-                              border: '1px solid var(--border)',
-                              borderRadius: '8px',
-                              background: 'var(--bg-card)',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                <SportIcon deporte={key} size={18} color="var(--text-primary)" />
-                                {label}
-                              </span>
-                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={parseSurgeActivo(cfg.activo)}
-                                  onChange={(e) => {
-                                    const next = { ...(surgeConfigs[key] ?? cfg), activo: e.target.checked };
-                                    setSurgeConfigs((prev) => ({ ...prev, [key]: next }));
-                                    persistSurgeConfigDeporte(key, next);
-                                  }}
-                                />
-                                Activo
-                                {saving ? (
-                                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                    {t('admin.metricas.savingEllipsis')}
-                                  </span>
-                                ) : null}
-                              </label>
-                            </div>
-                            {[
-                              { field: 'precio_minimo', label: 'Precio mínimo ARS' },
-                              { field: 'precio_maximo', label: 'Precio máximo ARS' },
-                            ].map(({ field, label: fieldLabel }) => (
-                              <div
-                                key={field}
-                                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', flexWrap: 'wrap' }}
-                              >
-                                <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '150px' }}>
-                                  {fieldLabel}
-                                </label>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  value={precioDuracionInputDisplay(cfg[field])}
-                                  onChange={(e) => {
-                                    const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
-                                    setSurgeConfigs((prev) => ({
-                                      ...prev,
-                                      [key]: { ...(prev[key] || cfg), [field]: digits },
-                                    }));
-                                  }}
-                                  onBlur={() => persistSurgeConfigDeporte(key)}
-                                  placeholder="0"
-                                  style={{ width: '100%', maxWidth: '200px', padding: '7px 10px', border: `1px solid ${bandError ? '#fca5a5' : 'var(--border)'}`, borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
-                                />
-                              </div>
-                            ))}
-                            {bandError ? (
-                              <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: 600, color: '#fca5a5' }}>{bandError}</p>
-                            ) : null}
-                          </div>
-                        );
-                      })}
-                    </div>
-                ) : null}
-                <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo.
-                </p>
-                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
-                  0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
-                </p>
-              </div>
-
-              <div style={{ marginTop: '24px' }}>
-                <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                  🕐 Precios por Franja Horaria
-                </h4>
-                <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Define precios distintos según día y horario. Cuando hay una franja activa que coincide con el turno, el precio de franja reemplaza al precio base y Surge no aplica.
-                </p>
-
-                {/* Tabla de franjas existentes */}
-                {franjasLoading ? (
-                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando franjas…</p>
-                ) : franjasPrecios.length === 0 ? (
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Sin franjas configuradas.</p>
-                ) : (
-                  <div style={{ overflowX: 'auto', marginBottom: '16px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                      <thead>
-                        <tr style={{ background: 'var(--accent)' }}>
-                          {['Deporte', 'Día', 'Desde', 'Hasta', '60 min', '90 min', '120 min', ''].map(h => (
-                            <th key={h} style={{ padding: '7px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {franjasPrecios.map(f => {
-                          const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-                          return (
-                            <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                              <td style={{ padding: '8px 10px', textTransform: 'capitalize' }}>{f.deporte}</td>
-                              <td style={{ padding: '8px 10px' }}>{f.dia_semana !== null ? dias[f.dia_semana] : 'Todos'}</td>
-                              <td style={{ padding: '8px 10px' }}>{f.hora_inicio?.slice(0,5)}</td>
-                              <td style={{ padding: '8px 10px' }}>{f.hora_fin?.slice(0,5)}</td>
-                              <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_60min ? precioDuracionInputDisplay(f.precio_60min) : '—'}</td>
-                              <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_90min ? precioDuracionInputDisplay(f.precio_90min) : '—'}</td>
-                              <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_120min ? precioDuracionInputDisplay(f.precio_120min) : '—'}</td>
-                              <td style={{ padding: '8px 6px' }}>
-                                <button type="button" onClick={() => deleteFranja(f.id)}
-                                  style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #fca5a5', background: 'transparent', color: '#fca5a5', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                                  Eliminar
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {/* Formulario nueva franja */}
-                <div style={{ padding: '14px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', display: 'grid', gap: '10px' }}>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Nueva franja</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Deporte</label>
-                      <select value={franjaDraft.deporte} onChange={e => setFranjaDraft(p => ({ ...p, deporte: e.target.value }))}
-                        style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                        {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Día</label>
-                      <select value={franjaDraft.dia_semana} onChange={e => setFranjaDraft(p => ({ ...p, dia_semana: e.target.value }))}
-                        style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                        <option value=''>Todos los días</option>
-                        {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map((d,i) => <option key={i} value={i}>{d}</option>)}
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Desde</label>
-                      <input type="time" value={franjaDraft.hora_inicio} onChange={e => setFranjaDraft(p => ({ ...p, hora_inicio: e.target.value }))}
-                        style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Hasta</label>
-                      <input type="time" value={franjaDraft.hora_fin} onChange={e => setFranjaDraft(p => ({ ...p, hora_fin: e.target.value }))}
-                        style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                    </div>
-                    {['60', '90', '120'].map(min => (
-                      <div key={min} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Precio {min} min</label>
-                        <input type="text" inputMode="numeric" placeholder="0"
-                          value={precioDuracionInputDisplay(franjaDraft[`precio_${min}min`])}
-                          onChange={e => { const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, ''); setFranjaDraft(p => ({ ...p, [`precio_${min}min`]: digits })); }}
-                          style={{ width: '110px', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, textAlign: 'right', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
-                      </div>
-                    ))}
-                    <button type="button" onClick={saveFranja} disabled={franjaSaving}
-                      style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: franjaSaving ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: franjaSaving ? 'not-allowed' : 'pointer', alignSelf: 'flex-end' }}>
-                      {franjaSaving ? 'Guardando…' : 'Agregar franja'}
-                    </button>
-                  </div>
-                  {franjasMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{franjasMsg}</p> : null}
-                </div>
-              </div>
-
               {isSuperAdmin ? (
                 <>
               <h4 className="admin-mi-sede-block-title" style={{ margin: '24px 0 10px', fontSize: '15px', fontWeight: 800 }}>
@@ -14573,6 +15330,102 @@ export default function AdminDashboard({
                   <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
                     0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
                   </p>
+                </div>
+
+                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+                  <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
+                    🕐 Precios por Franja Horaria
+                  </h4>
+                  <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    Define precios distintos según día y horario. Cuando hay una franja activa que coincide con el turno, el precio de franja reemplaza al precio base y Surge no aplica.
+                  </p>
+
+                  {/* Tabla de franjas existentes */}
+                  {franjasLoading ? (
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando franjas…</p>
+                  ) : franjasPrecios.length === 0 ? (
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Sin franjas configuradas.</p>
+                  ) : (
+                    <div style={{ overflowX: 'auto', marginBottom: '16px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--accent)' }}>
+                            {['Deporte', 'Día', 'Desde', 'Hasta', '60 min', '90 min', '120 min', ''].map(h => (
+                              <th key={h} style={{ padding: '7px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {franjasPrecios.map(f => {
+                            const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                            return (
+                              <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '8px 10px', textTransform: 'capitalize' }}>{f.deporte}</td>
+                                <td style={{ padding: '8px 10px' }}>{f.dia_semana !== null ? dias[f.dia_semana] : 'Todos'}</td>
+                                <td style={{ padding: '8px 10px' }}>{f.hora_inicio?.slice(0,5)}</td>
+                                <td style={{ padding: '8px 10px' }}>{f.hora_fin?.slice(0,5)}</td>
+                                <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_60min ? precioDuracionInputDisplay(f.precio_60min) : '—'}</td>
+                                <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_90min ? precioDuracionInputDisplay(f.precio_90min) : '—'}</td>
+                                <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_120min ? precioDuracionInputDisplay(f.precio_120min) : '—'}</td>
+                                <td style={{ padding: '8px 6px' }}>
+                                  <button type="button" onClick={() => deleteFranja(f.id)}
+                                    style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #fca5a5', background: 'transparent', color: '#fca5a5', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                                    Eliminar
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Formulario nueva franja */}
+                  <div style={{ padding: '14px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', display: 'grid', gap: '10px' }}>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Nueva franja</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Deporte</label>
+                        <select value={franjaDraft.deporte} onChange={e => setFranjaDraft(p => ({ ...p, deporte: e.target.value }))}
+                          style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                          {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Día</label>
+                        <select value={franjaDraft.dia_semana} onChange={e => setFranjaDraft(p => ({ ...p, dia_semana: e.target.value }))}
+                          style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                          <option value=''>Todos los días</option>
+                          {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map((d,i) => <option key={i} value={i}>{d}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Desde</label>
+                        <input type="time" value={franjaDraft.hora_inicio} onChange={e => setFranjaDraft(p => ({ ...p, hora_inicio: e.target.value }))}
+                          style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Hasta</label>
+                        <input type="time" value={franjaDraft.hora_fin} onChange={e => setFranjaDraft(p => ({ ...p, hora_fin: e.target.value }))}
+                          style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                      </div>
+                      {['60', '90', '120'].map(min => (
+                        <div key={min} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Precio {min} min</label>
+                          <input type="text" inputMode="numeric" placeholder="0"
+                            value={precioDuracionInputDisplay(franjaDraft[`precio_${min}min`])}
+                            onChange={e => { const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, ''); setFranjaDraft(p => ({ ...p, [`precio_${min}min`]: digits })); }}
+                            style={{ width: '110px', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, textAlign: 'right', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                        </div>
+                      ))}
+                      <button type="button" onClick={saveFranja} disabled={franjaSaving}
+                        style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: franjaSaving ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: franjaSaving ? 'not-allowed' : 'pointer', alignSelf: 'flex-end' }}>
+                        {franjaSaving ? 'Guardando…' : 'Agregar franja'}
+                      </button>
+                    </div>
+                    {franjasMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{franjasMsg}</p> : null}
+                  </div>
                 </div>
               </div>
             </div>
