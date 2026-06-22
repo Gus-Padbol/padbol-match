@@ -5695,7 +5695,7 @@ export default function AdminDashboard({
   const [surgeActivoSaving, setSurgeActivoSaving] = useState(false);
   const [franjasPrecios, setFranjasPrecios] = useState([]);
   const [franjasLoading, setFranjasLoading] = useState(false);
-  const [franjasMsg, setFranjasMsg] = useState('');
+  const [franjaPreciosMsg, setFranjaPreciosMsg] = useState('');
   const [franjaDraft, setFranjaDraft] = useState({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
   const [franjaSaving, setFranjaSaving] = useState(false);
   const [surgeCanchasList, setSurgeCanchasList] = useState([]);
@@ -6389,15 +6389,15 @@ export default function AdminDashboard({
   const saveFranja = async () => {
     if (!miSedeForm?.id) return;
     if (!franjaDraft.hora_inicio || !franjaDraft.hora_fin) {
-      setFranjasMsg('❌ Hora inicio y fin son obligatorias.');
+      setFranjaPreciosMsg('❌ Hora inicio y fin son obligatorias.');
       return;
     }
     if (franjaDraft.hora_fin <= franjaDraft.hora_inicio) {
-      setFranjasMsg('❌ Hora fin debe ser mayor que hora inicio.');
+      setFranjaPreciosMsg('❌ Hora fin debe ser mayor que hora inicio.');
       return;
     }
     setFranjaSaving(true);
-    setFranjasMsg('');
+    setFranjaPreciosMsg('');
     try {
       const row = {
         sede_id: miSedeForm.id,
@@ -6412,11 +6412,11 @@ export default function AdminDashboard({
       };
       const { error } = await supabase.from('franjas_precio').insert(row);
       if (error) throw error;
-      setFranjasMsg('✅ Franja guardada.');
+      setFranjaPreciosMsg('✅ Franja guardada.');
       setFranjaDraft({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
       await loadFranjasPrecios(miSedeForm.id);
     } catch (e) {
-      setFranjasMsg(`❌ ${e.message}`);
+      setFranjaPreciosMsg(`❌ ${e.message}`);
     } finally {
       setFranjaSaving(false);
     }
@@ -15424,7 +15424,7 @@ export default function AdminDashboard({
                         {franjaSaving ? 'Guardando…' : 'Agregar franja'}
                       </button>
                     </div>
-                    {franjasMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{franjasMsg}</p> : null}
+                    {franjaPreciosMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjaPreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{franjaPreciosMsg}</p> : null}
                   </div>
                 </div>
               </div>
