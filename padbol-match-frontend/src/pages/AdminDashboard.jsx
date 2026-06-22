@@ -498,6 +498,13 @@ function AdminScoreboardPartidoListItem({
   );
 }
 
+function normalizeScoreboardPositiveId(raw) {
+  if (raw == null || String(raw).trim() === '') return null;
+  const parsed = Number(String(raw).trim());
+  if (Number.isInteger(parsed) && parsed > 0) return parsed;
+  return null;
+}
+
 function buildScoreboardPartidoBody({
   sede_id,
   sbTorneoNombre,
@@ -511,11 +518,15 @@ function buildScoreboardPartidoBody({
   sbUniformA2,
   sbUniformB1,
   sbUniformB2,
+  sbPartidoAbiertoId,
+  sbReservaId,
 }) {
   const colorUniformeA1 = normalizeUniformColor(sbUniformA1);
   const colorUniformeA2 = normalizeUniformColor(sbUniformA2);
   const colorUniformeB1 = normalizeUniformColor(sbUniformB1);
   const colorUniformeB2 = normalizeUniformColor(sbUniformB2);
+  const partidoAbiertoId = normalizeScoreboardPositiveId(sbPartidoAbiertoId);
+  const reservaId = normalizeScoreboardPositiveId(sbReservaId);
   return {
     sede_id,
     torneo_nombre: sbTorneoNombre.trim() || null,
@@ -539,6 +550,8 @@ function buildScoreboardPartidoBody({
     color_uniforme_b2: colorUniformeB2,
     color_a: colorUniformeA1 || DEFAULT_SCOREBOARD_COLOR_A,
     color_b: colorUniformeB1 || DEFAULT_SCOREBOARD_COLOR_B,
+    ...(partidoAbiertoId != null ? { partido_abierto_id: partidoAbiertoId } : {}),
+    ...(reservaId != null ? { reserva_id: reservaId } : {}),
   };
 }
 
@@ -2726,6 +2739,8 @@ export default function AdminDashboard({
   const [sbUniformB2, setSbUniformB2] = useState('');
   const [sbJugadoresA, setSbJugadoresA] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
   const [sbJugadoresB, setSbJugadoresB] = useState(() => SCOREBOARD_JUGADORES_VACIOS());
+  const [sbPartidoAbiertoId, setSbPartidoAbiertoId] = useState('');
+  const [sbReservaId, setSbReservaId] = useState('');
   const [sbCreating, setSbCreating] = useState(false);
   const [sbError, setSbError] = useState('');
   const [sbCreated, setSbCreated] = useState(null);
@@ -7402,6 +7417,8 @@ export default function AdminDashboard({
     setSbUniformB2('');
     setSbJugadoresA(SCOREBOARD_JUGADORES_VACIOS());
     setSbJugadoresB(SCOREBOARD_JUGADORES_VACIOS());
+    setSbPartidoAbiertoId('');
+    setSbReservaId('');
     setSbJugadorFotoUploading(null);
     setSbError('');
   }, []);
@@ -7429,6 +7446,8 @@ export default function AdminDashboard({
       setSbUniformA2(partido.color_uniforme_a2 || '');
       setSbUniformB1(partido.color_uniforme_b1 || partido.color_b || DEFAULT_SCOREBOARD_COLOR_B);
       setSbUniformB2(partido.color_uniforme_b2 || '');
+      setSbPartidoAbiertoId(partido.partido_abierto_id != null ? String(partido.partido_abierto_id) : '');
+      setSbReservaId(partido.reserva_id != null ? String(partido.reserva_id) : '');
       const jugadoresA = jugadoresScoreboardFromPartido(
         partido.equipo_a_jugadores,
         [partido.jersey_a1, partido.jersey_a2, partido.jersey_a3, partido.jersey_a4],
@@ -7624,6 +7643,8 @@ export default function AdminDashboard({
       sbUniformA2,
       sbUniformB1,
       sbUniformB2,
+      sbPartidoAbiertoId,
+      sbReservaId,
     });
 
     setSbCreating(true);
@@ -11597,6 +11618,44 @@ export default function AdminDashboard({
                 />
               </label>
             </div>
+
+            <details style={{ marginBottom: '18px' }}>
+              <summary style={{ cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)', userSelect: 'none' }}>
+                {t('admin.scoreboard.vinculacionAvanzada', 'Vinculación avanzada (opcional)')}
+              </summary>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginTop: '10px' }}>
+                <label style={{ display: 'grid', gap: '6px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {t('admin.scoreboard.partidoAbiertoId', 'ID partido abierto')}
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    inputMode="numeric"
+                    value={sbPartidoAbiertoId}
+                    onChange={(e) => setSbPartidoAbiertoId(e.target.value)}
+                    placeholder={t('admin.scoreboard.optional', 'Opcional')}
+                    style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
+                  />
+                </label>
+                <label style={{ display: 'grid', gap: '6px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {t('admin.scoreboard.reservaId', 'ID reserva')}
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    inputMode="numeric"
+                    value={sbReservaId}
+                    onChange={(e) => setSbReservaId(e.target.value)}
+                    placeholder={t('admin.scoreboard.optional', 'Opcional')}
+                    style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '14px' }}
+                  />
+                </label>
+              </div>
+            </details>
 
             <div style={{ display: 'grid', gap: '10px', marginBottom: '18px' }}>
               {[
