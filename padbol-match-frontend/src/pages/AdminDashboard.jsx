@@ -1334,16 +1334,45 @@ function parsePadcoinsMovimientosResponse(data) {
   return { movimientos, total: Number(total) || 0, limit: Number(limit) || PC_MOV_PAGE_SIZE, offset: Number(offset) || 0 };
 }
 
-function padcoinsMovJugadorDisplay(row) {
-  const j = row?.jugador;
-  const nombre = [j?.nombre, j?.apellido].filter(Boolean).join(' ').trim()
-    || String(j?.nombre || row?.jugador_nombre || '').trim();
-  const email = String(j?.email || row?.jugador_email || '').trim();
-  if (nombre && email) return `${nombre} (${email})`;
-  if (nombre) return nombre;
-  if (email) return email;
-  const uid = row?.user_id ?? j?.user_id;
-  return uid != null && uid !== '' ? `Usuario #${uid}` : '—';
+function padcoinsMovRefTipoLabel(rt) {
+  const key = String(rt || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const map = {
+    canje_premio: 'Canje',
+    canje: 'Canje',
+    penalizacion: 'Penalización',
+    reserva: 'Reserva',
+    logro: 'Logro',
+    ajuste: 'Ajuste',
+  };
+  return map[key] || (rt ? String(rt) : '');
+}
+
+function padcoinsMovReferenciaIdCorto(id) {
+  const s = String(id ?? '').trim();
+  if (!s) return '';
+  if (s.length <= 12) return `#${s}`;
+  return `#${s.slice(0, 8)}…`;
+}
+
+function padcoinsMovReferenciaDisplay(row) {
+  const rtLabel = padcoinsMovRefTipoLabel(row?.referencia_tipo);
+  const ri = padcoinsMovReferenciaIdCorto(row?.referencia_id);
+  if (!rtLabel && !ri) return '—';
+  return [rtLabel, ri].filter(Boolean).join(' ') || '—';
+}
+
+function formatPadcoinsMovFechaCorta(raw) {
+  const src = raw?.fecha ?? raw?.created_at;
+  if (!src) return '—';
+  const d = new Date(src);
+  if (Number.isNaN(d.getTime())) return String(src).slice(0, 16);
+  return d.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function padcoinsMovTipoBadge(row) {
@@ -1361,27 +1390,6 @@ function padcoinsMovTipoBadge(row) {
   if (tipo === 'reverse') return { label: 'Reversa', bg: '#f3e8ff', color: '#6b21a8' };
   if (tipo) return { label: tipo, bg: 'var(--bg-page)', color: 'var(--text-muted)' };
   return { label: 'Movimiento', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
-}
-
-function padcoinsMovReferenciaDisplay(row) {
-  const rt = String(row?.referencia_tipo || '').trim();
-  const ri = row?.referencia_id;
-  if (!rt && (ri == null || ri === '')) return '—';
-  return [rt, ri != null && ri !== '' ? `#${ri}` : ''].filter(Boolean).join(' ') || '—';
-}
-
-function formatPadcoinsMovFecha(raw) {
-  const src = raw?.fecha ?? raw?.created_at;
-  if (!src) return '—';
-  const d = new Date(src);
-  if (Number.isNaN(d.getTime())) return String(src).slice(0, 16);
-  return d.toLocaleString('es-AR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 function padcoinsMovMontoDisplay(monto) {
@@ -14223,13 +14231,20 @@ export default function AdminDashboard({
 
             <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
               <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
-                {t('admin.padcoins.movementsTitle', 'Movimientos')}
+                {esAdminClub
+                  ? t('admin.padcoins.movementsClubTitle', 'Movimientos de tu sede')
+                  : t('admin.padcoins.movementsTitle', 'Movimientos')}
               </h3>
               <p style={{ color: 'var(--text-muted)', margin: '0 0 18px', maxWidth: '720px', fontSize: '14px' }}>
-                {t(
-                  'admin.padcoins.movementsDescription',
-                  'Auditoría de acreditaciones, canjes, penalizaciones y ajustes de PadCoins en Beneficios Padbol.',
-                )}
+                {esAdminClub
+                  ? t(
+                    'admin.padcoins.movementsClubDescription',
+                    'Consulta de movimientos PadCoins de tu sede para resolver consultas de jugadores.',
+                  )
+                  : t(
+                    'admin.padcoins.movementsDescription',
+                    'Auditoría de acreditaciones, canjes, penalizaciones y ajustes de PadCoins en Beneficios Padbol.',
+                  )}
               </p>
 
               <div style={{
@@ -14418,17 +14433,25 @@ export default function AdminDashboard({
                       : `${pcMovimientos.length} movimiento(s)`}
                   </p>
                   <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '920px' }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '12px',
+                      tableLayout: 'fixed',
+                      ...(esAdminClub ? {} : { minWidth: '860px' }),
+                    }}>
                       <thead>
                         <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', background: 'var(--bg-card)' }}>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsDate', 'Fecha')}</th>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsPlayer', 'Jugador')}</th>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsVenue', 'Sede')}</th>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsType', 'Tipo')}</th>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsAmount', 'Monto')}</th>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsDescriptionCol', 'Descripción')}</th>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsReference', 'Referencia')}</th>
-                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsBalance', 'Saldo resultante')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '108px' }}>{t('admin.padcoins.movementsDate', 'Fecha')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: esAdminClub ? '22%' : '18%' }}>{t('admin.padcoins.movementsPlayer', 'Jugador')}</th>
+                          {esAdminClub ? null : (
+                            <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '14%' }}>{t('admin.padcoins.movementsVenue', 'Sede')}</th>
+                          )}
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '108px' }}>{t('admin.padcoins.movementsType', 'Tipo')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '72px' }}>{t('admin.padcoins.movementsAmount', 'Monto')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsDescriptionCol', 'Descripción')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '96px' }}>{t('admin.padcoins.movementsReference', 'Referencia')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '88px' }}>{t('admin.padcoins.movementsBalance', 'Saldo')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -14437,43 +14460,94 @@ export default function AdminDashboard({
                           const sedeMov = mov.sede_nombre
                             || sedesMap[String(mov.sede_id)]?.nombre
                             || (mov.sede_id != null ? `Sede ${mov.sede_id}` : '—');
+                          const j = mov?.jugador;
+                          const jugadorNombre = [j?.nombre, j?.apellido].filter(Boolean).join(' ').trim()
+                            || String(j?.nombre || mov?.jugador_nombre || '').trim();
+                          const jugadorEmail = String(j?.email || mov?.jugador_email || '').trim();
+                          const jugadorUid = String(mov?.user_id ?? j?.user_id ?? '').trim();
                           return (
                             <tr key={mov.id ?? `${mov.fecha}-${mov.user_id}-${mov.monto}`} style={{ borderBottom: '1px solid var(--border)' }}>
-                              <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
-                                {formatPadcoinsMovFecha(mov)}
+                              <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', color: 'var(--text-primary)', verticalAlign: 'top' }}>
+                                {formatPadcoinsMovFechaCorta(mov)}
                               </td>
-                              <td style={{ padding: '10px 12px', color: 'var(--text-primary)', maxWidth: '220px' }}>
-                                {padcoinsMovJugadorDisplay(mov)}
+                              <td style={{ padding: '8px 10px', color: 'var(--text-primary)', verticalAlign: 'top' }}>
+                                {jugadorNombre || jugadorEmail ? (
+                                  <div style={{ display: 'grid', gap: '2px', lineHeight: 1.35 }}>
+                                    {jugadorNombre ? (
+                                      <span style={{ wordBreak: 'break-word' }}>{jugadorNombre}</span>
+                                    ) : null}
+                                    {jugadorEmail ? (
+                                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+                                        {jugadorEmail}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : jugadorUid ? (
+                                  <div style={{ display: 'grid', gap: '2px', lineHeight: 1.35 }}>
+                                    <span>Usuario</span>
+                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                      ID corto: {jugadorUid.slice(0, 8)}
+                                    </span>
+                                  </div>
+                                ) : '—'}
                               </td>
-                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{sedeMov}</td>
-                              <td style={{ padding: '10px 12px' }}>
+                              {esAdminClub ? null : (
+                                <td style={{ padding: '8px 10px', color: 'var(--text-secondary)', verticalAlign: 'top', wordBreak: 'break-word' }}>
+                                  {sedeMov}
+                                </td>
+                              )}
+                              <td style={{ padding: '8px 10px', verticalAlign: 'top' }}>
                                 <span style={{
                                   display: 'inline-block',
-                                  padding: '4px 10px',
+                                  padding: '3px 8px',
                                   borderRadius: '999px',
-                                  fontSize: '11px',
+                                  fontSize: '10px',
                                   fontWeight: 700,
                                   background: badge.bg,
                                   color: badge.color,
+                                  lineHeight: 1.3,
                                 }}>
                                   {badge.label}
                                 </span>
                               </td>
                               <td style={{
-                                padding: '10px 12px',
+                                padding: '8px 10px',
                                 fontWeight: 700,
                                 color: padcoinsMovMontoColor(mov.monto),
                                 whiteSpace: 'nowrap',
+                                verticalAlign: 'top',
                               }}>
                                 {padcoinsMovMontoDisplay(mov.monto)}
                               </td>
-                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', maxWidth: '260px' }}>
+                              <td style={{
+                                padding: '8px 10px',
+                                color: 'var(--text-secondary)',
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                lineHeight: 1.35,
+                                verticalAlign: 'top',
+                              }}>
                                 {mov.descripcion || '—'}
                               </td>
-                              <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                              <td style={{
+                                padding: '8px 10px',
+                                color: 'var(--text-muted)',
+                                fontSize: '11px',
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                lineHeight: 1.35,
+                                verticalAlign: 'top',
+                              }}>
                                 {padcoinsMovReferenciaDisplay(mov)}
                               </td>
-                              <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              <td style={{
+                                padding: '8px 10px',
+                                color: 'var(--text-primary)',
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                verticalAlign: 'top',
+                                fontSize: '11px',
+                              }}>
                                 {mov.saldo_resultante != null && Number.isFinite(Number(mov.saldo_resultante))
                                   ? Number(mov.saldo_resultante).toLocaleString('es-AR')
                                   : '—'}
