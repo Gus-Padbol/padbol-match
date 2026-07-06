@@ -3089,6 +3089,8 @@ export default function AdminDashboard({
   const [pcSedeParticipacionSaveError, setPcSedeParticipacionSaveError] = useState('');
   const [pcSedeParticipacionSaving, setPcSedeParticipacionSaving] = useState(false);
   const [pcSedesParticipacionList, setPcSedesParticipacionList] = useState([]);
+  const [pcSedeParticipacionBusqueda, setPcSedeParticipacionBusqueda] = useState('');
+  const [pcSedeParticipacionFiltro, setPcSedeParticipacionFiltro] = useState('todas');
 
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
@@ -3219,10 +3221,10 @@ export default function AdminDashboard({
 
   async function guardarPadcoinsSedeParticipacion(e) {
     e.preventDefault();
-    if (!isSuperAdmin) return;
+    if (!isSuperAdmin && !esAdminClub) return;
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPcSedeParticipacionSaveError('Seleccioná una sede para guardar la participación PadCoins');
+      setPcSedeParticipacionSaveError('Seleccioná una sede para guardar la participación en Beneficios Padbol');
       return;
     }
     if (pcSedeParticipacion.fecha_inicio && pcSedeParticipacion.fecha_fin
@@ -3249,13 +3251,18 @@ export default function AdminDashboard({
         },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar participación PadCoins');
-      setMensajeExito('✅ Participación PadCoins actualizada');
+      if (res.status === 403) {
+        throw new Error(
+          data.error || data.message || 'No tenés permisos para modificar la participación de esta sede.',
+        );
+      }
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar participación en Beneficios Padbol');
+      setMensajeExito('✅ Participación en Beneficios Padbol actualizada');
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsSedeParticipacion(sid);
-      void fetchPadcoinsSedesParticipacionList();
+      if (isSuperAdmin) void fetchPadcoinsSedesParticipacionList();
     } catch (err) {
-      setPcSedeParticipacionSaveError(err.message || 'Error al guardar participación PadCoins');
+      setPcSedeParticipacionSaveError(err.message || 'Error al guardar participación en Beneficios Padbol');
     } finally {
       setPcSedeParticipacionSaving(false);
     }
@@ -12842,7 +12849,127 @@ export default function AdminDashboard({
         );
         const padcoinsActivoSede = !!pcSedeParticipacion.padcoins_activo;
         const puedeCrearPremio = padcoinsActivoSede || isSuperAdmin;
+        const puedeEditarParticipacion = isSuperAdmin || esAdminClub;
         const clubSedeInactiva = esAdminClub && effectivePcSedeId && !padcoinsActivoSede && !pcSedeParticipacionLoading;
+        const pcSedeParticipacionQuery = pcSedeParticipacionBusqueda.trim().toLowerCase();
+        const pcSedesParticipacionFiltradas = pcSedesParticipacionList.filter((row) => {
+          const sid = String(row.sede_id ?? row.id ?? '');
+          const nombre = String(sedesMap[sid]?.nombre || row.nombre || row.sede_nombre || `Sede ${sid}`).toLowerCase();
+          const activo = row.padcoins_activo !== false && row.activo !== false;
+          if (pcSedeParticipacionFiltro === 'activas' && !activo) return false;
+          if (pcSedeParticipacionFiltro === 'inactivas' && activo) return false;
+          if (!pcSedeParticipacionQuery) return true;
+          return nombre.includes(pcSedeParticipacionQuery) || sid.includes(pcSedeParticipacionQuery);
+        });
+
+        const renderPcParticipacionForm = () => (
+          <form onSubmit={guardarPadcoinsSedeParticipacion} style={{ display: 'grid', gap: '14px' }}>
+            <label style={{
+              display: 'grid',
+              gap: '8px',
+              padding: '12px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-page)',
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+                  {esAdminClub
+                    ? t('admin.padcoins.sedeParticipationClubToggle', 'Activar Beneficios Padbol en mi sede')
+                    : t('admin.padcoins.sedeParticipationSuperToggle', 'Participación en Beneficios Padbol')}
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    {pcSedeParticipacion.padcoins_activo
+                      ? t('admin.padcoins.sedeParticipationOn', 'Activado')
+                      : t('admin.padcoins.sedeParticipationOff', 'Desactivado')}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={!!pcSedeParticipacion.padcoins_activo}
+                    onChange={(e) => updatePcSedeParticipacionField('padcoins_activo', e.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                </span>
+              </span>
+              {esAdminClub ? (
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                  {t(
+                    'admin.padcoins.sedeParticipationClubToggleHelp',
+                    'Al activar esta opción, tu sede podrá ofrecer beneficios y recibir canjes con PadCoins.',
+                  )}
+                </span>
+              ) : null}
+            </label>
+
+            <label style={{ display: 'grid', gap: '6px' }}>
+              <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                {t('admin.padcoins.descriptionField', 'Descripción')}
+              </span>
+              <textarea
+                value={pcSedeParticipacion.descripcion}
+                onChange={(e) => updatePcSedeParticipacionField('descripcion', e.target.value)}
+                rows={3}
+                placeholder={t(
+                  'admin.padcoins.sedeParticipationDescPlaceholder',
+                  'Notas internas sobre la participación de esta sede (opcional)',
+                )}
+                style={{ ...pcInp, resize: 'vertical' }}
+              />
+            </label>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+              <label style={{ display: 'grid', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                  {t('admin.padcoins.sedeParticipationStartDate', 'Fecha inicio (opcional)')}
+                </span>
+                <input
+                  type="date"
+                  value={pcSedeParticipacion.fecha_inicio}
+                  onChange={(e) => updatePcSedeParticipacionField('fecha_inicio', e.target.value)}
+                  style={pcInp}
+                />
+              </label>
+              <label style={{ display: 'grid', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                  {t('admin.padcoins.sedeParticipationEndDate', 'Fecha fin (opcional)')}
+                </span>
+                <input
+                  type="date"
+                  value={pcSedeParticipacion.fecha_fin}
+                  onChange={(e) => updatePcSedeParticipacionField('fecha_fin', e.target.value)}
+                  style={pcInp}
+                />
+              </label>
+            </div>
+
+            {pcSedeParticipacionSaveError ? (
+              <p style={{ color: '#dc2626', fontWeight: 600, margin: 0 }}>
+                {pcSedeParticipacionSaveError}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={pcSedeParticipacionSaving}
+              style={{
+                justifySelf: 'start',
+                padding: '10px 20px',
+                background: pcSedeParticipacionSaving ? '#94a3b8' : 'var(--accent)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: pcSedeParticipacionSaving ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {pcSedeParticipacionSaving
+                ? t('admin.metricas.saving', 'Guardando...')
+                : t('admin.padcoins.sedeParticipationSave', 'Guardar participación')}
+            </button>
+          </form>
+        );
 
         const renderPcGlobalRuleCard = (rule) => {
           const idx = pcGlobalConfigRows.findIndex((r) => r.key === rule.key);
@@ -13066,12 +13193,36 @@ export default function AdminDashboard({
               <h2 style={{ margin: '0 0 8px', fontSize: '20px', color: 'var(--text-primary)' }}>
                 {t('admin.padcoins.sedeParticipationTitle', 'Participación por sede')}
               </h2>
-              <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
-                {t(
-                  'admin.padcoins.sedeParticipationIntro',
-                  'PadCoins es opt-in por sede. Activá o desactivá la participación de cada club en Beneficios Padbol.',
-                )}
-              </p>
+              {isSuperAdmin ? (
+                <>
+                  <p style={{ color: 'var(--text-muted)', margin: '0 0 10px', maxWidth: '720px', fontSize: '14px' }}>
+                    {t(
+                      'admin.padcoins.sedeParticipationSuperIntro',
+                      'Supervisá la participación de las sedes en Beneficios Padbol.',
+                    )}
+                  </p>
+                  <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
+                    {t(
+                      'admin.padcoins.sedeParticipationSuperHelp',
+                      'El Admin Club puede activar o desactivar su sede. Como Super Admin podés intervenir ante abuso, reclamos o cuestiones comerciales.',
+                    )}
+                  </p>
+                </>
+              ) : esAdminClub ? (
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
+                  {t(
+                    'admin.padcoins.sedeParticipationClubIntro',
+                    'Administrá si tu sede participa en Beneficios Padbol y cuándo ofrece beneficios o recibe canjes.',
+                  )}
+                </p>
+              ) : (
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
+                  {t(
+                    'admin.padcoins.sedeParticipationReadIntro',
+                    'Consultá el estado de participación de la sede en Beneficios Padbol.',
+                  )}
+                </p>
+              )}
               <p style={{
                 color: 'var(--text-secondary)',
                 margin: '0 0 20px',
@@ -13084,66 +13235,131 @@ export default function AdminDashboard({
               }}>
                 {t(
                   'admin.padcoins.sedeParticipationNote',
-                  'Si una sede no participa, no otorga PadCoins ni permite canjes. Los canjes pendientes ya generados deben respetarse.',
+                  'Si una sede desactiva Beneficios Padbol, no se generan nuevos PadCoins por esa sede ni se permiten nuevos canjes. Los canjes pendientes deben respetarse.',
                 )}
               </p>
 
               {isSuperAdmin && pcSedesParticipacionList.length > 0 ? (
-                <div style={{ overflowX: 'auto', marginBottom: '20px', maxWidth: '720px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                        <th style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>
-                          {t('admin.padcoins.venue', 'Sede')}
-                        </th>
-                        <th style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>
-                          {t('admin.padcoins.sedeParticipationStatus', 'Estado')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pcSedesParticipacionList.map((row) => {
-                        const sid = String(row.sede_id ?? row.id ?? '');
-                        const nombre = sedesMap[sid]?.nombre || row.nombre || row.sede_nombre || `Sede ${sid}`;
-                        const activo = row.padcoins_activo !== false && row.activo !== false;
-                        const selected = effectivePcSedeId === sid;
+                <div style={{ marginBottom: '20px', maxWidth: '720px' }}>
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                    alignItems: 'center',
+                    marginBottom: '12px',
+                  }}>
+                    <input
+                      type="search"
+                      value={pcSedeParticipacionBusqueda}
+                      onChange={(e) => setPcSedeParticipacionBusqueda(e.target.value)}
+                      placeholder={t('admin.padcoins.sedeParticipationSearch', 'Buscar por nombre o sede_id...')}
+                      style={{ ...pcInp, flex: '1 1 220px', maxWidth: '320px' }}
+                    />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {[
+                        { id: 'todas', label: t('admin.padcoins.sedeParticipationFilterAll', 'Todas') },
+                        { id: 'activas', label: t('admin.padcoins.sedeParticipationFilterActive', 'Activas') },
+                        { id: 'inactivas', label: t('admin.padcoins.sedeParticipationFilterInactive', 'Inactivas') },
+                      ].map(({ id, label }) => {
+                        const active = pcSedeParticipacionFiltro === id;
                         return (
-                          <tr
-                            key={sid || nombre}
-                            onClick={() => {
-                              if (!sid) return;
-                              setPcSedeId(sid);
-                              cerrarPremioForm();
-                            }}
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => setPcSedeParticipacionFiltro(id)}
                             style={{
-                              borderBottom: '1px solid var(--border)',
-                              cursor: sid ? 'pointer' : 'default',
-                              background: selected ? 'var(--bg-card)' : 'transparent',
+                              padding: '7px 12px',
+                              borderRadius: '999px',
+                              border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
+                              background: active ? 'var(--bg-card)' : 'transparent',
+                              color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                              fontWeight: active ? 700 : 600,
+                              fontSize: '12px',
+                              cursor: 'pointer',
                             }}
                           >
-                            <td style={{ padding: '10px', fontWeight: selected ? 700 : 500, color: 'var(--text-primary)' }}>
-                              {nombre}
-                            </td>
-                            <td style={{ padding: '10px' }}>
-                              <span style={{
-                                display: 'inline-block',
-                                padding: '4px 10px',
-                                borderRadius: '999px',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                background: activo ? '#dcfce7' : 'var(--bg-page)',
-                                color: activo ? '#166534' : 'var(--text-muted)',
-                              }}>
-                                {activo
-                                  ? t('admin.padcoins.sedeParticipationActiveShort', 'Activa')
-                                  : t('admin.padcoins.sedeParticipationInactiveShort', 'Inactiva')}
-                              </span>
-                            </td>
-                          </tr>
+                            {label}
+                          </button>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
+                  <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    {t(
+                      'admin.padcoins.sedeParticipationListCount',
+                      '{{shown}} de {{total}} sedes',
+                    )
+                      .replace('{{shown}}', String(pcSedesParticipacionFiltradas.length))
+                      .replace('{{total}}', String(pcSedesParticipacionList.length))}
+                  </p>
+                  <div style={{ overflowX: 'auto', maxHeight: '280px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', position: 'sticky', top: 0, background: 'var(--bg-card)' }}>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>
+                            {t('admin.padcoins.venue', 'Sede')}
+                          </th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>
+                            ID
+                          </th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>
+                            {t('admin.padcoins.sedeParticipationStatus', 'Estado')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pcSedesParticipacionFiltradas.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} style={{ padding: '14px 10px', color: 'var(--text-muted)' }}>
+                              {t('admin.padcoins.sedeParticipationNoResults', 'No hay sedes que coincidan con la búsqueda o el filtro.')}
+                            </td>
+                          </tr>
+                        ) : pcSedesParticipacionFiltradas.map((row) => {
+                          const sid = String(row.sede_id ?? row.id ?? '');
+                          const nombre = sedesMap[sid]?.nombre || row.nombre || row.sede_nombre || `Sede ${sid}`;
+                          const activo = row.padcoins_activo !== false && row.activo !== false;
+                          const selected = effectivePcSedeId === sid;
+                          return (
+                            <tr
+                              key={sid || nombre}
+                              onClick={() => {
+                                if (!sid) return;
+                                setPcSedeId(sid);
+                                cerrarPremioForm();
+                              }}
+                              style={{
+                                borderBottom: '1px solid var(--border)',
+                                cursor: sid ? 'pointer' : 'default',
+                                background: selected ? 'var(--bg-card)' : 'transparent',
+                              }}
+                            >
+                              <td style={{ padding: '10px', fontWeight: selected ? 700 : 500, color: 'var(--text-primary)' }}>
+                                {nombre}
+                              </td>
+                              <td style={{ padding: '10px', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '12px' }}>
+                                {sid || '—'}
+                              </td>
+                              <td style={{ padding: '10px' }}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  background: activo ? '#dcfce7' : 'var(--bg-page)',
+                                  color: activo ? '#166534' : 'var(--text-muted)',
+                                }}>
+                                  {activo
+                                    ? t('admin.padcoins.sedeParticipationActiveShort', 'Activa')
+                                    : t('admin.padcoins.sedeParticipationInactiveShort', 'Inactiva')}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : null}
 
@@ -13239,106 +13455,12 @@ export default function AdminDashboard({
                     }}>
                       {t(
                         'admin.padcoins.sedeParticipationClubInactive',
-                        'Tu sede todavía no participa en Beneficios Padbol. Contactá al Super Admin para activarlo.',
+                        'Beneficios Padbol están desactivados en tu sede. Activá la opción de arriba para ofrecer beneficios y recibir canjes.',
                       )}
                     </p>
                   ) : null}
 
-                  {isSuperAdmin ? (
-                    <form onSubmit={guardarPadcoinsSedeParticipacion} style={{ display: 'grid', gap: '14px' }}>
-                      <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px',
-                        padding: '12px 14px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-page)',
-                      }}>
-                        <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
-                          {t('admin.padcoins.sedeParticipationToggle', 'Participación PadCoins')}
-                        </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                            {pcSedeParticipacion.padcoins_activo
-                              ? t('admin.padcoins.sedeParticipationOn', 'Activado')
-                              : t('admin.padcoins.sedeParticipationOff', 'Desactivado')}
-                          </span>
-                          <input
-                            type="checkbox"
-                            checked={!!pcSedeParticipacion.padcoins_activo}
-                            onChange={(e) => updatePcSedeParticipacionField('padcoins_activo', e.target.checked)}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                          />
-                        </span>
-                      </label>
-
-                      <label style={{ display: 'grid', gap: '6px' }}>
-                        <span style={{ fontWeight: 600, fontSize: '14px' }}>
-                          {t('admin.padcoins.descriptionField', 'Descripción')}
-                        </span>
-                        <textarea
-                          value={pcSedeParticipacion.descripcion}
-                          onChange={(e) => updatePcSedeParticipacionField('descripcion', e.target.value)}
-                          rows={3}
-                          placeholder={t('admin.padcoins.sedeParticipationDescPlaceholder', 'Notas internas sobre la participación de esta sede (opcional)')}
-                          style={{ ...pcInp, resize: 'vertical' }}
-                        />
-                      </label>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-                        <label style={{ display: 'grid', gap: '6px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '14px' }}>
-                            {t('admin.padcoins.sedeParticipationStartDate', 'Fecha inicio (opcional)')}
-                          </span>
-                          <input
-                            type="date"
-                            value={pcSedeParticipacion.fecha_inicio}
-                            onChange={(e) => updatePcSedeParticipacionField('fecha_inicio', e.target.value)}
-                            style={pcInp}
-                          />
-                        </label>
-                        <label style={{ display: 'grid', gap: '6px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '14px' }}>
-                            {t('admin.padcoins.sedeParticipationEndDate', 'Fecha fin (opcional)')}
-                          </span>
-                          <input
-                            type="date"
-                            value={pcSedeParticipacion.fecha_fin}
-                            onChange={(e) => updatePcSedeParticipacionField('fecha_fin', e.target.value)}
-                            style={pcInp}
-                          />
-                        </label>
-                      </div>
-
-                      {pcSedeParticipacionSaveError ? (
-                        <p style={{ color: '#dc2626', fontWeight: 600, margin: 0 }}>
-                          {pcSedeParticipacionSaveError}
-                        </p>
-                      ) : null}
-
-                      <button
-                        type="submit"
-                        disabled={pcSedeParticipacionSaving}
-                        style={{
-                          justifySelf: 'start',
-                          padding: '10px 20px',
-                          background: pcSedeParticipacionSaving ? '#94a3b8' : 'var(--accent)',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontWeight: 700,
-                          fontSize: '14px',
-                          cursor: pcSedeParticipacionSaving ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        {pcSedeParticipacionSaving
-                          ? t('admin.metricas.saving', 'Guardando...')
-                          : t('admin.padcoins.sedeParticipationSave', 'Guardar participación')}
-                      </button>
-                    </form>
-                  ) : (
+                  {puedeEditarParticipacion ? renderPcParticipacionForm() : (
                     <div style={{ display: 'grid', gap: '10px', fontSize: '14px', color: 'var(--text-secondary)' }}>
                       {pcSedeParticipacion.descripcion ? (
                         <p style={{ margin: 0 }}>
@@ -13360,8 +13482,8 @@ export default function AdminDashboard({
                       ) : null}
                       <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
                         {t(
-                          'admin.padcoins.sedeParticipationReadOnly',
-                          'Solo el Super Admin puede activar o desactivar la participación de esta sede.',
+                          'admin.padcoins.sedeParticipationNacionalReadOnly',
+                          'La participación de cada sede la gestiona su Admin Club. Como Admin Nacional podés consultar el estado.',
                         )}
                       </p>
                     </div>
@@ -13396,7 +13518,7 @@ export default function AdminDashboard({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  + {t('admin.padcoins.newPrize', 'Nuevo premio')}
+                  + {t('admin.padcoins.newBenefit', 'Nuevo beneficio')}
                 </button>
               ) : null}
             </div>
