@@ -1266,6 +1266,46 @@ function parsePadcoinsSedesConfigList(data) {
   return [];
 }
 
+function resolvePadcoinsSedeRowId(row) {
+  if (!row || typeof row !== 'object') return '';
+  if (row.sede_id != null && row.sede_id !== '') return String(row.sede_id);
+  if (row.sedeId != null && row.sedeId !== '') return String(row.sedeId);
+  if (row.sede?.id != null && row.sede.id !== '') return String(row.sede.id);
+  if (row.id != null && row.id !== '') return String(row.id);
+  return '';
+}
+
+function padcoinsSedeRowNombre(row, sedesMapRef) {
+  const sid = resolvePadcoinsSedeRowId(row);
+  if (sid && sedesMapRef?.[sid]?.nombre) return sedesMapRef[sid].nombre;
+  if (sid && sedesMapRef) {
+    const hit = Object.values(sedesMapRef).find((s) => mismoIdSede(s.id, sid));
+    if (hit?.nombre) return hit.nombre;
+  }
+  return row.nombre || row.sede_nombre || row.sede?.nombre || (sid ? `Sede ${sid}` : '');
+}
+
+function buildPcSedesOptions(sedesMapRef, participacionList) {
+  const byId = new Map();
+  Object.values(sedesMapRef || {}).forEach((s) => {
+    const id = String(s.id ?? '').trim();
+    if (!id) return;
+    if (!byId.has(id)) byId.set(id, { ...s, id });
+  });
+  (participacionList || []).forEach((row) => {
+    const id = resolvePadcoinsSedeRowId(row);
+    if (!id || byId.has(id)) return;
+    byId.set(id, {
+      id,
+      nombre: padcoinsSedeRowNombre(row, sedesMapRef),
+      pais: row.pais || row.sede?.pais || null,
+    });
+  });
+  return Array.from(byId.values()).sort((a, b) =>
+    String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'),
+  );
+}
+
 const ADMIN_TABS_ALLOWED = new Set([
   'resumen',
   'torneos',
@@ -12807,10 +12847,15 @@ export default function AdminDashboard({
 
       {activeTab === 'padcoins' && puedeVerPadCoins ? (() => {
         const effectivePcSedeId = resolvePcSedeId();
-        const pcSedesOptions = Object.values(sedesMap || {}).sort((a, b) =>
-          String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'),
-        );
-        const sedeNombre = effectivePcSedeId ? sedesMap[effectivePcSedeId]?.nombre : null;
+        const pcSedesOptions = buildPcSedesOptions(sedesMap, pcSedesParticipacionList);
+        const sedeNombre = effectivePcSedeId
+          ? (
+            sedesMap[effectivePcSedeId]?.nombre
+            || sedesMap[String(effectivePcSedeId)]?.nombre
+            || pcSedesOptions.find((s) => mismoIdSede(s.id, effectivePcSedeId))?.nombre
+            || null
+          )
+          : null;
         const canjesFiltrados = canjes.filter((c) => {
           const est = normalizeCanjeEstado(c.estado);
           if (canjeFiltroEstado === 'todos') return true;
@@ -12853,8 +12898,8 @@ export default function AdminDashboard({
         const clubSedeInactiva = esAdminClub && effectivePcSedeId && !padcoinsActivoSede && !pcSedeParticipacionLoading;
         const pcSedeParticipacionQuery = pcSedeParticipacionBusqueda.trim().toLowerCase();
         const pcSedesParticipacionFiltradas = pcSedesParticipacionList.filter((row) => {
-          const sid = String(row.sede_id ?? row.id ?? '');
-          const nombre = String(sedesMap[sid]?.nombre || row.nombre || row.sede_nombre || `Sede ${sid}`).toLowerCase();
+          const sid = resolvePadcoinsSedeRowId(row);
+          const nombre = String(padcoinsSedeRowNombre(row, sedesMap)).toLowerCase();
           const activo = row.padcoins_activo !== false && row.activo !== false;
           if (pcSedeParticipacionFiltro === 'activas' && !activo) return false;
           if (pcSedeParticipacionFiltro === 'inactivas' && activo) return false;
@@ -13315,8 +13360,8 @@ export default function AdminDashboard({
                             </td>
                           </tr>
                         ) : pcSedesParticipacionFiltradas.map((row) => {
-                          const sid = String(row.sede_id ?? row.id ?? '');
-                          const nombre = sedesMap[sid]?.nombre || row.nombre || row.sede_nombre || `Sede ${sid}`;
+                          const sid = resolvePadcoinsSedeRowId(row);
+                          const nombre = padcoinsSedeRowNombre(row, sedesMap);
                           const activo = row.padcoins_activo !== false && row.activo !== false;
                           const selected = effectivePcSedeId === sid;
                           return (
@@ -13324,7 +13369,7 @@ export default function AdminDashboard({
                               key={sid || nombre}
                               onClick={() => {
                                 if (!sid) return;
-                                setPcSedeId(sid);
+                                setPcSedeId(String(sid));
                                 cerrarPremioForm();
                               }}
                               style={{
@@ -13376,7 +13421,7 @@ export default function AdminDashboard({
                     >
                       <option value="">{t('admin.padcoins.selectVenue', 'Seleccionar sede...')}</option>
                       {pcSedesOptions.map((s) => (
-                        <option key={s.id} value={s.id}>{sedeFlag(s)} {s.nombre}</option>
+                        <option key={String(s.id)} value={String(s.id)}>{sedeFlag(s)} {s.nombre}</option>
                       ))}
                     </select>
                   </label>
