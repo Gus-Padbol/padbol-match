@@ -1132,16 +1132,16 @@ const PADCOINS_CONFIG_KEY_LABELS = {
   no_show: 'No show',
   limite_diario_jugador: 'Límite diario por jugador',
   limite_mensual_jugador: 'Límite mensual por jugador',
-  porcentaje_devolucion_reserva: 'Porcentaje de devolución por reserva',
-  padcoins_por_usd_equivalente: 'PadCoins por USD equivalente',
+  porcentaje_devolucion_reserva: 'Acreditación promocional por reserva',
+  padcoins_por_usd_equivalente: 'Conversión interna de referencia',
   modo_calculo_reserva: 'Modo de cálculo de reservas',
 };
 
 const PADCOINS_CONFIG_KEY_HELP = {
   porcentaje_devolucion_reserva:
-    'Porcentaje del valor pagado que vuelve al jugador en PadCoins. Lanzamiento recomendado: 5%.',
+    'Porcentaje del valor de la reserva que se acredita al jugador en PadCoins. Lanzamiento recomendado: 5%.',
   padcoins_por_usd_equivalente:
-    'Conversión promocional interna. No se muestra como valor monetario al jugador.',
+    'Conversión interna de referencia para calcular PadCoins. No se muestra como valor monetario al jugador.',
   modo_calculo_reserva: 'Calcula PadCoins como porcentaje del valor pagado.',
 };
 
@@ -1304,6 +1304,99 @@ function buildPcSedesOptions(sedesMapRef, participacionList) {
   return Array.from(byId.values()).sort((a, b) =>
     String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'),
   );
+}
+
+const PC_MOV_PAGE_SIZE = 25;
+
+const PC_MOV_TIPO_FILTRO = [
+  { id: '', label: 'Todos los tipos' },
+  { id: 'earn', label: 'Acreditación' },
+  { id: 'spend', label: 'Canje / descuento' },
+  { id: 'adjust', label: 'Ajuste admin' },
+  { id: 'reverse', label: 'Reversa' },
+];
+
+const PC_MOV_REF_TIPO_FILTRO = [
+  { id: '', label: 'Toda referencia' },
+  { id: 'reserva', label: 'Reserva' },
+  { id: 'penalizacion', label: 'Penalización' },
+  { id: 'canje', label: 'Canje' },
+  { id: 'logro', label: 'Logro' },
+  { id: 'ajuste', label: 'Ajuste' },
+];
+
+function parsePadcoinsMovimientosResponse(data) {
+  const movimientos = Array.isArray(data?.movimientos) ? data.movimientos : [];
+  const pag = data?.paginacion || data?.pagination || {};
+  const total = pag.total ?? pag.total_count ?? pag.count ?? movimientos.length;
+  const limit = pag.limit ?? PC_MOV_PAGE_SIZE;
+  const offset = pag.offset ?? 0;
+  return { movimientos, total: Number(total) || 0, limit: Number(limit) || PC_MOV_PAGE_SIZE, offset: Number(offset) || 0 };
+}
+
+function padcoinsMovJugadorDisplay(row) {
+  const j = row?.jugador;
+  const nombre = [j?.nombre, j?.apellido].filter(Boolean).join(' ').trim()
+    || String(j?.nombre || row?.jugador_nombre || '').trim();
+  const email = String(j?.email || row?.jugador_email || '').trim();
+  if (nombre && email) return `${nombre} (${email})`;
+  if (nombre) return nombre;
+  if (email) return email;
+  const uid = row?.user_id ?? j?.user_id;
+  return uid != null && uid !== '' ? `Usuario #${uid}` : '—';
+}
+
+function padcoinsMovTipoBadge(row) {
+  const tipo = String(row?.tipo || '').trim().toLowerCase();
+  const refTipo = String(row?.referencia_tipo || '').trim().toLowerCase();
+  if (refTipo === 'penalizacion' || refTipo === 'penalización') {
+    return { label: 'Penalización', bg: '#fee2e2', color: '#991b1b' };
+  }
+  if (refTipo === 'reserva') {
+    return { label: 'Reserva', bg: '#dbeafe', color: '#1e40af' };
+  }
+  if (tipo === 'earn') return { label: 'Acreditación', bg: '#dcfce7', color: '#166534' };
+  if (tipo === 'spend') return { label: 'Canje / descuento', bg: '#fef3c7', color: '#92400e' };
+  if (tipo === 'adjust') return { label: 'Ajuste admin', bg: '#e0e7ff', color: '#3730a3' };
+  if (tipo === 'reverse') return { label: 'Reversa', bg: '#f3e8ff', color: '#6b21a8' };
+  if (tipo) return { label: tipo, bg: 'var(--bg-page)', color: 'var(--text-muted)' };
+  return { label: 'Movimiento', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
+}
+
+function padcoinsMovReferenciaDisplay(row) {
+  const rt = String(row?.referencia_tipo || '').trim();
+  const ri = row?.referencia_id;
+  if (!rt && (ri == null || ri === '')) return '—';
+  return [rt, ri != null && ri !== '' ? `#${ri}` : ''].filter(Boolean).join(' ') || '—';
+}
+
+function formatPadcoinsMovFecha(raw) {
+  const src = raw?.fecha ?? raw?.created_at;
+  if (!src) return '—';
+  const d = new Date(src);
+  if (Number.isNaN(d.getTime())) return String(src).slice(0, 16);
+  return d.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function padcoinsMovMontoDisplay(monto) {
+  const n = Number(monto);
+  if (!Number.isFinite(n)) return '—';
+  const prefix = n > 0 ? '+' : '';
+  return `${prefix}${n.toLocaleString('es-AR')}`;
+}
+
+function padcoinsMovMontoColor(monto) {
+  const n = Number(monto);
+  if (!Number.isFinite(n)) return 'var(--text-muted)';
+  if (n > 0) return '#166534';
+  if (n < 0) return '#b91c1c';
+  return 'var(--text-muted)';
 }
 
 const ADMIN_TABS_ALLOWED = new Set([
@@ -3131,6 +3224,17 @@ export default function AdminDashboard({
   const [pcSedesParticipacionList, setPcSedesParticipacionList] = useState([]);
   const [pcSedeParticipacionBusqueda, setPcSedeParticipacionBusqueda] = useState('');
   const [pcSedeParticipacionFiltro, setPcSedeParticipacionFiltro] = useState('todas');
+  const [pcMovimientos, setPcMovimientos] = useState([]);
+  const [pcMovLoading, setPcMovLoading] = useState(false);
+  const [pcMovError, setPcMovError] = useState('');
+  const [pcMovTotal, setPcMovTotal] = useState(0);
+  const [pcMovPage, setPcMovPage] = useState(0);
+  const [pcMovFiltroSedeId, setPcMovFiltroSedeId] = useState('');
+  const [pcMovFiltroSearch, setPcMovFiltroSearch] = useState('');
+  const [pcMovFiltroTipo, setPcMovFiltroTipo] = useState('');
+  const [pcMovFiltroRefTipo, setPcMovFiltroRefTipo] = useState('');
+  const [pcMovFiltroDesde, setPcMovFiltroDesde] = useState('');
+  const [pcMovFiltroHasta, setPcMovFiltroHasta] = useState('');
 
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
@@ -3487,6 +3591,78 @@ export default function AdminDashboard({
     }
   }
 
+  async function fetchPadcoinsMovimientos(pageOverride) {
+    const page = pageOverride != null ? Number(pageOverride) : pcMovPage;
+    const clubSid = esAdminClub ? resolvePcSedeId() : '';
+    if (esAdminClub && !clubSid) {
+      setPcMovimientos([]);
+      setPcMovError('');
+      setPcMovTotal(0);
+      setPcMovLoading(false);
+      return;
+    }
+    setPcMovLoading(true);
+    setPcMovError('');
+    try {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams();
+      params.set('limit', String(PC_MOV_PAGE_SIZE));
+      params.set('offset', String(Math.max(0, page) * PC_MOV_PAGE_SIZE));
+      const sid = clubSid || pcMovFiltroSedeId;
+      if (sid) params.set('sede_id', String(sid));
+      const q = pcMovFiltroSearch.trim();
+      if (q) {
+        params.set('search', q);
+        params.set('q', q);
+      }
+      if (pcMovFiltroTipo) params.set('tipo', pcMovFiltroTipo);
+      if (pcMovFiltroRefTipo) params.set('referencia_tipo', pcMovFiltroRefTipo);
+      if (pcMovFiltroDesde) {
+        params.set('fecha_desde', pcMovFiltroDesde);
+        params.set('desde', pcMovFiltroDesde);
+      }
+      if (pcMovFiltroHasta) {
+        params.set('fecha_hasta', pcMovFiltroHasta);
+        params.set('hasta', pcMovFiltroHasta);
+      }
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins-movimientos?${params.toString()}`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        throw new Error('No tenés permisos para ver estos movimientos.');
+      }
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar movimientos PadCoins');
+      const parsed = parsePadcoinsMovimientosResponse(data);
+      setPcMovimientos(parsed.movimientos);
+      setPcMovTotal(parsed.total);
+      if (pageOverride != null) setPcMovPage(Math.max(0, page));
+    } catch (err) {
+      setPcMovError(err.message || 'Error al cargar movimientos PadCoins');
+      setPcMovimientos([]);
+      setPcMovTotal(0);
+    } finally {
+      setPcMovLoading(false);
+    }
+  }
+
+  function buscarPadcoinsMovimientos() {
+    setPcMovPage(0);
+    void fetchPadcoinsMovimientos(0);
+  }
+
+  function limpiarPadcoinsMovFiltros() {
+    if (!esAdminClub) setPcMovFiltroSedeId('');
+    setPcMovFiltroSearch('');
+    setPcMovFiltroTipo('');
+    setPcMovFiltroRefTipo('');
+    setPcMovFiltroDesde('');
+    setPcMovFiltroHasta('');
+    setPcMovPage(0);
+    void fetchPadcoinsMovimientos(0);
+  }
+
   useEffect(() => {
     if (sedeIdKey && !sbSedeId) setSbSedeId(String(sedeIdKey));
   }, [sedeIdKey, sbSedeId]);
@@ -3513,11 +3689,21 @@ export default function AdminDashboard({
       setPcSedeParticipacion(emptyPadcoinsSedeConfigForm());
       setPcSedeParticipacionError('');
       setPcSedeParticipacionLoading(false);
+      if (esAdminClub) {
+        setPcMovimientos([]);
+        setPcMovError('');
+        setPcMovTotal(0);
+        setPcMovLoading(false);
+        return;
+      }
+      void fetchPadcoinsMovimientos(0);
       return;
     }
     void fetchPadcoinsSedeParticipacion(sid);
     fetchPremios();
     fetchCanjes();
+    if (esAdminClub && sid) setPcMovFiltroSedeId(String(sid));
+    void fetchPadcoinsMovimientos(0);
   }, [activeTab, pcSedeId, sedeId, sedeIdKey, apiBaseUrl, esAdminClub, isSuperAdmin, esAdminNacional]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Vista Reservas super_admin: resumen global vs ranking de clubes. */
@@ -12906,6 +13092,15 @@ export default function AdminDashboard({
           if (!pcSedeParticipacionQuery) return true;
           return nombre.includes(pcSedeParticipacionQuery) || sid.includes(pcSedeParticipacionQuery);
         });
+        const pcMovClubSedeId = esAdminClub ? resolvePcSedeId() : '';
+        const pcMovSedeFiltroNombre = pcMovFiltroSedeId
+          ? (sedesMap[pcMovFiltroSedeId]?.nombre || sedesMap[String(pcMovFiltroSedeId)]?.nombre
+            || pcSedesOptions.find((s) => mismoIdSede(s.id, pcMovFiltroSedeId))?.nombre)
+          : null;
+        const pcMovPaginaInicio = pcMovTotal === 0 ? 0 : pcMovPage * PC_MOV_PAGE_SIZE + 1;
+        const pcMovPaginaFin = Math.min((pcMovPage + 1) * PC_MOV_PAGE_SIZE, pcMovTotal);
+        const pcMovHayAnterior = pcMovPage > 0;
+        const pcMovHaySiguiente = (pcMovPage + 1) * PC_MOV_PAGE_SIZE < pcMovTotal;
 
         const renderPcParticipacionForm = () => (
           <form onSubmit={guardarPadcoinsSedeParticipacion} style={{ display: 'grid', gap: '14px' }}>
@@ -13132,7 +13327,7 @@ export default function AdminDashboard({
                 }}>
                   {t(
                     'admin.padcoins.globalConfigExample',
-                    'Ejemplo: con 5% y 100 PadCoins por USD equivalente, una reserva de USD 50 genera 250 PadCoins.',
+                    'Ejemplo: con 5% de acreditación promocional y conversión interna 100, una reserva de referencia equivalente a 50 unidades genera 250 PadCoins.',
                   )}
                   {' '}
                   {t(
@@ -14025,6 +14220,313 @@ export default function AdminDashboard({
                 ) : null}
               </div>
             ) : null}
+
+            <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
+                {t('admin.padcoins.movementsTitle', 'Movimientos')}
+              </h3>
+              <p style={{ color: 'var(--text-muted)', margin: '0 0 18px', maxWidth: '720px', fontSize: '14px' }}>
+                {t(
+                  'admin.padcoins.movementsDescription',
+                  'Auditoría de acreditaciones, canjes, penalizaciones y ajustes de PadCoins en Beneficios Padbol.',
+                )}
+              </p>
+
+              <div style={{
+                display: 'grid',
+                gap: '12px',
+                marginBottom: '18px',
+                maxWidth: '960px',
+                padding: '16px',
+                border: '1px solid var(--border)',
+                borderRadius: '10px',
+                background: 'var(--bg-card)',
+              }}>
+                {isSuperAdmin ? (
+                  <label style={{ display: 'grid', gap: '6px', maxWidth: '320px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.movementsVenueFilter', 'Sede')}
+                    </span>
+                    <select
+                      value={pcMovFiltroSedeId}
+                      onChange={(e) => setPcMovFiltroSedeId(e.target.value)}
+                      style={pcInp}
+                    >
+                      <option value="">{t('admin.padcoins.movementsAllVenues', 'Todas las sedes')}</option>
+                      {pcSedesOptions.map((s) => (
+                        <option key={String(s.id)} value={String(s.id)}>{sedeFlag(s)} {s.nombre}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                {esAdminClub && pcMovClubSedeId ? (
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {t('admin.padcoins.movementsClubVenue', 'Movimientos de tu sede')}:{' '}
+                    <strong style={{ color: 'var(--text-primary)' }}>
+                      {sedeNombre || pcMovSedeFiltroNombre || `Sede ${pcMovClubSedeId}`}
+                    </strong>
+                  </p>
+                ) : null}
+
+                <label style={{ display: 'grid', gap: '6px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                    {t('admin.padcoins.movementsPlayerSearch', 'Buscar jugador (nombre, email o id)')}
+                  </span>
+                  <input
+                    type="search"
+                    value={pcMovFiltroSearch}
+                    onChange={(e) => setPcMovFiltroSearch(e.target.value)}
+                    placeholder={t('admin.padcoins.movementsPlayerPlaceholder', 'Ej: juan@mail.com o 123')}
+                    style={pcInp}
+                  />
+                </label>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.movementsTypeFilter', 'Tipo')}
+                    </span>
+                    <select value={pcMovFiltroTipo} onChange={(e) => setPcMovFiltroTipo(e.target.value)} style={pcInp}>
+                      {PC_MOV_TIPO_FILTRO.map((opt) => (
+                        <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.movementsRefFilter', 'Referencia')}
+                    </span>
+                    <select value={pcMovFiltroRefTipo} onChange={(e) => setPcMovFiltroRefTipo(e.target.value)} style={pcInp}>
+                      {PC_MOV_REF_TIPO_FILTRO.map((opt) => (
+                        <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.movementsFromDate', 'Desde')}
+                    </span>
+                    <input
+                      type="date"
+                      value={pcMovFiltroDesde}
+                      onChange={(e) => setPcMovFiltroDesde(e.target.value)}
+                      style={pcInp}
+                    />
+                  </label>
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.movementsToDate', 'Hasta')}
+                    </span>
+                    <input
+                      type="date"
+                      value={pcMovFiltroHasta}
+                      onChange={(e) => setPcMovFiltroHasta(e.target.value)}
+                      style={pcInp}
+                    />
+                  </label>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={buscarPadcoinsMovimientos}
+                    disabled={pcMovLoading}
+                    style={{
+                      padding: '9px 18px',
+                      background: pcMovLoading ? '#94a3b8' : 'var(--accent)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      cursor: pcMovLoading ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {t('admin.padcoins.movementsSearch', 'Buscar')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={limpiarPadcoinsMovFiltros}
+                    disabled={pcMovLoading}
+                    style={{
+                      padding: '9px 18px',
+                      background: 'var(--bg-page)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: pcMovLoading ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {t('admin.padcoins.movementsClear', 'Limpiar')}
+                  </button>
+                </div>
+              </div>
+
+              {esAdminClub && !pcMovClubSedeId ? (
+                <p style={{
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  padding: '14px 16px',
+                  borderRadius: '8px',
+                  maxWidth: '520px',
+                }}>
+                  {t('admin.padcoins.movementsClubNoVenue', 'No hay sede asignada para consultar movimientos PadCoins.')}
+                </p>
+              ) : null}
+
+              {pcMovLoading ? (
+                <p style={{ color: 'var(--text-muted)' }}>
+                  {t('admin.padcoins.movementsLoading', 'Cargando movimientos...')}
+                </p>
+              ) : null}
+
+              {!pcMovLoading && pcMovError ? (
+                <p style={{
+                  color: '#dc2626',
+                  fontWeight: 600,
+                  background: 'var(--bg-card)',
+                  border: '1px solid #fecaca',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  maxWidth: '640px',
+                }}>
+                  {pcMovError}
+                </p>
+              ) : null}
+
+              {!pcMovLoading && !pcMovError && pcMovimientos.length === 0 && (esAdminClub ? !!pcMovClubSedeId : true) ? (
+                <p style={{ color: 'var(--text-muted)' }}>
+                  {t('admin.padcoins.movementsEmpty', 'No hay movimientos para los filtros seleccionados.')}
+                </p>
+              ) : null}
+
+              {!pcMovLoading && !pcMovError && pcMovimientos.length > 0 ? (
+                <>
+                  <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {pcMovTotal > 0
+                      ? t(
+                        'admin.padcoins.movementsCount',
+                        'Mostrando {{from}}–{{to}} de {{total}} movimientos',
+                      )
+                        .replace('{{from}}', String(pcMovPaginaInicio))
+                        .replace('{{to}}', String(pcMovPaginaFin))
+                        .replace('{{total}}', String(pcMovTotal))
+                      : `${pcMovimientos.length} movimiento(s)`}
+                  </p>
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '920px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', background: 'var(--bg-card)' }}>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsDate', 'Fecha')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsPlayer', 'Jugador')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsVenue', 'Sede')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsType', 'Tipo')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsAmount', 'Monto')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsDescriptionCol', 'Descripción')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsReference', 'Referencia')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsBalance', 'Saldo resultante')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pcMovimientos.map((mov) => {
+                          const badge = padcoinsMovTipoBadge(mov);
+                          const sedeMov = mov.sede_nombre
+                            || sedesMap[String(mov.sede_id)]?.nombre
+                            || (mov.sede_id != null ? `Sede ${mov.sede_id}` : '—');
+                          return (
+                            <tr key={mov.id ?? `${mov.fecha}-${mov.user_id}-${mov.monto}`} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
+                                {formatPadcoinsMovFecha(mov)}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-primary)', maxWidth: '220px' }}>
+                                {padcoinsMovJugadorDisplay(mov)}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{sedeMov}</td>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  background: badge.bg,
+                                  color: badge.color,
+                                }}>
+                                  {badge.label}
+                                </span>
+                              </td>
+                              <td style={{
+                                padding: '10px 12px',
+                                fontWeight: 700,
+                                color: padcoinsMovMontoColor(mov.monto),
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {padcoinsMovMontoDisplay(mov.monto)}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', maxWidth: '260px' }}>
+                                {mov.descripcion || '—'}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                                {padcoinsMovReferenciaDisplay(mov)}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {mov.saldo_resultante != null && Number.isFinite(Number(mov.saldo_resultante))
+                                  ? Number(mov.saldo_resultante).toLocaleString('es-AR')
+                                  : '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+                    <button
+                      type="button"
+                      disabled={!pcMovHayAnterior || pcMovLoading}
+                      onClick={() => void fetchPadcoinsMovimientos(pcMovPage - 1)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-card)',
+                        cursor: !pcMovHayAnterior || pcMovLoading ? 'not-allowed' : 'pointer',
+                        opacity: !pcMovHayAnterior ? 0.5 : 1,
+                        fontWeight: 600,
+                        fontSize: '13px',
+                      }}
+                    >
+                      {t('admin.padcoins.movementsPrev', 'Anterior')}
+                    </button>
+                    <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                      {t('admin.padcoins.movementsPage', 'Página')} {pcMovPage + 1}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={!pcMovHaySiguiente || pcMovLoading}
+                      onClick={() => void fetchPadcoinsMovimientos(pcMovPage + 1)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-card)',
+                        cursor: !pcMovHaySiguiente || pcMovLoading ? 'not-allowed' : 'pointer',
+                        opacity: !pcMovHaySiguiente ? 0.5 : 1,
+                        fontWeight: 600,
+                        fontSize: '13px',
+                      }}
+                    >
+                      {t('admin.padcoins.movementsNext', 'Siguiente')}
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
           </div>
         );
       })() : null}
