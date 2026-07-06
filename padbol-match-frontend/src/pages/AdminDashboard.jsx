@@ -1027,6 +1027,83 @@ function buildPremioPayload(form, sede_id) {
   return payload;
 }
 
+const CANJE_ESTADOS_FILTRO = [
+  { id: 'pendiente', label: 'Pendientes' },
+  { id: 'entregado', label: 'Entregados' },
+  { id: 'cancelado', label: 'Cancelados' },
+  { id: 'todos', label: 'Todos' },
+];
+
+function normalizeCanjeEstado(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  if (s === 'entregado' || s === 'entregada') return 'entregado';
+  if (s === 'cancelado' || s === 'cancelada') return 'cancelado';
+  return 'pendiente';
+}
+
+function parseCanjesList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.canjes)) return data.canjes;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+function canjePerteneceASede(row, sedeId) {
+  if (!sedeId) return false;
+  const sid = String(sedeId);
+  const rowSede = row?.sede_id ?? row?.premio_sede_id ?? row?.premio?.sede_id;
+  if (rowSede == null || rowSede === '') return true;
+  return String(rowSede) === sid;
+}
+
+function canjeCodigoDisplay(row) {
+  return String(row?.codigo ?? row?.codigo_canje ?? row?.id ?? '—').trim() || '—';
+}
+
+function canjePremioNombre(row) {
+  const nombre = row?.premio_nombre
+    ?? row?.premio?.nombre
+    ?? row?.nombre_premio
+    ?? (typeof row?.premio === 'string' ? row.premio : null);
+  return String(nombre || '—').trim() || '—';
+}
+
+function canjeJugadorDisplay(row) {
+  const nombreCompleto = [row?.jugador?.nombre, row?.jugador?.apellido].filter(Boolean).join(' ').trim();
+  const bits = [
+    row?.jugador_nombre,
+    row?.nombre_jugador,
+    nombreCompleto,
+    row?.usuario_nombre,
+    row?.nombre,
+    row?.alias,
+    row?.email,
+    row?.jugador_email,
+    row?.usuario_email,
+    row?.email_jugador,
+  ].map((x) => String(x || '').trim()).filter(Boolean);
+  return bits[0] || '—';
+}
+
+function canjeFechaCreacion(row) {
+  const raw = row?.created_at ?? row?.fecha_creacion ?? row?.creado_en;
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return String(raw).slice(0, 16);
+  return d.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function canjeCostoPadcoins(row) {
+  const n = row?.costo_padcoins ?? row?.padcoins ?? row?.premio?.costo_padcoins;
+  return n != null && n !== '' ? Number(n) : null;
+}
+
 const ADMIN_TABS_ALLOWED = new Set([
   'resumen',
   'torneos',
@@ -2834,6 +2911,11 @@ export default function AdminDashboard({
   const [premioForm, setPremioForm] = useState(() => EMPTY_PREMIO_FORM());
   const [premioFormError, setPremioFormError] = useState('');
   const [premioSaving, setPremioSaving] = useState(false);
+  const [canjes, setCanjes] = useState([]);
+  const [canjesLoading, setCanjesLoading] = useState(false);
+  const [canjesError, setCanjesError] = useState('');
+  const [canjeFiltroEstado, setCanjeFiltroEstado] = useState('pendiente');
+  const [canjeActionId, setCanjeActionId] = useState(null);
 
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
@@ -2867,6 +2949,32 @@ export default function AdminDashboard({
       setPremios([]);
     } finally {
       setPremiosLoading(false);
+    }
+  }
+
+  async function fetchCanjes() {
+    const sid = resolvePcSedeId();
+    if (!sid) {
+      setCanjes([]);
+      return;
+    }
+    setCanjesLoading(true);
+    setCanjesError('');
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins-canjes?sede_id=${encodeURIComponent(sid)}`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar canjes');
+      const list = parseCanjesList(data).filter((row) => canjePerteneceASede(row, sid));
+      setCanjes(list);
+    } catch (err) {
+      setCanjesError(err.message || 'Error al cargar canjes');
+      setCanjes([]);
+    } finally {
+      setCanjesLoading(false);
     }
   }
 
@@ -2958,6 +3066,60 @@ export default function AdminDashboard({
     }
   }
 
+  async function entregarCanje(canje) {
+    if (!canje?.id) return;
+    const codigo = canjeCodigoDisplay(canje);
+    if (!window.confirm(`¿Marcar como entregado el canje ${codigo}?`)) return;
+    setCanjeActionId(canje.id);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${apiBaseUrl}/api/admin/padcoins-canjes/${canje.id}/entregar`, {
+        method: 'POST',
+        headers,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al marcar canje como entregado');
+      setMensajeExito('✅ Canje marcado como entregado');
+      setTimeout(() => setMensajeExito(''), 3000);
+      await fetchCanjes();
+      await fetchPremios();
+    } catch (err) {
+      alert(err.message || 'Error al entregar canje');
+    } finally {
+      setCanjeActionId(null);
+    }
+  }
+
+  async function cancelarCanje(canje) {
+    if (!canje?.id) return;
+    const codigo = canjeCodigoDisplay(canje);
+    if (
+      !window.confirm(
+        `¿Cancelar el canje ${codigo}?\n\nSi el backend lo permite, se devolverá el saldo de PadCoins al jugador.`,
+      )
+    ) {
+      return;
+    }
+    setCanjeActionId(canje.id);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${apiBaseUrl}/api/admin/padcoins-canjes/${canje.id}/cancelar`, {
+        method: 'POST',
+        headers,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cancelar canje');
+      setMensajeExito('✅ Canje cancelado');
+      setTimeout(() => setMensajeExito(''), 3000);
+      await fetchCanjes();
+      await fetchPremios();
+    } catch (err) {
+      alert(err.message || 'Error al cancelar canje');
+    } finally {
+      setCanjeActionId(null);
+    }
+  }
+
   useEffect(() => {
     if (sedeIdKey && !sbSedeId) setSbSedeId(String(sedeIdKey));
   }, [sedeIdKey, sbSedeId]);
@@ -2974,9 +3136,13 @@ export default function AdminDashboard({
       setPremios([]);
       setPremiosError('');
       setPremiosLoading(false);
+      setCanjes([]);
+      setCanjesError('');
+      setCanjesLoading(false);
       return;
     }
     fetchPremios();
+    fetchCanjes();
   }, [activeTab, pcSedeId, sedeId, sedeIdKey, apiBaseUrl, esAdminClub, isSuperAdmin, esAdminNacional]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Vista Reservas super_admin: resumen global vs ranking de clubes. */
@@ -12310,6 +12476,21 @@ export default function AdminDashboard({
           String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'),
         );
         const sedeNombre = effectivePcSedeId ? sedesMap[effectivePcSedeId]?.nombre : null;
+        const canjesFiltrados = canjes.filter((c) => {
+          const est = normalizeCanjeEstado(c.estado);
+          if (canjeFiltroEstado === 'todos') return true;
+          return est === canjeFiltroEstado;
+        });
+        const canjeEstadoBadge = (estadoRaw) => {
+          const est = normalizeCanjeEstado(estadoRaw);
+          if (est === 'entregado') {
+            return { bg: '#dcfce7', color: '#166534', label: t('admin.padcoins.redeemDelivered', 'Entregado') };
+          }
+          if (est === 'cancelado') {
+            return { bg: 'var(--bg-page)', color: 'var(--text-muted)', label: t('admin.padcoins.redeemCancelled', 'Cancelado') };
+          }
+          return { bg: '#fef3c7', color: '#92400e', label: t('admin.padcoins.redeemPending', 'Pendiente') };
+        };
         const pcInp = {
           padding: '10px',
           borderRadius: '8px',
@@ -12662,6 +12843,159 @@ export default function AdminDashboard({
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : null}
+
+            {effectivePcSedeId ? (
+              <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
+                  {t('admin.padcoins.redemptionsTitle', 'Canjes')}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '640px', fontSize: '14px' }}>
+                  {t(
+                    'admin.padcoins.redemptionsDescription',
+                    'Canjes de premios de esta sede. Cada sede entrega solo sus propios premios; no se mezclan canjes de otras sedes.',
+                  )}
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '18px' }}>
+                  {CANJE_ESTADOS_FILTRO.map(({ id, label }) => {
+                    const active = canjeFiltroEstado === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setCanjeFiltroEstado(id)}
+                        style={{
+                          padding: '7px 14px',
+                          borderRadius: '999px',
+                          border: active ? '2px solid var(--accent)' : '1px solid var(--border)',
+                          background: active ? 'var(--bg-card)' : 'transparent',
+                          color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                          fontWeight: active ? 700 : 600,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {canjesLoading ? (
+                  <p style={{ color: 'var(--text-muted)' }}>{t('admin.padcoins.redemptionsLoading', 'Cargando canjes...')}</p>
+                ) : null}
+
+                {!canjesLoading && canjesError ? (
+                  <p style={{
+                    color: '#dc2626',
+                    fontWeight: 600,
+                    background: 'var(--bg-card)',
+                    border: '1px solid #fecaca',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    maxWidth: '560px',
+                  }}>
+                    {canjesError}
+                  </p>
+                ) : null}
+
+                {!canjesLoading && !canjesError && canjesFiltrados.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)' }}>
+                    {t('admin.padcoins.redemptionsEmpty', 'No hay canjes para este filtro en la sede seleccionada.')}
+                  </p>
+                ) : null}
+
+                {!canjesLoading && canjesFiltrados.length > 0 ? (
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {canjesFiltrados.map((canje) => {
+                      const badge = canjeEstadoBadge(canje.estado);
+                      const est = normalizeCanjeEstado(canje.estado);
+                      const costo = canjeCostoPadcoins(canje);
+                      const busy = canjeActionId === canje.id;
+                      return (
+                        <div
+                          key={canje.id}
+                          style={{
+                            background: 'var(--bg-card)',
+                            borderRadius: '10px',
+                            padding: '16px 18px',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'flex-start',
+                            gap: '14px',
+                            border: '1px solid var(--border)',
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: '240px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                              <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
+                                {t('admin.padcoins.redeemCode', 'Código')}: {canjeCodigoDisplay(canje)}
+                              </strong>
+                              <span style={{
+                                background: badge.bg,
+                                color: badge.color,
+                                borderRadius: '12px',
+                                padding: '2px 10px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                              }}>
+                                {badge.label}
+                              </span>
+                            </div>
+                            <div style={{ display: 'grid', gap: '4px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                              <span><strong>{t('admin.padcoins.redeemPrize', 'Premio')}:</strong> {canjePremioNombre(canje)}</span>
+                              <span><strong>{t('admin.padcoins.redeemPlayer', 'Jugador')}:</strong> {canjeJugadorDisplay(canje)}</span>
+                              {costo != null && Number.isFinite(costo) ? (
+                                <span><strong>{t('admin.padcoins.cost', 'Costo')}:</strong> {costo} PadCoins</span>
+                              ) : null}
+                              <span><strong>{t('admin.padcoins.redeemCreated', 'Creado')}:</strong> {canjeFechaCreacion(canje)}</span>
+                            </div>
+                          </div>
+                          {est === 'pendiente' ? (
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void entregarCanje(canje)}
+                                style={{
+                                  padding: '7px 14px',
+                                  background: busy ? '#94a3b8' : 'var(--accent)',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: busy ? 'not-allowed' : 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: '13px',
+                                }}
+                              >
+                                {busy ? '…' : t('admin.padcoins.markDelivered', 'Marcar entregado')}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void cancelarCanje(canje)}
+                                style={{
+                                  padding: '7px 14px',
+                                  background: 'var(--bg-page)',
+                                  color: '#b91c1c',
+                                  border: '1px solid #fecaca',
+                                  borderRadius: '6px',
+                                  cursor: busy ? 'not-allowed' : 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: '13px',
+                                }}
+                              >
+                                {t('admin.padcoins.cancelRedemption', 'Cancelar canje')}
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
