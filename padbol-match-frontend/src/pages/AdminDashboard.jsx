@@ -3156,11 +3156,11 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar premios');
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar beneficios');
       const list = Array.isArray(data) ? data : (data.premios || data.data || []);
       setPremios(list);
     } catch (err) {
-      setPremiosError(err.message || 'Error al cargar premios');
+      setPremiosError(err.message || 'Error al cargar beneficios');
       setPremios([]);
     } finally {
       setPremiosLoading(false);
@@ -3380,7 +3380,7 @@ export default function AdminDashboard({
     e.preventDefault();
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPremioFormError('Seleccioná una sede para gestionar premios PadCoins');
+      setPremioFormError('Seleccioná una sede para gestionar beneficios PadCoins');
       return;
     }
     const validationError = validatePremioForm(premioForm);
@@ -3403,20 +3403,20 @@ export default function AdminDashboard({
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar premio');
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar beneficio');
       cerrarPremioForm();
-      setMensajeExito(isEdit ? '✅ Premio actualizado' : '✅ Premio creado');
+      setMensajeExito(isEdit ? '✅ Beneficio actualizado' : '✅ Beneficio creado');
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPremios();
     } catch (err) {
-      setPremioFormError(err.message || 'Error al guardar premio');
+      setPremioFormError(err.message || 'Error al guardar beneficio');
     } finally {
       setPremioSaving(false);
     }
   }
 
   async function desactivarPremio(premio) {
-    if (!window.confirm(`¿Desactivar el premio "${premio.nombre}"? Ya no será visible para los jugadores.`)) return;
+    if (!window.confirm(`¿Desactivar el beneficio "${premio.nombre}"? Ya no será visible para los jugadores.`)) return;
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${apiBaseUrl}/api/admin/premios-canjeables/${premio.id}`, {
@@ -3424,12 +3424,12 @@ export default function AdminDashboard({
         headers,
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al desactivar premio');
-      setMensajeExito('✅ Premio desactivado');
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al desactivar beneficio');
+      setMensajeExito('✅ Beneficio desactivado');
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPremios();
     } catch (err) {
-      alert(err.message || 'Error al desactivar premio');
+      alert(err.message || 'Error al desactivar beneficio');
     }
   }
 
@@ -13116,7 +13116,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '640px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.globalConfigDescription',
-                    'Padbol define cómo se ganan o pierden PadCoins. Los premios y canjes siguen siendo por sede.',
+                    'Padbol define cómo se ganan o pierden PadCoins. Los beneficios y canjes siguen siendo por sede.',
                   )}
                 </p>
                 <p style={{
@@ -13539,11 +13539,11 @@ export default function AdminDashboard({
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ marginTop: 0 }}>🪙 {t('admin.padcoins.title', 'Premios PadCoins')}</h2>
+                <h2 style={{ marginTop: 0 }}>🪙 {t('admin.padcoins.title', 'Beneficios PadCoins')}</h2>
                 <p style={{ color: 'var(--text-muted)', margin: 0, maxWidth: '560px' }}>
                   {t(
                     'admin.padcoins.description',
-                    'Administrá los premios canjeables visibles para los jugadores en Premios y Beneficios.',
+                    'Administrá los beneficios canjeables visibles para los jugadores.',
                   )}
                 </p>
               </div>
@@ -13597,7 +13597,7 @@ export default function AdminDashboard({
                 borderRadius: '10px',
                 maxWidth: '520px',
               }}>
-                {t('admin.padcoins.selectVenueHint', 'Seleccioná una sede para gestionar premios PadCoins.')}
+                {t('admin.padcoins.selectVenueHint', 'Seleccioná una sede para gestionar beneficios PadCoins.')}
               </p>
             ) : null}
 
@@ -13615,8 +13615,8 @@ export default function AdminDashboard({
               >
                 <h3 style={{ margin: '0 0 16px', fontSize: '17px', color: 'var(--text-primary)' }}>
                   {premioFormMode === 'edit'
-                    ? t('admin.padcoins.editPrize', 'Editar premio')
-                    : t('admin.padcoins.newPrize', 'Nuevo premio')}
+                    ? t('admin.padcoins.editPrize', 'Editar beneficio')
+                    : t('admin.padcoins.newPrize', 'Nuevo beneficio')}
                 </h3>
                 <div style={{ display: 'grid', gap: '14px' }}>
                   <label style={{ display: 'grid', gap: '6px' }}>
@@ -13710,7 +13710,7 @@ export default function AdminDashboard({
                       checked={!!premioForm.activo}
                       onChange={(e) => setPremioForm((p) => ({ ...p, activo: e.target.checked }))}
                     />
-                    {t('admin.padcoins.active', 'Premio activo')}
+                    {t('admin.padcoins.active', 'Beneficio activo')}
                   </label>
                 </div>
 
@@ -13733,7 +13733,7 @@ export default function AdminDashboard({
                       cursor: premioSaving ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {premioSaving ? t('admin.metricas.saving', 'Guardando...') : t('admin.padcoins.save', 'Guardar premio')}
+                    {premioSaving ? t('admin.metricas.saving', 'Guardando...') : t('admin.padcoins.save', 'Guardar beneficio')}
                   </button>
                   <button
                     type="button"
@@ -13757,7 +13757,7 @@ export default function AdminDashboard({
             ) : null}
 
             {effectivePcSedeId && premiosLoading ? (
-              <p style={{ color: 'var(--text-muted)' }}>{t('admin.padcoins.loading', 'Cargando premios...')}</p>
+              <p style={{ color: 'var(--text-muted)' }}>{t('admin.padcoins.loading', 'Cargando beneficios...')}</p>
             ) : null}
 
             {effectivePcSedeId && !premiosLoading && premiosError ? (
@@ -13775,7 +13775,7 @@ export default function AdminDashboard({
             ) : null}
 
             {effectivePcSedeId && !premiosLoading && !premiosError && premios.length === 0 && !premioFormMode ? (
-              <p style={{ color: 'var(--text-muted)' }}>{t('admin.padcoins.empty', 'No hay premios cargados para esta sede.')}</p>
+              <p style={{ color: 'var(--text-muted)' }}>{t('admin.padcoins.empty', 'No hay beneficios cargados para esta sede.')}</p>
             ) : null}
 
             {effectivePcSedeId && !premiosLoading && premios.length > 0 ? (
@@ -13881,7 +13881,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '640px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.redemptionsDescription',
-                    'Canjes de premios de esta sede. Cada sede entrega solo sus propios premios; no se mezclan canjes de otras sedes.',
+                    'Canjes de beneficios de esta sede. Cada sede entrega solo sus propios beneficios; no se mezclan canjes de otras sedes.',
                   )}
                 </p>
 
@@ -13972,7 +13972,7 @@ export default function AdminDashboard({
                               </span>
                             </div>
                             <div style={{ display: 'grid', gap: '4px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                              <span><strong>{t('admin.padcoins.redeemPrize', 'Premio')}:</strong> {canjePremioNombre(canje)}</span>
+                              <span><strong>{t('admin.padcoins.redeemPrize', 'Beneficio')}:</strong> {canjePremioNombre(canje)}</span>
                               <span><strong>{t('admin.padcoins.redeemPlayer', 'Jugador')}:</strong> {canjeJugadorDisplay(canje)}</span>
                               {costo != null && Number.isFinite(costo) ? (
                                 <span><strong>{t('admin.padcoins.cost', 'Costo')}:</strong> {costo} PadCoins</span>
