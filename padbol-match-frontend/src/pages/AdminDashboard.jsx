@@ -1104,6 +1104,135 @@ function canjeCostoPadcoins(row) {
   return n != null && n !== '' ? Number(n) : null;
 }
 
+const PADCOINS_CONFIG_PROPORCIONAL_KEYS = [
+  'porcentaje_devolucion_reserva',
+  'padcoins_por_usd_equivalente',
+  'modo_calculo_reserva',
+];
+
+const PADCOINS_CONFIG_FIJAS_KEYS = [
+  'partido_jugado',
+  'partido_ganado',
+  'logro_desbloqueado',
+  'inscripcion_torneo',
+  'reserva_confirmada',
+  'cancelacion_tarde',
+  'no_show',
+  'limite_diario_jugador',
+  'limite_mensual_jugador',
+];
+
+const PADCOINS_CONFIG_KEY_LABELS = {
+  partido_jugado: 'Partido jugado',
+  partido_ganado: 'Partido ganado',
+  logro_desbloqueado: 'Logro desbloqueado',
+  inscripcion_torneo: 'Inscripción a torneo',
+  reserva_confirmada: 'Reserva confirmada',
+  cancelacion_tarde: 'Cancelación tardía',
+  no_show: 'No show',
+  limite_diario_jugador: 'Límite diario por jugador',
+  limite_mensual_jugador: 'Límite mensual por jugador',
+  porcentaje_devolucion_reserva: 'Porcentaje de devolución por reserva',
+  padcoins_por_usd_equivalente: 'PadCoins por USD equivalente',
+  modo_calculo_reserva: 'Modo de cálculo de reservas',
+};
+
+const PADCOINS_CONFIG_KEY_HELP = {
+  porcentaje_devolucion_reserva:
+    'Porcentaje del valor pagado que vuelve al jugador en PadCoins. Lanzamiento recomendado: 5%.',
+  padcoins_por_usd_equivalente:
+    'Conversión promocional interna. No se muestra como valor monetario al jugador.',
+  modo_calculo_reserva: 'Calcula PadCoins como porcentaje del valor pagado.',
+};
+
+function isPadcoinsConfigTextRule(key) {
+  return String(key || '').trim() === 'modo_calculo_reserva';
+}
+
+function padcoinsConfigKeyLabel(key) {
+  const k = String(key || '').trim();
+  if (!k) return '—';
+  if (PADCOINS_CONFIG_KEY_LABELS[k]) return PADCOINS_CONFIG_KEY_LABELS[k];
+  return k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function parsePadcoinsConfigList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.config)) return data.config;
+  if (Array.isArray(data?.rules)) return data.rules;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+function padcoinsConfigRowToForm(row) {
+  const key = String(row?.key ?? row?.rule_key ?? '').trim();
+  const vi = row?.value_integer ?? row?.valor ?? row?.value;
+  const vt = row?.value_text ?? row?.text_value ?? row?.valor_texto;
+  return {
+    key,
+    value_integer: vi != null && vi !== '' ? String(vi) : '',
+    value_text: vt != null ? String(vt) : '',
+    descripcion: String(row?.descripcion ?? row?.description ?? '').trim(),
+    activo: row?.activo !== false && row?.active !== false,
+  };
+}
+
+function sortPadcoinsConfigRows(rows) {
+  const order = [...PADCOINS_CONFIG_PROPORCIONAL_KEYS, ...PADCOINS_CONFIG_FIJAS_KEYS];
+  const map = new Map(rows.map((r) => [r.key, r]));
+  const sorted = [];
+  for (const k of order) {
+    if (map.has(k)) sorted.push(map.get(k));
+  }
+  for (const r of rows) {
+    if (!order.includes(r.key)) sorted.push(r);
+  }
+  return sorted;
+}
+
+function validatePadcoinsConfigFormRows(rows) {
+  for (const row of rows) {
+    const key = String(row?.key || '').trim();
+    if (!key) return 'Hay una regla sin clave (key) válida';
+    if (isPadcoinsConfigTextRule(key)) {
+      if (!String(row?.value_text ?? '').trim()) {
+        return `El valor de «${padcoinsConfigKeyLabel(key)}» es obligatorio`;
+      }
+      continue;
+    }
+    const raw = String(row?.value_integer ?? '').trim();
+    if (raw === '') return `El valor de «${padcoinsConfigKeyLabel(key)}» es obligatorio`;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || !Number.isInteger(n)) {
+      return `El valor de «${padcoinsConfigKeyLabel(key)}» debe ser un número entero`;
+    }
+  }
+  return null;
+}
+
+function padcoinsConfigFormToPayload(rows) {
+  return rows.map((row) => {
+    const key = String(row.key).trim();
+    const base = {
+      key,
+      descripcion: String(row.descripcion || '').trim() || null,
+      activo: !!row.activo,
+    };
+    if (isPadcoinsConfigTextRule(key)) {
+      return {
+        ...base,
+        value_text: String(row.value_text || '').trim(),
+        value_integer: null,
+      };
+    }
+    return {
+      ...base,
+      value_integer: parseInt(String(row.value_integer).trim(), 10),
+      value_text: null,
+    };
+  });
+}
+
 const ADMIN_TABS_ALLOWED = new Set([
   'resumen',
   'torneos',
@@ -2916,6 +3045,11 @@ export default function AdminDashboard({
   const [canjesError, setCanjesError] = useState('');
   const [canjeFiltroEstado, setCanjeFiltroEstado] = useState('pendiente');
   const [canjeActionId, setCanjeActionId] = useState(null);
+  const [pcGlobalConfigRows, setPcGlobalConfigRows] = useState([]);
+  const [pcGlobalConfigLoading, setPcGlobalConfigLoading] = useState(false);
+  const [pcGlobalConfigError, setPcGlobalConfigError] = useState('');
+  const [pcGlobalConfigSaveError, setPcGlobalConfigSaveError] = useState('');
+  const [pcGlobalConfigSaving, setPcGlobalConfigSaving] = useState(false);
 
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
@@ -2975,6 +3109,64 @@ export default function AdminDashboard({
       setCanjes([]);
     } finally {
       setCanjesLoading(false);
+    }
+  }
+
+  async function fetchPadcoinsGlobalConfig() {
+    if (!isSuperAdmin) return;
+    setPcGlobalConfigLoading(true);
+    setPcGlobalConfigError('');
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${apiBaseUrl}/api/admin/padcoins-config`, { headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar configuración global');
+      const list = sortPadcoinsConfigRows(
+        parsePadcoinsConfigList(data).map(padcoinsConfigRowToForm).filter((r) => r.key),
+      );
+      setPcGlobalConfigRows(list);
+    } catch (err) {
+      setPcGlobalConfigError(err.message || 'Error al cargar configuración global');
+      setPcGlobalConfigRows([]);
+    } finally {
+      setPcGlobalConfigLoading(false);
+    }
+  }
+
+  function updatePcGlobalConfigRow(index, field, value) {
+    setPcGlobalConfigRows((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+    );
+    setPcGlobalConfigSaveError('');
+  }
+
+  async function guardarPadcoinsGlobalConfig(e) {
+    e.preventDefault();
+    if (!isSuperAdmin) return;
+    const validationError = validatePadcoinsConfigFormRows(pcGlobalConfigRows);
+    if (validationError) {
+      setPcGlobalConfigSaveError(validationError);
+      return;
+    }
+    setPcGlobalConfigSaving(true);
+    setPcGlobalConfigSaveError('');
+    try {
+      const headers = await getAuthHeaders();
+      const payload = padcoinsConfigFormToPayload(pcGlobalConfigRows);
+      const res = await fetch(`${apiBaseUrl}/api/admin/padcoins-config`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar configuración global');
+      setMensajeExito('✅ Configuración global PadCoins guardada');
+      setTimeout(() => setMensajeExito(''), 3000);
+      await fetchPadcoinsGlobalConfig();
+    } catch (err) {
+      setPcGlobalConfigSaveError(err.message || 'Error al guardar configuración global');
+    } finally {
+      setPcGlobalConfigSaving(false);
     }
   }
 
@@ -3131,6 +3323,7 @@ export default function AdminDashboard({
 
   useEffect(() => {
     if (activeTab !== 'padcoins') return;
+    if (isSuperAdmin) void fetchPadcoinsGlobalConfig();
     const sid = resolvePcSedeId();
     if (!sid) {
       setPremios([]);
@@ -12501,9 +12694,232 @@ export default function AdminDashboard({
           background: 'var(--bg-input, var(--bg-card))',
           color: 'var(--text-primary)',
         };
+        const pcGlobalProporcional = pcGlobalConfigRows.filter((r) =>
+          PADCOINS_CONFIG_PROPORCIONAL_KEYS.includes(r.key),
+        );
+        const pcGlobalFijas = pcGlobalConfigRows.filter((r) =>
+          PADCOINS_CONFIG_FIJAS_KEYS.includes(r.key),
+        );
+        const pcGlobalOtros = pcGlobalConfigRows.filter(
+          (r) =>
+            !PADCOINS_CONFIG_PROPORCIONAL_KEYS.includes(r.key) &&
+            !PADCOINS_CONFIG_FIJAS_KEYS.includes(r.key),
+        );
+
+        const renderPcGlobalRuleCard = (rule) => {
+          const idx = pcGlobalConfigRows.findIndex((r) => r.key === rule.key);
+          if (idx < 0) return null;
+          const help = PADCOINS_CONFIG_KEY_HELP[rule.key];
+          const isTextRule = isPadcoinsConfigTextRule(rule.key);
+          return (
+            <div
+              key={rule.key}
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: '10px',
+                padding: '16px 18px',
+                display: 'grid',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+                <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
+                  {padcoinsConfigKeyLabel(rule.key)}
+                </strong>
+                <span style={{
+                  fontSize: '11px',
+                  color: 'var(--text-muted)',
+                  fontFamily: 'monospace',
+                  background: 'var(--bg-page)',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                }}>
+                  {rule.key}
+                </span>
+              </div>
+              {help ? (
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                  {help}
+                </p>
+              ) : null}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
+                {isTextRule ? (
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.globalConfigValueText', 'Valor (texto)')}
+                    </span>
+                    <input
+                      type="text"
+                      value={rule.value_text}
+                      onChange={(e) => updatePcGlobalConfigRow(idx, 'value_text', e.target.value)}
+                      style={pcInp}
+                      required
+                    />
+                  </label>
+                ) : (
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.globalConfigValue', 'Valor (entero)')}
+                    </span>
+                    <input
+                      type="number"
+                      step="1"
+                      value={rule.value_integer}
+                      onChange={(e) => updatePcGlobalConfigRow(idx, 'value_integer', e.target.value)}
+                      style={pcInp}
+                      required
+                    />
+                  </label>
+                )}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, alignSelf: 'end', paddingBottom: '10px' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!rule.activo}
+                    onChange={(e) => updatePcGlobalConfigRow(idx, 'activo', e.target.checked)}
+                  />
+                  {t('admin.padcoins.globalConfigActive', 'Regla activa')}
+                </label>
+              </div>
+              <label style={{ display: 'grid', gap: '6px' }}>
+                <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                  {t('admin.padcoins.globalConfigDescriptionField', 'Descripción')}
+                </span>
+                <textarea
+                  value={rule.descripcion}
+                  onChange={(e) => updatePcGlobalConfigRow(idx, 'descripcion', e.target.value)}
+                  rows={2}
+                  style={{ ...pcInp, resize: 'vertical' }}
+                />
+              </label>
+            </div>
+          );
+        };
 
         return (
           <div className="section">
+            {isSuperAdmin ? (
+              <div style={{ marginBottom: '36px', paddingBottom: '28px', borderBottom: '1px solid var(--border)' }}>
+                <h2 style={{ marginTop: 0 }}>
+                  ⚙️ {t('admin.padcoins.globalConfigTitle', 'Configuración global')}
+                </h2>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '640px', fontSize: '14px' }}>
+                  {t(
+                    'admin.padcoins.globalConfigDescription',
+                    'Padbol define cómo se ganan o pierden PadCoins. Los premios y canjes siguen siendo por sede.',
+                  )}
+                </p>
+                <p style={{
+                  color: 'var(--text-secondary)',
+                  margin: '0 0 20px',
+                  maxWidth: '640px',
+                  fontSize: '13px',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  lineHeight: 1.45,
+                }}>
+                  {t(
+                    'admin.padcoins.globalConfigExample',
+                    'Ejemplo: con 5% y 100 PadCoins por USD equivalente, una reserva de USD 50 genera 250 PadCoins.',
+                  )}
+                  {' '}
+                  {t(
+                    'admin.padcoins.globalConfigNoMonetaryHint',
+                    'La equivalencia monetaria no se muestra al jugador.',
+                  )}
+                </p>
+
+                {pcGlobalConfigLoading ? (
+                  <p style={{ color: 'var(--text-muted)' }}>
+                    {t('admin.padcoins.globalConfigLoading', 'Cargando configuración global...')}
+                  </p>
+                ) : null}
+
+                {!pcGlobalConfigLoading && pcGlobalConfigError ? (
+                  <p style={{
+                    color: '#dc2626',
+                    fontWeight: 600,
+                    background: 'var(--bg-card)',
+                    border: '1px solid #fecaca',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    maxWidth: '560px',
+                  }}>
+                    {pcGlobalConfigError}
+                  </p>
+                ) : null}
+
+                {!pcGlobalConfigLoading && !pcGlobalConfigError && pcGlobalConfigRows.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)' }}>
+                    {t('admin.padcoins.globalConfigEmpty', 'No hay reglas globales configuradas.')}
+                  </p>
+                ) : null}
+
+                {!pcGlobalConfigLoading && pcGlobalConfigRows.length > 0 ? (
+                  <form onSubmit={guardarPadcoinsGlobalConfig}>
+                    <div style={{ display: 'grid', gap: '28px', maxWidth: '900px' }}>
+                      <div>
+                        <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: 'var(--text-primary)' }}>
+                          {t('admin.padcoins.globalConfigProportionalTitle', 'Reglas proporcionales de reservas')}
+                        </h3>
+                        <div style={{ display: 'grid', gap: '12px' }}>
+                          {pcGlobalProporcional.map((rule) => renderPcGlobalRuleCard(rule))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: 'var(--text-primary)' }}>
+                          {t('admin.padcoins.globalConfigFixedTitle', 'Reglas fijas / bonus / penalizaciones')}
+                        </h3>
+                        <div style={{ display: 'grid', gap: '12px' }}>
+                          {pcGlobalFijas.map((rule) => renderPcGlobalRuleCard(rule))}
+                        </div>
+                      </div>
+
+                      {pcGlobalOtros.length > 0 ? (
+                        <div>
+                          <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: 'var(--text-primary)' }}>
+                            {t('admin.padcoins.globalConfigOtherTitle', 'Otras reglas')}
+                          </h3>
+                          <div style={{ display: 'grid', gap: '12px' }}>
+                            {pcGlobalOtros.map((rule) => renderPcGlobalRuleCard(rule))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {pcGlobalConfigSaveError ? (
+                      <p style={{ color: '#dc2626', fontWeight: 600, marginTop: '14px', marginBottom: 0 }}>
+                        {pcGlobalConfigSaveError}
+                      </p>
+                    ) : null}
+
+                    <button
+                      type="submit"
+                      disabled={pcGlobalConfigSaving}
+                      style={{
+                        marginTop: '18px',
+                        padding: '10px 20px',
+                        background: pcGlobalConfigSaving ? '#94a3b8' : 'var(--accent)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        cursor: pcGlobalConfigSaving ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {pcGlobalConfigSaving
+                        ? t('admin.metricas.saving', 'Guardando...')
+                        : t('admin.padcoins.globalConfigSave', 'Guardar cambios')}
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+            ) : null}
+
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
               <div>
                 <h2 style={{ marginTop: 0 }}>🪙 {t('admin.padcoins.title', 'Premios PadCoins')}</h2>
