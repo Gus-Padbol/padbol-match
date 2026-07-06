@@ -5713,6 +5713,28 @@ export default function AdminDashboard({
   const [franjaPreciosMsg, setFranjaPreciosMsg] = useState('');
   const [franjaDraft, setFranjaDraft] = useState({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
   const [franjaSaving, setFranjaSaving] = useState(false);
+
+  const loadFranjasPrecios = useCallback(async (sid) => {
+    if (!sid) return;
+    setFranjasLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('franjas_precio')
+        .select('*')
+        .eq('sede_id', sid)
+        .eq('activo', true)
+        .order('deporte')
+        .order('dia_semana', { nullsFirst: true })
+        .order('hora_inicio');
+      if (error) throw error;
+      setFranjasPrecios(data || []);
+    } catch (e) {
+      console.error('Error cargando franjas:', e);
+    } finally {
+      setFranjasLoading(false);
+    }
+  }, []);
+
   const [surgeCanchasList, setSurgeCanchasList] = useState([]);
   const [surgeCanchasReady, setSurgeCanchasReady] = useState(false);
   const [surgeSaveAllBusy, setSurgeSaveAllBusy] = useState(false);
@@ -6379,27 +6401,6 @@ export default function AdminDashboard({
       setSurgeActivoSaving(false);
     }
   };
-
-  const loadFranjasPrecios = useCallback(async (sid) => {
-    if (!sid) return;
-    setFranjasLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('franjas_precio')
-        .select('*')
-        .eq('sede_id', sid)
-        .eq('activo', true)
-        .order('deporte')
-        .order('dia_semana', { nullsFirst: true })
-        .order('hora_inicio');
-      if (error) throw error;
-      setFranjasPrecios(data || []);
-    } catch (e) {
-      console.error('Error cargando franjas:', e);
-    } finally {
-      setFranjasLoading(false);
-    }
-  }, []);
 
   const saveFranja = async () => {
     if (!miSedeForm?.id) return;
