@@ -1407,6 +1407,103 @@ function padcoinsMovMontoColor(monto) {
   return 'var(--text-muted)';
 }
 
+const PC_ALERT_PAGE_SIZE = 20;
+
+const PC_ALERT_SEVERIDAD_FILTRO = [
+  { id: '', label: 'Todas las severidades' },
+  { id: 'alta', label: 'Alta (crítica / revisar)' },
+  { id: 'media', label: 'Media (atención)' },
+  { id: 'baja', label: 'Baja (informativa)' },
+];
+
+const PC_ALERT_TIPO_FILTRO = [
+  { id: '', label: 'Todos los tipos' },
+  { id: 'campania_identificada', label: 'Campaña detectada' },
+  { id: 'volumen_anormal', label: 'Actividad poco habitual' },
+  { id: 'acreditacion_masiva', label: 'Acreditaciones inusuales' },
+  { id: 'uso_concentrado', label: 'Uso concentrado' },
+  { id: 'canje_masivo', label: 'Canjes inusuales' },
+  { id: 'ajuste_frecuente', label: 'Ajustes frecuentes' },
+  { id: 'posible_abuso', label: 'Posible abuso' },
+];
+
+function parsePadcoinsAlertasResponse(data) {
+  const alertas = Array.isArray(data?.alertas)
+    ? data.alertas
+    : (Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []));
+  const pag = data?.paginacion || data?.pagination || {};
+  const total = pag.total ?? pag.total_count ?? pag.count ?? alertas.length;
+  const limit = pag.limit ?? PC_ALERT_PAGE_SIZE;
+  const offset = pag.offset ?? 0;
+  return { alertas, total: Number(total) || 0, limit: Number(limit) || PC_ALERT_PAGE_SIZE, offset: Number(offset) || 0 };
+}
+
+function padcoinsAlertSeveridadBadge(severidad) {
+  const key = String(severidad || '').trim().toLowerCase();
+  if (key === 'alta') return { label: 'Crítica / revisar', bg: '#fee2e2', color: '#991b1b' };
+  if (key === 'media') return { label: 'Atención', bg: '#fef3c7', color: '#92400e' };
+  if (key === 'baja') return { label: 'Informativa', bg: '#e0f2fe', color: '#0369a1' };
+  return { label: severidad || 'Alerta', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
+}
+
+function padcoinsAlertTipoLabel(tipo) {
+  const key = String(tipo || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const map = {
+    campania_identificada: 'Campaña detectada',
+    volumen_anormal: 'Actividad poco habitual',
+    acreditacion_masiva: 'Acreditaciones inusuales',
+    uso_concentrado: 'Uso concentrado',
+    canje_masivo: 'Canjes inusuales',
+    ajuste_frecuente: 'Ajustes frecuentes',
+    posible_abuso: 'Posible abuso',
+    uso_anormal: 'Uso anormal',
+  };
+  return map[key] || (tipo ? String(tipo).replace(/_/g, ' ') : '—');
+}
+
+function padcoinsAlertTipoBadge(tipo) {
+  const key = String(tipo || '').trim().toLowerCase();
+  if (key === 'campania_identificada') {
+    return { label: 'Campaña detectada', bg: '#f3e8ff', color: '#6b21a8' };
+  }
+  return { label: padcoinsAlertTipoLabel(tipo), bg: '#f1f5f9', color: '#334155' };
+}
+
+function padcoinsAlertMetricasDisplay(metricas) {
+  if (metricas == null || metricas === '') return '—';
+  if (typeof metricas === 'string') return metricas;
+  if (typeof metricas === 'object') {
+    const entries = Object.entries(metricas);
+    if (!entries.length) return '—';
+    return entries.map(([k, v]) => `${String(k).replace(/_/g, ' ')}: ${v}`).join(' · ');
+  }
+  return String(metricas);
+}
+
+function padcoinsAlertPeriodoDisplay(periodo) {
+  if (periodo == null || periodo === '') return '—';
+  if (typeof periodo === 'string') return periodo;
+  if (typeof periodo === 'object') {
+    const desde = periodo.desde ?? periodo.fecha_desde ?? periodo.inicio;
+    const hasta = periodo.hasta ?? periodo.fecha_hasta ?? periodo.fin;
+    if (desde && hasta) return `${desde} – ${hasta}`;
+    if (desde) return `Desde ${desde}`;
+    if (hasta) return `Hasta ${hasta}`;
+    return Object.entries(periodo).map(([k, v]) => `${k}: ${v}`).join(' · ');
+  }
+  return String(periodo);
+}
+
+function padcoinsAlertMovimientoResumen(mov) {
+  if (mov == null) return '—';
+  if (typeof mov === 'string' || typeof mov === 'number') return String(mov);
+  const fecha = mov.fecha ?? mov.created_at;
+  const monto = mov.monto != null ? padcoinsMovMontoDisplay(mov.monto) : '';
+  const desc = mov.descripcion || mov.tipo || '';
+  const parts = [fecha ? String(fecha).slice(0, 10) : '', monto, desc].filter(Boolean);
+  return parts.join(' · ') || '—';
+}
+
 const ADMIN_TABS_ALLOWED = new Set([
   'resumen',
   'torneos',
@@ -3243,6 +3340,17 @@ export default function AdminDashboard({
   const [pcMovFiltroRefTipo, setPcMovFiltroRefTipo] = useState('');
   const [pcMovFiltroDesde, setPcMovFiltroDesde] = useState('');
   const [pcMovFiltroHasta, setPcMovFiltroHasta] = useState('');
+  const [pcAlertas, setPcAlertas] = useState([]);
+  const [pcAlertLoading, setPcAlertLoading] = useState(false);
+  const [pcAlertError, setPcAlertError] = useState('');
+  const [pcAlertTotal, setPcAlertTotal] = useState(0);
+  const [pcAlertPage, setPcAlertPage] = useState(0);
+  const [pcAlertFiltroSedeId, setPcAlertFiltroSedeId] = useState('');
+  const [pcAlertFiltroSearch, setPcAlertFiltroSearch] = useState('');
+  const [pcAlertFiltroSeveridad, setPcAlertFiltroSeveridad] = useState('');
+  const [pcAlertFiltroTipo, setPcAlertFiltroTipo] = useState('');
+  const [pcAlertFiltroDesde, setPcAlertFiltroDesde] = useState('');
+  const [pcAlertFiltroHasta, setPcAlertFiltroHasta] = useState('');
 
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
@@ -3671,6 +3779,70 @@ export default function AdminDashboard({
     void fetchPadcoinsMovimientos(0);
   }
 
+  async function fetchPadcoinsAlertas(pageOverride) {
+    if (!isSuperAdmin) return;
+    const page = pageOverride != null ? Number(pageOverride) : pcAlertPage;
+    setPcAlertLoading(true);
+    setPcAlertError('');
+    try {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams();
+      params.set('limit', String(PC_ALERT_PAGE_SIZE));
+      params.set('offset', String(Math.max(0, page) * PC_ALERT_PAGE_SIZE));
+      if (pcAlertFiltroSedeId) params.set('sede_id', String(pcAlertFiltroSedeId));
+      const q = pcAlertFiltroSearch.trim();
+      if (q) {
+        params.set('search', q);
+        params.set('q', q);
+      }
+      if (pcAlertFiltroSeveridad) params.set('severidad', pcAlertFiltroSeveridad);
+      if (pcAlertFiltroTipo) params.set('tipo_alerta', pcAlertFiltroTipo);
+      if (pcAlertFiltroDesde) {
+        params.set('fecha_desde', pcAlertFiltroDesde);
+        params.set('desde', pcAlertFiltroDesde);
+      }
+      if (pcAlertFiltroHasta) {
+        params.set('fecha_hasta', pcAlertFiltroHasta);
+        params.set('hasta', pcAlertFiltroHasta);
+      }
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins-alertas?${params.toString()}`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        throw new Error('No tenés permisos para ver alertas de supervisión.');
+      }
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar alertas PadCoins');
+      const parsed = parsePadcoinsAlertasResponse(data);
+      setPcAlertas(parsed.alertas);
+      setPcAlertTotal(parsed.total);
+      if (pageOverride != null) setPcAlertPage(Math.max(0, page));
+    } catch (err) {
+      setPcAlertError(err.message || 'Error al cargar alertas PadCoins');
+      setPcAlertas([]);
+      setPcAlertTotal(0);
+    } finally {
+      setPcAlertLoading(false);
+    }
+  }
+
+  function buscarPadcoinsAlertas() {
+    setPcAlertPage(0);
+    void fetchPadcoinsAlertas(0);
+  }
+
+  function limpiarPadcoinsAlertFiltros() {
+    setPcAlertFiltroSedeId('');
+    setPcAlertFiltroSearch('');
+    setPcAlertFiltroSeveridad('');
+    setPcAlertFiltroTipo('');
+    setPcAlertFiltroDesde('');
+    setPcAlertFiltroHasta('');
+    setPcAlertPage(0);
+    void fetchPadcoinsAlertas(0);
+  }
+
   useEffect(() => {
     if (sedeIdKey && !sbSedeId) setSbSedeId(String(sedeIdKey));
   }, [sedeIdKey, sbSedeId]);
@@ -3685,6 +3857,7 @@ export default function AdminDashboard({
     if (isSuperAdmin) {
       void fetchPadcoinsGlobalConfig();
       void fetchPadcoinsSedesParticipacionList();
+      void fetchPadcoinsAlertas(0);
     }
     const sid = resolvePcSedeId();
     if (!sid) {
@@ -13109,6 +13282,10 @@ export default function AdminDashboard({
         const pcMovPaginaFin = Math.min((pcMovPage + 1) * PC_MOV_PAGE_SIZE, pcMovTotal);
         const pcMovHayAnterior = pcMovPage > 0;
         const pcMovHaySiguiente = (pcMovPage + 1) * PC_MOV_PAGE_SIZE < pcMovTotal;
+        const pcAlertPaginaInicio = pcAlertTotal === 0 ? 0 : pcAlertPage * PC_ALERT_PAGE_SIZE + 1;
+        const pcAlertPaginaFin = Math.min((pcAlertPage + 1) * PC_ALERT_PAGE_SIZE, pcAlertTotal);
+        const pcAlertHayAnterior = pcAlertPage > 0;
+        const pcAlertHaySiguiente = (pcAlertPage + 1) * PC_ALERT_PAGE_SIZE < pcAlertTotal;
 
         const renderPcParticipacionForm = () => (
           <form onSubmit={guardarPadcoinsSedeParticipacion} style={{ display: 'grid', gap: '14px' }}>
@@ -14225,6 +14402,346 @@ export default function AdminDashboard({
                       );
                     })}
                   </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {isSuperAdmin ? (
+              <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
+                  {t('admin.padcoins.alertsTitle', 'Alertas de uso anormal')}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 18px', maxWidth: '720px', fontSize: '14px' }}>
+                  {t(
+                    'admin.padcoins.alertsDescription',
+                    'Supervisión de posibles abusos, usos poco creíbles o acciones promocionales no justificadas en Beneficios Padbol.',
+                  )}
+                </p>
+
+                <div style={{
+                  display: 'grid',
+                  gap: '12px',
+                  marginBottom: '18px',
+                  maxWidth: '960px',
+                  padding: '16px',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  background: 'var(--bg-card)',
+                }}>
+                  <label style={{ display: 'grid', gap: '6px', maxWidth: '320px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.alertsVenueFilter', 'Sede')}
+                    </span>
+                    <select
+                      value={pcAlertFiltroSedeId}
+                      onChange={(e) => setPcAlertFiltroSedeId(e.target.value)}
+                      style={pcInp}
+                    >
+                      <option value="">{t('admin.padcoins.alertsAllVenues', 'Todas las sedes')}</option>
+                      {pcSedesOptions.map((s) => (
+                        <option key={String(s.id)} value={String(s.id)}>{sedeFlag(s)} {s.nombre}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                      {t('admin.padcoins.alertsSearch', 'Buscar')}
+                    </span>
+                    <input
+                      type="search"
+                      value={pcAlertFiltroSearch}
+                      onChange={(e) => setPcAlertFiltroSearch(e.target.value)}
+                      placeholder={t('admin.padcoins.alertsSearchPlaceholder', 'Sede, descripción o recomendación')}
+                      style={pcInp}
+                    />
+                  </label>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                    <label style={{ display: 'grid', gap: '6px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                        {t('admin.padcoins.alertsSeverityFilter', 'Severidad')}
+                      </span>
+                      <select value={pcAlertFiltroSeveridad} onChange={(e) => setPcAlertFiltroSeveridad(e.target.value)} style={pcInp}>
+                        {PC_ALERT_SEVERIDAD_FILTRO.map((opt) => (
+                          <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                        {t('admin.padcoins.alertsTypeFilter', 'Tipo de alerta')}
+                      </span>
+                      <select value={pcAlertFiltroTipo} onChange={(e) => setPcAlertFiltroTipo(e.target.value)} style={pcInp}>
+                        {PC_ALERT_TIPO_FILTRO.map((opt) => (
+                          <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                        {t('admin.padcoins.alertsFromDate', 'Fecha desde')}
+                      </span>
+                      <input
+                        type="date"
+                        value={pcAlertFiltroDesde}
+                        onChange={(e) => setPcAlertFiltroDesde(e.target.value)}
+                        style={pcInp}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                        {t('admin.padcoins.alertsToDate', 'Fecha hasta')}
+                      </span>
+                      <input
+                        type="date"
+                        value={pcAlertFiltroHasta}
+                        onChange={(e) => setPcAlertFiltroHasta(e.target.value)}
+                        style={pcInp}
+                      />
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={buscarPadcoinsAlertas}
+                      disabled={pcAlertLoading}
+                      style={{
+                        padding: '9px 16px',
+                        background: pcAlertLoading ? '#94a3b8' : 'var(--accent)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: pcAlertLoading ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {t('admin.padcoins.alertsSearchBtn', 'Buscar')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={limpiarPadcoinsAlertFiltros}
+                      disabled={pcAlertLoading}
+                      style={{
+                        padding: '9px 16px',
+                        background: 'var(--bg-page)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        cursor: pcAlertLoading ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {t('admin.padcoins.alertsClearBtn', 'Limpiar')}
+                    </button>
+                  </div>
+                </div>
+
+                {pcAlertLoading ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                    {t('admin.padcoins.alertsLoading', 'Cargando alertas…')}
+                  </p>
+                ) : null}
+
+                {!pcAlertLoading && pcAlertError ? (
+                  <p style={{
+                    margin: '0 0 16px',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    background: '#fef2f2',
+                    color: '#b91c1c',
+                    fontSize: '14px',
+                    maxWidth: '720px',
+                  }}>
+                    {pcAlertError}
+                  </p>
+                ) : null}
+
+                {!pcAlertLoading && !pcAlertError && pcAlertas.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                    {t('admin.padcoins.alertsEmpty', 'No hay alertas de uso anormal para los filtros seleccionados.')}
+                  </p>
+                ) : null}
+
+                {!pcAlertLoading && !pcAlertError && pcAlertas.length > 0 ? (
+                  <>
+                    <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                      {pcAlertTotal > 0
+                        ? t(
+                          'admin.padcoins.alertsCount',
+                          'Mostrando {{from}}–{{to}} de {{total}} alertas',
+                        )
+                          .replace('{{from}}', String(pcAlertPaginaInicio))
+                          .replace('{{to}}', String(pcAlertPaginaFin))
+                          .replace('{{total}}', String(pcAlertTotal))
+                        : `${pcAlertas.length} alerta(s)`}
+                    </p>
+
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      {pcAlertas.map((alerta, idx) => {
+                        const sevBadge = padcoinsAlertSeveridadBadge(alerta.severidad);
+                        const tipoBadge = padcoinsAlertTipoBadge(alerta.tipo_alerta);
+                        const sedeAlerta = alerta.sede_nombre
+                          || sedesMap[String(alerta.sede_id)]?.nombre
+                          || (alerta.sede_id != null ? `Sede ${alerta.sede_id}` : '—');
+                        const movs = Array.isArray(alerta.movimientos_relacionados)
+                          ? alerta.movimientos_relacionados
+                          : [];
+                        const alertaKey = alerta.id ?? `${alerta.tipo_alerta}-${alerta.sede_id}-${idx}`;
+                        return (
+                          <div
+                            key={alertaKey}
+                            style={{
+                              border: '1px solid var(--border)',
+                              borderRadius: '10px',
+                              padding: '14px 16px',
+                              background: 'var(--bg-card)',
+                            }}
+                          >
+                            <div style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              alignItems: 'center',
+                              gap: '8px',
+                              marginBottom: '10px',
+                            }}>
+                              <span style={{
+                                display: 'inline-block',
+                                padding: '3px 10px',
+                                borderRadius: '999px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                background: sevBadge.bg,
+                                color: sevBadge.color,
+                              }}>
+                                {sevBadge.label}
+                              </span>
+                              <span style={{
+                                display: 'inline-block',
+                                padding: '3px 10px',
+                                borderRadius: '999px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                background: tipoBadge.bg,
+                                color: tipoBadge.color,
+                              }}>
+                                {tipoBadge.label}
+                              </span>
+                              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                {sedeAlerta}
+                              </span>
+                            </div>
+
+                            <p style={{
+                              margin: '0 0 10px',
+                              fontSize: '14px',
+                              color: 'var(--text-primary)',
+                              lineHeight: 1.45,
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word',
+                            }}>
+                              {alerta.descripcion || t('admin.padcoins.alertsNoDescription', 'Actividad poco habitual detectada.')}
+                            </p>
+
+                            <div style={{ display: 'grid', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                              <p style={{ margin: 0, lineHeight: 1.4 }}>
+                                <strong style={{ color: 'var(--text-primary)' }}>
+                                  {t('admin.padcoins.alertsMetrics', 'Métricas')}:
+                                </strong>{' '}
+                                {padcoinsAlertMetricasDisplay(alerta.metricas_detectadas)}
+                              </p>
+                              <p style={{ margin: 0, lineHeight: 1.4 }}>
+                                <strong style={{ color: 'var(--text-primary)' }}>
+                                  {t('admin.padcoins.alertsPeriod', 'Periodo')}:
+                                </strong>{' '}
+                                {padcoinsAlertPeriodoDisplay(alerta.periodo_evaluado)}
+                              </p>
+                              {alerta.recomendacion ? (
+                                <p style={{
+                                  margin: 0,
+                                  lineHeight: 1.45,
+                                  whiteSpace: 'normal',
+                                  wordBreak: 'break-word',
+                                }}>
+                                  <strong style={{ color: 'var(--text-primary)' }}>
+                                    {t('admin.padcoins.alertsRecommendation', 'Recomendación')}:
+                                  </strong>{' '}
+                                  {alerta.recomendacion}
+                                </p>
+                              ) : null}
+                            </div>
+
+                            {movs.length > 0 ? (
+                              <div style={{
+                                marginTop: '12px',
+                                paddingTop: '10px',
+                                borderTop: '1px solid var(--border)',
+                              }}>
+                                <p style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>
+                                  {t('admin.padcoins.alertsRelatedMovements', 'Movimientos relacionados')} ({movs.length})
+                                </p>
+                                <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                  {movs.slice(0, 5).map((mov, movIdx) => (
+                                    <li key={mov.id ?? movIdx} style={{ marginBottom: '4px', lineHeight: 1.35 }}>
+                                      {padcoinsAlertMovimientoResumen(mov)}
+                                    </li>
+                                  ))}
+                                  {movs.length > 5 ? (
+                                    <li style={{ color: 'var(--text-muted)' }}>
+                                      {t('admin.padcoins.alertsMoreMovements', '+ {{count}} más').replace('{{count}}', String(movs.length - 5))}
+                                    </li>
+                                  ) : null}
+                                </ul>
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+                      <button
+                        type="button"
+                        disabled={!pcAlertHayAnterior || pcAlertLoading}
+                        onClick={() => void fetchPadcoinsAlertas(pcAlertPage - 1)}
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-card)',
+                          cursor: !pcAlertHayAnterior || pcAlertLoading ? 'not-allowed' : 'pointer',
+                          opacity: !pcAlertHayAnterior ? 0.5 : 1,
+                          fontWeight: 600,
+                          fontSize: '13px',
+                        }}
+                      >
+                        {t('admin.padcoins.alertsPrev', 'Anterior')}
+                      </button>
+                      <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {t('admin.padcoins.alertsPage', 'Página')} {pcAlertPage + 1}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={!pcAlertHaySiguiente || pcAlertLoading}
+                        onClick={() => void fetchPadcoinsAlertas(pcAlertPage + 1)}
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-card)',
+                          cursor: !pcAlertHaySiguiente || pcAlertLoading ? 'not-allowed' : 'pointer',
+                          opacity: !pcAlertHaySiguiente ? 0.5 : 1,
+                          fontWeight: 600,
+                          fontSize: '13px',
+                        }}
+                      >
+                        {t('admin.padcoins.alertsNext', 'Siguiente')}
+                      </button>
+                    </div>
+                  </>
                 ) : null}
               </div>
             ) : null}
