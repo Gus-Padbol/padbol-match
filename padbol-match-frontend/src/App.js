@@ -407,6 +407,10 @@ function AppRoutes() {
         />
         {/* /admin: AdminDashboardGate espera user_roles y no usa lista legacy de emails para super_admin. */}
         <Route
+          path="/admin/padcoins/alertas"
+          element={<Navigate to="/admin?tab=padcoins&section=alertas" replace />}
+        />
+        <Route
           path="/admin"
           element={
             <ProtectedRoute>

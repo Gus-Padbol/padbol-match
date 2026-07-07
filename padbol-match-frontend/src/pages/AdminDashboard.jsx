@@ -4645,6 +4645,40 @@ export default function AdminDashboard({
   }, [searchParams, rolPanel, esEmpleado, esEditorContenido]);
 
   useEffect(() => {
+    const section = String(searchParams.get('section') || '').trim().toLowerCase();
+    if (section !== 'alertas') return;
+    if (activeTab !== 'padcoins') return;
+    if (!isSuperAdmin) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    let retryTimer = null;
+
+    const tryScroll = () => {
+      if (cancelled) return;
+      const el = document.getElementById('admin-padcoins-alertas');
+      if (el) {
+        window.requestAnimationFrame(() => {
+          if (cancelled) return;
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        return;
+      }
+      attempts += 1;
+      if (attempts < 12) {
+        retryTimer = window.setTimeout(tryScroll, 150);
+      }
+    };
+
+    const startTimer = window.setTimeout(tryScroll, 100);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(startTimer);
+      if (retryTimer != null) window.clearTimeout(retryTimer);
+    };
+  }, [activeTab, searchParams, isSuperAdmin, pcAlertLoading]);
+
+  useEffect(() => {
     if (activeTab !== 'reservas') {
       setReservasSuperSubVista('principal');
       setRankingDetalleSedeKey(null);
@@ -14407,7 +14441,10 @@ export default function AdminDashboard({
             ) : null}
 
             {isSuperAdmin ? (
-              <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+              <div
+                id="admin-padcoins-alertas"
+                style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}
+              >
                 <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
                   {t('admin.padcoins.alertsTitle', 'Alertas de uso anormal')}
                 </h3>
