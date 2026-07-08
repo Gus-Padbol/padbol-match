@@ -1225,6 +1225,30 @@ function buildPcSedeSmartRuleOverridesPayload(form) {
   return rule_overrides;
 }
 
+function parsePcSedeSimNumber(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return null;
+  const n = Number(s);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
+}
+
+function computePadcoinsLoyaltySimulation({ turno, pct, conversion, beneficio }) {
+  const turnoN = parsePcSedeSimNumber(turno);
+  const pctN = parsePcSedeSimNumber(pct);
+  const convN = parsePcSedeSimNumber(conversion);
+  const benN = parsePcSedeSimNumber(beneficio);
+  if (turnoN == null || pctN == null || convN == null || benN == null || convN <= 0) {
+    return null;
+  }
+  const padcoinsPorReserva = Math.round(turnoN * (pctN / 100) * convN);
+  const padcoinsNecesarios = Math.round(benN * convN);
+  const reservasNecesarias = padcoinsPorReserva > 0
+    ? Math.ceil(padcoinsNecesarios / padcoinsPorReserva)
+    : null;
+  return { padcoinsPorReserva, padcoinsNecesarios, reservasNecesarias };
+}
+
 function isPadcoinsConfigTextRule(key) {
   return String(key || '').trim() === 'modo_calculo_reserva';
 }
@@ -3437,6 +3461,10 @@ export default function AdminDashboard({
   const [pcSedeSmartError, setPcSedeSmartError] = useState('');
   const [pcSedeSmartSaveError, setPcSedeSmartSaveError] = useState('');
   const [pcSedeSmartSaving, setPcSedeSmartSaving] = useState(false);
+  const [pcSedeSimTurno, setPcSedeSimTurno] = useState('');
+  const [pcSedeSimPct, setPcSedeSimPct] = useState('');
+  const [pcSedeSimConversion, setPcSedeSimConversion] = useState('');
+  const [pcSedeSimBeneficio, setPcSedeSimBeneficio] = useState('');
 
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
@@ -3619,6 +3647,21 @@ export default function AdminDashboard({
     setPcSedeSmartSaveError('');
   }
 
+  function updatePcSedeSimField(setter, value) {
+    const s = String(value);
+    if (s !== '' && Number(s) < 0) return;
+    setter(s);
+  }
+
+  function resetPcSedeSimDefaults(effective) {
+    setPcSedeSimTurno('');
+    setPcSedeSimBeneficio('');
+    const pct = effective?.porcentaje_devolucion_reserva;
+    const conv = effective?.padcoins_por_usd_equivalente;
+    setPcSedeSimPct(pct != null && pct !== '' ? String(pct) : '');
+    setPcSedeSimConversion(conv != null && conv !== '' ? String(conv) : '');
+  }
+
   async function fetchPadcoinsSedeSmartConfig(targetSedeId) {
     if (!isSuperAdmin && !esAdminClub) {
       setPcSedeSmartConfig(null);
@@ -3653,9 +3696,14 @@ export default function AdminDashboard({
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
       setPcSedeSmartForm(padcoinsSedeSmartOverridesToForm(parsed.sede_overrides));
+      resetPcSedeSimDefaults(parsed.effective);
     } catch (err) {
       setPcSedeSmartConfig(null);
       setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
+      setPcSedeSimTurno('');
+      setPcSedeSimPct('');
+      setPcSedeSimConversion('');
+      setPcSedeSimBeneficio('');
       setPcSedeSmartError(err.message || 'Error al cargar configuración inteligente PadCoins');
     } finally {
       setPcSedeSmartLoading(false);
@@ -3701,6 +3749,7 @@ export default function AdminDashboard({
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
       setPcSedeSmartForm(padcoinsSedeSmartOverridesToForm(parsed.sede_overrides));
+      resetPcSedeSimDefaults(parsed.effective);
       setMensajeExito('✅ Configuración inteligente de la sede actualizada');
       setTimeout(() => setMensajeExito(''), 3000);
     } catch (err) {
@@ -3739,6 +3788,7 @@ export default function AdminDashboard({
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
       setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
+      resetPcSedeSimDefaults(parsed.effective);
       setMensajeExito('✅ Configuración restaurada: la sede hereda las reglas globales');
       setTimeout(() => setMensajeExito(''), 3000);
     } catch (err) {
@@ -14185,12 +14235,44 @@ export default function AdminDashboard({
                 <h2 style={{ margin: '0 0 8px', fontSize: '20px', color: 'var(--text-primary)' }}>
                   {t('admin.padcoins.sedeSmartConfigTitle', 'Configuración inteligente por sede')}
                 </h2>
-                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeSmartConfigIntro',
                     'Define reglas propias para esta sede o deja los campos vacíos para heredar la configuración global.',
                   )}
                 </p>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
+                  {t(
+                    'admin.padcoins.sedeSmartConfigGovernance',
+                    'El Super Admin define la regla global. Cada sede puede heredarla o ajustar sus propios valores si tiene autorización.',
+                  )}
+                </p>
+
+                {isSuperAdmin ? (
+                  <div style={{ marginBottom: '20px', maxWidth: '360px' }}>
+                    <label style={{ display: 'grid', gap: '6px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+                        {t('admin.padcoins.venue', 'Sede')}
+                      </span>
+                      <select
+                        value={pcSedeId}
+                        onChange={(e) => { setPcSedeId(e.target.value); cerrarPremioForm(); }}
+                        style={pcInp}
+                      >
+                        <option value="">{t('admin.padcoins.selectVenue', 'Seleccionar sede...')}</option>
+                        {pcSedesOptions.map((s) => (
+                          <option key={String(s.id)} value={String(s.id)}>{sedeFlag(s)} {s.nombre}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                ) : null}
+
+                {esAdminClub && effectivePcSedeId && sedeNombre ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: 0, marginBottom: '16px' }}>
+                    {t('admin.padcoins.venueLabel', 'Sede')}: <strong style={{ color: 'var(--text-primary)' }}>{sedeNombre}</strong>
+                  </p>
+                ) : null}
 
                 {!effectivePcSedeId ? (
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
@@ -14342,6 +14424,154 @@ export default function AdminDashboard({
                     </div>
                   </form>
                 ) : null}
+
+                {effectivePcSedeId ? (() => {
+                  const pcLoyaltySim = computePadcoinsLoyaltySimulation({
+                    turno: pcSedeSimTurno,
+                    pct: pcSedeSimPct,
+                    conversion: pcSedeSimConversion,
+                    beneficio: pcSedeSimBeneficio,
+                  });
+                  const formatPcSimDisplay = (raw) => String(raw ?? '').trim().replace('.', ',');
+                  return (
+                    <div style={{
+                      marginTop: '28px',
+                      maxWidth: '960px',
+                      padding: '20px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-card)',
+                    }}>
+                      <h3 style={{ margin: '0 0 8px', fontSize: '17px', color: 'var(--text-primary)' }}>
+                        {t('admin.padcoins.loyaltySimTitle', 'Simulador de fidelización')}
+                      </h3>
+                      <p style={{ margin: '0 0 16px', color: 'var(--text-muted)', fontSize: '14px', maxWidth: '720px' }}>
+                        {t(
+                          'admin.padcoins.loyaltySimIntro',
+                          'Calcula cuántos PadCoins genera una reserva y cuántas reservas necesita un jugador para canjear un beneficio.',
+                        )}
+                      </p>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: '14px',
+                        marginBottom: '16px',
+                      }}>
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
+                            {t('admin.padcoins.loyaltySimTurno', 'Valor promedio del turno')}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={pcSedeSimTurno}
+                            onChange={(e) => updatePcSedeSimField(setPcSedeSimTurno, e.target.value)}
+                            placeholder="30"
+                            style={pcInp}
+                          />
+                        </label>
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
+                            {t('admin.padcoins.loyaltySimPct', 'Porcentaje de fidelización')}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={pcSedeSimPct}
+                            onChange={(e) => updatePcSedeSimField(setPcSedeSimPct, e.target.value)}
+                            placeholder="5"
+                            style={pcInp}
+                          />
+                        </label>
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
+                            {t('admin.padcoins.loyaltySimConversion', 'Conversión PadCoins')}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={pcSedeSimConversion}
+                            onChange={(e) => updatePcSedeSimField(setPcSedeSimConversion, e.target.value)}
+                            placeholder="100"
+                            style={pcInp}
+                          />
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            {t(
+                              'admin.padcoins.loyaltySimConversionHint',
+                              'Referencia de cálculo interno (equivalente interno).',
+                            )}
+                          </span>
+                        </label>
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
+                            {t('admin.padcoins.loyaltySimBeneficio', 'Valor estimado del beneficio')}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={pcSedeSimBeneficio}
+                            onChange={(e) => updatePcSedeSimField(setPcSedeSimBeneficio, e.target.value)}
+                            placeholder="4.5"
+                            style={pcInp}
+                          />
+                        </label>
+                      </div>
+                      {pcLoyaltySim ? (
+                        <div style={{
+                          padding: '14px 16px',
+                          borderRadius: '8px',
+                          background: 'var(--bg-page)',
+                          border: '1px solid var(--border)',
+                          fontSize: '14px',
+                          color: 'var(--text-primary)',
+                          lineHeight: 1.55,
+                        }}>
+                          <p style={{ margin: '0 0 8px' }}>
+                            {t(
+                              'admin.padcoins.loyaltySimResultReserva',
+                              'Con un turno de {{turno}} y una fidelización del {{pct}}%, cada reserva genera {{padcoins}} PadCoins.',
+                              {
+                                turno: formatPcSimDisplay(pcSedeSimTurno),
+                                pct: formatPcSimDisplay(pcSedeSimPct),
+                                padcoins: pcLoyaltySim.padcoinsPorReserva,
+                              },
+                            )}
+                          </p>
+                          {pcLoyaltySim.reservasNecesarias != null ? (
+                            <p style={{ margin: 0 }}>
+                              {t(
+                                'admin.padcoins.loyaltySimResultBeneficio',
+                                'Si el beneficio estimado cuesta {{beneficio}}, el jugador necesita aproximadamente {{reservas}} reservas para canjearlo.',
+                                {
+                                  beneficio: formatPcSimDisplay(pcSedeSimBeneficio),
+                                  reservas: pcLoyaltySim.reservasNecesarias,
+                                },
+                              )}
+                            </p>
+                          ) : (
+                            <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+                              {t(
+                                'admin.padcoins.loyaltySimZeroReserva',
+                                'Con estos valores la reserva no genera PadCoins; ajuste el valor del turno o el porcentaje de fidelización.',
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                          {t(
+                            'admin.padcoins.loyaltySimIncomplete',
+                            'Completa los valores para ver la estimación.',
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })() : null}
               </div>
             ) : null}
 
