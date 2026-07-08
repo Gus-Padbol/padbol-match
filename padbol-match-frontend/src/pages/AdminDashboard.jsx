@@ -1249,6 +1249,229 @@ function computePadcoinsLoyaltySimulation({ turno, pct, conversion, beneficio })
   return { padcoinsPorReserva, padcoinsNecesarios, reservasNecesarias };
 }
 
+const PC_CAMPAIGN_TYPES = [
+  { id: 'multiplier', label: 'Multiplicador' },
+  { id: 'percentage_override', label: 'Porcentaje temporal' },
+  { id: 'fixed_padcoins', label: 'PadCoins fijos' },
+  { id: 'benefit_equivalent', label: 'Equivalente a beneficio' },
+];
+
+const PC_CAMPAIGN_STATE_BADGES = {
+  draft: { label: 'Borrador', bg: '#f1f5f9', color: '#475569' },
+  active: { label: 'Activa', bg: '#dcfce7', color: '#166534' },
+  paused: { label: 'Pausada', bg: '#fef3c7', color: '#92400e' },
+  ended: { label: 'Finalizada', bg: 'var(--bg-page)', color: 'var(--text-muted)' },
+};
+
+const EMPTY_PC_CAMPAIGN_FORM = () => ({
+  sede_id: '',
+  name: '',
+  description: '',
+  campaign_type: 'multiplier',
+  start_at: '',
+  end_at: '',
+  multiplier: '',
+  loyalty_percentage_override: '',
+  fixed_padcoins: '',
+  benefit_id: '',
+  max_total_uses: '',
+  max_uses_per_player: '',
+  estimated_cost_reference: '',
+  message_title: '',
+  message_body: '',
+});
+
+function padcoinsCampaignTypeLabel(type) {
+  const id = String(type || '').trim();
+  return PC_CAMPAIGN_TYPES.find((row) => row.id === id)?.label || id || '—';
+}
+
+function padcoinsCampaignStateBadge(status) {
+  const key = String(status || 'draft').trim().toLowerCase();
+  return PC_CAMPAIGN_STATE_BADGES[key] || PC_CAMPAIGN_STATE_BADGES.draft;
+}
+
+function parsePadcoinsCampaignsList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.campaigns)) return data.campaigns;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+function parsePadcoinsCampaignEntity(data) {
+  return data?.campaign || data?.data || data || null;
+}
+
+function parsePadcoinsCampaignSummary(data) {
+  const raw = data?.summary || data?.campaign || data?.data || data || {};
+  return {
+    total_uses: raw.total_uses ?? raw.usos ?? raw.uses ?? null,
+    padcoins_delivered: raw.padcoins_delivered ?? raw.padcoins_entregados ?? raw.total_padcoins ?? null,
+    reservations_impacted: raw.reservations_impacted ?? raw.reservas_impactadas ?? null,
+    players_impacted: raw.players_impacted ?? raw.jugadores_impactados ?? null,
+    estimated_cost: raw.estimated_cost
+      ?? raw.estimated_cost_impact
+      ?? raw.costo_estimado
+      ?? raw.estimated_cost_reference
+      ?? null,
+    raw,
+  };
+}
+
+function isPadcoinsCampaignHighImpact(campaign) {
+  return !!(campaign?.high_impact || campaign?.is_high_impact || campaign?.alto_impacto);
+}
+
+function isPadcoinsCampaignLikelyHighImpact(form) {
+  const mult = parsePcSedeSimNumber(form?.multiplier);
+  const pct = parsePcSedeSimNumber(form?.loyalty_percentage_override);
+  const fixed = parsePcSedeSimNumber(form?.fixed_padcoins);
+  const maxTotal = parsePcSedeSimNumber(form?.max_total_uses);
+  const est = parsePcSedeSimNumber(form?.estimated_cost_reference);
+  if (mult != null && mult >= 3) return true;
+  if (pct != null && pct >= 15) return true;
+  if (fixed != null && fixed >= 500) return true;
+  if (maxTotal != null && maxTotal >= 1000) return true;
+  if (est != null && est >= 1000) return true;
+  return false;
+}
+
+function padcoinsCampaignToForm(campaign) {
+  const toLocalInput = (value) => {
+    if (!value) return '';
+    const s = String(value).trim();
+    if (s.length >= 16) return s.slice(0, 16);
+    return s.slice(0, 10);
+  };
+  return {
+    sede_id: campaign?.sede_id != null ? String(campaign.sede_id) : '',
+    name: campaign?.name || '',
+    description: campaign?.description || '',
+    campaign_type: campaign?.campaign_type || 'multiplier',
+    start_at: toLocalInput(campaign?.start_at),
+    end_at: toLocalInput(campaign?.end_at),
+    multiplier: campaign?.multiplier != null ? String(campaign.multiplier) : '',
+    loyalty_percentage_override: campaign?.loyalty_percentage_override != null
+      ? String(campaign.loyalty_percentage_override)
+      : '',
+    fixed_padcoins: campaign?.fixed_padcoins != null ? String(campaign.fixed_padcoins) : '',
+    benefit_id: campaign?.benefit_id != null ? String(campaign.benefit_id) : '',
+    max_total_uses: campaign?.max_total_uses != null ? String(campaign.max_total_uses) : '',
+    max_uses_per_player: campaign?.max_uses_per_player != null ? String(campaign.max_uses_per_player) : '',
+    estimated_cost_reference: campaign?.estimated_cost_reference != null
+      ? String(campaign.estimated_cost_reference)
+      : '',
+    message_title: campaign?.message_title || '',
+    message_body: campaign?.message_body || '',
+  };
+}
+
+function padcoinsCampaignNumericOptional(value) {
+  if (value === '' || value == null) return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function validatePadcoinsCampaignForm(form, { requireSedeId = false } = {}) {
+  if (!(form?.name || '').trim()) return 'El nombre es obligatorio';
+  if (!(form?.campaign_type || '').trim()) return 'El tipo de campaña es obligatorio';
+  if (requireSedeId && !String(form?.sede_id || '').trim()) return 'Seleccione una sede';
+
+  const start = String(form?.start_at || '').trim();
+  const end = String(form?.end_at || '').trim();
+  if (start && end && start >= end) return 'La fecha de fin debe ser posterior a la fecha de inicio';
+
+  const numericFields = [
+    form?.multiplier,
+    form?.loyalty_percentage_override,
+    form?.fixed_padcoins,
+    form?.max_total_uses,
+    form?.max_uses_per_player,
+    form?.estimated_cost_reference,
+  ];
+  for (const val of numericFields) {
+    if (val === '' || val == null) continue;
+    const n = Number(val);
+    if (!Number.isFinite(n) || n < 0) return 'Los valores numéricos no pueden ser negativos';
+  }
+
+  const type = String(form?.campaign_type || '').trim();
+  if (type === 'multiplier') {
+    const m = Number(form?.multiplier);
+    if (!Number.isFinite(m) || m <= 0) return 'Indique un multiplicador mayor a 0';
+  }
+  if (type === 'percentage_override') {
+    const p = Number(form?.loyalty_percentage_override);
+    if (!Number.isFinite(p) || p < 0) return 'Indique el porcentaje de fidelización';
+  }
+  if (type === 'fixed_padcoins') {
+    const f = Number(form?.fixed_padcoins);
+    if (!Number.isFinite(f) || f <= 0) return 'Indique una cantidad de PadCoins fijos mayor a 0';
+  }
+  if (type === 'benefit_equivalent') {
+    const bid = String(form?.benefit_id || '').trim();
+    if (!bid) return 'Seleccione un beneficio asociado';
+  }
+  return null;
+}
+
+function buildPadcoinsCampaignPayload(form, sedeId) {
+  const payload = {
+    name: form.name.trim(),
+    description: (form.description || '').trim() || null,
+    campaign_type: form.campaign_type,
+    message_title: (form.message_title || '').trim() || null,
+    message_body: (form.message_body || '').trim() || null,
+  };
+  if (sedeId) payload.sede_id = parseInt(sedeId, 10);
+
+  const start = String(form.start_at || '').trim();
+  const end = String(form.end_at || '').trim();
+  if (start) payload.start_at = start.length === 10 ? `${start}T00:00:00` : start;
+  if (end) payload.end_at = end.length === 10 ? `${end}T23:59:59` : end;
+
+  const type = String(form.campaign_type || '').trim();
+  if (type === 'multiplier') {
+    const m = padcoinsCampaignNumericOptional(form.multiplier);
+    if (m != null) payload.multiplier = m;
+  }
+  if (type === 'percentage_override') {
+    const p = padcoinsCampaignNumericOptional(form.loyalty_percentage_override);
+    if (p != null) payload.loyalty_percentage_override = p;
+  }
+  if (type === 'fixed_padcoins') {
+    const f = padcoinsCampaignNumericOptional(form.fixed_padcoins);
+    if (f != null) payload.fixed_padcoins = f;
+  }
+  if (type === 'benefit_equivalent') {
+    const bid = String(form.benefit_id || '').trim();
+    if (bid) payload.benefit_id = parseInt(bid, 10);
+  }
+
+  const mtu = padcoinsCampaignNumericOptional(form.max_total_uses);
+  const mup = padcoinsCampaignNumericOptional(form.max_uses_per_player);
+  const est = padcoinsCampaignNumericOptional(form.estimated_cost_reference);
+  if (mtu != null) payload.max_total_uses = mtu;
+  if (mup != null) payload.max_uses_per_player = mup;
+  if (est != null) payload.estimated_cost_reference = est;
+  return payload;
+}
+
+function padcoinsCampaignSedeNombre(campaign, sedesMapRef, pcSedesOptions) {
+  const sid = campaign?.sede_id;
+  if (sid == null || sid === '') return '—';
+  return sedesMapRef[sid]?.nombre
+    || sedesMapRef[String(sid)]?.nombre
+    || pcSedesOptions.find((s) => String(s.id) === String(sid))?.nombre
+    || `Sede #${sid}`;
+}
+
+function formatPadcoinsCampaignDateRange(campaign) {
+  const start = campaign?.start_at ? String(campaign.start_at).slice(0, 10) : '—';
+  const end = campaign?.end_at ? String(campaign.end_at).slice(0, 10) : '—';
+  return `${start} → ${end}`;
+}
+
 function isPadcoinsConfigTextRule(key) {
   return String(key || '').trim() === 'modo_calculo_reserva';
 }
@@ -3466,6 +3689,23 @@ export default function AdminDashboard({
   const [pcSedeSimConversion, setPcSedeSimConversion] = useState('');
   const [pcSedeSimBeneficio, setPcSedeSimBeneficio] = useState('');
 
+  const [pcCampaigns, setPcCampaigns] = useState([]);
+  const [pcCampaignsLoading, setPcCampaignsLoading] = useState(false);
+  const [pcCampaignsError, setPcCampaignsError] = useState('');
+  const [pcCampaignFiltroSedeId, setPcCampaignFiltroSedeId] = useState('');
+  const [pcCampaignFormMode, setPcCampaignFormMode] = useState(null);
+  const [pcCampaignEditId, setPcCampaignEditId] = useState(null);
+  const [pcCampaignForm, setPcCampaignForm] = useState(() => EMPTY_PC_CAMPAIGN_FORM());
+  const [pcCampaignFormError, setPcCampaignFormError] = useState('');
+  const [pcCampaignSaving, setPcCampaignSaving] = useState(false);
+  const [pcCampaignActionId, setPcCampaignActionId] = useState(null);
+  const [pcCampaignBenefits, setPcCampaignBenefits] = useState([]);
+  const [pcCampaignBenefitsLoading, setPcCampaignBenefitsLoading] = useState(false);
+  const [pcCampaignSummaryId, setPcCampaignSummaryId] = useState(null);
+  const [pcCampaignSummary, setPcCampaignSummary] = useState(null);
+  const [pcCampaignSummaryLoading, setPcCampaignSummaryLoading] = useState(false);
+  const [pcCampaignSummaryError, setPcCampaignSummaryError] = useState('');
+
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
   function resolvePcSedeId() {
@@ -4113,6 +4353,273 @@ export default function AdminDashboard({
     void fetchPadcoinsAlertas(0);
   }
 
+  async function fetchPadcoinsCampaigns() {
+    if (!isSuperAdmin && !esAdminClub) {
+      setPcCampaigns([]);
+      setPcCampaignsError('');
+      setPcCampaignsLoading(false);
+      return;
+    }
+    const clubSid = esAdminClub ? resolvePcSedeId() : '';
+    if (esAdminClub && !clubSid) {
+      setPcCampaigns([]);
+      setPcCampaignsError('');
+      setPcCampaignsLoading(false);
+      return;
+    }
+    setPcCampaignsLoading(true);
+    setPcCampaignsError('');
+    try {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams();
+      const sid = clubSid || pcCampaignFiltroSedeId;
+      if (sid) params.set('sede_id', String(sid));
+      const qs = params.toString();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/campaigns${qs ? `?${qs}` : ''}`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        throw new Error('No tienes permisos para ver campañas PadCoins.');
+      }
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Error al cargar campañas PadCoins');
+      }
+      setPcCampaigns(parsePadcoinsCampaignsList(data));
+    } catch (err) {
+      setPcCampaigns([]);
+      setPcCampaignsError(err.message || 'Error al cargar campañas PadCoins');
+    } finally {
+      setPcCampaignsLoading(false);
+    }
+  }
+
+  async function fetchPadcoinsCampaignBenefits(targetSedeId) {
+    const sid = targetSedeId != null ? String(targetSedeId) : '';
+    if (!sid) {
+      setPcCampaignBenefits([]);
+      return;
+    }
+    setPcCampaignBenefitsLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/premios-canjeables?sede_id=${encodeURIComponent(sid)}`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar beneficios');
+      const list = Array.isArray(data) ? data : (data.premios || data.data || []);
+      setPcCampaignBenefits(list);
+    } catch {
+      setPcCampaignBenefits([]);
+    } finally {
+      setPcCampaignBenefitsLoading(false);
+    }
+  }
+
+  function cerrarCampanaForm() {
+    setPcCampaignFormMode(null);
+    setPcCampaignEditId(null);
+    setPcCampaignForm(EMPTY_PC_CAMPAIGN_FORM());
+    setPcCampaignFormError('');
+    setPcCampaignBenefits([]);
+  }
+
+  function abrirNuevaCampana() {
+    const clubSid = esAdminClub ? resolvePcSedeId() : '';
+    const form = EMPTY_PC_CAMPAIGN_FORM();
+    if (clubSid) form.sede_id = String(clubSid);
+    else if (pcCampaignFiltroSedeId) form.sede_id = String(pcCampaignFiltroSedeId);
+    setPcCampaignForm(form);
+    setPcCampaignFormMode('create');
+    setPcCampaignEditId(null);
+    setPcCampaignFormError('');
+    if (form.sede_id) void fetchPadcoinsCampaignBenefits(form.sede_id);
+  }
+
+  async function abrirEditarCampana(campaign) {
+    if (!campaign?.id) return;
+    setPcCampaignActionId(campaign.id);
+    setPcCampaignFormError('');
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar campaña');
+      const entity = parsePadcoinsCampaignEntity(data) || campaign;
+      const form = padcoinsCampaignToForm(entity);
+      if (esAdminClub) {
+        const clubSid = resolvePcSedeId();
+        if (clubSid) form.sede_id = String(clubSid);
+      }
+      setPcCampaignForm(form);
+      setPcCampaignFormMode('edit');
+      setPcCampaignEditId(entity.id);
+      if (form.sede_id) void fetchPadcoinsCampaignBenefits(form.sede_id);
+    } catch (err) {
+      alert(err.message || 'Error al cargar campaña');
+    } finally {
+      setPcCampaignActionId(null);
+    }
+  }
+
+  function updatePcCampaignFormField(key, value) {
+    if (['multiplier', 'loyalty_percentage_override', 'fixed_padcoins', 'max_total_uses', 'max_uses_per_player', 'estimated_cost_reference'].includes(key)) {
+      const s = String(value);
+      if (s !== '' && Number(s) < 0) return;
+    }
+    setPcCampaignForm((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === 'sede_id') {
+        next.benefit_id = '';
+      }
+      if (key === 'campaign_type') {
+        next.multiplier = '';
+        next.loyalty_percentage_override = '';
+        next.fixed_padcoins = '';
+        next.benefit_id = '';
+      }
+      return next;
+    });
+    if (key === 'sede_id') {
+      void fetchPadcoinsCampaignBenefits(value);
+    }
+    setPcCampaignFormError('');
+  }
+
+  async function guardarCampana(e) {
+    e?.preventDefault?.();
+    if (!isSuperAdmin && !esAdminClub) return;
+    const clubSid = esAdminClub ? resolvePcSedeId() : '';
+    const formSedeId = clubSid || pcCampaignForm.sede_id;
+    const validationError = validatePadcoinsCampaignForm(pcCampaignForm, {
+      requireSedeId: isSuperAdmin && !clubSid,
+    });
+    if (validationError) {
+      setPcCampaignFormError(validationError);
+      return;
+    }
+    if (!formSedeId) {
+      setPcCampaignFormError('Seleccione una sede para la campaña');
+      return;
+    }
+    setPcCampaignSaving(true);
+    setPcCampaignFormError('');
+    try {
+      const headers = await getAuthHeaders();
+      const payload = buildPadcoinsCampaignPayload(pcCampaignForm, formSedeId);
+      const isEdit = pcCampaignFormMode === 'edit' && pcCampaignEditId;
+      const url = isEdit
+        ? `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(pcCampaignEditId)}`
+        : `${apiBaseUrl}/api/admin/padcoins/campaigns`;
+      const res = await fetch(url, {
+        method: isEdit ? 'PUT' : 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        throw new Error('No tienes permisos para guardar esta campaña.');
+      }
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Error al guardar campaña');
+      }
+      setMensajeExito(isEdit ? '✅ Campaña actualizada' : '✅ Campaña creada');
+      setTimeout(() => setMensajeExito(''), 3000);
+      cerrarCampanaForm();
+      await fetchPadcoinsCampaigns();
+    } catch (err) {
+      setPcCampaignFormError(err.message || 'Error al guardar campaña');
+    } finally {
+      setPcCampaignSaving(false);
+    }
+  }
+
+  async function activarCampana(campaign) {
+    if (!campaign?.id) return;
+    const highImpact = isPadcoinsCampaignHighImpact(campaign);
+    const msg = highImpact
+      ? `La campaña "${campaign.name}" está marcada como alto impacto. No se bloqueará, pero quedará registrada para auditoría.\n\n¿Activar de todos modos?`
+      : `¿Activar la campaña "${campaign.name}"?`;
+    if (!window.confirm(msg)) return;
+    setPcCampaignActionId(campaign.id);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}/activate`,
+        { method: 'POST', headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al activar campaña');
+      setMensajeExito('✅ Campaña activada');
+      setTimeout(() => setMensajeExito(''), 3000);
+      await fetchPadcoinsCampaigns();
+    } catch (err) {
+      alert(err.message || 'Error al activar campaña');
+    } finally {
+      setPcCampaignActionId(null);
+    }
+  }
+
+  async function pausarCampana(campaign) {
+    if (!campaign?.id) return;
+    if (!window.confirm(`¿Pausar la campaña "${campaign.name}"?`)) return;
+    setPcCampaignActionId(campaign.id);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}/pause`,
+        { method: 'POST', headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al pausar campaña');
+      setMensajeExito('✅ Campaña pausada');
+      setTimeout(() => setMensajeExito(''), 3000);
+      await fetchPadcoinsCampaigns();
+    } catch (err) {
+      alert(err.message || 'Error al pausar campaña');
+    } finally {
+      setPcCampaignActionId(null);
+    }
+  }
+
+  function cerrarResumenCampana() {
+    setPcCampaignSummaryId(null);
+    setPcCampaignSummary(null);
+    setPcCampaignSummaryError('');
+    setPcCampaignSummaryLoading(false);
+  }
+
+  async function verResumenCampana(campaign) {
+    if (!campaign?.id) return;
+    setPcCampaignSummaryId(campaign.id);
+    setPcCampaignSummary(null);
+    setPcCampaignSummaryError('');
+    setPcCampaignSummaryLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}/summary`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar resumen de campaña');
+      setPcCampaignSummary({
+        campaign,
+        summary: parsePadcoinsCampaignSummary(data),
+      });
+    } catch (err) {
+      setPcCampaignSummaryError(err.message || 'Error al cargar resumen de campaña');
+    } finally {
+      setPcCampaignSummaryLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (sedeIdKey && !sbSedeId) setSbSedeId(String(sedeIdKey));
   }, [sedeIdKey, sbSedeId]);
@@ -4128,6 +4635,15 @@ export default function AdminDashboard({
       void fetchPadcoinsGlobalConfig();
       void fetchPadcoinsSedesParticipacionList();
       void fetchPadcoinsAlertas(0);
+    }
+    if (isSuperAdmin || esAdminClub) {
+      void fetchPadcoinsCampaigns();
+    } else {
+      setPcCampaigns([]);
+      setPcCampaignsError('');
+      setPcCampaignsLoading(false);
+      cerrarCampanaForm();
+      cerrarResumenCampana();
     }
     const sid = resolvePcSedeId();
     if (!sid) {
@@ -4160,7 +4676,7 @@ export default function AdminDashboard({
     fetchCanjes();
     if (esAdminClub && sid) setPcMovFiltroSedeId(String(sid));
     void fetchPadcoinsMovimientos(0);
-  }, [activeTab, pcSedeId, sedeId, sedeIdKey, apiBaseUrl, esAdminClub, isSuperAdmin, esAdminNacional]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, pcSedeId, sedeId, sedeIdKey, apiBaseUrl, esAdminClub, isSuperAdmin, esAdminNacional, pcCampaignFiltroSedeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Vista Reservas super_admin: resumen global vs ranking de clubes. */
   const [reservasSuperSubVista, setReservasSuperSubVista] = useState('principal');
@@ -14572,6 +15088,647 @@ export default function AdminDashboard({
                     </div>
                   );
                 })() : null}
+              </div>
+            ) : null}
+
+            {(isSuperAdmin || esAdminClub) ? (
+              <div
+                id="admin-padcoins-campaigns"
+                style={{
+                  marginBottom: '32px',
+                  paddingBottom: '28px',
+                  borderBottom: '1px solid var(--border)',
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  marginBottom: '16px',
+                }}>
+                  <div>
+                    <h2 style={{ margin: '0 0 8px', fontSize: '20px', color: 'var(--text-primary)' }}>
+                      {t('admin.padcoins.campaignsTitle', 'Campañas automáticas')}
+                    </h2>
+                    <p style={{ color: 'var(--text-muted)', margin: '0 0 8px', maxWidth: '720px', fontSize: '14px' }}>
+                      {t(
+                        'admin.padcoins.campaignsIntro',
+                        'Crea campañas temporales para impulsar reservas y fidelización con PadCoins.',
+                      )}
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', margin: '0 0 4px', maxWidth: '720px', fontSize: '13px' }}>
+                      {t(
+                        'admin.padcoins.campaignsDisclaimerCost',
+                        'La sede asume el costo y cumplimiento de esta campaña.',
+                      )}
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', margin: '0 0 4px', maxWidth: '720px', fontSize: '13px' }}>
+                      {t(
+                        'admin.padcoins.campaignsDisclaimerTrace',
+                        'Padbol Match registra la trazabilidad y el impacto.',
+                      )}
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', margin: 0, maxWidth: '720px', fontSize: '13px' }}>
+                      {t(
+                        'admin.padcoins.campaignsDisclaimerHighImpact',
+                        'Las campañas de alto impacto no se bloquean, pero quedan marcadas para auditoría.',
+                      )}
+                    </p>
+                  </div>
+                  {!pcCampaignFormMode ? (
+                    <button
+                      type="button"
+                      onClick={abrirNuevaCampana}
+                      disabled={esAdminClub && !resolvePcSedeId()}
+                      style={{
+                        padding: '10px 20px',
+                        background: (esAdminClub && !resolvePcSedeId()) ? '#94a3b8' : 'var(--accent)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        cursor: (esAdminClub && !resolvePcSedeId()) ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      + {t('admin.padcoins.campaignsNew', 'Nueva campaña')}
+                    </button>
+                  ) : null}
+                </div>
+
+                {isSuperAdmin ? (
+                  <div style={{ marginBottom: '16px', maxWidth: '360px' }}>
+                    <label style={{ display: 'grid', gap: '6px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+                        {t('admin.padcoins.campaignsVenueFilter', 'Filtrar por sede')}
+                      </span>
+                      <select
+                        value={pcCampaignFiltroSedeId}
+                        onChange={(e) => setPcCampaignFiltroSedeId(e.target.value)}
+                        style={pcInp}
+                      >
+                        <option value="">{t('admin.padcoins.campaignsAllVenues', 'Todas las sedes')}</option>
+                        {pcSedesOptions.map((s) => (
+                          <option key={String(s.id)} value={String(s.id)}>{sedeFlag(s)} {s.nombre}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                ) : null}
+
+                {esAdminClub && effectivePcSedeId && sedeNombre ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: 0, marginBottom: '16px' }}>
+                    {t('admin.padcoins.venueLabel', 'Sede')}: <strong style={{ color: 'var(--text-primary)' }}>{sedeNombre}</strong>
+                  </p>
+                ) : null}
+
+                {esAdminClub && !resolvePcSedeId() ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+                    {t('admin.padcoins.campaignsClubNoVenue', 'No se pudo determinar la sede del club.')}
+                  </p>
+                ) : null}
+
+                {pcCampaignFormMode ? (
+                  <form
+                    onSubmit={guardarCampana}
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      maxWidth: '960px',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    <h3 style={{ margin: '0 0 16px', fontSize: '17px', color: 'var(--text-primary)' }}>
+                      {pcCampaignFormMode === 'edit'
+                        ? t('admin.padcoins.campaignsEditTitle', 'Editar campaña')
+                        : t('admin.padcoins.campaignsCreateTitle', 'Nueva campaña')}
+                    </h3>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: '14px',
+                    }}>
+                      {isSuperAdmin ? (
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.venue', 'Sede')}</span>
+                          <select
+                            value={pcCampaignForm.sede_id}
+                            onChange={(e) => updatePcCampaignFormField('sede_id', e.target.value)}
+                            style={pcInp}
+                            required
+                          >
+                            <option value="">{t('admin.padcoins.selectVenue', 'Seleccionar sede...')}</option>
+                            {pcSedesOptions.map((s) => (
+                              <option key={String(s.id)} value={String(s.id)}>{sedeFlag(s)} {s.nombre}</option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
+
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsName', 'Nombre')}</span>
+                        <input
+                          type="text"
+                          value={pcCampaignForm.name}
+                          onChange={(e) => updatePcCampaignFormField('name', e.target.value)}
+                          style={pcInp}
+                          required
+                        />
+                      </label>
+
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsType', 'Tipo de campaña')}</span>
+                        <select
+                          value={pcCampaignForm.campaign_type}
+                          onChange={(e) => updatePcCampaignFormField('campaign_type', e.target.value)}
+                          style={pcInp}
+                        >
+                          {PC_CAMPAIGN_TYPES.map((row) => (
+                            <option key={row.id} value={row.id}>{row.label}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsStart', 'Inicio')}</span>
+                        <input
+                          type="datetime-local"
+                          value={pcCampaignForm.start_at}
+                          onChange={(e) => updatePcCampaignFormField('start_at', e.target.value)}
+                          style={pcInp}
+                        />
+                      </label>
+
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsEnd', 'Fin')}</span>
+                        <input
+                          type="datetime-local"
+                          value={pcCampaignForm.end_at}
+                          onChange={(e) => updatePcCampaignFormField('end_at', e.target.value)}
+                          style={pcInp}
+                        />
+                      </label>
+
+                      {pcCampaignForm.campaign_type === 'multiplier' ? (
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsMultiplier', 'Multiplicador')}</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={pcCampaignForm.multiplier}
+                            onChange={(e) => updatePcCampaignFormField('multiplier', e.target.value)}
+                            placeholder="2"
+                            style={pcInp}
+                          />
+                        </label>
+                      ) : null}
+
+                      {pcCampaignForm.campaign_type === 'percentage_override' ? (
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsPctOverride', 'Porcentaje de fidelización')}</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={pcCampaignForm.loyalty_percentage_override}
+                            onChange={(e) => updatePcCampaignFormField('loyalty_percentage_override', e.target.value)}
+                            placeholder="10"
+                            style={pcInp}
+                          />
+                        </label>
+                      ) : null}
+
+                      {pcCampaignForm.campaign_type === 'fixed_padcoins' ? (
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsFixedPadcoins', 'PadCoins fijos')}</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={pcCampaignForm.fixed_padcoins}
+                            onChange={(e) => updatePcCampaignFormField('fixed_padcoins', e.target.value)}
+                            placeholder="100"
+                            style={pcInp}
+                          />
+                        </label>
+                      ) : null}
+
+                      {pcCampaignForm.campaign_type === 'benefit_equivalent' ? (
+                        <label style={{ display: 'grid', gap: '6px' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsBenefit', 'Beneficio asociado')}</span>
+                          <select
+                            value={pcCampaignForm.benefit_id}
+                            onChange={(e) => updatePcCampaignFormField('benefit_id', e.target.value)}
+                            style={pcInp}
+                            disabled={!pcCampaignForm.sede_id || pcCampaignBenefitsLoading}
+                          >
+                            <option value="">
+                              {pcCampaignBenefitsLoading
+                                ? t('admin.padcoins.loading', 'Cargando...')
+                                : t('admin.padcoins.campaignsSelectBenefit', 'Seleccionar beneficio...')}
+                            </option>
+                            {pcCampaignBenefits.map((premio) => (
+                              <option key={String(premio.id)} value={String(premio.id)}>
+                                {premio.nombre} ({premio.costo_padcoins} PadCoins)
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
+
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsMaxTotal', 'Cupo total')}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={pcCampaignForm.max_total_uses}
+                          onChange={(e) => updatePcCampaignFormField('max_total_uses', e.target.value)}
+                          style={pcInp}
+                        />
+                      </label>
+
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsMaxPlayer', 'Cupo por jugador')}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={pcCampaignForm.max_uses_per_player}
+                          onChange={(e) => updatePcCampaignFormField('max_uses_per_player', e.target.value)}
+                          style={pcInp}
+                        />
+                      </label>
+
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsEstCost', 'Referencia de costo estimado')}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={pcCampaignForm.estimated_cost_reference}
+                          onChange={(e) => updatePcCampaignFormField('estimated_cost_reference', e.target.value)}
+                          style={pcInp}
+                        />
+                      </label>
+                    </div>
+
+                    <label style={{ display: 'grid', gap: '6px', marginTop: '14px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsDescription', 'Descripción')}</span>
+                      <textarea
+                        value={pcCampaignForm.description}
+                        onChange={(e) => updatePcCampaignFormField('description', e.target.value)}
+                        rows={2}
+                        style={{ ...pcInp, resize: 'vertical' }}
+                      />
+                    </label>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: '14px',
+                      marginTop: '14px',
+                    }}>
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsMsgTitle', 'Título del mensaje')}</span>
+                        <input
+                          type="text"
+                          value={pcCampaignForm.message_title}
+                          onChange={(e) => updatePcCampaignFormField('message_title', e.target.value)}
+                          style={pcInp}
+                        />
+                      </label>
+                      <label style={{ display: 'grid', gap: '6px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '13px' }}>{t('admin.padcoins.campaignsMsgBody', 'Cuerpo del mensaje')}</span>
+                        <textarea
+                          value={pcCampaignForm.message_body}
+                          onChange={(e) => updatePcCampaignFormField('message_body', e.target.value)}
+                          rows={2}
+                          style={{ ...pcInp, resize: 'vertical' }}
+                        />
+                      </label>
+                    </div>
+
+                    {isPadcoinsCampaignLikelyHighImpact(pcCampaignForm) ? (
+                      <p style={{
+                        margin: '14px 0 0',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        background: '#fff7ed',
+                        border: '1px solid #fed7aa',
+                        color: '#9a3412',
+                        fontSize: '13px',
+                      }}>
+                        {t(
+                          'admin.padcoins.campaignsLikelyHighImpact',
+                          'Esta configuración parece de alto impacto. Al activarla quedará marcada para auditoría.',
+                        )}
+                      </p>
+                    ) : null}
+
+                    {pcCampaignFormError ? (
+                      <p style={{ color: '#dc2626', fontWeight: 600, marginTop: '14px', marginBottom: 0 }}>
+                        {pcCampaignFormError}
+                      </p>
+                    ) : null}
+
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '18px', flexWrap: 'wrap' }}>
+                      <button
+                        type="submit"
+                        disabled={pcCampaignSaving}
+                        style={{
+                          padding: '10px 20px',
+                          background: pcCampaignSaving ? '#94a3b8' : 'var(--accent)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '14px',
+                          cursor: pcCampaignSaving ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {pcCampaignSaving
+                          ? t('admin.metricas.saving', 'Guardando...')
+                          : t('admin.padcoins.campaignsSave', 'Guardar campaña')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cerrarCampanaForm}
+                        disabled={pcCampaignSaving}
+                        style={{
+                          padding: '10px 20px',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          cursor: pcCampaignSaving ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {t('admin.padcoins.cancel', 'Cancelar')}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+
+                {pcCampaignsLoading ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                    {t('admin.padcoins.campaignsLoading', 'Cargando campañas...')}
+                  </p>
+                ) : null}
+
+                {!pcCampaignsLoading && pcCampaignsError ? (
+                  <p style={{
+                    margin: 0,
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    background: '#fef2f2',
+                    color: '#b91c1c',
+                    fontSize: '14px',
+                    maxWidth: '720px',
+                  }}>
+                    {pcCampaignsError}
+                  </p>
+                ) : null}
+
+                {!pcCampaignsLoading && !pcCampaignsError && pcCampaigns.length === 0 && !pcCampaignFormMode ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+                    {t('admin.padcoins.campaignsEmpty', 'No hay campañas registradas.')}
+                  </p>
+                ) : null}
+
+                {!pcCampaignsLoading && !pcCampaignsError && pcCampaigns.length > 0 ? (
+                  <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '980px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', background: 'var(--bg-card)' }}>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.campaignsColName', 'Nombre')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.venue', 'Sede')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.campaignsColType', 'Tipo')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.campaignsColStatus', 'Estado')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.campaignsColDates', 'Fechas')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.campaignsColQuota', 'Cupos')}</th>
+                          <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{t('admin.padcoins.campaignsColActions', 'Acciones')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pcCampaigns.map((campaign) => {
+                          const statusKey = String(campaign.status || 'draft').trim().toLowerCase();
+                          const badge = padcoinsCampaignStateBadge(statusKey);
+                          const busy = pcCampaignActionId === campaign.id;
+                          const highImpact = isPadcoinsCampaignHighImpact(campaign);
+                          return (
+                            <tr key={String(campaign.id)} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
+                                <strong style={{ color: 'var(--text-primary)' }}>{campaign.name || '—'}</strong>
+                                {highImpact ? (
+                                  <span style={{
+                                    display: 'inline-block',
+                                    marginLeft: '8px',
+                                    background: '#fff7ed',
+                                    color: '#9a3412',
+                                    borderRadius: '12px',
+                                    padding: '2px 8px',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                  }}>
+                                    {t('admin.padcoins.campaignsHighImpact', 'Alto impacto')}
+                                  </span>
+                                ) : null}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
+                                {padcoinsCampaignSedeNombre(campaign, sedesMap, pcSedesOptions)}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
+                                {padcoinsCampaignTypeLabel(campaign.campaign_type)}
+                              </td>
+                              <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
+                                <span style={{
+                                  background: badge.bg,
+                                  color: badge.color,
+                                  borderRadius: '12px',
+                                  padding: '2px 10px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                }}>
+                                  {badge.label}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
+                                {formatPadcoinsCampaignDateRange(campaign)}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
+                                <div>{t('admin.padcoins.campaignsTotalUses', 'Total')}: {campaign.max_total_uses ?? '—'}</div>
+                                <div>{t('admin.padcoins.campaignsPlayerUses', 'Por jugador')}: {campaign.max_uses_per_player ?? '—'}</div>
+                              </td>
+                              <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => void verResumenCampana(campaign)}
+                                    style={{
+                                      padding: '6px 10px',
+                                      background: 'var(--bg-page)',
+                                      color: 'var(--text-primary)',
+                                      border: '1px solid var(--border)',
+                                      borderRadius: '6px',
+                                      fontSize: '12px',
+                                      fontWeight: 600,
+                                      cursor: busy ? 'not-allowed' : 'pointer',
+                                    }}
+                                  >
+                                    {t('admin.padcoins.campaignsSummary', 'Ver resumen')}
+                                  </button>
+                                  {statusKey !== 'ended' ? (
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => void abrirEditarCampana(campaign)}
+                                      style={{
+                                        padding: '6px 10px',
+                                        background: 'var(--accent)',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        cursor: busy ? 'not-allowed' : 'pointer',
+                                      }}
+                                    >
+                                      {t('admin.padcoins.edit', 'Editar')}
+                                    </button>
+                                  ) : null}
+                                  {(statusKey === 'draft' || statusKey === 'paused') ? (
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => void activarCampana(campaign)}
+                                      style={{
+                                        padding: '6px 10px',
+                                        background: '#166534',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        cursor: busy ? 'not-allowed' : 'pointer',
+                                      }}
+                                    >
+                                      {t('admin.padcoins.campaignsActivate', 'Activar')}
+                                    </button>
+                                  ) : null}
+                                  {statusKey === 'active' ? (
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => void pausarCampana(campaign)}
+                                      style={{
+                                        padding: '6px 10px',
+                                        background: '#92400e',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        cursor: busy ? 'not-allowed' : 'pointer',
+                                      }}
+                                    >
+                                      {t('admin.padcoins.campaignsPause', 'Pausar')}
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
+
+                {pcCampaignSummaryId ? (
+                  <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(15, 23, 42, 0.45)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    zIndex: 1200,
+                  }}>
+                    <div style={{
+                      background: 'var(--bg-card)',
+                      borderRadius: '12px',
+                      border: '1px solid var(--border)',
+                      padding: '20px',
+                      width: '100%',
+                      maxWidth: '520px',
+                      maxHeight: '90vh',
+                      overflowY: 'auto',
+                    }}>
+                      <h3 style={{ margin: '0 0 12px', fontSize: '18px', color: 'var(--text-primary)' }}>
+                        {t('admin.padcoins.campaignsSummaryTitle', 'Resumen de campaña')}
+                      </h3>
+                      {pcCampaignSummaryLoading ? (
+                        <p style={{ color: 'var(--text-muted)', margin: 0 }}>
+                          {t('admin.padcoins.campaignsSummaryLoading', 'Cargando resumen...')}
+                        </p>
+                      ) : null}
+                      {!pcCampaignSummaryLoading && pcCampaignSummaryError ? (
+                        <p style={{ color: '#b91c1c', margin: '0 0 12px' }}>{pcCampaignSummaryError}</p>
+                      ) : null}
+                      {!pcCampaignSummaryLoading && !pcCampaignSummaryError && pcCampaignSummary ? (
+                        <div style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.6 }}>
+                          <p style={{ margin: '0 0 10px' }}>
+                            <strong>{pcCampaignSummary.campaign?.name || '—'}</strong>
+                          </p>
+                          <p style={{ margin: '0 0 6px' }}>
+                            {t('admin.padcoins.campaignsSummaryUses', 'Usos')}: {pcCampaignSummary.summary.total_uses ?? '—'}
+                          </p>
+                          <p style={{ margin: '0 0 6px' }}>
+                            {t('admin.padcoins.campaignsSummaryPadcoins', 'PadCoins entregados')}: {pcCampaignSummary.summary.padcoins_delivered ?? '—'}
+                          </p>
+                          <p style={{ margin: '0 0 6px' }}>
+                            {t('admin.padcoins.campaignsSummaryReservations', 'Reservas impactadas')}: {pcCampaignSummary.summary.reservations_impacted ?? '—'}
+                          </p>
+                          <p style={{ margin: '0 0 6px' }}>
+                            {t('admin.padcoins.campaignsSummaryPlayers', 'Jugadores impactados')}: {pcCampaignSummary.summary.players_impacted ?? '—'}
+                          </p>
+                          <p style={{ margin: '0 0 12px' }}>
+                            {t('admin.padcoins.campaignsSummaryCost', 'Impacto estimado')}: {pcCampaignSummary.summary.estimated_cost ?? '—'}
+                          </p>
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={cerrarResumenCampana}
+                        style={{
+                          marginTop: '8px',
+                          padding: '8px 16px',
+                          background: 'var(--bg-page)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {t('admin.padcoins.campaignsClose', 'Cerrar')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
