@@ -22,6 +22,8 @@ import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { QRCodeCanvas } from 'qrcode.react';
 import './PagoExitoso.css';
+import { usePadcoinsActiveCampaign } from '../hooks/usePadcoinsActiveCampaign';
+import { PadcoinsCampaignPlayerHint } from '../components/PadcoinsCampaignPlayerSurfaces';
 
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -64,6 +66,11 @@ export default function PagoExitoso() {
     const n = parseInt(String(raw), 10);
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [reserva]);
+
+  const { campaign: pagoPadcoinsCampaign } = usePadcoinsActiveCampaign(reservaSedeId, {
+    apiBaseUrl: API_BASE,
+    enabled: !saving && !confirmError && pagoKind === 'reserva' && Boolean(reservaSedeId),
+  });
 
   const deporteReservaPago = useMemo(() => {
     const raw = reserva?.deporte ?? reserva?.deporte_cancha;
@@ -274,6 +281,7 @@ export default function PagoExitoso() {
             <p className="pago-exitoso__lead">
               Tu reserva está confirmada. Recibirás la confirmación por WhatsApp.
             </p>
+            <PadcoinsCampaignPlayerHint campaign={pagoPadcoinsCampaign} variant="success" />
             <div className="pago-exitoso__slot-wrap">
               <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
             </div>

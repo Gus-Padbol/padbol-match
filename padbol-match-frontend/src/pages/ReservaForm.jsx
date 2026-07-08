@@ -65,6 +65,11 @@ import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from '../components/common/SportIcon';
 import { useJugadorReputacionReserva } from '../components/ReputacionJugadorPanel';
+import { usePadcoinsActiveCampaign } from '../hooks/usePadcoinsActiveCampaign';
+import {
+  PadcoinsCampaignPlayerBadge,
+  PadcoinsCampaignPlayerHint,
+} from '../components/PadcoinsCampaignPlayerSurfaces';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -784,6 +789,18 @@ export default function ReservaForm() {
     }
     return null;
   }, [sedes, filtros.sede_id]);
+
+  const reservaCampaignSedeId = useMemo(() => {
+    const raw = filtros.sede_id ?? sedeSeleccionada?.id;
+    const n = parseInt(String(raw), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [filtros.sede_id, sedeSeleccionada?.id]);
+
+  const { campaign: pcActiveCampaign } = usePadcoinsActiveCampaign(reservaCampaignSedeId, {
+    apiBaseUrl: API_BASE,
+    accessToken: session?.access_token ?? null,
+    enabled: Boolean(reservaCampaignSedeId) && (pantalla === 2 || pantalla === 4),
+  });
 
   /** GPS o IP aproximada en pantalla 1 (país automático, orden por cercanía y badge «más cercana»). */
   const [geoReserva, setGeoReserva] = useState({
@@ -2607,6 +2624,12 @@ export default function ReservaForm() {
           </p>
           )}
 
+          {pcActiveCampaign ? (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+              <PadcoinsCampaignPlayerBadge campaign={pcActiveCampaign} />
+            </div>
+          ) : null}
+
           <form>
             <div className="form-group">
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.chooseDay')}</label>
@@ -2743,6 +2766,9 @@ export default function ReservaForm() {
                   >
                     {surgePrecioBadge.label}
                   </span>
+                ) : null}
+                {pcActiveCampaign ? (
+                  <PadcoinsCampaignPlayerBadge campaign={pcActiveCampaign} />
                 ) : null}
                 {(() => {
                   const subEtiqueta =
@@ -3083,6 +3109,8 @@ export default function ReservaForm() {
             </div>
           ) : null}
 
+          <PadcoinsCampaignPlayerHint campaign={pcActiveCampaign} variant="confirm" />
+
           {metodoPagoEfectivo ? (
             <div
               style={{
@@ -3269,6 +3297,7 @@ export default function ReservaForm() {
               <p style={{ margin: '0 0 20px', fontSize: '14px', lineHeight: 1.55, color: 'var(--text-secondary)' }}>
                 {t('reservas.confirmedWhatsapp')}
               </p>
+              <PadcoinsCampaignPlayerHint campaign={pcActiveCampaign} variant="success" />
               <button
                 type="button"
                 onClick={cerrarReservaStripeExito}

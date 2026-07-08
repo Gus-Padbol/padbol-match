@@ -38,6 +38,8 @@ import { fetchProfesores } from '../utils/clasesApi';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
 import { authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { formatNivelTorneo } from '../utils/torneoFormatters';
+import { usePadcoinsActiveCampaign } from '../hooks/usePadcoinsActiveCampaign';
+import { PadcoinsCampaignPlayerBanner } from '../components/PadcoinsCampaignPlayerSurfaces';
 import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
 import {
   PARTIDOS_ABIERTOS_PREVIEW_LIMIT,
@@ -1736,6 +1738,12 @@ export default function SedePublica() {
     return Number.isFinite(n) && n > 0 ? n : null;
   }, [sedeId]);
 
+  const { campaign: sedePadcoinsCampaign } = usePadcoinsActiveCampaign(sedeIdNumLoad, {
+    apiBaseUrl: API_BASE_RESENAS,
+    accessToken: session?.access_token ?? null,
+    enabled: Boolean(sedeIdNumLoad) && Boolean(sede) && !loading && !error,
+  });
+
   const partidosSedeOrdenados = useMemo(
     () => sortPartidosAbiertosPorFechaHora(partidosSede),
     [partidosSede]
@@ -2250,6 +2258,11 @@ export default function SedePublica() {
               onIndexChange={setFotosGalleryIndex}
             />
           ) : null}
+          <PadcoinsCampaignPlayerBanner
+            campaign={sedePadcoinsCampaign}
+            ctaLabel={t('sedes.publica.reservarAhora', { defaultValue: 'Reservar ahora' })}
+            onCtaClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
+          />
           <button
             type="button"
             className="sede-publica-btn sede-publica-btn--primary sede-publica-reservar-sticky__btn"
