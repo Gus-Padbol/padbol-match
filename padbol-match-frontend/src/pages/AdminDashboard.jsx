@@ -1145,6 +1145,86 @@ const PADCOINS_CONFIG_KEY_HELP = {
   modo_calculo_reserva: 'Calcula PadCoins como porcentaje del valor pagado.',
 };
 
+const PC_SEDE_SMART_RULE_KEYS = [
+  'limite_diario_jugador',
+  'limite_mensual_jugador',
+  'cancelacion_tarde',
+  'no_show',
+  'porcentaje_devolucion_reserva',
+  'padcoins_por_usd_equivalente',
+  'modo_calculo_reserva',
+  'logro_desbloqueado',
+];
+
+const PC_SEDE_SMART_RULE_LABELS = {
+  limite_diario_jugador: 'Límite diario por jugador',
+  limite_mensual_jugador: 'Límite mensual por jugador',
+  cancelacion_tarde: 'Penalización por cancelación tardía',
+  no_show: 'Penalización por no-show',
+  porcentaje_devolucion_reserva: 'Porcentaje de devolución por reserva',
+  padcoins_por_usd_equivalente: 'PadCoins por USD equivalente',
+  modo_calculo_reserva: 'Modo de cálculo de reserva',
+  logro_desbloqueado: 'PadCoins por logro desbloqueado',
+};
+
+function isPcSedeSmartRuleText(key) {
+  return String(key || '').trim() === 'modo_calculo_reserva';
+}
+
+function emptyPcSedeSmartOverrideForm() {
+  return Object.fromEntries(PC_SEDE_SMART_RULE_KEYS.map((k) => [k, '']));
+}
+
+function parsePadcoinsSedeEffectiveConfig(data) {
+  const global = data?.global && typeof data.global === 'object' ? data.global : {};
+  const sede_overrides = data?.sede_overrides && typeof data.sede_overrides === 'object'
+    ? data.sede_overrides
+    : (data?.rule_overrides && typeof data.rule_overrides === 'object' ? data.rule_overrides : {});
+  const effective = data?.effective && typeof data.effective === 'object' ? data.effective : {};
+  return { global, sede_overrides, effective };
+}
+
+function padcoinsSedeSmartOverridesToForm(sedeOverrides) {
+  const form = emptyPcSedeSmartOverrideForm();
+  for (const key of PC_SEDE_SMART_RULE_KEYS) {
+    const v = sedeOverrides?.[key];
+    if (v != null && v !== '') form[key] = String(v);
+  }
+  return form;
+}
+
+function formatPadcoinsSmartConfigValue(value) {
+  if (value == null || value === '') return '—';
+  return String(value);
+}
+
+function validatePcSedeSmartOverrideForm(form) {
+  for (const key of PC_SEDE_SMART_RULE_KEYS) {
+    const raw = String(form?.[key] ?? '').trim();
+    if (!raw) continue;
+    if (isPcSedeSmartRuleText(key)) continue;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || !Number.isInteger(n)) {
+      return `«${PC_SEDE_SMART_RULE_LABELS[key]}» debe ser un número entero`;
+    }
+  }
+  return null;
+}
+
+function buildPcSedeSmartRuleOverridesPayload(form) {
+  const rule_overrides = {};
+  for (const key of PC_SEDE_SMART_RULE_KEYS) {
+    const raw = String(form?.[key] ?? '').trim();
+    if (!raw) continue;
+    if (isPcSedeSmartRuleText(key)) {
+      rule_overrides[key] = raw;
+    } else {
+      rule_overrides[key] = parseInt(raw, 10);
+    }
+  }
+  return rule_overrides;
+}
+
 function isPadcoinsConfigTextRule(key) {
   return String(key || '').trim() === 'modo_calculo_reserva';
 }
@@ -3351,6 +3431,12 @@ export default function AdminDashboard({
   const [pcAlertFiltroTipo, setPcAlertFiltroTipo] = useState('');
   const [pcAlertFiltroDesde, setPcAlertFiltroDesde] = useState('');
   const [pcAlertFiltroHasta, setPcAlertFiltroHasta] = useState('');
+  const [pcSedeSmartConfig, setPcSedeSmartConfig] = useState(null);
+  const [pcSedeSmartForm, setPcSedeSmartForm] = useState(() => emptyPcSedeSmartOverrideForm());
+  const [pcSedeSmartLoading, setPcSedeSmartLoading] = useState(false);
+  const [pcSedeSmartError, setPcSedeSmartError] = useState('');
+  const [pcSedeSmartSaveError, setPcSedeSmartSaveError] = useState('');
+  const [pcSedeSmartSaving, setPcSedeSmartSaving] = useState(false);
 
   const pcNeedsSelector = isSuperAdmin || (esAdminNacional && (sedeId == null || sedeId === '') && !sedeIdKey);
 
@@ -3525,6 +3611,140 @@ export default function AdminDashboard({
       setPcSedeParticipacionSaveError(err.message || 'Error al guardar participación en Beneficios Padbol');
     } finally {
       setPcSedeParticipacionSaving(false);
+    }
+  }
+
+  function updatePcSedeSmartFormField(key, value) {
+    setPcSedeSmartForm((prev) => ({ ...prev, [key]: value }));
+    setPcSedeSmartSaveError('');
+  }
+
+  async function fetchPadcoinsSedeSmartConfig(targetSedeId) {
+    if (!isSuperAdmin && !esAdminClub) {
+      setPcSedeSmartConfig(null);
+      setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
+      setPcSedeSmartError('');
+      setPcSedeSmartLoading(false);
+      return;
+    }
+    const sid = targetSedeId != null ? String(targetSedeId) : resolvePcSedeId();
+    if (!sid) {
+      setPcSedeSmartConfig(null);
+      setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
+      setPcSedeSmartError('');
+      setPcSedeSmartLoading(false);
+      return;
+    }
+    setPcSedeSmartLoading(true);
+    setPcSedeSmartError('');
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/sedes/${encodeURIComponent(sid)}/config-effective`,
+        { headers },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        throw new Error('No tienes permisos para ver la configuración inteligente de esta sede.');
+      }
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Error al cargar configuración inteligente PadCoins');
+      }
+      const parsed = parsePadcoinsSedeEffectiveConfig(data);
+      setPcSedeSmartConfig(parsed);
+      setPcSedeSmartForm(padcoinsSedeSmartOverridesToForm(parsed.sede_overrides));
+    } catch (err) {
+      setPcSedeSmartConfig(null);
+      setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
+      setPcSedeSmartError(err.message || 'Error al cargar configuración inteligente PadCoins');
+    } finally {
+      setPcSedeSmartLoading(false);
+    }
+  }
+
+  async function guardarPadcoinsSedeSmartOverrides(e) {
+    e?.preventDefault?.();
+    if (!isSuperAdmin && !esAdminClub) return;
+    const sid = resolvePcSedeId();
+    if (!sid) {
+      setPcSedeSmartSaveError('Seleccione una sede para guardar la configuración inteligente');
+      return;
+    }
+    const validationError = validatePcSedeSmartOverrideForm(pcSedeSmartForm);
+    if (validationError) {
+      setPcSedeSmartSaveError(validationError);
+      return;
+    }
+    setPcSedeSmartSaving(true);
+    setPcSedeSmartSaveError('');
+    try {
+      const headers = await getAuthHeaders();
+      const rule_overrides = buildPcSedeSmartRuleOverridesPayload(pcSedeSmartForm);
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/sedes/${encodeURIComponent(sid)}/rule-overrides`,
+        {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ rule_overrides }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        throw new Error('No tienes permisos para modificar la configuración inteligente de esta sede.');
+      }
+      if (res.status === 400) {
+        throw new Error(data.error || data.message || 'Datos de configuración inválidos');
+      }
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Error al guardar configuración inteligente PadCoins');
+      }
+      const parsed = parsePadcoinsSedeEffectiveConfig(data);
+      setPcSedeSmartConfig(parsed);
+      setPcSedeSmartForm(padcoinsSedeSmartOverridesToForm(parsed.sede_overrides));
+      setMensajeExito('✅ Configuración inteligente de la sede actualizada');
+      setTimeout(() => setMensajeExito(''), 3000);
+    } catch (err) {
+      setPcSedeSmartSaveError(err.message || 'Error al guardar configuración inteligente PadCoins');
+    } finally {
+      setPcSedeSmartSaving(false);
+    }
+  }
+
+  async function restaurarPadcoinsSedeSmartHerencia() {
+    if (!isSuperAdmin && !esAdminClub) return;
+    const sid = resolvePcSedeId();
+    if (!sid) {
+      setPcSedeSmartSaveError('Seleccione una sede para restaurar la herencia global');
+      return;
+    }
+    setPcSedeSmartSaving(true);
+    setPcSedeSmartSaveError('');
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `${apiBaseUrl}/api/admin/padcoins/sedes/${encodeURIComponent(sid)}/rule-overrides`,
+        {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ rule_overrides: {} }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        throw new Error('No tienes permisos para modificar la configuración inteligente de esta sede.');
+      }
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Error al restaurar herencia global');
+      }
+      const parsed = parsePadcoinsSedeEffectiveConfig(data);
+      setPcSedeSmartConfig(parsed);
+      setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
+      setMensajeExito('✅ Configuración restaurada: la sede hereda las reglas globales');
+      setTimeout(() => setMensajeExito(''), 3000);
+    } catch (err) {
+      setPcSedeSmartSaveError(err.message || 'Error al restaurar herencia global');
+    } finally {
+      setPcSedeSmartSaving(false);
     }
   }
 
@@ -3870,6 +4090,10 @@ export default function AdminDashboard({
       setPcSedeParticipacion(emptyPadcoinsSedeConfigForm());
       setPcSedeParticipacionError('');
       setPcSedeParticipacionLoading(false);
+      setPcSedeSmartConfig(null);
+      setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
+      setPcSedeSmartError('');
+      setPcSedeSmartLoading(false);
       if (esAdminClub) {
         setPcMovimientos([]);
         setPcMovError('');
@@ -3881,6 +4105,7 @@ export default function AdminDashboard({
       return;
     }
     void fetchPadcoinsSedeParticipacion(sid);
+    void fetchPadcoinsSedeSmartConfig(sid);
     fetchPremios();
     fetchCanjes();
     if (esAdminClub && sid) setPcMovFiltroSedeId(String(sid));
@@ -13950,6 +14175,175 @@ export default function AdminDashboard({
                 </div>
               ) : null}
             </div>
+
+            {(isSuperAdmin || esAdminClub) ? (
+              <div style={{
+                marginBottom: '32px',
+                paddingBottom: '28px',
+                borderBottom: '1px solid var(--border)',
+              }}>
+                <h2 style={{ margin: '0 0 8px', fontSize: '20px', color: 'var(--text-primary)' }}>
+                  {t('admin.padcoins.sedeSmartConfigTitle', 'Configuración inteligente por sede')}
+                </h2>
+                <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
+                  {t(
+                    'admin.padcoins.sedeSmartConfigIntro',
+                    'Define reglas propias para esta sede o deja los campos vacíos para heredar la configuración global.',
+                  )}
+                </p>
+
+                {!effectivePcSedeId ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+                    {t(
+                      'admin.padcoins.sedeSmartConfigSelectVenue',
+                      'Seleccione una sede para ver o editar su configuración inteligente.',
+                    )}
+                  </p>
+                ) : null}
+
+                {effectivePcSedeId && pcSedeSmartLoading ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                    {t('admin.padcoins.sedeSmartConfigLoading', 'Cargando configuración inteligente...')}
+                  </p>
+                ) : null}
+
+                {effectivePcSedeId && !pcSedeSmartLoading && pcSedeSmartError ? (
+                  <p style={{
+                    margin: 0,
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    background: '#fef2f2',
+                    color: '#b91c1c',
+                    fontSize: '14px',
+                    maxWidth: '720px',
+                  }}>
+                    {pcSedeSmartError}
+                  </p>
+                ) : null}
+
+                {effectivePcSedeId && !pcSedeSmartLoading && !pcSedeSmartError && pcSedeSmartConfig ? (
+                  <form onSubmit={guardarPadcoinsSedeSmartOverrides} style={{ maxWidth: '960px' }}>
+                    <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '720px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', background: 'var(--bg-card)' }}>
+                            <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>
+                              {t('admin.padcoins.sedeSmartConfigField', 'Regla')}
+                            </th>
+                            <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>
+                              {t('admin.padcoins.sedeSmartConfigGlobal', 'Global')}
+                            </th>
+                            <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>
+                              {t('admin.padcoins.sedeSmartConfigOverride', 'Propio de la sede')}
+                            </th>
+                            <th style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>
+                              {t('admin.padcoins.sedeSmartConfigEffective', 'Efectivo')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {PC_SEDE_SMART_RULE_KEYS.map((key) => {
+                            const globalVal = formatPadcoinsSmartConfigValue(pcSedeSmartConfig.global?.[key]);
+                            const effectiveVal = formatPadcoinsSmartConfigValue(pcSedeSmartConfig.effective?.[key]);
+                            const hasOverride = Object.prototype.hasOwnProperty.call(
+                              pcSedeSmartConfig.sede_overrides || {},
+                              key,
+                            );
+                            return (
+                              <tr key={key} style={{ borderBottom: '1px solid var(--border)' }}>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, verticalAlign: 'top' }}>
+                                  {PC_SEDE_SMART_RULE_LABELS[key] || padcoinsConfigKeyLabel(key)}
+                                </td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
+                                  {globalVal}
+                                </td>
+                                <td style={{ padding: '10px 12px', verticalAlign: 'top', minWidth: '160px' }}>
+                                  {isPcSedeSmartRuleText(key) ? (
+                                    <input
+                                      type="text"
+                                      value={pcSedeSmartForm[key] ?? ''}
+                                      onChange={(e) => updatePcSedeSmartFormField(key, e.target.value)}
+                                      placeholder={t('admin.padcoins.sedeSmartConfigInherit', 'Hereda global')}
+                                      style={pcInp}
+                                    />
+                                  ) : (
+                                    <input
+                                      type="number"
+                                      step="1"
+                                      value={pcSedeSmartForm[key] ?? ''}
+                                      onChange={(e) => updatePcSedeSmartFormField(key, e.target.value)}
+                                      placeholder={t('admin.padcoins.sedeSmartConfigInherit', 'Hereda global')}
+                                      style={pcInp}
+                                    />
+                                  )}
+                                  {!String(pcSedeSmartForm[key] ?? '').trim() && hasOverride ? (
+                                    <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                      {t('admin.padcoins.sedeSmartConfigWillInherit', 'Se heredará al guardar')}
+                                    </span>
+                                  ) : null}
+                                </td>
+                                <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, verticalAlign: 'top' }}>
+                                  {effectiveVal}
+                                  {!hasOverride && !String(pcSedeSmartForm[key] ?? '').trim() ? (
+                                    <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>
+                                      {t('admin.padcoins.sedeSmartConfigInherited', 'Heredado')}
+                                    </span>
+                                  ) : null}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {pcSedeSmartSaveError ? (
+                      <p style={{ margin: '14px 0 0', color: '#b91c1c', fontSize: '14px', fontWeight: 600 }}>
+                        {pcSedeSmartSaveError}
+                      </p>
+                    ) : null}
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '16px' }}>
+                      <button
+                        type="submit"
+                        disabled={pcSedeSmartSaving}
+                        style={{
+                          padding: '10px 18px',
+                          background: pcSedeSmartSaving ? '#94a3b8' : 'var(--accent)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '14px',
+                          cursor: pcSedeSmartSaving ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {pcSedeSmartSaving
+                          ? t('admin.metricas.saving', 'Guardando...')
+                          : t('admin.padcoins.sedeSmartConfigSave', 'Guardar configuración')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={pcSedeSmartSaving}
+                        onClick={() => void restaurarPadcoinsSedeSmartHerencia()}
+                        style={{
+                          padding: '10px 18px',
+                          background: 'var(--bg-page)',
+                          color: 'var(--text-primary)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          cursor: pcSedeSmartSaving ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {t('admin.padcoins.sedeSmartConfigRestore', 'Restaurar herencia global')}
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
+              </div>
+            ) : null}
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
               <div>
