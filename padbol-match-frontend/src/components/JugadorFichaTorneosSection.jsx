@@ -13,40 +13,7 @@ import {
   validateIdentidadForm,
   formatDocumentoGuardadoDisplay,
 } from '../utils/jugadorIdentidad';
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px',
-  marginBottom: '6px',
-  border: '1px solid #ddd',
-  borderRadius: '5px',
-  boxSizing: 'border-box',
-  fontSize: '14px',
-  background: 'white',
-};
-
-const labelStyle = {
-  display: 'block',
-  fontWeight: 'bold',
-  marginBottom: '5px',
-  color: '#333',
-  fontSize: '13px',
-};
-
-const sectionTitleStyle = {
-  margin: '0 0 12px',
-  fontSize: '14px',
-  fontWeight: 800,
-  color: '#1e3a8a',
-};
-
-const sectionBoxStyle = {
-  background: '#f8fafc',
-  border: '1px solid #dbeafe',
-  borderRadius: '10px',
-  padding: '14px',
-  marginBottom: '16px',
-};
+import './JugadorFichaTorneosSection.css';
 
 export default function JugadorFichaTorneosSection() {
   const [loading, setLoading] = useState(true);
@@ -154,20 +121,9 @@ export default function JugadorFichaTorneosSection() {
   const formDisabled = saving;
 
   return (
-    <div
-      id="ficha-torneos"
-      style={{
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '20px 24px',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-        marginBottom: '16px',
-        border: '1px solid #c7d2fe',
-        borderLeft: '4px solid #1e3a8a',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-        <h4 style={{ margin: 0, color: '#1e3a8a', fontSize: '16px' }}>Ficha para torneos</h4>
+    <div id="ficha-torneos" className="jugador-ficha-torneos">
+      <div className="jugador-ficha-torneos__head">
+        <h4 className="jugador-ficha-torneos__title">Ficha para torneos</h4>
         {!loading ? (
           <span
             style={{
@@ -187,253 +143,235 @@ export default function JugadorFichaTorneosSection() {
         ) : null}
       </div>
 
-      <p style={{ margin: '0 0 14px', fontSize: '13px', color: '#666', lineHeight: 1.45 }}>
+      <p className="jugador-ficha-torneos__intro">
         Estos datos ayudan a validar identidad y categorías en torneos. Solo vos podés verlos desde tu perfil.
       </p>
 
       {loading ? (
-        <p style={{ color: '#888', fontSize: '14px', margin: '0 0 12px' }}>Cargando ficha…</p>
+        <p className="jugador-ficha-torneos__loading">Cargando ficha…</p>
       ) : null}
 
       {authMissing ? (
-        <p style={{ color: '#b45309', fontSize: '13px', margin: '0 0 12px', lineHeight: 1.45 }}>
+        <p className="jugador-ficha-torneos__warn">
           Tu sesión no está lista para sincronizar con el servidor. Podés completar la ficha abajo; si no podés guardar, volvé a iniciar sesión.
         </p>
       ) : null}
 
       {loadError ? (
-        <p style={{ color: '#b91c1c', fontSize: '13px', margin: '0 0 12px', lineHeight: 1.45 }}>
+        <p className="jugador-ficha-torneos__error">
           No se pudieron cargar datos guardados ({loadError}). Completá la ficha y guardala.
         </p>
       ) : null}
 
       <form onSubmit={handleGuardar}>
-        <div style={sectionBoxStyle}>
-          <h5 style={sectionTitleStyle}>Documento de identidad</h5>
+        <div className="jugador-ficha-torneos__section">
+          <h5 className="jugador-ficha-torneos__section-title">Documento de identidad</h5>
 
-          <label style={labelStyle}>Tipo de documento</label>
-          <select
-            name="tipo_documento"
-            value={form.tipo_documento}
-            onChange={handleChange}
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '14px' }}
-          >
-            {TIPO_DOCUMENTO_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <div className="jugador-ficha-torneos__field">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-tipo-documento">Tipo de documento</label>
+            <select
+              id="ficha-tipo-documento"
+              name="tipo_documento"
+              value={form.tipo_documento}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__select"
+            >
+              {TIPO_DOCUMENTO_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
 
-          <label style={labelStyle}>País del documento</label>
-          <select
-            name="pais_documento"
-            value={form.pais_documento}
-            onChange={handleChange}
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '14px' }}
-          >
-            {PAISES_ISO_OPTIONS.map((p) => (
-              <option key={p.code} value={p.code}>{p.label}</option>
-            ))}
-          </select>
+          <div className="jugador-ficha-torneos__field">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-pais-documento">País del documento</label>
+            <select
+              id="ficha-pais-documento"
+              name="pais_documento"
+              value={form.pais_documento}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__select"
+            >
+              {PAISES_ISO_OPTIONS.map((p) => (
+                <option key={p.code} value={p.code}>{p.label}</option>
+              ))}
+            </select>
+          </div>
 
-          <label style={labelStyle}>
-            {showDocumentInput && replaceDocument ? 'Nuevo número de documento' : 'Número de documento'}
-          </label>
+          <div className="jugador-ficha-torneos__field jugador-ficha-torneos__field--last">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-numero-documento">
+              {showDocumentInput && replaceDocument ? 'Nuevo número de documento' : 'Número de documento'}
+            </label>
 
-          {showDocumentInput ? (
-            <>
-              <input
-                type="text"
-                name="numero_documento"
-                value={form.numero_documento}
-                onChange={handleChange}
-                placeholder="Ingresá tu número de documento"
-                autoComplete="off"
-                disabled={formDisabled}
-                style={{
-                  ...inputStyle,
-                  marginBottom: '8px',
-                  border: '2px solid #93c5fd',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                }}
-              />
-              <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
-                Este dato es privado y se usa solo para validar identidad en torneos.
-              </p>
-              {replaceDocument ? (
+            {showDocumentInput ? (
+              <>
+                <input
+                  id="ficha-numero-documento"
+                  type="text"
+                  name="numero_documento"
+                  value={form.numero_documento}
+                  onChange={handleChange}
+                  placeholder="Ingresá tu número de documento"
+                  autoComplete="off"
+                  disabled={formDisabled}
+                  className="jugador-ficha-torneos__input jugador-ficha-torneos__input--document"
+                />
+                <p className="jugador-ficha-torneos__hint">
+                  Este dato es privado y se usa solo para validar identidad en torneos.
+                </p>
+                {replaceDocument ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplaceDocument(false);
+                      setForm((prev) => ({ ...prev, numero_documento: '' }));
+                    }}
+                    className="jugador-ficha-torneos__btn-secondary jugador-ficha-torneos__btn-secondary--sm"
+                  >
+                    Cancelar cambio
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <div>
+                <div className="jugador-ficha-torneos__doc-mask">
+                  {documentoGuardadoLabel}
+                </div>
                 <button
                   type="button"
                   onClick={() => {
-                    setReplaceDocument(false);
+                    setReplaceDocument(true);
                     setForm((prev) => ({ ...prev, numero_documento: '' }));
                   }}
-                  style={{
-                    marginBottom: '4px',
-                    padding: '6px 12px',
-                    borderRadius: '5px',
-                    border: '1px solid #cbd5e1',
-                    background: '#fff',
-                    color: '#475569',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
+                  className="jugador-ficha-torneos__btn-secondary"
                 >
-                  Cancelar cambio
+                  Cambiar documento
                 </button>
-              ) : null}
-            </>
-          ) : (
-            <div style={{ marginBottom: '4px' }}>
-              <div
-                style={{
-                  padding: '12px 14px',
-                  borderRadius: '8px',
-                  border: '2px solid #bfdbfe',
-                  background: '#eff6ff',
-                  fontSize: '15px',
-                  color: '#1e3a8a',
-                  fontWeight: 700,
-                  fontFamily: 'monospace',
-                  letterSpacing: '0.06em',
-                  marginBottom: '10px',
-                }}
-              >
-                {documentoGuardadoLabel}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setReplaceDocument(true);
-                  setForm((prev) => ({ ...prev, numero_documento: '' }));
-                }}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '6px',
-                  border: '1px solid #1e3a8a',
-                  background: '#fff',
-                  color: '#1e3a8a',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Cambiar documento
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        <div style={sectionBoxStyle}>
-          <h5 style={sectionTitleStyle}>Datos personales</h5>
+        <div className="jugador-ficha-torneos__section">
+          <h5 className="jugador-ficha-torneos__section-title">Datos personales</h5>
 
-          <label style={labelStyle}>Fecha de nacimiento</label>
-          <input
-            type="date"
-            name="fecha_nacimiento"
-            value={form.fecha_nacimiento}
-            onChange={handleChange}
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '14px' }}
-          />
+          <div className="jugador-ficha-torneos__field">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-fecha-nacimiento">Fecha de nacimiento</label>
+            <input
+              id="ficha-fecha-nacimiento"
+              type="date"
+              name="fecha_nacimiento"
+              value={form.fecha_nacimiento}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__input"
+            />
+          </div>
 
-          <label style={labelStyle}>Nacionalidad</label>
-          <select
-            name="nacionalidad"
-            value={form.nacionalidad}
-            onChange={handleChange}
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '14px' }}
-          >
-            {PAISES_ISO_OPTIONS.map((p) => (
-              <option key={p.code} value={p.code}>{p.label}</option>
-            ))}
-          </select>
+          <div className="jugador-ficha-torneos__field">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-nacionalidad">Nacionalidad</label>
+            <select
+              id="ficha-nacionalidad"
+              name="nacionalidad"
+              value={form.nacionalidad}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__select"
+            >
+              {PAISES_ISO_OPTIONS.map((p) => (
+                <option key={p.code} value={p.code}>{p.label}</option>
+              ))}
+            </select>
+          </div>
 
-          <label style={labelStyle}>Género</label>
-          <select
-            name="genero"
-            value={form.genero}
-            onChange={handleChange}
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '14px' }}
-          >
-            <option value="">— Seleccionar —</option>
-            {GENERO_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <div className="jugador-ficha-torneos__field">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-genero">Género</label>
+            <select
+              id="ficha-genero"
+              name="genero"
+              value={form.genero}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__select"
+            >
+              <option value="">— Seleccionar —</option>
+              {GENERO_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
 
-          <label style={labelStyle}>Teléfono</label>
-          <input
-            type="tel"
-            name="telefono"
-            value={form.telefono}
-            onChange={handleChange}
-            placeholder="Ej: +5491112345678"
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '0' }}
-          />
+          <div className="jugador-ficha-torneos__field jugador-ficha-torneos__field--last">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-telefono">Teléfono</label>
+            <input
+              id="ficha-telefono"
+              type="tel"
+              name="telefono"
+              value={form.telefono}
+              onChange={handleChange}
+              placeholder="Ej: +5491112345678"
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__input"
+            />
+          </div>
         </div>
 
-        <div style={sectionBoxStyle}>
-          <h5 style={sectionTitleStyle}>Contacto de emergencia</h5>
+        <div className="jugador-ficha-torneos__section">
+          <h5 className="jugador-ficha-torneos__section-title">Contacto de emergencia</h5>
 
-          <label style={labelStyle}>Nombre</label>
-          <input
-            type="text"
-            name="contacto_emergencia_nombre"
-            value={form.contacto_emergencia_nombre}
-            onChange={handleChange}
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '14px' }}
-          />
+          <div className="jugador-ficha-torneos__field">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-emergencia-nombre">Nombre</label>
+            <input
+              id="ficha-emergencia-nombre"
+              type="text"
+              name="contacto_emergencia_nombre"
+              value={form.contacto_emergencia_nombre}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__input"
+            />
+          </div>
 
-          <label style={labelStyle}>Teléfono</label>
-          <input
-            type="tel"
-            name="contacto_emergencia_telefono"
-            value={form.contacto_emergencia_telefono}
-            onChange={handleChange}
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '14px' }}
-          />
+          <div className="jugador-ficha-torneos__field">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-emergencia-telefono">Teléfono</label>
+            <input
+              id="ficha-emergencia-telefono"
+              type="tel"
+              name="contacto_emergencia_telefono"
+              value={form.contacto_emergencia_telefono}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__input"
+            />
+          </div>
 
-          <label style={labelStyle}>Relación</label>
-          <input
-            type="text"
-            name="contacto_emergencia_relacion"
-            value={form.contacto_emergencia_relacion}
-            onChange={handleChange}
-            placeholder="Ej: Madre, pareja, amigo"
-            disabled={formDisabled}
-            style={{ ...inputStyle, marginBottom: '0' }}
-          />
+          <div className="jugador-ficha-torneos__field jugador-ficha-torneos__field--last">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-emergencia-relacion">Relación</label>
+            <input
+              id="ficha-emergencia-relacion"
+              type="text"
+              name="contacto_emergencia_relacion"
+              value={form.contacto_emergencia_relacion}
+              onChange={handleChange}
+              placeholder="Ej: Madre, pareja, amigo"
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__input"
+            />
+          </div>
         </div>
 
         {errorMsg ? (
-          <p style={{ color: '#b91c1c', fontSize: '13px', marginBottom: '10px' }}>{errorMsg}</p>
+          <p className="jugador-ficha-torneos__form-error">{errorMsg}</p>
         ) : null}
         {successMsg ? (
-          <p style={{ color: '#15803d', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px' }}>{successMsg}</p>
+          <p className="jugador-ficha-torneos__form-success">{successMsg}</p>
         ) : null}
 
         <button
           type="submit"
           disabled={formDisabled}
-          style={{
-            width: '100%',
-            padding: '11px',
-            background: '#1e3a8a',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: formDisabled ? 'wait' : 'pointer',
-            fontWeight: 'bold',
-            opacity: formDisabled ? 0.7 : 1,
-          }}
+          className="jugador-ficha-torneos__submit"
         >
           {saving ? 'Guardando…' : 'Guardar ficha'}
         </button>

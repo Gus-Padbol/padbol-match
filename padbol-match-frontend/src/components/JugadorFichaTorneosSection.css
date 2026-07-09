@@ -1,0 +1,233 @@
+.jugador-ficha-torneos {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: var(--pm-shadow-card, 0 2px 12px rgba(0, 0, 0, 0.1));
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid #1e3a8a;
+  box-sizing: border-box;
+}
+
+html.theme-dark .jugador-ficha-torneos {
+  border-left-color: #60a5fa;
+}
+
+.jugador-ficha-torneos__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.jugador-ficha-torneos__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+html.theme-dark .jugador-ficha-torneos__title {
+  color: #93c5fd;
+}
+
+.jugador-ficha-torneos__intro,
+.jugador-ficha-torneos__loading {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.jugador-ficha-torneos__warn {
+  color: var(--pm-color-warning, #b45309);
+  font-size: 13px;
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.jugador-ficha-torneos__error {
+  color: var(--pm-color-error, #b91c1c);
+  font-size: 13px;
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.jugador-ficha-torneos__section {
+  background: var(--pm-color-muted-bg, #f8fafc);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.jugador-ficha-torneos__section-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+html.theme-dark .jugador-ficha-torneos__section-title {
+  color: #93c5fd;
+}
+
+.jugador-ficha-torneos__label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.jugador-ficha-torneos__field {
+  margin-bottom: 14px;
+}
+
+.jugador-ficha-torneos__field--last {
+  margin-bottom: 0;
+}
+
+.jugador-ficha-torneos__input,
+.jugador-ficha-torneos__select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary);
+}
+
+.jugador-ficha-torneos__input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.75;
+  -webkit-text-fill-color: var(--text-secondary);
+}
+
+.jugador-ficha-torneos__input:focus,
+.jugador-ficha-torneos__select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.jugador-ficha-torneos__input:disabled,
+.jugador-ficha-torneos__select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.jugador-ficha-torneos__input--document {
+  border-width: 2px;
+  border-color: #93c5fd;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+html.theme-dark .jugador-ficha-torneos__input--document {
+  border-color: #3b82f6;
+}
+
+.jugador-ficha-torneos__select option,
+.jugador-ficha-torneos__select optgroup {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.jugador-ficha-torneos__input[type='date'] {
+  color-scheme: light dark;
+}
+
+.jugador-ficha-torneos__input:-webkit-autofill,
+.jugador-ficha-torneos__input:-webkit-autofill:hover,
+.jugador-ficha-torneos__input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary);
+  border: 1px solid var(--border) !important;
+}
+
+.jugador-ficha-torneos__hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.jugador-ficha-torneos__doc-mask {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--bg-input);
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.jugador-ficha-torneos__btn-secondary {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.jugador-ficha-torneos__btn-secondary:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.jugador-ficha-torneos__btn-secondary--sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.jugador-ficha-torneos__form-error {
+  color: var(--pm-color-error, #b91c1c);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.jugador-ficha-torneos__form-success {
+  color: var(--pm-color-success, #15803d);
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.jugador-ficha-torneos__submit {
+  width: 100%;
+  padding: 11px;
+  background: #1e3a8a;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+html.theme-dark .jugador-ficha-torneos__submit {
+  background: #2563eb;
+}
+
+.jugador-ficha-torneos__submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
