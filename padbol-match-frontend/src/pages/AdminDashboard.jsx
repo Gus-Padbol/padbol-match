@@ -7824,6 +7824,19 @@ export default function AdminDashboard({
     },
     [miSedeScrollOffsetPx]
   );
+
+  const selectMiSedeSection = useCallback(
+    (sectionId) => {
+      const go = () => scrollToMiSedeSection(sectionId);
+      if (activeTab !== 'mi_sede') {
+        selectAdminTab('mi_sede');
+        window.setTimeout(go, 80);
+        return;
+      }
+      go();
+    },
+    [activeTab, scrollToMiSedeSection, selectAdminTab]
+  );
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
@@ -7862,7 +7875,7 @@ export default function AdminDashboard({
 
   useEffect(() => {
     if (loading) return;
-    const el = adminTabsStripRef.current;
+    const el = adminTabsStripRef.current?.querySelector('.admin-dashboard-tabs-strip--mobile');
     if (!el) return;
     const onWheel = (e) => {
       const maxScroll = el.scrollWidth - el.clientWidth;
@@ -9953,9 +9966,84 @@ export default function AdminDashboard({
     return '/logo-padbol-match.png';
   })();
 
+  const renderAdminNavTabButton = (tab, variant) => {
+    const isActive = activeTab === tab.id;
+    if (variant === 'sidebar') {
+      return (
+        <button
+          key={`sidebar-${tab.id}`}
+          type="button"
+          data-admin-tour-tab={tab.id}
+          className={`admin-dashboard-sidebar-btn${isActive ? ' admin-dashboard-sidebar-btn--active' : ''}`}
+          onClick={() => selectAdminTab(tab.id)}
+        >
+          <span className="admin-dashboard-sidebar-btn__label">{tab.label}</span>
+          {tab.badge > 0 ? (
+            <span
+              className={`admin-dashboard-sidebar-btn__badge${tab.badgeRed ? ' admin-dashboard-sidebar-btn__badge--red' : ''}`}
+            >
+              {tab.badge}
+            </span>
+          ) : null}
+        </button>
+      );
+    }
+    return (
+      <button
+        key={`strip-${tab.id}`}
+        type="button"
+        data-admin-tour-tab={tab.id}
+        onClick={() => selectAdminTab(tab.id)}
+        style={{
+          position: 'relative',
+          padding: '10px 18px',
+          border: 'none',
+          borderBottom: isActive ? '3px solid var(--accent)' : '3px solid transparent',
+          background: 'none',
+          cursor: 'pointer',
+          fontWeight: isActive ? 'bold' : 'normal',
+          color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+          fontSize: '14px',
+          marginBottom: '-2px',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+        }}
+      >
+        {tab.label}
+        {tab.badge > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '4px',
+              right: '4px',
+              background: tab.badgeRed ? '#dc2626' : 'var(--accent)',
+              color: 'var(--bg-card)',
+              borderRadius: '50%',
+              minWidth: '18px',
+              height: '18px',
+              padding: '0 4px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {tab.badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   return (
     <div
-      className={isSuperAdmin ? 'admin-dashboard admin-dashboard--super' : 'admin-dashboard'}
+      className={
+        isSuperAdmin
+          ? 'admin-dashboard admin-dashboard--super admin-dashboard--with-sidebar'
+          : 'admin-dashboard admin-dashboard--with-sidebar'
+      }
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -9977,7 +10065,7 @@ export default function AdminDashboard({
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
-          overflowX: 'auto',
+          overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
           paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
@@ -10176,69 +10264,45 @@ export default function AdminDashboard({
           })() : null}
         </div>
       </div>
+      </div>
 
-      {/* Tab navigation — scroll horizontal (mobile); dentro del bloque marca */}
-      <div
-        ref={adminTabsStripRef}
-        className="admin-dashboard-tabs-strip"
-        style={{
-          marginTop: '8px',
-          marginBottom: '24px',
-          paddingTop: 0,
-          paddingBottom: 0,
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-        }}
-      >
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            type="button"
-            data-admin-tour-tab={tab.id}
-            onClick={() => selectAdminTab(tab.id)}
+      <div className="admin-dashboard-shell">
+        <div ref={adminTabsStripRef} className="admin-dashboard-nav" aria-label="Navegación del panel admin">
+          <aside className="admin-dashboard-sidebar" aria-label="Secciones principales">
+            <nav className="admin-dashboard-sidebar-nav">
+              {TABS.map((tab) => renderAdminNavTabButton(tab, 'sidebar'))}
+              {activeTab === 'mi_sede' && puedeVerMiSede ? (
+                <div className="admin-dashboard-sidebar-sub" aria-label={t('admin.sedes.myVenueSectionsAria')}>
+                  {miSedeNavItems.map((item) => (
+                    <button
+                      key={`mi-sede-sub-${item.id}`}
+                      type="button"
+                      className={`admin-dashboard-sidebar-sub-btn${
+                        miSedeNavActive === item.id ? ' admin-dashboard-sidebar-sub-btn--active' : ''
+                      }`}
+                      onClick={() => selectMiSedeSection(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </nav>
+          </aside>
+          <div
+            className="admin-dashboard-tabs-strip admin-dashboard-tabs-strip--mobile"
             style={{
-              position: 'relative',
-              padding: '10px 18px',
-              border: 'none',
-              borderBottom: activeTab === tab.id ? '3px solid var(--accent)' : '3px solid transparent',
-              background: 'none',
-              cursor: 'pointer',
-              fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-              color: activeTab === tab.id ? 'var(--accent)' : 'var(--text-secondary)',
-              fontSize: '14px',
-              marginBottom: '-2px',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
+              marginTop: 0,
+              marginBottom: 0,
+              paddingTop: 0,
+              paddingBottom: 0,
             }}
           >
-            {tab.label}
-            {tab.badge > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '4px',
-                right: '4px',
-                background: tab.badgeRed ? '#dc2626' : 'var(--accent)',
-                color: 'var(--bg-card)',
-                borderRadius: '50%',
-                minWidth: '18px',
-                height: '18px',
-                padding: '0 4px',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid var(--border)',
-              }}>
-                {tab.badge}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-      </div>
+            {TABS.map((tab) => renderAdminNavTabButton(tab, 'strip'))}
+          </div>
+        </div>
 
+        <div className="admin-dashboard-panel">
       <div
         className="admin-dashboard-body-surface"
         style={{
@@ -18701,8 +18765,12 @@ export default function AdminDashboard({
                     {Math.max(0, miSedeSponsorSlots.max - miSedeSponsorSlots.used) === 1 ? '' : 's'})
                   </p>
                   <p style={{ margin: '0 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                    Plan considerado: <strong>{miSedeSponsorSlots.planLabel}</strong> (límite según configuración de Padbol Match). Solo lectura:
-                    no podés cambiar el cupo desde acá.
+                    Plan considerado: <strong>{miSedeSponsorSlots.planLabel}</strong> (límite según configuración de Padbol Match).
+                  </p>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    {puedeVerConfig
+                      ? 'Podés cambiar esta configuración en Configuración / Planes.'
+                      : 'Para cambiar esta configuración, solicitá la actualización del plan a Padbol Match.'}
                   </p>
                   {miSedeSponsorSlots.usedConfigFallback ? (
                     <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
@@ -19634,7 +19702,25 @@ export default function AdminDashboard({
                   </div>
                 </div>
               ))}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginTop: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                {franjasOverlapMsg ? (
+                  <div
+                    role="alert"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#b91c1c',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    ⚠️ {franjasOverlapMsg}
+                  </div>
+                ) : null}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 <button
                   type="button"
                   onClick={() =>
@@ -19697,6 +19783,7 @@ export default function AdminDashboard({
                 {franjasMsg ? (
                   <span style={{ fontSize: '13px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{franjasMsg}</span>
                 ) : null}
+              </div>
               </div>
 
             </div>
@@ -20406,6 +20493,24 @@ export default function AdminDashboard({
                             style={{ width: '110px', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, textAlign: 'right', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
                         </div>
                       ))}
+                      {franjasPrecioOverlapMsg ? (
+                        <div
+                          role="alert"
+                          style={{
+                            flex: '1 1 100%',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            color: '#b91c1c',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          ⚠️ {franjasPrecioOverlapMsg}
+                        </div>
+                      ) : null}
                       <button type="button" onClick={saveFranja} disabled={franjaSaving || !!franjasPrecioOverlapMsg}
                         style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: franjaSaving || franjasPrecioOverlapMsg ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: franjaSaving || franjasPrecioOverlapMsg ? 'not-allowed' : 'pointer', alignSelf: 'flex-end' }}>
                         {franjaSaving ? 'Guardando…' : 'Agregar franja'}
@@ -20655,6 +20760,8 @@ export default function AdminDashboard({
         </>)}
 
       </div>}
+      </div>
+      </div>
       </div>
       </div>
 

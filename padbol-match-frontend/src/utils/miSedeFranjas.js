@@ -146,7 +146,7 @@ export function detectFranjasHorariasOverlap(rows) {
     const detail = pairs.map((p) => `${p.a} y ${p.b}`).join(', ');
     return {
       hasOverlap: true,
-      message: `Hay franjas horarias superpuestas (franjas ${detail}). Revisá los horarios antes de guardar.`,
+      message: `Hay franjas horarias superpuestas. Revisá los días y horarios antes de guardar.${detail ? ` (Franjas ${detail})` : ''}`,
       pairs,
     };
   }

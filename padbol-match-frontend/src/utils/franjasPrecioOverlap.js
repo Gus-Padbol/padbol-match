@@ -82,7 +82,7 @@ export function detectFranjasPrecioOverlap(existingRows, draft = null) {
     const detail = pairs.map((p) => `${p.a} y ${p.b}`).join(', ');
     return {
       hasOverlap: true,
-      message: `Hay franjas de precio superpuestas (franjas ${detail}). Revisá deporte, día y horarios.`,
+      message: `Hay franjas de precio superpuestas. Revisá los días, horarios y cancha/deporte antes de guardar.${detail ? ` (Franjas ${detail})` : ''}`,
     };
   }
 
