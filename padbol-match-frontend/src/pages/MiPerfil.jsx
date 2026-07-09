@@ -2890,7 +2890,10 @@ export default function MiPerfil() {
         {successMsg && <p style={{ color: '#4caf50', fontWeight: 'bold', marginTop: '14px', marginBottom: 0 }}>{successMsg}</p>}
       </div>
 
-      <JugadorFichaTorneosSection />
+      <JugadorFichaTorneosSection
+        perfil={perfil}
+        whatsappFallback={String(cuentaDeSesion?.whatsapp || '').trim()}
+      />
 
       {/* Ficha detail card */}
       <div

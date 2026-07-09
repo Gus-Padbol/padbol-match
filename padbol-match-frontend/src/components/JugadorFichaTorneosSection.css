@@ -231,3 +231,71 @@ html.theme-dark .jugador-ficha-torneos__submit {
   opacity: 0.7;
   cursor: wait;
 }
+
+.jugador-ficha-torneos__perfil-ref {
+  background: var(--pm-color-muted-bg, #f8fafc);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.jugador-ficha-torneos__perfil-ref-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.jugador-ficha-torneos__perfil-ref-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.jugador-ficha-torneos__perfil-ref-row:last-of-type {
+  border-bottom: none;
+  margin-bottom: 4px;
+}
+
+.jugador-ficha-torneos__perfil-ref-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.jugador-ficha-torneos__perfil-ref-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+.jugador-ficha-torneos__perfil-ref-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.jugador-ficha-torneos__perfil-ref-missing {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: var(--pm-color-error, #b91c1c);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+html.theme-dark .jugador-ficha-torneos__perfil-ref-missing {
+  background: rgba(185, 28, 28, 0.15);
+  border-color: rgba(248, 113, 113, 0.45);
+}

@@ -3,7 +3,6 @@ import { supabase } from '../supabaseClient';
 import { API_BASE, getAuthHeaders } from '../utils/scoreboardApi';
 import {
   TIPO_DOCUMENTO_OPTIONS,
-  GENERO_OPTIONS,
   PAISES_ISO_OPTIONS,
   parseIdentidadFromApi,
   identidadEstadoDisplay,
@@ -11,11 +10,14 @@ import {
   identidadToForm,
   buildIdentidadPutPayload,
   validateIdentidadForm,
+  validatePerfilParaIdentidad,
+  mapPerfilToIdentidadFields,
+  generoPerfilDisplayLabel,
   formatDocumentoGuardadoDisplay,
 } from '../utils/jugadorIdentidad';
 import './JugadorFichaTorneosSection.css';
 
-export default function JugadorFichaTorneosSection() {
+export default function JugadorFichaTorneosSection({ perfil = null, whatsappFallback = '' }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -78,7 +80,12 @@ export default function JugadorFichaTorneosSection() {
     setSuccessMsg('');
 
     const hasExistingDocument = Boolean(parsed?.tiene_documento);
-    const errors = validateIdentidadForm(form, { hasExistingDocument, replaceDocument });
+    const errors = validateIdentidadForm(form, {
+      hasExistingDocument,
+      replaceDocument,
+      perfil,
+      whatsappFallback,
+    });
     if (errors.length) {
       setErrorMsg(errors[0]);
       return;
@@ -92,7 +99,12 @@ export default function JugadorFichaTorneosSection() {
         setErrorMsg('Volvé a iniciar sesión para guardar la ficha.');
         return;
       }
-      const payload = buildIdentidadPutPayload(form, { replaceDocument, hasExistingDocument });
+      const payload = buildIdentidadPutPayload(form, {
+        replaceDocument,
+        hasExistingDocument,
+        perfil,
+        whatsappFallback,
+      });
       const res = await fetch(`${API_BASE}/api/jugador/identidad`, {
         method: 'PUT',
         headers,
@@ -119,6 +131,11 @@ export default function JugadorFichaTorneosSection() {
   const showDocumentInput = !hasSavedDocument || replaceDocument;
   const documentoGuardadoLabel = formatDocumentoGuardadoDisplay(maskedDoc) || 'Documento guardado: ****';
   const formDisabled = saving;
+  const perfilFieldErrors = validatePerfilParaIdentidad(perfil, { whatsappFallback });
+  const perfilDatosIncompletos = perfilFieldErrors.length > 0;
+  const { telefono: telefonoIdentidad } = mapPerfilToIdentidadFields(perfil, { whatsappFallback });
+  const generoDisplay = generoPerfilDisplayLabel(perfil?.genero);
+  const whatsappDisplay = telefonoIdentidad || '—';
 
   return (
     <div id="ficha-torneos" className="jugador-ficha-torneos">
@@ -164,6 +181,26 @@ export default function JugadorFichaTorneosSection() {
       ) : null}
 
       <form onSubmit={handleGuardar}>
+        <div className="jugador-ficha-torneos__perfil-ref">
+          <h5 className="jugador-ficha-torneos__perfil-ref-title">Datos tomados de tu perfil</h5>
+          <div className="jugador-ficha-torneos__perfil-ref-row">
+            <span className="jugador-ficha-torneos__perfil-ref-label">Género</span>
+            <span className="jugador-ficha-torneos__perfil-ref-value">{generoDisplay}</span>
+          </div>
+          <div className="jugador-ficha-torneos__perfil-ref-row">
+            <span className="jugador-ficha-torneos__perfil-ref-label">WhatsApp</span>
+            <span className="jugador-ficha-torneos__perfil-ref-value">{whatsappDisplay}</span>
+          </div>
+          <p className="jugador-ficha-torneos__perfil-ref-hint">
+            Para modificar estos datos, editá la sección Datos del jugador.
+          </p>
+          {perfilDatosIncompletos ? (
+            <p className="jugador-ficha-torneos__perfil-ref-missing" role="alert">
+              {perfilFieldErrors[0]}
+            </p>
+          ) : null}
+        </div>
+
         <div className="jugador-ficha-torneos__section">
           <h5 className="jugador-ficha-torneos__section-title">Documento de identidad</h5>
 
@@ -269,7 +306,7 @@ export default function JugadorFichaTorneosSection() {
             />
           </div>
 
-          <div className="jugador-ficha-torneos__field">
+          <div className="jugador-ficha-torneos__field jugador-ficha-torneos__field--last">
             <label className="jugador-ficha-torneos__label" htmlFor="ficha-nacionalidad">Nacionalidad</label>
             <select
               id="ficha-nacionalidad"
@@ -283,37 +320,6 @@ export default function JugadorFichaTorneosSection() {
                 <option key={p.code} value={p.code}>{p.label}</option>
               ))}
             </select>
-          </div>
-
-          <div className="jugador-ficha-torneos__field">
-            <label className="jugador-ficha-torneos__label" htmlFor="ficha-genero">Género</label>
-            <select
-              id="ficha-genero"
-              name="genero"
-              value={form.genero}
-              onChange={handleChange}
-              disabled={formDisabled}
-              className="jugador-ficha-torneos__select"
-            >
-              <option value="">— Seleccionar —</option>
-              {GENERO_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="jugador-ficha-torneos__field jugador-ficha-torneos__field--last">
-            <label className="jugador-ficha-torneos__label" htmlFor="ficha-telefono">Teléfono</label>
-            <input
-              id="ficha-telefono"
-              type="tel"
-              name="telefono"
-              value={form.telefono}
-              onChange={handleChange}
-              placeholder="Ej: +5491112345678"
-              disabled={formDisabled}
-              className="jugador-ficha-torneos__input"
-            />
           </div>
         </div>
 
@@ -370,7 +376,7 @@ export default function JugadorFichaTorneosSection() {
 
         <button
           type="submit"
-          disabled={formDisabled}
+          disabled={formDisabled || perfilDatosIncompletos}
           className="jugador-ficha-torneos__submit"
         >
           {saving ? 'Guardando…' : 'Guardar ficha'}

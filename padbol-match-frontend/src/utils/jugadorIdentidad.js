@@ -191,14 +191,66 @@ export function maskDocumentoLocal(numero) {
   return `${'•'.repeat(Math.max(4, digits.length - 4))}${digits.slice(-4)}`;
 }
 
-export function buildIdentidadPutPayload(form, { replaceDocument, hasExistingDocument }) {
+/** Mapea género de jugadores_perfil al enum aceptado por identidad torneos. */
+export function mapGeneroPerfilAIdentidad(generoPerfil) {
+  const g = String(generoPerfil || '').trim().toLowerCase();
+  if (g === 'masculino') return 'masculino';
+  if (g === 'femenino') return 'femenino';
+  if (g === 'otro' || g === 'open') return 'otro';
+  if (g === 'prefiero_no_decir') return 'prefiero_no_decir';
+  return '';
+}
+
+/** Etiqueta legible del género guardado en jugadores_perfil. */
+export function generoPerfilDisplayLabel(generoPerfil) {
+  const g = String(generoPerfil || '').trim().toLowerCase();
+  const labels = {
+    masculino: 'Masculino',
+    femenino: 'Femenino',
+    otro: 'Otro',
+    open: 'Open',
+    prefiero_no_decir: 'Prefiero no decir',
+  };
+  return labels[g] || '—';
+}
+
+/** Deriva genero y telefono para PUT identidad desde jugadores_perfil. */
+export function mapPerfilToIdentidadFields(perfil, { whatsappFallback = '' } = {}) {
+  const genero = mapGeneroPerfilAIdentidad(perfil?.genero);
+  const telefono = String(perfil?.whatsapp || whatsappFallback || '').trim();
+  return { genero, telefono };
+}
+
+/** Valida que el perfil tenga género y WhatsApp antes de guardar identidad torneos. */
+export function validatePerfilParaIdentidad(perfil, { whatsappFallback = '' } = {}) {
+  const { genero, telefono } = mapPerfilToIdentidadFields(perfil, { whatsappFallback });
+  const faltaGenero = !genero;
+  const faltaWhatsapp = !telefono || telefono.length < 8;
+
+  if (faltaGenero && faltaWhatsapp) {
+    return ['Completá género y WhatsApp en Datos del jugador antes de guardar la ficha para torneos.'];
+  }
+  if (faltaGenero) {
+    return ['Completá género en Datos del jugador antes de guardar la ficha para torneos.'];
+  }
+  if (faltaWhatsapp) {
+    return ['Completá WhatsApp en Datos del jugador antes de guardar la ficha para torneos.'];
+  }
+  return [];
+}
+
+export function buildIdentidadPutPayload(
+  form,
+  { replaceDocument, hasExistingDocument, perfil, whatsappFallback = '' } = {},
+) {
+  const fromPerfil = mapPerfilToIdentidadFields(perfil, { whatsappFallback });
   const payload = {
     fecha_nacimiento: String(form.fecha_nacimiento || '').trim(),
     tipo_documento: String(form.tipo_documento || '').trim().toLowerCase(),
     pais_documento: String(form.pais_documento || '').trim().toUpperCase().slice(0, 2),
     nacionalidad: String(form.nacionalidad || '').trim().toUpperCase().slice(0, 2),
-    genero: String(form.genero || '').trim().toLowerCase(),
-    telefono: String(form.telefono || '').trim(),
+    genero: fromPerfil.genero || String(form.genero || '').trim().toLowerCase(),
+    telefono: fromPerfil.telefono || String(form.telefono || '').trim(),
     contacto_emergencia_nombre: String(form.contacto_emergencia_nombre || '').trim(),
     contacto_emergencia_telefono: String(form.contacto_emergencia_telefono || '').trim(),
     contacto_emergencia_relacion: String(form.contacto_emergencia_relacion || '').trim(),
@@ -213,8 +265,11 @@ export function buildIdentidadPutPayload(form, { replaceDocument, hasExistingDoc
   return payload;
 }
 
-export function validateIdentidadForm(form, { hasExistingDocument, replaceDocument }) {
-  const errors = [];
+export function validateIdentidadForm(
+  form,
+  { hasExistingDocument, replaceDocument, perfil, whatsappFallback = '' } = {},
+) {
+  const errors = [...validatePerfilParaIdentidad(perfil, { whatsappFallback })];
 
   if (!String(form.fecha_nacimiento || '').trim()) {
     errors.push('Ingresá tu fecha de nacimiento.');
@@ -237,16 +292,6 @@ export function validateIdentidadForm(form, { hasExistingDocument, replaceDocume
 
   if (!String(form.nacionalidad || '').trim()) {
     errors.push('Seleccioná tu nacionalidad.');
-  }
-
-  if (!GENERO_OPTIONS.some((o) => o.value === form.genero)) {
-    errors.push('Seleccioná género.');
-  }
-
-  if (!String(form.telefono || '').trim()) {
-    errors.push('Ingresá un teléfono de contacto.');
-  } else if (String(form.telefono).trim().length < 8) {
-    errors.push('El teléfono parece demasiado corto.');
   }
 
   const needsDocument = !hasExistingDocument || replaceDocument;
