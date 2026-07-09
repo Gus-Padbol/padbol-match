@@ -7,10 +7,8 @@ export const MI_SEDE_PRECIOS_DEPORTE_OPTIONS = [
   { value: '__base__', label: 'Base / Todas las disciplinas' },
   { value: 'padbol', label: 'Padbol' },
   { value: 'padel', label: 'Pádel' },
+  { value: 'pickleball', label: 'Pickleball' },
   { value: 'tenis', label: 'Tenis' },
-  { value: 'futbol', label: 'Fútbol' },
-  { value: 'basquet', label: 'Básquet' },
-  { value: 'voley', label: 'Vóley' },
 ];
 
 export function resolveSedeDuracionesApiBase(apiBaseUrl) {
