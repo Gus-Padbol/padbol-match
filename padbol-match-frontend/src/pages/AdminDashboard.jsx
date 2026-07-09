@@ -104,6 +104,17 @@ import {
   miSedeFormPreciosFromSedeRow,
 } from '../utils/sedePreciosDuracion';
 import {
+  MI_SEDE_PRECIOS_DEPORTE_OPTIONS,
+  countDuracionesActivas,
+  createSedeDuracion,
+  deleteSedeDuracion,
+  deporteLabelMiSedePrecios,
+  deporteQueryParam,
+  fetchSedeDuraciones,
+  tieneDuracionDuplicada,
+  updateSedeDuracion,
+} from '../utils/sedeDuracionesApi';
+import {
   detectFranjasHorariasOverlap,
   validateFranjasHorariasBeforeSave,
 } from '../utils/miSedeFranjas';
@@ -7698,9 +7709,19 @@ export default function AdminDashboard({
   const [surgeSaveMsg, setSurgeSaveMsg] = useState('');
   const [miSedeDuraciones, setMiSedeDuraciones] = useState([]);
   const [miSedeDuracionesLoading, setMiSedeDuracionesLoading] = useState(false);
+  const [miSedeDuracionesLoadError, setMiSedeDuracionesLoadError] = useState('');
   const [miSedeDuracionesMsg, setMiSedeDuracionesMsg] = useState('');
   const [miSedeDuracionDrafts, setMiSedeDuracionDrafts] = useState({});
   const [miSedeDuracionGuardandoId, setMiSedeDuracionGuardandoId] = useState(null);
+  const [miSedeDuracionEliminandoId, setMiSedeDuracionEliminandoId] = useState(null);
+  const [miSedePreciosDeporte, setMiSedePreciosDeporte] = useState('__base__');
+  const [miSedeNuevaDuracion, setMiSedeNuevaDuracion] = useState({
+    modo: 'custom',
+    duracion_minutos: '',
+    precio: '',
+    activo: true,
+  });
+  const [miSedeDuracionAgregando, setMiSedeDuracionAgregando] = useState(false);
   const [suscripcionEstadoSuperSavingId, setSuscripcionEstadoSuperSavingId] = useState(null);
   const [stripeOnboardingLoading, setStripeOnboardingLoading] = useState(false);
   const [cancelReservaModalId, setCancelReservaModalId] = useState(null);
@@ -7949,39 +7970,38 @@ export default function AdminDashboard({
   }, [activeTab, sedeId, apiBaseUrl, session?.access_token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (activeTab !== 'mi_sede' || !sedeId || !session?.access_token) {
-      setMiSedeDuraciones([]);
-      setMiSedeDuracionesLoading(false);
-      return;
+    if (activeTab !== 'mi_sede' || activeMiSedeSection !== 'precios' || !sedeId || !session?.access_token) {
+      if (activeTab !== 'mi_sede' || activeMiSedeSection !== 'precios') {
+        setMiSedeDuracionesLoading(false);
+      }
+      return undefined;
     }
     let cancelled = false;
     setMiSedeDuracionesLoading(true);
+    setMiSedeDuracionesLoadError('');
     setMiSedeDuracionesMsg('');
-    fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    })
-      .then(async (r) => {
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.error || r.statusText);
-        return Array.isArray(j.duraciones) ? j.duraciones : [];
-      })
-      .then((list) => {
-        if (cancelled) return;
-        setMiSedeDuraciones(list);
-      })
-      .catch((e) => {
+    (async () => {
+      try {
+        const { duraciones } = await fetchSedeDuraciones(sedeId, session.access_token, {
+          apiBaseUrl,
+          deporte: miSedePreciosDeporte,
+        });
+        if (!cancelled) setMiSedeDuraciones(duraciones);
+      } catch (e) {
         if (!cancelled) {
           setMiSedeDuraciones([]);
-          setMiSedeDuracionesMsg(e?.message || t('admin.sedes.durationsLoadFailed'));
+          setMiSedeDuracionesLoadError(
+            e?.message || 'No pudimos cargar las duraciones. Reintentá o revisá la conexión.',
+          );
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setMiSedeDuracionesLoading(false);
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [activeTab, sedeId, apiBaseUrl, session?.access_token]);
+  }, [activeTab, activeMiSedeSection, apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token]);
 
   useEffect(() => {
     if (!sedeId || !session?.access_token) {
@@ -8386,6 +8406,32 @@ export default function AdminDashboard({
     if (!error) await loadFranjasPrecios(miSedeForm.id);
   };
 
+  const cargarMiSedeDuraciones = useCallback(async () => {
+    if (!sedeId || !session?.access_token) {
+      setMiSedeDuraciones([]);
+      setMiSedeDuracionesLoading(false);
+      setMiSedeDuracionesLoadError('');
+      return;
+    }
+    setMiSedeDuracionesLoading(true);
+    setMiSedeDuracionesLoadError('');
+    setMiSedeDuracionesMsg('');
+    try {
+      const { duraciones } = await fetchSedeDuraciones(sedeId, session.access_token, {
+        apiBaseUrl,
+        deporte: miSedePreciosDeporte,
+      });
+      setMiSedeDuraciones(duraciones);
+    } catch (e) {
+      setMiSedeDuraciones([]);
+      setMiSedeDuracionesLoadError(
+        e?.message || 'No pudimos cargar las duraciones. Reintentá o revisá la conexión.',
+      );
+    } finally {
+      setMiSedeDuracionesLoading(false);
+    }
+  }, [apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token]);
+
   const guardarPreciosDuracion = async () => {
     if (!sedeId || !session?.access_token) {
       setMiSedePreciosMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
@@ -8431,21 +8477,9 @@ export default function AdminDashboard({
       setMiSedeForm((f) => ({ ...f, ...preciosForm }));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
       if (session?.access_token) {
-        fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-          .then((r) => r.json())
-          .then((j) => {
-            const rows = Array.isArray(j.duraciones) ? j.duraciones : [];
-            setMiSedeDuraciones(rows);
-            const drafts = {};
-            for (const r of rows) {
-              drafts[r.id] = {
-                precio: r.precio != null ? String(r.precio) : '',
-                activo: !!r.activo,
-              };
-            }
-            setMiSedeDuracionDrafts(drafts);
+        fetchSedeDuraciones(sedeId, session.access_token, { apiBaseUrl, deporte: miSedePreciosDeporte })
+          .then(({ duraciones }) => {
+            setMiSedeDuraciones(duraciones);
           })
           .catch(() => {});
       }
@@ -8466,28 +8500,25 @@ export default function AdminDashboard({
       setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
       return;
     }
+    const row = miSedeDuraciones.find((x) => Number(x.id) === Number(rowId));
+    const activas = countDuracionesActivas(miSedeDuraciones);
+    if (row?.activo && !draft.activo && activas <= 1) {
+      const ok = window.confirm(
+        'Esta es la última duración activa. Si la desactivás, las reservas pueden quedar sin precio base. ¿Continuar?',
+      );
+      if (!ok) return;
+    }
     setMiSedeDuracionGuardandoId(rowId);
     setMiSedeDuracionesMsg('');
     try {
-      const res = await fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones/${encodeURIComponent(rowId)}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ precio: pr, activo: !!draft.activo }),
+      const j = await updateSedeDuracion(sedeId, rowId, session.access_token, { precio: pr, activo: !!draft.activo }, {
+        apiBaseUrl,
       });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || res.statusText);
       const d = j.duracion;
       if (d && d.id != null) {
         setMiSedeDuraciones((prev) => prev.map((x) => (Number(x.id) === Number(d.id) ? { ...x, ...d } : x)));
       } else {
-        const refetch = await fetch(`${apiBaseUrl}/api/sedes/${encodeURIComponent(sedeId)}/duraciones`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        const jr = await refetch.json().catch(() => ({}));
-        if (refetch.ok && Array.isArray(jr.duraciones)) setMiSedeDuraciones(jr.duraciones);
+        await cargarMiSedeDuraciones();
       }
       setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
@@ -8496,6 +8527,96 @@ export default function AdminDashboard({
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
     } finally {
       setMiSedeDuracionGuardandoId(null);
+    }
+  };
+
+  const agregarMiSedeDuracion = async () => {
+    if (!sedeId || !session?.access_token) {
+      setMiSedeDuracionesMsg(t('admin.formularios.loginAgainAlt'));
+      setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
+      return;
+    }
+    const dm =
+      miSedeNuevaDuracion.modo === '90'
+        ? 90
+        : miSedeNuevaDuracion.modo === '120'
+          ? 120
+          : parseInt(String(miSedeNuevaDuracion.duracion_minutos || '').replace(/\D/g, ''), 10);
+    const pr = parseInt(String(miSedeNuevaDuracion.precio || '').replace(/\D/g, ''), 10);
+    if (!Number.isFinite(dm) || dm < 15 || dm > 480) {
+      setMiSedeDuracionesMsg(t('admin.formularios.durationRange'));
+      setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
+      return;
+    }
+    if (!Number.isFinite(pr) || pr < 0) {
+      setMiSedeDuracionesMsg(t('admin.formularios.validPriceRequired'));
+      setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
+      return;
+    }
+    if (tieneDuracionDuplicada(miSedeDuraciones, dm, miSedePreciosDeporte)) {
+      setMiSedeDuracionesMsg(
+        `Ya existe una duración de ${dm} min para ${deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}.`,
+      );
+      setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
+      return;
+    }
+    setMiSedeDuracionAgregando(true);
+    setMiSedeDuracionesMsg('');
+    try {
+      const payload = {
+        duracion_minutos: dm,
+        precio: pr,
+        activo: miSedeNuevaDuracion.activo !== false,
+      };
+      const dep = deporteQueryParam(miSedePreciosDeporte);
+      if (dep) payload.deporte = dep;
+      await createSedeDuracion(sedeId, session.access_token, payload, { apiBaseUrl });
+      setMiSedeNuevaDuracion({ modo: 'custom', duracion_minutos: '', precio: '', activo: true });
+      await cargarMiSedeDuraciones();
+      setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
+      setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
+    } catch (e) {
+      setMiSedeDuracionesMsg(e?.message || String(e));
+      setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
+    } finally {
+      setMiSedeDuracionAgregando(false);
+    }
+  };
+
+  const quitarMiSedeDuracion = async (row) => {
+    if (!sedeId || !session?.access_token || !row?.id) return;
+    const activas = countDuracionesActivas(miSedeDuraciones);
+    if (row.activo && activas <= 1) {
+      const ok = window.confirm(
+        'Esta es la última duración activa. Si la quitás, las reservas pueden quedar sin precio base. ¿Continuar?',
+      );
+      if (!ok) return;
+    } else if (
+      !window.confirm(
+        `¿Quitar la duración de ${row.duracion_minutos} min (${deporteLabelMiSedePrecios(row.deporte)})?`,
+      )
+    ) {
+      return;
+    }
+    setMiSedeDuracionEliminandoId(row.id);
+    setMiSedeDuracionesMsg('');
+    try {
+      await deleteSedeDuracion(sedeId, row.id, session.access_token, { apiBaseUrl });
+      await cargarMiSedeDuraciones();
+      setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
+      setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
+    } catch (e) {
+      const msg = String(e?.message || e);
+      if (/super admin|403|eliminar/i.test(msg)) {
+        const dr = miSedeDuracionDrafts[row.id] || { precio: row.precio, activo: false };
+        setMiSedeDuracionDrafts((p) => ({ ...p, [row.id]: { ...dr, activo: false } }));
+        await guardarMiSedeFilaDuracion(row.id);
+        return;
+      }
+      setMiSedeDuracionesMsg(msg);
+      setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
+    } finally {
+      setMiSedeDuracionEliminandoId(null);
     }
   };
 
@@ -19027,77 +19148,100 @@ export default function AdminDashboard({
             </h3>
             <div className="admin-mi-sede-theme-panel">
               <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Estos precios son los que usa el sistema para calcular reservas y pagos. Si definís un precio específico por
+                disciplina, tiene prioridad sobre el precio base.
+              </p>
+              <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 {t('admin.sedes.pricesByDurationCurrency', { currency: miSedeForm.moneda || 'ARS' })}
               </p>
-              {[
-                { field: 'precio_60min', label: '60 min' },
-                { field: 'precio_90min', label: t('admin.sedes.price90minLabel') },
-                { field: 'precio_120min', label: '120 min' },
-              ].map(({ field, label }) => (
-                <div
-                  key={field}
-                  className="admin-mi-sede-field-row admin-mi-sede-precio-base"
-                  style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}
-                >
-                  <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '140px' }}>{label}</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, maxWidth: '100%' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>{miSedeForm.moneda || 'ARS'}</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={precioDuracionInputDisplay(miSedeForm[field])}
-                      onChange={(e) => {
-                        const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
-                        setMiSedeForm((p) => ({ ...p, [field]: digits }));
-                      }}
-                      placeholder={t('admin.sedes.emptyNotOfferedPh')}
-                      style={{ width: '100%', maxWidth: '100%', minWidth: 0, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </div>
-              ))}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={guardarPreciosDuracion}
-                  disabled={miSedePreciosSaving}
-                  style={{ padding: '8px 20px', background: miSedePreciosSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #b91c1c)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedePreciosSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-                >
-                  {miSedePreciosSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.savePricesButton')}
-                </button>
-                {miSedePreciosMsg ? (
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: miSedePreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedePreciosMsg}</span>
-                ) : null}
-              </div>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                {t('admin.sedes.pricesDurationHint')}
-              </p>
 
-              {isSuperAdmin ? (
-                <>
-              <h4 className="admin-mi-sede-block-title" style={{ margin: '24px 0 10px', fontSize: '15px', fontWeight: 800 }}>
-                {t('admin.sedes.durationsTableTitle')}
-              </h4>
-              <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                {t('admin.sedes.durationsTableHint')}
-              </p>
-              {miSedeDuracionesMsg ? (
-                <p
+              <div
+                className="admin-mi-sede-field-row"
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}
+              >
+                <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '140px' }}>
+                  Disciplina
+                </label>
+                <select
+                  value={miSedePreciosDeporte}
+                  onChange={(e) => setMiSedePreciosDeporte(e.target.value)}
+                  className="admin-mi-sede-theme-input"
                   style={{
-                    margin: '0 0 10px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: miSedeDuracionesMsg.startsWith('✅') ? '#4ade80' : '#fca5a5',
+                    flex: '1 1 200px',
+                    minWidth: '180px',
+                    maxWidth: '100%',
+                    padding: '7px 10px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
                   }}
                 >
-                  {miSedeDuracionesMsg}
-                </p>
-              ) : null}
+                  {MI_SEDE_PRECIOS_DEPORTE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Base aplica cuando no hay precio específico para una disciplina.
+              </p>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => void cargarMiSedeDuraciones()}
+                  disabled={miSedeDuracionesLoading}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'var(--bg-page)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    cursor: miSedeDuracionesLoading ? 'not-allowed' : 'pointer',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                  }}
+                >
+                  {miSedeDuracionesLoading ? t('admin.common.loadingEllipsis') : 'Recargar'}
+                </button>
+                {miSedeDuracionesMsg ? (
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: miSedeDuracionesMsg.startsWith('✅') ? '#4ade80' : '#fca5a5',
+                    }}
+                  >
+                    {miSedeDuracionesMsg}
+                  </span>
+                ) : null}
+              </div>
+
               {miSedeDuracionesLoading ? (
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando duraciones…</p>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                  {t('admin.common.loadingEllipsis')}
+                </p>
+              ) : miSedeDuracionesLoadError ? (
+                <div
+                  style={{
+                    margin: '0 0 16px',
+                    padding: '12px',
+                    borderRadius: '10px',
+                    border: '1px solid #fecaca',
+                    background: '#fef2f2',
+                  }}
+                >
+                  <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 600, color: '#991b1b' }}>
+                    No pudimos cargar las duraciones. Reintentá o revisá la conexión.
+                  </p>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#b91c1c' }}>{miSedeDuracionesLoadError}</p>
+                </div>
               ) : miSedeDuraciones.length === 0 ? (
                 <p style={{ margin: '0 0 18px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  No hay filas en la tabla de duraciones para esta sede. Las reservas usan los precios por columna de arriba (compatibilidad) hasta que se carguen duraciones.
+                  No hay duraciones configuradas para{' '}
+                  {deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}. Agregá una duración para definir el
+                  precio base del turno.
                 </p>
               ) : (
                 <div style={{ margin: '0 0 20px', display: 'grid', gap: '10px' }}>
@@ -19117,11 +19261,30 @@ export default function AdminDashboard({
                           boxSizing: 'border-box',
                         }}
                       >
-                        <div style={{ fontWeight: 800, fontSize: '14px', color: 'var(--text-primary)' }}>
-                          {row.duracion_minutos} minutos
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '14px', color: 'var(--text-primary)' }}>
+                            {row.duracion_minutos} min
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '999px',
+                              background: dr.activo ? '#dcfce7' : '#f1f5f9',
+                              color: dr.activo ? '#166534' : '#64748b',
+                            }}
+                          >
+                            {dr.activo ? 'Activa' : 'Inactiva'}
+                          </span>
+                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            {deporteLabelMiSedePrecios(row.deporte)}
+                          </span>
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-                          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>Precio ({mon})</label>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                            Precio ({mon})
+                          </label>
                           <input
                             type="text"
                             inputMode="numeric"
@@ -19173,11 +19336,13 @@ export default function AdminDashboard({
                             disabled={miSedeDuracionGuardandoId === row.id}
                             onClick={() => void guardarMiSedeFilaDuracion(row.id)}
                             style={{
-                              marginLeft: 'auto',
                               padding: '8px 16px',
                               borderRadius: '8px',
                               border: 'none',
-                              background: miSedeDuracionGuardandoId === row.id ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)',
+                              background:
+                                miSedeDuracionGuardandoId === row.id
+                                  ? '#94a3b8'
+                                  : 'linear-gradient(135deg, #E11B22, #991b1b)',
                               color: '#fff',
                               fontWeight: 700,
                               fontSize: '13px',
@@ -19186,14 +19351,166 @@ export default function AdminDashboard({
                           >
                             {miSedeDuracionGuardandoId === row.id ? t('admin.metricas.saving') : t('general.save')}
                           </button>
+                          <button
+                            type="button"
+                            disabled={miSedeDuracionEliminandoId === row.id}
+                            onClick={() => void quitarMiSedeDuracion(row)}
+                            style={{
+                              padding: '8px 14px',
+                              borderRadius: '8px',
+                              border: '1px solid #fecaca',
+                              background: '#fef2f2',
+                              color: '#991b1b',
+                              fontWeight: 700,
+                              fontSize: '13px',
+                              cursor: miSedeDuracionEliminandoId === row.id ? 'not-allowed' : 'pointer',
+                            }}
+                          >
+                            {miSedeDuracionEliminandoId === row.id ? t('admin.metricas.saving') : 'Quitar'}
+                          </button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-                </>
-              ) : null}
+
+              <div
+                style={{
+                  marginTop: '8px',
+                  padding: '14px',
+                  borderRadius: '10px',
+                  border: '1px dashed var(--border)',
+                  display: 'grid',
+                  gap: '10px',
+                }}
+              >
+                <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  {t('admin.notif.addDuration')}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setMiSedeNuevaDuracion((p) => ({ ...p, modo: '90', duracion_minutos: '90' }))}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: miSedeNuevaDuracion.modo === '90' ? '2px solid #E11B22' : '1px solid var(--border)',
+                      background: miSedeNuevaDuracion.modo === '90' ? '#fef2f2' : 'var(--bg-page)',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    90 min
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMiSedeNuevaDuracion((p) => ({ ...p, modo: '120', duracion_minutos: '120' }))}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: miSedeNuevaDuracion.modo === '120' ? '2px solid #E11B22' : '1px solid var(--border)',
+                      background: miSedeNuevaDuracion.modo === '120' ? '#fef2f2' : 'var(--bg-page)',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    120 min
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMiSedeNuevaDuracion((p) => ({ ...p, modo: 'custom' }))}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: miSedeNuevaDuracion.modo === 'custom' ? '2px solid #E11B22' : '1px solid var(--border)',
+                      background: miSedeNuevaDuracion.modo === 'custom' ? '#fef2f2' : 'var(--bg-page)',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Personalizada
+                  </button>
+                </div>
+                {miSedeNuevaDuracion.modo === 'custom' ? (
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={15}
+                    max={480}
+                    placeholder={t('admin.formularios.minutesPh')}
+                    value={miSedeNuevaDuracion.duracion_minutos}
+                    onChange={(e) =>
+                      setMiSedeNuevaDuracion((p) => ({
+                        ...p,
+                        duracion_minutos: e.target.value.replace(/\D/g, '').slice(0, 3),
+                      }))
+                    }
+                    style={{
+                      width: '120px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      fontSize: '14px',
+                    }}
+                  />
+                ) : null}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder={`Precio (${miSedeForm.moneda || 'ARS'})`}
+                    value={precioDuracionInputDisplay(miSedeNuevaDuracion.precio)}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                      setMiSedeNuevaDuracion((p) => ({ ...p, precio: digits }));
+                    }}
+                    style={{
+                      flex: '1 1 140px',
+                      minWidth: '120px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      textAlign: 'right',
+                    }}
+                  />
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={miSedeNuevaDuracion.activo !== false}
+                      onChange={(e) => setMiSedeNuevaDuracion((p) => ({ ...p, activo: e.target.checked }))}
+                    />
+                    Activa al crear
+                  </label>
+                  <button
+                    type="button"
+                    disabled={miSedeDuracionAgregando}
+                    onClick={() => void agregarMiSedeDuracion()}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: miSedeDuracionAgregando ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: miSedeDuracionAgregando ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {miSedeDuracionAgregando ? t('admin.metricas.saving') : 'Agregar duración'}
+                  </button>
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  La duración se creará para{' '}
+                  <strong>{deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}</strong>. Duración entre 15 y
+                  480 minutos.
+                </p>
+              </div>
             </div>
           </div>
           ) : null}
