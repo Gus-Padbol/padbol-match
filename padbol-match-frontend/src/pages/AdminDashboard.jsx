@@ -7768,12 +7768,14 @@ export default function AdminDashboard({
     const main = miSedeMainScrollRef.current;
     const outer = adminMainScrollRef.current;
     if (main && main.scrollHeight > main.clientHeight + 1) return main;
-    return outer || main;
+    if (outer && outer.scrollHeight > outer.clientHeight + 1) return outer;
+    if (typeof document !== 'undefined') return document.documentElement;
+    return null;
   }, []);
 
   const miSedeScrollOffsetPx = useCallback(() => {
     if (typeof window === 'undefined') return 16;
-    return window.matchMedia('(min-width: 768px)').matches ? 16 : 108;
+    return window.matchMedia('(min-width: 768px)').matches ? 88 : 108;
   }, []);
 
   const resetAdminPanelScroll = useCallback(() => {
@@ -7803,8 +7805,8 @@ export default function AdminDashboard({
       const target = document.getElementById(`admin-mi-sede-${sectionId}`);
       if (!target) return;
       setMiSedeNavActive(sectionId);
-      const main = miSedeMainScrollRef.current;
       const offset = miSedeScrollOffsetPx();
+      const main = miSedeMainScrollRef.current;
       if (main && main.scrollHeight > main.clientHeight + 1) {
         const rootRect = main.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
@@ -7818,6 +7820,12 @@ export default function AdminDashboard({
         const targetRect = target.getBoundingClientRect();
         const nextTop = root.scrollTop + (targetRect.top - rootRect.top) - offset;
         root.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
+        return;
+      }
+      if (typeof window !== 'undefined') {
+        const targetRect = target.getBoundingClientRect();
+        const nextTop = window.scrollY + targetRect.top - offset;
+        window.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
         return;
       }
       target.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -7907,7 +7915,8 @@ export default function AdminDashboard({
         .filter(Boolean);
       if (!sections.length) return;
 
-      const probeTop = root.getBoundingClientRect().top + miSedeScrollOffsetPx();
+      const rootTop = root === document.documentElement ? 0 : root.getBoundingClientRect().top;
+      const probeTop = rootTop + miSedeScrollOffsetPx();
       let current = sections[0].id;
       for (const s of sections) {
         if (s.top <= probeTop + 4) current = s.id;
@@ -7916,11 +7925,12 @@ export default function AdminDashboard({
     };
 
     const t0 = window.setTimeout(syncActiveSection, 80);
-    root.addEventListener('scroll', syncActiveSection, { passive: true });
+    const scrollTarget = root === document.documentElement ? window : root;
+    scrollTarget.addEventListener('scroll', syncActiveSection, { passive: true });
     window.addEventListener('resize', syncActiveSection);
     return () => {
       window.clearTimeout(t0);
-      root.removeEventListener('scroll', syncActiveSection);
+      scrollTarget.removeEventListener('scroll', syncActiveSection);
       window.removeEventListener('resize', syncActiveSection);
     };
   }, [activeTab, miSede, miSedeLoading, miSedeNavItems, resolveMiSedeScrollRoot, miSedeScrollOffsetPx]);
@@ -10048,12 +10058,8 @@ export default function AdminDashboard({
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
-        minHeight: 0,
-        maxHeight: '100dvh',
         width: '100%',
         maxWidth: '100%',
-        overflow: 'hidden',
-        overscrollBehavior: 'none',
         boxSizing: 'border-box',
       }}
     >
@@ -10063,9 +10069,6 @@ export default function AdminDashboard({
         className="admin-dashboard-main-scroll"
         style={{
           flex: 1,
-          minHeight: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           paddingTop: hubContentPaddingTopCss(location.pathname, navDock),
           paddingBottom: `calc(12px + ${HUB_CONTENT_PADDING_BOTTOM_PX}px + env(safe-area-inset-bottom, 0px))`,
@@ -10271,22 +10274,6 @@ export default function AdminDashboard({
           <aside className="admin-dashboard-sidebar" aria-label="Secciones principales">
             <nav className="admin-dashboard-sidebar-nav">
               {TABS.map((tab) => renderAdminNavTabButton(tab, 'sidebar'))}
-              {activeTab === 'mi_sede' && puedeVerMiSede ? (
-                <div className="admin-dashboard-sidebar-sub" aria-label={t('admin.sedes.myVenueSectionsAria')}>
-                  {miSedeNavItems.map((item) => (
-                    <button
-                      key={`mi-sede-sub-${item.id}`}
-                      type="button"
-                      className={`admin-dashboard-sidebar-sub-btn${
-                        miSedeNavActive === item.id ? ' admin-dashboard-sidebar-sub-btn--active' : ''
-                      }`}
-                      onClick={() => selectMiSedeSection(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
             </nav>
           </aside>
           <div
@@ -18719,6 +18706,25 @@ export default function AdminDashboard({
               ))}
             </aside>
             <div className="admin-mi-sede-main" ref={miSedeMainScrollRef}>
+              <nav className="admin-mi-sede-nav-desktop" aria-label={t('admin.sedes.myVenueSectionsAria')}>
+                <p className="admin-mi-sede-nav-desktop__title">{t('admin.sedes.myVenueSectionsAria')}</p>
+                <div className="admin-mi-sede-nav-desktop__pills">
+                  {miSedeNavItems.map((item) => (
+                    <button
+                      key={`mi-sede-desktop-${item.id}`}
+                      type="button"
+                      className={
+                        miSedeNavActive === item.id
+                          ? 'admin-mi-sede-nav-pill admin-mi-sede-nav-pill--active'
+                          : 'admin-mi-sede-nav-pill'
+                      }
+                      onClick={() => scrollToMiSedeSection(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </nav>
               <nav className="admin-mi-sede-nav-mobile" aria-label={t('admin.sedes.myVenueSectionsAria')}>
                 {miSedeNavItems.map((item) => (
                   <button

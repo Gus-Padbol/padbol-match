@@ -184,9 +184,8 @@
     position: sticky;
     top: 12px;
     align-self: flex-start;
-    max-height: calc(100dvh - 180px);
-    overflow-y: auto;
-    overflow-x: hidden;
+    max-height: none;
+    overflow: visible;
     padding: 8px 4px 12px 0;
     box-sizing: border-box;
     z-index: 5;
@@ -210,6 +209,27 @@
 
   .admin-dashboard--with-sidebar .admin-mi-sede-main {
     max-height: none;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .admin-dashboard--with-sidebar {
+    flex: 1 1 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .admin-dashboard--with-sidebar .admin-dashboard-main-scroll {
+    flex: 1 1 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .admin-dashboard--with-sidebar .admin-dashboard-panel {
+    overflow: visible;
+  }
+
+  .admin-dashboard--with-sidebar .admin-dashboard-body-surface {
     overflow: visible;
   }
 }
@@ -507,7 +527,7 @@
   box-sizing: border-box;
 }
 
-/* Mi Sede: navegación interna (móvil = pills; desktop = panel lateral sticky) */
+/* Mi Sede: navegación interna (móvil = pills horizontales; desktop = subnav en contenido) */
 .admin-mi-sede-form [id^='admin-mi-sede-'] {
   scroll-margin-top: 108px;
 }
@@ -518,6 +538,10 @@
 }
 
 .admin-mi-sede-sidebar {
+  display: none;
+}
+
+.admin-mi-sede-nav-desktop {
   display: none;
 }
 
@@ -593,18 +617,42 @@
   box-sizing: border-box;
 }
 
-/* Desktop: sidebar sticky; panel derecho con scroll propio */
+/* Desktop: subnav Mi Sede en contenido (sin panel lateral con scroll propio) */
 @media (min-width: 768px) {
   .admin-mi-sede-layout {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 20px;
-    min-height: 0;
+    display: block;
+    max-width: 100%;
   }
 
   .admin-mi-sede-nav-mobile {
     display: none !important;
+  }
+
+  .admin-dashboard--with-sidebar .admin-mi-sede-nav-desktop {
+    display: block;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    position: sticky;
+    top: 8px;
+    z-index: 6;
+  }
+
+  .admin-mi-sede-nav-desktop__title {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .admin-mi-sede-nav-desktop__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .admin-mi-sede-sidebar {
@@ -623,14 +671,13 @@
   }
 
   .admin-mi-sede-main {
-    flex: 1;
     min-width: 0;
-    min-height: 0;
-    max-height: calc(100dvh - 200px);
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .admin-dashboard--with-sidebar .admin-mi-sede-form [id^='admin-mi-sede-'] {
+    scroll-margin-top: 88px;
   }
 
   .admin-mi-sede-form [id^='admin-mi-sede-'] {
