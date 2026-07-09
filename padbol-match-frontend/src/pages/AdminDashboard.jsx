@@ -4758,7 +4758,6 @@ export default function AdminDashboard({
       }
       navigate(`/admin?tab=${encodeURIComponent(id)}`, { replace: true });
       if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
-      if (miSedeMainScrollRef.current) miSedeMainScrollRef.current.scrollTop = 0;
       if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
     },
     [navigate, rolPanel],
@@ -6239,9 +6238,7 @@ export default function AdminDashboard({
       };
       const irAInstructoresClub = () => {
         irATab('mi_sede');
-        window.setTimeout(() => {
-          document.getElementById('admin-mi-sede-clases')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 120);
+        window.setTimeout(() => selectMiSedeSection('clases'), 120);
       };
       pushCampanita(
         `campanita-instructores-${campanitaData.instructoresPendientes}`,
@@ -7747,8 +7744,7 @@ export default function AdminDashboard({
   const logoCropPixelsRef = useRef(null);
   const adminTabsStripRef = useRef(null);
   const adminMainScrollRef = useRef(null);
-  const miSedeMainScrollRef = useRef(null);
-  const [miSedeNavActive, setMiSedeNavActive] = useState('info');
+  const [activeMiSedeSection, setActiveMiSedeSection] = useState('info');
   const miSedeNavItems = useMemo(() => {
     const items = [
       { id: 'info', label: t('admin.sedes.clubInfo') },
@@ -7764,23 +7760,15 @@ export default function AdminDashboard({
     items.push({ id: 'contrato', label: t('admin.sedes.images') });
     return items;
   }, [esAdminClub, isSuperAdmin, t]);
-  const resolveMiSedeScrollRoot = useCallback(() => {
-    const main = miSedeMainScrollRef.current;
-    const outer = adminMainScrollRef.current;
-    if (main && main.scrollHeight > main.clientHeight + 1) return main;
-    if (outer && outer.scrollHeight > outer.clientHeight + 1) return outer;
-    if (typeof document !== 'undefined') return document.documentElement;
-    return null;
-  }, []);
 
-  const miSedeScrollOffsetPx = useCallback(() => {
-    if (typeof window === 'undefined') return 16;
-    return window.matchMedia('(min-width: 768px)').matches ? 88 : 108;
-  }, []);
+  useEffect(() => {
+    if (!miSedeNavItems.some((item) => item.id === activeMiSedeSection)) {
+      setActiveMiSedeSection(miSedeNavItems[0]?.id || 'info');
+    }
+  }, [activeMiSedeSection, miSedeNavItems]);
 
   const resetAdminPanelScroll = useCallback(() => {
     if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
-    if (miSedeMainScrollRef.current) miSedeMainScrollRef.current.scrollTop = 0;
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
@@ -7799,51 +7787,21 @@ export default function AdminDashboard({
     [navigate, resetAdminPanelScroll, rolPanel],
   );
 
-  const scrollToMiSedeSection = useCallback(
-    (sectionId) => {
-      if (typeof document === 'undefined') return;
-      const target = document.getElementById(`admin-mi-sede-${sectionId}`);
-      if (!target) return;
-      setMiSedeNavActive(sectionId);
-      const offset = miSedeScrollOffsetPx();
-      const main = miSedeMainScrollRef.current;
-      if (main && main.scrollHeight > main.clientHeight + 1) {
-        const rootRect = main.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
-        const nextTop = main.scrollTop + (targetRect.top - rootRect.top) - offset;
-        main.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
-        return;
-      }
-      const root = adminMainScrollRef.current;
-      if (root && root.scrollHeight > root.clientHeight + 1) {
-        const rootRect = root.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
-        const nextTop = root.scrollTop + (targetRect.top - rootRect.top) - offset;
-        root.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
-        return;
-      }
-      if (typeof window !== 'undefined') {
-        const targetRect = target.getBoundingClientRect();
-        const nextTop = window.scrollY + targetRect.top - offset;
-        window.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
-        return;
-      }
-      target.scrollIntoView({ behavior: 'auto', block: 'start' });
-    },
-    [miSedeScrollOffsetPx]
-  );
-
   const selectMiSedeSection = useCallback(
     (sectionId) => {
-      const go = () => scrollToMiSedeSection(sectionId);
+      const validId = miSedeNavItems.some((item) => item.id === sectionId) ? sectionId : 'info';
+      const apply = () => {
+        setActiveMiSedeSection(validId);
+        resetAdminPanelScroll();
+      };
       if (activeTab !== 'mi_sede') {
         selectAdminTab('mi_sede');
-        window.setTimeout(go, 80);
+        window.setTimeout(apply, 80);
         return;
       }
-      go();
+      apply();
     },
-    [activeTab, scrollToMiSedeSection, selectAdminTab]
+    [activeTab, miSedeNavItems, resetAdminPanelScroll, selectAdminTab],
   );
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
@@ -7900,40 +7858,6 @@ export default function AdminDashboard({
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, [loading]);
-
-  useEffect(() => {
-    if (activeTab !== 'mi_sede' || !miSede || miSedeLoading) return;
-    const root = resolveMiSedeScrollRoot();
-    if (!root) return;
-
-    const syncActiveSection = () => {
-      const sections = miSedeNavItems
-        .map(({ id }) => {
-          const el = document.getElementById(`admin-mi-sede-${id}`);
-          return el ? { id, top: el.getBoundingClientRect().top } : null;
-        })
-        .filter(Boolean);
-      if (!sections.length) return;
-
-      const rootTop = root === document.documentElement ? 0 : root.getBoundingClientRect().top;
-      const probeTop = rootTop + miSedeScrollOffsetPx();
-      let current = sections[0].id;
-      for (const s of sections) {
-        if (s.top <= probeTop + 4) current = s.id;
-      }
-      setMiSedeNavActive((prev) => (prev === current ? prev : current));
-    };
-
-    const t0 = window.setTimeout(syncActiveSection, 80);
-    const scrollTarget = root === document.documentElement ? window : root;
-    scrollTarget.addEventListener('scroll', syncActiveSection, { passive: true });
-    window.addEventListener('resize', syncActiveSection);
-    return () => {
-      window.clearTimeout(t0);
-      scrollTarget.removeEventListener('scroll', syncActiveSection);
-      window.removeEventListener('resize', syncActiveSection);
-    };
-  }, [activeTab, miSede, miSedeLoading, miSedeNavItems, resolveMiSedeScrollRoot, miSedeScrollOffsetPx]);
 
   useEffect(() => {
     if (!sedeId || !session?.access_token) {
@@ -18689,59 +18613,26 @@ export default function AdminDashboard({
           ) : null}
 
           <div className="admin-mi-sede-layout">
-            <aside className="admin-mi-sede-sidebar" aria-label={t('admin.sedes.myVenueSectionsAria')}>
-              {miSedeNavItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={
-                    miSedeNavActive === item.id
-                      ? 'admin-mi-sede-nav-btn admin-mi-sede-nav-btn--active'
-                      : 'admin-mi-sede-nav-btn'
-                  }
-                  onClick={() => scrollToMiSedeSection(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </aside>
-            <div className="admin-mi-sede-main" ref={miSedeMainScrollRef}>
-              <nav className="admin-mi-sede-nav-desktop" aria-label={t('admin.sedes.myVenueSectionsAria')}>
-                <p className="admin-mi-sede-nav-desktop__title">{t('admin.sedes.myVenueSectionsAria')}</p>
-                <div className="admin-mi-sede-nav-desktop__pills">
-                  {miSedeNavItems.map((item) => (
-                    <button
-                      key={`mi-sede-desktop-${item.id}`}
-                      type="button"
-                      className={
-                        miSedeNavActive === item.id
-                          ? 'admin-mi-sede-nav-pill admin-mi-sede-nav-pill--active'
-                          : 'admin-mi-sede-nav-pill'
-                      }
-                      onClick={() => scrollToMiSedeSection(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </nav>
-              <nav className="admin-mi-sede-nav-mobile" aria-label={t('admin.sedes.myVenueSectionsAria')}>
+            <div className="admin-mi-sede-main">
+              <nav className="admin-mi-sede-nav" aria-label={t('admin.sedes.myVenueSectionsAria')}>
                 {miSedeNavItems.map((item) => (
                   <button
                     key={item.id}
                     type="button"
                     className={
-                      miSedeNavActive === item.id
+                      activeMiSedeSection === item.id
                         ? 'admin-mi-sede-nav-pill admin-mi-sede-nav-pill--active'
                         : 'admin-mi-sede-nav-pill'
                     }
-                    onClick={() => scrollToMiSedeSection(item.id)}
+                    onClick={() => selectMiSedeSection(item.id)}
                   >
                     {item.label}
                   </button>
                 ))}
               </nav>
 
+          <div className="admin-mi-sede-section-view">
+          {activeMiSedeSection === 'info' ? (
           <div id="admin-mi-sede-info">
           {puedeVerMiSede && !esEditorContenido ? (
             <div
@@ -19127,8 +19018,9 @@ export default function AdminDashboard({
             </div>
           </div>
           </div>
+          ) : null}
 
-          {/* ── Precios por duración (60 / 90 / 120 min) ── */}
+          {activeMiSedeSection === 'precios' ? (
           <div id="admin-mi-sede-precios" style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
               {t('admin.sedes.pricesByDuration')}
@@ -19304,8 +19196,9 @@ export default function AdminDashboard({
               ) : null}
             </div>
           </div>
+          ) : null}
 
-          {/* ── 5. Mis Canchas ── */}
+          {activeMiSedeSection === 'canchas' ? (
           <div id="admin-mi-sede-canchas" style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.myCourtsTitle')}</h3>
             <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
@@ -19514,7 +19407,9 @@ export default function AdminDashboard({
               </button>
             </div>
           </div>
+          ) : null}
 
+          {activeMiSedeSection === 'horarios' ? (
           <div id="admin-mi-sede-horarios" style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
               {t('admin.franjas.slotsAndPricesTitle')}
@@ -19794,8 +19689,9 @@ export default function AdminDashboard({
 
             </div>
           </div>
+          ) : null}
 
-          {sedeIdKey && session?.access_token ? (
+          {activeMiSedeSection === 'lista-espera' && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-lista-espera" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
                 {t('admin.sedes.listaEsperaTorneosTitle')}
@@ -19810,8 +19706,7 @@ export default function AdminDashboard({
             </div>
           ) : null}
 
-          {/* ── Extras tercer tiempo (opcional en checkout armar partido) ── */}
-          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
+          {activeMiSedeSection === 'extras' && (esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-extras" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
                 🍕 Extras del tercer tiempo
@@ -19828,7 +19723,7 @@ export default function AdminDashboard({
             </div>
           ) : null}
 
-          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
+          {activeMiSedeSection === 'resenas' && (esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-resenas" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
                 {t('admin.sedes.reviewsTitle')}
@@ -19843,8 +19738,7 @@ export default function AdminDashboard({
             </div>
           ) : null}
 
-          {/* ── Clases y profesores ── */}
-          {(esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
+          {activeMiSedeSection === 'clases' && (esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-clases" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
                 🎓 {isSuperAdmin ? t('clases.titulo') : t('admin.profesores.clasesYInstructores')}
@@ -19863,8 +19757,7 @@ export default function AdminDashboard({
             </div>
           ) : null}
 
-          {/* ── 3. Configuración de pagos (MP / Stripe por sede) ── */}
-          {(esAdminClub || isSuperAdmin) && (
+          {activeMiSedeSection === 'pagos' && (esAdminClub || isSuperAdmin) && (
             <div id="admin-mi-sede-pagos" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.paymentConfigTitle')}</h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '520px' }}>
@@ -20529,7 +20422,7 @@ export default function AdminDashboard({
             </div>
           )}
 
-          {/* ── 4. Redes Sociales ── */}
+          {activeMiSedeSection === 'info' ? (
           <div style={{ marginBottom: '32px' }}>
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.socialNetworksTitle')}</h3>
             <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '480px' }}>
@@ -20562,9 +20455,10 @@ export default function AdminDashboard({
               </button>
             </div>
           </div>
+          ) : null}
 
-        {/* ── 4. Fotos ── always visible when tab is active */}
-        {!miSedeLoading && <div id="admin-mi-sede-contrato" style={{ marginBottom: '32px' }}>
+        {activeMiSedeSection === 'contrato' && !miSedeLoading ? (
+        <div id="admin-mi-sede-contrato" style={{ marginBottom: '32px' }}>
           <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>📸 Fotos</h3>
 
           {/* Logo */}
@@ -20758,8 +20652,10 @@ export default function AdminDashboard({
               Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos. En iPhone, si varias a la vez no suben, usa «+ Agregar una foto».
             </p>
           </div>
-        </div>}
+        </div>
+        ) : null}
 
+            </div>
             </div>
           </div>
 
