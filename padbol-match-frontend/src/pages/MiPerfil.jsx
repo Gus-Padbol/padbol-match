@@ -43,6 +43,7 @@ import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
 import { fetchMisClases } from '../utils/clasesApi';
 import InstructorFipaSection from '../components/InstructorFipaSection';
+import JugadorFichaTorneosSection from '../components/JugadorFichaTorneosSection';
 import { normalizeHoraClase } from '../utils/clasesFechas';
 import {
   whatsappDigitsValido,
@@ -2888,6 +2889,8 @@ export default function MiPerfil() {
 
         {successMsg && <p style={{ color: '#4caf50', fontWeight: 'bold', marginTop: '14px', marginBottom: 0 }}>{successMsg}</p>}
       </div>
+
+      <JugadorFichaTorneosSection />
 
       {/* Ficha detail card */}
       <div
