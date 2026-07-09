@@ -283,3 +283,19 @@
   color: var(--text-secondary);
   white-space: pre-wrap;
 }
+
+.admin-sede-resenas__toggle {
+  margin-top: 12px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.admin-sede-resenas__toggle:hover {
+  background: var(--bg-input);
+}

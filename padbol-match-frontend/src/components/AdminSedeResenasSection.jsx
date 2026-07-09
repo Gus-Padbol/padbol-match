@@ -3,6 +3,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import './ResenasSede.css';
 
 const REPLY_MAX_CHARS = 1000;
+const PREVIEW_COUNT = 3;
 
 function resenaDisplayName(r) {
   const nombrePartes = [r?.autor?.nombre, r?.autor?.apellido].filter(Boolean).join(' ').trim();
@@ -33,8 +34,90 @@ function EstrellasLectura({ value }) {
   );
 }
 
+function ResenaItem({
+  row,
+  replyOpenId,
+  replyText,
+  replySaving,
+  replyMsg,
+  onOpenReply,
+  onCancelReply,
+  onReplyTextChange,
+  onSubmitReply,
+  t,
+  dateLocale,
+}) {
+  const displayName = resenaDisplayName(row);
+  const hasReply = Boolean(String(row.respuesta_admin || '').trim());
+  const isOpen = replyOpenId === row.id;
+
+  return (
+    <article className="reseñas-sede__item">
+      <div className="reseñas-sede__body" style={{ width: '100%' }}>
+        <div className="reseñas-sede__head">
+          <span className="reseñas-sede__name">{displayName}</span>
+          <EstrellasLectura value={row.estrellas} />
+          <span className="reseñas-sede__date">{formatFecha(row.created_at, dateLocale)}</span>
+        </div>
+        {String(row.comentario || '').trim() ? (
+          <p className="reseñas-sede__comment">{row.comentario}</p>
+        ) : (
+          <p className="reseñas-sede__comment" style={{ fontStyle: 'italic' }}>
+            {t('admin.resenas.noComment')}
+          </p>
+        )}
+        {hasReply ? (
+          <div className="reseñas-sede__reply">
+            <div className="reseñas-sede__reply-label">{t('resenas.clubReply')}</div>
+            <p className="reseñas-sede__reply-text">{row.respuesta_admin}</p>
+            <button
+              type="button"
+              className="reseñas-sede__login-link"
+              style={{ marginTop: 8, fontSize: 12 }}
+              onClick={() => onOpenReply(row)}
+            >
+              {t('admin.resenas.editReply')}
+            </button>
+          </div>
+        ) : null}
+        {isOpen ? (
+          <div style={{ marginTop: 12 }}>
+            <textarea
+              className="reseñas-sede__textarea"
+              value={replyText}
+              maxLength={REPLY_MAX_CHARS}
+              disabled={replySaving}
+              onChange={(e) => onReplyTextChange(e.target.value)}
+              rows={3}
+              placeholder={t('admin.resenas.replyPlaceholder')}
+            />
+            <div className="reseñas-sede__form-footer">
+              <span className="reseñas-sede__char-count">
+                {replyText.length}/{REPLY_MAX_CHARS}
+              </span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button type="button" className="reseñas-sede__submit" disabled={replySaving} onClick={() => onSubmitReply(row.id)}>
+                  {replySaving ? t('admin.resenas.savingReply') : t('admin.resenas.saveReply')}
+                </button>
+                <button type="button" className="reseñas-sede__login-link" disabled={replySaving} onClick={onCancelReply}>
+                  {t('general.cancel')}
+                </button>
+              </div>
+            </div>
+            {replyMsg ? <p className="reseñas-sede__form-msg reseñas-sede__form-msg--err">{replyMsg}</p> : null}
+          </div>
+        ) : !hasReply ? (
+          <button type="button" className="reseñas-sede__submit" style={{ marginTop: 10 }} onClick={() => onOpenReply(row)}>
+            {t('admin.resenas.respond')}
+          </button>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 /**
- * Panel admin club: listado de reseñas recibidas y respuesta del club.
+ * Panel admin club: reseñas recibidas (vista previa + ver todas).
  */
 export default function AdminSedeResenasSection({ apiBaseUrl, accessToken, sedeId }) {
   const { t, i18n } = useTranslation();
@@ -44,6 +127,7 @@ export default function AdminSedeResenasSection({ apiBaseUrl, accessToken, sedeI
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const [replyOpenId, setReplyOpenId] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replySaving, setReplySaving] = useState(false);
@@ -119,6 +203,22 @@ export default function AdminSedeResenasSection({ apiBaseUrl, accessToken, sedeI
 
   if (!Number.isFinite(sid)) return null;
 
+  const visibleRows = showAll ? rows : rows.slice(0, PREVIEW_COUNT);
+  const hasMore = rows.length > PREVIEW_COUNT;
+
+  const replyProps = {
+    replyOpenId,
+    replyText,
+    replySaving,
+    replyMsg,
+    onOpenReply: openReply,
+    onCancelReply: cancelReply,
+    onReplyTextChange: setReplyText,
+    onSubmitReply: submitReply,
+    t,
+    dateLocale,
+  };
+
   return (
     <div className="reseñas-sede admin-sede-resenas">
       <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
@@ -132,88 +232,30 @@ export default function AdminSedeResenasSection({ apiBaseUrl, accessToken, sedeI
       ) : rows.length === 0 ? (
         <p className="reseñas-sede__empty">{t('admin.resenas.empty')}</p>
       ) : (
-        <div className="reseñas-sede__list">
-          {rows.map((row) => {
-            const displayName = resenaDisplayName(row);
-            const hasReply = Boolean(String(row.respuesta_admin || '').trim());
-            const isOpen = replyOpenId === row.id;
-            return (
-              <article key={row.id} className="reseñas-sede__item">
-                <div className="reseñas-sede__body" style={{ width: '100%' }}>
-                  <div className="reseñas-sede__head">
-                    <span className="reseñas-sede__name">{displayName}</span>
-                    <EstrellasLectura value={row.estrellas} />
-                    <span className="reseñas-sede__date">{formatFecha(row.created_at, dateLocale)}</span>
-                  </div>
-                  {String(row.comentario || '').trim() ? (
-                    <p className="reseñas-sede__comment">{row.comentario}</p>
-                  ) : (
-                    <p className="reseñas-sede__comment" style={{ fontStyle: 'italic' }}>
-                      {t('admin.resenas.noComment')}
-                    </p>
-                  )}
-                  {hasReply ? (
-                    <div className="reseñas-sede__reply">
-                      <div className="reseñas-sede__reply-label">{t('resenas.clubReply')}</div>
-                      <p className="reseñas-sede__reply-text">{row.respuesta_admin}</p>
-                      <button
-                        type="button"
-                        className="reseñas-sede__login-link"
-                        style={{ marginTop: 8, fontSize: 12 }}
-                        onClick={() => openReply(row)}
-                      >
-                        {t('admin.resenas.editReply')}
-                      </button>
-                    </div>
-                  ) : null}
-                  {isOpen ? (
-                    <div style={{ marginTop: 12 }}>
-                      <textarea
-                        className="reseñas-sede__textarea"
-                        value={replyText}
-                        maxLength={REPLY_MAX_CHARS}
-                        disabled={replySaving}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        rows={3}
-                        placeholder={t('admin.resenas.replyPlaceholder')}
-                      />
-                      <div className="reseñas-sede__form-footer">
-                        <span className="reseñas-sede__char-count">
-                          {replyText.length}/{REPLY_MAX_CHARS}
-                        </span>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <button type="button" className="reseñas-sede__submit" disabled={replySaving} onClick={() => submitReply(row.id)}>
-                            {replySaving ? t('admin.resenas.savingReply') : t('admin.resenas.saveReply')}
-                          </button>
-                          <button
-                            type="button"
-                            className="reseñas-sede__login-link"
-                            disabled={replySaving}
-                            onClick={cancelReply}
-                          >
-                            {t('general.cancel')}
-                          </button>
-                        </div>
-                      </div>
-                      {replyMsg ? (
-                        <p className="reseñas-sede__form-msg reseñas-sede__form-msg--err">{replyMsg}</p>
-                      ) : null}
-                    </div>
-                  ) : !hasReply ? (
-                    <button
-                      type="button"
-                      className="reseñas-sede__submit"
-                      style={{ marginTop: 10 }}
-                      onClick={() => openReply(row)}
-                    >
-                      {t('admin.resenas.respond')}
-                    </button>
-                  ) : null}
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        <>
+          {!showAll && hasMore ? (
+            <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--text-secondary)' }}>
+              Mostrando las {Math.min(PREVIEW_COUNT, rows.length)} más recientes de {rows.length} reseñas.
+            </p>
+          ) : null}
+          <div className="reseñas-sede__list">
+            {visibleRows.map((row) => (
+              <ResenaItem key={row.id} row={row} {...replyProps} />
+            ))}
+          </div>
+          {hasMore ? (
+            <button
+              type="button"
+              className="admin-sede-resenas__toggle"
+              onClick={() => {
+                setShowAll((v) => !v);
+                cancelReply();
+              }}
+            >
+              {showAll ? 'Ver menos reseñas' : `Ver todas las reseñas (${rows.length})`}
+            </button>
+          ) : null}
+        </>
       )}
     </div>
   );

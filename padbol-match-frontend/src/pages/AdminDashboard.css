@@ -335,7 +335,12 @@
   z-index: 6;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.admin-mi-sede-nav-mobile::-webkit-scrollbar {
+  display: none;
 }
 
 .admin-mi-sede-nav-pill {
@@ -1652,8 +1657,13 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   overflow-y: hidden;
   flex-wrap: nowrap;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   background: var(--bg-card);
+}
+
+.admin-dashboard-tabs-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .admin-dashboard--super .admin-dashboard-tabs-strip {
@@ -1666,15 +1676,6 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 
 .admin-dashboard-tabs-strip > button {
   flex: 0 0 auto;
-}
-
-.admin-dashboard-tabs-strip::-webkit-scrollbar {
-  height: 4px;
-}
-
-.admin-dashboard-tabs-strip::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 999px;
 }
 
 /* Mi Sede — Mis canchas: tabla con scroll en desktop; tarjetas en mobile */

@@ -103,6 +103,14 @@ import {
   parsePrecioDuracionField,
   miSedeFormPreciosFromSedeRow,
 } from '../utils/sedePreciosDuracion';
+import {
+  detectFranjasHorariasOverlap,
+  validateFranjasHorariasBeforeSave,
+} from '../utils/miSedeFranjas';
+import {
+  detectFranjasPrecioOverlap,
+  validateFranjaPrecioDraft,
+} from '../utils/franjasPrecioOverlap';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { normalizeUserRole } from '../utils/adminPanelRoles';
 import { generarIniciosMinutosSlotReserva, minutosAHoraReserva } from '../utils/reservaSlotsHorarios';
@@ -4749,8 +4757,11 @@ export default function AdminDashboard({
         /* ignore */
       }
       navigate(`/admin?tab=${encodeURIComponent(id)}`, { replace: true });
+      if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
+      if (miSedeMainScrollRef.current) miSedeMainScrollRef.current.scrollTop = 0;
+      if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
     },
-    [navigate, rolPanel]
+    [navigate, rolPanel],
   );
 
   const [vistaReservasAdminTarjetas, setVistaReservasAdminTarjetas] = useState(false);
@@ -7765,6 +7776,27 @@ export default function AdminDashboard({
     return window.matchMedia('(min-width: 768px)').matches ? 16 : 108;
   }, []);
 
+  const resetAdminPanelScroll = useCallback(() => {
+    if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
+    if (miSedeMainScrollRef.current) miSedeMainScrollRef.current.scrollTop = 0;
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
+  const selectAdminTab = useCallback(
+    (tabId) => {
+      const id = sanitizeAdminActiveTab(tabId, rolPanel);
+      setActiveTab(id);
+      try {
+        sessionStorage.setItem('adminActiveTab', id);
+      } catch {
+        /* ignore */
+      }
+      navigate(`/admin?tab=${encodeURIComponent(id)}`, { replace: true });
+      resetAdminPanelScroll();
+    },
+    [navigate, resetAdminPanelScroll, rolPanel],
+  );
+
   const scrollToMiSedeSection = useCallback(
     (sectionId) => {
       if (typeof document === 'undefined') return;
@@ -7777,7 +7809,7 @@ export default function AdminDashboard({
         const rootRect = main.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
         const nextTop = main.scrollTop + (targetRect.top - rootRect.top) - offset;
-        main.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+        main.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
         return;
       }
       const root = adminMainScrollRef.current;
@@ -7785,10 +7817,10 @@ export default function AdminDashboard({
         const rootRect = root.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
         const nextTop = root.scrollTop + (targetRect.top - rootRect.top) - offset;
-        root.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+        root.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
         return;
       }
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.scrollIntoView({ behavior: 'auto', block: 'start' });
     },
     [miSedeScrollOffsetPx]
   );
@@ -7799,6 +7831,8 @@ export default function AdminDashboard({
   const [franjasHorarias, setFranjasHorarias] = useState([]);
   const [franjasSaving, setFranjasSaving] = useState(false);
   const [franjasMsg, setFranjasMsg] = useState('');
+  const [franjasOverlapMsg, setFranjasOverlapMsg] = useState('');
+  const [franjasPrecioOverlapMsg, setFranjasPrecioOverlapMsg] = useState('');
   const [fotoPortada, setFotoPortada] = useState('');
   const [fotoPortadaSaving, setFotoPortadaSaving] = useState(false);
   const [heroToast, setHeroToast] = useState('');
@@ -7811,6 +7845,20 @@ export default function AdminDashboard({
     usedConfigFallback: false,
     error: null,
   });
+
+  useEffect(() => {
+    if (!franjasHorarias.length) {
+      setFranjasOverlapMsg('');
+      return;
+    }
+    const overlap = detectFranjasHorariasOverlap(franjasHorarias);
+    setFranjasOverlapMsg(overlap.hasOverlap ? overlap.message : '');
+  }, [franjasHorarias]);
+
+  useEffect(() => {
+    const overlap = detectFranjasPrecioOverlap(franjasPrecios, franjaDraft);
+    setFranjasPrecioOverlapMsg(overlap.hasOverlap ? overlap.message : '');
+  }, [franjasPrecios, franjaDraft]);
 
   useEffect(() => {
     if (loading) return;
@@ -8353,12 +8401,10 @@ export default function AdminDashboard({
 
   const saveFranja = async () => {
     if (!miSedeForm?.id) return;
-    if (!franjaDraft.hora_inicio || !franjaDraft.hora_fin) {
-      setFranjaPreciosMsg('❌ Hora inicio y fin son obligatorias.');
-      return;
-    }
-    if (franjaDraft.hora_fin <= franjaDraft.hora_inicio) {
-      setFranjaPreciosMsg('❌ Hora fin debe ser mayor que hora inicio.');
+    const validation = validateFranjaPrecioDraft(franjasPrecios, franjaDraft);
+    if (!validation.ok) {
+      setFranjaPreciosMsg(`❌ ${validation.message}`);
+      setFranjasPrecioOverlapMsg(validation.message);
       return;
     }
     setFranjaSaving(true);
@@ -8378,6 +8424,7 @@ export default function AdminDashboard({
       const { error } = await supabase.from('franjas_precio').insert(row);
       if (error) throw error;
       setFranjaPreciosMsg('✅ Franja guardada.');
+      setFranjasPrecioOverlapMsg('');
       setFranjaDraft({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
       await loadFranjasPrecios(miSedeForm.id);
     } catch (e) {
@@ -9003,26 +9050,23 @@ export default function AdminDashboard({
     if (!sedeId) return;
     setFranjasSaving(true);
     setFranjasMsg('');
-    const payload = franjasHorariasToDbPayload(franjasHorarias);
-    const invalida = payload.find((f) => {
-      if (!f.hora_inicio || !f.hora_fin) return true;
-      if (f.tipo === 'fecha_especial') return !f.fecha;
-      return !Array.isArray(f.dias) || f.dias.length === 0;
-    });
-    if (invalida) {
+    const validation = validateFranjasHorariasBeforeSave(franjasHorarias);
+    if (!validation.ok) {
       setFranjasSaving(false);
-      setFranjasMsg(t('admin.franjas.completeSlotFields'));
-      setTimeout(() => setFranjasMsg(''), 4000);
+      setFranjasOverlapMsg(validation.message);
+      setFranjasMsg(`⚠️ ${validation.message}`);
+      setTimeout(() => setFranjasMsg(''), 5000);
       return;
     }
-    const { error } = await supabase.from(t('admin.metricas.venuesCount')).update({ franjas_horarias: payload }).eq('id', sedeId);
+    const { error } = await supabase.from(t('admin.metricas.venuesCount')).update({ franjas_horarias: validation.payload }).eq('id', sedeId);
     setFranjasSaving(false);
     if (error) {
       setFranjasMsg(`⚠️ ${error.message}`);
     } else {
+      setFranjasOverlapMsg('');
       setFranjasMsg(t('admin.franjas.slotsSaved'));
-      setFranjasHorarias(normalizeFranjasHorarias(payload));
-      setMiSede((prev) => (prev ? { ...prev, franjas_horarias: payload } : prev));
+      setFranjasHorarias(normalizeFranjasHorarias(validation.payload));
+      setMiSede((prev) => (prev ? { ...prev, franjas_horarias: validation.payload } : prev));
     }
     setTimeout(() => setFranjasMsg(''), 3000);
   };
@@ -9777,11 +9821,7 @@ export default function AdminDashboard({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  sessionStorage.setItem('adminActiveTab', tab.id);
-                  navigate(`/admin?tab=${encodeURIComponent(tab.id)}`, { replace: true });
-                }}
+                onClick={() => selectAdminTab(tab.id)}
                 style={{
                   padding: '10px 18px',
                   border: 'none',
@@ -10156,11 +10196,7 @@ export default function AdminDashboard({
             key={tab.id}
             type="button"
             data-admin-tour-tab={tab.id}
-            onClick={() => {
-              setActiveTab(tab.id);
-              sessionStorage.setItem('adminActiveTab', tab.id);
-              navigate(`/admin?tab=${encodeURIComponent(tab.id)}`, { replace: true });
-            }}
+            onClick={() => selectAdminTab(tab.id)}
             style={{
               position: 'relative',
               padding: '10px 18px',
@@ -19414,6 +19450,24 @@ export default function AdminDashboard({
               <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 Define franjas semanales por día o fechas especiales (feriados/eventos). El precio se elige según la hora de inicio del turno (formato 24 h).
               </p>
+              {franjasOverlapMsg ? (
+                <div
+                  role="alert"
+                  style={{
+                    marginBottom: '14px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    color: '#b91c1c',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  ⚠️ {franjasOverlapMsg}
+                </div>
+              ) : null}
               {franjasHorarias.map((fj, idx) => (
                 <div
                   key={fj.id}
@@ -19626,14 +19680,14 @@ export default function AdminDashboard({
                 <button
                   type="button"
                   onClick={guardarFranjas}
-                  disabled={franjasSaving}
+                  disabled={franjasSaving || !!franjasOverlapMsg}
                   style={{
                     padding: '8px 20px',
-                    background: franjasSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)',
+                    background: franjasSaving || franjasOverlapMsg ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
-                    cursor: franjasSaving ? 'not-allowed' : 'pointer',
+                    cursor: franjasSaving || franjasOverlapMsg ? 'not-allowed' : 'pointer',
                     fontWeight: 'bold',
                     fontSize: '13px',
                   }}
@@ -20254,6 +20308,24 @@ export default function AdminDashboard({
                   <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                     Define precios distintos según día y horario. Cuando hay una franja activa que coincide con el turno, el precio de franja reemplaza al precio base y Surge no aplica.
                   </p>
+                  {franjasPrecioOverlapMsg ? (
+                    <div
+                      role="alert"
+                      style={{
+                        marginBottom: '14px',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        color: '#b91c1c',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      ⚠️ {franjasPrecioOverlapMsg}
+                    </div>
+                  ) : null}
 
                   {/* Tabla de franjas existentes */}
                   {franjasLoading ? (
@@ -20334,8 +20406,8 @@ export default function AdminDashboard({
                             style={{ width: '110px', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: 700, textAlign: 'right', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
                         </div>
                       ))}
-                      <button type="button" onClick={saveFranja} disabled={franjaSaving}
-                        style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: franjaSaving ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: franjaSaving ? 'not-allowed' : 'pointer', alignSelf: 'flex-end' }}>
+                      <button type="button" onClick={saveFranja} disabled={franjaSaving || !!franjasPrecioOverlapMsg}
+                        style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: franjaSaving || franjasPrecioOverlapMsg ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: franjaSaving || franjasPrecioOverlapMsg ? 'not-allowed' : 'pointer', alignSelf: 'flex-end' }}>
                         {franjaSaving ? 'Guardando…' : 'Agregar franja'}
                       </button>
                     </div>

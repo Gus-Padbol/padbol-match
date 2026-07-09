@@ -13,6 +13,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
   const [msg, setMsg] = useState('');
   const [savingId, setSavingId] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [showNewForm, setShowNewForm] = useState(false);
   const [draft, setDraft] = useState({ nombre: '', descripcion: '', precio: '', imagen_url: '', stock: '' });
   const [edits, setEdits] = useState({});
   const [editRow, setEditRow] = useState(null);
@@ -176,6 +177,11 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
     );
   };
 
+  const resetNewForm = () => {
+    setDraft({ nombre: '', descripcion: '', precio: '', imagen_url: '', stock: '' });
+    setShowNewForm(false);
+  };
+
   const crear = async () => {
     const nombre = String(draft.nombre || '').trim();
     if (!nombre) {
@@ -200,7 +206,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || 'No se pudo crear');
-      setDraft({ nombre: '', descripcion: '', precio: '', imagen_url: '', stock: '' });
+      resetNewForm();
       await load();
     } catch (e) {
       setMsg(e.message || 'Error');
@@ -358,6 +364,11 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{t('admin.common.loadingEllipsis')}</p>
       ) : (
         <>
+          {extras.length === 0 && !showNewForm ? (
+            <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+              No hay extras cargados todavía.
+            </p>
+          ) : null}
           {extras.map((row) => {
             const ed = edits[row.id] || { precio: '', activo: true };
             const pendiente = !row.aprobado_super;
@@ -523,7 +534,25 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
             );
           })}
 
-          <div style={{ ...card, marginTop: 18 }}>
+          {!showNewForm ? (
+            <button
+              type="button"
+              onClick={() => setShowNewForm(true)}
+              style={{
+                padding: '10px 18px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--bg-page)',
+                color: 'var(--text-primary)',
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              + Agregar extra
+            </button>
+          ) : (
+          <div style={{ ...card, marginTop: extras.length ? 8 : 0 }}>
             <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>Nuevo extra</div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.formularios.name')}</label>
             <input
@@ -564,24 +593,44 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               value: draft.imagen_url,
               onChangeUrl: (url) => setDraft((d) => ({ ...d, imagen_url: url })),
             })}
-            <button
-              type="button"
-              disabled={creating}
-              onClick={crear}
-              style={{
-                padding: '10px 18px',
-                borderRadius: 8,
-                border: 'none',
-                background: creating ? '#9ca3af' : 'var(--accent)',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 14,
-                cursor: creating ? 'wait' : 'pointer',
-              }}
-            >
-              {creating ? 'Creando…' : 'Crear extra'}
-            </button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <button
+                type="button"
+                disabled={creating}
+                onClick={crear}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: creating ? '#9ca3af' : 'var(--accent)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: creating ? 'wait' : 'pointer',
+                }}
+              >
+                {creating ? 'Creando…' : 'Crear extra'}
+              </button>
+              <button
+                type="button"
+                disabled={creating}
+                onClick={resetNewForm}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-page)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: creating ? 'wait' : 'pointer',
+                }}
+              >
+                {t('general.cancel')}
+              </button>
+            </div>
           </div>
+          )}
         </>
       )}
       <ConfirmModal
