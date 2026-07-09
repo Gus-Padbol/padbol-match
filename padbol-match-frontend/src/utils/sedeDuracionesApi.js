@@ -11,6 +11,9 @@ export const MI_SEDE_PRECIOS_DEPORTE_OPTIONS = [
   { value: 'tenis', label: 'Tenis' },
 ];
 
+/** Duraciones administrables en Mi Sede → Precios (esta etapa). */
+export const MI_SEDE_PRECIOS_DURACIONES_PERMITIDAS = [60, 90, 120];
+
 export function resolveSedeDuracionesApiBase(apiBaseUrl) {
   return String(apiBaseUrl || DEFAULT_API_BASE).replace(/\/$/, '');
 }
@@ -62,6 +65,19 @@ export function tieneDuracionDuplicada(rows, duracionMinutos, deporteSel) {
   const dm = Number(duracionMinutos);
   if (!Number.isFinite(dm)) return false;
   return filterDuracionesPorDeporte(rows, deporteSel).some((r) => Number(r?.duracion_minutos) === dm);
+}
+
+export function esDuracionPrecioAdminEstandar(duracionMinutos) {
+  const dm = Number(duracionMinutos);
+  return MI_SEDE_PRECIOS_DURACIONES_PERMITIDAS.includes(dm);
+}
+
+/** Minutos de 60/90/120 que aún no existen para la disciplina/base seleccionada. */
+export function duracionesPrecioAdminDisponiblesParaAgregar(rows, deporteSel) {
+  const existentes = new Set(
+    filterDuracionesPorDeporte(rows, deporteSel).map((r) => Number(r?.duracion_minutos)),
+  );
+  return MI_SEDE_PRECIOS_DURACIONES_PERMITIDAS.filter((dm) => !existentes.has(dm));
 }
 
 function buildDuracionesUrl(base, sedeId, pathSuffix = '', deporte) {

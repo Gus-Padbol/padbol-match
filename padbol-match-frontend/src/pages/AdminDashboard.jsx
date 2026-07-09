@@ -110,6 +110,8 @@ import {
   deleteSedeDuracion,
   deporteLabelMiSedePrecios,
   deporteQueryParam,
+  duracionesPrecioAdminDisponiblesParaAgregar,
+  esDuracionPrecioAdminEstandar,
   fetchSedeDuraciones,
   tieneDuracionDuplicada,
   updateSedeDuracion,
@@ -7716,8 +7718,7 @@ export default function AdminDashboard({
   const [miSedeDuracionEliminandoId, setMiSedeDuracionEliminandoId] = useState(null);
   const [miSedePreciosDeporte, setMiSedePreciosDeporte] = useState('__base__');
   const [miSedeNuevaDuracion, setMiSedeNuevaDuracion] = useState({
-    modo: 'custom',
-    duracion_minutos: '',
+    modo: '60',
     precio: '',
     activo: true,
   });
@@ -8064,6 +8065,19 @@ export default function AdminDashboard({
     }
     setMiSedeDuracionDrafts(next);
   }, [miSedeDuraciones]);
+
+  const miSedeDuracionesAgregarOpciones = useMemo(
+    () => duracionesPrecioAdminDisponiblesParaAgregar(miSedeDuraciones, miSedePreciosDeporte),
+    [miSedeDuraciones, miSedePreciosDeporte],
+  );
+
+  useEffect(() => {
+    if (!miSedeDuracionesAgregarOpciones.length) return;
+    const modoNum = Number(miSedeNuevaDuracion.modo);
+    if (!miSedeDuracionesAgregarOpciones.includes(modoNum)) {
+      setMiSedeNuevaDuracion((p) => ({ ...p, modo: String(miSedeDuracionesAgregarOpciones[0]) }));
+    }
+  }, [miSedeDuracionesAgregarOpciones, miSedeNuevaDuracion.modo]);
 
   useEffect(() => {
     if (activeTab !== 'mi_sede' || !sedeId || !miSede) {
@@ -8536,16 +8550,16 @@ export default function AdminDashboard({
       setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
       return;
     }
-    const dm =
-      miSedeNuevaDuracion.modo === '90'
-        ? 90
-        : miSedeNuevaDuracion.modo === '120'
-          ? 120
-          : parseInt(String(miSedeNuevaDuracion.duracion_minutos || '').replace(/\D/g, ''), 10);
+    const dm = parseInt(String(miSedeNuevaDuracion.modo || ''), 10);
     const pr = parseInt(String(miSedeNuevaDuracion.precio || '').replace(/\D/g, ''), 10);
-    if (!Number.isFinite(dm) || dm < 15 || dm > 480) {
-      setMiSedeDuracionesMsg(t('admin.formularios.durationRange'));
+    if (!esDuracionPrecioAdminEstandar(dm)) {
+      setMiSedeDuracionesMsg('Solo se permiten duraciones de 60, 90 o 120 minutos.');
       setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
+      return;
+    }
+    if (!miSedeDuracionesAgregarOpciones.includes(dm)) {
+      setMiSedeDuracionesMsg(`La duración de ${dm} min ya está configurada para esta disciplina.`);
+      setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
       return;
     }
     if (!Number.isFinite(pr) || pr < 0) {
@@ -8571,7 +8585,7 @@ export default function AdminDashboard({
       const dep = deporteQueryParam(miSedePreciosDeporte);
       if (dep) payload.deporte = dep;
       await createSedeDuracion(sedeId, session.access_token, payload, { apiBaseUrl });
-      setMiSedeNuevaDuracion({ modo: 'custom', duracion_minutos: '', precio: '', activo: true });
+      setMiSedeNuevaDuracion({ modo: '60', precio: '', activo: true });
       await cargarMiSedeDuraciones();
       setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
@@ -19186,6 +19200,9 @@ export default function AdminDashboard({
               <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 Base aplica cuando no hay precio específico para una disciplina.
               </p>
+              <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                En esta etapa solo se administran turnos de 60, 90 y 120 minutos.
+              </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
                 <button
@@ -19248,6 +19265,7 @@ export default function AdminDashboard({
                   {miSedeDuraciones.map((row) => {
                     const dr = miSedeDuracionDrafts[row.id] || { precio: '', activo: !!row.activo };
                     const mon = miSedeForm.moneda || 'ARS';
+                    const esEstandar = esDuracionPrecioAdminEstandar(row.duracion_minutos);
                     return (
                       <div
                         key={row.id}
@@ -19259,12 +19277,27 @@ export default function AdminDashboard({
                           gap: '10px',
                           maxWidth: '100%',
                           boxSizing: 'border-box',
+                          opacity: esEstandar ? 1 : 0.92,
                         }}
                       >
                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontWeight: 800, fontSize: '14px', color: 'var(--text-primary)' }}>
                             {row.duracion_minutos} min
                           </span>
+                          {!esEstandar ? (
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                padding: '2px 8px',
+                                borderRadius: '999px',
+                                background: '#fef3c7',
+                                color: '#92400e',
+                              }}
+                            >
+                              No estándar
+                            </span>
+                          ) : null}
                           <span
                             style={{
                               fontSize: '11px',
@@ -19281,34 +19314,59 @@ export default function AdminDashboard({
                             {deporteLabelMiSedePrecios(row.deporte)}
                           </span>
                         </div>
+                        {!esEstandar ? (
+                          <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                            Duración heredada de datos anteriores. Solo podés activarla, desactivarla o quitarla; no se puede
+                            editar desde esta etapa.
+                          </p>
+                        ) : null}
                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
                           <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                             Precio ({mon})
                           </label>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            value={precioDuracionInputDisplay(dr.precio === '' ? '' : dr.precio)}
-                            onChange={(e) => {
-                              const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
-                              setMiSedeDuracionDrafts((p) => ({
-                                ...p,
-                                [row.id]: { ...dr, precio: digits },
-                              }));
-                            }}
-                            style={{
-                              flex: '1 1 120px',
-                              minWidth: '100px',
-                              maxWidth: '100%',
-                              padding: '8px 10px',
-                              borderRadius: '8px',
-                              border: '1px solid var(--border)',
-                              fontSize: '14px',
-                              fontWeight: 700,
-                              textAlign: 'right',
-                              boxSizing: 'border-box',
-                            }}
-                          />
+                          {esEstandar ? (
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={precioDuracionInputDisplay(dr.precio === '' ? '' : dr.precio)}
+                              onChange={(e) => {
+                                const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
+                                setMiSedeDuracionDrafts((p) => ({
+                                  ...p,
+                                  [row.id]: { ...dr, precio: digits },
+                                }));
+                              }}
+                              style={{
+                                flex: '1 1 120px',
+                                minWidth: '100px',
+                                maxWidth: '100%',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border)',
+                                fontSize: '14px',
+                                fontWeight: 700,
+                                textAlign: 'right',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                flex: '1 1 120px',
+                                minWidth: '100px',
+                                padding: '8px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border)',
+                                fontSize: '14px',
+                                fontWeight: 700,
+                                textAlign: 'right',
+                                color: 'var(--text-secondary)',
+                                background: 'var(--bg-page)',
+                              }}
+                            >
+                              {precioDuracionInputDisplay(dr.precio === '' ? row.precio : dr.precio) || '—'}
+                            </span>
+                          )}
                           <label
                             style={{
                               display: 'inline-flex',
@@ -19375,6 +19433,7 @@ export default function AdminDashboard({
                 </div>
               )}
 
+              {miSedeDuracionesAgregarOpciones.length > 0 ? (
               <div
                 style={{
                   marginTop: '8px',
@@ -19389,75 +19448,25 @@ export default function AdminDashboard({
                   {t('admin.notif.addDuration')}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => setMiSedeNuevaDuracion((p) => ({ ...p, modo: '90', duracion_minutos: '90' }))}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      border: miSedeNuevaDuracion.modo === '90' ? '2px solid #E11B22' : '1px solid var(--border)',
-                      background: miSedeNuevaDuracion.modo === '90' ? '#fef2f2' : 'var(--bg-page)',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    90 min
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMiSedeNuevaDuracion((p) => ({ ...p, modo: '120', duracion_minutos: '120' }))}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      border: miSedeNuevaDuracion.modo === '120' ? '2px solid #E11B22' : '1px solid var(--border)',
-                      background: miSedeNuevaDuracion.modo === '120' ? '#fef2f2' : 'var(--bg-page)',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    120 min
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMiSedeNuevaDuracion((p) => ({ ...p, modo: 'custom' }))}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      border: miSedeNuevaDuracion.modo === 'custom' ? '2px solid #E11B22' : '1px solid var(--border)',
-                      background: miSedeNuevaDuracion.modo === 'custom' ? '#fef2f2' : 'var(--bg-page)',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Personalizada
-                  </button>
+                  {miSedeDuracionesAgregarOpciones.map((dm) => (
+                    <button
+                      key={dm}
+                      type="button"
+                      onClick={() => setMiSedeNuevaDuracion((p) => ({ ...p, modo: String(dm) }))}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: miSedeNuevaDuracion.modo === String(dm) ? '2px solid #E11B22' : '1px solid var(--border)',
+                        background: miSedeNuevaDuracion.modo === String(dm) ? '#fef2f2' : 'var(--bg-page)',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {dm} min
+                    </button>
+                  ))}
                 </div>
-                {miSedeNuevaDuracion.modo === 'custom' ? (
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={15}
-                    max={480}
-                    placeholder={t('admin.formularios.minutesPh')}
-                    value={miSedeNuevaDuracion.duracion_minutos}
-                    onChange={(e) =>
-                      setMiSedeNuevaDuracion((p) => ({
-                        ...p,
-                        duracion_minutos: e.target.value.replace(/\D/g, '').slice(0, 3),
-                      }))
-                    }
-                    style={{
-                      width: '120px',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border)',
-                      fontSize: '14px',
-                    }}
-                  />
-                ) : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                   <input
                     type="text"
@@ -19507,10 +19516,16 @@ export default function AdminDashboard({
                 </div>
                 <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   La duración se creará para{' '}
-                  <strong>{deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}</strong>. Duración entre 15 y
-                  480 minutos.
+                  <strong>{deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}</strong>. Solo podés agregar 60,
+                  90 o 120 minutos.
                 </p>
               </div>
+              ) : (
+                <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  Ya configuraste las duraciones estándar (60, 90 y 120 min) para{' '}
+                  {deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}.
+                </p>
+              )}
             </div>
           </div>
           ) : null}
