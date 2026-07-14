@@ -689,7 +689,11 @@
       "manualGroupDrawTitle": "Sorteio manual de grupos",
       "editTournament": "Editar torneio",
       "deleteTournament": "Excluir torneio",
-      "filterDeporte": "Esporte"
+      "filterDeporte": "Esporte",
+      "abandonCreateTitle": "Leave creation?",
+      "abandonCreateMessage": "Are you sure you want to abandon tournament creation?",
+      "continueEditing": "Keep editing",
+      "discardCreate": "Discard"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 solicitação pendente",
@@ -1061,7 +1065,7 @@
       "manageOneVenue": "Gerenciar uma sede específica",
       "manageFullCountry": "Gerencie um país inteiro",
       "manageRegion": "Gerencie uma área específica",
-      "selectCountry": "Selecione o país",
+      "selectCountry": "Select country",
       "venueInvite48h": "Convite da sede (48 horas):",
       "venueInfoNotFound": "Nenhuma informação sobre a sede foi encontrada.",
       "coordsGoogleMapsHint": "Você pode obter as coordenadas no Google Maps (clique com o botão direito → \"O que há aqui?\")",
@@ -1127,7 +1131,10 @@
       "cropLogoShort": "Cortar logotipo",
       "uploadingOneOfOne": "Carregando 1 de 1...",
       "uploadingNPhotos": "Carregando {{count}} fotos...",
-      "myVenueSectionsAria": "Seções Minha Sede"
+      "myVenueSectionsAria": "Seções Minha Sede",
+      "whatsappPrefixHint": "Country prefix is filled automatically. Example: {{example}}",
+      "whatsappPrefixMismatch": "WhatsApp does not match the new country. Review the number before saving.",
+      "whatsappNoCodeManual": "This country has no catalog prefix. Enter WhatsApp manually."
     },
     "reservasLabel": "Reservas",
     "reservas": {

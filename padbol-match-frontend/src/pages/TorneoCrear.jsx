@@ -1,7 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import SedeSearchInput from '../components/SedeSearchInput';
+import ConfirmModal from '../components/ConfirmModal';
 import {
   hubContentPaddingTopCss,
   hubMainPaddingBottomCss,
@@ -31,6 +40,7 @@ import {
   formatoEquipoPayloadParaApi,
   normalizeTorneoDeporte,
 } from '../utils/torneoDeporteFormato';
+import { useSafeTranslation } from '../i18n/tSafe';
 
 function formatSedeTorneoOption(sede) {
   const nombre = String(sede?.nombre || '').trim();
@@ -38,42 +48,50 @@ function formatSedeTorneoOption(sede) {
   return ciudad ? `${nombre} - ${ciudad}` : nombre;
 }
 
-export default function TorneoCrear({
+const EMPTY_TORNEO_FORM = () => ({
+  nombre: '',
+  sede_id: '',
+  nivel_torneo: 'club',
+  categoria: CATEGORIA_TORNEO_DEFAULT,
+  tipo_competencia: TORNEO_TIPO_COMPETENCIA_DEFAULT,
+  categoria_edad: TORNEO_CATEGORIA_EDAD_DEFAULT,
+  tipo_torneo: 'round_robin',
+  fecha_inicio: '',
+  fecha_fin: '',
+  cantidad_equipos: '',
+  inscripcion_monto: '',
+  inscripcion_moneda: 'ARS',
+  premios_descripcion: '',
+  puntos_total: '',
+  cupos_maximos: '',
+  horas_revelar_equipos: '48',
+  estado: 'proximo',
+  es_multisede: false,
+  equipos_por_grupo: '',
+  clasificados_por_grupo: '',
+  mejores_terceros_clasificados: '',
+  fecha_apertura_inscripcion: '',
+  deporte: TORNEO_DEPORTE_PADBOL,
+  formato_equipo: TORNEO_FORMATO_DOBLES,
+});
+
+const TorneoCrear = forwardRef(function TorneoCrear({
   apiBaseUrl = 'https://padbol-backend.onrender.com',
   rol: rolProp = null,
   /** Dentro del panel /admin: sin AppHeader ni BottomNav. */
   embedded = false,
   onClose,
   onCreated,
-}) {
+  onDirtyChange,
+}, ref) {
+  const { t } = useSafeTranslation();
   const [sedes, setSedes] = useState([]);
   const [tiposCustom, setTiposCustom] = useState([]);
-  const [formData, setFormData] = useState({
-    nombre: '',
-    sede_id: '',
-    nivel_torneo: 'club',
-    categoria: CATEGORIA_TORNEO_DEFAULT,
-    tipo_competencia: TORNEO_TIPO_COMPETENCIA_DEFAULT,
-    categoria_edad: TORNEO_CATEGORIA_EDAD_DEFAULT,
-    tipo_torneo: 'round_robin',
-    fecha_inicio: '',
-    fecha_fin: '',
-    cantidad_equipos: '',
-    inscripcion_monto: '',
-    inscripcion_moneda: 'ARS',
-    premios_descripcion: '',
-    puntos_total: '',
-    cupos_maximos: '',
-    horas_revelar_equipos: '48',
-    estado: 'proximo',
-    es_multisede: false,
-    equipos_por_grupo: '',
-    clasificados_por_grupo: '',
-    mejores_terceros_clasificados: '',
-    fecha_apertura_inscripcion: '',
-    deporte: TORNEO_DEPORTE_PADBOL,
-    formato_equipo: TORNEO_FORMATO_DOBLES,
-  });
+  const [formData, setFormData] = useState(() => EMPTY_TORNEO_FORM());
+  const [baseline, setBaseline] = useState(() => EMPTY_TORNEO_FORM());
+  const [abandonOpen, setAbandonOpen] = useState(false);
+  const pendingLeaveRef = useRef(null);
+  const isDirtyRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -93,6 +111,16 @@ export default function TorneoCrear({
   const rol = rolProp || rolFromHook;
   const esAdminClub = rol === 'admin_club';
 
+  const isDirty = useMemo(
+    () => JSON.stringify(formData) !== JSON.stringify(baseline),
+    [formData, baseline],
+  );
+
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
   useEffect(() => {
     fetch(`${apiBaseUrl}/api/sedes`)
       .then((res) => res.json())
@@ -110,12 +138,72 @@ export default function TorneoCrear({
   useEffect(() => {
     if (!esAdminClub || sedeId == null || sedeId === '') return;
     const idStr = String(sedeId);
-    setFormData((prev) => ({
-      ...prev,
-      sede_id: idStr,
-      es_multisede: false,
-    }));
+    // Misma mutación en form y baseline: auto-sede no marca dirty ni borra edits del usuario.
+    setFormData((prev) => {
+      if (prev.sede_id === idStr && prev.es_multisede === false) return prev;
+      return { ...prev, sede_id: idStr, es_multisede: false };
+    });
+    setBaseline((prev) => {
+      if (prev.sede_id === idStr && prev.es_multisede === false) return prev;
+      return { ...prev, sede_id: idStr, es_multisede: false };
+    });
   }, [esAdminClub, sedeId]);
+
+  const resetFormClean = useCallback(() => {
+    const next = esAdminClub && sedeId != null && sedeId !== ''
+      ? { ...EMPTY_TORNEO_FORM(), sede_id: String(sedeId), es_multisede: false }
+      : EMPTY_TORNEO_FORM();
+    setFormData(next);
+    setBaseline(next);
+    setMensaje('');
+    setError('');
+    isDirtyRef.current = false;
+    onDirtyChange?.(false);
+  }, [esAdminClub, onDirtyChange, sedeId]);
+
+  const requestLeave = useCallback((onAllowed) => {
+    if (!isDirtyRef.current) {
+      onAllowed?.();
+      return;
+    }
+    pendingLeaveRef.current = onAllowed;
+    setAbandonOpen(true);
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    tryLeave: requestLeave,
+    isDirty: () => isDirtyRef.current,
+    resetClean: resetFormClean,
+  }), [requestLeave, resetFormClean]);
+
+  useEffect(() => {
+    if (!embedded) return undefined;
+    const onBeforeUnload = (ev) => {
+      if (!isDirtyRef.current) return;
+      ev.preventDefault();
+      ev.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [embedded]);
+
+  useEffect(() => {
+    if (!embedded) return undefined;
+    window.history.pushState({ padbolTorneoCrear: true }, '');
+    const onPopState = () => {
+      if (!isDirtyRef.current) {
+        onClose?.();
+        return;
+      }
+      window.history.pushState({ padbolTorneoCrear: true }, '');
+      requestLeave(() => {
+        resetFormClean();
+        onClose?.();
+      });
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [embedded, onClose, requestLeave, resetFormClean]);
 
   const sedeSeleccionada = useMemo(
     () => sedes.find((s) => String(s.id) === String(formData.sede_id)),
@@ -274,6 +362,7 @@ export default function TorneoCrear({
 
       if (response.ok) {
         setMensaje('✅ Torneo creado correctamente');
+        resetFormClean();
         const nuevoId = result?.[0]?.id;
         if (embedded) {
           if (nuevoId != null) onCreated?.(nuevoId);
@@ -302,7 +391,10 @@ export default function TorneoCrear({
         {embedded && onClose ? (
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => requestLeave(() => {
+              resetFormClean();
+              onClose?.();
+            })}
             style={{
               marginBottom: '16px',
               padding: '8px 14px',
@@ -713,11 +805,34 @@ export default function TorneoCrear({
     />
   );
 
+  const abandonModal = (
+    <ConfirmModal
+      open={abandonOpen}
+      title={t('admin.torneosSection.abandonCreateTitle')}
+      message={t('admin.torneosSection.abandonCreateMessage')}
+      dismissLabel={t('admin.torneosSection.continueEditing')}
+      confirmLabel={t('admin.torneosSection.discardCreate')}
+      confirmDanger
+      onDismiss={() => {
+        setAbandonOpen(false);
+        pendingLeaveRef.current = null;
+      }}
+      onConfirm={() => {
+        const next = pendingLeaveRef.current;
+        pendingLeaveRef.current = null;
+        setAbandonOpen(false);
+        resetFormClean();
+        next?.();
+      }}
+    />
+  );
+
   if (embedded) {
     return (
       <>
         {formulario}
         {puntosModal}
+        {abandonModal}
       </>
     );
   }
@@ -750,6 +865,9 @@ export default function TorneoCrear({
       </div>
       <BottomNav />
       {puntosModal}
+      {abandonModal}
     </div>
   );
-}
+});
+
+export default TorneoCrear;

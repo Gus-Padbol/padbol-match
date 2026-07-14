@@ -984,7 +984,11 @@
       "filterDeporte": "Deporte",
       "manualGroupDrawTitle": "Sorteo manual de grupos",
       "editTournament": "Editar torneo",
-      "deleteTournament": "Eliminar torneo"
+      "deleteTournament": "Eliminar torneo",
+      "abandonCreateTitle": "¿Abandonar creación?",
+      "abandonCreateMessage": "¿Seguro que querés abandonar la creación del torneo?",
+      "continueEditing": "Continuar editando",
+      "discardCreate": "Descartar"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 solicitud pendiente",
@@ -1441,7 +1445,10 @@
       "cropLogoShort": "Recortar logo",
       "uploadingOneOfOne": "Subiendo 1 de 1...",
       "uploadingNPhotos": "Subiendo {{count}} fotos...",
-      "myVenueSectionsAria": "Secciones Mi Sede"
+      "myVenueSectionsAria": "Secciones Mi Sede",
+      "whatsappPrefixHint": "Se completa el prefijo según el país. Ejemplo: {{example}}",
+      "whatsappPrefixMismatch": "El WhatsApp no coincide con el nuevo país. Revisá el número antes de guardar.",
+      "whatsappNoCodeManual": "Este país no tiene prefijo en el catálogo. Completá el WhatsApp manualmente."
     },
     "reservasLabel": "Reservas",
     "reservas": {

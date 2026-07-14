@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
+import { codigoTelefonicoDesdePaisLabel } from '../utils/sedeWhatsappPais';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim(), codigo: p.codigo }))
@@ -148,10 +149,13 @@ export default function NuevaSedeSuperBottomSheet({
     if (!open) return;
     const base = initialState();
     if (inviteToken && invitePrefill) {
+      const paisPrefill = String(invitePrefill.pais || '').trim() || base.pais;
+      const codigoPrefill = codigoTelefonicoDesdePaisLabel(paisPrefill) || base.telefonoCodigo;
       setSt({
         ...base,
         nombre: String(invitePrefill.nombre_club || '').trim() || base.nombre,
-        pais: String(invitePrefill.pais || '').trim() || base.pais,
+        pais: paisPrefill,
+        telefonoCodigo: codigoPrefill,
         email_contacto: String(invitePrefill.email || '').trim().toLowerCase() || base.email_contacto,
       });
     } else {
@@ -171,7 +175,19 @@ export default function NuevaSedeSuperBottomSheet({
   }, [st.direccion]);
 
   const setField = useCallback((key, val) => {
-    setSt((prev) => ({ ...prev, [key]: val }));
+    setSt((prev) => {
+      if (key !== 'pais') return { ...prev, [key]: val };
+      const nextCodigo = codigoTelefonicoDesdePaisLabel(val);
+      const prevCodigo = codigoTelefonicoDesdePaisLabel(prev.pais);
+      let telefonoCodigo = prev.telefonoCodigo;
+      const localEmpty = !String(prev.telefonoLocal || '').trim();
+      if (nextCodigo) {
+        if (localEmpty || prev.telefonoCodigo === prevCodigo || !String(prev.telefonoCodigo || '').trim()) {
+          telefonoCodigo = nextCodigo;
+        }
+      }
+      return { ...prev, pais: val, telefonoCodigo };
+    });
   }, []);
 
   const totalCanchas = useMemo(() => {

@@ -689,7 +689,11 @@
       "manualGroupDrawTitle": "Manuelle Gruppenauslosung",
       "editTournament": "Turnier bearbeiten",
       "deleteTournament": "Turnier löschen",
-      "filterDeporte": "Sport"
+      "filterDeporte": "Sport",
+      "abandonCreateTitle": "Leave creation?",
+      "abandonCreateMessage": "Are you sure you want to abandon tournament creation?",
+      "continueEditing": "Keep editing",
+      "discardCreate": "Discard"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 ausstehende Anfrage",
@@ -1061,7 +1065,7 @@
       "manageOneVenue": "Verwalten Sie einen bestimmten Hauptsitz",
       "manageFullCountry": "Verwalten Sie ein ganzes Land",
       "manageRegion": "Verwalten Sie einen bestimmten Bereich",
-      "selectCountry": "Land auswählen",
+      "selectCountry": "Select country",
       "venueInvite48h": "Einladung zur Zentrale (48 Stunden):",
       "venueInfoNotFound": "Es wurden keine Informationen zum Hauptquartier gefunden.",
       "coordsGoogleMapsHint": "Die Koordinaten erhalten Sie über Google Maps (Rechtsklick → „Was ist hier?“)",
@@ -1127,7 +1131,10 @@
       "cropLogoShort": "Crop-Logo",
       "uploadingOneOfOne": "1 von 1 wird hochgeladen...",
       "uploadingNPhotos": "{{count}} Fotos werden hochgeladen...",
-      "myVenueSectionsAria": "Abschnitte Mein Hauptquartier"
+      "myVenueSectionsAria": "Abschnitte Mein Hauptquartier",
+      "whatsappPrefixHint": "Country prefix is filled automatically. Example: {{example}}",
+      "whatsappPrefixMismatch": "WhatsApp does not match the new country. Review the number before saving.",
+      "whatsappNoCodeManual": "This country has no catalog prefix. Enter WhatsApp manually."
     },
     "reservasLabel": "Reservierungen",
     "reservas": {

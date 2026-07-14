@@ -718,7 +718,11 @@
       "filterDeporte": "رياضة",
       "manualGroupDrawTitle": "رسم جماعي يدوي",
       "editTournament": "تحرير البطولة",
-      "deleteTournament": "حذف البطولة"
+      "deleteTournament": "حذف البطولة",
+      "abandonCreateTitle": "Leave creation?",
+      "abandonCreateMessage": "Are you sure you want to abandon tournament creation?",
+      "continueEditing": "Keep editing",
+      "discardCreate": "Discard"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 طلب معلق",
@@ -1090,7 +1094,7 @@
       "manageOneVenue": "إدارة مقر معين",
       "manageFullCountry": "إدارة بلد بأكمله",
       "manageRegion": "إدارة منطقة معينة",
-      "selectCountry": "اختر البلد",
+      "selectCountry": "Select country",
       "venueInvite48h": "دعوة المقر (48 ساعة):",
       "venueInfoNotFound": "ولم يتم العثور على معلومات حول المقر.",
       "coordsGoogleMapsHint": "يمكنك الحصول على الإحداثيات من خرائط Google (انقر بزر الماوس الأيمن → \"ماذا هنا؟\")",
@@ -1156,7 +1160,10 @@
       "cropLogoShort": "شعار المحاصيل",
       "uploadingOneOfOne": "تحميل 1 من 1...",
       "uploadingNPhotos": "جارٍ تحميل صور {{count}}...",
-      "myVenueSectionsAria": "أقسام مقري"
+      "myVenueSectionsAria": "أقسام مقري",
+      "whatsappPrefixHint": "Country prefix is filled automatically. Example: {{example}}",
+      "whatsappPrefixMismatch": "WhatsApp does not match the new country. Review the number before saving.",
+      "whatsappNoCodeManual": "This country has no catalog prefix. Enter WhatsApp manually."
     },
     "reservasLabel": "التحفظات",
     "reservas": {

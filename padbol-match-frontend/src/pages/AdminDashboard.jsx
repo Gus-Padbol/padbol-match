@@ -96,6 +96,14 @@ import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
+import ConfirmModal from '../components/ConfirmModal';
+import {
+  applyPaisChangeToWhatsapp,
+  exampleWhatsappForPaisLabel,
+  normalizeWhatsappForStorage,
+  paisOptionValueFromStored,
+  sanitizeWhatsappInput,
+} from '../utils/sedeWhatsappPais';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { fetchAdminCampanitaAlertas } from '../utils/adminCampanitaApi';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -955,7 +963,7 @@ function miSedeFormToApiPatchBody(form) {
     provincia:
       form.provincia != null && String(form.provincia).trim() !== '' ? String(form.provincia).trim() : null,
     pais: form.pais || null,
-    telefono: form.telefono || null,
+    telefono: normalizeWhatsappForStorage(form.telefono),
     email_contacto: form.email_contacto || null,
     horario_apertura: form.horario_apertura || null,
     horario_cierre: form.horario_cierre || null,
@@ -3545,6 +3553,10 @@ export default function AdminDashboard({
   const [reservas, setReservas] = useState([]);
   const [torneos, setTorneos] = useState([]);
   const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
+  const torneoCrearRef = useRef(null);
+  const crearTorneoEmbedOpenRef = useRef(false);
+  const torneoCrearDirtyRef = useRef(false);
+  useEffect(() => { crearTorneoEmbedOpenRef.current = crearTorneoEmbedOpen; }, [crearTorneoEmbedOpen]);
   const [sedeTorneoInteresCount, setSedeTorneoInteresCount] = useState(0);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
   const [filtroDeporteTorneoAdmin, setFiltroDeporteTorneoAdmin] = useState('todos');
@@ -5461,12 +5473,35 @@ export default function AdminDashboard({
       return;
     }
     const t = sanitizeAdminActiveTab(raw, rolPanel);
+    if (
+      crearTorneoEmbedOpenRef.current
+      && torneoCrearDirtyRef.current
+      && t !== 'torneos'
+    ) {
+      // Evitar salir con formulario dirty: volver a torneos y preguntar.
+      if (String(searchParams.get('tab') || '') !== 'torneos') {
+        navigate('/admin?tab=torneos', { replace: true });
+      }
+      torneoCrearRef.current?.tryLeave?.(() => {
+        setCrearTorneoEmbedOpen(false);
+        torneoCrearDirtyRef.current = false;
+        setActiveTab(t);
+        try {
+          sessionStorage.setItem('adminActiveTab', t);
+        } catch {
+          /* ignore */
+        }
+        navigate(`/admin?tab=${encodeURIComponent(t)}`, { replace: true });
+        if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
+      });
+      return;
+    }
     setActiveTab((prev) => {
       if (prev === t) return prev;
       sessionStorage.setItem('adminActiveTab', t);
       return t;
     });
-  }, [searchParams, rolPanel, esEmpleado, esEditorContenido]);
+  }, [searchParams, rolPanel, esEmpleado, esEditorContenido, navigate]);
 
   useEffect(() => {
     const section = String(searchParams.get('section') || '').trim().toLowerCase();
@@ -7696,6 +7731,7 @@ export default function AdminDashboard({
   const [miSede,        setMiSede]        = useState(null);
   const [miSedeLoading, setMiSedeLoading] = useState(false);
   const [miSedeForm,    setMiSedeForm]    = useState({});
+  const [miSedeWhatsappHint, setMiSedeWhatsappHint] = useState('');
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
   const [miSedeInstalacionesSaving, setMiSedeInstalacionesSaving] = useState(false);
   const [miSedeInstalacionesMsg, setMiSedeInstalacionesMsg] = useState('');
@@ -7819,7 +7855,7 @@ export default function AdminDashboard({
     if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
   }, []);
 
-  const selectAdminTab = useCallback(
+  const selectAdminTabInner = useCallback(
     (tabId) => {
       const id = sanitizeAdminActiveTab(tabId, rolPanel);
       setActiveTab(id);
@@ -7832,6 +7868,27 @@ export default function AdminDashboard({
       resetAdminPanelScroll();
     },
     [navigate, resetAdminPanelScroll, rolPanel],
+  );
+
+  const selectAdminTab = useCallback(
+    (tabId) => {
+      const id = sanitizeAdminActiveTab(tabId, rolPanel);
+      if (crearTorneoEmbedOpenRef.current && id !== 'torneos') {
+        const leave = () => {
+          setCrearTorneoEmbedOpen(false);
+          torneoCrearDirtyRef.current = false;
+          selectAdminTabInner(id);
+        };
+        if (torneoCrearDirtyRef.current && torneoCrearRef.current?.tryLeave) {
+          torneoCrearRef.current.tryLeave(leave);
+          return;
+        }
+        leave();
+        return;
+      }
+      selectAdminTabInner(id);
+    },
+    [rolPanel, selectAdminTabInner],
   );
 
   const selectMiSedeSection = useCallback(
@@ -7969,7 +8026,14 @@ export default function AdminDashboard({
       .then(([{ data: sedeData }, canRes]) => {
         if (sedeData) {
           setMiSede(sedeData);
-          setMiSedeForm(sedeDbRowToMiSedeFormState(sedeData));
+          setMiSedeForm(() => {
+            const base = sedeDbRowToMiSedeFormState(sedeData);
+            return {
+              ...base,
+              pais: paisOptionValueFromStored(base.pais, PAISES_SEDE_OPTIONS) || base.pais,
+            };
+          });
+          setMiSedeWhatsappHint('');
           setLicenciaForm({
             numero_licencia: sedeData.numero_licencia || '',
             fecha_licencia: sedeData.fecha_licencia || '',
@@ -11070,13 +11134,19 @@ export default function AdminDashboard({
         {crearTorneoEmbedOpen ? (
           <div className="section admin-torneo-crear-embed" style={{ marginBottom: '18px' }}>
             <TorneoCrear
+              ref={torneoCrearRef}
               embedded
               apiBaseUrl={apiBaseUrl}
               rol={rol}
-              onClose={() => setCrearTorneoEmbedOpen(false)}
+              onDirtyChange={(dirty) => { torneoCrearDirtyRef.current = Boolean(dirty); }}
+              onClose={() => {
+                setCrearTorneoEmbedOpen(false);
+                torneoCrearDirtyRef.current = false;
+              }}
               onCreated={() => {
                 void fetchData();
                 setCrearTorneoEmbedOpen(false);
+                torneoCrearDirtyRef.current = false;
               }}
             />
           </div>
@@ -18961,28 +19031,80 @@ export default function AdminDashboard({
                 { label: t('admin.sedes.address'),              field: 'direccion' },
                 { label: t('admin.formularios.cityLabel'),                 field: 'ciudad' },
                 { label: 'Provincia / Estado',     field: 'provincia' },
-                { label: t('admin.formularios.countryLabel'),                   field: 'pais' },
-                { label: t('admin.sedes.clubWhatsappLabel'),       field: 'telefono', placeholder: t('admin.sedes.phoneExamplePh'), hint: t('admin.sedes.phoneNoLeadingZero') },
+                { label: t('admin.formularios.countryLabel'),                   field: 'pais', isPais: true },
+                { label: t('admin.sedes.clubWhatsappLabel'),       field: 'telefono', isWhatsapp: true },
                 { label: t('admin.sedes.contactEmailLabel'),      field: 'email_contacto' },
                 { label: 'Horario apertura',       field: 'horario_apertura', placeholder: 'Ej: 08:00' },
                 { label: 'Horario cierre',         field: 'horario_cierre',   placeholder: 'Ej: 23:00' },
                 { label: t('admin.sedes.latitude'), field: 'latitud', placeholder: 'Ej: -34.92105', inputType: 'number' },
                 { label: t('admin.sedes.longitude'), field: 'longitud', placeholder: 'Ej: -57.96505', inputType: 'number', hint: t('admin.sedes.coordsGoogleMapsHint') },
-              ].map(({ label, field, placeholder, hint, inputType }) => (
+              ].map(({ label, field, placeholder, hint, inputType, isPais, isWhatsapp }) => (
                 <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                   <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>{label}</label>
                   <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
-                    <input
-                      type={inputType === 'number' ? 'number' : 'text'}
-                      step={inputType === 'number' ? 'any' : undefined}
-                      inputMode={inputType === 'number' ? 'decimal' : undefined}
-                      value={miSedeForm[field] || ''}
-                      placeholder={placeholder || ''}
-                      onChange={e => setMiSedeForm(p => ({ ...p, [field]: e.target.value }))}
-                      className="admin-mi-sede-theme-input"
-                      style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
-                    />
-                    {hint && <p className="admin-mi-sede-theme-muted" style={{ margin: '3px 0 0', fontSize: '11px' }}>{hint}</p>}
+                    {isPais ? (
+                      <select
+                        value={paisOptionValueFromStored(miSedeForm.pais, PAISES_SEDE_OPTIONS) || miSedeForm.pais || ''}
+                        onChange={(e) => {
+                          const nextPais = e.target.value;
+                          const { phone, warning } = applyPaisChangeToWhatsapp({
+                            prevPaisLabel: miSedeForm.pais,
+                            nextPaisLabel: nextPais,
+                            currentPhone: miSedeForm.telefono,
+                          });
+                          setMiSedeForm((p) => ({ ...p, pais: nextPais, telefono: phone }));
+                          if (warning === 'mismatch') {
+                            setMiSedeWhatsappHint(t('admin.sedes.whatsappPrefixMismatch'));
+                          } else if (warning === 'no_code') {
+                            setMiSedeWhatsappHint(t('admin.sedes.whatsappNoCodeManual'));
+                          } else {
+                            setMiSedeWhatsappHint('');
+                          }
+                        }}
+                        className="admin-mi-sede-theme-input"
+                        style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                      >
+                        <option value="">{t('admin.sedes.selectCountry')}</option>
+                        {PAISES_SEDE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    ) : isWhatsapp ? (
+                      <>
+                        <input
+                          type="tel"
+                          value={miSedeForm.telefono || ''}
+                          placeholder={exampleWhatsappForPaisLabel(miSedeForm.pais)}
+                          onChange={(e) => {
+                            setMiSedeForm((p) => ({ ...p, telefono: sanitizeWhatsappInput(e.target.value) }));
+                            setMiSedeWhatsappHint('');
+                          }}
+                          className="admin-mi-sede-theme-input"
+                          style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                          autoComplete="tel"
+                        />
+                        <p className="admin-mi-sede-theme-muted" style={{ margin: '3px 0 0', fontSize: '11px' }}>
+                          {t('admin.sedes.whatsappPrefixHint', { example: exampleWhatsappForPaisLabel(miSedeForm.pais) })}
+                        </p>
+                        {miSedeWhatsappHint ? (
+                          <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: 700, color: '#b45309' }}>
+                            {miSedeWhatsappHint}
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <input
+                        type={inputType === 'number' ? 'number' : 'text'}
+                        step={inputType === 'number' ? 'any' : undefined}
+                        inputMode={inputType === 'number' ? 'decimal' : undefined}
+                        value={miSedeForm[field] || ''}
+                        placeholder={placeholder || ''}
+                        onChange={e => setMiSedeForm(p => ({ ...p, [field]: e.target.value }))}
+                        className="admin-mi-sede-theme-input"
+                        style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                      />
+                    )}
+                    {hint && !isWhatsapp ? <p className="admin-mi-sede-theme-muted" style={{ margin: '3px 0 0', fontSize: '11px' }}>{hint}</p> : null}
                   </div>
                 </div>
               ))}

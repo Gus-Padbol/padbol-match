@@ -689,7 +689,11 @@
       "manualGroupDrawTitle": "Extragere manuală a grupului",
       "editTournament": "Editează turneul",
       "deleteTournament": "Șterge turneul",
-      "filterDeporte": "Sport"
+      "filterDeporte": "Sport",
+      "abandonCreateTitle": "Leave creation?",
+      "abandonCreateMessage": "Are you sure you want to abandon tournament creation?",
+      "continueEditing": "Keep editing",
+      "discardCreate": "Discard"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 cerere în așteptare",
@@ -1061,7 +1065,7 @@
       "manageOneVenue": "Gestionați un anumit sediu",
       "manageFullCountry": "Gestionați o țară întreagă",
       "manageRegion": "Gestionați o anumită zonă",
-      "selectCountry": "Selectați țara",
+      "selectCountry": "Select country",
       "venueInvite48h": "Invitație la sediul central (48 de ore):",
       "venueInfoNotFound": "Nu au fost găsite informații despre sediu.",
       "coordsGoogleMapsHint": "Puteți obține coordonatele din Google Maps (clic dreapta → „Ce este aici?”)",
@@ -1127,7 +1131,10 @@
       "cropLogoShort": "Logo de decupare",
       "uploadingOneOfOne": "Se încarcă 1 din 1...",
       "uploadingNPhotos": "Se încarcă {{count}} fotografii...",
-      "myVenueSectionsAria": "Secțiunile Sediul meu"
+      "myVenueSectionsAria": "Secțiunile Sediul meu",
+      "whatsappPrefixHint": "Country prefix is filled automatically. Example: {{example}}",
+      "whatsappPrefixMismatch": "WhatsApp does not match the new country. Review the number before saving.",
+      "whatsappNoCodeManual": "This country has no catalog prefix. Enter WhatsApp manually."
     },
     "reservasLabel": "Rezervări",
     "reservas": {

@@ -960,7 +960,11 @@
       "manualGroupDrawTitle": "Manual group draw",
       "editTournament": "Edit tournament",
       "deleteTournament": "Delete tournament",
-      "filterDeporte": "Sport"
+      "filterDeporte": "Sport",
+      "abandonCreateTitle": "Leave creation?",
+      "abandonCreateMessage": "Are you sure you want to abandon tournament creation?",
+      "continueEditing": "Keep editing",
+      "discardCreate": "Discard"
     },
     "notif": {
       "pendingRequestsTitleOne": "1 pending request",
@@ -1414,7 +1418,10 @@
       "cropLogoShort": "Crop logo",
       "uploadingOneOfOne": "Uploading 1 of 1...",
       "uploadingNPhotos": "Uploading {{count}} photos...",
-      "myVenueSectionsAria": "My Venue sections"
+      "myVenueSectionsAria": "My Venue sections",
+      "whatsappPrefixHint": "Country prefix is filled automatically. Example: {{example}}",
+      "whatsappPrefixMismatch": "WhatsApp does not match the new country. Review the number before saving.",
+      "whatsappNoCodeManual": "This country has no catalog prefix. Enter WhatsApp manually."
     },
     "reservasLabel": "Bookings",
     "reservas": {

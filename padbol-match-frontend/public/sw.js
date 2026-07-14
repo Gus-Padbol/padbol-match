@@ -1,7 +1,7 @@
 /* Padbol Match — service worker (shell + estáticos).
  * CACHE_VERSION lo inyecta scripts/emit-pwa-build-id.js en cada build / arranque.
  * skipWaiting + clients.claim: el nuevo SW toma control al instalarse. */
-const CACHE_VERSION = 'pwa-1784069431920';
+const CACHE_VERSION = 'pwa-1784070271648';
 
 /** postMessage al cliente cuando se reemplazó una caché anterior (actualización real). */
 const MSG_UPDATED = 'PM_SW_UPDATED';
