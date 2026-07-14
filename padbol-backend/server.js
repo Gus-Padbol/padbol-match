@@ -46,6 +46,12 @@ import {
   turnoCabeEnVentanasReserva,
   ventanasHorarioReserva,
 } from './lib/reservaSlotsHorarios.js';
+import {
+  buildCanchaDeporteWritePatch,
+  isMissingCanchaCustomColumnError,
+  mapCanchaPublicDto,
+  validateCanchaNombreVisible,
+} from './lib/canchaDeporteCustom.js';
 
 globalThis.WebSocket = ws;
 
@@ -986,15 +992,18 @@ function pickSedeRedesSocialesPublicas(sedeRow) {
 function enrichSingleCanchaAdminDto(row, allRowsSameSede) {
   const enriched = canchasConNumeroReserva(allRowsSameSede);
   const hit = enriched.find((c) => Number(c.id) === Number(row.id));
-  return {
-    id: row.id,
-    sede_id: row.sede_id,
-    nombre: String(row.nombre || '').trim(),
-    estado: normalizeEstadoCancha(row.estado),
-    deporte: row.deporte != null && String(row.deporte).trim() !== '' ? String(row.deporte).trim() : 'padbol',
-    descripcion: row.descripcion != null && String(row.descripcion).trim() !== '' ? String(row.descripcion).trim() : null,
-    orden: hit ? hit.numero_reserva : null,
-  };
+  const dto = mapCanchaPublicDto(
+    { ...row, estado: normalizeEstadoCancha(row.estado) },
+    { orden: hit ? hit.numero_reserva : null },
+  );
+  return dto;
+}
+
+function canchasCustomMigrationPendingResponse(res) {
+  return res.status(503).json({
+    error: 'Migración SQL de deporte custom pendiente (canchas_deporte_custom_migration.sql)',
+    code: 'CANCHAS_CUSTOM_MIGRATION_REQUIRED',
+  });
 }
 
 function paisAdminCoincideSedeSorteo(paisAdminRaw, paisSedeRaw) {
@@ -3510,35 +3519,45 @@ app.get('/api/sedes/:id/canchas', async (req, res) => {
   }
 });
 
-/** Alta de cancha (JWT). Body: nombre, estado?, descripcion? */
+/** Alta de cancha (JWT). Body: nombre, estado?, descripcion?, deporte?, metadatos custom MEJ-07. */
 app.post('/api/sedes/:id/canchas', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID de sede inválido' });
     await assertUsuarioPuedeAdministrarSede(req, id);
     const b = req.body || {};
-    const nombre = String(b.nombre || '').trim();
-    if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+    const nombreVal = validateCanchaNombreVisible(b.nombre, { required: true });
+    if (!nombreVal.ok) return res.status(nombreVal.status).json({ error: nombreVal.error });
     const estado = normalizeEstadoCancha(b.estado != null ? b.estado : 'activa');
     const descripcion =
       b.descripcion != null && String(b.descripcion).trim() !== '' ? String(b.descripcion).trim() : null;
 
-    const depCol = normalizeCanchaDeporteColumnaBody(b.deporte);
-    if (depCol === null) return res.status(400).json({ error: 'deporte inválido' });
+    const depWrite = buildCanchaDeporteWritePatch(b, { mode: 'create' });
+    if (!depWrite.ok) return res.status(depWrite.status).json({ error: depWrite.error });
 
     const existing = await fetchCanchasRowsForSede(id);
     const enriched = canchasConNumeroReserva(existing);
     const nextOrden =
       enriched.length > 0 ? Math.max(...enriched.map((c) => c.numero_reserva)) + 1 : 1;
 
-    const insertPayload = { sede_id: id, nombre, estado, orden: nextOrden, deporte: depCol };
+    const insertPayload = {
+      sede_id: id,
+      nombre: nombreVal.nombre,
+      estado,
+      orden: nextOrden,
+      ...depWrite.patch,
+    };
     if (descripcion) insertPayload.descripcion = descripcion;
 
     const { data: created, error } = await supabase.from('canchas').insert(insertPayload).select('*').single();
-    if (error) throw error;
+    if (error) {
+      if (isMissingCanchaCustomColumnError(error)) return canchasCustomMigrationPendingResponse(res);
+      throw error;
+    }
     const all = await fetchCanchasRowsForSede(id);
     res.status(201).json({ cancha: enrichSingleCanchaAdminDto(created, all) });
   } catch (err) {
+    if (isMissingCanchaCustomColumnError(err)) return canchasCustomMigrationPendingResponse(res);
     const st = err.status || 500;
     if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
     console.error('❌ POST /api/sedes/:id/canchas:', err?.message || err);
@@ -3546,12 +3565,12 @@ app.post('/api/sedes/:id/canchas', async (req, res) => {
   }
 });
 
-/** Actualización parcial de cancha (JWT). Body: nombre?, estado?, descripcion? */
+/** Actualización parcial de cancha (JWT). Body: nombre?, estado?, descripcion?, deporte?, metadatos custom. */
 app.patch('/api/canchas/:id', async (req, res) => {
   try {
     const cid = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(cid)) return res.status(400).json({ error: 'ID de cancha inválido' });
-    const { data: row, error: e1 } = await supabase.from('canchas').select('id, sede_id').eq('id', cid).maybeSingle();
+    const { data: row, error: e1 } = await supabase.from('canchas').select('*').eq('id', cid).maybeSingle();
     if (e1) throw e1;
     if (!row) return res.status(404).json({ error: 'Cancha no encontrada' });
     await assertUsuarioPuedeAdministrarSede(req, row.sede_id);
@@ -3563,30 +3582,41 @@ app.patch('/api/canchas/:id', async (req, res) => {
     const patch = {};
     const hop = (k) => Object.prototype.hasOwnProperty.call(b, k);
     if (hop('nombre')) {
-      const n = String(b.nombre ?? '').trim();
-      if (!n) return res.status(400).json({ error: 'El nombre no puede quedar vacío' });
-      patch.nombre = n;
+      const nombreVal = validateCanchaNombreVisible(b.nombre, { required: false });
+      if (!nombreVal.ok) return res.status(nombreVal.status).json({ error: nombreVal.error });
+      patch.nombre = nombreVal.nombre;
     }
     if (hop('estado')) patch.estado = normalizeEstadoCancha(b.estado);
     if (hop('descripcion')) {
       patch.descripcion =
         b.descripcion == null || String(b.descripcion).trim() === '' ? null : String(b.descripcion).trim();
     }
-    if (hop('deporte')) {
-      const d = normalizeCanchaDeporteColumnaBody(b.deporte);
-      if (d === null) return res.status(400).json({ error: 'deporte inválido' });
-      patch.deporte = d;
+    const touchDeporte = hop('deporte') || [
+      'deporte_personalizado',
+      'cantidad_jugadores',
+      'modalidad_custom',
+      'duracion_sugerida_min',
+      'observacion_custom',
+    ].some((k) => hop(k));
+    if (touchDeporte) {
+      const depWrite = buildCanchaDeporteWritePatch(b, { mode: 'patch', existing: row });
+      if (!depWrite.ok) return res.status(depWrite.status).json({ error: depWrite.error });
+      Object.assign(patch, depWrite.patch);
     }
     if (Object.keys(patch).length === 0) {
       return res.status(400).json({ error: 'Ningún campo reconocido para actualizar' });
     }
 
     const { data: updated, error } = await supabase.from('canchas').update(patch).eq('id', cid).select('*').single();
-    if (error) throw error;
+    if (error) {
+      if (isMissingCanchaCustomColumnError(error)) return canchasCustomMigrationPendingResponse(res);
+      throw error;
+    }
     if (!updated) return res.status(404).json({ error: 'Cancha no encontrada' });
     const all = await fetchCanchasRowsForSede(row.sede_id);
     res.json({ cancha: enrichSingleCanchaAdminDto(updated, all) });
   } catch (err) {
+    if (isMissingCanchaCustomColumnError(err)) return canchasCustomMigrationPendingResponse(res);
     const st = err.status || 500;
     if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
     console.error('❌ PATCH /api/canchas/:id:', err?.message || err);
@@ -6155,7 +6185,10 @@ function filterCanchasRowsByDeporteCanon(rows, deporteCanon) {
   const keys = chatIaDeporteDbKeysForFilter(deporteCanon);
   if (!keys.length) return rows;
   return rows.filter((r) => {
-    const d = normalizeTorneoDeporteForDb(r.deporte != null && String(r.deporte).trim() !== '' ? r.deporte : 'padbol');
+    const raw = r.deporte != null && String(r.deporte).trim() !== '' ? String(r.deporte).trim().toLowerCase() : 'padbol';
+    // MEJ-07: custom no se remapea a padbol (normalizeTorneoDeporteForDb lo haría).
+    if (raw === 'custom') return keys.includes('custom');
+    const d = normalizeTorneoDeporteForDb(raw);
     return keys.includes(d);
   });
 }
@@ -6349,14 +6382,8 @@ function filterSedesPorDeporteReserva(sedes, keys, sedeIdsConCanchas) {
   });
 }
 
-/** Body admin: solo valores de columna canchas.deporte (sin __futbol_any__). */
-function normalizeCanchaDeporteColumnaBody(raw) {
-  const s0 = String(raw ?? '').trim().toLowerCase();
-  if (!s0) return 'padbol';
-  const s = s0 === 'futbol5' ? 'futbol_5' : s0 === 'futbol7' ? 'futbol_7' : s0;
-  if (TORNEO_DEPORTE_VALID.has(s)) return s;
-  return null;
-}
+/** Body admin: whitelist CRUD canchas (oficiales + custom). No usa TORNEO_DEPORTE_VALID. */
+// normalizeCanchaDeporteColumnaBody importado desde lib/canchaDeporteCustom.js (MEJ-07).
 
 /** Plegado del mensaje del usuario para reconocer frases rápidas (sin deporte explícito). */
 function chatIaFoldUsuarioDisponibilidadPhrase(raw) {
