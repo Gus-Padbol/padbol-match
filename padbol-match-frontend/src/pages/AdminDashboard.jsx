@@ -127,6 +127,13 @@ import {
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { normalizeUserRole } from '../utils/adminPanelRoles';
 import { generarIniciosMinutosSlotReserva, minutosAHoraReserva } from '../utils/reservaSlotsHorarios';
+import {
+  slotsReservaManualDisponibles,
+  validateReservaManualForm,
+  validationErrorMessage,
+  buildReservaManualPostPayload,
+  crearReservaManualApi,
+} from '../utils/adminReservaManual';
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -4771,7 +4778,6 @@ export default function AdminDashboard({
       }
       navigate(`/admin?tab=${encodeURIComponent(id)}`, { replace: true });
       if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
-      if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
     },
     [navigate, rolPanel],
   );
@@ -7581,62 +7587,73 @@ export default function AdminDashboard({
 
   const crearReservaManual = async (ev) => {
     ev.preventDefault();
+    if (reservaManualSaving) return;
     setReservaManualError('');
     if (!session?.access_token) {
       setReservaManualError(t('admin.formularios.loginAgainAgain'));
       return;
     }
-    const telefono = String(reservaManualForm.telefono || '').trim() || null;
-    const sedeIdResolved = String(
-      reservaManualForm.sede_id || (esAdminClub && sedeId != null ? sedeId : '') || '',
-    );
-    const sedeRow = sedeIdResolved ? sedesMap[sedeIdResolved] : null;
-    const sedeNombre = String(sedeRow?.nombre || miSede?.nombre || '').trim() || null;
-    const selectedCancha = String(reservaManualForm.cancha || '');
-    const canchaNum = parseInt(selectedCancha?.replace(/\D/g, '')) || 1;
-    const deporte = resolveDeporteKeyReservaAdmin(
-      { cancha: canchaNum },
-      sedeIdResolved,
-      canchasDetallePorSede,
-    ) || 'padbol';
-    const payload = {
-      sede_id: reservaManualForm.sede_id,
-      sede: sedeNombre,
-      cancha: canchaNum,
-      fecha: reservaManualForm.fecha,
-      hora: reservaManualForm.hora,
-      duracion: reservaManualForm.duracion,
-      nombre: String(reservaManualForm.nombre || '').trim(),
-      telefono,
-      email: 'admin@padbolmatch.com',
-      whatsapp: telefono || '',
-      nivel: 'intermedio',
-      deporte,
-      estado: reservaManualForm.estado || 'confirmada',
-    };
-    if (!payload.sede_id || !selectedCancha || !payload.fecha || !payload.hora || !payload.nombre) {
+
+    const validated = validateReservaManualForm(reservaManualForm, {
+      esAdminClub,
+      sedeIdDefault: sedeId,
+    });
+    if (!validated.ok) {
+      setReservaManualError(
+        validationErrorMessage(validated.errors) || t('admin.reservas.completeManualBookingFields'),
+      );
+      return;
+    }
+
+    const sedeRow = validated.sedeId ? sedesMap[validated.sedeId] : null;
+    const sedeNombre = String(sedeRow?.nombre || miSede?.nombre || '').trim();
+    if (!sedeNombre) {
       setReservaManualError(t('admin.reservas.completeManualBookingFields'));
       return;
     }
+
+    const slotsDisponibles = slotsReservaManualDisponibles({
+      sedeRow,
+      reservas,
+      fecha: validated.fecha,
+      cancha: validated.canchaNum,
+      duracion: validated.duracion,
+      ctx: ahoraArgentinaPartes(),
+    });
+    if (!slotsDisponibles.includes(validated.hora)) {
+      setReservaManualError(t('admin.reservas.noSlotsAvailable') || 'El horario seleccionado no está disponible u ocupado.');
+      return;
+    }
+
+    const deporte = resolveDeporteKeyReservaAdmin(
+      { cancha: validated.canchaNum },
+      validated.sedeId,
+      canchasDetallePorSede,
+    ) || 'padbol';
+
+    const payload = {
+      ...buildReservaManualPostPayload(validated, {
+        sedeNombre,
+        email: currentEmail || 'admin@padbolmatch.com',
+      }),
+      deporte,
+    };
+
     setReservaManualSaving(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/reservas`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(payload),
+      await crearReservaManualApi({
+        apiBaseUrl,
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        payload,
+        estadoDeseado: validated.estado,
       });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || t('admin.reservas.manualBookingFailed'));
       setMensajeExito(t('admin.reservas.manualBookingCreated'));
       setReservaManualOpen(false);
       resetReservaManualForm();
       await fetchData();
       setTimeout(() => setMensajeExito(''), 3500);
     } catch (err) {
-      setReservaManualError(err.message || String(err));
+      setReservaManualError(err.message || String(err) || t('admin.reservas.manualBookingFailed'));
     } finally {
       setReservaManualSaving(false);
     }
@@ -7791,7 +7808,6 @@ export default function AdminDashboard({
 
   const resetAdminPanelScroll = useCallback(() => {
     if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
-    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   const selectAdminTab = useCallback(
@@ -12269,7 +12285,7 @@ export default function AdminDashboard({
                 { length: Math.max(0, Number(sedeManualRow?.cantidad_canchas) || Number(canchasResumenPorSede[sedeManualId]?.activas) || 0) },
                 (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}` })
               );
-          const reservaManualSlots = slotsReservaManualDisponiblesAdminDash({
+          const reservaManualSlots = slotsReservaManualDisponibles({
             sedeRow: sedeManualRow,
             reservas,
             fecha: reservaManualForm.fecha,
