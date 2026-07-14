@@ -1592,6 +1592,33 @@
     "roles": {
       "invitePendingSignup": "Invitado - pendiente de alta",
       "editorScopeLabel": "Hub del jugador (cards)"
+    },
+    "jugadores": {
+      "subtitle": "Jugadores con historial de reservas en la sede. La búsqueda global sirve para la reserva manual.",
+      "searchPlaceholder": "Nombre, @usuario, email o teléfono",
+      "filterLabel": "Buscar",
+      "sedeLabel": "Sede",
+      "selectSede": "Seleccioná una sede",
+      "refresh": "Actualizar",
+      "empty": "No hay jugadores con historial en esta sede.",
+      "loadError": "No se pudieron cargar los jugadores.",
+      "searchError": "No se pudo buscar jugadores.",
+      "forbidden": "No tenés permiso para ver estos jugadores.",
+      "noResults": "Sin resultados. Podés cargar la reserva como invitado.",
+      "clearSelection": "Limpiar",
+      "modeRegistered": "Jugador registrado seleccionado",
+      "modeGuestHint": "Escribí para buscar un registrado, o completá el nombre para invitado.",
+      "phoneCol": "Teléfono",
+      "vinculacionCol": "Vinculación",
+      "activityCol": "Última actividad",
+      "vinculacionHistorial": "Con historial en sede",
+      "vinculacionRegistrado": "Registrado en Padbol Match",
+      "vinculacionSinHistorial": "Sin historial",
+      "vinculacionNote": "La vinculación formal a sede aún no existe en Backend: se muestra el historial de reservas. Vincular/desvincular requiere tabla sede_jugadores.",
+      "viewProfile": "Ver perfil",
+      "fichaTitle": "Ficha del jugador",
+      "pageOf": "Página {{page}} de {{total}} ({{count}})",
+      "playerNameLabel": "Jugador (registrado o invitado)"
     }
   },
   "pago": {

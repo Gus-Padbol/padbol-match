@@ -1565,6 +1565,33 @@
     "roles": {
       "invitePendingSignup": "Invited — pending signup",
       "editorScopeLabel": "Player hub (cards)"
+    },
+    "jugadores": {
+      "subtitle": "Players with booking history at this venue. Global search powers manual bookings.",
+      "searchPlaceholder": "Name, @username, email or phone",
+      "filterLabel": "Search",
+      "sedeLabel": "Venue",
+      "selectSede": "Select a venue",
+      "refresh": "Refresh",
+      "empty": "No players with history at this venue.",
+      "loadError": "Could not load players.",
+      "searchError": "Could not search players.",
+      "forbidden": "You are not allowed to view these players.",
+      "noResults": "No results. You can book as a guest.",
+      "clearSelection": "Clear",
+      "modeRegistered": "Registered player selected",
+      "modeGuestHint": "Type to find a registered player, or enter a name for a guest.",
+      "phoneCol": "Phone",
+      "vinculacionCol": "Link status",
+      "activityCol": "Last activity",
+      "vinculacionHistorial": "Has venue history",
+      "vinculacionRegistrado": "Registered on Padbol Match",
+      "vinculacionSinHistorial": "No history",
+      "vinculacionNote": "Formal venue membership is not in Backend yet: showing booking history. Link/unlink needs a sede_jugadores table.",
+      "viewProfile": "View profile",
+      "fichaTitle": "Player card",
+      "pageOf": "Page {{page}} of {{total}} ({{count}})",
+      "playerNameLabel": "Player (registered or guest)"
     }
   },
   "pago": {

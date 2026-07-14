@@ -8,6 +8,7 @@ import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPa
 import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
+import AdminJugadoresSection, { AdminJugadorSearchInput } from '../components/AdminJugadoresSection';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
@@ -1891,6 +1892,7 @@ const ADMIN_CLUB_TABS_ALLOWED = new Set([
   'padcoins',
   'notificaciones',
   'resumen',
+  'jugadores',
 ]);
 
 const ADMIN_NACIONAL_TABS_ALLOWED = new Set(['resumen', 'torneos', 'sedes', 'jugadores', 'notificaciones', 'padcoins']);
@@ -3591,8 +3593,10 @@ export default function AdminDashboard({
     duracion: '90',
     nombre: '',
     telefono: '',
+    email: '',
     estado: 'confirmada',
   }));
+  const [reservaManualJugador, setReservaManualJugador] = useState(null);
   /** reserva id → { open, loading, rows, error } */
   const [reservaHistorialUi, setReservaHistorialUi] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
@@ -7580,8 +7584,10 @@ export default function AdminDashboard({
       duracion: '90',
       nombre: '',
       telefono: '',
+      email: '',
       estado: 'confirmada',
     });
+    setReservaManualJugador(null);
     setReservaManualError('');
   };
 
@@ -7634,7 +7640,10 @@ export default function AdminDashboard({
     const payload = {
       ...buildReservaManualPostPayload(validated, {
         sedeNombre,
-        email: currentEmail || 'admin@padbolmatch.com',
+        email:
+          String(reservaManualJugador?.email || reservaManualForm.email || '').trim()
+          || currentEmail
+          || 'admin@padbolmatch.com',
       }),
       deporte,
     };
@@ -9982,6 +9991,7 @@ export default function AdminDashboard({
     ? [
         { id: 'mi_sede', label: t('admin.tabs.miSede') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
+        { id: 'jugadores', label: t('admin.tabs.jugadores') },
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
         ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: '📺 Scoreboard' }] : []),
@@ -10009,6 +10019,7 @@ export default function AdminDashboard({
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
+        ...(isSuperAdmin ? [{ id: 'jugadores', label: t('admin.tabs.jugadores') }] : []),
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
         ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: '📺 Scoreboard' }] : []),
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: '🪙 PadCoins' }] : []),
@@ -12102,6 +12113,17 @@ export default function AdminDashboard({
         </div>
       )}
 
+      {activeTab === 'jugadores' && (esAdminClub || isSuperAdmin) && !esAdminNacional ? (
+        <AdminJugadoresSection
+          apiBaseUrl={apiBaseUrl}
+          accessToken={session?.access_token}
+          sedeId={esAdminClub ? sedeId : undefined}
+          sedesMap={sedesMap}
+          isSuperAdmin={isSuperAdmin}
+          esAdminClub={esAdminClub}
+        />
+      ) : null}
+
       {activeTab === 'validaciones' && <div className="section">
         <h2>{t('admin.formularios.pendingValidationTitle')}</h2>
         {pendientesLoading ? (
@@ -12438,13 +12460,28 @@ export default function AdminDashboard({
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '10px' }}>
                     <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      Nombre del jugador
-                      <input
-                        type="text"
-                        value={reservaManualForm.nombre}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, nombre: e.target.value }))}
-                        style={manualInput}
-                        required
+                      {t('admin.jugadores.playerNameLabel')}
+                      <AdminJugadorSearchInput
+                        apiBaseUrl={apiBaseUrl}
+                        accessToken={session?.access_token}
+                        sedeId={sedeManualId || sedeId}
+                        valueNombre={reservaManualForm.nombre}
+                        selectedPlayer={reservaManualJugador}
+                        inputStyle={manualInput}
+                        onNombreChange={(nombre) => setReservaManualForm((p) => ({ ...p, nombre, email: '' }))}
+                        onClearPlayer={() => {
+                          setReservaManualJugador(null);
+                          setReservaManualForm((p) => ({ ...p, nombre: '', telefono: '', email: '' }));
+                        }}
+                        onSelectPlayer={(row) => {
+                          setReservaManualJugador(row);
+                          setReservaManualForm((p) => ({
+                            ...p,
+                            nombre: row.display_name || [row.nombre, row.apellido].filter(Boolean).join(' '),
+                            telefono: row.telefono || '',
+                            email: row.email || '',
+                          }));
+                        }}
                       />
                     </label>
                     <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>
