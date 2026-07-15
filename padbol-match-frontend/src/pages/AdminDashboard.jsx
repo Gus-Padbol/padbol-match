@@ -9,6 +9,7 @@ import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
 import AdminJugadoresSection, { AdminJugadorSearchInput } from '../components/AdminJugadoresSection';
+import AdminPadcoinsReportesSection from '../components/AdminPadcoinsReportesSection';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
@@ -16032,6 +16033,20 @@ export default function AdminDashboard({
                   </div>
                 ) : null}
               </div>
+            ) : null}
+
+            {(isSuperAdmin || esAdminClub) ? (
+              <AdminPadcoinsReportesSection
+                apiBaseUrl={apiBaseUrl}
+                accessToken={session?.access_token || ''}
+                isSuperAdmin={isSuperAdmin}
+                esAdminClub={esAdminClub}
+                clubSedeId={esAdminClub ? resolvePcSedeId() : ''}
+                sedesOptions={pcSedesOptions}
+                campaigns={pcCampaigns}
+                premios={premios}
+                sedeFlag={sedeFlag}
+              />
             ) : null}
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
