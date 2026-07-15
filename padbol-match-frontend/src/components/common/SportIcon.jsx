@@ -23,6 +23,8 @@ export function normalizeSportDeporte(deporte) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
   if (!d) return null;
+  // MEJ-07: custom nunca remapea a Padbol ni a otro icono oficial.
+  if (d === 'custom' || d === 'otro' || d === 'personalizado') return null;
   if (d.includes('padbol')) return 'padbol';
   if (d.includes('pickleball')) return 'pickleball';
   if (d.includes('padel')) return 'padel';

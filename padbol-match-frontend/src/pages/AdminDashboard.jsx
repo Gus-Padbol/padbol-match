@@ -104,6 +104,18 @@ import {
   paisOptionValueFromStored,
   sanitizeWhatsappInput,
 } from '../utils/sedeWhatsappPais';
+import {
+  buildCanchaWriteBody,
+  CANCHA_DEPORTE_ADMIN_VALUES,
+  canchaToModalDraft,
+  emptyCanchaModalDraft,
+  formatCanchaManualOptionLabel,
+  isDeporteCustom,
+  modalityLabelKey,
+  resolveCanchaDeporteLabel,
+  suggestedDurationForManualBooking,
+  validateCanchaModalDraft,
+} from '../utils/canchaDeporteCustom';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { fetchAdminCampanitaAlertas } from '../utils/adminCampanitaApi';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -918,10 +930,22 @@ function extractSurgeDeportesFromCanchas(canchas) {
 function surgeDeporteRowsFromCanchas(canchas) {
   const deportes = extractSurgeDeportesFromCanchas(canchas);
   const labelByKey = Object.fromEntries(DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => [o.key, o.label]));
-  return deportes.map((key) => ({
-    key,
-    label: labelByKey[key] || key.charAt(0).toUpperCase() + key.slice(1),
-  }));
+  const list = Array.isArray(canchas) ? canchas : [];
+  return deportes.map((key) => {
+    if (isDeporteCustom(key)) {
+      const first = list.find((c) => isDeporteCustom(c?.deporte));
+      return {
+        key,
+        label: resolveCanchaDeporteLabel(first || { deporte: 'custom' }, {
+          customFallback: 'Otro / Personalizado',
+        }),
+      };
+    }
+    return {
+      key,
+      label: labelByKey[key] || key.charAt(0).toUpperCase() + key.slice(1),
+    };
+  });
 }
 
 function defaultSurgeConfig(overrides = {}) {
@@ -2754,20 +2778,15 @@ function canchasConNumeroReservaAdminDash(rows) {
   });
 }
 
-const CANCHA_DEPORTE_ADMIN_VALUES = [
-  'padbol',
-  'padel',
-  'tenis',
-  'pickleball',
-];
-
 function getCanchaDeporteAdminOptions(tr) {
   return CANCHA_DEPORTE_ADMIN_VALUES.map((value) => ({
     value,
     label:
-      value === 'padbol'
-        ? 'Padbol'
-        : tr(`torneos.deporte.${value}`, { defaultValue: value.replace(/_/g, ' ') }),
+      value === 'custom'
+        ? tr('admin.sedes.customSportOption', { defaultValue: 'Otro / Personalizado' })
+        : value === 'padbol'
+          ? 'Padbol'
+          : tr(`torneos.deporte.${value}`, { defaultValue: value.replace(/_/g, ' ') }),
   }));
 }
 
@@ -7382,7 +7401,7 @@ export default function AdminDashboard({
         if (sidList.length > 0) {
           const { data: canRows } = await supabase
             .from('canchas')
-            .select('id, sede_id, nombre, estado, orden')
+            .select('id, sede_id, nombre, estado, orden, deporte, deporte_personalizado, cantidad_jugadores, modalidad_custom, duracion_sugerida_min, observacion_custom')
             .in('sede_id', sidList)
             .order('id', { ascending: true });
           const bySede = {};
@@ -7810,7 +7829,7 @@ export default function AdminDashboard({
   const [canchaModalOpen, setCanchaModalOpen] = useState(false);
   const [canchaModalMode, setCanchaModalMode] = useState('add');
   const [canchaEditId, setCanchaEditId] = useState(null);
-  const [canchaModalDraft, setCanchaModalDraft] = useState({ nombre: '', estado: 'activa', descripcion: '', deporte: 'padbol' });
+  const [canchaModalDraft, setCanchaModalDraft] = useState(() => emptyCanchaModalDraft());
   const [canchaModalMsg, setCanchaModalMsg] = useState('');
   const [canchaApiBusy, setCanchaApiBusy] = useState(false);
   const [licenciaForm,  setLicenciaForm]  = useState({ numero_licencia: '', fecha_licencia: '', licencia_activa: true });
@@ -9356,7 +9375,7 @@ export default function AdminDashboard({
   const abrirModalCanchaNueva = useCallback(() => {
     setCanchaModalMode('add');
     setCanchaEditId(null);
-    setCanchaModalDraft({ nombre: '', estado: 'activa', descripcion: '', deporte: 'padbol' });
+    setCanchaModalDraft(emptyCanchaModalDraft());
     setCanchaModalMsg('');
     setCanchaModalOpen(true);
   }, []);
@@ -9364,26 +9383,37 @@ export default function AdminDashboard({
   const abrirModalCanchaEditar = useCallback((c) => {
     setCanchaModalMode('edit');
     setCanchaEditId(c.id);
-    setCanchaModalDraft({
-      nombre: c.nombre || '',
-      estado: c.estado === 'inactiva' ? 'inactiva' : 'activa',
-      descripcion: c.descripcion || '',
-      deporte: c.deporte && CANCHA_DEPORTE_ADMIN_VALUES.includes(c.deporte) ? c.deporte : 'padbol',
-    });
+    setCanchaModalDraft(canchaToModalDraft(c));
     setCanchaModalMsg('');
     setCanchaModalOpen(true);
   }, []);
+
+  const resolveCanchaModalError = useCallback((errorKey) => {
+    const map = {
+      nameRequired: t('admin.formularios.nameRequired'),
+      customDisciplineRequired: t('admin.sedes.customDisciplineRequired'),
+      customPlayersRequired: t('admin.sedes.customPlayersRequired'),
+      customPlayersInvalid: t('admin.sedes.customPlayersInvalid'),
+      customPlayersRange: t('admin.sedes.customPlayersRange'),
+      customModalityRequired: t('admin.sedes.customModalityRequired'),
+      customModalityInvalid: t('admin.sedes.customModalityInvalid'),
+      customDurationInvalid: t('admin.sedes.customDurationInvalid'),
+      customDurationRange: t('admin.sedes.customDurationRange'),
+    };
+    return map[errorKey] || t('admin.alerts.createError');
+  }, [t]);
 
   const guardarCanchaModal = async () => {
     if (!sedeId || !session?.access_token) {
       setCanchaModalMsg(t('admin.formularios.loginAgainAlt'));
       return;
     }
-    const nombre = String(canchaModalDraft.nombre || '').trim();
-    if (!nombre) {
-      setCanchaModalMsg(t('admin.formularios.nameRequired'));
+    const validation = validateCanchaModalDraft(canchaModalDraft);
+    if (!validation.ok) {
+      setCanchaModalMsg(resolveCanchaModalError(validation.errorKey));
       return;
     }
+    const body = buildCanchaWriteBody(canchaModalDraft);
     setCanchaApiBusy(true);
     setCanchaModalMsg('');
     try {
@@ -9394,12 +9424,7 @@ export default function AdminDashboard({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            nombre,
-            estado: canchaModalDraft.estado === 'inactiva' ? 'inactiva' : 'activa',
-            descripcion: String(canchaModalDraft.descripcion || '').trim() || null,
-            deporte: canchaModalDraft.deporte || 'padbol',
-          }),
+          body: JSON.stringify(body),
         });
         const data = await res.json().catch(() => ({}));
         setCanchaApiBusy(false);
@@ -9422,12 +9447,7 @@ export default function AdminDashboard({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          nombre,
-          estado: canchaModalDraft.estado === 'inactiva' ? 'inactiva' : 'activa',
-          descripcion: String(canchaModalDraft.descripcion || '').trim() || null,
-          deporte: canchaModalDraft.deporte || 'padbol',
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json().catch(() => ({}));
       setCanchaApiBusy(false);
@@ -12369,13 +12389,15 @@ export default function AdminDashboard({
                 .filter((c) => normalizeEstadoCanchaAdminDash(c.estado) !== 'inactiva')
                 .map((c) => ({
                   numero: Number(c.numero_reserva ?? c.orden),
-                  nombre: String(c.nombre || '').trim() || `Cancha ${c.numero_reserva ?? c.orden}`,
+                  nombre: formatCanchaManualOptionLabel(c),
+                  deporte: c.deporte,
+                  duracion_sugerida_min: suggestedDurationForManualBooking(c),
                 }))
                 .filter((c) => Number.isFinite(c.numero))
                 .sort((a, b) => a.numero - b.numero)
             : Array.from(
                 { length: Math.max(0, Number(sedeManualRow?.cantidad_canchas) || Number(canchasResumenPorSede[sedeManualId]?.activas) || 0) },
-                (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}` })
+                (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}`, deporte: null, duracion_sugerida_min: null })
               );
           const reservaManualSlots = slotsReservaManualDisponibles({
             sedeRow: sedeManualRow,
@@ -12462,7 +12484,18 @@ export default function AdminDashboard({
                       Cancha
                       <select
                         value={reservaManualForm.cancha}
-                        onChange={(e) => setReservaManualForm((p) => ({ ...p, cancha: e.target.value, hora: '' }))}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          const hit = canchasManualReserva.find((c) => String(c.numero) === String(next));
+                          setReservaManualForm((p) => ({
+                            ...p,
+                            cancha: next,
+                            hora: '',
+                            ...(hit?.duracion_sugerida_min
+                              ? { duracion: String(hit.duracion_sugerida_min) }
+                              : {}),
+                          }));
+                        }}
                         style={manualInput}
                         required
                         disabled={!sedeManualId || canchasManualReserva.length === 0}
@@ -18740,7 +18773,9 @@ export default function AdminDashboard({
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   width: '100%',
-                  maxWidth: '420px',
+                  maxWidth: '480px',
+                  maxHeight: 'min(92vh, 720px)',
+                  overflowY: 'auto',
                   background: 'var(--bg-card)',
                   borderRadius: '14px',
                   padding: '22px',
@@ -18793,7 +18828,23 @@ export default function AdminDashboard({
                 </label>
                 <select
                   value={canchaModalDraft.deporte || 'padbol'}
-                  onChange={(e) => setCanchaModalDraft((p) => ({ ...p, deporte: e.target.value }))}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setCanchaModalDraft((p) => {
+                      if (isDeporteCustom(next)) {
+                        return { ...p, deporte: next };
+                      }
+                      return {
+                        ...p,
+                        deporte: next,
+                        deporte_personalizado: '',
+                        cantidad_jugadores: '',
+                        modalidad_custom: 'parejas',
+                        duracion_sugerida_min: '',
+                        observacion_custom: '',
+                      };
+                    });
+                  }}
                   style={{
                     width: '100%',
                     padding: '9px 11px',
@@ -18810,6 +18861,132 @@ export default function AdminDashboard({
                     </option>
                   ))}
                 </select>
+                {isDeporteCustom(canchaModalDraft.deporte) ? (
+                  <div
+                    style={{
+                      marginBottom: '14px',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-input)',
+                      display: 'grid',
+                      gap: '12px',
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: '12px', lineHeight: 1.45, color: 'var(--text-secondary)' }}>
+                      {t('admin.sedes.customSportNotice')}
+                    </p>
+                    <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      {t('admin.sedes.customDisciplineName')}
+                      <input
+                        type="text"
+                        value={canchaModalDraft.deporte_personalizado || ''}
+                        onChange={(e) => setCanchaModalDraft((p) => ({ ...p, deporte_personalizado: e.target.value }))}
+                        placeholder={t('admin.sedes.customDisciplinePlaceholder')}
+                        maxLength={80}
+                        style={{
+                          width: '100%',
+                          padding: '9px 11px',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                          fontWeight: 500,
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      {t('admin.sedes.customPlayersCount')}
+                      <input
+                        type="number"
+                        min={1}
+                        max={40}
+                        step={1}
+                        inputMode="numeric"
+                        value={canchaModalDraft.cantidad_jugadores || ''}
+                        onChange={(e) => setCanchaModalDraft((p) => ({ ...p, cantidad_jugadores: e.target.value }))}
+                        placeholder="1–40"
+                        style={{
+                          width: '100%',
+                          padding: '9px 11px',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                          fontWeight: 500,
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      {t('admin.sedes.customModality')}
+                      <select
+                        value={canchaModalDraft.modalidad_custom || 'parejas'}
+                        onChange={(e) => setCanchaModalDraft((p) => ({ ...p, modalidad_custom: e.target.value }))}
+                        style={{
+                          width: '100%',
+                          padding: '9px 11px',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                          fontWeight: 500,
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        <option value="individual">{t('admin.sedes.customModalityIndividual')}</option>
+                        <option value="parejas">{t('admin.sedes.customModalityPairs')}</option>
+                        <option value="equipos">{t('admin.sedes.customModalityTeams')}</option>
+                      </select>
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      {t('admin.sedes.customSuggestedDuration')}
+                      <input
+                        type="number"
+                        min={15}
+                        max={240}
+                        step={1}
+                        inputMode="numeric"
+                        value={canchaModalDraft.duracion_sugerida_min || ''}
+                        onChange={(e) => setCanchaModalDraft((p) => ({ ...p, duracion_sugerida_min: e.target.value }))}
+                        placeholder={t('admin.sedes.customSuggestedDurationPh')}
+                        style={{
+                          width: '100%',
+                          padding: '9px 11px',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                          fontWeight: 500,
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: '6px', margin: 0, fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                      {t('admin.sedes.customObservation')}
+                      <textarea
+                        rows={2}
+                        value={canchaModalDraft.observacion_custom || ''}
+                        onChange={(e) => setCanchaModalDraft((p) => ({ ...p, observacion_custom: e.target.value }))}
+                        placeholder={t('admin.sedes.customObservationPh')}
+                        maxLength={500}
+                        style={{
+                          width: '100%',
+                          padding: '9px 11px',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          resize: 'vertical',
+                          boxSizing: 'border-box',
+                          fontFamily: 'inherit',
+                          fontWeight: 500,
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                    </label>
+                  </div>
+                ) : null}
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                   Descripción (opcional)
                 </label>
@@ -19735,10 +19912,53 @@ export default function AdminDashboard({
                         <td style={{ padding: '10px 10px', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 700 }}>{c.orden ?? '—'}</td>
                         <td style={{ padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)' }}>{c.nombre}</td>
                         <td style={{ padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                            <SportIcon deporte={c.deporte} size={18} color="var(--text-secondary)" />
-                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <SportIcon
+                              deporte={isDeporteCustom(c.deporte) ? 'custom' : c.deporte}
+                              size={18}
+                              color="var(--text-secondary)"
+                            />
+                            <span>{resolveCanchaDeporteLabel(c, {
+                              customFallback: t('admin.sedes.customSportFallback'),
+                            })}</span>
+                            {isDeporteCustom(c.deporte) ? (
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: 999,
+                                  background: '#e2e8f0',
+                                  color: '#334155',
+                                }}
+                              >
+                                {t('admin.sedes.customBadge')}
+                              </span>
+                            ) : null}
                           </span>
+                          {isDeporteCustom(c.deporte) ? (
+                            <div style={{ marginTop: 4, fontSize: 11, lineHeight: 1.4, color: 'var(--text-secondary)' }}>
+                              {[
+                                c.cantidad_jugadores != null
+                                  ? t('admin.sedes.customPlayersShort', { count: c.cantidad_jugadores })
+                                  : null,
+                                (() => {
+                                  const mk = modalityLabelKey(c.modalidad_custom);
+                                  return mk ? t(`admin.sedes.${mk}`) : null;
+                                })(),
+                                c.duracion_sugerida_min != null
+                                  ? t('admin.sedes.customDurationShort', { min: c.duracion_sugerida_min })
+                                  : null,
+                              ].filter(Boolean).join(' · ')}
+                              {c.observacion_custom ? (
+                                <div title={c.observacion_custom} style={{ marginTop: 2 }}>
+                                  {String(c.observacion_custom).length > 60
+                                    ? `${String(c.observacion_custom).slice(0, 60)}…`
+                                    : c.observacion_custom}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </td>
                         <td style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '180px' }}>
                           {c.descripcion ? (
@@ -19822,12 +20042,55 @@ export default function AdminDashboard({
                               alignItems: 'center',
                               gap: 8,
                               justifyContent: 'flex-end',
+                              flexWrap: 'wrap',
                             }}
                           >
-                            <SportIcon deporte={c.deporte} size={18} color="var(--text-primary)" />
-                            {canchaDeporteAdminOptions.find((o) => o.value === c.deporte)?.label || c.deporte || 'Padbol'}
+                            <SportIcon
+                              deporte={isDeporteCustom(c.deporte) ? 'custom' : c.deporte}
+                              size={18}
+                              color="var(--text-primary)"
+                            />
+                            {resolveCanchaDeporteLabel(c, {
+                              customFallback: t('admin.sedes.customSportFallback'),
+                            })}
+                            {isDeporteCustom(c.deporte) ? (
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: 999,
+                                  background: '#e2e8f0',
+                                  color: '#334155',
+                                }}
+                              >
+                                {t('admin.sedes.customBadge')}
+                              </span>
+                            ) : null}
                           </span>
                         </div>
+                        {isDeporteCustom(c.deporte) ? (
+                          <div className="admin-mi-sede-cancha-card__row" style={{ alignItems: 'flex-start' }}>
+                            <span className="admin-mi-sede-cancha-card__label">{t('admin.sedes.customDetails')}</span>
+                            <span style={{ color: 'var(--text-secondary)', textAlign: 'right', fontSize: '13px', lineHeight: 1.4 }}>
+                              {[
+                                c.cantidad_jugadores != null
+                                  ? t('admin.sedes.customPlayersShort', { count: c.cantidad_jugadores })
+                                  : null,
+                                (() => {
+                                  const mk = modalityLabelKey(c.modalidad_custom);
+                                  return mk ? t(`admin.sedes.${mk}`) : null;
+                                })(),
+                                c.duracion_sugerida_min != null
+                                  ? t('admin.sedes.customDurationShort', { min: c.duracion_sugerida_min })
+                                  : null,
+                              ].filter(Boolean).join(' · ') || '—'}
+                              {c.observacion_custom ? (
+                                <div style={{ marginTop: 4 }}>{c.observacion_custom}</div>
+                              ) : null}
+                            </span>
+                          </div>
+                        ) : null}
                         <div className="admin-mi-sede-cancha-card__row" style={{ alignItems: 'flex-start' }}>
                           <span className="admin-mi-sede-cancha-card__label">Nota</span>
                           <span style={{ color: 'var(--text-secondary)', textAlign: 'right', fontSize: '13px', lineHeight: 1.4, wordBreak: 'break-word' }}>
@@ -20840,7 +21103,11 @@ export default function AdminDashboard({
                             const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
                             return (
                               <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                                <td style={{ padding: '8px 10px', textTransform: 'capitalize' }}>{f.deporte}</td>
+                                <td style={{ padding: '8px 10px', textTransform: 'capitalize' }}>
+                                  {isDeporteCustom(f.deporte)
+                                    ? t('admin.sedes.customSportOption')
+                                    : f.deporte}
+                                </td>
                                 <td style={{ padding: '8px 10px' }}>{f.dia_semana !== null ? dias[f.dia_semana] : 'Todos'}</td>
                                 <td style={{ padding: '8px 10px' }}>{f.hora_inicio?.slice(0,5)}</td>
                                 <td style={{ padding: '8px 10px' }}>{f.hora_fin?.slice(0,5)}</td>
@@ -20870,6 +21137,7 @@ export default function AdminDashboard({
                         <select value={franjaDraft.deporte} onChange={e => setFranjaDraft(p => ({ ...p, deporte: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
                           {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
+                          <option value="custom">{t('admin.sedes.customSportOption')}</option>
                         </select>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

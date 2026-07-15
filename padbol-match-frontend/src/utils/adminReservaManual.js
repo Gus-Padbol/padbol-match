@@ -2,6 +2,10 @@ import {
   generarIniciosMinutosSlotReserva,
   minutosAHoraReserva,
 } from './reservaSlotsHorarios';
+import {
+  formatCanchaManualOptionLabel,
+  suggestedDurationForManualBooking,
+} from './canchaDeporteCustom';
 
 export const RESERVA_MANUAL_DURACIONES = [60, 90, 120];
 export const RESERVA_MANUAL_ESTADOS = ['pendiente', 'reservada', 'confirmada'];
@@ -246,7 +250,14 @@ export function canchasManualDesdeFilas(canchasRows, sedeRow) {
       const numero = parseInt(String(c.numero_reserva ?? c.orden ?? idx + 1), 10);
       return {
         numero,
-        nombre: String(c.nombre || '').trim() || `Cancha ${numero}`,
+        nombre: formatCanchaManualOptionLabel({
+          ...c,
+          numero_reserva: numero,
+          nombre: String(c.nombre || '').trim() || `Cancha ${numero}`,
+        }),
+        deporte: c.deporte != null ? String(c.deporte).trim().toLowerCase() : null,
+        deporte_personalizado: c.deporte_personalizado || null,
+        duracion_sugerida_min: suggestedDurationForManualBooking(c),
       };
     })
     .filter((c) => Number.isFinite(c.numero))
@@ -258,5 +269,8 @@ export function canchasManualDesdeFilas(canchasRows, sedeRow) {
   return Array.from({ length: count }, (_, idx) => ({
     numero: idx + 1,
     nombre: `Cancha ${idx + 1}`,
+    deporte: null,
+    deporte_personalizado: null,
+    duracion_sugerida_min: null,
   }));
 }

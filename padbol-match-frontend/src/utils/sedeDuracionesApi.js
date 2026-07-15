@@ -9,6 +9,8 @@ export const MI_SEDE_PRECIOS_DEPORTE_OPTIONS = [
   { value: 'padel', label: 'Pádel' },
   { value: 'pickleball', label: 'Pickleball' },
   { value: 'tenis', label: 'Tenis' },
+  /** MEJ-07: precios específicos; si no hay fila, el Backend usa precio base. */
+  { value: 'custom', label: 'Otro / Personalizado' },
 ];
 
 /** Duraciones administrables en Mi Sede → Precios (esta etapa). */
