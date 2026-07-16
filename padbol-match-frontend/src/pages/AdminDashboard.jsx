@@ -10,6 +10,7 @@ import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
 import AdminJugadoresSection, { AdminJugadorSearchInput } from '../components/AdminJugadoresSection';
 import AdminPadcoinsReportesSection from '../components/AdminPadcoinsReportesSection';
+import AdminMembresiasSection from '../components/AdminMembresiasSection';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
@@ -1901,6 +1902,7 @@ const ADMIN_TABS_ALLOWED = new Set([
   'mi_sede',
   'config',
   'planes',
+  'membresias',
   'roles',
   'sedes',
   'jugadores',
@@ -1923,6 +1925,7 @@ const ADMIN_CLUB_TABS_ALLOWED = new Set([
   'validaciones',
   'scoreboard',
   'padcoins',
+  'membresias',
   'notificaciones',
   'resumen',
   'jugadores',
@@ -3541,6 +3544,7 @@ export default function AdminDashboard({
   const puedeVerConfig  = isSuperAdmin;
   const puedeVerScoreboard = isSuperAdmin || esAdminClub;
   const puedeVerPadCoins = isSuperAdmin || esAdminClub || esAdminNacional;
+  const puedeVerMembresias = isSuperAdmin || esAdminClub;
   const puedeVerFinanzas = !esEmpleado;
 
   const paisAdminNacional = useMemo(() => {
@@ -10081,6 +10085,7 @@ export default function AdminDashboard({
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
         ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: '📺 Scoreboard' }] : []),
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: '🪙 PadCoins' }] : []),
+        ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', '🎫 Membresías') }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         { id: 'resumen', label: t('nav.admin.resumen') },
       ]
@@ -10108,6 +10113,7 @@ export default function AdminDashboard({
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
         ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: '📺 Scoreboard' }] : []),
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: '🪙 PadCoins' }] : []),
+        ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', '🎫 Membresías') }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         ...(puedeVerMiSede ? [{ id: 'mi_sede', label: t('admin.tabs.miSede') }] : []),
         ...(puedeVerConfig
@@ -14337,6 +14343,21 @@ export default function AdminDashboard({
         <ScoreboardCanchaQrModal
           partido={sbQrPartido}
           onClose={() => setSbQrPartido(null)}
+        />
+      ) : null}
+
+      {activeTab === 'membresias' && puedeVerMembresias ? (
+        <AdminMembresiasSection
+          apiBaseUrl={apiBaseUrl}
+          accessToken={session?.access_token || ''}
+          isSuperAdmin={isSuperAdmin}
+          esAdminClub={esAdminClub}
+          clubSedeId={esAdminClub ? (sedeIdKey || (sedeId != null ? String(sedeId) : '')) : ''}
+          sedesOptions={Object.values(sedesMap || {})
+            .filter((s) => s?.id != null)
+            .map((s) => ({ id: s.id, nombre: s.nombre || String(s.id), pais: s.pais, pais_codigo: s.pais_codigo }))
+            .sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es', { sensitivity: 'base' }))}
+          sedeFlag={sedeFlag}
         />
       ) : null}
 
