@@ -1343,7 +1343,7 @@
       "editorScopeLabel": "مركز اللاعب (البطاقات)"
     },
     "jugadores": {
-      "subtitle": "Players with booking history at this venue. Global search powers manual bookings.",
+      "subtitle": "Players with booking history at this venue. Search, sort and open the profile card. Formal link/unlink needs Backend.",
       "searchPlaceholder": "Name, @username, email or phone",
       "filterLabel": "Search",
       "sedeLabel": "Venue",
@@ -1367,7 +1367,16 @@
       "viewProfile": "View profile",
       "fichaTitle": "Player card",
       "pageOf": "Page {{page}} of {{total}} ({{count}})",
-      "playerNameLabel": "Player (registered or guest)"
+      "playerNameLabel": "Player (registered or guest)",
+      "searchAuthRequired": "Session expired. Sign in again to search players.",
+      "vinculacionFilter": "Relationship status",
+      "filterAll": "All",
+      "sortLabel": "Sort",
+      "sortNameAsc": "Name A–Z",
+      "sortNameDesc": "Name Z–A",
+      "sortActivityDesc": "Recent activity",
+      "sortActivityAsc": "Oldest activity",
+      "fichaLinkBlocked": "Formal venue link/unlink is not available in Backend yet. The current relationship is inferred from booking history."
     },
     "membresias": {
       "title": "Memberships",

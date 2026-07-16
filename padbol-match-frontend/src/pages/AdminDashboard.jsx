@@ -101,6 +101,7 @@ import TorneoCrear from './TorneoCrear';
 import ConfirmModal from '../components/ConfirmModal';
 import {
   applyPaisChangeToWhatsapp,
+  ensureWhatsappPrefixed,
   exampleWhatsappForPaisLabel,
   normalizeWhatsappForStorage,
   paisOptionValueFromStored,
@@ -875,6 +876,14 @@ function sedeDbRowToMiSedeFormState(sedeData) {
   };
 }
 
+/** Merge DB sede into form with país option + WhatsApp prefix (MEJ-01). */
+function mergeMiSedeFormFromDb(updated, prevForm = {}, paisOptions = []) {
+  const base = { ...prevForm, ...sedeDbRowToMiSedeFormState(updated) };
+  const pais = paisOptionValueFromStored(base.pais, paisOptions) || base.pais;
+  const ensured = ensureWhatsappPrefixed(base.telefono, pais);
+  return { ...base, pais, telefono: ensured.phone };
+}
+
 
 function precioDuracionInputDisplay(raw) {
   if (raw === '' || raw == null) return '';
@@ -989,7 +998,7 @@ function miSedeFormToApiPatchBody(form) {
     provincia:
       form.provincia != null && String(form.provincia).trim() !== '' ? String(form.provincia).trim() : null,
     pais: form.pais || null,
-    telefono: normalizeWhatsappForStorage(form.telefono),
+    telefono: normalizeWhatsappForStorage(form.telefono, form.pais),
     email_contacto: form.email_contacto || null,
     horario_apertura: form.horario_apertura || null,
     horario_cierre: form.horario_cierre || null,
@@ -7876,7 +7885,18 @@ export default function AdminDashboard({
   }, [activeMiSedeSection, miSedeNavItems]);
 
   const resetAdminPanelScroll = useCallback(() => {
-    if (adminMainScrollRef.current) adminMainScrollRef.current.scrollTop = 0;
+    const panel = adminMainScrollRef.current;
+    if (panel && typeof panel.scrollTop === 'number') {
+      panel.scrollTop = 0;
+    }
+    // Mobile / tablet narrow: document is the scroller — align to panel top without jumping past chrome.
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      const el = panel || document.querySelector('.admin-dashboard-panel');
+      if (el && typeof el.getBoundingClientRect === 'function') {
+        const top = el.getBoundingClientRect().top + window.scrollY - 8;
+        window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'auto' });
+      }
+    }
   }, []);
 
   const selectAdminTabInner = useCallback(
@@ -7918,16 +7938,13 @@ export default function AdminDashboard({
   const selectMiSedeSection = useCallback(
     (sectionId) => {
       const validId = miSedeNavItems.some((item) => item.id === sectionId) ? sectionId : 'info';
-      const apply = () => {
-        setActiveMiSedeSection(validId);
-        resetAdminPanelScroll();
-      };
       if (activeTab !== 'mi_sede') {
         selectAdminTab('mi_sede');
-        window.setTimeout(apply, 80);
+        setActiveMiSedeSection(validId);
         return;
       }
-      apply();
+      setActiveMiSedeSection(validId);
+      resetAdminPanelScroll();
     },
     [activeTab, miSedeNavItems, resetAdminPanelScroll, selectAdminTab],
   );
@@ -8050,13 +8067,7 @@ export default function AdminDashboard({
       .then(([{ data: sedeData }, canRes]) => {
         if (sedeData) {
           setMiSede(sedeData);
-          setMiSedeForm(() => {
-            const base = sedeDbRowToMiSedeFormState(sedeData);
-            return {
-              ...base,
-              pais: paisOptionValueFromStored(base.pais, PAISES_SEDE_OPTIONS) || base.pais,
-            };
-          });
+          setMiSedeForm(() => mergeMiSedeFormFromDb(sedeData, {}, PAISES_SEDE_OPTIONS));
           setMiSedeWhatsappHint('');
           setLicenciaForm({
             numero_licencia: sedeData.numero_licencia || '',
@@ -8361,7 +8372,7 @@ export default function AdminDashboard({
         }).catch(() => {});
       }
       setMiSede(updated);
-      setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+      setMiSedeForm((f) => mergeMiSedeFormFromDb(updated, f, PAISES_SEDE_OPTIONS));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
     }
   };
@@ -8770,7 +8781,7 @@ export default function AdminDashboard({
         const updated = data.sede;
         if (updated) {
           setMiSede(updated);
-          setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+          setMiSedeForm((f) => mergeMiSedeFormFromDb(updated, f, PAISES_SEDE_OPTIONS));
           setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
         }
         setMiSedeMsg(t('admin.sedes.paymentsUpdated'));
@@ -8788,10 +8799,15 @@ export default function AdminDashboard({
   );
 
   const abrirModalEditarSede = useCallback(() => {
-    setEditarSedeDraft({ ...miSedeForm });
+    const pais = paisOptionValueFromStored(miSedeForm.pais, PAISES_SEDE_OPTIONS) || miSedeForm.pais;
+    const ensured = ensureWhatsappPrefixed(miSedeForm.telefono, pais);
+    setEditarSedeDraft({ ...miSedeForm, pais, telefono: ensured.phone });
+    setMiSedeWhatsappHint(
+      ensured.warning === 'mismatch' ? t('admin.sedes.whatsappPrefixMismatch') : '',
+    );
     setEditarSedeModalMsg('');
     setEditarSedeModalOpen(true);
-  }, [miSedeForm]);
+  }, [miSedeForm, t]);
 
   const guardarEditarSedeModal = async () => {
     if (!sedeId || !session?.access_token) {
@@ -8820,7 +8836,7 @@ export default function AdminDashboard({
       const updated = data.sede;
       if (updated) {
         setMiSede(updated);
-        setMiSedeForm((f) => ({ ...f, ...sedeDbRowToMiSedeFormState(updated) }));
+        setMiSedeForm((f) => mergeMiSedeFormFromDb(updated, f, PAISES_SEDE_OPTIONS));
         setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
         if (prev) {
           const secret =
@@ -10242,7 +10258,6 @@ export default function AdminDashboard({
     >
       <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
       <div
-        ref={adminMainScrollRef}
         className="admin-dashboard-main-scroll"
         style={{
           flex: 1,
@@ -10466,7 +10481,7 @@ export default function AdminDashboard({
           </div>
         </div>
 
-        <div className="admin-dashboard-panel">
+        <div className="admin-dashboard-panel" ref={adminMainScrollRef}>
       <div
         className="admin-dashboard-body-surface"
         style={{
@@ -18548,19 +18563,12 @@ export default function AdminDashboard({
                   { label: t('admin.sedes.address'), k: 'direccion' },
                   { label: t('admin.formularios.cityLabel'), k: 'ciudad' },
                   { label: 'Provincia / Estado', k: 'provincia' },
-                  { label: t('admin.formularios.countryLabel'), k: 'pais' },
                   { label: 'Horario apertura', k: 'horario_apertura', ph: 'Ej: 08:00' },
                   { label: 'Horario cierre', k: 'horario_cierre', ph: 'Ej: 23:00' },
-                  {
-                    label: t('admin.sedes.clubWhatsappLabel'),
-                    k: 'telefono',
-                    ph: 'Ej: 5493512345678',
-                    hint: t('admin.formularios.phoneHint'),
-                  },
                   { label: t('admin.sedes.contactEmailLabel'), k: 'email_contacto' },
                   { label: t('admin.sedes.latitude'), k: 'latitud', ph: '-34.92105', inputType: 'number' },
                   { label: t('admin.sedes.longitude'), k: 'longitud', ph: '-57.96505', inputType: 'number' },
-                ].map(({ label, k, ph, hint, inputType }) => (
+                ].map(({ label, k, ph, inputType }) => (
                   <div key={k} style={{ marginBottom: '12px' }}>
                     <label>{label}</label>
                     <input
@@ -18578,9 +18586,70 @@ export default function AdminDashboard({
                         boxSizing: 'border-box',
                       }}
                     />
-                    {hint ? <p className="admin-editar-sede-hint">{hint}</p> : null}
                   </div>
                 ))}
+                <div style={{ marginBottom: '12px' }}>
+                  <label>{t('admin.formularios.countryLabel')}</label>
+                  <select
+                    value={paisOptionValueFromStored(editarSedeDraft.pais, PAISES_SEDE_OPTIONS) || editarSedeDraft.pais || ''}
+                    onChange={(e) => {
+                      const nextPais = e.target.value;
+                      const { phone, warning } = applyPaisChangeToWhatsapp({
+                        prevPaisLabel: editarSedeDraft.pais,
+                        nextPaisLabel: nextPais,
+                        currentPhone: editarSedeDraft.telefono,
+                      });
+                      setEditarSedeDraft((p) => ({ ...p, pais: nextPais, telefono: phone }));
+                      if (warning === 'mismatch') {
+                        setMiSedeWhatsappHint(t('admin.sedes.whatsappPrefixMismatch'));
+                      } else if (warning === 'no_code') {
+                        setMiSedeWhatsappHint(t('admin.sedes.whatsappNoCodeManual'));
+                      } else {
+                        setMiSedeWhatsappHint('');
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="">{t('admin.sedes.selectCountry')}</option>
+                    {PAISES_SEDE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label>{t('admin.sedes.clubWhatsappLabel')}</label>
+                  <input
+                    type="tel"
+                    value={editarSedeDraft.telefono || ''}
+                    placeholder={exampleWhatsappForPaisLabel(editarSedeDraft.pais)}
+                    onChange={(e) => {
+                      setEditarSedeDraft((p) => ({ ...p, telefono: sanitizeWhatsappInput(e.target.value) }));
+                      setMiSedeWhatsappHint('');
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                    }}
+                    autoComplete="tel"
+                  />
+                  <p className="admin-editar-sede-hint">
+                    {t('admin.sedes.whatsappPrefixHint', { example: exampleWhatsappForPaisLabel(editarSedeDraft.pais) })}
+                  </p>
+                  {miSedeWhatsappHint ? (
+                    <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: 700, color: '#b45309' }}>
+                      {miSedeWhatsappHint}
+                    </p>
+                  ) : null}
+                </div>
                 <div style={{ marginBottom: '12px' }}>
                   <label>Moneda</label>
                   <select

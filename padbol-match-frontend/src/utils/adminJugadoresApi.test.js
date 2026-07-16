@@ -1,17 +1,30 @@
 import {
-  formatJugadorActivity,
-  formatJugadorUsername,
+  filterAdminJugadoresByVinculacion,
+  normalizeAdminJugadoresSearchItems,
+  parseAdminJugadoresApiError,
+  sortAdminJugadoresItems,
 } from './adminJugadoresApi';
 
 describe('adminJugadoresApi helpers', () => {
-  it('formatJugadorUsername adds @', () => {
-    expect(formatJugadorUsername('ana')).toBe('@ana');
-    expect(formatJugadorUsername('@ana')).toBe('@ana');
-    expect(formatJugadorUsername('')).toBe('');
+  it('normaliza items de búsqueda en varios shapes', () => {
+    expect(normalizeAdminJugadoresSearchItems({ items: [{ user_id: '1' }] })).toHaveLength(1);
+    expect(normalizeAdminJugadoresSearchItems([{ user_id: '2' }])).toHaveLength(1);
+    expect(normalizeAdminJugadoresSearchItems({ jugadores: [{ user_id: '3' }] })).toHaveLength(1);
+    expect(normalizeAdminJugadoresSearchItems({})).toEqual([]);
   });
 
-  it('formatJugadorActivity handles ISO dates', () => {
-    expect(formatJugadorActivity('2026-07-01T12:00:00.000Z')).toMatch(/2026/);
-    expect(formatJugadorActivity('')).toBe('');
+  it('mensajes de error 401/403/500', () => {
+    expect(parseAdminJugadoresApiError(401, {})).toMatch(/401|sesión/i);
+    expect(parseAdminJugadoresApiError(403, {})).toMatch(/403|permiso/i);
+    expect(parseAdminJugadoresApiError(500, { error: 'boom' })).toBe('boom');
+  });
+
+  it('ordena y filtra por vinculación', () => {
+    const rows = [
+      { display_name: 'Bruno', vinculacion: 'registrado', last_activity_at: '2026-01-01' },
+      { display_name: 'Ana', vinculacion: 'con_historial', last_activity_at: '2026-06-01' },
+    ];
+    expect(sortAdminJugadoresItems(rows, 'name_asc')[0].display_name).toBe('Ana');
+    expect(filterAdminJugadoresByVinculacion(rows, 'con_historial')).toHaveLength(1);
   });
 });

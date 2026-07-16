@@ -1628,7 +1628,7 @@
       "editorScopeLabel": "Hub del jugador (cards)"
     },
     "jugadores": {
-      "subtitle": "Jugadores con historial de reservas en la sede. La búsqueda global sirve para la reserva manual.",
+      "subtitle": "Jugadores con historial de reservas en la sede. Buscá, ordená y abrí la ficha. Vincular/desvincular formal requiere Backend.",
       "searchPlaceholder": "Nombre, @usuario, email o teléfono",
       "filterLabel": "Buscar",
       "sedeLabel": "Sede",
@@ -1652,7 +1652,16 @@
       "viewProfile": "Ver perfil",
       "fichaTitle": "Ficha del jugador",
       "pageOf": "Página {{page}} de {{total}} ({{count}})",
-      "playerNameLabel": "Jugador (registrado o invitado)"
+      "playerNameLabel": "Jugador (registrado o invitado)",
+      "searchAuthRequired": "Sesión expirada. Volvé a iniciar sesión para buscar jugadores.",
+      "vinculacionFilter": "Estado de relación",
+      "filterAll": "Todos",
+      "sortLabel": "Orden",
+      "sortNameAsc": "Nombre A–Z",
+      "sortNameDesc": "Nombre Z–A",
+      "sortActivityDesc": "Actividad reciente",
+      "sortActivityAsc": "Actividad antigua",
+      "fichaLinkBlocked": "Vincular / desvincular formalmente a la sede aún no está disponible en Backend. La relación actual se infiere del historial de reservas."
     },
     "membresias": {
       "title": "Membresías",

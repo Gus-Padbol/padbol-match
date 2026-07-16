@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSafeTranslation } from '../i18n/tSafe';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
   fetchAdminJugadoresList,
+  filterAdminJugadoresByVinculacion,
   formatJugadorActivity,
   formatJugadorUsername,
   formatJugadorVinculacionLabel,
   searchAdminJugadores,
+  sortAdminJugadoresItems,
 } from '../utils/adminJugadoresApi';
 
 const inputStyle = {
@@ -44,6 +46,7 @@ export function AdminJugadorSearchInput({
   const [items, setItems] = useState([]);
   const debounceRef = useRef(null);
   const wrapRef = useRef(null);
+  const reqIdRef = useRef(0);
 
   useEffect(() => {
     if (selectedPlayer) {
@@ -67,29 +70,40 @@ export function AdminJugadorSearchInput({
   const runSearch = useCallback(
     async (term) => {
       const cleaned = String(term || '').trim().replace(/^@+/, '');
-      if (cleaned.length < 2 || !accessToken) {
+      if (cleaned.length < 2) {
         setItems([]);
         setLoading(false);
         setError('');
+        setOpen(false);
         return;
       }
+      if (!accessToken) {
+        setItems([]);
+        setLoading(false);
+        setError(t('admin.jugadores.searchAuthRequired', 'Sesión expirada. Volvé a iniciar sesión para buscar jugadores.'));
+        setOpen(true);
+        return;
+      }
+      const reqId = ++reqIdRef.current;
       setLoading(true);
       setError('');
+      setOpen(true);
       try {
         const rows = await searchAdminJugadores({
           apiBaseUrl,
           accessToken,
           q: cleaned,
-          sedeId,
+          sedeId: sedeId != null && sedeId !== '' ? String(sedeId) : undefined,
           limit: 10,
         });
+        if (reqId !== reqIdRef.current) return;
         setItems(rows);
-        setOpen(true);
       } catch (err) {
+        if (reqId !== reqIdRef.current) return;
         setItems([]);
         setError(err.message || t('admin.jugadores.searchError'));
       } finally {
-        setLoading(false);
+        if (reqId === reqIdRef.current) setLoading(false);
       }
     },
     [accessToken, apiBaseUrl, sedeId, t],
@@ -109,6 +123,7 @@ export function AdminJugadorSearchInput({
     setQ(row.display_name || [row.nombre, row.apellido].filter(Boolean).join(' '));
     setOpen(false);
     setItems([]);
+    setError('');
   };
 
   return (
@@ -118,7 +133,9 @@ export function AdminJugadorSearchInput({
           type="search"
           value={q}
           onChange={handleChange}
-          onFocus={() => { if (items.length) setOpen(true); }}
+          onFocus={() => {
+            if (items.length || loading || error) setOpen(true);
+          }}
           disabled={disabled}
           placeholder={t('admin.jugadores.searchPlaceholder')}
           autoComplete="off"
@@ -133,6 +150,7 @@ export function AdminJugadorSearchInput({
               setQ('');
               onNombreChange?.('');
               setItems([]);
+              setError('');
             }}
             style={{
               padding: '8px 12px',
@@ -182,6 +200,10 @@ export function AdminJugadorSearchInput({
             <div style={{ padding: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
               {t('admin.common.loadingEllipsis')}
             </div>
+          ) : error ? (
+            <div style={{ padding: 12, fontSize: 13, color: '#b91c1c', fontWeight: 700 }}>
+              {error}
+            </div>
           ) : items.length === 0 ? (
             <div style={{ padding: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
               {t('admin.jugadores.noResults')}
@@ -189,7 +211,7 @@ export function AdminJugadorSearchInput({
           ) : (
             items.map((row) => (
               <button
-                key={row.user_id || row.email}
+                key={row.user_id || `${row.email}-${row.telefono}`}
                 type="button"
                 role="option"
                 onClick={() => pick(row)}
@@ -207,7 +229,7 @@ export function AdminJugadorSearchInput({
               >
                 <div style={{ fontWeight: 800, fontSize: 13 }}>{row.display_name}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                  {[formatJugadorUsername(row.username), row.email, row.telefono]
+                  {[formatJugadorUsername(row.username), row.telefono, formatJugadorVinculacionLabel(row.vinculacion, t)]
                     .filter(Boolean)
                     .join(' · ')}
                 </div>
@@ -240,6 +262,8 @@ export default function AdminJugadoresSection({
   });
   const [q, setQ] = useState('');
   const [qDebounced, setQDebounced] = useState('');
+  const [vinculacionFilter, setVinculacionFilter] = useState('');
+  const [sortKey, setSortKey] = useState('name_asc');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -299,12 +323,17 @@ export default function AdminJugadoresSection({
 
   useEffect(() => { load(); }, [load]);
 
+  const displayItems = useMemo(() => {
+    const filtered = filterAdminJugadoresByVinculacion(data.items, vinculacionFilter);
+    return sortAdminJugadoresItems(filtered, sortKey);
+  }, [data.items, sortKey, vinculacionFilter]);
+
   return (
     <div className="section">
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 14 }}>
         <div>
           <h2 style={{ margin: '0 0 6px' }}>{t('admin.tabs.jugadores')}</h2>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', maxWidth: 520 }}>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', maxWidth: 560 }}>
             {t('admin.jugadores.subtitle')}
           </p>
         </div>
@@ -329,7 +358,7 @@ export default function AdminJugadoresSection({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
           gap: 10,
           marginBottom: 14,
         }}
@@ -348,7 +377,14 @@ export default function AdminJugadoresSection({
               ))}
             </select>
           </label>
-        ) : null}
+        ) : (
+          <div style={{ fontSize: 13 }}>
+            <div style={{ fontWeight: 800, marginBottom: 6 }}>{t('admin.jugadores.sedeLabel')}</div>
+            <div style={{ color: 'var(--text-primary)' }}>
+              {sedesList.find((s) => String(s.id) === String(sedeId))?.nombre || sedeId || '—'}
+            </div>
+          </div>
+        )}
 
         <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
           {t('admin.jugadores.filterLabel')}
@@ -361,9 +397,47 @@ export default function AdminJugadoresSection({
             autoComplete="off"
           />
         </label>
+
+        <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
+          {t('admin.jugadores.vinculacionFilter', 'Estado de relación')}
+          <select
+            value={vinculacionFilter}
+            onChange={(e) => setVinculacionFilter(e.target.value)}
+            style={inputStyle}
+          >
+            <option value="">{t('admin.jugadores.filterAll', 'Todos')}</option>
+            <option value="con_historial">{t('admin.jugadores.vinculacionHistorial')}</option>
+            <option value="registrado">{t('admin.jugadores.vinculacionRegistrado')}</option>
+          </select>
+        </label>
+
+        <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
+          {t('admin.jugadores.sortLabel', 'Orden')}
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value)}
+            style={inputStyle}
+          >
+            <option value="name_asc">{t('admin.jugadores.sortNameAsc', 'Nombre A–Z')}</option>
+            <option value="name_desc">{t('admin.jugadores.sortNameDesc', 'Nombre Z–A')}</option>
+            <option value="activity_desc">{t('admin.jugadores.sortActivityDesc', 'Actividad reciente')}</option>
+            <option value="activity_asc">{t('admin.jugadores.sortActivityAsc', 'Actividad antigua')}</option>
+          </select>
+        </label>
       </div>
 
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 0 }}>
+      <p
+        style={{
+          fontSize: 12,
+          color: 'var(--text-secondary)',
+          marginTop: 0,
+          lineHeight: 1.45,
+          padding: '10px 12px',
+          borderRadius: 8,
+          border: '1px solid var(--border)',
+          background: 'var(--bg-page)',
+        }}
+      >
         {t('admin.jugadores.vinculacionNote')}
       </p>
 
@@ -373,11 +447,11 @@ export default function AdminJugadoresSection({
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
-      ) : data.items.length === 0 ? (
+      ) : displayItems.length === 0 ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.jugadores.empty')}</p>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="reservas-table">
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table className="reservas-table" style={{ minWidth: 720 }}>
             <thead>
               <tr>
                 <th>{t('admin.reservas.player')}</th>
@@ -390,7 +464,7 @@ export default function AdminJugadoresSection({
               </tr>
             </thead>
             <tbody>
-              {data.items.map((j) => {
+              {displayItems.map((j) => {
                 const perfilPath = pathJugadorPerfilPublico({
                   alias: j.username,
                   user_id: j.user_id,
@@ -491,8 +565,21 @@ export default function AdminJugadoresSection({
               <div><dt style={{ fontWeight: 800 }}>@</dt><dd style={{ margin: 0 }}>{formatJugadorUsername(ficha.username) || '—'}</dd></div>
               <div><dt style={{ fontWeight: 800 }}>{t('admin.formularios.emailLabel')}</dt><dd style={{ margin: 0 }}>{ficha.email || '—'}</dd></div>
               <div><dt style={{ fontWeight: 800 }}>{t('admin.jugadores.phoneCol')}</dt><dd style={{ margin: 0 }}>{ficha.telefono || '—'}</dd></div>
-              <div><dt style={{ fontWeight: 800 }}>{t('admin.jugadores.vinculacionCol')}</dt><dd style={{ margin: 0 }}>{formatJugadorVinculacionLabel(ficha.vinculacion, t)}</dd></div>
+              <div>
+                <dt style={{ fontWeight: 800 }}>{t('admin.jugadores.vinculacionCol')}</dt>
+                <dd style={{ margin: 0 }}>{formatJugadorVinculacionLabel(ficha.vinculacion, t)}</dd>
+              </div>
+              <div>
+                <dt style={{ fontWeight: 800 }}>{t('admin.jugadores.activityCol')}</dt>
+                <dd style={{ margin: 0 }}>{formatJugadorActivity(ficha.last_activity_at) || '—'}</dd>
+              </div>
             </dl>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, margin: '0 0 14px' }}>
+              {t(
+                'admin.jugadores.fichaLinkBlocked',
+                'Vincular / desvincular formalmente a la sede aún no está disponible en Backend. La relación actual se infiere del historial de reservas.',
+              )}
+            </p>
             <button
               type="button"
               onClick={() => setFicha(null)}

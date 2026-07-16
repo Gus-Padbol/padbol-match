@@ -46,6 +46,12 @@ export function digitsOnlyPhone(raw) {
 export function codigoTelefonicoDesdePaisLabel(paisLabel) {
   const key = normalizePaisName(paisLabel);
   if (!key) return null;
+  // ISO corto (AR, ES…) — pocos casos legacy
+  const isoMap = {
+    ar: '+54', es: '+34', it: '+39', fr: '+33', de: '+49',
+    us: '+1', br: '+55', uy: '+598', cl: '+56', co: '+57', mx: '+52',
+  };
+  if (isoMap[key]) return isoMap[key];
   const hit = ALL_PAISES.find((p) => normalizePaisName(p.nombre) === key);
   return hit?.codigo || null;
 }
@@ -57,7 +63,6 @@ export function paisOptionValueFromStored(paisRaw, paisOptions) {
   const opts = Array.isArray(paisOptions) ? paisOptions : [];
   const hit = opts.find((o) => normalizePaisName(o.value || o.label || '') === key);
   if (hit) return hit.value;
-  // fallback: reconstruct from catalog
   const cat = ALL_PAISES.find((p) => normalizePaisName(p.nombre) === key);
   if (cat) return `${cat.bandera} ${cat.nombre}`.trim();
   return raw;
@@ -78,6 +83,55 @@ export function phoneStartsWithCountryPrefix(phone, codigo) {
   const d = digitsOnlyPhone(trimmed);
   const cd = digitsOnlyPhone(c);
   return Boolean(cd) && d.startsWith(cd) && d.length > cd.length;
+}
+
+/** Quita el prefijo de país del WhatsApp, dejando el resto del número. */
+export function stripCountryPrefix(phone, codigo) {
+  const trimmed = String(phone || '').trim();
+  const c = String(codigo || '').trim();
+  if (!trimmed || !c) return trimmed;
+  if (trimmed === c) return '';
+  if (trimmed.startsWith(`${c} `) || trimmed.startsWith(`${c}-`)) {
+    return trimmed.slice(c.length + 1).trim();
+  }
+  if (trimmed.startsWith(c)) {
+    return trimmed.slice(c.length).trim();
+  }
+  const d = digitsOnlyPhone(trimmed);
+  const cd = digitsOnlyPhone(c);
+  if (cd && d.startsWith(cd) && d.length > cd.length) {
+    return d.slice(cd.length);
+  }
+  return trimmed;
+}
+
+/**
+ * Asegura prefijo de país en carga / país ya seleccionado.
+ * Vacío → +54; local sin + → prepend; ya con prefijo → intacto.
+ */
+export function ensureWhatsappPrefixed(currentPhone, paisLabel) {
+  const codigo = codigoTelefonicoDesdePaisLabel(paisLabel);
+  const phone = String(currentPhone || '').trim();
+  if (!codigo) {
+    return { phone, warning: paisLabel ? 'no_code' : null };
+  }
+  if (!phone) {
+    return { phone: codigo, warning: null };
+  }
+  if (phoneIsOnlyCountryPrefix(phone, codigo) || phoneStartsWithCountryPrefix(phone, codigo)) {
+    return { phone, warning: null };
+  }
+  // Dígitos ya empiezan con el código país (ej. 54911…)
+  const d = digitsOnlyPhone(phone);
+  const cd = digitsOnlyPhone(codigo);
+  if (cd && d.startsWith(cd) && d.length > cd.length) {
+    return { phone: phone.startsWith('+') ? phone : `+${d}`, warning: null };
+  }
+  // Número local sin código internacional
+  if (!phone.startsWith('+')) {
+    return { phone: `${codigo} ${phone}`, warning: null };
+  }
+  return { phone, warning: 'mismatch' };
 }
 
 /**
@@ -109,7 +163,23 @@ export function applyPaisChangeToWhatsapp({ prevPaisLabel, nextPaisLabel, curren
     return { phone, warning: null };
   }
 
-  // Número completo (o con otro prefijo): no tocar automáticamente.
+  // Reemplazar prefijo anterior por el nuevo (número ya internacional del país viejo)
+  if (prevCodigo && phoneStartsWithCountryPrefix(phone, prevCodigo)) {
+    const rest = stripCountryPrefix(phone, prevCodigo);
+    return { phone: rest ? `${nextCodigo} ${rest}` : nextCodigo, warning: null };
+  }
+
+  // Local sin +: anteponer prefijo sin destruir dígitos
+  if (!phone.startsWith('+')) {
+    const d = digitsOnlyPhone(phone);
+    const cd = digitsOnlyPhone(nextCodigo);
+    if (cd && d.startsWith(cd) && d.length > cd.length) {
+      return { phone: `+${d}`, warning: null };
+    }
+    return { phone: `${nextCodigo} ${phone}`, warning: null };
+  }
+
+  // Otro número internacional completo: no tocar
   return { phone, warning: 'mismatch' };
 }
 
@@ -118,11 +188,29 @@ export function sanitizeWhatsappInput(raw) {
   return String(raw || '').replace(/[^\d+\s\-()]/g, '');
 }
 
-/** Normaliza a E.164 cuando hay ≥11 dígitos; si no, conserva texto saneado. */
-export function normalizeWhatsappForStorage(raw) {
-  const cleaned = sanitizeWhatsappInput(raw).trim();
+/**
+ * Normaliza a E.164 cuando hay dígitos suficientes.
+ * Si se pasa paisLabel y el número es local, antepone el prefijo antes de guardar.
+ */
+export function normalizeWhatsappForStorage(raw, paisLabel) {
+  let cleaned = sanitizeWhatsappInput(raw).trim();
   if (!cleaned) return null;
+
+  const codigo = codigoTelefonicoDesdePaisLabel(paisLabel);
+  if (codigo && !phoneStartsWithCountryPrefix(cleaned, codigo) && !cleaned.startsWith('+')) {
+    const d = digitsOnlyPhone(cleaned);
+    const cd = digitsOnlyPhone(codigo);
+    if (!(cd && d.startsWith(cd))) {
+      cleaned = `${codigo} ${cleaned}`;
+    }
+  }
+
   const d = digitsOnlyPhone(cleaned);
+  if (!d) return null;
+  // Con prefijo de país aplicado, persistir E.164 aunque sea corto (evita perder +54)
+  if (codigo && d.startsWith(digitsOnlyPhone(codigo))) {
+    return `+${d}`;
+  }
   if (d.length >= 11) return `+${d}`;
   return cleaned;
 }
