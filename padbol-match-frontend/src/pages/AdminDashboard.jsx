@@ -154,6 +154,12 @@ import {
   defaultAdminTabForRole,
   canRoleSeePadCoins,
 } from '../utils/adminVisibleTabs';
+import {
+  canRoleFetchTorneosResumenStats,
+  collectValidTorneoIds,
+  fetchAdminTorneosResumenStats,
+  getTorneoResumenStat,
+} from '../utils/adminTorneosResumenStats';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { fetchAdminCampanitaAlertas } from '../utils/adminCampanitaApi';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -3532,6 +3538,8 @@ export default function AdminDashboard({
   const puedeVerPadCoins = canRoleSeePadCoins(rolPanel);
   const puedeVerMembresias = isSuperAdmin || esAdminClub;
   const puedeVerFinanzas = !esEmpleado;
+  /** Batch resumen-stats: solo roles autorizados por Backend (evita 403 en nacional/empleado). */
+  const puedeBatchTorneosResumen = canRoleFetchTorneosResumenStats(rolPanel);
 
   const paisAdminNacional = useMemo(() => {
     if (!esAdminNacional) return '';
@@ -3601,6 +3609,11 @@ export default function AdminDashboard({
   /** Debe declararse antes de `dashboardFinanciero` (useMemo) — ese memo lee equipos_count por torneo. */
   const [torneoStats, setTorneoStats] = useState({});
   const [torneoStatsTick, setTorneoStatsTick] = useState(0);
+  const [torneoStatsError, setTorneoStatsError] = useState('');
+  const [torneoStatsLoading, setTorneoStatsLoading] = useState(false);
+  const torneoStatsFetchSeqRef = useRef(0);
+  const torneoStatsLastIdsKeyRef = useRef('');
+  const torneoStatsLastTickRef = useRef(-1);
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -5748,7 +5761,7 @@ export default function AdminDashboard({
         torneo_id: eq?.torneo_id,
         nombre: t?.nombre || `Torneo #${eq?.torneo_id ?? ''}`,
         fecha: t?.fecha_inicio || '',
-        equipos: torneoStats[t?.id]?.equipos_count ?? 0,
+        equipos: getTorneoResumenStat(torneoStats, t?.id)?.equipos_count ?? 0,
         ingreso,
         moneda: mon,
         estado: t?.estado || '',
@@ -7064,65 +7077,84 @@ export default function AdminDashboard({
     [apiBaseUrl, session?.access_token],
   );
 
+  // Badges del listado Torneos: 1 request batch (no N+1 /equipos|/partidos).
   useEffect(() => {
-    if (activeTab !== 'torneos' || torneos.length === 0) return;
+    if (activeTab !== 'torneos') return undefined;
+    if (!puedeBatchTorneosResumen) return undefined;
+    if (!session?.access_token) return undefined;
+
+    const ids = collectValidTorneoIds(torneos);
+    if (ids.length === 0) {
+      setTorneoStatsError('');
+      setTorneoStatsLoading(false);
+      return undefined;
+    }
+
+    const idsKey = ids.join(',');
+    const forceByTick = torneoStatsTick !== torneoStatsLastTickRef.current;
+    if (
+      !forceByTick
+      && torneoStatsLastIdsKeyRef.current === idsKey
+      && Object.keys(torneoStats).length > 0
+    ) {
+      return undefined;
+    }
+
+    const seq = ++torneoStatsFetchSeqRef.current;
+    const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
     let cancelled = false;
-    const fetchTorneoStats = async () => {
-      const results = await Promise.all(
-        torneos.map(async (t) => {
-          try {
-            const [eqRes, partRes] = await Promise.all([
-              fetch(`${apiBaseUrl}/api/torneos/${t.id}/equipos`),
-              fetch(`${apiBaseUrl}/api/torneos/${t.id}/partidos`),
-            ]);
-            const equipos  = eqRes.ok  ? await eqRes.json()  : [];
-            const partidos = partRes.ok ? await partRes.json() : [];
-            const jugados  = partidos.filter(p => p.estado === 'finalizado').length;
-            const tiene_gruposPorPartido = partidos.some(
-              (p) => p && p.grupo != null && String(p.grupo).trim() !== ''
-            );
-            const tiene_gruposPorEquipo = (Array.isArray(equipos) ? equipos : []).some(
-              (eq) => eq && eq.grupo != null && String(eq.grupo).trim() !== ''
-            );
-            const tiene_grupos = tiene_gruposPorPartido || tiene_gruposPorEquipo;
-            const equipos_confirmados_sorteo = equiposConfirmadosParaSorteo(equipos).length;
-            // winner: equipo with highest puntos_ranking (finalizado) or puntos_totales (en_curso)
-            const sorted = [...equipos].sort((a, b) =>
-              t.estado === 'finalizado'
-                ? (b.puntos_ranking || 0) - (a.puntos_ranking || 0)
-                : (b.puntos_totales || 0) - (a.puntos_totales || 0)
-            );
-            return {
-              id: t.id,
-              equipos_count: equipos.length,
-              partidos_jugados: jugados,
-              total_partidos: partidos.length,
-              winner: sorted[0] || null,
-              tiene_grupos,
-              equipos_confirmados_sorteo,
-            };
-          } catch {
-            return {
-              id: t.id,
-              equipos_count: 0,
-              partidos_jugados: 0,
-              total_partidos: 0,
-              winner: null,
-              tiene_grupos: false,
-              equipos_confirmados_sorteo: 0,
-            };
-          }
-        })
-      );
-      if (!cancelled) {
-        const map = {};
-        results.forEach(r => { map[r.id] = r; });
+
+    const run = async () => {
+      setTorneoStatsLoading(true);
+      setTorneoStatsError('');
+      try {
+        const map = await fetchAdminTorneosResumenStats({
+          apiBaseUrl,
+          accessToken: session.access_token,
+          torneoIds: ids,
+          // admin_club: sede propia solo como refuerzo de scope (no ampliar).
+          sedeId: esAdminClub && sedeId != null && sedeId !== '' ? sedeId : null,
+          signal: ac?.signal,
+        });
+        if (cancelled || seq !== torneoStatsFetchSeqRef.current) return;
         setTorneoStats(map);
+        torneoStatsLastIdsKeyRef.current = idsKey;
+        torneoStatsLastTickRef.current = torneoStatsTick;
+        setTorneoStatsError('');
+      } catch (err) {
+        if (cancelled || seq !== torneoStatsFetchSeqRef.current) return;
+        if (err?.name === 'AbortError') return;
+        // Conservar stats previas en refresh/error; no vaciar el mapa.
+        setTorneoStatsError(err?.message || t('admin.torneosSection.statsLoadError', 'No se pudo cargar el resumen de torneos.'));
+      } finally {
+        if (!cancelled && seq === torneoStatsFetchSeqRef.current) {
+          setTorneoStatsLoading(false);
+        }
       }
     };
-    fetchTorneoStats();
-    return () => { cancelled = true; };
-  }, [activeTab, torneos.length, apiBaseUrl, torneoStatsTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    void run();
+    return () => {
+      cancelled = true;
+      try {
+        ac?.abort();
+      } catch {
+        /* ignore */
+      }
+    };
+    // torneoStats omitido a propósito: solo reutilizar vía refs; evita bucles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeTab,
+    apiBaseUrl,
+    esAdminClub,
+    puedeBatchTorneosResumen,
+    sedeId,
+    session?.access_token,
+    t,
+    torneoStatsTick,
+    torneos,
+  ]);
 
   const abrirEditTorneo = (torneo) => {
     setEditandoTorneoId(torneo.id);
@@ -11278,6 +11310,42 @@ export default function AdminDashboard({
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0 }}>📋 {t('admin.torneosSection.createdTitle')}</h2>
+          {puedeBatchTorneosResumen && torneoStatsError ? (
+            <div
+              role="status"
+              style={{
+                marginTop: '10px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-input)',
+                color: 'var(--text-secondary)',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <span>{torneoStatsError}</span>
+              <button
+                type="button"
+                disabled={torneoStatsLoading}
+                onClick={() => setTorneoStatsTick((n) => n + 1)}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  cursor: torneoStatsLoading ? 'default' : 'pointer',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                }}
+              >
+                {t('pago.reintentar')}
+              </button>
+            </div>
+          ) : null}
           {!esEmpleado ? (
             <button
               onClick={() => setCrearTorneoEmbedOpen(true)}
@@ -11667,8 +11735,14 @@ export default function AdminDashboard({
                             : <div style={{ color: '#ddd' }}>—</div>}
                         </div>
                         {(() => {
-                          const st = torneoStats[torneo.id];
-                          if (!st) return <div style={{ fontSize: '11px', color: '#ddd' }}>···</div>;
+                          const st = getTorneoResumenStat(torneoStats, torneo.id);
+                          if (!st) {
+                            return (
+                              <div style={{ fontSize: '11px', color: '#ddd' }}>
+                                {torneoStatsLoading ? '···' : '—'}
+                              </div>
+                            );
+                          }
                           if (torneo.estado === 'planificacion') return (
                             <div style={{ fontSize: '11px', color: '#6b7280' }}>
                               🔧 <strong>{st.equipos_count}</strong> equipo{st.equipos_count !== 1 ? 's' : ''} inscripto{st.equipos_count !== 1 ? 's' : ''}
@@ -11676,26 +11750,26 @@ export default function AdminDashboard({
                           );
                           if (torneo.estado === 'en_curso') return (
                             <div style={{ fontSize: '11px', color: '#1d4ed8' }}>
-                              ⚔️ <strong>{st.partidos_jugados}/{st.total_partidos}</strong> partidos
+                              ⚔️ <strong>{st.partidos_jugados}/{st.total_partidos ?? st.partidos_total}</strong> partidos
                             </div>
                           );
                           if (torneo.estado === 'finalizado') return (
                             <div style={{ fontSize: '11px', color: '#92400e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              🥇 <strong>{st.winner?.nombre || '—'}</strong>
+                              🥇 <strong>{st.winner_nombre || st.winner?.nombre || '—'}</strong>
                             </div>
                           );
                           return null;
                         })()}
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 'auto', flexWrap: 'wrap' }}>
                         {(() => {
-                          const st = torneoStats[torneo.id];
+                          const st = getTorneoResumenStat(torneoStats, torneo.id);
                           const mostrarSorteo =
                             isAdmin &&
                             torneo.tipo_torneo === 'grupos_knockout' &&
                             torneoEstadoPermiteSorteoGrupos(torneo.estado) &&
                             st &&
                             !st.tiene_grupos &&
-                            (st.equipos_confirmados_sorteo ?? 0) >= 2;
+                            (st.equipos_confirmados_sorteo ?? st.equipos_confirmados ?? 0) >= 2;
                           return mostrarSorteo ? (
                             <button
                               type="button"
