@@ -220,6 +220,10 @@
    * - Single vertical scroll = document/window (not a nested panel).
    * - Root uses min-height: 100dvh, never max-height: 100dvh (that starved the panel
    *   after AppHeader + brand shell and left a tiny inner scroller + dark footer gap).
+   * - Shell/main-scroll must size to content (flex: 0 0 auto), NOT fill a definite
+   *   viewport slice. flex:1 + min-height:0 on the shell made its box ~viewport-tall
+   *   while the panel overflowed visibly — sticky on .admin-dashboard-nav was then
+   *   clamped to that short parent and scrolled away with it.
    * - Sidebar stays sticky and independently scrollable if its own list overflows.
    * - Footer (LegalFooterBar) sits after content naturally.
    */
@@ -233,8 +237,9 @@
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-main-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
+    /* Grow with brand + shell content; do not lock to remaining viewport height. */
+    flex: 0 0 auto;
+    min-height: auto;
     overflow: visible;
     display: flex;
     flex-direction: column;
@@ -245,8 +250,9 @@
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-shell {
-    flex: 1 1 auto;
-    min-height: 0;
+    /* Must be as tall as the panel so sticky nav can travel the full content height. */
+    flex: 0 0 auto;
+    min-height: auto;
     overflow: visible;
     align-items: flex-start;
   }
@@ -260,6 +266,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    z-index: 5;
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-panel {
