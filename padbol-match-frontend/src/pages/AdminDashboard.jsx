@@ -7902,19 +7902,20 @@ export default function AdminDashboard({
     }
   }, [activeMiSedeSection, miSedeNavItems]);
 
+  /** Single scroll strategy: document/window. Panel is not a nested vertical scroller on desktop. */
   const resetAdminPanelScroll = useCallback(() => {
     const panel = adminMainScrollRef.current;
     if (panel && typeof panel.scrollTop === 'number') {
       panel.scrollTop = 0;
     }
-    // Mobile / tablet narrow: document is the scroller — align to panel top without jumping past chrome.
-    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
-      const el = panel || document.querySelector('.admin-dashboard-panel');
-      if (el && typeof el.getBoundingClientRect === 'function') {
-        const top = el.getBoundingClientRect().top + window.scrollY - 8;
-        window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'auto' });
-      }
+    if (typeof window === 'undefined') return;
+    const el = panel || document.querySelector('.admin-dashboard-panel');
+    if (el && typeof el.getBoundingClientRect === 'function') {
+      const top = el.getBoundingClientRect().top + window.scrollY - 8;
+      window.scrollTo({ top: Math.max(0, top), left: 0, behavior: 'auto' });
+      return;
     }
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
 
   const selectAdminTabInner = useCallback(
