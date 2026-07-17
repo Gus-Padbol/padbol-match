@@ -172,25 +172,26 @@
 @media (min-width: 768px) {
   .admin-dashboard-shell {
     flex-direction: row;
-    gap: 16px;
-    padding: 0 12px 12px;
+    gap: var(--pm-admin-sidebar-gap, 16px);
+    padding: 0 var(--pm-admin-sidebar-shell-pad-x, 12px) 12px;
     align-items: flex-start;
   }
 
+  /*
+   * Placeholder in-flow: reserves sidebar width so the panel never slides underneath.
+   * Visual nav lives on .admin-dashboard-sidebar with position:fixed (sticky discarded).
+   */
   .admin-dashboard-nav {
     display: block;
-    flex: 0 0 232px;
-    width: 232px;
-    position: sticky;
-    top: 12px;
-    align-self: flex-start;
-    max-height: calc(100dvh - 24px);
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 8px 4px 12px 0;
+    flex: 0 0 var(--pm-admin-sidebar-width, 232px);
+    width: var(--pm-admin-sidebar-width, 232px);
+    position: relative;
+    align-self: stretch;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
     box-sizing: border-box;
-    z-index: 5;
+    pointer-events: none;
   }
 
   .admin-dashboard-sidebar {
@@ -220,14 +221,21 @@
    * - Single vertical scroll = document/window (not a nested panel).
    * - Root uses min-height: 100dvh, never max-height: 100dvh (that starved the panel
    *   after AppHeader + brand shell and left a tiny inner scroller + dark footer gap).
-   * - Shell/main-scroll must size to content (flex: 0 0 auto), NOT fill a definite
-   *   viewport slice. flex:1 + min-height:0 on the shell made its box ~viewport-tall
-   *   while the panel overflowed visibly — sticky on .admin-dashboard-nav was then
-   *   clamped to that short parent and scrolled away with it.
-   * - Sidebar stays sticky and independently scrollable if its own list overflows.
-   * - Footer (LegalFooterBar) sits after content naturally.
+   * - Shell/main-scroll size to content (flex: 0 0 auto); document scroll unchanged.
+   * - Sidebar: position:fixed to the viewport (sticky failed in real QA — parent height /
+   *   scrollport issues). Placeholder .admin-dashboard-nav keeps the panel offset.
+   * - left aligns to the centered .pm-app-shell-column (~900px) + shell pad.
+   * - Footer (LegalFooterBar) sits after content; fixed sidebar may stay visible over
+   *   the left strip without dragging with the document.
    */
   .admin-dashboard--with-sidebar {
+    --pm-admin-sidebar-width: 232px;
+    --pm-admin-sidebar-gap: 16px;
+    --pm-admin-sidebar-shell-pad-x: 12px;
+    --pm-admin-sidebar-top: calc(var(--pm-app-header-stack-height, 86px) + 8px);
+    --pm-admin-sidebar-bottom-gap: 16px;
+    --pm-admin-sidebar-z: 40;
+    --pm-admin-sidebar-slot: calc(var(--pm-admin-sidebar-width) + var(--pm-admin-sidebar-gap));
     flex: 1 1 auto;
     min-height: 100vh;
     min-height: 100dvh;
@@ -247,26 +255,55 @@
 
   .admin-dashboard--with-sidebar .admin-dashboard-brand-shell {
     flex: 0 0 auto;
+    /* Reserve left strip so brand/logo are not under the fixed sidebar. */
+    padding-left: calc(var(--pm-admin-sidebar-shell-pad-x) + var(--pm-admin-sidebar-slot));
+    padding-right: var(--pm-admin-sidebar-shell-pad-x);
+    box-sizing: border-box;
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-shell {
-    /* Must be as tall as the panel so sticky nav can travel the full content height. */
     flex: 0 0 auto;
     min-height: auto;
     overflow: visible;
     align-items: flex-start;
+    gap: var(--pm-admin-sidebar-gap);
+    padding-left: var(--pm-admin-sidebar-shell-pad-x);
+    padding-right: var(--pm-admin-sidebar-shell-pad-x);
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-nav {
-    position: sticky;
-    top: calc(var(--pm-app-header-stack-height, 86px) + 8px);
-    align-self: flex-start;
-    max-height: calc(100dvh - var(--pm-app-header-stack-height, 86px) - 16px);
-    max-height: calc(100svh - var(--pm-app-header-stack-height, 86px) - 16px);
+    flex: 0 0 var(--pm-admin-sidebar-width);
+    width: var(--pm-admin-sidebar-width);
+    position: relative;
+    align-self: stretch;
+    max-height: none;
+    overflow: visible;
+    pointer-events: none;
+    /* Do not use sticky — real scroll must not drag the sidebar. */
+  }
+
+  .admin-dashboard--with-sidebar .admin-dashboard-sidebar {
+    display: block;
+    position: fixed;
+    top: var(--pm-admin-sidebar-top);
+    /* Align to centered app column (same idea as chatbot-fab-anchor). */
+    left: max(
+      var(--pm-admin-sidebar-shell-pad-x),
+      calc(
+        (100vw - min(100vw, var(--pm-app-body-max-width, 900px))) / 2 +
+          var(--pm-admin-sidebar-shell-pad-x)
+      )
+    );
+    width: var(--pm-admin-sidebar-width);
+    max-height: calc(100dvh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
+    max-height: calc(100svh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    z-index: 5;
+    z-index: var(--pm-admin-sidebar-z);
+    pointer-events: auto;
+    padding: 8px 4px 12px 0;
+    box-sizing: border-box;
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-panel {
@@ -317,6 +354,9 @@
     min-height: 100dvh;
     overflow: visible;
     overscroll-behavior: auto;
+    /* Clear desktop sidebar slot vars so no lateral compensation leaks. */
+    --pm-admin-sidebar-slot: 0px;
+    --pm-admin-sidebar-width: 0px;
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-main-scroll {
@@ -324,13 +364,35 @@
     min-height: auto;
   }
 
+  .admin-dashboard--with-sidebar .admin-dashboard-brand-shell {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .admin-dashboard-shell {
     flex-direction: column;
     padding: 0 8px 8px;
+    gap: 0;
+  }
+
+  .admin-dashboard-nav {
+    width: 100%;
+    flex: 0 0 auto;
+    position: static;
+    pointer-events: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .admin-dashboard-sidebar {
     display: none !important;
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    z-index: auto !important;
   }
 
   .admin-dashboard-tabs-strip--mobile {
@@ -342,6 +404,7 @@
     padding-bottom: 4px;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
+    pointer-events: auto;
   }
 }
 

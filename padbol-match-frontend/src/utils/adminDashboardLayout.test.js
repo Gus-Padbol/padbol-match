@@ -1,8 +1,8 @@
 /**
- * Layout strategy guards for AdminDashboard (responsive height / single scroll + sticky sidebar).
- * The CSS must keep document scroll as the only vertical scroller on desktop
- * so Windows DPI / short viewports do not trap content in a tiny nested panel,
- * while the sidebar stays sticky for the full content height.
+ * Layout strategy guards for AdminDashboard:
+ * - document/window is the only vertical scroller on desktop
+ * - sidebar is position:fixed (sticky is forbidden after real QA failure)
+ * - placeholder reserves sidebar width so the panel is not covered
  */
 const fs = require('fs');
 const path = require('path');
@@ -43,11 +43,23 @@ function extractRuleBody(block, selector) {
 function extractMobileBlock(source) {
   const mediaIdx = source.indexOf('@media (max-width: 767px)');
   expect(mediaIdx).toBeGreaterThanOrEqual(0);
-  return source.slice(mediaIdx, mediaIdx + 800);
+  const from = source.slice(mediaIdx);
+  const nextMedia = from.indexOf('@media', 1);
+  return nextMedia > 0 ? from.slice(0, nextMedia) : from.slice(0, 2000);
 }
 
-describe('AdminDashboard layout strategy', () => {
+function extractDesktopMediaPrefix(source) {
+  const mediaIdx = source.indexOf('@media (min-width: 768px)');
+  expect(mediaIdx).toBeGreaterThanOrEqual(0);
+  const fromMedia = source.slice(mediaIdx);
+  const end = fromMedia.indexOf('/* Short notebook');
+  return fromMedia.slice(0, end > 0 ? end : 3500);
+}
+
+describe('AdminDashboard layout strategy — fixed sidebar', () => {
   const block = extractDesktopWithSidebarBlock(css);
+  const desktopPrefix = extractDesktopMediaPrefix(css);
+  const mobile = extractMobileBlock(css);
 
   it('root uses min-height viewport and does not lock max-height to 100dvh', () => {
     expect(block).toMatch(/min-height:\s*100dvh/);
@@ -55,88 +67,142 @@ describe('AdminDashboard layout strategy', () => {
     expect(block).not.toMatch(/max-height:\s*100dvh/);
   });
 
-  it('1. sidebar uses sticky on desktop', () => {
-    const navCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-nav');
-    expect(navCss).toMatch(/position:\s*sticky/);
+  it('1. desktop uses position:fixed on sidebar', () => {
+    const sideCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-sidebar');
+    expect(sideCss).toMatch(/position:\s*fixed/);
   });
 
-  it('2. sticky top respects AppHeader stack height', () => {
+  it('2. desktop no longer uses sticky for sidebar/nav', () => {
+    const sideCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-sidebar');
     const navCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-nav');
-    expect(navCss).toMatch(
-      /top:\s*calc\(\s*var\(--pm-app-header-stack-height,\s*86px\)\s*\+\s*8px\s*\)/,
+    expect(sideCss).not.toMatch(/position:\s*sticky/);
+    expect(navCss).not.toMatch(/position:\s*sticky/);
+    expect(desktopPrefix).not.toMatch(
+      /\.admin-dashboard-nav\s*\{[^}]*position:\s*sticky/s,
     );
+    expect(block).not.toMatch(/position:\s*sticky/);
+  });
+
+  it('3. sidebar top uses shared --pm-admin-sidebar-top variable', () => {
+    expect(block).toMatch(/--pm-admin-sidebar-top:\s*calc\(\s*var\(--pm-app-header-stack-height/);
+    const sideCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-sidebar');
+    expect(sideCss).toMatch(/top:\s*var\(--pm-admin-sidebar-top\)/);
     expect(indexCss).toMatch(/--pm-app-header-stack-height:/);
   });
 
-  it('3. relevant ancestors do not cancel sticky with overflow != visible', () => {
-    expect(block).toMatch(
-      /\.admin-dashboard--with-sidebar\s*\{[^}]*overflow:\s*visible/s,
+  it('4. sidebar max-height is based on 100dvh/svh and shared top', () => {
+    const sideCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-sidebar');
+    expect(sideCss).toMatch(
+      /max-height:\s*calc\(\s*100(?:dvh|svh)\s*-\s*var\(--pm-admin-sidebar-top\)/,
     );
+  });
+
+  it('5. sidebar has overflow-y auto for long lists', () => {
+    const sideCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-sidebar');
+    expect(sideCss).toMatch(/overflow-y:\s*auto/);
+  });
+
+  it('6. main content reserves sidebar width via placeholder + slot', () => {
+    const navCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-nav');
+    expect(navCss).toMatch(/flex:\s*0\s+0\s+var\(--pm-admin-sidebar-width/);
+    expect(navCss).toMatch(/width:\s*var\(--pm-admin-sidebar-width/);
+    expect(block).toMatch(/--pm-admin-sidebar-width:\s*232px/);
+    expect(block).toMatch(/--pm-admin-sidebar-slot:/);
+    const brandCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-brand-shell');
+    expect(brandCss).toMatch(/padding-left:\s*calc\(\s*var\(--pm-admin-sidebar-shell-pad-x\)\s*\+\s*var\(--pm-admin-sidebar-slot\)/);
+  });
+
+  it('7. content is not placed under sidebar (panel flex + nav placeholder)', () => {
+    const panelCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-panel');
+    expect(panelCss).toMatch(/flex:\s*1\s+1\s+auto/);
+    expect(panelCss).toMatch(/min-width:\s*0/);
+    expect(jsx).toMatch(/className="admin-dashboard-nav"/);
+    expect(jsx).toMatch(/className="admin-dashboard-sidebar"/);
+  });
+
+  it('8. window/document remains the primary vertical scroll', () => {
+    expect(css).toMatch(/Single vertical scroll = document\/window/);
+    expect(block).not.toMatch(
+      /\.admin-dashboard--with-sidebar \.admin-dashboard-panel\s*\{[^}]*overflow-y:\s*auto/s,
+    );
+  });
+
+  it('9. right panel keeps overflow visible', () => {
+    const panelCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-panel');
+    expect(panelCss).toMatch(/overflow:\s*visible/);
+    expect(panelCss).not.toMatch(/overflow-y:\s*auto/);
+  });
+
+  it('10. footer stays after app content', () => {
+    expect(appSrc).toMatch(/LegalFooterBar/);
+    expect(appSrc.indexOf('<LegalFooterBar')).toBeGreaterThan(appSrc.indexOf('<Routes'));
+  });
+
+  it('11. no rigid max-height:100dvh on main layout', () => {
+    expect(block).not.toMatch(/max-height:\s*100dvh/);
+    expect(block).toMatch(/max-height:\s*none/);
+  });
+
+  it('12. no overflow hidden on shell/main-scroll', () => {
     expect(block).toMatch(
       /\.admin-dashboard--with-sidebar \.admin-dashboard-main-scroll\s*\{[^}]*overflow:\s*visible/s,
     );
     expect(block).toMatch(
       /\.admin-dashboard--with-sidebar \.admin-dashboard-shell\s*\{[^}]*overflow:\s*visible/s,
     );
+    expect(block).not.toMatch(
+      /\.admin-dashboard--with-sidebar \.admin-dashboard-shell\s*\{[^}]*overflow:\s*hidden/s,
+    );
   });
 
-  it('4. shell wrapper sizes to content (accompanies full panel height)', () => {
-    const shellCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-shell');
-    expect(shellCss).toMatch(/flex:\s*0\s+0\s+auto/);
-    expect(shellCss).toMatch(/min-height:\s*auto/);
-    expect(shellCss).not.toMatch(/min-height:\s*0/);
-    expect(shellCss).toMatch(/align-items:\s*flex-start/);
+  it('13. tablet/mobile removes position fixed on sidebar', () => {
+    expect(mobile).toMatch(/\.admin-dashboard-sidebar\s*\{[^}]*position:\s*static\s*!important/s);
+    expect(mobile).toMatch(/display:\s*none\s*!important/);
+  });
 
+  it('14. tablet/mobile removes lateral compensation', () => {
+    expect(mobile).toMatch(/--pm-admin-sidebar-slot:\s*0px/);
+    expect(mobile).toMatch(
+      /\.admin-dashboard--with-sidebar \.admin-dashboard-brand-shell\s*\{[^}]*padding-left:\s*0/s,
+    );
+  });
+
+  it('15. mobile keeps current strip menu behavior', () => {
+    expect(mobile).toMatch(/\.admin-dashboard-tabs-strip--mobile\s*\{[^}]*display:\s*flex/s);
+    expect(mobile).toMatch(/\.admin-dashboard-sidebar\s*\{[^}]*display:\s*none\s*!important/s);
+  });
+
+  it('16. header stays above sidebar (z-index)', () => {
+    expect(indexCss).toMatch(/\.app-header-shell\s*\{[^}]*z-index:\s*1002/s);
+    expect(block).toMatch(/--pm-admin-sidebar-z:\s*40/);
+    const sideCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-sidebar');
+    expect(sideCss).toMatch(/z-index:\s*var\(--pm-admin-sidebar-z\)/);
+  });
+
+  it('17. modals stay above sidebar', () => {
+    expect(css).toMatch(/z-index:\s*1?9?\d{3,}/);
+    expect(css).toMatch(/z-index:\s*12000|z-index:\s*19050|z-index:\s*9999|z-index:\s*100000/);
+  });
+
+  it('18. does not alter module-specific rules (mi sede pagos / metrics helpers untouched in CSS scope)', () => {
+    expect(css).toMatch(/admin-mi-sede/);
+    // Layout block must not redefine module metric class names
+    expect(block).not.toMatch(/admin-club-metricas|padcoins|membresias/);
+  });
+
+  it('19. keeps prior responsive fix (document scroll + content grow)', () => {
+    expect(block).toMatch(/min-height:\s*100dvh/);
+    expect(block).toMatch(/flex:\s*0\s+0\s+auto/);
     const mainCss = extractRuleBody(
       block,
       '.admin-dashboard--with-sidebar .admin-dashboard-main-scroll',
     );
-    expect(mainCss).toMatch(/flex:\s*0\s+0\s+auto/);
-    expect(mainCss).toMatch(/min-height:\s*auto/);
+    expect(mainCss).toMatch(/overflow:\s*visible/);
   });
 
-  it('5. sidebar can scroll internally if its list overflows', () => {
-    const navCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-nav');
-    expect(navCss).toMatch(/overflow-y:\s*auto/);
-    expect(navCss).toMatch(/max-height:\s*calc\(100(?:dvh|svh)/);
-    expect(navCss).toMatch(/align-self:\s*flex-start/);
-  });
-
-  it('6. right panel keeps overflow visible', () => {
-    const panelCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-panel');
-    expect(panelCss).toMatch(/overflow:\s*visible/);
-    expect(panelCss).not.toMatch(/overflow-y:\s*auto/);
-  });
-
-  it('7. document remains the primary vertical scroll', () => {
-    expect(css).toMatch(/Single vertical scroll = document\/window/);
-    expect(block).not.toMatch(
-      /\.admin-dashboard--with-sidebar \.admin-dashboard-panel\s*\{[^}]*overflow-y:\s*auto/s,
-    );
-    expect(block).not.toMatch(/max-height:\s*100dvh/);
-  });
-
-  it('8. footer sits after app content (LegalFooterBar after routes shell)', () => {
-    expect(appSrc).toMatch(/LegalFooterBar/);
-    const footerIdx = appSrc.indexOf('<LegalFooterBar');
-    const routesIdx = appSrc.indexOf('<Routes');
-    expect(footerIdx).toBeGreaterThan(routesIdx);
-  });
-
-  it('9. mobile/tablet does not force desktop sticky sidebar', () => {
-    const mobile = extractMobileBlock(css);
-    expect(mobile).toMatch(/\.admin-dashboard-sidebar\s*\{[^}]*display:\s*none\s*!important/s);
-    expect(mobile).not.toMatch(
-      /\.admin-dashboard--with-sidebar \.admin-dashboard-nav\s*\{[^}]*position:\s*sticky/s,
-    );
-  });
-
-  it('10. no regression of prior responsive fix (document scroll + no nested panel scroller)', () => {
-    expect(block).toMatch(/min-height:\s*100dvh/);
-    expect(block).toMatch(/max-height:\s*none/);
-    const panelCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-panel');
-    expect(panelCss).toMatch(/overflow:\s*visible/);
-    expect(jsx).toMatch(/admin-dashboard--with-sidebar/);
-    expect(jsx).toMatch(/className="admin-dashboard-nav"/);
+  it('20. guards against accidental return to sticky', () => {
+    expect(block).toMatch(/Do not use sticky|sticky discarded|sticky failed/i);
+    expect(block).not.toMatch(/position:\s*sticky/);
+    expect(desktopPrefix.match(/position:\s*sticky/g) || []).toHaveLength(0);
   });
 });
