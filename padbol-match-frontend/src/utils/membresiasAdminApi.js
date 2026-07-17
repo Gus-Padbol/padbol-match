@@ -33,6 +33,11 @@ export const MEMBRESIA_ORIGENES = [
 
 export const MEMBRESIA_MONEDAS = ['ARS', 'USD', 'EUR'];
 
+export const MEMBRESIAS_PAGE_SIZE = 15;
+export const MEMBRESIAS_Q_MIN = 2;
+export const MEMBRESIAS_SORT_OPTIONS = Object.freeze(['created_at', 'inicio', 'vencimiento', 'estado']);
+export const MEMBRESIAS_DIRECTION_OPTIONS = Object.freeze(['asc', 'desc']);
+
 export function resolveMembresiasApiBase(apiBaseUrl) {
   return String(apiBaseUrl || DEFAULT_API).replace(/\/$/, '');
 }
@@ -290,19 +295,211 @@ export async function fetchMembresiasAsignadas({
   accessToken,
   sedeId,
   estado = '',
-  limit = 100,
+  planId = '',
+  q = '',
+  page = 1,
+  limit = MEMBRESIAS_PAGE_SIZE,
+  sort = 'created_at',
+  direction = 'desc',
   signal,
 } = {}) {
+  const result = await fetchAdminMembresias({
+    apiBaseUrl,
+    accessToken,
+    sedeId,
+    estado,
+    planId,
+    q,
+    page,
+    limit,
+    sort,
+    direction,
+    signal,
+  });
+  return result.membresias;
+}
+
+/**
+ * @deprecated Preferir filtros server-side vía fetchAdminMembresias.
+ * Conservado solo para tests/compat; el listado admin ya no lo usa.
+ */
+export function filterMembresiasClient(list, { planId = '', jugadorQ = '' } = {}) {
+  let rows = Array.isArray(list) ? [...list] : [];
+  if (planId) {
+    rows = rows.filter((m) => String(m.plan_id) === String(planId));
+  }
+  const q = String(jugadorQ || '').trim().toLowerCase().replace(/^@+/, '');
+  if (q) {
+    rows = rows.filter((m) => {
+      const email = String(m.email || m.jugador?.email || '').toLowerCase();
+      const uid = String(m.user_id || '').toLowerCase();
+      const nombre = String(
+        m.jugador_nombre || m.display_name || m.jugador?.nombre || '',
+      ).toLowerCase();
+      return email.includes(q) || uid.includes(q) || nombre.includes(q);
+    });
+  }
+  return rows;
+}
+
+/** Etiqueta de jugador desde fila paginada (objeto jugador del Backend). */
+export function resolveMembresiaJugadorLabel(m) {
+  const j = m?.jugador && typeof m.jugador === 'object' ? m.jugador : {};
+  const name =
+    String(m?.jugador_nombre || j.nombre || '').trim()
+    || [j.nombre, j.apellido].filter(Boolean).join(' ').trim();
+  const userRaw = m?.username || j.username || j.alias || '';
+  const user = userRaw ? `@${String(userRaw).replace(/^@+/, '')}` : '';
+  const email = String(m?.email || j.email || '').trim();
+  if (name || user || email) {
+    return [name, user, email].filter(Boolean).join(' · ');
+  }
+  const uid = String(m?.user_id || j.user_id || '');
+  return uid ? `${uid.slice(0, 8)}…` : '—';
+}
+
+function toSafePage(value) {
+  const n = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+function toSafeLimit(value, fallback = MEMBRESIAS_PAGE_SIZE) {
+  const n = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(n) && n >= 1 ? n : fallback;
+}
+
+function toSafeTotal(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : 0;
+}
+
+function toSafeBool(value) {
+  return value === true;
+}
+
+export function normalizeMembresiasSort(sort) {
+  const s = String(sort || '').trim().toLowerCase();
+  return MEMBRESIAS_SORT_OPTIONS.includes(s) ? s : 'created_at';
+}
+
+export function normalizeMembresiasDirection(direction) {
+  const d = String(direction || '').trim().toLowerCase();
+  return d === 'asc' || d === 'desc' ? d : 'desc';
+}
+
+/**
+ * Normaliza respuesta de listado (con o sin pagination legacy).
+ */
+export function normalizeMembresiasListResponse(data, { fallbackLimit = MEMBRESIAS_PAGE_SIZE } = {}) {
+  const membresias = Array.isArray(data?.membresias) ? data.membresias : [];
+  const rawPag = data?.pagination && typeof data.pagination === 'object' ? data.pagination : null;
+
+  if (!rawPag) {
+    // Compat temporal: sin pagination → una sola página con las filas recibidas.
+    const limit = toSafeLimit(fallbackLimit, MEMBRESIAS_PAGE_SIZE);
+    const total = membresias.length;
+    const total_pages = total === 0 ? 0 : 1;
+    return {
+      membresias,
+      pagination: {
+        page: 1,
+        limit,
+        total,
+        total_pages,
+        has_next: false,
+        has_previous: false,
+      },
+    };
+  }
+
+  const page = toSafePage(rawPag.page);
+  const limit = toSafeLimit(rawPag.limit, fallbackLimit);
+  const total = toSafeTotal(rawPag.total);
+  let total_pages = toSafeTotal(rawPag.total_pages);
+  if (rawPag.total_pages == null || rawPag.total_pages === '') {
+    total_pages = total === 0 ? 0 : Math.ceil(total / limit);
+  }
+  let has_next = toSafeBool(rawPag.has_next);
+  let has_previous = toSafeBool(rawPag.has_previous);
+  if (rawPag.has_next == null) has_next = total_pages > 0 && page < total_pages;
+  if (rawPag.has_previous == null) has_previous = page > 1 && total > 0;
+
+  return {
+    membresias,
+    pagination: {
+      page,
+      limit,
+      total,
+      total_pages,
+      has_next,
+      has_previous,
+    },
+  };
+}
+
+/** Query params: no envía vacíos; q solo si length >= 2 tras trim. */
+export function buildMembresiasListQueryParams({
+  sedeId,
+  estado = '',
+  planId = '',
+  q = '',
+  page = 1,
+  limit = MEMBRESIAS_PAGE_SIZE,
+  sort = 'created_at',
+  direction = 'desc',
+} = {}) {
+  const params = new URLSearchParams();
+  if (sedeId != null && String(sedeId).trim() !== '') params.set('sede_id', String(sedeId).trim());
+  const est = String(estado || '').trim().toLowerCase();
+  if (est) params.set('estado', est);
+  if (planId != null && String(planId).trim() !== '') params.set('plan_id', String(planId).trim());
+  const qTrim = String(q || '').trim().replace(/\s+/g, ' ');
+  if (qTrim.length >= MEMBRESIAS_Q_MIN) params.set('q', qTrim);
+  params.set('page', String(toSafePage(page)));
+  params.set('limit', String(toSafeLimit(limit, MEMBRESIAS_PAGE_SIZE)));
+  params.set('sort', normalizeMembresiasSort(sort));
+  params.set('direction', normalizeMembresiasDirection(direction));
+  return params;
+}
+
+/**
+ * GET /api/admin/membresias — paginación server-side.
+ * @returns {Promise<{ membresias: array, pagination: object }>}
+ */
+export async function fetchAdminMembresias({
+  apiBaseUrl,
+  accessToken,
+  sedeId,
+  estado = '',
+  planId = '',
+  q = '',
+  page = 1,
+  limit = MEMBRESIAS_PAGE_SIZE,
+  sort = 'created_at',
+  direction = 'desc',
+  signal,
+} = {}) {
+  if (!accessToken) {
+    const err = new Error(parseMembresiasApiError(401, {}));
+    err.status = 401;
+    throw err;
+  }
   const base = resolveMembresiasApiBase(apiBaseUrl);
-  const q = new URLSearchParams();
-  if (sedeId != null && sedeId !== '') q.set('sede_id', String(sedeId));
-  if (estado) q.set('estado', String(estado));
-  q.set('limit', String(Math.min(Number(limit) || 100, 100)));
-  const data = await fetchJson(`${base}/api/admin/membresias?${q}`, {
+  const params = buildMembresiasListQueryParams({
+    sedeId,
+    estado,
+    planId,
+    q,
+    page,
+    limit,
+    sort,
+    direction,
+  });
+  const data = await fetchJson(`${base}/api/admin/membresias?${params}`, {
     accessToken,
     signal,
   });
-  return Array.isArray(data.membresias) ? data.membresias : [];
+  return normalizeMembresiasListResponse(data, { fallbackLimit: limit });
 }
 
 export async function asignarMembresia({ apiBaseUrl, accessToken, body } = {}) {
@@ -345,19 +542,3 @@ export async function cancelarMembresia({ apiBaseUrl, accessToken, id } = {}) {
   return data.membresia || data;
 }
 
-export function filterMembresiasClient(list, { planId = '', jugadorQ = '' } = {}) {
-  let rows = Array.isArray(list) ? [...list] : [];
-  if (planId) {
-    rows = rows.filter((m) => String(m.plan_id) === String(planId));
-  }
-  const q = String(jugadorQ || '').trim().toLowerCase().replace(/^@+/, '');
-  if (q) {
-    rows = rows.filter((m) => {
-      const email = String(m.email || '').toLowerCase();
-      const uid = String(m.user_id || '').toLowerCase();
-      const nombre = String(m.jugador_nombre || m.display_name || '').toLowerCase();
-      return email.includes(q) || uid.includes(q) || nombre.includes(q);
-    });
-  }
-  return rows;
-}

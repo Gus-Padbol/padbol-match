@@ -200,11 +200,13 @@ describe('adminTorneosResumenStats — cableado AdminDashboard', () => {
     expect(dashboardSrc).toMatch(/method:\s*'DELETE'/);
   });
 
-  it('32. no se toca Membresías', () => {
-    const memApi = fs.readFileSync(membresiasApiPath, 'utf8');
-    const memSec = fs.readFileSync(membresiasSectionPath, 'utf8');
-    expect(memApi).toMatch(/limit = 100/);
-    expect(memSec).toMatch(/PAGE_SIZE = 15/);
+  it('32. no se toca Membresías de forma incorrecta (paginación server-side intacta)', () => {
+    const memApi = fs.readFileSync(path.join(__dirname, 'membresiasAdminApi.js'), 'utf8');
+    const memSec = fs.readFileSync(path.join(__dirname, '../components/AdminMembresiasSection.jsx'), 'utf8');
+    expect(memApi).toMatch(/MEMBRESIAS_PAGE_SIZE = 15/);
+    expect(memApi).toMatch(/fetchAdminMembresias/);
+    expect(memSec).toMatch(/PAGE_SIZE = MEMBRESIAS_PAGE_SIZE|MEMBRESIAS_PAGE_SIZE/);
+    expect(memSec).not.toMatch(/limit:\s*100/);
     expect(dashboardSrc).not.toMatch(/membresiasAdminApi.*resumen-stats|resumen-stats.*membresias/);
   });
 });

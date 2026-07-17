@@ -1,33 +1,37 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { AdminJugadorSearchInput } from './AdminJugadoresSection';
 import ConfirmModal from './ConfirmModal';
-import { fetchAdminJugadoresList } from '../utils/adminJugadoresApi';
 import {
   MEMBRESIA_DURACION_TIPOS,
   MEMBRESIA_ESTADOS,
   MEMBRESIA_MONEDAS,
   MEMBRESIA_ORIGENES,
+  MEMBRESIAS_PAGE_SIZE,
+  MEMBRESIAS_Q_MIN,
+  MEMBRESIAS_SORT_OPTIONS,
   accionesDisponiblesParaEstado,
   asignarMembresia,
   cancelarMembresia,
   computeVencimientoFromPlan,
-  countActivosPorPlan,
   createMembresiaPlan,
   emptyPlanForm,
+  fetchAdminMembresias,
   fetchMembresiaPlanes,
-  fetchMembresiasAsignadas,
-  filterMembresiasClient,
   formatMembresiaFecha,
   formatMembresiaPrecio,
+  normalizeMembresiasDirection,
+  normalizeMembresiasSort,
   planToForm,
   renovarMembresia,
+  resolveMembresiaJugadorLabel,
   suspenderMembresia,
   updateMembresiaPlan,
   validateAndBuildPlanPayload,
 } from '../utils/membresiasAdminApi';
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = MEMBRESIAS_PAGE_SIZE;
+const SEARCH_DEBOUNCE_MS = 400;
 
 function thStyle(extra = {}) {
   return {
@@ -113,16 +117,28 @@ export default function AdminMembresiasSection({
   const [sedeId, setSedeId] = useState(() => fixedSedeId || '');
   const [planes, setPlanes] = useState([]);
   const [membresias, setMembresias] = useState([]);
-  const [jugadorMap, setJugadorMap] = useState({});
 
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [okMsg, setOkMsg] = useState('');
 
   const [planFilter, setPlanFilter] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
   const [jugadorFilter, setJugadorFilter] = useState('');
-  const [page, setPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(PAGE_SIZE);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
+  const [sort, setSort] = useState('created_at');
+  const [direction, setDirection] = useState('desc');
+
+  const membresiasSeqRef = useRef(0);
+  const membresiasAbortRef = useRef(null);
+  const initialMembresiasLoadedRef = useRef(false);
 
   const [planFormOpen, setPlanFormOpen] = useState(false);
   const [planEditId, setPlanEditId] = useState(null);
@@ -192,98 +208,197 @@ export default function AdminMembresiasSection({
 
   const effectiveSedeId = esAdminClub && fixedSedeId ? fixedSedeId : String(sedeId || '');
 
-  const loadAll = useCallback(async () => {
+  // Debounce búsqueda (300–500 ms); 1 carácter no se envía al Backend.
+  useEffect(() => {
+    const raw = String(jugadorFilter || '').trim().replace(/\s+/g, ' ');
+    const t = window.setTimeout(() => {
+      const next = raw.length >= MEMBRESIAS_Q_MIN ? raw : '';
+      setSearchQuery((prev) => {
+        if (prev === next) return prev;
+        setPage(1);
+        return next;
+      });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(t);
+  }, [jugadorFilter]);
+
+  const loadPlanes = useCallback(async ({ signal } = {}) => {
+    if (!canUse || !accessToken || !effectiveSedeId) {
+      setPlanes([]);
+      return;
+    }
+    const rows = await fetchMembresiaPlanes({
+      apiBaseUrl,
+      accessToken,
+      sedeId: effectiveSedeId,
+      includeInactive: true,
+      signal,
+    });
+    setPlanes(rows);
+  }, [accessToken, apiBaseUrl, canUse, effectiveSedeId]);
+
+  const loadMembresiasPage = useCallback(async ({ soft = false } = {}) => {
     if (!canUse || !accessToken) return;
     if (!effectiveSedeId) {
-      setPlanes([]);
       setMembresias([]);
+      setTotal(0);
+      setTotalPages(0);
+      setHasNext(false);
+      setHasPrevious(false);
       setError('');
       return;
     }
-    setLoading(true);
-    setError('');
-    try {
-      const [planesRows, memRows] = await Promise.all([
-        fetchMembresiaPlanes({
-          apiBaseUrl,
-          accessToken,
-          sedeId: effectiveSedeId,
-          includeInactive: true,
-        }),
-        fetchMembresiasAsignadas({
-          apiBaseUrl,
-          accessToken,
-          sedeId: effectiveSedeId,
-          estado: estadoFilter || '',
-          limit: 100,
-        }),
-      ]);
-      setPlanes(planesRows);
-      setMembresias(memRows);
 
-      try {
-        const jJson = await fetchAdminJugadoresList({
-          apiBaseUrl,
-          accessToken,
-          sedeId: effectiveSedeId,
-          limit: 100,
-          page: 1,
-        });
-        const map = {};
-        (Array.isArray(jJson.items) ? jJson.items : []).forEach((j) => {
-          if (j?.id) map[String(j.id)] = j;
-          if (j?.user_id) map[String(j.user_id)] = j;
-        });
-        setJugadorMap(map);
-      } catch {
-        setJugadorMap({});
+    try {
+      membresiasAbortRef.current?.abort?.();
+    } catch {
+      /* ignore */
+    }
+    const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    membresiasAbortRef.current = ac;
+    const seq = ++membresiasSeqRef.current;
+
+    if (soft || initialMembresiasLoadedRef.current) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError('');
+
+    try {
+      const result = await fetchAdminMembresias({
+        apiBaseUrl,
+        accessToken,
+        sedeId: effectiveSedeId,
+        estado: estadoFilter || '',
+        planId: planFilter || '',
+        q: searchQuery || '',
+        page,
+        limit,
+        sort,
+        direction,
+        signal: ac?.signal,
+      });
+      if (seq !== membresiasSeqRef.current) return;
+
+      const pag = result.pagination;
+      if (pag.page > 1 && pag.total_pages > 0 && pag.page > pag.total_pages) {
+        setPage(pag.total_pages);
+        return;
       }
+      if (result.membresias.length === 0 && page > 1 && pag.total > 0 && pag.total_pages >= 1) {
+        setPage(pag.total_pages);
+        return;
+      }
+
+      setMembresias(result.membresias);
+      setTotal(pag.total);
+      setTotalPages(pag.total_pages);
+      setHasNext(Boolean(pag.has_next));
+      setHasPrevious(Boolean(pag.has_previous));
+      initialMembresiasLoadedRef.current = true;
+    } catch (err) {
+      if (seq !== membresiasSeqRef.current) return;
+      if (err?.name === 'AbortError') return;
+      setError(err?.message || String(err));
+      // Conservar datos previos.
+    } finally {
+      if (seq === membresiasSeqRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }
+  }, [
+    accessToken,
+    apiBaseUrl,
+    canUse,
+    direction,
+    effectiveSedeId,
+    estadoFilter,
+    limit,
+    page,
+    planFilter,
+    searchQuery,
+    sort,
+  ]);
+
+  // Carga planes al cambiar sede.
+  useEffect(() => {
+    if (!canUse || !accessToken || !effectiveSedeId) {
+      setPlanes([]);
+      return undefined;
+    }
+    let cancelled = false;
+    const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    (async () => {
+      try {
+        setLoading(true);
+        await loadPlanes({ signal: ac?.signal });
+      } catch (err) {
+        if (!cancelled && err?.name !== 'AbortError') {
+          setError(err?.message || String(err));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      try {
+        ac?.abort();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [accessToken, canUse, effectiveSedeId, loadPlanes]);
+
+  // Listado paginado server-side.
+  useEffect(() => {
+    void loadMembresiasPage({ soft: initialMembresiasLoadedRef.current });
+    return () => {
+      try {
+        membresiasAbortRef.current?.abort?.();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [loadMembresiasPage]);
+
+  // Reset página al cambiar filtros de sede / estado / plan / orden (búsqueda ya resetea en debounce).
+  useEffect(() => {
+    setPage(1);
+    initialMembresiasLoadedRef.current = false;
+  }, [effectiveSedeId]);
+
+  const onEstadoFilterChange = (value) => {
+    setEstadoFilter(value);
+    setPage(1);
+  };
+  const onPlanFilterChange = (value) => {
+    setPlanFilter(value);
+    setPage(1);
+  };
+  const onSortChange = (value) => {
+    setSort(normalizeMembresiasSort(value));
+    setPage(1);
+  };
+  const onDirectionChange = (value) => {
+    setDirection(normalizeMembresiasDirection(value));
+    setPage(1);
+  };
+
+  const refreshAll = useCallback(async () => {
+    setOkMsg('');
+    try {
+      setLoading(true);
+      await loadPlanes();
+      await loadMembresiasPage({ soft: false });
     } catch (err) {
       setError(err?.message || String(err));
-      setPlanes([]);
-      setMembresias([]);
     } finally {
       setLoading(false);
     }
-  }, [accessToken, apiBaseUrl, canUse, effectiveSedeId, estadoFilter]);
-
-  useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [planFilter, estadoFilter, jugadorFilter, effectiveSedeId]);
-
-  const enrichedMembresias = useMemo(
-    () =>
-      membresias.map((m) => {
-        const j = jugadorMap[String(m.user_id)] || {};
-        return {
-          ...m,
-          email: m.email || j.email || '',
-          jugador_nombre:
-            j.display_name ||
-            [j.nombre, j.apellido].filter(Boolean).join(' ') ||
-            '',
-          username: j.username || '',
-        };
-      }),
-    [membresias, jugadorMap],
-  );
-
-  const filteredMembresias = useMemo(
-    () =>
-      filterMembresiasClient(enrichedMembresias, {
-        planId: planFilter,
-        jugadorQ: jugadorFilter,
-      }),
-    [enrichedMembresias, planFilter, jugadorFilter],
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filteredMembresias.length / PAGE_SIZE));
-  const pageSafe = Math.min(page, totalPages - 1);
-  const pageRows = filteredMembresias.slice(pageSafe * PAGE_SIZE, pageSafe * PAGE_SIZE + PAGE_SIZE);
+  }, [loadMembresiasPage, loadPlanes]);
 
   const planesActivos = useMemo(() => planes.filter((p) => p.activo !== false), [planes]);
 
@@ -315,16 +430,7 @@ export default function AdminMembresiasSection({
     [sedesOptions, sedeFlag],
   );
 
-  const jugadorLabel = (m) => {
-    const name = m.jugador_nombre || '';
-    const user = m.username ? `@${String(m.username).replace(/^@+/, '')}` : '';
-    const email = m.email || '';
-    if (name || user || email) {
-      return [name, user, email].filter(Boolean).join(' · ');
-    }
-    const uid = String(m.user_id || '');
-    return uid ? `${uid.slice(0, 8)}…` : '—';
-  };
+  const jugadorLabel = (m) => resolveMembresiaJugadorLabel(m);
 
   const openCreatePlan = () => {
     setPlanEditId(null);
@@ -386,7 +492,7 @@ export default function AdminMembresiasSection({
         setOkMsg(tr('planCreated', 'Plan creado.'));
       }
       setPlanFormOpen(false);
-      await loadAll();
+      await loadPlanes();
     } catch (err) {
       setPlanFormError(err?.message || String(err));
     } finally {
@@ -454,7 +560,7 @@ export default function AdminMembresiasSection({
       setAssignConfirmOpen(false);
       setAssignOpen(false);
       setOkMsg(tr('assignOk', 'Membresía asignada.'));
-      await loadAll();
+      await loadMembresiasPage({ soft: true });
     } catch (err) {
       setAssignConfirmOpen(false);
       setAssignError(err?.message || String(err));
@@ -465,11 +571,12 @@ export default function AdminMembresiasSection({
 
   const runConfirmedAction = async () => {
     if (!confirmAction || actionBusy) return;
+    const actionType = confirmAction.type;
     setActionBusy(true);
     setError('');
     setOkMsg('');
     try {
-      if (confirmAction.type === 'toggle_plan') {
+      if (actionType === 'toggle_plan') {
         await updateMembresiaPlan({
           apiBaseUrl,
           accessToken,
@@ -481,19 +588,23 @@ export default function AdminMembresiasSection({
             ? tr('planActivated', 'Plan activado.')
             : tr('planDeactivated', 'Plan desactivado.'),
         );
-      } else if (confirmAction.type === 'renovar') {
+      } else if (actionType === 'renovar') {
         await renovarMembresia({ apiBaseUrl, accessToken, id: confirmAction.row.id });
         setOkMsg(tr('renewedOk', 'Membresía renovada.'));
-      } else if (confirmAction.type === 'suspender') {
+      } else if (actionType === 'suspender') {
         await suspenderMembresia({ apiBaseUrl, accessToken, id: confirmAction.row.id });
         setOkMsg(tr('suspendedOk', 'Membresía suspendida.'));
-      } else if (confirmAction.type === 'cancelar') {
+      } else if (actionType === 'cancelar') {
         await cancelarMembresia({ apiBaseUrl, accessToken, id: confirmAction.row.id });
         setOkMsg(tr('cancelledOk', 'Membresía cancelada.'));
       }
       setConfirmAction(null);
       setDetailRow(null);
-      await loadAll();
+      if (actionType === 'toggle_plan') {
+        await loadPlanes();
+      } else {
+        await loadMembresiasPage({ soft: true });
+      }
     } catch (err) {
       setError(err?.message || String(err));
       setConfirmAction(null);
@@ -548,8 +659,13 @@ export default function AdminMembresiasSection({
             )}
           </p>
         </div>
-        <button type="button" onClick={() => void loadAll()} style={btnGhost} disabled={loading}>
-          {loading ? tr('loading', 'Cargando…') : tr('refresh', 'Actualizar')}
+        <button
+          type="button"
+          onClick={() => void refreshAll()}
+          style={btnGhost}
+          disabled={loading || refreshing}
+        >
+          {loading || refreshing ? tr('loading', 'Cargando…') : tr('refresh', 'Actualizar')}
         </button>
       </div>
 
@@ -633,7 +749,15 @@ export default function AdminMembresiasSection({
 
           {error ? (
             <p role="alert" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 13 }}>
-              {error}
+              {error}{' '}
+              <button
+                type="button"
+                style={{ ...btnGhost, padding: '2px 8px', fontSize: 12 }}
+                onClick={() => void loadMembresiasPage({ soft: true })}
+                disabled={refreshing || loading}
+              >
+                {tr('retry', 'Reintentar')}
+              </button>
             </p>
           ) : null}
           {okMsg ? (
@@ -674,7 +798,6 @@ export default function AdminMembresiasSection({
                   <tbody>
                     {planes.map((p) => {
                       const b = p.beneficios || {};
-                      const activos = countActivosPorPlan(membresias, p.id);
                       const durLabel =
                         MEMBRESIA_DURACION_TIPOS.find((d) => d.id === p.duracion_tipo)?.label ||
                         p.duracion_tipo;
@@ -699,7 +822,7 @@ export default function AdminMembresiasSection({
                           <td style={tdStyle({ whiteSpace: 'nowrap' })}>
                             {formatMembresiaFecha(p.vigencia_desde)} → {formatMembresiaFecha(p.vigencia_hasta)}
                           </td>
-                          <td style={tdStyle()}>{activos}</td>
+                          <td style={tdStyle()}>—</td>
                           <td style={tdStyle({ whiteSpace: 'normal', minWidth: 140 })}>
                             <div>{tr('benefitDiscount', 'Descuento')}: {b.descuento_porcentual ?? 0}%</div>
                             <div>
@@ -730,7 +853,7 @@ export default function AdminMembresiasSection({
             </div>
           ) : null}
 
-          {subTab === 'asignadas' && !loading ? (
+          {subTab === 'asignadas' ? (
             <div>
               <div
                 style={{
@@ -742,7 +865,11 @@ export default function AdminMembresiasSection({
               >
                 <label style={{ display: 'grid', gap: 4, fontSize: 12, fontWeight: 600 }}>
                   {tr('filterPlan', 'Plan')}
-                  <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)} style={inp}>
+                  <select
+                    value={planFilter}
+                    onChange={(e) => onPlanFilterChange(e.target.value)}
+                    style={inp}
+                  >
                     <option value="">{tr('all', 'Todos')}</option>
                     {planes.map((p) => (
                       <option key={p.id} value={String(p.id)}>{p.nombre}</option>
@@ -751,7 +878,11 @@ export default function AdminMembresiasSection({
                 </label>
                 <label style={{ display: 'grid', gap: 4, fontSize: 12, fontWeight: 600 }}>
                   {tr('filterEstado', 'Estado')}
-                  <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)} style={inp}>
+                  <select
+                    value={estadoFilter}
+                    onChange={(e) => onEstadoFilterChange(e.target.value)}
+                    style={inp}
+                  >
                     {MEMBRESIA_ESTADOS.map((e) => (
                       <option key={e.id || 'all'} value={e.id}>{e.label}</option>
                     ))}
@@ -766,6 +897,25 @@ export default function AdminMembresiasSection({
                     style={inp}
                   />
                 </label>
+                <label style={{ display: 'grid', gap: 4, fontSize: 12, fontWeight: 600 }}>
+                  {tr('sortLabel', 'Orden')}
+                  <select value={sort} onChange={(e) => onSortChange(e.target.value)} style={inp}>
+                    {MEMBRESIAS_SORT_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </label>
+                <label style={{ display: 'grid', gap: 4, fontSize: 12, fontWeight: 600 }}>
+                  {tr('directionLabel', 'Dirección')}
+                  <select
+                    value={direction}
+                    onChange={(e) => onDirectionChange(e.target.value)}
+                    style={inp}
+                  >
+                    <option value="desc">desc</option>
+                    <option value="asc">asc</option>
+                  </select>
+                </label>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                   <button type="button" style={btnPrimary} onClick={openAssign} disabled={!planesActivos.length}>
                     + {tr('assign', 'Asignar membresía')}
@@ -773,7 +923,13 @@ export default function AdminMembresiasSection({
                 </div>
               </div>
 
-              {filteredMembresias.length === 0 ? (
+              {refreshing ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '0 0 8px' }}>
+                  {tr('refreshing', 'Actualizando…')}
+                </p>
+              ) : null}
+
+              {membresias.length === 0 ? (
                 <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
                   {tr('emptyMembresias', 'No hay membresías con estos filtros.')}
                 </p>
@@ -795,7 +951,7 @@ export default function AdminMembresiasSection({
                       </tr>
                     </thead>
                     <tbody>
-                      {pageRows.map((m) => {
+                      {membresias.map((m) => {
                         const actions = accionesDisponiblesParaEstado(m.estado);
                         const badge = estadoBadgeStyle(m.estado);
                         return (
@@ -874,23 +1030,23 @@ export default function AdminMembresiasSection({
                   >
                     <span>
                       {tr('pageOf', 'Página {{page}} / {{total}} ({{count}})', {
-                        page: pageSafe + 1,
+                        page: totalPages === 0 ? 0 : page,
                         total: totalPages,
-                        count: filteredMembresias.length,
+                        count: total,
                       })}
                     </span>
                     <button
                       type="button"
                       style={btnGhost}
-                      disabled={pageSafe <= 0}
-                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      disabled={!hasPrevious || refreshing}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
                       {tr('prev', 'Anterior')}
                     </button>
                     <button
                       type="button"
                       style={btnGhost}
-                      disabled={pageSafe >= totalPages - 1}
+                      disabled={!hasNext || refreshing}
                       onClick={() => setPage((p) => p + 1)}
                     >
                       {tr('next', 'Siguiente')}
