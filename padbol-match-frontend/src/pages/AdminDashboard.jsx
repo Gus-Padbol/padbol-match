@@ -128,6 +128,14 @@ import {
   miSedeFormPreciosFromSedeRow,
 } from '../utils/sedePreciosDuracion';
 import {
+  clearPagosCredentialFields,
+  deriveSedePagosIndicadores,
+  pagosEstadoKey,
+  parseSedePatchResponse,
+  sanitizePagosPartialPayload,
+  sanitizeSedeRowForState,
+} from '../utils/miSedePagos';
+import {
   MI_SEDE_PRECIOS_DEPORTE_OPTIONS,
   countDuracionesActivas,
   createSedeDuracion,
@@ -860,9 +868,10 @@ function sedeDbRowToMiSedeFormState(sedeData) {
         ? String(sedeData.anio_fundacion).trim()
         : '',
     metodo_pago: sedeData.metodo_pago || 'mercadopago',
-    stripe_account_id: sedeData.stripe_account_id || '',
-    mp_access_token: sedeData.mp_access_token || '',
-    mp_public_key: sedeData.mp_public_key || '',
+    // Credenciales write-only: nunca se copian desde Backend / GET / PATCH.
+    stripe_account_id: '',
+    mp_access_token: '',
+    mp_public_key: '',
     pago_manual_instrucciones: sedeData.pago_manual_instrucciones || '',
     latitud: sedeData.latitud != null ? String(sedeData.latitud) : '',
     longitud: sedeData.longitud != null ? String(sedeData.longitud) : '',
@@ -881,7 +890,8 @@ function mergeMiSedeFormFromDb(updated, prevForm = {}, paisOptions = []) {
   const base = { ...prevForm, ...sedeDbRowToMiSedeFormState(updated) };
   const pais = paisOptionValueFromStored(base.pais, paisOptions) || base.pais;
   const ensured = ensureWhatsappPrefixed(base.telefono, pais);
-  return { ...base, pais, telefono: ensured.phone };
+  // Forzar write-only: aunque updated trajera secretos, no quedan en el form.
+  return clearPagosCredentialFields({ ...base, pais, telefono: ensured.phone });
 }
 
 
@@ -1031,9 +1041,12 @@ function miSedeFormToApiPatchBody(form) {
     website: form.website || null,
     amenities: normalizeSedeAmenities(form.amenities),
   };
-  if (mpTrim) out.mp_access_token = mpTrim;
-  if (mpPublicTrim) out.mp_public_key = mpPublicTrim;
-  if (stripeTrim) out.stripe_account_id = stripeTrim;
+  // Credenciales: solo si el admin escribió un valor nuevo (nunca vacíos).
+  Object.assign(out, sanitizePagosPartialPayload({
+    mp_access_token: mpTrim,
+    mp_public_key: mpPublicTrim,
+    stripe_account_id: stripeTrim,
+  }));
   return out;
 }
 
@@ -7836,6 +7849,11 @@ export default function AdminDashboard({
   const [pagosMpPublicKeyVisible, setPagosMpPublicKeyVisible] = useState(false);
   const [pagosStripePanelAbierto, setPagosStripePanelAbierto] = useState(false);
   const [pagosParcialSaving, setPagosParcialSaving] = useState(false);
+  // Indicadores write-only: true/false/null (null = desconocido). Nunca guarda secretos.
+  const [miSedePagos, setMiSedePagos] = useState({
+    mercadopago_configurado: null,
+    stripe_configurado: null,
+  });
   const [editarSedeModalOpen, setEditarSedeModalOpen] = useState(false);
   const [editarSedeDraft, setEditarSedeDraft] = useState({});
   const [editarSedeModalMsg, setEditarSedeModalMsg] = useState('');
@@ -8066,7 +8084,10 @@ export default function AdminDashboard({
     ])
       .then(([{ data: sedeData }, canRes]) => {
         if (sedeData) {
-          setMiSede(sedeData);
+          // Indicadores desde la fila cruda (si RLS aún entrega columnas sensibles);
+          // la fila en estado y el formulario nunca las conservan.
+          setMiSedePagos(deriveSedePagosIndicadores(sedeData));
+          setMiSede(sanitizeSedeRowForState(sedeData));
           setMiSedeForm(() => mergeMiSedeFormFromDb(sedeData, {}, PAISES_SEDE_OPTIONS));
           setMiSedeWhatsappHint('');
           setLicenciaForm({
@@ -8327,7 +8348,9 @@ export default function AdminDashboard({
       if (!res.ok) {
         errorMsg = data.error || res.statusText || t('admin.metricas.saveError');
       } else {
-        updated = data.sede;
+        const parsed = parseSedePatchResponse(data, miSedePagos);
+        setMiSedePagos(parsed.pagos);
+        updated = parsed.sede;
       }
     } catch (e) {
       errorMsg = e?.message || String(e);
@@ -8371,9 +8394,9 @@ export default function AdminDashboard({
           }),
         }).catch(() => {});
       }
-      setMiSede(updated);
+      setMiSede(sanitizeSedeRowForState(updated));
       setMiSedeForm((f) => mergeMiSedeFormFromDb(updated, f, PAISES_SEDE_OPTIONS));
-      setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+      setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...sanitizeSedeRowForState(updated) } }));
     }
   };
 
@@ -8765,6 +8788,20 @@ export default function AdminDashboard({
         setTimeout(() => setMiSedeMsg(''), 4000);
         return false;
       }
+      const placeholders = [
+        t('admin.sedes.mpTokenReplacePh'),
+        t('admin.sedes.mpTokenPh'),
+        t('admin.sedes.mpPublicKeyReplacePh', { defaultValue: 'Public Key guardada — ingresa una nueva para reemplazar' }),
+        t('admin.sedes.mpPublicKeyPh', { defaultValue: 'APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' }),
+        t('admin.sedes.stripeAccountPh'),
+        t('admin.sedes.stripeAccountEllipsisPh'),
+      ];
+      const body = sanitizePagosPartialPayload(partial, placeholders);
+      if (Object.keys(body).length === 0) {
+        setMiSedeMsg(`⚠️ ${t('admin.sedes.pagosSinCambios', { defaultValue: 'No hay una credencial nueva para guardar' })}`);
+        setTimeout(() => setMiSedeMsg(''), 4000);
+        return false;
+      }
       setPagosParcialSaving(true);
       setMiSedeMsg('');
       try {
@@ -8774,28 +8811,42 @@ export default function AdminDashboard({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify(partial),
+          body: JSON.stringify(body),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || res.statusText);
-        const updated = data.sede;
-        if (updated) {
-          setMiSede(updated);
-          setMiSedeForm((f) => mergeMiSedeFormFromDb(updated, f, PAISES_SEDE_OPTIONS));
-          setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+        if (!res.ok) {
+          // Mensaje controlado: no ecoar detalles internos ni el request.
+          setMiSedeMsg(`⚠️ ${t('admin.sedes.pagosErrorGuardar', { defaultValue: 'No se pudo guardar la configuración de pagos. Reintentá en unos segundos.' })}`);
+          setTimeout(() => setMiSedeMsg(''), 5000);
+          return false;
         }
+        const parsed = parseSedePatchResponse(data, miSedePagos);
+        setMiSedePagos(parsed.pagos);
+        if (parsed.sede) {
+          setMiSede(sanitizeSedeRowForState(parsed.sede));
+          setSedesMap((m) => ({
+            ...m,
+            [String(parsed.sede.id)]: {
+              ...(m[String(parsed.sede.id)] || {}),
+              ...sanitizeSedeRowForState(parsed.sede),
+            },
+          }));
+        }
+        // Éxito: limpiar inmediatamente los inputs secretos; conservar el resto del form.
+        setMiSedeForm((f) => clearPagosCredentialFields(f));
         setMiSedeMsg(t('admin.sedes.paymentsUpdated'));
         setTimeout(() => setMiSedeMsg(''), 3000);
         return true;
-      } catch (e) {
-        setMiSedeMsg(`⚠️ ${e?.message || String(e)}`);
+      } catch {
+        // Error de red: conservar lo escrito para reintentar; nunca loguear la credencial.
+        setMiSedeMsg(`⚠️ ${t('admin.sedes.pagosErrorGuardar', { defaultValue: 'No se pudo guardar la configuración de pagos. Reintentá en unos segundos.' })}`);
         setTimeout(() => setMiSedeMsg(''), 5000);
         return false;
       } finally {
         setPagosParcialSaving(false);
       }
     },
-    [apiBaseUrl, sedeId, session?.access_token]
+    [apiBaseUrl, sedeId, session?.access_token, miSedePagos, t]
   );
 
   const abrirModalEditarSede = useCallback(() => {
@@ -8835,9 +8886,12 @@ export default function AdminDashboard({
       }
       const updated = data.sede;
       if (updated) {
-        setMiSede(updated);
-        setMiSedeForm((f) => mergeMiSedeFormFromDb(updated, f, PAISES_SEDE_OPTIONS));
-        setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
+        const parsed = parseSedePatchResponse(data, miSedePagos);
+        setMiSedePagos(parsed.pagos);
+        const safe = sanitizeSedeRowForState(parsed.sede || updated);
+        setMiSede(safe);
+        setMiSedeForm((f) => mergeMiSedeFormFromDb(safe, f, PAISES_SEDE_OPTIONS));
+        setSedesMap((m) => ({ ...m, [String(safe.id)]: { ...(m[String(safe.id)] || {}), ...safe } }));
         if (prev) {
           const secret =
             typeof import.meta !== 'undefined' ? import.meta.env?.VITE_PADBOL_SEDE_CRITICO_NOTIFY_SECRET : '';
@@ -20659,7 +20713,11 @@ export default function AdminDashboard({
                       Mercado Pago
                     </div>
                     <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
-                      {Boolean(String(miSede?.mp_access_token || '').trim()) ? 'Conectado ✅' : t('admin.sedes.notConfiguredWarn')}
+                      {pagosEstadoKey(miSedePagos.mercadopago_configurado) === 'configurado'
+                        ? t('admin.sedes.mpConfigurado', { defaultValue: 'Mercado Pago configurado' })
+                        : pagosEstadoKey(miSedePagos.mercadopago_configurado) === 'no_configurado'
+                          ? t('admin.sedes.notConfiguredWarn')
+                          : t('admin.sedes.estadoNoDisponible', { defaultValue: 'Estado no disponible' })}
                     </div>
                   </div>
                   <button
@@ -20690,7 +20748,7 @@ export default function AdminDashboard({
                         className="admin-mi-sede-theme-input"
                         autoComplete="off"
                         value={miSedeForm.mp_access_token || ''}
-                        placeholder={Boolean(String(miSede?.mp_access_token || '').trim()) ? t('admin.sedes.mpTokenReplacePh') : t('admin.sedes.mpTokenPh')}
+                        placeholder={miSedePagos.mercadopago_configurado === true ? t('admin.sedes.mpTokenReplacePh') : t('admin.sedes.mpTokenPh')}
                         onChange={(e) => setMiSedeForm((p) => ({ ...p, mp_access_token: e.target.value }))}
                         style={{
                           width: '100%',
@@ -20733,7 +20791,7 @@ export default function AdminDashboard({
                         autoComplete="off"
                         value={miSedeForm.mp_public_key || ''}
                         placeholder={
-                          Boolean(String(miSede?.mp_public_key || '').trim())
+                          miSedePagos.mercadopago_configurado === true
                             ? t('admin.sedes.mpPublicKeyReplacePh', { defaultValue: 'Public Key guardada — ingresa una nueva para reemplazar' })
                             : t('admin.sedes.mpPublicKeyPh', { defaultValue: 'APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' })
                         }
@@ -20820,11 +20878,11 @@ export default function AdminDashboard({
                       Stripe
                     </div>
                     <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
-                      {String(miSede?.stripe_account_id || '')
-                        .trim()
-                        .startsWith('acct_')
-                        ? 'Conectado ✅'
-                        : t('admin.sedes.notConfiguredWarn')}
+                      {pagosEstadoKey(miSedePagos.stripe_configurado) === 'configurado'
+                        ? t('admin.sedes.stripeConfigurado', { defaultValue: 'Stripe configurado' })
+                        : pagosEstadoKey(miSedePagos.stripe_configurado) === 'no_configurado'
+                          ? t('admin.sedes.notConfiguredWarn')
+                          : t('admin.sedes.estadoNoDisponible', { defaultValue: 'Estado no disponible' })}
                     </div>
                   </div>
                   <button
@@ -20852,7 +20910,11 @@ export default function AdminDashboard({
                     <input
                       className="admin-mi-sede-theme-input"
                       value={miSedeForm.stripe_account_id || ''}
-                      placeholder={t('admin.sedes.stripeAccountPh')}
+                      placeholder={
+                        miSedePagos.stripe_configurado === true
+                          ? t('admin.sedes.stripeAccountReplacePh', { defaultValue: 'Ingresá una nueva credencial para reemplazar la actual' })
+                          : t('admin.sedes.stripeAccountPh')
+                      }
                       onChange={(e) => setMiSedeForm((p) => ({ ...p, stripe_account_id: e.target.value }))}
                       style={{
                         width: '100%',
