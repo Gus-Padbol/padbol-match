@@ -135,6 +135,20 @@ import {
   removeReservaAfterCancel,
   pickReservaFromConfirmResponse,
 } from '../utils/adminReservaActions';
+import {
+  isReservaEstadoIngresoValido,
+  isReservaEstadoActiva,
+  sumIngresosReservas,
+  sumIngresosReservasPorMoneda,
+  countReservasActivas,
+  filterReservasEnBounds,
+  resolvePeriodBounds,
+  buildPeriodoCompare,
+  buildReservasPorHorario,
+  hoyISOArgentina,
+  periodLabelKey,
+  safeMoney,
+} from '../utils/adminMetricasConsistencia';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { fetchAdminCampanitaAlertas } from '../utils/adminCampanitaApi';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -3431,21 +3445,33 @@ function resolveDeporteKeyReservaAdmin(r, sedeIdKey, canchasDetallePorSede) {
 }
 
 function AdminClubMetricasExtras({ metricas, moneda }) {
-  const { ocupacionHoraria, semanaCompare, cancelacion, deportesTop, periodoLabel } = metricas;
+  const { t } = useTranslation();
+  const {
+    reservasPorHorario,
+    ocupacionHoraria,
+    periodoCompare,
+    semanaCompare,
+    cancelacion,
+    deportesTop,
+    periodoLabel,
+    compareHint,
+  } = metricas;
   const mon = String(moneda || 'ARS').trim().toUpperCase();
+  const hourRows = (reservasPorHorario || ocupacionHoraria)?.rows || [];
+  const compare = periodoCompare || semanaCompare || {};
 
   return (
     <div className="admin-club-metricas-extras">
       <div className="admin-stat-card">
-        <h3 className="admin-stat-card__title">Ocupación por horario</h3>
+        <h3 className="admin-stat-card__title">{t('admin.metrics.bookingsByHour')}</h3>
         <p className="admin-stat-card__hint">
-          Reservas confirmadas · {periodoLabel}
+          {t('admin.metrics.bookingsByHourHint', { period: periodoLabel })}
         </p>
-        {ocupacionHoraria.rows.length === 0 ? (
-          <p className="admin-stat-card__empty">Sin reservas confirmadas en el período.</p>
+        {hourRows.length === 0 ? (
+          <p className="admin-stat-card__empty">{t('admin.metrics.bookingsByHourEmpty')}</p>
         ) : (
           <div className="admin-stat-bars" role="list">
-            {ocupacionHoraria.rows.map((row) => (
+            {hourRows.map((row) => (
               <div className="admin-stat-bar" key={row.hora} role="listitem">
                 <span className="admin-stat-bar__label">{row.hora}</span>
                 <div className="admin-stat-bar__track" aria-hidden>
@@ -3461,44 +3487,44 @@ function AdminClubMetricasExtras({ metricas, moneda }) {
       </div>
 
       <div className="admin-stat-card">
-        <h3 className="admin-stat-card__title">Semana actual vs semana anterior</h3>
-        <p className="admin-stat-card__hint">Lunes a domingo · por fecha de reserva</p>
+        <h3 className="admin-stat-card__title">{t('admin.metrics.comparePeriodTitle')}</h3>
+        <p className="admin-stat-card__hint">{compareHint || t('admin.metrics.comparePreviousEqual')}</p>
         <div className="admin-week-compare">
           <div className="admin-week-compare__col">
-            <div className="admin-week-compare__kicker">Reservas</div>
+            <div className="admin-week-compare__kicker">{t('admin.metrics.compareBookings')}</div>
             <div className="admin-week-compare__values">
-              <span className="admin-week-compare__current">{semanaCompare.reservasActual}</span>
+              <span className="admin-week-compare__current">{compare.reservasActual ?? 0}</span>
               <span className="admin-week-compare__vs">vs</span>
-              <span className="admin-week-compare__prev">{semanaCompare.reservasAnterior}</span>
+              <span className="admin-week-compare__prev">{compare.reservasAnterior ?? 0}</span>
             </div>
-            <SemanaCompareDelta pct={semanaCompare.reservasPct} />
+            <SemanaCompareDelta pct={compare.reservasPct ?? 0} />
           </div>
           <div className="admin-week-compare__col">
-            <div className="admin-week-compare__kicker">Ingresos ({mon})</div>
+            <div className="admin-week-compare__kicker">{t('admin.metrics.compareRevenue')} ({mon})</div>
             <div className="admin-week-compare__values">
               <span className="admin-week-compare__current">
-                $ {semanaCompare.ingresosActual.toLocaleString('es-AR')}
+                $ {(Number(compare.ingresosActual) || 0).toLocaleString('es-AR')}
               </span>
               <span className="admin-week-compare__vs">vs</span>
               <span className="admin-week-compare__prev">
-                $ {semanaCompare.ingresosAnterior.toLocaleString('es-AR')}
+                $ {(Number(compare.ingresosAnterior) || 0).toLocaleString('es-AR')}
               </span>
             </div>
-            <SemanaCompareDelta pct={semanaCompare.ingresosPct} />
+            <SemanaCompareDelta pct={compare.ingresosPct ?? 0} />
           </div>
         </div>
       </div>
 
       <div className="admin-stat-card admin-stat-card--inline-metrics">
-        <h3 className="admin-stat-card__title">Tasa de cancelación</h3>
+        <h3 className="admin-stat-card__title">{t('admin.metrics.cancellationRate')}</h3>
         <p className="admin-stat-card__hint">{periodoLabel}</p>
         <div className="admin-stat-card__metrics-row">
           <div>
-            <div className="admin-stat-card__metric-label">Total reservas</div>
-            <div className="admin-stat-card__metric-value">{cancelacion.total}</div>
+            <div className="admin-stat-card__metric-label">{t('admin.metrics.periodActiveBookings')}</div>
+            <div className="admin-stat-card__metric-value">{cancelacion.activas ?? cancelacion.total}</div>
           </div>
           <div>
-            <div className="admin-stat-card__metric-label">Canceladas</div>
+            <div className="admin-stat-card__metric-label">{t('admin.reservas.badgeCancelled', { defaultValue: 'Canceladas' })}</div>
             <div className="admin-stat-card__metric-value">{cancelacion.canceladas}</div>
           </div>
           <div>
@@ -3509,10 +3535,10 @@ function AdminClubMetricasExtras({ metricas, moneda }) {
       </div>
 
       <div className="admin-stat-card">
-        <h3 className="admin-stat-card__title">Deporte más reservado</h3>
-        <p className="admin-stat-card__hint">Top 3 · reservas no canceladas · {periodoLabel}</p>
+        <h3 className="admin-stat-card__title">{t('admin.metrics.topSportReserved')}</h3>
+        <p className="admin-stat-card__hint">{t('admin.metrics.topSportReservedHint', { period: periodoLabel })}</p>
         {deportesTop.length === 0 ? (
-          <p className="admin-stat-card__empty">Sin reservas en el período.</p>
+          <p className="admin-stat-card__empty">{t('admin.metrics.noActivityInPeriod')}</p>
         ) : (
           <div className="admin-stat-bars">
             {deportesTop.map((row) => (
@@ -4804,7 +4830,7 @@ export default function AdminDashboard({
     () => new Date().toISOString().slice(0, 10)
   );
   /** Día ancla para navegar semana/mes/año (e "hoy" como día concreto) en resumen y reservas super admin. */
-  const [finanzasAnclaISO, setFinanzasAnclaISO] = useState(() => new Date().toISOString().slice(0, 10));
+  const [finanzasAnclaISO, setFinanzasAnclaISO] = useState(() => hoyISOArgentina());
 
   const [sedesPendientes, setSedesPendientes] = useState([]);
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
@@ -5648,6 +5674,12 @@ export default function AdminDashboard({
     const torneosList = asAdminDataArray(torneos);
     const equiposList = asAdminDataArray(equiposInscripcionRows);
     const reservasFiltradas = reservasList.filter((r) => inP(fechaReservaDiaISO(r?.fecha)));
+    const reservasIngreso = reservasFiltradas.filter((r) =>
+      isReservaEstadoIngresoValido(r?.estado, r?.cancelada)
+    );
+    const reservasActivas = reservasFiltradas.filter((r) =>
+      isReservaEstadoActiva(r?.estado, r?.cancelada)
+    );
 
     const fechaInscripcionEquipo = (eq) => {
       const u = eq?.updated_at || eq?.created_at;
@@ -5670,13 +5702,13 @@ export default function AdminDashboard({
         reservas: { ARS: 0, USD: 0, EUR: 0 },
         inscripciones: { ARS: 0, USD: 0, EUR: 0 },
       };
-      reservasFiltradas.forEach((r) => {
+      reservasIngreso.forEach((r) => {
         const sn = String(r?.sede || '').trim().toLowerCase();
         const sedeRow = Object.values(sedesMap || {}).find(
           (s) => sn && String(s?.nombre || '').trim().toLowerCase() === sn
         );
         const mon = bucketMonedaAdmin(sedeRow?.moneda || r?.moneda || 'ARS');
-        acum.reservas[mon] = (acum.reservas[mon] || 0) + (Number(r?.precio) || 0);
+        acum.reservas[mon] = (acum.reservas[mon] || 0) + safeMoney(r?.precio);
       });
       equiposInsFiltrados.forEach((eq) => {
         const t = torneoById[eq.torneo_id];
@@ -5691,7 +5723,7 @@ export default function AdminDashboard({
         tipo: 'super',
         porFuente: acum,
         total,
-        reservasEnPeriodo: reservasFiltradas.length,
+        reservasEnPeriodo: reservasActivas.length,
       };
     }
 
@@ -5701,8 +5733,8 @@ export default function AdminDashboard({
         : 'ARS';
 
     let reservasSum = 0;
-    reservasFiltradas.forEach((r) => {
-      reservasSum += Number(r?.precio) || 0;
+    reservasIngreso.forEach((r) => {
+      reservasSum += safeMoney(r?.precio);
     });
     let insSum = 0;
     equiposInsFiltrados.forEach((eq) => {
@@ -5714,7 +5746,7 @@ export default function AdminDashboard({
       reservas: reservasSum,
       inscripciones: insSum,
       total: reservasSum + insSum,
-      reservasEnPeriodo: reservasFiltradas.length,
+      reservasEnPeriodo: reservasActivas.length,
     };
   }, [
     reservas,
@@ -5762,15 +5794,17 @@ export default function AdminDashboard({
       const d = String(iso || '').slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
       if (!porDia[d]) porDia[d] = { ARS: 0, USD: 0, EUR: 0 };
-      porDia[d][mon] = (porDia[d][mon] || 0) + (Number(amount) || 0);
+      porDia[d][mon] = (porDia[d][mon] || 0) + safeMoney(amount);
     };
     const reservasDetalle = reservasPeriodo.map((r) => {
       const sedeRow = sedeByNombreLower[String(r?.sede || '').trim().toLowerCase()] || null;
       const mon = bucketMonedaAdmin(sedeRow?.moneda || r?.moneda || 'ARS');
-      const precio = Number(r?.precio) || 0;
-      addDay(String(r?.fecha || '').slice(0, 10), mon, precio);
-      return { ...r, moneda_calc: mon, precio_calc: precio };
+      const precio = safeMoney(r?.precio);
+      const cuentaIngreso = isReservaEstadoIngresoValido(r?.estado, r?.cancelada);
+      if (cuentaIngreso) addDay(String(r?.fecha || '').slice(0, 10), mon, precio);
+      return { ...r, moneda_calc: mon, precio_calc: precio, cuenta_ingreso: cuentaIngreso };
     });
+    const reservasIngresoDetalle = reservasDetalle.filter((r) => r.cuenta_ingreso);
     const torneosDetalle = inscripcionesPeriodo.map((eq) => {
       const t = torneoById[eq?.torneo_id] || null;
       const mon = bucketMonedaAdmin(t?.moneda || 'ARS');
@@ -5786,7 +5820,7 @@ export default function AdminDashboard({
         estado: t?.estado || '',
       };
     });
-    const totalTx = reservasDetalle.length + torneosDetalle.length;
+    const totalTx = reservasIngresoDetalle.length + torneosDetalle.length;
     const totalMontoBase = isSuperAdmin
       ? ['ARS', 'USD', 'EUR'].reduce((acc, k) => acc + (Number(cifrasFinanzasResumen?.total?.[k]) || 0), 0)
       : Number(cifrasFinanzasResumen?.total) || 0;
@@ -5904,12 +5938,11 @@ export default function AdminDashboard({
 
     const ingresosHoyPorMoneda = { ARS: 0, USD: 0, EUR: 0 };
     for (const r of reservasHoyLista) {
-      const est = String(r?.estado || '').trim().toLowerCase();
-      if (est === 'cancelada') continue;
+      if (!isReservaEstadoIngresoValido(r?.estado, r?.cancelada)) continue;
       const sid = sedeIdDesdeNombreReserva(r?.sede, sedesMap);
       const sedeRow = sid != null ? sedesMap?.[String(sid)] : null;
       const mon = bucketMonedaAdmin(sedeRow?.moneda || 'ARS');
-      ingresosHoyPorMoneda[mon] += Number(r.precio) || 0;
+      ingresosHoyPorMoneda[mon] += safeMoney(r.precio);
     }
     const ingresosHoyTexto = formatoIngresosHoyMultimoneda(ingresosHoyPorMoneda);
 
@@ -6067,64 +6100,29 @@ export default function AdminDashboard({
     t,
   ]);
 
-  /** Métricas extra admin_club: ocupación horaria, semana vs semana, cancelación, deportes (solo `reservas` cargadas). */
+  /** Métricas extra admin_club: reservas por horario, comparación de período, cancelación, deportes. */
   const adminClubMetricasExtra = useMemo(() => {
     if (!esAdminClub && !isSuperAdmin) return null;
     if (esAdminClub && !sedeIdKey) return null;
 
     const reservasList = asAdminDataArray(reservas);
-
-    const inPeriodo = (r) =>
-      fechaDentroDePeriodoFinanzas(
-        fechaReservaDiaOCreatedISO(r),
-        superAdminPeriodo,
-        superAdminFechaDesde,
-        superAdminFechaHasta,
-        finanzasAnclaISO
-      );
-
-    const reservasPeriodo = reservasList.filter(inPeriodo);
-    const confirmadasPeriodo = reservasPeriodo.filter(
-      (r) => String(r?.estado || '').trim().toLowerCase() === 'confirmada'
-    );
-    const activasPeriodo = reservasPeriodo.filter(
-      (r) => String(r?.estado || '').trim().toLowerCase() !== 'cancelada'
+    const bounds = resolvePeriodBounds(
+      superAdminPeriodo,
+      superAdminFechaDesde,
+      superAdminFechaHasta,
+      finanzasAnclaISO,
     );
 
-    const byHora = {};
-    confirmadasPeriodo.forEach((r) => {
-      const slot = horaFranjaReservaAdmin(r?.hora);
-      if (!slot) return;
-      byHora[slot] = (byHora[slot] || 0) + 1;
-    });
-    const totalConfirmadas = confirmadasPeriodo.length;
-    const ocupacionHoraria = {
-      rows: Object.keys(byHora)
-        .sort((a, b) => a.localeCompare(b))
-        .map((hora) => {
-          const count = byHora[hora];
-          const pct = totalConfirmadas > 0 ? Math.round((count / totalConfirmadas) * 100) : 0;
-          return { hora, count, pct };
-        }),
-    };
+    const reservasPeriodo = bounds
+      ? filterReservasEnBounds(reservasList, bounds.startISO, bounds.endISO, fechaReservaDiaOCreatedISO)
+      : [];
+    const activasPeriodo = reservasPeriodo.filter((r) => isReservaEstadoActiva(r?.estado, r?.cancelada));
 
-    const hoy = new Date();
-    const semActualStart = startOfWeekMondayLocal(hoy);
-    const semActualEnd = endOfWeekSundayEndLocal(semActualStart);
-    const semAnteriorStart = new Date(semActualStart);
-    semAnteriorStart.setDate(semAnteriorStart.getDate() - 7);
-    const semAnteriorEnd = endOfWeekSundayEndLocal(semAnteriorStart);
-
-    const enSemana = (r, start, end) => diaCalendarioEnRangoLocal(fechaReservaDiaOCreatedISO(r), start, end);
-    const activasNoCancel = (r) => String(r?.estado || '').trim().toLowerCase() !== 'cancelada';
-
-    const resActual = reservasList.filter((r) => enSemana(r, semActualStart, semActualEnd) && activasNoCancel(r));
-    const resAnterior = reservasList.filter((r) => enSemana(r, semAnteriorStart, semAnteriorEnd) && activasNoCancel(r));
-    const ingresosActual = resActual.reduce((s, r) => s + (Number(r?.precio) || 0), 0);
-    const ingresosAnterior = resAnterior.reduce((s, r) => s + (Number(r?.precio) || 0), 0);
+    const reservasPorHorario = buildReservasPorHorario(activasPeriodo);
+    const periodoCompare = buildPeriodoCompare(reservasList, bounds);
 
     const canceladas = reservasPeriodo.filter(
-      (r) => String(r?.estado || '').trim().toLowerCase() === 'cancelada'
+      (r) => !isReservaEstadoActiva(r?.estado, r?.cancelada),
     ).length;
     const totalPeriodo = reservasPeriodo.length;
     const cancelPct = totalPeriodo > 0 ? Math.round((canceladas / totalPeriodo) * 100) : 0;
@@ -6158,21 +6156,33 @@ export default function AdminDashboard({
         return { key, label, count, pct };
       });
 
-    const periodoLabel = labelNavegacionFinanzas(superAdminPeriodo, finanzasAnclaISO);
+    const navLabel = labelNavegacionFinanzas(superAdminPeriodo, finanzasAnclaISO);
+    const periodoLabel =
+      superAdminPeriodo === 'rango' && superAdminFechaDesde && superAdminFechaHasta
+        ? `${superAdminFechaDesde} → ${superAdminFechaHasta}`
+        : navLabel !== '—'
+          ? navLabel
+          : t(periodLabelKey(superAdminPeriodo));
+
+    const compareHint = t(periodoCompare.compareLabelKey || 'admin.metrics.comparePreviousEqual');
 
     return {
       periodoLabel,
-      ocupacionHoraria,
+      compareHint,
+      reservasPorHorario,
+      ocupacionHoraria: reservasPorHorario,
+      periodoCompare,
       semanaCompare: {
-        reservasActual: resActual.length,
-        reservasAnterior: resAnterior.length,
-        reservasPct: pctCambioSemana(resActual.length, resAnterior.length),
-        ingresosActual,
-        ingresosAnterior,
-        ingresosPct: pctCambioSemana(ingresosActual, ingresosAnterior),
+        reservasActual: periodoCompare.reservasActual,
+        reservasAnterior: periodoCompare.reservasAnterior,
+        reservasPct: periodoCompare.reservasPct,
+        ingresosActual: periodoCompare.ingresosActual,
+        ingresosAnterior: periodoCompare.ingresosAnterior,
+        ingresosPct: periodoCompare.ingresosPct,
       },
       cancelacion: {
         total: totalPeriodo,
+        activas: activasPeriodo.length,
         canceladas,
         pct: cancelPct,
       },
@@ -6187,9 +6197,10 @@ export default function AdminDashboard({
     superAdminFechaDesde,
     superAdminFechaHasta,
     finanzasAnclaISO,
-    canchasDetallePorSede,
     sedesMap,
+    canchasDetallePorSede,
     t,
+    sedeIdKey,
   ]);
 
   /** Vista cancha por cancha (admin_club): solo datos ya en `reservas`, `sedesMap` y `canchasDetallePorSede`. */
@@ -10985,7 +10996,7 @@ export default function AdminDashboard({
                 onClick={() => {
                   setSuperAdminPeriodo(opt.id);
                   if (opt.id !== 'rango') {
-                    setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
+                    setFinanzasAnclaISO(hoyISOArgentina());
                   }
                 }}
                 style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id, adminPillInactiveSurface)}
@@ -11044,7 +11055,7 @@ export default function AdminDashboard({
             <div className="ingresos-por-moneda">
               <div className="ingreso-fila" style={{ textAlign: 'left' }}>
                 <span className="ingreso-codigo" style={{ flex: 1 }}>
-                  ⚽ Reservas de canchas
+                  ⚽ {t('admin.metrics.courtBookingsRevenue')}
                 </span>
                 <span className="ingreso-valor" style={{ fontSize: '1.1rem' }}>
                   $ {cifrasFinanzasResumen.reservas.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
@@ -11052,7 +11063,7 @@ export default function AdminDashboard({
               </div>
               <div className="ingreso-fila" style={{ textAlign: 'left' }}>
                 <span className="ingreso-codigo" style={{ flex: 1 }}>
-                  🏆 Inscripciones a torneos
+                  🏆 {t('admin.metrics.tournamentFeesRevenue')}
                 </span>
                 <span className="ingreso-valor" style={{ fontSize: '1.1rem' }}>
                   $ {cifrasFinanzasResumen.inscripciones.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
@@ -11095,7 +11106,7 @@ export default function AdminDashboard({
                     style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
                   >
                     <span className="ingreso-codigo" style={{ width: '100%' }}>
-                      ⚽ Reservas de canchas
+                      ⚽ {t('admin.metrics.courtBookingsRevenue')}
                     </span>
                     <span
                       className={valSin(resVac)}
@@ -11109,7 +11120,7 @@ export default function AdminDashboard({
                     style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
                   >
                     <span className="ingreso-codigo" style={{ width: '100%' }}>
-                      🏆 Inscripciones a torneos
+                      🏆 {t('admin.metrics.tournamentFeesRevenue')}
                     </span>
                     <span
                       className={valSin(insVac)}
@@ -11146,12 +11157,18 @@ export default function AdminDashboard({
           )}
         </div>
         <div className="card reservas">
-          <h2>{t('admin.metrics.periodBookings')}</h2>
+          <h2>{t('admin.metrics.periodActiveBookings')}</h2>
           <p className="count">{cifrasFinanzasResumen.reservasEnPeriodo}</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>
+            {t(periodLabelKey(superAdminPeriodo))}
+          </p>
         </div>
         <div className="card torneos">
           <h2>{t('admin.metrics.totalTournaments')}</h2>
           <p className="count">{torneos.length}</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>
+            {t('admin.metrics.historicalTotalHint')}
+          </p>
         </div>
       </div>
       <div
@@ -11229,11 +11246,11 @@ export default function AdminDashboard({
               color: 'var(--text-primary)',
             }}
           >
-            Ingresos por día
+            {t('admin.metrics.dailyRevenue')}
           </div>
           {dashboardFinanciero.dailyRows.length === 0 ? (
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Sin movimientos en el período seleccionado.
+              {t('admin.metrics.noActivityInPeriod')}
             </div>
           ) : (
             <div style={{ display: 'grid', gap: '6px' }}>
@@ -12891,7 +12908,7 @@ export default function AdminDashboard({
                       onClick={() => {
                         setSuperAdminPeriodo(opt.id);
                         if (opt.id !== 'rango') {
-                          setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
+                          setFinanzasAnclaISO(hoyISOArgentina());
                         }
                       }}
                       style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id, adminPillInactiveSurface)}
@@ -13405,7 +13422,7 @@ export default function AdminDashboard({
                     onClick={() => {
                       setSuperAdminPeriodo(opt.id);
                       if (opt.id !== 'rango') {
-                        setFinanzasAnclaISO(new Date().toISOString().slice(0, 10));
+                        setFinanzasAnclaISO(hoyISOArgentina());
                       }
                     }}
                     style={adminFilterPillButtonStyle(superAdminPeriodo === opt.id, adminPillInactiveSurface)}
