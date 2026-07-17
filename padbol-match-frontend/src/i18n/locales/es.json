@@ -1521,7 +1521,15 @@
       "badgeConfirmed": "🟢 Confirmada",
       "courtNumberPrefix": "Cancha ",
       "optionManualPaymentPending": "Pendiente pago manual",
-      "optionManualPaymentPendingEmoji": "Pendiente pago manual"
+      "optionManualPaymentPendingEmoji": "Pendiente pago manual",
+      "confirming": "Confirmando…",
+      "cancelling": "Cancelando…",
+      "confirmFailed": "No se pudo confirmar la reserva.",
+      "cancelFailed": "No se pudo cancelar la reserva.",
+      "actionForbidden": "No tenés permiso para realizar esta acción.",
+      "actionNotFound": "La reserva no existe o ya fue eliminada.",
+      "actionConflict": "La reserva ya fue modificada. Actualizá la lista e intentá nuevamente.",
+      "actionUnauthorized": "Sesión expirada. Volvé a iniciar sesión."
     },
     "metricas": {
       "processing": "Procesando…",

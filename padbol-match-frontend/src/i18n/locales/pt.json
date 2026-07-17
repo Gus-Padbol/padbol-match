@@ -1201,7 +1201,15 @@
       "badgeConfirmed": "🟢 Confirmado",
       "courtNumberPrefix": "Quadra de basquete",
       "optionManualPaymentPending": "Pagamento manual pendente",
-      "optionManualPaymentPendingEmoji": "Pagamento manual pendente"
+      "optionManualPaymentPendingEmoji": "Pagamento manual pendente",
+      "confirming": "Confirming…",
+      "cancelling": "Cancelling…",
+      "confirmFailed": "Could not confirm the booking.",
+      "cancelFailed": "Could not cancel the booking.",
+      "actionForbidden": "You do not have permission to perform this action.",
+      "actionNotFound": "The booking does not exist or was already removed.",
+      "actionConflict": "The booking was already changed. Refresh the list and try again.",
+      "actionUnauthorized": "Session expired. Please sign in again."
     },
     "metricas": {
       "processing": "Processamento…",

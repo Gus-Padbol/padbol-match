@@ -1201,7 +1201,15 @@
       "badgeConfirmed": "🟢 Confirmé",
       "courtNumberPrefix": "Terrain de basket",
       "optionManualPaymentPending": "Paiement manuel en attente",
-      "optionManualPaymentPendingEmoji": "Paiement manuel en attente"
+      "optionManualPaymentPendingEmoji": "Paiement manuel en attente",
+      "confirming": "Confirming…",
+      "cancelling": "Cancelling…",
+      "confirmFailed": "Could not confirm the booking.",
+      "cancelFailed": "Could not cancel the booking.",
+      "actionForbidden": "You do not have permission to perform this action.",
+      "actionNotFound": "The booking does not exist or was already removed.",
+      "actionConflict": "The booking was already changed. Refresh the list and try again.",
+      "actionUnauthorized": "Session expired. Please sign in again."
     },
     "metricas": {
       "processing": "Traitement…",

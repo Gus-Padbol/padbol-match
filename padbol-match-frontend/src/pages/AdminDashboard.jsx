@@ -119,6 +119,22 @@ import {
   suggestedDurationForManualBooking,
   validateCanchaModalDraft,
 } from '../utils/canchaDeporteCustom';
+import {
+  ADMIN_SEDES_TAB_ID,
+  ADMIN_SEDES_TABLE,
+  ADMIN_SEDES_STORAGE_BUCKET,
+  coerceAdminSedesTabId,
+} from '../utils/adminSedesTab';
+import {
+  tryBeginReservaAction,
+  clearReservaAction,
+  isReservaActionBusyFor,
+  parseAdminReservaActionError,
+  resolveAdminReservaActionErrorMessage,
+  mergeReservaAfterConfirm,
+  removeReservaAfterCancel,
+  pickReservaFromConfirmResponse,
+} from '../utils/adminReservaActions';
 import { IconGeroNotificacionesNav } from '../components/icons/GeroIcons';
 import { fetchAdminCampanitaAlertas } from '../utils/adminCampanitaApi';
 import { getCroppedImgBlob } from '../utils/cropImage';
@@ -1980,7 +1996,9 @@ function defaultAdminTabForRole(rolUsuario) {
 function sanitizeAdminActiveTab(raw, rolUsuario = null) {
   const rol = normalizeUserRole(rolUsuario);
   const t0 = String(raw || '').trim();
-  const t = t0 === 'sedes_pendientes' ? 'solicitudes' : t0;
+  const tRaw = t0 === 'sedes_pendientes' ? 'solicitudes' : t0;
+  // Normaliza ids legacy de Sedes (traducciones usadas históricamente como tab id).
+  const t = coerceAdminSedesTabId(tRaw) === ADMIN_SEDES_TAB_ID ? ADMIN_SEDES_TAB_ID : tRaw;
 
   if (rol === 'editor_contenido') {
     return EDITOR_CONTENIDO_TABS_ALLOWED.has(t) ? t : 'personalizar_hub';
@@ -1992,8 +2010,7 @@ function sanitizeAdminActiveTab(raw, rolUsuario = null) {
     return ADMIN_CLUB_TABS_ALLOWED.has(t) ? t : 'mi_sede';
   }
   if (rol === 'admin_nacional') {
-    const nacionalTab = t === 'sedes' ? 'sedes' : t;
-    return ADMIN_NACIONAL_TABS_ALLOWED.has(nacionalTab) ? nacionalTab : 'resumen';
+    return ADMIN_NACIONAL_TABS_ALLOWED.has(t) ? t : 'resumen';
   }
   return ADMIN_TABS_ALLOWED.has(t) ? t : defaultAdminTabForRole(rol);
 }
@@ -3658,6 +3675,9 @@ export default function AdminDashboard({
   /** reserva id → { open, loading, rows, error } */
   const [reservaHistorialUi, setReservaHistorialUi] = useState({});
   const [mensajeExito, setMensajeExito] = useState('');
+  /** Mapa reservaId → 'confirm' | 'cancel' (bloqueo por reserva, no toda la tabla). */
+  const [reservaActionBusy, setReservaActionBusy] = useState({});
+  const reservaActionBusyRef = useRef({});
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
   const campanitaWrapRef = useRef(null);
   const [campanitaData, setCampanitaData] = useState(null);
@@ -6471,7 +6491,7 @@ export default function AdminDashboard({
             days: a.days,
           }),
           actionLabel: t('admin.notif.goToVenues'),
-          onClick: () => irATab(t('admin.metricas.venuesCount')),
+          onClick: () => irATab(ADMIN_SEDES_TAB_ID),
         });
       });
       alertasSuscripcionBilling.forEach((a) => {
@@ -6484,7 +6504,7 @@ export default function AdminDashboard({
             title: t('admin.notif.subscriptionExpiredTitle'),
             body: t('admin.notif.subscriptionExpiredBody', { venue: a.sedeNombre }),
             actionLabel: t('admin.notif.goToVenues'),
-            onClick: () => irATab(t('admin.metricas.venuesCount')),
+            onClick: () => irATab(ADMIN_SEDES_TAB_ID),
           });
         } else {
           items.push({
@@ -6498,7 +6518,7 @@ export default function AdminDashboard({
               date: formatProximoCobroAdmin(a.fecha),
             }),
             actionLabel: t('admin.notif.goToVenues'),
-            onClick: () => irATab(t('admin.metricas.venuesCount')),
+            onClick: () => irATab(ADMIN_SEDES_TAB_ID),
           });
         }
       });
@@ -6891,7 +6911,7 @@ export default function AdminDashboard({
   }, [isSuperAdmin, sedeDetalleAbiertoId, sedesSuperAdminLista]);
 
   useEffect(() => {
-    if (activeTab !== t('admin.metricas.venuesCount')) setSedeDetalleAbiertoId(null);
+    if (activeTab !== ADMIN_SEDES_TAB_ID) setSedeDetalleAbiertoId(null);
   }, [activeTab]);
 
   useEffect(() => {
@@ -7306,7 +7326,7 @@ export default function AdminDashboard({
           scopeMeta = { rol: 'super_admin', alcance: 'global', sedes: allSedesRows };
         } else {
           const { data: sedesRows, error: sedesErr } = await supabase
-            .from(t('admin.metricas.venuesCount'))
+            .from(ADMIN_SEDES_TABLE)
             .select(
               'id, nombre, ciudad, pais, moneda, licencia_activa, numero_licencia, horario_apertura, horario_cierre, duracion_reserva_minutos, cantidad_canchas'
             );
@@ -7591,6 +7611,10 @@ export default function AdminDashboard({
   };
 
   const confirmarPagoManualReserva = async (reservaId) => {
+    const begin = tryBeginReservaAction(reservaActionBusyRef.current, reservaId, 'confirm');
+    if (!begin.ok) return;
+    reservaActionBusyRef.current = begin.next;
+    setReservaActionBusy(begin.next);
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
@@ -7599,19 +7623,28 @@ export default function AdminDashboard({
         headers,
         body: JSON.stringify({ estado: 'confirmada' }),
       });
+      const j = await response.json().catch(() => ({}));
       if (response.ok) {
         invalidateReservaHistorialCache(reservaId);
+        const updated = pickReservaFromConfirmResponse(j);
+        setReservas((prev) => mergeReservaAfterConfirm(prev, reservaId, updated));
         setMensajeExito(t('admin.reservas.inPersonPaymentConfirmed'));
-        setTimeout(() => {
-          fetchData();
-          setMensajeExito('');
-        }, 900);
+        setTimeout(() => setMensajeExito(''), 3500);
       } else {
-        const j = await response.json().catch(() => ({}));
-        alert(j.error || t('admin.reservas.paymentConfirmFailed'));
+        const parsed = parseAdminReservaActionError(response.status, j, 'confirm');
+        alert(resolveAdminReservaActionErrorMessage(parsed, t));
       }
     } catch (err) {
-      alert(t('admin.alerts.genericError') + ' ' + err.message);
+      const parsed = parseAdminReservaActionError(
+        err?.response?.status || 0,
+        err?.response?.data || { message: err?.message },
+        'confirm',
+      );
+      alert(resolveAdminReservaActionErrorMessage(parsed, t));
+    } finally {
+      const cleared = clearReservaAction(reservaActionBusyRef.current, reservaId);
+      reservaActionBusyRef.current = cleared;
+      setReservaActionBusy(cleared);
     }
   };
 
@@ -7750,6 +7783,10 @@ export default function AdminDashboard({
   };
 
   const ejecutarCancelarReservaAdmin = async (reservaId) => {
+    const begin = tryBeginReservaAction(reservaActionBusyRef.current, reservaId, 'cancel');
+    if (!begin.ok) return;
+    reservaActionBusyRef.current = begin.next;
+    setReservaActionBusy(begin.next);
     try {
       const headers = {};
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
@@ -7757,18 +7794,29 @@ export default function AdminDashboard({
         method: 'DELETE',
         headers,
       });
+      const j = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        invalidateReservaHistorialCache(reservaId);
+        setReservas((prev) => removeReservaAfterCancel(prev, reservaId));
+        setCancelReservaModalId(null);
         setMensajeExito(t('admin.reservas.bookingCancelled'));
-        setTimeout(() => {
-          fetchData();
-          setMensajeExito('');
-        }, 1500);
+        setTimeout(() => setMensajeExito(''), 3500);
       } else {
-        alert('Error al cancelar');
+        const parsed = parseAdminReservaActionError(response.status, j, 'cancel');
+        alert(resolveAdminReservaActionErrorMessage(parsed, t));
       }
     } catch (err) {
-      alert(t('admin.alerts.genericError') + ' ' + err.message);
+      const parsed = parseAdminReservaActionError(
+        err?.response?.status || 0,
+        err?.response?.data || { message: err?.message },
+        'cancel',
+      );
+      alert(resolveAdminReservaActionErrorMessage(parsed, t));
+    } finally {
+      const cleared = clearReservaAction(reservaActionBusyRef.current, reservaId);
+      reservaActionBusyRef.current = cleared;
+      setReservaActionBusy(cleared);
     }
   };
 
@@ -8075,7 +8123,7 @@ export default function AdminDashboard({
     setMiSedeLoading(true);
     const headers = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
     Promise.all([
-      supabase.from(t('admin.metricas.venuesCount')).select('*').eq('id', sedeId).maybeSingle(),
+      supabase.from(ADMIN_SEDES_TABLE).select('*').eq('id', sedeId).maybeSingle(),
       session?.access_token
         ? fetch(`${apiBaseUrl}/api/sedes/${sedeId}/canchas`, { headers }).then(async (r) => {
             const j = await r.json().catch(() => ({}));
@@ -8317,7 +8365,7 @@ export default function AdminDashboard({
 
   useEffect(() => {
     if (!sedeId || !esAdminClub) return;
-    supabase.from(t('admin.metricas.venuesCount'))
+    supabase.from(ADMIN_SEDES_TABLE)
       .select('numero_licencia, licencia_activa')
       .eq('id', sedeId)
       .maybeSingle()
@@ -9040,7 +9088,7 @@ export default function AdminDashboard({
   const guardarLicencia = async () => {
     setLicenciaSaving(true); setLicenciaMsg('');
     const prev = miSede;
-    const { error } = await supabase.from(t('admin.metricas.venuesCount')).update({
+    const { error } = await supabase.from(ADMIN_SEDES_TABLE).update({
       numero_licencia: licenciaForm.numero_licencia || null,
       fecha_licencia:  licenciaForm.fecha_licencia  || null,
       licencia_activa: licenciaForm.licencia_activa,
@@ -9271,14 +9319,14 @@ export default function AdminDashboard({
       const safeName = name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const path = `${sedeId}/fotos/${Date.now()}_${index}_${safeName}`;
       const { error: uploadError } = await supabase.storage
-        .from(t('admin.metricas.venuesCount'))
+        .from(ADMIN_SEDES_STORAGE_BUCKET)
         .upload(path, file, { contentType: file.type || 'image/jpeg' });
       if (uploadError) {
         failures.push(`${name}: ${uploadError.message}`);
       } else {
         const {
           data: { publicUrl },
-        } = supabase.storage.from(t('admin.metricas.venuesCount')).getPublicUrl(path);
+        } = supabase.storage.from(ADMIN_SEDES_STORAGE_BUCKET).getPublicUrl(path);
         urlsOk.push({ index, url: publicUrl });
       }
       completed += 1;
@@ -9324,7 +9372,7 @@ export default function AdminDashboard({
       setTimeout(() => setFranjasMsg(''), 5000);
       return;
     }
-    const { error } = await supabase.from(t('admin.metricas.venuesCount')).update({ franjas_horarias: validation.payload }).eq('id', sedeId);
+    const { error } = await supabase.from(ADMIN_SEDES_TABLE).update({ franjas_horarias: validation.payload }).eq('id', sedeId);
     setFranjasSaving(false);
     if (error) {
       setFranjasMsg(`⚠️ ${error.message}`);
@@ -9439,7 +9487,7 @@ export default function AdminDashboard({
     const idx = url.indexOf(marker);
     if (idx !== -1) {
       const storagePath = decodeURIComponent(url.substring(idx + marker.length).split('?')[0]);
-      await supabase.storage.from(t('admin.metricas.venuesCount')).remove([storagePath]);
+      await supabase.storage.from(ADMIN_SEDES_STORAGE_BUCKET).remove([storagePath]);
     }
     const newFotos = fotosUrls.filter((u) => u !== url);
     await persistFotosUrls(newFotos);
@@ -10164,14 +10212,14 @@ export default function AdminDashboard({
     ? [
         { id: 'resumen', label: t('nav.admin.resumen') },
         { id: 'torneos', label: t('torneos.titulo') },
-        { id: t('admin.metricas.venuesCount'), label: t('admin.tabs.sedes') },
+        { id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') },
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: '🪙 PadCoins' }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
       ]
     : [
         { id: 'resumen', label: t('admin.tabs.resumen') },
-        ...(isSuperAdmin ? [{ id: t('admin.metricas.venuesCount'), label: t('admin.tabs.sedes') }] : []),
+        ...(isSuperAdmin ? [{ id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') }] : []),
         ...(isSuperAdmin ? [{ id: 'solicitudes', label: t('admin.tabs.solicitudes') }] : []),
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
@@ -10545,7 +10593,7 @@ export default function AdminDashboard({
           paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
         }}
       >
-      {isSuperAdmin && ['resumen', t('admin.metricas.venuesCount')].includes(activeTab) && (
+      {isSuperAdmin && ['resumen', ADMIN_SEDES_TAB_ID].includes(activeTab) && (
         <div
           style={{
             display: 'flex',
@@ -11868,7 +11916,7 @@ export default function AdminDashboard({
         </div>
       ) : null}
 
-      {activeTab === t('admin.metricas.venuesCount') && (esAdminNacional || isSuperAdmin) && (
+      {activeTab === ADMIN_SEDES_TAB_ID && (esAdminNacional || isSuperAdmin) && (
         <div className="section">
           <h2>{isSuperAdmin ? t('admin.sedes.registeredVenues') : t('admin.sedes.venuesInCountry')}</h2>
           {isSuperAdmin && session?.access_token ? (
@@ -13512,15 +13560,35 @@ export default function AdminDashboard({
               ) : null}
               {['pendiente_pago_manual', 'pendiente_pago_efectivo'].includes(String(r.estado || '').toLowerCase()) &&
               (esAdminClub || isSuperAdmin) ? (
-                <button type="button" onClick={() => confirmarPagoManualReserva(r.id)} style={BTN({ background: '#f59e0b' })}>
-                  {String(r.estado || '').toLowerCase() === 'pendiente_pago_efectivo' ? 'Confirmar cobro en sede' : t('admin.metricas.confirmPayment')}
+                <button
+                  type="button"
+                  disabled={isReservaActionBusyFor(reservaActionBusy, r.id)}
+                  onClick={() => confirmarPagoManualReserva(r.id)}
+                  style={BTN({
+                    background: isReservaActionBusyFor(reservaActionBusy, r.id, 'confirm') ? '#94a3b8' : '#f59e0b',
+                    cursor: isReservaActionBusyFor(reservaActionBusy, r.id) ? 'not-allowed' : 'pointer',
+                    opacity: isReservaActionBusyFor(reservaActionBusy, r.id) && !isReservaActionBusyFor(reservaActionBusy, r.id, 'confirm') ? 0.6 : 1,
+                  })}
+                >
+                  {isReservaActionBusyFor(reservaActionBusy, r.id, 'confirm')
+                    ? t('admin.reservas.confirming')
+                    : (String(r.estado || '').toLowerCase() === 'pendiente_pago_efectivo' ? 'Confirmar cobro en sede' : t('admin.metricas.confirmPayment'))}
                 </button>
               ) : null}
               <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#E11B22' })}>
                 ✏️ Editar
               </button>
-              <button type="button" onClick={() => setCancelReservaModalId(r.id)} style={BTN({ background: '#d32f2f' })}>
-                🗑️
+              <button
+                type="button"
+                disabled={isReservaActionBusyFor(reservaActionBusy, r.id)}
+                onClick={() => setCancelReservaModalId(r.id)}
+                style={BTN({
+                  background: isReservaActionBusyFor(reservaActionBusy, r.id, 'cancel') ? '#94a3b8' : '#d32f2f',
+                  cursor: isReservaActionBusyFor(reservaActionBusy, r.id) ? 'not-allowed' : 'pointer',
+                  opacity: isReservaActionBusyFor(reservaActionBusy, r.id) && !isReservaActionBusyFor(reservaActionBusy, r.id, 'cancel') ? 0.6 : 1,
+                })}
+              >
+                {isReservaActionBusyFor(reservaActionBusy, r.id, 'cancel') ? t('admin.reservas.cancelling') : '🗑️'}
               </button>
             </div>
           );
@@ -22060,11 +22128,20 @@ export default function AdminDashboard({
         open={cancelReservaModalId != null}
         title={t('admin.reservas.cancelBookingTitle')}
         dismissLabel={t('admin.reservas.dismissToPanel')}
-        onDismiss={() => setCancelReservaModalId(null)}
-        onConfirm={() => {
-          const id = cancelReservaModalId;
+        confirmLabel={
+          isReservaActionBusyFor(reservaActionBusy, cancelReservaModalId, 'cancel')
+            ? t('admin.reservas.cancelling')
+            : t('admin.reservas.cancelBooking')
+        }
+        busy={isReservaActionBusyFor(reservaActionBusy, cancelReservaModalId)}
+        onDismiss={() => {
+          if (isReservaActionBusyFor(reservaActionBusy, cancelReservaModalId)) return;
           setCancelReservaModalId(null);
-          if (id != null) void ejecutarCancelarReservaAdmin(id);
+        }}
+        onConfirm={() => {
+          if (cancelReservaModalId == null) return;
+          if (isReservaActionBusyFor(reservaActionBusy, cancelReservaModalId)) return;
+          void ejecutarCancelarReservaAdmin(cancelReservaModalId);
         }}
       />
 
