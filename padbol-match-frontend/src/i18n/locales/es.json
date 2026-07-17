@@ -771,7 +771,11 @@
       "nationalTitle": "Panel Admin Nacional",
       "genericTitle": "Panel {{role}}",
       "editorDescription": "Personalizá el hub del jugador y gestioná sponsors/publicidades de todas las sedes.",
-      "backToHub": "Volver al hub"
+      "backToHub": "Volver al hub",
+      "accessUnavailable": "Este módulo no está disponible para tu rol.",
+      "redirectedToSafeTab": "Te redirigimos a una sección disponible.",
+      "padcoinsUnavailable": "PadCoins no está disponible para tu rol.",
+      "sponsorsInConfig": "Sponsors está disponible dentro de Configuración."
     },
     "profesores": {
       "tab": "Instructores",

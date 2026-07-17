@@ -747,7 +747,11 @@
       "nationalTitle": "National Admin Panel",
       "genericTitle": "{{role}} Panel",
       "editorDescription": "Customize the player hub and manage sponsors/ads across all venues.",
-      "backToHub": "Back to hub"
+      "backToHub": "Back to hub",
+      "accessUnavailable": "This module is not available for your role.",
+      "redirectedToSafeTab": "We redirected you to an available section.",
+      "padcoinsUnavailable": "PadCoins is not available for your role.",
+      "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "profesores": {
       "tab": "Instructors",

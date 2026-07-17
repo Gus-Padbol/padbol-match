@@ -630,7 +630,11 @@
       "nationalTitle": "لوحة الإدارة الوطنية",
       "genericTitle": "لوحة {{role}}",
       "editorDescription": "قم بتخصيص مركز اللاعبين وإدارة الجهات الراعية/الإعلانات لجميع الأماكن.",
-      "backToHub": "العودة إلى المحور"
+      "backToHub": "العودة إلى المحور",
+      "accessUnavailable": "This module is not available for your role.",
+      "redirectedToSafeTab": "We redirected you to an available section.",
+      "padcoinsUnavailable": "PadCoins is not available for your role.",
+      "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "tabs": {
       "resumen": "📊 ملخص",

@@ -601,7 +601,11 @@
       "nationalTitle": "Pannello amministrativo nazionale",
       "genericTitle": "Pannello {{role}}",
       "editorDescription": "Personalizza l'hub del giocatore e gestisci sponsor/pubblicità per tutte le sedi.",
-      "backToHub": "Ritorno all'hub"
+      "backToHub": "Ritorno all'hub",
+      "accessUnavailable": "This module is not available for your role.",
+      "redirectedToSafeTab": "We redirected you to an available section.",
+      "padcoinsUnavailable": "PadCoins is not available for your role.",
+      "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "tabs": {
       "resumen": "📊 Riepilogo",

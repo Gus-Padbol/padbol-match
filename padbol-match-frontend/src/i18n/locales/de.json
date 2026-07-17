@@ -601,7 +601,11 @@
       "nationalTitle": "Nationales Verwaltungsgremium",
       "genericTitle": "Panel {{role}}",
       "editorDescription": "Passen Sie den Spieler-Hub an und verwalten Sie Sponsoren/Werbung für alle Veranstaltungsorte.",
-      "backToHub": "Zurück zum Hub"
+      "backToHub": "Zurück zum Hub",
+      "accessUnavailable": "This module is not available for your role.",
+      "redirectedToSafeTab": "We redirected you to an available section.",
+      "padcoinsUnavailable": "PadCoins is not available for your role.",
+      "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "tabs": {
       "resumen": "📊 Zusammenfassung",

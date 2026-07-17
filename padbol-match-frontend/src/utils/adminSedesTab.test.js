@@ -52,22 +52,34 @@ describe('adminSedesTab technical ids', () => {
 
   it('6. refresh con ?tab=sedes mantiene la pantalla (coerce + allowlist)', () => {
     expect(coerceAdminSedesTabId('sedes')).toBe('sedes');
-    expect(dashboardSrc).toMatch(/ADMIN_TABS_ALLOWED[\s\S]*?'sedes'/);
-    expect(dashboardSrc).toMatch(/ADMIN_NACIONAL_TABS_ALLOWED[\s\S]*?'sedes'/);
+    const visibleTabsSrc = fs.readFileSync(
+      path.join(__dirname, 'adminVisibleTabs.js'),
+      'utf8',
+    );
+    expect(visibleTabsSrc).toMatch(/SUPER_ADMIN_VISIBLE_TABS[\s\S]*?'sedes'/);
+    expect(visibleTabsSrc).toMatch(/ADMIN_NACIONAL_VISIBLE_TABS[\s\S]*?'sedes'/);
   });
 
   it('7. admin_nacional puede abrir Sedes', () => {
-    expect(dashboardSrc).toMatch(
-      /ADMIN_NACIONAL_TABS_ALLOWED\s*=\s*new Set\(\[[^\]]*['"]sedes['"]/,
+    const visibleTabsSrc = fs.readFileSync(
+      path.join(__dirname, 'adminVisibleTabs.js'),
+      'utf8',
+    );
+    expect(visibleTabsSrc).toMatch(
+      /ADMIN_NACIONAL_VISIBLE_TABS\s*=\s*Object\.freeze\(\[[^\]]*['"]sedes['"]/,
     );
     expect(dashboardSrc).toMatch(/id:\s*ADMIN_SEDES_TAB_ID,\s*label:\s*t\(['"]admin\.tabs\.sedes['"]\)/);
   });
 
   it('8. super_admin puede abrir Sedes', () => {
+    const visibleTabsSrc = fs.readFileSync(
+      path.join(__dirname, 'adminVisibleTabs.js'),
+      'utf8',
+    );
     expect(dashboardSrc).toMatch(
       /isSuperAdmin\s*\?\s*\[\s*\{\s*id:\s*ADMIN_SEDES_TAB_ID,\s*label:\s*t\(['"]admin\.tabs\.sedes['"]\)/,
     );
-    expect(dashboardSrc).toMatch(/ADMIN_TABS_ALLOWED[\s\S]*?'sedes'/);
+    expect(visibleTabsSrc).toMatch(/SUPER_ADMIN_VISIBLE_TABS[\s\S]*?'sedes'/);
   });
 
   it('9. no queda ningún nombre de tabla derivado de i18n', () => {

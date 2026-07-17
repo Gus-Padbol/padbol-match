@@ -601,7 +601,11 @@
       "nationalTitle": "Panoul de administrare național",
       "genericTitle": "Panoul {{role}}",
       "editorDescription": "Personalizați centrul de jucători și gestionați sponsorii/publicitatea pentru toate locațiile.",
-      "backToHub": "Reveniți la hub"
+      "backToHub": "Reveniți la hub",
+      "accessUnavailable": "This module is not available for your role.",
+      "redirectedToSafeTab": "We redirected you to an available section.",
+      "padcoinsUnavailable": "PadCoins is not available for your role.",
+      "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "tabs": {
       "resumen": "📊 Rezumat",
