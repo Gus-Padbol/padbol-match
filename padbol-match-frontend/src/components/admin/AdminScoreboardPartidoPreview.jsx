@@ -2,6 +2,11 @@ import React from 'react';
 import UniformJerseyStrip from '../scoreboard/UniformJerseyStrip';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
+import {
+  getScoreboardJerseyLabel,
+  listVisibleScoreboardJugadores,
+  scoreboardPlayerName,
+} from '../../utils/scoreboardPlayers';
 
 const SCOREBOARD_PUBLIC_BASE = 'https://padbolmatch.com';
 
@@ -19,16 +24,25 @@ function jugadoresPreviewList(jugadores, jerseyFields = []) {
     if (key >= 1 && key <= 4) bySlot.set(key, j);
   });
 
-  return [1, 2, 3, 4].flatMap((slot, idx) => {
+  const merged = [1, 2, 3, 4].map((slot, idx) => {
     const j = bySlot.get(slot) || {};
-    const nombre = String(j.nombre ?? j.name ?? '').trim();
     const jerseyField = jerseyFields[idx];
-    const jerseyRaw = j.jersey ?? j.numero ?? jerseyField;
-    const hasJersey = jerseyRaw != null && jerseyRaw !== '' && Number(jerseyRaw) !== 0;
-    if (!nombre && !hasJersey) return [];
-    const jersey = hasJersey ? jerseyRaw : slot;
-    return [{ jersey, nombre: nombre || '—' }];
+    const jerseyRaw = j.jersey ?? j.numero ?? j.dorsal ?? (
+      jerseyField != null && jerseyField !== 0 ? jerseyField : null
+    );
+    return {
+      ...j,
+      slot,
+      nombre: j.nombre ?? j.name ?? '',
+      jersey: jerseyRaw,
+      numero: jerseyRaw,
+    };
   });
+
+  return listVisibleScoreboardJugadores(merged, 4).map((j) => ({
+    jersey: getScoreboardJerseyLabel(j),
+    nombre: scoreboardPlayerName(j),
+  }));
 }
 
 export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
@@ -64,7 +78,9 @@ export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
         <ul className="admin-sb-partido-preview__players">
           {jugadores.map((j, idx) => (
             <li key={`${side}-${idx}`}>
-              <span className="admin-sb-partido-preview__jersey">#{j.jersey}</span>
+              {j.jersey != null ? (
+                <span className="admin-sb-partido-preview__jersey">#{j.jersey}</span>
+              ) : null}
               <span className="admin-sb-partido-preview__player-name">{j.nombre}</span>
             </li>
           ))}
