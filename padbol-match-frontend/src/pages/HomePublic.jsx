@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppButton from '../components/AppButton';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import { pageBackgroundStyle } from '../theme/uiStyles';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,11 +37,9 @@ export default function HomePublic() {
           gap: blockGap,
         }}
       >
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
+        <PadbolBrandLogo
+          variant="on-dark"
           style={{
-            ...padbolLogoImgStyle,
             filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.28))',
           }}
         />

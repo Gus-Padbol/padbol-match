@@ -1,6 +1,6 @@
 /**
- * Logo `/logo-padbol-match.png` unificado en pantallas hub / marketing (PNG transparente).
- * Centrado con `margin: 0 auto`, alto mínimo 110px y ancho automático.
+ * Logo horizontal oficial Padbol Match (PNG).
+ * Centrado, proporción intacta (sin border-radius que recorte la marca).
  */
 export const padbolLogoImgStyle = {
   display: 'block',
@@ -8,7 +8,7 @@ export const padbolLogoImgStyle = {
   paddingTop: 0,
   height: '110px',
   width: 'auto',
+  maxWidth: '100%',
   objectFit: 'contain',
-  borderRadius: '16px',
   background: 'transparent',
 };

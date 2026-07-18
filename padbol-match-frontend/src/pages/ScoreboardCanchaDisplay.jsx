@@ -4,7 +4,7 @@ import ScoreboardBoard from '../components/scoreboard/ScoreboardBoard';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchPartidoByCancha, fetchSponsors } from '../utils/scoreboardApi';
-import logo from '../logo.svg';
+import { PADBOL_LOGO_ON_DARK } from '../constants/padbolBrandLogo';
 import '../styles/ScoreboardDisplay.css';
 
 const CANCHA_POLL_MS = 10000;
@@ -12,7 +12,7 @@ const CANCHA_POLL_MS = 10000;
 function ScoreboardWaitingScreen({ canchaLabel }) {
   return (
     <div className="sb-waiting">
-      <img src={logo} alt="Padbol Match" className="sb-waiting__logo" />
+      <img src={PADBOL_LOGO_ON_DARK} alt="Padbol Match" className="sb-waiting__logo" />
       <p className="sb-waiting__text">Waiting for match...</p>
       <p className="sb-waiting__cancha">{canchaLabel}</p>
     </div>

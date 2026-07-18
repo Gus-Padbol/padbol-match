@@ -8,7 +8,7 @@ import {
   hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import {
@@ -323,11 +323,8 @@ export default function CompletarPerfilOAuth() {
           overflow: 'visible',
         }}
       >
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
+        <PadbolBrandLogo
           style={{
-            ...padbolLogoImgStyle,
             display: 'block',
             margin: '0 auto 16px',
           }}

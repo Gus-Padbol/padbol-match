@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import PadbolBrandLogo from './PadbolBrandLogo';
 import { useAuth } from '../context/AuthContext';
 import { PADBOL_LANGUAGES } from '../constants/padbolLanguages';
 import { setPadbolLanguage } from '../utils/padbolLang';
@@ -33,12 +33,7 @@ export default function LanguageSelectScreen({ onComplete }) {
       aria-label="Language selection"
     >
       <div className="language-select-screen__inner">
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          className="language-select-screen__logo"
-          style={padbolLogoImgStyle}
-        />
+        <PadbolBrandLogo className="language-select-screen__logo" />
 
         <div className="language-select-screen__actions">
           {PADBOL_LANGUAGES.map((opt) => (

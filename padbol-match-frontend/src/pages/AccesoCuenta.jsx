@@ -11,7 +11,7 @@ import {
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubAccesoContentPaddingTopCss,
 } from '../constants/hubLayout';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { supabase } from '../supabaseClient';
@@ -490,11 +490,8 @@ export default function AccesoCuenta() {
           maxWidth: '400px',
         }}
       >
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
+        <PadbolBrandLogo
           style={{
-            ...padbolLogoImgStyle,
             marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '4px',
           }}

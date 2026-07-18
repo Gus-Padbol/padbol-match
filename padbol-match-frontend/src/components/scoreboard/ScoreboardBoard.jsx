@@ -510,7 +510,7 @@ export default function ScoreboardBoard({
             {TICKER_LOGOS.map((index) => (
               <img
                 key={`ticker-logo-${index}`}
-                src="/padbol-match-logo.png"
+                src="/brand/padbol-match-logo-on-dark.png"
                 alt={index === 0 ? 'Padbol Match' : ''}
                 className="sb-ticker-logo"
               />

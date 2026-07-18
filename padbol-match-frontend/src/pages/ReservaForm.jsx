@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'r
 import '../styles/ReservaForm.css';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import AppHeader from '../components/AppHeader';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import ReservaCalendarioMes from '../components/ReservaCalendarioMes';
 import BottomNav from '../components/BottomNav';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
@@ -2370,7 +2371,7 @@ export default function ReservaForm() {
           }}
         >
         <div className="reserva-sede-inner">
-          <img src="/logo-padbol-match.png" alt="Padbol Match" className="reserva-sede-logo" />
+          <PadbolBrandLogo className="reserva-sede-logo" />
           <header className="reserva-sede-hero">
             <h1 className="reserva-sede-hero-title">{t('reservas.heroTitle')}</h1>
             <p className="reserva-sede-hero-sub">{t('reservas.heroSubtitle')}</p>

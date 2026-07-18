@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import '../pages/LandingPage.css';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
@@ -261,10 +262,8 @@ export default function UnirsePage() {
     >
       <AppHeader title="Alta de club" onBack={() => navigate(-1)} />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px' }}>
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
-          style={{ width: '180px', maxWidth: '85vw', display: 'block', margin: '0 auto 20px' }}
+        <PadbolBrandLogo
+          style={{ width: '180px', height: 'auto', maxWidth: '85vw', display: 'block', margin: '0 auto 20px' }}
         />
 
         <section

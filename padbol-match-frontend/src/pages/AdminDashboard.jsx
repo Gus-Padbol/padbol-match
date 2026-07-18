@@ -20,7 +20,8 @@ import {
   hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
 import { clearAdminNavContext } from '../utils/adminNavContext';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
+import { padbolBrandLogoSrc } from '../constants/padbolBrandLogo';
 import SportIcon from '../components/common/SportIcon';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
@@ -10001,19 +10002,14 @@ export default function AdminDashboard({
                 marginTop: 0,
               }}
             >
-              <img
-                src="/logo-padbol-match.png"
-                alt="Padbol Match"
+              <PadbolBrandLogo
                 style={{
-                  ...padbolLogoImgStyle,
                   display: 'block',
                   marginLeft: 'auto',
                   marginRight: 'auto',
                   width: '120px',
                   height: 'auto',
                   maxWidth: '120px',
-                  objectFit: 'contain',
-                  borderRadius: '16px',
                   marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
                   marginBottom: '10px',
                 }}
@@ -10206,7 +10202,7 @@ export default function AdminDashboard({
       (sedeClubHeader?.logo_url && String(sedeClubHeader.logo_url).trim()) ||
       '';
     if (esAdminClub && clubLogo) return clubLogo;
-    return '/logo-padbol-match.png';
+    return padbolBrandLogoSrc(theme);
   })();
 
   const renderAdminNavTabButton = (tab, variant) => {

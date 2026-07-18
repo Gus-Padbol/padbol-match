@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import './CheckinKiosco.css';
 
 const API_BASE = (
@@ -157,13 +158,10 @@ export default function CheckinKiosco() {
   return (
     <div className={`checkin-kiosco checkin-kiosco--${phase}`}>
       <header className="checkin-kiosco__header">
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
+        <PadbolBrandLogo
+          variant="on-dark"
           className="checkin-kiosco__logo"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
+          style={{ height: 48, width: 'auto' }}
         />
         <img src="/chivi.png" alt="" className="checkin-kiosco__chivi" />
         <h1 className="checkin-kiosco__title">{t('checkin.titulo')}</h1>

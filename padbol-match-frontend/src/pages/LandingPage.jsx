@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { padbolLogoImgStyle } from '../constants/padbolLogoStyle';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
@@ -124,15 +124,12 @@ export default function LandingPage() {
         </div>
       </div>
       <header style={{ ...column, textAlign: 'center', paddingBottom: 0 }}>
-        <img
-          src="/logo-padbol-match.png"
-          alt="Padbol Match"
+        <PadbolBrandLogo
+          variant="on-dark"
           style={{
-            ...padbolLogoImgStyle,
             width: 120,
             height: 120,
             maxWidth: '100%',
-            objectFit: 'contain',
             marginBottom: 20,
             filter: 'drop-shadow(0 0 18px rgba(255, 255, 255, 0.12))',
           }}
