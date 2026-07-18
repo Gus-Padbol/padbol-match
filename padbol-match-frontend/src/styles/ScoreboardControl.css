@@ -198,6 +198,8 @@
   width: 10px;
   height: 10px;
   margin-top: 0;
+  /* ~2mm hacia adentro del borde de la tarjeta (ambas columnas, LED a la izquierda del nombre) */
+  margin-left: 2mm;
   background: #00ff88;
   border-radius: 50%;
   flex-shrink: 0;
