@@ -154,6 +154,7 @@ import {
   defaultAdminTabForRole,
   canRoleSeePadCoins,
 } from '../utils/adminVisibleTabs';
+import { asAdminDataArray } from '../utils/asAdminDataArray';
 import {
   canRoleFetchTorneosResumenStats,
   collectValidTorneoIds,
