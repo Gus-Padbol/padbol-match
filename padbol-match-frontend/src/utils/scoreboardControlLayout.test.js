@@ -18,14 +18,14 @@ describe('ScoreboardControl mobile team card layout', () => {
     expect(css).toMatch(/line-clamp:\s*2/);
   });
 
-  it('reserva zona fija para dos jugadores con número siempre visible', () => {
+  it('reserva zona fija para hasta 4 jugadores (sin placeholders vacíos)', () => {
     expect(css).toMatch(/--sc-players-h:/);
     expect(css).toMatch(/\.sc-players\s*\{[^}]*height:\s*var\(--sc-players-h\)/s);
-    expect(css).toMatch(/\.sc-player__num\s*\{[^}]*flex:\s*0 0 auto/s);
     expect(css).toMatch(/\.sc-player__name\s*\{[^}]*text-overflow:\s*ellipsis/s);
     expect(jsx).toMatch(/function TeamPlayersBlock/);
-    expect(jsx).toMatch(/sc-player__num/);
+    expect(jsx).toMatch(/listVisibleScoreboardJugadores/);
     expect(jsx).toMatch(/sc-player__name/);
+    expect(jsx).not.toMatch(/sc-player--empty/);
   });
 
   it('agrupa resultado / Games / Sets / + POINT en bloque posterior a la cabecera', () => {

@@ -4,7 +4,8 @@ import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
 import { fetchJugadoresTemp } from '../../utils/scoreboardApi';
 import {
-  isScoreboardSlotEmptyForDisplay,
+  listVisibleScoreboardJugadores,
+  getScoreboardJerseyLabel,
   scoreboardPlayerName,
 } from '../../utils/scoreboardPlayers';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
@@ -47,13 +48,6 @@ function formatTimerFromSeconds(totalSeconds) {
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-}
-
-function resolvePlayerJersey(jugador, index) {
-  const raw = jugador?.jersey ?? jugador?.numero ?? jugador?.number;
-  const parsed = parseInt(raw, 10);
-  if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 99) return parsed;
-  return index + 1;
 }
 
 const HEX_CLUSTER_SIZE = 320;
@@ -133,36 +127,25 @@ function playerInitial(name) {
   return parts[0].slice(0, 1).toUpperCase();
 }
 
-function PlayerList({ jugadores, teamSide = 'left', jerseyFields = [] }) {
-  const list = (Array.isArray(jugadores) ? jugadores : []).slice(0, 4);
-  while (list.length < 4) list.push({});
+function PlayerList({ jugadores, teamSide = 'left' }) {
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
+  // Solo registrados con identidad (nombre). No rellenar a 4 ni renderizar placeholders.
+  const list = listVisibleScoreboardJugadores(jugadores, 4);
+
+  if (list.length === 0) {
+    return <ul className="sb-players" aria-label="Jugadores" />;
+  }
 
   return (
-    <ul className="sb-players">
+    <ul className="sb-players" aria-label="Jugadores">
       {list.map((j, i) => {
-        const slotIdx = (Number(j.slot) || i + 1) - 1;
-        const jerseyFieldValue = jerseyFields[slotIdx];
-        if (isScoreboardSlotEmptyForDisplay(j, jerseyFieldValue)) {
-          return (
-            <li key={`empty-${i}`} className="sb-player sb-player--empty" aria-hidden="true">
-              <span className={`sb-player__avatar sb-player__avatar--placeholder ${avatarClass}`} />
-              <span className="sb-player__num sb-player__num--placeholder" />
-              <span className="sb-player__name-wrap">
-                <span className="sb-player__name sb-player__name--placeholder">—</span>
-              </span>
-            </li>
-          );
-        }
-
-        const jersey = resolvePlayerJersey(j, i);
-        const jerseyLabel = String(jersey);
-        const isTwoDigit = jerseyLabel.length >= 2;
+        const jerseyLabel = getScoreboardJerseyLabel(j);
+        const isTwoDigit = jerseyLabel != null && jerseyLabel.length >= 2;
         const displayName = scoreboardPlayerName(j);
         const fotoUrl = String(j.foto_url || '').trim();
 
         return (
-          <li key={`${displayName}-${i}`} className="sb-player">
+          <li key={`${displayName}-${j.slot ?? i}`} className="sb-player">
             <span className={`sb-player__avatar ${avatarClass}`}>
               {fotoUrl ? (
                 <img src={fotoUrl} alt="" className="sb-player__avatar-img" />
@@ -172,9 +155,11 @@ function PlayerList({ jugadores, teamSide = 'left', jerseyFields = [] }) {
                 </span>
               )}
             </span>
-            <span className={`sb-player__num ${isTwoDigit ? 'sb-player__num--two-digit' : ''}`}>
-              {jerseyLabel}
-            </span>
+            {jerseyLabel != null ? (
+              <span className={`sb-player__num ${isTwoDigit ? 'sb-player__num--two-digit' : ''}`}>
+                {jerseyLabel}
+              </span>
+            ) : null}
             <span className="sb-player__name-wrap">
               <span className="sb-player__name">{displayName}</span>
             </span>
@@ -430,7 +415,7 @@ export default function ScoreboardBoard({
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <PlayerList jugadores={jugadoresA} teamSide="left" jerseyFields={jerseyFieldsA} />
+            <PlayerList jugadores={jugadoresA} teamSide="left" />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -512,7 +497,7 @@ export default function ScoreboardBoard({
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <PlayerList jugadores={jugadoresB} teamSide="right" jerseyFields={jerseyFieldsB} />
+            <PlayerList jugadores={jugadoresB} teamSide="right" />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />

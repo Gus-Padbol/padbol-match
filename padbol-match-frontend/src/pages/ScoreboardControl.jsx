@@ -8,6 +8,11 @@ import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
 import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
+import {
+  listVisibleScoreboardJugadores,
+  getScoreboardJerseyLabel,
+  scoreboardPlayerName,
+} from '../utils/scoreboardPlayers';
 import '../styles/ScoreboardControl.css';
 
 function formatTimer(seconds) {
@@ -32,29 +37,22 @@ function gameScoreClassName(display, side) {
   return 'sc-game-score';
 }
 
-function resolvePlayerJerseyLabel(jugador, index) {
-  const raw = jugador?.jersey ?? jugador?.numero ?? jugador?.number;
-  const parsed = parseInt(raw, 10);
-  if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 99) return String(parsed);
-  return String(index + 1);
-}
-
-/** Dos slots fijos: nombre truncable + número siempre visible (solo maquetación). */
+/** Solo jugadores registrados (2–4). Sin placeholders ni huecos. */
 function TeamPlayersBlock({ jugadores }) {
-  const source = Array.isArray(jugadores) ? jugadores : [];
-  const slots = [0, 1].map((i) => source[i] || null);
+  const list = listVisibleScoreboardJugadores(jugadores, 4);
+
+  if (list.length === 0) {
+    return <ul className="sc-players" aria-label="Jugadores" />;
+  }
 
   return (
     <ul className="sc-players" aria-label="Jugadores">
-      {slots.map((j, i) => {
-        if (!j) {
-          return <li key={`empty-${i}`} className="sc-player sc-player--empty" aria-hidden="true" />;
-        }
-        const name = String(j.nombre ?? j.name ?? '—').trim() || '—';
-        const num = resolvePlayerJerseyLabel(j, i);
+      {list.map((j, i) => {
+        const name = scoreboardPlayerName(j);
+        const num = getScoreboardJerseyLabel(j);
         return (
-          <li key={`${name}-${i}`} className="sc-player">
-            <span className="sc-player__num">{num}</span>
+          <li key={`${name}-${j.slot ?? i}`} className="sc-player">
+            {num != null ? <span className="sc-player__num">{num}</span> : null}
             <span className="sc-player__name" title={name}>{name}</span>
           </li>
         );

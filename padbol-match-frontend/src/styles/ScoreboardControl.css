@@ -129,7 +129,8 @@
   height: 100%;
   /* Cabecera fija (nombre 2 líneas + 2 jugadores) → bloque de resultado alineado */
   --sc-team-name-h: 3.25rem; /* 22px × 1.15 × 2 */
-  --sc-players-h: 2.75rem;
+  /* Reserva para hasta 4 jugadores (alineación score entre tarjetas 2 vs 4) */
+  --sc-players-h: 5.6rem; /* 4×1.25rem + 3×0.2rem gap */
   --sc-score-h: 5.75rem;
   --sc-stats-h: 3.35rem;
   --sc-point-h: 120px;
@@ -224,8 +225,10 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  align-items: stretch;
   gap: 0.2rem;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .sc-player {
@@ -239,8 +242,7 @@
 }
 
 .sc-player--empty {
-  visibility: hidden;
-  pointer-events: none;
+  display: none;
 }
 
 .sc-player__num {
@@ -391,7 +393,7 @@
   .sc-team-card {
     padding: 0.85rem 0.55rem;
     --sc-team-name-h: 3rem;
-    --sc-players-h: 2.65rem;
+    --sc-players-h: 5.35rem;
     --sc-score-h: 5.25rem;
     --sc-stats-h: 3.2rem;
     --sc-point-h: 108px;
