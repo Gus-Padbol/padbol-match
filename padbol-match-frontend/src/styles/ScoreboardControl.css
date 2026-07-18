@@ -113,6 +113,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  align-items: stretch;
 }
 
 .sc-team-card {
@@ -125,6 +126,13 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;
+  /* Cabecera fija (nombre 2 líneas + 2 jugadores) → bloque de resultado alineado */
+  --sc-team-name-h: 3.25rem; /* 22px × 1.15 × 2 */
+  --sc-players-h: 2.75rem;
+  --sc-score-h: 5.75rem;
+  --sc-stats-h: 3.35rem;
+  --sc-point-h: 120px;
 }
 
 .sc-team-card--a {
@@ -145,13 +153,25 @@
     inset 0 0 20px rgba(213, 58, 58, 0.15);
 }
 
+.sc-team-card__header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(var(--sc-team-name-h) + var(--sc-players-h) + 0.45rem);
+  margin-bottom: 0.55rem;
+}
+
 .sc-team-name-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  margin-bottom: 0.2rem;
+  height: var(--sc-team-name-h);
+  min-height: var(--sc-team-name-h);
+  max-height: var(--sc-team-name-h);
+  margin: 0 0 0.35rem;
   min-width: 0;
+  overflow: hidden;
 }
 
 .sc-team-card .sc-team-name {
@@ -160,13 +180,23 @@
   margin: 0;
   text-transform: uppercase;
   line-height: 1.15;
-  word-break: break-word;
   color: #ffffff;
+  min-width: 0;
+  max-width: 100%;
+  /* Exactamente hasta 2 líneas; no empuja el bloque de resultado */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .sc-team-serve-dot {
   width: 10px;
   height: 10px;
+  margin-top: 0;
   background: #00ff88;
   border-radius: 50%;
   flex-shrink: 0;
@@ -184,34 +214,105 @@
   }
 }
 
+.sc-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: var(--sc-players-h);
+  min-height: var(--sc-players-h);
+  max-height: var(--sc-players-h);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.2rem;
+  overflow: hidden;
+}
+
+.sc-player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+  height: 1.25rem;
+  max-height: 1.25rem;
+}
+
+.sc-player--empty {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sc-player__num {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.72);
+  min-width: 1.1em;
+  text-align: right;
+}
+
+.sc-player__name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* Compat: por si queda alguna referencia antigua */
 .sc-players-line {
-  margin: 0 0 0.5rem;
-  font-size: 11px;
-  line-height: 1.35;
+  margin: 0;
+  height: var(--sc-players-h);
+  font-size: 12px;
+  line-height: 1.25;
   color: rgba(255, 255, 255, 0.4);
-  word-break: break-word;
+  overflow: hidden;
+}
+
+.sc-team-card__score-block {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  margin-top: 0;
 }
 
 .sc-game-score {
-  font-size: clamp(72px, 14vw, 96px);
+  font-size: clamp(64px, 15vw, 96px);
   font-weight: 900;
-  margin: 0.35rem 0;
+  margin: 0;
   color: var(--sc-yellow);
   line-height: 1;
   max-width: 100%;
+  height: var(--sc-score-h);
+  min-height: var(--sc-score-h);
+  max-height: var(--sc-score-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .sc-game-score--deuce {
-  font-size: clamp(40px, 8vw, 48px);
+  font-size: clamp(36px, 8vw, 48px);
   font-weight: 900;
   letter-spacing: 0.06em;
 }
 
 .sc-game-score--adv {
-  font-size: clamp(36px, 7.5vw, 42px);
+  font-size: clamp(32px, 7.5vw, 42px);
   font-weight: 900;
   letter-spacing: 0.04em;
 }
@@ -219,21 +320,29 @@
 .sc-stats {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   gap: 1.25rem;
-  margin: 0.5rem 0 0.75rem;
+  margin: 0.35rem 0 0.65rem;
+  height: var(--sc-stats-h);
+  min-height: var(--sc-stats-h);
+  max-height: var(--sc-stats-h);
   color: var(--sc-muted);
   font-size: 0.85rem;
+  box-sizing: border-box;
 }
 
 .sc-stats strong {
   color: var(--sc-text);
   display: block;
   font-size: 1.3rem;
+  line-height: 1.15;
 }
 
 .sc-point-btn {
   width: 100%;
-  min-height: 120px;
+  height: var(--sc-point-h);
+  min-height: var(--sc-point-h);
+  max-height: var(--sc-point-h);
   margin-top: auto;
   border: 3px solid transparent;
   border-radius: 12px;
@@ -244,6 +353,10 @@
   background: transparent;
   transition: transform 0.1s, opacity 0.2s;
   touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .sc-point-btn:active:not(:disabled) {
@@ -267,6 +380,59 @@
   color: #d53a3a !important;
   background: rgba(213, 58, 58, 0.08) !important;
   box-shadow: 0 0 20px rgba(213, 58, 58, 0.4);
+}
+
+/* iPhone / anchos estrechos: misma estructura, tipografía de equipo un poco más contenida */
+@media (max-width: 430px) {
+  .sc-columns {
+    gap: 0.55rem;
+  }
+
+  .sc-team-card {
+    padding: 0.85rem 0.55rem;
+    --sc-team-name-h: 3rem;
+    --sc-players-h: 2.65rem;
+    --sc-score-h: 5.25rem;
+    --sc-stats-h: 3.2rem;
+    --sc-point-h: 108px;
+  }
+
+  .sc-team-card .sc-team-name {
+    font-size: 18px;
+  }
+
+  .sc-player__num,
+  .sc-player__name {
+    font-size: 12px; /* no bajar más: números y nombres legibles */
+  }
+
+  .sc-stats {
+    gap: 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  .sc-stats strong {
+    font-size: 1.2rem;
+  }
+
+  .sc-game-score {
+    font-size: clamp(56px, 16vw, 80px);
+  }
+}
+
+@media (max-width: 360px) {
+  .sc-team-card {
+    --sc-point-h: 96px;
+  }
+
+  .sc-team-card .sc-team-name {
+    font-size: 16px;
+  }
+
+  .sc-point-btn {
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+  }
 }
 
 .sc-options-btn {

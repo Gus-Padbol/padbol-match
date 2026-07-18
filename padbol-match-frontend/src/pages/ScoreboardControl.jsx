@@ -32,9 +32,35 @@ function gameScoreClassName(display, side) {
   return 'sc-game-score';
 }
 
-function formatPlayersLine(jugadores) {
-  const list = Array.isArray(jugadores) ? jugadores.slice(0, 4) : [];
-  return list.map((j) => j.nombre ?? j.name ?? '—').join(' · ');
+function resolvePlayerJerseyLabel(jugador, index) {
+  const raw = jugador?.jersey ?? jugador?.numero ?? jugador?.number;
+  const parsed = parseInt(raw, 10);
+  if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 99) return String(parsed);
+  return String(index + 1);
+}
+
+/** Dos slots fijos: nombre truncable + número siempre visible (solo maquetación). */
+function TeamPlayersBlock({ jugadores }) {
+  const source = Array.isArray(jugadores) ? jugadores : [];
+  const slots = [0, 1].map((i) => source[i] || null);
+
+  return (
+    <ul className="sc-players" aria-label="Jugadores">
+      {slots.map((j, i) => {
+        if (!j) {
+          return <li key={`empty-${i}`} className="sc-player sc-player--empty" aria-hidden="true" />;
+        }
+        const name = String(j.nombre ?? j.name ?? '—').trim() || '—';
+        const num = resolvePlayerJerseyLabel(j, i);
+        return (
+          <li key={`${name}-${i}`} className="sc-player">
+            <span className="sc-player__num">{num}</span>
+            <span className="sc-player__name" title={name}>{name}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function getTorneoLabel(partido) {
@@ -385,63 +411,71 @@ export default function ScoreboardControl() {
 
       <div className="sc-columns">
         <div className="sc-team-card sc-team-card--a">
-          <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
-          <p className="sc-players-line">{formatPlayersLine(partido.equipo_a_jugadores)}</p>
-          <div className={gameScoreClassName(display, 'A')}>
-            {formatGameScore(display, 'A')}
+          <div className="sc-team-card__header">
+            <TeamNameRow name={partido.equipo_a_nombre} serving={partido.saque_actual === 'A'} />
+            <TeamPlayersBlock jugadores={partido.equipo_a_jugadores} />
           </div>
-          <div className="sc-stats">
-            <div>
-              <strong>{partido.games_a}</strong>
-              Games
+          <div className="sc-team-card__score-block">
+            <div className={gameScoreClassName(display, 'A')}>
+              {formatGameScore(display, 'A')}
             </div>
-            <div>
-              <strong>{partido.sets_a}</strong>
-              Sets
+            <div className="sc-stats">
+              <div>
+                <strong>{partido.games_a}</strong>
+                Games
+              </div>
+              <div>
+                <strong>{partido.sets_a}</strong>
+                Sets
+              </div>
             </div>
+            <button
+              type="button"
+              className="sc-point-btn sc-point-btn--a"
+              style={teamButtonStyle(colorA)}
+              disabled={actionLoading || terminado || !canScorePoints}
+              onClick={() => runAction(
+                `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/A`,
+                { refetchAfter: true },
+              )}
+            >
+              + POINT
+            </button>
           </div>
-          <button
-            type="button"
-            className="sc-point-btn sc-point-btn--a"
-            style={teamButtonStyle(colorA)}
-            disabled={actionLoading || terminado || !canScorePoints}
-            onClick={() => runAction(
-              `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/A`,
-              { refetchAfter: true },
-            )}
-          >
-            + POINT
-          </button>
         </div>
 
         <div className="sc-team-card sc-team-card--b">
-          <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
-          <p className="sc-players-line">{formatPlayersLine(partido.equipo_b_jugadores)}</p>
-          <div className={gameScoreClassName(display, 'B')}>
-            {formatGameScore(display, 'B')}
+          <div className="sc-team-card__header">
+            <TeamNameRow name={partido.equipo_b_nombre} serving={partido.saque_actual === 'B'} />
+            <TeamPlayersBlock jugadores={partido.equipo_b_jugadores} />
           </div>
-          <div className="sc-stats">
-            <div>
-              <strong>{partido.games_b}</strong>
-              Games
+          <div className="sc-team-card__score-block">
+            <div className={gameScoreClassName(display, 'B')}>
+              {formatGameScore(display, 'B')}
             </div>
-            <div>
-              <strong>{partido.sets_b}</strong>
-              Sets
+            <div className="sc-stats">
+              <div>
+                <strong>{partido.games_b}</strong>
+                Games
+              </div>
+              <div>
+                <strong>{partido.sets_b}</strong>
+                Sets
+              </div>
             </div>
+            <button
+              type="button"
+              className="sc-point-btn sc-point-btn--b"
+              style={teamButtonStyle(colorB)}
+              disabled={actionLoading || terminado || !canScorePoints}
+              onClick={() => runAction(
+                `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/B`,
+                { refetchAfter: true },
+              )}
+            >
+              + POINT
+            </button>
           </div>
-          <button
-            type="button"
-            className="sc-point-btn sc-point-btn--b"
-            style={teamButtonStyle(colorB)}
-            disabled={actionLoading || terminado || !canScorePoints}
-            onClick={() => runAction(
-              `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/B`,
-              { refetchAfter: true },
-            )}
-          >
-            + POINT
-          </button>
         </div>
       </div>
 
