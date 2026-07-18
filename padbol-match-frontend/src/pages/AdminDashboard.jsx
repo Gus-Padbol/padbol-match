@@ -14204,13 +14204,17 @@ export default function AdminDashboard({
                             className="admin-scoreboard-jugador-row__nombre"
                           />
                           <div className="admin-scoreboard-jugador-row__foto">
-                            {fotoUrl ? (
-                              <>
+                            <span className="admin-scoreboard-jugador-row__foto-avatar">
+                              {fotoUrl ? (
                                 <img
                                   src={fotoUrl}
                                   alt=""
                                   className="admin-scoreboard-jugador-row__foto-preview"
                                 />
+                              ) : (
+                                <span className="admin-scoreboard-jugador-row__foto-fallback" aria-hidden="true" />
+                              )}
+                              {fotoUrl ? (
                                 <button
                                   type="button"
                                   className="admin-scoreboard-jugador-row__foto-remove"
@@ -14221,8 +14225,8 @@ export default function AdminDashboard({
                                 >
                                   ✕
                                 </button>
-                              </>
-                            ) : null}
+                              ) : null}
+                            </span>
                             <input
                               type="file"
                               accept="image/*"
