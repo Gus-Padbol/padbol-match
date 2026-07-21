@@ -13,9 +13,37 @@ const AUTOPLAY_MS = 7000;
 /**
  * Mini preview de marketing por experiencia: tokens reales de la app nativa
  * aplicados a una demo estática (sin providers, APIs ni pantallas productivas).
- * `experience.media` permite reemplazar la demo por captura/video real.
+ * Si `experience.media.video` existe, el video real se reproduce como capa
+ * sobre la demo dentro del mismo marco de teléfono; la demo queda debajo como
+ * fallback (video no cargado, error o reduced motion), sin flashes ni huecos.
  */
-function ExperiencePhonePreview({ experience, demoLabel }) {
+function ExperiencePhonePreview({ experience, demoLabel, videoPlaying, videoFailed, onVideoError }) {
+  const videoSrc = !videoFailed ? experience.media?.video || null : null;
+  const videoRef = useRef(null);
+  const [videoReady, setVideoReady] = useState(false);
+
+  /* Cambio de experiencia: pausar el video anterior y reiniciar el nuevo
+     desde 0 (load() con el src ya actualizado por React). El fade de opacidad
+     evita pantallas negras: la demo con los colores del tema queda debajo. */
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !videoSrc) return;
+    setVideoReady(false);
+    el.pause();
+    el.load();
+  }, [videoSrc]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !videoSrc) return;
+    if (videoPlaying) {
+      const p = el.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [videoPlaying, videoSrc, videoReady]);
+
   const vars = {
     '--exp-accent': experience.accent,
     '--exp-bg': experience.background,
@@ -65,6 +93,22 @@ function ExperiencePhonePreview({ experience, demoLabel }) {
           <span />
           <span />
         </div>
+
+        {videoSrc ? (
+          <video
+            ref={videoRef}
+            className={`ps-exp-phone__video${videoReady ? ' is-ready' : ''}`}
+            src={videoSrc}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            tabIndex={-1}
+            disablePictureInPicture
+            onLoadedData={() => setVideoReady(true)}
+            onError={() => onVideoError(experience.id)}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -75,12 +119,26 @@ export default function ExperiencesSection() {
   const text = usePublicSiteText();
   const [activeId, setActiveId] = useState(PUBLIC_SITE_EXPERIENCE_IDS[0]);
   const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(() => prefersReducedMotion());
+  /* Sección visible (viewport + pestaña): gate de reproducción del video real. */
+  const [mediaAllowed, setMediaAllowed] = useState(true);
+  /* Videos que fallaron al cargar: la experiencia vuelve a la demo conceptual. */
+  const [failedVideos, setFailedVideos] = useState({});
   const sectionRef = useRef(null);
   const interactedRef = useRef(false);
   const tablistRef = useRef(null);
 
   const active = PUBLIC_SITE_EXPERIENCES[activeId];
   const activeIndex = PUBLIC_SITE_EXPERIENCE_IDS.indexOf(activeId);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = (event) => setReducedMotion(Boolean(event.matches));
+    setReducedMotion(query.matches);
+    query.addEventListener?.('change', onChange);
+    return () => query.removeEventListener?.('change', onChange);
+  }, []);
 
   const select = useCallback((id, { fromUser = true } = {}) => {
     if (fromUser) interactedRef.current = true;
@@ -141,6 +199,42 @@ export default function ExperiencesSection() {
       observer?.disconnect();
     };
   }, [paused, step]);
+
+  /* Gate del video real: pausa cuando la sección sale del viewport o la
+     pestaña queda oculta. Un solo observer/listener, limpiado al desmontar. */
+  useEffect(() => {
+    let inView = true;
+    let visible = typeof document !== 'undefined' ? !document.hidden : true;
+    const update = () => setMediaAllowed(visible && inView);
+
+    const onVisibility = () => {
+      visible = !document.hidden;
+      update();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    let observer;
+    if (typeof IntersectionObserver !== 'undefined' && sectionRef.current) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          inView = Boolean(entry?.isIntersecting);
+          update();
+        },
+        { threshold: 0.2 },
+      );
+      observer.observe(sectionRef.current);
+    }
+
+    update();
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      observer?.disconnect();
+    };
+  }, []);
+
+  const onVideoError = useCallback((id) => {
+    setFailedVideos((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  }, []);
 
   const onTabKeyDown = (event) => {
     if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
@@ -235,6 +329,9 @@ export default function ExperiencesSection() {
           <ExperiencePhonePreview
             experience={active}
             demoLabel={text('publicSite.experiences.demoBadge')}
+            videoPlaying={mediaAllowed && !reducedMotion}
+            videoFailed={Boolean(failedVideos[activeId])}
+            onVideoError={onVideoError}
           />
         </div>
 

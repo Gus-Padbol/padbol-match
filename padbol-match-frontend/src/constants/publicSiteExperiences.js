@@ -2,8 +2,8 @@
  * Identidad visual real de las cinco experiencias de Padbol Match.
  * Valores tomados de la app nativa (`src/lib/experiences.js` y
  * `src/lib/experiencePalettes.js`): solo tokens de marca, sin lógica
- * ni imports del producto. `media` queda preparado para incorporar
- * capturas o video reales sin rehacer la sección.
+ * ni imports del producto. `media.video` apunta a la captura real de
+ * cada experiencia servida como asset estático.
  */
 
 export const PUBLIC_SITE_EXPERIENCE_IDS = [
@@ -25,7 +25,7 @@ export const PUBLIC_SITE_EXPERIENCES = {
     textSecondary: '#a9adb5',
     border: 'rgba(255, 255, 255, 0.12)',
     scheme: 'dark',
-    media: null,
+    media: { video: '/media/experiences/signature.mp4' },
   },
   stadium: {
     id: 'stadium',
@@ -37,7 +37,7 @@ export const PUBLIC_SITE_EXPERIENCES = {
     textSecondary: '#888888',
     border: '#222222',
     scheme: 'dark',
-    media: null,
+    media: { video: '/media/experiences/stadium.mp4' },
   },
   express: {
     id: 'express',
@@ -49,7 +49,7 @@ export const PUBLIC_SITE_EXPERIENCES = {
     textSecondary: '#6b7076',
     border: 'rgba(20, 20, 20, 0.12)',
     scheme: 'light',
-    media: null,
+    media: { video: '/media/experiences/express.mp4' },
   },
   arena: {
     id: 'arena',
@@ -61,7 +61,7 @@ export const PUBLIC_SITE_EXPERIENCES = {
     textSecondary: '#9a9590',
     border: '#c4bdb5',
     scheme: 'light',
-    media: null,
+    media: { video: '/media/experiences/arena.mp4' },
   },
   quantum: {
     id: 'quantum',
@@ -73,7 +73,7 @@ export const PUBLIC_SITE_EXPERIENCES = {
     textSecondary: 'rgba(140, 200, 230, 0.6)',
     border: 'rgba(0, 200, 255, 0.2)',
     scheme: 'dark',
-    media: null,
+    media: { video: '/media/experiences/quantum.mp4' },
   },
 };
 

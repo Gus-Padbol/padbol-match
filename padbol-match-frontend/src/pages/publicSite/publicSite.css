@@ -1037,6 +1037,8 @@ html.public-site-active #root {
 }
 
 .ps-exp-phone__screen {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1046,6 +1048,34 @@ html.public-site-active #root {
   background: var(--exp-bg);
   color: var(--exp-text);
   transition: background 0.5s ease, color 0.5s ease;
+}
+
+/*
+ * Video real de la experiencia activa: capa sobre la demo conceptual dentro
+ * del mismo marco. Invisible hasta tener datos (la demo con los colores del
+ * tema queda debajo: sin pantallas negras ni huecos si el video falla).
+ */
+.ps-exp-phone__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+  background: transparent;
+}
+
+.ps-exp-phone__video.is-ready {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-exp-phone__video {
+    transition: none;
+  }
 }
 
 .ps-exp-phone__statusbar {

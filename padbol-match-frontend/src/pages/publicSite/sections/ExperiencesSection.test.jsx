@@ -54,8 +54,19 @@ describe('cinco experiencias (sección inmersiva)', () => {
     expect(PUBLIC_SITE_EXPERIENCES.arena.accent).toBe('#9a7a5a');
     expect(PUBLIC_SITE_EXPERIENCES.express.accent).toBe('#ffd93d');
     expect(PUBLIC_SITE_EXPERIENCES.signature.accent).toBe('#e8150a');
-    /* Arquitectura preparada para captura/video real sin rehacer la sección */
-    PUBLIC_SITE_EXPERIENCE_LIST.forEach((exp) => expect(exp).toHaveProperty('media', null));
+    /* Cada experiencia apunta a su video real servido como asset estático */
+    PUBLIC_SITE_EXPERIENCE_LIST.forEach((exp) => {
+      expect(exp.media).toEqual({ video: `/media/experiences/${exp.id}.mp4` });
+    });
+  });
+
+  it('los cinco archivos de video existen en public/media/experiences', () => {
+    const fs = require('fs');
+    const path = require('path');
+    PUBLIC_SITE_EXPERIENCE_LIST.forEach((exp) => {
+      const abs = path.join(__dirname, '../../../../public', exp.media.video);
+      expect({ id: exp.id, exists: fs.existsSync(abs) }).toEqual({ id: exp.id, exists: true });
+    });
   });
 
   it('renderiza selector con roles de tab y Signature activa por defecto', () => {
@@ -127,6 +138,143 @@ describe('cinco experiencias (sección inmersiva)', () => {
     try {
       render(<ExperiencesSection />);
       expect(screen.getAllByText('Demostración').length).toBeGreaterThan(0);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+});
+
+describe('video real por experiencia', () => {
+  let reducedMotion = false;
+  let motionListeners;
+  let playSpy;
+  let pauseSpy;
+  let loadSpy;
+
+  beforeEach(() => {
+    reducedMotion = false;
+    motionListeners = new Set();
+    window.matchMedia = jest.fn().mockImplementation(() => ({
+      matches: reducedMotion,
+      addEventListener: (_event, listener) => motionListeners.add(listener),
+      removeEventListener: (_event, listener) => motionListeners.delete(listener),
+    }));
+    playSpy = jest
+      .spyOn(window.HTMLMediaElement.prototype, 'play')
+      .mockImplementation(() => Promise.resolve());
+    pauseSpy = jest.spyOn(window.HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    loadSpy = jest.spyOn(window.HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    playSpy.mockRestore();
+    pauseSpy.mockRestore();
+    loadSpy.mockRestore();
+  });
+
+  const getVideo = (container) => container.querySelector('video.ps-exp-phone__video');
+
+  it('la experiencia activa usa su video con atributos seguros (sin controles)', () => {
+    const { container } = render(<ExperiencesSection />);
+    const video = getVideo(container);
+    expect(video).toBeTruthy();
+    expect(video.getAttribute('src')).toBe('/media/experiences/signature.mp4');
+    expect(video).toHaveAttribute('playsinline');
+    expect(video.muted).toBe(true);
+    expect(video).toHaveAttribute('loop');
+    expect(video.getAttribute('preload')).toBe('metadata');
+    expect(video).not.toHaveAttribute('controls');
+    expect(playSpy).toHaveBeenCalled();
+  });
+
+  it('cambiar de experiencia pausa el anterior, reinicia desde 0 y cambia la fuente', () => {
+    const { container } = render(<ExperiencesSection />);
+    pauseSpy.mockClear();
+    loadSpy.mockClear();
+    fireEvent.click(screen.getByRole('tab', { name: /Quantum/i }));
+    const video = getVideo(container);
+    expect(video.getAttribute('src')).toBe('/media/experiences/quantum.mp4');
+    expect(pauseSpy).toHaveBeenCalled();
+    /* load() con el src nuevo reinicia la reproducción desde 0 */
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
+  it('ante error de carga cae a la demo conceptual sin dejar hueco ni error visible', () => {
+    const { container } = render(<ExperiencesSection />);
+    const video = getVideo(container);
+    fireEvent.error(video);
+    expect(getVideo(container)).toBeNull();
+    /* La demo conceptual sigue presente dentro del marco */
+    expect(screen.getByText('Reserva')).toBeInTheDocument();
+    expect(screen.getAllByText('Demostración').length).toBeGreaterThan(0);
+    expect(container.textContent).not.toMatch(/error/i);
+  });
+
+  it('con reduced motion el video no se reproduce', () => {
+    reducedMotion = true;
+    const { container } = render(<ExperiencesSection />);
+    expect(getVideo(container)).toBeTruthy();
+    expect(playSpy).not.toHaveBeenCalled();
+  });
+
+  it('pausa si reduced motion se activa con la sección abierta', () => {
+    render(<ExperiencesSection />);
+    pauseSpy.mockClear();
+    act(() => {
+      motionListeners.forEach((listener) => listener({ matches: true }));
+    });
+    expect(pauseSpy).toHaveBeenCalled();
+  });
+
+  it('pausa cuando la pestaña queda oculta y reanuda al volver', () => {
+    render(<ExperiencesSection />);
+    pauseSpy.mockClear();
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(pauseSpy).toHaveBeenCalled();
+    playSpy.mockClear();
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(playSpy).toHaveBeenCalled();
+  });
+
+  it('pausa cuando la sección sale del viewport', () => {
+    const observers = [];
+    global.IntersectionObserver = jest.fn().mockImplementation((cb) => {
+      const instance = {
+        callback: cb,
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+        disconnect: jest.fn(),
+      };
+      observers.push(instance);
+      return instance;
+    });
+    try {
+      render(<ExperiencesSection />);
+      pauseSpy.mockClear();
+      act(() => {
+        observers.forEach((o) => o.callback([{ isIntersecting: false }]));
+      });
+      expect(pauseSpy).toHaveBeenCalled();
+    } finally {
+      delete global.IntersectionObserver;
+    }
+  });
+
+  it('el video no dispara llamadas al Backend (fetch intacto)', () => {
+    const fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(() => {
+      throw new Error('la sección no debe llamar APIs');
+    });
+    try {
+      const { container } = render(<ExperiencesSection />);
+      fireEvent.click(screen.getByRole('tab', { name: /Arena/i }));
+      expect(getVideo(container).getAttribute('src')).toBe('/media/experiences/arena.mp4');
       expect(fetchSpy).not.toHaveBeenCalled();
     } finally {
       fetchSpy.mockRestore();
