@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { canUseNavigatorShare } from '../components/ShareLinkButton';
 import { fetchCanchaActiva, postJugadorTemp } from '../utils/scoreboardApi';
+import { resolveScoreboardCanchaLabel } from '../utils/scoreboardVenueLabels';
 import '../styles/ScoreboardJoin.css';
 
 const FOTO_BUCKET = 'scoreboard-fotos';
@@ -35,6 +36,7 @@ export default function ScoreboardJoin() {
   const { session, userProfile } = useAuth();
   const equipoFromUrl = normalizeEquipo(equipoParam);
   const cancha = decodeURIComponent(String(canchaParam || '').trim());
+  const canchaDisplay = resolveScoreboardCanchaLabel({ cancha });
 
   const [selectedEquipo, setSelectedEquipo] = useState(equipoFromUrl);
   const equipo = equipoFromUrl || selectedEquipo;
@@ -234,7 +236,7 @@ export default function ScoreboardJoin() {
           {t('scoreboard.join.title', 'Sumate al marcador')}
         </h1>
         <p className="sb-join__meta">
-          {cancha}
+          {canchaDisplay}
           {equipo ? (
             <>
               {' · '}

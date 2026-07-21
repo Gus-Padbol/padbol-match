@@ -13,6 +13,7 @@ import {
   getScoreboardJerseyLabel,
   scoreboardPlayerName,
 } from '../utils/scoreboardPlayers';
+import { formatScoreboardVenueHeader } from '../utils/scoreboardVenueLabels';
 import '../styles/ScoreboardControl.css';
 
 function formatTimer(seconds) {
@@ -368,8 +369,7 @@ export default function ScoreboardControl() {
           {partido.equipo_a_nombre} vs {partido.equipo_b_nombre}
         </h1>
         <p className="sc-header__meta">
-          {partido.cancha && `${partido.cancha} · `}
-          Sede #{partido.sede_id}
+          {formatScoreboardVenueHeader(partido)}
           {partido.saque_actual === 'A' && (
             <span className="sc-serve-indicator" title="Team A serving" />
           )}

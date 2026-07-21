@@ -5,6 +5,7 @@ import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchPartidoByCancha, fetchSponsors } from '../utils/scoreboardApi';
 import { PADBOL_LOGO_ON_DARK } from '../constants/padbolBrandLogo';
+import { resolveScoreboardCanchaLabel } from '../utils/scoreboardVenueLabels';
 import '../styles/ScoreboardDisplay.css';
 
 const CANCHA_POLL_MS = 10000;
@@ -21,9 +22,14 @@ function ScoreboardWaitingScreen({ canchaLabel }) {
 
 export default function ScoreboardCanchaDisplay() {
   const { sedeId, cancha } = useParams();
-  const canchaLabel = useMemo(
+  const canchaFromRoute = useMemo(
     () => decodeURIComponent(String(cancha || '').trim()),
     [cancha],
+  );
+  // Label legible en espera TV; la resolución por sede/cancha sigue usando el valor de ruta.
+  const canchaLabel = useMemo(
+    () => resolveScoreboardCanchaLabel({ cancha: canchaFromRoute }),
+    [canchaFromRoute],
   );
 
   const [partido, setPartido] = useState(null);
@@ -58,9 +64,10 @@ export default function ScoreboardCanchaDisplay() {
   }, []);
 
   const pollCancha = useCallback(async () => {
-    if (!sedeId || !canchaLabel) return;
+    // Lookup por el valor de ruta/DB (puede ser "Court One"); el label visible ya está normalizado.
+    if (!sedeId || !canchaFromRoute) return;
     try {
-      const canchaPartido = await fetchPartidoByCancha(sedeId, canchaLabel);
+      const canchaPartido = await fetchPartidoByCancha(sedeId, canchaFromRoute);
       const nextPartidoId = canchaPartido?.id ?? null;
 
       if (!nextPartidoId) {
@@ -81,7 +88,7 @@ export default function ScoreboardCanchaDisplay() {
     } finally {
       setPolling(false);
     }
-  }, [sedeId, canchaLabel, loadPartidoById]);
+  }, [sedeId, canchaFromRoute, loadPartidoById]);
 
   useEffect(() => {
     setPolling(true);

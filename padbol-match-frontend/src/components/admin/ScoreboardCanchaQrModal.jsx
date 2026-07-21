@@ -1,6 +1,7 @@
 import React from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useSafeTranslation } from '../../i18n/tSafe';
+import { resolveScoreboardCanchaLabel } from '../../utils/scoreboardVenueLabels';
 
 const QR_PUBLIC_BASE = 'https://padbolmatch.com';
 
@@ -14,8 +15,11 @@ export default function ScoreboardCanchaQrModal({ partido, onClose }) {
   if (!partido) return null;
 
   const sedeId = partido.sede_id;
-  const cancha = String(partido.cancha || '').trim() || t('admin.scoreboard.defaultCourt', 'Cancha 1');
-  const joinUrl = buildJoinUrl(sedeId, cancha);
+  // URL/join usan el valor crudo de DB; la UI muestra el label normalizado.
+  const canchaRaw = String(partido.cancha || '').trim()
+    || t('admin.scoreboard.defaultCourt', 'Cancha 1');
+  const cancha = resolveScoreboardCanchaLabel(partido) || canchaRaw;
+  const joinUrl = buildJoinUrl(sedeId, canchaRaw);
 
   return (
     <div

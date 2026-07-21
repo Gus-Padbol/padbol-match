@@ -47,4 +47,10 @@ describe('ScoreboardControl mobile team card layout', () => {
     expect(mobileBlock).toMatch(/\.sc-player__name\s*\{[^}]*font-size:\s*12px/s);
     expect(mobileBlock).not.toMatch(/\.sc-player__name\s*\{[^}]*font-size:\s*1[01]px/s);
   });
+
+  it('encabezado usa venue labels reales y no fabrica Sede #id', () => {
+    expect(jsx).toMatch(/formatScoreboardVenueHeader/);
+    expect(jsx).not.toMatch(/Sede #\{partido\.sede_id\}/);
+    expect(jsx).not.toMatch(/partido\.cancha && `\$\{partido\.cancha\}/);
+  });
 });
