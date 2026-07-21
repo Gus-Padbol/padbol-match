@@ -100,13 +100,12 @@ import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSecti
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import ConfirmModal from '../components/ConfirmModal';
+import SedeWhatsappPhoneField from '../components/SedeWhatsappPhoneField';
 import {
   applyPaisChangeToWhatsapp,
   ensureWhatsappPrefixed,
-  exampleWhatsappForPaisLabel,
   normalizeWhatsappForStorage,
   paisOptionValueFromStored,
-  sanitizeWhatsappInput,
 } from '../utils/sedeWhatsappPais';
 import {
   buildCanchaWriteBody,
@@ -18736,27 +18735,16 @@ export default function AdminDashboard({
                   </select>
                 </div>
                 <div style={{ marginBottom: '12px' }}>
-                  <label>{t('admin.sedes.clubWhatsappLabel')}</label>
-                  <input
-                    type="tel"
+                  <label htmlFor="editar-sede-whatsapp">{t('admin.sedes.clubWhatsappLabel')}</label>
+                  <SedeWhatsappPhoneField
+                    id="editar-sede-whatsapp"
                     value={editarSedeDraft.telefono || ''}
-                    placeholder={exampleWhatsappForPaisLabel(editarSedeDraft.pais)}
-                    onChange={(e) => {
-                      setEditarSedeDraft((p) => ({ ...p, telefono: sanitizeWhatsappInput(e.target.value) }));
+                    paisLabel={editarSedeDraft.pais}
+                    onChange={(telefono) => {
+                      setEditarSedeDraft((p) => ({ ...p, telefono }));
                       setMiSedeWhatsappHint('');
                     }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                    }}
-                    autoComplete="tel"
                   />
-                  <p className="admin-editar-sede-hint">
-                    {t('admin.sedes.whatsappPrefixHint', { example: exampleWhatsappForPaisLabel(editarSedeDraft.pais) })}
-                  </p>
                   {miSedeWhatsappHint ? (
                     <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: 700, color: '#b45309' }}>
                       {miSedeWhatsappHint}
@@ -19435,7 +19423,7 @@ export default function AdminDashboard({
                 { label: t('admin.sedes.longitude'), field: 'longitud', placeholder: 'Ej: -57.96505', inputType: 'number', hint: t('admin.sedes.coordsGoogleMapsHint') },
               ].map(({ label, field, placeholder, hint, inputType, isPais, isWhatsapp }) => (
                 <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-                  <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>{label}</label>
+                  <label htmlFor={isWhatsapp ? 'mi-sede-whatsapp' : undefined} style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>{label}</label>
                   <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                     {isPais ? (
                       <select
@@ -19466,21 +19454,16 @@ export default function AdminDashboard({
                       </select>
                     ) : isWhatsapp ? (
                       <>
-                        <input
-                          type="tel"
+                        <SedeWhatsappPhoneField
+                          id="mi-sede-whatsapp"
                           value={miSedeForm.telefono || ''}
-                          placeholder={exampleWhatsappForPaisLabel(miSedeForm.pais)}
-                          onChange={(e) => {
-                            setMiSedeForm((p) => ({ ...p, telefono: sanitizeWhatsappInput(e.target.value) }));
+                          paisLabel={miSedeForm.pais}
+                          onChange={(telefono) => {
+                            setMiSedeForm((p) => ({ ...p, telefono }));
                             setMiSedeWhatsappHint('');
                           }}
-                          className="admin-mi-sede-theme-input"
-                          style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
-                          autoComplete="tel"
+                          inputClassName="admin-mi-sede-theme-input"
                         />
-                        <p className="admin-mi-sede-theme-muted" style={{ margin: '3px 0 0', fontSize: '11px' }}>
-                          {t('admin.sedes.whatsappPrefixHint', { example: exampleWhatsappForPaisLabel(miSedeForm.pais) })}
-                        </p>
                         {miSedeWhatsappHint ? (
                           <p style={{ margin: '4px 0 0', fontSize: '12px', fontWeight: 700, color: '#b45309' }}>
                             {miSedeWhatsappHint}

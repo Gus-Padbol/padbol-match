@@ -215,6 +215,71 @@ export function normalizeWhatsappForStorage(raw, paisLabel) {
   return cleaned;
 }
 
+/**
+ * MEJ-04: divide el teléfono guardado en prefijo visual + número local.
+ * mode 'split' → bloque de prefijo readonly + campo local editable.
+ * mode 'full'  → sin código aplicable o internacional de otro país: campo único.
+ * No modifica el dato: es solo para presentación.
+ */
+export function splitWhatsappForPhoneField(value, paisLabel) {
+  const codigo = codigoTelefonicoDesdePaisLabel(paisLabel);
+  const phone = String(value || '').trim();
+  if (!codigo) return { mode: 'full', codigo: null, local: phone };
+  if (!phone) return { mode: 'split', codigo, local: '' };
+  if (phoneIsOnlyCountryPrefix(phone, codigo)) return { mode: 'split', codigo, local: '' };
+  if (phoneStartsWithCountryPrefix(phone, codigo)) {
+    return { mode: 'split', codigo, local: stripCountryPrefix(phone, codigo) };
+  }
+  if (phone.startsWith('+')) {
+    // Internacional de otro país: no forzar el prefijo de la sede.
+    return { mode: 'full', codigo, local: phone };
+  }
+  // Histórico local sin prefijo: se conserva como número local.
+  return { mode: 'split', codigo, local: phone };
+}
+
+/**
+ * MEJ-04: une el número local editado con el prefijo readonly sin duplicarlo.
+ * Acepta pegado de números que ya incluyen el código de país (+54 …, 54911…).
+ * `dedupDigits` controla la deduplicación de dígitos sin "+": debe activarse
+ * solo en pegados, porque números locales legítimos pueden empezar con los
+ * mismos dígitos del código de país (ej. móviles "39…" en Italia +39).
+ * El resultado es compatible con normalizeWhatsappForStorage (contrato intacto).
+ */
+export function joinWhatsappLocalInput(localRaw, codigo, { dedupDigits = true } = {}) {
+  const local = sanitizeWhatsappInput(localRaw).trim();
+  const c = String(codigo || '').trim();
+  if (!c) return local;
+  if (!local) return c;
+  if (local.startsWith('+')) {
+    if (phoneIsOnlyCountryPrefix(local, c)) return c;
+    if (phoneStartsWithCountryPrefix(local, c)) {
+      const rest = stripCountryPrefix(local, c);
+      return rest ? `${c} ${rest}` : c;
+    }
+    // Otro internacional pegado completo: conservar tal cual (el aviso lo maneja el form).
+    return local;
+  }
+  if (dedupDigits) {
+    // Dígitos que ya arrancan con el código país (ej. 54911…): no duplicar.
+    const d = digitsOnlyPhone(local);
+    const cd = digitsOnlyPhone(c);
+    if (cd && d.startsWith(cd) && d.length > cd.length) {
+      return `${c} ${d.slice(cd.length)}`;
+    }
+    if (cd && d === cd) return c;
+  }
+  return `${c} ${local}`;
+}
+
+/** MEJ-04: ejemplo de número local (sin prefijo) para placeholder del campo editable. */
+export function exampleLocalForCodigo(codigo) {
+  const c = String(codigo || '').trim();
+  const full = WHATSAPP_EXAMPLES[c];
+  if (!full) return '';
+  return stripCountryPrefix(full, c);
+}
+
 export function exampleWhatsappForPaisLabel(paisLabel) {
   const codigo = codigoTelefonicoDesdePaisLabel(paisLabel);
   if (!codigo) return 'Ej: +54 9 11 1234-5678';
