@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, Suspense, lazy } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -9,6 +9,9 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import './App.css';
+
+/** Web pública `/plataforma` — code-split fuera del bundle del producto. */
+const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
 import ReservaForm from './pages/ReservaForm';
 import AdminDashboard from './pages/AdminDashboard';
 import TorneoCrear from './pages/TorneoCrear';
@@ -524,6 +527,32 @@ function App() {
                       <ScoreboardControl />
                     </ErrorBoundary>
                   </ProtectedRoute>
+                )}
+              />
+              <Route
+                path="/plataforma"
+                element={(
+                  <ErrorBoundary label="la web pública">
+                    <Suspense
+                      fallback={(
+                        <div
+                          style={{
+                            minHeight: '100dvh',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: '#070b14',
+                            color: 'rgba(248,250,252,0.85)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Cargando…
+                        </div>
+                      )}
+                    >
+                      <PublicSitePage />
+                    </Suspense>
+                  </ErrorBoundary>
                 )}
               />
               <Route

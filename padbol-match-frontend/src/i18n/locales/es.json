@@ -2023,6 +2023,27 @@
     "terms": "Términos",
     "privacy": "Privacidad"
   },
+  "publicSite": {
+    "brandAlt": "Padbol Match",
+    "nav": {
+      "aria": "Navegación principal",
+      "platform": "Plataforma",
+      "players": "Para jugadores",
+      "venues": "Para sedes",
+      "download": "Descargar",
+      "login": "Ingresar"
+    },
+    "hero": {
+      "eyebrow": "Plataforma oficial",
+      "title": "Padbol Match",
+      "claim": "La plataforma que convierte cada partido en una relación continua.",
+      "pillars": "Juego · Comunidad · Gestión",
+      "lead": "Una experiencia simple para el jugador y una herramienta de crecimiento, fidelización y control para cada sede.",
+      "ctaExplore": "Conocer la plataforma",
+      "ctaPlay": "Quiero jugar",
+      "ctaVenue": "Quiero incorporar Padbol Match"
+    }
+  },
   "checkin": {
     "titulo": "Check-in Padbol Match",
     "escanear": "Mostrá tu QR para hacer check-in",
