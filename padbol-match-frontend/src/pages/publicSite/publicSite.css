@@ -1024,11 +1024,15 @@ html.public-site-active #root {
 
 /* Marco de teléfono (CSS puro) */
 
+/*
+ * Marco tipo teléfono grande (Pro Max). En columnas angostas usa el 100%
+ * del ancho disponible; el shell ya garantiza márgenes laterales de 20px.
+ */
 .ps-exp-phone {
-  width: min(300px, 82vw);
+  width: min(390px, 100%);
   margin: 0 auto;
   padding: 12px;
-  border-radius: 42px;
+  border-radius: 48px;
   background: #0c0e14;
   border: 1px solid rgba(148, 163, 184, 0.28);
   box-shadow:
@@ -1036,15 +1040,20 @@ html.public-site-active #root {
     inset 0 0 0 2px rgba(0, 0, 0, 0.7);
 }
 
+/*
+ * La pantalla replica la proporción exacta de los videos (1080x2346,
+ * ~9:19.5): el video la llena sin recortes ni bandas con object-fit: cover.
+ */
 .ps-exp-phone__screen {
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  aspect-ratio: 1080 / 2346;
   min-height: 470px;
   padding: 16px 14px 12px;
-  border-radius: 32px;
+  border-radius: 36px;
   background: var(--exp-bg);
   color: var(--exp-text);
   transition: background 0.5s ease, color 0.5s ease;
@@ -2458,7 +2467,7 @@ html.public-site-active #root {
   }
 
   .ps-exp-stage {
-    grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
   }
 
   .ps-cycle {
