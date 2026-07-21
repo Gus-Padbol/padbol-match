@@ -255,9 +255,16 @@
 
   .admin-dashboard--with-sidebar .admin-dashboard-brand-shell {
     flex: 0 0 auto;
-    /* Reserve left strip so brand/logo are not under the fixed sidebar. */
-    padding-left: calc(var(--pm-admin-sidebar-shell-pad-x) + var(--pm-admin-sidebar-slot));
-    padding-right: var(--pm-admin-sidebar-shell-pad-x);
+    /*
+     * BUG-03: the header box (background + border included) must start AFTER the
+     * fixed sidebar column. margin-left cuts the block before the sidebar limit;
+     * a padding-left reservation kept the surface running behind the nav.
+     */
+    width: auto;
+    margin-left: calc(var(--pm-admin-sidebar-shell-pad-x) + var(--pm-admin-sidebar-slot));
+    margin-right: var(--pm-admin-sidebar-shell-pad-x);
+    padding-left: 0;
+    padding-right: 0;
     box-sizing: border-box;
   }
 
@@ -365,6 +372,9 @@
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-brand-shell {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
     padding-left: 0;
     padding-right: 0;
   }

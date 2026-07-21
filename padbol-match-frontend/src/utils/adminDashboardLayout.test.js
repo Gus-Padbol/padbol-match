@@ -109,7 +109,10 @@ describe('AdminDashboard layout strategy — fixed sidebar', () => {
     expect(block).toMatch(/--pm-admin-sidebar-width:\s*232px/);
     expect(block).toMatch(/--pm-admin-sidebar-slot:/);
     const brandCss = extractRuleBody(block, '.admin-dashboard--with-sidebar .admin-dashboard-brand-shell');
-    expect(brandCss).toMatch(/padding-left:\s*calc\(\s*var\(--pm-admin-sidebar-shell-pad-x\)\s*\+\s*var\(--pm-admin-sidebar-slot\)/);
+    // BUG-03: the header box must START after the sidebar (margin), not just pad
+    // its content — otherwise its background/border runs behind the fixed nav.
+    expect(brandCss).toMatch(/margin-left:\s*calc\(\s*var\(--pm-admin-sidebar-shell-pad-x\)\s*\+\s*var\(--pm-admin-sidebar-slot\)/);
+    expect(brandCss).not.toMatch(/padding-left:\s*calc\(/);
   });
 
   it('7. content is not placed under sidebar (panel flex + nav placeholder)', () => {
@@ -162,6 +165,9 @@ describe('AdminDashboard layout strategy — fixed sidebar', () => {
 
   it('14. tablet/mobile removes lateral compensation', () => {
     expect(mobile).toMatch(/--pm-admin-sidebar-slot:\s*0px/);
+    expect(mobile).toMatch(
+      /\.admin-dashboard--with-sidebar \.admin-dashboard-brand-shell\s*\{[^}]*margin-left:\s*0/s,
+    );
     expect(mobile).toMatch(
       /\.admin-dashboard--with-sidebar \.admin-dashboard-brand-shell\s*\{[^}]*padding-left:\s*0/s,
     );

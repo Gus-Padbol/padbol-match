@@ -637,20 +637,20 @@
       "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "tabs": {
-      "resumen": "📊 ملخص",
-      "sedes": "🏟️ المقر",
-      "solicitudes": "📝 الطلبات",
-      "personalizarHub": "🎨 تخصيص المحور",
-      "sponsors": "🤝 الرعاة / الإعلان",
-      "torneos": "🏆 البطولات",
-      "reservas": "⚽ الحجز",
-      "validaciones": "⏳ التحقق من الصحة",
-      "miSede": "🏟️ مقري",
-      "config": "⚙️ الإعدادات",
-      "planes": "💳 الخطط",
-      "roles": "👥 الأدوار",
+      "resumen": "ملخص",
+      "sedes": "المقر",
+      "solicitudes": "الطلبات",
+      "personalizarHub": "تخصيص المحور",
+      "sponsors": "الرعاة / الإعلان",
+      "torneos": "البطولات",
+      "reservas": "الحجز",
+      "validaciones": "التحقق من الصحة",
+      "miSede": "مقري",
+      "config": "الإعدادات",
+      "planes": "الخطط",
+      "roles": "الأدوار",
       "jugadores": "اللاعبين",
-      "membresias": "🎫 العضويات"
+      "membresias": "العضويات"
     },
     "notifications": {
       "title": "إشعارات",

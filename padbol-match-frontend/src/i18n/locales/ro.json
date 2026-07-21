@@ -608,20 +608,20 @@
       "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "tabs": {
-      "resumen": "📊 Rezumat",
-      "sedes": "🏟️ Sediul central",
-      "solicitudes": "📝 Cereri",
-      "personalizarHub": "🎨 Personalizați Hub",
-      "sponsors": "🤝 Sponsori / Publicitate",
-      "torneos": "🏆 Turnee",
-      "reservas": "⚽ Rezervări",
-      "validaciones": "⏳ Validari",
-      "miSede": "🏟️ Sediul meu",
-      "config": "⚙️ Setări",
-      "planes": "💳 Planuri",
-      "roles": "👥 Roluri",
+      "resumen": "Rezumat",
+      "sedes": "Sediul central",
+      "solicitudes": "Cereri",
+      "personalizarHub": "Personalizați Hub",
+      "sponsors": "Sponsori / Publicitate",
+      "torneos": "Turnee",
+      "reservas": "Rezervări",
+      "validaciones": "Validari",
+      "miSede": "Sediul meu",
+      "config": "Setări",
+      "planes": "Planuri",
+      "roles": "Roluri",
       "jugadores": "Jucători",
-      "membresias": "🎫 Membrii"
+      "membresias": "Membrii"
     },
     "notifications": {
       "title": "Notificări",

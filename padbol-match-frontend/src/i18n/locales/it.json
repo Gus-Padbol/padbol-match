@@ -608,20 +608,20 @@
       "sponsorsInConfig": "Sponsors is available inside Settings."
     },
     "tabs": {
-      "resumen": "📊 Riepilogo",
-      "sedes": "🏟️Sede centrale",
-      "solicitudes": "📝 Richieste",
-      "personalizarHub": "🎨 Personalizza Hub",
-      "sponsors": "🤝 Sponsor/Pubblicità",
-      "torneos": "🏆 Tornei",
-      "reservas": "⚽ Prenotazioni",
-      "validaciones": "⏳ Validazioni",
-      "miSede": "🏟️ Il mio quartier generale",
-      "config": "⚙️ Impostazioni",
-      "planes": "💳 Piani",
-      "roles": "👥 Ruoli",
+      "resumen": "Riepilogo",
+      "sedes": "Sede centrale",
+      "solicitudes": "Richieste",
+      "personalizarHub": "Personalizza Hub",
+      "sponsors": "Sponsor/Pubblicità",
+      "torneos": "Tornei",
+      "reservas": "Prenotazioni",
+      "validaciones": "Validazioni",
+      "miSede": "Il mio quartier generale",
+      "config": "Impostazioni",
+      "planes": "Piani",
+      "roles": "Ruoli",
       "jugadores": "Giocatori",
-      "membresias": "🎫 Membership"
+      "membresias": "Membership"
     },
     "notifications": {
       "title": "Notifiche",

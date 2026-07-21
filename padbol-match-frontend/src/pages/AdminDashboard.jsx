@@ -10135,9 +10135,9 @@ export default function AdminDashboard({
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
-        ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: '📺 Scoreboard' }] : []),
-        ...(puedeVerPadCoins ? [{ id: 'padcoins', label: '🪙 PadCoins' }] : []),
-        ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', '🎫 Membresías') }] : []),
+        ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: 'Scoreboard' }] : []),
+        ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
+        ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', 'Membresías') }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         { id: 'resumen', label: t('nav.admin.resumen') },
       ]
@@ -10147,7 +10147,7 @@ export default function AdminDashboard({
         { id: 'torneos', label: t('torneos.titulo') },
         { id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') },
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
-        ...(puedeVerPadCoins ? [{ id: 'padcoins', label: '🪙 PadCoins' }] : []),
+        ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
       ]
     : [
@@ -10163,9 +10163,9 @@ export default function AdminDashboard({
         { id: 'reservas', label: t('admin.tabs.reservas') },
         ...(isSuperAdmin ? [{ id: 'jugadores', label: t('admin.tabs.jugadores') }] : []),
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
-        ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: '📺 Scoreboard' }] : []),
-        ...(puedeVerPadCoins ? [{ id: 'padcoins', label: '🪙 PadCoins' }] : []),
-        ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', '🎫 Membresías') }] : []),
+        ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: 'Scoreboard' }] : []),
+        ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
+        ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', 'Membresías') }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         ...(puedeVerMiSede ? [{ id: 'mi_sede', label: t('admin.tabs.miSede') }] : []),
         ...(puedeVerConfig
