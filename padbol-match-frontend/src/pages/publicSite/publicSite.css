@@ -528,79 +528,177 @@ html.public-site-active #root {
   color: #fff;
 }
 
-/* Vista conceptual del ecosistema */
+/* ── Vista conceptual: globo terráqueo conectado (SVG + CSS) ── */
 
 .public-site-hero__ecosystem {
   position: relative;
-  display: none;
+  display: block;
   aspect-ratio: 1;
-  max-width: 460px;
   width: 100%;
-  margin: 0 auto;
+  /* Móvil: debajo del texto, 280–340 px sin tocar bordes. */
+  max-width: min(320px, 88vw);
+  margin: 10px auto 0;
 }
 
-.public-site-hero__eco-ring {
-  position: absolute;
-  inset: 12%;
-  border: 1px dashed rgba(148, 163, 184, 0.3);
-  border-radius: 50%;
-  animation: ps-ring-spin 60s linear infinite;
+.public-site-hero__globe {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.public-site-hero__eco-ring--outer {
-  inset: 0;
-  border-color: rgba(148, 163, 184, 0.16);
-  animation-duration: 90s;
-  animation-direction: reverse;
+.public-site-hero__globe-halo {
+  fill: none;
+  stroke: rgba(56, 189, 248, 0.16);
+  stroke-width: 1;
+  filter: drop-shadow(0 0 30px rgba(225, 27, 34, 0.25));
 }
 
-@keyframes ps-ring-spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* Grilla (meridianos/paralelos) con rotación lentísima y discreta. */
+.public-site-hero__globe-grid {
+  transform-origin: 240px 240px;
+  animation: ps-globe-spin 360s linear infinite;
 }
 
+.public-site-hero__globe-grid ellipse {
+  fill: none;
+  stroke: rgba(148, 163, 184, 0.2);
+  stroke-width: 1;
+}
+
+@keyframes ps-globe-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Continentes sugeridos: masas abstractas de puntos con brillo leve. */
+.public-site-hero__globe-land circle {
+  fill: rgba(148, 163, 184, 0.42);
+}
+
+.public-site-hero__globe-land {
+  animation: ps-globe-land 9s ease-in-out infinite alternate;
+}
+
+@keyframes ps-globe-land {
+  from { opacity: 0.75; }
+  to { opacity: 1; }
+}
+
+/* Arcos de conexión: se iluminan por turnos con un pulso que recorre
+   el trazo (dasharray) desde el núcleo hacia cada región. */
+.public-site-hero__globe-arcs path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ps-accent) 70%, #fff);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-dasharray: 30 320;
+  stroke-dashoffset: 350;
+  opacity: 0;
+  animation: ps-globe-arc 9.8s linear infinite;
+}
+
+.public-site-hero__globe-arcs .is-a2 { animation-delay: -1.4s; }
+.public-site-hero__globe-arcs .is-a3 { animation-delay: -2.8s; }
+.public-site-hero__globe-arcs .is-a4 { animation-delay: -4.2s; }
+.public-site-hero__globe-arcs .is-a5 { animation-delay: -5.6s; }
+.public-site-hero__globe-arcs .is-a6 { animation-delay: -7s; stroke: rgba(56, 189, 248, 0.75); }
+.public-site-hero__globe-arcs .is-a7 { animation-delay: -8.4s; stroke: rgba(56, 189, 248, 0.75); }
+
+@keyframes ps-globe-arc {
+  0% { stroke-dashoffset: 350; opacity: 0; }
+  6% { opacity: 0.9; }
+  40% { stroke-dashoffset: 0; opacity: 0.9; }
+  52% { stroke-dashoffset: 0; opacity: 0; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* Nodos luminosos que respiran. */
+.public-site-hero__globe-nodes circle {
+  fill: #f8fafc;
+  stroke: rgba(225, 27, 34, 0.6);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ps-globe-breathe 4.6s ease-in-out infinite;
+}
+
+.public-site-hero__globe-nodes circle:nth-of-type(2) { animation-delay: -0.8s; }
+.public-site-hero__globe-nodes circle:nth-of-type(3) { animation-delay: -1.6s; }
+.public-site-hero__globe-nodes circle:nth-of-type(4) { animation-delay: -2.4s; }
+.public-site-hero__globe-nodes circle:nth-of-type(5) { animation-delay: -3.2s; }
+.public-site-hero__globe-nodes circle:nth-of-type(6) { animation-delay: -4s; }
+
+.public-site-hero__globe-nodes .is-core {
+  fill: var(--ps-accent);
+  stroke: rgba(255, 255, 255, 0.85);
+  filter: drop-shadow(0 0 14px rgba(225, 27, 34, 0.85));
+}
+
+@keyframes ps-globe-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.22); opacity: 1; }
+}
+
+/* Núcleo "Partido": chip integrado bajo el nodo central del globo,
+   con pulso expansivo desde su región (sin círculo aislado). */
 .public-site-hero__eco-core {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  top: 48.3%;
+  transform: translate(-50%, 16px);
   display: grid;
-  place-items: center;
-  gap: 2px;
-  width: 128px;
-  height: 128px;
-  border-radius: 50%;
+  justify-items: center;
+  gap: 1px;
+  padding: 8px 16px;
+  border-radius: 14px;
   text-align: center;
-  background:
-    radial-gradient(closest-side, rgba(225, 27, 34, 0.32), rgba(225, 27, 34, 0.06)),
-    var(--ps-bg-2);
-  border: 1px solid rgba(225, 27, 34, 0.5);
-  box-shadow: 0 0 60px rgba(225, 27, 34, 0.35);
+  background: rgba(10, 15, 28, 0.85);
+  border: 1px solid rgba(225, 27, 34, 0.55);
+  box-shadow: 0 0 34px rgba(225, 27, 34, 0.3);
+}
+
+.public-site-hero__eco-core::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -25px;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 50%;
+  border: 1px solid rgba(225, 27, 34, 0.7);
+  animation: ps-globe-pulse 3.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ps-globe-pulse {
+  from { transform: scale(0.5); opacity: 0.9; }
+  to { transform: scale(2.8); opacity: 0; }
 }
 
 .public-site-hero__eco-core strong {
-  font-size: 17px;
+  font-size: 15px;
 }
 
 .public-site-hero__eco-core span {
   font-size: 11px;
-  color: var(--ps-text-muted);
+  color: var(--ps-text-2);
 }
 
+/* Chips flotantes anclados a los nodos del globo. */
 .public-site-hero__eco-node {
   position: absolute;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 14px;
+  padding: 8px 13px;
   border-radius: 999px;
   border: 1px solid var(--ps-border-strong);
   background: rgba(10, 15, 28, 0.88);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   white-space: nowrap;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -145%);
   animation: ps-node-float 7s ease-in-out infinite alternate;
 }
 
@@ -612,11 +710,12 @@ html.public-site-active #root {
   box-shadow: 0 0 10px rgba(225, 27, 34, 0.8);
 }
 
-.public-site-hero__eco-node.is-player { top: 4%; left: 50%; transform: translateX(-50%); }
-.public-site-hero__eco-node.is-venue { top: 30%; right: -2%; animation-delay: -1.5s; }
-.public-site-hero__eco-node.is-scoreboard { bottom: 22%; right: 4%; animation-delay: -3s; }
-.public-site-hero__eco-node.is-ranking { bottom: 22%; left: 4%; animation-delay: -4.5s; }
-.public-site-hero__eco-node.is-padcoins { top: 30%; left: -2%; animation-delay: -6s; }
+/* Posiciones = coordenadas de los nodos del SVG (x/480, y/480). */
+.public-site-hero__eco-node.is-player { left: 31.7%; top: 30.8%; }
+.public-site-hero__eco-node.is-venue { left: 67.1%; top: 26.7%; animation-delay: -1.5s; }
+.public-site-hero__eco-node.is-scoreboard { left: 73.3%; top: 54.6%; animation-delay: -3s; }
+.public-site-hero__eco-node.is-ranking { left: 35%; top: 66.3%; animation-delay: -4.5s; }
+.public-site-hero__eco-node.is-padcoins { left: 54.6%; top: 72.5%; animation-delay: -6s; transform: translate(-50%, 45%); }
 
 @keyframes ps-node-float {
   from { translate: 0 0; }
@@ -2538,6 +2637,11 @@ html.public-site-active #root {
     padding: 56px 0 88px;
   }
 
+  /* Tablet: globo intermedio. */
+  .public-site-hero__ecosystem {
+    max-width: 400px;
+  }
+
   .public-site-hero__logo {
     width: min(280px, 100%) !important;
   }
@@ -2671,8 +2775,10 @@ html.public-site-active #root {
     gap: 56px;
   }
 
+  /* Desktop: globo entre 440 y 560 px según viewport, centrado en su columna. */
   .public-site-hero__ecosystem {
-    display: block;
+    max-width: clamp(440px, 38vw, 560px);
+    margin: 0 auto;
   }
 
   .public-site__brand-logo {
