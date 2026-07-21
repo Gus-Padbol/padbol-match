@@ -1166,7 +1166,7 @@ export default function ArmarPartido() {
                     cursor: 'pointer',
                   }}
                 >
-                  <span aria-hidden>👁</span> {t('reservas.verSede')}
+                  {t('reservas.verSede')}
                 </button>
               ) : null}
 

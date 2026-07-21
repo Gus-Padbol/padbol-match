@@ -100,7 +100,7 @@ function horaInicioSlotToMinutes(horaInicio) {
 }
 
 /**
- * Franjas según especificación: 🌅 08:00–12:59, ☀️ 13:00–17:59, 🌙 18:00–23:59.
+ * Franjas según especificación: mañana 08:00–12:59, tarde 13:00–17:59, noche 18:00–23:59.
  * Horas fuera de 08–24 se asignan a la franja más cercana para no perder chips.
  */
 function slotFranjaKey(horaInicio) {
@@ -353,27 +353,27 @@ function chatUiStrings(loc, tr) {
       leerVozAlta: 'Read replies aloud',
       escucharUltimaIos: 'Play last reply (iOS / Safari)',
       hintIosSafari: 'On iPhone or iPad, audio may need an extra tap after the reply loads.',
-      ttsDetener: '⏹ Stop',
+      ttsDetener: 'Stop',
       errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
       errVoiceStart: 'Could not start speech recognition.',
       slotsDisponiblesTitulo: 'Free slots (tap to book):',
       deportesElegirTitulo: 'Sports at this club (tap one):',
       deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
-      franjaManana: '🌅 Morning',
-      franjaTarde: '☀️ Afternoon',
-      franjaNoche: '🌙 Evening',
+      franjaManana: 'Morning',
+      franjaTarde: 'Afternoon',
+      franjaNoche: 'Evening',
       welcomeAssistant: (firstName) => {
         const n = capitalizeName(firstName);
-        const lead = n ? `Hi ${n} 👋` : 'Hi 👋';
+        const lead = n ? `Hi ${n}.` : 'Hi.';
         return `${lead} I'm Chivi, your Padbol Match assistant. I can help you book a court, find a game nearby, or check tournaments. What do you need?`;
       },
       welcomeDeportesHint:
-        'By the way, if you tell me which sports you play I can help you better 🎯',
+        'By the way, if you tell me which sports you play I can help you better.',
       quickSuggestions: [
-        { label: "See today's court times ⚽" },
-        { label: 'Find a game nearby 🔍', to: '/jugar/buscar' },
-        { label: 'Available tournaments 🏆', to: '/competir' },
-        { label: 'Book a court 📅' },
+        { label: "See today's court times" },
+        { label: 'Find a game nearby', to: '/jugar/buscar' },
+        { label: 'Available tournaments', to: '/competir' },
+        { label: 'Book a court' },
       ],
     };
   }
@@ -408,27 +408,27 @@ function chatUiStrings(loc, tr) {
       leerVozAlta: 'Ler respostas em voz alta',
       escucharUltimaIos: 'Ouvir última resposta (iOS / Safari)',
       hintIosSafari: 'No iPhone ou iPad, o áudio pode exigir um toque extra após carregar a resposta.',
-      ttsDetener: '⏹ Parar',
+      ttsDetener: 'Parar',
       errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
       errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
       slotsDisponiblesTitulo: 'Horários livres (toque para reservar):',
       deportesElegirTitulo: 'Esportes neste clube (toque em um):',
       deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
-      franjaManana: '🌅 Manhã',
-      franjaTarde: '☀️ Tarde',
-      franjaNoche: '🌙 Noite',
+      franjaManana: 'Manhã',
+      franjaTarde: 'Tarde',
+      franjaNoche: 'Noite',
       welcomeAssistant: (firstName) => {
         const n = capitalizeName(firstName);
-        const lead = n ? `Olá ${n} 👋` : 'Olá 👋';
+        const lead = n ? `Olá ${n}.` : 'Olá.';
         return `${lead} Sou a Chivi, sua assistente Padbol Match. Posso ajudar a reservar quadra, buscar partida perto ou consultar torneios. O que você precisa?`;
       },
       welcomeDeportesHint:
-        'Ah, e se você me disser quais esportes pratica posso ajudar melhor 🎯',
+        'Ah, e se você me disser quais esportes pratica posso ajudar melhor.',
       quickSuggestions: [
-        { label: 'Ver horários hoje ⚽' },
-        { label: 'Buscar partida perto 🔍', to: '/jugar/buscar' },
-        { label: 'Torneios disponíveis 🏆', to: '/competir' },
-        { label: 'Reservar quadra 📅' },
+        { label: 'Ver horários hoje' },
+        { label: 'Buscar partida perto', to: '/jugar/buscar' },
+        { label: 'Torneios disponíveis', to: '/competir' },
+        { label: 'Reservar quadra' },
       ],
     };
   }
@@ -462,27 +462,27 @@ function chatUiStrings(loc, tr) {
     leerVozAlta: 'Leer respuestas en voz alta',
     escucharUltimaIos: 'Escuchar última respuesta (iOS / Safari)',
     hintIosSafari: 'En iPhone o iPad el audio puede requerir un toque explícito después de cargar la respuesta.',
-    ttsDetener: '⏹ Detener',
+    ttsDetener: 'Detener',
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
     slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
     deportesElegirTitulo: 'Deportes en esta sede (toca uno):',
     deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
-    franjaManana: '🌅 Mañana',
-    franjaTarde: '☀️ Tarde',
-    franjaNoche: '🌙 Noche',
+    franjaManana: 'Mañana',
+    franjaTarde: 'Tarde',
+    franjaNoche: 'Noche',
     welcomeAssistant: (firstName) => {
       const n = capitalizeName(firstName);
-      const lead = n ? `Hola ${n} 👋` : 'Hola 👋';
+      const lead = n ? `Hola ${n}.` : 'Hola.';
       return `${lead} Soy Chivi, tu asistente de Padbol Match. Puedo ayudarte a reservar cancha, buscar partido o consultar torneos. ¿Qué necesitas?`;
     },
     welcomeDeportesHint:
-      'Por cierto, si me cuentas qué deportes practicas te puedo ayudar mejor 🎯',
+      'Por cierto, si me cuentas qué deportes practicas te puedo ayudar mejor.',
     quickSuggestions: [
-      { label: 'Ver horarios hoy ⚽' },
-      { label: 'Buscar partido cerca 🔍', to: '/jugar/buscar' },
-      { label: 'Torneos disponibles 🏆', to: '/competir' },
-      { label: 'Reservar cancha 📅' },
+      { label: 'Ver horarios hoy' },
+      { label: 'Buscar partido cerca', to: '/jugar/buscar' },
+      { label: 'Torneos disponibles', to: '/competir' },
+      { label: 'Reservar cancha' },
     ],
   };
 }
