@@ -1,16 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import PadbolBrandLogo from '../../../components/PadbolBrandLogo';
 import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { SectionIntro, usePublicSiteText } from './SectionElements';
 
 export default function DownloadSection() {
   const config = PUBLIC_SITE_SECTIONS.download;
   const text = usePublicSiteText();
+
   return (
     <section id={config.id} className="ps-section ps-section--download" aria-labelledby="ps-download-title">
       <div className="public-site__shell ps-download">
+        <PadbolBrandLogo
+          variant="on-dark"
+          className="ps-download__logo"
+          alt={text('publicSite.brandAlt')}
+        />
         <SectionIntro sectionKey="download" titleId="ps-download-title" />
-        <div className="ps-store-list">
+        <div className="ps-store-list" data-ps-reveal>
           {config.stores.map(({ key, url }) => (
             url ? (
               <a className="ps-store" href={url} key={key} rel="noreferrer">

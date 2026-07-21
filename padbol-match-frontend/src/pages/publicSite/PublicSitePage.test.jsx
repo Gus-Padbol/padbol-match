@@ -29,6 +29,9 @@ jest.mock('../../i18n/tSafe', () => {
 jest.mock('../../components/PadbolBrandLogo', () => function Logo({ alt }) {
   return <img alt={alt} />;
 });
+jest.mock('../../components/common/SportIcon', () => function SportIconMock({ deporte }) {
+  return <span data-testid={`sport-icon-${deporte}`} />;
+});
 jest.mock('../../components/LanguageSwitcher', () => function Language() {
   return <button type="button">Idioma</button>;
 });

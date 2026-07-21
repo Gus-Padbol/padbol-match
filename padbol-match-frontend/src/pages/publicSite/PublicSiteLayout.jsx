@@ -22,12 +22,58 @@ function scrollToHash(hash) {
   el.focus({ preventScroll: true });
 }
 
+/** Header transparente al inicio; glass al hacer scroll. */
+function useHeaderScrolled() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        setScrolled(window.scrollY > 24);
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+  return scrolled;
+}
+
+/** Sección activa para el indicador del nav (IntersectionObserver único). */
+function useActiveSection() {
+  const [activeId, setActiveId] = useState(null);
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined;
+    const ids = PUBLIC_SITE_NAV_ITEMS.map(({ href }) => href.replace(/^#/, ''));
+    const targets = ids.map((id) => document.getElementById(id)).filter(Boolean);
+    if (!targets.length) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActiveId(entry.target.id);
+        });
+      },
+      { rootMargin: '-30% 0px -55% 0px' },
+    );
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+  return activeId;
+}
+
 export default function PublicSiteLayout({ children }) {
   const { t } = useTranslation();
   const text = (key) => t(key, ES_FALLBACKS[key] || '');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef(null);
   const firstMenuLinkRef = useRef(null);
+  const scrolled = useHeaderScrolled();
+  const activeSectionId = useActiveSection();
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -49,7 +95,7 @@ export default function PublicSiteLayout({ children }) {
 
   return (
     <div className="public-site">
-      <header className="public-site__nav">
+      <header className={`public-site__nav${scrolled || menuOpen ? ' is-scrolled' : ''}`}>
         <div className="public-site__shell public-site__nav-inner">
           <Link
             to={PUBLIC_SITE_PATH}
@@ -65,17 +111,21 @@ export default function PublicSiteLayout({ children }) {
 
           <nav className="public-site__desktop-nav" aria-label={text('publicSite.nav.aria')}>
             <ul className="public-site__nav-links">
-              {PUBLIC_SITE_NAV_ITEMS.map((item) => (
-                <li key={item.key}>
-                  <a
-                    href={item.href}
-                    className="public-site__nav-link"
-                    onClick={(event) => chooseAnchor(event, item.href)}
-                  >
-                    {text(`publicSite.nav.${item.key}`)}
-                  </a>
-                </li>
-              ))}
+              {PUBLIC_SITE_NAV_ITEMS.map((item) => {
+                const isActive = activeSectionId === item.href.replace(/^#/, '');
+                return (
+                  <li key={item.key}>
+                    <a
+                      href={item.href}
+                      className={`public-site__nav-link${isActive ? ' is-active' : ''}`}
+                      aria-current={isActive ? 'true' : undefined}
+                      onClick={(event) => chooseAnchor(event, item.href)}
+                    >
+                      {text(`publicSite.nav.${item.key}`)}
+                    </a>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
 
@@ -95,7 +145,11 @@ export default function PublicSiteLayout({ children }) {
               aria-label={text(menuOpen ? 'publicSite.nav.close' : 'publicSite.nav.menu')}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              <span aria-hidden>{menuOpen ? '×' : '☰'}</span>
+              <span className={`public-site__menu-icon${menuOpen ? ' is-open' : ''}`} aria-hidden>
+                <i />
+                <i />
+                <i />
+              </span>
             </button>
           </div>
         </div>

@@ -2043,7 +2043,21 @@
       "lead": "Una experiencia simple para el jugador y una herramienta de crecimiento, fidelización y control para cada sede.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
-      "ctaVenue": "Quiero incorporar Padbol Match"
+      "ctaVenue": "Quiero incorporar Padbol Match",
+      "ecosystemAria": "Ecosistema conectado: jugador, partido, sede, marcador, ranking y PadCoins",
+      "ecosystemCore": "Partido",
+      "ecosystemCoreSub": "el centro de todo",
+      "ecosystem": {
+        "player": "Jugador",
+        "venue": "Sede",
+        "scoreboard": "Marcador",
+        "ranking": "Ranking",
+        "padcoins": "PadCoins"
+      }
+    },
+    "sports": {
+      "title": "Una plataforma multideporte",
+      "text": "Padbol es el deporte de origen. La misma plataforma gestiona hoy estos deportes en cada sede."
     },
     "problem": {
       "title": "De lo aislado a lo conectado",
@@ -2082,7 +2096,12 @@
         "arena": { "title": "Arena", "text": "Una experiencia dinámica y social, orientada a la comunidad y la actividad." },
         "quantum": { "title": "Quantum", "text": "La mirada más avanzada, enfocada en datos, evolución y control." }
       },
-      "placeholder": "Espacio preparado para captura real"
+      "placeholder": "Espacio preparado para captura real",
+      "selectorAria": "Elegir experiencia visual",
+      "prev": "Experiencia anterior",
+      "next": "Experiencia siguiente",
+      "demoBadge": "Demostración",
+      "note": "Vista de demostración con datos ficticios. Las cinco experiencias comparten funciones, datos y conexión con cada sede."
     },
     "playerCycle": {
       "title": "Encontrar. Reservar. Jugar. Volver.",
@@ -2117,6 +2136,16 @@
         "communicate": { "title": "Comunicar y volver", "text": "Notificaciones, comunidad y nuevas oportunidades de juego." }
       },
       "example": "2 / 4 jugadores confirmados",
+      "scene": {
+        "matchTitle": "Partido abierto · Padbol",
+        "matchMeta": "Hoy · 20:30 · Cancha 2",
+        "slotsOpen": "2 lugares disponibles",
+        "requestOne": "Solicitud para unirse",
+        "requestTwo": "Nueva solicitud recibida",
+        "confirmed": "Jugador confirmado",
+        "notification": "Notificación enviada al partido",
+        "back": "El partido queda completo y la actividad vuelve a la sede"
+      },
       "closing": "La intención de jugar se convierte en demanda real para la sede."
     },
     "scoreboard": {
@@ -2137,7 +2166,9 @@
         "statistics": { "title": "Estadísticas", "text": "Evolución, rachas y rendimiento" },
         "venue": { "title": "Sede", "text": "Más información para gestionar" }
       },
-      "placeholder": "Espacio preparado para captura o video real"
+      "placeholder": "Espacio preparado para captura o video real",
+      "demoBadge": "Vista de demostración",
+      "demoAria": "Representación del marcador en vivo con datos ficticios"
     },
     "tournaments": {
       "title": "La competencia crea continuidad.",

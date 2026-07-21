@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PublicSiteLayout from './PublicSiteLayout';
+import useRevealOnScroll from './useRevealOnScroll';
 import HeroSection from './sections/HeroSection';
+import SportsStrip from './sections/SportsStrip';
 import ProblemSection from './sections/ProblemSection';
 import EcosystemSection from './sections/EcosystemSection';
 import ExperiencesSection from './sections/ExperiencesSection';
@@ -121,10 +123,14 @@ function usePublicSiteDocumentMeta() {
 
 export default function PublicSitePage() {
   usePublicSiteDocumentMeta();
+  const revealRootRef = useRef(null);
+  useRevealOnScroll(revealRootRef);
 
   return (
     <PublicSiteLayout>
+      <div ref={revealRootRef} className="public-site__reveal-root">
       <HeroSection />
+      <SportsStrip />
       <ProblemSection />
       <EcosystemSection />
       <ExperiencesSection />
@@ -139,6 +145,7 @@ export default function PublicSitePage() {
       <RolloutSection />
       <DownloadSection />
       <ContactSection />
+      </div>
     </PublicSiteLayout>
   );
 }
