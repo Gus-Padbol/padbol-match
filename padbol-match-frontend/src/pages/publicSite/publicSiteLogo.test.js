@@ -38,7 +38,7 @@ describe('logo oficial de la web pública', () => {
   it('Hero se dimensiona por ancho (protagonista) y no por altura del lienzo', () => {
     const rule = css.match(/\.public-site-hero__logo\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
-    expect(rule[0]).toMatch(/width:\s*min\(220px,\s*88vw\)\s*!important/);
+    expect(rule[0]).toMatch(/width:\s*clamp\(210px,\s*58vw,\s*260px\)\s*!important/);
     expect(rule[0]).toMatch(/height:\s*auto\s*!important/);
     expect(rule[0]).toMatch(/object-fit:\s*contain/);
     /* Sin márgenes negativos que compensaban el padding negro. */

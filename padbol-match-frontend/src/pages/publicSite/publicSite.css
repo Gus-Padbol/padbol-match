@@ -331,7 +331,7 @@ html.public-site-active #root {
   flex-direction: column;
   justify-content: center;
   min-height: calc(100dvh - 76px);
-  padding: 40px 0 72px;
+  padding: clamp(28px, 4vw, 48px) 0 clamp(48px, 6vw, 72px);
   overflow: hidden;
   isolation: isolate;
 }
@@ -347,35 +347,37 @@ html.public-site-active #root {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
   background-size: 72px 72px;
-  mask-image: radial-gradient(1100px 600px at 65% 35%, rgba(0, 0, 0, 0.9), transparent 75%);
-  -webkit-mask-image: radial-gradient(1100px 600px at 65% 35%, rgba(0, 0, 0, 0.9), transparent 75%);
+  /* Grilla acotada al cuadrante del globo: no cruza el copy ni los CTAs. */
+  mask-image: radial-gradient(720px 520px at 88% 42%, rgba(0, 0, 0, 0.75), transparent 72%);
+  -webkit-mask-image: radial-gradient(720px 520px at 88% 42%, rgba(0, 0, 0, 0.75), transparent 72%);
 }
 
 .public-site-hero__glow {
   position: absolute;
   border-radius: 50%;
   filter: blur(90px);
-  opacity: 0.55;
+  opacity: 0.5;
   animation: ps-glow-drift 16s ease-in-out infinite alternate;
 }
 
 .public-site-hero__glow--red {
-  width: 620px;
-  height: 460px;
-  top: -140px;
-  right: -120px;
-  background: radial-gradient(closest-side, rgba(225, 27, 34, 0.5), transparent);
+  width: 560px;
+  height: 420px;
+  top: -120px;
+  right: -100px;
+  background: radial-gradient(closest-side, rgba(225, 27, 34, 0.45), transparent);
 }
 
 .public-site-hero__glow--blue {
-  width: 520px;
-  height: 420px;
-  bottom: -160px;
-  left: -160px;
-  background: radial-gradient(closest-side, rgba(56, 189, 248, 0.22), transparent);
+  width: 420px;
+  height: 360px;
+  bottom: -140px;
+  right: 8%;
+  left: auto;
+  background: radial-gradient(closest-side, rgba(56, 189, 248, 0.18), transparent);
   animation-delay: -8s;
 }
 
@@ -388,29 +390,41 @@ html.public-site-active #root {
   }
 }
 
+/*
+ * Línea decorativa solo en la mitad derecha (detrás del globo), para que
+ * no atraviese título, párrafo ni botones.
+ */
 .public-site-hero__court-line {
   position: absolute;
-  left: 50%;
-  top: 58%;
-  width: 140vw;
+  left: 52%;
+  right: -8%;
+  top: 62%;
+  width: auto;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(225, 27, 34, 0.5), transparent);
-  transform: translateX(-50%) rotate(-7deg);
+  background: linear-gradient(90deg, transparent, rgba(225, 27, 34, 0.45), transparent);
+  transform: rotate(-8deg);
+  transform-origin: left center;
 }
 
 .public-site-hero__grid {
   display: grid;
-  gap: 44px;
+  gap: 36px;
   align-items: center;
+  width: 100%;
 }
 
+/* Bloque izquierdo: una sola columna visual alineada a la izquierda. */
 .public-site-hero__copy {
-  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 640px;
+  min-width: 0;
 }
 
 .public-site-hero__eyebrow {
-  margin: 0 0 4px;
-  color: var(--ps-text-muted);
+  margin: 0 0 10px;
+  color: var(--ps-text-2);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -418,61 +432,69 @@ html.public-site-active #root {
 }
 
 /*
- * Hero: protagonista (~180–240 móvil, ~260–340 desktop). Ancho real =
- * ancho visual gracias al asset tight; sin márgenes negativos ni
- * espacio negro sobrante alrededor.
+ * Logo protagonista alineado al borde izquierdo del título.
+ * Móvil 210–260 · tablet/desktop vía media queries.
  */
 .public-site-hero__logo {
   display: block !important;
-  width: min(220px, 88vw) !important;
+  width: clamp(210px, 58vw, 260px) !important;
   height: auto !important;
   max-width: 100% !important;
   max-height: none !important;
-  margin: 0 0 14px !important;
+  margin: 0 0 18px !important;
   object-fit: contain !important;
   background: transparent !important;
   filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45));
 }
 
+/*
+ * Título: ancho controlado (~28ch) para 3–4 líneas en desktop, no pirámide.
+ */
 .public-site-hero__title {
-  margin: 0 0 16px;
-  font-size: clamp(2rem, 5vw, 3.6rem);
+  margin: 0 0 12px;
+  font-size: clamp(1.85rem, 3.4vw + 0.6rem, 3.15rem);
   font-weight: 900;
-  letter-spacing: -0.035em;
-  line-height: 1.06;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
   color: var(--ps-text);
-  max-width: 18ch;
+  max-width: 28ch;
+  text-wrap: balance;
 }
 
+/* Descriptor integrado justo bajo el título, mismo eje izquierdo. */
 .public-site-hero__pillars {
   display: inline-flex;
-  margin: 0 0 18px;
-  padding: 7px 14px;
+  margin: 0 0 14px;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(225, 27, 34, 0.4);
+  border: 1px solid rgba(225, 27, 34, 0.45);
   background: var(--ps-accent-soft);
   color: #fda4a8;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .public-site-hero__lead {
-  margin: 0 0 30px;
-  max-width: 48ch;
-  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  margin: 0 0 22px;
+  max-width: 42ch;
+  font-size: clamp(0.98rem, 1.2vw + 0.7rem, 1.1rem);
   font-weight: 500;
-  line-height: 1.65;
-  color: var(--ps-text-muted);
+  line-height: 1.55;
+  color: var(--ps-text-2);
 }
 
+/*
+ * CTAs como grupo: en móvil apilados; desde tablet, dos arriba +
+ * “Quiero incorporar…” a ancho completo debajo.
+ */
 .public-site-hero__ctas {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 12px;
   width: 100%;
-  max-width: 440px;
+  max-width: 520px;
 }
 
 .public-site-hero__cta {
@@ -535,9 +557,10 @@ html.public-site-active #root {
   display: block;
   aspect-ratio: 1;
   width: 100%;
-  /* Móvil: debajo del texto, 280–340 px sin tocar bordes. */
+  /* Móvil: debajo del copy, 280–340 px, centrado en el eje de la columna. */
   max-width: min(320px, 88vw);
-  margin: 10px auto 0;
+  margin: 4px auto 0;
+  justify-self: center;
 }
 
 .public-site-hero__globe {
@@ -2634,28 +2657,30 @@ html.public-site-active #root {
 
 @media (min-width: 768px) {
   .public-site-hero {
-    padding: 56px 0 88px;
+    padding: 48px 0 72px;
   }
 
-  /* Tablet: globo intermedio. */
+  /* Tablet: logo 260–320 · globo intermedio · CTAs en dos filas. */
   .public-site-hero__ecosystem {
-    max-width: 400px;
+    max-width: clamp(320px, 48vw, 400px);
   }
 
   .public-site-hero__logo {
-    width: min(280px, 100%) !important;
+    width: clamp(260px, 36vw, 320px) !important;
   }
 
   .public-site-hero__ctas {
-    flex-direction: row;
-    flex-wrap: wrap;
-    max-width: none;
+    grid-template-columns: 1fr 1fr;
+    max-width: 520px;
   }
 
   .public-site-hero__cta {
-    width: auto;
-    min-width: 210px;
-    flex: 0 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .public-site-hero__cta--tertiary {
+    grid-column: 1 / -1;
   }
 
   .ps-sports__inner {
@@ -2771,13 +2796,14 @@ html.public-site-active #root {
   }
 
   .public-site-hero__grid {
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    gap: 56px;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(36px, 4vw, 64px);
+    align-items: center;
   }
 
-  /* Desktop: globo entre 440 y 560 px según viewport, centrado en su columna. */
+  /* Desktop: globo 430–520 px, centrado verticalmente con el copy. */
   .public-site-hero__ecosystem {
-    max-width: clamp(440px, 38vw, 560px);
+    max-width: clamp(430px, 34vw, 520px);
     margin: 0 auto;
   }
 
@@ -2806,8 +2832,9 @@ html.public-site-active #root {
     width: clamp(300px, 24vw, 340px);
   }
 
+  /* Desktop: logo 320–380 px, alineado al título. */
   .public-site-hero__logo {
-    width: min(300px, 100%) !important;
+    width: clamp(320px, 26vw, 380px) !important;
   }
 
   .ps-download__logo {
@@ -2843,7 +2870,7 @@ html.public-site-active #root {
   }
 
   .public-site-hero__logo {
-    width: min(180px, 90vw) !important;
+    width: clamp(210px, 66vw, 240px) !important;
   }
 
   .ps-community-scene__slots span {
