@@ -264,68 +264,75 @@ export default function ExperiencesSection() {
         '--exp-bg': active.background,
       }}
     >
-      <div className="public-site__shell">
-        <SectionIntro sectionKey="experiences" titleId="ps-experiences-title" />
+      {/* Dos columnas en desktop: bloque de contenido (intro + selector +
+          copy activo) a la izquierda y dispositivo a la derecha, centrados
+          entre sí. En móvil apila: selector, copy, teléfono, nota. */}
+      <div className="public-site__shell ps-exp-layout">
+        <div className="ps-exp-main">
+          <SectionIntro sectionKey="experiences" titleId="ps-experiences-title" />
 
-        <div
-          ref={tablistRef}
-          className="ps-exp-tabs"
-          role="tablist"
-          aria-label={text('publicSite.experiences.selectorAria')}
-        >
-          {PUBLIC_SITE_EXPERIENCE_IDS.map((id) => (
-            <button
-              key={id}
-              id={`ps-exp-tab-${id}`}
-              type="button"
-              role="tab"
-              aria-selected={id === activeId}
-              aria-controls={`ps-exp-panel-${id}`}
-              tabIndex={id === activeId ? 0 : -1}
-              className={`ps-exp-tab${id === activeId ? ' is-active' : ''}`}
-              style={{ '--exp-tab-accent': PUBLIC_SITE_EXPERIENCES[id].accent }}
-              onClick={() => select(id)}
-              onKeyDown={onTabKeyDown}
-            >
-              <span className="ps-exp-tab__dot" aria-hidden="true" />
-              {PUBLIC_SITE_EXPERIENCES[id].name}
-            </button>
-          ))}
-        </div>
-
-        <div
-          id={`ps-exp-panel-${activeId}`}
-          className="ps-exp-stage"
-          role="tabpanel"
-          aria-labelledby={`ps-exp-tab-${activeId}`}
-        >
-          <div className="ps-exp-stage__copy" data-ps-reveal>
-            <p className="ps-exp-stage__index" aria-hidden="true">
-              {String(activeIndex + 1).padStart(2, '0')} / 05
-            </p>
-            <h3>{active.name}</h3>
-            <p>{text(`publicSite.experiences.items.${activeId}.text`)}</p>
-
-            <div className="ps-exp-stage__controls">
+          <div
+            ref={tablistRef}
+            className="ps-exp-tabs"
+            role="tablist"
+            aria-label={text('publicSite.experiences.selectorAria')}
+          >
+            {PUBLIC_SITE_EXPERIENCE_IDS.map((id) => (
               <button
+                key={id}
+                id={`ps-exp-tab-${id}`}
                 type="button"
-                className="ps-exp-arrow"
-                aria-label={text('publicSite.experiences.prev')}
-                onClick={() => step(-1)}
+                role="tab"
+                aria-selected={id === activeId}
+                aria-controls={`ps-exp-panel-${id}`}
+                tabIndex={id === activeId ? 0 : -1}
+                className={`ps-exp-tab${id === activeId ? ' is-active' : ''}`}
+                style={{ '--exp-tab-accent': PUBLIC_SITE_EXPERIENCES[id].accent }}
+                onClick={() => select(id)}
+                onKeyDown={onTabKeyDown}
               >
-                ‹
+                <span className="ps-exp-tab__dot" aria-hidden="true" />
+                {PUBLIC_SITE_EXPERIENCES[id].name}
               </button>
-              <button
-                type="button"
-                className="ps-exp-arrow"
-                aria-label={text('publicSite.experiences.next')}
-                onClick={() => step(1)}
-              >
-                ›
-              </button>
-            </div>
+            ))}
           </div>
 
+          <div
+            id={`ps-exp-panel-${activeId}`}
+            className="ps-exp-stage"
+            role="tabpanel"
+            aria-labelledby={`ps-exp-tab-${activeId}`}
+          >
+            <div className="ps-exp-stage__copy" data-ps-reveal>
+              <p className="ps-exp-stage__index" aria-hidden="true">
+                {String(activeIndex + 1).padStart(2, '0')} / 05
+              </p>
+              <h3>{active.name}</h3>
+              <p>{text(`publicSite.experiences.items.${activeId}.text`)}</p>
+
+              <div className="ps-exp-stage__controls">
+                <button
+                  type="button"
+                  className="ps-exp-arrow"
+                  aria-label={text('publicSite.experiences.prev')}
+                  onClick={() => step(-1)}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="ps-exp-arrow"
+                  aria-label={text('publicSite.experiences.next')}
+                  onClick={() => step(1)}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="ps-exp-device">
           <ExperiencePhonePreview
             experience={active}
             demoLabel={text('publicSite.experiences.demoBadge')}
