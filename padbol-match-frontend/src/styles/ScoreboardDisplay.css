@@ -214,35 +214,61 @@
 }
 
 .sb-team-name-block {
+  /* Zona fija idéntica en ambos paneles: 2 líneas de nombre + meta (jersey) */
+  --sb-team-name-fs: 2.88vw;
+  --sb-team-name-lh: 1.05;
+  --sb-team-name-h: calc(2 * var(--sb-team-name-fs) * var(--sb-team-name-lh));
+  --sb-team-meta-h: 16px;
+  --sb-team-name-gap: 0.5rem;
+  --sb-team-serve-gutter: 1.75rem;
+  --sb-team-header-h: calc(var(--sb-team-name-h) + var(--sb-team-name-gap) + var(--sb-team-meta-h));
+
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.5rem;
+  justify-content: flex-start;
+  gap: var(--sb-team-name-gap);
   margin-top: 0;
   margin-bottom: 4vh;
   min-width: 0;
   width: 100%;
+  flex-shrink: 0;
+  height: var(--sb-team-header-h);
+  min-height: var(--sb-team-header-h);
+  max-height: var(--sb-team-header-h);
+  box-sizing: border-box;
+  /* Gutter simétrico para el LED (ambos equipos), sin que el punto entre en el flujo */
+  padding-left: var(--sb-team-serve-gutter);
 }
 
 .sb-team-name-meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 16px;
+  height: var(--sb-team-meta-h);
+  min-height: var(--sb-team-meta-h);
+  max-height: var(--sb-team-meta-h);
+  flex-shrink: 0;
 }
 
 .sb-panel--left .sb-team-name-block,
 .sb-panel--right .sb-team-name-block {
   margin-left: 0;
-  padding-left: 0;
 }
 
 .sb-team-serve-dot {
+  position: absolute;
+  left: 0;
+  /* Centrado verticalmente en la zona de nombre (no en jersey / meta) */
+  top: calc((var(--sb-team-name-h) - 16px) / 2);
   width: 16px;
   height: 16px;
   background: #00ff88;
   border-radius: 50%;
   flex-shrink: 0;
+  pointer-events: none;
+  z-index: 2;
   box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0, 255, 136, 0.6);
   animation: sb-serve-dot-pulse 1.2s ease-in-out infinite;
 }
@@ -260,14 +286,26 @@
 
 .sb-panel .sb-team-name {
   font-family: var(--sb-font-condensed);
-  font-size: 2.88vw;
+  font-size: var(--sb-team-name-fs);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   text-align: left;
   margin: 0;
-  line-height: 1.05;
+  line-height: var(--sb-team-name-lh);
   color: #ffffff;
+  width: 100%;
+  min-width: 0;
+  height: var(--sb-team-name-h);
+  min-height: var(--sb-team-name-h);
+  max-height: var(--sb-team-name-h);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .sb-panel--right .sb-team-name {

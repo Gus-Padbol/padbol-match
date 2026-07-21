@@ -228,9 +228,10 @@ function TournamentBrand({ torneoNombre, logoTorneoUrl }) {
 function TeamNameRow({ name, serving, color1, color2 }) {
   return (
     <div className="sb-team-name-block">
+      {/* LED fuera del flujo vertical: no empuja título ni jugadores */}
+      {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
       <h1 className="sb-team-name">{name}</h1>
       <div className="sb-team-name-meta">
-        {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
         <UniformJerseyStrip color1={color1} color2={color2} size="tv" />
       </div>
     </div>
