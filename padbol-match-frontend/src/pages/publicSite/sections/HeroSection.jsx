@@ -11,6 +11,8 @@ function scrollToHash(hash) {
   if (!el) return;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+  el.focus({ preventScroll: true });
 }
 
 export default function HeroSection() {
