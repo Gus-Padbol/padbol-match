@@ -15,6 +15,8 @@ html.public-site-active {
   --ps-text: #f8fafc;
   --ps-text-2: #cbd5e1;
   --ps-text-muted: #8e9bb0;
+  --ps-heading: var(--ps-text);
+  --ps-heading-muted: var(--ps-text-2);
   --ps-accent: #e11b22;
   --ps-accent-soft: rgba(225, 27, 34, 0.14);
   --ps-accent-hover: #f43f4a;
@@ -45,6 +47,21 @@ html.public-site-active #root {
 .public-site *::before,
 .public-site *::after {
   box-sizing: border-box;
+}
+
+/*
+ * Blindaje de contraste: App.css define h1/h2/h3 { color: #1a1a1a } a nivel
+ * global y cualquier título de la web pública sin color propio lo hereda
+ * (texto casi negro sobre fondo oscuro). Este scope garantiza titulares
+ * legibles; las reglas más específicas (acentos por sección) siguen ganando.
+ */
+.public-site h1,
+.public-site h2,
+.public-site h3,
+.public-site h4,
+.public-site h5,
+.public-site h6 {
+  color: var(--ps-heading);
 }
 
 .public-site__shell {
@@ -917,6 +934,11 @@ html.public-site-active #root {
 /* ═══ Experiencias ═══ */
 
 .ps-section--experiences {
+  /*
+   * Variante legible del acento activo: aclarado con blanco para asegurar
+   * contraste AA sobre --ps-bg-2 sin perder la identidad de la experiencia.
+   */
+  --ps-accent-readable: color-mix(in srgb, var(--exp-accent, var(--ps-accent)) 60%, #fff);
   background:
     radial-gradient(900px 460px at 80% 10%, color-mix(in srgb, var(--exp-accent, #e11b22) 12%, transparent), transparent 65%),
     var(--ps-bg-2);
@@ -974,11 +996,19 @@ html.public-site-active #root {
   letter-spacing: 0.14em;
 }
 
+/*
+ * Nombre de la experiencia activa: conserva el color de marca pero en una
+ * variante luminosa (60% acento + 40% blanco) que garantiza AA sobre el
+ * fondo oscuro con las cinco paletas (mínimo 6.7:1). Si color-mix no está
+ * soportado, la primera declaración deja el fallback blanco.
+ */
 .ps-exp-stage__copy h3 {
   margin: 0 0 12px;
   font-size: clamp(1.7rem, 3.4vw, 2.6rem);
   font-weight: 900;
   letter-spacing: -0.02em;
+  color: var(--ps-heading);
+  color: var(--ps-accent-readable, var(--ps-heading));
 }
 
 .ps-exp-stage__copy > p {
