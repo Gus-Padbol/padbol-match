@@ -26,7 +26,7 @@ export default function PublicSiteFooter() {
         <div className="public-site-footer__top">
           <div className="public-site-footer__brand">
             <PadbolBrandLogo
-              variant="on-dark"
+              variant="on-dark-tight"
               className="public-site-footer__logo"
               alt={text('publicSite.brandAlt')}
             />

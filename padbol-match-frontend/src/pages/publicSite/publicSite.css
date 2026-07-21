@@ -132,11 +132,19 @@ html.public-site-active #root {
   border-radius: 10px;
 }
 
+/*
+ * Header: asset tight (~4:1). Se dimensiona por ancho para que el arte
+ * ocupe todo el box (sin el bloque negro del PNG cuadrado original).
+ */
 .public-site__brand-logo {
-  height: 44px !important;
-  width: auto !important;
-  max-width: min(190px, 44vw) !important;
+  display: block !important;
+  width: min(140px, 42vw) !important;
+  height: auto !important;
+  max-width: 160px !important;
+  max-height: none !important;
   margin: 0 !important;
+  object-fit: contain !important;
+  background: transparent !important;
 }
 
 .public-site__desktop-nav {
@@ -409,13 +417,21 @@ html.public-site-active #root {
   text-transform: uppercase;
 }
 
+/*
+ * Hero: protagonista (~180–240 móvil, ~260–340 desktop). Ancho real =
+ * ancho visual gracias al asset tight; sin márgenes negativos ni
+ * espacio negro sobrante alrededor.
+ */
 .public-site-hero__logo {
-  display: block;
-  height: 160px !important;
-  width: auto !important;
-  max-width: min(380px, 100%) !important;
-  margin: -24px 0 6px -6px !important;
-  filter: drop-shadow(0 14px 44px rgba(0, 0, 0, 0.55));
+  display: block !important;
+  width: min(220px, 88vw) !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  margin: 0 0 14px !important;
+  object-fit: contain !important;
+  background: transparent !important;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45));
 }
 
 .public-site-hero__title {
@@ -2258,11 +2274,15 @@ html.public-site-active #root {
 }
 
 .ps-download__logo {
-  height: 120px !important;
-  width: auto !important;
-  max-width: min(320px, 90%) !important;
-  margin: -20px auto 8px !important;
-  filter: drop-shadow(0 12px 36px rgba(0, 0, 0, 0.5));
+  display: block !important;
+  width: min(260px, 80%) !important;
+  height: auto !important;
+  max-width: 320px !important;
+  max-height: none !important;
+  margin: 0 auto 16px !important;
+  object-fit: contain !important;
+  background: transparent !important;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45));
 }
 
 .ps-store-list,
@@ -2391,10 +2411,14 @@ html.public-site-active #root {
 }
 
 .public-site-footer__logo {
-  width: auto !important;
-  height: 76px !important;
-  max-width: 250px !important;
-  margin: -12px 0 4px !important;
+  display: block !important;
+  width: min(180px, 70%) !important;
+  height: auto !important;
+  max-width: 200px !important;
+  max-height: none !important;
+  margin: 0 0 10px !important;
+  object-fit: contain !important;
+  background: transparent !important;
 }
 
 .public-site-footer__brand strong {
@@ -2465,6 +2489,10 @@ html.public-site-active #root {
 @media (min-width: 768px) {
   .public-site-hero {
     padding: 56px 0 88px;
+  }
+
+  .public-site-hero__logo {
+    width: min(280px, 100%) !important;
   }
 
   .public-site-hero__ctas {
@@ -2599,15 +2627,17 @@ html.public-site-active #root {
     display: block;
   }
 
+  .public-site__brand-logo {
+    width: 170px !important;
+    max-width: 200px !important;
+  }
+
   .public-site-hero__logo {
-    height: 210px !important;
-    max-width: 480px !important;
-    margin-top: -34px !important;
+    width: min(300px, 100%) !important;
   }
 
   .ps-download__logo {
-    height: 150px !important;
-    max-width: 400px !important;
+    width: min(300px, 70%) !important;
   }
 }
 
@@ -2634,11 +2664,12 @@ html.public-site-active #root {
   }
 
   .public-site__brand-logo {
-    max-width: 118px !important;
+    width: 120px !important;
+    max-width: 120px !important;
   }
 
   .public-site-hero__logo {
-    height: 128px !important;
+    width: min(180px, 90vw) !important;
   }
 
   .ps-community-scene__slots span {

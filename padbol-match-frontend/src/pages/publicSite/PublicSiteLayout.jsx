@@ -103,7 +103,7 @@ export default function PublicSiteLayout({ children }) {
             aria-label={text('publicSite.brandAlt')}
           >
             <PadbolBrandLogo
-              variant="on-dark"
+              variant="on-dark-tight"
               className="public-site__brand-logo"
               alt={text('publicSite.brandAlt')}
             />

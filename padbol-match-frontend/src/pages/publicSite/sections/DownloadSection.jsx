@@ -12,7 +12,7 @@ export default function DownloadSection() {
     <section id={config.id} className="ps-section ps-section--download" aria-labelledby="ps-download-title">
       <div className="public-site__shell ps-download">
         <PadbolBrandLogo
-          variant="on-dark"
+          variant="on-dark-tight"
           className="ps-download__logo"
           alt={text('publicSite.brandAlt')}
         />

@@ -41,7 +41,7 @@ export default function HeroSection() {
         <div className="public-site-hero__copy" data-ps-reveal>
           <p className="public-site-hero__eyebrow">{text('publicSite.hero.eyebrow')}</p>
           <PadbolBrandLogo
-            variant="on-dark"
+            variant="on-dark-tight"
             className="public-site-hero__logo"
             alt={text('publicSite.brandAlt')}
           />
