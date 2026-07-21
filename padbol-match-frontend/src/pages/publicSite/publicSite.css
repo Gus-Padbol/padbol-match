@@ -555,12 +555,21 @@ html.public-site-active #root {
 .public-site-hero__ecosystem {
   position: relative;
   display: block;
-  aspect-ratio: 1;
   width: 100%;
-  /* Móvil: debajo del copy, 280–340 px, centrado en el eje de la columna. */
-  max-width: min(320px, 88vw);
+  /* Contenedor más ancho que la esfera para labels exteriores. */
+  max-width: min(360px, 94vw);
   margin: 4px auto 0;
   justify-self: center;
+  aspect-ratio: auto;
+  min-height: 0;
+  padding: 34px 42px 40px;
+}
+
+.public-site-hero__globe-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 0 auto;
 }
 
 .public-site-hero__globe {
@@ -571,122 +580,118 @@ html.public-site-active #root {
 
 .public-site-hero__globe-halo {
   fill: none;
-  stroke: rgba(56, 189, 248, 0.16);
-  stroke-width: 1;
-  filter: drop-shadow(0 0 30px rgba(225, 27, 34, 0.25));
+  stroke: rgba(56, 189, 248, 0.18);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 28px rgba(225, 27, 34, 0.22));
 }
 
-/* Grilla (meridianos/paralelos) con rotación lentísima y discreta. */
-.public-site-hero__globe-grid {
-  transform-origin: 240px 240px;
-  animation: ps-globe-spin 360s linear infinite;
-}
-
+/* Meridianos/paralelos fijos: profundidad esférica, no grilla protagonista. */
 .public-site-hero__globe-grid ellipse {
   fill: none;
-  stroke: rgba(148, 163, 184, 0.2);
+  stroke: rgba(148, 163, 184, 0.12);
   stroke-width: 1;
 }
 
-@keyframes ps-globe-spin {
-  to { transform: rotate(360deg); }
+/*
+ * Rotación del mapa (traslación horizontal del panel duplicado = 480 px).
+ * Ciclo ~60 s: perceptible y elegante, sin mareo.
+ */
+.public-site-hero__globe-spin {
+  animation: ps-globe-rotate 60s linear infinite;
 }
 
-/* Continentes sugeridos: masas abstractas de puntos con brillo leve. */
-.public-site-hero__globe-land circle {
-  fill: rgba(148, 163, 184, 0.42);
+@keyframes ps-globe-rotate {
+  from { transform: translateX(0); }
+  to { transform: translateX(-480px); }
 }
 
-.public-site-hero__globe-land {
-  animation: ps-globe-land 9s ease-in-out infinite alternate;
+/* Continentes: siluetas reconocibles, tono tecnológico (no mapa escolar). */
+.public-site-hero__globe-land path {
+  fill: rgba(148, 174, 210, 0.38);
+  stroke: rgba(186, 210, 240, 0.35);
+  stroke-width: 1;
 }
 
-@keyframes ps-globe-land {
-  from { opacity: 0.75; }
-  to { opacity: 1; }
-}
-
-/* Arcos de conexión: se iluminan por turnos con un pulso que recorre
-   el trazo (dasharray) desde el núcleo hacia cada región. */
-.public-site-hero__globe-arcs path {
+/* Red: líneas finas continuas + pulsos que recorren el trazo. */
+.public-site-hero__globe-arcs .is-base {
   fill: none;
-  stroke: color-mix(in srgb, var(--ps-accent) 70%, #fff);
-  stroke-width: 1.7;
+  stroke: rgba(225, 27, 34, 0.28);
+  stroke-width: 1.05;
   stroke-linecap: round;
-  stroke-dasharray: 30 320;
-  stroke-dashoffset: 350;
-  opacity: 0;
-  animation: ps-globe-arc 9.8s linear infinite;
 }
 
-.public-site-hero__globe-arcs .is-a2 { animation-delay: -1.4s; }
-.public-site-hero__globe-arcs .is-a3 { animation-delay: -2.8s; }
-.public-site-hero__globe-arcs .is-a4 { animation-delay: -4.2s; }
-.public-site-hero__globe-arcs .is-a5 { animation-delay: -5.6s; }
-.public-site-hero__globe-arcs .is-a6 { animation-delay: -7s; stroke: rgba(56, 189, 248, 0.75); }
-.public-site-hero__globe-arcs .is-a7 { animation-delay: -8.4s; stroke: rgba(56, 189, 248, 0.75); }
-
-@keyframes ps-globe-arc {
-  0% { stroke-dashoffset: 350; opacity: 0; }
-  6% { opacity: 0.9; }
-  40% { stroke-dashoffset: 0; opacity: 0.9; }
-  52% { stroke-dashoffset: 0; opacity: 0; }
-  100% { stroke-dashoffset: 0; opacity: 0; }
+.public-site-hero__globe-arcs .is-pulse {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 14 220;
+  stroke-dashoffset: 240;
+  opacity: 0.95;
+  animation: ps-globe-light 5.6s linear infinite;
 }
 
-/* Nodos luminosos que respiran. */
-.public-site-hero__globe-nodes circle {
-  fill: #f8fafc;
-  stroke: rgba(225, 27, 34, 0.6);
-  stroke-width: 2;
+.public-site-hero__globe-arcs .is-pulse--red { stroke: #ff6b6f; }
+.public-site-hero__globe-arcs .is-pulse--blue { stroke: #7dd3fc; }
+.public-site-hero__globe-arcs .is-pulse--white { stroke: #f8fafc; }
+
+@keyframes ps-globe-light {
+  from { stroke-dashoffset: 240; }
+  to { stroke-dashoffset: 0; }
+}
+
+.public-site-hero__globe-hubs circle {
+  fill: #e8eef8;
+  stroke: rgba(225, 27, 34, 0.55);
+  stroke-width: 1;
   transform-box: fill-box;
   transform-origin: center;
-  animation: ps-globe-breathe 4.6s ease-in-out infinite;
+  animation: ps-globe-breathe 4.8s ease-in-out infinite;
 }
 
-.public-site-hero__globe-nodes circle:nth-of-type(2) { animation-delay: -0.8s; }
-.public-site-hero__globe-nodes circle:nth-of-type(3) { animation-delay: -1.6s; }
-.public-site-hero__globe-nodes circle:nth-of-type(4) { animation-delay: -2.4s; }
-.public-site-hero__globe-nodes circle:nth-of-type(5) { animation-delay: -3.2s; }
-.public-site-hero__globe-nodes circle:nth-of-type(6) { animation-delay: -4s; }
-
-.public-site-hero__globe-nodes .is-core {
-  fill: var(--ps-accent);
-  stroke: rgba(255, 255, 255, 0.85);
-  filter: drop-shadow(0 0 14px rgba(225, 27, 34, 0.85));
+.public-site-hero__globe-hubs .is-major {
+  fill: #fff;
+  stroke: rgba(225, 27, 34, 0.85);
+  stroke-width: 1.4;
 }
 
 @keyframes ps-globe-breathe {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50% { transform: scale(1.22); opacity: 1; }
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.35); opacity: 1; }
 }
 
-/* Núcleo "Partido": chip integrado bajo el nodo central del globo,
-   con pulso expansivo desde su región (sin círculo aislado). */
+.public-site-hero__globe-core-dot {
+  fill: var(--ps-accent);
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 12px rgba(225, 27, 34, 0.9));
+}
+
+/* Núcleo Partido: fijo sobre el centro (no gira). */
 .public-site-hero__eco-core {
   position: absolute;
   left: 50%;
-  top: 48.3%;
-  transform: translate(-50%, 16px);
+  top: 48%;
+  transform: translate(-50%, 18px);
   display: grid;
   justify-items: center;
   gap: 1px;
-  padding: 8px 16px;
-  border-radius: 14px;
+  padding: 7px 14px;
+  border-radius: 12px;
   text-align: center;
-  background: rgba(10, 15, 28, 0.85);
+  background: rgba(8, 12, 22, 0.88);
   border: 1px solid rgba(225, 27, 34, 0.55);
-  box-shadow: 0 0 34px rgba(225, 27, 34, 0.3);
+  box-shadow: 0 0 28px rgba(225, 27, 34, 0.28);
+  z-index: 2;
 }
 
 .public-site-hero__eco-core::before {
   content: '';
   position: absolute;
   left: 50%;
-  top: -25px;
-  width: 18px;
-  height: 18px;
-  margin-left: -9px;
+  top: -22px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
   border-radius: 50%;
   border: 1px solid rgba(225, 27, 34, 0.7);
   animation: ps-globe-pulse 3.6s ease-out infinite;
@@ -695,54 +700,96 @@ html.public-site-active #root {
 
 @keyframes ps-globe-pulse {
   from { transform: scale(0.5); opacity: 0.9; }
-  to { transform: scale(2.8); opacity: 0; }
+  to { transform: scale(2.6); opacity: 0; }
 }
 
 .public-site-hero__eco-core strong {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .public-site-hero__eco-core span {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--ps-text-2);
+  text-transform: none;
 }
 
-/* Chips flotantes anclados a los nodos del globo. */
+/*
+ * Labels fuera de la esfera: no giran con el mapa.
+ * Línea guía ::before hacia el borde del globo.
+ */
 .public-site-hero__eco-node {
   position: absolute;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 13px;
+  gap: 7px;
+  padding: 6px 11px;
   border-radius: 999px;
   border: 1px solid var(--ps-border-strong);
-  background: rgba(10, 15, 28, 0.88);
-  font-size: 12.5px;
+  background: rgba(8, 12, 22, 0.92);
+  color: var(--ps-text);
+  font-size: 11.5px;
   font-weight: 700;
   white-space: nowrap;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  transform: translate(-50%, -145%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   animation: ps-node-float 7s ease-in-out infinite alternate;
 }
 
-.public-site-hero__eco-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ps-accent);
-  box-shadow: 0 0 10px rgba(225, 27, 34, 0.8);
+.public-site-hero__eco-node::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(225, 27, 34, 0.55), transparent);
+  pointer-events: none;
 }
 
-/* Posiciones = coordenadas de los nodos del SVG (x/480, y/480). */
-.public-site-hero__eco-node.is-player { left: 31.7%; top: 30.8%; }
-.public-site-hero__eco-node.is-venue { left: 67.1%; top: 26.7%; animation-delay: -1.5s; }
-.public-site-hero__eco-node.is-scoreboard { left: 73.3%; top: 54.6%; animation-delay: -3s; }
-.public-site-hero__eco-node.is-ranking { left: 35%; top: 66.3%; animation-delay: -4.5s; }
-.public-site-hero__eco-node.is-padcoins { left: 54.6%; top: 72.5%; animation-delay: -6s; transform: translate(-50%, 45%); }
+.public-site-hero__eco-node.is-lt::after,
+.public-site-hero__eco-node.is-lm::after,
+.public-site-hero__eco-node.is-lb::after,
+.public-site-hero__eco-node.is-ls1::after,
+.public-site-hero__eco-node.is-ls2::after {
+  right: -16px;
+  background: linear-gradient(90deg, transparent, rgba(225, 27, 34, 0.55));
+}
+
+.public-site-hero__eco-node.is-rt::after,
+.public-site-hero__eco-node.is-rm::after,
+.public-site-hero__eco-node.is-rs1::after,
+.public-site-hero__eco-node.is-rs2::after {
+  left: -16px;
+}
+
+.public-site-hero__eco-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ps-accent);
+  box-shadow: 0 0 8px rgba(225, 27, 34, 0.8);
+  flex-shrink: 0;
+}
+
+.public-site-hero__eco-node.is-sport {
+  color: var(--ps-text-2);
+  font-weight: 650;
+}
+
+/* Distribución alrededor del stage (porcentajes del contenedor ecosystem). */
+.public-site-hero__eco-node.is-lt { left: 0; top: 12%; }
+.public-site-hero__eco-node.is-ls1 { left: 0; top: 28%; animation-delay: -0.8s; }
+.public-site-hero__eco-node.is-lm { left: 0; top: 44%; animation-delay: -1.6s; }
+.public-site-hero__eco-node.is-ls2 { left: 0; top: 60%; animation-delay: -2.4s; }
+.public-site-hero__eco-node.is-lb { left: 0; top: 76%; animation-delay: -3.2s; }
+
+.public-site-hero__eco-node.is-rt { right: 0; top: 14%; left: auto; animation-delay: -0.5s; }
+.public-site-hero__eco-node.is-rs1 { right: 0; top: 34%; left: auto; animation-delay: -1.3s; }
+.public-site-hero__eco-node.is-rm { right: 0; top: 54%; left: auto; animation-delay: -2.1s; }
+.public-site-hero__eco-node.is-rs2 { right: 0; top: 74%; left: auto; animation-delay: -2.9s; }
 
 @keyframes ps-node-float {
   from { translate: 0 0; }
-  to { translate: 0 -8px; }
+  to { translate: 0 -5px; }
 }
 
 /* ═══ Franja multideporte ═══ */
@@ -2662,7 +2709,8 @@ html.public-site-active #root {
 
   /* Tablet: logo 260–320 · globo intermedio · CTAs en dos filas. */
   .public-site-hero__ecosystem {
-    max-width: clamp(320px, 48vw, 400px);
+    max-width: min(520px, 92vw);
+    padding: 36px 56px 44px;
   }
 
   .public-site-hero__logo {
@@ -2801,10 +2849,14 @@ html.public-site-active #root {
     align-items: center;
   }
 
-  /* Desktop: globo 430–520 px, centrado verticalmente con el copy. */
+  /* Desktop: globo 460–540 px (stage), labels en la columna. */
   .public-site-hero__ecosystem {
-    max-width: clamp(430px, 34vw, 520px);
-    margin: 0 auto;
+    max-width: clamp(560px, 42vw, 640px);
+    padding: 28px 72px 36px;
+  }
+
+  .public-site-hero__globe-stage {
+    max-width: clamp(460px, 34vw, 540px);
   }
 
   .public-site__brand-logo {
@@ -2843,6 +2895,21 @@ html.public-site-active #root {
 }
 
 @media (max-width: 479px) {
+  .public-site-hero__ecosystem {
+    max-width: min(340px, 96vw);
+    padding: 28px 8px 32px;
+  }
+
+  .public-site-hero__eco-node {
+    font-size: 10.5px;
+    padding: 5px 8px;
+    gap: 5px;
+  }
+
+  .public-site-hero__eco-node::after {
+    width: 10px;
+  }
+
   .ps-problem-scene__scattered {
     grid-template-columns: minmax(0, 1fr);
   }
