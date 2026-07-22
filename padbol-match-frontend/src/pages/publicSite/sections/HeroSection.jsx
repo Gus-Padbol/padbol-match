@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PadbolBrandLogo from '../../../components/PadbolBrandLogo';
 import SportIcon from '../../../components/common/SportIcon';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../../constants/deportesCanchaSede';
 import { ES_FALLBACKS, useSafeTranslation } from '../../../i18n/tSafe';
@@ -21,91 +20,133 @@ function scrollToHash(hash) {
 const MAP_W = 480;
 
 /*
- * Siluetas reconocibles (simplificadas) en proyección plana del panel.
- * data-continent se usa en tests y como ancla semántica del SVG.
+ * Siluetas continentales más reconocibles (proyección plana del panel).
+ * Contornos físicos únicamente — sin países ni fronteras.
+ * data-continent ancla tests y semántica SVG.
  */
 const CONTINENT_PATHS = [
   {
     id: 'north-america',
-    d: 'M58 118 C78 92 118 78 158 88 C188 96 208 118 202 148 C196 178 178 198 152 208 C138 228 118 232 98 218 C78 228 62 208 58 178 C52 152 48 132 58 118 Z M168 198 C178 208 172 228 158 232 C148 228 150 212 158 204 Z',
+    d:
+      'M42 108 C62 78 98 62 138 68 C168 72 198 88 212 112 C228 138 222 168 208 188 ' +
+      'C198 208 178 218 158 222 C148 248 128 262 108 252 C88 258 72 238 68 212 ' +
+      'C58 188 48 158 42 132 C40 120 42 112 42 108 Z ' +
+      'M168 218 C182 228 178 252 162 258 C148 252 150 232 160 224 Z ' +
+      'M78 248 C92 258 88 278 72 282 C62 274 64 256 78 248 Z',
   },
   {
     id: 'south-america',
-    d: 'M142 242 C168 236 186 258 182 292 C178 328 164 358 148 378 C132 368 122 338 126 302 C128 272 132 248 142 242 Z',
+    d:
+      'M138 268 C168 258 192 272 198 302 C202 338 188 372 168 398 C152 412 138 408 128 392 ' +
+      'C118 368 112 338 118 308 C120 288 128 272 138 268 Z ' +
+      'M152 398 C158 412 148 428 136 422 C132 410 142 402 152 398 Z',
   },
   {
     id: 'europe',
-    d: 'M268 98 C292 88 318 96 326 118 C320 138 298 146 278 140 C266 128 260 108 268 98 Z M302 128 C312 132 318 148 308 156 C298 152 296 136 302 128 Z',
+    d:
+      'M258 92 C278 78 302 82 318 96 C332 108 328 128 318 138 C308 148 292 146 280 138 ' +
+      'C268 128 258 112 258 92 Z ' +
+      'M292 138 C308 142 318 158 308 168 C296 168 288 152 292 138 Z ' +
+      'M268 148 C278 152 276 168 264 168 C258 158 260 150 268 148 Z',
   },
   {
     id: 'africa',
-    d: 'M274 158 C308 150 328 178 324 222 C320 268 302 304 278 318 C256 306 248 268 252 224 C254 190 262 164 274 158 Z',
+    d:
+      'M268 168 C298 158 328 172 338 198 C348 228 342 268 328 298 C312 328 288 338 268 328 ' +
+      'C248 318 238 288 242 252 C244 218 252 178 268 168 Z ' +
+      'M298 318 C312 328 308 348 292 348 C284 338 288 322 298 318 Z',
   },
   {
     id: 'asia',
-    d: 'M330 88 C372 72 422 88 448 122 C460 158 448 198 418 218 C392 232 362 220 346 188 C332 158 322 118 330 88 Z M400 210 C422 218 438 242 428 262 C408 268 392 248 400 210 Z',
+    d:
+      'M328 72 C368 58 418 68 452 98 C468 122 472 158 458 188 C442 218 408 228 382 218 ' +
+      'C362 232 338 228 328 208 C312 178 308 138 318 108 C320 92 324 78 328 72 Z ' +
+      'M388 218 C412 228 432 252 422 272 C398 278 378 252 388 218 Z ' +
+      'M438 188 C458 198 468 218 458 232 C442 232 432 208 438 188 Z',
   },
   {
     id: 'oceania',
-    d: 'M402 292 C428 284 452 302 448 326 C432 342 408 338 396 318 C396 304 400 296 402 292 Z M428 338 C440 342 448 356 438 364 C426 362 422 348 428 338 Z',
+    d:
+      'M398 298 C428 288 458 302 462 328 C452 348 428 352 408 342 C396 328 394 308 398 298 Z ' +
+      'M428 348 C448 352 458 372 448 382 C428 382 418 362 428 348 Z ' +
+      'M462 318 C478 322 482 338 472 342 C462 338 458 324 462 318 Z',
   },
 ];
 
 /* Hubs de actividad sobre continentes (nodos de la red). */
 const GLOBE_HUBS = [
-  [110, 140], [150, 160], [175, 125], [130, 190],
-  [155, 280], [148, 330], [160, 360],
-  [290, 115], [310, 135], [280, 145],
-  [290, 200], [300, 250], [275, 290],
-  [360, 120], [400, 150], [380, 185], [420, 200], [350, 170],
-  [420, 310], [435, 340],
+  [88, 128], [128, 148], [168, 118], [198, 158], [118, 198],
+  [158, 288], [178, 328], [148, 368], [168, 398],
+  [278, 108], [302, 128], [288, 148],
+  [288, 198], [312, 248], [278, 288], [298, 318],
+  [358, 108], [398, 138], [428, 168], [378, 188], [418, 208], [448, 148],
+  [418, 318], [438, 348], [452, 328],
 ];
 
 /*
- * 24 arcos internacionales (curvas). Base continua + pulso luminoso
- * que recorre el trazo (stroke-dashoffset).
+ * 36 arcos internacionales permanentes (curvas Q).
+ * Línea base siempre visible + pulso luminoso independiente.
  */
 const GLOBE_ARCS = [
-  { id: 'c01', d: 'M110,140 Q200,60 290,115' },
-  { id: 'c02', d: 'M150,160 Q240,100 310,135' },
-  { id: 'c03', d: 'M175,125 Q280,40 360,120' },
-  { id: 'c04', d: 'M130,190 Q250,140 290,200' },
-  { id: 'c05', d: 'M155,280 Q250,180 300,250' },
-  { id: 'c06', d: 'M148,330 Q260,220 275,290' },
-  { id: 'c07', d: 'M160,360 Q300,280 420,310' },
-  { id: 'c08', d: 'M110,140 Q80,240 155,280' },
-  { id: 'c09', d: 'M150,160 Q200,260 148,330' },
-  { id: 'c10', d: 'M290,115 Q340,80 400,150' },
-  { id: 'c11', d: 'M310,135 Q360,100 420,200' },
-  { id: 'c12', d: 'M280,145 Q320,160 350,170' },
-  { id: 'c13', d: 'M290,200 Q340,160 380,185' },
-  { id: 'c14', d: 'M300,250 Q360,220 420,200' },
-  { id: 'c15', d: 'M275,290 Q350,260 420,310' },
-  { id: 'c16', d: 'M360,120 Q400,90 448,122' },
-  { id: 'c17', d: 'M400,150 Q430,180 435,340' },
-  { id: 'c18', d: 'M175,125 Q240,200 300,250' },
-  { id: 'c19', d: 'M130,190 Q220,250 290,200' },
-  { id: 'c20', d: 'M155,280 Q260,300 350,170' },
-  { id: 'c21', d: 'M148,330 Q280,340 400,310' },
-  { id: 'c22', d: 'M110,140 Q200,200 280,145' },
-  { id: 'c23', d: 'M310,135 Q280,220 160,360' },
-  { id: 'c24', d: 'M420,200 Q340,280 275,290' },
+  { id: 'c01', d: 'M88,128 Q200,48 278,108' },
+  { id: 'c02', d: 'M128,148 Q230,70 302,128' },
+  { id: 'c03', d: 'M168,118 Q280,40 358,108' },
+  { id: 'c04', d: 'M198,158 Q260,90 398,138' },
+  { id: 'c05', d: 'M118,198 Q240,120 288,198' },
+  { id: 'c06', d: 'M158,288 Q250,170 312,248' },
+  { id: 'c07', d: 'M178,328 Q270,210 278,288' },
+  { id: 'c08', d: 'M148,368 Q280,250 298,318' },
+  { id: 'c09', d: 'M168,398 Q300,280 418,318' },
+  { id: 'c10', d: 'M88,128 Q70,220 158,288' },
+  { id: 'c11', d: 'M128,148 Q180,250 178,328' },
+  { id: 'c12', d: 'M168,118 Q200,240 148,368' },
+  { id: 'c13', d: 'M198,158 Q240,280 168,398' },
+  { id: 'c14', d: 'M278,108 Q340,70 398,138' },
+  { id: 'c15', d: 'M302,128 Q370,90 428,168' },
+  { id: 'c16', d: 'M288,148 Q340,120 378,188' },
+  { id: 'c17', d: 'M288,198 Q350,150 418,208' },
+  { id: 'c18', d: 'M312,248 Q380,200 448,148' },
+  { id: 'c19', d: 'M278,288 Q360,250 418,318' },
+  { id: 'c20', d: 'M298,318 Q380,280 438,348' },
+  { id: 'c21', d: 'M358,108 Q410,90 448,148' },
+  { id: 'c22', d: 'M398,138 Q440,180 452,328' },
+  { id: 'c23', d: 'M428,168 Q450,240 438,348' },
+  { id: 'c24', d: 'M378,188 Q420,260 418,318' },
+  { id: 'c25', d: 'M88,128 Q220,200 288,148' },
+  { id: 'c26', d: 'M128,148 Q240,220 312,248' },
+  { id: 'c27', d: 'M168,118 Q250,200 288,198' },
+  { id: 'c28', d: 'M118,198 Q220,260 278,288' },
+  { id: 'c29', d: 'M158,288 Q280,300 378,188' },
+  { id: 'c30', d: 'M178,328 Q300,320 418,208' },
+  { id: 'c31', d: 'M148,368 Q290,340 438,348' },
+  { id: 'c32', d: 'M302,128 Q280,220 168,398' },
+  { id: 'c33', d: 'M398,138 Q320,240 178,328' },
+  { id: 'c34', d: 'M448,148 Q340,260 158,288' },
+  { id: 'c35', d: 'M278,108 Q200,180 118,198' },
+  { id: 'c36', d: 'M428,168 Q300,280 198,158' },
 ];
 
-/* Labels funcionales fuera de la esfera (izquierda / derecha). */
-const ORBIT_FUNCTIONAL = [
-  { key: 'player', spot: 'lt' },
-  { key: 'ranking', spot: 'lm' },
-  { key: 'padcoins', spot: 'lb' },
-  { key: 'venue', spot: 'rt' },
-  { key: 'scoreboard', spot: 'rm' },
+/*
+ * Labels exteriores: funciones + comunidad/ops + 4 deportes.
+ * priority: visibles en móvil; secondary: ocultos visualmente en móvil (siguen en DOM/aria).
+ */
+const ORBIT_LABELS = [
+  { key: 'player', spot: 'lt', priority: true },
+  { key: 'community', spot: 'ls1', priority: true },
+  { key: 'ranking', spot: 'lm', priority: false },
+  { key: 'padcoins', spot: 'ls2', priority: false },
+  { key: 'tournaments', spot: 'lb', priority: false },
+  { key: 'venue', spot: 'rt', priority: true },
+  { key: 'scoreboard', spot: 'rm', priority: true },
+  { key: 'bookings', spot: 'rs1', priority: false },
+  { key: 'memberships', spot: 'rs2', priority: false },
 ];
 
 const ORBIT_SPORTS = [
-  { key: 'padbol', spot: 'ls1' },
-  { key: 'padel', spot: 'ls2' },
-  { key: 'pickleball', spot: 'rs1' },
-  { key: 'tenis', spot: 'rs2' },
+  { key: 'padbol', spot: 'sb1', priority: true },
+  { key: 'padel', spot: 'sb2', priority: false },
+  { key: 'pickleball', spot: 'sb3', priority: false },
+  { key: 'tenis', spot: 'sb4', priority: false },
 ];
 
 /** Un panel del mapa mundi (continentes + red). Se renderiza dos veces. */
@@ -121,11 +162,15 @@ function GlobeMapPanel({ offsetX = 0 }) {
       <g className="public-site-hero__globe-arcs">
         {GLOBE_ARCS.map(({ id, d }, index) => (
           <g key={id} className={`is-${id}`}>
-            <path className="is-base" d={d} />
+            <path className="is-base" d={d} pathLength={1} />
             <path
               className={`is-pulse${index % 3 === 0 ? ' is-pulse--red' : index % 3 === 1 ? ' is-pulse--blue' : ' is-pulse--white'}`}
               d={d}
-              style={{ animationDelay: `${(-index * 0.55).toFixed(2)}s` }}
+              pathLength={1}
+              style={{
+                animationDuration: `${(4.2 + (index % 5) * 0.55).toFixed(2)}s`,
+                animationDelay: `${(-index * 0.42).toFixed(2)}s`,
+              }}
             />
           </g>
         ))}
@@ -155,7 +200,6 @@ export default function HeroSection() {
 
   return (
     <section className="public-site-hero" aria-labelledby="public-site-hero-title">
-      {/* Composición abstracta CSS: trama, luces y líneas (solo decorativa) */}
       <div className="public-site-hero__backdrop" aria-hidden="true">
         <span className="public-site-hero__grid-lines" />
         <span className="public-site-hero__glow public-site-hero__glow--red" />
@@ -165,13 +209,13 @@ export default function HeroSection() {
 
       <div className="public-site__shell public-site-hero__grid">
         <div className="public-site-hero__copy" data-ps-reveal>
-          <PadbolBrandLogo
-            variant="on-dark-tight"
-            className="public-site-hero__logo"
-            alt={text('publicSite.brandAlt')}
-          />
-
           <p className="public-site-hero__eyebrow">{text('publicSite.hero.eyebrow')}</p>
+
+          <p className="public-site-hero__brand" aria-label={text('publicSite.hero.title')}>
+            <span className="public-site-hero__brand-padbol">Padbol</span>
+            {' '}
+            <span className="public-site-hero__brand-match">Match</span>
+          </p>
 
           <h1 id="public-site-hero-title" className="public-site-hero__title">
             {text('publicSite.hero.claim')}
@@ -203,7 +247,6 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Globo: mapa en bucle bajo máscara esférica + labels exteriores fijos */}
         <div
           className="public-site-hero__ecosystem"
           role="img"
@@ -245,7 +288,6 @@ export default function HeroSection() {
               />
 
               <g clipPath="url(#ps-globe-clip)">
-                {/* Paralelos/meridianos fijos (profundidad); el mapa gira debajo. */}
                 <g className="public-site-hero__globe-grid">
                   <ellipse cx="240" cy="240" rx="70" ry="208" />
                   <ellipse cx="240" cy="240" rx="140" ry="208" />
@@ -256,7 +298,6 @@ export default function HeroSection() {
                   <ellipse cx="240" cy="360" rx="168" ry="18" />
                 </g>
 
-                {/* Mapa duplicado: traslación horizontal = rotación del globo. */}
                 <g className="public-site-hero__globe-spin">
                   <GlobeMapPanel />
                   <GlobeMapPanel offsetX={MAP_W} />
@@ -265,8 +306,7 @@ export default function HeroSection() {
                 <circle cx="240" cy="240" r="210" fill="url(#ps-globe-shade)" />
               </g>
 
-              {/* Núcleo Partido (fijo, no gira con el mapa). */}
-              <circle className="public-site-hero__globe-core-dot" cx="240" cy="228" r="8" />
+              <circle className="public-site-hero__globe-core-dot" cx="240" cy="228" r="6.5" />
             </svg>
 
             <div className="public-site-hero__eco-core">
@@ -275,16 +315,21 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Labels fuera de la esfera: funciones + 4 deportes soportados. */}
-          {ORBIT_FUNCTIONAL.map(({ key, spot }) => (
-            <div key={key} className={`public-site-hero__eco-node is-${spot} is-${key}`}>
+          {ORBIT_LABELS.map(({ key, spot, priority }) => (
+            <div
+              key={key}
+              className={`public-site-hero__eco-node is-${spot} is-${key}${priority ? ' is-priority' : ' is-secondary-orbit'}`}
+            >
               <span className="public-site-hero__eco-dot" aria-hidden="true" />
               {text(`publicSite.hero.ecosystem.${key}`)}
             </div>
           ))}
 
-          {ORBIT_SPORTS.map(({ key, spot }) => (
-            <div key={key} className={`public-site-hero__eco-node is-sport is-${spot} is-${key}`}>
+          {ORBIT_SPORTS.map(({ key, spot, priority }) => (
+            <div
+              key={key}
+              className={`public-site-hero__eco-node is-sport is-${spot} is-${key}${priority ? ' is-priority' : ' is-secondary-orbit'}`}
+            >
               <SportIcon deporte={key} size={14} color="currentColor" />
               <span>{sportLabel(key)}</span>
             </div>

@@ -41,6 +41,9 @@ html.public-site-active #root {
   background: var(--ps-bg);
   color: var(--ps-text);
   font-family: inherit;
+  /* Compensa header fixed: sin salto de layout ni anchors tapados. */
+  padding-top: calc(68px + env(safe-area-inset-top, 0px));
+  --ps-header-offset: calc(68px + env(safe-area-inset-top, 0px));
 }
 
 .public-site *,
@@ -95,22 +98,26 @@ html.public-site-active #root {
     transform 0.65s var(--ps-ease) var(--ps-reveal-delay, 0ms);
 }
 
-/* ── Header: transparente → glass ── */
+/* ── Header fijo permanente: glass al inicio, más sólido al scroll ── */
 
 .public-site__nav {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 40;
-  background: transparent;
-  border-bottom: 1px solid transparent;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: rgba(5, 7, 13, 0.42);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
   transition: background 0.35s ease, border-color 0.35s ease, backdrop-filter 0.35s ease;
 }
 
 .public-site__nav.is-scrolled {
-  background: rgba(5, 7, 13, 0.72);
+  background: rgba(5, 7, 13, 0.88);
   border-bottom-color: var(--ps-border);
-  backdrop-filter: blur(16px) saturate(1.3);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
 }
 
 .public-site__nav-inner {
@@ -330,8 +337,8 @@ html.public-site-active #root {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: calc(100dvh - 76px);
-  padding: clamp(28px, 4vw, 48px) 0 clamp(48px, 6vw, 72px);
+  min-height: calc(100dvh - var(--ps-header-offset, 68px));
+  padding: clamp(16px, 2.5vw, 28px) 0 clamp(40px, 5vw, 64px);
   overflow: hidden;
   isolation: isolate;
 }
@@ -423,7 +430,7 @@ html.public-site-active #root {
 }
 
 .public-site-hero__eyebrow {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: var(--ps-text-2);
   font-size: 0.78rem;
   font-weight: 800;
@@ -432,26 +439,31 @@ html.public-site-active #root {
 }
 
 /*
- * Logo protagonista alineado al borde izquierdo del título.
- * Móvil 210–260 · tablet/desktop vía media queries.
+ * Marca textual: entre eyebrow y claim.
+ * Tipografía heredada del sitio (deportiva/tech vía weight + tracking).
  */
-.public-site-hero__logo {
-  display: block !important;
-  width: clamp(210px, 58vw, 260px) !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: none !important;
-  margin: 0 0 18px !important;
-  object-fit: contain !important;
-  background: transparent !important;
-  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45));
+.public-site-hero__brand {
+  margin: 0 0 10px;
+  font-size: clamp(1.35rem, 2.2vw + 0.55rem, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--ps-text);
+}
+
+.public-site-hero__brand-padbol {
+  color: #fff;
+}
+
+.public-site-hero__brand-match {
+  color: var(--ps-accent);
 }
 
 /*
- * Título: ancho controlado (~28ch) para 3–4 líneas en desktop, no pirámide.
+ * Claim: ancho equilibrado (~28ch), alineado con marca y globo.
  */
 .public-site-hero__title {
-  margin: 0 0 12px;
+  margin: 0 0 18px;
   font-size: clamp(1.85rem, 3.4vw + 0.6rem, 3.15rem);
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -461,10 +473,11 @@ html.public-site-active #root {
   text-wrap: balance;
 }
 
-/* Descriptor integrado justo bajo el título, mismo eje izquierdo. */
+/* Descriptor centrado en el bloque de texto, separado del claim y del lead. */
 .public-site-hero__pillars {
   display: inline-flex;
-  margin: 0 0 14px;
+  align-self: center;
+  margin: 0 0 18px;
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid rgba(225, 27, 34, 0.45);
@@ -478,7 +491,7 @@ html.public-site-active #root {
 
 .public-site-hero__lead {
   margin: 0 0 22px;
-  max-width: 42ch;
+  max-width: 40ch;
   font-size: clamp(0.98rem, 1.2vw + 0.7rem, 1.1rem);
   font-weight: 500;
   line-height: 1.55;
@@ -486,15 +499,16 @@ html.public-site-active #root {
 }
 
 /*
- * CTAs como grupo: en móvil apilados; desde tablet, dos arriba +
- * “Quiero incorporar…” a ancho completo debajo.
+ * CTAs centrados dentro del bloque izquierdo.
+ * Móvil: apilados; tablet+: dos arriba + tertiary ancho completo.
  */
 .public-site-hero__ctas {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
+  align-self: center;
 }
 
 .public-site-hero__cta {
@@ -585,11 +599,11 @@ html.public-site-active #root {
   filter: drop-shadow(0 0 28px rgba(225, 27, 34, 0.22));
 }
 
-/* Meridianos/paralelos fijos: profundidad esférica, no grilla protagonista. */
+/* Meridianos/paralelos: más sutiles que continentes y que la red. */
 .public-site-hero__globe-grid ellipse {
   fill: none;
-  stroke: rgba(148, 163, 184, 0.12);
-  stroke-width: 1;
+  stroke: rgba(148, 163, 184, 0.08);
+  stroke-width: 0.85;
 }
 
 /*
@@ -605,28 +619,32 @@ html.public-site-active #root {
   to { transform: translateX(-480px); }
 }
 
-/* Continentes: siluetas reconocibles, tono tecnológico (no mapa escolar). */
+/* Continentes: siluetas reconocibles, tono tecnológico premium. */
 .public-site-hero__globe-land path {
-  fill: rgba(148, 174, 210, 0.38);
-  stroke: rgba(186, 210, 240, 0.35);
-  stroke-width: 1;
+  fill: rgba(156, 186, 226, 0.42);
+  stroke: rgba(200, 220, 245, 0.42);
+  stroke-width: 1.05;
 }
 
-/* Red: líneas finas continuas + pulsos que recorren el trazo. */
+/*
+ * Red permanente: líneas base blancas/azuladas siempre visibles.
+ * Pulsos luminosos recorren encima sin apagar la base.
+ */
 .public-site-hero__globe-arcs .is-base {
   fill: none;
-  stroke: rgba(225, 27, 34, 0.28);
+  stroke: rgba(232, 242, 255, 0.42);
   stroke-width: 1.05;
   stroke-linecap: round;
+  opacity: 1;
 }
 
 .public-site-hero__globe-arcs .is-pulse {
   fill: none;
-  stroke-width: 1.8;
+  stroke-width: 2;
   stroke-linecap: round;
-  stroke-dasharray: 14 220;
-  stroke-dashoffset: 240;
-  opacity: 0.95;
+  stroke-dasharray: 0.08 0.92;
+  stroke-dashoffset: 1;
+  opacity: 0.92;
   animation: ps-globe-light 5.6s linear infinite;
 }
 
@@ -635,7 +653,7 @@ html.public-site-active #root {
 .public-site-hero__globe-arcs .is-pulse--white { stroke: #f8fafc; }
 
 @keyframes ps-globe-light {
-  from { stroke-dashoffset: 240; }
+  from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
 }
 
@@ -666,22 +684,23 @@ html.public-site-active #root {
   filter: drop-shadow(0 0 12px rgba(225, 27, 34, 0.9));
 }
 
-/* Núcleo Partido: fijo sobre el centro (no gira). */
+/* Núcleo Partido: fijo sobre el centro (no gira), discreto. */
 .public-site-hero__eco-core {
   position: absolute;
   left: 50%;
   top: 48%;
-  transform: translate(-50%, 18px);
+  transform: translate(-50%, 14px);
   display: grid;
   justify-items: center;
-  gap: 1px;
-  padding: 7px 14px;
-  border-radius: 12px;
+  gap: 0;
+  padding: 5px 11px;
+  border-radius: 10px;
   text-align: center;
-  background: rgba(8, 12, 22, 0.88);
-  border: 1px solid rgba(225, 27, 34, 0.55);
-  box-shadow: 0 0 28px rgba(225, 27, 34, 0.28);
+  background: rgba(8, 12, 22, 0.82);
+  border: 1px solid rgba(225, 27, 34, 0.5);
+  box-shadow: 0 0 22px rgba(225, 27, 34, 0.22);
   z-index: 2;
+  pointer-events: none;
 }
 
 .public-site-hero__eco-core::before {
@@ -704,11 +723,11 @@ html.public-site-active #root {
 }
 
 .public-site-hero__eco-core strong {
-  font-size: 14px;
+  font-size: 12.5px;
 }
 
 .public-site-hero__eco-core span {
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--ps-text-2);
   text-transform: none;
 }
@@ -749,7 +768,9 @@ html.public-site-active #root {
 .public-site-hero__eco-node.is-lm::after,
 .public-site-hero__eco-node.is-lb::after,
 .public-site-hero__eco-node.is-ls1::after,
-.public-site-hero__eco-node.is-ls2::after {
+.public-site-hero__eco-node.is-ls2::after,
+.public-site-hero__eco-node.is-sb1::after,
+.public-site-hero__eco-node.is-sb2::after {
   right: -16px;
   background: linear-gradient(90deg, transparent, rgba(225, 27, 34, 0.55));
 }
@@ -757,7 +778,9 @@ html.public-site-active #root {
 .public-site-hero__eco-node.is-rt::after,
 .public-site-hero__eco-node.is-rm::after,
 .public-site-hero__eco-node.is-rs1::after,
-.public-site-hero__eco-node.is-rs2::after {
+.public-site-hero__eco-node.is-rs2::after,
+.public-site-hero__eco-node.is-sb3::after,
+.public-site-hero__eco-node.is-sb4::after {
   left: -16px;
 }
 
@@ -776,16 +799,20 @@ html.public-site-active #root {
 }
 
 /* Distribución alrededor del stage (porcentajes del contenedor ecosystem). */
-.public-site-hero__eco-node.is-lt { left: 0; top: 12%; }
-.public-site-hero__eco-node.is-ls1 { left: 0; top: 28%; animation-delay: -0.8s; }
-.public-site-hero__eco-node.is-lm { left: 0; top: 44%; animation-delay: -1.6s; }
-.public-site-hero__eco-node.is-ls2 { left: 0; top: 60%; animation-delay: -2.4s; }
-.public-site-hero__eco-node.is-lb { left: 0; top: 76%; animation-delay: -3.2s; }
+.public-site-hero__eco-node.is-lt { left: 0; top: 8%; }
+.public-site-hero__eco-node.is-ls1 { left: 0; top: 22%; animation-delay: -0.8s; }
+.public-site-hero__eco-node.is-lm { left: 0; top: 36%; animation-delay: -1.6s; }
+.public-site-hero__eco-node.is-ls2 { left: 0; top: 50%; animation-delay: -2.4s; }
+.public-site-hero__eco-node.is-lb { left: 0; top: 64%; animation-delay: -3.2s; }
+.public-site-hero__eco-node.is-sb1 { left: 0; top: 78%; animation-delay: -3.8s; }
+.public-site-hero__eco-node.is-sb2 { left: 0; top: 90%; animation-delay: -4.2s; }
 
-.public-site-hero__eco-node.is-rt { right: 0; top: 14%; left: auto; animation-delay: -0.5s; }
-.public-site-hero__eco-node.is-rs1 { right: 0; top: 34%; left: auto; animation-delay: -1.3s; }
-.public-site-hero__eco-node.is-rm { right: 0; top: 54%; left: auto; animation-delay: -2.1s; }
-.public-site-hero__eco-node.is-rs2 { right: 0; top: 74%; left: auto; animation-delay: -2.9s; }
+.public-site-hero__eco-node.is-rt { right: 0; top: 10%; left: auto; animation-delay: -0.5s; }
+.public-site-hero__eco-node.is-rm { right: 0; top: 28%; left: auto; animation-delay: -1.3s; }
+.public-site-hero__eco-node.is-rs1 { right: 0; top: 46%; left: auto; animation-delay: -2.1s; }
+.public-site-hero__eco-node.is-rs2 { right: 0; top: 64%; left: auto; animation-delay: -2.9s; }
+.public-site-hero__eco-node.is-sb3 { right: 0; top: 78%; left: auto; animation-delay: -3.5s; }
+.public-site-hero__eco-node.is-sb4 { right: 0; top: 90%; left: auto; animation-delay: -4s; }
 
 @keyframes ps-node-float {
   from { translate: 0 0; }
@@ -856,7 +883,7 @@ html.public-site-active #root {
 .ps-section {
   position: relative;
   padding: clamp(76px, 9vw, 130px) 0;
-  scroll-margin-top: 84px;
+  scroll-margin-top: calc(var(--ps-header-offset, 68px) + 16px);
   overflow: hidden;
 }
 
@@ -2700,26 +2727,44 @@ html.public-site-active #root {
   .public-site__nav-actions {
     gap: 6px;
   }
+
+  /* Móvil: priorizar labels clave; secundarios ocultos visualmente (siguen en DOM/aria). */
+  .public-site-hero__eco-node.is-secondary-orbit {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    pointer-events: none;
+  }
+
+  .public-site-hero__eco-node.is-secondary-orbit::after {
+    display: none;
+  }
+
+  .public-site-hero__ecosystem {
+    padding: 24px 36px 32px;
+  }
 }
 
 @media (min-width: 768px) {
   .public-site-hero {
-    padding: 48px 0 72px;
+    padding: 28px 0 64px;
   }
 
-  /* Tablet: logo 260–320 · globo intermedio · CTAs en dos filas. */
+  /* Tablet: globo intermedio · CTAs en dos filas. */
   .public-site-hero__ecosystem {
     max-width: min(520px, 92vw);
     padding: 36px 56px 44px;
   }
 
-  .public-site-hero__logo {
-    width: clamp(260px, 36vw, 320px) !important;
-  }
-
   .public-site-hero__ctas {
     grid-template-columns: 1fr 1fr;
-    max-width: 520px;
+    max-width: 480px;
   }
 
   .public-site-hero__cta {
@@ -2844,15 +2889,16 @@ html.public-site-active #root {
   }
 
   .public-site-hero__grid {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: clamp(36px, 4vw, 64px);
-    align-items: center;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(28px, 3.5vw, 56px);
+    align-items: start;
   }
 
-  /* Desktop: globo 460–540 px (stage), labels en la columna. */
+  /* Desktop: globo alineado arriba con marca + claim. */
   .public-site-hero__ecosystem {
     max-width: clamp(560px, 42vw, 640px);
-    padding: 28px 72px 36px;
+    padding: 0 72px 36px;
+    margin-top: 0;
   }
 
   .public-site-hero__globe-stage {
@@ -2882,11 +2928,6 @@ html.public-site-active #root {
   /* Desktop: 300–340 px con clamp; nunca sigue creciendo en 1440/1920. */
   .ps-exp-phone {
     width: clamp(300px, 24vw, 340px);
-  }
-
-  /* Desktop: logo 320–380 px, alineado al título. */
-  .public-site-hero__logo {
-    width: clamp(320px, 26vw, 380px) !important;
   }
 
   .ps-download__logo {
@@ -2936,10 +2977,6 @@ html.public-site-active #root {
     max-width: 120px !important;
   }
 
-  .public-site-hero__logo {
-    width: clamp(210px, 66vw, 240px) !important;
-  }
-
   .ps-community-scene__slots span {
     width: 38px;
   }
@@ -2966,5 +3003,19 @@ html.public-site-active #root {
   .ps-reveal-armed {
     opacity: 1;
     transform: none;
+  }
+
+  /* Globo legible sin movimiento: líneas base permanentes visibles. */
+  .public-site-hero__globe-arcs .is-base {
+    opacity: 1;
+    stroke: rgba(232, 242, 255, 0.48);
+  }
+
+  .public-site-hero__globe-arcs .is-pulse {
+    opacity: 0;
+  }
+
+  .public-site-hero__globe-spin {
+    transform: none !important;
   }
 }

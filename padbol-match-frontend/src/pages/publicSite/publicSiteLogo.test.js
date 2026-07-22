@@ -1,10 +1,8 @@
 /**
  * Regresión del logo oficial en la web pública (/plataforma).
  *
- * Protege contra:
- * - uso del asset cuadrado 1024×1024 (bloque negro) en Hero/Header;
- * - tamaños CSS que vuelvan a dimensionar por altura del lienzo
- *   cuadrado en lugar del ancho visual del arte.
+ * El logo imagen vive en Header (y footer/download).
+ * El Hero usa marca textual "Padbol Match" (sin imagen duplicada).
  */
 
 const fs = require('fs');
@@ -30,19 +28,11 @@ describe('logo oficial de la web pública', () => {
     expect(fs.existsSync(assetPath)).toBe(true);
   });
 
-  it('Hero y Header usan la variante tight', () => {
-    expect(hero).toMatch(/variant=["']on-dark-tight["']/);
+  it('Header usa la variante tight; Hero no duplica el logo imagen', () => {
     expect(layout).toMatch(/variant=["']on-dark-tight["']/);
-  });
-
-  it('Hero se dimensiona por ancho (protagonista) y no por altura del lienzo', () => {
-    const rule = css.match(/\.public-site-hero__logo\s*\{[^}]*\}/);
-    expect(rule).not.toBeNull();
-    expect(rule[0]).toMatch(/width:\s*clamp\(210px,\s*58vw,\s*260px\)\s*!important/);
-    expect(rule[0]).toMatch(/height:\s*auto\s*!important/);
-    expect(rule[0]).toMatch(/object-fit:\s*contain/);
-    /* Sin márgenes negativos que compensaban el padding negro. */
-    expect(rule[0]).not.toMatch(/margin:\s*-\d/);
+    expect(hero).not.toMatch(/PadbolBrandLogo/);
+    expect(hero).not.toMatch(/public-site-hero__logo/);
+    expect(hero).toMatch(/public-site-hero__brand/);
   });
 
   it('Header se dimensiona por ancho sin empujar la navegación', () => {
@@ -51,5 +41,12 @@ describe('logo oficial de la web pública', () => {
     expect(rule[0]).toMatch(/width:\s*min\(140px,\s*42vw\)\s*!important/);
     expect(rule[0]).toMatch(/height:\s*auto\s*!important/);
     expect(rule[0]).toMatch(/object-fit:\s*contain/);
+  });
+
+  it('marca textual Padbol Match está estilizada en CSS (sin tipografía externa)', () => {
+    expect(css).toMatch(/\.public-site-hero__brand\s*\{/);
+    expect(css).toMatch(/\.public-site-hero__brand-match\s*\{/);
+    expect(css).not.toMatch(/@import\s+url\(/);
+    expect(css).not.toMatch(/fonts\.google/);
   });
 });
