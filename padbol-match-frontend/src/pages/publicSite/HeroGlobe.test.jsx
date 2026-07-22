@@ -1,7 +1,7 @@
 /**
  * Regresión del globo tecnológico del Hero (/plataforma).
- * Verifica continentes, red densa permanente, labels, 4 deportes,
- * marca textual, accesibilidad y ausencia de dependencias/llamadas externas.
+ * Verifica logo grande, continentes, red, labels activos/futuros,
+ * 4 deportes, accesibilidad y ausencia de llamadas externas.
  */
 
 import React from 'react';
@@ -36,6 +36,10 @@ jest.mock('../../i18n/tSafe', () => {
   };
 });
 
+jest.mock('../../components/PadbolBrandLogo', () => function Logo({ alt, className }) {
+  return <img alt={alt} className={className} data-testid="hero-brand-logo" />;
+});
+
 jest.mock('../../components/common/SportIcon', () => function SportIconMock({ deporte }) {
   return <span data-testid={`sport-icon-${deporte}`} />;
 });
@@ -60,6 +64,7 @@ const FUNCTIONAL = [
   'Reservas',
   'Membresías',
 ];
+const FUTURE = ['Sponsor', 'Publicidad', 'E-shop'];
 const SPORTS = ['Padbol', 'Pádel', 'Pickleball', 'Tenis'];
 const UNSUPPORTED = ['Fútbol', 'Golf', 'Hockey', 'Rugby', 'Squash'];
 
@@ -73,13 +78,16 @@ describe('Hero globe tecnológico', () => {
     return render(<HeroSection />);
   }
 
-  it('muestra marca textual Padbol Match sin logo imagen duplicado', () => {
+  it('muestra logo grande en Hero y no duplica marca textual Padbol Match', () => {
     const { container } = renderHero();
-    expect(container.querySelector('.public-site-hero__brand')).toBeTruthy();
-    expect(container.querySelector('.public-site-hero__brand-padbol')).toHaveTextContent('Padbol');
-    expect(container.querySelector('.public-site-hero__brand-match')).toHaveTextContent('Match');
-    expect(container.querySelector('img')).toBeNull();
-    expect(container.querySelector('.public-site-hero__logo')).toBeNull();
+    expect(screen.getByTestId('hero-brand-logo')).toBeInTheDocument();
+    expect(container.querySelector('.public-site-hero__logo')).toBeTruthy();
+    expect(container.querySelector('.public-site-hero__brand')).toBeNull();
+    /* El claim no debe ir precedido por un nodo de marca textual. */
+    const copy = container.querySelector('.public-site-hero__copy');
+    const children = Array.from(copy.children).map((el) => el.className);
+    expect(children[0]).toMatch(/public-site-hero__logo/);
+    expect(children[1]).toMatch(/public-site-hero__title/);
   });
 
   it('expone los seis continentes como siluetas SVG', () => {
@@ -89,11 +97,18 @@ describe('Hero globe tecnológico', () => {
     });
   });
 
-  it('muestra labels funcionales fuera del globo incluyendo Comunidad', () => {
-    renderHero();
+  it('muestra labels funcionales y capacidades futuras con indicación', () => {
+    const { container } = renderHero();
     FUNCTIONAL.forEach((label) => {
       expect(screen.getByText(label)).toBeInTheDocument();
     });
+    FUTURE.forEach((label) => {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    });
+    const futureNodes = container.querySelectorAll('.public-site-hero__eco-node.is-future');
+    expect(futureNodes.length).toBe(3);
+    expect(container.querySelectorAll('.public-site-hero__eco-soon').length).toBe(3);
+    expect(screen.getAllByText('Próximamente').length).toBeGreaterThanOrEqual(3);
   });
 
   it('incluye exactamente los cuatro deportes soportados', () => {
@@ -114,24 +129,28 @@ describe('Hero globe tecnológico', () => {
     });
   });
 
-  it('conserva núcleo Partido y estructura accesible', () => {
+  it('conserva núcleo Partido y aria-label con capacidades futuras', () => {
     const { container } = renderHero();
     expect(screen.getByText('Partido')).toBeInTheDocument();
     expect(screen.getByText('el centro de todo')).toBeInTheDocument();
     const globe = container.querySelector('.public-site-hero__ecosystem');
     expect(globe).toHaveAttribute('role', 'img');
-    expect(globe.getAttribute('aria-label')).toMatch(/Comunidad/i);
-    expect(globe.getAttribute('aria-label')).toMatch(/Padbol, Pádel, Pickleball y Tenis/i);
+    const aria = globe.getAttribute('aria-label');
+    expect(aria).toMatch(/Sponsor/i);
+    expect(aria).toMatch(/Publicidad/i);
+    expect(aria).toMatch(/E-shop/i);
+    expect(aria).toMatch(/futuras/i);
+    expect(aria).toMatch(/Padbol, Pádel, Pickleball y Tenis/i);
     expect(container.querySelector('svg.public-site-hero__globe')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('tiene red densa (≥30) con líneas base permanentes y pulsos (sin fetch)', () => {
+  it('tiene red densa (35–50) con líneas base permanentes y pulsos (sin fetch)', () => {
     const { container } = renderHero();
     const bases = container.querySelectorAll('.public-site-hero__globe-arcs .is-base');
     const pulses = container.querySelectorAll('.public-site-hero__globe-arcs .is-pulse');
-    /* Dos paneles del mapa → N arcos × 2; N entre 30 y 45 */
-    expect(bases.length).toBeGreaterThanOrEqual(60);
-    expect(bases.length).toBeLessThanOrEqual(90);
+    /* Dos paneles → N arcos × 2; N entre 35 y 50 */
+    expect(bases.length).toBeGreaterThanOrEqual(70);
+    expect(bases.length).toBeLessThanOrEqual(100);
     expect(pulses.length).toBe(bases.length);
     expect(container.querySelector('.public-site-hero__globe-spin')).toBeTruthy();
     expect(global.fetch).not.toHaveBeenCalled();

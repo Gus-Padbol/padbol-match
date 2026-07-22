@@ -439,45 +439,40 @@ html.public-site-active #root {
 }
 
 /*
- * Marca textual: entre eyebrow y claim.
- * Tipografía heredada del sitio (deportiva/tech vía weight + tracking).
+ * Logo protagonista alineado al borde izquierdo del claim.
+ * Móvil 210–260 · tablet/desktop vía media queries.
  */
-.public-site-hero__brand {
-  margin: 0 0 10px;
-  font-size: clamp(1.35rem, 2.2vw + 0.55rem, 1.85rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  color: var(--ps-text);
-}
-
-.public-site-hero__brand-padbol {
-  color: #fff;
-}
-
-.public-site-hero__brand-match {
-  color: var(--ps-accent);
+.public-site-hero__logo {
+  display: block !important;
+  width: clamp(210px, 58vw, 260px) !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  margin: 0 0 10px !important;
+  object-fit: contain !important;
+  background: transparent !important;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45));
 }
 
 /*
- * Claim: ancho equilibrado (~28ch), alineado con marca y globo.
+ * Claim: inmediatamente bajo el logo, ~28ch, interlineado compacto.
  */
 .public-site-hero__title {
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   font-size: clamp(1.85rem, 3.4vw + 0.6rem, 3.15rem);
   font-weight: 900;
   letter-spacing: -0.03em;
-  line-height: 1.08;
+  line-height: 1.05;
   color: var(--ps-text);
   max-width: 28ch;
   text-wrap: balance;
 }
 
-/* Descriptor centrado en el bloque de texto, separado del claim y del lead. */
+/* Descriptor bajo el claim, coherente con el bloque izquierdo. */
 .public-site-hero__pillars {
   display: inline-flex;
-  align-self: center;
-  margin: 0 0 18px;
+  align-self: flex-start;
+  margin: 0 0 16px;
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid rgba(225, 27, 34, 0.45);
@@ -490,7 +485,7 @@ html.public-site-active #root {
 }
 
 .public-site-hero__lead {
-  margin: 0 0 22px;
+  margin: 0 0 20px;
   max-width: 40ch;
   font-size: clamp(0.98rem, 1.2vw + 0.7rem, 1.1rem);
   font-weight: 500;
@@ -499,8 +494,7 @@ html.public-site-active #root {
 }
 
 /*
- * CTAs centrados dentro del bloque izquierdo.
- * Móvil: apilados; tablet+: dos arriba + tertiary ancho completo.
+ * CTAs: dos arriba + comercial a ancho completo.
  */
 .public-site-hero__ctas {
   display: grid;
@@ -508,7 +502,7 @@ html.public-site-active #root {
   gap: 12px;
   width: 100%;
   max-width: 480px;
-  align-self: center;
+  align-self: flex-start;
 }
 
 .public-site-hero__cta {
@@ -556,12 +550,15 @@ html.public-site-active #root {
 .public-site-hero__cta--tertiary {
   background: transparent;
   color: #fda4a8;
-  border-color: rgba(225, 27, 34, 0.4);
+  border-color: rgba(225, 27, 34, 0.72);
+  box-shadow: 0 0 0 1px rgba(225, 27, 34, 0.12);
 }
 
 .public-site-hero__cta--tertiary:hover {
-  background: var(--ps-accent-soft);
+  background: rgba(225, 27, 34, 0.22);
+  border-color: rgba(225, 27, 34, 0.95);
   color: #fff;
+  box-shadow: 0 10px 28px rgba(225, 27, 34, 0.28);
 }
 
 /* ── Vista conceptual: globo terráqueo conectado (SVG + CSS) ── */
@@ -619,11 +616,11 @@ html.public-site-active #root {
   to { transform: translateX(-480px); }
 }
 
-/* Continentes: siluetas reconocibles, tono tecnológico premium. */
+/* Continentes: siluetas reconocibles, tono tecnológico premium (no mapa escolar). */
 .public-site-hero__globe-land path {
-  fill: rgba(156, 186, 226, 0.42);
-  stroke: rgba(200, 220, 245, 0.42);
-  stroke-width: 1.05;
+  fill: rgba(168, 192, 222, 0.48);
+  stroke: rgba(210, 226, 245, 0.5);
+  stroke-width: 1.1;
 }
 
 /*
@@ -684,21 +681,21 @@ html.public-site-active #root {
   filter: drop-shadow(0 0 12px rgba(225, 27, 34, 0.9));
 }
 
-/* Núcleo Partido: fijo sobre el centro (no gira), discreto. */
+/* Núcleo Partido: integrado, más liviano. */
 .public-site-hero__eco-core {
   position: absolute;
   left: 50%;
   top: 48%;
-  transform: translate(-50%, 14px);
+  transform: translate(-50%, 12px);
   display: grid;
   justify-items: center;
   gap: 0;
-  padding: 5px 11px;
-  border-radius: 10px;
+  padding: 4px 10px;
+  border-radius: 9px;
   text-align: center;
-  background: rgba(8, 12, 22, 0.82);
-  border: 1px solid rgba(225, 27, 34, 0.5);
-  box-shadow: 0 0 22px rgba(225, 27, 34, 0.22);
+  background: rgba(8, 12, 22, 0.72);
+  border: 1px solid rgba(225, 27, 34, 0.42);
+  box-shadow: 0 0 18px rgba(225, 27, 34, 0.18);
   z-index: 2;
   pointer-events: none;
 }
@@ -770,7 +767,8 @@ html.public-site-active #root {
 .public-site-hero__eco-node.is-ls1::after,
 .public-site-hero__eco-node.is-ls2::after,
 .public-site-hero__eco-node.is-sb1::after,
-.public-site-hero__eco-node.is-sb2::after {
+.public-site-hero__eco-node.is-sb2::after,
+.public-site-hero__eco-node.is-ft1::after {
   right: -16px;
   background: linear-gradient(90deg, transparent, rgba(225, 27, 34, 0.55));
 }
@@ -780,7 +778,9 @@ html.public-site-active #root {
 .public-site-hero__eco-node.is-rs1::after,
 .public-site-hero__eco-node.is-rs2::after,
 .public-site-hero__eco-node.is-sb3::after,
-.public-site-hero__eco-node.is-sb4::after {
+.public-site-hero__eco-node.is-sb4::after,
+.public-site-hero__eco-node.is-ft2::after,
+.public-site-hero__eco-node.is-ft3::after {
   left: -16px;
 }
 
@@ -798,19 +798,45 @@ html.public-site-active #root {
   font-weight: 650;
 }
 
-/* Distribución alrededor del stage (porcentajes del contenedor ecosystem). */
-.public-site-hero__eco-node.is-lt { left: 0; top: 8%; }
-.public-site-hero__eco-node.is-ls1 { left: 0; top: 22%; animation-delay: -0.8s; }
-.public-site-hero__eco-node.is-lm { left: 0; top: 36%; animation-delay: -1.6s; }
-.public-site-hero__eco-node.is-ls2 { left: 0; top: 50%; animation-delay: -2.4s; }
-.public-site-hero__eco-node.is-lb { left: 0; top: 64%; animation-delay: -3.2s; }
+/* Capacidades futuras: menor intensidad + etiqueta Próximamente. */
+.public-site-hero__eco-node.is-future {
+  opacity: 0.72;
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--ps-text-2);
+  font-weight: 650;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);
+}
+
+.public-site-hero__eco-node.is-future .public-site-hero__eco-dot {
+  background: rgba(148, 163, 184, 0.75);
+  box-shadow: none;
+}
+
+.public-site-hero__eco-soon {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ps-text-muted);
+  margin-left: 2px;
+}
+
+/* Distribución alrededor del stage. */
+.public-site-hero__eco-node.is-lt { left: 0; top: 4%; }
+.public-site-hero__eco-node.is-ls1 { left: 0; top: 16%; animation-delay: -0.8s; }
+.public-site-hero__eco-node.is-lm { left: 0; top: 28%; animation-delay: -1.6s; }
+.public-site-hero__eco-node.is-ls2 { left: 0; top: 40%; animation-delay: -2.4s; }
+.public-site-hero__eco-node.is-lb { left: 0; top: 52%; animation-delay: -3.2s; }
+.public-site-hero__eco-node.is-ft1 { left: 0; top: 64%; animation-delay: -3.6s; }
 .public-site-hero__eco-node.is-sb1 { left: 0; top: 78%; animation-delay: -3.8s; }
 .public-site-hero__eco-node.is-sb2 { left: 0; top: 90%; animation-delay: -4.2s; }
 
-.public-site-hero__eco-node.is-rt { right: 0; top: 10%; left: auto; animation-delay: -0.5s; }
-.public-site-hero__eco-node.is-rm { right: 0; top: 28%; left: auto; animation-delay: -1.3s; }
-.public-site-hero__eco-node.is-rs1 { right: 0; top: 46%; left: auto; animation-delay: -2.1s; }
-.public-site-hero__eco-node.is-rs2 { right: 0; top: 64%; left: auto; animation-delay: -2.9s; }
+.public-site-hero__eco-node.is-rt { right: 0; top: 4%; left: auto; animation-delay: -0.5s; }
+.public-site-hero__eco-node.is-rm { right: 0; top: 16%; left: auto; animation-delay: -1.3s; }
+.public-site-hero__eco-node.is-rs1 { right: 0; top: 28%; left: auto; animation-delay: -2.1s; }
+.public-site-hero__eco-node.is-rs2 { right: 0; top: 40%; left: auto; animation-delay: -2.9s; }
+.public-site-hero__eco-node.is-ft2 { right: 0; top: 52%; left: auto; animation-delay: -3.3s; }
+.public-site-hero__eco-node.is-ft3 { right: 0; top: 64%; left: auto; animation-delay: -3.7s; }
 .public-site-hero__eco-node.is-sb3 { right: 0; top: 78%; left: auto; animation-delay: -3.5s; }
 .public-site-hero__eco-node.is-sb4 { right: 0; top: 90%; left: auto; animation-delay: -4s; }
 
@@ -2756,10 +2782,14 @@ html.public-site-active #root {
     padding: 28px 0 64px;
   }
 
-  /* Tablet: globo intermedio · CTAs en dos filas. */
+  /* Tablet: globo intermedio · logo 260–320 · CTAs en dos filas. */
   .public-site-hero__ecosystem {
     max-width: min(520px, 92vw);
     padding: 36px 56px 44px;
+  }
+
+  .public-site-hero__logo {
+    width: clamp(260px, 36vw, 320px) !important;
   }
 
   .public-site-hero__ctas {
@@ -2910,6 +2940,11 @@ html.public-site-active #root {
     max-width: 200px !important;
   }
 
+  /* Desktop: logo 320–380 px, alineado al claim. */
+  .public-site-hero__logo {
+    width: clamp(320px, 26vw, 380px) !important;
+  }
+
   /*
    * Experiencias en dos columnas integradas: contenido (intro + selector +
    * copy) | dispositivo, centrados entre sí; la nota cruza ambas columnas.
@@ -2975,6 +3010,10 @@ html.public-site-active #root {
   .public-site__brand-logo {
     width: 120px !important;
     max-width: 120px !important;
+  }
+
+  .public-site-hero__logo {
+    width: clamp(210px, 66vw, 240px) !important;
   }
 
   .ps-community-scene__slots span {

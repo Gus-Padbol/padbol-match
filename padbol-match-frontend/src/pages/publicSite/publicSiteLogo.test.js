@@ -1,8 +1,7 @@
 /**
  * Regresión del logo oficial en la web pública (/plataforma).
  *
- * El logo imagen vive en Header (y footer/download).
- * El Hero usa marca textual "Padbol Match" (sin imagen duplicada).
+ * Header: logo pequeño. Hero: logo grande tight (sin marca textual duplicada).
  */
 
 const fs = require('fs');
@@ -28,11 +27,20 @@ describe('logo oficial de la web pública', () => {
     expect(fs.existsSync(assetPath)).toBe(true);
   });
 
-  it('Header usa la variante tight; Hero no duplica el logo imagen', () => {
+  it('Hero y Header usan la variante tight', () => {
+    expect(hero).toMatch(/variant=["']on-dark-tight["']/);
     expect(layout).toMatch(/variant=["']on-dark-tight["']/);
-    expect(hero).not.toMatch(/PadbolBrandLogo/);
-    expect(hero).not.toMatch(/public-site-hero__logo/);
-    expect(hero).toMatch(/public-site-hero__brand/);
+    expect(hero).toMatch(/public-site-hero__logo/);
+    expect(hero).not.toMatch(/public-site-hero__brand/);
+  });
+
+  it('Hero se dimensiona por ancho (protagonista) y no por altura del lienzo', () => {
+    const rule = css.match(/\.public-site-hero__logo\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    expect(rule[0]).toMatch(/width:\s*clamp\(210px,\s*58vw,\s*260px\)\s*!important/);
+    expect(rule[0]).toMatch(/height:\s*auto\s*!important/);
+    expect(rule[0]).toMatch(/object-fit:\s*contain/);
+    expect(rule[0]).not.toMatch(/margin:\s*-\d/);
   });
 
   it('Header se dimensiona por ancho sin empujar la navegación', () => {
@@ -43,10 +51,12 @@ describe('logo oficial de la web pública', () => {
     expect(rule[0]).toMatch(/object-fit:\s*contain/);
   });
 
-  it('marca textual Padbol Match está estilizada en CSS (sin tipografía externa)', () => {
-    expect(css).toMatch(/\.public-site-hero__brand\s*\{/);
-    expect(css).toMatch(/\.public-site-hero__brand-match\s*\{/);
-    expect(css).not.toMatch(/@import\s+url\(/);
-    expect(css).not.toMatch(/fonts\.google/);
+  it('claim aparece inmediatamente después del logo en el Hero', () => {
+    const logoIdx = hero.indexOf('public-site-hero__logo');
+    const titleIdx = hero.indexOf('public-site-hero__title');
+    const brandIdx = hero.indexOf('public-site-hero__brand');
+    expect(logoIdx).toBeGreaterThan(-1);
+    expect(titleIdx).toBeGreaterThan(logoIdx);
+    expect(brandIdx).toBe(-1);
   });
 });

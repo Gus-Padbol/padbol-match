@@ -71,9 +71,15 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Quiero incorporar Padbol Match' })[0])
       .toHaveAttribute('href', '/contacto');
     expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
-    expect(screen.getAllByText('Próximamente')).toHaveLength(2);
+    /* Stores: badge "Próximamente" sin enlaces falsos (además de labels futuros del Hero). */
     expect(screen.getByText('App Store').closest('a')).toBeNull();
     expect(screen.getByText('Google Play').closest('a')).toBeNull();
+    const storeSoon = screen.getAllByText('Próximamente').filter((el) => {
+      const block = el.closest('.ps-store, .ps-download, [class*="store"]');
+      return Boolean(block) || el.className === '' || !el.classList.contains('public-site-hero__eco-soon');
+    });
+    expect(storeSoon.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Próximamente').some((el) => el.classList.contains('public-site-hero__eco-soon'))).toBe(true);
   });
 
   it('abre el menú móvil, mueve el foco y cierra con Escape', () => {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import PadbolBrandLogo from '../../../components/PadbolBrandLogo';
 import SportIcon from '../../../components/common/SportIcon';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../../constants/deportesCanchaSede';
 import { ES_FALLBACKS, useSafeTranslation } from '../../../i18n/tSafe';
@@ -20,115 +21,124 @@ function scrollToHash(hash) {
 const MAP_W = 480;
 
 /*
- * Siluetas continentales más reconocibles (proyección plana del panel).
+ * Siluetas continentales reconocibles (proyección plana del panel).
  * Contornos físicos únicamente — sin países ni fronteras.
- * data-continent ancla tests y semántica SVG.
  */
 const CONTINENT_PATHS = [
   {
     id: 'north-america',
     d:
-      'M42 108 C62 78 98 62 138 68 C168 72 198 88 212 112 C228 138 222 168 208 188 ' +
-      'C198 208 178 218 158 222 C148 248 128 262 108 252 C88 258 72 238 68 212 ' +
-      'C58 188 48 158 42 132 C40 120 42 112 42 108 Z ' +
-      'M168 218 C182 228 178 252 162 258 C148 252 150 232 160 224 Z ' +
-      'M78 248 C92 258 88 278 72 282 C62 274 64 256 78 248 Z',
+      'M28 95 C48 55 95 42 145 48 C185 52 225 72 245 105 C262 138 255 175 238 198 ' +
+      'C225 218 200 228 175 232 C162 265 135 285 108 272 C85 282 62 255 55 220 ' +
+      'C42 185 30 145 28 115 C26 105 28 98 28 95 Z ' +
+      'M195 228 C215 242 210 275 188 282 C168 272 172 245 188 235 Z ' +
+      'M72 275 C92 288 88 315 65 320 C48 308 52 282 72 275 Z ' +
+      'M248 118 C268 108 285 122 278 142 C262 148 248 135 248 118 Z',
   },
   {
     id: 'south-america',
     d:
-      'M138 268 C168 258 192 272 198 302 C202 338 188 372 168 398 C152 412 138 408 128 392 ' +
-      'C118 368 112 338 118 308 C120 288 128 272 138 268 Z ' +
-      'M152 398 C158 412 148 428 136 422 C132 410 142 402 152 398 Z',
+      'M155 278 C192 265 225 285 232 325 C238 370 218 415 192 448 C170 468 148 458 138 435 ' +
+      'C122 400 115 355 122 318 C128 295 140 280 155 278 Z ' +
+      'M175 448 C188 468 172 488 155 478 C148 462 162 452 175 448 Z',
   },
   {
     id: 'europe',
     d:
-      'M258 92 C278 78 302 82 318 96 C332 108 328 128 318 138 C308 148 292 146 280 138 ' +
-      'C268 128 258 112 258 92 Z ' +
-      'M292 138 C308 142 318 158 308 168 C296 168 288 152 292 138 Z ' +
-      'M268 148 C278 152 276 168 264 168 C258 158 260 150 268 148 Z',
+      'M268 78 C295 58 328 62 348 82 C365 98 362 122 348 138 C335 152 312 148 295 138 ' +
+      'C278 125 265 102 268 78 Z ' +
+      'M318 138 C338 145 348 168 335 182 C318 180 308 155 318 138 Z ' +
+      'M278 148 C292 155 290 175 275 178 C265 165 268 152 278 148 Z ' +
+      'M348 95 C365 88 378 98 372 115 C358 118 348 105 348 95 Z',
   },
   {
     id: 'africa',
     d:
-      'M268 168 C298 158 328 172 338 198 C348 228 342 268 328 298 C312 328 288 338 268 328 ' +
-      'C248 318 238 288 242 252 C244 218 252 178 268 168 Z ' +
-      'M298 318 C312 328 308 348 292 348 C284 338 288 322 298 318 Z',
+      'M275 175 C315 158 355 175 368 210 C382 250 375 305 355 345 C335 385 300 398 272 382 ' +
+      'C248 368 235 325 240 275 C244 225 255 185 275 175 Z ' +
+      'M318 365 C338 380 332 408 308 408 C295 392 302 372 318 365 Z',
   },
   {
     id: 'asia',
     d:
-      'M328 72 C368 58 418 68 452 98 C468 122 472 158 458 188 C442 218 408 228 382 218 ' +
-      'C362 232 338 228 328 208 C312 178 308 138 318 108 C320 92 324 78 328 72 Z ' +
-      'M388 218 C412 228 432 252 422 272 C398 278 378 252 388 218 Z ' +
-      'M438 188 C458 198 468 218 458 232 C442 232 432 208 438 188 Z',
+      'M348 58 C395 38 440 48 468 85 C485 118 488 158 472 195 C452 232 418 245 388 232 ' +
+      'C368 248 342 242 330 218 C312 180 308 130 322 95 C328 75 338 60 348 58 Z ' +
+      'M400 232 C432 245 455 275 442 300 C412 308 388 272 400 232 Z ' +
+      'M458 188 C478 200 485 228 468 245 C448 242 440 208 458 188 Z ' +
+      'M372 92 C392 80 412 92 405 112 C388 115 370 105 372 92 Z',
   },
   {
     id: 'oceania',
     d:
-      'M398 298 C428 288 458 302 462 328 C452 348 428 352 408 342 C396 328 394 308 398 298 Z ' +
-      'M428 348 C448 352 458 372 448 382 C428 382 418 362 428 348 Z ' +
-      'M462 318 C478 322 482 338 472 342 C462 338 458 324 462 318 Z',
+      'M405 312 C442 298 472 318 475 348 C462 372 432 375 408 360 C392 342 392 322 405 312 Z ' +
+      'M438 368 C462 375 472 398 455 410 C432 408 420 382 438 368 Z ' +
+      'M470 335 C488 342 492 362 478 368 C465 360 460 340 470 335 Z ' +
+      'M422 382 C435 388 432 402 420 398 C414 390 416 384 422 382 Z',
   },
 ];
 
 /* Hubs de actividad sobre continentes (nodos de la red). */
 const GLOBE_HUBS = [
-  [88, 128], [128, 148], [168, 118], [198, 158], [118, 198],
-  [158, 288], [178, 328], [148, 368], [168, 398],
-  [278, 108], [302, 128], [288, 148],
-  [288, 198], [312, 248], [278, 288], [298, 318],
-  [358, 108], [398, 138], [428, 168], [378, 188], [418, 208], [448, 148],
-  [418, 318], [438, 348], [452, 328],
+  [70, 120], [120, 140], [170, 110], [210, 150], [100, 190], [150, 210],
+  [170, 300], [195, 350], [160, 400], [185, 440],
+  [290, 100], [320, 125], [300, 145], [340, 155],
+  [295, 210], [325, 265], [285, 310], [310, 350],
+  [380, 100], [420, 130], [455, 160], [400, 185], [445, 210], [468, 140],
+  [450, 340], [465, 365], [470, 350], [430, 360],
 ];
 
 /*
- * 36 arcos internacionales permanentes (curvas Q).
+ * 42 arcos internacionales permanentes (rango 35–50).
  * Línea base siempre visible + pulso luminoso independiente.
  */
 const GLOBE_ARCS = [
-  { id: 'c01', d: 'M88,128 Q200,48 278,108' },
-  { id: 'c02', d: 'M128,148 Q230,70 302,128' },
-  { id: 'c03', d: 'M168,118 Q280,40 358,108' },
-  { id: 'c04', d: 'M198,158 Q260,90 398,138' },
-  { id: 'c05', d: 'M118,198 Q240,120 288,198' },
-  { id: 'c06', d: 'M158,288 Q250,170 312,248' },
-  { id: 'c07', d: 'M178,328 Q270,210 278,288' },
-  { id: 'c08', d: 'M148,368 Q280,250 298,318' },
-  { id: 'c09', d: 'M168,398 Q300,280 418,318' },
-  { id: 'c10', d: 'M88,128 Q70,220 158,288' },
-  { id: 'c11', d: 'M128,148 Q180,250 178,328' },
-  { id: 'c12', d: 'M168,118 Q200,240 148,368' },
-  { id: 'c13', d: 'M198,158 Q240,280 168,398' },
-  { id: 'c14', d: 'M278,108 Q340,70 398,138' },
-  { id: 'c15', d: 'M302,128 Q370,90 428,168' },
-  { id: 'c16', d: 'M288,148 Q340,120 378,188' },
-  { id: 'c17', d: 'M288,198 Q350,150 418,208' },
-  { id: 'c18', d: 'M312,248 Q380,200 448,148' },
-  { id: 'c19', d: 'M278,288 Q360,250 418,318' },
-  { id: 'c20', d: 'M298,318 Q380,280 438,348' },
-  { id: 'c21', d: 'M358,108 Q410,90 448,148' },
-  { id: 'c22', d: 'M398,138 Q440,180 452,328' },
-  { id: 'c23', d: 'M428,168 Q450,240 438,348' },
-  { id: 'c24', d: 'M378,188 Q420,260 418,318' },
-  { id: 'c25', d: 'M88,128 Q220,200 288,148' },
-  { id: 'c26', d: 'M128,148 Q240,220 312,248' },
-  { id: 'c27', d: 'M168,118 Q250,200 288,198' },
-  { id: 'c28', d: 'M118,198 Q220,260 278,288' },
-  { id: 'c29', d: 'M158,288 Q280,300 378,188' },
-  { id: 'c30', d: 'M178,328 Q300,320 418,208' },
-  { id: 'c31', d: 'M148,368 Q290,340 438,348' },
-  { id: 'c32', d: 'M302,128 Q280,220 168,398' },
-  { id: 'c33', d: 'M398,138 Q320,240 178,328' },
-  { id: 'c34', d: 'M448,148 Q340,260 158,288' },
-  { id: 'c35', d: 'M278,108 Q200,180 118,198' },
-  { id: 'c36', d: 'M428,168 Q300,280 198,158' },
+  { id: 'c01', d: 'M70,120 Q200,40 290,100' },
+  { id: 'c02', d: 'M120,140 Q230,55 320,125' },
+  { id: 'c03', d: 'M170,110 Q290,35 380,100' },
+  { id: 'c04', d: 'M210,150 Q280,70 420,130' },
+  { id: 'c05', d: 'M100,190 Q240,110 295,210' },
+  { id: 'c06', d: 'M150,210 Q250,140 325,265' },
+  { id: 'c07', d: 'M170,300 Q270,180 285,310' },
+  { id: 'c08', d: 'M195,350 Q285,220 310,350' },
+  { id: 'c09', d: 'M160,400 Q300,260 450,340' },
+  { id: 'c10', d: 'M185,440 Q320,300 465,365' },
+  { id: 'c11', d: 'M70,120 Q55,220 170,300' },
+  { id: 'c12', d: 'M120,140 Q170,260 195,350' },
+  { id: 'c13', d: 'M170,110 Q200,250 160,400' },
+  { id: 'c14', d: 'M210,150 Q240,290 185,440' },
+  { id: 'c15', d: 'M290,100 Q350,60 420,130' },
+  { id: 'c16', d: 'M320,125 Q390,80 460,160' },
+  { id: 'c17', d: 'M300,145 Q360,110 400,185' },
+  { id: 'c18', d: 'M340,155 Q400,140 445,210' },
+  { id: 'c19', d: 'M295,210 Q370,160 468,140' },
+  { id: 'c20', d: 'M325,265 Q400,220 450,340' },
+  { id: 'c21', d: 'M285,310 Q390,270 465,365' },
+  { id: 'c22', d: 'M310,350 Q400,300 470,350' },
+  { id: 'c23', d: 'M380,100 Q430,70 468,140' },
+  { id: 'c24', d: 'M420,130 Q455,180 470,350' },
+  { id: 'c25', d: 'M455,160 Q470,250 465,365' },
+  { id: 'c26', d: 'M400,185 Q450,270 430,360' },
+  { id: 'c27', d: 'M70,120 Q220,190 300,145' },
+  { id: 'c28', d: 'M120,140 Q240,210 325,265' },
+  { id: 'c29', d: 'M170,110 Q250,200 295,210' },
+  { id: 'c30', d: 'M100,190 Q220,260 285,310' },
+  { id: 'c31', d: 'M150,210 Q280,290 400,185' },
+  { id: 'c32', d: 'M170,300 Q310,310 445,210' },
+  { id: 'c33', d: 'M195,350 Q320,330 468,140' },
+  { id: 'c34', d: 'M160,400 Q300,360 450,340' },
+  { id: 'c35', d: 'M320,125 Q270,230 185,440' },
+  { id: 'c36', d: 'M420,130 Q310,250 195,350' },
+  { id: 'c37', d: 'M468,140 Q340,280 170,300' },
+  { id: 'c38', d: 'M290,100 Q200,180 100,190' },
+  { id: 'c39', d: 'M455,160 Q310,290 210,150' },
+  { id: 'c40', d: 'M445,210 Q300,300 150,210' },
+  { id: 'c41', d: 'M310,350 Q250,280 120,140' },
+  { id: 'c42', d: 'M430,360 Q280,250 170,110' },
 ];
 
 /*
- * Labels exteriores: funciones + comunidad/ops + 4 deportes.
- * priority: visibles en móvil; secondary: ocultos visualmente en móvil (siguen en DOM/aria).
+ * Labels exteriores: funciones activas + capacidades futuras + 4 deportes.
+ * priority: visibles en móvil; future: expansión comercial (menor intensidad).
  */
 const ORBIT_LABELS = [
   { key: 'player', spot: 'lt', priority: true },
@@ -136,10 +146,13 @@ const ORBIT_LABELS = [
   { key: 'ranking', spot: 'lm', priority: false },
   { key: 'padcoins', spot: 'ls2', priority: false },
   { key: 'tournaments', spot: 'lb', priority: false },
+  { key: 'sponsor', spot: 'ft1', priority: false, future: true },
   { key: 'venue', spot: 'rt', priority: true },
   { key: 'scoreboard', spot: 'rm', priority: true },
   { key: 'bookings', spot: 'rs1', priority: false },
   { key: 'memberships', spot: 'rs2', priority: false },
+  { key: 'ads', spot: 'ft2', priority: false, future: true },
+  { key: 'eshop', spot: 'ft3', priority: false, future: true },
 ];
 
 const ORBIT_SPORTS = [
@@ -168,8 +181,8 @@ function GlobeMapPanel({ offsetX = 0 }) {
               d={d}
               pathLength={1}
               style={{
-                animationDuration: `${(4.2 + (index % 5) * 0.55).toFixed(2)}s`,
-                animationDelay: `${(-index * 0.42).toFixed(2)}s`,
+                animationDuration: `${(4.0 + (index % 6) * 0.5).toFixed(2)}s`,
+                animationDelay: `${(-index * 0.38).toFixed(2)}s`,
               }}
             />
           </g>
@@ -197,6 +210,7 @@ export default function HeroSection() {
   const text = (key) => t(key, ES_FALLBACKS[key] || '');
   const sportLabel = (key) =>
     DEPORTES_CANCHA_SEDE_OPTIONS.find((item) => item.key === key)?.label || key;
+  const comingSoon = text('publicSite.hero.ecosystem.comingSoon');
 
   return (
     <section className="public-site-hero" aria-labelledby="public-site-hero-title">
@@ -209,13 +223,11 @@ export default function HeroSection() {
 
       <div className="public-site__shell public-site-hero__grid">
         <div className="public-site-hero__copy" data-ps-reveal>
-          <p className="public-site-hero__eyebrow">{text('publicSite.hero.eyebrow')}</p>
-
-          <p className="public-site-hero__brand" aria-label={text('publicSite.hero.title')}>
-            <span className="public-site-hero__brand-padbol">Padbol</span>
-            {' '}
-            <span className="public-site-hero__brand-match">Match</span>
-          </p>
+          <PadbolBrandLogo
+            variant="on-dark-tight"
+            className="public-site-hero__logo"
+            alt={text('publicSite.brandAlt')}
+          />
 
           <h1 id="public-site-hero-title" className="public-site-hero__title">
             {text('publicSite.hero.claim')}
@@ -262,16 +274,22 @@ export default function HeroSection() {
               focusable="false"
             >
               <defs>
-                <radialGradient id="ps-globe-sphere" cx="36%" cy="28%" r="78%">
-                  <stop offset="0%" stopColor="#1a2740" />
-                  <stop offset="52%" stopColor="#0b1326" />
+                <radialGradient id="ps-globe-sphere" cx="34%" cy="26%" r="78%">
+                  <stop offset="0%" stopColor="#243552" />
+                  <stop offset="42%" stopColor="#121c32" />
                   <stop offset="100%" stopColor="#050914" />
                 </radialGradient>
-                <radialGradient id="ps-globe-shade" cx="32%" cy="28%" r="72%">
-                  <stop offset="0%" stopColor="rgba(255,255,255,0.14)" />
-                  <stop offset="45%" stopColor="rgba(255,255,255,0)" />
-                  <stop offset="100%" stopColor="rgba(0,0,0,0.55)" />
+                <radialGradient id="ps-globe-shade" cx="30%" cy="26%" r="74%">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.16)" />
+                  <stop offset="40%" stopColor="rgba(255,255,255,0)" />
+                  <stop offset="78%" stopColor="rgba(0,0,0,0.35)" />
+                  <stop offset="100%" stopColor="rgba(0,0,0,0.62)" />
                 </radialGradient>
+                <linearGradient id="ps-globe-atm" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(148, 180, 220, 0.22)" />
+                  <stop offset="55%" stopColor="rgba(148, 180, 220, 0)" />
+                  <stop offset="100%" stopColor="rgba(0, 0, 0, 0.25)" />
+                </linearGradient>
                 <clipPath id="ps-globe-clip">
                   <circle cx="240" cy="240" r="210" />
                 </clipPath>
@@ -283,8 +301,8 @@ export default function HeroSection() {
                 cy="240"
                 r="210"
                 fill="url(#ps-globe-sphere)"
-                stroke="rgba(148, 163, 184, 0.32)"
-                strokeWidth="1.4"
+                stroke="rgba(148, 163, 184, 0.28)"
+                strokeWidth="1.3"
               />
 
               <g clipPath="url(#ps-globe-clip)">
@@ -304,9 +322,10 @@ export default function HeroSection() {
                 </g>
 
                 <circle cx="240" cy="240" r="210" fill="url(#ps-globe-shade)" />
+                <circle cx="240" cy="240" r="210" fill="url(#ps-globe-atm)" opacity="0.55" />
               </g>
 
-              <circle className="public-site-hero__globe-core-dot" cx="240" cy="228" r="6.5" />
+              <circle className="public-site-hero__globe-core-dot" cx="240" cy="228" r="5.5" />
             </svg>
 
             <div className="public-site-hero__eco-core">
@@ -315,13 +334,17 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {ORBIT_LABELS.map(({ key, spot, priority }) => (
+          {ORBIT_LABELS.map(({ key, spot, priority, future }) => (
             <div
               key={key}
-              className={`public-site-hero__eco-node is-${spot} is-${key}${priority ? ' is-priority' : ' is-secondary-orbit'}`}
+              className={`public-site-hero__eco-node is-${spot} is-${key}${priority ? ' is-priority' : ' is-secondary-orbit'}${future ? ' is-future' : ''}`}
+              title={future ? comingSoon : undefined}
             >
               <span className="public-site-hero__eco-dot" aria-hidden="true" />
-              {text(`publicSite.hero.ecosystem.${key}`)}
+              <span className="public-site-hero__eco-label">{text(`publicSite.hero.ecosystem.${key}`)}</span>
+              {future ? (
+                <span className="public-site-hero__eco-soon">{comingSoon}</span>
+              ) : null}
             </div>
           ))}
 

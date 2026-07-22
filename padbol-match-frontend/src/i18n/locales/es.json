@@ -2047,7 +2047,7 @@
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
       "ctaVenue": "Quiero incorporar Padbol Match",
-      "ecosystemAria": "Red global de Padbol Match conectando jugadores, sedes, comunidad, torneos, reservas, membresías, partidos, marcador, ranking, PadCoins y los deportes Padbol, Pádel, Pickleball y Tenis.",
+      "ecosystemAria": "Red global de Padbol Match conectando jugadores, sedes, comunidad, marcador, ranking, PadCoins, torneos, reservas, membresías y los deportes Padbol, Pádel, Pickleball y Tenis, con capacidades futuras de Sponsor, Publicidad y E-shop.",
       "ecosystemCore": "Partido",
       "ecosystemCoreSub": "el centro de todo",
       "ecosystem": {
@@ -2059,7 +2059,11 @@
         "community": "Comunidad",
         "tournaments": "Torneos",
         "bookings": "Reservas",
-        "memberships": "Membresías"
+        "memberships": "Membresías",
+        "sponsor": "Sponsor",
+        "ads": "Publicidad",
+        "eshop": "E-shop",
+        "comingSoon": "Próximamente"
       }
     },
     "sports": {
