@@ -26,8 +26,8 @@ jest.mock('../../i18n/tSafe', () => {
   };
 });
 
-jest.mock('../../components/PadbolBrandLogo', () => function Logo({ alt }) {
-  return <img alt={alt} />;
+jest.mock('../../components/PadbolBrandLogo', () => function Logo({ alt, className }) {
+  return <img alt={alt} className={className} />;
 });
 jest.mock('../../components/common/SportIcon', () => function SportIconMock({ deporte }) {
   return <span data-testid={`sport-icon-${deporte}`} />;
@@ -71,6 +71,54 @@ describe('/plataforma public site', () => {
     expect(container.querySelector('.bottom-nav')).toBeNull();
     expect(container.querySelector('.ps-hero__video')).toBeTruthy();
     expect(container.querySelector('.public-site-hero__globe')).toBeNull();
+  });
+
+  it('Hero prioriza la marca: logo → claim → subtítulo → CTAs', () => {
+    const { container } = renderPage();
+    const hero = container.querySelector('.ps-hero');
+    expect(hero).toBeTruthy();
+    const logo = hero.querySelector('.ps-hero__logo');
+    const claim = hero.querySelector('.ps-hero__claim');
+    const lead = hero.querySelector('.ps-hero__lead');
+    const ctas = hero.querySelector('.ps-hero__ctas');
+    const media = hero.querySelector('.ps-hero__media');
+    expect(logo).toBeTruthy();
+    expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo.');
+    expect(lead).toHaveTextContent(
+      'Jugadores, sedes, partidos, torneos, ranking, comunidad y gestión en una sola plataforma.',
+    );
+    expect(hero.textContent).not.toMatch(/Cada partido construye una relación/i);
+    expect(hero.textContent).not.toMatch(/Jugadores y sedes en una misma plataforma/i);
+    /* No repetir el nombre de marca como texto suelto en el Hero (solo alt del logo). */
+    const textNodes = Array.from(hero.querySelectorAll('h1, p, a, button')).map((el) => el.textContent.trim());
+    expect(textNodes.some((t) => t === 'Padbol Match')).toBe(false);
+    const positions = [logo, claim, lead, ctas, media].map((el) => {
+      let pos = 0;
+      const walker = document.createTreeWalker(hero, NodeFilter.SHOW_ELEMENT);
+      while (walker.nextNode()) {
+        if (walker.currentNode === el) return pos;
+        pos += 1;
+      }
+      return -1;
+    });
+    expect(positions[0]).toBeLessThan(positions[1]);
+    expect(positions[1]).toBeLessThan(positions[2]);
+    expect(positions[2]).toBeLessThan(positions[3]);
+    expect(positions[3]).toBeLessThan(positions[4]);
+    const ctaLinks = Array.from(ctas.querySelectorAll('a')).map((a) => a.textContent.trim());
+    expect(ctaLinks).toEqual([
+      'Conocer la plataforma',
+      'Quiero incorporar Padbol Match',
+      'Quiero jugar',
+    ]);
+  });
+
+  it('mantiene el header intacto con logo pequeño e Ingresar', () => {
+    const { container } = renderPage();
+    expect(container.querySelector('.public-site__nav')).toBeTruthy();
+    expect(container.querySelector('.public-site__brand-logo')).toBeTruthy();
+    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
+    expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeTruthy();
   });
 
   it('expone navegación, CTAs prioritarios y stores no activos', () => {

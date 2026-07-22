@@ -18,8 +18,7 @@ function scrollToHash(hash) {
 const HERO_VIDEO = '/media/experiences/signature.mp4';
 
 /**
- * Hero premium: deporte real (video) + claim + marca + CTAs.
- * Un solo video muted, sin globo saturado.
+ * Hero: marca primero, luego claim, subtítulo, CTAs y video de fondo.
  */
 export default function HeroSection() {
   const { t } = useSafeTranslation();
@@ -55,31 +54,15 @@ export default function HeroSection() {
 
   return (
     <section className="ps-hero" aria-labelledby="public-site-hero-title">
-      <div className="ps-hero__media" aria-hidden={false}>
-        <video
-          ref={videoRef}
-          className="ps-hero__video"
-          src={HERO_VIDEO}
-          muted
-          playsInline
-          loop
-          preload="metadata"
-          poster=""
-          aria-label={text('publicSite.hero.videoAria')}
-        />
-        <div className="ps-hero__scrim" aria-hidden="true" />
-        <div className="ps-hero__court-lines" aria-hidden="true" />
-      </div>
-
       <div className="public-site__shell ps-hero__content">
-        <h1 id="public-site-hero-title" className="ps-hero__claim">
-          {text('publicSite.hero.claim')}
-        </h1>
         <PadbolBrandLogo
           variant="on-dark-tight"
           className="ps-hero__logo"
           alt={text('publicSite.brandAlt')}
         />
+        <h1 id="public-site-hero-title" className="ps-hero__claim">
+          {text('publicSite.hero.claim')}
+        </h1>
         <p className="ps-hero__lead">{text('publicSite.hero.lead')}</p>
         <div className="ps-hero__ctas">
           <a
@@ -99,6 +82,22 @@ export default function HeroSection() {
             {text('publicSite.hero.ctaPlay')}
           </Link>
         </div>
+      </div>
+
+      <div className="ps-hero__media" aria-hidden={false}>
+        <video
+          ref={videoRef}
+          className="ps-hero__video"
+          src={HERO_VIDEO}
+          muted
+          playsInline
+          loop
+          preload="metadata"
+          poster=""
+          aria-label={text('publicSite.hero.videoAria')}
+        />
+        <div className="ps-hero__scrim" aria-hidden="true" />
+        <div className="ps-hero__court-lines" aria-hidden="true" />
       </div>
     </section>
   );

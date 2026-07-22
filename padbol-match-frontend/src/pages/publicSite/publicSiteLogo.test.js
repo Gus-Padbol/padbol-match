@@ -1,7 +1,7 @@
 /**
  * Regresión del logo oficial en la web pública (/plataforma).
  *
- * Header: logo pequeño. Hero: claim → logo grande tight.
+ * Header: logo pequeño. Hero: logo grande → claim → subtítulo → CTAs.
  */
 
 const fs = require('fs');
@@ -37,10 +37,12 @@ describe('logo oficial de la web pública', () => {
   it('Hero se dimensiona por ancho (protagonista) y no por altura del lienzo', () => {
     const rule = css.match(/\.ps-hero__logo\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
-    expect(rule[0]).toMatch(/width:\s*clamp\(280px,\s*88vw,\s*340px\)\s*!important/);
+    expect(rule[0]).toMatch(/width:\s*clamp\(250px,\s*82vw,\s*330px\)\s*!important/);
     expect(rule[0]).toMatch(/height:\s*auto\s*!important/);
     expect(rule[0]).toMatch(/object-fit:\s*contain/);
     expect(rule[0]).not.toMatch(/margin:\s*-\d/);
+    expect(css).toMatch(/clamp\(320px,\s*48vw,\s*430px\)/);
+    expect(css).toMatch(/clamp\(420px,\s*36vw,\s*560px\)/);
   });
 
   it('Header se dimensiona por ancho sin empujar la navegación', () => {
@@ -51,12 +53,18 @@ describe('logo oficial de la web pública', () => {
     expect(rule[0]).toMatch(/object-fit:\s*contain/);
   });
 
-  it('claim aparece antes del logo en el Hero', () => {
+  it('logo aparece antes del claim en el Hero', () => {
     const logoIdx = hero.indexOf('ps-hero__logo');
     const titleIdx = hero.indexOf('ps-hero__claim');
+    const leadIdx = hero.indexOf('ps-hero__lead');
+    const ctasIdx = hero.indexOf('ps-hero__ctas');
+    const mediaIdx = hero.indexOf('ps-hero__media');
     expect(logoIdx).toBeGreaterThan(-1);
     expect(titleIdx).toBeGreaterThan(-1);
-    expect(titleIdx).toBeLessThan(logoIdx);
+    expect(logoIdx).toBeLessThan(titleIdx);
+    expect(titleIdx).toBeLessThan(leadIdx);
+    expect(leadIdx).toBeLessThan(ctasIdx);
+    expect(ctasIdx).toBeLessThan(mediaIdx);
     expect(hero).not.toMatch(/public-site-hero__pillars/);
     expect(hero).not.toMatch(/publicSite\.hero\.pillars/);
   });
