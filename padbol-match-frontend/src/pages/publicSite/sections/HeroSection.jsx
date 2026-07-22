@@ -223,17 +223,15 @@ export default function HeroSection() {
 
       <div className="public-site__shell public-site-hero__grid">
         <div className="public-site-hero__copy" data-ps-reveal>
+          <h1 id="public-site-hero-title" className="public-site-hero__title">
+            {text('publicSite.hero.claim')}
+          </h1>
+
           <PadbolBrandLogo
             variant="on-dark-tight"
             className="public-site-hero__logo"
             alt={text('publicSite.brandAlt')}
           />
-
-          <h1 id="public-site-hero-title" className="public-site-hero__title">
-            {text('publicSite.hero.claim')}
-          </h1>
-
-          <p className="public-site-hero__pillars">{text('publicSite.hero.pillars')}</p>
 
           <p className="public-site-hero__lead">{text('publicSite.hero.lead')}</p>
 

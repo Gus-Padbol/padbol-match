@@ -78,16 +78,20 @@ describe('Hero globe tecnológico', () => {
     return render(<HeroSection />);
   }
 
-  it('muestra logo grande en Hero y no duplica marca textual Padbol Match', () => {
+  it('muestra claim → logo → párrafo → CTAs sin descriptor', () => {
     const { container } = renderHero();
     expect(screen.getByTestId('hero-brand-logo')).toBeInTheDocument();
     expect(container.querySelector('.public-site-hero__logo')).toBeTruthy();
     expect(container.querySelector('.public-site-hero__brand')).toBeNull();
-    /* El claim no debe ir precedido por un nodo de marca textual. */
+    expect(container.querySelector('.public-site-hero__pillars')).toBeNull();
+    expect(screen.queryByText('Juego · Comunidad · Gestión')).toBeNull();
+
     const copy = container.querySelector('.public-site-hero__copy');
     const children = Array.from(copy.children).map((el) => el.className);
-    expect(children[0]).toMatch(/public-site-hero__logo/);
-    expect(children[1]).toMatch(/public-site-hero__title/);
+    expect(children[0]).toMatch(/public-site-hero__title/);
+    expect(children[1]).toMatch(/public-site-hero__logo/);
+    expect(children[2]).toMatch(/public-site-hero__lead/);
+    expect(children[3]).toMatch(/public-site-hero__ctas/);
   });
 
   it('expone los seis continentes como siluetas SVG', () => {

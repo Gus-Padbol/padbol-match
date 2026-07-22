@@ -439,23 +439,23 @@ html.public-site-active #root {
 }
 
 /*
- * Logo protagonista alineado al borde izquierdo del claim.
- * Móvil 210–260 · tablet/desktop vía media queries.
+ * Logo debajo del claim: ancho ~ claim, claramente mayor que el header.
+ * Móvil 280–340 · tablet/desktop vía media queries.
  */
 .public-site-hero__logo {
   display: block !important;
-  width: clamp(210px, 58vw, 260px) !important;
+  width: clamp(280px, 88vw, 340px) !important;
   height: auto !important;
   max-width: 100% !important;
   max-height: none !important;
-  margin: 0 0 10px !important;
+  margin: 0 0 12px !important;
   object-fit: contain !important;
   background: transparent !important;
   filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45));
 }
 
 /*
- * Claim: inmediatamente bajo el logo, ~28ch, interlineado compacto.
+ * Claim arriba de todo en el bloque izquierdo (~28ch, interlineado compacto).
  */
 .public-site-hero__title {
   margin: 0 0 14px;
@@ -468,24 +468,8 @@ html.public-site-active #root {
   text-wrap: balance;
 }
 
-/* Descriptor bajo el claim, coherente con el bloque izquierdo. */
-.public-site-hero__pillars {
-  display: inline-flex;
-  align-self: flex-start;
-  margin: 0 0 16px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(225, 27, 34, 0.45);
-  background: var(--ps-accent-soft);
-  color: #fda4a8;
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .public-site-hero__lead {
-  margin: 0 0 20px;
+  margin: 0 0 18px;
   max-width: 40ch;
   font-size: clamp(0.98rem, 1.2vw + 0.7rem, 1.1rem);
   font-weight: 500;
@@ -2782,14 +2766,14 @@ html.public-site-active #root {
     padding: 28px 0 64px;
   }
 
-  /* Tablet: globo intermedio · logo 260–320 · CTAs en dos filas. */
+  /* Tablet: globo intermedio · logo 340–430 · CTAs en dos filas. */
   .public-site-hero__ecosystem {
     max-width: min(520px, 92vw);
     padding: 36px 56px 44px;
   }
 
   .public-site-hero__logo {
-    width: clamp(260px, 36vw, 320px) !important;
+    width: clamp(340px, 48vw, 430px) !important;
   }
 
   .public-site-hero__ctas {
@@ -2940,9 +2924,9 @@ html.public-site-active #root {
     max-width: 200px !important;
   }
 
-  /* Desktop: logo 320–380 px, alineado al claim. */
+  /* Desktop: logo 430–520 px, alineado al claim (~ancho del bloque). */
   .public-site-hero__logo {
-    width: clamp(320px, 26vw, 380px) !important;
+    width: clamp(430px, 36vw, 520px) !important;
   }
 
   /*
@@ -3013,7 +2997,7 @@ html.public-site-active #root {
   }
 
   .public-site-hero__logo {
-    width: clamp(210px, 66vw, 240px) !important;
+    width: clamp(280px, 92vw, 340px) !important;
   }
 
   .ps-community-scene__slots span {

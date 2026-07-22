@@ -1,7 +1,7 @@
 /**
  * Regresión del logo oficial en la web pública (/plataforma).
  *
- * Header: logo pequeño. Hero: logo grande tight (sin marca textual duplicada).
+ * Header: logo pequeño. Hero: claim → logo grande tight.
  */
 
 const fs = require('fs');
@@ -37,7 +37,7 @@ describe('logo oficial de la web pública', () => {
   it('Hero se dimensiona por ancho (protagonista) y no por altura del lienzo', () => {
     const rule = css.match(/\.public-site-hero__logo\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
-    expect(rule[0]).toMatch(/width:\s*clamp\(210px,\s*58vw,\s*260px\)\s*!important/);
+    expect(rule[0]).toMatch(/width:\s*clamp\(280px,\s*88vw,\s*340px\)\s*!important/);
     expect(rule[0]).toMatch(/height:\s*auto\s*!important/);
     expect(rule[0]).toMatch(/object-fit:\s*contain/);
     expect(rule[0]).not.toMatch(/margin:\s*-\d/);
@@ -51,12 +51,13 @@ describe('logo oficial de la web pública', () => {
     expect(rule[0]).toMatch(/object-fit:\s*contain/);
   });
 
-  it('claim aparece inmediatamente después del logo en el Hero', () => {
+  it('claim aparece antes del logo en el Hero', () => {
     const logoIdx = hero.indexOf('public-site-hero__logo');
     const titleIdx = hero.indexOf('public-site-hero__title');
-    const brandIdx = hero.indexOf('public-site-hero__brand');
     expect(logoIdx).toBeGreaterThan(-1);
-    expect(titleIdx).toBeGreaterThan(logoIdx);
-    expect(brandIdx).toBe(-1);
+    expect(titleIdx).toBeGreaterThan(-1);
+    expect(titleIdx).toBeLessThan(logoIdx);
+    expect(hero).not.toMatch(/public-site-hero__pillars/);
+    expect(hero).not.toMatch(/publicSite\.hero\.pillars/);
   });
 });
