@@ -1,17 +1,17 @@
 /**
  * Enlaces y anchors de la web pública (`/plataforma`).
- * App Store / Google Play: sin URLs aprobadas → UI “Próximamente”.
+ * App Store / Google Play: sin URLs aprobadas → UI no activa.
  */
 
 export const PUBLIC_SITE_PATH = '/plataforma';
 
 /** CTAs del Hero — flujos productivos existentes. */
 export const PUBLIC_SITE_CTA = {
-  /** Scroll interno a la sección de ecosistema. */
-  exploreHash: '#ecosistema',
-  /** Entrada a jugar / explorar (guest-friendly, sin gate de login). */
+  /** Scroll interno a la sección “Qué es”. */
+  exploreHash: '#que-es',
+  /** Entrada a jugar / explorar (guest-friendly). */
   play: '/hub',
-  /** Incorporar sede: página comercial existente (luego → /unirse). */
+  /** Incorporar sede: página comercial existente. */
   venue: '/contacto',
   /** Acceso a cuenta. */
   login: '/acceso',
@@ -19,13 +19,15 @@ export const PUBLIC_SITE_CTA = {
 
 /** Anchors principales de navegación pública. */
 export const PUBLIC_SITE_ANCHORS = {
-  platform: '#ecosistema',
+  platform: '#que-es',
   players: '#jugadores',
+  community: '#comunidad-partidos',
+  scoreboard: '#marcador-inteligente',
   venues: '#sedes',
   download: '#descargar',
 };
 
-/** Stores: null = mostrar “Próximamente”. */
+/** Stores: null = no presentar como enlace activo. */
 export const PUBLIC_SITE_STORE_LINKS = {
   appStore: null,
   googlePlay: null,

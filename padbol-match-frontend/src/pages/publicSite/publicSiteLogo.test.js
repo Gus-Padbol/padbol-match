@@ -30,12 +30,12 @@ describe('logo oficial de la web pública', () => {
   it('Hero y Header usan la variante tight', () => {
     expect(hero).toMatch(/variant=["']on-dark-tight["']/);
     expect(layout).toMatch(/variant=["']on-dark-tight["']/);
-    expect(hero).toMatch(/public-site-hero__logo/);
+    expect(hero).toMatch(/ps-hero__logo/);
     expect(hero).not.toMatch(/public-site-hero__brand/);
   });
 
   it('Hero se dimensiona por ancho (protagonista) y no por altura del lienzo', () => {
-    const rule = css.match(/\.public-site-hero__logo\s*\{[^}]*\}/);
+    const rule = css.match(/\.ps-hero__logo\s*\{[^}]*\}/);
     expect(rule).not.toBeNull();
     expect(rule[0]).toMatch(/width:\s*clamp\(280px,\s*88vw,\s*340px\)\s*!important/);
     expect(rule[0]).toMatch(/height:\s*auto\s*!important/);
@@ -52,8 +52,8 @@ describe('logo oficial de la web pública', () => {
   });
 
   it('claim aparece antes del logo en el Hero', () => {
-    const logoIdx = hero.indexOf('public-site-hero__logo');
-    const titleIdx = hero.indexOf('public-site-hero__title');
+    const logoIdx = hero.indexOf('ps-hero__logo');
+    const titleIdx = hero.indexOf('ps-hero__claim');
     expect(logoIdx).toBeGreaterThan(-1);
     expect(titleIdx).toBeGreaterThan(-1);
     expect(titleIdx).toBeLessThan(logoIdx);

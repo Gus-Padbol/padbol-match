@@ -2072,5 +2072,305 @@
     "seeAllReviews": "See all",
     "allReviewsTitle": "All reviews",
     "close": "Close"
+  },
+  "publicSite": {
+    "brandAlt": "Padbol Match",
+    "nav": {
+      "aria": "Main navigation",
+      "menu": "Open menu",
+      "close": "Close menu",
+      "platform": "Platform",
+      "players": "For players",
+      "venues": "For venues",
+      "download": "Download the app",
+      "login": "Sign in",
+      "community": "Community",
+      "scoreboard": "Scoreboard"
+    },
+    "hero": {
+      "claim": "Every match builds a relationship.",
+      "lead": "Players and venues on one platform: play, compete and manage.",
+      "ctaExplore": "Explore the platform",
+      "ctaPlay": "I want to play",
+      "ctaVenue": "I want to bring Padbol Match",
+      "videoAria": "Padbol match on court"
+    },
+    "whatIs": {
+      "title": "What is Padbol Match",
+      "text": "It connects players and venues. It brings together competition, community and management. Every match creates continuity: not just a booking tool, but a relationship that continues after you play."
+    },
+    "playerPath": {
+      "title": "For players",
+      "text": "Find matches, create games, join open slots, book, compete and follow your progress inside the community.",
+      "items": {
+        "find": {
+          "title": "Find matches",
+          "text": "Discover nearby games and chances to play."
+        },
+        "book": {
+          "title": "Book",
+          "text": "Secure court time at your venue."
+        },
+        "compete": {
+          "title": "Compete",
+          "text": "Tournaments, teams and results that count."
+        },
+        "community": {
+          "title": "Community",
+          "text": "Notifications, messages and connected players."
+        },
+        "rewards": {
+          "title": "Rewards",
+          "text": "Profile, PadCoins and achievements"
+        },
+        "create": {
+          "title": "Create a match",
+          "text": "Set venue, time and level to invite players."
+        },
+        "join": {
+          "title": "Open matches",
+          "text": "Request a spot, complete teams and confirm your place."
+        },
+        "evolve": {
+          "title": "Track your progress",
+          "text": "History, ranking and growth in your profile."
+        }
+      }
+    },
+    "venuePath": {
+      "title": "For venues and organizations",
+      "text": "Create new matches, fill schedules, activate players and turn open games into real occupancy, with smart scoreboard and continuity.",
+      "items": {
+        "bookings": {
+          "title": "Bookings",
+          "text": "Courts, schedules and prices"
+        },
+        "players": {
+          "title": "Players",
+          "text": "The venue’s active community"
+        },
+        "tournaments": {
+          "title": "Tournaments",
+          "text": "Registrations and competition"
+        },
+        "scoreboard": {
+          "title": "Smart scoreboard",
+          "text": "Record the match live and connect it to venue operations."
+        },
+        "loyalty": {
+          "title": "Loyalty",
+          "text": "Memberships, PadCoins and campaigns"
+        },
+        "reports": {
+          "title": "Management",
+          "text": "Reports and operational control"
+        },
+        "occupy": {
+          "title": "Real occupancy",
+          "text": "Open matches and bookings that fill courts and empty slots."
+        },
+        "activate": {
+          "title": "Activate players",
+          "text": "Your venue community finds someone to play with and comes back."
+        },
+        "continuity": {
+          "title": "Continuity",
+          "text": "Tournaments, ranking, PadCoins and memberships after every game."
+        }
+      }
+    },
+    "continuity": {
+      "title": "Before, during and after",
+      "text": "Every match can become history, competition, progress and a new reason to return. Open matches, results, ranking, PadCoins, memberships and community reinforce each other.",
+      "items": {
+        "matches": {
+          "title": "Matches",
+          "text": "Open, complete and confirm"
+        },
+        "tournaments": {
+          "title": "Tournaments",
+          "text": "Competition with a calendar."
+        },
+        "ranking": {
+          "title": "Ranking",
+          "text": "Visible progress."
+        },
+        "scoreboard": {
+          "title": "Scoreboard",
+          "text": "Live result"
+        },
+        "community": {
+          "title": "Community",
+          "text": "Relationships that last."
+        },
+        "padcoins": {
+          "title": "PadCoins",
+          "text": "Participation recognized."
+        },
+        "memberships": {
+          "title": "Memberships",
+          "text": "A bond with the venue."
+        },
+        "openMatches": {
+          "title": "Open matches",
+          "text": "The doorway into playing."
+        },
+        "results": {
+          "title": "Results",
+          "text": "The match is recorded."
+        }
+      }
+    },
+    "experiences": {
+      "title": "Five experiences. One platform.",
+      "text": "The same play and management base, five visual identities.",
+      "items": {
+        "signature": {
+          "title": "Signature",
+          "text": "Complete and balanced."
+        },
+        "stadium": {
+          "title": "Stadium",
+          "text": "Immersive, for living competition."
+        },
+        "express": {
+          "title": "Express",
+          "text": "Fast: enter, book and play."
+        },
+        "arena": {
+          "title": "Arena",
+          "text": "Social and dynamic."
+        },
+        "quantum": {
+          "title": "Quantum",
+          "text": "Data, progress and control."
+        }
+      },
+      "selectorAria": "Choose visual experience",
+      "prev": "Previous experience",
+      "next": "Next experience",
+      "demoBadge": "Demo",
+      "note": "Demo with sample data."
+    },
+    "expansion": {
+      "title": "The ecosystem keeps growing",
+      "text": "New commercial layers for venues, brands and the Padbol community.",
+      "items": {
+        "sponsor": {
+          "title": "Sponsor",
+          "text": "Visibility aligned with real play."
+        },
+        "ads": {
+          "title": "Advertising",
+          "text": "Presence in high-attention moments."
+        },
+        "eshop": {
+          "title": "E-shop",
+          "text": "Products and benefits connected to the venue."
+        }
+      },
+      "note": "Areas in development within the Padbol Match ecosystem."
+    },
+    "about": {
+      "title": "About us",
+      "text": "Padbol Match comes from the sport of Padbol and grows as an international platform for players, venues and organizations.",
+      "visualAlt": "Space for institutional photography"
+    },
+    "download": {
+      "title": "Download the app",
+      "text": "Take Padbol Match on your phone.",
+      "appStore": "App Store",
+      "googlePlay": "Google Play",
+      "storeSoon": "Not yet available in stores",
+      "login": "Log in to Padbol Match"
+    },
+    "contact": {
+      "title": "Start today",
+      "text": "Add your venue or start playing.",
+      "play": "I want to play",
+      "venue": "I want to bring Padbol Match",
+      "login": "Log in"
+    },
+    "footer": {
+      "aria": "Footer navigation",
+      "tagline": "Game, community and management.",
+      "platform": "Platform",
+      "players": "For players",
+      "venues": "For venues",
+      "download": "Download the app",
+      "contact": "Contact",
+      "about": "About us",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "language": "Language",
+      "copyright": "Padbol Match. All rights reserved.",
+      "community": "Community",
+      "scoreboard": "Smart scoreboard"
+    },
+    "paths": {
+      "aria": "Pathways"
+    },
+    "communityMatches": {
+      "title": "Playing starts before you walk on court.",
+      "text": "Padbol Match lets you create matches, find players, join open games and complete teams in one community. Venues gain real activity when the intent to play is confirmed.",
+      "ctaPlay": "I want to play",
+      "mockAria": "Visual example of an open match with available slots",
+      "mockBadge": "Demo",
+      "mockTitle": "Open match",
+      "mockMeta": "Venue · Today 7:30 PM",
+      "mockLevel": "Intermediate level",
+      "mockSlots": "2 of 4 spots confirmed",
+      "mockAction": "Request a spot",
+      "steps": {
+        "create": {
+          "title": "Create and publish",
+          "text": "Set up the match with venue, time, level and open slots."
+        },
+        "publish": {
+          "title": "Find and request",
+          "text": "Players discover the open match and ask to join."
+        },
+        "join": {
+          "title": "Complete teams",
+          "text": "Accept requests, fill slots and communicate with the group."
+        },
+        "confirm": {
+          "title": "Confirm and play",
+          "text": "Notifications and confirmations turn intent into real venue activity."
+        }
+      }
+    },
+    "smartScoreboard": {
+      "title": "Smart scoreboard: the match live.",
+      "text": "The result is recorded while you play and stays connected to history, competition and venue activity. Sets, partials and corrections serve the match and what comes next.",
+      "demoAria": "Visual demo of the smart scoreboard",
+      "demoBadge": "Live",
+      "demoTeamA": "Team A",
+      "demoTeamB": "Team B",
+      "demoSet": "Set 2",
+      "demoPartial": "Partial 3-2",
+      "steps": {
+        "start": {
+          "title": "Start the match",
+          "text": "Select players or teams and open the scoreboard."
+        },
+        "live": {
+          "title": "Follow live",
+          "text": "Record points, sets and partials as the match unfolds."
+        },
+        "correct": {
+          "title": "Correct an action",
+          "text": "Adjust a point or a set when needed."
+        },
+        "close": {
+          "title": "Close the result",
+          "text": "Confirm the finish and display it on screen when relevant."
+        },
+        "connect": {
+          "title": "Connect the result",
+          "text": "The match feeds history, stats, ranking and tournaments when applicable."
+        }
+      }
+    }
   }
 }

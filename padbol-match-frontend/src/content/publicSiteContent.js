@@ -9,60 +9,51 @@ const item = (key) => ({ key });
 export const PUBLIC_SITE_NAV_ITEMS = [
   { key: 'platform', href: PUBLIC_SITE_ANCHORS.platform },
   { key: 'players', href: PUBLIC_SITE_ANCHORS.players },
+  { key: 'community', href: PUBLIC_SITE_ANCHORS.community },
+  { key: 'scoreboard', href: PUBLIC_SITE_ANCHORS.scoreboard },
   { key: 'venues', href: PUBLIC_SITE_ANCHORS.venues },
   { key: 'download', href: PUBLIC_SITE_ANCHORS.download },
 ];
 
+/**
+ * Estructura editorial (~10 bloques) con protagonismo de comunidad y marcador.
+ */
 export const PUBLIC_SITE_SECTIONS = {
-  problem: {
-    id: 'problema',
-    items: ['messages', 'payments', 'sheets', 'results'].map(item),
-    journey: ['book', 'play', 'compete', 'return'],
+  whatIs: {
+    id: 'que-es',
   },
-  ecosystem: {
-    id: 'ecosistema',
-    items: ['player', 'venue', 'system'].map(item),
+  playerPath: {
+    id: 'jugadores',
+    items: ['find', 'create', 'join', 'book', 'compete', 'evolve', 'community'].map(item),
+  },
+  communityMatches: {
+    id: 'comunidad-partidos',
+    steps: ['create', 'publish', 'join', 'confirm'].map(item),
+  },
+  venuePath: {
+    id: 'sedes',
+    items: ['occupy', 'activate', 'scoreboard', 'continuity'].map(item),
+  },
+  continuity: {
+    id: 'continuidad',
+    items: ['openMatches', 'tournaments', 'results', 'ranking', 'padcoins', 'memberships', 'community'].map(
+      item,
+    ),
+  },
+  smartScoreboard: {
+    id: 'marcador-inteligente',
+    steps: ['start', 'live', 'correct', 'close', 'connect'].map(item),
   },
   experiences: {
     id: 'experiencias',
     items: ['signature', 'stadium', 'express', 'arena', 'quantum'].map(item),
   },
-  playerCycle: {
-    id: 'jugadores',
-    items: ['find', 'book', 'play', 'compete', 'evolve', 'return'].map(item),
+  expansion: {
+    id: 'expansion',
+    items: ['sponsor', 'ads', 'eshop'].map(item),
   },
-  venueOps: {
-    id: 'sedes',
-    items: ['operation', 'competition', 'loyalty', 'decisions'].map(item),
-  },
-  community: {
-    id: 'comunidad',
-    items: ['create', 'complete', 'communicate'].map(item),
-  },
-  scoreboard: {
-    id: 'marcador',
-    items: ['start', 'follow', 'correct', 'close'].map(item),
-    flow: ['result', 'history', 'ranking', 'statistics', 'venue'].map(item),
-  },
-  tournaments: {
-    id: 'torneos',
-    items: ['teams', 'registrations', 'matches', 'results'].map(item),
-  },
-  ranking: {
-    id: 'evolucion',
-    items: ['history', 'statistics', 'achievements', 'ranking'].map(item),
-  },
-  padCoins: {
-    id: 'fidelizacion',
-    items: ['padcoins', 'memberships', 'campaigns'].map(item),
-  },
-  venueBenefits: {
-    id: 'beneficios',
-    items: ['friction', 'occupancy', 'recurrence', 'control', 'revenue', 'community'].map(item),
-  },
-  rollout: {
-    id: 'implementacion',
-    items: ['base', 'connected', 'loyalty', 'expansion'].map(item),
+  about: {
+    id: 'nosotros',
   },
   download: {
     id: 'descargar',
@@ -75,8 +66,8 @@ export const PUBLIC_SITE_SECTIONS = {
   contact: {
     id: 'contacto',
     ctas: [
-      { key: 'play', to: PUBLIC_SITE_CTA.play },
       { key: 'venue', to: PUBLIC_SITE_CTA.venue },
+      { key: 'play', to: PUBLIC_SITE_CTA.play },
       { key: 'login', to: PUBLIC_SITE_CTA.login },
     ],
   },

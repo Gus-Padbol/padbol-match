@@ -1,7 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import ExperiencesSection from './ExperiencesSection';
-import SportsStrip from './SportsStrip';
 import {
   PUBLIC_SITE_EXPERIENCE_IDS,
   PUBLIC_SITE_EXPERIENCE_LIST,
@@ -282,22 +281,13 @@ describe('video real por experiencia', () => {
   });
 });
 
-describe('franja multideporte', () => {
-  beforeEach(() => {
-    window.matchMedia = jest.fn().mockReturnValue({ matches: false });
-  });
-
-  it('muestra únicamente los deportes habilitados en el producto', () => {
-    render(<SportsStrip />);
+describe('deportes habilitados en el producto', () => {
+  it('mantiene únicamente los deportes habilitados en el producto', () => {
     expect(DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key }) => key)).toEqual([
       'padbol',
       'padel',
       'pickleball',
       'tenis',
     ]);
-    DEPORTES_CANCHA_SEDE_OPTIONS.forEach(({ label }) => {
-      expect(screen.getByText(label)).toBeInTheDocument();
-    });
-    expect(screen.getAllByRole('listitem')).toHaveLength(DEPORTES_CANCHA_SEDE_OPTIONS.length);
   });
 });

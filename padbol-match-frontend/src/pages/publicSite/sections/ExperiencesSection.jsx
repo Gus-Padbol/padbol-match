@@ -5,7 +5,7 @@ import {
   PUBLIC_SITE_EXPERIENCES,
 } from '../../../constants/publicSiteExperiences';
 import SportIcon from '../../../components/common/SportIcon';
-import { SectionIntro, usePublicSiteText } from './SectionElements';
+import { usePublicSiteText } from '../publicSiteI18n';
 import { prefersReducedMotion } from '../useRevealOnScroll';
 
 const AUTOPLAY_MS = 7000;
@@ -269,7 +269,10 @@ export default function ExperiencesSection() {
           entre sí. En móvil apila: selector, copy, teléfono, nota. */}
       <div className="public-site__shell ps-exp-layout">
         <div className="ps-exp-main">
-          <SectionIntro sectionKey="experiences" titleId="ps-experiences-title" />
+          <header className="ps-exp-intro">
+            <h2 id="ps-experiences-title">{text('publicSite.experiences.title')}</h2>
+            <p>{text('publicSite.experiences.text')}</p>
+          </header>
 
           <div
             ref={tablistRef}

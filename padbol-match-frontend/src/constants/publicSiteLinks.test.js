@@ -12,15 +12,17 @@ const {
 describe('publicSite links + shell isolation', () => {
   it('expone la ruta /plataforma y CTAs productivos', () => {
     expect(PUBLIC_SITE_PATH).toBe('/plataforma');
-    expect(PUBLIC_SITE_CTA.exploreHash).toBe('#ecosistema');
+    expect(PUBLIC_SITE_CTA.exploreHash).toBe('#que-es');
     expect(PUBLIC_SITE_CTA.play).toBe('/hub');
     expect(PUBLIC_SITE_CTA.venue).toBe('/contacto');
     expect(PUBLIC_SITE_CTA.login).toBe('/acceso');
   });
 
   it('define anchors futuros sin stores aprobados', () => {
-    expect(PUBLIC_SITE_ANCHORS.platform).toBe('#ecosistema');
+    expect(PUBLIC_SITE_ANCHORS.platform).toBe('#que-es');
     expect(PUBLIC_SITE_ANCHORS.players).toBe('#jugadores');
+    expect(PUBLIC_SITE_ANCHORS.community).toBe('#comunidad-partidos');
+    expect(PUBLIC_SITE_ANCHORS.scoreboard).toBe('#marcador-inteligente');
     expect(PUBLIC_SITE_ANCHORS.venues).toBe('#sedes');
     expect(PUBLIC_SITE_ANCHORS.download).toBe('#descargar');
     expect(PUBLIC_SITE_STORE_LINKS.appStore).toBeNull();
