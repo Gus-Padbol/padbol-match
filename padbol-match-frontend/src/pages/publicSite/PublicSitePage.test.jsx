@@ -54,6 +54,33 @@ describe('/plataforma public site', () => {
     });
     jest.spyOn(window.HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve());
     jest.spyOn(window.HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
+      setTransform: jest.fn(),
+      clearRect: jest.fn(),
+      beginPath: jest.fn(),
+      arc: jest.fn(),
+      fill: jest.fn(),
+      stroke: jest.fn(),
+      moveTo: jest.fn(),
+      lineTo: jest.fn(),
+      closePath: jest.fn(),
+      save: jest.fn(),
+      restore: jest.fn(),
+      clip: jest.fn(),
+      fillRect: jest.fn(),
+      createRadialGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+      createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+    }));
+    global.IntersectionObserver = jest.fn(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    }));
+    global.ResizeObserver = jest.fn(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    }));
   });
 
   afterEach(() => {
@@ -64,16 +91,40 @@ describe('/plataforma public site', () => {
     return render(<PublicSitePage />);
   }
 
+  it('binario vive en la zona Qué es → Comunidad, no en el Hero', () => {
+    const { container } = renderPage();
+    const hero = container.querySelector('.ps-hero');
+    const zone = container.querySelector('[data-binary-zone="true"]');
+    const stream = container.querySelector('[data-binary-stream="true"]');
+    expect(hero.querySelector('[data-binary-stream="true"]')).toBeNull();
+    expect(zone).toBeTruthy();
+    expect(zone).toHaveAttribute('data-binary-zone-start', 'what-is');
+    expect(zone).toHaveAttribute('data-binary-zone-end', 'community');
+    expect(stream).toBeTruthy();
+    expect(zone.contains(stream)).toBe(true);
+    expect(zone.querySelector('#ps-what-title')).toBeTruthy();
+    expect(zone.querySelector('#ps-players-title')).toBeTruthy();
+    expect(zone.querySelector('#ps-community-matches-title')).toBeTruthy();
+    expect(stream).toHaveAttribute('data-position', 'left');
+    expect(stream).toHaveAttribute('data-orientation', 'vertical');
+    expect(Number(stream.getAttribute('data-band-count'))).toBe(4);
+    expect(stream.className).toMatch(/ps-binary-zone__stream/);
+    expect(stream).toHaveAttribute('data-motion-axis', 'y');
+    /* Fuera de la zona (sedes) no hay otra corriente */
+    expect(container.querySelectorAll('[data-binary-stream="true"]')).toHaveLength(1);
+  });
+
   it('renderiza la estructura nueva, un h1 y ninguna BottomNav', () => {
     const { container } = renderPage();
     PUBLIC_SITE_SECTION_ORDER.forEach((id) => expect(container.querySelector(`#${id}`)).toBeTruthy());
     expect(container.querySelectorAll('h1')).toHaveLength(1);
     expect(container.querySelector('.bottom-nav')).toBeNull();
-    expect(container.querySelector('.ps-hero__video')).toBeTruthy();
-    expect(container.querySelector('.public-site-hero__globe')).toBeNull();
+    expect(container.querySelector('.ps-hero__video')).toBeNull();
+    expect(container.querySelector('.ps-globe')).toBeTruthy();
+    expect(container.querySelector('canvas.ps-globe__canvas')).toBeTruthy();
   });
 
-  it('Hero prioriza la marca: logo → claim → subtítulo → CTAs', () => {
+  it('Hero prioriza la marca: logo → claim → subtítulo → CTAs → globo', () => {
     const { container } = renderPage();
     const hero = container.querySelector('.ps-hero');
     expect(hero).toBeTruthy();
@@ -81,7 +132,7 @@ describe('/plataforma public site', () => {
     const claim = hero.querySelector('.ps-hero__claim');
     const lead = hero.querySelector('.ps-hero__lead');
     const ctas = hero.querySelector('.ps-hero__ctas');
-    const media = hero.querySelector('.ps-hero__media');
+    const globe = hero.querySelector('.ps-globe');
     expect(logo).toBeTruthy();
     expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo.');
     expect(lead).toHaveTextContent(
@@ -92,7 +143,7 @@ describe('/plataforma public site', () => {
     /* No repetir el nombre de marca como texto suelto en el Hero (solo alt del logo). */
     const textNodes = Array.from(hero.querySelectorAll('h1, p, a, button')).map((el) => el.textContent.trim());
     expect(textNodes.some((t) => t === 'Padbol Match')).toBe(false);
-    const positions = [logo, claim, lead, ctas, media].map((el) => {
+    const positions = [logo, claim, lead, ctas, globe].map((el) => {
       let pos = 0;
       const walker = document.createTreeWalker(hero, NodeFilter.SHOW_ELEMENT);
       while (walker.nextNode()) {
@@ -213,18 +264,17 @@ describe('/plataforma public site', () => {
     expect(document.documentElement.classList.contains('public-site-active')).toBe(false);
   });
 
-  it('respeta reduced motion en el hero video', () => {
+  it('respeta reduced motion en el hero con globo estático', () => {
     window.matchMedia = jest.fn().mockReturnValue({
       matches: true,
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
     });
-    const playSpy = window.HTMLMediaElement.prototype.play;
-    const pauseSpy = window.HTMLMediaElement.prototype.pause;
-    playSpy.mockClear();
-    pauseSpy.mockClear();
-    renderPage();
-    expect(playSpy).not.toHaveBeenCalled();
-    expect(pauseSpy).toHaveBeenCalled();
+    const { container } = renderPage();
+    expect(container.querySelector('.ps-globe')).toBeTruthy();
+    expect(container.querySelector('.ps-hero__globe-wrap')).toHaveAttribute(
+      'data-reduced-motion',
+      'true',
+    );
   });
 });

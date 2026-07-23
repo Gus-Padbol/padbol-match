@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PadbolBrandLogo from '../../../components/PadbolBrandLogo';
 import { useSafeTranslation } from '../../../i18n/tSafe';
 import { PUBLIC_SITE_CTA } from '../../../constants/publicSiteLinks';
+import PremiumGlobalGlobe from '../globe/PremiumGlobalGlobe';
+import HeroStarfield from '../globe/HeroStarfield';
 
 function scrollToHash(hash) {
   const id = String(hash || '').replace(/^#/, '');
@@ -15,19 +17,25 @@ function scrollToHash(hash) {
   el.focus({ preventScroll: true });
 }
 
-const HERO_VIDEO = '/media/experiences/signature.mp4';
-
 /**
- * Hero: marca primero, luego claim, subtítulo, CTAs y video de fondo.
+ * Hero: marca + mensaje + globo global (elemento visual principal).
+ * Fondo estelar sutil (sin video). Experiencias mantienen sus videos.
  */
 export default function HeroSection() {
   const { t } = useSafeTranslation();
   const text = (key) => t(key);
-  const videoRef = useRef(null);
   const [reduceMotion, setReduceMotion] = useState(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   });
+  const [compact, setCompact] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+  );
+  const [tablet, setTablet] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.innerWidth >= 768 && window.innerWidth < 900
+      : false,
+  );
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -38,66 +46,55 @@ export default function HeroSection() {
   }, []);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return undefined;
-    if (reduceMotion) {
-      video.pause();
-      return undefined;
-    }
-    const play = () => {
-      const result = video.play();
-      if (result && typeof result.catch === 'function') result.catch(() => {});
+    const onResize = () => {
+      const w = window.innerWidth;
+      setCompact(w < 768);
+      setTablet(w >= 768 && w < 900);
     };
-    play();
-    return () => video.pause();
-  }, [reduceMotion]);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   return (
-    <section className="ps-hero" aria-labelledby="public-site-hero-title">
-      <div className="public-site__shell ps-hero__content">
-        <PadbolBrandLogo
-          variant="on-dark-tight"
-          className="ps-hero__logo"
-          alt={text('publicSite.brandAlt')}
-        />
-        <h1 id="public-site-hero-title" className="ps-hero__claim">
-          {text('publicSite.hero.claim')}
-        </h1>
-        <p className="ps-hero__lead">{text('publicSite.hero.lead')}</p>
-        <div className="ps-hero__ctas">
-          <a
-            href={PUBLIC_SITE_CTA.exploreHash}
-            className="ps-btn ps-btn--primary"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToHash(PUBLIC_SITE_CTA.exploreHash);
-            }}
-          >
-            {text('publicSite.hero.ctaExplore')}
-          </a>
-          <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--secondary">
-            {text('publicSite.hero.ctaVenue')}
-          </Link>
-          <Link to={PUBLIC_SITE_CTA.play} className="ps-btn ps-btn--ghost">
-            {text('publicSite.hero.ctaPlay')}
-          </Link>
-        </div>
-      </div>
+    <section className="ps-hero ps-hero--globe" aria-labelledby="public-site-hero-title">
+      <div className="ps-hero__atmosphere" aria-hidden="true" />
+      <HeroStarfield reducedMotion={reduceMotion} compact={compact} tablet={tablet} />
 
-      <div className="ps-hero__media" aria-hidden={false}>
-        <video
-          ref={videoRef}
-          className="ps-hero__video"
-          src={HERO_VIDEO}
-          muted
-          playsInline
-          loop
-          preload="metadata"
-          poster=""
-          aria-label={text('publicSite.hero.videoAria')}
-        />
-        <div className="ps-hero__scrim" aria-hidden="true" />
-        <div className="ps-hero__court-lines" aria-hidden="true" />
+      <div className="public-site__shell ps-hero__layout">
+        <div className="ps-hero__content">
+          <PadbolBrandLogo
+            variant="on-dark-tight"
+            className="ps-hero__logo"
+            alt={text('publicSite.brandAlt')}
+          />
+          <h1 id="public-site-hero-title" className="ps-hero__claim">
+            {text('publicSite.hero.claim')}
+          </h1>
+          <p className="ps-hero__lead">{text('publicSite.hero.lead')}</p>
+          <div className="ps-hero__ctas">
+            <a
+              href={PUBLIC_SITE_CTA.exploreHash}
+              className="ps-btn ps-btn--primary"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToHash(PUBLIC_SITE_CTA.exploreHash);
+              }}
+            >
+              {text('publicSite.hero.ctaExplore')}
+            </a>
+            <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--secondary">
+              {text('publicSite.hero.ctaVenue')}
+            </Link>
+            <Link to={PUBLIC_SITE_CTA.play} className="ps-btn ps-btn--ghost">
+              {text('publicSite.hero.ctaPlay')}
+            </Link>
+          </div>
+        </div>
+
+        <div className="ps-hero__globe-wrap" data-reduced-motion={reduceMotion ? 'true' : 'false'}>
+          <PremiumGlobalGlobe text={text} />
+        </div>
       </div>
     </section>
   );

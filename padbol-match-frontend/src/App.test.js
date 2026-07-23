@@ -1,15 +1,36 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-test('monta la aplicación', () => {
-  const { container } = render(
-    <ThemeProvider>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </ThemeProvider>
-  );
+jest.mock('./context/AuthContext', () => ({
+  AuthProvider: ({ children }) => children,
+  useAuth: () => ({
+    loading: false,
+    session: null,
+    signOutAndClear: jest.fn(),
+    userProfile: null,
+  }),
+}));
+
+jest.mock('./pages/AdminDashboard', () => function AdminDashboardMock() {
+  return <div>Admin dashboard</div>;
+});
+
+jest.mock('./pages/LandingPage', () => function LandingPageMock() {
+  return <main>Padbol Match</main>;
+});
+
+test('monta la aplicación', async () => {
+  let container;
+  await act(async () => {
+    ({ container } = render(
+      <ThemeProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ThemeProvider>
+    ));
+  });
   expect(container).toBeTruthy();
 });

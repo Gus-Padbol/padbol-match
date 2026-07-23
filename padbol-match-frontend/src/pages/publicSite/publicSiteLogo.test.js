@@ -27,6 +27,17 @@ describe('logo oficial de la web pública', () => {
     expect(fs.existsSync(assetPath)).toBe(true);
   });
 
+  it('no expone isólogo de globo (eliminado del Hero)', () => {
+    expect(brandConst).not.toMatch(/PADBOL_ISOLOGO/);
+    expect(brandConst).not.toMatch(/isologo/i);
+    const isoPath = path.join(__dirname, '../../../public/brand/padbol-match-isologo.png');
+    const darkPath = path.join(__dirname, '../../../public/brand/padbol-match-isologo-on-dark.png');
+    expect(fs.existsSync(isoPath)).toBe(false);
+    expect(fs.existsSync(darkPath)).toBe(false);
+    expect(css).not.toMatch(/ps-globe__core/);
+    expect(css).not.toMatch(/is-emphasize/);
+  });
+
   it('Hero y Header usan la variante tight', () => {
     expect(hero).toMatch(/variant=["']on-dark-tight["']/);
     expect(layout).toMatch(/variant=["']on-dark-tight["']/);
@@ -58,13 +69,14 @@ describe('logo oficial de la web pública', () => {
     const titleIdx = hero.indexOf('ps-hero__claim');
     const leadIdx = hero.indexOf('ps-hero__lead');
     const ctasIdx = hero.indexOf('ps-hero__ctas');
-    const mediaIdx = hero.indexOf('ps-hero__media');
+    const globeIdx = hero.indexOf('ps-hero__globe-wrap');
     expect(logoIdx).toBeGreaterThan(-1);
     expect(titleIdx).toBeGreaterThan(-1);
     expect(logoIdx).toBeLessThan(titleIdx);
     expect(titleIdx).toBeLessThan(leadIdx);
     expect(leadIdx).toBeLessThan(ctasIdx);
-    expect(ctasIdx).toBeLessThan(mediaIdx);
+    expect(ctasIdx).toBeLessThan(globeIdx);
+    expect(hero).toMatch(/PremiumGlobalGlobe/);
     expect(hero).not.toMatch(/public-site-hero__pillars/);
     expect(hero).not.toMatch(/publicSite\.hero\.pillars/);
   });

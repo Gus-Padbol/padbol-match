@@ -334,11 +334,6 @@ function AdminDashboardGate() {
 }
 
 function AppRoutes() {
-  const location = useLocation();
-  useEffect(() => {
-    console.log('PATH ACTUAL:', window.location.pathname);
-  }, [location.pathname]);
-
   return (
     <PerfilJugadorDatosMinimosGate>
     <Routes>
