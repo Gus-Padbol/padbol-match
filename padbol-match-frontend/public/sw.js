@@ -8,13 +8,23 @@
  * - /static/* hasheado: cache-first (immutable).
  * - Iconos/manifest: cache-first con revalidación al fallar red.
  */
-const CACHE_VERSION = 'pwa-1784840708759';
+const CACHE_VERSION = 'pwa-1784841679637';
 
 /** postMessage al cliente cuando se reemplazó una caché anterior (actualización real). */
 const MSG_UPDATED = 'PM_SW_UPDATED';
 
 /** Solo offline fallback — no se sirve en cache-first para documentos. */
-const PRECACHE_URLS = ['/manifest.json', '/logo192.png', '/logo512.png', '/favicon.ico'];
+const PRECACHE_URLS = [
+  '/manifest.json',
+  '/brand/padbol-match-icon.svg',
+  '/brand/padbol-match-icon-192.png',
+  '/brand/padbol-match-icon-512.png',
+  '/brand/padbol-match-icon-maskable-512.png',
+  '/brand/padbol-match-apple-touch-icon.png',
+  '/favicon.ico',
+  '/logo192.png',
+  '/logo512.png',
+];
 
 function broadcastToClients(data) {
   return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

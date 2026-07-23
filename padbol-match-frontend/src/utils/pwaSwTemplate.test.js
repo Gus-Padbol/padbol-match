@@ -23,6 +23,11 @@ describe('pwa-sw.template.js — invalidación entre deploys', () => {
     expect(template).not.toMatch(/PRECACHE_URLS = \[[^\]]*['"]\/['"]/);
   });
 
+  it('precachea el isotipo oficial y su variante maskable', () => {
+    expect(template).toMatch(/\/brand\/padbol-match-icon\.svg/);
+    expect(template).toMatch(/\/brand\/padbol-match-icon-maskable-512\.png/);
+  });
+
   it('no intercepta /sw.js (bypass para updates)', () => {
     expect(template).toMatch(/path === '\/sw\.js'/);
     expect(template).toMatch(/path\.endsWith\('\/sw\.js'\)/);

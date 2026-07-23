@@ -5,7 +5,6 @@ import { readCachedUserRoleForEmail } from '../utils/mergeUserRoleResult';
 import {
   USER_ROLE_STORAGE_KEY,
   normalizeUserRole,
-  userCanAccessAdminPanel,
 } from '../utils/adminPanelRoles';
 
 const STORAGE_KEY = USER_ROLE_STORAGE_KEY;

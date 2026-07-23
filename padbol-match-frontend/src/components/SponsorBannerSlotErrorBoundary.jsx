@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 
 /**
  * Evita que un fallo en el banner de sponsors tire abajo toda la página.

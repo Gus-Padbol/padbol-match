@@ -2,7 +2,7 @@ import { usePadbolI18n } from '../context/PadbolI18nContext';
 
 /** Idioma activo + suscripción al tick global de re-render (cambio ES/EN). */
 export function usePadbolLang() {
-  const { language, version } = usePadbolI18n();
+  const { language } = usePadbolI18n();
   return language;
 }
 

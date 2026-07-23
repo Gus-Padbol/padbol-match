@@ -29,6 +29,7 @@ import { useAuth } from './context/AuthContext';
 import { HubNavLayoutProvider } from './context/HubNavLayoutContext';
 import { getDisplayName } from './utils/displayName';
 import { scheduleHubEntryScrollReset } from './utils/hubEntryScrollReset';
+import { useSafeTranslation } from './i18n/tSafe';
 import {
   userCanAccessAdminPanel,
   normalizeUserRole,
@@ -79,6 +80,8 @@ const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreB
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
 
 function RouteLoadingScreen() {
+  const { t } = useSafeTranslation();
+
   return (
     <div
       role="status"
@@ -93,7 +96,7 @@ function RouteLoadingScreen() {
         fontWeight: 600,
       }}
     >
-      Cargando…
+      {t('general.loading')}
     </div>
   );
 }

@@ -90,7 +90,7 @@ export default function SedeBusquedaInput(props) {
       }
       setListOpen(false);
     },
-    [props, formatOption]
+    [props]
   );
 
   const showList = listOpen && debouncedQ.length >= minChars && opciones.length > 0;
