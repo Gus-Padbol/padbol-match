@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useSafeTranslation } from '../i18n/tSafe';
 import {
   HUB_BOTTOM_NAV_CONTENT_GAP_PX,
   HUB_NAV_HEIGHT_PX,
@@ -31,6 +32,7 @@ function readConsent() {
 export default function CookieConsentBanner() {
   const location = useLocation();
   const { navDock } = useHubNavLayout();
+  const { t } = useSafeTranslation();
   const [visible, setVisible] = useState(() => readConsent() == null);
 
   const bottomOffsetPx = useMemo(() => {
@@ -59,7 +61,7 @@ export default function CookieConsentBanner() {
     <div
       role="dialog"
       aria-modal="false"
-      aria-label="Cookies"
+      aria-label={t('general.cookiesBanner')}
       style={{
         position: 'fixed',
         left: 0,
@@ -87,30 +89,56 @@ export default function CookieConsentBanner() {
       }}
     >
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, fontWeight: 600, color: 'var(--text-primary)' }}>
-        Usamos cookies para mejorar tu experiencia.
+        {t('general.cookiesBanner')}
       </p>
-      <button
-        type="button"
-        onClick={() => persist(COOKIES_CONSENT_ACCEPTED)}
+      <div
         style={{
-          width: '100%',
-          maxWidth: 320,
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          padding: '12px 16px',
-          borderRadius: 10,
-          border: 'none',
-          background: 'linear-gradient(135deg, #e11b22 0%, #b91c1c 100%)',
-          color: '#fff',
-          fontWeight: 800,
-          fontSize: 14,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
+          display: 'flex',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          gap: 10,
         }}
       >
-        Aceptar
-      </button>
+        <button
+          type="button"
+          onClick={() => persist(COOKIES_CONSENT_ESSENTIAL)}
+          style={{
+            width: '100%',
+            maxWidth: 220,
+            padding: '12px 16px',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            fontWeight: 800,
+            fontSize: 14,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          {t('general.cookiesEssentialOnly')}
+        </button>
+        <button
+          type="button"
+          onClick={() => persist(COOKIES_CONSENT_ACCEPTED)}
+          style={{
+            width: '100%',
+            maxWidth: 220,
+            padding: '12px 16px',
+            borderRadius: 10,
+            border: 'none',
+            background: 'linear-gradient(135deg, #e11b22 0%, #b91c1c 100%)',
+            color: '#fff',
+            fontWeight: 800,
+            fontSize: 14,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
+          }}
+        >
+          {t('general.cookiesAccept')}
+        </button>
+      </div>
     </div>
   );
 }

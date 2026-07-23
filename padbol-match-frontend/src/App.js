@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, Suspense, lazy } from 'react';
+import React, { useMemo, useEffect, Suspense, lazy } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -10,38 +10,7 @@ import {
 } from 'react-router-dom';
 import './App.css';
 
-/** Web pública `/plataforma` — code-split fuera del bundle del producto. */
-const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
-import ReservaForm from './pages/ReservaForm';
-import AdminDashboard from './pages/AdminDashboard';
-import TorneoCrear from './pages/TorneoCrear';
-import FormEquipos from './pages/FormEquipos';
-import MiPerfil from './pages/MiPerfil';
-import PerfilPublico from './PerfilPublico';
-import TorneoVista from './pages/TorneoVista';
-import Rankings from './pages/Rankings';
-import TorneosPublicos from './pages/TorneosPublicos';
-import SedePublica from './pages/SedePublica';
-import UnirsePage from './pages/UnirsePage';
-import SedesPublicas from './pages/SedesPublicas';
-import EquipoPerfil from './pages/EquipoPerfil';
-import PagoExitoso from './pages/PagoExitoso';
-import PagoFallido from './pages/PagoFallido';
-import CheckinKiosco from './pages/CheckinKiosco';
-import Jugar from './pages/Jugar';
-import Competir from './pages/Competir';
-import PartidosAbiertos from './pages/PartidosAbiertos';
-import NotificacionesPage from './pages/NotificacionesPage';
-import ArmarPartido from './pages/ArmarPartido';
-import ClasesPage from './pages/ClasesPage';
-import ClaseDetallePage from './pages/ClaseDetallePage';
 import useUserRole from './hooks/useUserRole';
-import EquipoVista from './pages/EquipoVista';
-import UserHome from './pages/UserHome';
-import LandingPage from './pages/LandingPage';
-import SobrePadbolMatch from './pages/SobrePadbolMatch';
-import ContactoSumarClub from './pages/ContactoSumarClub';
-import AccesoCuenta from './pages/AccesoCuenta';
 import ProtectedRoute from './components/ProtectedRoute';
 import PerfilJugadorDatosMinimosGate from './components/PerfilJugadorDatosMinimosGate';
 import GlobalErrorBoundary from './components/GlobalErrorBoundary';
@@ -51,16 +20,10 @@ import ChatbotIASafe from './components/ChatbotIASafe';
 import LegalFooterBar from './components/LegalFooterBar';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import PwaUpdateBanner from './components/PwaUpdateBanner';
-import TerminosCondiciones from './pages/TerminosCondiciones';
-import PoliticaPrivacidad from './pages/PoliticaPrivacidad';
 import {
   isLegalFooterGlobalBarVisiblePathname,
   LEGAL_FOOTER_GLOBAL_SPACER_PX,
 } from './constants/hubLayout';
-import CompletarPerfilOAuth from './pages/CompletarPerfilOAuth';
-import AuthOAuthCallback from './pages/AuthOAuthCallback';
-import NuevaSede from './components/NuevaSede';
-import InvitarAdminClubPage from './pages/InvitarAdminClubPage';
 import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import { HubNavLayoutProvider } from './context/HubNavLayoutContext';
@@ -70,12 +33,70 @@ import {
   userCanAccessAdminPanel,
   normalizeUserRole,
 } from './utils/adminPanelRoles';
-import ScoreboardDisplay from './pages/ScoreboardDisplay';
-import ScoreboardCanchaDisplay from './pages/ScoreboardCanchaDisplay';
-import ScoreboardControl from './pages/ScoreboardControl';
-import ScoreboardJoin from './pages/ScoreboardJoin';
-import ScoreboardScoreBugPage from './pages/ScoreboardScoreBugPage';
-import ScoreboardScoreBugCanchaPage from './pages/ScoreboardScoreBugCanchaPage';
+
+/** Cada recorrido grande carga su código cuando la ruta lo necesita. */
+const ReservaForm = lazy(() => import('./pages/ReservaForm'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const TorneoCrear = lazy(() => import('./pages/TorneoCrear'));
+const FormEquipos = lazy(() => import('./pages/FormEquipos'));
+const MiPerfil = lazy(() => import('./pages/MiPerfil'));
+const PerfilPublico = lazy(() => import('./PerfilPublico'));
+const TorneoVista = lazy(() => import('./pages/TorneoVista'));
+const Rankings = lazy(() => import('./pages/Rankings'));
+const TorneosPublicos = lazy(() => import('./pages/TorneosPublicos'));
+const SedePublica = lazy(() => import('./pages/SedePublica'));
+const UnirsePage = lazy(() => import('./pages/UnirsePage'));
+const SedesPublicas = lazy(() => import('./pages/SedesPublicas'));
+const EquipoPerfil = lazy(() => import('./pages/EquipoPerfil'));
+const PagoExitoso = lazy(() => import('./pages/PagoExitoso'));
+const PagoFallido = lazy(() => import('./pages/PagoFallido'));
+const CheckinKiosco = lazy(() => import('./pages/CheckinKiosco'));
+const Jugar = lazy(() => import('./pages/Jugar'));
+const Competir = lazy(() => import('./pages/Competir'));
+const PartidosAbiertos = lazy(() => import('./pages/PartidosAbiertos'));
+const NotificacionesPage = lazy(() => import('./pages/NotificacionesPage'));
+const ArmarPartido = lazy(() => import('./pages/ArmarPartido'));
+const ClasesPage = lazy(() => import('./pages/ClasesPage'));
+const ClaseDetallePage = lazy(() => import('./pages/ClaseDetallePage'));
+const EquipoVista = lazy(() => import('./pages/EquipoVista'));
+const UserHome = lazy(() => import('./pages/UserHome'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const SobrePadbolMatch = lazy(() => import('./pages/SobrePadbolMatch'));
+const ContactoSumarClub = lazy(() => import('./pages/ContactoSumarClub'));
+const AccesoCuenta = lazy(() => import('./pages/AccesoCuenta'));
+const TerminosCondiciones = lazy(() => import('./pages/TerminosCondiciones'));
+const PoliticaPrivacidad = lazy(() => import('./pages/PoliticaPrivacidad'));
+const CompletarPerfilOAuth = lazy(() => import('./pages/CompletarPerfilOAuth'));
+const AuthOAuthCallback = lazy(() => import('./pages/AuthOAuthCallback'));
+const NuevaSede = lazy(() => import('./components/NuevaSede'));
+const InvitarAdminClubPage = lazy(() => import('./pages/InvitarAdminClubPage'));
+const ScoreboardDisplay = lazy(() => import('./pages/ScoreboardDisplay'));
+const ScoreboardCanchaDisplay = lazy(() => import('./pages/ScoreboardCanchaDisplay'));
+const ScoreboardControl = lazy(() => import('./pages/ScoreboardControl'));
+const ScoreboardJoin = lazy(() => import('./pages/ScoreboardJoin'));
+const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage'));
+const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
+const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
+
+function RouteLoadingScreen() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-page, #070b14)',
+        color: 'var(--text-primary, rgba(248,250,252,0.85))',
+        fontWeight: 600,
+      }}
+    >
+      Cargando…
+    </div>
+  );
+}
 
 function LegacyPerfilRedirect() {
   const loc = useLocation();
@@ -465,7 +486,8 @@ function App() {
       <HubNavLayoutProvider>
         <GlobalErrorBoundary>
           <AppLanguageGate>
-            <Routes>
+            <Suspense fallback={<RouteLoadingScreen />}>
+              <Routes>
               <Route
                 path="/scoreboard/join/:sedeId/:cancha/:equipo"
                 element={(
@@ -529,21 +551,7 @@ function App() {
                 element={(
                   <ErrorBoundary label="la web pública">
                     <Suspense
-                      fallback={(
-                        <div
-                          style={{
-                            minHeight: '100dvh',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: '#070b14',
-                            color: 'rgba(248,250,252,0.85)',
-                            fontWeight: 600,
-                          }}
-                        >
-                          Cargando…
-                        </div>
-                      )}
+                      fallback={<RouteLoadingScreen />}
                     >
                       <PublicSitePage />
                     </Suspense>
@@ -558,7 +566,8 @@ function App() {
                   </div>
                 )}
               />
-            </Routes>
+              </Routes>
+            </Suspense>
           </AppLanguageGate>
         </GlobalErrorBoundary>
       </HubNavLayoutProvider>

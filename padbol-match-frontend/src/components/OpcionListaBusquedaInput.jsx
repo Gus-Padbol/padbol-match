@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 function useDebouncedValue(value, ms) {
   const [debounced, setDebounced] = useState(value);
@@ -28,6 +28,7 @@ export default function OpcionListaBusquedaInput({
   const [listOpen, setListOpen] = useState(false);
   const blurCloseRef = useRef(null);
   const prevValueRef = useRef(null);
+  const listboxId = useId();
 
   useEffect(() => {
     const v = String(value || '').trim();
@@ -64,7 +65,10 @@ export default function OpcionListaBusquedaInput({
     <div style={{ position: 'relative', minWidth: '160px', flex: '0 1 200px' }}>
       <input
         type="text"
+        role="combobox"
         aria-label={ariaLabel}
+        aria-expanded={showList}
+        aria-controls={listboxId}
         autoComplete="off"
         placeholder={placeholder}
         value={text}
@@ -83,7 +87,6 @@ export default function OpcionListaBusquedaInput({
           boxSizing: 'border-box',
           padding: '8px 12px',
           borderRadius: '8px',
-          border: '1px solid var(--border)',
           fontSize: '13px',
           background: 'var(--bg-card)',
           color: 'var(--text-primary)',
@@ -98,6 +101,7 @@ export default function OpcionListaBusquedaInput({
       ) : null}
       {showList ? (
         <ul
+          id={listboxId}
           role="listbox"
           style={{
             position: 'absolute',
@@ -120,6 +124,7 @@ export default function OpcionListaBusquedaInput({
             <button
               type="button"
               role="option"
+              aria-selected={!String(value || '').trim()}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 if (blurCloseRef.current) window.clearTimeout(blurCloseRef.current);
@@ -147,6 +152,7 @@ export default function OpcionListaBusquedaInput({
               <button
                 type="button"
                 role="option"
+                aria-selected={String(value || '').trim() === String(o)}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (blurCloseRef.current) window.clearTimeout(blurCloseRef.current);

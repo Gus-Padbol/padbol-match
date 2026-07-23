@@ -1040,6 +1040,7 @@ export default function ArmarPartido() {
                     type="text"
                     role="combobox"
                     aria-expanded={sedeDropdownOpen}
+                    aria-controls="armar-sede-opciones"
                     autoComplete="off"
                     placeholder={t('reservas.searchVenuePlaceholder')}
                     value={sedeBusqueda}
@@ -1078,6 +1079,7 @@ export default function ArmarPartido() {
                 </div>
                 {sedeDropdownOpen && step === 1 ? (
                   <div
+                    id="armar-sede-opciones"
                     role="listbox"
                     onMouseDown={(e) => e.preventDefault()}
                     style={{
@@ -1110,6 +1112,7 @@ export default function ArmarPartido() {
                             key={s.id}
                             type="button"
                             role="option"
+                            aria-selected={String(form.sedeId || '') === String(s.id || '')}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
                               setForm((f) => ({

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useSafeTranslation } from '../i18n/tSafe';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
@@ -47,6 +47,7 @@ export function AdminJugadorSearchInput({
   const debounceRef = useRef(null);
   const wrapRef = useRef(null);
   const reqIdRef = useRef(0);
+  const listboxId = useId();
 
   useEffect(() => {
     if (selectedPlayer) {
@@ -131,6 +132,7 @@ export function AdminJugadorSearchInput({
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
         <input
           type="search"
+          role="combobox"
           value={q}
           onChange={handleChange}
           onFocus={() => {
@@ -141,6 +143,8 @@ export function AdminJugadorSearchInput({
           autoComplete="off"
           style={{ ...(inputStyleProp || inputStyle), flex: '1 1 220px' }}
           aria-label={t('admin.jugadores.searchPlaceholder')}
+          aria-expanded={open && !selectedPlayer}
+          aria-controls={listboxId}
         />
         {selectedPlayer ? (
           <button
@@ -180,6 +184,7 @@ export function AdminJugadorSearchInput({
 
       {open && !selectedPlayer ? (
         <div
+          id={listboxId}
           role="listbox"
           style={{
             position: 'absolute',
@@ -214,6 +219,7 @@ export function AdminJugadorSearchInput({
                 key={row.user_id || `${row.email}-${row.telefono}`}
                 type="button"
                 role="option"
+                aria-selected={String(selectedPlayer?.user_id || '') === String(row.user_id || '')}
                 onClick={() => pick(row)}
                 style={{
                   display: 'block',

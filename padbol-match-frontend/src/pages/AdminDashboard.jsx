@@ -2555,7 +2555,6 @@ const PAISES_BANDERA_ALIASES = {
   spain: 'España',
   usa: 'Estados Unidos',
   eeuu: 'Estados Unidos',
-  'eeuu': 'Estados Unidos',
   'ee.uu': 'Estados Unidos',
   'ee. uu': 'Estados Unidos',
   'estados unidos de america': 'Estados Unidos',

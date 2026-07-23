@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 function useDebouncedValue(value, ms) {
   const [debounced, setDebounced] = useState(value);
@@ -37,6 +37,7 @@ export default function SedeBusquedaInput(props) {
   const [listOpen, setListOpen] = useState(false);
   const blurCloseRef = useRef(null);
   const prevExternalRef = useRef(null);
+  const listboxId = useId();
 
   const formatOption = props.mode === 'id' ? props.formatOption : undefined;
 
@@ -98,7 +99,10 @@ export default function SedeBusquedaInput(props) {
     <div style={{ position: 'relative', width: '100%' }}>
       <input
         type="text"
+        role="combobox"
         aria-label={ariaLabel}
+        aria-expanded={showList}
+        aria-controls={listboxId}
         autoComplete="off"
         placeholder={placeholder}
         value={text}
@@ -128,6 +132,7 @@ export default function SedeBusquedaInput(props) {
       ) : null}
       {showList ? (
         <ul
+          id={listboxId}
           role="listbox"
           style={{
             position: 'absolute',
@@ -151,6 +156,11 @@ export default function SedeBusquedaInput(props) {
               <button
                 type="button"
                 role="option"
+                aria-selected={
+                  props.mode === 'id'
+                    ? String(props.valueId || '') === String(s.id || '')
+                    : String(props.valueNombre || '') === String(s.nombre || '')
+                }
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   if (blurCloseRef.current) window.clearTimeout(blurCloseRef.current);

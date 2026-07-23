@@ -237,7 +237,7 @@ function mostrarCampoPaisSegunTorneo(torneoRow) {
   return n === 'nacional' || n === 'internacional';
 }
 
-function mensajeValidarPaisTorneo(torneoRow, paisForm) {
+function mensajeValidarPaisTorneo(torneoRow, paisForm, t) {
   if (!torneoRow) {
     return String(paisForm || '').trim() ? null : t('perfil.selectCountry');
   }
@@ -1374,7 +1374,7 @@ export default function MiPerfil() {
         fe.password2 = t('perfil.passwordMismatch');
       }
 
-      const errPaisInv = mensajeValidarPaisTorneo(torneoPerfil, formData.pais);
+      const errPaisInv = mensajeValidarPaisTorneo(torneoPerfil, formData.pais, t);
       if (errPaisInv) {
         fe.pais = errPaisInv;
       }
@@ -1564,7 +1564,7 @@ export default function MiPerfil() {
         setErrorMsg(t('perfil.noActiveSession'));
         return;
       }
-      const errPais = mensajeValidarPaisTorneo(torneoPerfil, formData.pais);
+      const errPais = mensajeValidarPaisTorneo(torneoPerfil, formData.pais, t);
       if (errPais) {
         setErrorMsg(errPais);
         return;
