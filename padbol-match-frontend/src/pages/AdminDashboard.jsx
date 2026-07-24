@@ -7150,7 +7150,10 @@ export default function AdminDashboard({
       let scopeMeta = null;
       try {
         if (isSuperAdmin) {
-          const sedesRes = await fetch(`${apiBaseUrl}/api/sedes/todas`, { headers: { ...listAuthHeaders } });
+          let sedesRes = await fetch(`${apiBaseUrl}/api/sedes/todas`, { headers: { ...listAuthHeaders } });
+          if (sedesRes.status === 404) {
+            sedesRes = await fetch(`${apiBaseUrl}/api/sedes`, { headers: { ...listAuthHeaders } });
+          }
           const sedesJson = await sedesRes.json().catch(() => []);
           if (!sedesRes.ok) throw new Error(sedesJson?.error || sedesRes.statusText);
           allSedesRows = Array.isArray(sedesJson) ? sedesJson : [];

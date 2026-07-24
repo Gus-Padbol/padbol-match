@@ -55,6 +55,9 @@ export default function LegalFooterBar() {
         <Link to="/privacidad" style={linkBase}>
           Política de Privacidad
         </Link>
+        <Link to="/eliminar-cuenta" style={linkBase}>
+          Eliminar cuenta
+        </Link>
       </nav>
     </footer>
   );

@@ -81,5 +81,6 @@ export const PUBLIC_SITE_INTERNAL_ROUTES = [
   PUBLIC_SITE_CTA.login,
   '/sobre',
   '/privacidad',
+  '/eliminar-cuenta',
   '/terminos',
 ];

@@ -45,7 +45,15 @@ describe('publicSite content structure', () => {
       '/acceso',
     ]);
     expect(PUBLIC_SITE_INTERNAL_ROUTES).toEqual(
-      expect.arrayContaining(['/hub', '/contacto', '/acceso', '/sobre', '/privacidad', '/terminos']),
+      expect.arrayContaining([
+        '/hub',
+        '/contacto',
+        '/acceso',
+        '/sobre',
+        '/privacidad',
+        '/eliminar-cuenta',
+        '/terminos',
+      ]),
     );
     PUBLIC_SITE_INTERNAL_ROUTES.forEach((route) => expect(route).toMatch(/^\/[a-z-]+$/));
   });

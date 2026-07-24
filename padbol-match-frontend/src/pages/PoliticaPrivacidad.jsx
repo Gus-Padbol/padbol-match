@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import LegalStaticPageLayout, {
   LegalSectionTitle,
   LegalP,
@@ -60,12 +61,13 @@ export default function PoliticaPrivacidad() {
 
       <LegalSectionTitle>Derecho a eliminar tu cuenta y tus datos</LegalSectionTitle>
       <LegalP>
-        Puedes solicitar la baja de tu cuenta y, en la medida de lo posible, la eliminación o anonimización de tus datos
-        personales escribiendo a{' '}
-        <a href={CONTACT} style={{ color: '#a5b4fc', fontWeight: 700 }}>
-          padbolinternacional@gmail.com
-        </a>
-        . Algunos datos pueden conservarse el tiempo que exija la ley (por ejemplo registros contables o reclamos).
+        Podés iniciar la solicitud desde Mi perfil o consultar el proceso completo en{' '}
+        <Link to="/eliminar-cuenta" style={{ color: '#a5b4fc', fontWeight: 700 }}>
+          Eliminar tu cuenta
+        </Link>
+        . Si no podés ingresar, también podés escribir desde el correo asociado a tu cuenta a{' '}
+        <a href={CONTACT} style={{ color: '#a5b4fc', fontWeight: 700 }}>padbolinternacional@gmail.com</a>. Algunos datos
+        pueden conservarse durante el plazo que exija la ley, por ejemplo registros contables o reclamos.
       </LegalP>
 
       <LegalSectionTitle>Cookies y tecnologías similares</LegalSectionTitle>

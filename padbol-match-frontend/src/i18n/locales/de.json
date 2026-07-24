@@ -1359,7 +1359,7 @@
       "editorScopeLabel": "Spieler-Hub (Karten)"
     },
     "jugadores": {
-      "subtitle": "Players with booking history at this venue. Search, sort and open the profile card. Formal link/unlink needs Backend.",
+      "subtitle": "Players linked to this venue or with booking history. Search, sort and open the profile card.",
       "searchPlaceholder": "Name, @username, email or phone",
       "filterLabel": "Search",
       "sedeLabel": "Venue",
@@ -1379,7 +1379,7 @@
       "vinculacionHistorial": "Has venue history",
       "vinculacionRegistrado": "Registered on Padbol Match",
       "vinculacionSinHistorial": "No history",
-      "vinculacionNote": "Formal venue membership is not in Backend yet: showing booking history. Link/unlink needs a sede_jugadores table.",
+      "vinculacionNote": "Booking history and formal venue membership are combined. You can link or unlink players without losing their history.",
       "viewProfile": "View profile",
       "fichaTitle": "Player card",
       "pageOf": "Page {{page}} of {{total}} ({{count}})",

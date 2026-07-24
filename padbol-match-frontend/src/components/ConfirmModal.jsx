@@ -107,7 +107,7 @@ export default function ConfirmModal({
               padding: '10px 16px',
               borderRadius: 10,
               border: 'none',
-              background: 'var(--accent)',
+              background: confirmDanger ? '#dc2626' : 'var(--accent)',
               color: '#fff',
               fontSize: 14,
               fontWeight: 600,

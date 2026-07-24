@@ -55,7 +55,7 @@ const bottomLink = {
 };
 
 /**
- * Contenedor común para documentos legales (términos / privacidad): header, tipografía legible, enlaces al pie.
+ * Contenedor común para documentos legales: header, tipografía legible y enlaces al pie.
  */
 export default function LegalStaticPageLayout({ title, lead, children }) {
   const navigate = useNavigate();
@@ -118,6 +118,12 @@ export default function LegalStaticPageLayout({ title, lead, children }) {
           </span>
           <Link to="/privacidad" style={bottomLink}>
             Política de Privacidad
+          </Link>
+          <span style={{ color: 'rgba(226,232,240,0.35)' }} aria-hidden>
+            ·
+          </span>
+          <Link to="/eliminar-cuenta" style={bottomLink}>
+            Eliminar cuenta
           </Link>
           <span style={{ color: 'rgba(226,232,240,0.35)' }} aria-hidden>
             ·

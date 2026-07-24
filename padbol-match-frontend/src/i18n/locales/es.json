@@ -1679,7 +1679,7 @@
       "editorScopeLabel": "Hub del jugador (cards)"
     },
     "jugadores": {
-      "subtitle": "Jugadores con historial de reservas en la sede. Buscá, ordená y abrí la ficha. Vincular/desvincular formal requiere Backend.",
+      "subtitle": "Jugadores vinculados a la sede o con historial de reservas. Buscá, ordená y abrí la ficha.",
       "searchPlaceholder": "Nombre, @usuario, email o teléfono",
       "filterLabel": "Buscar",
       "sedeLabel": "Sede",
@@ -1699,7 +1699,7 @@
       "vinculacionHistorial": "Con historial en sede",
       "vinculacionRegistrado": "Registrado en Padbol Match",
       "vinculacionSinHistorial": "Sin historial",
-      "vinculacionNote": "La vinculación formal a sede aún no existe en Backend: se muestra el historial de reservas. Vincular/desvincular requiere tabla sede_jugadores.",
+      "vinculacionNote": "Se combina el historial de reservas con la vinculación formal a la sede. Podés vincular o desvincular jugadores sin perder su historial.",
       "viewProfile": "Ver perfil",
       "fichaTitle": "Ficha del jugador",
       "pageOf": "Página {{page}} de {{total}} ({{count}})",

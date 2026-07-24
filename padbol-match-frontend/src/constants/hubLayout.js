@@ -108,6 +108,7 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/sedes' || pathOnly.startsWith('/sedes/')) return true;
   if (pathOnly === '/terminos' || pathOnly.startsWith('/terminos/')) return true;
   if (pathOnly === '/privacidad' || pathOnly.startsWith('/privacidad/')) return true;
+  if (pathOnly === '/eliminar-cuenta' || pathOnly.startsWith('/eliminar-cuenta/')) return true;
   if (pathOnly === '/sobre' || pathOnly.startsWith('/sobre/')) return true;
   if (pathOnly === '/contacto' || pathOnly.startsWith('/contacto/')) return true;
   if (pathOnly === '/plataforma' || pathOnly.startsWith('/plataforma/')) return true;
@@ -296,7 +297,7 @@ export function isChatbotIAVisiblePathname(pathname) {
 export const LEGAL_FOOTER_GLOBAL_SPACER_PX = 52;
 
 /**
- * Pie global con enlaces a /terminos y /privacidad.
+ * Pie global con enlaces legales y de eliminación de cuenta.
  * La landing (`/`) tiene su propio footer; las páginas legales incluyen navegación al final del texto.
  */
 export function isLegalFooterGlobalBarVisiblePathname(pathname) {
@@ -305,6 +306,7 @@ export function isLegalFooterGlobalBarVisiblePathname(pathname) {
   if (p === '/') return false;
   if (p === '/terminos' || p.startsWith('/terminos/')) return false;
   if (p === '/privacidad' || p.startsWith('/privacidad/')) return false;
+  if (p === '/eliminar-cuenta' || p.startsWith('/eliminar-cuenta/')) return false;
   if (p === '/sobre' || p.startsWith('/sobre/')) return false;
   if (p === '/contacto' || p.startsWith('/contacto/')) return false;
   if (p === '/plataforma' || p.startsWith('/plataforma/')) return false;

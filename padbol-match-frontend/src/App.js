@@ -67,6 +67,7 @@ const ContactoSumarClub = lazy(() => import('./pages/ContactoSumarClub'));
 const AccesoCuenta = lazy(() => import('./pages/AccesoCuenta'));
 const TerminosCondiciones = lazy(() => import('./pages/TerminosCondiciones'));
 const PoliticaPrivacidad = lazy(() => import('./pages/PoliticaPrivacidad'));
+const EliminarCuenta = lazy(() => import('./pages/EliminarCuenta'));
 const CompletarPerfilOAuth = lazy(() => import('./pages/CompletarPerfilOAuth'));
 const AuthOAuthCallback = lazy(() => import('./pages/AuthOAuthCallback'));
 const NuevaSede = lazy(() => import('./components/NuevaSede'));
@@ -409,6 +410,7 @@ function AppRoutes() {
         <Route path="/contacto" element={<ContactoSumarClub />} />
         <Route path="/terminos" element={<TerminosCondiciones />} />
         <Route path="/privacidad" element={<PoliticaPrivacidad />} />
+        <Route path="/eliminar-cuenta" element={<EliminarCuenta />} />
 
         <Route
           path="/completar-perfil"
