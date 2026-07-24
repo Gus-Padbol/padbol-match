@@ -206,7 +206,11 @@ import {
   buildReservaManualPostPayload,
   crearReservaManualApi,
 } from '../utils/adminReservaManual';
-import * as XLSX from 'xlsx';
+import {
+  appendJsonWorksheet,
+  createExcelWorkbook,
+  downloadExcelWorkbook,
+} from '../utils/excelWorkbook';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
@@ -5701,9 +5705,9 @@ export default function AdminDashboard({
     cifrasFinanzasResumen,
   ]);
 
-  const exportarFinanzasExcel = useCallback(() => {
+  const exportarFinanzasExcel = useCallback(async () => {
     try {
-      const wb = XLSX.utils.book_new();
+      const workbook = createExcelWorkbook();
       const periodoNombre = labelPeriodoFinanciero(superAdminPeriodo);
       const resumenRows = isSuperAdmin
         ? [
@@ -5733,7 +5737,7 @@ export default function AdminDashboard({
               ticket_promedio: Math.round(Number(dashboardFinanciero.ticketPromedio) || 0),
             },
           ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenRows), t('nav.admin.resumen'));
+      appendJsonWorksheet(workbook, resumenRows, t('nav.admin.resumen'));
 
       const reservasRows = dashboardFinanciero.reservasDetalle.map((r) => ({
         fecha: String(r?.fecha || '').slice(0, 10),
@@ -5744,7 +5748,7 @@ export default function AdminDashboard({
         moneda: r?.moneda_calc || 'ARS',
         estado: r?.estado || '',
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reservasRows), t('nav.admin.reservas'));
+      appendJsonWorksheet(workbook, reservasRows, t('nav.admin.reservas'));
 
       const torneosRows = dashboardFinanciero.torneosDetalle.map((t) => ({
         nombre: t.nombre,
@@ -5754,10 +5758,10 @@ export default function AdminDashboard({
         moneda: t.moneda || 'ARS',
         estado: t.estado || '',
       }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(torneosRows), t('torneos.titulo'));
+      appendJsonWorksheet(workbook, torneosRows, t('torneos.titulo'));
 
       const nombre = `financiero_${periodoNombre}_${String(finanzasAnclaISO || '').slice(0, 10) || 'reporte'}.xlsx`;
-      XLSX.writeFile(wb, nombre);
+      await downloadExcelWorkbook(workbook, nombre);
     } catch (e) {
       console.error('[AdminDashboard] exportarFinanzasExcel:', e);
       alert(t('admin.alerts.excelFailed'));

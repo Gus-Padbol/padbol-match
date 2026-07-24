@@ -170,9 +170,7 @@ export default function PerfilPublico() {
 
     try {
       const apiUrl = buildPerfilPublicoFetchUrl(a, API_BASE_PERFIL);
-      console.log('[PERFIL] URL llamada:', apiUrl);
       if (!apiUrl) {
-        console.log('[PERFIL] error:', 'URL inválida para slug', a);
         setPerfil(null);
         setPerfilPublicoApi(null);
         setLoading(false);
@@ -182,16 +180,13 @@ export default function PerfilPublico() {
       let data = null;
       try {
         data = await res.json();
-      } catch (parseErr) {
-        console.log('[PERFIL] error:', parseErr);
+      } catch {
         setPerfil(null);
         setPerfilPublicoApi(null);
         setLoading(false);
         return;
       }
-      console.log('[PERFIL] respuesta:', data);
       if (!res.ok) {
-        console.log('[PERFIL] error:', { status: res.status, statusText: res.statusText, body: data });
         setPerfil(null);
         setPerfilPublicoApi(null);
         setLoading(false);
@@ -200,7 +195,6 @@ export default function PerfilPublico() {
 
       const normalized = normalizePerfilPublicoApiResponse(data);
       if (!normalized?.perfil || !normalized?.api) {
-        console.log('[PERFIL] error:', 'respuesta sin perfil reconocible', data);
         setPerfil(null);
         setPerfilPublicoApi(null);
         setLoading(false);
@@ -232,7 +226,6 @@ export default function PerfilPublico() {
         setCompaneroDisplay(null);
       }
     } catch (e) {
-      console.log('[PERFIL] error:', e);
       console.error('[PerfilPublico]', e);
       setPerfil(null);
       setPerfilPublicoApi(null);

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, Suspense, lazy } from 'react';
+import React, { useMemo, Suspense, lazy } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -257,17 +257,6 @@ function AdminDashboardGate() {
   const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
   const rolPanel = normalizeUserRole(rol);
   const canAccessAdmin = userCanAccessAdminPanel(rolPanel);
-
-  useEffect(() => {
-    if (roleLoading) return;
-    const email = String(session?.user?.email || '').trim().toLowerCase();
-    console.log('[AdminDashboardGate] rol desde /api/auth/mi-rol', {
-      email,
-      rol: rolPanel,
-      sedeId,
-      canAccessAdmin,
-    });
-  }, [roleLoading, session?.user?.email, rolPanel, sedeId, canAccessAdmin]);
 
   const stillResolvingRole = roleLoading;
 

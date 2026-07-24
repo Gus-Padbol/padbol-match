@@ -61,11 +61,9 @@ const PADBOL_CONFETTI_COLORS = ['#FFD700', '#C0C0C0', '#CC0000', '#FFFFFF'];
 
 /** Confetti nativo: divs fijos que caen y se eliminan al terminar la animación. */
 function launchNativePadbolConfetti(isMobile) {
-  console.log('[TorneoTabbedView] launchNativePadbolConfetti start', { isMobile, t: Date.now() });
   if (typeof document === 'undefined') return () => {};
   try {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      console.log('[TorneoTabbedView] launchNativePadbolConfetti skipped (prefers-reduced-motion)');
       return () => {};
     }
   } catch {
@@ -399,16 +397,6 @@ export default function TorneoTabbedView({
     [jugadorNombreTorneoCtx]
   );
 
-  useEffect(() => {
-    if (!torneo) return;
-    console.log('[TorneoTabbedView] estado actual del torneo (API/DB):', {
-      estado: torneo.estado,
-      estadoNormalizado: String(torneo.estado || '').toLowerCase(),
-      torneoId: torneo.id,
-      nombre: torneo.nombre,
-    });
-  }, [torneo]);
-
   const esGruposKnockout = torneo?.tipo_torneo === 'grupos_knockout';
   const esKnockoutPuro = torneo?.tipo_torneo === 'knockout';
   const muestraTabLlave = esGruposKnockout || esKnockoutPuro;
@@ -485,12 +473,17 @@ export default function TorneoTabbedView({
     return () => window.clearTimeout(t);
   }, [shareTorneoCopied]);
 
-  const handleExportarJugadoresExcel = useCallback(() => {
-    downloadTorneoJugadoresXlsx({
-      torneo,
-      equipos,
-      jugadorNombreTorneoCtx,
-    });
+  const handleExportarJugadoresExcel = useCallback(async () => {
+    try {
+      await downloadTorneoJugadoresXlsx({
+        torneo,
+        equipos,
+        jugadorNombreTorneoCtx,
+      });
+    } catch (error) {
+      console.error('[TorneoTabbedView] No se pudo generar el Excel:', error);
+      window.alert('No se pudo generar el archivo Excel. Intenta nuevamente.');
+    }
   }, [torneo, equipos, jugadorNombreTorneoCtx]);
 
   const handleShareTorneo = useCallback(async () => {

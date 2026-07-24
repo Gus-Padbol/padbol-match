@@ -358,8 +358,6 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       });
 
       const result = await response.json();
-      console.log('Result recibido:', result);
-
       if (response.ok) {
         setMensaje('✅ Torneo creado correctamente');
         resetFormClean();

@@ -370,7 +370,6 @@ export default function ArmarPartido() {
   /** Tras login: restaurar reserva pendiente y abrir paso 3 (resumen). Espera auth; no borra storage hasta paso 3 (Strict Mode). */
   const tryRestoreReservaPendiente = useCallback(() => {
     if (authLoading) {
-      console.log('[PM ArmarPartido restore] esperando auth…');
       return;
     }
     if (!session?.user) return;
@@ -385,7 +384,6 @@ export default function ArmarPartido() {
       return;
     }
 
-    console.log('[PM ArmarPartido restore] aplicando', parsed);
     const sedeRow = findSedeById(sedes, parsed.sedeId);
     if (sedeRow) setSedeBusqueda(String(sedeRow.nombre || '').trim());
     setForm((f) => ({
@@ -407,7 +405,6 @@ export default function ArmarPartido() {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event !== 'SIGNED_IN' || !nextSession?.user) return;
-      console.log('[PM ArmarPartido restore] onAuthStateChange SIGNED_IN');
       tryRestoreReservaPendiente();
     });
     return () => sub.subscription.unsubscribe();
@@ -416,7 +413,6 @@ export default function ArmarPartido() {
   useEffect(() => {
     if (step !== 3 || authLoading || !session?.user) return;
     if (!readReservaPendienteArmar()) return;
-    console.log('[PM ArmarPartido restore] consumiendo sessionStorage (paso 3)');
     clearReservaPendienteArmar();
   }, [step, authLoading, session?.user]);
 
@@ -796,7 +792,6 @@ export default function ArmarPartido() {
         hora_inicio: horaInicio,
         duracion_minutos: Number(form.duracion),
       });
-      console.log('[PM ArmarPartido restore] sin sesión → /login?redirect=/armar-partido');
       navigate('/login?redirect=/armar-partido');
       return;
     }

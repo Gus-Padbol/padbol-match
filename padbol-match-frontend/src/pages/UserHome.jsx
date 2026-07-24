@@ -229,13 +229,6 @@ export default function UserHome() {
       try {
         const res = await fetch(`${HUB_API_BASE}/api/hub-config/inicio-cards`);
         const data = await res.json().catch(() => null);
-        // eslint-disable-next-line no-console
-        console.log('[UserHome] hub_inicio_cards fetch', {
-          ok: res.ok,
-          status: res.status,
-          raw: data,
-          rows: Array.isArray(data) ? data : [],
-        });
         if (cancelled) return;
         setHubInicioRows(Array.isArray(data) ? data : []);
       } catch {

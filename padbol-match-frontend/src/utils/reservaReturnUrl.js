@@ -254,7 +254,6 @@ export function clearPartidosBuscarReturnUrl() {
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
   if (peekReservaPendienteArmar()) {
-    console.log('[PM ArmarPartido restore] post-login → /armar-partido (reserva_pendiente)');
     return '/armar-partido';
   }
   const fromPartidosRedirect = safePartidosBuscarPathFromLoginRedirect(loginSearch);
@@ -273,7 +272,6 @@ export function resolvePostLoginNavigatePath(loginSearch) {
   if (fromRedirect) return fromRedirect;
   const fromArmar = safeArmarPartidoPathFromLoginRedirect(loginSearch);
   if (fromArmar) {
-    console.log('[PM ArmarPartido restore] post-login →', fromArmar, '(redirect query)');
     return fromArmar;
   }
   return fromStored;
