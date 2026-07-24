@@ -2334,11 +2334,11 @@ function formatFecha(str) {
 }
 
 // "2026-04-10" → "Viernes 10 de Abril"
-function formatFechaDia(str) {
+function formatFechaDia(str, locale = 'es-AR') {
   if (!str) return '';
   const [y, m, d] = str.split('-').map(Number);
   const fecha = new Date(y, m - 1, d);
-  return fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+  return fecha.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
     .replace(/^\w/, c => c.toUpperCase());
 }
 
@@ -2773,7 +2773,7 @@ function torneoProximoSinEmpezar(t) {
   return true;
 }
 
-function formatoIngresosHoyMultimoneda(porMoneda) {
+function formatoIngresosHoyMultimoneda(porMoneda, emptyLabel = 'sin ingresos registrados') {
   const MON = ['ARS', 'USD', 'EUR'];
   const parts = MON.filter((m) => (Number(porMoneda[m]) || 0) > 0).map((m) => {
     const n = Number(porMoneda[m]) || 0;
@@ -2781,7 +2781,7 @@ function formatoIngresosHoyMultimoneda(porMoneda) {
     if (m === 'USD') return `US$ ${n.toLocaleString('en-US')} USD`;
     return `€ ${n.toLocaleString('de-DE')} EUR`;
   });
-  return parts.length ? parts.join(' · ') : '$ 0 (sin ingresos registrados)';
+  return parts.length ? parts.join(' · ') : `$ 0 (${emptyLabel})`;
 }
 
 function labelPeriodoFinanciero(periodo) {
@@ -5788,7 +5788,10 @@ export default function AdminDashboard({
       const mon = bucketMonedaAdmin(sedeRow?.moneda || 'ARS');
       ingresosHoyPorMoneda[mon] += safeMoney(r.precio);
     }
-    const ingresosHoyTexto = formatoIngresosHoyMultimoneda(ingresosHoyPorMoneda);
+    const ingresosHoyTexto = formatoIngresosHoyMultimoneda(
+      ingresosHoyPorMoneda,
+      t('admin.overview.noRevenueRegistered'),
+    );
 
     const ocupadasPorSede = {};
     for (const r of reservasHoyLista) {
@@ -5922,7 +5925,7 @@ export default function AdminDashboard({
 
     return {
       hoyISO,
-      fechaLabelHoy: formatFechaDia(hoyISO),
+      fechaLabelHoy: formatFechaDia(hoyISO, i18n.language?.startsWith('en') ? 'en-US' : 'es-AR'),
       reservasHoy,
       reservasHoyOrdenadas,
       ingresosHoyTexto,
@@ -5942,6 +5945,7 @@ export default function AdminDashboard({
     canchasResumenPorSede,
     partidosCountByTorneoId,
     t,
+    i18n.language,
   ]);
 
   /** Métricas extra admin_club: reservas por horario, comparación de período, cancelación, deportes. */
@@ -6122,13 +6126,13 @@ export default function AdminDashboard({
     });
 
     return {
-      fechaLabel: formatFechaDia(hoyISO),
-      nombreSede: String(sedeRow.nombre || '').trim() || 'Mi sede',
+      fechaLabel: formatFechaDia(hoyISO, i18n.language?.startsWith('en') ? 'en-US' : 'es-AR'),
+      nombreSede: String(sedeRow.nombre || '').trim() || t('admin.tabs.miSede'),
       sinCanchasActivas: filasCancha.length === 0,
       rows,
       totalReservasHoySede: reservasHoyActivas.length,
     };
-  }, [esAdminClub, sedeIdKey, reservas, sedesMap, canchasDetallePorSede, canchasResumenPorSede, t]);
+  }, [esAdminClub, sedeIdKey, reservas, sedesMap, canchasDetallePorSede, canchasResumenPorSede, t, i18n.language]);
 
   const adminNotificaciones = useMemo(() => {
     const p = resumenPanelDiario;
@@ -6461,12 +6465,12 @@ export default function AdminDashboard({
     return (
       <>
         <div className="section admin-resumen-hoy" style={{ marginBottom: '18px', color: 'var(--text-primary)' }}>
-          <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Hoy</h2>
+          <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>{t('admin.overview.today')}</h2>
           <p style={{ margin: '0 0 12px', color: 'var(--text-secondary)', fontSize: '14px' }}>{p.fechaLabelHoy}</p>
           <div style={{ display: 'grid', gap: '14px' }}>
             <div>
               <div className="admin-resumen-hoy-kicker" style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Reservas ({p.reservasHoy})
+                {t('admin.overview.bookings')} ({p.reservasHoy})
               </div>
               {p.reservasHoyOrdenadas.length === 0 ? (
                 <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)' }}>{t('admin.metrics.noBookingsToday')}</p>
@@ -6487,7 +6491,7 @@ export default function AdminDashboard({
                         <span>
                           <strong>{horarioReservaAdmin(r)}</strong>
                           {' · '}
-                          Cancha {r.cancha}
+                          {t('admin.overview.court')} {r.cancha}
                           {' · '}
                           {String(r.nombre || '').trim() || '—'}
                         </span>
@@ -6500,29 +6504,30 @@ export default function AdminDashboard({
             </div>
             {puedeVerFinanzas ? <div>
               <div className="admin-resumen-hoy-kicker" style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Ingresos del día
+                {t('admin.overview.todayRevenue')}
                 {isSuperAdmin ? (
-                  <span style={{ fontWeight: 700 }}> (por moneda de cada sede)</span>
+                  <span style={{ fontWeight: 700 }}> ({t('admin.overview.byVenueCurrency')})</span>
                 ) : esAdminClub ? (
-                  <span style={{ fontWeight: 700 }}> (de hoy)</span>
+                  <span style={{ fontWeight: 700 }}> ({t('admin.overview.fromToday')})</span>
                 ) : null}
               </div>
               <p className="admin-resumen-hoy-ingresos-valor" style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>{p.ingresosHoyTexto}</p>
               <p style={{ margin: '6px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                Suma de precios de reservas de hoy no canceladas.
+                {t('admin.overview.todayRevenueHint')}
               </p>
             </div> : null}
             <div>
               <div className="admin-resumen-hoy-kicker" style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Canchas ahora (hora Argentina)
+                {t('admin.overview.courtsNowArgentina')}
               </div>
               {p.ocupacionSedes.length === 0 ? (
                 <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)' }}>{t('admin.metrics.noVenuesScope')}</p>
               ) : isSuperAdmin ? (
                 <p className="admin-resumen-hoy-canchas-copy" style={{ margin: '8px 0 0', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                  {p.canchasOcupacionGlobal.ocupadas === 1
-                    ? `1 cancha ocupada de ${p.canchasOcupacionGlobal.totalActivas} totales activas`
-                    : `${p.canchasOcupacionGlobal.ocupadas} canchas ocupadas de ${p.canchasOcupacionGlobal.totalActivas} totales activas`}
+                  {t('admin.overview.globalCourtOccupancy', {
+                    occupied: p.canchasOcupacionGlobal.ocupadas,
+                    total: p.canchasOcupacionGlobal.totalActivas,
+                  })}
                 </p>
               ) : (
                 <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', fontSize: '14px' }}>
@@ -6540,12 +6545,12 @@ export default function AdminDashboard({
                       <strong style={{ color: 'var(--text-primary)' }}>{row.nombre}</strong>
                       {row.sinCanchasRegistradas ? (
                         <div style={{ marginTop: '6px', color: '#b45309', fontSize: '13px' }}>
-                          Sin canchas cargadas en el sistema. Registralas en «Mi sede» para ver ocupación vs disponibles.
+                          {t('admin.overview.noCourtsConfigured')}
                         </div>
                       ) : (
                         <div style={{ marginTop: '6px', color: 'var(--text-primary)' }}>
-                          Ocupadas ahora: <strong>{row.ocupadas}</strong> · Disponibles:{' '}
-                          <strong>{row.disponibles}</strong> · Total canchas activas: <strong>{row.totalActivas}</strong>
+                          {t('admin.overview.occupiedNow')}: <strong>{row.ocupadas}</strong> · {t('admin.overview.available')}:{' '}
+                          <strong>{row.disponibles}</strong> · {t('admin.overview.totalActiveCourts')}: <strong>{row.totalActivas}</strong>
                         </div>
                       )}
                     </li>
@@ -7027,7 +7032,7 @@ export default function AdminDashboard({
         if (cancelled || seq !== torneoStatsFetchSeqRef.current) return;
         if (err?.name === 'AbortError') return;
         // Conservar stats previas en refresh/error; no vaciar el mapa.
-        setTorneoStatsError(err?.message || t('admin.torneosSection.statsLoadError', 'No se pudo cargar el resumen de torneos.'));
+        setTorneoStatsError(t('admin.torneosSection.statsLoadError'));
       } finally {
         if (!cancelled && seq === torneoStatsFetchSeqRef.current) {
           setTorneoStatsLoading(false);
@@ -10276,7 +10281,7 @@ export default function AdminDashboard({
                       boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
                     }}
                   >
-                    📋 Sin licencia asignada
+                    📋 {t('admin.sedes.noLicense')}
                   </span>
                 </div>
               );
@@ -10301,7 +10306,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <span style={{ fontSize: '0.8rem', lineHeight: 1 }} aria-hidden>⭐</span>
-                    Licencia PADBOL Activa
+                    {t('admin.sedes.padbolLicenseActive')}
                   </span>
                 </div>
               );
@@ -10323,7 +10328,7 @@ export default function AdminDashboard({
                     boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
                   }}
                 >
-                  ⚠️ Licencia Suspendida
+                  ⚠️ {t('admin.sedes.padbolLicenseSuspended')}
                 </span>
               </div>
             );
@@ -10690,7 +10695,7 @@ export default function AdminDashboard({
             </p>
             {misCanchasHoyAdminClub.sinCanchasActivas ? (
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600 }}>
-                Sin canchas activas cargadas. Configuralas en «Mi sede».
+                {t('admin.overview.noCourtsConfigured')}
               </p>
             ) : misCanchasHoyAdminClub.totalReservasHoySede === 0 ? (
               <p style={{ margin: '0 0 12px', color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 700 }}>{t('admin.metrics.noBookingsTodayShort')}</p>
@@ -10714,9 +10719,9 @@ export default function AdminDashboard({
                       </span>
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Slots ocupados hoy:</span> {row.ocupados}
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metrics.slotsOccupied')}</span> {row.ocupados}
                       <span style={{ margin: '0 10px', color: '#cbd5e1' }}>|</span>
-                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>Slots disponibles hoy:</span>{' '}
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metrics.slotsAvailable')}</span>{' '}
                       {row.disponibles == null ? '—' : row.disponibles}
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '6px', fontWeight: 600 }}>
@@ -10731,7 +10736,7 @@ export default function AdminDashboard({
         {puedeVerFinanzas ? <>
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
-            Período del resumen financiero
+            {t('admin.metrics.periodSelected')}
           </div>
           <div
             style={{
@@ -10746,11 +10751,11 @@ export default function AdminDashboard({
             }}
           >
             {[
-              { id: 'hoy', label: 'Hoy' },
-              { id: 'semana', label: 'Semana' },
-              { id: 'mes', label: 'Mes' },
+              { id: 'hoy', label: t('admin.metrics.periodToday') },
+              { id: 'semana', label: t('admin.metrics.periodWeek') },
+              { id: 'mes', label: t('admin.metrics.periodMonth') },
               { id: 'anio', label: t('admin.formularios.yearLabel') },
-              { id: 'rango', label: 'Rango' },
+              { id: 'rango', label: t('admin.metrics.periodCustomRange') },
             ].map((opt) => (
               <button
                 key={opt.id}
@@ -11188,7 +11193,7 @@ export default function AdminDashboard({
               onClick={() => setCrearTorneoEmbedOpen(true)}
               style={{ padding: '8px 16px', background: '#e53935', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
             >
-              + Nuevo Torneo
+              {t('admin.notif.newTournament')}
             </button>
           ) : null}
         </div>
@@ -11223,12 +11228,18 @@ export default function AdminDashboard({
               ) ? 'fipa' : nivelTorneoRaw;
               const nivelColor   = NIVEL_COLOR[nivelCanonico] || { bg: '#e2e8f0', color: 'var(--text-secondary)' };
               const formatoColor = FORMATO_COLOR[torneo.tipo_torneo]  || { bg: '#f3f4f6', color: '#374151' };
-              const estadoBadge =
+              const estadoBadgeBase =
                 badgeTorneoEstadoPublico(torneo.estado) || {
                   bg: '#94a3b8',
                   color: '#ffffff',
                   label: String(torneo.estado || '').trim() || '—',
                 };
+              const estadoBadge = {
+                ...estadoBadgeBase,
+                label: t(`torneos.vista.estado.${String(torneo.estado || '').trim().toLowerCase()}`, {
+                  defaultValue: estadoBadgeBase.label,
+                }),
+              };
               // Shared badge style — fixed 120px, centered
               const badge = (bg, col) => ({
                 background: bg, color: col,
@@ -11550,14 +11561,26 @@ export default function AdminDashboard({
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                         {torneo.nivel_torneo
-                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>{formatNivelTorneo(torneo.nivel_torneo)}</span>
+                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>
+                              {t(`admin.tournamentLabels.level.${String(torneo.nivel_torneo).trim().toLowerCase()}`, {
+                                defaultValue: formatNivelTorneo(torneo.nivel_torneo),
+                              })}
+                            </span>
                           : null}
                         <span style={badge('#fef2f2', '#991b1b')}>{resumenDeporteFormatoTorneo(torneo)}</span>
-                        <span style={badge('#f0fdf4', '#166534')}>{formatCategoriaTorneo(torneo.categoria)}</span>
+                        <span style={badge('#f0fdf4', '#166534')}>
+                          {t(`torneos.vista.categoriaNivel.${String(torneo.categoria || 'Libre').trim()}`, {
+                            defaultValue: formatCategoriaTorneo(torneo.categoria),
+                          })}
+                        </span>
                         <span style={badge('#fef9c3', '#854d0e')}>{formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))}</span>
                         <span style={badge('#e0f2fe', '#0369a1')}>{formatCategoriaEdadTorneo(torneo.categoria_edad)}</span>
                         {torneo.tipo_torneo
-                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>{formatTipoTorneo(torneo.tipo_torneo)}</span>
+                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>
+                              {t(`torneos.tipo.${String(torneo.tipo_torneo).trim().toLowerCase()}`, {
+                                defaultValue: formatTipoTorneo(torneo.tipo_torneo),
+                              })}
+                            </span>
                           : null}
                         <span style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
                       </div>
@@ -11632,7 +11655,7 @@ export default function AdminDashboard({
                           onClick={() => navigate(`/torneo/${torneo.id}`, { state: { fromAdmin: true } })}
                           style={{ padding: '6px 14px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
                         >
-                          Ver →
+                          {t('admin.tournamentLabels.view')} →
                         </button>
                         {isAdmin && (
                           <button
@@ -12289,7 +12312,7 @@ export default function AdminDashboard({
       {activeTab === 'reservas' && <>
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
-            Estado de la reserva
+            {t('admin.reservas.bookingStatusLabel')}
           </div>
           <div
             role="group"
@@ -12408,7 +12431,7 @@ export default function AdminDashboard({
                   cursor: 'pointer',
                 }}
               >
-                {reservaManualOpen ? t('general.close') : 'Nueva reserva manual'}
+                {reservaManualOpen ? t('general.close') : t('admin.reservas.createManualBooking')}
               </button>
 
               {reservaManualOpen ? (
@@ -12700,11 +12723,11 @@ export default function AdminDashboard({
                   }}
                 >
                   {[
-                    { id: 'hoy', label: 'Hoy' },
-                    { id: 'semana', label: 'Esta semana' },
-                    { id: 'mes', label: 'Este mes' },
+                    { id: 'hoy', label: t('admin.metrics.periodToday') },
+                    { id: 'semana', label: t('admin.metrics.periodWeek') },
+                    { id: 'mes', label: t('admin.metrics.periodMonth') },
                     { id: 'anio', label: t('admin.metricas.thisYear') },
-                    { id: 'rango', label: 'Rango' },
+                    { id: 'rango', label: t('admin.metrics.periodCustomRange') },
                   ].map((opt) => (
                     <button
                       key={opt.id}
@@ -13067,7 +13090,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                      Total reservas del período
+                      {t('admin.bookingsSummary.totalBookingsPeriod')}
                     </div>
                     <div
                       style={{
@@ -13091,7 +13114,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                      Total facturado (reservas)
+                      {t('admin.bookingsSummary.totalBilledBookings')}
                     </div>
                     <div
                       style={{
@@ -13214,11 +13237,11 @@ export default function AdminDashboard({
                 }}
               >
                 {[
-                  { id: 'hoy', label: 'Hoy' },
-                  { id: 'semana', label: 'Esta semana' },
-                  { id: 'mes', label: 'Este mes' },
+                  { id: 'hoy', label: t('admin.metrics.periodToday') },
+                  { id: 'semana', label: t('admin.metrics.periodWeek') },
+                  { id: 'mes', label: t('admin.metrics.periodMonth') },
                   { id: 'anio', label: t('admin.metricas.thisYear') },
-                  { id: 'rango', label: 'Rango' },
+                  { id: 'rango', label: t('admin.metrics.periodCustomRange') },
                 ].map((opt) => (
                   <button
                     key={opt.id}
@@ -13311,7 +13334,7 @@ export default function AdminDashboard({
                 }}
               >
                 <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                  Total reservas del período
+                  {t('admin.bookingsSummary.totalBookingsPeriod')}
                 </div>
                 <div style={{ color: 'var(--text-primary)', fontSize: '26px', fontWeight: 900, marginTop: '6px' }}>
                   {sortedRows.length}
@@ -13327,7 +13350,7 @@ export default function AdminDashboard({
                 }}
               >
                 <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                  Total facturado (reservas)
+                  {t('admin.bookingsSummary.totalBilledBookings')}
                 </div>
                 <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800, marginTop: '8px' }}>
                   {monResClub}{' '}
@@ -13766,6 +13789,7 @@ export default function AdminDashboard({
                     />
                   ) : null}
                   <input
+                    id="admin-scoreboard-tournament-logo"
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
@@ -13774,8 +13798,25 @@ export default function AdminDashboard({
                       setSbTorneoLogoFile(file);
                       setSbTorneoLogoPreview(URL.createObjectURL(file));
                     }}
-                    style={{ fontSize: '13px' }}
+                    style={{ display: 'none' }}
                   />
+                  <label
+                    htmlFor="admin-scoreboard-tournament-logo"
+                    style={{
+                      padding: '7px 11px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-input)',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t('admin.scoreboard.selectFile')}
+                  </label>
+                  <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {sbTorneoLogoFile?.name || t('admin.scoreboard.noFileSelected')}
+                  </span>
                   {sbTorneoLogoPreview ? (
                     <button
                       type="button"
@@ -18442,7 +18483,7 @@ export default function AdminDashboard({
             marginBottom: '8px',
           }}
         >
-          <h2 style={{ margin: 0 }}>🏟️ Mi Sede</h2>
+          <h2 style={{ margin: 0 }}>🏟️ {t('admin.tabs.miSede')}</h2>
           {!miSedeLoading && miSede ? (
             <button
               type="button"
@@ -18459,13 +18500,13 @@ export default function AdminDashboard({
                 boxShadow: '0 2px 8px rgba(225,27,34,0.35)',
               }}
             >
-              ✏️ Editar sede
+              ✏️ {t('admin.sedes.editVenue')}
             </button>
           ) : null}
         </div>
 
         {miSedeLoading ? (
-          <p style={{ color: 'var(--text-secondary)' }}>Cargando datos de la sede...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('admin.sedes.loadingVenueData')}</p>
         ) : !miSede ? (
           <p style={{ color: 'var(--pm-color-error, #f87171)' }}>{t('admin.sedes.venueInfoNotFound')}</p>
         ) : (<>
@@ -18500,19 +18541,19 @@ export default function AdminDashboard({
                 }}
               >
                 <h3 id="editar-sede-modal-titulo" style={{ margin: '0 0 8px', fontSize: '18px' }}>
-                  Editar sede
+                  {t('admin.sedes.editVenue')}
                 </h3>
                 <p className="admin-editar-sede-intro">
-                  Datos del perfil público. Al guardar se actualizan en la base y se ven al entrar de nuevo a{' '}
+                  {t('admin.sedes.publicProfileEditHint')}{' '}
                   <strong>/sede/…</strong>.
                 </p>
                 {[
                   { label: t('admin.sedes.clubNameLabel'), k: 'nombre' },
                   { label: t('admin.sedes.address'), k: 'direccion' },
                   { label: t('admin.formularios.cityLabel'), k: 'ciudad' },
-                  { label: 'Provincia / Estado', k: 'provincia' },
-                  { label: 'Horario apertura', k: 'horario_apertura', ph: 'Ej: 08:00' },
-                  { label: 'Horario cierre', k: 'horario_cierre', ph: 'Ej: 23:00' },
+                  { label: t('admin.sedes.provinceState'), k: 'provincia' },
+                  { label: t('admin.sedes.openingTime'), k: 'horario_apertura', ph: t('admin.sedes.openingTimePh') },
+                  { label: t('admin.sedes.closingTime'), k: 'horario_cierre', ph: t('admin.sedes.closingTimePh') },
                   { label: t('admin.sedes.contactEmailLabel'), k: 'email_contacto' },
                   { label: t('admin.sedes.latitude'), k: 'latitud', ph: '-34.92105', inputType: 'number' },
                   { label: t('admin.sedes.longitude'), k: 'longitud', ph: '-57.96505', inputType: 'number' },
@@ -18769,7 +18810,7 @@ export default function AdminDashboard({
                       cursor: miSedeSaving ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    Cancelar
+                    {t('general.cancel')}
                   </button>
                   <button
                     type="button"
@@ -18785,7 +18826,7 @@ export default function AdminDashboard({
                       cursor: miSedeSaving ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {miSedeSaving ? t('admin.metricas.saving') : 'Guardar cambios'}
+                    {miSedeSaving ? t('admin.metricas.saving') : t('admin.sedes.saveChanges')}
                   </button>
                 </div>
               </div>
@@ -19030,7 +19071,7 @@ export default function AdminDashboard({
                   </div>
                 ) : null}
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                  Descripción (opcional)
+                  {t('admin.sedes.descriptionOptional')}
                 </label>
                 <textarea
                   rows={3}
@@ -19066,7 +19107,7 @@ export default function AdminDashboard({
                       cursor: canchaApiBusy ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    Cancelar
+                    {t('general.cancel')}
                   </button>
                   <button
                     type="button"
@@ -19123,7 +19164,7 @@ export default function AdminDashboard({
               }}
             >
               <h3 className="admin-mi-sede-block-title" style={{ margin: '0 0 10px', fontSize: '15px', color: 'var(--text-primary)' }}>
-                Mis sponsors disponibles
+                {t('admin.sponsors.mySponsorsAvailable')}
               </h3>
               {miSedeSponsorSlots.loading ? (
                 <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>{t('admin.sponsors.loadingSponsorQuotas')}</p>
@@ -19134,22 +19175,23 @@ export default function AdminDashboard({
               ) : (
                 <>
                   <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                    📢 Sponsors de tu sede: {miSedeSponsorSlots.used} de {miSedeSponsorSlots.max} slots usados (
-                    {Math.max(0, miSedeSponsorSlots.max - miSedeSponsorSlots.used)} disponible
-                    {Math.max(0, miSedeSponsorSlots.max - miSedeSponsorSlots.used) === 1 ? '' : 's'})
+                    📢 {t('admin.sedes.venueSponsorUsage', {
+                      used: miSedeSponsorSlots.used,
+                      max: miSedeSponsorSlots.max,
+                      available: Math.max(0, miSedeSponsorSlots.max - miSedeSponsorSlots.used),
+                    })}
                   </p>
                   <p style={{ margin: '0 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                    Plan considerado: <strong>{miSedeSponsorSlots.planLabel}</strong> (límite según configuración de Padbol Match).
+                    {t('admin.sedes.planConsidered')}: <strong>{miSedeSponsorSlots.planLabel}</strong> ({t('admin.sedes.planLimitHint')}).
                   </p>
                   <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                     {puedeVerConfig
-                      ? 'Podés cambiar esta configuración en Configuración / Planes.'
-                      : 'Para cambiar esta configuración, solicitá la actualización del plan a Padbol Match.'}
+                      ? t('admin.sedes.changePlanInSettings')
+                      : t('admin.sedes.requestPlanUpdate')}
                   </p>
                   {miSedeSponsorSlots.usedConfigFallback ? (
                     <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                      Se muestran límites por defecto tipo Starter hasta que tu sede pueda leer la tabla global de cupos (si ya aplicaste la
-                      migración en Supabase, ignorá este aviso).
+                      {t('admin.sedes.sponsorQuotaFallbackHint')}
                     </p>
                   ) : null}
                 </>
@@ -19249,7 +19291,7 @@ export default function AdminDashboard({
                 { label: t('admin.sedes.clubNameLabel'),        field: 'nombre' },
                 { label: t('admin.sedes.address'),              field: 'direccion' },
                 { label: t('admin.formularios.cityLabel'),                 field: 'ciudad' },
-                { label: 'Provincia / Estado',     field: 'provincia' },
+                { label: t('admin.sedes.provinceState'), field: 'provincia' },
                 { label: t('admin.formularios.countryLabel'),                   field: 'pais', isPais: true },
                 { label: t('admin.sedes.clubWhatsappLabel'),       field: 'telefono', isWhatsapp: true },
                 { label: t('admin.sedes.contactEmailLabel'),      field: 'email_contacto' },
@@ -19346,7 +19388,7 @@ export default function AdminDashboard({
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                 <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>
-                  Descripción
+                  {t('admin.sedes.description')}
                 </label>
                 <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <textarea
@@ -19362,13 +19404,13 @@ export default function AdminDashboard({
                     {(miSedeForm.descripcion || '').length}/300
                   </div>
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '4px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
-                    Texto sobre el club en el perfil público (sección Descripción).
+                    {t('admin.sedes.clubDescriptionHint')}
                   </p>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
                 <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>
-                  Instalaciones
+                  {t('admin.sedes.facilities')}
                 </label>
                 <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <div
@@ -19411,13 +19453,15 @@ export default function AdminDashboard({
                             }}
                           />
                           <span aria-hidden>{amenity.icon}</span>
-                          <span>{amenity.label}</span>
+                          <span>
+                            {t(`admin.sedes.amenities.${amenity.key}`, { defaultValue: amenity.label })}
+                          </span>
                         </label>
                       );
                     })}
                   </div>
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '8px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
-                    Se guardan al marcar/desmarcar y se muestran en el perfil público (sección Instalaciones).
+                    {t('admin.sedes.facilitiesAutoSaveHint')}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px', flexWrap: 'wrap' }}>
                     <button
@@ -19435,7 +19479,7 @@ export default function AdminDashboard({
                         fontSize: '13px',
                       }}
                     >
-                      {miSedeInstalacionesSaving ? 'Guardando…' : 'Guardar instalaciones'}
+                      {miSedeInstalacionesSaving ? t('admin.metricas.saving') : t('admin.sedes.saveFacilities')}
                     </button>
                     {miSedeInstalacionesMsg ? (
                       <span style={{ fontSize: '12px', fontWeight: 600, color: miSedeInstalacionesMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>
@@ -19447,7 +19491,7 @@ export default function AdminDashboard({
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
                 <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', paddingTop: '8px' }}>
-                  Historia del club
+                  {t('admin.sedes.clubStoryLabel')}
                 </label>
                 <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <textarea
@@ -19481,13 +19525,13 @@ export default function AdminDashboard({
                     {(miSedeForm.historia || '').length}/500
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                    Texto largo opcional en <strong>/sede/…</strong> (complementa la descripción corta).
+                    {t('admin.sedes.clubStoryLongHint')} <strong>/sede/…</strong>.
                   </p>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                 <label style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  Año de fundación
+                  {t('admin.sedes.yearFounded')}
                 </label>
                 <div style={{ flex: 1, minWidth: 0, maxWidth: '100%' }}>
                   <input
@@ -19512,12 +19556,12 @@ export default function AdminDashboard({
                     }}
                   />
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '4px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
-                    Opcional. Se muestra en la sección «En números» del perfil público del club.
+                    {t('admin.sedes.yearFoundedHint')}
                   </p>
                 </div>
               </div>
               <div className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>Moneda</label>
+                <label className="admin-mi-sede-field-label" style={{ width: '180px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>{t('admin.sedes.currency')}</label>
                 <select
                   value={miSedeForm.moneda || 'ARS'}
                   onChange={(e) => setMiSedeForm((p) => ({ ...p, moneda: e.target.value }))}
@@ -19535,7 +19579,7 @@ export default function AdminDashboard({
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={guardarMiSede} disabled={miSedeSaving}
                   style={{ padding: '10px 24px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
-                  {miSedeSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar cambios'}
+                  {miSedeSaving ? t('admin.metricas.savingEllipsis') : `💾 ${t('admin.sedes.saveChanges')}`}
                 </button>
                 {miSedeMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: miSedeMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedeMsg}</span>}
               </div>
@@ -21247,15 +21291,15 @@ export default function AdminDashboard({
             <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.socialNetworksTitle')}</h3>
             <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '480px' }}>
               <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
-                Ingresa las URLs completas (incluye https://). Solo se muestran las redes que tengas cargadas.
+                {t('admin.sedes.socialNetworksHint')}
               </p>
               {[
-                { field: 'instagram', label: '📸 Instagram', placeholder: 'https://instagram.com/tusede' },
-                { field: 'facebook',  label: '👍 Facebook',  placeholder: 'https://facebook.com/tusede' },
-                { field: 'tiktok',    label: '🎵 TikTok',    placeholder: 'https://tiktok.com/@tusede' },
-                { field: 'twitter',   label: '✖ Twitter / X', placeholder: 'https://x.com/tusede' },
-                { field: 'youtube',   label: '▶ YouTube',   placeholder: 'https://youtube.com/@tusede' },
-                { field: 'website',   label: '🌐 Sitio web', placeholder: 'https://tusede.com' },
+                { field: 'instagram', label: '📸 Instagram', placeholder: t('admin.sedes.instagramPh') },
+                { field: 'facebook',  label: '👍 Facebook',  placeholder: t('admin.sedes.facebookPh') },
+                { field: 'tiktok',    label: '🎵 TikTok',    placeholder: t('admin.sedes.tiktokPh') },
+                { field: 'twitter',   label: '✖ Twitter / X', placeholder: t('admin.sedes.twitterPh') },
+                { field: 'youtube',   label: '▶ YouTube',   placeholder: t('admin.sedes.youtubePh') },
+                { field: 'website',   label: `🌐 ${t('admin.sedes.website')}`, placeholder: t('admin.sedes.websitePh') },
               ].map(({ field, label, placeholder }) => (
                 <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                   <label className="admin-mi-sede-field-label" style={{ width: '150px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>{label}</label>
@@ -21271,7 +21315,7 @@ export default function AdminDashboard({
               ))}
               <button onClick={guardarMiSede} disabled={miSedeSaving}
                 style={{ marginTop: '8px', padding: '8px 20px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                {miSedeSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar redes'}
+                {miSedeSaving ? t('admin.metricas.savingEllipsis') : `💾 ${t('admin.sedes.saveSocialNetworks')}`}
               </button>
             </div>
           </div>

@@ -11,6 +11,7 @@ async function adminPushFetch({ apiBaseUrl, accessToken, path, method = 'GET', b
   if (!res.ok) {
     const err = new Error(data?.error || res.statusText || 'Error');
     err.status = res.status;
+    err.code = data?.code;
     err.quota = data?.quota;
     throw err;
   }

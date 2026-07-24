@@ -184,12 +184,12 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
           <>
             <label className="admin-hub-promo-sede__check-row">
               <input type="checkbox" checked={form.activo} onChange={(e) => patch({ activo: e.target.checked })} />
-              <span>Promo activa</span>
+              <span>{t('admin.hub.promoActive')}</span>
             </label>
 
             <div className="admin-hub-promo-sede__field">
               <label className="admin-hub-promo-sede__label" htmlFor="hub-promo-imagen-url">
-                URL de imagen (fondo de la card)
+                {t('admin.hub.imageUrlCardBackground')}
               </label>
               <input
                 id="hub-promo-imagen-url"
@@ -214,10 +214,10 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
                 disabled={imagenUploading}
                 onClick={() => imagenFileRef.current?.click()}
               >
-                {imagenUploading ? '⏳ Subiendo…' : '📷 Subir desde dispositivo'}
+                {imagenUploading ? `⏳ ${t('admin.hub.uploading')}` : `📷 ${t('admin.hub.uploadFromDevice')}`}
               </button>
               <p className="admin-hub-promo-sede__intro" style={{ marginTop: '8px', marginBottom: 0 }}>
-                La imagen se guarda en el almacenamiento del club (bucket sedes). Podés pegar una URL externa o subir un archivo.
+                {t('admin.hub.imageStorageHint')}
               </p>
               {String(form.imagen_url || '').trim() ? (
                 <div className="admin-hub-promo-sede__preview">

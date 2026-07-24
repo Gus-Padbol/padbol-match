@@ -14,6 +14,17 @@ import './AdminNotificacionesSection.css';
 const TITLE_MAX = 50;
 const BODY_MAX = 150;
 
+function translatedPushError(error, t, fallbackKey) {
+  if (error?.code === 'ADMIN_PUSH_NOT_CONFIGURED' || error?.status === 503) {
+    return t('admin.pushNotif.notConfigured');
+  }
+  if (error?.status === 404) return t('admin.pushNotif.routeUnavailable');
+  if (error?.status === 401) return t('admin.pushNotif.sessionExpired');
+  if (error?.status === 403) return t('admin.pushNotif.forbidden');
+  if (error?.status === 429) return t('admin.pushNotif.quotaExceeded');
+  return t(fallbackKey);
+}
+
 function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub }) {
   if (segmentKind === 'jugador' && selectedPlayer?.userId) {
     return { type: 'jugador', userId: selectedPlayer.userId, email: selectedPlayer.email || undefined };
@@ -115,7 +126,7 @@ export default function AdminNotificacionesSection({
       setQuota(q);
       setHistory(Array.isArray(h) ? h : []);
     } catch (e) {
-      setError(e.message || t('admin.pushNotif.loadError'));
+      setError(translatedPushError(e, t, 'admin.pushNotif.loadError'));
     } finally {
       setLoading(false);
     }
@@ -190,7 +201,7 @@ export default function AdminNotificacionesSection({
       const h = await fetchAdminPushHistory({ apiBaseUrl, accessToken });
       setHistory(Array.isArray(h) ? h : []);
     } catch (e) {
-      setError(e.message || t('admin.pushNotif.sendError'));
+      setError(translatedPushError(e, t, 'admin.pushNotif.sendError'));
       if (e.quota) setQuota((prev) => ({ ...(prev || {}), ...e.quota }));
     } finally {
       setSending(false);
@@ -405,7 +416,13 @@ export default function AdminNotificacionesSection({
                     <td>{row.titulo}</td>
                     <td>{formatAdminPushSegmentLabel(row.segmento, t)}</td>
                     <td>{row.cantidad_enviadas ?? 0}</td>
-                    <td>{row.estado || '—'}</td>
+                    <td>
+                      {row.estado === 'sent'
+                        ? t('admin.pushNotif.statusSent')
+                        : row.estado === 'failed'
+                          ? t('admin.pushNotif.statusFailed')
+                          : row.estado || '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
