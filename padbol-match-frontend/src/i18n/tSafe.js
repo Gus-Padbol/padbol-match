@@ -8,6 +8,7 @@ import de from './locales/de.json';
 import fr from './locales/fr.json';
 import pt from './locales/pt.json';
 import ar from './locales/ar.json';
+import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
 import { normalizePadbolLang } from '../utils/padbolLang';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
 
@@ -41,8 +42,21 @@ const FALLBACKS_BY_LANG = {
   ro: RO_FALLBACKS,
   de: DE_FALLBACKS,
   fr: FR_FALLBACKS,
-  pt: PT_FALLBACKS,
+  'pt-BR': PT_FALLBACKS,
+  'pt-PT': {
+    ...PT_FALLBACKS,
+    ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['pt-PT']),
+  },
   ar: AR_FALLBACKS,
+  'nl-BE': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['nl-BE']) },
+  'nl-NL': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['nl-NL']) },
+  sv: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.sv) },
+  el: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.el) },
+  hu: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.hu) },
+  he: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.he) },
+  pl: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.pl) },
+  uk: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.uk) },
+  af: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.af) },
 };
 
 export function getLocaleFallbacks(lang) {

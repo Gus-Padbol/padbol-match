@@ -55,8 +55,11 @@
   right: 0;
   z-index: 10150;
   min-width: 196px;
+  max-height: min(70vh, 560px);
   margin: 0;
   padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
   border-radius: 12px;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
@@ -64,6 +67,7 @@
   color: var(--text-primary, #f8fafc);
   box-shadow: 0 10px 32px rgba(15, 23, 42, 0.35);
   box-sizing: border-box;
+  scrollbar-gutter: stable;
 }
 
 .lang-switcher__option {

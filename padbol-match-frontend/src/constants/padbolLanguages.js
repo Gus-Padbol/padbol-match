@@ -9,18 +9,43 @@
 
 /** @type {PadbolLanguageOption[]} */
 export const PADBOL_LANGUAGES = [
+  { code: 'de', flags: '🇩🇪', label: 'Deutsch' },
   { code: 'es', flags: '🇪🇸', label: 'Español' },
-  { code: 'en', flags: '🇺🇸', label: 'English' },
+  { code: 'en', flags: '🇬🇧', label: 'English' },
+  { code: 'ar', flags: '🇸🇦', label: 'العربية' },
+  { code: 'nl-BE', flags: '🇧🇪', label: 'Nederlands (België)' },
+  { code: 'fr', flags: '🇫🇷', label: 'Français' },
   { code: 'it', flags: '🇮🇹', label: 'Italiano' },
   { code: 'ro', flags: '🇷🇴', label: 'Română' },
-  { code: 'de', flags: '🇩🇪', label: 'Deutsch' },
-  { code: 'fr', flags: '🇫🇷', label: 'Français' },
-  { code: 'pt', flags: '🇧🇷', label: 'Português' },
-  { code: 'ar', flags: '🇸🇦', label: 'العربية' },
+  { code: 'nl-NL', flags: '🇳🇱', label: 'Nederlands (Nederland)' },
+  { code: 'sv', flags: '🇸🇪', label: 'Svenska' },
+  { code: 'pt-BR', flags: '🇧🇷', label: 'Português (Brasil)' },
+  { code: 'pt-PT', flags: '🇵🇹', label: 'Português (Portugal)' },
+  { code: 'el', flags: '🇬🇷', label: 'Ελληνικά' },
+  { code: 'hu', flags: '🇭🇺', label: 'Magyar' },
+  { code: 'he', flags: '🇮🇱', label: 'עברית' },
+  { code: 'pl', flags: '🇵🇱', label: 'Polski' },
+  { code: 'uk', flags: '🇺🇦', label: 'Українська' },
+  { code: 'af', flags: '🇿🇦', label: 'Afrikaans' },
 ];
 
 export const PADBOL_LANGUAGE_CODES = PADBOL_LANGUAGES.map((l) => l.code);
 
+const LANGUAGE_CODE_BY_LOWERCASE = Object.fromEntries(
+  PADBOL_LANGUAGE_CODES.map((code) => [code.toLowerCase(), code]),
+);
+
+const LEGACY_LANGUAGE_ALIASES = {
+  pt: 'pt-BR',
+  nl: 'nl-NL',
+  iw: 'he',
+};
+
+export function canonicalPadbolLanguageCode(code) {
+  const normalized = String(code || '').trim().replace(/_/g, '-').toLowerCase();
+  return LANGUAGE_CODE_BY_LOWERCASE[normalized] || LEGACY_LANGUAGE_ALIASES[normalized] || null;
+}
+
 export function isPadbolLanguageCode(code) {
-  return PADBOL_LANGUAGE_CODES.includes(String(code || '').trim().toLowerCase());
+  return canonicalPadbolLanguageCode(code) != null;
 }

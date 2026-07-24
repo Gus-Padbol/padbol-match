@@ -153,7 +153,7 @@ function normalizeUiLocale(raw) {
   if (s.startsWith('es')) return 'es';
   if (s.startsWith('pt')) return 'pt';
   if (s.startsWith('en')) return 'en';
-  return 'es';
+  return 'en';
 }
 
 /** Etiqueta corta para chips de elección de deporte (slug canónico del backend). */
@@ -255,7 +255,8 @@ function navigatorLanguageToChatCode(nav) {
   const n = String(nav || 'es').toLowerCase();
   if (n.startsWith('pt')) return 'pt';
   if (n.startsWith('en')) return 'en';
-  return 'es';
+  if (n.startsWith('es')) return 'es';
+  return 'en';
 }
 
 function chatUiStringsFromI18n(tr, loc) {
