@@ -48,6 +48,7 @@ const FALLBACKS_BY_LANG = {
     ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['pt-PT']),
   },
   ar: AR_FALLBACKS,
+  'fa-IR': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['fa-IR']) },
   'nl-BE': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['nl-BE']) },
   'nl-NL': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['nl-NL']) },
   sv: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.sv) },

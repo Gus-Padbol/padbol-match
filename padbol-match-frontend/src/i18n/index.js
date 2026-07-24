@@ -55,6 +55,7 @@ i18n
       'pt-BR': { translation: pt },
       'pt-PT': { translation: mergeLocale(pt, ADDITIONAL_LOCALE_OVERRIDES['pt-PT']) },
       ar: { translation: ar },
+      'fa-IR': { translation: englishBackedLocale('fa-IR') },
       'nl-BE': { translation: englishBackedLocale('nl-BE') },
       'nl-NL': { translation: englishBackedLocale('nl-NL') },
       sv: { translation: englishBackedLocale('sv') },

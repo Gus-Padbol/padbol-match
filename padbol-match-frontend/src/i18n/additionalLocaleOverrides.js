@@ -4,6 +4,53 @@
  * aparezcan identificadores técnicos mientras avanza la traducción editorial.
  */
 export const ADDITIONAL_LOCALE_OVERRIDES = {
+  'fa-IR': {
+    general: {
+      language: 'زبان',
+      loading: 'در حال بارگذاری…',
+      confirm: 'تأیید',
+      cancel: 'لغو',
+      close: 'بستن',
+      save: 'ذخیره',
+      edit: 'ویرایش',
+      delete: 'حذف',
+      search: 'جستجو',
+      back: 'بازگشت',
+      continue: 'ادامه',
+      accept: 'پذیرفتن',
+      optional: 'اختیاری',
+    },
+    nav: {
+      mainAria: 'ناوبری اصلی',
+      perfil: 'نمایه',
+      jugar: 'بازی',
+      competir: 'رقابت',
+      notificaciones: 'اعلان‌ها',
+      search: 'جستجو',
+      logout: 'خروج',
+      backToHub: 'بازگشت',
+      myProfile: 'نمایه من',
+      adminPanel: 'پنل مدیریت',
+    },
+    publicSite: {
+      nav: {
+        platform: 'پلتفرم',
+        players: 'برای بازیکنان',
+        venues: 'برای باشگاه‌ها',
+        download: 'دانلود برنامه',
+        login: 'ورود',
+        community: 'جامعه',
+        scoreboard: 'تابلوی امتیازات',
+      },
+      hero: {
+        claim: 'اپلیکیشن ورزشی که همه‌چیز را به هم متصل می‌کند.',
+        lead: 'بازیکنان، باشگاه‌ها، مسابقات، تورنمنت‌ها، رتبه‌بندی، جامعه و مدیریت؛ همه در یک پلتفرم.',
+        ctaExplore: 'آشنایی با پلتفرم',
+        ctaPlay: 'می‌خواهم بازی کنم',
+        ctaVenue: 'می‌خواهم Padbol Match را به باشگاهم اضافه کنم',
+      },
+    },
+  },
   'nl-BE': {
     general: {
       language: 'Taal',

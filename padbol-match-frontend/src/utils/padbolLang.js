@@ -19,6 +19,7 @@ export function normalizePadbolLang(code) {
   if (s.startsWith('pt-pt')) return 'pt-PT';
   if (s.startsWith('pt')) return 'pt-BR';
   if (s.startsWith('ar')) return 'ar';
+  if (s.startsWith('fa')) return 'fa-IR';
   if (s.startsWith('nl-be')) return 'nl-BE';
   if (s.startsWith('nl')) return 'nl-NL';
   if (s.startsWith('sv')) return 'sv';
@@ -38,6 +39,7 @@ export function padbolLangToIntlLocale(lang) {
     es: 'es-AR',
     en: 'en-US',
     ar: 'ar',
+    'fa-IR': 'fa-IR',
     de: 'de-DE',
     fr: 'fr-FR',
     it: 'it-IT',
@@ -76,11 +78,12 @@ export function reservaMonthYearLabel(year, monthIndex, lang) {
 export function applyPadbolDocumentDirection(lang) {
   if (typeof document === 'undefined') return;
   const code = normalizePadbolLang(lang);
-  const isRtl = code === 'ar' || code === 'he';
+  const isRtl = code === 'ar' || code === 'he' || code === 'fa-IR';
   document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
   document.body.classList.toggle('lang-rtl', isRtl);
   document.body.classList.toggle('lang-ar', code === 'ar');
   document.body.classList.toggle('lang-he', code === 'he');
+  document.body.classList.toggle('lang-fa', code === 'fa-IR');
 }
 
 /** true si el usuario ya eligió idioma (guardado en localStorage). */

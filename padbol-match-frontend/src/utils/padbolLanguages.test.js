@@ -24,12 +24,13 @@ function flattenKeys(value, prefix = '', output = []) {
 }
 
 describe('idiomas internacionales de Padbol Match', () => {
-  test('registra las 18 opciones solicitadas con códigos regionales inequívocos', () => {
+  test('registra las 19 opciones solicitadas con códigos regionales inequívocos', () => {
     expect(PADBOL_LANGUAGE_CODES).toEqual([
       'de',
       'es',
       'en',
       'ar',
+      'fa-IR',
       'nl-BE',
       'fr',
       'it',
@@ -45,17 +46,19 @@ describe('idiomas internacionales de Padbol Match', () => {
       'uk',
       'af',
     ]);
-    expect(new Set(PADBOL_LANGUAGE_CODES).size).toBe(18);
+    expect(new Set(PADBOL_LANGUAGE_CODES).size).toBe(19);
     expect(PADBOL_LANGUAGES.every(({ label, flags }) => label && flags)).toBe(true);
   });
 
   test('migra códigos antiguos y normaliza variantes del navegador', () => {
     expect(canonicalPadbolLanguageCode('pt')).toBe('pt-BR');
     expect(canonicalPadbolLanguageCode('nl')).toBe('nl-NL');
+    expect(canonicalPadbolLanguageCode('fa')).toBe('fa-IR');
     expect(normalizePadbolLang('nl_BE')).toBe('nl-BE');
     expect(normalizePadbolLang('pt-PT')).toBe('pt-PT');
     expect(normalizePadbolLang('pt')).toBe('pt-BR');
     expect(normalizePadbolLang('iw-IL')).toBe('he');
+    expect(normalizePadbolLang('fa_IR')).toBe('fa-IR');
     expect(normalizePadbolLang('uk-UA')).toBe('uk');
     expect(normalizePadbolLang('unknown')).toBe('en');
   });
@@ -65,10 +68,11 @@ describe('idiomas internacionales de Padbol Match', () => {
     expect(padbolLangToIntlLocale('pt-PT')).toBe('pt-PT');
     expect(padbolLangToIntlLocale('hu')).toBe('hu-HU');
     expect(padbolLangToIntlLocale('he')).toBe('he-IL');
+    expect(padbolLangToIntlLocale('fa')).toBe('fa-IR');
     expect(padbolLangToIntlLocale('uk')).toBe('uk-UA');
   });
 
-  test('aplica RTL a árabe y hebreo, y restaura LTR en los demás', () => {
+  test('aplica RTL a árabe, hebreo y persa, y restaura LTR en los demás', () => {
     applyPadbolDocumentDirection('he');
     expect(document.documentElement.dir).toBe('rtl');
     expect(document.body.classList.contains('lang-rtl')).toBe(true);
@@ -77,6 +81,12 @@ describe('idiomas internacionales de Padbol Match', () => {
     applyPadbolDocumentDirection('ar');
     expect(document.body.classList.contains('lang-ar')).toBe(true);
     expect(document.body.classList.contains('lang-he')).toBe(false);
+
+    applyPadbolDocumentDirection('fa-IR');
+    expect(document.documentElement.dir).toBe('rtl');
+    expect(document.body.classList.contains('lang-rtl')).toBe(true);
+    expect(document.body.classList.contains('lang-fa')).toBe(true);
+    expect(document.body.classList.contains('lang-ar')).toBe(false);
 
     applyPadbolDocumentDirection('hu');
     expect(document.documentElement.dir).toBe('ltr');
@@ -92,7 +102,7 @@ describe('idiomas internacionales de Padbol Match', () => {
     },
   );
 
-  test.each(['nl-BE', 'nl-NL', 'sv', 'pt-PT', 'el', 'hu', 'he', 'pl', 'uk', 'af'])(
+  test.each(['fa-IR', 'nl-BE', 'nl-NL', 'sv', 'pt-PT', 'el', 'hu', 'he', 'pl', 'uk', 'af'])(
     '%s incluye navegación básica traducida y no sólo fallback inglés',
     (code) => {
       expect(i18n.t('general.language', { lng: code })).not.toBe(en.general.language);

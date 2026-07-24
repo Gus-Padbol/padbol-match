@@ -13,6 +13,7 @@ export const PADBOL_LANGUAGES = [
   { code: 'es', flags: '🇪🇸', label: 'Español' },
   { code: 'en', flags: '🇬🇧', label: 'English' },
   { code: 'ar', flags: '🇸🇦', label: 'العربية' },
+  { code: 'fa-IR', flags: '🇮🇷', label: 'فارسی' },
   { code: 'nl-BE', flags: '🇧🇪', label: 'Nederlands (België)' },
   { code: 'fr', flags: '🇫🇷', label: 'Français' },
   { code: 'it', flags: '🇮🇹', label: 'Italiano' },
@@ -39,6 +40,7 @@ const LEGACY_LANGUAGE_ALIASES = {
   pt: 'pt-BR',
   nl: 'nl-NL',
   iw: 'he',
+  fa: 'fa-IR',
 };
 
 export function canonicalPadbolLanguageCode(code) {

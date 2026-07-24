@@ -2,12 +2,13 @@
 
 ## Idiomas habilitados
 
-La aplicación reconoce 18 opciones:
+La aplicación reconoce 19 opciones:
 
 - alemán (`de`)
 - español (`es`)
 - inglés (`en`)
 - árabe (`ar`, RTL)
+- persa de Irán / farsi (`fa-IR`, RTL)
 - neerlandés de Bélgica / flamenco (`nl-BE`)
 - francés (`fr`)
 - italiano (`it`)
@@ -32,8 +33,8 @@ locale estándar `nl-BE`, diferenciado de `nl-NL`.
 - Nunca se debe mostrar una clave interna como `publicSite.hero.claim`.
 - Los códigos antiguos `pt`, `nl` e `iw` se migran a `pt-BR`, `nl-NL` y `he`.
 - Fechas y calendarios usan un locale BCP 47 específico para cada mercado.
-- Árabe y hebreo activan dirección RTL en toda la interfaz.
-- El selector soporta desplazamiento y las 18 opciones en móvil y escritorio.
+- Árabe, hebreo y persa activan dirección RTL en toda la interfaz.
+- El selector soporta desplazamiento y las 19 opciones en móvil y escritorio.
 - Los tests recorren todos los idiomas y todas las claves del catálogo inglés.
 
 ## Cobertura editorial
