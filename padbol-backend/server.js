@@ -1020,8 +1020,8 @@ function paisAdminCoincideSedeSorteo(paisAdminRaw, paisSedeRaw) {
   return b.includes(a) || a.includes(b);
 }
 
-/** JWT + rol: puede definir sorteo de grupos en un torneo (misma idea que el front). */
-async function assertUsuarioPuedeSortearTorneo(req, torneo) {
+/** JWT + rol: puede administrar un torneo cuyo alcance incluye la sede. */
+async function assertUsuarioPuedeAdministrarTorneo(req, torneo) {
   const user = await authUserFromBearer(req);
   if (!user?.email) {
     const e = new Error('Se requiere sesión');
@@ -1049,9 +1049,13 @@ async function assertUsuarioPuedeSortearTorneo(req, torneo) {
     if (ids.has(tsede)) return;
   }
 
-  const e = new Error('No autorizado para sortear grupos en este torneo');
+  const e = new Error('No autorizado para administrar este torneo');
   e.status = 403;
   throw e;
+}
+
+async function assertUsuarioPuedeSortearTorneo(req, torneo) {
+  return assertUsuarioPuedeAdministrarTorneo(req, torneo);
 }
 
 /** Partidos round-robin por grupo con letra A, B, … */
@@ -3060,7 +3064,8 @@ app.get('/api/sedes/:id/torneo-interes/me', async (req, res) => {
     if (error) throw error;
     res.json({ enrolled: Boolean(data) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -3122,7 +3127,8 @@ app.post('/api/sedes/:id/torneo-interes', async (req, res) => {
     }
     res.json({ ok: true, already: false });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -3141,7 +3147,8 @@ app.delete('/api/sedes/:id/torneo-interes', async (req, res) => {
     if (error) throw error;
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -5524,6 +5531,7 @@ app.get('/api/reservas/:id/historial', async (req, res) => {
 // GET ingresos
 app.get('/api/ingresos', async (req, res) => {
   try {
+    await assertSuperAdminReq(req);
     const { data, error } = await supabaseAdmin
       .from('reservas')
       .select('precio')
@@ -5534,7 +5542,8 @@ app.get('/api/ingresos', async (req, res) => {
     const total = data.reduce((sum, r) => sum + (r.precio || 0), 0);
     res.json({ total, reservas: data.length });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -5542,6 +5551,17 @@ app.get('/api/ingresos', async (req, res) => {
 app.put('/api/reservas/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const scopePut = await adminListScopeFromRequest(req);
+    const isAdminReservaPut =
+      scopePut &&
+      (scopePut.superA ||
+        scopePut.rol === 'admin_club' ||
+        scopePut.rol === 'empleado' ||
+        scopePut.rol === 'admin_nacional' ||
+        scopePut.alcance === 'global');
+    if (!scopePut) return res.status(401).json({ error: 'No autorizado' });
+    if (!isAdminReservaPut) return res.status(403).json({ error: 'Sin permiso' });
+    await assertReservaAccesibleHistorial(req, id);
     const { sede, fecha, hora, cancha, nombre, email, precio, duracion, estado } = req.body;
 
     const { data: prevRow, error: prevErr } = await supabaseAdmin
@@ -5645,14 +5665,6 @@ app.put('/api/reservas/:id', async (req, res) => {
       }).catch((err) => console.warn('⚠️ WhatsApp confirmación reserva (PUT):', err.message));
     }
 
-    const scopePut = await adminListScopeFromRequest(req);
-    const isAdminReservaPut =
-      scopePut &&
-      (scopePut.superA ||
-        scopePut.rol === 'admin_club' ||
-        scopePut.rol === 'empleado' ||
-        scopePut.rol === 'admin_nacional' ||
-        scopePut.alcance === 'global');
     if (row && isAdminReservaPut) {
       const newEstLc = String(row.estado || '').toLowerCase();
       const oldEstLc = String(prevRow?.estado || '').toLowerCase();
@@ -5686,7 +5698,8 @@ app.put('/api/reservas/:id', async (req, res) => {
 
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -5703,6 +5716,9 @@ app.delete('/api/reservas/:id', async (req, res) => {
         scopeDel.rol === 'empleado' ||
         scopeDel.rol === 'admin_nacional' ||
         scopeDel.alcance === 'global');
+    if (!scopeDel) return res.status(401).json({ error: 'No autorizado' });
+    if (!isAdminReservaDel) return res.status(403).json({ error: 'Sin permiso' });
+    await assertReservaAccesibleHistorial(req, id);
 
     let prevReserva = null;
     if (isAdminReservaDel) {
@@ -5729,7 +5745,8 @@ app.delete('/api/reservas/:id', async (req, res) => {
 
     res.json({ mensaje: 'Reserva eliminada' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -7396,10 +7413,12 @@ async function handleTorneoPatchOrPut(req, res) {
 
     const { data: prevRow, error: prevErr } = await supabase
       .from('torneos')
-      .select('estado, nombre, deporte, formato_equipo')
+      .select('id, sede_id, estado, nombre, deporte, formato_equipo')
       .eq('id', id)
       .maybeSingle();
     if (prevErr) throw prevErr;
+    if (!prevRow) return res.status(404).json({ error: 'Torneo no encontrado' });
+    await assertUsuarioPuedeAdministrarTorneo(req, prevRow);
 
     const patch = { updated_at: new Date() };
     if (nombre !== undefined) patch.nombre = nombre;
@@ -7544,7 +7563,8 @@ async function handleTorneoPatchOrPut(req, res) {
     }
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 }
 
@@ -7566,7 +7586,8 @@ app.get('/api/torneos/:id/lista-espera/me', async (req, res) => {
     if (error) throw error;
     res.json({ enrolled: Boolean(data) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -8146,6 +8167,14 @@ app.post('/api/torneos/:id/busca-dupla/limpiar-si-dupla-formada', async (req, re
 app.delete('/api/torneos/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const { data: torneo, error: torneoErr } = await supabase
+      .from('torneos')
+      .select('id, sede_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (torneoErr) throw torneoErr;
+    if (!torneo) return res.status(404).json({ error: 'Torneo no encontrado' });
+    await assertUsuarioPuedeAdministrarTorneo(req, torneo);
 
     const { error } = await supabase
       .from('torneos')
@@ -8155,7 +8184,8 @@ app.delete('/api/torneos/:id', async (req, res) => {
     if (error) throw error;
     res.json({ mensaje: 'Torneo eliminado' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -8173,6 +8203,7 @@ app.post('/api/torneos/:id/generar-partidos', async (req, res) => {
       .eq('id', id)
       .single();
     if (errTorneo) throw errTorneo;
+    await assertUsuarioPuedeAdministrarTorneo(req, torneo);
 
     const { data: equipos, error: errEquipos } = await supabase
       .from('equipos')
@@ -8215,7 +8246,8 @@ app.post('/api/torneos/:id/generar-partidos', async (req, res) => {
     res.json({ partidos, total: partidos.length, formato: torneo.tipo_torneo });
   } catch (err) {
     console.error('❌ Error generar-partidos:', err.message);
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -8592,6 +8624,7 @@ app.post('/api/torneos/:id/finalizar', async (req, res) => {
     const { data: torneo, error: errTorneo } = await supabase
       .from('torneos').select('*').eq('id', id).single();
     if (errTorneo) throw errTorneo;
+    await assertUsuarioPuedeAdministrarTorneo(req, torneo);
 
     // Load equipos & partidos
     const [{ data: equipos, error: errEq }, { data: partidos, error: errPart }] = await Promise.all([
@@ -8661,7 +8694,8 @@ app.post('/api/torneos/:id/finalizar', async (req, res) => {
     });
   } catch (err) {
     console.error('❌ Error finalizar torneo:', err.message);
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 
@@ -9642,6 +9676,7 @@ app.get('/api/config/puntos', async (req, res) => {
 
 app.put('/api/config/puntos', async (req, res) => {
   try {
+    await assertSuperAdminReq(req);
     const { niveles, posiciones, tipos_custom } = req.body;
     const rows = [];
     if (niveles)                    rows.push({ clave: 'niveles',      valor: niveles,      updated_at: new Date() });
@@ -9656,7 +9691,8 @@ app.put('/api/config/puntos', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ Error PUT /api/config/puntos:', err.message);
-    res.status(500).json({ error: err.message });
+    const st = err.status || 500;
+    res.status(st).json({ error: err.message });
   }
 });
 

@@ -164,6 +164,15 @@ describe('/plataforma public site', () => {
     ]);
   });
 
+  it('evita que el Hero desborde horizontalmente en pantallas móviles', () => {
+    const css = require('fs').readFileSync(
+      require('path').join(__dirname, 'publicSite.css'),
+      'utf8',
+    );
+    expect(css).toMatch(/\.ps-hero__content\s*\{[\s\S]*?min-width:\s*0/);
+    expect(css).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  });
+
   it('mantiene el header intacto con logo pequeño e Ingresar', () => {
     const { container } = renderPage();
     expect(container.querySelector('.public-site__nav')).toBeTruthy();

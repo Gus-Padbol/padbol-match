@@ -694,6 +694,7 @@ html.public-site-active #root {
 .ps-hero__content {
   position: relative;
   z-index: 3;
+  min-width: 0;
   max-width: 560px;
   animation: ps-hero-in 0.7s var(--ps-ease) both;
   /* Máscara suave: estrellas no compiten con logo/claim/CTAs */
@@ -754,6 +755,7 @@ html.public-site-active #root {
   position: relative;
   z-index: 2;
   width: 100%;
+  min-width: 0;
   min-height: min(72vw, 420px);
   max-width: 680px;
   margin: 0 auto;
@@ -1585,7 +1587,7 @@ html.public-site-active #root {
   .ps-hero__ctas .ps-btn--ghost { width: auto; }
 
   .ps-hero__layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ps-hero__globe-wrap,

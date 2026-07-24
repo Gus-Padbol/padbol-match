@@ -6722,7 +6722,12 @@ export default function AdminDashboard({
   const eliminarTorneo = async (torneoId, torneoNombre) => {
     if (!window.confirm(t('admin.notif.deleteTournamentConfirm', { name: torneoNombre }))) return;
     try {
-      const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, { method: 'DELETE' });
+      const headers = {};
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+      const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, {
+        method: 'DELETE',
+        headers,
+      });
       if (res.ok) {
         setTorneos(prev => prev.filter(t => t.id !== torneoId));
       } else {
@@ -7011,9 +7016,11 @@ export default function AdminDashboard({
         niveles_hidden: [...configNivelesHidden],
       };
       localStorage.setItem('config_puntos', JSON.stringify(body));
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const res = await fetch(`${apiBaseUrl}/api/config/puntos`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(body),
       });
       if (res.ok) { setConfigMsg(t('admin.metricas.configSaved')); }

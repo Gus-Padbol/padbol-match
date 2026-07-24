@@ -594,9 +594,11 @@ export default function TorneoVista() {
       return;
     setFinalizando(true);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/finalizar`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
       const data = await res.json();
       if (res.ok) {
