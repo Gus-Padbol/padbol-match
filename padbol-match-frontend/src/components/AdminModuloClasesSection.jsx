@@ -47,7 +47,7 @@ export default function AdminModuloClasesSection({
       .then(setCanchasLocal)
       .catch(() => setCanchasLocal([]));
     return () => ac.abort();
-  }, [apiBaseUrl, accessToken, sid, canchas]);
+  }, [apiBaseUrl, accessToken, sid, canchas, t]);
 
   if (!accessToken || !Number.isFinite(sid)) {
     return <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.formularios.selectValidVenue')}</p>;

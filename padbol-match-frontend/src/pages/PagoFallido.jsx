@@ -45,8 +45,6 @@ export default function PagoFallido() {
   const [busy, setBusy] = useState(false);
   const [cancelReservaModalOpen, setCancelReservaModalOpen] = useState(false);
 
-  const pending = readMpReservaPendingSlot();
-
   const onIntentarDeNuevo = useCallback(() => {
     const p = readMpReservaPendingSlot();
     const dest = p ? reservarUrlFromPending(p) : '/reservar';

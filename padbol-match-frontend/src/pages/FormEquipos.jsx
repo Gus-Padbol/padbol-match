@@ -17,7 +17,7 @@ import {
   PERFIL_CHANGE_EVENT,
   nombreCompletoJugadorPerfil,
 } from '../utils/jugadorPerfil';
-import { setTorneoEquipoActual, clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
+import { clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
 import { tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
 import {
   getEquipoInscripcionEstado,
@@ -279,7 +279,6 @@ export default function FormEquipos() {
     void perfilLsKey;
     return isPerfilTorneoCompleto();
   }, [perfilLsKey]);
-  const perfilIncompleto = !perfilTorneoCompleto;
   /** Banner "Ficha pendiente": solo si faltan nombre/apellido/género (no WhatsApp ni foto). */
   const fichaBasicaIncompleta = useMemo(() => {
     void perfilLsKey;
@@ -302,6 +301,7 @@ export default function FormEquipos() {
   const [companeroOpciones, setCompaneroOpciones] = useState([]);
   const [companeroBusquedaCargando, setCompaneroBusquedaCargando] = useState(false);
   const companeroSearchSeqRef = useRef(0);
+  const cargarTodoRef = useRef(null);
   const [bannerCupoTrasEquipoCompleto, setBannerCupoTrasEquipoCompleto] = useState(null);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
@@ -355,7 +355,7 @@ export default function FormEquipos() {
       return;
     }
     setCupoMaximo((c) => (Number(c) < 2 ? 2 : c));
-  }, [torneo?.id, torneo?.deporte, torneo?.formato_equipo]);
+  }, [torneo]);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -422,6 +422,7 @@ export default function FormEquipos() {
 
     setLoading(false);
   };
+  cargarTodoRef.current = cargarTodo;
 
   const refrescarEquiposDesdeSupabase = useCallback(async () => {
     if (!torneoId) return;
@@ -435,7 +436,7 @@ export default function FormEquipos() {
   }, [torneoId]);
 
   useEffect(() => {
-    cargarTodo();
+    cargarTodoRef.current?.();
   }, [torneoId]);
 
   useEffect(() => {
@@ -575,7 +576,7 @@ export default function FormEquipos() {
     return () => {
       cancelled = true;
     };
-  }, [perfilFetchKeyForm]);
+  }, [perfilFetchKeyForm, jugadoresParaLookupPerfil]);
 
   const nombreTorneoCtxForm = useMemo(
     () => ({
@@ -630,7 +631,7 @@ export default function FormEquipos() {
     }
 
     return null;
-  }, [jugadoresTorneo, cuentaAuth, perfilLsKey, session?.user?.email]);
+  }, [jugadoresTorneo, cuentaAuth, session?.user?.email]);
 
   const yo = useMemo(() => {
     const u = getOrCreateUsuarioBasico();
@@ -652,7 +653,7 @@ export default function FormEquipos() {
       nombre: nombreVis,
       email: emailJug || emailCliente,
     };
-  }, [cuentaAuth, currentJugador, perfilLsKey, authUserId, session, userProfile]);
+  }, [cuentaAuth, currentJugador, authUserId, session, userProfile]);
 
   useEffect(() => {
     const raw = companeroBusqueda.trim();
@@ -851,8 +852,8 @@ export default function FormEquipos() {
     authLoading,
     session?.user,
     flujoInscripcionTorneoActivo,
-    miEquipo?.id,
-    miSolicitudPendiente?.id,
+    miEquipo,
+    miSolicitudPendiente,
     isMobile,
     id,
     navigate,
@@ -893,13 +894,13 @@ export default function FormEquipos() {
       }
     };
     void run();
-  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, authUserId, session?.user]);
+  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, authUserId, session?.user, cuentaAuth?.email]);
 
   useEffect(() => {
     if (!isMobile || !flujoInscripcionTorneoActivo) return;
     if (miEquipo) setMobileVista('mi_equipo');
     else if (miSolicitudPendiente) setMobileVista('lista');
-  }, [isMobile, flujoInscripcionTorneoActivo, miEquipo?.id, miSolicitudPendiente?.id]);
+  }, [isMobile, flujoInscripcionTorneoActivo, miEquipo, miSolicitudPendiente]);
 
   const crearEquipo = async () => {
     const { data } = await supabase.auth.getSession();
@@ -1359,10 +1360,6 @@ export default function FormEquipos() {
     () =>
       !!miEquipo &&
       equipoListoParaTorneo(miEquipo.players, Number(miEquipo.cupo_maximo || miEquipo.cupo || 2)),
-    [miEquipo]
-  );
-  const miEquipoHayPendientes = useMemo(
-    () => !!(miEquipo?.players && miEquipo.players.some(esJugadorPendiente)),
     [miEquipo]
   );
   const uBas = getOrCreateUsuarioBasico();

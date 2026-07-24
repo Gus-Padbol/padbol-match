@@ -195,12 +195,6 @@ function defaultTabId(estado) {
   return 'equipos';
 }
 
-function trunc12(s) {
-  const t = String(s || '');
-  if (t.length <= 12) return t;
-  return `${t.slice(0, 12)}…`;
-}
-
 const TAB_BTN = {
   border: 'none',
   background: 'transparent',
@@ -413,7 +407,7 @@ export default function TorneoTabbedView({
       torneoId: torneo.id,
       nombre: torneo.nombre,
     });
-  }, [torneo?.id, torneo?.estado]);
+  }, [torneo]);
 
   const esGruposKnockout = torneo?.tipo_torneo === 'grupos_knockout';
   const esKnockoutPuro = torneo?.tipo_torneo === 'knockout';
@@ -687,13 +681,6 @@ export default function TorneoTabbedView({
     [isAdmin, puedeCargarResultados],
   );
 
-  const abrirModalResultado = useCallback(
-    (partido) => {
-      abrirCargarResultadoDesdeDetalle(partido);
-    },
-    [abrirCargarResultadoDesdeDetalle],
-  );
-
   const startVoiceResultado = useCallback(() => {
     const Ctor = getSpeechRecognitionConstructor();
     if (!Ctor) {
@@ -891,7 +878,7 @@ export default function TorneoTabbedView({
         alert('Error al guardar: ' + err.message);
       }
     },
-    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, setPartidos]
+    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, setPartidos, t]
   );
 
   const confirmarVozYGuardar = useCallback(async () => {
@@ -992,7 +979,7 @@ export default function TorneoTabbedView({
 
   const horasRevelarEquiposMsg = useMemo(
     () => String(horasRevelarEquiposTorneo(torneo)),
-    [torneo?.horas_revelar_equipos]
+    [torneo]
   );
 
   const ocultarListaEquiposPublico = useMemo(

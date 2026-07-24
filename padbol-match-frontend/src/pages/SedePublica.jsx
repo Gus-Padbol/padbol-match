@@ -14,7 +14,6 @@ import {
   hubContentPaddingTopCss,
   hubInstagramColumnWrapStyle,
   hubMainPaddingBottomCss,
-  hubScrollChromeTopExtraPx,
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
@@ -23,8 +22,6 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
-import { getDisplayName } from '../utils/displayName';
-import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from '../components/common/SportIcon';
@@ -50,8 +47,6 @@ import ResenasSede from '../components/ResenasSede';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import { formatSedeUbicacionSubtitulo } from '../utils/paisI18n';
 import './SedePublica.css';
-
-const MAP_THUMB_MAX_H = 120;
 
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
 
@@ -125,55 +120,6 @@ const SEDE_DS = {
   cardRadius: '12px',
   brand: 'var(--accent)',
 };
-
-/** CTAs principales: no al borde lateral, centrados. */
-const SEDE_CTA_NARROW_CENTERED = {
-  width: '85%',
-  maxWidth: '100%',
-  marginLeft: 'auto',
-  marginRight: 'auto',
-  display: 'block',
-  boxSizing: 'border-box',
-};
-
-const SEDE_BTN_RESERVAR_CANCHA_STYLE = {
-  width: '100%',
-  padding: '14px 16px',
-  background: SEDE_DS.brand,
-  color: '#fff',
-  border: 'none',
-  borderRadius: '12px',
-  cursor: 'pointer',
-  fontWeight: 800,
-  fontSize: '15px',
-  boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
-  boxSizing: 'border-box',
-};
-
-/** CTA secundario «Ver torneos»: borde y texto rojo, fondo blanco. */
-const SEDE_BTN_VER_TORNEOS_STYLE = {
-  padding: '12px 16px',
-  background: 'var(--bg-card)',
-  color: SEDE_DS.brand,
-  border: `2px solid ${SEDE_DS.brand}`,
-  borderRadius: '12px',
-  cursor: 'pointer',
-  fontWeight: 800,
-  fontSize: '14px',
-  boxSizing: 'border-box',
-};
-
-function formatFechaIsoPublicaSede(iso) {
-  const s = String(iso || '').trim().slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '—';
-  const [y, m, d] = s.split('-').map((n) => parseInt(n, 10));
-  if (![y, m, d].every((n) => Number.isFinite(n))) return '—';
-  return new Date(y, m - 1, d).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 /** «15 de mayo» para fila de próximo torneo en la ficha pública. */
 function formatFechaDiaMesPublica(iso, lang) {
@@ -545,8 +491,6 @@ function SedeSocialLinks({ sede, t, variant = 'hero' }) {
  * Margen extra bajo AppHeader + BottomNav + chrome del header (ref. hubLayout) + safe-area.
  * Incluye el mismo stack que {@link hubContentPaddingTopCss} más buffer de hero.
  */
-const SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX = 52;
-
 function formatHorario(apertura, cierre) {
   if (!apertura && !cierre) return null;
   if (apertura && cierre) return `${apertura} – ${cierre}`;
@@ -1380,98 +1324,6 @@ function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
   );
 }
 
-/** Mapa miniatura (iframe pequeño, sin interacción) + abrir en Maps. */
-function MapThumbnail({ direccion, ciudad, pais, latitud, longitud }) {
-  const openMapsHref = useMemo(
-    () => toHttps(buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud)),
-    [direccion, ciudad, pais, latitud, longitud]
-  );
-  const embedSrc = useMemo(
-    () => buildMapsEmbedSrc({ latitud, longitud, direccion, ciudad, pais }),
-    [direccion, ciudad, pais, latitud, longitud]
-  );
-
-  if (!embedSrc && !openMapsHref) return null;
-
-  return (
-    <div style={{ position: 'relative' }}>
-      {embedSrc ? (
-        <div
-          style={{
-            position: 'relative',
-            borderRadius: SEDE_DS.cardRadius,
-            overflow: 'hidden',
-            maxHeight: MAP_THUMB_MAX_H,
-            boxShadow: '0 1px 6px rgba(15, 23, 42, 0.08)',
-            background: '#e2e8f0',
-            border: `1px solid ${SEDE_DS.cardBorder}`,
-            boxSizing: 'border-box',
-          }}
-        >
-          <iframe
-            title="Vista de mapa"
-            width="100%"
-            height={MAP_THUMB_MAX_H}
-            style={{
-              border: 0,
-              display: 'block',
-              pointerEvents: 'none',
-              transform: 'scale(1.02)',
-              transformOrigin: 'center center',
-            }}
-            loading="lazy"
-            src={toHttps(embedSrc)}
-          />
-          {openMapsHref ? (
-            <a
-              href={toHttps(openMapsHref)}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                position: 'absolute',
-                right: '8px',
-                bottom: '8px',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                background: 'rgba(15, 23, 42, 0.88)',
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              }}
-            >
-              Abrir en Maps
-            </a>
-          ) : null}
-        </div>
-      ) : (
-        openMapsHref && (
-          <a
-            href={toHttps(openMapsHref)}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'block',
-              textAlign: 'center',
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: '#1e293b',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '13px',
-              textDecoration: 'none',
-            }}
-          >
-            Abrir en Maps
-          </a>
-        )
-      )}
-    </div>
-  );
-}
-
-
 const API_BASE_RESENAS = toHttps(
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -1620,18 +1472,7 @@ export default function SedePublica() {
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
-  const { session, userProfile } = useAuth();
-
-  const currentCliente = useMemo(() => {
-    const em = String(session?.user?.email || '').trim();
-    if (!em) return null;
-    return {
-      email: em,
-      nombre: getDisplayName(userProfile, session) || '',
-      whatsapp: String(userProfile?.whatsapp || '').trim(),
-      foto: toHttps(userProfile?.foto_url ?? userProfile?.foto ?? null),
-    };
-  }, [session, userProfile]);
+  const { session } = useAuth();
 
   const sedeIdNumTicker = useMemo(() => {
     const n = parseInt(String(sedeId), 10);
@@ -1655,12 +1496,6 @@ export default function SedePublica() {
         return next;
       });
   }, [sedeTickerSponsors]);
-  /** Hueco bajo AppHeader + BottomNav fijos + buffer (hero y resto del scroll). Safe-area en `--pm-app-header-stack-height`. */
-  const sedeScrollPaddingTopCss = useMemo(
-    () =>
-      `calc(var(--pm-app-header-stack-height) + ${hubScrollChromeTopExtraPx(location.pathname, navDock) + SEDE_PUBLIC_SCROLL_EXTRA_TOP_PX}px)`,
-    [location.pathname, navDock]
-  );
   const [sede, setSede] = useState(null);
   /** Viene en `GET /api/sedes/:id` como `estadisticas_publicas` (null si solo fallback Supabase). */
   const [estadisticasPublicas, setEstadisticasPublicas] = useState(null);
@@ -1671,11 +1506,11 @@ export default function SedePublica() {
   const [torneosSedeLista, setTorneosSedeLista] = useState([]);
   const [instructoresAprobados, setInstructoresAprobados] = useState([]);
   const [sedeShareCopied, setSedeShareCopied] = useState(false);
-  const [duracionesOferta, setDuracionesOferta] = useState([]);
+  const [, setDuracionesOferta] = useState([]);
   const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
   const [partidosSede, setPartidosSede] = useState([]);
   const [partidosSedeLoading, setPartidosSedeLoading] = useState(false);
-  const [partidosSedeError, setPartidosSedeError] = useState(false);
+  const [, setPartidosSedeError] = useState(false);
   const [partidosSedeVerTodos, setPartidosSedeVerTodos] = useState(false);
   const [sedePerfilCanchasCount, setSedePerfilCanchasCount] = useState(null);
 

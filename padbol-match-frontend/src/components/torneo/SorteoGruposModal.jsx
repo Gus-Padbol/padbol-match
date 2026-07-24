@@ -242,10 +242,8 @@ export default function SorteoGruposModal({
     numGrupos,
     maxGrupos,
     modoCabezas,
-    ordenManualCabezas.length,
     numCabezas,
     ordenManualCabezas,
-    cabezaIdsParaSortear,
   ]);
 
   const iniciarSorteoAnimado = useCallback(() => {

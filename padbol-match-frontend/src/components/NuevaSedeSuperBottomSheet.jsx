@@ -168,7 +168,7 @@ export default function NuevaSedeSuperBottomSheet({
       .then((data) => setPlanPricing(Array.isArray(data) ? data : []))
       .catch(() => setPlanPricing([]))
       .finally(() => setPlanPricingLoading(false));
-  }, [open, apiBaseUrl, inviteToken, invitePrefillKey]);
+  }, [open, apiBaseUrl, inviteToken, invitePrefillKey, invitePrefill]);
 
   useEffect(() => {
     setPlacesInputValue(String(st.direccion || ''));

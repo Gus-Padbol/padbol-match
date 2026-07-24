@@ -19,5 +19,5 @@ export function usePerfilJugadorMinimoEnRuta() {
     if (!rutaExigePerfilJugadorMinimo(pathOnly)) return;
     if (perfilJugadorDatosMinimosCompletos(userProfile)) return;
     navigate('/completar-perfil', { replace: true, state: { from: pathOnly } });
-  }, [loading, profileLoading, session?.user?.id, userProfile, location.pathname, navigate]);
+  }, [loading, profileLoading, session?.user, userProfile, location.pathname, navigate]);
 }

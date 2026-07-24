@@ -180,7 +180,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, t]);
 
   const loadDeporte = useCallback(async () => {
     setDeporteLoading(true);
@@ -208,7 +208,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     } finally {
       setDeporteLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, t]);
 
   const legacyHubRows = useMemo(
     () =>
@@ -398,7 +398,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     fileRefDeporte.current?.click();
   };
 
-  const subirFotoHubConfig = async (id, file) => {
+  const subirFotoHubConfig = useCallback(async (id, file) => {
     setUploadingId(id);
     setMsg('');
     try {
@@ -417,9 +417,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     } finally {
       setUploadingId(null);
     }
-  };
+  }, [accessToken, apiBaseUrl]);
 
-  const subirFotoHubDeporte = async (dep, ck, file) => {
+  const subirFotoHubDeporte = useCallback(async (dep, ck, file) => {
     const dk = draftKeyDeporte(dep, ck);
     setUploadingDeporteKey(dk);
     setDeporteMsg('');
@@ -448,9 +448,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     } finally {
       setUploadingDeporteKey(null);
     }
-  };
+  }, [accessToken, apiBaseUrl, refreshDeporteRowsSilently, t]);
 
-  const subirFotoHubInicio = async (id, file) => {
+  const subirFotoHubInicio = useCallback(async (id, file) => {
     setUploadingInicioId(id);
     setInicioMsg('');
     try {
@@ -469,7 +469,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     } finally {
       setUploadingInicioId(null);
     }
-  };
+  }, [accessToken, apiBaseUrl]);
 
   const handleCropConfirm = useCallback(
     async (file) => {
@@ -494,7 +494,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         setCropUploadBusy(false);
       }
     },
-    [accessToken, apiBaseUrl, cerrarCropModal, refreshDeporteRowsSilently],
+    [
+      accessToken,
+      cerrarCropModal,
+      subirFotoHubConfig,
+      subirFotoHubDeporte,
+      subirFotoHubInicio,
+    ],
   );
 
   const onFileChange = (e) => {

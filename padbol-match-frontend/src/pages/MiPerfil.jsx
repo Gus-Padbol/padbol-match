@@ -980,7 +980,7 @@ export default function MiPerfil() {
     return () => {
       cancelled = true;
     };
-  }, [perfil?.user_id, perfil?.email, perfil?.alias, perfil?.nombre]);
+  }, [perfil]);
 
   useEffect(() => {
     setMostrarTodosTorneosMiPerfil(false);
@@ -1295,7 +1295,7 @@ export default function MiPerfil() {
         setGuardandoFoto(false);
       }
     },
-    [sessionOwnerEmail, session?.user?.id, perfil, formData.nivel, userProfile?.whatsapp, cerrarFotoAccionModal]
+    [sessionOwnerEmail, session?.user?.id, perfil, formData.nivel, userProfile?.whatsapp, cerrarFotoAccionModal, refreshSession, t]
   );
 
   const handleChange = (e) => {
@@ -1719,18 +1719,16 @@ export default function MiPerfil() {
       });
 
       await fetchPerfil();
-      {
-        persistJugadorPerfil({
-          nombre: nombreTrim,
-          apellido: apellidoTrim,
-          genero: genTrim,
-          apodo: String(formData.apodo || '').trim(),
-          categoria: String(formData.nivel || '').trim(),
-          whatsapp: waFinal,
-          email: owner,
-          ...(fotoUrlGuardada ? { foto_url: fotoUrlGuardada } : {}),
-        });
-      }
+      persistJugadorPerfil({
+        nombre: nombreTrim,
+        apellido: apellidoTrim,
+        genero: genTrim,
+        apodo: String(formData.apodo || '').trim(),
+        categoria: String(formData.nivel || '').trim(),
+        whatsapp: waFinal,
+        email: owner,
+        ...(fotoUrlGuardada ? { foto_url: fotoUrlGuardada } : {}),
+      });
       await refreshJugadorPerfilFromSupabase(owner);
       await refreshSession();
 

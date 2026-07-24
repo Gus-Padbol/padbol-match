@@ -35,7 +35,6 @@ import { authLoginRedirectPath } from '../utils/authLoginRedirect';
 import { getDisplayName, nombreRealDesdePerfilOauth } from '../utils/displayName';
 import {
   getDistanceKm,
-  precioBaseTurnoDesdeSede,
   primeraFotoSede,
 } from '../utils/sedeCardUi';
 import {
@@ -193,12 +192,6 @@ function minutosDesdeHoraReserva(horaRaw) {
   const mm = parseInt(m[2], 10);
   if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
   return hh * 60 + mm;
-}
-
-function horaDesdeMinutosReserva(totalMin) {
-  const hh = Math.floor(totalMin / 60);
-  const mm = totalMin % 60;
-  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 
 /** sedes_duraciones (duraciones_oferta) si viene en la sede; si no, columnas legacy precio_60/90/120. */
@@ -725,7 +718,7 @@ export default function ReservaForm() {
   const [sedesCatalogo, setSedesCatalogo] = useState([]);
   const [sedesLoadError, setSedesLoadError] = useState('');
   const reservaPaisAutoSuprimidoRef = useRef(false);
-  const [ciudades, setCiudades] = useState([]);
+  const [, setCiudades] = useState([]);
   /** Deportes con al menos una sede activa en `filtros.pais` (GET /api/sedes?deporte=). */
   const [deportesDisponiblesEnPais, setDeportesDisponiblesEnPais] = useState(() => new Set());
   const [deportesZonaLoading, setDeportesZonaLoading] = useState(false);
@@ -1493,7 +1486,6 @@ export default function ReservaForm() {
     authLoading,
     formData,
     whatsapp,
-    session?.user,
     userProfile,
     filtros,
     navigate,
@@ -2054,7 +2046,7 @@ export default function ReservaForm() {
       const todosLosHorarios = [];
 
       for (const slot of candidatos) {
-        const { startMin, endMin, horaInicio, horaFin, horario } = slot;
+        const { startMin, endMin, horaInicio, horario } = slot;
         const ocupadasNums = Array.isArray(reservadas)
           ? reservadas
             .filter((r) => (
@@ -2164,7 +2156,7 @@ export default function ReservaForm() {
     } catch {
       setError(t('reservas.searchCourtsError'));
     }
-  }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
+  }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl, t]);
 
   // Hora ya fijada (p. ej. deep link ?sedeId=&fecha=&hora=): cargar canchas sin retocar el botón de horario.
   useEffect(() => {
@@ -2209,14 +2201,6 @@ export default function ReservaForm() {
     });
     return () => cancelAnimationFrame(id);
   }, [pantalla, formData.hora, canchasDisponibles]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
 
   const handlePagarConMP = async () => {
     if (!gateReservaPago()) return;

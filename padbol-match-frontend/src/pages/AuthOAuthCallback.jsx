@@ -51,7 +51,7 @@ export default function AuthOAuthCallback() {
     return () => {
       cancelled = true;
     };
-  }, [loading, session?.user?.id, navigate]);
+  }, [loading, session, navigate]);
 
   return (
     <div

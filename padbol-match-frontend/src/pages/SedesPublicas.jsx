@@ -122,7 +122,7 @@ export default function SedesPublicas() {
     return () => {
       cancelled = true;
     };
-  }, [skipFavoriteRedirect, loading, authLoading, session?.user?.id, session?.user?.email, sedes, navigate]);
+  }, [skipFavoriteRedirect, loading, authLoading, session?.user, sedes, navigate]);
 
   // Catálogo: no solicitar ubicación. Reserva / sin query: intentar geolocalización para orden cercano.
   useEffect(() => {

@@ -178,7 +178,7 @@ export default function TorneoVista() {
     return () => {
       cancelled = true;
     };
-  }, [perfilFetchKeyVista]);
+  }, [perfilFetchKeyVista, jugadoresParaLookupVista]);
 
   const nombreTorneoCtxVista = useMemo(
     () => ({
@@ -698,7 +698,7 @@ export default function TorneoVista() {
       if (yaInscripto) return equipo;
     }
     return null;
-  }, [equipos, session?.user?.id, session?.user?.email]);
+  }, [equipos, session?.user]);
 
   const reservarMiLugarTorneo = useCallback(async () => {
     if (!session?.user) {
@@ -802,7 +802,6 @@ export default function TorneoVista() {
     torneoPasadoCalendario,
     modoAdminExplicitoEnVista,
     session?.user,
-    session?.access_token,
     mostrarBannerJugadorTorneo,
     esListaEsperaTorneo,
     esInscripcionAbiertaJugador,

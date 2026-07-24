@@ -342,6 +342,7 @@ export default function EquipoVista() {
   const [invitarBuscando, setInvitarBuscando] = useState(false);
   const [invitarAgregandoUserId, setInvitarAgregandoUserId] = useState(null);
   const invitarSearchSeqRef = useRef(0);
+  const cargarEquipoRef = useRef(null);
 
   const authUserId = useMemo(
     () => (session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : null),
@@ -356,7 +357,6 @@ export default function EquipoVista() {
     () => isGlobalSuperAdminEmailOrRole(authEmail, rol) && fromAdminStrict,
     [authEmail, rol, fromAdminStrict]
   );
-  const fromAdminNav = fromAdminStrict;
   const esAdminGestionTorneoEq = useMemo(
     () =>
       computeIsAdminEnTorneo({
@@ -536,9 +536,10 @@ export default function EquipoVista() {
     setRequests(solicitudes);
     setLoading(false);
   };
+  cargarEquipoRef.current = cargarEquipo;
 
   useEffect(() => {
-    if (equipoIdParam) cargarEquipo();
+    if (equipoIdParam) cargarEquipoRef.current?.();
   }, [equipoIdParam]);
 
   useEffect(() => {
@@ -604,7 +605,7 @@ export default function EquipoVista() {
         .from('equipos')
         .update({ jugadores: next })
         .eq('id', Number(equipoIdParam));
-      if (!upErr) cargarEquipo();
+      if (!upErr) cargarEquipoRef.current?.();
     };
     void run();
   }, [
@@ -613,9 +614,9 @@ export default function EquipoVista() {
     cuentaAuth?.email,
     cuentaAuth?.nombre,
     cuentaAuth?.id,
-    perfilLsKey,
     usuarioLocal.id,
-    session?.user,
+    session,
+    userProfile,
   ]);
 
   const perfilFetchKeyEquipo = useMemo(
@@ -643,7 +644,7 @@ export default function EquipoVista() {
     return () => {
       cancelled = true;
     };
-  }, [perfilFetchKeyEquipo]);
+  }, [perfilFetchKeyEquipo, players, requests]);
 
   const jugadoresUserIdsFetchKey = useMemo(
     () =>
@@ -683,7 +684,7 @@ export default function EquipoVista() {
     return () => {
       cancelled = true;
     };
-  }, [jugadoresUserIdsFetchKey]);
+  }, [jugadoresUserIdsFetchKey, players, requests]);
 
   useEffect(() => {
     const t = setTimeout(() => setInvitarJugadorDebounced(String(invitarJugadorInput || '').trim()), 320);
@@ -770,7 +771,7 @@ export default function EquipoVista() {
     const nombreEquipo = String(equipo?.nombre || '').trim() || 'nuestro equipo';
     const mensaje = `¡Hola! Te invito a jugar juntos el torneo de Padbol ${nombreTorneo} en ${nombreSede}. Somos el equipo ${nombreEquipo}. ¡Confirma tu lugar y nos vemos en la cancha! 🎯 ${link}`;
     return `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  }, [equipoIdParam, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
+  }, [id, equipoIdParam, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
 
   const abrirCompartirLugarEquipoWa = () => {
     if (!urlCompartirLugarEquipoWa) return;
@@ -919,7 +920,7 @@ export default function EquipoVista() {
       if (byName) return byName;
     }
     return null;
-  }, [jugadoresTorneo, cuentaAuth, perfilLsKey, session?.user?.email]);
+  }, [jugadoresTorneo, cuentaAuth, session?.user?.email]);
 
   const yo = useMemo(() => {
     const idEfectivo = authUserId || usuarioLocal.id;
@@ -938,7 +939,7 @@ export default function EquipoVista() {
       nombre: nombreVis,
       email: currentJugador?.email || cuentaAuth.email || '',
     };
-  }, [cuentaAuth, currentJugador, usuarioLocal.id, usuarioLocal.nombre, perfilLsKey, authUserId, session, userProfile]);
+  }, [cuentaAuth, currentJugador, usuarioLocal.id, usuarioLocal.nombre, authUserId, session, userProfile]);
 
   const esMiEquipo = useMemo(() => {
     if (!equipo || !yo) return false;

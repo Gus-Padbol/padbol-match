@@ -150,8 +150,6 @@ export async function solicitarUnirseAEquipoAbierto({
   equiposTorneo,
 }) {
   const yo = buildYoParaSolicitud(session, userProfile);
-  const authUserId = session?.user?.id != null && session.user.id !== '' ? String(session.user.id) : '';
-
   const miEquipo = findMiEquipoEnLista(equiposTorneo, session, userProfile);
   if (miEquipo) {
     return { ok: false, message: 'Ya estás en un equipo' };

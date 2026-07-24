@@ -260,7 +260,7 @@ export default function ScoreboardControl() {
     const count = Array.isArray(partido.historial_puntos) ? partido.historial_puntos.length : 0;
     setUndoCount(count);
     return undefined;
-  }, [partido?.historial_puntos, partido?.id]);
+  }, [partido]);
 
   const resolvePartidoApiId = useCallback(() => {
     const id = partido?.id ?? partidoId;
@@ -307,15 +307,7 @@ export default function ScoreboardControl() {
     const path = `/api/scoreboard/partidos/${encodeURIComponent(partido.id)}/cronometro/pause`;
     void runActionRef.current?.(path, { refetchAfter: false });
     return undefined;
-  }, [
-    partido?.id,
-    partido?.estado,
-    partido?.sets_a,
-    partido?.sets_b,
-    partido?.display?.cronometroActivo,
-    partido?.cronometro_pausado,
-    partido?.cronometro_inicio,
-  ]);
+  }, [partido]);
 
   const handleUndo = useCallback(async () => {
     if (!partido?.id || undoCount <= 0) return;

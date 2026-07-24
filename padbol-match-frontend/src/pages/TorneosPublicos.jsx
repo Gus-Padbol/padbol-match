@@ -158,7 +158,7 @@ export default function TorneosPublicos() {
     const d = String(searchParams.get('deporte') || '').trim().toLowerCase();
     if (!d || d === 'todos') return 'todos';
     return filtrosDeporteTorneoPublico.some((x) => x.id === d) ? d : 'todos';
-  }, [searchParams]);
+  }, [searchParams, filtrosDeporteTorneoPublico]);
 
   const deporteTickerTorneos = useMemo(() => {
     if (filtroDeporteTorneo === 'todos') return null;

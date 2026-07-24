@@ -765,7 +765,7 @@ export default function Rankings() {
       padding: `${hubContentPaddingTopCss(location.pathname, navDock)} 0 ${hubMainPaddingBottomCss(location.pathname, navDock)} 0`,
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     }),
-    [location.pathname]
+    [location.pathname, navDock]
   );
 
   const innerStyle = {

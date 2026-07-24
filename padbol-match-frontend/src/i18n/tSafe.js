@@ -71,7 +71,7 @@ export function resolveTranslation(key, translated, explicitFallback, lang = 'es
  */
 export function useSafeTranslation(ns) {
   const { t: tBase, i18n, ready } = useTranslationBase(ns);
-  const { version: langVersion } = usePadbolI18n();
+  usePadbolI18n();
   const currentLang = normalizePadbolLang(i18n.language || i18n.resolvedLanguage);
 
   const t = useCallback(
@@ -98,7 +98,7 @@ export function useSafeTranslation(ns) {
       if (!ready && explicitFallback) return explicitFallback;
       return resolveTranslation(k, raw, explicitFallback, currentLang);
     },
-    [tBase, ready, currentLang, langVersion],
+    [tBase, ready, currentLang],
   );
 
   return { t, i18n, ready, language: currentLang };

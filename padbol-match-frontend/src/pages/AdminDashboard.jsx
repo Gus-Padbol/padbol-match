@@ -51,8 +51,6 @@ import {
 } from '../constants/sedeAmenities.js';
 import {
   getFiltrosEstadoTorneoPills,
-  esEstadoCanceladoTorneo,
-  esEstadoFinalizadoTorneo,
   esFiltroTorneoEstadoTodos,
   torneoPasaFiltroEstadoVista,
 } from '../utils/torneoEstadoFiltroPills';
@@ -82,7 +80,7 @@ import {
   opcionesSelectEstadoTorneoAdmin,
   validarCambioEstadoTorneoAdminGuardar,
 } from '../utils/torneoEstadoTransiciones';
-import SorteoGruposModal, { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
+import SorteoGruposModal from '../components/torneo/SorteoGruposModal';
 import TorneoPuntosDistribucionModal from '../components/torneo/TorneoPuntosDistribucionModal';
 import AdminClubOnboardingTour, { readOnboardingDone } from '../components/AdminClubOnboardingTour';
 import AdminHubPersonalizarSection from '../components/AdminHubPersonalizarSection';
@@ -99,7 +97,6 @@ import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
-import ConfirmModal from '../components/ConfirmModal';
 import SedeWhatsappPhoneField from '../components/SedeWhatsappPhoneField';
 import {
   applyPaisChangeToWhatsapp,
@@ -137,9 +134,6 @@ import {
 import {
   isReservaEstadoIngresoValido,
   isReservaEstadoActiva,
-  sumIngresosReservas,
-  sumIngresosReservasPorMoneda,
-  countReservasActivas,
   filterReservasEnBounds,
   resolvePeriodBounds,
   buildPeriodoCompare,
@@ -172,7 +166,6 @@ import { getCroppedImgBlob } from '../utils/cropImage';
 import {
   preciosDuracionToApiPatch,
   parsePrecioDuracionField,
-  miSedeFormPreciosFromSedeRow,
 } from '../utils/sedePreciosDuracion';
 import {
   clearPagosCredentialFields,
@@ -849,43 +842,6 @@ function normalizeFranjasHorarias(raw) {
         ? ''
         : String(f.precio).replace(/\./g, '').replace(/[^\d]/g, ''),
   }));
-}
-
-function franjasHorariasToDbPayload(rows) {
-  return rows.map((r) => {
-    const digits = String(r.precio ?? '').replace(/\./g, '').replace(/[^\d]/g, '');
-    const precio = digits === '' ? 0 : parseInt(digits, 10);
-    const tipo = String(r.tipo || '').trim() === 'fecha_especial' ? 'fecha_especial' : 'semanal';
-    return {
-      id: String(r.id || '').trim() || newFranjaId(),
-      tipo,
-      nombre: String(r.nombre || '').trim(),
-      fecha: String(r.fecha || '').trim().slice(0, 10) || null,
-      dias:
-        tipo === 'fecha_especial'
-          ? []
-          : Array.isArray(r.dias) && r.dias.length
-            ? r.dias.map((d) => String(d).trim()).filter((d) => DIAS_SEMANA_DEFAULT_FRANJA.includes(d))
-            : DIAS_SEMANA_DEFAULT_FRANJA,
-      hora_inicio: String(r.hora_inicio || '').trim().slice(0, 5),
-      hora_fin: String(r.hora_fin || '').trim().slice(0, 5),
-      precio: Number.isFinite(precio) ? precio : 0,
-    };
-  });
-}
-
-function normalizeHexSedeAdmin(raw) {
-  if (raw == null) return null;
-  const s = String(raw).trim();
-  if (!s) return null;
-  if (/^#[0-9A-Fa-f]{6}$/i.test(s)) return s;
-  if (/^#[0-9A-Fa-f]{3}$/i.test(s)) {
-    const r = s[1];
-    const g = s[2];
-    const b = s[3];
-    return `#${r}${r}${g}${g}${b}${b}`;
-  }
-  return null;
 }
 
 /** Estado de formulario «Mi Sede» desde fila Supabase / API. */
@@ -2796,55 +2752,9 @@ function minutosDesdeMedianocheHHMMAdminDash(hhmm) {
   return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
 }
 
-function horaDesdeMinutosAdminDash(totalMin) {
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
 function minutosInicioReservaAdminDash(r) {
   const s = normalizeHoraInicioReservaAdminDash(r?.hora);
   return minutosDesdeMedianocheHHMMAdminDash(s);
-}
-
-function reservaBloqueaSlotAdminDash(r) {
-  const est = String(r?.estado || '').trim().toLowerCase();
-  return est !== 'cancelada' && !r?.cancelada;
-}
-
-function reservaSolapaSlotAdminDash(r, startMin, endMin) {
-  const rStart = minutosInicioReservaAdminDash(r);
-  if (rStart == null) return false;
-  const rEnd = rStart + duracionReservaAdmin(r);
-  return startMin < rEnd && endMin > rStart;
-}
-
-function slotsReservaManualDisponiblesAdminDash({ sedeRow, reservas, fecha, cancha, duracion, ctx }) {
-  if (!sedeRow || !fecha || !cancha) return [];
-  const dur = parseInt(String(duracion), 10);
-  const duracionMin = [60, 90, 120].includes(dur) ? dur : 90;
-  const canchaNum = parseInt(String(cancha), 10);
-  if (!Number.isFinite(canchaNum)) return [];
-
-  const sedeNombre = String(sedeRow?.nombre || '').trim().toLowerCase();
-  const fechaISO = String(fecha || '').trim().slice(0, 10);
-  const ocupadas = (Array.isArray(reservas) ? reservas : []).filter((r) => {
-    if (!reservaBloqueaSlotAdminDash(r)) return false;
-    if (String(r?.fecha || '').trim().slice(0, 10) !== fechaISO) return false;
-    if (parseInt(String(r?.cancha), 10) !== canchaNum) return false;
-    return String(r?.sede || '').trim().toLowerCase() === sedeNombre;
-  });
-
-  const filtraPasadosHoy = ctx?.hoyISO && fechaISO === ctx.hoyISO;
-  const inicios = generarIniciosMinutosSlotReserva(sedeRow, fechaISO, duracionMin, 30);
-  const out = [];
-  for (const start of inicios) {
-    if (filtraPasadosHoy && start < ctx.minutesNow) continue;
-    const end = start + duracionMin;
-    const solapada = ocupadas.some((r) => reservaSolapaSlotAdminDash(r, start, end));
-    if (!solapada) out.push(minutosAHoraReserva(start));
-  }
-  return out;
 }
 
 /** Inicios de turno posibles hoy (ART) según horario_apertura / horario_cierre de la sede. */
@@ -3325,32 +3235,8 @@ function inviteAdminTipoToRol(tipo) {
   return 'admin_club';
 }
 
-/** HH:00 desde hora de reserva (inicio del turno). */
-function horaFranjaReservaAdmin(horaRaw) {
-  const start = String(horaRaw || '').split(' - ')[0].trim();
-  const m = /^(\d{1,2}):(\d{2})/.exec(start);
-  if (!m) return null;
-  const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
-  return `${String(h).padStart(2, '0')}:00`;
-}
-
 function fechaReservaDiaOCreatedISO(r) {
   return fechaReservaDiaISO(r?.fecha) || fechaReservaDiaISO(r?.created_at);
-}
-
-function diaCalendarioEnRangoLocal(diaISO, start, end) {
-  if (!diaISO || !/^\d{4}-\d{2}-\d{2}$/.test(diaISO)) return false;
-  const [y, m, d] = diaISO.split('-').map(Number);
-  const fecha = new Date(y, m - 1, d);
-  if (Number.isNaN(fecha.getTime())) return false;
-  return fecha >= start && fecha <= end;
-}
-
-function pctCambioSemana(actual, anterior) {
-  const a = Number(actual) || 0;
-  const p = Number(anterior) || 0;
-  if (p === 0) return a > 0 ? 100 : 0;
-  return Math.round(((a - p) / p) * 100);
 }
 
 function cancelacionBadgeClass(pct) {
@@ -3562,15 +3448,13 @@ export default function AdminDashboard({
   const [nacionalJugadoresLoading, setNacionalJugadoresLoading] = useState(false);
   const puedeVerSedesPendientes = isSuperAdmin;
   const puedeEnviarNotificacionesPush = isSuperAdmin || esAdminNacional || esAdminClub;
-  const puedeCrearTorneosOficiales = isSuperAdmin || (!esAdminClub);
-
-  const ROLE_BADGE = {
+  const ROLE_BADGE = useMemo(() => ({
     super_admin:    `👑 ${t('admin.role.super')}`,
     admin_nacional: `🌎 ${t('admin.role.national')}`,
     admin_club:     `🏠 ${t('admin.role.club')}`,
     empleado:       `👤 ${t('admin.role.employee')}`,
     editor_contenido: `📝 ${t('admin.role.editor')}`,
-  };
+  }), [t]);
   const roleBadgeLabel = ROLE_BADGE[rolPanel] || ROLE_BADGE[rol] || 'Admin';
 
   const [reservas, setReservas] = useState([]);
@@ -3583,15 +3467,17 @@ export default function AdminDashboard({
   const [sedeTorneoInteresCount, setSedeTorneoInteresCount] = useState(0);
   const [filtroEstadoTorneoAdmin, setFiltroEstadoTorneoAdmin] = useState('todos');
   const [filtroDeporteTorneoAdmin, setFiltroDeporteTorneoAdmin] = useState('todos');
-  const filtrosEstadoTorneoPillsAdmin = useMemo(() => getFiltrosEstadoTorneoPills(t), [t, i18n.language]);
+  const filtrosEstadoTorneoPillsAdmin = useMemo(() => getFiltrosEstadoTorneoPills(t), [t]);
   const filtrosDeporteTorneoPillsAdmin = useMemo(
     () => [
       { id: 'todos', label: t('admin.sponsors.allSports') },
       ...TORNEO_DEPORTE_OPTIONS.map((o) => ({ id: o.value, label: o.label })),
     ],
-    [t, i18n.language]
+    [t]
   );
-  const canchaDeporteAdminOptions = useMemo(() => getCanchaDeporteAdminOptions(t), [t, i18n.language]);
+  const canchaDeporteAdminOptions = useMemo(() => getCanchaDeporteAdminOptions(t), [t]);
+  const fetchDataRef = useRef(null);
+  const selectMiSedeSectionRef = useRef(null);
   const [filtroPillReservas, setFiltroPillReservas] = useState('todas');
   const [reservasAdminPagina, setReservasAdminPagina] = useState(1);
   const [sedesMap, setSedesMap] = useState({});
@@ -4783,7 +4669,7 @@ export default function AdminDashboard({
   const [solicitudesFiltroEstado, setSolicitudesFiltroEstado] = useState('pendiente');
   const [solicitudDetalleExpandidoKey, setSolicitudDetalleExpandidoKey] = useState(null);
   /** Conteos solo con GET pendiente (alerta Resumen; no depende del filtro de la tab Solicitudes). */
-  const [snapPendienteSedes, setSnapPendienteSedes] = useState(0);
+  const [, setSnapPendienteSedes] = useState(0);
   const [snapPendienteLic, setSnapPendienteLic] = useState(0);
   const [snapPendienteProfesores, setSnapPendienteProfesores] = useState(0);
   const [adminScopeMeta, setAdminScopeMeta] = useState(null);
@@ -4876,7 +4762,7 @@ export default function AdminDashboard({
         setSedesPendientesLoading(false);
       }
     },
-    [apiBaseUrl, puedeVerSedesPendientes]
+    [apiBaseUrl, puedeVerSedesPendientes, t]
   );
 
   const cargarSolicitudesLicencia = useCallback(
@@ -4904,7 +4790,7 @@ export default function AdminDashboard({
         setSolicitudesLicenciaLoading(false);
       }
     },
-    [apiBaseUrl, isSuperAdmin]
+    [apiBaseUrl, isSuperAdmin, t]
   );
 
   const refreshSnapPendientesOnly = useCallback(async () => {
@@ -5011,14 +4897,14 @@ export default function AdminDashboard({
         alert(e?.message || t('admin.alerts.rejectRequest'));
       }
     },
-    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
+    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly, t]
   );
 
   const abrirModalAprobarLicenciaWeb = useCallback((rawLicencia) => {
     const rawTipo = String(rawLicencia?.tipo_interes || '').trim();
     const pickDefault = TIPO_INTERES_APROBAR_SOLICITUD_LIC.includes(rawTipo) ? rawTipo : t('admin.sedes.affiliateClub');
     setLicApruebaTipoModal({ rawLicencia, tipoInteresSeleccionado: pickDefault });
-  }, []);
+  }, [t]);
 
   const confirmarTipoYContinuarAprobarLicenciaWeb = useCallback(async () => {
     if (!licApruebaTipoModal?.rawLicencia) return;
@@ -5043,7 +4929,7 @@ export default function AdminDashboard({
     } finally {
       setLicApruebaTipoSaving(false);
     }
-  }, [apiBaseUrl, licApruebaTipoModal, navigate]);
+  }, [apiBaseUrl, licApruebaTipoModal, navigate, t]);
 
   const cargarRolesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -5064,7 +4950,7 @@ export default function AdminDashboard({
     } finally {
       setAdminRolesLoading(false);
     }
-  }, [apiBaseUrl, isSuperAdmin]);
+  }, [apiBaseUrl, isSuperAdmin, t]);
 
   const solicitarMagicLinkAdmin = useCallback(
     async ({ email, rol, nombre, sede_id }) => {
@@ -5087,7 +4973,7 @@ export default function AdminDashboard({
       if (!j?.magic_link) throw new Error(t('admin.formularios.noMagicLink'));
       return j.magic_link;
     },
-    [apiBaseUrl],
+    [apiBaseUrl, t],
   );
 
   const asignarEditorContenido = useCallback(async () => {
@@ -5147,6 +5033,7 @@ export default function AdminDashboard({
     editorContenidoNombre,
     isSuperAdmin,
     solicitarMagicLinkAdmin,
+    t,
   ]);
 
   const cargarInvitacionesAdmin = useCallback(async () => {
@@ -5168,7 +5055,7 @@ export default function AdminDashboard({
     } finally {
       setAdminInvitacionesLoading(false);
     }
-  }, [apiBaseUrl, isSuperAdmin]);
+  }, [apiBaseUrl, isSuperAdmin, t]);
 
   const enviarInvitacionClub = useCallback(async () => {
     if (!isSuperAdmin) return;
@@ -5248,6 +5135,7 @@ export default function AdminDashboard({
     inviteClubForm,
     isSuperAdmin,
     solicitarMagicLinkAdmin,
+    t,
   ]);
 
   const reenviarInvitacionClub = useCallback(
@@ -5274,7 +5162,7 @@ export default function AdminDashboard({
         alert(e?.message || t('admin.alerts.resendInvite'));
       }
     },
-    [apiBaseUrl, cargarInvitacionesAdmin, isSuperAdmin],
+    [apiBaseUrl, cargarInvitacionesAdmin, isSuperAdmin, t],
   );
 
   const revocarRolAdmin = useCallback(async (email) => {
@@ -5293,11 +5181,11 @@ export default function AdminDashboard({
       setMensajeExito(t('admin.notif.roleRevoked'));
       setTimeout(() => setMensajeExito(''), 3500);
       void cargarRolesAdmin();
-      void fetchData();
+      void fetchDataRef.current?.();
     } catch (e) {
       alert(e?.message || t('admin.alerts.revokeRole'));
     }
-  }, [apiBaseUrl, isSuperAdmin, cargarRolesAdmin]);
+  }, [apiBaseUrl, isSuperAdmin, cargarRolesAdmin, t]);
 
   const aprobarSedePendiente = useCallback(
     async (id) => {
@@ -5313,7 +5201,7 @@ export default function AdminDashboard({
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || res.statusText);
         setMensajeExito(t('admin.notif.venueApproved'));
-        void fetchData();
+        void fetchDataRef.current?.();
         void refreshSnapPendientesOnly();
         refetchSolicitudesTabLists();
         setTimeout(() => setMensajeExito(''), 4000);
@@ -5322,7 +5210,7 @@ export default function AdminDashboard({
       }
     },
     // fetchData se declara más abajo; se invoca solo al hacer clic (no incluir en deps).
-    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
+    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly, t]
   );
 
   const rechazarSedePendiente = useCallback(
@@ -5353,7 +5241,7 @@ export default function AdminDashboard({
         alert(e.message || String(e));
       }
     },
-    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly]
+    [apiBaseUrl, refetchSolicitudesTabLists, refreshSnapPendientesOnly, t]
   );
 
   useEffect(() => {
@@ -5475,7 +5363,7 @@ export default function AdminDashboard({
       const asig = asignacionGestionAdminTexto(row);
       return `${badge} · Alcance: ${alc} · ${asig}`;
     },
-    [asignacionGestionAdminTexto],
+    [asignacionGestionAdminTexto, ROLE_BADGE],
   );
 
   useEffect(() => {
@@ -5493,7 +5381,7 @@ export default function AdminDashboard({
       setLoading(false);
       return;
     }
-    fetchData();
+    void fetchDataRef.current?.();
     fetchPendientes();
   }, [apiBaseUrl, rol, sedeId, session?.access_token, esEditorContenido]); // token: alcance correcto en GET torneos/reservas
 
@@ -5709,9 +5597,8 @@ export default function AdminDashboard({
     superAdminFechaHasta,
     finanzasAnclaISO,
     isSuperAdmin,
-    currentEmail,
     esAdminClub,
-    sedeId,
+    sedeIdKey,
     sedesMap,
   ]);
 
@@ -5870,7 +5757,7 @@ export default function AdminDashboard({
       console.error('[AdminDashboard] exportarFinanzasExcel:', e);
       alert(t('admin.alerts.excelFailed'));
     }
-  }, [superAdminPeriodo, isSuperAdmin, cifrasFinanzasResumen, dashboardFinanciero, finanzasAnclaISO]);
+  }, [superAdminPeriodo, isSuperAdmin, cifrasFinanzasResumen, dashboardFinanciero, finanzasAnclaISO, t]);
 
   const resumenPanelDiario = useMemo(() => {
     const reservasList = asAdminDataArray(reservas);
@@ -6143,7 +6030,6 @@ export default function AdminDashboard({
   }, [
     esAdminClub,
     isSuperAdmin,
-    sedeId,
     reservas,
     superAdminPeriodo,
     superAdminFechaDesde,
@@ -6237,7 +6123,7 @@ export default function AdminDashboard({
       rows,
       totalReservasHoySede: reservasHoyActivas.length,
     };
-  }, [esAdminClub, sedeId, reservas, sedesMap, canchasDetallePorSede, canchasResumenPorSede]);
+  }, [esAdminClub, sedeIdKey, reservas, sedesMap, canchasDetallePorSede, canchasResumenPorSede, t]);
 
   const adminNotificaciones = useMemo(() => {
     const p = resumenPanelDiario;
@@ -6326,7 +6212,7 @@ export default function AdminDashboard({
       };
       const irAInstructoresClub = () => {
         irATab('mi_sede');
-        window.setTimeout(() => selectMiSedeSection('clases'), 120);
+        window.setTimeout(() => selectMiSedeSectionRef.current?.('clases'), 120);
       };
       pushCampanita(
         `campanita-instructores-${campanitaData.instructoresPendientes}`,
@@ -6495,11 +6381,10 @@ export default function AdminDashboard({
     isSuperAdmin,
     navigate,
     puedeVerFinanzas,
-    snapPendienteSedes,
     snapPendienteLic,
     campanitaData,
     puedeUsarCampanita,
-    esAdminClub,
+    rolPanel,
     setSolicitudesFiltroEstado,
     t,
   ]);
@@ -6757,7 +6642,7 @@ export default function AdminDashboard({
     } catch (e) {
       alert(e?.message || t('admin.alerts.loadTeams'));
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, t]);
 
   /** Sorteo de grupos solo con torneo en inscripción / abierto (antes de `en_curso`). */
   const torneoEstadoPermiteSorteoGrupos = (est) => {
@@ -7086,7 +6971,7 @@ export default function AdminDashboard({
         setPlanPricingSavingId(null);
       }
     },
-    [apiBaseUrl, session?.access_token],
+    [apiBaseUrl, session?.access_token, t],
   );
 
   // Badges del listado Torneos: 1 request batch (no N+1 /equipos|/partidos).
@@ -7344,10 +7229,7 @@ export default function AdminDashboard({
       setReservas(resData);
 
       const tornRes = await fetch(`${apiBaseUrl}/api/torneos`, { headers: { ...listAuthHeaders } });
-      const tornResOk = tornRes.ok;
-      const tornResStatus = tornRes.status;
       let tornData = [];
-      let tornParseError = null;
       try {
         const parsed = await tornRes.json();
         if (Array.isArray(parsed)) {
@@ -7355,19 +7237,13 @@ export default function AdminDashboard({
         } else {
           console.warn('[Admin] GET /api/torneos: respuesta no es array', parsed);
           tornData = [];
-          tornParseError = { invalidPayload: parsed };
         }
-      } catch (e) {
-        tornParseError = { message: e?.message || String(e) };
+      } catch {
+        tornData = [];
       }
       if (!isSuperAdmin) {
         if (sedesAlcance.length === 0) tornData = [];
         else tornData = tornData.filter((t) => filaDentroDelAlcanceSedes(t, sedesAlcance));
-      }
-      if (isSuperAdmin && (!tornData || tornData.length === 0)) {
-        const error =
-          tornParseError ||
-          (!tornResOk ? { status: tornResStatus, statusText: tornRes.statusText } : null);
       }
       setTorneos(tornData);
 
@@ -7450,6 +7326,7 @@ export default function AdminDashboard({
       setLoading(false);
     }
   };
+  fetchDataRef.current = fetchData;
 
   const abrirNuevaSedeModal = useCallback(() => {
     setNuevaSedeModalOpen(true);
@@ -7519,7 +7396,7 @@ export default function AdminDashboard({
         }));
       }
     },
-    [apiBaseUrl, session?.access_token],
+    [apiBaseUrl, session?.access_token, t],
   );
 
   const cerrarHistorialReserva = useCallback((reservaId) => {
@@ -7774,8 +7651,6 @@ export default function AdminDashboard({
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
   const [miSedeInstalacionesSaving, setMiSedeInstalacionesSaving] = useState(false);
   const [miSedeInstalacionesMsg, setMiSedeInstalacionesMsg] = useState('');
-  const [miSedePreciosSaving, setMiSedePreciosSaving] = useState(false);
-  const [miSedePreciosMsg, setMiSedePreciosMsg] = useState('');
   const [surgeConfigs, setSurgeConfigs] = useState({});
   const [surgeConfigSaving, setSurgeConfigSaving] = useState({});
   const [surgeActivoSaving, setSurgeActivoSaving] = useState(false);
@@ -7960,6 +7835,7 @@ export default function AdminDashboard({
     },
     [activeTab, miSedeNavItems, resetAdminPanelScroll, selectAdminTab],
   );
+  selectMiSedeSectionRef.current = selectMiSedeSection;
   const [fotosUrls,      setFotosUrls]      = useState([]);
   const [fotosUploading, setFotosUploading] = useState(false);
   const [fotosMsg,       setFotosMsg]       = useState('');
@@ -8587,60 +8463,6 @@ export default function AdminDashboard({
     }
   }, [apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token]);
 
-  const guardarPreciosDuracion = async () => {
-    if (!sedeId || !session?.access_token) {
-      setMiSedePreciosMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
-      setTimeout(() => setMiSedePreciosMsg(''), 4000);
-      return;
-    }
-    setMiSedePreciosSaving(true);
-    setMiSedePreciosMsg('');
-    const body = preciosDuracionToApiPatch(miSedeForm);
-    let errorMsg = null;
-    let updated = null;
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        errorMsg = data.error || res.statusText || t('admin.metricas.saveError');
-      } else {
-        updated = data.sede ?? data;
-      }
-    } catch (e) {
-      errorMsg = e?.message || String(e);
-    }
-    setMiSedePreciosSaving(false);
-    if (errorMsg) {
-      setMiSedePreciosMsg(`⚠️ ${errorMsg}`);
-      setTimeout(() => setMiSedePreciosMsg(''), 5000);
-      return;
-    }
-    const successMsg = t('admin.sedes.pricesSaved').startsWith('✅')
-      ? t('admin.sedes.pricesSaved')
-      : `✅ ${t('admin.sedes.pricesSaved')}`;
-    setMiSedePreciosMsg(successMsg);
-    if (updated && (updated.id != null || updated.nombre != null)) {
-      setMiSede(updated);
-      const preciosForm = miSedeFormPreciosFromSedeRow(updated);
-      setMiSedeForm((f) => ({ ...f, ...preciosForm }));
-      setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...updated } }));
-      if (session?.access_token) {
-        fetchSedeDuraciones(sedeId, session.access_token, { apiBaseUrl, deporte: miSedePreciosDeporte })
-          .then(({ duraciones }) => {
-            setMiSedeDuraciones(duraciones);
-          })
-          .catch(() => {});
-      }
-    }
-  };
-
   const guardarMiSedeFilaDuracion = async (rowId) => {
     if (!sedeId || !session?.access_token) {
       setMiSedeDuracionesMsg(t('admin.formularios.loginAgainAlt'));
@@ -8961,7 +8783,7 @@ export default function AdminDashboard({
     } finally {
       setStripeOnboardingLoading(false);
     }
-  }, [apiBaseUrl, sedeId, session?.access_token]);
+  }, [apiBaseUrl, sedeId, session?.access_token, t]);
 
   const activarSuscripcionStripeSede = useCallback(
     async (sedeRow) => {
@@ -8998,7 +8820,7 @@ export default function AdminDashboard({
         alert(e.message || String(e));
       }
     },
-    [apiBaseUrl, isSuperAdmin, session?.access_token]
+    [apiBaseUrl, isSuperAdmin, session?.access_token, t]
   );
 
   const guardarSuscripcionEstadoSuper = useCallback(
@@ -9020,14 +8842,14 @@ export default function AdminDashboard({
           alert(j.error || t('admin.formularios.statusUpdateFailed'));
           return;
         }
-        await fetchData();
+        await fetchDataRef.current?.();
       } catch (e) {
         alert(e.message || String(e));
       } finally {
         setSuscripcionEstadoSuperSavingId(null);
       }
     },
-    [apiBaseUrl, fetchData, isSuperAdmin, session?.access_token]
+    [apiBaseUrl, isSuperAdmin, session?.access_token, t]
   );
 
   const guardarLicencia = async () => {

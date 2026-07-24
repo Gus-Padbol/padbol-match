@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useNavigate, useLocation, useNavigationType, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import './AccesoCuenta.css';
 import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { mensajeErrorAuthSupabase, mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
@@ -19,7 +19,6 @@ import {
   RESERVA_RETURN_STORAGE_KEY,
   resolvePostLoginNavigatePath,
   peekReservaLoginGateMessage,
-  clearReservaLoginGateMessage,
 } from '../utils/reservaReturnUrl';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
@@ -102,12 +101,6 @@ function PasswordEyeIcon({ revealed }) {
   );
 }
 
-/**
- * Estado en `<Link to="/login" />` desde la landing: misma SPA pero sin “historial útil” para Volver.
- * Debe coincidir con `LandingPage.jsx`.
- */
-const LOGIN_NAV_HIDE_VOLVER = 'padbolHideLoginBack';
-
 /** `?modo=registro` | `?modo=register` | `?registro=1` abre el formulario de alta en `/login`. */
 function readModoDesdeSearch(search) {
   try {
@@ -148,7 +141,6 @@ export default function AccesoCuenta() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const navigationType = useNavigationType();
   const { navDock } = useHubNavLayout();
   const { refreshSession, session, loading } = useAuth();
 
@@ -177,12 +169,6 @@ export default function AccesoCuenta() {
   const [regPaisTorneoExtra, setRegPaisTorneoExtra] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
 
-  /** Volver solo tras navegación interna (push/replace), no en carga directa ni desde la landing. */
-  const muestreBotonVolverAcceso = useMemo(() => {
-    if (location.state?.[LOGIN_NAV_HIDE_VOLVER]) return false;
-    return navigationType === 'PUSH' || navigationType === 'REPLACE';
-  }, [location.state, navigationType]);
-
   useEffect(() => {
     if (!regParticiparTorneos) {
       setRegLateralidadTorneo('');
@@ -204,10 +190,6 @@ export default function AccesoCuenta() {
       setRegNivelTorneo('');
     }
   }, [categoriasTorneoRegistro, regNivelTorneo]);
-
-  const handleAccesoBack = useCallback(() => {
-    navigate(-1);
-  }, [navigate]);
 
   /**
    * OAuth (Google / Facebook): `redirectTo` tras el proveedor. Agregar en Supabase → Authentication → URL Configuration → Redirect URLs:
@@ -285,7 +267,7 @@ export default function AccesoCuenta() {
     const p = location.pathname;
     if (p !== '/login' && p !== '/auth' && p !== '/acceso') return;
     void afterLogin(session);
-  }, [loading, session?.user?.id, afterLogin, location.pathname]);
+  }, [loading, session, afterLogin, location.pathname]);
 
   useEffect(() => {
     setErrorMsg('');

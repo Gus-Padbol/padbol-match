@@ -114,7 +114,7 @@ export default function CompletarPerfilOAuth() {
     } else {
       setDeportesPreferidos([]);
     }
-  }, [userProfile?.id, userProfile?.genero, userProfile?.whatsapp, userProfile?.deportes_preferidos]);
+  }, [userProfile]);
 
   const validarPasoDatos = useCallback(() => {
     setErrorMsg('');
@@ -226,12 +226,10 @@ export default function CompletarPerfilOAuth() {
     },
     [
       session,
-      session?.access_token,
       userProfile,
       genero,
       waCodigo,
       waLocal,
-      waLocalConfirm,
       validarPasoDatos,
       refreshSession,
       irAlHubPrincipal,
@@ -276,7 +274,7 @@ export default function CompletarPerfilOAuth() {
       }
       await guardarPerfilYContinuar(deportesPreferidos);
     },
-    [session, session?.access_token, paso, deportesPreferidos, validarPasoDatos, guardarPerfilYContinuar]
+    [session, paso, deportesPreferidos, validarPasoDatos, guardarPerfilYContinuar]
   );
 
   const handleOmitirDeportes = useCallback(
