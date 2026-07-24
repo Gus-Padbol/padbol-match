@@ -130,6 +130,25 @@
 .lang-switcher--landing .lang-switcher__menu {
   border-color: rgba(248, 250, 252, 0.18);
   background: #1e293b;
+  color: #f8fafc;
+  color-scheme: dark;
+}
+
+.lang-switcher--landing .lang-switcher__option {
+  color: #f8fafc;
+}
+
+.lang-switcher--landing .lang-switcher__option:hover {
+  background: rgba(248, 250, 252, 0.1);
+}
+
+.lang-switcher--landing .lang-switcher__option--active {
+  background: rgba(225, 27, 34, 0.24);
+  color: #ffffff;
+}
+
+.lang-switcher--landing .lang-switcher__check {
+  color: #ff5a61;
 }
 
 /* Mi perfil: trigger compacto (44px); menú anclado a la derecha */
