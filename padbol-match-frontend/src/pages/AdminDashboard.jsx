@@ -4749,6 +4749,11 @@ export default function AdminDashboard({
         const res = await fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=${encodeURIComponent(eq)}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (res.status === 404) {
+          setSedesPendientes([]);
+          if (eq === 'pendiente') setSnapPendienteSedes(0);
+          return;
+        }
         const j = await res.json().catch(() => []);
         if (!res.ok) throw new Error(j.error || res.statusText);
         const rows = Array.isArray(j) ? j : [];
