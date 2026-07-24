@@ -1,8 +1,6 @@
 /** sessionStorage: reserva armar-partido pendiente de login (paso 2 → login → paso 3). */
 export const RESERVA_PENDIENTE_KEY = 'reserva_pendiente';
 
-const PM_RESTORE_LOG = '[PM ArmarPartido restore]';
-
 /** Normaliza y valida el payload guardado antes de restaurar el paso 3. */
 export function parseReservaPendienteArmarPayload(data) {
   if (!data || typeof data !== 'object') return null;
@@ -31,7 +29,6 @@ export function saveReservaPendienteArmar(payload) {
     if (typeof window === 'undefined') return;
     const parsed = parseReservaPendienteArmarPayload(payload);
     if (!parsed) {
-      console.warn(`${PM_RESTORE_LOG} save omitido (payload inválido)`, payload);
       return;
     }
     const toStore = {
@@ -42,7 +39,6 @@ export function saveReservaPendienteArmar(payload) {
       duracion_minutos: parsed.duracion,
     };
     sessionStorage.setItem(RESERVA_PENDIENTE_KEY, JSON.stringify(toStore));
-    console.log(`${PM_RESTORE_LOG} guardado`, toStore);
   } catch {
     /* ignore */
   }

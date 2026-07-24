@@ -426,8 +426,6 @@ export default function EquipoVista() {
       return;
     }
     setLoading(true);
-    console.log('[Equipo] cargando equipo id:', equipoIdParam, 'usuario:', authEmail);
-
     const { data, error } = await supabase
       .from('equipos')
       .select('*')

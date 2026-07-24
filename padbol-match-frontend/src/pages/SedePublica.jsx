@@ -1346,59 +1346,30 @@ async function fetchPartidosSedePublica(sedeIdNum, headers = {}) {
   const primaryUrl = apiUrlResenas(
     `/api/sedes/${sedeIdNum}/partidos?upcoming=true`,
   );
-  console.log('[SedePublica] partidos URL (primary)', {
-    url: primaryUrl,
-    apiBase: API_BASE_RESENAS,
-    sedeId: sedeIdNum,
-    hasAuth: Boolean(headers.Authorization),
-  });
 
   try {
     const r = await fetch(primaryUrl, { headers });
     const data = await r.json().catch(() => ({}));
     if (r.ok) {
       const list = parsePartidosSedeResponse(data);
-      console.log('[SedePublica] partidos primary ok', { url: primaryUrl, count: list.length });
       return { list, error: false, source: 'sedes/:id/partidos' };
     }
-    console.warn('[SedePublica] partidos primary HTTP error, fallback', {
-      url: primaryUrl,
-      status: r.status,
-      body: data,
-    });
-  } catch (e) {
-    console.warn('[SedePublica] partidos primary fetch failed, fallback', { url: primaryUrl, error: e });
+  } catch {
+    // El endpoint alternativo mantiene disponible la sección de partidos.
   }
 
   const fallbackUrl = apiUrlResenas('/api/partidos/abiertos');
-  console.log('[SedePublica] partidos URL (fallback)', {
-    url: fallbackUrl,
-    apiBase: API_BASE_RESENAS,
-    sedeId: sedeIdNum,
-    hasAuth: Boolean(headers.Authorization),
-  });
 
   try {
     const r2 = await fetch(fallbackUrl, { headers });
     const data2 = await r2.json().catch(() => ({}));
     if (!r2.ok) {
-      console.error('[SedePublica] partidos fallback HTTP error', {
-        url: fallbackUrl,
-        status: r2.status,
-        body: data2,
-      });
       return { list: [], error: true, source: null };
     }
     const all = parsePartidosSedeResponse(data2);
     const list = all.filter((p) => Number(p?.sede_id) === sedeIdNum);
-    console.log('[SedePublica] partidos fallback ok', {
-      url: fallbackUrl,
-      total: all.length,
-      filtered: list.length,
-    });
     return { list, error: false, source: 'partidos/abiertos' };
-  } catch (e2) {
-    console.error('[SedePublica] partidos fallback fetch failed', { url: fallbackUrl, error: e2 });
+  } catch {
     return { list: [], error: true, source: null };
   }
 }
@@ -1610,14 +1581,8 @@ export default function SedePublica() {
     if (token) headers.Authorization = `Bearer ${token}`;
 
     fetchPartidosSedePublica(sedeIdNumLoad, headers)
-      .then(({ list, error, source }) => {
+      .then(({ list, error }) => {
         if (cancelled) return;
-        console.log('[SedePublica] partidos result', {
-          sedeId: sedeIdNumLoad,
-          source,
-          count: list.length,
-          error,
-        });
         setPartidosSede(list);
         setPartidosSedeError(error);
       })
@@ -1793,7 +1758,6 @@ export default function SedePublica() {
             const cc = Number(perfilBody.canchas_count);
             if (Number.isFinite(cc) && cc > 0) {
               setSedePerfilCanchasCount(cc);
-              console.log('[SedePublica] perfil canchas_count', { sedeId: idNum, canchas_count: cc });
             }
           } else if (!perfilRes.ok) {
             console.warn('[SedePublica] GET /api/sedes/:id/perfil', {

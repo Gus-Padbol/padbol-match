@@ -28,7 +28,6 @@ export default function AuthOAuthCallback() {
       if (s?.user) {
         navigatedRef.current = true;
         const dest = resolvePostLoginNavigatePath(window.location.search);
-        console.log('[PM ArmarPartido restore] OAuth callback →', dest);
         navigate(dest, { replace: true });
         return;
       }
@@ -38,7 +37,6 @@ export default function AuthOAuthCallback() {
         if (data?.session?.user) {
           navigatedRef.current = true;
           const dest = resolvePostLoginNavigatePath(window.location.search);
-          console.log('[PM ArmarPartido restore] OAuth callback (retry) →', dest);
           navigate(dest, { replace: true });
           return;
         }

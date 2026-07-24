@@ -55,8 +55,11 @@
   right: 0;
   z-index: 10150;
   min-width: 196px;
+  max-height: min(70vh, 560px);
   margin: 0;
   padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
   border-radius: 12px;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
@@ -64,6 +67,7 @@
   color: var(--text-primary, #f8fafc);
   box-shadow: 0 10px 32px rgba(15, 23, 42, 0.35);
   box-sizing: border-box;
+  scrollbar-gutter: stable;
 }
 
 .lang-switcher__option {
@@ -126,6 +130,25 @@
 .lang-switcher--landing .lang-switcher__menu {
   border-color: rgba(248, 250, 252, 0.18);
   background: #1e293b;
+  color: #f8fafc;
+  color-scheme: dark;
+}
+
+.lang-switcher--landing .lang-switcher__option {
+  color: #f8fafc;
+}
+
+.lang-switcher--landing .lang-switcher__option:hover {
+  background: rgba(248, 250, 252, 0.1);
+}
+
+.lang-switcher--landing .lang-switcher__option--active {
+  background: rgba(225, 27, 34, 0.24);
+  color: #ffffff;
+}
+
+.lang-switcher--landing .lang-switcher__check {
+  color: #ff5a61;
 }
 
 /* Mi perfil: trigger compacto (44px); menú anclado a la derecha */

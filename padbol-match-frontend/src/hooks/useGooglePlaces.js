@@ -64,7 +64,6 @@ export function useGooglePlaces() {
 
     if (placesAlreadyReady()) {
       setIsLoaded(true);
-      console.log('[useGooglePlaces] Google Places cargado OK');
       return undefined;
     }
 
@@ -74,7 +73,6 @@ export function useGooglePlaces() {
         if (!cancelled) {
           setLoadError(undefined);
           setIsLoaded(true);
-          console.log('[useGooglePlaces] Google Places cargado OK');
         }
       })
       .catch((e) => {

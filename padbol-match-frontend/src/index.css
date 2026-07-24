@@ -209,7 +209,7 @@ textarea:focus-visible {
   padding-top: 16px;
 }
 
-body.lang-ar {
+body.lang-rtl {
   font-family: 'Cairo', 'Segoe UI', sans-serif;
   direction: rtl;
 }

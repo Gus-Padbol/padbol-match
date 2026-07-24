@@ -1,6 +1,10 @@
-import * as XLSX from 'xlsx';
 import { nombreListadoTorneoRanking } from './jugadorPerfil';
 import { normalizeJugadorEmail } from './jugadorNombreTorneo';
+import {
+  appendJsonWorksheet,
+  createExcelWorkbook,
+  downloadExcelWorkbook,
+} from './excelWorkbook';
 
 function safeJugadores(eq) {
   let j = eq?.jugadores;
@@ -78,16 +82,18 @@ function slugifyFilename(s) {
 /**
  * Genera y descarga un .xlsx con jugadores inscriptos en el torneo (una fila por jugador).
  */
-export function downloadTorneoJugadoresXlsx({ torneo, equipos, jugadorNombreTorneoCtx }) {
+export async function downloadTorneoJugadoresXlsx({ torneo, equipos, jugadorNombreTorneoCtx }) {
   const data = buildTorneoJugadoresExportRows(equipos, jugadorNombreTorneoCtx);
   if (!data.length) {
     window.alert('No hay jugadores en los equipos de este torneo para exportar.');
     return;
   }
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Jugadores');
+  const workbook = createExcelWorkbook();
+  appendJsonWorksheet(workbook, data, 'Jugadores');
   const name = slugifyFilename(torneo?.nombre);
   const id = torneo?.id != null ? String(torneo.id) : '';
-  XLSX.writeFile(wb, `jugadores_${name}${id ? `_${id}` : ''}.xlsx`);
+  await downloadExcelWorkbook(
+    workbook,
+    `jugadores_${name}${id ? `_${id}` : ''}.xlsx`
+  );
 }

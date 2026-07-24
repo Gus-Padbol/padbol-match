@@ -181,7 +181,6 @@ function OptionsModal({
             className="sc-modal-option-btn sc-modal-option-btn--undo"
             disabled={undoCount <= 0}
             onClick={() => {
-              console.log('UNDO CLICKED');
               onUndo();
             }}
           >
@@ -271,7 +270,6 @@ export default function ScoreboardControl() {
     setActionLoading(true);
     setError('');
     try {
-      console.log('[ScoreboardControl] action:', path);
       const data = await scoreboardAction(path);
       if (refetchAfter) {
         await refreshPartido();

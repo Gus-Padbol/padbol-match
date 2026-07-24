@@ -2092,17 +2092,17 @@ button.podium-player-avatar-wrap {
   border-bottom: 1px solid #e2e8f0;
 }
 
-body.lang-ar .torneo-tabs,
-body.lang-ar .torneo-tabbed-nav,
-body.lang-ar [class*='torneo-tab'] {
+body.lang-rtl .torneo-tabs,
+body.lang-rtl .torneo-tabbed-nav,
+body.lang-rtl [class*='torneo-tab'] {
   direction: rtl;
   font-size: 13px;
   gap: 4px;
 }
 
-body.lang-ar .torneo-tab-btn,
-body.lang-ar [class*='tab-btn'],
-body.lang-ar [class*='torneo-tab-item'] {
+body.lang-rtl .torneo-tab-btn,
+body.lang-rtl [class*='tab-btn'],
+body.lang-rtl [class*='torneo-tab-item'] {
   font-size: 12px;
   padding: 8px 10px;
   white-space: nowrap;

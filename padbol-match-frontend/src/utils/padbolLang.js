@@ -1,20 +1,35 @@
 import i18n, { STORAGE_KEY } from '../i18n';
-import { isPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
+import {
+  canonicalPadbolLanguageCode,
+  isPadbolLanguageCode,
+} from '../constants/padbolLanguages';
 
 export { STORAGE_KEY };
 
 export function normalizePadbolLang(code) {
-  const s = String(code || '').trim().toLowerCase();
-  if (isPadbolLanguageCode(s)) return s;
+  const s = String(code || '').trim().replace(/_/g, '-').toLowerCase();
+  const exact = canonicalPadbolLanguageCode(s);
+  if (exact) return exact;
   if (s.startsWith('en')) return 'en';
   if (s.startsWith('es')) return 'es';
   if (s.startsWith('it')) return 'it';
   if (s.startsWith('ro')) return 'ro';
   if (s.startsWith('de')) return 'de';
   if (s.startsWith('fr')) return 'fr';
-  if (s.startsWith('pt')) return 'pt';
+  if (s.startsWith('pt-pt')) return 'pt-PT';
+  if (s.startsWith('pt')) return 'pt-BR';
   if (s.startsWith('ar')) return 'ar';
-  return PADBOL_LANGUAGE_CODES[0] || 'en';
+  if (s.startsWith('fa')) return 'fa-IR';
+  if (s.startsWith('nl-be')) return 'nl-BE';
+  if (s.startsWith('nl')) return 'nl-NL';
+  if (s.startsWith('sv')) return 'sv';
+  if (s.startsWith('el')) return 'el';
+  if (s.startsWith('hu')) return 'hu';
+  if (s.startsWith('he') || s.startsWith('iw')) return 'he';
+  if (s.startsWith('pl')) return 'pl';
+  if (s.startsWith('uk') || s.startsWith('ua')) return 'uk';
+  if (s.startsWith('af')) return 'af';
+  return 'en';
 }
 
 /** Locale BCP 47 para `Intl` / `toLocaleDateString` según idioma Padbol. */
@@ -24,11 +39,22 @@ export function padbolLangToIntlLocale(lang) {
     es: 'es-AR',
     en: 'en-US',
     ar: 'ar',
+    'fa-IR': 'fa-IR',
     de: 'de-DE',
     fr: 'fr-FR',
     it: 'it-IT',
     ro: 'ro-RO',
-    pt: 'pt-BR',
+    'nl-BE': 'nl-BE',
+    'nl-NL': 'nl-NL',
+    sv: 'sv-SE',
+    'pt-BR': 'pt-BR',
+    'pt-PT': 'pt-PT',
+    el: 'el-GR',
+    hu: 'hu-HU',
+    he: 'he-IL',
+    pl: 'pl-PL',
+    uk: 'uk-UA',
+    af: 'af-ZA',
   };
   return map[code] || code;
 }
@@ -52,9 +78,12 @@ export function reservaMonthYearLabel(year, monthIndex, lang) {
 export function applyPadbolDocumentDirection(lang) {
   if (typeof document === 'undefined') return;
   const code = normalizePadbolLang(lang);
-  const isAr = code === 'ar';
-  document.documentElement.dir = isAr ? 'rtl' : 'ltr';
-  document.body.classList.toggle('lang-ar', isAr);
+  const isRtl = code === 'ar' || code === 'he' || code === 'fa-IR';
+  document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+  document.body.classList.toggle('lang-rtl', isRtl);
+  document.body.classList.toggle('lang-ar', code === 'ar');
+  document.body.classList.toggle('lang-he', code === 'he');
+  document.body.classList.toggle('lang-fa', code === 'fa-IR');
 }
 
 /** true si el usuario ya eligió idioma (guardado en localStorage). */
@@ -70,7 +99,7 @@ export function hasPadbolLangChosen() {
 export function getPadbolLangStored() {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    if (isPadbolLanguageCode(v)) return v;
+    if (isPadbolLanguageCode(v)) return normalizePadbolLang(v);
   } catch {
     /* ignore */
   }

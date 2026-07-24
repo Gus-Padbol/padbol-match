@@ -675,16 +675,6 @@ export default function MiPerfil() {
         if (!byUserId.has(uid)) byUserId.set(uid, row);
       }
       const merged = Array.from(byUserId.values()).slice(0, 12);
-      console.log(
-        '[Compañero] buscando:',
-        term,
-        'resultados:',
-        merged,
-        'length:',
-        merged.length,
-        'errors:',
-        { alias: errAlias, nombre: errNombre }
-      );
       setCompaneroCargando(false);
       if (errAlias && errNombre) {
         setCompaneroOpciones([]);
@@ -907,9 +897,8 @@ export default function MiPerfil() {
       } else {
         setPerfil(null);
       }
-    } catch (err) {
+    } catch {
       // Profile is optional; silently fail if not found or network error
-      console.log('[MiPerfil] fetchPerfil error (expected if no profile yet):', err.message);
     }
     setLoading(false);
   };
@@ -938,8 +927,6 @@ export default function MiPerfil() {
           hint: error.hint,
           raw: error,
         });
-      } else {
-        console.log('[MiPerfil] reservas por user_id:', uid, 'filas:', Array.isArray(data) ? data.length : 0);
       }
       setReservas(data || []);
     } catch {
@@ -1448,7 +1435,6 @@ export default function MiPerfil() {
         },
       });
       if (authErr) {
-        console.log('ERROR SIGNUP:', authErr);
         setErrorMsg(
           mensajeErrorJugadoresPerfilDuplicado(authErr) ||
             mensajeErrorAuthSupabase(authErr.message)
@@ -1460,7 +1446,6 @@ export default function MiPerfil() {
         .trim()
         .toLowerCase();
       if (!owner) {
-        console.log('ERROR SIGNUP: respuesta sin user.email', authData);
         setErrorMsg(
           t('perfil.noEmailAfterSignup')
         );
@@ -1541,7 +1526,6 @@ export default function MiPerfil() {
         setErrorMsg(t('perfil.missingRequiredFields'));
       }
     } catch (err) {
-      console.log('ERROR SIGNUP:', err);
       setErrorMsg(
         mensajeErrorJugadoresPerfilDuplicado(err) ||
           mensajeErrorDbSupabase(err) ||
