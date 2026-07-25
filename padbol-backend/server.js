@@ -29,6 +29,7 @@ import { registerModuloClasesRoutes } from './lib/moduloClases.js';
 import { registerModuloSponsorsRoutes } from './lib/moduloSponsors.js';
 import { mountScoreboardRoutes } from './routes/scoreboard.js';
 import { registerAdminPushRoutes } from './lib/adminPushNotifications.js';
+import { registerModuloComunidadMediaRoutes } from './lib/moduloComunidadMedia.js';
 import {
   isMercadoPagoTestAccessToken,
   mercadoPagoGlobalAccessToken,
@@ -17184,6 +17185,12 @@ registerAdminPushRoutes(app, {
   authUserFromBearer,
   adminListScopeFromRequest,
   sedesPermitidasPorScope,
+});
+
+registerModuloComunidadMediaRoutes(app, {
+  supabaseAdmin,
+  authUserFromBearer,
+  multer,
 });
 
 cron.schedule('*/10 * * * *', async () => {
