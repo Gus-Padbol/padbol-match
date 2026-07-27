@@ -80,8 +80,8 @@ export default function HeroSection() {
                 scrollToHash(PUBLIC_SITE_CTA.play);
               }}
             >
-              <span>{text('publicSite.hero.ctaPlay')}</span>
-              <span className="ps-hero__play-note">{text('publicSite.nav.download')} ↓</span>
+              <span>{text('publicSite.nav.download')}</span>
+              <span className="ps-hero__play-note">iOS + Android ↓</span>
             </a>
             <div className="ps-hero__secondary-actions">
               <a

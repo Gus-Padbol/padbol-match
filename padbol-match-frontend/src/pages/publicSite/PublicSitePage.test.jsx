@@ -169,7 +169,7 @@ describe('/plataforma public site', () => {
     expect(positions[3]).toBeLessThan(positions[4]);
     const ctaLinks = Array.from(ctas.querySelectorAll('a')).map((a) => a.textContent.trim());
     expect(ctaLinks).toEqual([
-      'Quiero jugarDescargar la app ↓',
+      'Descargar la appiOS + Android ↓',
       'Conocer la plataforma ↓',
       'Quiero incorporar Padbol Match →',
     ]);

@@ -921,18 +921,25 @@ html.public-site-active #root {
   gap: 3px;
   justify-items: start;
   padding: 14px 24px 13px;
-  border-color: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.42);
   border-radius: 17px;
   background:
     linear-gradient(145deg, #f23a32 0%, #dc251f 48%, #b91017 100%);
   box-shadow:
-    0 24px 54px rgba(225, 27, 34, 0.29),
-    0 12px 22px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    inset 0 -12px 22px rgba(93, 0, 10, 0.26);
+    0 18px 38px rgba(225, 27, 34, 0.34),
+    0 9px 16px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -9px 17px rgba(93, 0, 10, 0.22);
   text-align: left;
   translate: 0 0;
   animation: ps-cta-float 5.8s ease-in-out infinite;
+}
+
+.ps-hero__play > span:first-child {
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.012em;
+  text-shadow: 0 1px 2px rgba(48, 0, 5, 0.72);
 }
 
 .ps-hero__play::before {
@@ -967,11 +974,12 @@ html.public-site-active #root {
 }
 
 .ps-hero__play-note {
-  color: rgba(4, 11, 18, 0.68);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.69rem;
-  font-weight: 700;
+  font-weight: 750;
   letter-spacing: 0.11em;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(48, 0, 5, 0.62);
   text-transform: uppercase;
 }
 
@@ -990,22 +998,24 @@ html.public-site-active #root {
   display: inline-flex;
   align-items: center;
   padding: 9px 15px;
-  border: 1px solid rgba(174, 211, 238, 0.18);
+  border: 1px solid rgba(193, 220, 240, 0.31);
   border-radius: 999px;
   background:
-    linear-gradient(145deg, rgba(30, 42, 64, 0.72), rgba(5, 10, 19, 0.58));
+    linear-gradient(145deg, rgba(36, 49, 72, 0.88), rgba(6, 12, 22, 0.8));
   -webkit-backdrop-filter: blur(13px) saturate(1.25);
   backdrop-filter: blur(13px) saturate(1.25);
   box-shadow:
-    0 15px 32px rgba(0, 0, 0, 0.44),
-    0 0 24px rgba(66, 157, 206, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -8px 16px rgba(0, 0, 0, 0.17);
-  color: rgba(242, 247, 252, 0.88);
+    0 12px 24px rgba(0, 0, 0, 0.56),
+    0 0 17px rgba(87, 176, 224, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.2);
+  color: #f7f9fc;
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 720;
   line-height: 1.35;
+  letter-spacing: 0.006em;
   text-decoration: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   translate: 0 0;
   animation: ps-cta-float 6.8s ease-in-out infinite;
   transition:
