@@ -54,6 +54,8 @@ describe('logo oficial de la web pública', () => {
     expect(rule[0]).not.toMatch(/margin:\s*-\d/);
     expect(css).toMatch(/clamp\(320px,\s*48vw,\s*430px\)/);
     expect(css).toMatch(/clamp\(420px,\s*36vw,\s*540px\)/);
+    expect(css).toMatch(/margin-bottom:\s*30px\s*!important/);
+    expect(css).toMatch(/transform:\s*translateY\(-10px\)/);
   });
 
   it('Header se dimensiona por ancho sin empujar la navegación', () => {
