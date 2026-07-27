@@ -660,18 +660,13 @@ html.public-site-active #root {
 .ps-what__brand {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .ps-what__brand > img {
-  width: 58px;
+  width: 68px;
   height: auto;
   object-fit: contain;
-}
-
-.ps-what__brand .ps-kicker {
-  margin: 0;
 }
 
 .ps-paths__list li > img {
