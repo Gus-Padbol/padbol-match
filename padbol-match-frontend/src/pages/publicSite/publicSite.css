@@ -422,18 +422,33 @@ html.public-site-active #root {
 }
 
 .ps-binary-zone__stream.ps-binary-stream {
+  top: 1.5%;
+  bottom: 1.5%;
   z-index: 0;
   pointer-events: none;
-}
-
-.ps-binary-zone__stream.ps-binary-zone__stream--start.ps-binary-stream {
-  top: 4%;
-  bottom: 46%;
-}
-
-.ps-binary-zone__stream.ps-binary-zone__stream--end.ps-binary-stream {
-  top: 46%;
-  bottom: 4%;
+  opacity: 0.9;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.82) 7%,
+    #000 19%,
+    rgba(0, 0, 0, 0.3) 35%,
+    #000 51%,
+    rgba(0, 0, 0, 0.46) 69%,
+    #000 87%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.82) 7%,
+    #000 19%,
+    rgba(0, 0, 0, 0.3) 35%,
+    #000 51%,
+    rgba(0, 0, 0, 0.46) 69%,
+    #000 87%,
+    transparent 100%
+  );
 }
 
 .ps-binary-zone__content {
@@ -447,12 +462,11 @@ html.public-site-active #root {
 .ps-binary-zone .ps-section--community {
   background:
     linear-gradient(
-      90deg,
+      270deg,
       transparent 0,
       transparent clamp(52px, 10vw, 120px),
-      rgba(5, 7, 13, 0.72) clamp(52px, 10vw, 120px)
-    ),
-    var(--ps-bg);
+      rgba(5, 7, 13, 0.96) clamp(52px, 10vw, 120px)
+    );
 }
 
 .ps-binary-zone .ps-section--players {
@@ -461,9 +475,8 @@ html.public-site-active #root {
       90deg,
       transparent 0,
       transparent clamp(52px, 10vw, 120px),
-      rgba(10, 15, 28, 0.88) clamp(52px, 10vw, 120px)
-    ),
-    var(--ps-bg-2);
+      rgba(10, 15, 28, 0.96) clamp(52px, 10vw, 120px)
+    );
 }
 
 .ps-binary-zone .ps-section--community {
@@ -472,10 +485,9 @@ html.public-site-active #root {
       270deg,
       transparent 0,
       transparent clamp(52px, 10vw, 120px),
-      rgba(10, 15, 28, 0.9) clamp(52px, 10vw, 120px)
+      rgba(10, 15, 28, 0.96) clamp(52px, 10vw, 120px)
     ),
-    radial-gradient(700px 380px at 90% 10%, rgba(225, 27, 34, 0.12), transparent 60%),
-    var(--ps-bg-2);
+    radial-gradient(700px 380px at 90% 10%, rgba(225, 27, 34, 0.12), transparent 60%);
 }
 
 .ps-binary-zone .public-site__shell,
@@ -494,12 +506,11 @@ html.public-site-active #root {
   .ps-binary-zone .ps-section--community {
     background:
       linear-gradient(
-        90deg,
+        270deg,
         transparent 0,
         transparent clamp(36px, 14vw, 72px),
-        rgba(5, 7, 13, 0.82) clamp(36px, 14vw, 72px)
-      ),
-      var(--ps-bg);
+        rgba(5, 7, 13, 0.97) clamp(36px, 14vw, 72px)
+      );
   }
 
   .ps-binary-zone .ps-section--players,
@@ -509,9 +520,8 @@ html.public-site-active #root {
         90deg,
         transparent 0,
         transparent clamp(36px, 14vw, 72px),
-        rgba(10, 15, 28, 0.9) clamp(36px, 14vw, 72px)
-      ),
-      var(--ps-bg-2);
+        rgba(10, 15, 28, 0.97) clamp(36px, 14vw, 72px)
+      );
   }
 
   .ps-binary-zone .ps-section--community {
@@ -520,9 +530,8 @@ html.public-site-active #root {
         270deg,
         transparent 0,
         transparent clamp(36px, 14vw, 72px),
-        rgba(10, 15, 28, 0.9) clamp(36px, 14vw, 72px)
-      ),
-      var(--ps-bg-2);
+        rgba(10, 15, 28, 0.97) clamp(36px, 14vw, 72px)
+      );
   }
 }
 
