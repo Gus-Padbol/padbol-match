@@ -875,16 +875,62 @@ html.public-site-active #root {
 .ps-hero__ctas {
   display: grid;
   justify-items: start;
-  gap: 15px;
+  gap: 18px;
+  perspective: 800px;
 }
 
 .ps-hero__play {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-width: min(100%, 250px);
   display: inline-grid;
   gap: 3px;
   justify-items: start;
-  padding: 13px 22px 12px;
+  padding: 14px 24px 13px;
+  border-color: rgba(255, 255, 255, 0.24);
+  border-radius: 17px;
+  background:
+    linear-gradient(145deg, #f23a32 0%, #dc251f 48%, #b91017 100%);
+  box-shadow:
+    0 24px 54px rgba(225, 27, 34, 0.29),
+    0 12px 22px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -12px 22px rgba(93, 0, 10, 0.26);
   text-align: left;
+  translate: 0 0;
+  animation: ps-cta-float 5.8s ease-in-out infinite;
+}
+
+.ps-hero__play::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 18% 0%, rgba(255, 255, 255, 0.28), transparent 46%);
+  content: '';
+  pointer-events: none;
+}
+
+.ps-hero__play:hover,
+.ps-hero__play:focus-visible {
+  border-color: rgba(255, 255, 255, 0.42);
+  background:
+    linear-gradient(145deg, #ff4940 0%, #e82b24 48%, #c4121a 100%);
+  box-shadow:
+    0 29px 62px rgba(225, 27, 34, 0.38),
+    0 15px 25px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -12px 22px rgba(93, 0, 10, 0.22);
+  transform: translateY(-3px) rotateX(1.5deg);
+}
+
+.ps-hero__play:active {
+  box-shadow:
+    0 12px 28px rgba(225, 27, 34, 0.28),
+    0 7px 14px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  transform: translateY(1px);
 }
 
 .ps-hero__play-note {
@@ -899,43 +945,82 @@ html.public-site-active #root {
 .ps-hero__secondary-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px 20px;
+  gap: 10px 12px;
   align-items: center;
 }
 
 .ps-hero__text-link {
   position: relative;
-  color: var(--ps-text-2);
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 39px;
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 15px;
+  border: 1px solid rgba(174, 211, 238, 0.18);
+  border-radius: 999px;
+  background:
+    linear-gradient(145deg, rgba(30, 42, 64, 0.72), rgba(5, 10, 19, 0.58));
+  -webkit-backdrop-filter: blur(13px) saturate(1.25);
+  backdrop-filter: blur(13px) saturate(1.25);
+  box-shadow:
+    0 15px 32px rgba(0, 0, 0, 0.44),
+    0 0 24px rgba(66, 157, 206, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.17);
+  color: rgba(242, 247, 252, 0.88);
   font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.35;
   text-decoration: none;
-  transition: color 160ms var(--ps-ease), transform 160ms var(--ps-ease);
+  translate: 0 0;
+  animation: ps-cta-float 6.8s ease-in-out infinite;
+  transition:
+    color 180ms var(--ps-ease),
+    border-color 180ms var(--ps-ease),
+    background 180ms var(--ps-ease),
+    transform 180ms var(--ps-ease),
+    box-shadow 180ms var(--ps-ease);
 }
 
-.ps-hero__text-link::after {
+.ps-hero__text-link:nth-child(2) {
+  animation-delay: -3.2s;
+}
+
+.ps-hero__text-link::before {
   position: absolute;
-  right: 0;
-  bottom: -4px;
-  left: 0;
-  height: 1px;
-  background: currentColor;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(90% 110% at 18% 0%, rgba(255, 255, 255, 0.13), transparent 55%);
   content: '';
-  opacity: 0.28;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 160ms var(--ps-ease);
+  pointer-events: none;
 }
 
 .ps-hero__text-link:hover,
 .ps-hero__text-link:focus-visible {
-  color: var(--ps-heading);
-  transform: translateY(-1px);
+  border-color: rgba(173, 220, 249, 0.34);
+  background:
+    linear-gradient(145deg, rgba(42, 58, 85, 0.8), rgba(8, 15, 27, 0.66));
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 28px rgba(83, 184, 237, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.21);
+  color: #fff;
+  transform: translateY(-3px);
 }
 
-.ps-hero__text-link:hover::after,
-.ps-hero__text-link:focus-visible::after {
-  transform: scaleX(1);
+.ps-hero__text-link:active {
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transform: translateY(1px);
+}
+
+@keyframes ps-cta-float {
+  0%,
+  100% { translate: 0 0; }
+  50% { translate: 0 -4px; }
 }
 
 .ps-hero__globe-wrap {
