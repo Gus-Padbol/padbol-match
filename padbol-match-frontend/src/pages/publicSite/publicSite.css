@@ -1956,6 +1956,8 @@ html.public-site-active #root {
 @media (min-width: 1024px) {
   .ps-hero__logo {
     width: clamp(420px, 36vw, 540px) !important;
+    margin-bottom: 30px !important;
+    transform: translateY(-10px);
   }
 
   .ps-hero__claim {
