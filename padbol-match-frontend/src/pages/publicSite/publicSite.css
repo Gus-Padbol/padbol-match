@@ -1302,7 +1302,7 @@ html.public-site-active #root {
 .ps-exp-main { min-width: 0; }
 
 .ps-exp-intro {
-  margin-bottom: 22px;
+  margin-bottom: clamp(30px, 3vw, 38px);
   max-width: 42ch;
 }
 
