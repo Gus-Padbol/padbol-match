@@ -57,7 +57,6 @@ export function WhatIsSection() {
     <SectionShell id={id} className="ps-section--what" titleId="ps-what-title">
       <div className="ps-what__brand" aria-hidden="true">
         <img src={`${ASSET_ROOT}/match.svg`} alt="" />
-        <p className="ps-kicker">Padbol Match</p>
       </div>
       <h2 id="ps-what-title">{text('publicSite.whatIs.title')}</h2>
       <p className="ps-lead">{text('publicSite.whatIs.text')}</p>

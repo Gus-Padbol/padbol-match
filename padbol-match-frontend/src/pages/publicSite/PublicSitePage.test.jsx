@@ -124,6 +124,13 @@ describe('/plataforma public site', () => {
     expect(container.querySelector('canvas.ps-globe__canvas')).toBeTruthy();
   });
 
+  it('evita repetir Padbol Match junto al isólogo de la sección Qué es', () => {
+    const { container } = renderPage();
+    const brand = container.querySelector('.ps-what__brand');
+    expect(brand?.querySelector('img')).toBeTruthy();
+    expect(brand).not.toHaveTextContent('Padbol Match');
+  });
+
   it('Hero prioriza la marca: logo → claim → subtítulo → CTAs → globo', () => {
     const { container } = renderPage();
     const hero = container.querySelector('.ps-hero');
