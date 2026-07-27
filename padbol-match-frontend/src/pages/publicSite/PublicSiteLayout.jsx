@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import PadbolBrandLogo from '../../components/PadbolBrandLogo';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import CookieConsentBanner from '../../components/CookieConsentBanner';
 import { ES_FALLBACKS, useSafeTranslation as useTranslation } from '../../i18n/tSafe';
@@ -102,8 +101,8 @@ export default function PublicSiteLayout({ children }) {
             className="public-site__brand"
             aria-label={text('publicSite.brandAlt')}
           >
-            <PadbolBrandLogo
-              variant="on-dark-tight"
+            <img
+              src="/media/public-site/jero/padbol-match-logo-white.svg"
               className="public-site__brand-logo"
               alt={text('publicSite.brandAlt')}
             />

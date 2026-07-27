@@ -9,8 +9,8 @@ export const PUBLIC_SITE_PATH = '/plataforma';
 export const PUBLIC_SITE_CTA = {
   /** Scroll interno a la sección “Qué es”. */
   exploreHash: '#que-es',
-  /** Entrada a jugar / explorar (guest-friendly). */
-  play: '/hub',
+  /** Descarga de la app. Mientras no haya stores, baja al bloque "Próximamente". */
+  play: '#descargar',
   /** Incorporar sede: página comercial existente. */
   venue: '/contacto',
   /** Acceso a cuenta. */

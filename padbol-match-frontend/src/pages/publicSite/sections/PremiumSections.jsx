@@ -1,11 +1,45 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PadbolBrandLogo from '../../../components/PadbolBrandLogo';
 import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { PUBLIC_SITE_CTA } from '../../../constants/publicSiteLinks';
 import { usePublicSiteText } from '../publicSiteI18n';
 
 export { usePublicSiteText };
+
+const ASSET_ROOT = '/media/public-site/jero';
+
+const PLAYER_ICONS = {
+  find: 'search.svg',
+  create: 'add.svg',
+  join: 'ball.svg',
+  book: 'calendar.svg',
+  compete: 'trophy.svg',
+  evolve: 'progress.svg',
+  community: 'community.svg',
+};
+
+const VENUE_MEDIA = {
+  occupy: 'real-occupancy.jpg',
+  activate: 'active-players.jpg',
+  scoreboard: 'active-scoreboard.jpg',
+  continuity: 'continuity.jpg',
+};
+
+const CONTINUITY_ICONS = {
+  openMatches: 'community-small.svg',
+  tournaments: 'trophy.svg',
+  results: 'results.svg',
+  ranking: 'ranking.svg',
+  padcoins: 'padcoins.svg',
+  memberships: 'memberships.svg',
+  community: 'community-small.svg',
+};
+
+const EXPANSION_ICONS = {
+  sponsor: 'sponsor.svg',
+  ads: 'advertising.svg',
+  eshop: 'eshop.svg',
+};
 
 export function SectionShell({ id, className = '', titleId, children }) {
   return (
@@ -21,7 +55,10 @@ export function WhatIsSection() {
   const id = PUBLIC_SITE_SECTIONS.whatIs.id;
   return (
     <SectionShell id={id} className="ps-section--what" titleId="ps-what-title">
-      <p className="ps-kicker">Padbol Match</p>
+      <div className="ps-what__brand" aria-hidden="true">
+        <img src={`${ASSET_ROOT}/match.svg`} alt="" />
+        <p className="ps-kicker">Padbol Match</p>
+      </div>
       <h2 id="ps-what-title">{text('publicSite.whatIs.title')}</h2>
       <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
     </SectionShell>
@@ -39,8 +76,11 @@ export function PlayerPathSection() {
       <ul className="ps-paths__list">
         {config.items.map(({ key }) => (
           <li key={key}>
-            <strong>{text(`publicSite.playerPath.items.${key}.title`)}</strong>
-            <span>{text(`publicSite.playerPath.items.${key}.text`)}</span>
+            <img src={`${ASSET_ROOT}/${PLAYER_ICONS[key]}`} alt="" aria-hidden="true" />
+            <div>
+              <strong>{text(`publicSite.playerPath.items.${key}.title`)}</strong>
+              <span>{text(`publicSite.playerPath.items.${key}.text`)}</span>
+            </div>
           </li>
         ))}
       </ul>
@@ -118,11 +158,19 @@ export function VenuePathSection() {
     <SectionShell id={config.id} className="ps-section--paths ps-section--venues" titleId="ps-venues-title">
       <h2 id="ps-venues-title">{text('publicSite.venuePath.title')}</h2>
       <p className="ps-lead">{text('publicSite.venuePath.text')}</p>
-      <ul className="ps-paths__list">
+      <ul className="ps-venue-cards">
         {config.items.map(({ key }) => (
           <li key={key}>
-            <strong>{text(`publicSite.venuePath.items.${key}.title`)}</strong>
-            <span>{text(`publicSite.venuePath.items.${key}.text`)}</span>
+            <img
+              src={`${ASSET_ROOT}/${VENUE_MEDIA[key]}`}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <div>
+              <strong>{text(`publicSite.venuePath.items.${key}.title`)}</strong>
+              <span>{text(`publicSite.venuePath.items.${key}.text`)}</span>
+            </div>
           </li>
         ))}
       </ul>
@@ -141,8 +189,11 @@ export function ContinuitySection() {
       <ul className="ps-chip-row">
         {config.items.map(({ key }) => (
           <li key={key} className="ps-chip">
-            <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
-            <span>{text(`publicSite.continuity.items.${key}.text`)}</span>
+            <img src={`${ASSET_ROOT}/${CONTINUITY_ICONS[key]}`} alt="" aria-hidden="true" />
+            <div>
+              <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
+              <span>{text(`publicSite.continuity.items.${key}.text`)}</span>
+            </div>
           </li>
         ))}
       </ul>
@@ -197,6 +248,9 @@ export function SmartScoreboardSection() {
       className="ps-section--scoreboard"
       titleId="ps-smart-scoreboard-title"
     >
+      <span className="ps-coming-soon">
+        {text('publicSite.smartScoreboard.comingSoon')}
+      </span>
       <div className="ps-scoreboard__grid">
         <div className="ps-scoreboard__copy">
           <h2 id="ps-smart-scoreboard-title">{text('publicSite.smartScoreboard.title')}</h2>
@@ -232,8 +286,11 @@ export function ExpansionSection() {
       <div className="ps-expansion__grid">
         {config.items.map(({ key }) => (
           <article key={key} className="ps-expansion__card">
-            <h3>{text(`publicSite.expansion.items.${key}.title`)}</h3>
-            <p>{text(`publicSite.expansion.items.${key}.text`)}</p>
+            <img src={`${ASSET_ROOT}/${EXPANSION_ICONS[key]}`} alt="" aria-hidden="true" />
+            <div>
+              <h3>{text(`publicSite.expansion.items.${key}.title`)}</h3>
+              <p>{text(`publicSite.expansion.items.${key}.text`)}</p>
+            </div>
           </article>
         ))}
       </div>
@@ -254,7 +311,12 @@ export function AboutSection() {
           <p className="ps-lead">{text('publicSite.about.text')}</p>
         </div>
         <div className="ps-about__visual" role="img" aria-label={text('publicSite.about.visualAlt')}>
-          <span className="ps-about__placeholder" />
+          <img
+            src={`${ASSET_ROOT}/real-occupancy.jpg`}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
         </div>
       </div>
     </SectionShell>
@@ -267,7 +329,11 @@ export function DownloadSection() {
   const config = PUBLIC_SITE_SECTIONS.download;
   return (
     <SectionShell id={config.id} className="ps-section--download" titleId="ps-download-title">
-      <PadbolBrandLogo variant="on-dark-tight" className="ps-download__logo" alt={text('publicSite.brandAlt')} />
+      <img
+        src={`${ASSET_ROOT}/padbol-match-logo-white.svg`}
+        className="ps-download__logo"
+        alt={text('publicSite.brandAlt')}
+      />
       <h2 id="ps-download-title">{text('publicSite.download.title')}</h2>
       <p className="ps-lead">{text('publicSite.download.text')}</p>
       <div className="ps-download__stores">

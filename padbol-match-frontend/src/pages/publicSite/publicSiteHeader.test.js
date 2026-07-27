@@ -31,7 +31,7 @@ describe('header fijo y anchors de la web pública', () => {
   });
 
   it('conserva logo, navegación, idioma e Ingresar en el layout', () => {
-    expect(layout).toMatch(/PadbolBrandLogo/);
+    expect(layout).toMatch(/padbol-match-logo-white\.svg/);
     expect(layout).toMatch(/LanguageSwitcher/);
     expect(layout).toMatch(/PUBLIC_SITE_NAV_ITEMS|public-site__desktop-nav/);
     expect(layout).toMatch(/Ingresar|ctaLogin|PUBLIC_SITE_CTA/);
