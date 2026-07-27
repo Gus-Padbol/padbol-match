@@ -3,7 +3,8 @@ import BinaryDataStream from '../globe/BinaryDataStream';
 
 /**
  * Zona de contenido (Qué es → Jugadores → Comunidad) con corriente binaria
- * vertical a la izquierda. El stream hace scroll con la sección (no fixed).
+ * vertical alternada: comienza a la izquierda y termina a la derecha, antes
+ * de que empiecen las secciones fotográficas. Hace scroll con la zona.
  */
 export default function BinaryDataStreamZone({ children }) {
   const [reduceMotion, setReduceMotion] = useState(() => {
@@ -46,12 +47,23 @@ export default function BinaryDataStreamZone({ children }) {
       data-binary-zone-end="community"
     >
       <BinaryDataStream
-        className="ps-binary-zone__stream"
+        className="ps-binary-zone__stream ps-binary-zone__stream--start"
         reducedMotion={reduceMotion}
         compact={compact}
         tablet={tablet}
         position="left"
         direction="ttb"
+        color="cyan"
+      />
+      <BinaryDataStream
+        className="ps-binary-zone__stream ps-binary-zone__stream--end"
+        reducedMotion={reduceMotion}
+        compact={compact}
+        tablet={tablet}
+        position="right"
+        direction="ttb"
+        speedScale={1.12}
+        opacityScale={0.82}
         color="cyan"
       />
       <div className="ps-binary-zone__content">{children}</div>
