@@ -38,9 +38,9 @@ describe('logo oficial de la web pública', () => {
     expect(css).not.toMatch(/is-emphasize/);
   });
 
-  it('Hero y Header usan la variante tight', () => {
-    expect(hero).toMatch(/variant=["']on-dark-tight["']/);
-    expect(layout).toMatch(/variant=["']on-dark-tight["']/);
+  it('Hero y Header usan el SVG entregado para la propuesta editorial', () => {
+    expect(hero).toMatch(/\/media\/public-site\/jero\/padbol-match-logo-white\.svg/);
+    expect(layout).toMatch(/\/media\/public-site\/jero\/padbol-match-logo-white\.svg/);
     expect(hero).toMatch(/ps-hero__logo/);
     expect(hero).not.toMatch(/public-site-hero__brand/);
   });

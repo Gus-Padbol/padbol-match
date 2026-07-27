@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import PadbolBrandLogo from '../../../components/PadbolBrandLogo';
 import { useSafeTranslation } from '../../../i18n/tSafe';
 import { PUBLIC_SITE_CTA } from '../../../constants/publicSiteLinks';
 import PremiumGlobalGlobe from '../globe/PremiumGlobalGlobe';
@@ -63,8 +62,8 @@ export default function HeroSection() {
 
       <div className="public-site__shell ps-hero__layout">
         <div className="ps-hero__content">
-          <PadbolBrandLogo
-            variant="on-dark-tight"
+          <img
+            src="/media/public-site/jero/padbol-match-logo-white.svg"
             className="ps-hero__logo"
             alt={text('publicSite.brandAlt')}
           />
