@@ -81,7 +81,7 @@ describe('Hero con globo premium', () => {
     );
     const ctas = Array.from(hero.querySelectorAll('.ps-hero__ctas a')).map((a) => a.textContent);
     expect(ctas).toEqual([
-      'Quiero jugarDescargar la app ↓',
+      'Descargar la appiOS + Android ↓',
       'Conocer la plataforma ↓',
       'Quiero incorporar Padbol Match →',
     ]);
