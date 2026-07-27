@@ -73,21 +73,31 @@ export default function HeroSection() {
           <p className="ps-hero__lead">{text('publicSite.hero.lead')}</p>
           <div className="ps-hero__ctas">
             <a
-              href={PUBLIC_SITE_CTA.exploreHash}
-              className="ps-btn ps-btn--primary"
+              href={PUBLIC_SITE_CTA.play}
+              className="ps-btn ps-btn--primary ps-hero__play"
               onClick={(e) => {
                 e.preventDefault();
-                scrollToHash(PUBLIC_SITE_CTA.exploreHash);
+                scrollToHash(PUBLIC_SITE_CTA.play);
               }}
             >
-              {text('publicSite.hero.ctaExplore')}
+              <span>{text('publicSite.hero.ctaPlay')}</span>
+              <span className="ps-hero__play-note">{text('publicSite.nav.download')} ↓</span>
             </a>
-            <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--secondary">
-              {text('publicSite.hero.ctaVenue')}
-            </Link>
-            <Link to={PUBLIC_SITE_CTA.play} className="ps-btn ps-btn--ghost">
-              {text('publicSite.hero.ctaPlay')}
-            </Link>
+            <div className="ps-hero__secondary-actions">
+              <a
+                href={PUBLIC_SITE_CTA.exploreHash}
+                className="ps-hero__text-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToHash(PUBLIC_SITE_CTA.exploreHash);
+                }}
+              >
+                {text('publicSite.hero.ctaExplore')} <span aria-hidden="true">↓</span>
+              </a>
+              <Link to={PUBLIC_SITE_CTA.venue} className="ps-hero__text-link">
+                {text('publicSite.hero.ctaVenue')} <span aria-hidden="true">→</span>
+              </Link>
+            </div>
           </div>
         </div>
 

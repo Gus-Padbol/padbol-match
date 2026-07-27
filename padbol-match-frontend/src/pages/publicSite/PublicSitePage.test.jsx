@@ -158,9 +158,9 @@ describe('/plataforma public site', () => {
     expect(positions[3]).toBeLessThan(positions[4]);
     const ctaLinks = Array.from(ctas.querySelectorAll('a')).map((a) => a.textContent.trim());
     expect(ctaLinks).toEqual([
-      'Conocer la plataforma',
-      'Quiero incorporar Padbol Match',
-      'Quiero jugar',
+      'Quiero jugarDescargar la app ↓',
+      'Conocer la plataforma ↓',
+      'Quiero incorporar Padbol Match →',
     ]);
   });
 
@@ -190,7 +190,7 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Para sedes' })[0]).toHaveAttribute('href', '#sedes');
     expect(screen.getAllByRole('link', { name: 'Descargar la app' })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.getByRole('link', { name: 'Conocer la plataforma' })).toHaveAttribute('href', '#que-es');
-    expect(screen.getAllByRole('link', { name: 'Quiero jugar' })[0]).toHaveAttribute('href', '/hub');
+    expect(screen.getAllByRole('link', { name: /Quiero jugar/i })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.getAllByRole('link', { name: 'Quiero incorporar Padbol Match' })[0])
       .toHaveAttribute('href', '/contacto');
     expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');

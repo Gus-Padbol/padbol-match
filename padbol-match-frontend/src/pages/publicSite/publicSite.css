@@ -878,10 +878,69 @@ html.public-site-active #root {
 }
 
 .ps-hero__ctas {
+  display: grid;
+  justify-items: start;
+  gap: 15px;
+}
+
+.ps-hero__play {
+  min-width: min(100%, 250px);
+  display: inline-grid;
+  gap: 3px;
+  justify-items: start;
+  padding: 13px 22px 12px;
+  text-align: left;
+}
+
+.ps-hero__play-note {
+  color: rgba(4, 11, 18, 0.68);
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.ps-hero__secondary-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 9px 20px;
   align-items: center;
+}
+
+.ps-hero__text-link {
+  position: relative;
+  color: var(--ps-text-2);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: color 160ms var(--ps-ease), transform 160ms var(--ps-ease);
+}
+
+.ps-hero__text-link::after {
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: '';
+  opacity: 0.28;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 160ms var(--ps-ease);
+}
+
+.ps-hero__text-link:hover,
+.ps-hero__text-link:focus-visible {
+  color: var(--ps-heading);
+  transform: translateY(-1px);
+}
+
+.ps-hero__text-link:hover::after,
+.ps-hero__text-link:focus-visible::after {
+  transform: scaleX(1);
 }
 
 .ps-hero__globe-wrap {
@@ -1715,9 +1774,12 @@ html.public-site-active #root {
 
   .ps-hero__claim { max-width: 14ch; }
 
-  .ps-hero__ctas .ps-btn { width: 100%; }
+  .ps-hero__play { width: 100%; }
 
-  .ps-hero__ctas .ps-btn--ghost { width: auto; }
+  .ps-hero__secondary-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 
   .ps-hero__layout {
     grid-template-columns: minmax(0, 1fr);
