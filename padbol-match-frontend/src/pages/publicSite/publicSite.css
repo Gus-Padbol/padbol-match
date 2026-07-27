@@ -649,6 +649,139 @@ html.public-site-active #root {
   }
 }
 
+/* ═══ Propuesta editorial de Jero · recursos originales ═══ */
+
+.ps-paths__list li {
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 16px;
+}
+
+.ps-what__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.ps-what__brand > img {
+  width: 58px;
+  height: auto;
+  object-fit: contain;
+}
+
+.ps-what__brand .ps-kicker {
+  margin: 0;
+}
+
+.ps-paths__list li > img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  opacity: 0.96;
+}
+
+.ps-paths__list li > div,
+.ps-chip > div,
+.ps-expansion__card > div {
+  display: grid;
+  gap: 6px;
+}
+
+.ps-venue-cards {
+  display: grid;
+  gap: 22px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-venue-cards li {
+  overflow: hidden;
+  border: 1px solid var(--ps-border);
+  border-radius: var(--ps-radius);
+  background: rgba(14, 20, 36, 0.72);
+}
+
+.ps-venue-cards li > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 297 / 185;
+  object-fit: cover;
+}
+
+.ps-venue-cards li > div {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+}
+
+.ps-venue-cards strong {
+  font-family: var(--ps-font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ps-venue-cards span {
+  color: var(--ps-text-2);
+  line-height: 1.55;
+}
+
+.ps-chip {
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 12px;
+}
+
+.ps-chip > img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.ps-coming-soon {
+  display: inline-flex;
+  margin: 0 0 18px;
+  padding: 7px 12px;
+  border: 1px solid rgba(225, 27, 34, 0.62);
+  border-radius: 999px;
+  background: rgba(225, 27, 34, 0.12);
+  color: #fda4a8;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ps-expansion__card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.ps-expansion__card > img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.ps-about__visual > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  object-fit: cover;
+  image-rendering: auto;
+}
+
+@media (min-width: 720px) {
+  .ps-venue-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 899px) {
   .ps-binary-stream.is-left {
     left: 4px;

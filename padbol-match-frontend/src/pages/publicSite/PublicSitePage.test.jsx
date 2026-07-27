@@ -199,7 +199,7 @@ describe('/plataforma public site', () => {
     expect(screen.getByText('App Store').closest('a')).toBeNull();
     expect(screen.getByText('Google Play').closest('a')).toBeNull();
     expect(screen.getAllByText('Aún no disponible en tiendas').length).toBeGreaterThanOrEqual(2);
-    expect(document.body.textContent).not.toMatch(/próximamente/i);
+    expect(document.body.textContent).toMatch(/próximamente/i);
   });
 
   it('explica comunidad, partidos abiertos y marcador inteligente', () => {

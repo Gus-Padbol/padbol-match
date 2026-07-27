@@ -2053,6 +2053,7 @@
     },
     "smartScoreboard": {
       "title": "Marcador inteligente: el partido en vivo.",
+      "comingSoon": "Demnächst",
       "text": "El resultado se registra mientras se juega y queda conectado con el historial, la competencia y la actividad de la sede. Sets, parciales y correcciones quedan al servicio del partido y de lo que viene después.",
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
