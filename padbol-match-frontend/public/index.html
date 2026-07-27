@@ -7,6 +7,13 @@
     <link rel="alternate icon" type="image/x-icon" href="%PUBLIC_URL%/favicon.ico?v=20260723" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0f172a" />
+    <script>
+      if (new URLSearchParams(window.location.search).get('password_reset') === '1') {
+        window.location.replace(
+          'https://padbol-match-frontend.vercel.app/?password_reset=1' + window.location.hash
+        );
+      }
+    </script>
     <script src="%PUBLIC_URL%/theme-init.js"></script>
     <meta name="application-name" content="Padbol Match" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
