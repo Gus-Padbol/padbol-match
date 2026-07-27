@@ -11,7 +11,7 @@ describe('BinaryDataStreamZone', () => {
     });
   });
 
-  it('envuelve contenido con corriente izquierda detrás', () => {
+  it('envuelve contenido con corrientes alternadas detrás', () => {
     const { container } = render(
       <BinaryDataStreamZone>
         <section id="ps-what">Qué es</section>
@@ -20,14 +20,18 @@ describe('BinaryDataStreamZone', () => {
       </BinaryDataStreamZone>,
     );
     const zone = container.querySelector('[data-binary-zone="true"]');
-    const stream = container.querySelector('[data-binary-stream="true"]');
+    const streams = container.querySelectorAll('[data-binary-stream="true"]');
+    const [leftStream, rightStream] = streams;
     expect(zone).toBeTruthy();
-    expect(stream).toBeTruthy();
-    expect(zone.contains(stream)).toBe(true);
-    expect(stream.className).toMatch(/is-left/);
-    expect(stream).toHaveAttribute('data-position', 'left');
-    expect(stream).toHaveAttribute('data-orientation', 'vertical');
-    expect(Number(stream.getAttribute('data-band-count'))).toBe(4);
+    expect(streams).toHaveLength(2);
+    expect(zone.contains(leftStream)).toBe(true);
+    expect(leftStream.className).toMatch(/is-left/);
+    expect(leftStream).toHaveAttribute('data-position', 'left');
+    expect(rightStream.className).toMatch(/is-right/);
+    expect(rightStream).toHaveAttribute('data-position', 'right');
+    expect(leftStream).toHaveAttribute('data-orientation', 'vertical');
+    expect(Number(leftStream.getAttribute('data-band-count'))).toBe(6);
+    expect(Number(rightStream.getAttribute('data-band-count'))).toBe(6);
     expect(container.querySelector('#ps-what')).toBeTruthy();
     expect(container.querySelector('#ps-community')).toBeTruthy();
   });
@@ -43,9 +47,8 @@ describe('BinaryDataStreamZone', () => {
         <div>contenido</div>
       </BinaryDataStreamZone>,
     );
-    expect(container.querySelector('[data-binary-stream="true"]')).toHaveAttribute(
-      'data-motion',
-      'static',
-    );
+    container.querySelectorAll('[data-binary-stream="true"]').forEach((stream) => {
+      expect(stream).toHaveAttribute('data-motion', 'static');
+    });
   });
 });

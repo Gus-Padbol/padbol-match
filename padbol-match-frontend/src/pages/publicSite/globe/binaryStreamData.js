@@ -34,7 +34,7 @@ export const BINARY_STREAM_TYPOGRAPHY = {
     mobile: '0.06em',
   },
   fontPx: {
-    desktop: [16, 17, 15, 18],
+    desktop: [16, 17, 15, 18, 14, 16],
     tablet: [14, 15, 13, 14],
     mobile: [11, 12, 11],
   },
@@ -57,7 +57,7 @@ export const BINARY_STREAM_TYPOGRAPHY = {
 };
 
 /**
- * Exactamente 4 líneas desktop — grupo compacto a la izquierda, caída vertical.
+ * Seis líneas desktop — grupo tenue, ancho y vertical.
  * rotateDeg: 0°; duraciones lentas; opacidades de fondo (≤0.22).
  */
 export const BINARY_STREAM_BANDS_DESKTOP = [
@@ -108,6 +108,30 @@ export const BINARY_STREAM_BANDS_DESKTOP = [
     fontPx: 18,
     opacity: 0.14,
     colorTone: 'secondary',
+  },
+  {
+    id: 'bin-v5',
+    seed: 55117,
+    length: 152,
+    durationSec: 45,
+    delaySec: -10,
+    rotateDeg: 0,
+    depth: 'line-5',
+    fontPx: 14,
+    opacity: 0.09,
+    colorTone: 'soft',
+  },
+  {
+    id: 'bin-v6',
+    seed: 66139,
+    length: 168,
+    durationSec: 52,
+    delaySec: -5.5,
+    rotateDeg: 0,
+    depth: 'line-6',
+    fontPx: 16,
+    opacity: 0.11,
+    colorTone: 'primary',
   },
 ];
 
@@ -181,7 +205,7 @@ export function selectBinaryBands({ compact = false, tablet = false, reducedMoti
       fonts,
     );
   }
-  /* reduced motion: mismas 4 líneas, estáticas vía CSS/animación pausada */
+  /* reduced motion: mismas 6 líneas, estáticas vía CSS/animación pausada */
   void reducedMotion;
   return BINARY_STREAM_BANDS_DESKTOP;
 }

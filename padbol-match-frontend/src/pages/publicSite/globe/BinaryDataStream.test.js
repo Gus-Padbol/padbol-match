@@ -21,8 +21,8 @@ describe('binaryStreamData', () => {
     expect(isBinaryOnly(a)).toBe(true);
   });
 
-  it('define exactamente 4 líneas verticales a 0deg en desktop', () => {
-    expect(BINARY_STREAM_BANDS_DESKTOP.length).toBe(4);
+  it('define exactamente 6 líneas verticales a 0deg en desktop', () => {
+    expect(BINARY_STREAM_BANDS_DESKTOP.length).toBe(6);
     expect(BINARY_STREAM_TYPOGRAPHY.orientation).toBe('vertical');
     expect(BINARY_STREAM_TYPOGRAPHY.rotateDeg).toBe(0);
     expect(BINARY_STREAM_TYPOGRAPHY.position).toBe('left');
@@ -65,7 +65,7 @@ describe('binaryStreamData', () => {
   });
 
   it('reduce bandas en tablet/móvil con opacidades bajas y más lentas', () => {
-    expect(selectBinaryBands({}).length).toBe(4);
+    expect(selectBinaryBands({}).length).toBe(6);
     const tablet = selectBinaryBands({ tablet: true });
     expect(tablet.length).toBe(4);
     tablet.forEach((b, i) => {
@@ -87,7 +87,7 @@ describe('BinaryDataStream', () => {
     const { container } = render(<BinaryDataStream />);
     const root = container.querySelector('[data-binary-stream="true"]');
     expect(root).toBeTruthy();
-    expect(Number(root.getAttribute('data-band-count'))).toBe(4);
+    expect(Number(root.getAttribute('data-band-count'))).toBe(6);
     expect(root.getAttribute('data-position')).toBe('left');
     expect(root.getAttribute('data-position')).not.toBe('right');
     expect(root.className).toMatch(/is-left/);
