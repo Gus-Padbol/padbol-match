@@ -33,6 +33,7 @@ import {
 } from '../utils/authIdentidad';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -151,6 +152,7 @@ export default function AccesoCuenta() {
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [accessLinkBusy, setAccessLinkBusy] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegPassword2, setShowRegPassword2] = useState(false);
@@ -289,7 +291,7 @@ export default function AccesoCuenta() {
     e.preventDefault();
     setErrorMsg('');
     setInfoMsg(peekReservaLoginGateMessage() ? t('auth.reservaLoginGate') : '');
-    if (busy) return;
+    if (busy || accessLinkBusy) return;
     const em = email.trim().toLowerCase();
     if (!em) {
       setErrorMsg(t('auth.enterEmail'));
@@ -318,6 +320,35 @@ export default function AccesoCuenta() {
       await afterLogin(data?.session ?? null);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleEnviarEnlaceAcceso = async () => {
+    setErrorMsg('');
+    setInfoMsg('');
+    if (busy || accessLinkBusy) return;
+    const em = email.trim().toLowerCase();
+    if (!em) {
+      setErrorMsg(t('auth.enterEmail'));
+      return;
+    }
+    setAccessLinkBusy(true);
+    try {
+      const destination = resolvePostLoginNavigatePath(location.search);
+      const { error } = await requestPasswordlessAccess({
+        auth: supabase.auth,
+        email: em,
+        origin: window.location.origin,
+        destination,
+      });
+      if (error) {
+        console.error('Error acceso por enlace:', error.message);
+        setErrorMsg(t('auth.accessLinkFailed'));
+        return;
+      }
+      setInfoMsg(t('auth.accessLinkSent'));
+    } finally {
+      setAccessLinkBusy(false);
     }
   };
 
@@ -657,7 +688,7 @@ export default function AccesoCuenta() {
             </div>
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || accessLinkBusy}
               style={{
                 width: '100%',
                 padding: '16px 12px',
@@ -667,11 +698,31 @@ export default function AccesoCuenta() {
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
-                cursor: busy ? 'default' : 'pointer',
-                opacity: busy ? 0.7 : 1,
+                cursor: busy || accessLinkBusy ? 'default' : 'pointer',
+                opacity: busy || accessLinkBusy ? 0.7 : 1,
               }}
             >
               {busy ? t('auth.signingIn') : t('auth.signIn')}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleEnviarEnlaceAcceso()}
+              disabled={busy || accessLinkBusy}
+              style={{
+                marginTop: '12px',
+                width: '100%',
+                padding: '13px 12px',
+                borderRadius: '10px',
+                border: '1px solid var(--accent)',
+                background: 'transparent',
+                color: 'var(--accent)',
+                fontWeight: 700,
+                fontSize: '15px',
+                cursor: busy || accessLinkBusy ? 'default' : 'pointer',
+                opacity: busy || accessLinkBusy ? 0.7 : 1,
+              }}
+            >
+              {accessLinkBusy ? t('auth.sendingAccessLink') : t('auth.sendAccessLink')}
             </button>
             <button
               type="button"
