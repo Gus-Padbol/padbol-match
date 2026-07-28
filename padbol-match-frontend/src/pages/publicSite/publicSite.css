@@ -1992,25 +1992,35 @@ html.public-site-active #root {
   }
 
   .ps-hero__layout {
-    /* El hero tiene un único eje de lectura: marca, mensaje y acciones.
-       El globo queda como la pieza siguiente, no desplaza el texto a la
-       columna izquierda en pantallas grandes. */
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-    gap: clamp(30px, 4vw, 54px);
+    /* En escritorio la composición vuelve a ser editorial: relato a la
+       izquierda y globo como contrapeso visual a la derecha. */
+    grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
+    justify-items: stretch;
+    gap: clamp(24px, 4vw, 56px);
+    align-items: center;
   }
 
   .ps-hero__content {
     width: min(100%, 560px);
-    margin-inline: auto;
+    margin-inline: 0;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .ps-hero__ctas {
+    justify-items: start;
+  }
+
+  .ps-hero__secondary-actions {
+    justify-content: flex-start;
   }
 
   .ps-hero__globe-wrap,
   .ps-globe {
     min-height: 520px;
     height: min(56vh, 600px);
-    max-width: min(680px, 100%);
-    margin-inline: auto;
+    max-width: none;
+    margin: 0;
   }
 
   .public-site__desktop-nav { display: block; }
