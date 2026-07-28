@@ -727,7 +727,7 @@ html.public-site-active #root {
 
 .ps-venue-cards {
   display: grid;
-  gap: 22px;
+  gap: 20px;
   margin: 32px 0 0;
   padding: 0;
   list-style: none;
@@ -736,14 +736,15 @@ html.public-site-active #root {
 .ps-venue-cards li {
   overflow: hidden;
   border: 1px solid var(--ps-border);
-  border-radius: var(--ps-radius);
+  border-radius: 24px;
   background: rgba(14, 20, 36, 0.72);
 }
 
 .ps-venue-cards li > img {
   display: block;
   width: 100%;
-  aspect-ratio: 297 / 185;
+  /* Más aire para leer la propuesta: la foto acompaña, no domina la tarjeta. */
+  aspect-ratio: 2 / 1;
   object-fit: cover;
 }
 
