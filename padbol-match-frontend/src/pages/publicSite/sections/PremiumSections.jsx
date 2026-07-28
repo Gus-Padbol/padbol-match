@@ -241,8 +241,9 @@ export function VenuePathSection() {
       <p className="ps-lead">{text('publicSite.venuePath.text')}</p>
       <ul className="ps-venue-cards">
         {config.items.map(({ key }) => (
-          <li key={key}>
+          <li key={key} className={`ps-venue-card ps-venue-card--${key}`}>
             <img
+              className="ps-venue-card__image"
               src={`${ASSET_ROOT}/${VENUE_MEDIA[key]}`}
               alt={`${VENUE_SPORTS[key]}: ${text(`publicSite.venuePath.items.${key}.title`)}`}
               loading="lazy"

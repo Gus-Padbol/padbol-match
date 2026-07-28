@@ -751,7 +751,7 @@ html.public-site-active #root {
   display: grid;
   grid-template-columns: minmax(132px, 42%) minmax(0, 1fr);
   align-items: stretch;
-  min-height: 132px;
+  min-height: 176px;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 28px;
@@ -813,7 +813,7 @@ html.public-site-active #root {
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 132px;
+  min-height: 176px;
   padding: 8px;
   box-sizing: border-box;
   background: rgba(5, 9, 19, 0.55);
@@ -826,7 +826,7 @@ html.public-site-active #root {
   z-index: 1;
   display: grid;
   align-content: center;
-  gap: 7px;
+  gap: 8px;
   padding: 18px 20px;
 }
 
@@ -854,6 +854,13 @@ html.public-site-active #root {
 .ps-venue-cards span {
   color: var(--ps-text-2);
   line-height: 1.55;
+}
+
+/* Las imágenes multideporte tienen proporciones distintas. La tarjeta conserva
+   una altura estable para que el recorrido no salte entre disciplinas. */
+.ps-venue-card--occupy .ps-venue-card__image,
+.ps-venue-card--continuity .ps-venue-card__image {
+  background: linear-gradient(135deg, rgba(225, 27, 34, 0.12), rgba(5, 9, 19, 0.68));
 }
 
 @keyframes ps-venue-card-glow {
@@ -917,6 +924,11 @@ html.public-site-active #root {
 @media (min-width: 720px) {
   .ps-venue-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ps-venue-cards li,
+  .ps-venue-cards li > img {
+    min-height: 188px;
   }
 }
 
@@ -2289,11 +2301,95 @@ html.public-site-active #root {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .ps-hero__sports {
+    justify-content: flex-start;
+    gap: 8px;
+    margin: -4px 0 22px;
+  }
+
+  .ps-hero__sports span {
+    padding: 7px 10px;
+    font-size: 0.72rem;
+  }
+
   .ps-hero__globe-wrap,
   .ps-globe {
     min-height: 320px;
     height: min(88vw, 380px);
     max-width: none;
+  }
+
+  .ps-section--about .ps-about__grid {
+    gap: 24px;
+  }
+
+  .ps-about__sports {
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .ps-about__sports span {
+    padding: 7px 10px;
+    font-size: 0.76rem;
+  }
+
+  .ps-venue-cards {
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .ps-venue-cards li {
+    grid-template-columns: minmax(112px, 36%) minmax(0, 1fr);
+    min-height: 168px;
+    border-radius: 22px;
+  }
+
+  .ps-venue-cards li > img {
+    min-height: 168px;
+    padding: 6px;
+  }
+
+  .ps-venue-cards li > div {
+    gap: 6px;
+    padding: 15px 14px;
+  }
+
+  .ps-venue-cards strong {
+    font-size: 1rem;
+  }
+
+  .ps-venue-cards span {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .ps-venue-card__sport {
+    padding: 4px 7px;
+    font-size: 0.62rem !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ps-hero__layout {
+    grid-template-columns: minmax(0, 0.92fr) minmax(300px, 0.88fr);
+    align-items: center;
+  }
+
+  .ps-hero__content {
+    text-align: left;
+  }
+
+  .ps-hero__sports,
+  .ps-hero__ctas,
+  .ps-hero__secondary-actions {
+    justify-content: flex-start;
+    justify-items: start;
+  }
+
+  .ps-hero__globe-wrap,
+  .ps-globe {
+    min-height: 400px;
+    height: min(52vw, 470px);
   }
 }
 
