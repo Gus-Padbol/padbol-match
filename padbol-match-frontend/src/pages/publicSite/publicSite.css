@@ -1969,7 +1969,9 @@ html.public-site-active #root {
 
 /* About */
 .ps-section--about {
-  background: var(--ps-bg);
+  background:
+    radial-gradient(560px 340px at 80% 42%, rgba(225, 27, 34, 0.12), transparent 68%),
+    var(--ps-bg);
 }
 
 .ps-about__grid {
@@ -1987,6 +1989,40 @@ html.public-site-active #root {
     linear-gradient(135deg, rgba(225, 27, 34, 0.18), transparent 48%),
     linear-gradient(210deg, rgba(56, 189, 248, 0.1), transparent 40%),
     #0b101c;
+}
+
+.ps-about__kicker {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--ps-accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ps-about__detail {
+  max-width: 60ch;
+  margin: 18px 0 0;
+  color: var(--ps-text-2);
+  line-height: 1.62;
+}
+
+.ps-about__sports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 24px;
+}
+
+.ps-about__sports span {
+  padding: 8px 12px;
+  border: 1px solid rgba(225, 27, 34, 0.44);
+  border-radius: 999px;
+  background: rgba(225, 27, 34, 0.08);
+  color: var(--ps-heading);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .ps-about__placeholder {

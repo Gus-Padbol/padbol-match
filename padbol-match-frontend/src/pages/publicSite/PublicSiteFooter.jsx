@@ -14,7 +14,6 @@ export default function PublicSiteFooter() {
       href,
       label: text(`publicSite.footer.${key}`),
     })),
-    { key: 'about', href: '#nosotros', label: text('publicSite.footer.about') },
     { key: 'contact', to: '/contacto', label: text('publicSite.footer.contact') },
     { key: 'privacy', to: '/privacidad', label: text('publicSite.footer.privacy') },
     { key: 'terms', to: '/terminos', label: text('publicSite.footer.terms') },

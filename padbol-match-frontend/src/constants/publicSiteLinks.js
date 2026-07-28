@@ -24,6 +24,7 @@ export const PUBLIC_SITE_ANCHORS = {
   community: '#comunidad-partidos',
   scoreboard: '#marcador-inteligente',
   venues: '#sedes',
+  about: '#nosotros',
   download: '#descargar',
 };
 
