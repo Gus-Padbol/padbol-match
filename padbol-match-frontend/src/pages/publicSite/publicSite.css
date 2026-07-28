@@ -830,6 +830,20 @@ html.public-site-active #root {
   padding: 18px 20px;
 }
 
+.ps-venue-card__sport {
+  align-self: start;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid rgba(225, 27, 34, 0.62);
+  border-radius: 999px;
+  color: #ffb4b8 !important;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .ps-venue-cards strong {
   font-family: var(--ps-font-display);
   font-size: 1.2rem;

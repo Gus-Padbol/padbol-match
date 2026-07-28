@@ -19,10 +19,18 @@ const PLAYER_ICONS = {
 };
 
 const VENUE_MEDIA = {
-  occupy: 'real-occupancy.jpg',
-  activate: 'active-players.jpg',
+  // Temporary free-to-use sport imagery. Replace with Padbol Match-owned media when available.
+  occupy: 'sport-padel-cc0.jpg',
+  activate: 'sport-pickleball-public-domain.jpg',
   scoreboard: 'active-scoreboard.jpg',
-  continuity: 'continuity.jpg',
+  continuity: 'sport-tennis-cc0.jpg',
+};
+
+const VENUE_SPORTS = {
+  occupy: 'Pádel',
+  activate: 'Pickleball',
+  scoreboard: 'Padbol',
+  continuity: 'Tenis',
 };
 
 const CONTINUITY_ICONS = {
@@ -236,11 +244,12 @@ export function VenuePathSection() {
           <li key={key}>
             <img
               src={`${ASSET_ROOT}/${VENUE_MEDIA[key]}`}
-              alt=""
+              alt={`${VENUE_SPORTS[key]}: ${text(`publicSite.venuePath.items.${key}.title`)}`}
               loading="lazy"
               decoding="async"
             />
             <div>
+              <span className="ps-venue-card__sport">{VENUE_SPORTS[key]}</span>
               <strong>{text(`publicSite.venuePath.items.${key}.title`)}</strong>
               <span>{text(`publicSite.venuePath.items.${key}.text`)}</span>
             </div>
