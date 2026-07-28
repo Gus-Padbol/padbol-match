@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { PUBLIC_SITE_CTA } from '../../../constants/publicSiteLinks';
@@ -40,6 +40,12 @@ const EXPANSION_ICONS = {
   ads: 'advertising.svg',
   eshop: 'eshop.svg',
 };
+
+const OPEN_MATCH_DEMO_STATES = [
+  { filled: 2, revenue: '$12.000', status: 'Buscando 2 jugadores', note: '50% de ocupación' },
+  { filled: 3, revenue: '$18.000', status: 'Un jugador confirmó', note: '75% de ocupación' },
+  { filled: 4, revenue: '$24.000', status: 'Partido confirmado', note: '100% de ocupación' },
+];
 
 export function SectionShell({ id, className = '', titleId, children }) {
   return (
@@ -88,6 +94,16 @@ export function PlayerPathSection() {
 }
 
 function OpenMatchMockup({ text }) {
+  const [demoIndex, setDemoIndex] = useState(0);
+  const demo = OPEN_MATCH_DEMO_STATES[demoIndex];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setDemoIndex((current) => (current + 1) % OPEN_MATCH_DEMO_STATES.length);
+    }, 2600);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <div className="ps-match" role="img" aria-label={text('publicSite.communityMatches.mockAria')}>
       <div className="ps-match__phone">
@@ -99,12 +115,24 @@ function OpenMatchMockup({ text }) {
           <p className="ps-match__meta">{text('publicSite.communityMatches.mockMeta')}</p>
           <p className="ps-match__level">{text('publicSite.communityMatches.mockLevel')}</p>
           <ul className="ps-match__slots" aria-hidden="true">
-            <li className="is-filled" />
-            <li className="is-filled" />
-            <li className="is-open" />
-            <li className="is-open" />
+            {[0, 1, 2, 3].map((slot) => (
+              <li key={slot} className={slot < demo.filled ? 'is-filled' : 'is-open'} />
+            ))}
           </ul>
-          <p className="ps-match__slots-label">{text('publicSite.communityMatches.mockSlots')}</p>
+          <p className="ps-match__slots-label" aria-live="polite">
+            {demo.filled} de 4 lugares confirmados
+          </p>
+          <div className="ps-match__metrics" aria-label="Simulación de actividad estimada">
+            <div>
+              <span>Ocupación</span>
+              <strong>{demo.note}</strong>
+            </div>
+            <div>
+              <span>Recaudación estimada</span>
+              <strong className="ps-match__revenue">{demo.revenue}</strong>
+            </div>
+          </div>
+          <p className="ps-match__status" aria-live="polite"><i />{demo.status}</p>
           <span className="ps-match__cta">{text('publicSite.communityMatches.mockAction')}</span>
         </div>
       </div>

@@ -2264,16 +2264,77 @@ html.public-site-active #root {
   border-radius: 12px;
   border: 1px dashed rgba(148, 163, 184, 0.35);
   background: rgba(248, 250, 252, 0.04);
+  transition: border-color 300ms ease, background-color 300ms ease, box-shadow 300ms ease, transform 300ms ease;
 }
 
 .ps-match__slots li.is-filled {
   border-style: solid;
   border-color: rgba(225, 27, 34, 0.55);
   background: rgba(225, 27, 34, 0.28);
+  box-shadow: 0 0 18px rgba(225, 27, 34, 0.2);
 }
 
 .ps-match__slots li.is-open {
   border-color: rgba(56, 189, 248, 0.4);
+}
+
+.ps-match__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ps-match__metrics > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  background: rgba(5, 8, 15, 0.32);
+}
+
+.ps-match__metrics span,
+.ps-match__status {
+  color: var(--ps-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ps-match__metrics strong {
+  color: var(--ps-text);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ps-match__metrics .ps-match__revenue {
+  color: #86efac;
+}
+
+.ps-match__status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+
+.ps-match__status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+  animation: ps-match-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ps-match-pulse {
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-match__status i { animation: none; }
+  .ps-match__slots li { transition: none; }
 }
 
 .ps-match__cta {
