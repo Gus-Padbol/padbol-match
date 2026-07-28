@@ -23,6 +23,10 @@ export const PUBLIC_SITE_SECTIONS = {
   whatIs: {
     id: 'que-es',
   },
+  status: {
+    id: 'estado-plataforma',
+    items: ['active', 'rollingOut', 'next'].map(item),
+  },
   playerPath: {
     id: 'jugadores',
     items: ['find', 'create', 'join', 'book', 'compete', 'evolve', 'community'].map(item),

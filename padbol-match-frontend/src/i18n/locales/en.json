@@ -2443,6 +2443,7 @@
     "hero": {
       "claim": "The sports app that connects everything.",
       "lead": "Players, venues, matches, tournaments, ranking, community and management on one platform.",
+      "sportsAria": "Sports rollout status",
       "ctaExplore": "Explore the platform",
       "ctaPlay": "I want to play",
       "ctaVenue": "I want to bring Padbol Match",
@@ -2494,6 +2495,39 @@
     "whatIs": {
       "title": "What is Padbol Match",
       "text": "It connects players and venues. It brings together competition, community and management. Every match creates continuity: not just a booking tool, but a relationship that continues after you play."
+    },
+    "sports": {
+      "padbol": "Padbol",
+      "padel": "Padel",
+      "pickleball": "Pickleball",
+      "tennis": "Tennis"
+    },
+    "status": {
+      "kicker": "Product status",
+      "title": "What you can use today and what comes next",
+      "text": "We clearly show what is already available, what is rolling out, and what belongs to the next stage.",
+      "labels": {
+        "active": "Available today",
+        "rollingOut": "Rolling out",
+        "next": "Next stage"
+      },
+      "items": {
+        "active": {
+          "eyebrow": "Available today",
+          "title": "The Padbol journey",
+          "text": "Sign in, profiles, bookings, open matches, tournaments, ranking, and community with photos and videos."
+        },
+        "rollingOut": {
+          "eyebrow": "Rolling out",
+          "title": "New sports and scoreboard",
+          "text": "Padel, Pickleball and Tennis; the smart scoreboard and external level recognition are enabled gradually and validated through real play."
+        },
+        "next": {
+          "eyebrow": "Next stage",
+          "title": "Commercial layers",
+          "text": "Sponsor spaces, advertising managed by each venue, and a dedicated e-shop for products and benefits."
+        }
+      }
     },
     "playerPath": {
       "title": "For players",

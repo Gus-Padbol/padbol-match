@@ -9,6 +9,7 @@ const es = require('../i18n/locales/es.json');
 describe('publicSite content structure', () => {
   const expectedAnchors = [
     'que-es',
+    'estado-plataforma',
     'jugadores',
     'comunidad-partidos',
     'sedes',
@@ -41,12 +42,12 @@ describe('publicSite content structure', () => {
     ]);
     expect(PUBLIC_SITE_SECTIONS.contact.ctas.map(({ to }) => to)).toEqual([
       '/contacto',
-      '/hub',
+      '#descargar',
       '/acceso',
     ]);
     expect(PUBLIC_SITE_INTERNAL_ROUTES).toEqual(
       expect.arrayContaining([
-        '/hub',
+        '#descargar',
         '/contacto',
         '/acceso',
         '/sobre',
@@ -55,7 +56,7 @@ describe('publicSite content structure', () => {
         '/terminos',
       ]),
     );
-    PUBLIC_SITE_INTERNAL_ROUTES.forEach((route) => expect(route).toMatch(/^\/[a-z-]+$/));
+    PUBLIC_SITE_INTERNAL_ROUTES.forEach((route) => expect(route).toMatch(/^(?:\/[a-z-]+|#[a-z-]+)$/));
   });
 
   it('tiene contenido español para todos los títulos, textos e items configurados', () => {
@@ -84,9 +85,9 @@ describe('publicSite content structure', () => {
 
   it('explica comunidad/partidos y marcador inteligente con peso suficiente', () => {
     expect(es.publicSite.communityMatches.title).toMatch(/antes de entrar/i);
-    expect(es.publicSite.communityMatches.text).toMatch(/partidos abiertos|encuentros abiertos/i);
+    expect(es.publicSite.communityMatches.text).toMatch(/crear un encuentro|partidos abiertos/i);
     expect(es.publicSite.smartScoreboard.title).toMatch(/Marcador inteligente/i);
     expect(es.publicSite.smartScoreboard.text).toMatch(/en vivo|mientras se juega/i);
-    expect(es.publicSite.continuity.text).toMatch(/historial|competencia|evolución/i);
+    expect(es.publicSite.continuity.text).toMatch(/recorrido|encuentro|actividad/i);
   });
 });

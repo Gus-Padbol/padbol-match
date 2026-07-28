@@ -147,7 +147,7 @@ describe('/plataforma public site', () => {
     expect(logo).toBeTruthy();
     expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo.');
     expect(lead).toHaveTextContent(
-      'Jugadores, sedes, partidos, torneos, ranking, comunidad y gestión en una sola plataforma.',
+      'Hoy conecta juego, operación y comunidad para Padbol. La misma base se expande por etapas a Pádel, Pickleball y Tenis.',
     );
     expect(hero.textContent).not.toMatch(/Cada partido construye una relación/i);
     expect(hero.textContent).not.toMatch(/Jugadores y sedes en una misma plataforma/i);
@@ -219,8 +219,8 @@ describe('/plataforma public site', () => {
     expect(container.querySelector('#marcador-inteligente')).toBeTruthy();
     expect(screen.getByRole('heading', { name: /Jugar empieza antes/i })).toBeTruthy();
     expect(screen.getByRole('heading', { name: /Marcador inteligente/i })).toBeTruthy();
-    expect(container.textContent).toMatch(/crear partidos/i);
-    expect(container.textContent).toMatch(/encuentros abiertos/i);
+    expect(container.textContent).toMatch(/crear un encuentro/i);
+    expect(container.textContent).toMatch(/completar sus cupos/i);
     expect(container.textContent).toMatch(/Completar equipos/i);
     expect(container.textContent).toMatch(/mientras se juega/i);
     expect(container.textContent).toMatch(/sets y parciales/i);
@@ -271,7 +271,7 @@ describe('/plataforma public site', () => {
     expect(document.title).toBe('Padbol Match — Plataforma');
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
       'content',
-      expect.stringMatching(/jugadores y sedes/i),
+      expect.stringMatching(/jugadores, sedes y organizaciones/i),
     );
     expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute('content', '#0a0c12');
     expect(document.documentElement.classList.contains('public-site-active')).toBe(true);

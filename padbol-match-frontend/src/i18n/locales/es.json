@@ -2214,7 +2214,8 @@
     },
     "hero": {
       "claim": "La aplicación deportiva que conecta todo.",
-      "lead": "Una misma base para organizar juego, operación y comunidad en Padbol, Pádel, Pickleball y Tenis.",
+      "lead": "Hoy conecta juego, operación y comunidad para Padbol. La misma base se expande por etapas a Pádel, Pickleball y Tenis.",
+      "sportsAria": "Estado de las disciplinas deportivas",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
       "ctaVenue": "Quiero incorporar Padbol Match",
@@ -2267,9 +2268,42 @@
       "title": "Qué es Padbol Match",
       "text": "Una plataforma para conectar a quienes juegan, las sedes donde sucede y la información que deja cada encuentro. Reservas, partidos, competencia y comunicación trabajan sobre una misma base."
     },
+    "sports": {
+      "padbol": "Padbol",
+      "padel": "Pádel",
+      "pickleball": "Pickleball",
+      "tennis": "Tenis"
+    },
+    "status": {
+      "kicker": "Estado de producto",
+      "title": "Lo que podés usar hoy y lo que sigue",
+      "text": "Mostramos con claridad qué partes ya están disponibles, cuáles se están desplegando y cuáles forman parte de la próxima etapa.",
+      "labels": {
+        "active": "Disponible hoy",
+        "rollingOut": "En despliegue",
+        "next": "Próxima etapa"
+      },
+      "items": {
+        "active": {
+          "eyebrow": "Disponible hoy",
+          "title": "El recorrido Padbol",
+          "text": "Ingreso, perfiles, reservas, partidos abiertos, torneos, ranking y comunidad con fotos y videos."
+        },
+        "rollingOut": {
+          "eyebrow": "En despliegue",
+          "title": "Nuevas disciplinas y marcador",
+          "text": "Pádel, Pickleball y Tenis; marcador inteligente y reconocimiento de nivel externo se habilitan por etapas y se validan con juego real."
+        },
+        "next": {
+          "eyebrow": "Próxima etapa",
+          "title": "Capas comerciales",
+          "text": "Espacios para sponsors, publicidad administrada por cada sede y e-shop propio para productos y beneficios."
+        }
+      }
+    },
     "playerPath": {
       "title": "Para jugadores",
-      "text": "Elegí tu deporte, encontrá actividad cerca y resolvé todo el recorrido de juego desde un solo lugar: partido, cancha, torneo y evolución.",
+      "text": "Hoy, elegí Padbol, encontrá actividad cerca y resolvé todo el recorrido desde un solo lugar. El mismo flujo se abre gradualmente a nuevas disciplinas.",
       "items": {
         "find": {
           "title": "Encontrar partidos",
@@ -2307,7 +2341,7 @@
     },
     "venuePath": {
       "title": "Para sedes y organizaciones",
-      "text": "Una operación preparada para distintos deportes: generá actividad, completá horarios y conectá cada encuentro con la gestión de tu sede.",
+      "text": "Hoy la operación está disponible para Padbol; la misma estructura se extiende gradualmente a otros deportes de cancha.",
       "items": {
         "bookings": {
           "title": "Reservas",
@@ -2483,7 +2517,7 @@
     },
     "communityMatches": {
       "title": "Jugar empieza antes de entrar a la cancha.",
-      "text": "En Padbol, Pádel, Pickleball o Tenis, crear un encuentro y completar sus cupos puede empezar antes de llegar a la sede. La plataforma convierte intención en actividad confirmada.",
+      "text": "En Padbol, crear un encuentro y completar sus cupos puede empezar antes de llegar a la sede. Ese mismo recorrido se abre gradualmente a Pádel, Pickleball y Tenis.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
       "mockBadge": "Demostración",
@@ -2514,7 +2548,7 @@
     "smartScoreboard": {
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Próximamente",
-      "text": "Cuando el formato de juego lo requiere, el marcador registra el encuentro en vivo y conserva un resultado útil para jugadores, competencia y sede.",
+      "text": "El marcador inteligente está en despliegue. Cuando se habilita para un formato de juego, registra el encuentro en vivo y conserva un resultado útil para jugadores, competencia y sede.",
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

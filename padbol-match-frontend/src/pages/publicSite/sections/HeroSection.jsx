@@ -71,8 +71,18 @@ export default function HeroSection() {
             {text('publicSite.hero.claim')}
           </h1>
           <p className="ps-hero__lead">{text('publicSite.hero.lead')}</p>
-          <div className="ps-hero__sports" aria-label="Deportes que se pueden gestionar con Padbol Match">
-            {['Padbol', 'Pádel', 'Pickleball', 'Tenis'].map((sport) => <span key={sport}>{sport}</span>)}
+          <div className="ps-hero__sports" aria-label={text('publicSite.hero.sportsAria')}>
+            {[
+              { key: 'padbol', phase: 'active' },
+              { key: 'padel', phase: 'rollingOut' },
+              { key: 'pickleball', phase: 'rollingOut' },
+              { key: 'tennis', phase: 'rollingOut' },
+            ].map(({ key, phase }) => (
+              <span key={key} className={`is-${phase}`}>
+                <b>{text(`publicSite.sports.${key}`)}</b>
+                <small>{text(`publicSite.status.labels.${phase}`)}</small>
+              </span>
+            ))}
           </div>
           <div className="ps-hero__ctas">
             <a

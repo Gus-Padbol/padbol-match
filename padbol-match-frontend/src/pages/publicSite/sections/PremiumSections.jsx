@@ -27,10 +27,10 @@ const VENUE_MEDIA = {
 };
 
 const VENUE_SPORTS = {
-  occupy: 'Pádel',
-  activate: 'Pickleball',
-  scoreboard: 'Padbol',
-  continuity: 'Tenis',
+  occupy: { name: 'padel', phase: 'rollingOut' },
+  activate: { name: 'pickleball', phase: 'rollingOut' },
+  scoreboard: { name: 'padbol', phase: 'active' },
+  continuity: { name: 'tennis', phase: 'rollingOut' },
 };
 
 const CONTINUITY_ICONS = {
@@ -120,6 +120,28 @@ export function WhatIsSection() {
       </div>
       <h2 id="ps-what-title">{text('publicSite.whatIs.title')}</h2>
       <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
+    </SectionShell>
+  );
+}
+
+/** Estado de producto: separa con claridad lo disponible de lo que viene. */
+export function PlatformStatusSection() {
+  const text = usePublicSiteText();
+  const config = PUBLIC_SITE_SECTIONS.status;
+  return (
+    <SectionShell id={config.id} className="ps-section--status" titleId="ps-status-title">
+      <span className="ps-kicker">{text('publicSite.status.kicker')}</span>
+      <h2 id="ps-status-title">{text('publicSite.status.title')}</h2>
+      <p className="ps-lead">{text('publicSite.status.text')}</p>
+      <ul className="ps-status-grid">
+        {config.items.map(({ key }) => (
+          <li key={key} className={`ps-status-card ps-status-card--${key}`}>
+            <span>{text(`publicSite.status.items.${key}.eyebrow`)}</span>
+            <strong>{text(`publicSite.status.items.${key}.title`)}</strong>
+            <p>{text(`publicSite.status.items.${key}.text`)}</p>
+          </li>
+        ))}
+      </ul>
     </SectionShell>
   );
 }
@@ -245,12 +267,14 @@ export function VenuePathSection() {
             <img
               className="ps-venue-card__image"
               src={`${ASSET_ROOT}/${VENUE_MEDIA[key]}`}
-              alt={`${VENUE_SPORTS[key]}: ${text(`publicSite.venuePath.items.${key}.title`)}`}
+              alt={`${text(`publicSite.sports.${VENUE_SPORTS[key].name}`)}: ${text(`publicSite.venuePath.items.${key}.title`)}`}
               loading="lazy"
               decoding="async"
             />
             <div>
-              <span className="ps-venue-card__sport">{VENUE_SPORTS[key]}</span>
+              <span className="ps-venue-card__sport">
+                {text(`publicSite.sports.${VENUE_SPORTS[key].name}`)} · {text(`publicSite.status.labels.${VENUE_SPORTS[key].phase}`)}
+              </span>
               <strong>{text(`publicSite.venuePath.items.${key}.title`)}</strong>
               <span>{text(`publicSite.venuePath.items.${key}.text`)}</span>
             </div>

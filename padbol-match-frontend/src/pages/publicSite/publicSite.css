@@ -1041,15 +1041,46 @@ html.public-site-active #root {
 }
 
 .ps-hero__sports span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
   padding: 8px 13px;
   border: 1px solid rgba(225, 27, 34, 0.72);
   border-radius: 999px;
   background: rgba(225, 27, 34, 0.1);
   box-shadow: 0 0 18px rgba(225, 27, 34, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   color: var(--ps-heading);
+}
+
+.ps-hero__sports b {
   font-size: 0.78rem;
   font-weight: 850;
   letter-spacing: 0.03em;
+}
+
+.ps-hero__sports small {
+  color: #f9d2d4;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.ps-hero__sports span.is-active {
+  border-color: rgba(112, 230, 166, 0.62);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.ps-hero__sports span.is-active small {
+  color: #9bf0bd;
+}
+
+.ps-hero__sports span.is-rollingOut {
+  border-color: rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.08);
+}
+
+.ps-hero__sports span.is-rollingOut small {
+  color: #f8dc83;
 }
 
 .ps-hero__ctas {
@@ -1374,6 +1405,58 @@ html.public-site-active #root {
   margin-top: 8px;
   font-size: clamp(1.1rem, 2vw, 1.35rem);
 }
+
+.ps-section--status {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(225, 27, 34, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(8, 13, 25, 0.94), var(--ps-bg-2));
+}
+
+.ps-status-grid {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-status-card {
+  min-height: 164px;
+  padding: 21px;
+  border: 1px solid var(--ps-border);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(18, 27, 47, 0.92), rgba(7, 11, 21, 0.88));
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.ps-status-card > span {
+  display: inline-flex;
+  margin-bottom: 13px;
+  color: #a8e5bf;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ps-status-card strong {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--ps-heading);
+  font-family: var(--ps-font-display);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  letter-spacing: 0.015em;
+}
+
+.ps-status-card p {
+  margin: 0;
+  color: var(--ps-text-2);
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+
+.ps-status-card--rollingOut > span { color: #f8dc83; }
+.ps-status-card--next > span { color: #ffb4b8; }
 
 .ps-section--paths {
   background: var(--ps-bg-2);
@@ -2394,6 +2477,10 @@ html.public-site-active #root {
 }
 
 @media (min-width: 768px) {
+  .ps-status-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .ps-hero__logo {
     width: clamp(320px, 48vw, 430px) !important;
   }

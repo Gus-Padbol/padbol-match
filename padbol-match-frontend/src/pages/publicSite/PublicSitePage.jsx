@@ -5,6 +5,7 @@ import ExperiencesSection from './sections/ExperiencesSection';
 import BinaryDataStreamZone from './sections/BinaryDataStreamZone';
 import {
   WhatIsSection,
+  PlatformStatusSection,
   PlayerPathSection,
   CommunityMatchesSection,
   VenuePathSection,
@@ -54,6 +55,7 @@ export default function PublicSitePage() {
         <HeroSection />
         <BinaryDataStreamZone>
           <WhatIsSection />
+          <PlatformStatusSection />
           <PlayerPathSection />
           <CommunityMatchesSection />
         </BinaryDataStreamZone>
