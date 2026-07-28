@@ -27,10 +27,10 @@ const VENUE_MEDIA = {
 };
 
 const VENUE_SPORTS = {
-  occupy: { name: 'padel', phase: 'rollingOut' },
-  activate: { name: 'pickleball', phase: 'rollingOut' },
-  scoreboard: { name: 'padbol', phase: 'active' },
-  continuity: { name: 'tennis', phase: 'rollingOut' },
+  occupy: 'padel',
+  activate: 'pickleball',
+  scoreboard: 'padbol',
+  continuity: 'tennis',
 };
 
 const CONTINUITY_ICONS = {
@@ -267,13 +267,13 @@ export function VenuePathSection() {
             <img
               className="ps-venue-card__image"
               src={`${ASSET_ROOT}/${VENUE_MEDIA[key]}`}
-              alt={`${text(`publicSite.sports.${VENUE_SPORTS[key].name}`)}: ${text(`publicSite.venuePath.items.${key}.title`)}`}
+              alt={`${text(`publicSite.sports.${VENUE_SPORTS[key]}`)}: ${text(`publicSite.venuePath.items.${key}.title`)}`}
               loading="lazy"
               decoding="async"
             />
             <div>
               <span className="ps-venue-card__sport">
-                {text(`publicSite.sports.${VENUE_SPORTS[key].name}`)} · {text(`publicSite.status.labels.${VENUE_SPORTS[key].phase}`)}
+                {text(`publicSite.sports.${VENUE_SPORTS[key]}`)}
               </span>
               <strong>{text(`publicSite.venuePath.items.${key}.title`)}</strong>
               <span>{text(`publicSite.venuePath.items.${key}.text`)}</span>
