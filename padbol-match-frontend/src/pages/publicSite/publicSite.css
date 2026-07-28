@@ -728,27 +728,9 @@ html.public-site-active #root {
 .ps-section--venues {
   isolation: isolate;
   background:
-    radial-gradient(640px 260px at 4% 52%, rgba(225, 27, 34, 0.1), transparent 62%),
-    radial-gradient(520px 280px at 94% 20%, rgba(56, 189, 248, 0.08), transparent 64%),
+    radial-gradient(580px 340px at 0% 48%, rgba(225, 27, 34, 0.09), transparent 64%),
+    radial-gradient(480px 300px at 100% 18%, rgba(56, 189, 248, 0.07), transparent 66%),
     var(--ps-bg-2);
-}
-
-.ps-section--venues::before {
-  position: absolute;
-  inset: 0 auto 0 50%;
-  z-index: 0;
-  width: min(360px, 42vw);
-  color: rgba(114, 152, 204, 0.09);
-  content: '0101 1010 0110 1001 0011 1010 0110 1100 0101 1001 0011 1010 0110 1100 0101 1001';
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(1.8rem, 4vw, 3.5rem);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  line-height: 1.25;
-  overflow: hidden;
-  transform: translateX(-10%) rotate(-8deg);
-  animation: ps-venue-data-drift 18s linear infinite;
-  pointer-events: none;
 }
 
 .ps-section--venues .public-site__shell {
@@ -771,22 +753,27 @@ html.public-site-active #root {
   align-items: stretch;
   min-height: 132px;
   overflow: hidden;
-  border: 1px solid var(--ps-border);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 28px;
-  background: rgba(14, 20, 36, 0.72);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
-  transition: transform 260ms var(--ps-ease), border-color 260ms ease, box-shadow 260ms ease;
+  background:
+    linear-gradient(128deg, rgba(255, 255, 255, 0.045), transparent 36%),
+    rgba(14, 20, 36, 0.82);
+  box-shadow:
+    0 18px 32px rgba(0, 0, 0, 0.26),
+    0 32px 54px rgba(1, 3, 10, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  transition: transform 300ms var(--ps-ease), border-color 300ms ease, box-shadow 300ms ease;
 }
 
 .ps-venue-cards li::before {
   position: absolute;
-  inset: -45%;
+  inset: -60%;
   z-index: 0;
   background: radial-gradient(circle, rgba(225, 27, 34, 0.2), transparent 43%);
   content: '';
-  opacity: 0.44;
-  transform: translate3d(-26%, 14%, 0);
-  animation: ps-venue-card-glow 8s ease-in-out infinite alternate;
+  opacity: 0.32;
+  transform: translate3d(-30%, 20%, 0);
+  animation: ps-venue-card-glow 10s ease-in-out infinite alternate;
   pointer-events: none;
 }
 
@@ -795,10 +782,29 @@ html.public-site-active #root {
   animation-delay: -3.5s;
 }
 
+.ps-venue-cards li::after {
+  position: absolute;
+  top: 0;
+  left: 13%;
+  z-index: 2;
+  width: 62%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.68), transparent);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
+  content: '';
+  opacity: 0.34;
+  animation: ps-venue-card-reflection 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .ps-venue-cards li:hover {
-  transform: translateY(-5px);
-  border-color: rgba(225, 27, 34, 0.66);
-  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.32), 0 0 32px rgba(225, 27, 34, 0.1);
+  transform: translateY(-7px) scale(1.008);
+  border-color: rgba(225, 27, 34, 0.72);
+  box-shadow:
+    0 24px 44px rgba(0, 0, 0, 0.34),
+    0 44px 70px rgba(1, 3, 10, 0.34),
+    0 0 34px rgba(225, 27, 34, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .ps-venue-cards li > img {
@@ -836,14 +842,14 @@ html.public-site-active #root {
   line-height: 1.55;
 }
 
-@keyframes ps-venue-data-drift {
-  from { transform: translate(-10%, -6%) rotate(-8deg); }
-  to { transform: translate(-10%, 7%) rotate(-8deg); }
+@keyframes ps-venue-card-glow {
+  from { opacity: 0.18; transform: translate3d(-30%, 20%, 0) scale(0.82); }
+  to { opacity: 0.54; transform: translate3d(28%, -20%, 0) scale(1.08); }
 }
 
-@keyframes ps-venue-card-glow {
-  from { opacity: 0.22; transform: translate3d(-28%, 18%, 0) scale(0.84); }
-  to { opacity: 0.65; transform: translate3d(26%, -18%, 0) scale(1.08); }
+@keyframes ps-venue-card-reflection {
+  0%, 100% { opacity: 0.12; transform: translateX(-24%); }
+  50% { opacity: 0.6; transform: translateX(24%); }
 }
 
 .ps-chip {
