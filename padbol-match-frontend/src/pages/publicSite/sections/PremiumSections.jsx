@@ -47,6 +47,37 @@ const OPEN_MATCH_DEMO_STATES = [
   { filled: 4, revenue: '$24.000', status: 'Partido confirmado', note: '100% de ocupación' },
 ];
 
+const CONTINUITY_DETAILS = {
+  openMatches: {
+    lead: 'Convertí una intención de jugar en un encuentro concreto, sin depender de grupos externos ni cadenas de mensajes.',
+    points: ['Publicás sede, horario, nivel y cupos.', 'Los jugadores cercanos piden lugar desde la app.', 'La sede ve actividad real antes de que empiece el partido.'],
+  },
+  tournaments: {
+    lead: 'Organizá competencias con un calendario claro y una experiencia que acompaña al jugador desde la inscripción hasta el cierre.',
+    points: ['Inscripciones, cupos y categorías en un solo lugar.', 'Llaves, zonas o formatos según el torneo.', 'Cada fecha sostiene participación y movimiento en la sede.'],
+  },
+  results: {
+    lead: 'El juego no termina al salir de la cancha: el resultado queda asociado al encuentro y alimenta el recorrido deportivo.',
+    points: ['Registro simple de marcadores y asistencia.', 'Historial consultable por jugador y competencia.', 'Base confiable para ranking, estadísticas y logros.'],
+  },
+  ranking: {
+    lead: 'Una evolución entendible, ligada a los partidos que realmente se juegan y a la categoría o alcance de cada competencia.',
+    points: ['Posiciones por club, categoría, nacional o FIPA.', 'Subís o bajás a partir de resultados validados.', 'Podés reconocer una clasificación externa como punto de partida.'],
+  },
+  padcoins: {
+    lead: 'La participación activa puede transformarse en reconocimiento dentro del ecosistema, con reglas visibles para todos.',
+    points: ['Se acreditan por acciones y dinámicas definidas.', 'Sirven para beneficios, canjes o experiencias.', 'La sede puede premiar constancia y comunidad.'],
+  },
+  memberships: {
+    lead: 'Un vínculo directo entre cada jugador y su sede, pensado para volver más simple la relación cotidiana.',
+    points: ['Beneficios y propuestas pensadas para cada comunidad.', 'Acceso ordenado a actividades y novedades.', 'Más recurrencia sin perder el control de la sede.'],
+  },
+  community: {
+    lead: 'Un espacio propio para que el juego siga conversándose: publicaciones, comentarios, videos y conexiones entre jugadores.',
+    points: ['Compartí jugadas, fotos y novedades de la comunidad.', 'Seguís jugadores, sedes y conversaciones relevantes.', 'El contenido ayuda a que cada experiencia tenga continuidad.'],
+  },
+};
+
 export function SectionShell({ id, className = '', titleId, children }) {
   return (
     <section id={id} className={`ps-section ${className}`.trim()} aria-labelledby={titleId} data-ps-reveal>
@@ -245,7 +276,12 @@ export function ContinuitySection() {
               <aside id={`ps-continuity-detail-${key}`} className="ps-chip__detail" role="status">
                 <span className="ps-chip__eyebrow">Padbol Match</span>
                 <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
-                <p>{text(`publicSite.continuity.items.${key}.text`)}</p>
+                <p>{CONTINUITY_DETAILS[key]?.lead || text(`publicSite.continuity.items.${key}.text`)}</p>
+                {CONTINUITY_DETAILS[key]?.points && (
+                  <ul>
+                    {CONTINUITY_DETAILS[key].points.map((point) => <li key={point}>{point}</li>)}
+                  </ul>
+                )}
               </aside>
             )}
           </li>

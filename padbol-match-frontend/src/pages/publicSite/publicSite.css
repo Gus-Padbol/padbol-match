@@ -1367,7 +1367,7 @@ html.public-site-active #root {
   z-index: 4;
   left: 50%;
   bottom: calc(100% + 12px);
-  width: min(300px, calc(100vw - 44px));
+  width: min(370px, calc(100vw - 44px));
   padding: 16px 18px;
   border: 1px solid rgba(225, 27, 34, 0.72);
   border-radius: 18px;
@@ -1393,9 +1393,35 @@ html.public-site-active #root {
 .ps-chip__detail > * { position: relative; z-index: 1; }
 .ps-chip__detail strong,
 .ps-chip__detail p,
+.ps-chip__detail ul,
 .ps-chip__eyebrow { display: block; }
 .ps-chip__detail strong { margin: 3px 0 7px; font-size: 1rem; }
 .ps-chip__detail p { margin: 0; color: var(--ps-text-2); line-height: 1.5; }
+.ps-chip__detail ul {
+  display: grid;
+  gap: 6px;
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ps-chip__detail li {
+  position: relative;
+  padding-left: 14px;
+  color: var(--ps-text-2);
+  font-size: 0.83rem;
+  line-height: 1.42;
+}
+.ps-chip__detail li::before {
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ps-accent);
+  box-shadow: 0 0 8px rgba(225, 27, 34, 0.75);
+  content: '';
+}
 .ps-chip__eyebrow {
   color: var(--ps-accent);
   font-size: 0.68rem;
