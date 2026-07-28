@@ -78,6 +78,21 @@ const CONTINUITY_DETAILS = {
   },
 };
 
+const EXPANSION_DETAILS = {
+  sponsor: {
+    lead: 'Cada sede puede abrir espacios para marcas que tengan sentido para su comunidad, su deporte y el momento de juego.',
+    points: ['La sede define qué espacios ofrece y para qué público.', 'Las marcas ganan presencia contextual, no publicidad invasiva.', 'La gestión se organiza desde el área administrativa de la sede.'],
+  },
+  ads: {
+    lead: 'La publicidad se incorpora en momentos de atención real: antes de reservar, al confirmar un partido, durante un torneo o dentro de contenidos seleccionados.',
+    points: ['Cada sede controla los espacios que habilita.', 'Se puede adaptar la propuesta a campañas, beneficios o eventos.', 'La prioridad es que acompañe la experiencia, sin interrumpir el juego.'],
+  },
+  eshop: {
+    lead: 'La visión es que cada club tenga su propio e-shop dentro de Padbol Match, con productos, promociones y beneficios para su comunidad.',
+    points: ['La sede cargará sus productos y administrará su catálogo.', 'Los jugadores comprarán desde el entorno del club que conocen.', 'Una misma base permite crecer sin que cada sede tenga que crear su tienda desde cero.'],
+  },
+};
+
 export function SectionShell({ id, className = '', titleId, children }) {
   return (
     <section id={id} className={`ps-section ${className}`.trim()} aria-labelledby={titleId} data-ps-reveal>
@@ -369,19 +384,50 @@ export function SmartScoreboardSection() {
 export function ExpansionSection() {
   const text = usePublicSiteText();
   const config = PUBLIC_SITE_SECTIONS.expansion;
+  const [activeKey, setActiveKey] = useState(null);
+
+  const closeDetail = (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
+  };
+
   return (
     <SectionShell id={config.id} className="ps-section--expansion" titleId="ps-expansion-title">
       <h2 id="ps-expansion-title">{text('publicSite.expansion.title')}</h2>
       <p className="ps-lead">{text('publicSite.expansion.text')}</p>
       <div className="ps-expansion__grid">
         {config.items.map(({ key }) => (
-          <article key={key} className="ps-expansion__card">
-            <img src={`${ASSET_ROOT}/${EXPANSION_ICONS[key]}`} alt="" aria-hidden="true" />
-            <div>
-              <h3>{text(`publicSite.expansion.items.${key}.title`)}</h3>
-              <p>{text(`publicSite.expansion.items.${key}.text`)}</p>
-            </div>
-          </article>
+          <div
+            key={key}
+            className={`ps-expansion__item${activeKey === key ? ' is-active' : ''}`}
+            onMouseEnter={() => setActiveKey(key)}
+            onMouseLeave={closeDetail}
+            onFocus={() => setActiveKey(key)}
+            onBlur={closeDetail}
+          >
+            <button
+              type="button"
+              className="ps-expansion__card"
+              aria-expanded={activeKey === key}
+              aria-controls={`ps-expansion-detail-${key}`}
+              onClick={() => setActiveKey((current) => (current === key ? null : key))}
+            >
+              <img src={`${ASSET_ROOT}/${EXPANSION_ICONS[key]}`} alt="" aria-hidden="true" />
+              <div>
+                <h3>{text(`publicSite.expansion.items.${key}.title`)}</h3>
+                <p>{text(`publicSite.expansion.items.${key}.text`)}</p>
+              </div>
+            </button>
+            {activeKey === key && (
+              <aside id={`ps-expansion-detail-${key}`} className="ps-expansion__detail" role="status">
+                <span>Padbol Match · Próximamente</span>
+                <strong>{text(`publicSite.expansion.items.${key}.title`)}</strong>
+                <p>{EXPANSION_DETAILS[key].lead}</p>
+                <ul>
+                  {EXPANSION_DETAILS[key].points.map((point) => <li key={point}>{point}</li>)}
+                </ul>
+              </aside>
+            )}
+          </div>
         ))}
       </div>
       <p className="ps-note">{text('publicSite.expansion.note')}</p>
