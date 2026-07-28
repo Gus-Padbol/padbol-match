@@ -72,15 +72,9 @@ export default function HeroSection() {
           </h1>
           <p className="ps-hero__lead">{text('publicSite.hero.lead')}</p>
           <div className="ps-hero__sports" aria-label={text('publicSite.hero.sportsAria')}>
-            {[
-              { key: 'padbol', phase: 'active' },
-              { key: 'padel', phase: 'rollingOut' },
-              { key: 'pickleball', phase: 'rollingOut' },
-              { key: 'tennis', phase: 'rollingOut' },
-            ].map(({ key, phase }) => (
-              <span key={key} className={`is-${phase}`}>
+            {['padbol', 'padel', 'pickleball', 'tennis'].map((key) => (
+              <span key={key}>
                 <b>{text(`publicSite.sports.${key}`)}</b>
-                <small>{text(`publicSite.status.labels.${phase}`)}</small>
               </span>
             ))}
           </div>
