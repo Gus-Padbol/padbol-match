@@ -725,6 +725,37 @@ html.public-site-active #root {
   gap: 6px;
 }
 
+.ps-section--venues {
+  isolation: isolate;
+  background:
+    radial-gradient(640px 260px at 4% 52%, rgba(225, 27, 34, 0.1), transparent 62%),
+    radial-gradient(520px 280px at 94% 20%, rgba(56, 189, 248, 0.08), transparent 64%),
+    var(--ps-bg-2);
+}
+
+.ps-section--venues::before {
+  position: absolute;
+  inset: 0 auto 0 50%;
+  z-index: 0;
+  width: min(360px, 42vw);
+  color: rgba(114, 152, 204, 0.09);
+  content: '0101 1010 0110 1001 0011 1010 0110 1100 0101 1001 0011 1010 0110 1100 0101 1001';
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.25;
+  overflow: hidden;
+  transform: translateX(-10%) rotate(-8deg);
+  animation: ps-venue-data-drift 18s linear infinite;
+  pointer-events: none;
+}
+
+.ps-section--venues .public-site__shell {
+  position: relative;
+  z-index: 1;
+}
+
 .ps-venue-cards {
   display: grid;
   gap: 16px;
@@ -734,6 +765,7 @@ html.public-site-active #root {
 }
 
 .ps-venue-cards li {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(132px, 42%) minmax(0, 1fr);
   align-items: stretch;
@@ -742,9 +774,36 @@ html.public-site-active #root {
   border: 1px solid var(--ps-border);
   border-radius: 28px;
   background: rgba(14, 20, 36, 0.72);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+  transition: transform 260ms var(--ps-ease), border-color 260ms ease, box-shadow 260ms ease;
+}
+
+.ps-venue-cards li::before {
+  position: absolute;
+  inset: -45%;
+  z-index: 0;
+  background: radial-gradient(circle, rgba(225, 27, 34, 0.2), transparent 43%);
+  content: '';
+  opacity: 0.44;
+  transform: translate3d(-26%, 14%, 0);
+  animation: ps-venue-card-glow 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.ps-venue-cards li:nth-child(even)::before {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.16), transparent 43%);
+  animation-delay: -3.5s;
+}
+
+.ps-venue-cards li:hover {
+  transform: translateY(-5px);
+  border-color: rgba(225, 27, 34, 0.66);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.32), 0 0 32px rgba(225, 27, 34, 0.1);
 }
 
 .ps-venue-cards li > img {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -757,6 +816,8 @@ html.public-site-active #root {
 }
 
 .ps-venue-cards li > div {
+  position: relative;
+  z-index: 1;
   display: grid;
   align-content: center;
   gap: 7px;
@@ -773,6 +834,16 @@ html.public-site-active #root {
 .ps-venue-cards span {
   color: var(--ps-text-2);
   line-height: 1.55;
+}
+
+@keyframes ps-venue-data-drift {
+  from { transform: translate(-10%, -6%) rotate(-8deg); }
+  to { transform: translate(-10%, 7%) rotate(-8deg); }
+}
+
+@keyframes ps-venue-card-glow {
+  from { opacity: 0.22; transform: translate3d(-28%, 18%, 0) scale(0.84); }
+  to { opacity: 0.65; transform: translate3d(26%, -18%, 0) scale(1.08); }
 }
 
 .ps-chip {
