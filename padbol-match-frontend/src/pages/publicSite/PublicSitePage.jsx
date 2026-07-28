@@ -29,7 +29,7 @@ function usePublicSiteDocumentMeta() {
     document.title = 'Padbol Match — Plataforma';
     description?.setAttribute(
       'content',
-      'Padbol Match conecta jugadores y sedes: competencia, comunidad y gestión en una plataforma internacional.',
+      'Padbol Match conecta jugadores, sedes y organizaciones para gestionar Padbol, Pádel, Pickleball y Tenis en una sola plataforma.',
     );
     theme?.setAttribute('content', '#0a0c12');
     document.documentElement.classList.add('public-site-active');

@@ -2214,7 +2214,7 @@
     },
     "hero": {
       "claim": "La aplicación deportiva que conecta todo.",
-      "lead": "Jugadores, sedes, partidos, torneos, ranking, comunidad y gestión en una sola plataforma.",
+      "lead": "Una misma base para organizar juego, operación y comunidad en Padbol, Pádel, Pickleball y Tenis.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
       "ctaVenue": "Quiero incorporar Padbol Match",
@@ -2265,27 +2265,27 @@
     },
     "whatIs": {
       "title": "Qué es Padbol Match",
-      "text": "Conecta jugadores y sedes. Reúne competencia, comunidad y gestión. Cada partido genera continuidad: no es solo una herramienta de reservas, sino una relación que sigue después de jugar."
+      "text": "Una plataforma para conectar a quienes juegan, las sedes donde sucede y la información que deja cada encuentro. Reservas, partidos, competencia y comunicación trabajan sobre una misma base."
     },
     "playerPath": {
       "title": "Para jugadores",
-      "text": "Encontrá partidos, creá encuentros, sumate a cupos abiertos, reservá, competí y seguí tu evolución dentro de la comunidad.",
+      "text": "Elegí tu deporte, encontrá actividad cerca y resolvé todo el recorrido de juego desde un solo lugar: partido, cancha, torneo y evolución.",
       "items": {
         "find": {
           "title": "Encontrar partidos",
-          "text": "Descubrí encuentros cerca y oportunidades para jugar."
+          "text": "Descubrí encuentros por deporte, zona y nivel."
         },
         "book": {
           "title": "Reservar",
-          "text": "Asegurá el turno en la cancha de tu sede."
+          "text": "Elegí sede, cancha y horario para jugar."
         },
         "compete": {
           "title": "Competir",
-          "text": "Torneos, equipos y resultados que suman."
+          "text": "Participá en torneos, equipos y formatos de competencia."
         },
         "community": {
           "title": "Comunidad",
-          "text": "Notificaciones, mensajes y jugadores conectados."
+          "text": "Seguí a tus sedes, jugadores y novedades relevantes."
         },
         "rewards": {
           "title": "Beneficios",
@@ -2293,21 +2293,21 @@
         },
         "create": {
           "title": "Crear un partido",
-          "text": "Definí sede, horario y nivel para invitar jugadores."
+          "text": "Publicá sede, horario, nivel y cupos para convocar jugadores."
         },
         "join": {
           "title": "Partidos abiertos",
-          "text": "Pedí un lugar, completá equipos y confirmá tu cupo."
+          "text": "Pedí un lugar, completá equipos y confirmá tu participación."
         },
         "evolve": {
           "title": "Seguir tu evolución",
-          "text": "Historial, ranking y progreso en tu perfil."
+          "text": "Consultá historial, ranking y progreso por disciplina."
         }
       }
     },
     "venuePath": {
       "title": "Para sedes y organizaciones",
-      "text": "Generá nuevos partidos, completá horarios, activá jugadores y convertí encuentros abiertos en ocupación real, con marcador inteligente y continuidad.",
+      "text": "Una operación preparada para distintos deportes: generá actividad, completá horarios y conectá cada encuentro con la gestión de tu sede.",
       "items": {
         "bookings": {
           "title": "Reservas",
@@ -2323,7 +2323,7 @@
         },
         "scoreboard": {
           "title": "Marcador inteligente",
-          "text": "Registrá el partido en vivo y conectalo con la operación de la sede."
+          "text": "Registrá el encuentro en vivo y sumá información útil a la operación."
         },
         "loyalty": {
           "title": "Fidelización",
@@ -2335,21 +2335,21 @@
         },
         "occupy": {
           "title": "Ocupación real",
-          "text": "Partidos abiertos y reservas que llenan canchas y horarios vacíos."
+          "text": "Reservas y partidos abiertos que convierten horas disponibles en juego."
         },
         "activate": {
           "title": "Activar jugadores",
-          "text": "La comunidad de la sede encuentra con quién jugar y vuelve."
+          "text": "Más personas encuentran con quién jugar y vuelven a tu sede."
         },
         "continuity": {
           "title": "Continuidad",
-          "text": "Torneos, ranking, PadCoins y membresías después de cada encuentro."
+          "text": "Cada encuentro habilita próximos torneos, beneficios y participación."
         }
       }
     },
     "continuity": {
       "title": "Antes, durante y después",
-      "text": "Cada partido puede convertirse en historial, competencia, evolución y una nueva razón para volver. Partidos abiertos, resultados, ranking, PadCoins, membresías y comunidad se refuerzan entre sí.",
+      "text": "La actividad no queda aislada: lo que ocurre antes, durante y después del encuentro forma un recorrido útil para jugadores, clubes y organizaciones.",
       "items": {
         "matches": {
           "title": "Partidos",
@@ -2357,41 +2357,41 @@
         },
         "tournaments": {
           "title": "Torneos",
-          "text": "Competencia con calendario."
+          "text": "Calendario, categorías e inscripción."
         },
         "ranking": {
           "title": "Ranking",
-          "text": "Evolución visible."
+          "text": "Posición y progreso consultables."
         },
         "scoreboard": {
           "title": "Marcador",
-          "text": "Resultado en vivo"
+          "text": "Registro del juego en vivo."
         },
         "community": {
           "title": "Comunidad",
-          "text": "Relaciones que se mantienen."
+          "text": "Conversaciones y vínculos activos."
         },
         "padcoins": {
           "title": "PadCoins",
-          "text": "Participación reconocida."
+          "text": "Participación con beneficios."
         },
         "memberships": {
           "title": "Membresías",
-          "text": "Vínculo con la sede."
+          "text": "Beneficios y relación con la sede."
         },
         "openMatches": {
           "title": "Partidos abiertos",
-          "text": "La puerta de entrada a jugar."
+          "text": "Una forma simple de activar juego."
         },
         "results": {
           "title": "Resultados",
-          "text": "El partido queda registrado."
+          "text": "El encuentro deja un registro."
         }
       }
     },
     "experiences": {
       "title": "Cinco experiencias. Una plataforma.",
-      "text": "Misma base de juego y gestión, cinco identidades visuales.",
+      "text": "Cinco identidades visuales sobre la misma base de juego y gestión multideporte.",
       "items": {
         "signature": {
           "title": "Signature",
@@ -2422,7 +2422,7 @@
     },
     "expansion": {
       "title": "El ecosistema sigue creciendo",
-      "text": "Nuevas capas comerciales para sedes, marcas y la comunidad Padbol.",
+      "text": "Nuevas capas comerciales para sedes, marcas y comunidades de deportes de cancha.",
       "items": {
         "sponsor": {
           "title": "Sponsor",
@@ -2441,15 +2441,15 @@
     },
     "about": {
       "title": "Quiénes somos",
-      "text": "Nacimos en Padbol, con una idea simple: que jugar, organizar y hacer crecer una comunidad deportiva no debería depender de herramientas desconectadas.",
-      "detail": "Padbol Match reúne jugadores, clubes, sedes y organizaciones en una misma base. Hoy parte de Padbol y se prepara para gestionar Pádel, Pickleball y Tenis con la misma lógica: más juego, mejor operación y comunidades que vuelven.",
+      "text": "Nacimos en Padbol con la idea de que jugar y organizar deporte no debería depender de herramientas desconectadas.",
+      "detail": "Convertimos esa experiencia en una base común para jugadores, clubes, sedes y organizaciones. Padbol es nuestro origen; Pádel, Pickleball y Tenis son las próximas disciplinas que la plataforma integra bajo la misma lógica.",
       "sportsLabel": "Deportes en la plataforma",
-      "playersNote": "Pensada para jugadores, clubes y organizaciones de deportes de cancha.",
+      "playersNote": "Pensada para quienes hacen posible el deporte de cancha: jugadores, clubes, sedes y organizaciones.",
       "visualAlt": "Jugadores que forman parte de una comunidad deportiva"
     },
     "download": {
       "title": "Descargar la app",
-      "text": "Llevá Padbol Match en el teléfono.",
+      "text": "Llevá tu actividad deportiva, tus partidos y tu comunidad en el teléfono.",
       "appStore": "App Store",
       "googlePlay": "Google Play",
       "storeSoon": "Aún no disponible en tiendas",
@@ -2457,7 +2457,7 @@
     },
     "contact": {
       "title": "Empezá hoy",
-      "text": "Sumá tu sede o entrá a jugar.",
+      "text": "Sumá tu sede, organizá tu comunidad o empezá a jugar.",
       "play": "Quiero jugar",
       "venue": "Quiero incorporar Padbol Match",
       "login": "Ingresar"
@@ -2483,7 +2483,7 @@
     },
     "communityMatches": {
       "title": "Jugar empieza antes de entrar a la cancha.",
-      "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
+      "text": "En Padbol, Pádel, Pickleball o Tenis, crear un encuentro y completar sus cupos puede empezar antes de llegar a la sede. La plataforma convierte intención en actividad confirmada.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
       "mockBadge": "Demostración",
@@ -2495,26 +2495,26 @@
       "steps": {
         "create": {
           "title": "Crear y publicar",
-          "text": "Armá el partido con sede, horario, nivel y cupos disponibles."
+          "text": "Definí deporte, sede, horario, nivel y cupos disponibles."
         },
         "publish": {
           "title": "Buscar y solicitar",
-          "text": "Los jugadores encuentran el encuentro abierto y piden participar."
+          "text": "Los jugadores cercanos encuentran el encuentro y solicitan participar."
         },
         "join": {
           "title": "Completar equipos",
-          "text": "Aceptá solicitudes, cerrá cupos y comunicate con el grupo."
+          "text": "Aceptá solicitudes, cerrá cupos y dejá al grupo listo para jugar."
         },
         "confirm": {
           "title": "Confirmar y jugar",
-          "text": "Notificaciones y confirmaciones convierten la intención en actividad real para la sede."
+          "text": "Las confirmaciones ordenan el encuentro y dan previsibilidad a la sede."
         }
       }
     },
     "smartScoreboard": {
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Próximamente",
-      "text": "El resultado se registra mientras se juega y queda conectado con el historial, la competencia y la actividad de la sede. Sets, parciales y correcciones quedan al servicio del partido y de lo que viene después.",
+      "text": "Cuando el formato de juego lo requiere, el marcador registra el encuentro en vivo y conserva un resultado útil para jugadores, competencia y sede.",
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",
@@ -2540,7 +2540,7 @@
         },
         "connect": {
           "title": "Conectar el resultado",
-          "text": "El partido alimenta historial, estadísticas, ranking y torneos cuando aplica."
+          "text": "El resultado puede alimentar historial, estadísticas, ranking y torneos según la disciplina."
         }
       }
     }

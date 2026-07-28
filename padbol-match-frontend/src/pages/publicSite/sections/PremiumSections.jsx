@@ -62,7 +62,7 @@ const CONTINUITY_DETAILS = {
   },
   tournaments: {
     lead: 'Organizá competencias con un calendario claro y una experiencia que acompaña al jugador desde la inscripción hasta el cierre.',
-    points: ['Inscripciones, cupos y categorías en un solo lugar.', 'Llaves, zonas o formatos según el torneo.', 'Cada fecha sostiene participación y movimiento en la sede.'],
+    points: ['Inscripciones, cupos y categorías en un solo lugar.', 'Llaves, zonas o formatos según la disciplina y el torneo.', 'Cada fecha sostiene participación y movimiento en la sede.'],
   },
   results: {
     lead: 'El juego no termina al salir de la cancha: el resultado queda asociado al encuentro y alimenta el recorrido deportivo.',
@@ -70,7 +70,7 @@ const CONTINUITY_DETAILS = {
   },
   ranking: {
     lead: 'Una evolución entendible, ligada a los partidos que realmente se juegan y a la categoría o alcance de cada competencia.',
-    points: ['Posiciones por club, categoría, nacional o FIPA.', 'Subís o bajás a partir de resultados validados.', 'Podés reconocer una clasificación externa como punto de partida.'],
+    points: ['Posiciones por club, categoría o alcance de cada circuito.', 'Subís o bajás a partir de resultados validados.', 'Podés reconocer una clasificación externa como punto de partida.'],
   },
   padcoins: {
     lead: 'La participación activa puede transformarse en reconocimiento dentro del ecosistema, con reglas visibles para todos.',
@@ -97,7 +97,7 @@ const EXPANSION_DETAILS = {
   },
   eshop: {
     lead: 'La visión es que cada club tenga su propio e-shop dentro de Padbol Match, con productos, promociones y beneficios para su comunidad.',
-    points: ['La sede cargará sus productos y administrará su catálogo.', 'Los jugadores comprarán desde el entorno del club que conocen.', 'Una misma base permite crecer sin que cada sede tenga que crear su tienda desde cero.'],
+    points: ['La sede cargará sus productos y administrará su catálogo.', 'Los jugadores comprarán desde el entorno del club que conocen.', 'La misma estructura sirve a sedes de Padbol, Pádel, Pickleball y Tenis.'],
   },
 };
 
