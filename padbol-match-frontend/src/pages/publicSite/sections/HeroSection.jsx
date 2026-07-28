@@ -71,6 +71,9 @@ export default function HeroSection() {
             {text('publicSite.hero.claim')}
           </h1>
           <p className="ps-hero__lead">{text('publicSite.hero.lead')}</p>
+          <div className="ps-hero__sports" aria-label="Deportes que se pueden gestionar con Padbol Match">
+            {['Padbol', 'Pádel', 'Pickleball', 'Tenis'].map((sport) => <span key={sport}>{sport}</span>)}
+          </div>
           <div className="ps-hero__ctas">
             <a
               href={PUBLIC_SITE_CTA.play}

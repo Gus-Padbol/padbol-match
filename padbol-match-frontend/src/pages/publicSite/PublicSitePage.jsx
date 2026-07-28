@@ -57,12 +57,12 @@ export default function PublicSitePage() {
           <PlayerPathSection />
           <CommunityMatchesSection />
         </BinaryDataStreamZone>
+        <AboutSection />
         <VenuePathSection />
         <ContinuitySection />
         <SmartScoreboardSection />
         <ExperiencesSection />
         <ExpansionSection />
-        <AboutSection />
         <DownloadSection />
         <ContactSection />
       </div>
