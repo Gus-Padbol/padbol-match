@@ -2045,6 +2045,13 @@ html.public-site-active #root {
   font-weight: 800;
 }
 
+.ps-about__players-note {
+  margin: 14px 0 0;
+  color: var(--ps-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .ps-about__placeholder {
   display: block;
   width: 100%;

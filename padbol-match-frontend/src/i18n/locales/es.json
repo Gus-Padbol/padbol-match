@@ -2444,7 +2444,8 @@
       "text": "Nacimos en Padbol, con una idea simple: que jugar, organizar y hacer crecer una comunidad deportiva no debería depender de herramientas desconectadas.",
       "detail": "Padbol Match reúne jugadores, clubes, sedes y organizaciones en una misma base. Hoy parte de Padbol y se prepara para gestionar Pádel, Pickleball y Tenis con la misma lógica: más juego, mejor operación y comunidades que vuelven.",
       "sportsLabel": "Deportes en la plataforma",
-      "visualAlt": "Cancha deportiva vista desde arriba"
+      "playersNote": "Pensada para jugadores, clubes y organizaciones de deportes de cancha.",
+      "visualAlt": "Jugadores que forman parte de una comunidad deportiva"
     },
     "download": {
       "title": "Descargar la app",

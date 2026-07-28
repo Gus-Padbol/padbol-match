@@ -450,10 +450,11 @@ export function AboutSection() {
           <div className="ps-about__sports" aria-label={text('publicSite.about.sportsLabel')}>
             {['Padbol', 'Pádel', 'Pickleball', 'Tenis'].map((sport) => <span key={sport}>{sport}</span>)}
           </div>
+          <p className="ps-about__players-note">{text('publicSite.about.playersNote')}</p>
         </div>
         <div className="ps-about__visual" role="img" aria-label={text('publicSite.about.visualAlt')}>
           <img
-            src={`${ASSET_ROOT}/real-occupancy.jpg`}
+            src={`${ASSET_ROOT}/active-players.jpg`}
             alt=""
             loading="lazy"
             decoding="async"
