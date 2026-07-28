@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { PUBLIC_SITE_CTA } from '../../../constants/publicSiteLinks';
@@ -181,18 +181,45 @@ export function VenuePathSection() {
 export function ContinuitySection() {
   const text = usePublicSiteText();
   const config = PUBLIC_SITE_SECTIONS.continuity;
+  const [activeKey, setActiveKey] = useState(null);
+
+  const closeDetail = (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
+  };
+
   return (
     <SectionShell id={config.id} className="ps-section--continuity" titleId="ps-continuity-title">
       <h2 id="ps-continuity-title">{text('publicSite.continuity.title')}</h2>
-      <p className="ps-statement">{text('publicSite.continuity.text')}</p>
       <ul className="ps-chip-row">
         {config.items.map(({ key }) => (
-          <li key={key} className="ps-chip">
-            <img src={`${ASSET_ROOT}/${CONTINUITY_ICONS[key]}`} alt="" aria-hidden="true" />
-            <div>
-              <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
-              <span>{text(`publicSite.continuity.items.${key}.text`)}</span>
-            </div>
+          <li
+            key={key}
+            className={`ps-chip-wrap${activeKey === key ? ' is-active' : ''}`}
+            onMouseEnter={() => setActiveKey(key)}
+            onMouseLeave={closeDetail}
+            onFocus={() => setActiveKey(key)}
+            onBlur={closeDetail}
+          >
+            <button
+              type="button"
+              className="ps-chip"
+              aria-expanded={activeKey === key}
+              aria-controls={`ps-continuity-detail-${key}`}
+              onClick={() => setActiveKey((current) => (current === key ? null : key))}
+            >
+              <img src={`${ASSET_ROOT}/${CONTINUITY_ICONS[key]}`} alt="" aria-hidden="true" />
+              <div>
+                <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
+                <span>{text(`publicSite.continuity.items.${key}.text`)}</span>
+              </div>
+            </button>
+            {activeKey === key && (
+              <aside id={`ps-continuity-detail-${key}`} className="ps-chip__detail" role="status">
+                <span className="ps-chip__eyebrow">Padbol Match</span>
+                <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
+                <p>{text(`publicSite.continuity.items.${key}.text`)}</p>
+              </aside>
+            )}
           </li>
         ))}
       </ul>
