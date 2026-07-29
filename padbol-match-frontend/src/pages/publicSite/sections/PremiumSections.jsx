@@ -50,9 +50,9 @@ const EXPANSION_ICONS = {
 };
 
 const OPEN_MATCH_DEMO_STATES = [
-  { filled: 2, revenue: '$12.000', status: 'Buscando 2 jugadores', note: '50% de ocupación' },
-  { filled: 3, revenue: '$18.000', status: 'Un jugador confirmó', note: '75% de ocupación' },
-  { filled: 4, revenue: '$24.000', status: 'Partido confirmado', note: '100% de ocupación' },
+  { filled: 2, status: 'Buscando 2 jugadores', note: '50% de ocupación' },
+  { filled: 3, status: 'Un jugador confirmó', note: '75% de ocupación' },
+  { filled: 4, status: 'Partido confirmado', note: '100% de ocupación' },
 ];
 
 const CONTINUITY_DETAILS = {
@@ -198,17 +198,18 @@ function OpenMatchMockup({ text }) {
           <p className="ps-match__slots-label" aria-live="polite">
             {demo.filled} de 4 lugares confirmados
           </p>
-          <div className="ps-match__metrics" aria-label="Simulación de actividad estimada">
+          <div className="ps-match__metrics" aria-label="Simulación de ocupación y confirmación">
             <div>
               <span>Ocupación</span>
               <strong>{demo.note}</strong>
             </div>
             <div>
-              <span>Recaudación estimada</span>
-              <strong className="ps-match__revenue">{demo.revenue}</strong>
+              <span>Reserva</span>
+              <strong className="ps-match__confirmation">Al completar cupos</strong>
             </div>
           </div>
           <p className="ps-match__status" aria-live="polite"><i />{demo.status}</p>
+          <p className="ps-match__release-note">Si no se completa, la reserva se libera 8 h antes.</p>
           <span className="ps-match__cta">{text('publicSite.communityMatches.mockAction')}</span>
         </div>
       </div>
