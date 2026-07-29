@@ -254,7 +254,7 @@ function AdminDashboardGate() {
     };
   }, [session, userProfile]);
 
-  const { rol, sedeId, loading: roleLoading } = useUserRole(currentCliente);
+  const { rol, sedeId, loading: roleLoading, error: roleError } = useUserRole(currentCliente);
   const rolPanel = normalizeUserRole(rol);
   const canAccessAdmin = userCanAccessAdminPanel(rolPanel);
 
@@ -313,6 +313,28 @@ function AdminDashboardGate() {
       <ErrorBoundary label="el panel de administración">
         <AdminDashboard rol={rolPanel} sedeId={sedeId} handleLogout={signOutAndClear} />
       </ErrorBoundary>
+    );
+  }
+
+  if (roleError) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 16, padding: 24, textAlign: 'center', color: 'rgba(255,255,255,0.95)', boxSizing: 'border-box',
+        }}
+      >
+        <strong style={{ fontSize: '20px' }}>No pudimos cargar el panel</strong>
+        <p style={{ maxWidth: 420, margin: 0, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>
+          La sesión está activa, pero la verificación de permisos no respondió a tiempo. Probá nuevamente.
+        </p>
+        <button type="button" onClick={() => window.location.reload()} style={{ padding: '12px 18px', border: 0, borderRadius: 10, background: '#e11b22', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+          Reintentar
+        </button>
+        <button type="button" onClick={() => navigate('/')} style={{ padding: '8px 14px', border: 0, background: 'transparent', color: 'rgba(255,255,255,0.78)', cursor: 'pointer' }}>
+          Volver a la app
+        </button>
+      </div>
     );
   }
 

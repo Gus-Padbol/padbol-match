@@ -8,6 +8,15 @@ import {
 } from '../utils/adminPanelRoles';
 
 const STORAGE_KEY = USER_ROLE_STORAGE_KEY;
+const ROLE_LOOKUP_TIMEOUT_MS = 12_000;
+
+function withTimeout(promise, message) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), ROLE_LOOKUP_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+}
 
 function roleDataFromCached(email) {
   const cached = readCachedUserRoleForEmail(email);
@@ -43,6 +52,7 @@ export default function useUserRole(currentCliente) {
   );
   /** true mientras no hay email; con email, true hasta resolver rol vía GET /api/auth/mi-rol. */
   const [loading, setLoading] = useState(() => Boolean(emailKey));
+  const [error, setError] = useState(null);
 
   useLayoutEffect(() => {
     if (!emailKey) return;
@@ -55,6 +65,7 @@ export default function useUserRole(currentCliente) {
     if (!emailKey) {
       localStorage.removeItem(STORAGE_KEY);
       setRoleData(null);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -63,7 +74,11 @@ export default function useUserRole(currentCliente) {
 
     (async () => {
       try {
-        const { data: sessWrap } = await supabase.auth.getSession();
+        setError(null);
+        const { data: sessWrap } = await withTimeout(
+          supabase.auth.getSession(),
+          'La sesión tardó demasiado en responder.',
+        );
         const token = sessWrap?.session?.access_token;
 
         if (!token) {
@@ -77,9 +92,13 @@ export default function useUserRole(currentCliente) {
 
         let apiResult = null;
         try {
-          apiResult = await fetchMiRol(token);
+          apiResult = await withTimeout(
+            fetchMiRol(token),
+            'La verificación de permisos tardó demasiado en responder.',
+          );
         } catch (apiErr) {
           console.warn('useUserRole: /api/auth/mi-rol error:', apiErr?.message || apiErr);
+          if (!cancelled) setError(apiErr?.message || 'No se pudo verificar el permiso administrativo.');
         }
 
         if (cancelled) return;
@@ -96,6 +115,7 @@ export default function useUserRole(currentCliente) {
         if (!cancelled) {
           console.error('useUserRole fetch error:', err?.message || err);
           setRoleData(null);
+          setError(err?.message || 'No se pudo resolver la sesión.');
           localStorage.removeItem(STORAGE_KEY);
         }
       } finally {
@@ -115,5 +135,6 @@ export default function useUserRole(currentCliente) {
     sedeId: roleData?.sedeId ?? null,
     torneosOficialesHabilitados: roleData?.torneosOficialesHabilitados ?? false,
     loading,
+    error,
   };
 }
