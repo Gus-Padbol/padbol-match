@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import PublicSiteLayout from './PublicSiteLayout';
 import HeroSection from './sections/HeroSection';
 import ExperiencesSection from './sections/ExperiencesSection';
-import BinaryDataStreamZone from './sections/BinaryDataStreamZone';
 import {
   WhatIsSection,
   PlatformStatusSection,
@@ -53,12 +52,10 @@ export default function PublicSitePage() {
     <PublicSiteLayout>
       <div ref={revealRootRef} className="public-site__reveal-root">
         <HeroSection />
-        <BinaryDataStreamZone>
-          <WhatIsSection />
-          <PlatformStatusSection />
-          <PlayerPathSection />
-          <CommunityMatchesSection />
-        </BinaryDataStreamZone>
+        <WhatIsSection />
+        <PlatformStatusSection />
+        <PlayerPathSection />
+        <CommunityMatchesSection />
         <AboutSection />
         <VenuePathSection />
         <ContinuitySection />

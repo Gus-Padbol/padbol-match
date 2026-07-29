@@ -1526,9 +1526,7 @@ html.public-site-active #root {
 .ps-section--continuity {
   z-index: 5;
   overflow: visible;
-  background:
-    radial-gradient(700px 360px at 0% 0%, rgba(225, 27, 34, 0.12), transparent 60%),
-    var(--ps-bg);
+  background: var(--ps-bg);
 }
 
 .ps-chip-row {
