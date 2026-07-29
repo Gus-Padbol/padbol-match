@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, Suspense, lazy } from 'react';
+import React, { useMemo, useEffect, useState, Suspense, lazy } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -242,6 +242,7 @@ function WildcardFallback() {
 function AdminDashboardGate() {
   const navigate = useNavigate();
   const { session, userProfile, signOutAndClear } = useAuth();
+  const [roleGateTimedOut, setRoleGateTimedOut] = useState(false);
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -268,6 +269,15 @@ function AdminDashboardGate() {
       canAccessAdmin,
     });
   }, [roleLoading, session?.user?.email, rolPanel, sedeId, canAccessAdmin]);
+
+  // Última red de seguridad: el panel nunca debe quedar con un spinner infinito,
+  // incluso si el navegador bloquea una promesa de autenticación o de red.
+  useEffect(() => {
+    setRoleGateTimedOut(false);
+    if (!roleLoading) return undefined;
+    const timeoutId = window.setTimeout(() => setRoleGateTimedOut(true), 15_000);
+    return () => window.clearTimeout(timeoutId);
+  }, [roleLoading, currentCliente?.email]);
 
   const stillResolvingRole = roleLoading;
 
@@ -304,7 +314,7 @@ function AdminDashboardGate() {
     </div>
   );
 
-  if (stillResolvingRole) {
+  if (stillResolvingRole && !roleGateTimedOut) {
     return spinner;
   }
 
@@ -316,7 +326,7 @@ function AdminDashboardGate() {
     );
   }
 
-  if (roleError) {
+  if (roleError || roleGateTimedOut) {
     return (
       <div
         style={{
