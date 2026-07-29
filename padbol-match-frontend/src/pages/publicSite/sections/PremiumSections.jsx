@@ -101,6 +101,24 @@ const EXPANSION_DETAILS = {
   },
 };
 
+function AccentWords({ value, terms = [] }) {
+  if (!value || !terms.length) return value;
+
+  const escapedTerms = terms
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+  if (!escapedTerms.length) return value;
+
+  const matcher = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+  return String(value).split(matcher).map((part, index) => (
+    terms.some((term) => term.toLocaleLowerCase('es-AR') === part.toLocaleLowerCase('es-AR'))
+      ? <span className="ps-title-accent" key={`${part}-${index}`}>{part}</span>
+      : part
+  ));
+}
+
 export function SectionShell({ id, className = '', titleId, children }) {
   return (
     <section id={id} className={`ps-section ${className}`.trim()} aria-labelledby={titleId} data-ps-reveal>
@@ -118,7 +136,7 @@ export function WhatIsSection() {
       <div className="ps-what__brand" aria-hidden="true">
         <img src={`${ASSET_ROOT}/match.svg`} alt="" />
       </div>
-      <h2 id="ps-what-title">{text('publicSite.whatIs.title')}</h2>
+      <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Qué']} /></h2>
       <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
     </SectionShell>
   );
@@ -229,7 +247,7 @@ export function CommunityMatchesSection() {
     >
       <div className="ps-community__grid">
         <div className="ps-community__copy">
-          <h2 id="ps-community-matches-title">{text('publicSite.communityMatches.title')}</h2>
+          <h2 id="ps-community-matches-title"><AccentWords value={text('publicSite.communityMatches.title')} terms={['Jugar', 'cancha']} /></h2>
           <p className="ps-lead">{text('publicSite.communityMatches.text')}</p>
           <ol className="ps-flow-steps">
             {config.steps.map(({ key }, index) => (
@@ -260,7 +278,7 @@ export function VenuePathSection() {
   const config = PUBLIC_SITE_SECTIONS.venuePath;
   return (
     <SectionShell id={config.id} className="ps-section--paths ps-section--venues" titleId="ps-venues-title">
-      <h2 id="ps-venues-title">{text('publicSite.venuePath.title')}</h2>
+      <h2 id="ps-venues-title"><AccentWords value={text('publicSite.venuePath.title')} terms={['sedes', 'organizaciones']} /></h2>
       <p className="ps-lead">{text('publicSite.venuePath.text')}</p>
       <ul className="ps-venue-cards">
         {config.items.map(({ key }) => (
@@ -298,7 +316,7 @@ export function ContinuitySection() {
 
   return (
     <SectionShell id={config.id} className="ps-section--continuity" titleId="ps-continuity-title">
-      <h2 id="ps-continuity-title">{text('publicSite.continuity.title')}</h2>
+      <h2 id="ps-continuity-title"><AccentWords value={text('publicSite.continuity.title')} terms={['durante']} /></h2>
       <ul className="ps-chip-row">
         {config.items.map(({ key }) => (
           <li
@@ -393,9 +411,9 @@ export function SmartScoreboardSection() {
       </span>
       <div className="ps-scoreboard__grid">
         <div className="ps-scoreboard__copy">
-          <h2 id="ps-smart-scoreboard-title">{text('publicSite.smartScoreboard.title')}</h2>
+          <h2 id="ps-smart-scoreboard-title"><AccentWords value={text('publicSite.smartScoreboard.title')} terms={['Marcador', 'partido en vivo']} /></h2>
           <p className="ps-lead">{text('publicSite.smartScoreboard.text')}</p>
-          <ol className="ps-flow-steps">
+          <ol className="ps-flow-steps ps-flow-steps--scoreboard">
             {config.steps.map(({ key }, index) => (
               <li key={key}>
                 <span className="ps-flow-steps__num" aria-hidden="true">
@@ -427,7 +445,7 @@ export function ExpansionSection() {
 
   return (
     <SectionShell id={config.id} className="ps-section--expansion" titleId="ps-expansion-title">
-      <h2 id="ps-expansion-title">{text('publicSite.expansion.title')}</h2>
+      <h2 id="ps-expansion-title"><AccentWords value={text('publicSite.expansion.title')} terms={['ecosistema']} /></h2>
       <p className="ps-lead">{text('publicSite.expansion.text')}</p>
       <div className="ps-expansion__grid">
         {config.items.map(({ key }) => (
@@ -479,7 +497,7 @@ export function AboutSection() {
       <div className="ps-about__grid">
         <div>
           <span className="ps-about__kicker">Padbol Match · deporte conectado</span>
-          <h2 id="ps-about-title">{text('publicSite.about.title')}</h2>
+          <h2 id="ps-about-title"><AccentWords value={text('publicSite.about.title')} terms={['Quiénes somos']} /></h2>
           <p className="ps-lead">{text('publicSite.about.text')}</p>
           <p className="ps-about__detail">{text('publicSite.about.detail')}</p>
           <div className="ps-about__sports" aria-label={text('publicSite.about.sportsLabel')}>
@@ -511,7 +529,7 @@ export function DownloadSection() {
         className="ps-download__logo"
         alt={text('publicSite.brandAlt')}
       />
-      <h2 id="ps-download-title">{text('publicSite.download.title')}</h2>
+      <h2 id="ps-download-title"><AccentWords value={text('publicSite.download.title')} terms={['app']} /></h2>
       <p className="ps-lead">{text('publicSite.download.text')}</p>
       <div className="ps-download__stores">
         {config.stores.map(({ key, url }) =>
