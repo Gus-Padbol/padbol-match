@@ -88,6 +88,10 @@ export function useSafeTranslation(ns) {
       }
       const fallbacks = getLocaleFallbacks(currentLang);
       const defaultValue = explicitFallback || fallbacks[k] || k;
+      // i18next puede devolver el fallback en inglés cuando falta una clave del
+      // idioma activo. Si el componente entregó una traducción explícita para
+      // ese idioma, debe prevalecer: evita interfaces mixtas (p. ej. PadCoins).
+      if (!fallbacks[k] && explicitFallback) return explicitFallback;
       let raw;
       try {
         raw = tBase(k, { ...opts, defaultValue, lng: currentLang });

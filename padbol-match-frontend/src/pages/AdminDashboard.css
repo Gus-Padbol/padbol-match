@@ -2304,8 +2304,8 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 }
 
 .admin-scoreboard-jugador-row {
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: 32px 52px 52px minmax(0, 1fr) 76px 32px;
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
@@ -2487,16 +2487,27 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 @media (max-width: 480px) {
   .admin-scoreboard-jugador-row {
     gap: 6px;
+    grid-template-columns: 28px 42px 42px minmax(0, 1fr) 32px;
   }
 
   .admin-scoreboard-jugador-row__optional-label {
-    width: 44px;
+    display: none;
     font-size: 9px;
   }
 
   .admin-scoreboard-jugador-row__jersey {
     width: 44px;
     padding: 8px 4px;
+  }
+
+  .admin-scoreboard-jugador-row__foto {
+    width: 32px;
+    min-width: 32px;
+    max-width: 32px;
+  }
+
+  .admin-scoreboard-jugador-row__foto-avatar {
+    display: none;
   }
 }
 

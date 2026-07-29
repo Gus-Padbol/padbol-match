@@ -125,6 +125,18 @@ html.theme-dark .admin-hub-promo-sede__panel {
   cursor: not-allowed;
 }
 
+.admin-hub-promo-sede__remove-btn {
+  margin: 8px 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--pm-color-error, #dc2626);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .admin-hub-promo-sede__preview {
   margin-top: 12px;
   border-radius: 10px;

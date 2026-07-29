@@ -26,7 +26,6 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
     () => [
       { k: 'titulo', label: t('admin.hub.title'), ph: t('admin.hub.titlePlaceholder') },
       { k: 'subtitulo', label: t('admin.hub.subtitle'), ph: t('admin.hub.optional') },
-      { k: 'texto_boton', label: t('admin.hub.buttonText'), ph: t('admin.hub.seeMore') },
       { k: 'url_destino', label: t('admin.hub.clickUrl'), ph: t('admin.hub.urlPlaceholder') },
     ],
     [t],
@@ -39,6 +38,11 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
   const [msg, setMsg] = useState('');
   const [imagenUploading, setImagenUploading] = useState(false);
   const imagenFileRef = useRef(null);
+  const BUTTON_TEXT_OPTIONS = [
+    t('admin.hub.seeMore'),
+    t('admin.hub.bookNow', 'Reservar ahora'),
+    t('admin.hub.buyNow', 'Comprar'),
+  ];
 
   const load = useCallback(async () => {
     if (sid == null) {
@@ -216,6 +220,15 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
               >
                 {imagenUploading ? `⏳ ${t('admin.hub.uploading')}` : `📷 ${t('admin.hub.uploadFromDevice')}`}
               </button>
+              {String(form.imagen_url || '').trim() ? (
+                <button
+                  type="button"
+                  className="admin-hub-promo-sede__remove-btn"
+                  onClick={() => patch({ imagen_url: '' })}
+                >
+                  {t('admin.hub.removeImage', 'Quitar imagen')}
+                </button>
+              ) : null}
               <p className="admin-hub-promo-sede__intro" style={{ marginTop: '8px', marginBottom: 0 }}>
                 {t('admin.hub.imageStorageHint')}
               </p>
@@ -230,6 +243,20 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
                   />
                 </div>
               ) : null}
+            </div>
+
+            <div className="admin-hub-promo-sede__field">
+              <label className="admin-hub-promo-sede__label" htmlFor="hub-promo-texto-boton">
+                {t('admin.hub.buttonText')}
+              </label>
+              <select
+                id="hub-promo-texto-boton"
+                className="admin-hub-promo-sede__input"
+                value={form.texto_boton}
+                onChange={(e) => patch({ texto_boton: e.target.value })}
+              >
+                {BUTTON_TEXT_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
             </div>
 
             {textFields.map(({ k, label, ph }) => (

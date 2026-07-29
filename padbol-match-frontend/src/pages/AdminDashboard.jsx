@@ -11156,7 +11156,7 @@ export default function AdminDashboard({
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2 style={{ margin: 0 }}>📋 {t('admin.torneosSection.createdTitle')}</h2>
-          {puedeBatchTorneosResumen && torneoStatsError ? (
+          {puedeBatchTorneosResumen && torneoStatsError && torneos.length === 0 ? (
             <div
               role="status"
               style={{
