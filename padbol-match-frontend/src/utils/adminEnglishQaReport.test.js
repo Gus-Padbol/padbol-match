@@ -17,7 +17,9 @@ describe('QA English report — Admin panel', () => {
     expect(en.admin.overview.todayRevenue).toBe('TODAY’S REVENUE');
     expect(en.admin.scoreboard.title).toBe('Live scoreboard');
     expect(en.admin.scoreboard.selectFile).toBe('Select file');
-    expect(Object.keys(en.admin.padcoins)).toHaveLength(180);
+    // El módulo sigue creciendo; verificamos el grupo y sus claves críticas
+    // sin volver frágil el test por cada nueva etiqueta traducida.
+    expect(Object.keys(en.admin.padcoins).length).toBeGreaterThanOrEqual(260);
     expect(en.admin.padcoins.title).toBe('PadCoins Benefits');
   });
 
