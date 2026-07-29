@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSafeTranslation } from '../../i18n/tSafe';
 import UniformJerseyStrip from '../scoreboard/UniformJerseyStrip';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
@@ -46,6 +47,7 @@ function jugadoresPreviewList(jugadores, jerseyFields = []) {
 }
 
 export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
+  const { t } = useSafeTranslation();
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const tvLink = buildScoreboardTvCanchaUrl(partido.sede_id, partido.cancha);
   const arbiterLink = `${origin}/admin/scoreboard/${partido.id}`;
@@ -73,7 +75,7 @@ export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
           className="admin-sb-partido-preview__team-name"
           style={{ color: accentColor }}
         >
-          {nombre || `Equipo ${side}`}
+          {nombre || t('admin.scoreboard.teamFallback', { side, defaultValue: `Equipo ${side}` })}
         </p>
         <ul className="admin-sb-partido-preview__players">
           {jugadores.map((j, idx) => (
@@ -106,14 +108,14 @@ export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
           📺 TV
         </a>
         <a href={arbiterLink} className="admin-sb-partido-preview__action-btn">
-          🎮 Árbitro
+          🎮 {t('admin.scoreboard.refereeAction', 'Árbitro')}
         </a>
         <button
           type="button"
           onClick={() => onEdit(partido.id)}
           className="admin-sb-partido-preview__action-btn"
         >
-          ✏️ Editar
+          ✏️ {t('admin.scoreboard.editAction', 'Editar')}
         </button>
       </div>
     </div>

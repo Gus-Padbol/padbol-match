@@ -1466,6 +1466,9 @@
       "padbolLicenseTitle": "🔐 PADBOL license",
       "licenseGrantDate": "Grant date",
       "licenseSuspended": "❌ Suspended",
+      "licenseActive": "✅ Active",
+      "licenseSave": "💾 Save license",
+      "licenseSuperAdminOnly": "🔒 Only a Super Admin can modify this data.",
       "heroColorsTitle": "Hero colors",
       "currencyArs": "ARS — Argentine peso",
       "currencyClp": "CLP — Chilean peso",
@@ -1639,11 +1642,15 @@
         "club_no_oficial": "Unofficial club",
         "club_oficial": "Official club",
         "mundial": "World",
-        "local": "Local"
+        "local": "Local",
+        "avanzado": "Advanced"
       }
     },
     "scoreboard": {
       "copyArbiterLink": "Copy referee link",
+      "refereeAction": "Referee",
+      "editAction": "Edit",
+      "teamFallback": "Team {{side}}",
       "hidePreview": "Hide",
       "showPreview": "View",
       "copyVerLink": "Copy public view link",
@@ -1713,6 +1720,53 @@
       "arbiterLink": "Referee panel"
     },
     "padcoins": {
+      "from": "From",
+      "until": "Until",
+      "campaignType": {
+        "multiplier": "Multiplier",
+        "percentage_override": "Temporary percentage",
+        "fixed_padcoins": "Fixed PadCoins",
+        "benefit_equivalent": "Benefit equivalent"
+      },
+      "campaignState": {
+        "draft": "Draft",
+        "active": "Active",
+        "paused": "Paused",
+        "ended": "Ended"
+      },
+      "movementReference": {
+        "canje_premio": "Redemption",
+        "canje": "Redemption",
+        "penalizacion": "Penalty",
+        "reserva": "Booking",
+        "logro": "Achievement",
+        "ajuste": "Adjustment"
+      },
+      "movementType": {
+        "penalty": "Penalty",
+        "booking": "Booking",
+        "earn": "Credit",
+        "spend": "Redemption / discount",
+        "adjust": "Admin adjustment",
+        "reverse": "Reversal",
+        "default": "Movement"
+      },
+      "alertSeverity": {
+        "high": "Critical / review",
+        "medium": "Attention",
+        "low": "Informational",
+        "default": "Alert"
+      },
+      "alertType": {
+        "campania_identificada": "Campaign detected",
+        "volumen_anormal": "Unusual activity",
+        "acreditacion_masiva": "Unusual credits",
+        "uso_concentrado": "Concentrated usage",
+        "canje_masivo": "Unusual redemptions",
+        "ajuste_frecuente": "Frequent adjustments",
+        "posible_abuso": "Possible abuse",
+        "uso_anormal": "Unusual use"
+      },
       "redeemDelivered": "Delivered",
       "redeemCancelled": "Cancelled",
       "redeemPending": "Pending",

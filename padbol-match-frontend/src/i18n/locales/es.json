@@ -1493,6 +1493,9 @@
       "padbolLicenseTitle": "🔐 Licencia PADBOL",
       "licenseGrantDate": "Fecha de otorgamiento",
       "licenseSuspended": "❌ Suspendida",
+      "licenseActive": "✅ Activa",
+      "licenseSave": "💾 Guardar licencia",
+      "licenseSuperAdminOnly": "🔒 Solo un Super Admin puede modificar estos datos.",
       "heroColorsTitle": "Colores del hero",
       "currencyArs": "ARS — Peso argentino",
       "currencyClp": "CLP — Peso chileno",
@@ -1666,11 +1669,15 @@
         "club_no_oficial": "Club no oficial",
         "club_oficial": "Club oficial",
         "mundial": "Mundial",
-        "local": "Local"
+        "local": "Local",
+        "avanzado": "Avanzado"
       }
     },
     "scoreboard": {
       "copyArbiterLink": "Copiar link árbitro",
+      "refereeAction": "Árbitro",
+      "editAction": "Editar",
+      "teamFallback": "Equipo {{side}}",
       "hidePreview": "Ocultar",
       "showPreview": "Ver",
       "copyVerLink": "Copiar link vista pública",
@@ -2405,7 +2412,54 @@
           "title": "Comunidad",
           "text": "Conversaciones y vínculos activos."
         },
-        "padcoins": {
+    "padcoins": {
+      "from": "Desde",
+      "until": "Hasta",
+      "campaignType": {
+        "multiplier": "Multiplicador",
+        "percentage_override": "Porcentaje temporal",
+        "fixed_padcoins": "PadCoins fijos",
+        "benefit_equivalent": "Equivalente a beneficio"
+      },
+      "campaignState": {
+        "draft": "Borrador",
+        "active": "Activa",
+        "paused": "Pausada",
+        "ended": "Finalizada"
+      },
+      "movementReference": {
+        "canje_premio": "Canje",
+        "canje": "Canje",
+        "penalizacion": "Penalización",
+        "reserva": "Reserva",
+        "logro": "Logro",
+        "ajuste": "Ajuste"
+      },
+      "movementType": {
+        "penalty": "Penalización",
+        "booking": "Reserva",
+        "earn": "Acreditación",
+        "spend": "Canje / descuento",
+        "adjust": "Ajuste admin",
+        "reverse": "Reversa",
+        "default": "Movimiento"
+      },
+      "alertSeverity": {
+        "high": "Crítica / revisar",
+        "medium": "Atención",
+        "low": "Informativa",
+        "default": "Alerta"
+      },
+      "alertType": {
+        "campania_identificada": "Campaña detectada",
+        "volumen_anormal": "Actividad poco habitual",
+        "acreditacion_masiva": "Acreditaciones inusuales",
+        "uso_concentrado": "Uso concentrado",
+        "canje_masivo": "Canjes inusuales",
+        "ajuste_frecuente": "Ajustes frecuentes",
+        "posible_abuso": "Posible abuso",
+        "uso_anormal": "Uso anormal"
+      },
           "title": "PadCoins",
           "text": "Participación con beneficios."
         },

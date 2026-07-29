@@ -487,7 +487,7 @@ function AdminScoreboardPartidoListItem({
         <div className="admin-sb-actions">
           <a href={arbiterLink} className="admin-sb-actions__arbitro">
             <SbIconPlay size={14} />
-            Árbitro
+            {t('admin.scoreboard.refereeAction', 'Árbitro')}
           </a>
           <button
             type="button"
@@ -580,7 +580,7 @@ function AdminScoreboardPartidoListItem({
             className="admin-sb-actions__edit"
           >
             <SbIconPencil size={14} />
-            Editar
+            {t('admin.scoreboard.editAction', 'Editar')}
           </button>
         </div>
         {copiedKey ? (
@@ -1368,14 +1368,16 @@ const EMPTY_PC_CAMPAIGN_FORM = () => ({
   message_body: '',
 });
 
-function padcoinsCampaignTypeLabel(type) {
+function padcoinsCampaignTypeLabel(type, t) {
   const id = String(type || '').trim();
-  return PC_CAMPAIGN_TYPES.find((row) => row.id === id)?.label || id || '—';
+  const fallback = PC_CAMPAIGN_TYPES.find((row) => row.id === id)?.label || id || '—';
+  return t ? t(`admin.padcoins.campaignType.${id}`, { defaultValue: fallback }) : fallback;
 }
 
-function padcoinsCampaignStateBadge(status) {
+function padcoinsCampaignStateBadge(status, t) {
   const key = String(status || 'draft').trim().toLowerCase();
-  return PC_CAMPAIGN_STATE_BADGES[key] || PC_CAMPAIGN_STATE_BADGES.draft;
+  const badge = PC_CAMPAIGN_STATE_BADGES[key] || PC_CAMPAIGN_STATE_BADGES.draft;
+  return { ...badge, label: t ? t(`admin.padcoins.campaignState.${key}`, { defaultValue: badge.label }) : badge.label };
 }
 
 function parsePadcoinsCampaignsList(data) {
@@ -1748,7 +1750,7 @@ function parsePadcoinsMovimientosResponse(data) {
   return { movimientos, total: Number(total) || 0, limit: Number(limit) || PC_MOV_PAGE_SIZE, offset: Number(offset) || 0 };
 }
 
-function padcoinsMovRefTipoLabel(rt) {
+function padcoinsMovRefTipoLabel(rt, t) {
   const key = String(rt || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const map = {
     canje_premio: 'Canje',
@@ -1758,7 +1760,8 @@ function padcoinsMovRefTipoLabel(rt) {
     logro: 'Logro',
     ajuste: 'Ajuste',
   };
-  return map[key] || (rt ? String(rt) : '');
+  const fallback = map[key] || (rt ? String(rt) : '');
+  return t ? t(`admin.padcoins.movementReference.${key}`, { defaultValue: fallback }) : fallback;
 }
 
 function padcoinsMovReferenciaIdCorto(id) {
@@ -1768,19 +1771,19 @@ function padcoinsMovReferenciaIdCorto(id) {
   return `#${s.slice(0, 8)}…`;
 }
 
-function padcoinsMovReferenciaDisplay(row) {
-  const rtLabel = padcoinsMovRefTipoLabel(row?.referencia_tipo);
+function padcoinsMovReferenciaDisplay(row, t) {
+  const rtLabel = padcoinsMovRefTipoLabel(row?.referencia_tipo, t);
   const ri = padcoinsMovReferenciaIdCorto(row?.referencia_id);
   if (!rtLabel && !ri) return '—';
   return [rtLabel, ri].filter(Boolean).join(' ') || '—';
 }
 
-function formatPadcoinsMovFechaCorta(raw) {
+function formatPadcoinsMovFechaCorta(raw, locale = 'es-AR') {
   const src = raw?.fecha ?? raw?.created_at;
   if (!src) return '—';
   const d = new Date(src);
   if (Number.isNaN(d.getTime())) return String(src).slice(0, 16);
-  return d.toLocaleString('es-AR', {
+  return d.toLocaleString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
@@ -1789,21 +1792,21 @@ function formatPadcoinsMovFechaCorta(raw) {
   });
 }
 
-function padcoinsMovTipoBadge(row) {
+function padcoinsMovTipoBadge(row, t) {
   const tipo = String(row?.tipo || '').trim().toLowerCase();
   const refTipo = String(row?.referencia_tipo || '').trim().toLowerCase();
   if (refTipo === 'penalizacion' || refTipo === 'penalización') {
-    return { label: 'Penalización', bg: '#fee2e2', color: '#991b1b' };
+    return { label: t ? t('admin.padcoins.movementType.penalty', 'Penalización') : 'Penalización', bg: '#fee2e2', color: '#991b1b' };
   }
   if (refTipo === 'reserva') {
-    return { label: 'Reserva', bg: '#dbeafe', color: '#1e40af' };
+    return { label: t ? t('admin.padcoins.movementType.booking', 'Reserva') : 'Reserva', bg: '#dbeafe', color: '#1e40af' };
   }
-  if (tipo === 'earn') return { label: 'Acreditación', bg: '#dcfce7', color: '#166534' };
-  if (tipo === 'spend') return { label: 'Canje / descuento', bg: '#fef3c7', color: '#92400e' };
-  if (tipo === 'adjust') return { label: 'Ajuste admin', bg: '#e0e7ff', color: '#3730a3' };
-  if (tipo === 'reverse') return { label: 'Reversa', bg: '#f3e8ff', color: '#6b21a8' };
+  if (tipo === 'earn') return { label: t ? t('admin.padcoins.movementType.earn', 'Acreditación') : 'Acreditación', bg: '#dcfce7', color: '#166534' };
+  if (tipo === 'spend') return { label: t ? t('admin.padcoins.movementType.spend', 'Canje / descuento') : 'Canje / descuento', bg: '#fef3c7', color: '#92400e' };
+  if (tipo === 'adjust') return { label: t ? t('admin.padcoins.movementType.adjust', 'Ajuste admin') : 'Ajuste admin', bg: '#e0e7ff', color: '#3730a3' };
+  if (tipo === 'reverse') return { label: t ? t('admin.padcoins.movementType.reverse', 'Reversa') : 'Reversa', bg: '#f3e8ff', color: '#6b21a8' };
   if (tipo) return { label: tipo, bg: 'var(--bg-page)', color: 'var(--text-muted)' };
-  return { label: 'Movimiento', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
+  return { label: t ? t('admin.padcoins.movementType.default', 'Movimiento') : 'Movimiento', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
 }
 
 function padcoinsMovMontoDisplay(monto) {
@@ -1852,15 +1855,15 @@ function parsePadcoinsAlertasResponse(data) {
   return { alertas, total: Number(total) || 0, limit: Number(limit) || PC_ALERT_PAGE_SIZE, offset: Number(offset) || 0 };
 }
 
-function padcoinsAlertSeveridadBadge(severidad) {
+function padcoinsAlertSeveridadBadge(severidad, t) {
   const key = String(severidad || '').trim().toLowerCase();
-  if (key === 'alta') return { label: 'Crítica / revisar', bg: '#fee2e2', color: '#991b1b' };
-  if (key === 'media') return { label: 'Atención', bg: '#fef3c7', color: '#92400e' };
-  if (key === 'baja') return { label: 'Informativa', bg: '#e0f2fe', color: '#0369a1' };
-  return { label: severidad || 'Alerta', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
+  if (key === 'alta') return { label: t ? t('admin.padcoins.alertSeverity.high', 'Crítica / revisar') : 'Crítica / revisar', bg: '#fee2e2', color: '#991b1b' };
+  if (key === 'media') return { label: t ? t('admin.padcoins.alertSeverity.medium', 'Atención') : 'Atención', bg: '#fef3c7', color: '#92400e' };
+  if (key === 'baja') return { label: t ? t('admin.padcoins.alertSeverity.low', 'Informativa') : 'Informativa', bg: '#e0f2fe', color: '#0369a1' };
+  return { label: severidad || (t ? t('admin.padcoins.alertSeverity.default', 'Alerta') : 'Alerta'), bg: 'var(--bg-page)', color: 'var(--text-muted)' };
 }
 
-function padcoinsAlertTipoLabel(tipo) {
+function padcoinsAlertTipoLabel(tipo, t) {
   const key = String(tipo || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const map = {
     campania_identificada: 'Campaña detectada',
@@ -1872,15 +1875,16 @@ function padcoinsAlertTipoLabel(tipo) {
     posible_abuso: 'Posible abuso',
     uso_anormal: 'Uso anormal',
   };
-  return map[key] || (tipo ? String(tipo).replace(/_/g, ' ') : '—');
+  const fallback = map[key] || (tipo ? String(tipo).replace(/_/g, ' ') : '—');
+  return t ? t(`admin.padcoins.alertType.${key}`, { defaultValue: fallback }) : fallback;
 }
 
-function padcoinsAlertTipoBadge(tipo) {
+function padcoinsAlertTipoBadge(tipo, t) {
   const key = String(tipo || '').trim().toLowerCase();
   if (key === 'campania_identificada') {
-    return { label: 'Campaña detectada', bg: '#f3e8ff', color: '#6b21a8' };
+    return { label: t ? t('admin.padcoins.alertType.campania_identificada', 'Campaña detectada') : 'Campaña detectada', bg: '#f3e8ff', color: '#6b21a8' };
   }
-  return { label: padcoinsAlertTipoLabel(tipo), bg: '#f1f5f9', color: '#334155' };
+  return { label: padcoinsAlertTipoLabel(tipo, t), bg: '#f1f5f9', color: '#334155' };
 }
 
 function padcoinsAlertMetricasDisplay(metricas) {
@@ -1894,21 +1898,21 @@ function padcoinsAlertMetricasDisplay(metricas) {
   return String(metricas);
 }
 
-function padcoinsAlertPeriodoDisplay(periodo) {
+function padcoinsAlertPeriodoDisplay(periodo, t) {
   if (periodo == null || periodo === '') return '—';
   if (typeof periodo === 'string') return periodo;
   if (typeof periodo === 'object') {
     const desde = periodo.desde ?? periodo.fecha_desde ?? periodo.inicio;
     const hasta = periodo.hasta ?? periodo.fecha_hasta ?? periodo.fin;
     if (desde && hasta) return `${desde} – ${hasta}`;
-    if (desde) return `Desde ${desde}`;
-    if (hasta) return `Hasta ${hasta}`;
+    if (desde) return `${t ? t('admin.padcoins.from', 'Desde') : 'Desde'} ${desde}`;
+    if (hasta) return `${t ? t('admin.padcoins.until', 'Hasta') : 'Hasta'} ${hasta}`;
     return Object.entries(periodo).map(([k, v]) => `${k}: ${v}`).join(' · ');
   }
   return String(periodo);
 }
 
-function padcoinsAlertMovimientoResumen(mov) {
+function padcoinsAlertMovimientoResumen(mov, t) {
   if (mov == null) return '—';
   if (typeof mov === 'string' || typeof mov === 'number') return String(mov);
   const fecha = mov.fecha ?? mov.created_at;
@@ -11573,8 +11577,20 @@ export default function AdminDashboard({
                             defaultValue: formatCategoriaTorneo(torneo.categoria),
                           })}
                         </span>
-                        <span style={badge('#fef9c3', '#854d0e')}>{formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo))}</span>
-                        <span style={badge('#e0f2fe', '#0369a1')}>{formatCategoriaEdadTorneo(torneo.categoria_edad)}</span>
+                        {torneoTipoCompetenciaDb(torneo) ? (
+                          <span style={badge('#fef9c3', '#854d0e')}>
+                            {t(`torneos.vista.genero.${String(torneoTipoCompetenciaDb(torneo)).trim().toLowerCase()}`, {
+                              defaultValue: formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo)),
+                            })}
+                          </span>
+                        ) : null}
+                        {String(torneo.categoria_edad || '').trim() ? (
+                          <span style={badge('#e0f2fe', '#0369a1')}>
+                            {t(`torneos.vista.categoriaEdad.${String(torneo.categoria_edad).trim().toLowerCase().replace(/\s+/g, '_')}`, {
+                              defaultValue: formatCategoriaEdadTorneo(torneo.categoria_edad),
+                            })}
+                          </span>
+                        ) : null}
                         {torneo.tipo_torneo
                           ? <span style={badge(formatoColor.bg, formatoColor.color)}>
                               {t(`torneos.tipo.${String(torneo.tipo_torneo).trim().toLowerCase()}`, {
@@ -12232,12 +12248,18 @@ export default function AdminDashboard({
                     <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{nombreMostrar || jugador.nombre || '—'}</strong>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '2px' }}>{jugador.email}</div>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '2px' }}>
-                      {t('admin.formularios.validationGenderLabel')}: {String(jugador.genero || '').trim() || '—'}
+                      {t('admin.formularios.validationGenderLabel')}: {jugador.genero
+                        ? t(`torneos.vista.genero.${String(jugador.genero).trim().toLowerCase()}`, {
+                            defaultValue: String(jugador.genero).trim(),
+                          })
+                        : '—'}
                     </div>
                     <div style={{ marginTop: '5px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {flag && <span style={{ fontSize: '18px' }}>{flag}</span>}
                       <span style={{ background: '#fffde7', border: '1px solid #ffc107', color: '#7c5b00', borderRadius: '12px', padding: '2px 10px', fontSize: '12px', fontWeight: 'bold' }}>
-                        {formatNivelValidacionDisplay(jugador.nivel)}
+                        {t(`torneos.vista.categoriaNivel.${formatNivelValidacionDisplay(jugador.nivel)}`, {
+                          defaultValue: formatNivelValidacionDisplay(jugador.nivel),
+                        })}
                       </span>
                     </div>
                   </div>
@@ -12287,7 +12309,9 @@ export default function AdminDashboard({
                           style={{ padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px' }}
                         >
                           {categoriasNivelPorGenero(jugador.genero).map((c) => (
-                            <option key={c} value={c}>{c}</option>
+                            <option key={c} value={c}>
+                              {t(`torneos.vista.categoriaNivel.${c}`, { defaultValue: c })}
+                            </option>
                           ))}
                         </select>
                         <button
@@ -15850,7 +15874,7 @@ export default function AdminDashboard({
                       <tbody>
                         {pcCampaigns.map((campaign) => {
                           const statusKey = String(campaign.status || 'draft').trim().toLowerCase();
-                          const badge = padcoinsCampaignStateBadge(statusKey);
+                          const badge = padcoinsCampaignStateBadge(statusKey, t);
                           const busy = pcCampaignActionId === campaign.id;
                           const highImpact = isPadcoinsCampaignHighImpact(campaign);
                           return (
@@ -15876,7 +15900,7 @@ export default function AdminDashboard({
                                 {padcoinsCampaignSedeNombre(campaign, sedesMap, pcSedesOptions)}
                               </td>
                               <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
-                                {padcoinsCampaignTypeLabel(campaign.campaign_type)}
+                                {padcoinsCampaignTypeLabel(campaign.campaign_type, t)}
                               </td>
                               <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
                                 <span style={{
@@ -16742,8 +16766,8 @@ export default function AdminDashboard({
 
                     <div style={{ display: 'grid', gap: '12px' }}>
                       {pcAlertas.map((alerta, idx) => {
-                        const sevBadge = padcoinsAlertSeveridadBadge(alerta.severidad);
-                        const tipoBadge = padcoinsAlertTipoBadge(alerta.tipo_alerta);
+                        const sevBadge = padcoinsAlertSeveridadBadge(alerta.severidad, t);
+                        const tipoBadge = padcoinsAlertTipoBadge(alerta.tipo_alerta, t);
                         const sedeAlerta = alerta.sede_nombre
                           || sedesMap[String(alerta.sede_id)]?.nombre
                           || (alerta.sede_id != null ? `Sede ${alerta.sede_id}` : '—');
@@ -16817,7 +16841,7 @@ export default function AdminDashboard({
                                 <strong style={{ color: 'var(--text-primary)' }}>
                                   {t('admin.padcoins.alertsPeriod', 'Periodo')}:
                                 </strong>{' '}
-                                {padcoinsAlertPeriodoDisplay(alerta.periodo_evaluado)}
+                                {padcoinsAlertPeriodoDisplay(alerta.periodo_evaluado, t)}
                               </p>
                               {alerta.recomendacion ? (
                                 <p style={{
@@ -16846,7 +16870,7 @@ export default function AdminDashboard({
                                 <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                                   {movs.slice(0, 5).map((mov, movIdx) => (
                                     <li key={mov.id ?? movIdx} style={{ marginBottom: '4px', lineHeight: 1.35 }}>
-                                      {padcoinsAlertMovimientoResumen(mov)}
+                                      {padcoinsAlertMovimientoResumen(mov, t)}
                                     </li>
                                   ))}
                                   {movs.length > 5 ? (
@@ -17133,7 +17157,7 @@ export default function AdminDashboard({
                       </thead>
                       <tbody>
                         {pcMovimientos.map((mov) => {
-                          const badge = padcoinsMovTipoBadge(mov);
+                          const badge = padcoinsMovTipoBadge(mov, t);
                           const sedeMov = mov.sede_nombre
                             || sedesMap[String(mov.sede_id)]?.nombre
                             || (mov.sede_id != null ? `Sede ${mov.sede_id}` : '—');
@@ -17145,7 +17169,7 @@ export default function AdminDashboard({
                           return (
                             <tr key={mov.id ?? `${mov.fecha}-${mov.user_id}-${mov.monto}`} style={{ borderBottom: '1px solid var(--border)' }}>
                               <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', color: 'var(--text-primary)', verticalAlign: 'top' }}>
-                                {formatPadcoinsMovFechaCorta(mov)}
+                                {formatPadcoinsMovFechaCorta(mov, i18n?.language === 'en' ? 'en-US' : 'es-AR')}
                               </td>
                               <td style={{ padding: '8px 10px', color: 'var(--text-primary)', verticalAlign: 'top' }}>
                                 {jugadorNombre || jugadorEmail ? (
@@ -17215,7 +17239,7 @@ export default function AdminDashboard({
                                 lineHeight: 1.35,
                                 verticalAlign: 'top',
                               }}>
-                                {padcoinsMovReferenciaDisplay(mov)}
+                                {padcoinsMovReferenciaDisplay(mov, t)}
                               </td>
                               <td style={{
                                 padding: '8px 10px',
@@ -19234,14 +19258,14 @@ export default function AdminDashboard({
                       className="admin-mi-sede-theme-input"
                       style={{ padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
                     >
-                      <option value="activa">✅ Activa</option>
+                      <option value="activa">{t('admin.sedes.licenseActive')}</option>
                       <option value="suspendida">{t('admin.sedes.licenseSuspended')}</option>
                     </select>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <button onClick={guardarLicencia} disabled={licenciaSaving}
                       style={{ padding: '10px 24px', background: licenciaSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: licenciaSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
-                      {licenciaSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar licencia'}
+                      {licenciaSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.licenseSave')}
                     </button>
                     {licenciaMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: licenciaMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{licenciaMsg}</span>}
                   </div>
@@ -19270,11 +19294,11 @@ export default function AdminDashboard({
                       background: licenciaForm.licencia_activa ? '#dcfce7' : '#fee2e2',
                       color:      licenciaForm.licencia_activa ? '#16a34a' : '#dc2626',
                     }}>
-                      {licenciaForm.licencia_activa ? '✅ Activa' : t('admin.sedes.licenseSuspended')}
+                      {licenciaForm.licencia_activa ? t('admin.sedes.licenseActive') : t('admin.sedes.licenseSuspended')}
                     </span>
                   </div>
                   <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    🔒 Solo un Super Admin puede modificar estos datos.
+                    {t('admin.sedes.licenseSuperAdminOnly')}
                   </p>
                 </div>
               )}
