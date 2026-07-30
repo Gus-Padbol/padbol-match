@@ -2984,6 +2984,19 @@
           "text": "The match feeds history, stats, ranking and tournaments when applicable."
         }
       }
+    },
+    "matchIntelligence": {
+      "kicker": "Coming soon · Match intelligence",
+      "accent": "Virtual referee",
+      "title": "Virtual referee: a match with more support.",
+      "text": "The next layer adds AI assistance to the scoreboard to support officiating, log actions and bring traceability to every result.",
+      "videoAria": "Padbol match scoreboard in action",
+      "caption": "Connected scoreboard demonstration",
+      "features": {
+        "scoreboard": { "title": "Connected scoreboard", "text": "The result follows the match as it is played." },
+        "referee": { "title": "Officiating assistance", "text": "A supporting layer to organize match actions and decisions." },
+        "traceability": { "title": "Traceable result", "text": "Each record prepares clearer validation for players, venues and competition." }
+      }
     }
   }
 }

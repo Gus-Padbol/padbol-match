@@ -484,6 +484,51 @@ export function SmartScoreboardSection() {
   );
 }
 
+/** Próxima capa de validación del partido */
+export function MatchIntelligenceSection() {
+  const text = usePublicSiteText();
+  const config = PUBLIC_SITE_SECTIONS.matchIntelligence;
+
+  return (
+    <SectionShell id={config.id} className="ps-section--match-intelligence" titleId="ps-match-intelligence-title">
+      <div className="ps-match-intelligence__layout">
+        <div className="ps-match-intelligence__copy" data-ps-reveal>
+          <span className="ps-coming-soon">{text('publicSite.matchIntelligence.kicker')}</span>
+          <h2 id="ps-match-intelligence-title">
+            <AccentWords
+              value={text('publicSite.matchIntelligence.title')}
+              terms={[text('publicSite.matchIntelligence.accent')]}
+            />
+          </h2>
+          <p className="ps-lead">{text('publicSite.matchIntelligence.text')}</p>
+          <ul className="ps-match-intelligence__features">
+            {config.features.map(({ key }) => (
+              <li key={key}>
+                <strong>{text(`publicSite.matchIntelligence.features.${key}.title`)}</strong>
+                <span>{text(`publicSite.matchIntelligence.features.${key}.text`)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <figure className="ps-match-intelligence__media" data-ps-reveal data-ps-reveal-order="1">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            poster="/media/public-site/jero/marcador-01-poster.jpg"
+            aria-label={text('publicSite.matchIntelligence.videoAria')}
+          >
+            <source src="/media/public-site/jero/marcador-01.mp4" type="video/mp4" />
+          </video>
+          <figcaption>{text('publicSite.matchIntelligence.caption')}</figcaption>
+        </figure>
+      </div>
+    </SectionShell>
+  );
+}
+
 /** Expansión comercial */
 export function ExpansionSection() {
   const text = usePublicSiteText();

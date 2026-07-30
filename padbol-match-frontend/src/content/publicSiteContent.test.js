@@ -15,6 +15,7 @@ describe('publicSite content structure', () => {
     'sedes',
     'continuidad',
     'marcador-inteligente',
+    'arbitro-virtual',
     'experiencias',
     'expansion',
     'nosotros',

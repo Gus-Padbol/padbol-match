@@ -3320,10 +3320,114 @@ html.public-site-active #root {
   line-height: 1.45;
 }
 
+/* Próxima capa: árbitro virtual y validación de partido */
+.ps-section--match-intelligence {
+  background:
+    radial-gradient(620px 340px at 80% 48%, rgba(225, 27, 34, 0.11), transparent 66%),
+    linear-gradient(180deg, #0a0c12, #0d1018);
+}
+
+.ps-match-intelligence__layout {
+  display: grid;
+  gap: 32px;
+  align-items: center;
+}
+
+.ps-match-intelligence__copy h2 {
+  max-width: 15ch;
+}
+
+.ps-match-intelligence__features {
+  display: grid;
+  gap: 10px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ps-match-intelligence__features li {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px 12px 17px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  background: rgba(15, 22, 34, 0.68);
+}
+
+.ps-match-intelligence__features li::before {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--ps-red);
+  content: '';
+}
+
+.ps-match-intelligence__features strong {
+  color: var(--ps-text);
+  font-size: 0.95rem;
+}
+
+.ps-match-intelligence__features span {
+  color: var(--ps-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.ps-match-intelligence__media {
+  position: relative;
+  width: min(360px, 100%);
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(225, 27, 34, 0.52);
+  border-radius: 22px;
+  background: #07090e;
+  box-shadow: 0 28px 68px rgba(0, 0, 0, 0.48), 0 0 0 8px rgba(225, 27, 34, 0.035);
+}
+
+.ps-match-intelligence__media::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 42%, rgba(6, 8, 13, 0.86) 100%);
+  content: '';
+  pointer-events: none;
+}
+
+.ps-match-intelligence__media video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 9 / 13;
+  object-fit: cover;
+  object-position: center;
+}
+
+.ps-match-intelligence__media figcaption {
+  position: absolute;
+  z-index: 2;
+  right: 16px;
+  bottom: 15px;
+  left: 16px;
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 @media (min-width: 900px) {
   .ps-community__grid,
   .ps-scoreboard__grid {
     grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.85fr);
+    gap: 48px;
+  }
+
+  .ps-match-intelligence__layout {
+    grid-template-columns: minmax(0, 1.06fr) minmax(280px, 0.72fr);
     gap: 48px;
   }
 }

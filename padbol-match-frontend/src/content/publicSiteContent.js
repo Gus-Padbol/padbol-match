@@ -49,6 +49,10 @@ export const PUBLIC_SITE_SECTIONS = {
     id: 'marcador-inteligente',
     steps: ['start', 'live', 'correct', 'close', 'connect'].map(item),
   },
+  matchIntelligence: {
+    id: 'arbitro-virtual',
+    features: ['scoreboard', 'referee', 'traceability'].map(item),
+  },
   experiences: {
     id: 'experiencias',
     items: ['signature', 'stadium', 'express', 'arena', 'quantum'].map(item),

@@ -2105,6 +2105,19 @@
           "text": "El partido alimenta historial, estadísticas, ranking y torneos cuando aplica."
         }
       }
+    },
+    "matchIntelligence": {
+      "kicker": "Prossimamente · Intelligenza della partita",
+      "accent": "Arbitro virtuale",
+      "title": "Arbitro virtuale: più supporto alla partita.",
+      "text": "Il prossimo livello aggiunge assistenza IA al tabellone per supportare l’arbitraggio, registrare le azioni e dare tracciabilità a ogni risultato.",
+      "videoAria": "Tabellone di una partita di Padbol in funzione",
+      "caption": "Dimostrazione di tabellone connesso",
+      "features": {
+        "scoreboard": { "title": "Tabellone connesso", "text": "Il risultato accompagna la partita mentre si gioca." },
+        "referee": { "title": "Assistenza arbitrale", "text": "Un livello di supporto per ordinare azioni e decisioni della partita." },
+        "traceability": { "title": "Risultato tracciabile", "text": "Ogni registrazione prepara una validazione più chiara per giocatori, sede e competizione." }
+      }
     }
   }
 }

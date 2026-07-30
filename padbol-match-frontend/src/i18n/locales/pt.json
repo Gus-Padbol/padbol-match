@@ -2105,6 +2105,19 @@
           "text": "El partido alimenta historial, estadísticas, ranking y torneos cuando aplica."
         }
       }
+    },
+    "matchIntelligence": {
+      "kicker": "Em breve · Inteligência de partida",
+      "accent": "Árbitro virtual",
+      "title": "Árbitro virtual: mais apoio para a partida.",
+      "text": "A próxima camada adiciona assistência de IA ao placar para apoiar a arbitragem, registrar ações e dar rastreabilidade a cada resultado.",
+      "videoAria": "Placar de partida de Padbol em funcionamento",
+      "caption": "Demonstração de placar conectado",
+      "features": {
+        "scoreboard": { "title": "Placar conectado", "text": "O resultado acompanha a partida enquanto ela é jogada." },
+        "referee": { "title": "Assistência de arbitragem", "text": "Uma camada de apoio para organizar ações e decisões da partida." },
+        "traceability": { "title": "Resultado rastreável", "text": "Cada registro prepara uma validação mais clara para jogadores, sede e competição." }
+      }
     }
   }
 }

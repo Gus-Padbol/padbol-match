@@ -2648,6 +2648,19 @@
           "text": "El resultado puede alimentar historial, estadísticas, ranking y torneos según la disciplina."
         }
       }
+    },
+    "matchIntelligence": {
+      "kicker": "Próximamente · Inteligencia de partido",
+      "accent": "Árbitro virtual",
+      "title": "Árbitro virtual: el partido con más respaldo.",
+      "text": "La próxima capa suma asistencia IA al marcador para acompañar el arbitraje, registrar acciones y dar trazabilidad a cada resultado.",
+      "videoAria": "Marcador de partido Padbol en funcionamiento",
+      "caption": "Demostración de marcador conectado",
+      "features": {
+        "scoreboard": { "title": "Marcador conectado", "text": "El resultado acompaña al partido mientras se juega." },
+        "referee": { "title": "Asistencia arbitral", "text": "Una capa de apoyo para ordenar acciones y decisiones del encuentro." },
+        "traceability": { "title": "Resultado trazable", "text": "Cada registro prepara una validación más clara para jugadores, sede y competencia." }
+      }
     }
   },
   "checkin": {

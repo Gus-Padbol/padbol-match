@@ -2105,6 +2105,19 @@
           "text": "El partido alimenta historial, estadísticas, ranking y torneos cuando aplica."
         }
       }
+    },
+    "matchIntelligence": {
+      "kicker": "Bientôt disponible · Intelligence de match",
+      "accent": "Arbitre virtuel",
+      "title": "Arbitre virtuel : plus d’appui pour le match.",
+      "text": "La prochaine couche ajoute une assistance IA au tableau de score pour accompagner l’arbitrage, enregistrer les actions et assurer la traçabilité de chaque résultat.",
+      "videoAria": "Tableau de score d’un match de Padbol en action",
+      "caption": "Démonstration de tableau connecté",
+      "features": {
+        "scoreboard": { "title": "Tableau connecté", "text": "Le résultat accompagne le match en direct." },
+        "referee": { "title": "Assistance à l’arbitrage", "text": "Une couche de soutien pour organiser les actions et décisions du match." },
+        "traceability": { "title": "Résultat traçable", "text": "Chaque enregistrement prépare une validation plus claire pour les joueurs, le club et la compétition." }
+      }
     }
   }
 }

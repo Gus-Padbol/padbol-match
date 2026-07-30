@@ -2105,6 +2105,19 @@
           "text": "El partido alimenta historial, estadísticas, ranking y torneos cuando aplica."
         }
       }
+    },
+    "matchIntelligence": {
+      "kicker": "Demnächst · Match-Intelligenz",
+      "accent": "Virtueller Schiedsrichter",
+      "title": "Virtueller Schiedsrichter: mehr Rückhalt für das Spiel.",
+      "text": "Die nächste Ebene ergänzt die Anzeigetafel um KI-Unterstützung, um Schiedsrichter zu unterstützen, Aktionen zu erfassen und Ergebnisse nachvollziehbar zu machen.",
+      "videoAria": "Padbol-Spielanzeige in Aktion",
+      "caption": "Demonstration einer vernetzten Anzeigetafel",
+      "features": {
+        "scoreboard": { "title": "Vernetzte Anzeigetafel", "text": "Das Ergebnis begleitet das Spiel in Echtzeit." },
+        "referee": { "title": "Schiedsrichterassistenz", "text": "Eine Unterstützungsebene für Aktionen und Entscheidungen im Spiel." },
+        "traceability": { "title": "Nachvollziehbares Ergebnis", "text": "Jeder Eintrag ermöglicht eine klarere Validierung für Spieler, Anlage und Wettbewerb." }
+      }
     }
   }
 }

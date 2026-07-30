@@ -10,6 +10,7 @@ import {
   VenuePathSection,
   ContinuitySection,
   SmartScoreboardSection,
+  MatchIntelligenceSection,
   ExpansionSection,
   AboutSection,
   DownloadSection,
@@ -60,6 +61,7 @@ export default function PublicSitePage() {
         <VenuePathSection />
         <ContinuitySection />
         <SmartScoreboardSection />
+        <MatchIntelligenceSection />
         <ExperiencesSection />
         <ExpansionSection />
         <DownloadSection />
