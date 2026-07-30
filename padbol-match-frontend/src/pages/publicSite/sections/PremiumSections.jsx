@@ -50,10 +50,12 @@ const EXPANSION_ICONS = {
 };
 
 const OPEN_MATCH_DEMO_STATES = [
-  { filled: 2, status: 'Buscando 2 jugadores', note: '50% de ocupación', players: ['GA', 'LU'] },
-  { filled: 3, status: 'Un jugador confirmó', note: '75% de ocupación', players: ['GA', 'LU', 'MA'] },
-  { filled: 4, status: 'Partido confirmado', note: '100% de ocupación', players: ['GA', 'LU', 'MA', 'NO'] },
+  { filled: 2, status: 'Buscando 2 jugadores', note: '50% de ocupación', players: ['player-01.jpg', 'player-02.jpg'] },
+  { filled: 3, status: 'Un jugador confirmó', note: '75% de ocupación', players: ['player-01.jpg', 'player-02.jpg', 'player-03.jpg'] },
+  { filled: 4, status: 'Partido confirmado', note: '100% de ocupación', players: ['player-01.jpg', 'player-02.jpg', 'player-03.jpg', 'player-04.jpg'] },
 ];
+
+const OPEN_MATCH_AVATAR_ROOT = '/media/public-site/players';
 
 const CONTINUITY_DETAILS = {
   openMatches: {
@@ -212,7 +214,11 @@ function OpenMatchMockup({ text }) {
           <ul className="ps-match__slots" aria-hidden="true">
             {[0, 1, 2, 3].map((slot) => (
               <li key={slot} className={slot < demo.filled ? 'is-filled' : 'is-open'}>
-                {slot < demo.filled ? <span>{demo.players[slot]}</span> : <i />}
+                {slot < demo.filled ? (
+                  <span className="ps-match__avatar">
+                    <img src={`${OPEN_MATCH_AVATAR_ROOT}/${demo.players[slot]}`} alt="" />
+                  </span>
+                ) : <i />}
               </li>
             ))}
           </ul>
@@ -276,7 +282,7 @@ export function CommunityMatchesSection() {
               </li>
             ))}
           </ol>
-          <Link to={PUBLIC_SITE_CTA.play} className="ps-btn ps-btn--secondary">
+          <Link to={PUBLIC_SITE_CTA.play} className="ps-btn ps-btn--secondary ps-btn--play">
             {text('publicSite.communityMatches.ctaPlay')}
           </Link>
         </div>

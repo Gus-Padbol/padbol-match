@@ -2642,6 +2642,34 @@ html.public-site-active #root {
   margin-top: 28px;
 }
 
+.ps-community__copy .ps-btn--play {
+  position: relative;
+  overflow: hidden;
+  min-width: 154px;
+  border-color: rgba(225, 27, 34, 0.72);
+  background: linear-gradient(120deg, rgba(225, 27, 34, 0.98), #a80d18);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(225, 27, 34, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.ps-community__copy .ps-btn--play::before {
+  position: absolute;
+  inset: 0 auto 0 -42%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: skewX(-22deg);
+  content: '';
+  transition: transform 380ms var(--ps-ease);
+}
+
+.ps-community__copy .ps-btn--play:hover {
+  border-color: #ff6670;
+  background: linear-gradient(120deg, #f22d38, #bd101c);
+  box-shadow: 0 16px 34px rgba(225, 27, 34, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.ps-community__copy .ps-btn--play:hover::before { transform: translateX(440%) skewX(-22deg); }
+
 .ps-flow-steps {
   display: grid;
   gap: 16px;
@@ -2651,25 +2679,43 @@ html.public-site-active #root {
 }
 
 .ps-flow-steps li {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 14px;
   align-items: start;
+  padding: 10px 12px 10px 0;
+  border-radius: 12px;
+  transition: background-color 220ms var(--ps-ease), transform 220ms var(--ps-ease);
+}
+
+.ps-flow-steps li:hover {
+  transform: translateX(4px);
+  background: linear-gradient(90deg, rgba(225, 27, 34, 0.09), transparent 86%);
 }
 
 .ps-flow-steps__num {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(225, 27, 34, 0.6);
+  border-radius: 50%;
+  background: rgba(225, 27, 34, 0.1);
   font-family: var(--ps-font-display);
-  font-size: 1.1rem;
+  font-size: 0.86rem;
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: var(--ps-accent);
+  color: #ff5962;
   font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 18px rgba(225, 27, 34, 0.16);
 }
 
 .ps-flow-steps strong {
   display: block;
   margin-bottom: 4px;
   font-size: 1rem;
+  color: #fff;
 }
 
 .ps-flow-steps span {
@@ -2724,8 +2770,8 @@ html.public-site-active #root {
   padding: 14px;
   border-radius: 28px;
   border: 1px solid var(--ps-border-strong);
-  background: #0c0e14;
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(155deg, #151927 0%, #0c0e14 72%);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45), 0 0 34px rgba(225, 27, 34, 0.11);
 }
 
 .ps-match__bar {
@@ -2797,32 +2843,20 @@ html.public-site-active #root {
   height: 66%;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.5);
-  background:
-    radial-gradient(circle at 50% 34%, #f4c9ab 0 20%, transparent 21%),
-    linear-gradient(145deg, #263854 0 46%, #a62632 47% 100%);
   color: #fff;
   font-size: 0.54rem;
   font-weight: 900;
   letter-spacing: -0.04em;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.26);
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.38), 0 0 0 2px rgba(225, 27, 34, 0.12);
 }
 
-.ps-match__slots li:nth-child(2) > span {
-  background:
-    radial-gradient(circle at 50% 34%, #d9a77f 0 20%, transparent 21%),
-    linear-gradient(145deg, #295b58 0 46%, #e0703e 47% 100%);
-}
-
-.ps-match__slots li:nth-child(3) > span {
-  background:
-    radial-gradient(circle at 50% 34%, #9d6546 0 20%, transparent 21%),
-    linear-gradient(145deg, #5c3d7c 0 46%, #d3345f 47% 100%);
-}
-
-.ps-match__slots li:nth-child(4) > span {
-  background:
-    radial-gradient(circle at 50% 34%, #e9c397 0 20%, transparent 21%),
-    linear-gradient(145deg, #446785 0 46%, #279784 47% 100%);
+.ps-match__avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 28%;
 }
 
 .ps-match__slots li > i {
@@ -2908,17 +2942,20 @@ html.public-site-active #root {
   justify-self: start;
   margin-top: 4px;
   padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  background: var(--ps-accent);
+  background: linear-gradient(120deg, #ec202b, #bb101b);
   color: #fff;
   font-size: 0.82rem;
   font-weight: 800;
+  box-shadow: 0 9px 18px rgba(225, 27, 34, 0.23);
 }
 
 .ps-match__cta--disabled {
+  border-color: rgba(148, 163, 184, 0.26);
   background: rgba(148, 163, 184, 0.16);
   color: var(--ps-text-muted);
-  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12);
 }
 
 /* Smart scoreboard */
