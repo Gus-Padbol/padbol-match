@@ -606,13 +606,18 @@ export function AboutSection() {
             {text('publicSite.about.cta')} <span aria-hidden="true">→</span>
           </a>
         </div>
-        <div className="ps-about__visual" role="img" aria-label={text('publicSite.about.visualAlt')}>
-          <img
-            src={`${ASSET_ROOT}/active-players.jpg`}
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
+        <div className="ps-about__visual">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            poster={`${ASSET_ROOT}/expansion-court-poster.jpg`}
+            aria-label={text('publicSite.about.visualAlt')}
+          >
+            <source src={`${ASSET_ROOT}/expansion-court.mp4`} type="video/mp4" />
+          </video>
         </div>
       </div>
     </SectionShell>
