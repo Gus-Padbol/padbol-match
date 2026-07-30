@@ -135,11 +135,19 @@ export function WhatIsSection() {
   const id = PUBLIC_SITE_SECTIONS.whatIs.id;
   return (
     <SectionShell id={id} className="ps-section--what" titleId="ps-what-title">
-      <div className="ps-what__brand" aria-hidden="true">
-        <img src={`${ASSET_ROOT}/match.svg`} alt="" />
+      <div className="ps-what__layout">
+        <div className="ps-what__copy">
+          <div className="ps-what__brand" aria-hidden="true">
+            <img src={`${ASSET_ROOT}/match.svg`} alt="" />
+          </div>
+          <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Qué', 'Padbol Match']} /></h2>
+          <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
+        </div>
+        <figure className="ps-what__visual" aria-hidden="true">
+          <img src={`${ASSET_ROOT}/real-occupancy.jpg`} alt="" />
+          <span className="ps-what__visual-line" />
+        </figure>
       </div>
-      <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Qué', 'Padbol Match']} /></h2>
-      <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
     </SectionShell>
   );
 }
