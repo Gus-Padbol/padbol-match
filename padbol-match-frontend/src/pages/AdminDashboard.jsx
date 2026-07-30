@@ -7035,8 +7035,10 @@ export default function AdminDashboard({
       } catch (err) {
         if (cancelled || seq !== torneoStatsFetchSeqRef.current) return;
         if (err?.name === 'AbortError') return;
-        // Conservar stats previas en refresh/error; no vaciar el mapa.
-        setTorneoStatsError(t('admin.torneosSection.statsLoadError'));
+        // Conservar stats previas en refresh/error; no vaciar el mapa. Si el
+        // listado principal está visible, el resumen es accesorio y no debe
+        // presentar la pantalla como fallida.
+        setTorneoStatsError(torneos.length === 0 ? t('admin.torneosSection.statsLoadError') : '');
       } finally {
         if (!cancelled && seq === torneoStatsFetchSeqRef.current) {
           setTorneoStatsLoading(false);
@@ -7668,6 +7670,7 @@ export default function AdminDashboard({
   const [miSedeSaving,  setMiSedeSaving]  = useState(false);
   const [miSedeInstalacionesSaving, setMiSedeInstalacionesSaving] = useState(false);
   const [miSedeInstalacionesMsg, setMiSedeInstalacionesMsg] = useState('');
+  const [miSedeCustomAmenity, setMiSedeCustomAmenity] = useState('');
   const [surgeConfigs, setSurgeConfigs] = useState({});
   const [surgeConfigSaving, setSurgeConfigSaving] = useState({});
   const [surgeActivoSaving, setSurgeActivoSaving] = useState(false);
@@ -7765,6 +7768,7 @@ export default function AdminDashboard({
   const adminTabsStripRef = useRef(null);
   const adminMainScrollRef = useRef(null);
   const [activeMiSedeSection, setActiveMiSedeSection] = useState('info');
+  const [miSedePromoDirty, setMiSedePromoDirty] = useState(false);
   const miSedeNavItems = useMemo(() => {
     const items = [
       { id: 'info', label: t('admin.sedes.clubInfo') },
@@ -7821,6 +7825,13 @@ export default function AdminDashboard({
   const selectAdminTab = useCallback(
     (tabId) => {
       const id = sanitizeAdminActiveTab(tabId, rolPanel);
+      if (miSedePromoDirty && activeTab === 'mi_sede' && id !== 'mi_sede') {
+        const confirmed = window.confirm(
+          'Tenés cambios sin guardar en la promoción de tu sede. ¿Querés salir y descartarlos?',
+        );
+        if (!confirmed) return;
+        setMiSedePromoDirty(false);
+      }
       if (crearTorneoEmbedOpenRef.current && id !== 'torneos') {
         const leave = () => {
           setCrearTorneoEmbedOpen(false);
@@ -7836,7 +7847,7 @@ export default function AdminDashboard({
       }
       selectAdminTabInner(id);
     },
-    [rolPanel, selectAdminTabInner],
+    [activeTab, miSedePromoDirty, rolPanel, selectAdminTabInner],
   );
 
   const selectMiSedeSection = useCallback(
@@ -7847,10 +7858,17 @@ export default function AdminDashboard({
         setActiveMiSedeSection(validId);
         return;
       }
+      if (miSedePromoDirty && validId !== 'info') {
+        const confirmed = window.confirm(
+          'Tenés cambios sin guardar en la promoción de tu sede. ¿Querés salir y descartarlos?',
+        );
+        if (!confirmed) return;
+        setMiSedePromoDirty(false);
+      }
       setActiveMiSedeSection(validId);
       resetAdminPanelScroll();
     },
-    [activeTab, miSedeNavItems, resetAdminPanelScroll, selectAdminTab],
+    [activeTab, miSedeNavItems, miSedePromoDirty, resetAdminPanelScroll, selectAdminTab],
   );
   selectMiSedeSectionRef.current = selectMiSedeSection;
   const [fotosUrls,      setFotosUrls]      = useState([]);
@@ -11679,7 +11697,7 @@ export default function AdminDashboard({
                             style={{ padding: '6px 10px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
                             title={t('admin.torneosSection.editTournament')}
                           >
-                            ✏️
+                            Editar
                           </button>
                         )}
                         {isSuperAdmin && (
@@ -13444,7 +13462,7 @@ export default function AdminDashboard({
                 </button>
               ) : null}
               <button type="button" onClick={() => iniciarEdicion(r)} style={BTN({ background: '#E11B22' })}>
-                ✏️ Editar
+                Editar
               </button>
               <button
                 type="button"
@@ -18507,7 +18525,7 @@ export default function AdminDashboard({
             marginBottom: '8px',
           }}
         >
-          <h2 style={{ margin: 0 }}>🏟️ {t('admin.tabs.miSede')}</h2>
+          <h2 style={{ margin: 0 }}>{t('admin.tabs.miSede')}</h2>
           {!miSedeLoading && miSede ? (
             <button
               type="button"
@@ -19199,7 +19217,7 @@ export default function AdminDashboard({
               ) : (
                 <>
                   <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                    📢 {t('admin.sedes.venueSponsorUsage', {
+                    {t('admin.sedes.venueSponsorUsage', {
                       used: miSedeSponsorSlots.used,
                       max: miSedeSponsorSlots.max,
                       available: Math.max(0, miSedeSponsorSlots.max - miSedeSponsorSlots.used),
@@ -19305,7 +19323,12 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          {(esAdminClub || isSuperAdmin) && sedeId ? <AdminHubPromoSedeSection sedeId={Number(sedeId)} /> : null}
+          {(esAdminClub || isSuperAdmin) && sedeId ? (
+            <AdminHubPromoSedeSection
+              sedeId={Number(sedeId)}
+              onDirtyChange={setMiSedePromoDirty}
+            />
+          ) : null}
 
           {/* ── 1. Info General ── */}
           <div style={{ marginBottom: '32px' }}>
@@ -19476,7 +19499,6 @@ export default function AdminDashboard({
                               void guardarInstalacionesMiSede(nextAmenities);
                             }}
                           />
-                          <span aria-hidden>{amenity.icon}</span>
                           <span>
                             {t(`admin.sedes.amenities.${amenity.key}`, { defaultValue: amenity.label })}
                           </span>
@@ -19484,6 +19506,45 @@ export default function AdminDashboard({
                       );
                     })}
                   </div>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    <input
+                      type="text"
+                      value={miSedeCustomAmenity}
+                      placeholder="Otra instalación (ej. Cafetería)"
+                      maxLength={50}
+                      onChange={(e) => setMiSedeCustomAmenity(e.target.value)}
+                      className="admin-mi-sede-theme-input"
+                      style={{ flex: '1 1 220px', padding: '8px 10px', borderRadius: '8px', boxSizing: 'border-box' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const label = miSedeCustomAmenity.trim().replace(/\s+/g, ' ');
+                        if (!label) return;
+                        const nextAmenities = [...amenitiesArrayToSelectionSet(miSedeForm.amenities), `custom:${label}`];
+                        setMiSedeForm((p) => ({ ...p, amenities: nextAmenities }));
+                        setMiSedeCustomAmenity('');
+                        void guardarInstalacionesMiSede(nextAmenities);
+                      }}
+                      style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Agregar
+                    </button>
+                  </div>
+                  {[...amenitiesArrayToSelectionSet(miSedeForm.amenities)].filter((key) => key.startsWith('custom:')).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        const nextAmenities = [...amenitiesArrayToSelectionSet(miSedeForm.amenities)].filter((item) => item !== key);
+                        setMiSedeForm((p) => ({ ...p, amenities: nextAmenities }));
+                        void guardarInstalacionesMiSede(nextAmenities);
+                      }}
+                      style={{ margin: '8px 8px 0 0', padding: '5px 9px', borderRadius: '999px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}
+                    >
+                      {key.slice(7)} ×
+                    </button>
+                  ))}
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '8px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
                     {t('admin.sedes.facilitiesAutoSaveHint')}
                   </p>
@@ -19603,7 +19664,7 @@ export default function AdminDashboard({
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button onClick={guardarMiSede} disabled={miSedeSaving}
                   style={{ padding: '10px 24px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
-                  {miSedeSaving ? t('admin.metricas.savingEllipsis') : `💾 ${t('admin.sedes.saveChanges')}`}
+                  {miSedeSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.saveChanges')}
                 </button>
                 {miSedeMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: miSedeMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedeMsg}</span>}
               </div>
@@ -20554,7 +20615,7 @@ export default function AdminDashboard({
                     fontSize: '13px',
                   }}
                 >
-                  {franjasSaving ? t('admin.metricas.savingEllipsis') : '💾 Guardar franjas'}
+                  {franjasSaving ? t('admin.metricas.savingEllipsis') : 'Guardar franjas'}
                 </button>
                 {franjasMsg ? (
                   <span style={{ fontSize: '13px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{franjasMsg}</span>
@@ -21144,7 +21205,7 @@ export default function AdminDashboard({
                                 fontSize: '13px',
                               }}
                             >
-                              {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : '💾 Guardar Surge'}
+                              {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : 'Guardar Surge'}
                             </button>
                             {surgeSaveMsg ? (
                               <span
@@ -21318,12 +21379,12 @@ export default function AdminDashboard({
                 {t('admin.sedes.socialNetworksHint')}
               </p>
               {[
-                { field: 'instagram', label: '📸 Instagram', placeholder: t('admin.sedes.instagramPh') },
-                { field: 'facebook',  label: '👍 Facebook',  placeholder: t('admin.sedes.facebookPh') },
-                { field: 'tiktok',    label: '🎵 TikTok',    placeholder: t('admin.sedes.tiktokPh') },
-                { field: 'twitter',   label: '✖ Twitter / X', placeholder: t('admin.sedes.twitterPh') },
-                { field: 'youtube',   label: '▶ YouTube',   placeholder: t('admin.sedes.youtubePh') },
-                { field: 'website',   label: `🌐 ${t('admin.sedes.website')}`, placeholder: t('admin.sedes.websitePh') },
+                { field: 'instagram', label: 'Instagram', placeholder: t('admin.sedes.instagramPh') },
+                { field: 'facebook',  label: 'Facebook',  placeholder: t('admin.sedes.facebookPh') },
+                { field: 'tiktok',    label: 'TikTok',    placeholder: t('admin.sedes.tiktokPh') },
+                { field: 'twitter',   label: 'X / Twitter', placeholder: t('admin.sedes.twitterPh') },
+                { field: 'youtube',   label: 'YouTube',   placeholder: t('admin.sedes.youtubePh') },
+                { field: 'website',   label: t('admin.sedes.website'), placeholder: t('admin.sedes.websitePh') },
               ].map(({ field, label, placeholder }) => (
                 <div key={field} className="admin-mi-sede-field-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                   <label className="admin-mi-sede-field-label" style={{ width: '150px', flexShrink: 0, fontSize: '13px', fontWeight: 600 }}>{label}</label>
@@ -21339,7 +21400,7 @@ export default function AdminDashboard({
               ))}
               <button onClick={guardarMiSede} disabled={miSedeSaving}
                 style={{ marginTop: '8px', padding: '8px 20px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-                {miSedeSaving ? t('admin.metricas.savingEllipsis') : `💾 ${t('admin.sedes.saveSocialNetworks')}`}
+                {miSedeSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.saveSocialNetworks')}
               </button>
             </div>
           </div>

@@ -47,11 +47,12 @@ describe('Admin scoreboard jugador row — foto sin desalinear (BUG-01)', () => 
     expect(nombre).toMatch(/overflow:\s*hidden/);
   });
 
-  it('fila flex alineada, sin wrap, altura mínima estable', () => {
+  it('fila en grilla alineada, sin desborde, altura mínima estable', () => {
     const row = extractRuleBody(css, '.admin-scoreboard-jugador-row');
-    expect(row).toMatch(/display:\s*flex/);
+    expect(row).toMatch(/display:\s*grid/);
+    expect(row).toMatch(/grid-template-columns:\s*32px\s+52px\s+52px\s+minmax\(0,\s*1fr\)/);
     expect(row).toMatch(/align-items:\s*center/);
-    expect(row).toMatch(/flex-wrap:\s*nowrap/);
+    expect(row).toMatch(/min-width:\s*0/);
     expect(row).toMatch(/min-height:\s*44px/);
   });
 

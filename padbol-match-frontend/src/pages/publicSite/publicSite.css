@@ -2774,6 +2774,8 @@ html.public-site-active #root {
 }
 
 .ps-match__slots li {
+  display: grid;
+  place-items: center;
   aspect-ratio: 1;
   border-radius: 12px;
   border: 1px dashed rgba(148, 163, 184, 0.35);
@@ -2786,6 +2788,49 @@ html.public-site-active #root {
   border-color: rgba(225, 27, 34, 0.55);
   background: rgba(225, 27, 34, 0.28);
   box-shadow: 0 0 18px rgba(225, 27, 34, 0.2);
+}
+
+.ps-match__slots li > span {
+  display: grid;
+  place-items: center;
+  width: 66%;
+  height: 66%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background:
+    radial-gradient(circle at 50% 34%, #f4c9ab 0 20%, transparent 21%),
+    linear-gradient(145deg, #263854 0 46%, #a62632 47% 100%);
+  color: #fff;
+  font-size: 0.54rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.26);
+}
+
+.ps-match__slots li:nth-child(2) > span {
+  background:
+    radial-gradient(circle at 50% 34%, #d9a77f 0 20%, transparent 21%),
+    linear-gradient(145deg, #295b58 0 46%, #e0703e 47% 100%);
+}
+
+.ps-match__slots li:nth-child(3) > span {
+  background:
+    radial-gradient(circle at 50% 34%, #9d6546 0 20%, transparent 21%),
+    linear-gradient(145deg, #5c3d7c 0 46%, #d3345f 47% 100%);
+}
+
+.ps-match__slots li:nth-child(4) > span {
+  background:
+    radial-gradient(circle at 50% 34%, #e9c397 0 20%, transparent 21%),
+    linear-gradient(145deg, #446785 0 46%, #279784 47% 100%);
+}
+
+.ps-match__slots li > i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.65);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.38);
 }
 
 .ps-match__slots li.is-open {
@@ -2868,6 +2913,12 @@ html.public-site-active #root {
   color: #fff;
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.ps-match__cta--disabled {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--ps-text-muted);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.28);
 }
 
 /* Smart scoreboard */

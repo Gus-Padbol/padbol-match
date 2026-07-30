@@ -456,16 +456,16 @@ export default function AdminJugadoresSection({
       ) : displayItems.length === 0 ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.jugadores.empty')}</p>
       ) : (
-        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <table className="reservas-table" style={{ minWidth: 720 }}>
+        <div className="admin-jugadores-table-wrap">
+          <table className="reservas-table admin-jugadores-table">
             <thead>
               <tr>
                 <th>{t('admin.reservas.player')}</th>
                 <th>@</th>
-                <th>{t('admin.formularios.emailLabel')}</th>
-                <th>{t('admin.jugadores.phoneCol')}</th>
+                <th className="admin-jugadores-table__contact">{t('admin.formularios.emailLabel')}</th>
+                <th className="admin-jugadores-table__contact">{t('admin.jugadores.phoneCol')}</th>
                 <th>{t('admin.jugadores.vinculacionCol')}</th>
-                <th>{t('admin.jugadores.activityCol')}</th>
+                <th className="admin-jugadores-table__activity">{t('admin.jugadores.activityCol')}</th>
                 <th>{t('admin.metricas.profileCol')}</th>
               </tr>
             </thead>
@@ -495,10 +495,10 @@ export default function AdminJugadoresSection({
                       </button>
                     </td>
                     <td style={{ fontSize: 13 }}>{formatJugadorUsername(j.username) || '—'}</td>
-                    <td style={{ fontSize: 13 }}>{j.email || '—'}</td>
-                    <td style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
+                    <td className="admin-jugadores-table__contact" style={{ fontSize: 13 }}>{j.email || '—'}</td>
+                    <td className="admin-jugadores-table__contact" style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
                     <td style={{ fontSize: 12 }}>{formatJugadorVinculacionLabel(j.vinculacion, t)}</td>
-                    <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at) || '—'}</td>
+                    <td className="admin-jugadores-table__activity" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at) || '—'}</td>
                     <td style={{ fontSize: 13 }}>
                       {perfilPath ? (
                         <a href={perfilPath} target="_blank" rel="noopener noreferrer" style={{ color: '#E11B22', fontWeight: 700 }}>

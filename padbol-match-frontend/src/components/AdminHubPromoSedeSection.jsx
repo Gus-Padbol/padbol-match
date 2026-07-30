@@ -7,9 +7,9 @@ const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 /**
  * Edición de la promo «Del club» en Jugar (tab Mi Sede, admin_club / super_admin).
- * @param {{ sedeId: number }} props
+ * @param {{ sedeId: number, onDirtyChange?: (dirty: boolean) => void }} props
  */
-export default function AdminHubPromoSedeSection({ sedeId }) {
+export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
   const { t } = useTranslation();
   const emptyForm = useCallback(
     () => ({
@@ -38,6 +38,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
   const [msg, setMsg] = useState('');
   const [imagenUploading, setImagenUploading] = useState(false);
   const imagenFileRef = useRef(null);
+  const savedSnapshotRef = useRef('');
   const BUTTON_TEXT_OPTIONS = [
     t('admin.hub.seeMore'),
     t('admin.hub.bookNow', 'Reservar ahora'),
@@ -47,7 +48,9 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
   const load = useCallback(async () => {
     if (sid == null) {
       setRowId(null);
-      setForm(emptyForm());
+      const next = emptyForm();
+      savedSnapshotRef.current = JSON.stringify(next);
+      setForm(next);
       setLoading(false);
       return;
     }
@@ -58,28 +61,42 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
     if (error) {
       setMsg(`⚠️ ${error.message}`);
       setRowId(null);
-      setForm(emptyForm());
+      const next = emptyForm();
+      savedSnapshotRef.current = JSON.stringify(next);
+      setForm(next);
       return;
     }
     if (!data) {
       setRowId(null);
-      setForm({ ...emptyForm(), texto_boton: t('admin.hub.seeMore') });
+      const next = { ...emptyForm(), texto_boton: t('admin.hub.seeMore') };
+      savedSnapshotRef.current = JSON.stringify(next);
+      setForm(next);
       return;
     }
     setRowId(data.id || null);
-    setForm({
+    const next = {
       activo: Boolean(data.activo),
       imagen_url: String(data.imagen_url || '').trim(),
       titulo: String(data.titulo || '').trim(),
       subtitulo: String(data.subtitulo || '').trim(),
       texto_boton: String(data.texto_boton || '').trim() || t('admin.hub.seeMore'),
       url_destino: String(data.url_destino || '').trim(),
-    });
+    };
+    savedSnapshotRef.current = JSON.stringify(next);
+    setForm(next);
   }, [sid, emptyForm, t]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!onDirtyChange) return undefined;
+    onDirtyChange(!loading && JSON.stringify(form) !== savedSnapshotRef.current);
+    return undefined;
+  }, [form, loading, onDirtyChange]);
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
   const patch = useCallback((partial) => {
     setForm((p) => ({ ...p, ...partial }));
@@ -166,6 +183,8 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
         if (iErr) throw iErr;
         if (ins?.id) setRowId(ins.id);
       }
+      savedSnapshotRef.current = JSON.stringify(form);
+      onDirtyChange?.(false);
       setMsg(t('admin.hub.promoSaved', { defaultValue: '✅ Promo guardada' }));
       window.setTimeout(() => setMsg(''), 3500);
     } catch (err) {
@@ -218,7 +237,7 @@ export default function AdminHubPromoSedeSection({ sedeId }) {
                 disabled={imagenUploading}
                 onClick={() => imagenFileRef.current?.click()}
               >
-                {imagenUploading ? `⏳ ${t('admin.hub.uploading')}` : `📷 ${t('admin.hub.uploadFromDevice')}`}
+                {imagenUploading ? t('admin.hub.uploading') : t('admin.hub.uploadFromDevice')}
               </button>
               {String(form.imagen_url || '').trim() ? (
                 <button

@@ -50,9 +50,9 @@ const EXPANSION_ICONS = {
 };
 
 const OPEN_MATCH_DEMO_STATES = [
-  { filled: 2, status: 'Buscando 2 jugadores', note: '50% de ocupación' },
-  { filled: 3, status: 'Un jugador confirmó', note: '75% de ocupación' },
-  { filled: 4, status: 'Partido confirmado', note: '100% de ocupación' },
+  { filled: 2, status: 'Buscando 2 jugadores', note: '50% de ocupación', players: ['GA', 'LU'] },
+  { filled: 3, status: 'Un jugador confirmó', note: '75% de ocupación', players: ['GA', 'LU', 'MA'] },
+  { filled: 4, status: 'Partido confirmado', note: '100% de ocupación', players: ['GA', 'LU', 'MA', 'NO'] },
 ];
 
 const CONTINUITY_DETAILS = {
@@ -190,6 +190,7 @@ export function PlayerPathSection() {
 function OpenMatchMockup({ text }) {
   const [demoIndex, setDemoIndex] = useState(0);
   const demo = OPEN_MATCH_DEMO_STATES[demoIndex];
+  const isComplete = demo.filled === 4;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -210,7 +211,9 @@ function OpenMatchMockup({ text }) {
           <p className="ps-match__level">{text('publicSite.communityMatches.mockLevel')}</p>
           <ul className="ps-match__slots" aria-hidden="true">
             {[0, 1, 2, 3].map((slot) => (
-              <li key={slot} className={slot < demo.filled ? 'is-filled' : 'is-open'} />
+              <li key={slot} className={slot < demo.filled ? 'is-filled' : 'is-open'}>
+                {slot < demo.filled ? <span>{demo.players[slot]}</span> : <i />}
+              </li>
             ))}
           </ul>
           <p className="ps-match__slots-label" aria-live="polite">
@@ -223,12 +226,23 @@ function OpenMatchMockup({ text }) {
             </div>
             <div>
               <span>Reserva</span>
-              <strong className="ps-match__confirmation">Al completar cupos</strong>
+              <strong className="ps-match__confirmation">
+                {isComplete ? 'Confirmada' : 'Al completar cupos'}
+              </strong>
             </div>
           </div>
           <p className="ps-match__status" aria-live="polite"><i />{demo.status}</p>
-          <p className="ps-match__release-note">Si no se completa, la reserva se libera 8 h antes.</p>
-          <span className="ps-match__cta">{text('publicSite.communityMatches.mockAction')}</span>
+          <p className="ps-match__release-note">
+            {isComplete
+              ? 'Cupos completos: la reserva ya quedó confirmada.'
+              : 'Si no se completa, la reserva se libera 8 h antes.'}
+          </p>
+          <span
+            className={`ps-match__cta${isComplete ? ' ps-match__cta--disabled' : ''}`}
+            aria-disabled={isComplete}
+          >
+            {isComplete ? 'Cupos completos' : text('publicSite.communityMatches.mockAction')}
+          </span>
         </div>
       </div>
     </div>

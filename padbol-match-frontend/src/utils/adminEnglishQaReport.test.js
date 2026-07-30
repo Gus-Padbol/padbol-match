@@ -11,6 +11,10 @@ const promoSource = fs.readFileSync(
   'utf8',
 );
 
+function readPath(source, dottedPath) {
+  return dottedPath.split('.').reduce((value, segment) => value && value[segment], source);
+}
+
 describe('QA English report — Admin panel', () => {
   it('contains complete English groups for Overview, Scoreboard and PadCoins', () => {
     expect(en.admin.overview.today).toBe('Today');
@@ -39,5 +43,15 @@ describe('QA English report — Admin panel', () => {
     expect(dashboardSource).not.toMatch(/>\s*Guardar instalaciones\s*</);
     expect(promoSource).not.toMatch(/>\s*Promo activa\s*</);
     expect(promoSource).not.toMatch(/>\s*URL de imagen \(fondo de la card\)\s*</);
+  });
+
+  it('translates every PadCoins key currently rendered by the admin modules', () => {
+    const padcoinsSources = [
+      dashboardSource,
+      fs.readFileSync(path.join(__dirname, '../components/AdminPadcoinsReportesSection.jsx'), 'utf8'),
+    ].join('\n');
+    const keys = [...padcoinsSources.matchAll(/["'](admin\.padcoins\.[^"'\s,)]+)["']/g)].map((match) => match[1]);
+    const missing = [...new Set(keys)].filter((key) => typeof readPath(en, key) !== 'string');
+    expect(missing).toEqual([]);
   });
 });

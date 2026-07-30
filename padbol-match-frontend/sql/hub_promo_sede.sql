@@ -82,3 +82,45 @@ WITH CHECK (
       AND hub_promo_sede.sede_id = ur.sede_id
   )
 );
+
+-- Reparación de permisos: las políticas anteriores leían `user_roles`
+-- directamente. Si esa tabla tiene RLS propia, Postgres puede ocultar el rol
+-- del administrador y rechazar el INSERT aun cuando el usuario sea admin_club.
+-- Esta función se ejecuta como dueña de la tabla y solo responde si el usuario
+-- autenticado es super_admin o administra exactamente la sede objetivo.
+CREATE OR REPLACE FUNCTION public.can_manage_hub_promo_sede(target_sede_id integer)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.user_roles ur
+    WHERE ur.user_id = auth.uid()
+      AND (
+        ur.role = 'super_admin'
+        OR (ur.role = 'admin_club' AND ur.sede_id = target_sede_id)
+      )
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.can_manage_hub_promo_sede(integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.can_manage_hub_promo_sede(integer) TO authenticated;
+
+DROP POLICY IF EXISTS hub_promo_sede_select_staff ON public.hub_promo_sede;
+CREATE POLICY hub_promo_sede_select_staff ON public.hub_promo_sede
+FOR SELECT TO authenticated
+USING (public.can_manage_hub_promo_sede(sede_id));
+
+DROP POLICY IF EXISTS hub_promo_sede_insert ON public.hub_promo_sede;
+CREATE POLICY hub_promo_sede_insert ON public.hub_promo_sede
+FOR INSERT TO authenticated
+WITH CHECK (public.can_manage_hub_promo_sede(sede_id));
+
+DROP POLICY IF EXISTS hub_promo_sede_update ON public.hub_promo_sede;
+CREATE POLICY hub_promo_sede_update ON public.hub_promo_sede
+FOR UPDATE TO authenticated
+USING (public.can_manage_hub_promo_sede(sede_id))
+WITH CHECK (public.can_manage_hub_promo_sede(sede_id));
