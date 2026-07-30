@@ -2632,28 +2632,28 @@
     },
     "status": {
       "kicker": "Product status",
-      "title": "What you can use today and what comes next",
-      "text": "We clearly show what is already available, what is rolling out, and what belongs to the next stage.",
+      "title": "Padbol Match works today and grows into new sports",
+      "text": "The core experience is already active: it connects play, community and operations. The same model progressively expands into new sports and territories.",
       "labels": {
         "active": "Available today",
-        "rollingOut": "Rolling out",
-        "next": "Next stage"
+        "rollingOut": "Expanding",
+        "next": "Active and growing"
       },
       "items": {
         "active": {
           "eyebrow": "Available today",
-          "title": "The Padbol journey",
-          "text": "Sign in, profiles, bookings, open matches, tournaments, ranking, and community with photos and videos."
+          "title": "Padbol Match in action",
+          "text": "Sign in, profiles, bookings, open matches, tournaments, ranking, community, photos and videos already connected in one platform."
         },
         "rollingOut": {
-          "eyebrow": "Rolling out",
-          "title": "New sports and scoreboard",
-          "text": "Padel, Pickleball and Tennis; the smart scoreboard and external level recognition are enabled gradually and validated through real play."
+          "eyebrow": "Expanding",
+          "title": "More sports, one platform",
+          "text": "Padbol is the active starting point. Padel, Pickleball and Tennis join through the same play, management and community journey."
         },
         "next": {
-          "eyebrow": "Next stage",
-          "title": "Commercial layers",
-          "text": "Sponsor spaces, advertising managed by each venue, and a dedicated e-shop for products and benefits."
+          "eyebrow": "Active and growing",
+          "title": "Connected commercial layers",
+          "text": "Sponsor spaces and venue-managed advertising are already available. Paddle Match Shop is advancing as a pilot for local products and benefits."
         }
       }
     },

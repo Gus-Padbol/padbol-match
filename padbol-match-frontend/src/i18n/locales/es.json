@@ -2284,28 +2284,28 @@
     },
     "status": {
       "kicker": "Estado de producto",
-      "title": "Lo que podés usar hoy y lo que sigue",
-      "text": "Mostramos con claridad qué partes ya están disponibles, cuáles se están desplegando y cuáles forman parte de la próxima etapa.",
+      "title": "Padbol Match funciona hoy y crece hacia nuevos deportes",
+      "text": "La experiencia base ya está activa: conecta juego, comunidad y operación. La misma lógica se expande progresivamente a nuevas disciplinas y territorios.",
       "labels": {
         "active": "Disponible hoy",
-        "rollingOut": "En despliegue",
-        "next": "Próxima etapa"
+        "rollingOut": "En expansión",
+        "next": "Activo y creciendo"
       },
       "items": {
         "active": {
           "eyebrow": "Disponible hoy",
-          "title": "El recorrido Padbol",
-          "text": "Ingreso, perfiles, reservas, partidos abiertos, torneos, ranking y comunidad con fotos y videos."
+          "title": "Padbol Match en acción",
+          "text": "Ingreso, perfiles, reservas, partidos abiertos, torneos, ranking, comunidad, fotos y videos ya conectados en una misma plataforma."
         },
         "rollingOut": {
-          "eyebrow": "En despliegue",
-          "title": "Nuevas disciplinas y marcador",
-          "text": "Pádel, Pickleball y Tenis; marcador inteligente y reconocimiento de nivel externo se habilitan por etapas y se validan con juego real."
+          "eyebrow": "En expansión",
+          "title": "Más deportes, misma plataforma",
+          "text": "Padbol es el punto de partida activo. Pádel, Pickleball y Tenis se incorporan con el mismo recorrido de juego, gestión y comunidad."
         },
         "next": {
-          "eyebrow": "Próxima etapa",
-          "title": "Capas comerciales",
-          "text": "Espacios para sponsors, publicidad administrada por cada sede y e-shop propio para productos y beneficios."
+          "eyebrow": "Activo y creciendo",
+          "title": "Capas comerciales conectadas",
+          "text": "Espacios para sponsors y publicidad administrada por cada sede ya están disponibles. Paddle Match Shop avanza como piloto para productos y beneficios locales."
         }
       }
     },
