@@ -2082,6 +2082,12 @@
       "demoTeamB": "Equipo B",
       "demoSet": "Set 2",
       "demoPartial": "Parcial 3-2",
+      "futureAccess": {
+        "label": "قريبًا",
+        "title": "دخول ذكي",
+        "text": "دخول عبر التعرّف على الوجه واعتماد PadCoins منذ الوصول إلى النادي.",
+        "imageAlt": "دخول إلى النادي عبر التعرّف على الوجه"
+      },
       "steps": {
         "start": {
           "title": "Iniciar el partido",

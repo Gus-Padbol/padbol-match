@@ -2077,6 +2077,12 @@
       "demoTeamB": "Equipo B",
       "demoSet": "Set 2",
       "demoPartial": "Parcial 3-2",
+      "futureAccess": {
+        "label": "Em breve",
+        "title": "Acesso inteligente",
+        "text": "Entrada por reconhecimento facial e crédito de PadCoins desde a chegada ao clube.",
+        "imageAlt": "Entrada no clube por reconhecimento facial"
+      },
       "steps": {
         "start": {
           "title": "Iniciar el partido",

@@ -462,7 +462,23 @@ export function SmartScoreboardSection() {
             ))}
           </ol>
         </div>
-        <ScoreboardPreview text={text} />
+        <div className="ps-scoreboard__visual">
+          <ScoreboardPreview text={text} />
+          <aside className="ps-scoreboard__future" data-ps-reveal data-ps-reveal-order="2">
+            <img
+              src="/media/public-site/jero/upcoming-facial-access.jpg"
+              alt={text('publicSite.smartScoreboard.futureAccess.imageAlt')}
+              loading="lazy"
+            />
+            <div className="ps-scoreboard__future-copy">
+              <span className="ps-scoreboard__future-label">
+                {text('publicSite.smartScoreboard.futureAccess.label')}
+              </span>
+              <h3>{text('publicSite.smartScoreboard.futureAccess.title')}</h3>
+              <p>{text('publicSite.smartScoreboard.futureAccess.text')}</p>
+            </div>
+          </aside>
+        </div>
       </div>
     </SectionShell>
   );

@@ -2956,6 +2956,12 @@
       "demoTeamB": "Team B",
       "demoSet": "Set 2",
       "demoPartial": "Partial 3-2",
+      "futureAccess": {
+        "label": "Coming soon",
+        "title": "Smart access",
+        "text": "Facial-recognition entry and PadCoins credit from the moment you arrive at the venue.",
+        "imageAlt": "Venue entry using facial recognition"
+      },
       "steps": {
         "start": {
           "title": "Start the match",
