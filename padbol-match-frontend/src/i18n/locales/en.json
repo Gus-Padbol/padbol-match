@@ -2565,7 +2565,8 @@
       "download": "Download the app",
       "login": "Sign in",
       "community": "Community",
-      "scoreboard": "Scoreboard"
+      "scoreboard": "Scoreboard",
+      "about": "About us"
     },
     "hero": {
       "claim": "The sports app that connects everything.",
@@ -2829,9 +2830,13 @@
       "note": "Areas in development within the Padbol Match ecosystem."
     },
     "about": {
+      "kicker": "Padbol Match · connected sport",
       "title": "About us",
       "text": "Padbol Match comes from the sport of Padbol and grows as an international platform for players, venues and organizations.",
-      "visualAlt": "Space for institutional photography"
+      "detail": "We turn that idea into one shared foundation for players, clubs, venues and organizations. Padbol is our origin; Padel, Pickleball and Tennis expand the same connected way of playing and organizing sport.",
+      "sportsLabel": "Sports on the platform",
+      "playersNote": "Built for the people who make court sports happen: players, clubs, venues and organizations.",
+      "visualAlt": "Players taking part in a sports community"
     },
     "download": {
       "title": "Download the app",

@@ -1757,7 +1757,8 @@
       "download": "Descargar la app",
       "login": "Ingresar",
       "community": "Comunidad",
-      "scoreboard": "Marcador"
+      "scoreboard": "Marcador",
+      "about": "Quem somos"
     },
     "hero": {
       "claim": "A aplicação desportiva que conecta tudo.",
@@ -1987,9 +1988,19 @@
       "note": "Áreas en desarrollo dentro del ecosistema Padbol Match."
     },
     "about": {
-      "title": "Quiénes somos",
-      "text": "Padbol Match nace del deporte Padbol y crece como plataforma internacional para jugadores, sedes y organizaciones.",
-      "visualAlt": "Espacio para fotografía institucional"
+      "kicker": "Padbol Match · esporte conectado",
+      "title": "Quem somos",
+      "text": "Padbol Match nasce do esporte Padbol e cresce como plataforma internacional para jogadores, sedes e organizações.",
+      "detail": "Transformamos essa ideia em uma base comum para jogadores, clubes, sedes e organizações. O Padbol é nossa origem; Padel, Pickleball e Tênis ampliam a mesma forma conectada de jogar e organizar o esporte.",
+      "sportsLabel": "Esportes na plataforma",
+      "playersNote": "Pensada para quem torna os esportes de quadra possíveis: jogadores, clubes, sedes e organizações.",
+      "visualAlt": "Jogadores em uma comunidade esportiva"
+    },
+    "sports": {
+      "padbol": "Padbol",
+      "padel": "Padel",
+      "pickleball": "Pickleball",
+      "tennis": "Tênis"
     },
     "download": {
       "title": "Descargar la app",

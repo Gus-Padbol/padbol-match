@@ -496,12 +496,14 @@ export function AboutSection() {
     <SectionShell id={id} className="ps-section--about" titleId="ps-about-title">
       <div className="ps-about__grid">
         <div>
-          <span className="ps-about__kicker">Padbol Match · deporte conectado</span>
+          <span className="ps-about__kicker">{text('publicSite.about.kicker')}</span>
           <h2 id="ps-about-title"><AccentWords value={text('publicSite.about.title')} terms={['Quiénes somos']} /></h2>
           <p className="ps-lead">{text('publicSite.about.text')}</p>
           <p className="ps-about__detail">{text('publicSite.about.detail')}</p>
           <div className="ps-about__sports" aria-label={text('publicSite.about.sportsLabel')}>
-            {['Padbol', 'Pádel', 'Pickleball', 'Tenis'].map((sport) => <span key={sport}>{sport}</span>)}
+            {['padbol', 'padel', 'pickleball', 'tennis'].map((sport) => (
+              <span key={sport}>{text(`publicSite.sports.${sport}`)}</span>
+            ))}
           </div>
           <p className="ps-about__players-note">{text('publicSite.about.playersNote')}</p>
         </div>

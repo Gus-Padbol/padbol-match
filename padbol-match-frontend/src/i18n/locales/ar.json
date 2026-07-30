@@ -1762,7 +1762,8 @@
       "download": "Descargar la app",
       "login": "Ingresar",
       "community": "Comunidad",
-      "scoreboard": "Marcador"
+      "scoreboard": "Marcador",
+      "about": "من نحن"
     },
     "hero": {
       "claim": "التطبيق الرياضي الذي يربط كل شيء.",
@@ -1992,9 +1993,19 @@
       "note": "Áreas en desarrollo dentro del ecosistema Padbol Match."
     },
     "about": {
-      "title": "Quiénes somos",
-      "text": "Padbol Match nace del deporte Padbol y crece como plataforma internacional para jugadores, sedes y organizaciones.",
-      "visualAlt": "Espacio para fotografía institucional"
+      "kicker": "Padbol Match · رياضة متصلة",
+      "title": "من نحن",
+      "text": "تنطلق Padbol Match من رياضة بادبول وتنمو كمنصة دولية للاعبين والملاعب والمنظمات.",
+      "detail": "نحوّل هذه الفكرة إلى قاعدة مشتركة للاعبين والأندية والملاعب والمنظمات. بادبول هو انطلاقتنا؛ وتوسّع بادل وبيكلبول والتنس نفس طريقة اللعب والتنظيم المتصلة.",
+      "sportsLabel": "الرياضات على المنصة",
+      "playersNote": "صُممت لمن يجعلون رياضات الملاعب ممكنة: اللاعبون والأندية والملاعب والمنظمات.",
+      "visualAlt": "لاعبون يشاركون في مجتمع رياضي"
+    },
+    "sports": {
+      "padbol": "بادبول",
+      "padel": "بادل",
+      "pickleball": "بيكلبول",
+      "tennis": "تنس"
     },
     "download": {
       "title": "Descargar la app",
