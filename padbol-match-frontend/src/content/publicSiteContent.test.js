@@ -75,7 +75,7 @@ describe('publicSite content structure', () => {
   });
 
   it('diferencia expansión (futuro) de funciones actuales sin usar Próximamente', () => {
-    expect(es.publicSite.expansion.note).toMatch(/desarrollo|evolución|oportunidad/i);
+    expect(es.publicSite.expansion.note).toMatch(/gestiona|piloto|avanza/i);
     expect(es.publicSite.expansion.note).not.toMatch(/próximamente/i);
     expect(es.publicSite.download.storeSoon).not.toMatch(/próximamente/i);
     ['sponsor', 'ads', 'eshop'].forEach((key) => {

@@ -52,11 +52,11 @@ export default function PublicSitePage() {
     <PublicSiteLayout>
       <div ref={revealRootRef} className="public-site__reveal-root">
         <HeroSection />
+        <AboutSection />
         <WhatIsSection />
         <PlatformStatusSection />
         <PlayerPathSection />
         <CommunityMatchesSection />
-        <AboutSection />
         <VenuePathSection />
         <ContinuitySection />
         <SmartScoreboardSection />

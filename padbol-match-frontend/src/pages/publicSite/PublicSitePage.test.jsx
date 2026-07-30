@@ -239,7 +239,7 @@ describe('/plataforma public site', () => {
     const toggle = screen.getByRole('button', { name: 'Abrir menú' });
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(document.activeElement).toHaveTextContent('Plataforma');
+    expect(document.activeElement).toHaveTextContent('Quiénes somos');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(document.activeElement).toBe(toggle);
