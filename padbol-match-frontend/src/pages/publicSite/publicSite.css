@@ -2304,6 +2304,39 @@ html.public-site-active #root {
   line-height: 1.5;
 }
 
+.ps-about__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 11px 16px;
+  border: 1px solid rgba(225, 27, 34, 0.78);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(225, 27, 34, 0.2), rgba(225, 27, 34, 0.05));
+  box-shadow: 0 10px 26px rgba(225, 27, 34, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: var(--ps-heading);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  transition: transform 220ms var(--ps-ease), background 220ms ease, box-shadow 220ms ease;
+}
+
+.ps-about__cta:hover {
+  transform: translateY(-2px);
+  background: rgba(225, 27, 34, 0.28);
+  box-shadow: 0 14px 32px rgba(225, 27, 34, 0.23), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.ps-about__cta span {
+  color: var(--ps-accent);
+  font-size: 1.1rem;
+  line-height: 0;
+  transition: transform 220ms var(--ps-ease);
+}
+
+.ps-about__cta:hover span { transform: translateX(3px); }
+
 .ps-about__placeholder {
   display: block;
   width: 100%;

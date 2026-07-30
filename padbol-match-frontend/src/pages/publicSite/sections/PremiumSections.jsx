@@ -541,6 +541,9 @@ export function AboutSection() {
             ))}
           </div>
           <p className="ps-about__players-note">{text('publicSite.about.playersNote')}</p>
+          <a className="ps-about__cta" href="#que-es">
+            {text('publicSite.about.cta')} <span aria-hidden="true">→</span>
+          </a>
         </div>
         <div className="ps-about__visual" role="img" aria-label={text('publicSite.about.visualAlt')}>
           <img

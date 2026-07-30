@@ -2873,12 +2873,13 @@
       "note": "Sponsors and advertising are already managed by each venue. Paddle Match Shop is advancing as a pilot."
     },
     "about": {
-      "kicker": "Padbol Match · connected sport",
+      "kicker": "From Padbol to connected sport",
       "title": "About us",
-      "text": "Padbol Match comes from the sport of Padbol and grows as an international platform for players, venues and organizations.",
-      "detail": "We turn that idea into one shared foundation for players, clubs, venues and organizations. Padbol is our origin; Padel, Pickleball and Tennis expand the same connected way of playing and organizing sport.",
+      "text": "We are Padbol Match: a platform born on the court so playing, organizing and growing never depend on disconnected tools.",
+      "detail": "We connect players, clubs, venues and organizations in one simple journey: find, create, book, compete and play again. Padbol is our origin; the same logic already supports Padel, Pickleball and Tennis.",
       "sportsLabel": "Sports on the platform",
-      "playersNote": "Built for the people who make court sports happen: players, clubs, venues and organizations.",
+      "playersNote": "One experience for the people who make court sports happen.",
+      "cta": "Explore the platform",
       "visualAlt": "Players taking part in a sports community"
     },
     "download": {
