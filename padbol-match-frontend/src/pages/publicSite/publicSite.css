@@ -2429,33 +2429,33 @@ html.public-site-active #root {
   }
 
   .ps-venue-cards li {
-    grid-template-columns: minmax(96px, 32%) minmax(0, 1fr);
-    min-height: 132px;
-    border-radius: 22px;
+    grid-template-columns: minmax(82px, 27%) minmax(0, 1fr);
+    min-height: 108px;
+    border-radius: 18px;
   }
 
   .ps-venue-cards li > img {
-    min-height: 132px;
-    padding: 6px;
+    min-height: 108px;
+    padding: 5px;
   }
 
   .ps-venue-cards li > div {
-    gap: 6px;
-    padding: 15px 14px;
+    gap: 4px;
+    padding: 11px 13px;
   }
 
   .ps-venue-cards strong {
-    font-size: 1rem;
+    font-size: 0.94rem;
   }
 
   .ps-venue-cards span {
-    font-size: 0.88rem;
-    line-height: 1.45;
+    font-size: 0.8rem;
+    line-height: 1.32;
   }
 
   .ps-venue-card__sport {
-    padding: 4px 7px;
-    font-size: 0.62rem !important;
+    padding: 3px 6px;
+    font-size: 0.58rem !important;
   }
 }
 
