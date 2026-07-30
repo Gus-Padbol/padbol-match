@@ -61,8 +61,8 @@ export default function PublicSitePage() {
         <VenuePathSection />
         <ContinuitySection />
         <SmartScoreboardSection />
-        <MatchIntelligenceSection />
         <ExperiencesSection />
+        <MatchIntelligenceSection />
         <ExpansionSection />
         <DownloadSection />
         <ContactSection />

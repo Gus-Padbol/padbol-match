@@ -206,7 +206,7 @@ describe('/plataforma public site', () => {
     expect(container.textContent).toMatch(/Corregir una acción/i);
     expect(container.textContent).toMatch(/Cerrar el resultado/i);
     expect(container.textContent).toMatch(/historial, estadísticas, ranking y torneos/i);
-    expect(container.querySelector('.ps-sb')).toBeTruthy();
+    expect(container.querySelector('.ps-scoreboard__video')).toBeTruthy();
     expect(container.querySelector('.ps-match')).toBeTruthy();
     expect(container.textContent).toMatch(/Crear un partido/i);
     expect(container.textContent).toMatch(/Partidos abiertos/i);

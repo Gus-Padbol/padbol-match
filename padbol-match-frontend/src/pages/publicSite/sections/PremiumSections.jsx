@@ -394,40 +394,22 @@ export function ContinuitySection() {
   );
 }
 
-function ScoreboardPreview({ text }) {
+function ScoreboardVideo({ text }) {
   return (
-    <div className="ps-sb" role="img" aria-label={text('publicSite.smartScoreboard.demoAria')}>
-      <div className="ps-sb__frame">
-        <header className="ps-sb__header">
-          <span className="ps-sb__live" aria-hidden="true" />
-          {text('publicSite.smartScoreboard.demoBadge')}
-        </header>
-        <div className="ps-sb__teams">
-          <div className="ps-sb__team is-serving">
-            <span className="ps-sb__serve" aria-hidden="true" />
-            <span className="ps-sb__team-name">{text('publicSite.smartScoreboard.demoTeamA')}</span>
-            <span className="ps-sb__sets" aria-hidden="true">
-              <i className="is-won" />
-              <i />
-            </span>
-            <span className="ps-sb__points">30</span>
-          </div>
-          <div className="ps-sb__team">
-            <span className="ps-sb__serve is-idle" aria-hidden="true" />
-            <span className="ps-sb__team-name">{text('publicSite.smartScoreboard.demoTeamB')}</span>
-            <span className="ps-sb__sets" aria-hidden="true">
-              <i />
-              <i />
-            </span>
-            <span className="ps-sb__points">15</span>
-          </div>
-        </div>
-        <footer className="ps-sb__meta">
-          <span>{text('publicSite.smartScoreboard.demoSet')}</span>
-          <span>{text('publicSite.smartScoreboard.demoPartial')}</span>
-        </footer>
-      </div>
-    </div>
+    <figure className="ps-scoreboard__video" data-ps-reveal data-ps-reveal-order="1">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        poster={`${ASSET_ROOT}/marcador-01-poster.jpg`}
+        aria-label={text('publicSite.matchIntelligence.videoAria')}
+      >
+        <source src={`${ASSET_ROOT}/marcador-01.mp4`} type="video/mp4" />
+      </video>
+      <figcaption>{text('publicSite.matchIntelligence.caption')}</figcaption>
+    </figure>
   );
 }
 
@@ -463,7 +445,7 @@ export function SmartScoreboardSection() {
           </ol>
         </div>
         <div className="ps-scoreboard__visual">
-          <ScoreboardPreview text={text} />
+          <ScoreboardVideo text={text} />
           <aside className="ps-scoreboard__future" data-ps-reveal data-ps-reveal-order="2">
             <img
               src="/media/public-site/jero/upcoming-facial-access.jpg"
@@ -510,20 +492,11 @@ export function MatchIntelligenceSection() {
             ))}
           </ul>
         </div>
-        <figure className="ps-match-intelligence__media" data-ps-reveal data-ps-reveal-order="1">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            poster="/media/public-site/jero/marcador-01-poster.jpg"
-            aria-label={text('publicSite.matchIntelligence.videoAria')}
-          >
-            <source src="/media/public-site/jero/marcador-01.mp4" type="video/mp4" />
-          </video>
-          <figcaption>{text('publicSite.matchIntelligence.caption')}</figcaption>
-        </figure>
+        <aside className="ps-match-intelligence__signal" data-ps-reveal data-ps-reveal-order="1" aria-hidden="true">
+          <span>AI / 01</span>
+          <strong>VALIDACIÓN<br />ASISTIDA</strong>
+          <i />
+        </aside>
       </div>
     </SectionShell>
   );
