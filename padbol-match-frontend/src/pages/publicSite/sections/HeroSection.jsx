@@ -11,7 +11,10 @@ function scrollToHash(hash) {
   const el = document.getElementById(id);
   if (!el) return;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  const header = document.querySelector('.public-site__nav');
+  const headerHeight = Math.ceil(header?.getBoundingClientRect().height || 68);
+  const targetTop = Math.max(0, window.scrollY + el.getBoundingClientRect().top - headerHeight - 16);
+  window.scrollTo({ top: targetTop, behavior: reduceMotion ? 'auto' : 'smooth' });
   if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
   el.focus({ preventScroll: true });
 }

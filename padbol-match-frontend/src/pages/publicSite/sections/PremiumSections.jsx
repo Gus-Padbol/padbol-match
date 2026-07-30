@@ -140,7 +140,7 @@ export function WhatIsSection() {
           <div className="ps-what__brand" aria-hidden="true">
             <img src={`${ASSET_ROOT}/match.svg`} alt="" />
           </div>
-          <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Qué', 'Padbol Match']} /></h2>
+          <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Padbol Match']} /></h2>
           <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
         </div>
         <figure className="ps-what__visual" aria-hidden="true">
@@ -446,7 +446,7 @@ export function SmartScoreboardSection() {
       </span>
       <div className="ps-scoreboard__grid">
         <div className="ps-scoreboard__copy">
-          <h2 id="ps-smart-scoreboard-title"><AccentWords value={text('publicSite.smartScoreboard.title')} terms={['Marcador', 'partido en vivo']} /></h2>
+          <h2 id="ps-smart-scoreboard-title"><AccentWords value={text('publicSite.smartScoreboard.title')} terms={['Marcador inteligente']} /></h2>
           <p className="ps-lead">{text('publicSite.smartScoreboard.text')}</p>
           <ol className="ps-flow-steps ps-flow-steps--scoreboard">
             {config.steps.map(({ key }, index) => (
