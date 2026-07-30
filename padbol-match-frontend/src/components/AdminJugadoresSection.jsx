@@ -466,7 +466,7 @@ export default function AdminJugadoresSection({
                 <th className="admin-jugadores-table__contact">{t('admin.jugadores.phoneCol')}</th>
                 <th>{t('admin.jugadores.vinculacionCol')}</th>
                 <th className="admin-jugadores-table__activity">{t('admin.jugadores.activityCol')}</th>
-                <th>{t('admin.metricas.profileCol')}</th>
+                <th className="admin-jugadores-table__profile">{t('admin.metricas.profileCol')}</th>
               </tr>
             </thead>
             <tbody>
@@ -495,13 +495,13 @@ export default function AdminJugadoresSection({
                       </button>
                     </td>
                     <td style={{ fontSize: 13 }}>{formatJugadorUsername(j.username) || '—'}</td>
-                    <td className="admin-jugadores-table__contact" style={{ fontSize: 13 }}>{j.email || '—'}</td>
-                    <td className="admin-jugadores-table__contact" style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
+                    <td className="admin-jugadores-table__contact admin-jugadores-table__email" style={{ fontSize: 13 }}>{j.email || '—'}</td>
+                    <td className="admin-jugadores-table__contact admin-jugadores-table__phone" style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
                     <td style={{ fontSize: 12 }}>{formatJugadorVinculacionLabel(j.vinculacion, t)}</td>
                     <td className="admin-jugadores-table__activity" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at) || '—'}</td>
-                    <td style={{ fontSize: 13 }}>
+                    <td className="admin-jugadores-table__profile" style={{ fontSize: 13 }}>
                       {perfilPath ? (
-                        <a href={perfilPath} target="_blank" rel="noopener noreferrer" style={{ color: '#E11B22', fontWeight: 700 }}>
+                        <a className="admin-jugadores-table__profile-link" href={perfilPath} target="_blank" rel="noopener noreferrer">
                           {t('admin.jugadores.viewProfile')}
                         </a>
                       ) : '—'}

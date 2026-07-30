@@ -5,6 +5,7 @@ import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPartidoPreview';
+import { AdminEditIcon, AdminGridIcon, AdminLicenseIcon } from '../components/admin/AdminUiIcons';
 import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
@@ -10327,7 +10328,7 @@ export default function AdminDashboard({
                       boxShadow: '0 1px 6px rgba(15,23,42,0.1)',
                     }}
                   >
-                    <span style={{ fontSize: '0.8rem', lineHeight: 1 }} aria-hidden>⭐</span>
+                    <AdminLicenseIcon size={14} />
                     {t('admin.sedes.padbolLicenseActive')}
                   </span>
                 </div>
@@ -11694,10 +11695,11 @@ export default function AdminDashboard({
                         {isAdmin && (
                           <button
                             onClick={() => abrirEditTorneo(torneo)}
-                            style={{ padding: '6px 10px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
+                            className="admin-edit-button"
                             title={t('admin.torneosSection.editTournament')}
                           >
-                            Editar
+                            <AdminEditIcon size={14} />
+                            {t('admin.scoreboard.editAction', 'Editar')}
                           </button>
                         )}
                         {isSuperAdmin && (
@@ -18530,19 +18532,10 @@ export default function AdminDashboard({
             <button
               type="button"
               onClick={abrirModalEditarSede}
-              style={{
-                padding: '10px 18px',
-                background: 'linear-gradient(135deg, #E11B22, #b91c1c)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
-                fontWeight: 800,
-                fontSize: '14px',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(225,27,34,0.35)',
-              }}
+              className="admin-edit-button"
             >
-              ✏️ {t('admin.sedes.editVenue')}
+              <AdminEditIcon size={16} />
+              {t('admin.sedes.editVenue')}
             </button>
           ) : null}
         </div>
@@ -21373,7 +21366,10 @@ export default function AdminDashboard({
 
           {activeMiSedeSection === 'info' ? (
           <div style={{ marginBottom: '32px' }}>
-            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.socialNetworksTitle')}</h3>
+            <h3 className="admin-mi-sede-block-title admin-mi-sede-block-title--with-icon" style={{ marginBottom: '16px', fontSize: '16px' }}>
+              <AdminGridIcon size={17} />
+              {t('admin.sedes.socialNetworksTitle')}
+            </h3>
             <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '480px' }}>
               <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
                 {t('admin.sedes.socialNetworksHint')}

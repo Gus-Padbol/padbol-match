@@ -3,6 +3,7 @@ import { useSafeTranslation } from '../../i18n/tSafe';
 import UniformJerseyStrip from '../scoreboard/UniformJerseyStrip';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
+import { AdminEditIcon } from './AdminUiIcons';
 import {
   getScoreboardJerseyLabel,
   listVisibleScoreboardJugadores,
@@ -113,9 +114,10 @@ export default function AdminScoreboardPartidoPreview({ partido, onEdit }) {
         <button
           type="button"
           onClick={() => onEdit(partido.id)}
-          className="admin-sb-partido-preview__action-btn"
+          className="admin-sb-partido-preview__action-btn admin-edit-button"
         >
-          ✏️ {t('admin.scoreboard.editAction', 'Editar')}
+          <AdminEditIcon size={14} />
+          {t('admin.scoreboard.editAction', 'Editar')}
         </button>
       </div>
     </div>

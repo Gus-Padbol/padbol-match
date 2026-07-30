@@ -2883,15 +2883,94 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   border-color: var(--accent);
 }
 
+/* Acción secundaria unificada para las entradas de edición del panel. */
+.admin-edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid rgba(225, 27, 34, 0.85);
+  border-radius: 8px;
+  background: rgba(225, 27, 34, 0.1);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.admin-edit-button svg {
+  color: #ff7b80;
+  flex: 0 0 auto;
+}
+
+.admin-edit-button:hover,
+.admin-edit-button:focus-visible {
+  border-color: #ff646b;
+  background: rgba(225, 27, 34, 0.2);
+  outline: none;
+}
+
+.admin-mi-sede-block-title--with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-mi-sede-block-title--with-icon svg {
+  color: var(--accent);
+}
+
 /* Jugadores: en móvil priorizamos identidad, relación y perfil. Los datos
    completos siguen disponibles al abrir la ficha, sin forzar scroll lateral. */
 .admin-jugadores-table-wrap {
   width: 100%;
+  overflow-x: auto;
 }
 
 .admin-jugadores-table {
   width: 100%;
-  table-layout: fixed;
+  min-width: 880px;
+  table-layout: auto;
+}
+
+.admin-jugadores-table__email {
+  min-width: 180px;
+  overflow-wrap: anywhere;
+}
+
+.admin-jugadores-table__phone {
+  min-width: 132px;
+  white-space: nowrap;
+}
+
+.admin-jugadores-table__profile {
+  min-width: 96px;
+  white-space: nowrap;
+}
+
+.admin-jugadores-table__profile-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid rgba(225, 27, 34, 0.72);
+  border-radius: 6px;
+  color: #E11B22;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.admin-jugadores-table__profile-link:hover,
+.admin-jugadores-table__profile-link:focus-visible {
+  background: rgba(225, 27, 34, 0.08);
+  outline: none;
 }
 
 @media (max-width: 760px) {
