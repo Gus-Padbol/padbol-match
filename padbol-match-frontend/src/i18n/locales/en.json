@@ -2846,23 +2846,26 @@
       "note": "Demo with sample data."
     },
     "expansion": {
-      "title": "The ecosystem keeps growing",
-      "text": "New commercial layers for venues, brands and the Padbol community.",
+      "title": "More opportunities for your venue",
+      "text": "Active tools to connect brands, campaigns and court-sport communities.",
       "items": {
         "sponsor": {
-          "title": "Sponsor",
-          "text": "Visibility aligned with real play."
+          "title": "Sponsors",
+          "text": "Ongoing brand relationships aligned with real play.",
+          "status": "Available today"
         },
         "ads": {
           "title": "Advertising",
-          "text": "Presence in high-attention moments."
+          "text": "Campaigns in high-attention spaces and moments.",
+          "status": "Available today"
         },
         "eshop": {
           "title": "E-shop",
-          "text": "Products and benefits connected to the venue."
+          "text": "Products and benefits connected to the venue.",
+          "status": "In development"
         }
       },
-      "note": "Areas in development within the Padbol Match ecosystem."
+      "note": "Sponsors and advertising are already managed by each venue. Paddle Match Shop is advancing as a pilot."
     },
     "about": {
       "kicker": "Padbol Match · connected sport",

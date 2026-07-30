@@ -88,12 +88,12 @@ const CONTINUITY_DETAILS = {
 
 const EXPANSION_DETAILS = {
   sponsor: {
-    lead: 'Cada sede puede abrir espacios para marcas que tengan sentido para su comunidad, su deporte y el momento de juego.',
-    points: ['La sede define qué espacios ofrece y para qué público.', 'Las marcas ganan presencia contextual, no publicidad invasiva.', 'La gestión se organiza desde el área administrativa de la sede.'],
+    lead: 'Sponsor es un vínculo de marca sostenido: una sede puede asociar una marca a su comunidad, su deporte o una propuesta estable.',
+    points: ['La sede define qué espacios ofrece y para qué público.', 'La marca gana presencia contextual y continuidad, no una interrupción invasiva.', 'La gestión se organiza desde el área administrativa de la sede.'],
   },
   ads: {
-    lead: 'La publicidad se incorpora en momentos de atención real: antes de reservar, al confirmar un partido, durante un torneo o dentro de contenidos seleccionados.',
-    points: ['Cada sede controla los espacios que habilita.', 'Se puede adaptar la propuesta a campañas, beneficios o eventos.', 'La prioridad es que acompañe la experiencia, sin interrumpir el juego.'],
+    lead: 'Publicidad es una campaña puntual: la sede decide qué anuncio mostrar, en qué espacio cedido y a qué usuarios de su zona.',
+    points: ['Puede aparecer antes de reservar, al confirmar un partido, durante un torneo o en contenidos seleccionados.', 'Cada sede controla sus espacios, campañas, beneficios y eventos.', 'La prioridad es acompañar la experiencia, sin interrumpir el juego.'],
   },
   eshop: {
     lead: 'La visión es que cada club tenga su propio e-shop dentro de Padbol Match, con productos, promociones y beneficios para su comunidad.',
@@ -459,7 +459,7 @@ export function ExpansionSection() {
 
   return (
     <SectionShell id={config.id} className="ps-section--expansion" titleId="ps-expansion-title">
-      <h2 id="ps-expansion-title"><AccentWords value={text('publicSite.expansion.title')} terms={['ecosistema']} /></h2>
+      <h2 id="ps-expansion-title"><AccentWords value={text('publicSite.expansion.title')} terms={['oportunidades']} /></h2>
       <p className="ps-lead">{text('publicSite.expansion.text')}</p>
       <div className="ps-expansion__grid">
         {config.items.map(({ key }) => (
@@ -486,7 +486,7 @@ export function ExpansionSection() {
             </button>
             {activeKey === key && (
               <aside id={`ps-expansion-detail-${key}`} className="ps-expansion__detail" role="status">
-                <span>Padbol Match · Próximamente</span>
+                <span>Padbol Match · {text(`publicSite.expansion.items.${key}.status`)}</span>
                 <strong>{text(`publicSite.expansion.items.${key}.title`)}</strong>
                 <p>{EXPANSION_DETAILS[key].lead}</p>
                 <ul>

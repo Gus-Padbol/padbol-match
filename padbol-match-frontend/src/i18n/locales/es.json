@@ -2510,23 +2510,26 @@
       "note": "Demostración con datos de ejemplo."
     },
     "expansion": {
-      "title": "El ecosistema sigue creciendo",
-      "text": "Nuevas capas comerciales para sedes, marcas y comunidades de deportes de cancha.",
+      "title": "Más oportunidades para tu sede",
+      "text": "Herramientas activas para conectar marcas, campañas y comunidades de deportes de cancha.",
       "items": {
         "sponsor": {
-          "title": "Sponsor",
-          "text": "Visibilidad alineada al juego real."
+          "title": "Sponsors",
+          "text": "Vínculos de marca sostenidos, alineados al juego real.",
+          "status": "Disponible hoy"
         },
         "ads": {
           "title": "Publicidad",
-          "text": "Presencia en momentos de alta atención."
+          "text": "Campañas en espacios y momentos de alta atención.",
+          "status": "Disponible hoy"
         },
         "eshop": {
           "title": "E-shop",
-          "text": "Productos y beneficios conectados a la sede."
+          "text": "Productos y beneficios conectados a la sede.",
+          "status": "En desarrollo"
         }
       },
-      "note": "Áreas en desarrollo dentro del ecosistema Padbol Match."
+      "note": "Sponsors y publicidad ya se gestionan desde cada sede. Paddle Match Shop avanza como piloto."
     },
     "about": {
       "kicker": "Padbol Match · deporte conectado",

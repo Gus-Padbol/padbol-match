@@ -91,31 +91,10 @@ describe('/plataforma public site', () => {
     return render(<PublicSitePage />);
   }
 
-  it('binario vive en la zona Qué es → Comunidad, no en el Hero', () => {
+  it('no muestra binarios decorativos en el recorrido público', () => {
     const { container } = renderPage();
-    const hero = container.querySelector('.ps-hero');
-    const zone = container.querySelector('[data-binary-zone="true"]');
-    const streams = container.querySelectorAll('[data-binary-stream="true"]');
-    const [leftStream, rightStream] = streams;
-    expect(hero.querySelector('[data-binary-stream="true"]')).toBeNull();
-    expect(zone).toBeTruthy();
-    expect(zone).toHaveAttribute('data-binary-zone-start', 'what-is');
-    expect(zone).toHaveAttribute('data-binary-zone-end', 'community');
-    expect(streams).toHaveLength(2);
-    expect(zone.contains(leftStream)).toBe(true);
-    expect(zone.contains(rightStream)).toBe(true);
-    expect(zone.querySelector('#ps-what-title')).toBeTruthy();
-    expect(zone.querySelector('#ps-players-title')).toBeTruthy();
-    expect(zone.querySelector('#ps-community-matches-title')).toBeTruthy();
-    expect(leftStream).toHaveAttribute('data-position', 'left');
-    expect(rightStream).toHaveAttribute('data-position', 'right');
-    expect(leftStream).toHaveAttribute('data-orientation', 'vertical');
-    expect(Number(leftStream.getAttribute('data-band-count'))).toBe(6);
-    expect(Number(rightStream.getAttribute('data-band-count'))).toBe(6);
-    expect(leftStream.className).toMatch(/ps-binary-zone__stream/);
-    expect(rightStream.className).toMatch(/ps-binary-zone__stream/);
-    expect(leftStream).toHaveAttribute('data-motion-axis', 'y');
-    expect(rightStream).toHaveAttribute('data-motion-axis', 'y');
+    expect(container.querySelector('[data-binary-zone="true"]')).toBeNull();
+    expect(container.querySelectorAll('[data-binary-stream="true"]')).toHaveLength(0);
   });
 
   it('renderiza la estructura nueva, un h1 y ninguna BottomNav', () => {
@@ -239,8 +218,8 @@ describe('/plataforma public site', () => {
     ['Signature', 'Stadium', 'Express', 'Arena', 'Quantum'].forEach((name) => {
       expect(screen.getByRole('tab', { name: new RegExp(name, 'i') })).toBeTruthy();
     });
-    expect(screen.getByRole('heading', { name: /ecosistema sigue creciendo/i })).toBeTruthy();
-    expect(screen.getByText('Sponsor')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /más oportunidades para tu sede/i })).toBeTruthy();
+    expect(screen.getByText('Sponsors')).toBeTruthy();
     expect(screen.getByText('Publicidad')).toBeTruthy();
     expect(screen.getByText('E-shop')).toBeTruthy();
   });
