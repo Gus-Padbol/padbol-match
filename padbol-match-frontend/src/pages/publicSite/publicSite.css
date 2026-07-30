@@ -765,9 +765,12 @@ html.public-site-active #root {
 .ps-venue-cards li {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(118px, 31%) minmax(0, 1fr);
+  grid-template-columns: minmax(96px, 28%) minmax(0, 1fr);
   align-items: stretch;
-  min-height: 112px;
+  /* Altura definida: evita que la proporción original de cada foto estire
+     toda la fila. Así las tarjetas se leen de una sola pasada, también en móvil. */
+  height: 112px;
+  min-height: 0;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 28px;
@@ -829,7 +832,7 @@ html.public-site-active #root {
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 112px;
+  min-height: 0;
   padding: 6px;
   box-sizing: border-box;
   background: rgba(5, 9, 19, 0.55);
@@ -870,6 +873,13 @@ html.public-site-active #root {
 .ps-venue-cards span {
   color: var(--ps-text-2);
   line-height: 1.45;
+}
+
+.ps-venue-cards li > div > span:last-child {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* Las imágenes multideporte tienen proporciones distintas. La tarjeta conserva
@@ -944,7 +954,8 @@ html.public-site-active #root {
 
   .ps-venue-cards li,
   .ps-venue-cards li > img {
-    min-height: 124px;
+    height: 120px;
+    min-height: 0;
   }
 }
 
@@ -2554,13 +2565,14 @@ html.public-site-active #root {
   }
 
   .ps-venue-cards li {
-    grid-template-columns: minmax(82px, 27%) minmax(0, 1fr);
-    min-height: 102px;
+    grid-template-columns: minmax(76px, 25%) minmax(0, 1fr);
+    height: 104px;
+    min-height: 0;
     border-radius: 18px;
   }
 
   .ps-venue-cards li > img {
-    min-height: 102px;
+    min-height: 0;
     padding: 5px;
   }
 
