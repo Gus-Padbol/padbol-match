@@ -103,7 +103,7 @@ const EXPANSION_DETAILS = {
   },
 };
 
-function AccentWords({ value, terms = [] }) {
+export function AccentWords({ value, terms = [] }) {
   if (!value || !terms.length) return value;
 
   const escapedTerms = terms
@@ -138,7 +138,7 @@ export function WhatIsSection() {
       <div className="ps-what__brand" aria-hidden="true">
         <img src={`${ASSET_ROOT}/match.svg`} alt="" />
       </div>
-      <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Qué']} /></h2>
+      <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Qué', 'Padbol Match']} /></h2>
       <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
     </SectionShell>
   );
@@ -151,7 +151,7 @@ export function PlatformStatusSection() {
   return (
     <SectionShell id={config.id} className="ps-section--status" titleId="ps-status-title">
       <span className="ps-kicker">{text('publicSite.status.kicker')}</span>
-      <h2 id="ps-status-title">{text('publicSite.status.title')}</h2>
+      <h2 id="ps-status-title"><AccentWords value={text('publicSite.status.title')} terms={['Padbol Match', 'deportes']} /></h2>
       <p className="ps-lead">{text('publicSite.status.text')}</p>
       <ul className="ps-status-grid">
         {config.items.map(({ key }) => (
@@ -159,6 +159,13 @@ export function PlatformStatusSection() {
             <span>{text(`publicSite.status.items.${key}.eyebrow`)}</span>
             <strong>{text(`publicSite.status.items.${key}.title`)}</strong>
             <p>{text(`publicSite.status.items.${key}.text`)}</p>
+            {key === 'next' && (
+              <ul className="ps-status-card__badges" aria-label="Estado de las capas comerciales">
+                <li>{text('publicSite.status.items.next.badges.sponsor')}</li>
+                <li>{text('publicSite.status.items.next.badges.ads')}</li>
+                <li>{text('publicSite.status.items.next.badges.shop')}</li>
+              </ul>
+            )}
           </li>
         ))}
       </ul>
@@ -172,7 +179,7 @@ export function PlayerPathSection() {
   const config = PUBLIC_SITE_SECTIONS.playerPath;
   return (
     <SectionShell id={config.id} className="ps-section--paths ps-section--players" titleId="ps-players-title">
-      <h2 id="ps-players-title">{text('publicSite.playerPath.title')}</h2>
+      <h2 id="ps-players-title"><AccentWords value={text('publicSite.playerPath.title')} terms={['jugadores']} /></h2>
       <p className="ps-lead">{text('publicSite.playerPath.text')}</p>
       <ul className="ps-paths__list">
         {config.items.map(({ key }) => (

@@ -2667,12 +2667,12 @@
     },
     "status": {
       "kicker": "Product status",
-      "title": "Padbol Match works today and grows into new sports",
-      "text": "The core experience is already active: it connects play, community and operations. The same model progressively expands into new sports and territories.",
+      "title": "Padbol Match works today, across all sports",
+      "text": "Play, community and operations already work in one platform. Padbol, Padel, Pickleball and Tennis share the same journey.",
       "labels": {
         "active": "Available today",
-        "rollingOut": "Expanding",
-        "next": "Active and growing"
+        "rollingOut": "Available today",
+        "next": "Available today"
       },
       "items": {
         "active": {
@@ -2681,14 +2681,19 @@
           "text": "Sign in, profiles, bookings, open matches, tournaments, ranking, community, photos and videos already connected in one platform."
         },
         "rollingOut": {
-          "eyebrow": "Expanding",
+          "eyebrow": "Available today",
           "title": "More sports, one platform",
-          "text": "Padbol is the active starting point. Padel, Pickleball and Tennis join through the same play, management and community journey."
+          "text": "Padbol, Padel, Pickleball and Tennis already share the same play, management and community journey in one platform."
         },
         "next": {
-          "eyebrow": "Active and growing",
-          "title": "Connected commercial layers",
-          "text": "Sponsor spaces and venue-managed advertising are already available. Paddle Match Shop is advancing as a pilot for local products and benefits."
+          "eyebrow": "Available today",
+          "title": "Sponsors and advertising are active",
+          "text": "Each venue can already manage its sponsor and advertising spaces. Paddle Match Shop is moving forward as a pilot for local products and benefits.",
+          "badges": {
+            "sponsor": "Sponsors · available",
+            "ads": "Advertising · available",
+            "shop": "Paddle Match Shop · pilot"
+          }
         }
       }
     },

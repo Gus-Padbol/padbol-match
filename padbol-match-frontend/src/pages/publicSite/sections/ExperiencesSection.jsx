@@ -7,6 +7,7 @@ import {
 import SportIcon from '../../../components/common/SportIcon';
 import { usePublicSiteText } from '../publicSiteI18n';
 import { prefersReducedMotion } from '../useRevealOnScroll';
+import { AccentWords } from './PremiumSections';
 
 const AUTOPLAY_MS = 7000;
 
@@ -270,7 +271,7 @@ export default function ExperiencesSection() {
       <div className="public-site__shell ps-exp-layout">
         <div className="ps-exp-main">
           <header className="ps-exp-intro">
-            <h2 id="ps-experiences-title">{text('publicSite.experiences.title')}</h2>
+            <h2 id="ps-experiences-title"><AccentWords value={text('publicSite.experiences.title')} terms={['Cinco experiencias']} /></h2>
             <p>{text('publicSite.experiences.text')}</p>
           </header>
 
