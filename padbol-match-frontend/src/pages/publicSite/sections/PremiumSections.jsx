@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PadbolBrandLogo from '../../../components/PadbolBrandLogo';
 import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
@@ -48,9 +48,22 @@ export function PlayerPathSection() {
   );
 }
 
+const DEMO_PLAYERS = [
+  { initials: 'MG', name: 'Martín G.', tone: 'coral' },
+  { initials: 'LP', name: 'Lola P.', tone: 'blue' },
+  { initials: 'AR', name: 'Alex R.', tone: 'gold' },
+  { initials: 'SV', name: 'Sofi V.', tone: 'violet' },
+];
+
 function OpenMatchMockup({ text }) {
+  const [confirmedPlayers, setConfirmedPlayers] = useState(DEMO_PLAYERS.length);
+  const isComplete = confirmedPlayers === DEMO_PLAYERS.length;
+  const slotsLabel = isComplete
+    ? '4 de 4 lugares confirmados'
+    : `${confirmedPlayers} de 4 lugares confirmados`;
+
   return (
-    <div className="ps-match" role="img" aria-label={text('publicSite.communityMatches.mockAria')}>
+    <div className="ps-match" aria-label={text('publicSite.communityMatches.mockAria')}>
       <div className="ps-match__phone">
         <header className="ps-match__bar">
           <span>{text('publicSite.communityMatches.mockBadge')}</span>
@@ -59,14 +72,34 @@ function OpenMatchMockup({ text }) {
         <div className="ps-match__card">
           <p className="ps-match__meta">{text('publicSite.communityMatches.mockMeta')}</p>
           <p className="ps-match__level">{text('publicSite.communityMatches.mockLevel')}</p>
-          <ul className="ps-match__slots" aria-hidden="true">
-            <li className="is-filled" />
-            <li className="is-filled" />
-            <li className="is-open" />
-            <li className="is-open" />
+          <ul className="ps-match__slots" aria-label="Jugadores confirmados">
+            {DEMO_PLAYERS.map((player, index) => {
+              const isConfirmed = index < confirmedPlayers;
+              return (
+                <li key={player.initials} className={isConfirmed ? 'is-filled' : 'is-open'}>
+                  {isConfirmed ? (
+                    <span className={`ps-match__avatar ps-match__avatar--${player.tone}`} title={player.name}>
+                      {player.initials}
+                    </span>
+                  ) : (
+                    <span className="ps-match__avatar ps-match__avatar--open" aria-label="Lugar disponible">+</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
-          <p className="ps-match__slots-label">{text('publicSite.communityMatches.mockSlots')}</p>
-          <span className="ps-match__cta">{text('publicSite.communityMatches.mockAction')}</span>
+          <p className="ps-match__slots-label">{slotsLabel}</p>
+          <div className={`ps-match__occupancy${isComplete ? ' is-complete' : ''}`}>
+            <span>{isComplete ? '100% de ocupación' : 'Queda 1 lugar'}</span>
+            <strong>{isComplete ? 'Reserva confirmada al completar el grupo' : 'Reserva al completar el grupo'}</strong>
+          </div>
+          {isComplete ? (
+            <span className="ps-match__complete">Partido completo</span>
+          ) : (
+            <button type="button" className="ps-match__cta" onClick={() => setConfirmedPlayers(DEMO_PLAYERS.length)}>
+              {text('publicSite.communityMatches.mockAction')}
+            </button>
+          )}
         </div>
       </div>
     </div>
