@@ -21,7 +21,7 @@ const PLAYER_ICONS = {
 const VENUE_MEDIA = {
   // Padbol usa material real; las otras disciplinas tienen fotografía editorial
   // propia con el mismo encuadre para que el bloque se lea como multideporte.
-  occupy: 'sport-padel-cc0.jpg',
+  occupy: 'real-occupancy.jpg',
   activate: 'sport-padel-premium.jpg',
   scoreboard: 'sport-pickleball-premium.jpg',
   continuity: 'sport-tennis-premium.jpg',
