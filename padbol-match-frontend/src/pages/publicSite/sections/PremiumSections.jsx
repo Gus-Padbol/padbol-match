@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { PUBLIC_SITE_CTA } from '../../../constants/publicSiteLinks';
@@ -339,6 +339,14 @@ export function ContinuitySection() {
   const text = usePublicSiteText();
   const config = PUBLIC_SITE_SECTIONS.continuity;
   const [activeKey, setActiveKey] = useState(null);
+  const detailRef = useRef(null);
+
+  useEffect(() => {
+    if (!activeKey || !detailRef.current || window.innerWidth >= 768) return;
+    // En móvil el detalle forma parte del flujo: lo acercamos a la vista sin
+    // desplazarlo a un área que el usuario no puede ver.
+    detailRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [activeKey]);
 
   const closeDetail = (event) => {
     if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
@@ -354,8 +362,6 @@ export function ContinuitySection() {
             className={`ps-chip-wrap${activeKey === key ? ' is-active' : ''}`}
             onMouseEnter={() => setActiveKey(key)}
             onMouseLeave={closeDetail}
-            onFocus={() => setActiveKey(key)}
-            onBlur={closeDetail}
           >
             <button
               type="button"
@@ -371,7 +377,7 @@ export function ContinuitySection() {
               </div>
             </button>
             {activeKey === key && (
-              <aside id={`ps-continuity-detail-${key}`} className="ps-chip__detail" role="status">
+              <aside ref={detailRef} id={`ps-continuity-detail-${key}`} className="ps-chip__detail" role="status">
                 <span className="ps-chip__eyebrow">Padbol Match</span>
                 <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
                 <p>{CONTINUITY_DETAILS[key]?.lead || text(`publicSite.continuity.items.${key}.text`)}</p>

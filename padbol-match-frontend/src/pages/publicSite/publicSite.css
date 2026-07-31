@@ -2586,6 +2586,33 @@ html.public-site-active #root {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* En teléfono las tarjetas de continuidad y sus explicaciones se leen como
+     un único recorrido vertical. Evita que el detalle absoluto se abra fuera
+     de la ventana, por encima del encabezado de la sección. */
+  .ps-chip-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .ps-chip {
+    height: auto;
+    min-height: 108px;
+  }
+
+  .ps-chip__detail {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    margin-top: 10px;
+    transform: none;
+  }
+
+  .ps-chip__detail::after {
+    top: -7px;
+    bottom: auto;
+  }
+
   .ps-hero__sports {
     justify-content: flex-start;
     gap: 8px;
