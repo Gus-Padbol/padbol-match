@@ -2987,17 +2987,17 @@
     },
     "matchIntelligence": {
       "kicker": "Coming soon · The scoreboard vision",
-      "accent": "AI referee",
-      "title": "AI referee: vision learning to see the game.",
-      "text": "We are testing a vision layer with three cameras to train an algorithm that recognizes play, assists officials and automatically scores actions.",
+      "accent": "Intelligent vision referee",
+      "title": "Intelligent vision referee: an independent eye for the game.",
+      "text": "We are training an independent intelligent vision referee. With three cameras, it learns to read play and score actions based on what it sees, as a human referee would. As it evolves, players and referees can supervise its decisions.",
       "videoAria": "Padbol match scoreboard in action",
       "caption": "Connected scoreboard demonstration",
       "features": {
-        "scoreboard": { "title": "Multi-camera vision", "text": "Three cameras can cover play from the angles required by each court." },
-        "referee": { "title": "Play review", "text": "Doubtful actions can be reviewed as VAR-style support, without replacing the human referee." },
-        "traceability": { "title": "Automatic scoring", "text": "The goal is for the scoreboard to recognize actions and suggest the point while the algorithm keeps learning." }
+        "scoreboard": { "title": "Three-camera vision", "text": "Three cameras can cover play from the angles required by each court." },
+        "referee": { "title": "Independent scoring", "text": "Vision interprets plays and scores actions from what it observes in real time." },
+        "traceability": { "title": "Supervised training", "text": "In its first stages, players and referees can review decisions to keep training the system." }
       },
-      "signal": { "eyebrow": "VISION / AI", "title": "TRAINING\nIN PROGRESS" }
+      "signal": { "eyebrow": "SCOREBOARD VISION / AI", "title": "TRAINING\nIN PROGRESS" }
     }
   }
 }

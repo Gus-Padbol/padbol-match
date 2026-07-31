@@ -2651,17 +2651,17 @@
     },
     "matchIntelligence": {
       "kicker": "Próximamente · La visión del marcador",
-      "accent": "Árbitro IA",
-      "title": "Árbitro IA: visión que aprende el juego.",
-      "text": "Estamos probando una capa de visión con tres cámaras para entrenar un algoritmo que reconozca el juego, asista al árbitro y marque acciones automáticamente.",
+      "accent": "Árbitro de visión inteligente",
+      "title": "Árbitro de visión inteligente: una mirada independiente para el juego.",
+      "text": "Estamos entrenando un árbitro de visión inteligente e independiente. Con tres cámaras, aprende a leer el juego y a marcar acciones según lo que ve, como lo haría un árbitro humano. Durante su evolución, jugadores y árbitros podrán supervisar sus decisiones.",
       "videoAria": "Marcador de partido Padbol en funcionamiento",
       "caption": "Demostración de marcador conectado",
       "features": {
-        "scoreboard": { "title": "Visión multicámara", "text": "Tres cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
-        "referee": { "title": "Revisión de jugadas", "text": "Las acciones dudosas podrán revisarse como apoyo tipo VAR, sin reemplazar al árbitro humano." },
-        "traceability": { "title": "Marcado automático", "text": "El objetivo es que el marcador reconozca las acciones y proponga el punto mientras el algoritmo sigue aprendiendo." }
+        "scoreboard": { "title": "Visión de tres cámaras", "text": "Tres cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
+        "referee": { "title": "Marcado independiente", "text": "La visión interpreta las jugadas y marca acciones a partir de lo que observa en tiempo real." },
+        "traceability": { "title": "Entrenamiento supervisado", "text": "En sus primeras etapas, jugadores y árbitros podrán revisar decisiones para seguir entrenando el sistema." }
       },
-      "signal": { "eyebrow": "VISIÓN / IA", "title": "ENTRENAMIENTO\nEN CURSO" }
+      "signal": { "eyebrow": "VISIÓN DEL MARCADOR / IA", "title": "ENTRENAMIENTO\nEN CURSO" }
     }
   },
   "checkin": {

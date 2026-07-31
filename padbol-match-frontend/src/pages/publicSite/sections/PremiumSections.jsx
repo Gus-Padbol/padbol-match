@@ -490,6 +490,7 @@ export function MatchIntelligenceSection() {
           <span>{text('publicSite.matchIntelligence.signal.eyebrow')}</span>
           <strong>{text('publicSite.matchIntelligence.signal.title')}</strong>
           <i />
+          <b className="ps-match-intelligence__lens" aria-hidden="true" />
         </aside>
       </div>
     </SectionShell>
