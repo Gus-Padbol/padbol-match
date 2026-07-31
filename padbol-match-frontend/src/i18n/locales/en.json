@@ -2667,8 +2667,8 @@
     },
     "status": {
       "kicker": "Product status",
-      "title": "Padbol Match works today, across all sports",
-      "text": "Play, community and operations already work in one platform. Padbol, Padel, Pickleball and Tennis share the same journey.",
+      "title": "Padbol Match adds new sports",
+      "text": "Padbol already connects play, community and operations. Now Padel, Pickleball and Tennis join the same journey.",
       "labels": {
         "active": "Available today",
         "rollingOut": "Available today",
@@ -2677,13 +2677,13 @@
       "items": {
         "active": {
           "eyebrow": "Available today",
-          "title": "Padbol Match in action",
+          "title": "Padbol, active base",
           "text": "Sign in, profiles, bookings, open matches, tournaments, ranking, community, photos and videos already connected in one platform."
         },
         "rollingOut": {
           "eyebrow": "Available today",
-          "title": "More sports, one platform",
-          "text": "Padbol, Padel, Pickleball and Tennis already share the same play, management and community journey in one platform."
+          "title": "New sports, same journey",
+          "text": "Padel, Pickleball and Tennis are progressively joining Padbol Match's play, management and community journey."
         },
         "next": {
           "eyebrow": "Available today",

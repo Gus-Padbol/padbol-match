@@ -153,14 +153,13 @@ export function WhatIsSection() {
   );
 }
 
-/** Estado de producto: separa con claridad lo disponible de lo que viene. */
+/** La expansión multideporte parte de la base activa de Padbol. */
 export function PlatformStatusSection() {
   const text = usePublicSiteText();
   const config = PUBLIC_SITE_SECTIONS.status;
   return (
     <SectionShell id={config.id} className="ps-section--status" titleId="ps-status-title">
-      <span className="ps-kicker">{text('publicSite.status.kicker')}</span>
-      <h2 id="ps-status-title"><AccentWords value={text('publicSite.status.title')} terms={['Padbol Match', 'deportes']} /></h2>
+      <h2 id="ps-status-title"><AccentWords value={text('publicSite.status.title')} terms={['Padbol Match', 'nuevos deportes', 'new sports']} /></h2>
       <p className="ps-lead">{text('publicSite.status.text')}</p>
       <ul className="ps-status-grid">
         {config.items.map(({ key }) => (

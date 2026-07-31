@@ -2284,8 +2284,8 @@
     },
     "status": {
       "kicker": "Estado de producto",
-      "title": "Padbol Match funciona hoy, en todos los deportes",
-      "text": "Juego, comunidad y operación ya funcionan en una misma plataforma. Padbol, Pádel, Pickleball y Tenis comparten el mismo recorrido.",
+      "title": "Padbol Match incorpora nuevos deportes",
+      "text": "Padbol ya conecta juego, comunidad y operación. Ahora Pádel, Pickleball y Tenis se incorporan al mismo recorrido.",
       "labels": {
         "active": "Disponible hoy",
         "rollingOut": "Disponible hoy",
@@ -2294,13 +2294,13 @@
       "items": {
         "active": {
           "eyebrow": "Disponible hoy",
-          "title": "Padbol Match en acción",
+          "title": "Padbol, base activa",
           "text": "Ingreso, perfiles, reservas, partidos abiertos, torneos, ranking, comunidad, fotos y videos ya conectados en una misma plataforma."
         },
         "rollingOut": {
           "eyebrow": "Disponible hoy",
-          "title": "Más deportes, misma plataforma",
-          "text": "Padbol, Pádel, Pickleball y Tenis ya comparten el recorrido de juego, gestión y comunidad dentro de una misma plataforma."
+          "title": "Nuevos deportes, mismo recorrido",
+          "text": "Pádel, Pickleball y Tenis se integran de forma progresiva al recorrido de juego, gestión y comunidad de Padbol Match."
         },
         "next": {
           "eyebrow": "Disponible hoy",
