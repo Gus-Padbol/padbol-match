@@ -227,12 +227,12 @@ describe('/plataforma public site', () => {
     const sectionIds = [
       'que-es',
       'estado-plataforma',
+      'experiencias',
       'jugadores',
       'comunidad-partidos',
       'marcador-inteligente',
       'sedes',
       'continuidad',
-      'experiencias',
       'expansion',
       'arbitro-virtual',
       'descargar',

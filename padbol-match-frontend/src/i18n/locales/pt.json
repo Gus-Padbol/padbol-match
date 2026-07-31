@@ -2069,8 +2069,8 @@
     },
     "smartScoreboard": {
       "title": "Marcador inteligente: el partido en vivo.",
-      "comingSoon": "Em breve",
-      "text": "El resultado se registra mientras se juega y queda conectado con el historial, la competencia y la actividad de la sede. Sets, parciales y correcciones quedan al servicio del partido y de lo que viene después.",
+      "comingSoon": "Disponível hoje · Ao vivo",
+      "text": "O placar inteligente já registra a partida ao vivo e mantém o resultado conectado a jogadores, competição e operação da sede.",
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

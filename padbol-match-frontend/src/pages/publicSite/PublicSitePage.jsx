@@ -56,12 +56,12 @@ export default function PublicSitePage() {
         <AboutSection />
         <WhatIsSection />
         <PlatformStatusSection />
+        <ExperiencesSection />
         <PlayerPathSection />
         <CommunityMatchesSection />
         <SmartScoreboardSection />
         <VenuePathSection />
         <ContinuitySection />
-        <ExperiencesSection />
         <ExpansionSection />
         <MatchIntelligenceSection />
         <DownloadSection />

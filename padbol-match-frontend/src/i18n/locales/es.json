@@ -2612,8 +2612,8 @@
     },
     "smartScoreboard": {
       "title": "Marcador inteligente: el partido en vivo.",
-      "comingSoon": "Próximamente",
-      "text": "El marcador inteligente está en despliegue. Cuando se habilita para un formato de juego, registra el encuentro en vivo y conserva un resultado útil para jugadores, competencia y sede.",
+      "comingSoon": "Disponible hoy · En vivo",
+      "text": "El marcador inteligente ya registra el encuentro en vivo y mantiene el resultado conectado con jugadores, competencia y la operación de la sede.",
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

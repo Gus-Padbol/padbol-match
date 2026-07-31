@@ -2948,8 +2948,8 @@
     },
     "smartScoreboard": {
       "title": "Smart scoreboard: the match live.",
-      "comingSoon": "Coming soon",
-      "text": "The result is recorded while you play and stays connected to history, competition and venue activity. Sets, partials and corrections serve the match and what comes next.",
+      "comingSoon": "Available today · Live",
+      "text": "The smart scoreboard already records the match live and keeps the result connected to players, competition and venue operations.",
       "demoAria": "Visual demo of the smart scoreboard",
       "demoBadge": "Live",
       "demoTeamA": "Team A",
