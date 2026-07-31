@@ -510,10 +510,16 @@ export function ExpansionSection() {
   const text = usePublicSiteText();
   const config = PUBLIC_SITE_SECTIONS.expansion;
   const [activeKey, setActiveKey] = useState(null);
+  const detailRef = useRef(null);
 
   const closeDetail = (event) => {
     if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
   };
+
+  useEffect(() => {
+    if (!activeKey || typeof window === 'undefined' || window.innerWidth >= 768) return;
+    detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [activeKey]);
 
   return (
     <SectionShell id={config.id} className="ps-section--expansion" titleId="ps-expansion-title">
@@ -526,8 +532,6 @@ export function ExpansionSection() {
             className={`ps-expansion__item${activeKey === key ? ' is-active' : ''}`}
             onMouseEnter={() => setActiveKey(key)}
             onMouseLeave={closeDetail}
-            onFocus={() => setActiveKey(key)}
-            onBlur={closeDetail}
           >
             <button
               type="button"
@@ -540,10 +544,11 @@ export function ExpansionSection() {
               <div>
                 <h3>{text(`publicSite.expansion.items.${key}.title`)}</h3>
                 <p>{text(`publicSite.expansion.items.${key}.text`)}</p>
+                <span className="ps-expansion__hint" aria-hidden="true">+</span>
               </div>
             </button>
             {activeKey === key && (
-              <aside id={`ps-expansion-detail-${key}`} className="ps-expansion__detail" role="status">
+              <aside ref={detailRef} id={`ps-expansion-detail-${key}`} className="ps-expansion__detail" role="status">
                 <span>Padbol Match · {text(`publicSite.expansion.items.${key}.status`)}</span>
                 <strong>{text(`publicSite.expansion.items.${key}.title`)}</strong>
                 <p>{EXPANSION_DETAILS[key].lead}</p>

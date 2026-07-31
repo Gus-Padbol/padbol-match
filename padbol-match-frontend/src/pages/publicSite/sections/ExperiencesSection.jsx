@@ -9,7 +9,8 @@ import { usePublicSiteText } from '../publicSiteI18n';
 import { prefersReducedMotion } from '../useRevealOnScroll';
 import { AccentWords } from './PremiumSections';
 
-const AUTOPLAY_MS = 7000;
+const AUTOPLAY_MS = 4500;
+const MANUAL_PAUSE_MS = 3200;
 
 /**
  * Mini preview de marketing por experiencia: tokens reales de la app nativa
@@ -125,7 +126,7 @@ export default function ExperiencesSection() {
   /* Videos que fallaron al cargar: la experiencia vuelve a la demo conceptual. */
   const [failedVideos, setFailedVideos] = useState({});
   const sectionRef = useRef(null);
-  const interactedRef = useRef(false);
+  const manualPauseUntilRef = useRef(0);
   const tablistRef = useRef(null);
 
   const active = PUBLIC_SITE_EXPERIENCES[activeId];
@@ -141,7 +142,9 @@ export default function ExperiencesSection() {
   }, []);
 
   const select = useCallback((id, { fromUser = true } = {}) => {
-    if (fromUser) interactedRef.current = true;
+    // Un toque permite explorar sin apagar para siempre la demostración.
+    // Al poco tiempo vuelve a avanzar sola, también en teléfono.
+    if (fromUser) manualPauseUntilRef.current = Date.now() + MANUAL_PAUSE_MS;
     setActiveId(id);
   }, []);
 
@@ -157,10 +160,10 @@ export default function ExperiencesSection() {
     [activeId, select],
   );
 
-  /* Autoplay lento: se detiene con interacción, pestaña oculta, fuera de viewport
-     o reduced motion. */
+  /* Autoplay: pausa brevemente después de un toque, se detiene fuera de
+     viewport/pestaña oculta y respeta movimiento reducido. */
   useEffect(() => {
-    if (prefersReducedMotion() || interactedRef.current) return undefined;
+    if (reducedMotion) return undefined;
 
     let visible = !document.hidden;
     let inView = true;
@@ -169,8 +172,10 @@ export default function ExperiencesSection() {
     const restart = () => {
       if (timer) clearInterval(timer);
       timer = null;
-      if (visible && inView && !interactedRef.current) {
-        timer = setInterval(() => step(1, { fromUser: false }), AUTOPLAY_MS);
+      if (visible && inView) {
+        timer = setInterval(() => {
+          if (Date.now() >= manualPauseUntilRef.current) step(1, { fromUser: false });
+        }, AUTOPLAY_MS);
       }
     };
 
@@ -198,7 +203,7 @@ export default function ExperiencesSection() {
       document.removeEventListener('visibilitychange', onVisibility);
       observer?.disconnect();
     };
-  }, [step]);
+  }, [step, reducedMotion]);
 
   /* Gate del video real: pausa cuando la sección sale del viewport o la
      pestaña queda oculta. Un solo observer/listener, limpiado al desmontar. */

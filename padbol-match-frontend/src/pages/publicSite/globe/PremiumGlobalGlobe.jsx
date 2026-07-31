@@ -52,7 +52,7 @@ const LAND_GEOM = landData.features[0].geometry;
 const PACIFIC_TRANSIT_MAX = 1.45;
 /* En teléfono el globo ocupa menos píxeles: una vuelta más rápida hace que
    el movimiento se perciba sin sumar capas ni carga de render. */
-const MOBILE_GLOBE_ROTATION_MS = 30000;
+const MOBILE_GLOBE_ROTATION_MS = 18000;
 
 function smoothstep(from, to, value) {
   const t = Math.max(0, Math.min(1, (value - from) / (to - from)));
@@ -580,7 +580,7 @@ export default function PremiumGlobalGlobe({ text }) {
       role="img"
       aria-label={text('publicSite.hero.globe.aria')}
       data-continents={GLOBE_CONTINENT_REGIONS.join(',')}
-      data-rotation-ms={GLOBE_ROTATION_MS}
+      data-rotation-ms={compact ? MOBILE_GLOBE_ROTATION_MS : GLOBE_ROTATION_MS}
       data-pacific-transit-max={PACIFIC_TRANSIT_MAX}
       data-nodes={visibleNodes.length}
       data-links={visibleLinks.length}
