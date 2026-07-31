@@ -1055,7 +1055,7 @@ html.public-site-active #root {
 }
 
 .ps-hero__lead {
-  margin: 0 0 28px;
+  margin: 0 0 24px;
   max-width: 42ch;
   color: var(--ps-text-2);
   font-size: clamp(1rem, 1.8vw, 1.18rem);
@@ -1118,6 +1118,10 @@ html.public-site-active #root {
   justify-items: center;
   gap: 18px;
   perspective: 800px;
+}
+
+.ps-hero__ctas .ps-hero__play {
+  margin-top: 0;
 }
 
 .ps-hero__play {
@@ -3443,13 +3447,32 @@ html.public-site-active #root {
   overflow: hidden;
   border: 1px solid rgba(225, 27, 34, 0.52);
   border-radius: 22px;
-  background:
-    linear-gradient(135deg, rgba(225, 27, 34, 0.13), transparent 52%),
-    #07090e;
+  background: #07090e;
   box-shadow: 0 28px 68px rgba(0, 0, 0, 0.48), 0 0 0 8px rgba(225, 27, 34, 0.035);
 }
 
+.ps-match-intelligence__signal > img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 52% center;
+  opacity: 0.76;
+  filter: saturate(0.9) contrast(1.07);
+}
+
+.ps-match-intelligence__signal::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgba(7, 9, 14, 0.88) 0%, rgba(7, 9, 14, 0.27) 72%), linear-gradient(0deg, rgba(7, 9, 14, 0.74), transparent 58%);
+  content: '';
+}
+
 .ps-match-intelligence__signal::before {
+  z-index: 1;
   position: absolute;
   top: 28px;
   right: 28px;
@@ -3486,6 +3509,8 @@ html.public-site-active #root {
 }
 
 .ps-match-intelligence__signal i {
+  position: relative;
+  z-index: 2;
   width: 80px;
   height: 3px;
   background: var(--ps-red);

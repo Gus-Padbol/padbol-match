@@ -69,7 +69,7 @@ describe('Hero con globo premium', () => {
     }));
   });
 
-  it('mantiene logo, claim, subtítulo, CTAs y globo sin video dominante', () => {
+  it('mantiene logo, claim, una sola acción y globo sin video dominante', () => {
     const { container } = render(<HeroSection />);
     const hero = container.querySelector('.ps-hero');
     expect(hero.querySelector('.ps-hero__logo')).toBeTruthy();
@@ -77,14 +77,13 @@ describe('Hero con globo premium', () => {
       'La aplicación deportiva que conecta todo.',
     );
     expect(hero.querySelector('.ps-hero__lead')).toHaveTextContent(
-      'Jugadores, sedes, partidos, torneos, ranking, comunidad y gestión en una sola plataforma.',
+      'Juego, operación y comunidad. Nace con Padbol y está lista para otros deportes de cancha.',
     );
     const ctas = Array.from(hero.querySelectorAll('.ps-hero__ctas a')).map((a) => a.textContent);
     expect(ctas).toEqual([
       'Descargar la appiOS + Android ↓',
-      'Conocer la plataforma ↓',
-      'Quiero incorporar Padbol Match →',
     ]);
+    expect(hero.querySelector('.ps-hero__sports')).toBeNull();
     expect(hero.querySelector('.ps-hero__video')).toBeNull();
     expect(hero.querySelector('.ps-globe')).toBeTruthy();
     expect(hero.querySelector('canvas.ps-globe__canvas')).toBeTruthy();

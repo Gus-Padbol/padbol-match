@@ -126,7 +126,7 @@ describe('/plataforma public site', () => {
     expect(logo).toBeTruthy();
     expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo.');
     expect(lead).toHaveTextContent(
-      'Hoy conecta juego, operación y comunidad para Padbol. La misma base se expande por etapas a Pádel, Pickleball y Tenis.',
+      'Juego, operación y comunidad. Nace con Padbol y está lista para otros deportes de cancha.',
     );
     expect(hero.textContent).not.toMatch(/Cada partido construye una relación/i);
     expect(hero.textContent).not.toMatch(/Jugadores y sedes en una misma plataforma/i);
@@ -149,8 +149,6 @@ describe('/plataforma public site', () => {
     const ctaLinks = Array.from(ctas.querySelectorAll('a')).map((a) => a.textContent.trim());
     expect(ctaLinks).toEqual([
       'Descargar la appiOS + Android ↓',
-      'Conocer la plataforma ↓',
-      'Quiero incorporar Padbol Match →',
     ]);
   });
 
@@ -179,7 +177,7 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Marcador' })[0]).toHaveAttribute('href', '#marcador-inteligente');
     expect(screen.getAllByRole('link', { name: 'Para sedes' })[0]).toHaveAttribute('href', '#sedes');
     expect(screen.getAllByRole('link', { name: 'Descargar la app' })[0]).toHaveAttribute('href', '#descargar');
-    expect(screen.getByRole('link', { name: 'Conocer la plataforma' })).toHaveAttribute('href', '#que-es');
+    expect(screen.queryByRole('link', { name: 'Conocer la plataforma' })).toBeNull();
     expect(screen.getAllByRole('link', { name: /Quiero jugar/i })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.getAllByRole('link', { name: 'Quiero incorporar Padbol Match' })[0])
       .toHaveAttribute('href', '/contacto');

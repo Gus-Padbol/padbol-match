@@ -494,6 +494,7 @@ export function MatchIntelligenceSection() {
           </ul>
         </div>
         <aside className="ps-match-intelligence__signal" data-ps-reveal data-ps-reveal-order="1" aria-hidden="true">
+          <img src="/media/public-site/ai/ai-referee-vision.png" alt="" />
           <span>{text('publicSite.matchIntelligence.signal.eyebrow')}</span>
           <strong>{text('publicSite.matchIntelligence.signal.title')}</strong>
           <i />
