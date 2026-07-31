@@ -168,13 +168,6 @@ export function PlatformStatusSection() {
             <span>{text(`publicSite.status.items.${key}.eyebrow`)}</span>
             <strong>{text(`publicSite.status.items.${key}.title`)}</strong>
             <p>{text(`publicSite.status.items.${key}.text`)}</p>
-            {key === 'next' && (
-              <ul className="ps-status-card__badges" aria-label="Estado de las capas comerciales">
-                <li>{text('publicSite.status.items.next.badges.sponsor')}</li>
-                <li>{text('publicSite.status.items.next.badges.ads')}</li>
-                <li>{text('publicSite.status.items.next.badges.shop')}</li>
-              </ul>
-            )}
           </li>
         ))}
       </ul>

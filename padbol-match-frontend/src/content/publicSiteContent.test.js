@@ -8,17 +8,17 @@ const es = require('../i18n/locales/es.json');
 
 describe('publicSite content structure', () => {
   const expectedAnchors = [
+    'nosotros',
     'que-es',
     'estado-plataforma',
+    'experiencias',
     'jugadores',
     'comunidad-partidos',
+    'marcador-inteligente',
     'sedes',
     'continuidad',
-    'marcador-inteligente',
-    'experiencias',
-    'arbitro-virtual',
     'expansion',
-    'nosotros',
+    'arbitro-virtual',
     'descargar',
     'contacto',
   ];
