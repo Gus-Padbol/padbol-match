@@ -2653,11 +2653,11 @@
       "kicker": "Próximamente · La visión del marcador",
       "accent": "Árbitro IA",
       "title": "Árbitro IA: visión que aprende el juego.",
-      "text": "Estamos probando una capa de visión con tres o cuatro cámaras —las que requiera cada cancha— para entrenar un algoritmo que reconozca el juego, asista al árbitro y marque acciones automáticamente.",
+      "text": "Estamos probando una capa de visión con tres cámaras para entrenar un algoritmo que reconozca el juego, asista al árbitro y marque acciones automáticamente.",
       "videoAria": "Marcador de partido Padbol en funcionamiento",
       "caption": "Demostración de marcador conectado",
       "features": {
-        "scoreboard": { "title": "Visión multicámara", "text": "Tres o cuatro cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
+        "scoreboard": { "title": "Visión multicámara", "text": "Tres cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
         "referee": { "title": "Revisión de jugadas", "text": "Las acciones dudosas podrán revisarse como apoyo tipo VAR, sin reemplazar al árbitro humano." },
         "traceability": { "title": "Marcado automático", "text": "El objetivo es que el marcador reconozca las acciones y proponga el punto mientras el algoritmo sigue aprendiendo." }
       },

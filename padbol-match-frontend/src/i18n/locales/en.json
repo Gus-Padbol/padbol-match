@@ -2989,11 +2989,11 @@
       "kicker": "Coming soon · The scoreboard vision",
       "accent": "AI referee",
       "title": "AI referee: vision learning to see the game.",
-      "text": "We are testing a vision layer with three or four cameras —whatever each court requires— to train an algorithm that recognizes play, assists officials and automatically scores actions.",
+      "text": "We are testing a vision layer with three cameras to train an algorithm that recognizes play, assists officials and automatically scores actions.",
       "videoAria": "Padbol match scoreboard in action",
       "caption": "Connected scoreboard demonstration",
       "features": {
-        "scoreboard": { "title": "Multi-camera vision", "text": "Three or four cameras can cover play from the angles required by each court." },
+        "scoreboard": { "title": "Multi-camera vision", "text": "Three cameras can cover play from the angles required by each court." },
         "referee": { "title": "Play review", "text": "Doubtful actions can be reviewed as VAR-style support, without replacing the human referee." },
         "traceability": { "title": "Automatic scoring", "text": "The goal is for the scoreboard to recognize actions and suggest the point while the algorithm keeps learning." }
       },
