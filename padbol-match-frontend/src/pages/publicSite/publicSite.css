@@ -3179,7 +3179,7 @@ html.public-site-active #root {
 
 .ps-scoreboard__video {
   position: relative;
-  width: min(420px, 100%);
+  width: min(320px, 100%);
   margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgba(225, 27, 34, 0.5);
@@ -3202,7 +3202,7 @@ html.public-site-active #root {
 .ps-scoreboard__video video {
   display: block;
   width: 100%;
-  aspect-ratio: 9 / 13;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
 }
 
