@@ -82,7 +82,29 @@ export const PUBLIC_SITE_SECTIONS = {
   },
 };
 
-export const PUBLIC_SITE_SECTION_ORDER = Object.values(PUBLIC_SITE_SECTIONS).map(({ id }) => id);
+/**
+ * Recorrido público, en el mismo orden en que se renderiza la landing:
+ * identidad y propuesta → producto activo → jugadores y operación →
+ * experiencias → oportunidades comerciales → lo próximo.
+ *
+ * El bloque de innovación futura queda deliberadamente al final del relato
+ * para no competir con las funciones que ya pueden usar jugadores y sedes.
+ */
+export const PUBLIC_SITE_SECTION_ORDER = [
+  PUBLIC_SITE_SECTIONS.about.id,
+  PUBLIC_SITE_SECTIONS.whatIs.id,
+  PUBLIC_SITE_SECTIONS.status.id,
+  PUBLIC_SITE_SECTIONS.playerPath.id,
+  PUBLIC_SITE_SECTIONS.communityMatches.id,
+  PUBLIC_SITE_SECTIONS.smartScoreboard.id,
+  PUBLIC_SITE_SECTIONS.venuePath.id,
+  PUBLIC_SITE_SECTIONS.continuity.id,
+  PUBLIC_SITE_SECTIONS.experiences.id,
+  PUBLIC_SITE_SECTIONS.expansion.id,
+  PUBLIC_SITE_SECTIONS.matchIntelligence.id,
+  PUBLIC_SITE_SECTIONS.download.id,
+  PUBLIC_SITE_SECTIONS.contact.id,
+];
 
 export const PUBLIC_SITE_INTERNAL_ROUTES = [
   PUBLIC_SITE_CTA.play,

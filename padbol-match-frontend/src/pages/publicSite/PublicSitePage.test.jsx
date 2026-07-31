@@ -224,6 +224,32 @@ describe('/plataforma public site', () => {
     expect(screen.getByText('E-shop')).toBeTruthy();
   });
 
+  it('ordena el relato desde el producto activo hasta lo próximo', () => {
+    const { container } = renderPage();
+    const sectionIds = [
+      'que-es',
+      'estado-plataforma',
+      'jugadores',
+      'comunidad-partidos',
+      'marcador-inteligente',
+      'sedes',
+      'continuidad',
+      'experiencias',
+      'expansion',
+      'arbitro-virtual',
+      'descargar',
+    ];
+    const positions = sectionIds.map((id) => {
+      const section = container.querySelector(`#${id}`);
+      return Array.from(container.querySelectorAll('section')).indexOf(section);
+    });
+
+    positions.forEach((position) => expect(position).toBeGreaterThanOrEqual(0));
+    positions.slice(1).forEach((position, index) => {
+      expect(position).toBeGreaterThan(positions[index]);
+    });
+  });
+
   it('no deja claves i18n visibles ni secciones eliminadas', () => {
     const { container } = renderPage();
     expect(container.textContent).not.toMatch(/publicSite\./);
