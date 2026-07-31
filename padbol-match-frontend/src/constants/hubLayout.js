@@ -294,7 +294,7 @@ export function isChatbotIAVisiblePathname(pathname) {
 }
 
 /** Altura aproximada del pie global de enlaces legales (padding + texto). */
-export const LEGAL_FOOTER_GLOBAL_SPACER_PX = 52;
+export const LEGAL_FOOTER_GLOBAL_SPACER_PX = 76;
 
 /**
  * Pie global con enlaces legales y de eliminación de cuenta.

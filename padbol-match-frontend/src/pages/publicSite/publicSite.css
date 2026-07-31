@@ -2507,6 +2507,18 @@ html.public-site-active #root {
 
 .public-site-footer__bottom p { margin: 0; }
 
+.public-site-footer__copyright a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(225, 27, 34, 0.72);
+  text-underline-offset: 3px;
+}
+
+.public-site-footer__copyright a:hover {
+  color: #fff;
+}
+
 .public-site-footer__language {
   display: flex;
   align-items: center;

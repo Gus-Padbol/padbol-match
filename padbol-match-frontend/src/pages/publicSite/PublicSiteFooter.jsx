@@ -47,7 +47,13 @@ export default function PublicSiteFooter() {
             <span>{text('publicSite.footer.language')}</span>
             <LanguageSwitcher variant="landing" />
           </div>
-          <p>© {new Date().getFullYear()} {text('publicSite.footer.copyright')}</p>
+          <p className="public-site-footer__copyright">
+            © 2026 Padbol. Operated by{' '}
+            <a href="https://padbol.com/company">
+              Entertainment and Sports Services LLC
+            </a>
+            .
+          </p>
         </div>
       </div>
     </footer>

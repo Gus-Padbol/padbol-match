@@ -43,6 +43,13 @@ export default function LegalFooterBar() {
     color: linkColor,
   };
 
+  const companyStyle = {
+    margin: 0,
+    color: linkColor,
+    fontSize: '11px',
+    lineHeight: 1.45,
+  };
+
   return (
     <footer role="contentinfo" style={footerStyle}>
       <nav
@@ -59,6 +66,13 @@ export default function LegalFooterBar() {
           Eliminar cuenta
         </Link>
       </nav>
+      <p style={companyStyle}>
+        © 2026 Padbol. Operated by{' '}
+        <a href="https://padbol.com/company" style={linkBase}>
+          Entertainment and Sports Services LLC
+        </a>
+        .
+      </p>
     </footer>
   );
 }
