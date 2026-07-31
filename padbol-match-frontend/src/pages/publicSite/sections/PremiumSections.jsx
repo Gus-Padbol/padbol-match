@@ -19,17 +19,18 @@ const PLAYER_ICONS = {
 };
 
 const VENUE_MEDIA = {
-  // Temporary free-to-use sport imagery. Replace with Padbol Match-owned media when available.
+  // Padbol usa material real; las otras disciplinas tienen fotografía editorial
+  // propia con el mismo encuadre para que el bloque se lea como multideporte.
   occupy: 'sport-padel-cc0.jpg',
-  activate: 'sport-pickleball-public-domain.jpg',
-  scoreboard: 'active-scoreboard.jpg',
-  continuity: 'sport-tennis-cc0.jpg',
+  activate: 'sport-padel-premium.jpg',
+  scoreboard: 'sport-pickleball-premium.jpg',
+  continuity: 'sport-tennis-premium.jpg',
 };
 
 const VENUE_SPORTS = {
-  occupy: 'padel',
-  activate: 'pickleball',
-  scoreboard: 'padbol',
+  occupy: 'padbol',
+  activate: 'padel',
+  scoreboard: 'pickleball',
   continuity: 'tennis',
 };
 
