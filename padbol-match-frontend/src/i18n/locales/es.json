@@ -2589,8 +2589,22 @@
       "mockTitle": "Partido abierto",
       "mockMeta": "Sede · Hoy 19:30",
       "mockLevel": "Nivel intermedio",
-      "mockSlots": "2 de 4 lugares confirmados",
+      "mockSlots": "{{filled}} de 4 lugares confirmados",
       "mockAction": "Solicitar lugar",
+      "mockMetricsAria": "Simulación de ocupación y confirmación",
+      "mockOccupancy": "Ocupación",
+      "mockOccupancyValue": "{{percentage}}% de ocupación",
+      "mockReservation": "Reserva",
+      "mockConfirmed": "Confirmada",
+      "mockCompleteWhenFull": "Al completar cupos",
+      "mockSlotsComplete": "Cupos completos: la reserva ya quedó confirmada.",
+      "mockReleaseNote": "Si no se completa, la reserva se libera 8 h antes.",
+      "mockFull": "Cupos completos",
+      "mockStatuses": {
+        "looking": "Buscando {{count}} jugadores",
+        "playerConfirmed": "Un jugador confirmó",
+        "matchConfirmed": "Partido confirmado"
+      },
       "steps": {
         "create": {
           "title": "Crear y publicar",

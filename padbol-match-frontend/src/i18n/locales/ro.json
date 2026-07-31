@@ -2046,8 +2046,22 @@
       "mockTitle": "Partido abierto",
       "mockMeta": "Sede · Hoy 19:30",
       "mockLevel": "Nivel intermedio",
-      "mockSlots": "2 de 4 lugares confirmados",
+      "mockSlots": "{{filled}} din 4 locuri confirmate",
       "mockAction": "Solicitar lugar",
+      "mockMetricsAria": "Simulare de ocupare și confirmare",
+      "mockOccupancy": "Ocupare",
+      "mockOccupancyValue": "{{percentage}}% ocupare",
+      "mockReservation": "Rezervare",
+      "mockConfirmed": "Confirmată",
+      "mockCompleteWhenFull": "La completarea locurilor",
+      "mockSlotsComplete": "Toate locurile sunt ocupate: rezervarea este confirmată.",
+      "mockReleaseNote": "Dacă nu se completează, rezervarea se eliberează cu 8 h înainte.",
+      "mockFull": "Locuri complete",
+      "mockStatuses": {
+        "looking": "Căutăm {{count}} jucători",
+        "playerConfirmed": "Un jucător a confirmat",
+        "matchConfirmed": "Meci confirmat"
+      },
       "steps": {
         "create": {
           "title": "Crear y publicar",

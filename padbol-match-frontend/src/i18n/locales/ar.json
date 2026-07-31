@@ -2051,8 +2051,22 @@
       "mockTitle": "Partido abierto",
       "mockMeta": "Sede · Hoy 19:30",
       "mockLevel": "Nivel intermedio",
-      "mockSlots": "2 de 4 lugares confirmados",
+      "mockSlots": "تم تأكيد {{filled}} من أصل 4 أماكن",
       "mockAction": "Solicitar lugar",
+      "mockMetricsAria": "محاكاة الإشغال والتأكيد",
+      "mockOccupancy": "الإشغال",
+      "mockOccupancyValue": "إشغال بنسبة {{percentage}}%",
+      "mockReservation": "الحجز",
+      "mockConfirmed": "مؤكد",
+      "mockCompleteWhenFull": "عند اكتمال الأماكن",
+      "mockSlotsComplete": "اكتملت جميع الأماكن: تم تأكيد الحجز.",
+      "mockReleaseNote": "إذا لم يكتمل، يتم تحرير الحجز قبل 8 ساعات.",
+      "mockFull": "الأماكن مكتملة",
+      "mockStatuses": {
+        "looking": "نبحث عن {{count}} لاعبين",
+        "playerConfirmed": "أكد لاعب واحد",
+        "matchConfirmed": "تم تأكيد المباراة"
+      },
       "steps": {
         "create": {
           "title": "Crear y publicar",

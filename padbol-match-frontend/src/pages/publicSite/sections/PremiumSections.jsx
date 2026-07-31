@@ -51,9 +51,9 @@ const EXPANSION_ICONS = {
 };
 
 const OPEN_MATCH_DEMO_STATES = [
-  { filled: 2, status: 'Buscando 2 jugadores', note: '50% de ocupación', players: ['player-01.jpg', 'player-02.jpg'] },
-  { filled: 3, status: 'Un jugador confirmó', note: '75% de ocupación', players: ['player-01.jpg', 'player-02.jpg', 'player-03.jpg'] },
-  { filled: 4, status: 'Partido confirmado', note: '100% de ocupación', players: ['player-01.jpg', 'player-02.jpg', 'player-03.jpg', 'player-04.jpg'] },
+  { filled: 2, status: 'looking', players: ['player-01.jpg', 'player-02.jpg'] },
+  { filled: 3, status: 'playerConfirmed', players: ['player-01.jpg', 'player-02.jpg', 'player-03.jpg'] },
+  { filled: 4, status: 'matchConfirmed', players: ['player-01.jpg', 'player-02.jpg', 'player-03.jpg', 'player-04.jpg'] },
 ];
 
 const OPEN_MATCH_AVATAR_ROOT = '/media/public-site/players';
@@ -231,31 +231,33 @@ function OpenMatchMockup({ text }) {
             ))}
           </ul>
           <p className="ps-match__slots-label" aria-live="polite">
-            {demo.filled} de 4 lugares confirmados
+            {text('publicSite.communityMatches.mockSlots', { filled: demo.filled })}
           </p>
-          <div className="ps-match__metrics" aria-label="Simulación de ocupación y confirmación">
+          <div className="ps-match__metrics" aria-label={text('publicSite.communityMatches.mockMetricsAria')}>
             <div>
-              <span>Ocupación</span>
-              <strong>{demo.note}</strong>
+              <span>{text('publicSite.communityMatches.mockOccupancy')}</span>
+              <strong>{text('publicSite.communityMatches.mockOccupancyValue', { percentage: demo.filled * 25 })}</strong>
             </div>
             <div>
-              <span>Reserva</span>
+              <span>{text('publicSite.communityMatches.mockReservation')}</span>
               <strong className="ps-match__confirmation">
-                {isComplete ? 'Confirmada' : 'Al completar cupos'}
+                {isComplete
+                  ? text('publicSite.communityMatches.mockConfirmed')
+                  : text('publicSite.communityMatches.mockCompleteWhenFull')}
               </strong>
             </div>
           </div>
-          <p className="ps-match__status" aria-live="polite"><i />{demo.status}</p>
+          <p className="ps-match__status" aria-live="polite"><i />{text(`publicSite.communityMatches.mockStatuses.${demo.status}`, { count: 4 - demo.filled })}</p>
           <p className="ps-match__release-note">
             {isComplete
-              ? 'Cupos completos: la reserva ya quedó confirmada.'
-              : 'Si no se completa, la reserva se libera 8 h antes.'}
+              ? text('publicSite.communityMatches.mockSlotsComplete')
+              : text('publicSite.communityMatches.mockReleaseNote')}
           </p>
           <span
             className={`ps-match__cta${isComplete ? ' ps-match__cta--disabled' : ''}`}
             aria-disabled={isComplete}
           >
-            {isComplete ? 'Cupos completos' : text('publicSite.communityMatches.mockAction')}
+            {isComplete ? text('publicSite.communityMatches.mockFull') : text('publicSite.communityMatches.mockAction')}
           </span>
         </div>
       </div>

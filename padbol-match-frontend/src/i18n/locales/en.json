@@ -2925,8 +2925,22 @@
       "mockTitle": "Open match",
       "mockMeta": "Venue · Today 7:30 PM",
       "mockLevel": "Intermediate level",
-      "mockSlots": "2 of 4 spots confirmed",
+      "mockSlots": "{{filled}} of 4 spots confirmed",
       "mockAction": "Request a spot",
+      "mockMetricsAria": "Occupancy and confirmation simulation",
+      "mockOccupancy": "Occupancy",
+      "mockOccupancyValue": "{{percentage}}% occupied",
+      "mockReservation": "Booking",
+      "mockConfirmed": "Confirmed",
+      "mockCompleteWhenFull": "When slots are filled",
+      "mockSlotsComplete": "All slots are filled: the booking is confirmed.",
+      "mockReleaseNote": "If it is not completed, the booking is released 8 h before.",
+      "mockFull": "All slots filled",
+      "mockStatuses": {
+        "looking": "Looking for {{count}} players",
+        "playerConfirmed": "One player confirmed",
+        "matchConfirmed": "Match confirmed"
+      },
       "steps": {
         "create": {
           "title": "Create and publish",
