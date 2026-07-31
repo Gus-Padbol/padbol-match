@@ -3527,6 +3527,11 @@ html.public-site-active #root {
     gap: 48px;
   }
 
+  /* El bloque visual acompaña los pasos operativos: termina junto al paso 05. */
+  .ps-scoreboard__visual {
+    align-self: end;
+  }
+
   .ps-match-intelligence__layout {
     grid-template-columns: minmax(0, 1.06fr) minmax(280px, 0.72fr);
     gap: 48px;
