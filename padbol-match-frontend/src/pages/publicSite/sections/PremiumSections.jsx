@@ -575,17 +575,11 @@ export function AboutSection() {
           </a>
         </div>
         <div className="ps-about__visual">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            poster={`${ASSET_ROOT}/expansion-court-poster.jpg`}
-            aria-label={text('publicSite.about.visualAlt')}
-          >
-            <source src={`${ASSET_ROOT}/expansion-court.mp4`} type="video/mp4" />
-          </video>
+          <img
+            src="/media/public-site/jero/padbol-match-team.jpg"
+            alt={text('publicSite.about.visualAlt')}
+            loading="lazy"
+          />
         </div>
       </div>
     </SectionShell>
