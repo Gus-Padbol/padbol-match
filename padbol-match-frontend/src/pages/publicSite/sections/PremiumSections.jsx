@@ -576,7 +576,7 @@ export function AboutSection() {
             ))}
           </div>
           <p className="ps-about__players-note">{text('publicSite.about.playersNote')}</p>
-          <a className="ps-about__cta" href="#que-es">
+          <a className="ps-about__cta" href="#jugadores">
             {text('publicSite.about.cta')} <span aria-hidden="true">→</span>
           </a>
         </div>

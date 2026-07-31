@@ -1988,13 +1988,13 @@
       "note": "Áreas en desarrollo dentro del ecosistema Padbol Match."
     },
     "about": {
-      "kicker": "Padbol Match · sport conectat",
+      "kicker": "18 ani de dezvoltare Padbol",
       "title": "Despre noi",
-      "text": "Padbol Match pornește din sportul Padbol și crește ca platformă internațională pentru jucători, sedii și organizații.",
-      "detail": "Transformăm această idee într-o bază comună pentru jucători, cluburi, sedii și organizații. Padbol este originea noastră; Padel, Pickleball și Tenis extind aceeași modalitate conectată de a juca și organiza sportul.",
+      "text": "De 18 ani lucrăm pentru a dezvolta Padbol și a duce acest sport în lume. Fiecare teren, eveniment și comunitate ne-a arătat că dezvoltarea are nevoie de instrumente pe măsură.",
+      "detail": "De aceea am creat Padbol Match: o aplicație proprie care conectează jocul, managementul și comunitatea într-un singur parcurs. Se naște cu Padbol și se deschide către Padel, Pickleball și Tenis pentru ca mai multe sporturi de teren să crească pe aceeași bază.",
       "sportsLabel": "Sporturi pe platformă",
-      "playersNote": "Creată pentru cei care fac posibile sporturile de teren: jucători, cluburi, sedii și organizații.",
-      "cta": "Descoperă platforma",
+      "playersNote": "O platformă născută din experiența reală a celor care fac posibile sporturile de teren.",
+      "cta": "Vezi cum funcționează",
       "visualAlt": "Un teren de Padbol, originea Padbol Match"
     },
     "sports": {
