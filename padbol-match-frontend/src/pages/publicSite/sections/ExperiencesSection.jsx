@@ -119,7 +119,6 @@ export default function ExperiencesSection() {
   const config = PUBLIC_SITE_SECTIONS.experiences;
   const text = usePublicSiteText();
   const [activeId, setActiveId] = useState(PUBLIC_SITE_EXPERIENCE_IDS[0]);
-  const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(() => prefersReducedMotion());
   /* Sección visible (viewport + pestaña): gate de reproducción del video real. */
   const [mediaAllowed, setMediaAllowed] = useState(true);
@@ -161,7 +160,7 @@ export default function ExperiencesSection() {
   /* Autoplay lento: se detiene con interacción, pestaña oculta, fuera de viewport
      o reduced motion. */
   useEffect(() => {
-    if (prefersReducedMotion() || paused || interactedRef.current) return undefined;
+    if (prefersReducedMotion() || interactedRef.current) return undefined;
 
     let visible = !document.hidden;
     let inView = true;
@@ -199,7 +198,7 @@ export default function ExperiencesSection() {
       document.removeEventListener('visibilitychange', onVisibility);
       observer?.disconnect();
     };
-  }, [paused, step]);
+  }, [step]);
 
   /* Gate del video real: pausa cuando la sección sale del viewport o la
      pestaña queda oculta. Un solo observer/listener, limpiado al desmontar. */
@@ -256,10 +255,6 @@ export default function ExperiencesSection() {
       ref={sectionRef}
       className={`ps-section ps-section--experiences is-exp-${activeId}`}
       aria-labelledby="ps-experiences-title"
-      onPointerDown={() => {
-        interactedRef.current = true;
-        setPaused(true);
-      }}
       style={{
         '--exp-accent': active.accent,
         '--exp-bg': active.background,

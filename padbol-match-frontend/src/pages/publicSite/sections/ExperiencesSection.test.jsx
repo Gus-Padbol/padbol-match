@@ -98,7 +98,7 @@ describe('cinco experiencias (sección inmersiva)', () => {
     expect(screen.getByRole('tab', { name: /Stadium/i })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('autoplay avanza lento y se detiene con interacción', () => {
+  it('autoplay avanza lento y se detiene al elegir una experiencia', () => {
     jest.useFakeTimers();
     try {
       render(<ExperiencesSection />);
@@ -106,11 +106,11 @@ describe('cinco experiencias (sección inmersiva)', () => {
         jest.advanceTimersByTime(7100);
       });
       expect(screen.getByRole('tab', { name: /Stadium/i })).toHaveAttribute('aria-selected', 'true');
-      fireEvent.pointerDown(screen.getByRole('tabpanel'));
+      fireEvent.click(screen.getByRole('tab', { name: /Quantum/i }));
       act(() => {
         jest.advanceTimersByTime(15000);
       });
-      expect(screen.getByRole('tab', { name: /Stadium/i })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: /Quantum/i })).toHaveAttribute('aria-selected', 'true');
     } finally {
       jest.useRealTimers();
     }

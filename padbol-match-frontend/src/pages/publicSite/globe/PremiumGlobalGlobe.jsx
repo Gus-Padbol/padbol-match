@@ -50,6 +50,9 @@ export { GLOBE_CONTINENT_REGIONS, GLOBE_ROTATION_MS };
 
 const LAND_GEOM = landData.features[0].geometry;
 const PACIFIC_TRANSIT_MAX = 1.45;
+/* En teléfono el globo ocupa menos píxeles: una vuelta más rápida hace que
+   el movimiento se perciba sin sumar capas ni carga de render. */
+const MOBILE_GLOBE_ROTATION_MS = 30000;
 
 function smoothstep(from, to, value) {
   const t = Math.max(0, Math.min(1, (value - from) / (to - from)));
@@ -277,11 +280,12 @@ export default function PremiumGlobalGlobe({ text }) {
         const previousFrame = lastRotationFrameRef.current ?? now;
         const frameDelta = Math.min(Math.max(0, now - previousFrame), 80);
         lastRotationFrameRef.current = now;
-        const currentYaw = -18 + (rotationElapsedRef.current / GLOBE_ROTATION_MS) * 360;
+        const rotationMs = compact ? MOBILE_GLOBE_ROTATION_MS : GLOBE_ROTATION_MS;
+        const currentYaw = -18 + (rotationElapsedRef.current / rotationMs) * 360;
         const interactionSpeed = hoverRef.current ? 0.55 : 1;
         rotationElapsedRef.current +=
           frameDelta * interactionSpeed * rotationSpeedMultiplier(currentYaw);
-        yaw = -18 + (rotationElapsedRef.current / GLOBE_ROTATION_MS) * 360;
+        yaw = -18 + (rotationElapsedRef.current / rotationMs) * 360;
         yawRef.current = yaw;
         labelTickRef.current += 1;
         if (labelTickRef.current % 3 === 0) {
