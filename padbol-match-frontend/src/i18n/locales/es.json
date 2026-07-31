@@ -2650,17 +2650,18 @@
       }
     },
     "matchIntelligence": {
-      "kicker": "Próximamente · Inteligencia de partido",
-      "accent": "Árbitro virtual",
-      "title": "Árbitro virtual: el partido con más respaldo.",
-      "text": "La próxima capa suma asistencia IA al marcador para acompañar el arbitraje, registrar acciones y dar trazabilidad a cada resultado.",
+      "kicker": "Próximamente · La visión del marcador",
+      "accent": "Árbitro IA",
+      "title": "Árbitro IA: visión que aprende el juego.",
+      "text": "Estamos probando una capa de visión con tres o cuatro cámaras —las que requiera cada cancha— para entrenar un algoritmo que reconozca el juego, asista al árbitro y marque acciones automáticamente.",
       "videoAria": "Marcador de partido Padbol en funcionamiento",
       "caption": "Demostración de marcador conectado",
       "features": {
-        "scoreboard": { "title": "Marcador conectado", "text": "El resultado acompaña al partido mientras se juega." },
-        "referee": { "title": "Asistencia arbitral", "text": "Una capa de apoyo para ordenar acciones y decisiones del encuentro." },
-        "traceability": { "title": "Resultado trazable", "text": "Cada registro prepara una validación más clara para jugadores, sede y competencia." }
-      }
+        "scoreboard": { "title": "Visión multicámara", "text": "Tres o cuatro cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
+        "referee": { "title": "Revisión de jugadas", "text": "Las acciones dudosas podrán revisarse como apoyo tipo VAR, sin reemplazar al árbitro humano." },
+        "traceability": { "title": "Marcado automático", "text": "El objetivo es que el marcador reconozca las acciones y proponga el punto mientras el algoritmo sigue aprendiendo." }
+      },
+      "signal": { "eyebrow": "VISIÓN / IA", "title": "ENTRENAMIENTO\nEN CURSO" }
     }
   },
   "checkin": {

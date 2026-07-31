@@ -2107,17 +2107,18 @@
       }
     },
     "matchIntelligence": {
-      "kicker": "Bientôt disponible · Intelligence de match",
-      "accent": "Arbitre virtuel",
-      "title": "Arbitre virtuel : plus d’appui pour le match.",
-      "text": "La prochaine couche ajoute une assistance IA au tableau de score pour accompagner l’arbitrage, enregistrer les actions et assurer la traçabilité de chaque résultat.",
+      "kicker": "Bientôt disponible · La vision du tableau",
+      "accent": "Arbitre IA",
+      "title": "Arbitre IA : une vision qui apprend à voir le jeu.",
+      "text": "Nous testons une couche de vision avec trois ou quatre caméras —selon les besoins de chaque terrain— pour entraîner un algorithme qui reconnaît le jeu, aide l'arbitrage et marque les actions automatiquement.",
       "videoAria": "Tableau de score d’un match de Padbol en action",
       "caption": "Démonstration de tableau connecté",
       "features": {
-        "scoreboard": { "title": "Tableau connecté", "text": "Le résultat accompagne le match en direct." },
-        "referee": { "title": "Assistance à l’arbitrage", "text": "Une couche de soutien pour organiser les actions et décisions du match." },
-        "traceability": { "title": "Résultat traçable", "text": "Chaque enregistrement prépare une validation plus claire pour les joueurs, le club et la compétition." }
-      }
+        "scoreboard": { "title": "Vision multicaméra", "text": "Trois ou quatre caméras peuvent couvrir le jeu selon les angles requis par chaque terrain." },
+        "referee": { "title": "Révision des actions", "text": "Les actions douteuses pourront être revues comme une aide de type VAR, sans remplacer l'arbitre humain." },
+        "traceability": { "title": "Marquage automatique", "text": "L'objectif est que le tableau reconnaisse les actions et propose le point pendant que l'algorithme continue d'apprendre." }
+      },
+      "signal": { "eyebrow": "VISION / IA", "title": "ENTRAÎNEMENT\nEN COURS" }
     }
   }
 }

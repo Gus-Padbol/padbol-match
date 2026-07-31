@@ -2986,17 +2986,18 @@
       }
     },
     "matchIntelligence": {
-      "kicker": "Coming soon · Match intelligence",
-      "accent": "Virtual referee",
-      "title": "Virtual referee: a match with more support.",
-      "text": "The next layer adds AI assistance to the scoreboard to support officiating, log actions and bring traceability to every result.",
+      "kicker": "Coming soon · The scoreboard vision",
+      "accent": "AI referee",
+      "title": "AI referee: vision learning to see the game.",
+      "text": "We are testing a vision layer with three or four cameras —whatever each court requires— to train an algorithm that recognizes play, assists officials and automatically scores actions.",
       "videoAria": "Padbol match scoreboard in action",
       "caption": "Connected scoreboard demonstration",
       "features": {
-        "scoreboard": { "title": "Connected scoreboard", "text": "The result follows the match as it is played." },
-        "referee": { "title": "Officiating assistance", "text": "A supporting layer to organize match actions and decisions." },
-        "traceability": { "title": "Traceable result", "text": "Each record prepares clearer validation for players, venues and competition." }
-      }
+        "scoreboard": { "title": "Multi-camera vision", "text": "Three or four cameras can cover play from the angles required by each court." },
+        "referee": { "title": "Play review", "text": "Doubtful actions can be reviewed as VAR-style support, without replacing the human referee." },
+        "traceability": { "title": "Automatic scoring", "text": "The goal is for the scoreboard to recognize actions and suggest the point while the algorithm keeps learning." }
+      },
+      "signal": { "eyebrow": "VISION / AI", "title": "TRAINING\nIN PROGRESS" }
     }
   }
 }

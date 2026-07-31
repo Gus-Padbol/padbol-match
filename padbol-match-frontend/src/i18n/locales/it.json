@@ -2107,17 +2107,18 @@
       }
     },
     "matchIntelligence": {
-      "kicker": "Prossimamente · Intelligenza della partita",
-      "accent": "Arbitro virtuale",
-      "title": "Arbitro virtuale: più supporto alla partita.",
-      "text": "Il prossimo livello aggiunge assistenza IA al tabellone per supportare l’arbitraggio, registrare le azioni e dare tracciabilità a ogni risultato.",
+      "kicker": "Prossimamente · La visione del tabellone",
+      "accent": "Arbitro IA",
+      "title": "Arbitro IA: una visione che impara a vedere il gioco.",
+      "text": "Stiamo testando un livello di visione con tre o quattro telecamere —quelle necessarie per ogni campo— per addestrare un algoritmo che riconosca il gioco, assista l'arbitro e segni automaticamente le azioni.",
       "videoAria": "Tabellone di una partita di Padbol in funzione",
       "caption": "Dimostrazione di tabellone connesso",
       "features": {
-        "scoreboard": { "title": "Tabellone connesso", "text": "Il risultato accompagna la partita mentre si gioca." },
-        "referee": { "title": "Assistenza arbitrale", "text": "Un livello di supporto per ordinare azioni e decisioni della partita." },
-        "traceability": { "title": "Risultato tracciabile", "text": "Ogni registrazione prepara una validazione più chiara per giocatori, sede e competizione." }
-      }
+        "scoreboard": { "title": "Visione multicamera", "text": "Tre o quattro telecamere possono coprire il gioco dagli angoli richiesti da ogni campo." },
+        "referee": { "title": "Revisione delle azioni", "text": "Le azioni dubbie potranno essere riviste come supporto stile VAR, senza sostituire l'arbitro umano." },
+        "traceability": { "title": "Punteggio automatico", "text": "L'obiettivo è che il tabellone riconosca le azioni e proponga il punto mentre l'algoritmo continua a imparare." }
+      },
+      "signal": { "eyebrow": "VISIONE / IA", "title": "ADDESTRAMENTO\nIN CORSO" }
     }
   }
 }

@@ -2107,17 +2107,18 @@
       }
     },
     "matchIntelligence": {
-      "kicker": "Demnächst · Match-Intelligenz",
-      "accent": "Virtueller Schiedsrichter",
-      "title": "Virtueller Schiedsrichter: mehr Rückhalt für das Spiel.",
-      "text": "Die nächste Ebene ergänzt die Anzeigetafel um KI-Unterstützung, um Schiedsrichter zu unterstützen, Aktionen zu erfassen und Ergebnisse nachvollziehbar zu machen.",
+      "kicker": "Demnächst · Die Vision der Anzeigetafel",
+      "accent": "KI-Schiedsrichter",
+      "title": "KI-Schiedsrichter: Sicht, die das Spiel sehen lernt.",
+      "text": "Wir testen eine Sicht-Ebene mit drei oder vier Kameras —je nachdem, was jeder Platz benötigt—, um einen Algorithmus zu trainieren, der das Spiel erkennt, die Schiedsrichter unterstützt und Aktionen automatisch wertet.",
       "videoAria": "Padbol-Spielanzeige in Aktion",
       "caption": "Demonstration einer vernetzten Anzeigetafel",
       "features": {
-        "scoreboard": { "title": "Vernetzte Anzeigetafel", "text": "Das Ergebnis begleitet das Spiel in Echtzeit." },
-        "referee": { "title": "Schiedsrichterassistenz", "text": "Eine Unterstützungsebene für Aktionen und Entscheidungen im Spiel." },
-        "traceability": { "title": "Nachvollziehbares Ergebnis", "text": "Jeder Eintrag ermöglicht eine klarere Validierung für Spieler, Anlage und Wettbewerb." }
-      }
+        "scoreboard": { "title": "Mehrkamera-Sicht", "text": "Drei oder vier Kameras können das Spiel aus den für jeden Platz nötigen Winkeln erfassen." },
+        "referee": { "title": "Überprüfung von Spielzügen", "text": "Zweifelhafte Aktionen können als VAR-ähnliche Unterstützung geprüft werden, ohne den menschlichen Schiedsrichter zu ersetzen." },
+        "traceability": { "title": "Automatische Wertung", "text": "Das Ziel ist, dass die Anzeigetafel Aktionen erkennt und den Punkt vorschlägt, während der Algorithmus weiter lernt." }
+      },
+      "signal": { "eyebrow": "SICHT / KI", "title": "TRAINING\nLÄUFT" }
     }
   }
 }

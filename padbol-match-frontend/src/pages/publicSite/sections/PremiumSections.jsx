@@ -494,8 +494,8 @@ export function MatchIntelligenceSection() {
           </ul>
         </div>
         <aside className="ps-match-intelligence__signal" data-ps-reveal data-ps-reveal-order="1" aria-hidden="true">
-          <span>AI / 01</span>
-          <strong>VALIDACIÓN<br />ASISTIDA</strong>
+          <span>{text('publicSite.matchIntelligence.signal.eyebrow')}</span>
+          <strong>{text('publicSite.matchIntelligence.signal.title')}</strong>
           <i />
         </aside>
       </div>

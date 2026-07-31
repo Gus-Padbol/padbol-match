@@ -2107,17 +2107,18 @@
       }
     },
     "matchIntelligence": {
-      "kicker": "În curând · Inteligența meciului",
-      "accent": "Arbitru virtual",
-      "title": "Arbitru virtual: mai mult sprijin pentru meci.",
-      "text": "Următorul strat adaugă asistență IA tabelului de scor pentru a susține arbitrajul, a înregistra acțiuni și a oferi trasabilitate fiecărui rezultat.",
+      "kicker": "În curând · Viziunea tabelei",
+      "accent": "Arbitru IA",
+      "title": "Arbitru IA: o viziune care învață să vadă jocul.",
+      "text": "Testăm un strat de viziune cu trei sau patru camere —cele necesare pentru fiecare teren— pentru a antrena un algoritm care recunoaște jocul, asistă arbitrul și marchează automat acțiunile.",
       "videoAria": "Tabelă de scor a unui meci de Padbol în funcțiune",
       "caption": "Demonstrație de tabelă conectată",
       "features": {
-        "scoreboard": { "title": "Tabelă conectată", "text": "Rezultatul însoțește meciul în timp ce se joacă." },
-        "referee": { "title": "Asistență pentru arbitraj", "text": "Un strat de sprijin pentru organizarea acțiunilor și deciziilor meciului." },
-        "traceability": { "title": "Rezultat trasabil", "text": "Fiecare înregistrare pregătește o validare mai clară pentru jucători, sediu și competiție." }
-      }
+        "scoreboard": { "title": "Viziune multicameră", "text": "Trei sau patru camere pot acoperi jocul din unghiurile necesare fiecărui teren." },
+        "referee": { "title": "Revizuirea acțiunilor", "text": "Acțiunile discutabile pot fi revizuite ca sprijin de tip VAR, fără a înlocui arbitrul uman." },
+        "traceability": { "title": "Marcaj automat", "text": "Obiectivul este ca tabela să recunoască acțiunile și să propună punctul în timp ce algoritmul continuă să învețe." }
+      },
+      "signal": { "eyebrow": "VIZIUNE / IA", "title": "ANTRENARE\nÎN CURS" }
     }
   }
 }

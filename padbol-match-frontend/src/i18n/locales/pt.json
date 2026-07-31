@@ -2107,17 +2107,18 @@
       }
     },
     "matchIntelligence": {
-      "kicker": "Em breve · Inteligência de partida",
-      "accent": "Árbitro virtual",
-      "title": "Árbitro virtual: mais apoio para a partida.",
-      "text": "A próxima camada adiciona assistência de IA ao placar para apoiar a arbitragem, registrar ações e dar rastreabilidade a cada resultado.",
+      "kicker": "Em breve · A visão do placar",
+      "accent": "Árbitro IA",
+      "title": "Árbitro IA: visão que aprende a ver o jogo.",
+      "text": "Estamos testando uma camada de visão com três ou quatro câmeras —as necessárias em cada quadra— para treinar um algoritmo que reconheça o jogo, auxilie a arbitragem e marque ações automaticamente.",
       "videoAria": "Placar de partida de Padbol em funcionamento",
       "caption": "Demonstração de placar conectado",
       "features": {
-        "scoreboard": { "title": "Placar conectado", "text": "O resultado acompanha a partida enquanto ela é jogada." },
-        "referee": { "title": "Assistência de arbitragem", "text": "Uma camada de apoio para organizar ações e decisões da partida." },
-        "traceability": { "title": "Resultado rastreável", "text": "Cada registro prepara uma validação mais clara para jogadores, sede e competição." }
-      }
+        "scoreboard": { "title": "Visão multicâmera", "text": "Três ou quatro câmeras podem cobrir o jogo pelos ângulos exigidos por cada quadra." },
+        "referee": { "title": "Revisão de jogadas", "text": "Lances duvidosos poderão ser revisados como apoio tipo VAR, sem substituir o árbitro humano." },
+        "traceability": { "title": "Marcação automática", "text": "O objetivo é que o placar reconheça ações e sugira o ponto enquanto o algoritmo continua aprendendo." }
+      },
+      "signal": { "eyebrow": "VISÃO / IA", "title": "TREINAMENTO\nEM CURSO" }
     }
   }
 }
