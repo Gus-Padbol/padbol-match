@@ -222,11 +222,10 @@ describe('/plataforma public site', () => {
     expect(screen.getByText('E-shop')).toBeTruthy();
   });
 
-  it('ordena el relato desde el producto activo hasta lo próximo', () => {
+  it('ordena el relato sin duplicar el bloque de expansión multideporte', () => {
     const { container } = renderPage();
     const sectionIds = [
       'que-es',
-      'estado-plataforma',
       'experiencias',
       'jugadores',
       'comunidad-partidos',

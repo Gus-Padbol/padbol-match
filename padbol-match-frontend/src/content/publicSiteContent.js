@@ -84,7 +84,7 @@ export const PUBLIC_SITE_SECTIONS = {
 
 /**
  * Recorrido público, en el mismo orden en que se renderiza la landing:
- * identidad y propuesta → producto activo → experiencias → jugadores y
+ * identidad y propuesta → experiencias → jugadores y
  * operación → oportunidades comerciales → lo próximo.
  *
  * El bloque de innovación futura queda deliberadamente al final del relato
@@ -93,7 +93,6 @@ export const PUBLIC_SITE_SECTIONS = {
 export const PUBLIC_SITE_SECTION_ORDER = [
   PUBLIC_SITE_SECTIONS.about.id,
   PUBLIC_SITE_SECTIONS.whatIs.id,
-  PUBLIC_SITE_SECTIONS.status.id,
   PUBLIC_SITE_SECTIONS.experiences.id,
   PUBLIC_SITE_SECTIONS.playerPath.id,
   PUBLIC_SITE_SECTIONS.communityMatches.id,

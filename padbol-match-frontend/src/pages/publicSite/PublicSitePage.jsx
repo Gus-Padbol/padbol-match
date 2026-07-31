@@ -4,7 +4,6 @@ import HeroSection from './sections/HeroSection';
 import ExperiencesSection from './sections/ExperiencesSection';
 import {
   WhatIsSection,
-  PlatformStatusSection,
   PlayerPathSection,
   CommunityMatchesSection,
   VenuePathSection,
@@ -55,7 +54,6 @@ export default function PublicSitePage() {
         <HeroSection />
         <AboutSection />
         <WhatIsSection />
-        <PlatformStatusSection />
         <ExperiencesSection />
         <PlayerPathSection />
         <CommunityMatchesSection />

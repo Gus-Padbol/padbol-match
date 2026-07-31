@@ -10,7 +10,6 @@ describe('publicSite content structure', () => {
   const expectedAnchors = [
     'nosotros',
     'que-es',
-    'estado-plataforma',
     'experiencias',
     'jugadores',
     'comunidad-partidos',
