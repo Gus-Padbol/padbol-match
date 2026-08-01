@@ -21,6 +21,7 @@ import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
 import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
 import { capitalizeName } from '../utils/displayName';
+import { buildVoiceBookingCheckoutHref, resolveVoiceBookingConfirmation } from '../utils/chibiVoiceBooking';
 import './ChatbotIA.css';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
@@ -1087,6 +1088,42 @@ export default function ChatbotIA() {
     async (textRaw) => {
       const text = String(textRaw || '').trim();
       if (!text || loading || sessionEnded) return;
+
+      // Cuando ya se eligió un horario, una respuesta corta por voz/texto no
+      // debe volver al modelo: es la autorización explícita para abrir la
+      // reserva real con el turno preseleccionado.
+      const bookingAnswer = voiceBookingSelection
+        ? resolveVoiceBookingConfirmation(text)
+        : null;
+      if (bookingAnswer) {
+        primeSpeechSynthesisFromUserGesture();
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', content: text },
+          {
+            role: 'assistant',
+            content:
+              bookingAnswer === 'confirm'
+                ? padbolLang === 'en'
+                  ? 'Perfect. I will open the booking summary so you can review it and complete payment.'
+                  : padbolLang === 'pt'
+                    ? 'Perfeito. Vou abrir o resumo da reserva para você revisar e concluir o pagamento.'
+                    : 'Perfecto. Voy a abrir el resumen de la reserva para que lo revises y completes el pago.'
+                : padbolLang === 'en'
+                  ? 'No problem. Choose another available time when you are ready.'
+                  : padbolLang === 'pt'
+                    ? 'Sem problema. Escolha outro horário disponível quando quiser.'
+                    : 'No hay problema. Elegí otro horario disponible cuando quieras.',
+          },
+        ]);
+        const selectedHref = voiceBookingSelection.href;
+        setVoiceBookingSelection(null);
+        if (bookingAnswer === 'confirm' && selectedHref) {
+          setOpen(false);
+          navigate(selectedHref);
+        }
+        return;
+      }
       if (userMessageCount >= MAX_USER_MESSAGES) {
         setSessionEnded(true);
         return;
@@ -1103,7 +1140,6 @@ export default function ChatbotIA() {
       setVoiceNotice('');
       setLoading(true);
       setLastReserve(null);
-      setVoiceBookingSelection(null);
       setSedeContextoTurno(null);
       setWhatsappEscalada(null);
 
@@ -1203,6 +1239,9 @@ export default function ChatbotIA() {
       primeSpeechSynthesisFromUserGesture,
       scheduleAssistantSpeak,
       refreshSession,
+      voiceBookingSelection,
+      padbolLang,
+      navigate,
     ]
   );
 
@@ -1825,12 +1864,20 @@ export default function ChatbotIA() {
                             const chipText = hora ? `${hora} · ${nLibres}` : String(nLibres);
                             const cancha = det[0] || null;
                             const canchaId = cancha?.numero != null ? String(cancha.numero) : '';
-                            const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}${canchaId ? `&canchaId=${encodeURIComponent(canchaId)}` : ''}`;
+                            const href = buildVoiceBookingCheckoutHref({
+                              sedeId: sid,
+                              fecha: fe,
+                              hora: s.hora_inicio,
+                              canchaId,
+                              deporte: disp.deporte_filtro,
+                            });
                             return (
                               <button
                                 key={`${i}-slot-${String(s.hora_inicio || '')}-${j}`}
                                 type="button"
-                                onClick={() =>
+                                disabled={!href}
+                                onClick={() => {
+                                  if (!href) return;
                                   setVoiceBookingSelection({
                                     sedeId: sid,
                                     sedeNombre: disp.sede_nombre || ui.limiteCtaVerSede,
@@ -1838,8 +1885,8 @@ export default function ChatbotIA() {
                                     hora,
                                     canchaNombre: String(cancha?.nombre || '').trim() || `Cancha ${canchaId || ''}`.trim(),
                                     href,
-                                  })
-                                }
+                                  });
+                                }}
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -1851,7 +1898,8 @@ export default function ChatbotIA() {
                                   fontSize: 12,
                                   border: `0.5px solid ${c.slotBorder}`,
                                   whiteSpace: 'nowrap',
-                                  cursor: 'pointer',
+                                  cursor: href ? 'pointer' : 'not-allowed',
+                                  opacity: href ? 1 : 0.55,
                                   WebkitTapHighlightColor: 'transparent',
                                 }}
                               >
@@ -1902,11 +1950,13 @@ export default function ChatbotIA() {
                     {ui.confirmarTurnoAviso}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                    <Link
-                      to={voiceBookingSelection.href}
+                    <button
+                      type="button"
                       onClick={() => {
+                        const selectedHref = voiceBookingSelection.href;
                         setVoiceBookingSelection(null);
                         setOpen(false);
+                        navigate(selectedHref);
                       }}
                       style={{
                         padding: '9px 12px',
@@ -1915,11 +1965,12 @@ export default function ChatbotIA() {
                         color: '#fff',
                         fontWeight: 800,
                         fontSize: 13,
-                        textDecoration: 'none',
+                        border: 0,
+                        cursor: 'pointer',
                       }}
                     >
                       {ui.confirmarTurnoCta}
-                    </Link>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setVoiceBookingSelection(null)}
