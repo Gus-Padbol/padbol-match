@@ -36,9 +36,10 @@ function emptyFilters(clubSedeId) {
   };
 }
 
-function StatCard({ label, value, hint }) {
+function StatCard({ label, value, hint, variant = '' }) {
   return (
     <div
+      className={`padcoins-report-stat${variant ? ` padcoins-report-stat--${variant}` : ''}`}
       style={{
         padding: '14px 16px',
         borderRadius: 12,
@@ -623,6 +624,7 @@ export default function AdminPadcoinsReportesSection({
                 key={est}
                 label={est}
                 value={formatPadcoinsNumber(canjesEstado[est] || 0)}
+                variant="redeem-status"
               />
             ))}
           </div>

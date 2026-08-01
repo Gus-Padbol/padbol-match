@@ -5,3 +5,23 @@
   opacity: 1 !important;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
 }
+
+/* QA Bug-02: los estados de canje necesitan contrastar inequívocamente
+ * incluso con temas oscuros personalizados de una sede. */
+.padcoins-report-stat--redeem-status {
+  border-color: rgba(255, 47, 70, 0.48) !important;
+  background: linear-gradient(135deg, rgba(229, 24, 46, 0.15), rgba(15, 23, 42, 0.96)) !important;
+}
+
+.padcoins-report-stat--redeem-status .padcoins-report-stat__value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 3px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  letter-spacing: 0.02em;
+}
