@@ -2624,6 +2624,19 @@
         }
       }
     },
+    "voice": {
+      "title": "Chivi por voz: pedí lo que necesitás jugando.",
+      "text": "Hablale a la app con palabras simples. Chivi entiende tu consulta, te orienta y te acerca al siguiente paso sin obligarte a recorrer cada pantalla.",
+      "items": {
+        "ask": { "title": "Hacé una consulta", "text": "Tocá el micrófono y hablá como lo harías con una persona." },
+        "guide": { "title": "Pedí ayuda para jugar", "text": "Consultá por canchas, partidos abiertos o próximos torneos." },
+        "result": { "title": "Seguí el próximo paso", "text": "Chivi responde por texto y te guía dentro de la experiencia." }
+      },
+      "note": "El uso del micrófono requiere tu permiso y depende de la compatibilidad de cada dispositivo.",
+      "demoLabel": "CHIVI · ASISTENTE POR VOZ",
+      "demoPrompt": "“Buscame una cancha mañana cerca de las 20.”",
+      "demoAnswer": "Te ayudo a encontrar opciones y a continuar con la reserva."
+    },
     "smartScoreboard": {
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Disponible hoy · En vivo",

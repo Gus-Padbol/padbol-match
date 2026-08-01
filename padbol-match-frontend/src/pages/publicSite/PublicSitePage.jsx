@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import PublicSiteLayout from './PublicSiteLayout';
 import HeroSection from './sections/HeroSection';
 import ExperiencesSection from './sections/ExperiencesSection';
+import VoiceAssistantSection from './sections/VoiceAssistantSection';
 import {
   WhatIsSection,
   PlayerPathSection,
@@ -57,6 +58,7 @@ export default function PublicSitePage() {
         <ExperiencesSection />
         <PlayerPathSection />
         <CommunityMatchesSection />
+        <VoiceAssistantSection />
         <SmartScoreboardSection />
         <VenuePathSection />
         <ContinuitySection />

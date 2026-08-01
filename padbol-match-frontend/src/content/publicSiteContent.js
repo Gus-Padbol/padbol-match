@@ -45,6 +45,10 @@ export const PUBLIC_SITE_SECTIONS = {
       item,
     ),
   },
+  voice: {
+    id: 'chivi-voz',
+    items: ['ask', 'guide', 'result'].map(item),
+  },
   smartScoreboard: {
     id: 'marcador-inteligente',
     steps: ['start', 'live', 'correct', 'close', 'connect'].map(item),

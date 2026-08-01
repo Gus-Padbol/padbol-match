@@ -300,6 +300,16 @@ function chatUiStringsFromI18n(tr, loc) {
     errMicDenied: tr('chatbot.errMicDenied'),
     errVoiceStart: tr('chatbot.errVoiceStart'),
     slotsDisponiblesTitulo: tr('chatbot.slotsDisponiblesTitulo'),
+    confirmarTurnoTitulo: tr('chatbot.confirmarTurnoTitulo', { defaultValue: l === 'en' ? 'Confirm your court' : l === 'pt' ? 'Confirme sua quadra' : 'Confirmá tu cancha' }),
+    confirmarTurnoDetalle: (sede, cancha, fecha, hora) =>
+      l === 'en'
+        ? `${sede} · ${cancha} · ${fecha} · ${hora}`
+        : l === 'pt'
+          ? `${sede} · ${cancha} · ${fecha} · ${hora}`
+          : `${sede} · ${cancha} · ${fecha} · ${hora}`,
+    confirmarTurnoAviso: tr('chatbot.confirmarTurnoAviso', { defaultValue: l === 'en' ? 'We will recheck availability before payment.' : l === 'pt' ? 'Vamos verificar a disponibilidade novamente antes do pagamento.' : 'Vamos a validar la disponibilidad otra vez antes del pago.' }),
+    confirmarTurnoCta: tr('chatbot.confirmarTurnoCta', { defaultValue: l === 'en' ? 'Yes, continue' : l === 'pt' ? 'Sim, continuar' : 'Sí, continuar' }),
+    cancelarTurnoCta: tr('chatbot.cancelarTurnoCta', { defaultValue: l === 'en' ? 'Choose another time' : l === 'pt' ? 'Escolher outro horário' : 'Elegir otro horario' }),
     deportesElegirTitulo: tr('chatbot.deportesElegirTitulo'),
     deporteElegirLabel: (slug) =>
       tr(`torneos.deporte.${slug}`, { defaultValue: deporteSlugDisplayLabel(slug, l) }),
@@ -357,6 +367,11 @@ function chatUiStrings(loc, tr) {
       errMicDenied: 'Microphone permission denied. Enable it in the browser and try again.',
       errVoiceStart: 'Could not start speech recognition.',
       slotsDisponiblesTitulo: 'Free slots (tap to book):',
+      confirmarTurnoTitulo: 'Confirm your court',
+      confirmarTurnoDetalle: (sede, cancha, fecha, hora) => `${sede} · ${cancha} · ${fecha} · ${hora}`,
+      confirmarTurnoAviso: 'We will recheck availability before payment.',
+      confirmarTurnoCta: 'Yes, continue',
+      cancelarTurnoCta: 'Choose another time',
       deportesElegirTitulo: 'Sports at this club (tap one):',
       deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
       franjaManana: 'Morning',
@@ -412,6 +427,11 @@ function chatUiStrings(loc, tr) {
       errMicDenied: 'Permissão do microfone negada. Ative no navegador e tente de novo.',
       errVoiceStart: 'Não foi possível iniciar o reconhecimento de voz.',
       slotsDisponiblesTitulo: 'Horários livres (toque para reservar):',
+      confirmarTurnoTitulo: 'Confirme sua quadra',
+      confirmarTurnoDetalle: (sede, cancha, fecha, hora) => `${sede} · ${cancha} · ${fecha} · ${hora}`,
+      confirmarTurnoAviso: 'Vamos verificar a disponibilidade novamente antes do pagamento.',
+      confirmarTurnoCta: 'Sim, continuar',
+      cancelarTurnoCta: 'Escolher outro horário',
       deportesElegirTitulo: 'Esportes neste clube (toque em um):',
       deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
       franjaManana: 'Manhã',
@@ -466,6 +486,11 @@ function chatUiStrings(loc, tr) {
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
     slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
+    confirmarTurnoTitulo: 'Confirmá tu cancha',
+    confirmarTurnoDetalle: (sede, cancha, fecha, hora) => `${sede} · ${cancha} · ${fecha} · ${hora}`,
+    confirmarTurnoAviso: 'Vamos a validar la disponibilidad otra vez antes del pago.',
+    confirmarTurnoCta: 'Sí, continuar',
+    cancelarTurnoCta: 'Elegir otro horario',
     deportesElegirTitulo: 'Deportes en esta sede (toca uno):',
     deporteElegirLabel: (slug) => deporteSlugDisplayLabel(slug, l),
     franjaManana: 'Mañana',
@@ -707,6 +732,7 @@ export default function ChatbotIA() {
   /** Despliegue por franja de turnos (índice del mensaje + franja) cuando hay >8 slots y varias franjas. */
   const [dispSlotsFranja, setDispSlotsFranja] = useState(null);
   const [lastReserve, setLastReserve] = useState(null);
+  const [voiceBookingSelection, setVoiceBookingSelection] = useState(null);
   const [bootstrap, setBootstrap] = useState(null);
   const [sedeContextoTurno, setSedeContextoTurno] = useState(null);
   const [whatsappEscalada, setWhatsappEscalada] = useState(null);
@@ -1077,6 +1103,7 @@ export default function ChatbotIA() {
       setVoiceNotice('');
       setLoading(true);
       setLastReserve(null);
+      setVoiceBookingSelection(null);
       setSedeContextoTurno(null);
       setWhatsappEscalada(null);
 
@@ -1796,27 +1823,40 @@ export default function ChatbotIA() {
                                 : Math.max(1, det.length);
                             const hora = String(s.hora_inicio || '').trim();
                             const chipText = hora ? `${hora} · ${nLibres}` : String(nLibres);
-                            const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}`;
+                            const cancha = det[0] || null;
+                            const canchaId = cancha?.numero != null ? String(cancha.numero) : '';
+                            const href = `/reservar?sedeId=${encodeURIComponent(String(sid))}&fecha=${encodeURIComponent(fe)}&hora=${encodeURIComponent(s.hora_inicio)}${canchaId ? `&canchaId=${encodeURIComponent(canchaId)}` : ''}`;
                             return (
-                              <Link
+                              <button
                                 key={`${i}-slot-${String(s.hora_inicio || '')}-${j}`}
-                                to={href}
-                                onClick={() => setOpen(false)}
+                                type="button"
+                                onClick={() =>
+                                  setVoiceBookingSelection({
+                                    sedeId: sid,
+                                    sedeNombre: disp.sede_nombre || ui.limiteCtaVerSede,
+                                    fecha: fe,
+                                    hora,
+                                    canchaNombre: String(cancha?.nombre || '').trim() || `Cancha ${canchaId || ''}`.trim(),
+                                    href,
+                                  })
+                                }
                                 style={{
-                                  display: 'inline-block',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
                                   padding: '5px 9px',
                                   borderRadius: 8,
                                   background: c.slotBg,
                                   color: c.slotColor,
                                   fontWeight: 700,
                                   fontSize: 12,
-                                  textDecoration: 'none',
                                   border: `0.5px solid ${c.slotBorder}`,
                                   whiteSpace: 'nowrap',
+                                  cursor: 'pointer',
+                                  WebkitTapHighlightColor: 'transparent',
                                 }}
                               >
                                 {chipText}
-                              </Link>
+                              </button>
                             );
                           })}
                         </div>
@@ -1835,6 +1875,69 @@ export default function ChatbotIA() {
               ))}
               {loading ? (
                 <div style={{ color: c.loadingColor, fontSize: 13, fontWeight: 600 }}>{ui.escribiendo}</div>
+              ) : null}
+              {!sessionEnded && voiceBookingSelection?.href ? (
+                <div
+                  style={{
+                    alignSelf: 'stretch',
+                    margin: '4px 2px 8px',
+                    padding: 14,
+                    border: `1px solid ${c.reservaCtaBg}`,
+                    borderRadius: 12,
+                    background: c.slotBg,
+                  }}
+                >
+                  <div style={{ color: c.assistantColor, fontWeight: 850, fontSize: 14, marginBottom: 6 }}>
+                    {ui.confirmarTurnoTitulo}
+                  </div>
+                  <div style={{ color: c.secondaryLabel, fontSize: 13, lineHeight: 1.45 }}>
+                    {ui.confirmarTurnoDetalle(
+                      voiceBookingSelection.sedeNombre,
+                      voiceBookingSelection.canchaNombre,
+                      voiceBookingSelection.fecha,
+                      voiceBookingSelection.hora,
+                    )}
+                  </div>
+                  <div style={{ color: c.secondaryLabel, fontSize: 12, lineHeight: 1.45, marginTop: 8 }}>
+                    {ui.confirmarTurnoAviso}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                    <Link
+                      to={voiceBookingSelection.href}
+                      onClick={() => {
+                        setVoiceBookingSelection(null);
+                        setOpen(false);
+                      }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: 9,
+                        background: c.reservaCtaBg,
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: 13,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {ui.confirmarTurnoCta}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setVoiceBookingSelection(null)}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: 9,
+                        border: `1px solid ${c.chipBorder}`,
+                        background: 'transparent',
+                        color: c.secondaryLabel,
+                        fontWeight: 750,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {ui.cancelarTurnoCta}
+                    </button>
+                  </div>
+                </div>
               ) : null}
               {error ? (
                 <div style={{ color: c.errorColor, fontSize: 13, fontWeight: 600 }}>{error}</div>
