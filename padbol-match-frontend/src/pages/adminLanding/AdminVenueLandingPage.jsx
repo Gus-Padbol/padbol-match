@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PadbolBrandLogo from '../../components/PadbolBrandLogo';
 import './adminVenueLanding.css';
+import './adminVenueLandingOverrides.css';
 
 const modules = [
   ['01', 'Configurá tu sede', 'Datos públicos, deportes, canchas, horarios, precios y medios de cobro.'],

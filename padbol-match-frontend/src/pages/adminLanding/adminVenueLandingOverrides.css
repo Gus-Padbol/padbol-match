@@ -1,0 +1,18 @@
+/* Esta hoja se carga al final para aislar la landing de reglas globales de la app.
+ * App.css aplica títulos oscuros por defecto; en esta landing premium el texto
+ * principal debe mantenerse blanco y por delante de toda capa decorativa. */
+.admin-landing h1,
+.admin-landing h2,
+.admin-landing h3 {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-landing h1 span,
+.admin-landing h2 span {
+  color: #ed1c2e !important;
+  -webkit-text-fill-color: #ed1c2e !important;
+}
