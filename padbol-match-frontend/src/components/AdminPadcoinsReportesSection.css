@@ -1,0 +1,7 @@
+.padcoins-report-stat__value {
+  /* Los contadores se usan dentro de paneles oscuros: no heredan color ni relleno del tema. */
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+}
