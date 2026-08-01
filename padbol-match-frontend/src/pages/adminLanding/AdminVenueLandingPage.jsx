@@ -107,7 +107,7 @@ export default function AdminVenueLandingPage() {
                 <li>Precio por franja, cobro, señas y política de cancelación.</li>
                 <li>Revisión final y publicación controlada.</li>
               </ul>
-              <p className="admin-landing__note">Chibi puede asistir y abrir cada pantalla correcta; la sede conserva siempre la decisión y la confirmación final.</p>
+              <p className="admin-landing__note">Chivi puede asistir y abrir cada pantalla correcta; la sede conserva siempre la decisión y la confirmación final.</p>
             </div>
             <div className="admin-landing__conversation" aria-label="Ejemplo de asistente guiado">
               <p className="admin-landing__panel-label">ASISTENTE DE CONFIGURACIÓN</p>

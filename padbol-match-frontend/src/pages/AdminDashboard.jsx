@@ -90,6 +90,7 @@ import AdminHubPromoSedeSection from '../components/AdminHubPromoSedeSection';
 import AdminSedeExtrasSection from '../components/AdminSedeExtrasSection';
 import AdminSedeResenasSection from '../components/AdminSedeResenasSection';
 import AdminSedeListaEsperaTorneosSection from '../components/AdminSedeListaEsperaTorneosSection';
+import AdminSedeConfiguracionGuiada from '../components/AdminSedeConfiguracionGuiada';
 import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
 import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
@@ -8303,6 +8304,77 @@ export default function AdminDashboard({
       setMiSede(sanitizeSedeRowForState(updated));
       setMiSedeForm((f) => mergeMiSedeFormFromDb(updated, f, PAISES_SEDE_OPTIONS));
       setSedesMap((m) => ({ ...m, [String(updated.id)]: { ...(m[String(updated.id)] || {}), ...sanitizeSedeRowForState(updated) } }));
+    }
+  };
+
+  /**
+   * Chivi: alta guiada de la base operativa de una sede.
+   * Reutiliza los mismos endpoints de Mi Sede y Canchas: no guarda borradores
+   * locales ni inventa configuración que el backend no soporte.
+   */
+  const guardarConfiguracionGuiadaSede = async ({ venue, court }) => {
+    if (!sedeId || !session?.access_token) {
+      return { ok: false, message: t('admin.formularios.loginAgainAlt') };
+    }
+
+    setMiSedeSaving(true);
+    try {
+      const nextForm = { ...miSedeForm, ...venue };
+      const res = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(miSedeFormToApiPatchBody(nextForm)),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, message: data.error || res.statusText || t('admin.metricas.saveError') };
+      }
+
+      const parsed = parseSedePatchResponse(data, miSedePagos);
+      const updated = parsed.sede;
+      setMiSedePagos(parsed.pagos);
+      if (updated) {
+        const safe = sanitizeSedeRowForState(updated);
+        setMiSede(safe);
+        setMiSedeForm((current) => mergeMiSedeFormFromDb(updated, { ...current, ...venue }, PAISES_SEDE_OPTIONS));
+        setSedesMap((current) => ({ ...current, [String(updated.id)]: { ...(current[String(updated.id)] || {}), ...safe } }));
+      } else {
+        setMiSedeForm(nextForm);
+      }
+
+      if (court) {
+        const courtRes = await fetch(`${apiBaseUrl}/api/sedes/${sedeId}/canchas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(buildCanchaWriteBody({
+            ...emptyCanchaModalDraft(),
+            nombre: court.nombre,
+            deporte: court.deporte,
+            estado: 'activa',
+          })),
+        });
+        const courtData = await courtRes.json().catch(() => ({}));
+        if (!courtRes.ok) {
+          return {
+            ok: false,
+            message: courtData.error || courtRes.statusText || 'La sede se guardó, pero no se pudo crear la cancha. Podés agregarla desde Canchas.',
+          };
+        }
+        if (courtData.cancha) {
+          setCanchas((current) => [...current, courtData.cancha].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0)));
+        }
+      }
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, message: error?.message || String(error) };
+    } finally {
+      setMiSedeSaving(false);
     }
   };
 
@@ -19157,6 +19229,14 @@ export default function AdminDashboard({
           <div className="admin-mi-sede-section-view">
           {activeMiSedeSection === 'info' ? (
           <div id="admin-mi-sede-info">
+          {!esEditorContenido ? (
+            <AdminSedeConfiguracionGuiada
+              venue={miSedeForm}
+              existingCourts={canchas}
+              onSave={guardarConfiguracionGuiadaSede}
+              busy={miSedeSaving}
+            />
+          ) : null}
           {puedeVerMiSede && !esEditorContenido ? (
             <div
               style={{
