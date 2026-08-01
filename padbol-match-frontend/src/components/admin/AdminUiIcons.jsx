@@ -39,3 +39,24 @@ export function AdminGridIcon({ size = 18 }) {
     </svg>
   );
 }
+
+/** Moneda propia de PadCoins: evita depender del emoji del sistema operativo. */
+export function AdminPadcoinsIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M9 8.5h4a2 2 0 0 1 0 4H11a2 2 0 0 0 0 4h4" />
+      <path d="M12 6.5v11" />
+    </svg>
+  );
+}
+
+export function AdminTrophyIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>
+      <path d="M8 4h8v5a4 4 0 0 1-8 0Z" />
+      <path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3" />
+      <path d="M12 13v4M8.5 20h7M10 17h4" />
+    </svg>
+  );
+}

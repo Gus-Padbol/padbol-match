@@ -49,7 +49,7 @@ function StatCard({ label, value, hint }) {
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
         {label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', WebkitTextFillColor: '#f8fafc', lineHeight: 1.2 }}>
         {value}
       </div>
       {hint ? (

@@ -5,7 +5,7 @@ import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPartidoPreview';
-import { AdminEditIcon, AdminGridIcon, AdminLicenseIcon } from '../components/admin/AdminUiIcons';
+import { AdminEditIcon, AdminGridIcon, AdminLicenseIcon, AdminPadcoinsIcon, AdminTrophyIcon } from '../components/admin/AdminUiIcons';
 import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
@@ -9638,19 +9638,6 @@ export default function AdminDashboard({
     }
   };
 
-  const handleSbJugadorFotoRemove = async (equipo, index) => {
-    const uploadKey = `${equipo}-${index}`;
-    setSbJugadorFotoUploading(uploadKey);
-    setSbError('');
-    try {
-      await saveSbJugadorFotoViaApi(equipo, index, null);
-    } catch (err) {
-      setSbError(err?.message || t('admin.scoreboard.playerPhotoRemoveError', 'No se pudo quitar la foto del jugador'));
-    } finally {
-      setSbJugadorFotoUploading(null);
-    }
-  };
-
   const updateSbJugador = (equipo, index, nombre) => {
     const setter = equipo === 'A' ? setSbJugadoresA : setSbJugadoresB;
     setter((prev) => prev.map((j, i) => (i === index ? { ...j, nombre } : j)));
@@ -11174,7 +11161,10 @@ export default function AdminDashboard({
         </div>
       <div className="section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0 }}>📋 {t('admin.torneosSection.createdTitle')}</h2>
+          <h2 className="admin-section-title-with-icon" style={{ margin: 0 }}>
+            <AdminTrophyIcon size={21} />
+            {t('admin.torneosSection.createdTitle')}
+          </h2>
           {puedeBatchTorneosResumen && torneoStatsError && torneos.length === 0 ? (
             <div
               role="status"
@@ -14124,7 +14114,15 @@ export default function AdminDashboard({
                             className="admin-scoreboard-jugador-row__nombre"
                           />
                           <div className="admin-scoreboard-jugador-row__foto">
-                            <span className="admin-scoreboard-jugador-row__foto-avatar">
+                            <label
+                              htmlFor={fotoInputId}
+                              className={`admin-scoreboard-jugador-row__foto-avatar${canUploadFoto ? '' : ' is-disabled'}`}
+                              title={
+                                sbEditingId
+                                  ? t('admin.scoreboard.playerPhotoUpload', 'Subir o cambiar foto del jugador')
+                                  : t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores')
+                              }
+                            >
                               {fotoUrl ? (
                                 <img
                                   src={fotoUrl}
@@ -14134,44 +14132,19 @@ export default function AdminDashboard({
                               ) : (
                                 <span className="admin-scoreboard-jugador-row__foto-fallback" aria-hidden="true" />
                               )}
-                              {fotoUrl ? (
-                                <button
-                                  type="button"
-                                  className="admin-scoreboard-jugador-row__foto-remove"
-                                  onClick={() => { void handleSbJugadorFotoRemove(equipo, idx); }}
-                                  disabled={!canUploadFoto}
-                                  title={t('admin.scoreboard.playerPhotoRemove', 'Quitar foto')}
-                                  aria-label={t('admin.scoreboard.playerPhotoRemove', 'Quitar foto')}
-                                >
-                                  ✕
-                                </button>
-                              ) : null}
-                            </span>
+                            </label>
                             <input
                               type="file"
                               accept="image/*"
                               id={fotoInputId}
                               className="admin-scoreboard-jugador-row__foto-input"
+                              disabled={!canUploadFoto}
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 e.target.value = '';
                                 if (file) void handleSbJugadorFotoUpload(equipo, idx, file);
                               }}
                             />
-                            <button
-                              type="button"
-                              className="admin-scoreboard-jugador-row__foto-btn"
-                              onClick={() => document.getElementById(fotoInputId)?.click()}
-                              disabled={!canUploadFoto}
-                              title={
-                                sbEditingId
-                                  ? t('admin.scoreboard.playerPhotoUpload', 'Subir foto del jugador')
-                                  : t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores')
-                              }
-                              aria-label={t('admin.scoreboard.playerPhotoUpload', 'Subir foto del jugador')}
-                            >
-                              {isFotoUploading ? '…' : '📷'}
-                            </button>
                           </div>
                           <button
                             type="button"
@@ -16120,7 +16093,10 @@ export default function AdminDashboard({
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
               <div>
-                <h2 style={{ marginTop: 0 }}>🪙 {t('admin.padcoins.title', 'Beneficios PadCoins')}</h2>
+                <h2 className="admin-section-title-with-icon" style={{ marginTop: 0 }}>
+                  <AdminPadcoinsIcon size={21} />
+                  {t('admin.padcoins.title', 'Beneficios PadCoins')}
+                </h2>
                 <p style={{ color: 'var(--text-muted)', margin: 0, maxWidth: '560px' }}>
                   {t(
                     'admin.padcoins.description',
@@ -16419,18 +16395,10 @@ export default function AdminDashboard({
                       <button
                         type="button"
                         onClick={() => abrirEditarPremio(premio)}
-                        style={{
-                          padding: '7px 14px',
-                          background: 'var(--accent)',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          fontSize: '13px',
-                        }}
+                        className="admin-edit-button"
                       >
-                        ✏️ {t('admin.padcoins.edit', 'Editar')}
+                        <AdminEditIcon size={14} />
+                        {t('admin.padcoins.edit', 'Editar')}
                       </button>
                       <button
                         type="button"
@@ -17159,19 +17127,19 @@ export default function AdminDashboard({
                       borderCollapse: 'collapse',
                       fontSize: '12px',
                       tableLayout: 'fixed',
-                      ...(esAdminClub ? {} : { minWidth: '860px' }),
+                      minWidth: esAdminClub ? '960px' : '1120px',
                     }}>
                       <thead>
                         <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left', background: 'var(--bg-card)' }}>
                           <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '108px' }}>{t('admin.padcoins.movementsDate', 'Fecha')}</th>
-                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: esAdminClub ? '22%' : '18%' }}>{t('admin.padcoins.movementsPlayer', 'Jugador')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: esAdminClub ? '220px' : '200px' }}>{t('admin.padcoins.movementsPlayer', 'Jugador')}</th>
                           {esAdminClub ? null : (
                             <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '14%' }}>{t('admin.padcoins.movementsVenue', 'Sede')}</th>
                           )}
                           <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '108px' }}>{t('admin.padcoins.movementsType', 'Tipo')}</th>
                           <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '72px' }}>{t('admin.padcoins.movementsAmount', 'Monto')}</th>
-                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>{t('admin.padcoins.movementsDescriptionCol', 'Descripción')}</th>
-                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '96px' }}>{t('admin.padcoins.movementsReference', 'Referencia')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '250px' }}>{t('admin.padcoins.movementsDescriptionCol', 'Descripción')}</th>
+                          <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '170px' }}>{t('admin.padcoins.movementsReference', 'Referencia')}</th>
                           <th style={{ padding: '8px 10px', color: 'var(--text-muted)', width: '88px' }}>{t('admin.padcoins.movementsBalance', 'Saldo')}</th>
                         </tr>
                       </thead>
@@ -17195,10 +17163,10 @@ export default function AdminDashboard({
                                 {jugadorNombre || jugadorEmail ? (
                                   <div style={{ display: 'grid', gap: '2px', lineHeight: 1.35 }}>
                                     {jugadorNombre ? (
-                                      <span style={{ wordBreak: 'break-word' }}>{jugadorNombre}</span>
+                                      <span title={jugadorNombre} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{jugadorNombre}</span>
                                     ) : null}
                                     {jugadorEmail ? (
-                                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+                                      <span title={jugadorEmail} style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                         {jugadorEmail}
                                       </span>
                                     ) : null}
@@ -17243,8 +17211,9 @@ export default function AdminDashboard({
                               <td style={{
                                 padding: '8px 10px',
                                 color: 'var(--text-secondary)',
-                                whiteSpace: 'normal',
-                                wordBreak: 'break-word',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
                                 lineHeight: 1.35,
                                 verticalAlign: 'top',
                               }}>
@@ -17254,12 +17223,13 @@ export default function AdminDashboard({
                                 padding: '8px 10px',
                                 color: 'var(--text-muted)',
                                 fontSize: '11px',
-                                whiteSpace: 'normal',
-                                wordBreak: 'break-word',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
                                 lineHeight: 1.35,
                                 verticalAlign: 'top',
                               }}>
-                                {padcoinsMovReferenciaDisplay(mov, t)}
+                                <span title={padcoinsMovReferenciaDisplay(mov, t)}>{padcoinsMovReferenciaDisplay(mov, t)}</span>
                               </td>
                               <td style={{
                                 padding: '8px 10px',
@@ -19235,7 +19205,10 @@ export default function AdminDashboard({
           ) : null}
           {/* ── 0. Licencia PADBOL ── */}
           <div style={{ marginBottom: '32px' }}>
-            <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.padbolLicenseTitle')}</h3>
+            <h3 className="admin-mi-sede-block-title admin-mi-sede-block-title--with-icon" style={{ marginBottom: '16px', fontSize: '16px' }}>
+              <AdminLicenseIcon size={17} />
+              {t('admin.sedes.padbolLicenseTitle')}
+            </h3>
             <div className="admin-mi-sede-theme-panel">
               {isSuperAdmin ? (
                 /* Editable for super_admin */

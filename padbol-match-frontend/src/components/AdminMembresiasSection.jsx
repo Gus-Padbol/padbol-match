@@ -1091,7 +1091,7 @@ export default function AdminMembresiasSection({
               boxSizing: 'border-box',
             }}
           >
-            <h3 style={{ margin: '0 0 12px' }}>
+            <h3 style={{ margin: '0 0 12px', color: 'var(--text-primary, #f8fafc)', WebkitTextFillColor: 'var(--text-primary, #f8fafc)' }}>
               {planEditId ? tr('editPlan', 'Editar plan') : tr('newPlan', 'Nuevo plan')}
             </h3>
             <div style={{ display: 'grid', gap: 10 }}>
