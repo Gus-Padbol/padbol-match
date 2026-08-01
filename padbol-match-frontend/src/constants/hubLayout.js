@@ -112,6 +112,7 @@ export function isHubNavBarHiddenPathname(pathname) {
   if (pathOnly === '/sobre' || pathOnly.startsWith('/sobre/')) return true;
   if (pathOnly === '/contacto' || pathOnly.startsWith('/contacto/')) return true;
   if (pathOnly === '/plataforma' || pathOnly.startsWith('/plataforma/')) return true;
+  if (pathOnly === '/administradores' || pathOnly.startsWith('/administradores/')) return true;
   return false;
 }
 
@@ -310,6 +311,7 @@ export function isLegalFooterGlobalBarVisiblePathname(pathname) {
   if (p === '/sobre' || p.startsWith('/sobre/')) return false;
   if (p === '/contacto' || p.startsWith('/contacto/')) return false;
   if (p === '/plataforma' || p.startsWith('/plataforma/')) return false;
+  if (p === '/administradores' || p.startsWith('/administradores/')) return false;
   if (p === '/sede' || p.startsWith('/sede/')) return false;
   return true;
 }

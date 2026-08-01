@@ -79,6 +79,8 @@ const ScoreboardJoin = lazy(() => import('./pages/ScoreboardJoin'));
 const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage'));
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
+/** Landing pública de operación para administradores de sede. */
+const AdminVenueLandingPage = lazy(() => import('./pages/adminLanding/AdminVenueLandingPage'));
 
 function RouteLoadingScreen() {
   const { t } = useSafeTranslation();
@@ -591,6 +593,32 @@ function App() {
                       fallback={<RouteLoadingScreen />}
                     >
                       <PublicSitePage />
+                    </Suspense>
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
+                path="/administradores"
+                element={(
+                  <ErrorBoundary label="la guía pública para administradores de sede">
+                    <Suspense
+                      fallback={(
+                        <div
+                          style={{
+                            minHeight: '100dvh',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: '#070b14',
+                            color: 'rgba(248,250,252,0.85)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Cargando…
+                        </div>
+                      )}
+                    >
+                      <AdminVenueLandingPage />
                     </Suspense>
                   </ErrorBoundary>
                 )}
