@@ -51,19 +51,38 @@ export function getLocaleFallbacks(lang) {
 }
 
 /**
+ * Última barrera para que una variable de traducción nunca llegue cruda a la
+ * interfaz (por ejemplo `{{filled}} of 4 spots`). i18next normalmente hace
+ * esta interpolación, pero algunas vistas públicas llaman al traductor a
+ * través de un helper y pueden renderizar antes de que el catálogo termine de
+ * sincronizarse. En ese instante completamos los valores disponibles y no
+ * exponemos la clave técnica si alguno todavía no llegó.
+ */
+export function interpolateTranslation(value, options = {}) {
+  return String(value ?? '').replace(/{{\s*([^}\s]+)\s*}}/g, (token, name) => {
+    const replacement = options?.[name];
+    return replacement == null ? '' : String(replacement);
+  });
+}
+
+/**
  * Normaliza el valor devuelto por i18next (nunca devolver objetos a React).
  */
-export function resolveTranslation(key, translated, explicitFallback, lang = 'es') {
+export function resolveTranslation(key, translated, explicitFallback, lang = 'es', options = {}) {
   const k = String(key || '');
   const fallbacks = getLocaleFallbacks(lang);
   if (translated != null && typeof translated === 'object') {
-    return explicitFallback || fallbacks[k] || k;
+    return interpolateTranslation(explicitFallback || fallbacks[k] || EN_FALLBACKS[k] || ES_FALLBACKS[k] || k, options);
   }
   const s = translated != null ? String(translated) : '';
-  if (s && s !== k) return s;
-  if (explicitFallback) return explicitFallback;
-  if (fallbacks[k]) return fallbacks[k];
-  return k;
+  if (s && s !== k) return interpolateTranslation(s, options);
+  if (explicitFallback) return interpolateTranslation(explicitFallback, options);
+  if (fallbacks[k]) return interpolateTranslation(fallbacks[k], options);
+  // Si un locale aún no tiene una clave nueva, el inglés es el respaldo
+  // universal. Es preferible a mostrar `publicSite.algo` en pantalla.
+  if (EN_FALLBACKS[k]) return interpolateTranslation(EN_FALLBACKS[k], options);
+  if (ES_FALLBACKS[k]) return interpolateTranslation(ES_FALLBACKS[k], options);
+  return interpolateTranslation(k, options);
 }
 
 /**
@@ -97,10 +116,10 @@ export function useSafeTranslation(ns) {
         raw = tBase(k, { ...opts, defaultValue, lng: currentLang });
       } catch (err) {
         console.error('[i18n] t() falló para clave:', k, err);
-        return resolveTranslation(k, null, explicitFallback, currentLang);
+        return resolveTranslation(k, null, explicitFallback, currentLang, opts);
       }
       if (!ready && explicitFallback) return explicitFallback;
-      return resolveTranslation(k, raw, explicitFallback, currentLang);
+      return resolveTranslation(k, raw, explicitFallback, currentLang, opts);
     },
     [tBase, ready, currentLang],
   );

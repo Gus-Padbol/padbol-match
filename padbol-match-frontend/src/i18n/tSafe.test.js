@@ -1,0 +1,15 @@
+import { interpolateTranslation, resolveTranslation } from './tSafe';
+
+describe('traducciones seguras', () => {
+  it('nunca deja variables de interpolación visibles', () => {
+    expect(interpolateTranslation('{{filled}} of {{total}} spots', { filled: 3, total: 4 }))
+      .toBe('3 of 4 spots');
+    expect(interpolateTranslation('{{filled}} of {{total}} spots', { filled: 3 }))
+      .toBe('3 of  spots');
+  });
+
+  it('usa el catálogo inglés antes de exponer una clave técnica faltante', () => {
+    expect(resolveTranslation('publicSite.status.title', 'publicSite.status.title', undefined, 'it'))
+      .toBe('Padbol Match adds new sports');
+  });
+});
