@@ -19,7 +19,7 @@ const MANUAL_PAUSE_MS = 3200;
  * sobre la demo dentro del mismo marco de teléfono; la demo queda debajo como
  * fallback (video no cargado, error o reduced motion), sin flashes ni huecos.
  */
-function ExperiencePhonePreview({ experience, demoLabel, videoPlaying, videoFailed, onVideoError }) {
+function ExperiencePhonePreview({ experience, demoLabel, text, videoPlaying, videoFailed, onVideoError }) {
   const videoSrc = !videoFailed ? experience.media?.video || null : null;
   const videoRef = useRef(null);
   const [videoReady, setVideoReady] = useState(false);
@@ -67,20 +67,20 @@ function ExperiencePhonePreview({ experience, demoLabel, videoPlaying, videoFail
           <strong>{experience.name}</strong>
           <span className="ps-exp-phone__chiprow">
             <SportIcon deporte="padbol" size={14} color="currentColor" />
-            Padbol Club Norte · 20:30
+            {text('publicSite.experiences.preview.club')} · 20:30
           </span>
         </div>
 
         <div className="ps-exp-phone__card ps-exp-phone__card--main">
-          <span className="ps-exp-phone__label">Reserva</span>
-          <strong>Cancha 2 · 60 min</strong>
-          <span className="ps-exp-phone__meta">2/4 jugadores confirmados</span>
-          <span className="ps-exp-phone__cta">Confirmar</span>
+          <span className="ps-exp-phone__label">{text('publicSite.experiences.preview.booking')}</span>
+          <strong>{text('publicSite.experiences.preview.court')}</strong>
+          <span className="ps-exp-phone__meta">{text('publicSite.experiences.preview.playersConfirmed')}</span>
+          <span className="ps-exp-phone__cta">{text('publicSite.experiences.preview.confirm')}</span>
         </div>
 
         <div className="ps-exp-phone__row">
           <div className="ps-exp-phone__card">
-            <span className="ps-exp-phone__label">Ranking</span>
+            <span className="ps-exp-phone__label">{text('publicSite.experiences.preview.ranking')}</span>
             <strong>#12</strong>
           </div>
           <div className="ps-exp-phone__card">
@@ -340,6 +340,7 @@ export default function ExperiencesSection() {
           <ExperiencePhonePreview
             experience={active}
             demoLabel={text('publicSite.experiences.demoBadge')}
+            text={text}
             videoPlaying={mediaAllowed && !reducedMotion}
             videoFailed={Boolean(failedVideos[activeId])}
             onVideoError={onVideoError}

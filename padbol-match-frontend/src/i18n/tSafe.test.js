@@ -12,4 +12,13 @@ describe('traducciones seguras', () => {
     expect(resolveTranslation('publicSite.status.title', 'publicSite.status.title', undefined, 'it'))
       .toBe('Padbol Match adds new sports');
   });
+
+  it('no deja que un default histórico en español mezcle una interfaz en inglés', () => {
+    expect(resolveTranslation(
+      'publicSite.status.title',
+      'publicSite.status.title',
+      'Padbol Match incorpora nuevos deportes',
+      'en',
+    )).toBe('Padbol Match adds new sports');
+  });
 });

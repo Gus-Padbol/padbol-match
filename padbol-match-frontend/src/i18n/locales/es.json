@@ -2512,7 +2512,15 @@
       "prev": "Experiencia anterior",
       "next": "Experiencia siguiente",
       "demoBadge": "Demostración",
-      "note": "Demostración con datos de ejemplo."
+      "note": "Demostración con datos de ejemplo.",
+      "preview": {
+        "club": "Padbol Club Norte",
+        "booking": "Reserva",
+        "court": "Cancha 2 · 60 min",
+        "playersConfirmed": "2/4 jugadores confirmados",
+        "confirm": "Confirmar",
+        "ranking": "Ranking"
+      }
     },
     "expansion": {
       "title": "Más oportunidades para tu sede",
@@ -2545,6 +2553,10 @@
       "playersNote": "Una plataforma nacida de la experiencia real de quienes hacen posible el deporte de cancha.",
       "cta": "Mirá cómo funciona",
       "visualAlt": "Equipo de Padbol Match reunido en su espacio de trabajo"
+    },
+    "meta": {
+      "title": "Padbol Match — Plataforma",
+      "description": "Padbol Match conecta jugadores, sedes y organizaciones para gestionar Padbol, Pádel, Pickleball y Tenis en una sola plataforma."
     },
     "download": {
       "title": "Descargar la app",
@@ -2674,6 +2686,22 @@
           "title": "Conectar el resultado",
           "text": "El resultado puede alimentar historial, estadísticas, ranking y torneos según la disciplina."
         }
+      }
+    },
+    "padCoins": {
+      "wallet": {
+        "completedMatch": "Partido completado",
+        "confirmedBooking": "Reserva confirmada",
+        "redeemedBenefit": "Beneficio canjeado",
+        "activeMembership": "Membresía activa"
+      }
+    },
+    "tournaments": {
+      "preview": {
+        "teamA": "Equipo A",
+        "teamB": "Equipo B",
+        "teamC": "Equipo C",
+        "teamD": "Equipo D"
       }
     },
     "matchIntelligence": {

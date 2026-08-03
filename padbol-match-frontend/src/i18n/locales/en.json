@@ -2848,7 +2848,15 @@
       "prev": "Previous experience",
       "next": "Next experience",
       "demoBadge": "Demo",
-      "note": "Demo with sample data."
+      "note": "Demo with sample data.",
+      "preview": {
+        "club": "Padbol Club North",
+        "booking": "Booking",
+        "court": "Court 2 · 60 min",
+        "playersConfirmed": "2/4 players confirmed",
+        "confirm": "Confirm",
+        "ranking": "Ranking"
+      }
     },
     "expansion": {
       "title": "More opportunities for your venue",
@@ -2881,6 +2889,10 @@
       "playersNote": "A platform born from the real experience of the people who make court sports happen.",
       "cta": "See how it works",
       "visualAlt": "The Padbol Match team gathered in their workspace"
+    },
+    "meta": {
+      "title": "Padbol Match — Platform",
+      "description": "Padbol Match connects players, venues and organizations to manage Padbol, Padel, Pickleball and Tennis on one platform."
     },
     "download": {
       "title": "Download the app",
@@ -2997,6 +3009,22 @@
           "title": "Connect the result",
           "text": "The match feeds history, stats, ranking and tournaments when applicable."
         }
+      }
+    },
+    "padCoins": {
+      "wallet": {
+        "completedMatch": "Match completed",
+        "confirmedBooking": "Booking confirmed",
+        "redeemedBenefit": "Benefit redeemed",
+        "activeMembership": "Active membership"
+      }
+    },
+    "tournaments": {
+      "preview": {
+        "teamA": "Team A",
+        "teamB": "Team B",
+        "teamC": "Team C",
+        "teamD": "Team D"
       }
     },
     "matchIntelligence": {

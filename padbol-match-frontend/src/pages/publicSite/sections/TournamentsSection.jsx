@@ -3,21 +3,21 @@ import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { Closing, SectionIntro, usePublicSiteText } from './SectionElements';
 
 /** Bracket conceptual en CSS (equipos genéricos, resultado de demostración). */
-function BracketConcept() {
+function BracketConcept({ text }) {
   return (
     <div className="ps-bracket" aria-hidden="true">
       <div className="ps-bracket__round">
-        <span className="ps-bracket__team">Equipo A</span>
-        <span className="ps-bracket__team is-winner">Equipo B</span>
-        <span className="ps-bracket__team is-winner">Equipo C</span>
-        <span className="ps-bracket__team">Equipo D</span>
+        <span className="ps-bracket__team">{text('publicSite.tournaments.preview.teamA')}</span>
+        <span className="ps-bracket__team is-winner">{text('publicSite.tournaments.preview.teamB')}</span>
+        <span className="ps-bracket__team is-winner">{text('publicSite.tournaments.preview.teamC')}</span>
+        <span className="ps-bracket__team">{text('publicSite.tournaments.preview.teamD')}</span>
       </div>
       <div className="ps-bracket__round ps-bracket__round--final">
-        <span className="ps-bracket__team is-winner">Equipo B</span>
-        <span className="ps-bracket__team">Equipo C</span>
+        <span className="ps-bracket__team is-winner">{text('publicSite.tournaments.preview.teamB')}</span>
+        <span className="ps-bracket__team">{text('publicSite.tournaments.preview.teamC')}</span>
       </div>
       <div className="ps-bracket__round ps-bracket__round--champion">
-        <span className="ps-bracket__team is-champion">Equipo B</span>
+        <span className="ps-bracket__team is-champion">{text('publicSite.tournaments.preview.teamB')}</span>
       </div>
     </div>
   );
@@ -46,7 +46,7 @@ export default function TournamentsSection() {
           <Closing>{text('publicSite.tournaments.closing')}</Closing>
         </div>
         <div className="ps-tournaments-visual" data-ps-reveal data-ps-reveal-order="2">
-          <BracketConcept />
+          <BracketConcept text={text} />
         </div>
       </div>
     </section>

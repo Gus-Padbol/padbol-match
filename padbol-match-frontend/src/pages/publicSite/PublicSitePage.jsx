@@ -17,9 +17,11 @@ import {
   ContactSection,
 } from './sections/PremiumSections';
 import useRevealOnScroll from './useRevealOnScroll';
+import { useSafeTranslation } from '../../i18n/tSafe';
 import './publicSite.css';
 
 function usePublicSiteDocumentMeta() {
+  const { t } = useSafeTranslation();
   useEffect(() => {
     const prevTitle = document.title;
     const description = document.querySelector('meta[name="description"]');
@@ -27,10 +29,10 @@ function usePublicSiteDocumentMeta() {
     const prevDescription = description?.getAttribute('content') || '';
     const prevTheme = theme?.getAttribute('content') || '';
 
-    document.title = 'Padbol Match — Plataforma';
+    document.title = t('publicSite.meta.title');
     description?.setAttribute(
       'content',
-      'Padbol Match conecta jugadores, sedes y organizaciones para gestionar Padbol, Pádel, Pickleball y Tenis en una sola plataforma.',
+      t('publicSite.meta.description'),
     );
     theme?.setAttribute('content', '#0a0c12');
     document.documentElement.classList.add('public-site-active');
@@ -41,7 +43,7 @@ function usePublicSiteDocumentMeta() {
       theme?.setAttribute('content', prevTheme);
       document.documentElement.classList.remove('public-site-active');
     };
-  }, []);
+  }, [t]);
 }
 
 export default function PublicSitePage() {

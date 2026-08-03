@@ -98,12 +98,12 @@ export function resolveTranslation(key, translated, explicitFallback, lang = 'es
   const k = String(key || '');
   const fallbacks = getLocaleFallbacks(lang);
   if (translated != null && typeof translated === 'object') {
-    return interpolateTranslation(explicitFallback || fallbacks[k] || EN_FALLBACKS[k] || ES_FALLBACKS[k] || k, options);
+    return interpolateTranslation(fallbacks[k] || explicitFallback || EN_FALLBACKS[k] || ES_FALLBACKS[k] || k, options);
   }
   const s = translated != null ? String(translated) : '';
   if (s && s !== k) return interpolateTranslation(s, options);
-  if (explicitFallback) return interpolateTranslation(explicitFallback, options);
   if (fallbacks[k]) return interpolateTranslation(fallbacks[k], options);
+  if (explicitFallback) return interpolateTranslation(explicitFallback, options);
   // Si un locale aún no tiene una clave nueva, el inglés es el respaldo
   // universal. Es preferible a mostrar `publicSite.algo` en pantalla.
   if (EN_FALLBACKS[k]) return interpolateTranslation(EN_FALLBACKS[k], options);
@@ -147,7 +147,8 @@ export function useSafeTranslation(ns) {
         console.error('[i18n] t() falló para clave:', k, err);
         return resolveTranslation(k, null, explicitFallback, currentLang, opts);
       }
-      if (!ready && explicitFallback) return explicitFallback;
+      if (!ready && fallbacks[k]) return interpolateTranslation(fallbacks[k], opts);
+      if (!ready && explicitFallback) return interpolateTranslation(explicitFallback, opts);
       return resolveTranslation(k, raw, explicitFallback, currentLang, opts);
     },
     [tBase, ready, currentLang],
