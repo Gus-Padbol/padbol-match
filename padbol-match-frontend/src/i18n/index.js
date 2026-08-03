@@ -9,51 +9,50 @@ import de from './locales/de.json';
 import fr from './locales/fr.json';
 import pt from './locales/pt.json';
 import ar from './locales/ar.json';
-import { PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
+import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
+import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
 const STORAGE_KEY = 'padbol_lang';
 
 function readInitialLng() {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (PADBOL_LANGUAGE_CODES.includes(v)) return v;
+    return canonicalPadbolLanguageCode(localStorage.getItem(STORAGE_KEY)) || 'en';
   } catch {
-    /* ignore */
+    return 'en';
   }
-  return 'en';
 }
+
+function mergeLocale(base, override) {
+  const result = { ...(base || {}) };
+  Object.entries(override || {}).forEach(([key, value]) => {
+    result[key] = value && typeof value === 'object' && !Array.isArray(value)
+      ? mergeLocale(result[key], value)
+      : value;
+  });
+  return result;
+}
+
+const englishBackedLocale = (code) => mergeLocale(en, ADDITIONAL_LOCALE_OVERRIDES[code]);
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
-      es: { translation: es },
-      en: { translation: en },
-      it: { translation: it },
-      ro: { translation: ro },
-      de: { translation: de },
-      fr: { translation: fr },
-      pt: { translation: pt },
-      ar: { translation: ar },
+      es: { translation: es }, en: { translation: en }, it: { translation: it }, ro: { translation: ro },
+      de: { translation: de }, fr: { translation: fr }, 'pt-BR': { translation: pt },
+      'pt-PT': { translation: mergeLocale(pt, ADDITIONAL_LOCALE_OVERRIDES['pt-PT']) },
+      ar: { translation: ar }, 'fa-IR': { translation: englishBackedLocale('fa-IR') },
+      'nl-BE': { translation: englishBackedLocale('nl-BE') }, 'nl-NL': { translation: englishBackedLocale('nl-NL') },
+      sv: { translation: englishBackedLocale('sv') }, el: { translation: englishBackedLocale('el') },
+      hu: { translation: englishBackedLocale('hu') }, he: { translation: englishBackedLocale('he') },
+      pl: { translation: englishBackedLocale('pl') }, uk: { translation: englishBackedLocale('uk') },
+      af: { translation: englishBackedLocale('af') },
     },
-    lng: readInitialLng(),
-    fallbackLng: 'en',
-    supportedLngs: [...PADBOL_LANGUAGE_CODES],
-    interpolation: { escapeValue: false },
-    returnNull: false,
-    returnEmptyString: false,
-    react: {
-      useSuspense: false,
-      bindI18n: 'languageChanged loaded',
-      bindI18nStore: 'added removed',
-    },
-    detection: {
-      /** Solo `padbol_lang` explícito (pantalla inicial o selector); no autoguardar idioma del navegador. */
-      order: ['localStorage'],
-      caches: [],
-      lookupLocalStorage: STORAGE_KEY,
-    },
+    lng: readInitialLng(), fallbackLng: 'en', supportedLngs: [...PADBOL_LANGUAGE_CODES], load: 'currentOnly',
+    interpolation: { escapeValue: false }, returnNull: false, returnEmptyString: false,
+    react: { useSuspense: false, bindI18n: 'languageChanged loaded', bindI18nStore: 'added removed' },
+    detection: { order: ['localStorage'], caches: [], lookupLocalStorage: STORAGE_KEY },
   });
 
 export { STORAGE_KEY };
