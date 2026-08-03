@@ -32,17 +32,27 @@ function mergeLocale(base, override) {
   return result;
 }
 
-const englishBackedLocale = (code) => mergeLocale(en, ADDITIONAL_LOCALE_OVERRIDES[code]);
+// Todo idioma se construye sobre el catálogo inglés completo. Así, una clave
+// que todavía no tenga versión editorial local conserva una frase legible en
+// inglés y nunca hereda el texto por defecto en español de un componente.
+// Esto evita pantallas mezcladas (por ejemplo, interfaz inglesa con acciones
+// o estados en español) mientras se mantienen las traducciones existentes.
+const englishBackedLocale = (code, baseLocale = {}) => mergeLocale(
+  mergeLocale(en, baseLocale),
+  ADDITIONAL_LOCALE_OVERRIDES[code],
+);
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
-      es: { translation: es }, en: { translation: en }, it: { translation: it }, ro: { translation: ro },
-      de: { translation: de }, fr: { translation: fr }, 'pt-BR': { translation: pt },
-      'pt-PT': { translation: mergeLocale(pt, ADDITIONAL_LOCALE_OVERRIDES['pt-PT']) },
-      ar: { translation: ar }, 'fa-IR': { translation: englishBackedLocale('fa-IR') },
+      es: { translation: englishBackedLocale('es', es) }, en: { translation: en },
+      it: { translation: englishBackedLocale('it', it) }, ro: { translation: englishBackedLocale('ro', ro) },
+      de: { translation: englishBackedLocale('de', de) }, fr: { translation: englishBackedLocale('fr', fr) },
+      'pt-BR': { translation: englishBackedLocale('pt-BR', pt) },
+      'pt-PT': { translation: englishBackedLocale('pt-PT', pt) },
+      ar: { translation: englishBackedLocale('ar', ar) }, 'fa-IR': { translation: englishBackedLocale('fa-IR') },
       'nl-BE': { translation: englishBackedLocale('nl-BE') }, 'nl-NL': { translation: englishBackedLocale('nl-NL') },
       sv: { translation: englishBackedLocale('sv') }, el: { translation: englishBackedLocale('el') },
       hu: { translation: englishBackedLocale('hu') }, he: { translation: englishBackedLocale('he') },
