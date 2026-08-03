@@ -26,14 +26,28 @@ function flattenLocale(obj, prefix = '') {
 }
 
 /** Textos de respaldo por idioma (si falta clave o i18n aún no resolvió). */
-export const ES_FALLBACKS = flattenLocale(es);
+const mergeLocale = (base, override) => {
+  const result = { ...(base || {}) };
+  Object.entries(override || {}).forEach(([key, value]) => {
+    result[key] = value && typeof value === 'object' && !Array.isArray(value)
+      ? mergeLocale(result[key], value)
+      : value;
+  });
+  return result;
+};
+
+// Los fallbacks también se arman desde el inglés completo. Esta capa es la
+// que usan componentes antiguos que aún entregan defaults en español.
+const completeLocale = (baseLocale, override) => flattenLocale(mergeLocale(mergeLocale(en, baseLocale), override));
+
+export const ES_FALLBACKS = completeLocale(es);
 export const EN_FALLBACKS = flattenLocale(en);
-export const IT_FALLBACKS = flattenLocale(it);
-export const RO_FALLBACKS = flattenLocale(ro);
-export const DE_FALLBACKS = flattenLocale(de);
-export const FR_FALLBACKS = flattenLocale(fr);
-export const PT_FALLBACKS = flattenLocale(pt);
-export const AR_FALLBACKS = flattenLocale(ar);
+export const IT_FALLBACKS = completeLocale(it);
+export const RO_FALLBACKS = completeLocale(ro);
+export const DE_FALLBACKS = completeLocale(de);
+export const FR_FALLBACKS = completeLocale(fr);
+export const PT_FALLBACKS = completeLocale(pt);
+export const AR_FALLBACKS = completeLocale(ar);
 
 const FALLBACKS_BY_LANG = {
   es: ES_FALLBACKS,
@@ -43,18 +57,18 @@ const FALLBACKS_BY_LANG = {
   de: DE_FALLBACKS,
   fr: FR_FALLBACKS,
   'pt-BR': PT_FALLBACKS,
-  'pt-PT': { ...PT_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['pt-PT']) },
+  'pt-PT': completeLocale(pt, ADDITIONAL_LOCALE_OVERRIDES['pt-PT']),
   ar: AR_FALLBACKS,
-  'fa-IR': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['fa-IR']) },
-  'nl-BE': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['nl-BE']) },
-  'nl-NL': { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES['nl-NL']) },
-  sv: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.sv) },
-  el: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.el) },
-  hu: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.hu) },
-  he: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.he) },
-  pl: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.pl) },
-  uk: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.uk) },
-  af: { ...EN_FALLBACKS, ...flattenLocale(ADDITIONAL_LOCALE_OVERRIDES.af) },
+  'fa-IR': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['fa-IR']),
+  'nl-BE': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['nl-BE']),
+  'nl-NL': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['nl-NL']),
+  sv: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.sv),
+  el: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.el),
+  hu: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.hu),
+  he: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.he),
+  pl: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.pl),
+  uk: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.uk),
+  af: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.af),
 };
 
 export function getLocaleFallbacks(lang) {
@@ -99,7 +113,10 @@ export function useSafeTranslation(ns) {
         explicitFallback = opts.defaultValue != null ? String(opts.defaultValue) : undefined;
       }
       const fallbacks = getLocaleFallbacks(currentLang);
-      const defaultValue = explicitFallback || fallbacks[k] || k;
+      // Nunca usar primero un default del componente: muchos de los antiguos
+      // están escritos en español. El catálogo del idioma activo (o su
+      // fallback inglés completo) debe definir el idioma visual.
+      const defaultValue = fallbacks[k] || explicitFallback || k;
       // i18next puede devolver el fallback en inglés cuando falta una clave del
       // idioma activo. Si el componente entregó una traducción explícita para
       // ese idioma, debe prevalecer: evita interfaces mixtas (p. ej. PadCoins).
