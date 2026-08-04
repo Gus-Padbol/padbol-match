@@ -1430,12 +1430,21 @@ html.public-site-active #root {
 
 .ps-expansion__cta {
   display: flex;
-  margin-top: 24px;
+  justify-content: center;
+  margin-top: 36px;
 }
 
 .ps-expansion__cta .ps-btn {
-  min-width: 230px;
+  min-width: min(100%, 286px);
+  padding: 15px 27px;
   justify-content: center;
+  box-shadow: 0 12px 30px rgba(225, 27, 34, 0.24), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.ps-expansion__cta .ps-btn:hover,
+.ps-expansion__cta .ps-btn:focus-visible {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 18px 38px rgba(225, 27, 34, 0.34), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
 }
 
 .ps-section--what {
