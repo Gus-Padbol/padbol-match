@@ -161,83 +161,13 @@ function AccesoRoute() {
   return <AccesoCuenta />;
 }
 
-/** `/` para visitantes: landing. Con sesión → hub (home habitual). */
+/** La raíz siempre es la presentación pública. El Hub queda como ruta interna. */
 function RootHomeRoute() {
-  const { session, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(180deg, #0b1020 0%, #151832 100%)',
-          color: 'rgba(248, 250, 252, 0.92)',
-          fontWeight: 600,
-          fontSize: '15px',
-          boxSizing: 'border-box',
-          padding: 24,
-        }}
-      >
-        <div
-          aria-hidden
-          style={{
-            width: 36,
-            height: 36,
-            marginRight: 14,
-            border: '3px solid rgba(255,255,255,0.2)',
-            borderTopColor: '#a5b4fc',
-            borderRadius: '50%',
-            animation: 'rootHomeSpin 0.75s linear infinite',
-          }}
-        />
-        Cargando…
-        <style>{`@keyframes rootHomeSpin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  if (session?.user) {
-    return <Navigate to="/hub" replace />;
-  }
-
   return <LandingPage />;
 }
 
-/**
- * Rutas desconocidas: evita quedarse sin match útil. Con sesión → hub; sin sesión → landing (/).
- * Mientras `loading` de auth, spinner compacto (no pantalla vacía sobre el gradiente de body).
- */
+/** Rutas desconocidas: vuelven a la presentación pública, nunca al Hub. */
 function WildcardFallback() {
-  const { session, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: '100dvh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(180deg, #0b1020 0%, #151832 100%)',
-          color: 'rgba(248, 250, 252, 0.92)',
-          fontWeight: 600,
-          fontSize: '15px',
-          boxSizing: 'border-box',
-          padding: 24,
-        }}
-      >
-        Cargando…
-      </div>
-    );
-  }
-
-  if (session?.user) {
-    return <Navigate to="/hub" replace />;
-  }
-
   return <Navigate to="/" replace />;
 }
 
