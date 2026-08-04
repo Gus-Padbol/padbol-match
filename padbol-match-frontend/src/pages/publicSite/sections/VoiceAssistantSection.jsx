@@ -1,6 +1,7 @@
 import React from 'react';
 import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { usePublicSiteText } from '../publicSiteI18n';
+import { AccentWords } from './PremiumSections';
 
 const FALLBACK_COPY = {
   title: 'Chivi voice: ask for what you need to play.',
@@ -44,7 +45,12 @@ export default function VoiceAssistantSection() {
           <div>
             <header className="ps-section__intro">
               <p className="ps-section__eyebrow">{text('demoLabel')}</p>
-              <h2 id="ps-voice-title">{text('title')}</h2>
+              <h2 id="ps-voice-title">
+                <AccentWords
+                  value={text('title')}
+                  terms={['Chivi', 'voz', 'jugando', 'voice', 'play']}
+                />
+              </h2>
               <p>{text('text')}</p>
             </header>
             <div className="ps-voice-cards">

@@ -330,11 +330,6 @@ export function VenuePathSection() {
           </li>
         ))}
       </ul>
-      <div className="ps-venue-cta">
-        <Link to="/administradores" className="ps-btn ps-btn--primary">
-          {text('publicSite.contact.venue')} <span>→</span>
-        </Link>
-      </div>
     </SectionShell>
   );
 }

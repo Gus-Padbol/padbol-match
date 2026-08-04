@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import PadbolBrandLogo from '../../components/PadbolBrandLogo';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
 
@@ -67,7 +66,11 @@ export default function AdminVenueLandingPage() {
       <header className="admin-landing__header">
         <div className="admin-landing__shell admin-landing__header-inner">
           <Link to="/plataforma" aria-label="Ir a Padbol Match" className="admin-landing__brand">
-            <PadbolBrandLogo variant="on-dark-tight" className="admin-landing__brand-logo" alt="Padbol Match" />
+            <img
+              src="/media/public-site/jero/padbol-match-logo-white.svg"
+              className="admin-landing__brand-logo"
+              alt="Padbol Match"
+            />
           </Link>
           <div className="admin-landing__header-actions">
             <a href="#recorrido" className="admin-landing__text-link">Cómo funciona</a>
