@@ -2489,12 +2489,56 @@ html.public-site-active #root {
   color: var(--ps-text-muted);
 }
 
+.public-site-footer__padbol-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 17px;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .19em;
+  text-decoration: none;
+  transition: color .2s ease, transform .2s ease;
+}
+
+.public-site-footer__padbol-lockup:hover,
+.public-site-footer__padbol-lockup:focus-visible { color: #ef233c; transform: translateX(2px); }
+
+.public-site-footer__padbol-mark { position: relative; display: inline-block; width: 29px; height: 13px; }
+.public-site-footer__padbol-mark i { position: absolute; display: block; height: 4px; border-radius: 99px; transform: skewX(33deg); }
+.public-site-footer__padbol-mark i:nth-child(1) { left: 0; top: 1px; width: 13px; background: #fff; }
+.public-site-footer__padbol-mark i:nth-child(2) { left: 12px; top: 5px; width: 6px; background: #ef233c; }
+.public-site-footer__padbol-mark i:nth-child(3) { right: 0; bottom: 0; width: 13px; background: #fff; }
+
+.public-site-footer__product-of {
+  margin-top: 7px !important;
+  color: #c7d1e1 !important;
+  font-size: .9rem;
+  font-weight: 650;
+}
+
 .public-site-footer__developed-by {
   color: #fff !important;
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
+
+.public-site-footer__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.public-site-footer__contact span { color: #ef233c; font-size: 1.15em; transition: transform .2s ease; }
+.public-site-footer__contact:hover span,
+.public-site-footer__contact:focus-visible span { transform: translateX(3px); }
 
 .public-site-footer__links {
   display: grid;

@@ -28,8 +28,19 @@ export default function PublicSiteFooter() {
               className="public-site-footer__logo"
               alt={text('publicSite.brandAlt')}
             />
-            <p>{text('publicSite.footer.tagline')}</p>
+            <a
+              className="public-site-footer__padbol-lockup"
+              href="https://padbol.com"
+              aria-label="Visitar Padbol"
+            >
+              <span className="public-site-footer__padbol-mark" aria-hidden="true"><i /><i /><i /></span>
+              <span>PADBOL</span>
+            </a>
+            <p className="public-site-footer__product-of">Un producto de Padbol.</p>
             <p className="public-site-footer__developed-by">{text('publicSite.footer.developedBy')}</p>
+            <Link to="/contacto" className="public-site-footer__contact">
+              ¿Necesitás ayuda? Contactanos <span aria-hidden="true">→</span>
+            </Link>
           </div>
           <nav aria-label={text('publicSite.footer.aria')}>
             <ul className="public-site-footer__links">
