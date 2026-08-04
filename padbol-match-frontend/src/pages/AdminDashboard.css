@@ -70,37 +70,85 @@
 .admin-dashboard-sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
+  position: relative;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(239, 35, 60, 0.15), transparent 42%),
+    linear-gradient(155deg, color-mix(in srgb, var(--bg-card) 96%, #05070d), color-mix(in srgb, var(--bg-page) 90%, #05070d));
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  overflow: hidden;
+}
+
+.admin-dashboard-sidebar-nav::after {
+  content: '';
+  position: absolute;
+  right: -36px;
+  bottom: -42px;
+  width: 132px;
+  height: 132px;
+  border: 1px solid rgba(239, 35, 60, 0.18);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .admin-dashboard-sidebar-btn {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg-input);
+  min-height: 43px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-input) 88%, transparent);
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
   line-height: 1.25;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease;
+}
+
+.admin-dashboard-sidebar-btn::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: -1px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 0 99px 99px 0;
+  background: transparent;
+  transition: background 180ms ease, box-shadow 180ms ease, top 180ms ease, bottom 180ms ease;
 }
 
 .admin-dashboard-sidebar-btn:hover {
-  background: var(--bg-page);
-  border-color: var(--accent);
+  transform: translateX(3px);
+  background: color-mix(in srgb, var(--bg-page) 68%, var(--bg-input));
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--border));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.13);
 }
 
 .admin-dashboard-sidebar-btn--active {
-  border-color: var(--accent);
-  background: var(--bg-page);
-  color: var(--accent);
-  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.1);
+  transform: translateX(3px);
+  border-color: color-mix(in srgb, var(--accent) 82%, #fff 5%);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--accent) 28%, var(--bg-page)), color-mix(in srgb, var(--bg-input) 94%, transparent));
+  color: var(--text-primary);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22), 0 0 18px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.admin-dashboard-sidebar-btn--active::before {
+  top: 7px;
+  bottom: 7px;
+  background: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 78%, transparent);
 }
 
 .admin-dashboard-sidebar-btn__label {
@@ -114,8 +162,8 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--bg-card);
+  background: color-mix(in srgb, var(--accent) 90%, #fff 10%);
+  color: #fff;
   font-size: 11px;
   font-weight: 700;
   display: inline-flex;
@@ -125,6 +173,18 @@
 
 .admin-dashboard-sidebar-btn__badge--red {
   background: #dc2626;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard-sidebar-btn,
+  .admin-dashboard-sidebar-btn::before {
+    transition: none;
+  }
+
+  .admin-dashboard-sidebar-btn:hover,
+  .admin-dashboard-sidebar-btn--active {
+    transform: none;
+  }
 }
 
 .admin-dashboard-sidebar-sub {
