@@ -2881,7 +2881,7 @@ html.public-site-active #root {
 .ps-section--voice { background: radial-gradient(700px 420px at 85% 45%, rgba(225, 27, 34, 0.12), transparent 70%), var(--ps-bg); }
 .ps-section--voice .ps-section__eyebrow { color: var(--ps-accent); }
 .ps-voice-layout { display: grid; gap: 34px; align-items: center; }
-.ps-voice-cards { display: grid; gap: 10px; }
+.ps-voice-cards { display: grid; gap: 10px; margin-top: 16px; }
 .ps-voice-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; padding: 16px 18px; border: 1px solid var(--ps-border); border-radius: 14px; background: rgba(248, 250, 252, 0.025); }
 .ps-voice-card__number { color: #fb7185; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; }
 .ps-voice-card h3 { margin: 0 0 4px; font-size: 1rem; }
