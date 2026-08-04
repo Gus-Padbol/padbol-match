@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PadbolBrandLogo from '../../components/PadbolBrandLogo';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { PUBLIC_SITE_NAV_ITEMS } from '../../content/publicSiteContent';
 import { ES_FALLBACKS, useSafeTranslation } from '../../i18n/tSafe';
@@ -24,12 +23,11 @@ export default function PublicSiteFooter() {
       <div className="public-site__shell">
         <div className="public-site-footer__top">
           <div className="public-site-footer__brand">
-            <PadbolBrandLogo
-              variant="on-dark-tight"
+            <img
+              src="/media/public-site/jero/padbol-match-logo-white.svg"
               className="public-site-footer__logo"
               alt={text('publicSite.brandAlt')}
             />
-            <strong>Padbol Match</strong>
             <p>{text('publicSite.footer.tagline')}</p>
           </div>
           <nav aria-label={text('publicSite.footer.aria')}>

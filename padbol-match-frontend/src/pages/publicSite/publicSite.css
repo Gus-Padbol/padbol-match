@@ -2484,13 +2484,6 @@ html.public-site-active #root {
   background: transparent !important;
 }
 
-.public-site-footer__brand strong {
-  display: block;
-  font-family: var(--ps-font-display);
-  font-size: 1.15rem;
-  text-transform: uppercase;
-}
-
 .public-site-footer__brand p {
   margin: 8px 0 0;
   color: var(--ps-text-muted);
