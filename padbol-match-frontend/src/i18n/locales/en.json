@@ -2901,7 +2901,8 @@
       "appStore": "App Store",
       "googlePlay": "Google Play",
       "storeSoon": "Not yet available in stores",
-      "login": "Log in to Padbol Match"
+      "login": "Log in to Padbol Match",
+      "webApp": "Prefer the web app? Open it from your computer"
     },
     "contact": {
       "title": "Start today",

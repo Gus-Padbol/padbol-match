@@ -2474,6 +2474,24 @@ html.public-site-active #root {
   justify-content: center;
 }
 
+.ps-download__web-app-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  color: var(--ps-text-muted);
+  font-size: 0.94rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.ps-download__web-app-link:hover,
+.ps-download__web-app-link:focus-visible {
+  color: var(--ps-accent);
+  transform: translateX(3px);
+}
+
 .ps-section--contact .ps-hero__ctas {
   margin-top: 24px;
 }

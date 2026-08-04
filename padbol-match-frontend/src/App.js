@@ -61,7 +61,6 @@ const ClasesPage = lazy(() => import('./pages/ClasesPage'));
 const ClaseDetallePage = lazy(() => import('./pages/ClaseDetallePage'));
 const EquipoVista = lazy(() => import('./pages/EquipoVista'));
 const UserHome = lazy(() => import('./pages/UserHome'));
-const LandingPage = lazy(() => import('./pages/LandingPage'));
 const SobrePadbolMatch = lazy(() => import('./pages/SobrePadbolMatch'));
 const ContactoSumarClub = lazy(() => import('./pages/ContactoSumarClub'));
 const AccesoCuenta = lazy(() => import('./pages/AccesoCuenta'));
@@ -161,9 +160,12 @@ function AccesoRoute() {
   return <AccesoCuenta />;
 }
 
-/** La raíz siempre es la presentación pública. El Hub queda como ruta interna. */
+/**
+ * La raíz siempre abre la web pública completa. El Hub queda disponible sólo
+ * como app web opcional y nunca forma parte del recorrido público obligatorio.
+ */
 function RootHomeRoute() {
-  return <LandingPage />;
+  return <Navigate to="/plataforma" replace />;
 }
 
 /** Rutas desconocidas: vuelven a la presentación pública, nunca al Hub. */

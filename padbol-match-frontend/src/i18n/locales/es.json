@@ -2565,7 +2565,8 @@
       "appStore": "App Store",
       "googlePlay": "Google Play",
       "storeSoon": "Aún no disponible en tiendas",
-      "login": "Ingresar a Padbol Match"
+      "login": "Ingresar a Padbol Match",
+      "webApp": "¿Preferís usar la app web? Abrila desde tu computadora"
     },
     "contact": {
       "title": "Empezá hoy",

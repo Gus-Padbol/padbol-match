@@ -634,6 +634,9 @@ export function DownloadSection() {
       <Link to={config.login} className="ps-btn ps-btn--ghost">
         {text('publicSite.download.login')}
       </Link>
+      <Link to="/hub" className="ps-download__web-app-link">
+        {text('publicSite.download.webApp')} <span aria-hidden="true">→</span>
+      </Link>
     </SectionShell>
   );
 }
