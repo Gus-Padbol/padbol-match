@@ -1,28 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PadbolBrandLogo from '../../components/PadbolBrandLogo';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
 
 const modules = [
-  ['01', 'Configurá tu sede', 'Datos públicos, deportes, canchas, horarios, precios y medios de cobro.'],
-  ['02', 'Operá reservas', 'Calendario, pagos, asistencia, reprogramaciones y reglas de cancelación.'],
-  ['03', 'Activá jugadores', 'Vinculaciones, solicitudes, comunidad y comunicación desde una misma base.'],
-  ['04', 'Creá competencia', 'Torneos, equipos, cupos, resultados y rankings de tu sede.'],
-  ['05', 'Llevá el marcador', 'Iniciá, seguí, corregí y cerrá resultados para conectarlos con el historial.'],
-  ['06', 'Fidelizá', 'PadCoins y membresías cuando estén habilitados para tu operación.'],
-  ['07', 'Mostrá y vendé', 'Espacios de publicidad, sponsors y Padbol Match Shop cuando la sede los active.'],
-];
-
-const capturePlan = [
-  ['CAP-01', 'Mi Sede', 'Información, canchas y fotos.'],
-  ['CAP-02', 'Precios y horarios', 'Franja, duración y valor.'],
-  ['CAP-03', 'Reservas', 'Calendario y estados.'],
-  ['CAP-04', 'Jugadores', 'Vinculación y solicitudes.'],
-  ['CAP-05', 'Torneos', 'Cupos, formato y detalle.'],
-  ['CAP-06', 'Marcador', 'Partido en vivo y cierre.'],
-  ['CAP-07', 'Fidelización', 'PadCoins y membresías.'],
-  ['CAP-08', 'Comercial', 'Publicidad, sponsor y tienda.'],
+  { number: '01', title: 'Configurá tu sede', description: 'Datos públicos, deportes, canchas, horarios, precios y medios de cobro.', overview: 'Dejá lista la base operativa de tu sede para que las personas puedan encontrarla, conocer sus canchas y reservar con información clara.', steps: ['Completá nombre, ubicación, contacto, moneda y deportes disponibles.', 'Cargá cada cancha con su foto, tipo, duración de turno y condiciones de uso.', 'Definí días, horarios, franjas de precio y reglas de cancelación.', 'Revisá el resumen y publicá solamente cuando todos los datos estén correctos.'] },
+  { number: '02', title: 'Operá reservas', description: 'Calendario, pagos, asistencia, reprogramaciones y reglas de cancelación.', overview: 'Controlá la agenda diaria en un solo lugar: disponibilidad, cupos, confirmaciones y cambios de cada reserva.', steps: ['Revisá el calendario por cancha, día y franja horaria.', 'Confirmá el grupo completo y habilitá el cobro cuando corresponda.', 'Registrá asistencia, reprogramaciones o cancelaciones con su motivo.', 'Consultá el estado final para que el historial de la sede quede actualizado.'] },
+  { number: '03', title: 'Activá jugadores', description: 'Vinculaciones, solicitudes, comunidad y comunicación desde una misma base.', overview: 'Conectá a las personas que juegan en tu sede y usá la comunidad para que encuentren partidos, completen equipos y vuelvan a jugar.', steps: ['Revisá solicitudes de vinculación y aprobá únicamente las que correspondan.', 'Mantené actualizada la ficha deportiva de cada jugador.', 'Publicá o acompañá partidos abiertos desde la comunidad.', 'Usá avisos y notificaciones para comunicar cambios importantes.'] },
+  { number: '04', title: 'Creá competencia', description: 'Torneos, equipos, cupos, resultados y rankings de tu sede.', overview: 'Armá competencias con reglas visibles, cupos reales y resultados que alimentan la experiencia deportiva de cada participante.', steps: ['Elegí deporte, formato, categoría, fechas, sede y cantidad de cupos.', 'Definí equipos, precio, reglas de inscripción y condiciones de participación.', 'Publicá el torneo y seguí las inscripciones desde el panel.', 'Cargá resultados y verificá cómo impactan en el historial y ranking.'] },
+  { number: '05', title: 'Llevá el marcador', description: 'Iniciá, seguí, corregí y cerrá resultados para conectarlos con el historial.', overview: 'El marcador registra el partido mientras se juega y convierte el resultado final en información útil para jugadores, torneos y rankings.', steps: ['Seleccioná el partido, los jugadores o equipos y abrí el marcador.', 'Registrá puntos, sets y parciales mientras el encuentro está en juego.', 'Corregí una acción si hace falta antes de cerrar el resultado.', 'Confirmá el cierre para conectar el partido con historial, estadísticas y competencia.'] },
+  { number: '06', title: 'Fidelizá', description: 'PadCoins y membresías cuando estén habilitados para tu operación.', overview: 'Reconocé la participación y construí continuidad con beneficios, membresías y PadCoins configurados según las reglas de tu sede.', steps: ['Definí qué beneficios querés habilitar para tu comunidad.', 'Configurá las reglas de membresía, vigencia y condiciones de uso.', 'Revisá movimientos y canjes antes de confirmarlos.', 'Comunicá con claridad los beneficios disponibles para cada jugador.'] },
+  { number: '07', title: 'Mostrá y vendé', description: 'Espacios de publicidad, sponsors y Padbol Match Shop cuando la sede los active.', overview: 'Gestioná oportunidades comerciales de la sede: espacios de marca y, cuando esté activado, productos locales de Padbol Match Shop.', steps: ['Definí los espacios publicitarios o de sponsor disponibles en tu sede.', 'Cargá las piezas, fechas y condiciones de cada campaña.', 'Activá productos, precios y stock local en Padbol Match Shop cuando corresponda.', 'Revisá resultados, pedidos y rendimiento sin afectar la operación deportiva.'] },
 ];
 
 function useDocumentMeta() {
@@ -40,6 +29,25 @@ function useDocumentMeta() {
 
 export default function AdminVenueLandingPage() {
   useDocumentMeta();
+  const [activeModule, setActiveModule] = useState(null);
+  const [showSteps, setShowSteps] = useState(false);
+
+  useEffect(() => {
+    if (!activeModule) return undefined;
+    const handleKeyDown = (event) => { if (event.key === 'Escape') setActiveModule(null); };
+    const previousOverflow = document.body.style.overflow;
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [activeModule]);
+
+  const openModule = (module) => {
+    setShowSteps(false);
+    setActiveModule(module);
+  };
   return (
     <div className="admin-landing">
       <header className="admin-landing__header">
@@ -86,10 +94,10 @@ export default function AdminVenueLandingPage() {
             <h2>Todo lo que necesitás para <span>gestionar</span> una sede.</h2>
             <p className="admin-landing__intro">La guía está pensada para que una sede pueda arrancar simple, probar su circuito y activar cada módulo cuando le haga falta.</p>
             <div className="admin-landing__module-grid">
-              {modules.map(([number, title, description]) => (
-                <article key={number} className="admin-landing__module-card">
-                  <span>{number}</span><h3>{title}</h3><p>{description}</p><b>Ver en el manual →</b>
-                </article>
+              {modules.map((module) => (
+                <button key={module.number} type="button" className="admin-landing__module-card" onClick={() => openModule(module)}>
+                  <span>{module.number}</span><h3>{module.title}</h3><p>{module.description}</p><b>Conocé este módulo <i>→</i></b>
+                </button>
               ))}
             </div>
           </div>
@@ -119,17 +127,6 @@ export default function AdminVenueLandingPage() {
           </div>
         </section>
 
-        <section className="admin-landing__section admin-landing__section--captures">
-          <div className="admin-landing__shell">
-            <p className="admin-landing__eyebrow">MATERIAL PARA EL MANUAL</p>
-            <h2>Capturas reales que hacen la guía <span>simple.</span></h2>
-            <p className="admin-landing__intro">Estas piezas visuales reemplazan los ejemplos al tenerlas listas. No deben exponer teléfonos, mails, pagos ni datos personales de jugadores.</p>
-            <div className="admin-landing__capture-grid">
-              {capturePlan.map(([code, title, detail]) => <div key={code} className="admin-landing__capture"><b>{code}</b><strong>{title}</strong><span>{detail}</span></div>)}
-            </div>
-          </div>
-        </section>
-
         <section className="admin-landing__cta">
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">OPERACIÓN ACOMPAÑADA</p>
@@ -139,6 +136,29 @@ export default function AdminVenueLandingPage() {
           </div>
         </section>
       </main>
+
+      {activeModule && (
+        <div className="admin-landing__modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveModule(null); }}>
+          <section className="admin-landing__modal" role="dialog" aria-modal="true" aria-labelledby={`admin-module-${activeModule.number}`}>
+            <button type="button" className="admin-landing__modal-close" onClick={() => setActiveModule(null)} aria-label="Cerrar explicación">×</button>
+            {!showSteps ? <>
+              <p className="admin-landing__eyebrow">MÓDULO {activeModule.number} / ADMINISTRACIÓN DE SEDE</p>
+              <h2 id={`admin-module-${activeModule.number}`}>{activeModule.title}</h2>
+              <p className="admin-landing__modal-copy">{activeModule.overview}</p>
+              <div className="admin-landing__modal-actions">
+                <button type="button" className="admin-landing__primary" onClick={() => setShowSteps(true)}>Ver paso a paso <span>→</span></button>
+                <a href="/manual-administradores.pdf" className="admin-landing__secondary">Descargar guía PDF</a>
+              </div>
+            </> : <>
+              <button type="button" className="admin-landing__modal-back" onClick={() => setShowSteps(false)}>← Volver al resumen</button>
+              <p className="admin-landing__eyebrow">MÓDULO {activeModule.number} / PASO A PASO</p>
+              <h2 id={`admin-module-${activeModule.number}`}>{activeModule.title}</h2>
+              <ol className="admin-landing__steps">{activeModule.steps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>)}</ol>
+              <div className="admin-landing__modal-actions"><a href="/manual-administradores.pdf" className="admin-landing__primary">Descargar guía PDF <span>↓</span></a></div>
+            </>}
+          </section>
+        </div>
+      )}
 
       <footer className="admin-landing__footer"><div className="admin-landing__shell">© 2026 Padbol. Operated by <a href="https://padbol.com/company">Entertainment and Sports Services LLC</a>.</div></footer>
     </div>
