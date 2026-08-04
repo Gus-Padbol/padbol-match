@@ -10833,7 +10833,8 @@ export default function AdminDashboard({
               overflowX: 'auto',
               WebkitOverflowScrolling: 'touch',
               whiteSpace: 'nowrap',
-              paddingBottom: '2px',
+              // Deja aire arriba y abajo para que el rebote de cada cápsula no quede recortado.
+              padding: '7px 0 9px',
             }}
           >
             {[
@@ -11183,7 +11184,8 @@ export default function AdminDashboard({
               overflowX: 'auto',
               WebkitOverflowScrolling: 'touch',
               whiteSpace: 'nowrap',
-              paddingBottom: '2px',
+              // Deja aire arriba y abajo para que el rebote de cada cápsula no quede recortado.
+              padding: '7px 0 9px',
             }}
           >
             {filtrosEstadoTorneoPillsAdmin.map(({ id, label }) => {
@@ -11218,7 +11220,8 @@ export default function AdminDashboard({
               overflowX: 'auto',
               WebkitOverflowScrolling: 'touch',
               whiteSpace: 'nowrap',
-              paddingBottom: '2px',
+              // Deja aire arriba y abajo para que el rebote de cada cápsula no quede recortado.
+              padding: '7px 0 9px',
             }}
           >
             {filtrosDeporteTorneoPillsAdmin.map(({ id, label }) => {
@@ -12438,7 +12441,8 @@ export default function AdminDashboard({
               overflowX: 'auto',
               WebkitOverflowScrolling: 'touch',
               whiteSpace: 'nowrap',
-              paddingBottom: '2px',
+              // Deja aire arriba y abajo para que el rebote de cada cápsula no quede recortado.
+              padding: '7px 0 9px',
             }}
           >
             {FILTROS_RESERVA_ADMIN_PILLS.map(({ id, label }) => {
@@ -12833,7 +12837,8 @@ export default function AdminDashboard({
                     overflowX: 'auto',
                     WebkitOverflowScrolling: 'touch',
                     whiteSpace: 'nowrap',
-                    paddingBottom: '2px',
+                    // Deja aire arriba y abajo para que el rebote de cada cápsula no quede recortado.
+                    padding: '7px 0 9px',
                   }}
                 >
                   {[
@@ -13348,7 +13353,8 @@ export default function AdminDashboard({
                   overflowX: 'auto',
                   WebkitOverflowScrolling: 'touch',
                   whiteSpace: 'nowrap',
-                  paddingBottom: '2px',
+                  // Deja aire arriba y abajo para que el rebote de cada cápsula no quede recortado.
+                  padding: '7px 0 9px',
                 }}
               >
                 {[

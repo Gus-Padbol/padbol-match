@@ -946,7 +946,7 @@
   flex-direction: column;
   gap: 4px;
   width: 100%;
-  max-width: 280px;
+  max-width: 300px;
 }
 
 .sedes-admin-filter-field--search {
@@ -959,6 +959,7 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--text-secondary);
+  letter-spacing: .02em;
 }
 
 .sedes-admin-filter-select {
@@ -968,10 +969,34 @@
   min-height: 44px;
   font-size: 16px;
   padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-input) 93%, #fff 7%), var(--bg-input));
   color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 4px 10px rgba(2,6,23,.10);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.sedes-admin-filter-select:hover,
+.sedes-admin-filter-select:focus {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--border));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 7px 16px color-mix(in srgb, var(--accent) 13%, transparent);
+  outline: none;
+}
+
+.sedes-admin-sedes-table thead th {
+  background: linear-gradient(135deg, #c81018 0%, #ef2631 50%, #bf0f1a 100%);
+  border-bottom-color: rgba(255,255,255,.28);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.26), inset 0 -1px 0 rgba(83,0,0,.28);
+  letter-spacing: .015em;
+}
+
+.sedes-admin-sedes-table tbody tr {
+  transition: background .16s ease, transform .16s ease;
+}
+
+.sedes-admin-sedes-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
 }
 
 @media (min-width: 768px) {

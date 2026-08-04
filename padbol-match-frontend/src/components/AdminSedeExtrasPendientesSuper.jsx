@@ -27,7 +27,8 @@ export default function AdminSedeExtrasPendientesSuper({ apiBaseUrl, accessToken
       if (!res.ok) throw new Error(j.error || 'No se pudo cargar');
       setItems(Array.isArray(j.items) ? j.items : []);
     } catch (e) {
-      setMsg(e.message || 'Error');
+      // No exponemos errores técnicos de rutas en una pantalla operativa.
+      setMsg('No se pudo actualizar la revisión de extras. Probá recargar la pantalla.');
       setItems([]);
     } finally {
       setLoading(false);
