@@ -2688,11 +2688,11 @@
         "next": {
           "eyebrow": "Available today",
           "title": "Sponsors and advertising are active",
-          "text": "Each venue can already manage its sponsor and advertising spaces. Paddle Match Shop is moving forward as a pilot for local products and benefits.",
+          "text": "Each venue can already manage its sponsor and advertising spaces. Padbol Match Shop is moving forward as a pilot for local products and benefits.",
           "badges": {
             "sponsor": "Sponsors · available",
             "ads": "Advertising · available",
-            "shop": "Paddle Match Shop · pilot"
+            "shop": "Padbol Match Shop · pilot"
           }
         }
       }
@@ -2878,7 +2878,7 @@
           "status": "In development"
         }
       },
-      "note": "Sponsors and advertising are already managed by each venue. Paddle Match Shop is advancing as a pilot."
+      "note": "Sponsors and advertising are already managed by each venue. Padbol Match Shop is advancing as a pilot."
     },
     "about": {
       "kicker": "18 years developing Padbol",

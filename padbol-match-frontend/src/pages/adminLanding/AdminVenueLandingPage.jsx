@@ -11,7 +11,7 @@ const modules = [
   ['04', 'Creá competencia', 'Torneos, equipos, cupos, resultados y rankings de tu sede.'],
   ['05', 'Llevá el marcador', 'Iniciá, seguí, corregí y cerrá resultados para conectarlos con el historial.'],
   ['06', 'Fidelizá', 'PadCoins y membresías cuando estén habilitados para tu operación.'],
-  ['07', 'Mostrá y vendé', 'Espacios de publicidad, sponsors y Paddle Match Shop cuando la sede los active.'],
+  ['07', 'Mostrá y vendé', 'Espacios de publicidad, sponsors y Padbol Match Shop cuando la sede los active.'],
 ];
 
 const capturePlan = [
