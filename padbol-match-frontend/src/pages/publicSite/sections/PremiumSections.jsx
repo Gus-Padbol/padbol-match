@@ -480,7 +480,7 @@ export function MatchIntelligenceSection() {
           <h2 id="ps-match-intelligence-title">
             <AccentWords
               value={text('publicSite.matchIntelligence.title')}
-              terms={[text('publicSite.matchIntelligence.accent')]}
+              terms={['Árbitro', 'inteligente', 'independiente', 'juego']}
             />
           </h2>
           <p className="ps-lead">{text('publicSite.matchIntelligence.text')}</p>
