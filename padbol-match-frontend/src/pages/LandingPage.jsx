@@ -166,13 +166,13 @@ export default function LandingPage() {
         </section>
 
         <section className="landing-page__cta-group">
-          <Link to="/reservar" className="landing-page__cta landing-page__cta--primary">
+          <Link to="/plataforma#descargar" className="landing-page__cta landing-page__cta--primary">
             {t('landing.bookSlot')}
           </Link>
-          <Link to="/hub" className="landing-page__cta landing-page__cta--secondary">
+          <Link to="/plataforma" className="landing-page__cta landing-page__cta--secondary">
             {t('landing.enterPlay')}
           </Link>
-          <Link to="/registro" className="landing-page__cta landing-page__cta--account">
+          <Link to="/plataforma#descargar" className="landing-page__cta landing-page__cta--account">
             {t('landing.createAccount')}
           </Link>
         </section>

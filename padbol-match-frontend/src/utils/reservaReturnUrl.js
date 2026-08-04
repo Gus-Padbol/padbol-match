@@ -210,6 +210,13 @@ function isPartidosBuscarPath(path) {
   return pathOnly === '/jugar/buscar' || pathOnly === '/partidos-abiertos';
 }
 
+/** `?redirect=/admin` es el único acceso administrativo público permitido. */
+export function safeAdminPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  const pathOnly = String(path || '').split('?')[0].split('#')[0];
+  return pathOnly === '/admin' ? path : null;
+}
+
 /** `?redirect=` seguro hacia buscar partido (evita open redirect). */
 export function safePartidosBuscarPathFromLoginRedirect(loginSearch) {
   const path = decodeLoginRedirectParam(loginSearch);
@@ -250,7 +257,8 @@ export function clearPartidosBuscarReturnUrl() {
 }
 
 /**
- * Destino tras login: prioriza sessionStorage v2 / localStorage de reserva; si no hay datos, usa `?redirect=` solo si es `/reservar…`.
+ * Destino tras login: prioriza operaciones pendientes y permite retornos internos
+ * explícitos para reservas, partidos, creación de partido y el panel administrativo.
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
   if (peekReservaPendienteArmar()) {
@@ -276,6 +284,8 @@ export function resolvePostLoginNavigatePath(loginSearch) {
     console.log('[PM ArmarPartido restore] post-login →', fromArmar, '(redirect query)');
     return fromArmar;
   }
+  const fromAdmin = safeAdminPathFromLoginRedirect(loginSearch);
+  if (fromAdmin) return fromAdmin;
   return fromStored;
 }
 

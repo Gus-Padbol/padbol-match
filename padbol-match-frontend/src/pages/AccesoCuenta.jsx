@@ -19,6 +19,7 @@ import {
   RESERVA_RETURN_STORAGE_KEY,
   resolvePostLoginNavigatePath,
   peekReservaLoginGateMessage,
+  safeAdminPathFromLoginRedirect,
 } from '../utils/reservaReturnUrl';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
@@ -204,7 +205,9 @@ export default function AccesoCuenta() {
    */
   const handleGoogleLogin = useCallback(async () => {
     setErrorMsg('');
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const adminRedirect = safeAdminPathFromLoginRedirect(location.search);
+    const callbackQuery = adminRedirect ? `?redirect=${encodeURIComponent(adminRedirect)}` : '';
+    const redirectTo = `${window.location.origin}/auth/callback${callbackQuery}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -215,11 +218,13 @@ export default function AccesoCuenta() {
       console.error('Error Google OAuth:', error.message);
       setErrorMsg(t('auth.googleLoginFailed'));
     }
-  }, [t]);
+  }, [t, location.search]);
 
   const handleFacebookLogin = useCallback(async () => {
     setErrorMsg('');
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const adminRedirect = safeAdminPathFromLoginRedirect(location.search);
+    const callbackQuery = adminRedirect ? `?redirect=${encodeURIComponent(adminRedirect)}` : '';
+    const redirectTo = `${window.location.origin}/auth/callback${callbackQuery}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
@@ -230,7 +235,7 @@ export default function AccesoCuenta() {
       console.error('Error Facebook OAuth:', error.message);
       setErrorMsg(t('auth.facebookLoginFailed'));
     }
-  }, [t]);
+  }, [t, location.search]);
 
   const afterLogin = useCallback(
     async (sessionArg) => {

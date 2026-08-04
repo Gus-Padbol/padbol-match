@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
 
+// El Hub queda como área interna de la app. La captación de sedes entra al
+// acceso autenticado y, tras validar la sesión, abre directamente el panel.
+const ADMIN_PANEL_ACCESS_PATH = '/acceso?redirect=%2Fadmin';
+
 const modules = [
   { number: '01', title: 'Configurá tu sede', description: 'Datos públicos, deportes, canchas, horarios, precios y medios de cobro.', overview: 'Dejá lista la base operativa de tu sede para que las personas puedan encontrarla, conocer sus canchas y reservar con información clara.', steps: ['Completá nombre, ubicación, contacto, moneda y deportes disponibles.', 'Cargá cada cancha con su foto, tipo, duración de turno y condiciones de uso.', 'Definí días, horarios, franjas de precio y reglas de cancelación.', 'Revisá el resumen y publicá solamente cuando todos los datos estén correctos.'] },
   { number: '02', title: 'Operá reservas', description: 'Calendario, pagos, asistencia, reprogramaciones y reglas de cancelación.', overview: 'Controlá la agenda diaria en un solo lugar: disponibilidad, cupos, confirmaciones y cambios de cada reserva.', steps: ['Revisá el calendario por cancha, día y franja horaria.', 'Confirmá el grupo completo y habilitá el cobro cuando corresponda.', 'Registrá asistencia, reprogramaciones o cancelaciones con su motivo.', 'Consultá el estado final para que el historial de la sede quede actualizado.'] },
@@ -74,7 +78,7 @@ export default function AdminVenueLandingPage() {
           </Link>
           <div className="admin-landing__header-actions">
             <a href="#recorrido" className="admin-landing__text-link">Cómo funciona</a>
-            <Link to="/admin" className="admin-landing__login">Ingresar al panel</Link>
+            <Link to={ADMIN_PANEL_ACCESS_PATH} className="admin-landing__login">Ingresar al panel</Link>
           </div>
         </div>
       </header>
@@ -171,7 +175,7 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__eyebrow">OPERACIÓN ACOMPAÑADA</p>
             <h2>Tu sede no tiene que aprender todo de una vez.</h2>
             <p>Empezá por datos, canchas, horarios y reservas. El resto se activa según la operación real.</p>
-            <div className="admin-landing__hero-actions"><Link to="/admin" className="admin-landing__primary">Ingresar al panel <span>→</span></Link><a href="/manual-administradores.pdf" className="admin-landing__secondary">Descargar manual PDF</a></div>
+            <div className="admin-landing__hero-actions"><Link to={ADMIN_PANEL_ACCESS_PATH} className="admin-landing__primary">Ingresar al panel <span>→</span></Link><a href="/manual-administradores.pdf" className="admin-landing__secondary">Descargar manual PDF</a></div>
           </div>
         </section>
       </main>
@@ -218,7 +222,7 @@ export default function AdminVenueLandingPage() {
                 <p>PLATAFORMA</p>
                 <Link to="/plataforma">Conocé Padbol Match</Link>
                 <a href="#recorrido">Administrá tu sede</a>
-                <Link to="/admin">Ingresar al panel</Link>
+                <Link to={ADMIN_PANEL_ACCESS_PATH}>Ingresar al panel</Link>
               </div>
               <div>
                 <p>RECURSOS</p>
