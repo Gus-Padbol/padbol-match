@@ -14,6 +14,20 @@ const modules = [
   { number: '07', title: 'Mostrá y vendé', description: 'Espacios de publicidad, sponsors y Padbol Match Shop cuando la sede los active.', overview: 'Gestioná oportunidades comerciales de la sede: espacios de marca y, cuando esté activado, productos locales de Padbol Match Shop.', steps: ['Definí los espacios publicitarios o de sponsor disponibles en tu sede.', 'Cargá las piezas, fechas y condiciones de cada campaña.', 'Activá productos, precios y stock local en Padbol Match Shop cuando corresponda.', 'Revisá resultados, pedidos y rendimiento sin afectar la operación deportiva.'] },
 ];
 
+// Estructura de la guía visual que acompaña a los administradores. Estas
+// tarjetas vuelven a hacer visible el alcance completo del manual: no son
+// tareas internas ni reemplazan los módulos operativos de arriba.
+const guideSections = [
+  ['01', 'Mi sede', 'Datos públicos, canchas, imágenes y medios de contacto.'],
+  ['02', 'Precios y horarios', 'Franjas, duración de turnos y valores por cancha.'],
+  ['03', 'Reservas', 'Calendario, estados, confirmaciones y cancelaciones.'],
+  ['04', 'Jugadores', 'Vinculaciones, solicitudes y comunidad de la sede.'],
+  ['05', 'Torneos', 'Cupos, formato, inscripción, resultados y detalle.'],
+  ['06', 'Marcador', 'Partido en vivo, correcciones y cierre del resultado.'],
+  ['07', 'Fidelización', 'PadCoins y membresías habilitados para la sede.'],
+  ['08', 'Comercial', 'Publicidad, sponsors y Padbol Match Shop.'],
+];
+
 function useDocumentMeta() {
   useEffect(() => {
     const previousTitle = document.title;
@@ -106,23 +120,45 @@ export default function AdminVenueLandingPage() {
         <section className="admin-landing__guided" id="asistente">
           <div className="admin-landing__shell admin-landing__guided-grid">
             <div>
-              <p className="admin-landing__eyebrow">PRÓXIMO PASO / CONFIGURACIÓN GUIADA</p>
+              <p className="admin-landing__eyebrow">CONFIGURACIÓN GUIADA CON CHIVI</p>
               <h2>Menos planillas. Más preguntas <span>claras.</span></h2>
-              <p className="admin-landing__intro">La mejora recomendada es un asistente dentro del panel: pregunta una cosa por vez, valida lo que falta y muestra un resumen antes de guardar.</p>
+              <p className="admin-landing__intro">Chivi acompaña la configuración desde el panel, por texto o por voz: pregunta una cosa por vez, valida lo que falta y muestra un resumen antes de guardar.</p>
+              <div className="admin-landing__assistant-features" aria-label="Funciones de Chivi">
+                <span>◉ Por voz o texto</span><span>✓ Valida datos</span><span>→ Abre el módulo correcto</span>
+              </div>
               <ul className="admin-landing__check-list">
                 <li>Nombre, país, moneda y deportes de la sede.</li>
                 <li>Canchas, días, horarios y duración de cada turno.</li>
                 <li>Precio por franja, cobro, señas y política de cancelación.</li>
                 <li>Revisión final y publicación controlada.</li>
               </ul>
-              <p className="admin-landing__note">Chivi puede asistir y abrir cada pantalla correcta; la sede conserva siempre la decisión y la confirmación final.</p>
+              <p className="admin-landing__note"><strong>Así funciona:</strong> decís o escribís lo que necesitás configurar; Chivi te lleva a la pantalla correcta, ordena las respuestas y solicita confirmación final. La sede conserva siempre la decisión y el guardado.</p>
             </div>
             <div className="admin-landing__conversation" aria-label="Ejemplo de asistente guiado">
-              <p className="admin-landing__panel-label">ASISTENTE DE CONFIGURACIÓN</p>
+              <p className="admin-landing__panel-label">CHIVI / ASISTENTE DE CONFIGURACIÓN</p>
               <div className="admin-landing__bubble admin-landing__bubble--bot">¿Qué valor tiene una hora de Cancha 1?</div>
               <div className="admin-landing__bubble admin-landing__bubble--user">ARS 28.000 de lunes a viernes.</div>
               <div className="admin-landing__bubble admin-landing__bubble--bot">Perfecto. ¿El precio cambia en horario pico o fines de semana?</div>
               <div className="admin-landing__confirmation">Antes de publicar: <strong>te mostramos el resumen y confirmás.</strong></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="admin-landing__section admin-landing__section--guide">
+          <div className="admin-landing__shell">
+            <p className="admin-landing__eyebrow">GUÍA VISUAL PARA ADMINISTRADORES</p>
+            <h2>Todo el panel, explicado de forma <span>simple.</span></h2>
+            <p className="admin-landing__intro">Además de los recorridos paso a paso, la guía reúne ejemplos claros de cada pantalla para que puedas resolver la operación de tu sede con autonomía.</p>
+            <div className="admin-landing__capture-grid">
+              {guideSections.map(([number, title, detail]) => (
+                <article key={number} className="admin-landing__capture">
+                  <b>GUÍA {number}</b><strong>{title}</strong><span>{detail}</span>
+                </article>
+              ))}
+            </div>
+            <div className="admin-landing__guide-actions">
+              <a href="/manual-administradores.pdf" className="admin-landing__secondary">Descargar guía PDF</a>
+              <a href="#recorrido" className="admin-landing__text-link">Volver a los módulos operativos ↑</a>
             </div>
           </div>
         </section>

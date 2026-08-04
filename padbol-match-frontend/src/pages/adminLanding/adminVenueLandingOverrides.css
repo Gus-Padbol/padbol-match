@@ -166,3 +166,50 @@
   .admin-landing__modal-actions .admin-landing__primary,
   .admin-landing__modal-actions .admin-landing__secondary { width: 100%; }
 }
+
+/* La guía visual forma parte de la landing pública: restituye el alcance
+ * completo del manual sin confundirla con una lista interna de producción. */
+.admin-landing__section--guide {
+  background: #0a101b;
+}
+
+.admin-landing__assistant-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: -6px 0 22px;
+}
+
+.admin-landing__assistant-features span {
+  border: 1px solid #45536a;
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: rgba(16, 24, 39, .82);
+  color: #dce6f3;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-landing__assistant-features span:first-child {
+  border-color: rgba(237, 28, 46, .75);
+  color: #ffb7bd;
+}
+
+.admin-landing__guide-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 26px;
+}
+
+@media (max-width: 600px) {
+  .admin-landing__guide-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-landing__guide-actions .admin-landing__text-link {
+    display: inline-flex;
+  }
+}
