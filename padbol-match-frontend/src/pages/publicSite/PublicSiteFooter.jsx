@@ -29,6 +29,7 @@ export default function PublicSiteFooter() {
               alt={text('publicSite.brandAlt')}
             />
             <p>{text('publicSite.footer.tagline')}</p>
+            <p className="public-site-footer__developed-by">{text('publicSite.footer.developedBy')}</p>
           </div>
           <nav aria-label={text('publicSite.footer.aria')}>
             <ul className="public-site-footer__links">

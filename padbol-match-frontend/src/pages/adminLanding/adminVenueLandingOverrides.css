@@ -194,6 +194,14 @@
   margin-bottom: 16px;
 }
 
+.admin-landing__footer-developed-by {
+  margin-top: 10px !important;
+  color: #fff !important;
+  font-size: 0.82rem !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .admin-landing__footer-brand p {
   margin: 0;
   color: #b9c6d8;

@@ -202,6 +202,7 @@ export default function AdminVenueLandingPage() {
             <div className="admin-landing__footer-brand">
               <img src="/media/public-site/jero/padbol-match-logo-white.svg" className="admin-landing__footer-logo" alt="Padbol Match" />
               <p>Una misma plataforma para operar tu sede, conectar jugadores y hacer crecer el deporte.</p>
+              <p className="admin-landing__footer-developed-by">Desarrollado por Padbol Internacional.</p>
               <Link to="/contacto" className="admin-landing__footer-contact">¿Necesitás ayuda? Contactanos <span>→</span></Link>
             </div>
 
