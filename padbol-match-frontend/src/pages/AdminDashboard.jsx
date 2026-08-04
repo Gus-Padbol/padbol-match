@@ -22,7 +22,7 @@ import {
 } from '../constants/hubLayout';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import PadbolBrandLogo from '../components/PadbolBrandLogo';
-import { padbolBrandLogoSrc } from '../constants/padbolBrandLogo';
+import { PADBOL_ICON_SVG, padbolBrandLogoSrc } from '../constants/padbolBrandLogo';
 import SportIcon from '../components/common/SportIcon';
 import './AdminDashboard.css';
 import { supabase } from '../supabaseClient';
@@ -2050,6 +2050,8 @@ const ADMIN_FILTER_PILL_BASE = {
   whiteSpace: 'nowrap',
   lineHeight: 1.25,
   boxSizing: 'border-box',
+  transition: 'transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, background 170ms ease',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,.16), 0 5px 12px rgba(2,6,23,.14)',
 };
 
 /** inactiveSurface `lightMuted`: chips sobre fondo claro (p. ej. período Semana/Mes en resumen super admin). */
@@ -2060,6 +2062,7 @@ function adminFilterPillButtonStyle(active, inactiveSurface = 'default') {
       background: 'var(--accent)',
       color: '#fff',
       border: 'none',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(100,0,0,.2), 0 8px 16px rgba(225,27,34,.28)',
     };
   }
   if (inactiveSurface === 'lightMuted') {
@@ -10123,6 +10126,7 @@ export default function AdminDashboard({
       (miSede?.logo_url && String(miSede.logo_url).trim()) ||
       (sedeClubHeader?.logo_url && String(sedeClubHeader.logo_url).trim()) ||
       '';
+    if (isSuperAdmin) return PADBOL_ICON_SVG;
     if (esAdminClub && clubLogo) return clubLogo;
     return padbolBrandLogoSrc(theme);
   })();
@@ -10228,8 +10232,8 @@ export default function AdminDashboard({
       <div className="admin-dashboard-brand-shell">
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
-          <div className="admin-super-header__logo-wrap">
-            <img className="admin-super-header__logo" src={logoPanelSrc} alt="" />
+          <div className={`admin-super-header__logo-wrap${isSuperAdmin ? ' admin-super-header__logo-wrap--super' : ''}`}>
+            <img className={`admin-super-header__logo${isSuperAdmin ? ' admin-super-header__logo--super' : ''}`} src={logoPanelSrc} alt="" />
           </div>
           <p
             className="admin-super-header__title"
@@ -10841,6 +10845,7 @@ export default function AdminDashboard({
             ].map((opt) => (
               <button
                 key={opt.id}
+                className="admin-filter-pill"
                 type="button"
                 onClick={() => {
                   setSuperAdminPeriodo(opt.id);
@@ -11186,6 +11191,7 @@ export default function AdminDashboard({
               return (
                 <button
                   key={id}
+                  className="admin-filter-pill"
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFiltroEstadoTorneoAdmin(id)}
@@ -11220,6 +11226,7 @@ export default function AdminDashboard({
               return (
                 <button
                   key={id}
+                  className="admin-filter-pill"
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFiltroDeporteTorneoAdmin(id)}
@@ -12439,6 +12446,7 @@ export default function AdminDashboard({
               return (
                 <button
                   key={id}
+                  className="admin-filter-pill"
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFiltroPillReservas(id)}
@@ -12837,6 +12845,7 @@ export default function AdminDashboard({
                   ].map((opt) => (
                     <button
                       key={opt.id}
+                      className="admin-filter-pill"
                       type="button"
                       onClick={() => {
                         setSuperAdminPeriodo(opt.id);
@@ -13351,6 +13360,7 @@ export default function AdminDashboard({
                 ].map((opt) => (
                   <button
                     key={opt.id}
+                    className="admin-filter-pill"
                     type="button"
                     onClick={() => {
                       setSuperAdminPeriodo(opt.id);
@@ -18316,6 +18326,7 @@ export default function AdminDashboard({
             ].map((opt) => (
               <button
                 key={opt.id}
+                className="admin-filter-pill"
                 type="button"
                 onClick={() => setSolicitudesFiltroEstado(opt.id)}
                 style={adminFilterPillButtonStyle(solicitudesFiltroEstado === opt.id)}
