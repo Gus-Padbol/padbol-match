@@ -196,7 +196,43 @@ export default function AdminVenueLandingPage() {
         </div>
       )}
 
-      <footer className="admin-landing__footer"><div className="admin-landing__shell">© 2026 Padbol. Operated by <a href="https://padbol.com/company">Entertainment and Sports Services LLC</a>.</div></footer>
+      <footer className="admin-landing__footer">
+        <div className="admin-landing__shell">
+          <div className="admin-landing__footer-top">
+            <div className="admin-landing__footer-brand">
+              <PadbolBrandLogo variant="on-dark-tight" className="admin-landing__footer-logo" alt="Padbol Match" />
+              <p>Una misma plataforma para operar tu sede, conectar jugadores y hacer crecer el deporte.</p>
+              <Link to="/contacto" className="admin-landing__footer-contact">¿Necesitás ayuda? Contactanos <span>→</span></Link>
+            </div>
+
+            <nav className="admin-landing__footer-nav" aria-label="Navegación de Padbol Match">
+              <div>
+                <p>PLATAFORMA</p>
+                <Link to="/plataforma">Conocé Padbol Match</Link>
+                <a href="#recorrido">Administrá tu sede</a>
+                <Link to="/admin">Ingresar al panel</Link>
+              </div>
+              <div>
+                <p>RECURSOS</p>
+                <a href="#asistente">Configuración guiada con Chivi</a>
+                <a href="/manual-administradores.pdf">Guía para administradores</a>
+                <Link to="/contacto">Soporte</Link>
+              </div>
+              <div>
+                <p>INFORMACIÓN</p>
+                <Link to="/terminos">Términos y condiciones</Link>
+                <Link to="/privacidad">Política de privacidad</Link>
+                <Link to="/eliminar-cuenta">Eliminar cuenta</Link>
+              </div>
+            </nav>
+          </div>
+
+          <div className="admin-landing__footer-bottom">
+            <p>© 2026 Padbol. Operated by <a href="https://padbol.com/company">Entertainment and Sports Services LLC</a>.</p>
+            <span>Padbol Match · Gestión deportiva conectada</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

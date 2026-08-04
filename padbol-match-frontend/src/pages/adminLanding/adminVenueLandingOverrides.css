@@ -167,6 +167,117 @@
   .admin-landing__modal-actions .admin-landing__secondary { width: 100%; }
 }
 
+/* Footer institucional de la guía para administradores. Tiene la misma
+ * jerarquía que la web pública sin convertir el cierre en una navegación
+ * pesada: marca, ayuda, recursos y documentación legal. */
+.admin-landing__footer {
+  padding: 58px 0 max(26px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #263247;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(237, 28, 46, .1), transparent 24%),
+    #050811;
+  color: #97a7bd;
+}
+
+.admin-landing__footer-top {
+  display: grid;
+  grid-template-columns: minmax(220px, .9fr) minmax(0, 1.6fr);
+  gap: 64px;
+}
+
+.admin-landing__footer-brand { max-width: 320px; }
+
+.admin-landing__footer-logo {
+  display: block;
+  width: min(190px, 100%);
+  height: auto;
+  margin-bottom: 16px;
+}
+
+.admin-landing__footer-brand p {
+  margin: 0;
+  color: #b9c6d8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.admin-landing__footer-contact {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 20px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-landing__footer-contact span { color: #ed1c2e; }
+
+.admin-landing__footer-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+}
+
+.admin-landing__footer-nav > div { display: grid; align-content: start; gap: 10px; }
+
+.admin-landing__footer-nav p {
+  margin: 0 0 4px;
+  color: #f59aa2;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.admin-landing__footer-nav a {
+  color: #b9c6d8;
+  font-size: 14px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.admin-landing__footer-nav a:hover,
+.admin-landing__footer-contact:hover,
+.admin-landing__footer-bottom a:hover { color: #fff; }
+
+.admin-landing__footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 42px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(69, 83, 106, .55);
+  font-size: 12px;
+}
+
+.admin-landing__footer-bottom p { margin: 0; }
+
+.admin-landing__footer-bottom a {
+  color: #d9e2ee;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: rgba(237, 28, 46, .7);
+  text-underline-offset: 3px;
+}
+
+.admin-landing__footer-bottom span {
+  color: #71829a;
+  text-align: right;
+}
+
+@media (max-width: 800px) {
+  .admin-landing__footer-top { grid-template-columns: 1fr; gap: 38px; }
+}
+
+@media (max-width: 600px) {
+  .admin-landing__footer { padding-top: 44px; }
+  .admin-landing__footer-nav { grid-template-columns: 1fr 1fr; gap: 28px 22px; }
+  .admin-landing__footer-nav > div:last-child { grid-column: span 2; }
+  .admin-landing__footer-bottom { align-items: flex-start; flex-direction: column; }
+  .admin-landing__footer-bottom span { text-align: left; }
+}
+
 /* La guía visual forma parte de la landing pública: restituye el alcance
  * completo del manual sin confundirla con una lista interna de producción. */
 .admin-landing__section--guide {
