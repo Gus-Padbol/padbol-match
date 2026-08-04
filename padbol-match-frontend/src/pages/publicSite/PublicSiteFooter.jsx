@@ -8,9 +8,10 @@ export default function PublicSiteFooter() {
   const { t } = useSafeTranslation();
   const text = (key) => t(key, ES_FALLBACKS[key] || '');
   const links = [
-    ...PUBLIC_SITE_NAV_ITEMS.map(({ key, href }) => ({
+    ...PUBLIC_SITE_NAV_ITEMS.map(({ key, href, to }) => ({
       key,
       href,
+      to,
       label: text(`publicSite.footer.${key}`),
     })),
     { key: 'contact', to: '/contacto', label: text('publicSite.footer.contact') },

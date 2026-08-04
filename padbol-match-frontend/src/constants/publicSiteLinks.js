@@ -4,6 +4,8 @@
  */
 
 export const PUBLIC_SITE_PATH = '/plataforma';
+/** Página pública para sedes interesadas en conocer el panel y su guía. */
+export const PUBLIC_SITE_ADMIN_PATH = '/administradores';
 
 /** CTAs del Hero — flujos productivos existentes. */
 export const PUBLIC_SITE_CTA = {

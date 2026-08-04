@@ -51,7 +51,9 @@ function useActiveSection() {
   const [activeId, setActiveId] = useState(null);
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return undefined;
-    const ids = PUBLIC_SITE_NAV_ITEMS.map(({ href }) => href.replace(/^#/, ''));
+    const ids = PUBLIC_SITE_NAV_ITEMS
+      .filter(({ href }) => Boolean(href))
+      .map(({ href }) => href.replace(/^#/, ''));
     const targets = ids.map((id) => document.getElementById(id)).filter(Boolean);
     if (!targets.length) return undefined;
     const observer = new IntersectionObserver(
@@ -114,6 +116,15 @@ export default function PublicSiteLayout({ children }) {
           <nav className="public-site__desktop-nav" aria-label={text('publicSite.nav.aria')}>
             <ul className="public-site__nav-links">
               {PUBLIC_SITE_NAV_ITEMS.map((item) => {
+                if (item.to) {
+                  return (
+                    <li key={item.key}>
+                      <Link to={item.to} className="public-site__nav-link">
+                        {text(`publicSite.nav.${item.key}`)}
+                      </Link>
+                    </li>
+                  );
+                }
                 const isActive = activeSectionId === item.href.replace(/^#/, '');
                 return (
                   <li key={item.key}>
@@ -163,14 +174,25 @@ export default function PublicSiteLayout({ children }) {
         >
           <div className="public-site__shell">
             {PUBLIC_SITE_NAV_ITEMS.map((item, index) => (
-              <a
-                ref={index === 0 ? firstMenuLinkRef : undefined}
-                href={item.href}
-                key={item.key}
-                onClick={(event) => chooseAnchor(event, item.href)}
-              >
-                {text(`publicSite.nav.${item.key}`)}
-              </a>
+              item.to ? (
+                <Link
+                  ref={index === 0 ? firstMenuLinkRef : undefined}
+                  to={item.to}
+                  key={item.key}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {text(`publicSite.nav.${item.key}`)}
+                </Link>
+              ) : (
+                <a
+                  ref={index === 0 ? firstMenuLinkRef : undefined}
+                  href={item.href}
+                  key={item.key}
+                  onClick={(event) => chooseAnchor(event, item.href)}
+                >
+                  {text(`publicSite.nav.${item.key}`)}
+                </a>
+              )
             ))}
             <Link to={PUBLIC_SITE_CTA.login} onClick={() => setMenuOpen(false)}>
               {text('publicSite.nav.login')}
