@@ -23,11 +23,6 @@ export default function PublicSiteFooter() {
       <div className="public-site__shell">
         <div className="public-site-footer__top">
           <div className="public-site-footer__brand">
-            <img
-              src="/media/public-site/jero/padbol-match-logo-white.svg"
-              className="public-site-footer__logo"
-              alt={text('publicSite.brandAlt')}
-            />
             <a
               className="public-site-footer__padbol-lockup"
               href="https://padbol.com"

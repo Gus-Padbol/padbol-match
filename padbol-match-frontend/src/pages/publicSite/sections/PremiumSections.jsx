@@ -561,6 +561,11 @@ export function ExpansionSection() {
         ))}
       </div>
       <p className="ps-note">{text('publicSite.expansion.note')}</p>
+      <div className="ps-expansion__cta">
+        <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--primary">
+          {text('publicSite.contact.venue')}
+        </Link>
+      </div>
     </SectionShell>
   );
 }

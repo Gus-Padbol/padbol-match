@@ -1428,6 +1428,16 @@ html.public-site-active #root {
   line-height: 1.55;
 }
 
+.ps-expansion__cta {
+  display: flex;
+  margin-top: 24px;
+}
+
+.ps-expansion__cta .ps-btn {
+  min-width: 230px;
+  justify-content: center;
+}
+
 .ps-section--what {
   background:
     linear-gradient(180deg, rgba(8, 12, 22, 0), rgba(14, 20, 36, 0.48) 78%, rgba(14, 20, 36, 0.7)),
@@ -2473,17 +2483,6 @@ html.public-site-active #root {
 
 .public-site-footer__brand { max-width: 300px; }
 
-.public-site-footer__logo {
-  display: block !important;
-  width: min(180px, 70%) !important;
-  height: auto !important;
-  max-width: 200px !important;
-  max-height: none !important;
-  margin: 0 0 10px !important;
-  object-fit: contain !important;
-  background: transparent !important;
-}
-
 .public-site-footer__brand p {
   margin: 8px 0 0;
   color: var(--ps-text-muted);
@@ -2492,12 +2491,12 @@ html.public-site-active #root {
 .public-site-footer__padbol-lockup {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  margin-top: 17px;
+  gap: 14px;
+  margin-top: 0;
   color: #fff;
-  font-size: .72rem;
+  font-size: 1.12rem;
   font-weight: 900;
-  letter-spacing: .19em;
+  letter-spacing: .22em;
   text-decoration: none;
   transition: color .2s ease, transform .2s ease;
 }
@@ -2505,11 +2504,11 @@ html.public-site-active #root {
 .public-site-footer__padbol-lockup:hover,
 .public-site-footer__padbol-lockup:focus-visible { color: #ef233c; transform: translateX(2px); }
 
-.public-site-footer__padbol-mark { position: relative; display: inline-block; width: 29px; height: 13px; }
-.public-site-footer__padbol-mark i { position: absolute; display: block; height: 4px; border-radius: 99px; transform: skewX(33deg); }
-.public-site-footer__padbol-mark i:nth-child(1) { left: 0; top: 1px; width: 13px; background: #fff; }
-.public-site-footer__padbol-mark i:nth-child(2) { left: 12px; top: 5px; width: 6px; background: #ef233c; }
-.public-site-footer__padbol-mark i:nth-child(3) { right: 0; bottom: 0; width: 13px; background: #fff; }
+.public-site-footer__padbol-mark { position: relative; display: inline-block; width: 47px; height: 22px; }
+.public-site-footer__padbol-mark i { position: absolute; display: block; height: 7px; border-radius: 99px; transform: skewX(33deg); }
+.public-site-footer__padbol-mark i:nth-child(1) { left: 0; top: 1px; width: 22px; background: #fff; }
+.public-site-footer__padbol-mark i:nth-child(2) { left: 19px; top: 8px; width: 10px; background: #ef233c; }
+.public-site-footer__padbol-mark i:nth-child(3) { right: 0; bottom: 0; width: 22px; background: #fff; }
 
 .public-site-footer__product-of {
   margin-top: 7px !important;
