@@ -25,13 +25,18 @@ export default function PublicSiteFooter() {
         <div className="public-site-footer__top">
           <div className="public-site-footer__brand">
             <a
-              className="public-site-footer__padbol-lockup"
-              href="https://padbol.com"
-              aria-label="Visitar Padbol"
+              className="public-site-footer__padbol-match-lockup"
+              href="/plataforma"
+              aria-label="Ir a Padbol Match"
             >
-              <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
+              <img src="/media/public-site/jero/padbol-match-logo-white.svg" alt="Padbol Match" />
             </a>
-            <p className="public-site-footer__product-of">Un producto de Padbol.</p>
+            <p className="public-site-footer__product-of">
+              Un producto de Padbol
+              <a href="https://padbol.com" aria-label="Visitar Padbol">
+                <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
+              </a>
+            </p>
             <p className="public-site-footer__developed-by">{text('publicSite.footer.developedBy')}</p>
             <Link to="/contacto" className="public-site-footer__contact">
               ¿Necesitás ayuda? Contactanos <span aria-hidden="true">→</span>

@@ -2521,28 +2521,42 @@ html.public-site-active #root {
   color: var(--ps-text-muted);
 }
 
-.public-site-footer__padbol-lockup {
+.public-site-footer__padbol-match-lockup {
   display: inline-block;
-  width: min(230px, 100%);
+  width: min(190px, 100%);
   margin-top: 0;
   text-decoration: none;
   transition: transform .2s ease;
 }
 
-.public-site-footer__padbol-lockup:hover,
-.public-site-footer__padbol-lockup:focus-visible { transform: translateX(2px); }
+.public-site-footer__padbol-match-lockup:hover,
+.public-site-footer__padbol-match-lockup:focus-visible { transform: translateX(2px); }
 
-.public-site-footer__padbol-lockup img {
+.public-site-footer__padbol-match-lockup img {
   display: block;
   width: 100%;
   height: auto;
 }
 
 .public-site-footer__product-of {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 7px !important;
   color: #c7d1e1 !important;
   font-size: .9rem;
   font-weight: 650;
+}
+
+.public-site-footer__product-of a {
+  display: inline-flex;
+  width: 54px;
+}
+
+.public-site-footer__product-of img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .public-site-footer__developed-by {
