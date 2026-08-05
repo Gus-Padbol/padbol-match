@@ -409,10 +409,10 @@ function ScoreboardVideo({ text }) {
         muted
         playsInline
         preload="metadata"
-        poster={`${ASSET_ROOT}/marcador-01-poster.jpg`}
+        poster={`${ASSET_ROOT}/marcador-inteligente-poster.jpg`}
         aria-label={text('publicSite.matchIntelligence.videoAria')}
       >
-        <source src={`${ASSET_ROOT}/marcador-01.mp4`} type="video/mp4" />
+        <source src={`${ASSET_ROOT}/marcador-inteligente.mp4`} type="video/mp4" />
       </video>
       <figcaption>{text('publicSite.matchIntelligence.caption')}</figcaption>
     </figure>
