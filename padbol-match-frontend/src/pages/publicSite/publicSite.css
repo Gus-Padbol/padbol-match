@@ -763,7 +763,9 @@ html.public-site-active #root {
 }
 
 .ps-venue__cta {
-  margin: 22px 0 28px;
+  display: flex;
+  justify-content: center;
+  margin: 26px 0 24px;
 }
 
 .ps-venue-cards li {
