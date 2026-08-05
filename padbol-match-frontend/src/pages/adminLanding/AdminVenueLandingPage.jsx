@@ -87,12 +87,12 @@ export default function AdminVenueLandingPage() {
         <section className="admin-landing__hero">
           <div className="admin-landing__shell admin-landing__hero-grid">
             <div>
-              <p className="admin-landing__eyebrow">PADBOL MATCH / ADMINISTRADORES DE SEDE</p>
+              <p className="admin-landing__eyebrow">PADBOL MATCH / PARA SEDES</p>
               <h1>Tu sede, <span>en orden</span> desde el primer día.</h1>
               <p className="admin-landing__lead">Configurá canchas, horarios y precios. Operá reservas, jugadores y torneos. Medí el juego y hacé crecer la comunidad desde un solo panel.</p>
               <div className="admin-landing__hero-actions">
-                <a href="#recorrido" className="admin-landing__primary">Ver recorrido <span>↓</span></a>
-                <a href="#asistente" className="admin-landing__secondary">Conocé la configuración guiada</a>
+                <Link to="/unirse" className="admin-landing__primary">Ver planes <span>→</span></Link>
+                <Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link>
               </div>
             </div>
             <div className="admin-landing__hero-panel" aria-label="Ejemplo de tablero administrativo">
@@ -175,7 +175,7 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__eyebrow">OPERACIÓN ACOMPAÑADA</p>
             <h2>Tu sede no tiene que aprender todo de una vez.</h2>
             <p>Empezá por datos, canchas, horarios y reservas. El resto se activa según la operación real.</p>
-            <div className="admin-landing__hero-actions"><Link to={ADMIN_PANEL_ACCESS_PATH} className="admin-landing__primary">Ingresar al panel <span>→</span></Link><a href="/manual-administradores.pdf" className="admin-landing__secondary">Descargar manual PDF</a></div>
+            <div className="admin-landing__hero-actions"><Link to="/unirse" className="admin-landing__primary">Elegir mi plan <span>→</span></Link><Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link></div>
           </div>
         </section>
       </main>

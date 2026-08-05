@@ -41,14 +41,14 @@ describe('publicSite content structure', () => {
       { key: 'googlePlay', url: null },
     ]);
     expect(PUBLIC_SITE_SECTIONS.contact.ctas.map(({ to }) => to)).toEqual([
-      '/contacto',
+      '/administradores',
       '#descargar',
       '/acceso',
     ]);
     expect(PUBLIC_SITE_INTERNAL_ROUTES).toEqual(
       expect.arrayContaining([
         '#descargar',
-        '/contacto',
+        '/administradores',
         '/acceso',
         '/sobre',
         '/privacidad',

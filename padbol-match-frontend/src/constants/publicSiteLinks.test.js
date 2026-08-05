@@ -16,7 +16,7 @@ describe('publicSite links + shell isolation', () => {
     expect(PUBLIC_SITE_ADMIN_PATH).toBe('/administradores');
     expect(PUBLIC_SITE_CTA.exploreHash).toBe('#que-es');
     expect(PUBLIC_SITE_CTA.play).toBe('#descargar');
-    expect(PUBLIC_SITE_CTA.venue).toBe('/contacto');
+    expect(PUBLIC_SITE_CTA.venue).toBe('/administradores');
     expect(PUBLIC_SITE_CTA.login).toBe('/acceso');
   });
 

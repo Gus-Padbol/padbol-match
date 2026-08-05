@@ -13,8 +13,8 @@ export const PUBLIC_SITE_CTA = {
   exploreHash: '#que-es',
   /** Descarga de la app. Mientras no haya stores, baja al bloque "Próximamente". */
   play: '#descargar',
-  /** Incorporar sede: página comercial existente. */
-  venue: '/contacto',
+  /** Incorporar sede: primero conoce la propuesta para sedes y desde allí elige plan o contacto. */
+  venue: PUBLIC_SITE_ADMIN_PATH,
   /** Acceso a cuenta. */
   login: '/acceso',
 };
