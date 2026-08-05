@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import PadbolBrandLogo from '../components/PadbolBrandLogo';
@@ -15,6 +15,50 @@ const PRECIO_MENSUAL_USD =
   typeof process !== 'undefined' && process.env.REACT_APP_PRECIO_MENSUAL_USD != null
     ? String(process.env.REACT_APP_PRECIO_MENSUAL_USD).trim()
     : '$29 USD/mes';
+
+const SERVICE_PLANS = [
+  {
+    id: 'explorar',
+    number: '01',
+    name: 'Explorá',
+    price: 'Gratis',
+    period: 'Para conocer la propuesta',
+    accent: '#22c55e',
+    description: 'Una primera vista para entender cómo Padbol Match puede acompañar a tu sede.',
+    includes: ['Recorrido de producto', 'Asistente Chivi', 'Consulta con el equipo'],
+  },
+  {
+    id: 'base',
+    number: '02',
+    name: 'Sede Base',
+    price: PRECIO_MENSUAL_USD,
+    period: 'por sede / mes',
+    accent: '#38bdf8',
+    description: 'La base para abrir tu operación deportiva desde un único panel.',
+    includes: ['Canchas, horarios y precios', 'Reservas y jugadores', 'Panel de administración'],
+  },
+  {
+    id: 'pro',
+    number: '03',
+    name: 'Sede Pro',
+    price: '$59 USD/mes',
+    period: 'por sede / mes',
+    accent: '#E11B22',
+    featured: true,
+    description: 'Para sedes que además quieren activar comunidad y competencia.',
+    includes: ['Torneos y rankings', 'Marcador conectado', 'PadCoins y membresías'],
+  },
+  {
+    id: '360',
+    number: '04',
+    name: 'Sede 360',
+    price: '$99 USD/mes',
+    period: 'por sede / mes',
+    accent: '#f59e0b',
+    description: 'La capa para operar, comunicar y mostrar tu sede en una experiencia ampliada.',
+    includes: ['Pantallas y publicidad', 'Sponsor y tienda', 'Automatizaciones por etapas'],
+  },
+];
 
 function normalizeWs(s) {
   return String(s || '').trim();
@@ -71,36 +115,9 @@ export default function UnirsePage() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [form, setForm] = useState(getInitialForm);
-  const serviceLayers = useMemo(() => [
-    {
-      number: '01',
-      eyebrow: 'EMPEZÁ GRATIS',
-      title: 'Conocé la plataforma',
-      description: 'Recorré Padbol Match, entendé las posibilidades y compartí la propuesta con tu equipo antes de configurar una sede.',
-      accent: '#22c55e',
-    },
-    {
-      number: '02',
-      eyebrow: 'JUGADORES',
-      title: 'Juego y comunidad',
-      description: 'Reservas, partidos abiertos, torneos, ranking y comunidad en una misma experiencia deportiva.',
-      accent: '#38bdf8',
-    },
-    {
-      number: '03',
-      eyebrow: 'CLUBES Y SEDES',
-      title: 'Operá tu sede',
-      description: 'Configurá canchas, horarios, precios, reservas, jugadores y competencia desde un panel guiado.',
-      accent: '#E11B22',
-    },
-    {
-      number: '04',
-      eyebrow: 'OPERACIÓN AVANZADA',
-      title: 'Pantallas y automatización',
-      description: 'Marcador conectado, pantallas, publicidad y nuevas automatizaciones que se incorporan por etapas.',
-      accent: '#f59e0b',
-    },
-  ], []);
+  const [selectedPlanId, setSelectedPlanId] = useState('base');
+  const formRef = useRef(null);
+  const selectedPlan = SERVICE_PLANS.find((plan) => plan.id === selectedPlanId) || SERVICE_PLANS[1];
 
   useEffect(() => {
     const root = document.documentElement;
@@ -115,6 +132,10 @@ export default function UnirsePage() {
   }, []);
 
   const onField = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const selectPlan = (planId) => {
+    setSelectedPlanId(planId);
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -135,7 +156,7 @@ export default function UnirsePage() {
       responsable_nombre: form.responsable_nombre.trim(),
       email: em,
       whatsapp: wa,
-      mensaje: form.mensaje.trim() || null,
+      mensaje: `[Plan elegido: ${selectedPlan.name} — ${selectedPlan.price}]${form.mensaje.trim() ? `\n${form.mensaje.trim()}` : ''}`,
       solicitud_inicial: true,
     };
 
@@ -148,7 +169,7 @@ export default function UnirsePage() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || res.statusText);
-      setMsg('Listo. Recibimos tu solicitud. El siguiente paso es activar tu cuenta y continuar con el plan; después completás los datos de tu sede con la configuración guiada.');
+      setMsg(`Listo. Recibimos tu solicitud para ${selectedPlan.name}. Te acompañamos a activar la cuenta, confirmar el plan y completar tu sede con la configuración guiada.`);
       setForm(getInitialForm());
     } catch (e2) {
       setErr(e2?.message || 'No se pudo enviar la solicitud');
@@ -224,8 +245,8 @@ export default function UnirsePage() {
               textAlign: 'center',
             }}
           >
-            Empezá con lo mínimo. Los datos de la sede, ubicación, canchas, horarios, precios y cobros se completan
-            después, desde una configuración guiada.
+            Elegí la capa que mejor acompaña a tu sede. Podés empezar hoy, completar tus datos después y recibir
+            apoyo humano cuando lo necesites.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
             <span
@@ -241,46 +262,62 @@ export default function UnirsePage() {
             >
               Alta simple, sin planillas
             </span>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#E11B22' }}>{PRECIO_MENSUAL_USD}</span>
           </div>
           <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-            Primero creamos tu acceso. Luego elegís el plan y completás la operación de tu sede.
+            Elegís tu plan, iniciás el alta y completás la operación de tu sede con una configuración guiada.
           </p>
         </section>
 
         <section style={{ margin: '0 0 20px' }}>
           <p style={{ margin: '0 0 7px', color: '#E11B22', fontSize: 12, fontWeight: 900, letterSpacing: '.09em', textTransform: 'uppercase' }}>
-            Una plataforma, distintas capas
+            Planes para crecer con Padbol Match
           </p>
           <h2 style={{ margin: '0 0 9px', color: 'var(--text-primary)', fontSize: 'clamp(1.25rem, 3vw, 1.55rem)', lineHeight: 1.12 }}>
-            Elegí cómo querés empezar
+            Todo lo que necesitás, a tu escala
           </h2>
           <p style={{ margin: '0 0 13px', color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.45 }}>
-            La propuesta se adapta a jugadores, clubes y operaciones que quieren crecer con más herramientas.
+            Elegí un plan para empezar. Los valores son de referencia y se pueden ajustar por país, moneda y necesidad de cada sede.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
-            {serviceLayers.map(({ number, eyebrow, title, description, accent }) => (
+            {SERVICE_PLANS.map((plan) => {
+              const selected = selectedPlanId === plan.id;
+              return (
               <article
-                key={number}
+                key={plan.id}
                 style={{
-                  border: '1px solid var(--border)',
+                  border: `1px solid ${selected ? plan.accent : 'var(--border)'}`,
                   borderRadius: 16,
                   padding: '16px 14px',
-                  background: `linear-gradient(145deg, var(--bg-card), color-mix(in srgb, ${accent} 7%, var(--bg-card)))`,
-                  minHeight: 190,
+                  background: `linear-gradient(145deg, var(--bg-card), color-mix(in srgb, ${plan.accent} 9%, var(--bg-card)))`,
+                  minHeight: 294,
                   boxSizing: 'border-box',
-                  boxShadow: `0 14px 30px color-mix(in srgb, ${accent} 12%, transparent)`,
+                  boxShadow: selected ? `0 16px 34px color-mix(in srgb, ${plan.accent} 24%, transparent)` : `0 14px 30px color-mix(in srgb, ${plan.accent} 12%, transparent)`,
                   position: 'relative',
                   overflow: 'hidden',
                 }}
               >
-                <span style={{ display: 'block', color: accent, fontSize: 12, fontWeight: 900, marginBottom: 10, letterSpacing: '.06em' }}>{number}</span>
-                <span style={{ display: 'block', color: accent, fontSize: 10, fontWeight: 900, letterSpacing: '.08em', marginBottom: 7 }}>{eyebrow}</span>
-                <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 16, lineHeight: 1.16, marginBottom: 8 }}>{title}</strong>
-                <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.43 }}>{description}</span>
+                <span style={{ display: 'block', color: plan.accent, fontSize: 12, fontWeight: 900, marginBottom: 10, letterSpacing: '.06em' }}>{plan.number}</span>
+                <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 17, lineHeight: 1.16, marginBottom: 4 }}>{plan.name}</strong>
+                <span style={{ display: 'block', color: plan.accent, fontSize: 20, fontWeight: 900, marginBottom: 2 }}>{plan.price}</span>
+                <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 11, marginBottom: 10 }}>{plan.period}</span>
+                <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.38, minHeight: 49 }}>{plan.description}</span>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '12px 0 14px', display: 'grid', gap: 5 }}>
+                  {plan.includes.map((item) => <li key={item} style={{ color: 'var(--text-primary)', fontSize: 11, lineHeight: 1.3 }}>✓ {item}</li>)}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() => selectPlan(plan.id)}
+                  style={{ width: '100%', padding: '9px 10px', borderRadius: 9, border: `1px solid ${plan.accent}`, background: selected ? plan.accent : 'transparent', color: selected ? '#fff' : plan.accent, cursor: 'pointer', fontWeight: 800, fontSize: 12 }}
+                >
+                  {selected ? 'Plan elegido' : `Elegir ${plan.name}`}
+                </button>
               </article>
-            ))}
+              );
+            })}
           </div>
+          <p style={{ margin: '14px 0 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.45 }}>
+            ¿Querés conversarlo antes de elegir? Escribinos a <a href="mailto:info@padbol.com?subject=Consulta%20sobre%20planes%20de%20Padbol%20Match" style={{ color: '#E11B22', fontWeight: 800 }}>info@padbol.com</a>. También vas a tener ayuda de Chivi y soporte humano durante el alta.
+          </p>
         </section>
 
         {err ? (
@@ -316,6 +353,7 @@ export default function UnirsePage() {
         ) : null}
 
         <form
+          ref={formRef}
           onSubmit={onSubmit}
           style={{
             background: 'var(--bg-card)',
@@ -325,7 +363,7 @@ export default function UnirsePage() {
             boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
           }}
         >
-          <FormSection title="Empezá con estos datos" subtitle="Sólo necesitamos una referencia de la sede y una persona de contacto para abrir el proceso.">
+          <FormSection title={`Empezá ${selectedPlan.name === 'Explorá' ? 'la consulta' : `con ${selectedPlan.name}`}`} subtitle={`Plan elegido: ${selectedPlan.name} · ${selectedPlan.price}. Sólo necesitamos una referencia de la sede y una persona de contacto para abrir el proceso.`}>
             <label style={labelStyle}>Nombre de la sede o club *</label>
             <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
             <label style={labelStyle}>Nombre completo *</label>
@@ -337,6 +375,10 @@ export default function UnirsePage() {
           </FormSection>
           <label style={{ ...labelStyle, marginTop: 4 }}>¿Algo que quieras contarnos? (opcional)</label>
           <textarea rows={3} style={{ ...inputStyle, resize: 'vertical', maxWidth: '100%' }} value={form.mensaje} onChange={(e) => onField('mensaje', e.target.value)} />
+
+          <p style={{ margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45 }}>
+            Esta solicitud inicia el alta. La activación del plan y el medio de pago se confirman con vos antes de cualquier cobro.
+          </p>
 
           <button
             type="submit"
@@ -356,7 +398,7 @@ export default function UnirsePage() {
               boxShadow: '0 8px 24px rgba(225, 27, 34, 0.35)',
             }}
           >
-            {saving ? 'Enviando…' : 'Comenzar alta de mi sede'}
+            {saving ? 'Enviando…' : selectedPlan.id === 'explorar' ? 'Enviar mi consulta' : `Comenzar con ${selectedPlan.name}`}
           </button>
         </form>
       </div>
