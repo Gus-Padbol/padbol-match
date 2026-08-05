@@ -71,11 +71,35 @@ export default function UnirsePage() {
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [form, setForm] = useState(getInitialForm);
-  const startBenefits = useMemo(() => [
-    ['01', 'Tu cuenta', 'Creamos el acceso principal de la sede.'],
-    ['02', 'Tu plan', 'Elegís el plan y el medio de pago cuando esté listo.'],
-    ['03', 'Configuración guiada', 'Completás sede, ubicación, canchas, horarios y precios.'],
-    ['04', 'Publicación', 'Revisás el resumen y activás tu sede para jugadores.'],
+  const serviceLayers = useMemo(() => [
+    {
+      number: '01',
+      eyebrow: 'EMPEZÁ GRATIS',
+      title: 'Conocé la plataforma',
+      description: 'Recorré Padbol Match, entendé las posibilidades y compartí la propuesta con tu equipo antes de configurar una sede.',
+      accent: '#22c55e',
+    },
+    {
+      number: '02',
+      eyebrow: 'JUGADORES',
+      title: 'Juego y comunidad',
+      description: 'Reservas, partidos abiertos, torneos, ranking y comunidad en una misma experiencia deportiva.',
+      accent: '#38bdf8',
+    },
+    {
+      number: '03',
+      eyebrow: 'CLUBES Y SEDES',
+      title: 'Operá tu sede',
+      description: 'Configurá canchas, horarios, precios, reservas, jugadores y competencia desde un panel guiado.',
+      accent: '#E11B22',
+    },
+    {
+      number: '04',
+      eyebrow: 'OPERACIÓN AVANZADA',
+      title: 'Pantallas y automatización',
+      description: 'Marcador conectado, pantallas, publicidad y nuevas automatizaciones que se incorporan por etapas.',
+      accent: '#f59e0b',
+    },
   ], []);
 
   useEffect(() => {
@@ -224,16 +248,36 @@ export default function UnirsePage() {
           </p>
         </section>
 
-        <section style={{ margin: '0 0 16px' }}>
-          <p style={{ margin: '0 0 10px', color: 'var(--text-secondary)', fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase' }}>
-            Después del alta, te acompañamos así
+        <section style={{ margin: '0 0 20px' }}>
+          <p style={{ margin: '0 0 7px', color: '#E11B22', fontSize: 12, fontWeight: 900, letterSpacing: '.09em', textTransform: 'uppercase' }}>
+            Una plataforma, distintas capas
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 10 }}>
-            {startBenefits.map(([number, title, description]) => (
-              <article key={number} style={{ border: '1px solid var(--border)', borderRadius: 14, padding: '14px 13px', background: 'var(--bg-card)', minHeight: 118, boxSizing: 'border-box' }}>
-                <span style={{ display: 'block', color: '#E11B22', fontSize: 12, fontWeight: 900, marginBottom: 8 }}>{number}</span>
-                <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 14, marginBottom: 6 }}>{title}</strong>
-                <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.4 }}>{description}</span>
+          <h2 style={{ margin: '0 0 9px', color: 'var(--text-primary)', fontSize: 'clamp(1.25rem, 3vw, 1.55rem)', lineHeight: 1.12 }}>
+            Elegí cómo querés empezar
+          </h2>
+          <p style={{ margin: '0 0 13px', color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.45 }}>
+            La propuesta se adapta a jugadores, clubes y operaciones que quieren crecer con más herramientas.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
+            {serviceLayers.map(({ number, eyebrow, title, description, accent }) => (
+              <article
+                key={number}
+                style={{
+                  border: '1px solid var(--border)',
+                  borderRadius: 16,
+                  padding: '16px 14px',
+                  background: `linear-gradient(145deg, var(--bg-card), color-mix(in srgb, ${accent} 7%, var(--bg-card)))`,
+                  minHeight: 190,
+                  boxSizing: 'border-box',
+                  boxShadow: `0 14px 30px color-mix(in srgb, ${accent} 12%, transparent)`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                <span style={{ display: 'block', color: accent, fontSize: 12, fontWeight: 900, marginBottom: 10, letterSpacing: '.06em' }}>{number}</span>
+                <span style={{ display: 'block', color: accent, fontSize: 10, fontWeight: 900, letterSpacing: '.08em', marginBottom: 7 }}>{eyebrow}</span>
+                <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 16, lineHeight: 1.16, marginBottom: 8 }}>{title}</strong>
+                <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.43 }}>{description}</span>
               </article>
             ))}
           </div>
