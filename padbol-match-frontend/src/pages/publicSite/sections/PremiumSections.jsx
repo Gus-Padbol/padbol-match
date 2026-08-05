@@ -429,7 +429,7 @@ export function SmartScoreboardSection() {
       </span>
       <div className="ps-scoreboard__grid">
         <div className="ps-scoreboard__copy">
-          <h2 id="ps-smart-scoreboard-title"><AccentWords value={text('publicSite.smartScoreboard.title')} terms={['Marcador inteligente']} /></h2>
+          <h2 id="ps-smart-scoreboard-title"><AccentWords value={text('publicSite.smartScoreboard.title')} terms={['Marcador', 'en vivo']} /></h2>
           <p className="ps-lead">{text('publicSite.smartScoreboard.text')}</p>
           <ol className="ps-flow-steps ps-flow-steps--scoreboard">
             {config.steps.map(({ key }, index) => (
