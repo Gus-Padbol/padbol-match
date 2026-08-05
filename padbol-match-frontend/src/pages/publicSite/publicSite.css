@@ -762,6 +762,10 @@ html.public-site-active #root {
   list-style: none;
 }
 
+.ps-venue__cta {
+  margin: 22px 0 28px;
+}
+
 .ps-venue-cards li {
   position: relative;
   display: grid;

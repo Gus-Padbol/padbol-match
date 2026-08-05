@@ -14,7 +14,6 @@ export const PUBLIC_SITE_NAV_ITEMS = [
   { key: 'community', href: PUBLIC_SITE_ANCHORS.community },
   { key: 'scoreboard', href: PUBLIC_SITE_ANCHORS.scoreboard },
   { key: 'venues', href: PUBLIC_SITE_ANCHORS.venues },
-  { key: 'administrators', to: PUBLIC_SITE_ADMIN_PATH },
   { key: 'download', href: PUBLIC_SITE_ANCHORS.download },
 ];
 

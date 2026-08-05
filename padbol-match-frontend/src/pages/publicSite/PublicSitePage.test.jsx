@@ -176,6 +176,7 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Comunidad' })[0]).toHaveAttribute('href', '#comunidad-partidos');
     expect(screen.getAllByRole('link', { name: 'Marcador' })[0]).toHaveAttribute('href', '#marcador-inteligente');
     expect(screen.getAllByRole('link', { name: 'Para sedes' })[0]).toHaveAttribute('href', '#sedes');
+    expect(screen.queryByRole('link', { name: 'Administradores' })).toBeNull();
     expect(screen.getAllByRole('link', { name: 'Descargar la app' })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.queryByRole('link', { name: 'Conocer la plataforma' })).toBeNull();
     expect(screen.getAllByRole('link', { name: /Quiero jugar/i })[0]).toHaveAttribute('href', '#descargar');

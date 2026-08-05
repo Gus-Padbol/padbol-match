@@ -310,6 +310,11 @@ export function VenuePathSection() {
     <SectionShell id={config.id} className="ps-section--paths ps-section--venues" titleId="ps-venues-title">
       <h2 id="ps-venues-title"><AccentWords value={text('publicSite.venuePath.title')} terms={['sedes', 'organizaciones']} /></h2>
       <p className="ps-lead">{text('publicSite.venuePath.text')}</p>
+      <div className="ps-venue__cta">
+        <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--primary">
+          {text('publicSite.contact.venue')}
+        </Link>
+      </div>
       <ul className="ps-venue-cards">
         {config.items.map(({ key }) => (
           <li key={key} className={`ps-venue-card ps-venue-card--${key}`}>
