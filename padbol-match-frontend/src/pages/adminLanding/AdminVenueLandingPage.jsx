@@ -123,7 +123,7 @@ export default function AdminVenueLandingPage() {
             <div className="admin-landing__module-grid">
               {modules.map((module) => (
                 <button key={module.number} type="button" className="admin-landing__module-card" onClick={() => openModule(module)}>
-                  <span>{module.number}</span><h3>{module.title}</h3><p>{module.description}</p><b>Conocé este módulo <i>→</i></b>
+                  <span>{module.number}</span><h3>{module.title}</h3><p>{module.description}</p><b>Ver explicación y opciones <i>→</i></b>
                 </button>
               ))}
             </div>

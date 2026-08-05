@@ -35,6 +35,66 @@
   box-shadow: 0 16px 32px rgba(0, 0, 0, .26);
 }
 
+/* Antes de abrir el modal, la card anticipa la acción disponible.
+ * El texto queda visible siempre en touch, donde no existe hover. */
+.admin-landing__module-card b {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #f5a1a8;
+  opacity: .72;
+  transform: translateY(3px);
+  transition: opacity .18s ease, transform .18s ease, color .18s ease;
+}
+
+.admin-landing__module-card b::after {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(245, 154, 162, .55);
+  border-radius: 50%;
+  color: #ffffff;
+  content: '↗';
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.admin-landing__module-card:hover,
+.admin-landing__module-card:focus-visible {
+  border-color: rgba(237, 28, 46, .78);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, .32), 0 0 24px rgba(237, 28, 46, .1);
+}
+
+.admin-landing__module-card:hover b,
+.admin-landing__module-card:focus-visible b {
+  color: #ffffff;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.admin-landing__module-card:hover b::after,
+.admin-landing__module-card:focus-visible b::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (hover: none) {
+  .admin-landing__module-card b {
+    color: #ffffff;
+    opacity: 1;
+    transform: none;
+  }
+
+  .admin-landing__module-card b::after {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* La landing de sedes conserva una salida clara al resto de Padbol Match.
  * No depende de volver con el navegador para seguir recorriendo la web. */
 .admin-landing__site-nav {

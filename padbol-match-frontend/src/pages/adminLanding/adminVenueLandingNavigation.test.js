@@ -15,4 +15,8 @@ describe('navegación de la landing para sedes', () => {
     expect(page).toMatch(/Para sedes/);
     expect(page).toMatch(/to="\/contacto">Contacto/);
   });
+
+  it('anticipa que cada módulo abre una explicación con sus opciones', () => {
+    expect(page).toMatch(/Ver explicación y opciones/);
+  });
 });
