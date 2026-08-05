@@ -198,9 +198,13 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__eyebrow">MÓDULO {activeModule.number} / PARA SEDES</p>
             <h2 id={`admin-module-${activeModule.number}`}>{activeModule.title}</h2>
             <p className="admin-landing__modal-copy">{activeModule.overview}</p>
-            <div className="admin-landing__modal-actions">
-              <Link to="/unirse" className="admin-landing__primary">Ver planes <span>→</span></Link>
-              <Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link>
+            <div className="admin-landing__modal-steps">
+              <p>ASÍ FUNCIONA</p>
+              <ol className="admin-landing__steps">
+                {activeModule.steps.map((step, index) => (
+                  <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>
+                ))}
+              </ol>
             </div>
           </section>
         </div>

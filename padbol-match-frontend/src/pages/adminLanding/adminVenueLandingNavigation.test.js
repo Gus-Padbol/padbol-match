@@ -21,5 +21,7 @@ describe('navegación de la landing para sedes', () => {
     expect(page).toMatch(/onMouseEnter=\{\(\) => openModule\(module\)\}/);
     expect(page).not.toMatch(/manual-administradores\.pdf/);
     expect(page).not.toMatch(/Descargar guía PDF/);
+    expect(page).toMatch(/ASÍ FUNCIONA/);
+    expect(page).toMatch(/activeModule\.steps\.map/);
   });
 });
