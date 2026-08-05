@@ -17658,7 +17658,10 @@ export default function AdminDashboard({
           </p>
         </div>
 
-        <AdminSponsorsSection isSuperAdmin={isSuperAdmin} />
+        <AdminSponsorsSection
+          isSuperAdmin={isSuperAdmin}
+          allowedVenueId={esAdminClub ? sedeId : null}
+        />
 
       </div>}
 

@@ -85,7 +85,9 @@ export default function AdminSponsorsSection({
   canDelete,
   canManageCupos,
   canAutoApprove,
+  allowedVenueId = null,
 }) {
+  const venueScopeId = allowedVenueId != null && allowedVenueId !== '' ? Number(allowedVenueId) : null;
   const allowDelete = canDelete ?? isSuperAdmin;
   const allowCupos = canManageCupos ?? isSuperAdmin;
   const autoApprove = canAutoApprove ?? isSuperAdmin;
@@ -110,9 +112,9 @@ export default function AdminSponsorsSection({
       url_destino: '',
       texto_boton: t('admin.sponsors.seeOffer'),
       descripcion: '',
-      scope: 'global',
+      scope: venueScopeId ? 'sede' : 'global',
       formato: 'ticker',
-      sede_id: '',
+      sede_id: venueScopeId || '',
       torneo_id: '',
       pais: '',
       activo: true,
@@ -120,7 +122,7 @@ export default function AdminSponsorsSection({
       fecha_hasta: '',
       deportes_keys: [],
     }),
-    [t],
+    [t, venueScopeId],
   );
   const etiquetaDeportesSponsorRow = useCallback(
     (r) => {
@@ -184,7 +186,9 @@ export default function AdminSponsorsSection({
   const loadSponsors = useCallback(async () => {
     setLoading(true);
     setMsg('');
-    const { data, error } = await supabase.from('sponsors').select('*').order('id', { ascending: false });
+    let query = supabase.from('sponsors').select('*').order('id', { ascending: false });
+    if (venueScopeId) query = query.eq('scope', 'sede').eq('sede_id', venueScopeId);
+    const { data, error } = await query;
     if (error) {
       setMsg(error.message);
       setRows([]);
