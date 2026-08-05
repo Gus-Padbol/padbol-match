@@ -51,6 +51,8 @@ describe('QA English report — Admin panel', () => {
     expect(guidedSetupSource).not.toMatch(/>\s*Configurá tu sede sin perderte en formularios\s*</);
     expect(dashboardSource).not.toMatch(/>\s*Método de cobro para reservas y torneos\s*</);
     expect(dashboardSource).not.toMatch(/>\s*Activa para reservas\s*</);
+    expect(dashboardSource).not.toMatch(/>\s*Cada sede cobra con su propia cuenta/);
+    expect(dashboardSource).not.toMatch(/>\s*No pudimos cargar las duraciones/);
   });
 
   it('routes each reported module through i18n', () => {
@@ -60,6 +62,7 @@ describe('QA English report — Admin panel', () => {
     expect(dashboardSource).toContain('<AdminSaveIcon size={15} />');
     expect(en.admin.tabs.torneos).toBe('Tournaments & Competition');
     expect(en.admin.sedes.savePaymentMethodBtn).toBe('Save method and instructions');
+    expect(dashboardSource).toContain("t('admin.sedes.paymentAccountsHint'");
   });
 
   it('translates every PadCoins key currently rendered by the admin modules', () => {

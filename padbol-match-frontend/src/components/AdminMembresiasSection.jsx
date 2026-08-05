@@ -1203,7 +1203,7 @@ export default function AdminMembresiasSection({
                   />
                 </label>
                 <label style={{ display: 'grid', gap: 4, fontSize: 13, fontWeight: 600 }}>
-                  {tr('fieldVigenciaHasta', 'Vigencia hasta')}
+                  {tr('fieldVigenciaHasta', 'Valid until (calculated automatically)')}
                   <input
                     type="date"
                     style={inp}
@@ -1213,6 +1213,9 @@ export default function AdminMembresiasSection({
                     readOnly
                     aria-readonly="true"
                   />
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>
+                    {tr('fieldVigenciaHastaHint', 'Calculated from the start date and selected duration.')}
+                  </span>
                 </label>
               </div>
               <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13 }}>

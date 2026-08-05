@@ -19859,15 +19859,15 @@ export default function AdminDashboard({
                   }}
                 >
                   <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 600, color: '#991b1b' }}>
-                    No pudimos cargar las duraciones. Reintentá o revisá la conexión.
+                    {t('admin.sedes.durationPricesLoadError', 'Could not load durations. Try again or check your connection.')}
                   </p>
                   <p style={{ margin: 0, fontSize: '12px', color: '#b91c1c' }}>{miSedeDuracionesLoadError}</p>
                 </div>
               ) : miSedeDuraciones.length === 0 ? (
                 <p style={{ margin: '0 0 18px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  No hay duraciones configuradas para{' '}
-                  {deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}. Agregá una duración para definir el
-                  precio base del turno.
+                  {t('admin.sedes.durationPricesEmpty', 'No durations are configured for {{sport}}. Add a duration to define the base slot price.', {
+                    sport: deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte)),
+                  })}
                 </p>
               ) : (
                 <div style={{ margin: '0 0 20px', display: 'grid', gap: '10px' }}>
@@ -19904,7 +19904,7 @@ export default function AdminDashboard({
                                 color: '#92400e',
                               }}
                             >
-                              No estándar
+                              {t('admin.sedes.durationPricesNonStandard', 'Non-standard')}
                             </span>
                           ) : null}
                           <span
@@ -19925,8 +19925,7 @@ export default function AdminDashboard({
                         </div>
                         {!esEstandar ? (
                           <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                            Duración heredada de datos anteriores. Solo podés activarla, desactivarla o quitarla; no se puede
-                            editar desde esta etapa.
+                            {t('admin.sedes.durationPricesLegacyHint', 'This duration comes from earlier data. You can only activate, deactivate or remove it; it cannot be edited here.')}
                           </p>
                         ) : null}
                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
@@ -20080,7 +20079,7 @@ export default function AdminDashboard({
                   <input
                     type="text"
                     inputMode="numeric"
-                    placeholder={`Precio (${miSedeForm.moneda || 'ARS'})`}
+                    placeholder={t('admin.sedes.priceWithCurrency', 'Price ({{currency}})', { currency: miSedeForm.moneda || 'ARS' })}
                     value={precioDuracionInputDisplay(miSedeNuevaDuracion.precio)}
                     onChange={(e) => {
                       const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, '');
@@ -20103,7 +20102,7 @@ export default function AdminDashboard({
                       checked={miSedeNuevaDuracion.activo !== false}
                       onChange={(e) => setMiSedeNuevaDuracion((p) => ({ ...p, activo: e.target.checked }))}
                     />
-                    Activa al crear
+                    {t('admin.sedes.durationPricesActiveOnCreate', 'Active when created')}
                   </label>
                   <button
                     type="button"
@@ -20120,19 +20119,20 @@ export default function AdminDashboard({
                       cursor: miSedeDuracionAgregando ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {miSedeDuracionAgregando ? t('admin.metricas.saving') : 'Agregar duración'}
+                    {miSedeDuracionAgregando ? t('admin.metricas.saving') : t('admin.sedes.addDuration', 'Add duration')}
                   </button>
                 </div>
                 <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  La duración se creará para{' '}
-                  <strong>{deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}</strong>. Solo podés agregar 60,
-                  90 o 120 minutos.
+                  {t('admin.sedes.durationPricesCreateHint', 'The duration will be created for {{sport}}. You can only add 60, 90 or 120 minutes.', {
+                    sport: deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte)),
+                  })}
                 </p>
               </div>
               ) : (
                 <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Ya configuraste las duraciones estándar (60, 90 y 120 min) para{' '}
-                  {deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}.
+                  {t('admin.sedes.durationPricesComplete', 'You have already configured the standard durations (60, 90 and 120 min) for {{sport}}.', {
+                    sport: deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte)),
+                  })}
                 </p>
               )}
             </div>
@@ -20789,8 +20789,7 @@ export default function AdminDashboard({
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.paymentConfigTitle')}</h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '520px' }}>
                 <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
-                  Cada sede cobra con su propia cuenta. Mercado Pago usa el Access Token de tu aplicación MP; Stripe usa el
-                  Account ID (acct_…) para cuentas internacionales.
+                  {t('admin.sedes.paymentAccountsHint', 'Each venue charges through its own account. Mercado Pago uses your MP app Access Token; Stripe uses the Account ID (acct_…) for international accounts.')}
                 </p>
                 <div
                   style={{
@@ -20832,13 +20831,13 @@ export default function AdminDashboard({
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {pagosMpPanelAbierto ? 'Ocultar' : 'Conectar Mercado Pago'}
+                    {pagosMpPanelAbierto ? t('admin.common.hide', 'Hide') : t('admin.sedes.connectMercadoPago', 'Connect Mercado Pago')}
                   </button>
                 </div>
                 {pagosMpPanelAbierto ? (
                   <div style={{ marginBottom: '18px', paddingLeft: '4px' }}>
                     <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                      Access Token de Mercado Pago
+                      {t('admin.sedes.mpAccessTokenLabel', 'Mercado Pago Access Token')}
                     </label>
                     <div style={{ position: 'relative', marginBottom: '14px' }}>
                       <input
@@ -20997,7 +20996,7 @@ export default function AdminDashboard({
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {pagosStripePanelAbierto ? 'Ocultar' : 'Conectar Stripe'}
+                    {pagosStripePanelAbierto ? t('admin.common.hide', 'Hide') : t('admin.sedes.connectStripe', 'Connect Stripe')}
                   </button>
                 </div>
                 {pagosStripePanelAbierto ? (
@@ -21052,7 +21051,7 @@ export default function AdminDashboard({
                               : 'pointer',
                         }}
                       >
-                        {pagosParcialSaving ? t('admin.metricas.saving') : 'Guardar Stripe Account ID'}
+                        {pagosParcialSaving ? t('admin.metricas.saving') : t('admin.sedes.saveStripeAccount', 'Save Stripe Account ID')}
                       </button>
                       <button
                         type="button"
@@ -21069,11 +21068,11 @@ export default function AdminDashboard({
                           cursor: stripeOnboardingLoading ? 'not-allowed' : 'pointer',
                         }}
                       >
-                        {stripeOnboardingLoading ? 'Abriendo Stripe…' : 'Onboarding Stripe (alternativa)'}
+                        {stripeOnboardingLoading ? t('admin.sedes.openingStripe', 'Opening Stripe…') : t('admin.sedes.stripeOnboardingAlternative', 'Stripe onboarding (alternative)')}
                       </button>
                     </div>
                     <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                      Puedes pegar manualmente el <code style={{ fontSize: '11px' }}>{t('admin.sedes.stripeAccountEllipsisPh')}</code> o usar el onboarding; al volver, comprueba que el ID quedó guardado.
+                      {t('admin.sedes.stripeAccountHintBefore', 'You can paste the')} <code style={{ fontSize: '11px' }}>{t('admin.sedes.stripeAccountEllipsisPh')}</code> {t('admin.sedes.stripeAccountHintAfter', 'manually or use onboarding; when you return, confirm that the ID was saved.')}
                     </p>
                   </div>
                 ) : null}
