@@ -1344,6 +1344,12 @@
       "listaEsperaEmpty": "No hay jugadores en lista de espera para este filtro.",
       "listaEsperaLoadError": "No se pudo cargar la lista de espera",
       "paymentSettings": "Configuración de pagos",
+      "guidedSetup": {
+        "eyebrow": "CHIVI OPERATIVO",
+        "title": "Configurá tu sede sin perderte en formularios",
+        "intro": "Chivi ordena la puesta en marcha: datos de sede, primera cancha, horarios y precios. Al final revisás un resumen y recién entonces se guardan los cambios reales.",
+        "start": "Empezar configuración guiada"
+      },
       "images": "Imágenes",
       "logoColorSaved": "✅ Color del logo guardado",
       "venueUpdated": "✅ Sede actualizada",

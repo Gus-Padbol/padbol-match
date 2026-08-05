@@ -10,6 +10,10 @@ const promoSource = fs.readFileSync(
   path.join(__dirname, '../components/AdminHubPromoSedeSection.jsx'),
   'utf8',
 );
+const guidedSetupSource = fs.readFileSync(
+  path.join(__dirname, '../components/AdminSedeConfiguracionGuiada.jsx'),
+  'utf8',
+);
 
 function readPath(source, dottedPath) {
   return dottedPath.split('.').reduce((value, segment) => value && value[segment], source);
@@ -43,6 +47,16 @@ describe('QA English report — Admin panel', () => {
     expect(dashboardSource).not.toMatch(/>\s*Guardar instalaciones\s*</);
     expect(promoSource).not.toMatch(/>\s*Promo activa\s*</);
     expect(promoSource).not.toMatch(/>\s*URL de imagen \(fondo de la card\)\s*</);
+    expect(guidedSetupSource).not.toMatch(/>\s*CHIVI OPERATIVO\s*</);
+    expect(guidedSetupSource).not.toMatch(/>\s*Configurá tu sede sin perderte en formularios\s*</);
+    expect(dashboardSource).not.toMatch(/>\s*Método de cobro para reservas y torneos\s*</);
+    expect(dashboardSource).not.toMatch(/>\s*Activa para reservas\s*</);
+  });
+
+  it('routes each reported module through i18n', () => {
+    expect(guidedSetupSource).toContain("t('admin.sedes.guidedSetup.title'");
+    expect(dashboardSource).toContain("t('admin.sedes.paymentMethodDescription'");
+    expect(dashboardSource).toContain('`admin.padcoins.smartRules.${key}`');
   });
 
   it('translates every PadCoins key currently rendered by the admin modules', () => {

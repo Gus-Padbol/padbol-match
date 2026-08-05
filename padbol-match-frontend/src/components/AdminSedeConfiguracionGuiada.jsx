@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import './AdminSedeConfiguracionGuiada.css';
 
 const STEPS = [
@@ -50,6 +51,7 @@ function initialDraft(venue) {
 }
 
 export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [], onSave, busy = false }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(() => initialDraft(venue));
@@ -118,15 +120,14 @@ export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [
   return (
     <section className="guided-setup" aria-labelledby="guided-setup-title">
       <div className="guided-setup__copy">
-        <p className="guided-setup__eyebrow">CHIVI OPERATIVO</p>
-        <h3 id="guided-setup-title">Configurá tu sede sin perderte en formularios</h3>
+        <p className="guided-setup__eyebrow">{t('admin.sedes.guidedSetup.eyebrow', 'CHIVI OPERATIONS')}</p>
+        <h3 id="guided-setup-title">{t('admin.sedes.guidedSetup.title', 'Set up your venue without getting lost in forms')}</h3>
         <p>
-          Chivi ordena la puesta en marcha: datos de sede, primera cancha, horarios y precios.
-          Al final revisás un resumen y recién entonces se guardan los cambios reales.
+          {t('admin.sedes.guidedSetup.intro', 'Chivi organizes your setup: venue details, first court, hours and prices. At the end, you review a summary and only then are the real changes saved.')}
         </p>
       </div>
       <button type="button" className="guided-setup__start" onClick={start}>
-        Empezar configuración guiada
+        {t('admin.sedes.guidedSetup.start', 'Start guided setup')}
         <span aria-hidden="true">→</span>
       </button>
 

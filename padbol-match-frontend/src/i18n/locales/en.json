@@ -1320,6 +1320,12 @@
       "listaEsperaEmpty": "No players on the waitlist for this filter.",
       "listaEsperaLoadError": "Could not load the waitlist",
       "paymentSettings": "Payment settings",
+      "guidedSetup": {
+        "eyebrow": "CHIVI OPERATIONS",
+        "title": "Set up your venue without getting lost in forms",
+        "intro": "Chivi organizes your setup: venue details, first court, hours and prices. At the end, you review a summary and only then are the real changes saved.",
+        "start": "Start guided setup"
+      },
       "images": "Images",
       "logoColorSaved": "✅ Logo color saved",
       "venueUpdated": "✅ Venue updated",

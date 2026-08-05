@@ -1256,6 +1256,17 @@ const PC_SEDE_SMART_RULE_LABELS = {
   logro_desbloqueado: 'PadCoins por logro desbloqueado',
 };
 
+const PC_SEDE_SMART_RULE_EN_LABELS = {
+  limite_diario_jugador: 'Daily limit per player',
+  limite_mensual_jugador: 'Monthly limit per player',
+  cancelacion_tarde: 'Late cancellation penalty',
+  no_show: 'No-show penalty',
+  porcentaje_devolucion_reserva: 'Booking refund percentage',
+  padcoins_por_usd_equivalente: 'PadCoins per USD equivalent',
+  modo_calculo_reserva: 'Booking calculation mode',
+  logro_desbloqueado: 'PadCoins per unlocked achievement',
+};
+
 function isPcSedeSmartRuleText(key) {
   return String(key || '').trim() === 'modo_calculo_reserva';
 }
@@ -15283,7 +15294,10 @@ export default function AdminDashboard({
                             return (
                               <tr key={key} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, verticalAlign: 'top' }}>
-                                  {PC_SEDE_SMART_RULE_LABELS[key] || padcoinsConfigKeyLabel(key)}
+                                  {t(
+                                    `admin.padcoins.smartRules.${key}`,
+                                    PC_SEDE_SMART_RULE_EN_LABELS[key] || PC_SEDE_SMART_RULE_LABELS[key] || padcoinsConfigKeyLabel(key),
+                                  )}
                                 </td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
                                   {globalVal}
@@ -19743,8 +19757,7 @@ export default function AdminDashboard({
             </h3>
             <div className="admin-mi-sede-theme-panel">
               <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Estos precios son los que usa el sistema para calcular reservas y pagos. Si definís un precio específico por
-                disciplina, tiene prioridad sobre el precio base.
+                {t('admin.sedes.durationPricesIntro', 'These prices are used to calculate bookings and payments. A sport-specific price takes priority over the base price.')}
               </p>
               <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 {t('admin.sedes.pricesByDurationCurrency', { currency: miSedeForm.moneda || 'ARS' })}
@@ -19755,7 +19768,7 @@ export default function AdminDashboard({
                 style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}
               >
                 <label style={{ flexShrink: 0, fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', minWidth: '140px' }}>
-                  Disciplina
+                  {t('admin.sedes.sport', 'Sport')}
                 </label>
                 <select
                   value={miSedePreciosDeporte}
@@ -19779,10 +19792,10 @@ export default function AdminDashboard({
                 </select>
               </div>
               <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Base aplica cuando no hay precio específico para una disciplina.
+                {t('admin.sedes.durationPricesBaseHint', 'Base applies when there is no sport-specific price.')}
               </p>
               <p style={{ margin: '0 0 16px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                En esta etapa solo se administran turnos de 60, 90 y 120 minutos.
+                {t('admin.sedes.durationPricesDurationsHint', 'At this stage, only 60, 90 and 120 minute slots are managed.')}
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
@@ -19801,7 +19814,7 @@ export default function AdminDashboard({
                     fontSize: '13px',
                   }}
                 >
-                  {miSedeDuracionesLoading ? t('admin.common.loadingEllipsis') : 'Recargar'}
+                  {miSedeDuracionesLoading ? t('admin.common.loadingEllipsis') : t('admin.sedes.reload', 'Reload')}
                 </button>
                 {miSedeDuracionesMsg ? (
                   <span
@@ -19889,7 +19902,7 @@ export default function AdminDashboard({
                               color: dr.activo ? '#166534' : '#64748b',
                             }}
                           >
-                            {dr.activo ? 'Activa' : 'Inactiva'}
+                            {dr.activo ? t('admin.sedes.active', 'Active') : t('admin.sedes.inactive', 'Inactive')}
                           </span>
                           <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                             {deporteLabelMiSedePrecios(row.deporte)}
@@ -19903,7 +19916,7 @@ export default function AdminDashboard({
                         ) : null}
                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
                           <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                            Precio ({mon})
+                            {t('admin.sedes.price', 'Price')} ({mon})
                           </label>
                           {esEstandar ? (
                             <input
@@ -19968,7 +19981,7 @@ export default function AdminDashboard({
                                 }))
                               }
                             />
-                            Activa para reservas
+                            {t('admin.sedes.activeForBookings', 'Active for bookings')}
                           </label>
                           <button
                             type="button"
@@ -20005,7 +20018,7 @@ export default function AdminDashboard({
                               cursor: miSedeDuracionEliminandoId === row.id ? 'not-allowed' : 'pointer',
                             }}
                           >
-                            {miSedeDuracionEliminandoId === row.id ? t('admin.metricas.saving') : 'Quitar'}
+                            {miSedeDuracionEliminandoId === row.id ? t('admin.metricas.saving') : t('admin.sedes.remove', 'Remove')}
                           </button>
                         </div>
                       </div>
@@ -21052,7 +21065,7 @@ export default function AdminDashboard({
 
                 <hr style={{ border: 0, borderTop: '1px solid var(--border)', margin: '18px 0' }} />
                 <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                  Método de cobro para reservas y torneos
+                  {t('admin.sedes.paymentMethodDescription', 'Payment method for bookings and tournaments')}
                 </label>
                 <select
                   className="admin-mi-sede-theme-input"
@@ -21069,18 +21082,18 @@ export default function AdminDashboard({
                 >
                   <option value="mercadopago">{t('admin.sedes.paymentMercadoPago')}</option>
                   <option value="stripe">Stripe</option>
-                  <option value="manual">Manual (transferencia u otras instrucciones)</option>
-                  <option value="efectivo">Efectivo en sede (sin pasarela ni fee 3%)</option>
+                  <option value="manual">{t('admin.sedes.paymentManual', 'Manual (bank transfer or other instructions)')}</option>
+                  <option value="efectivo">{t('admin.sedes.paymentCash', 'Cash at venue (no gateway or 3% fee)')}</option>
                 </select>
                 {String(miSedeForm.metodo_pago || '') === 'efectivo' ? (
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 12px', fontSize: '12px', lineHeight: 1.45 }}>
-                    Las reservas quedan pendientes de cobro en el club hasta que confirmes el pago recibido.
+                    {t('admin.sedes.paymentCashHint', 'Bookings remain pending at the venue until you confirm receipt of payment.')}
                   </p>
                 ) : null}
                 {String(miSedeForm.metodo_pago || '') === 'manual' ? (
                   <>
                     <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                      Instrucciones para el jugador
+                      {t('admin.sedes.paymentInstructions', 'Instructions for the player')}
                     </label>
                     <textarea
                       className="admin-mi-sede-theme-input"
