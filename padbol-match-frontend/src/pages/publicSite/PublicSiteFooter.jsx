@@ -29,8 +29,7 @@ export default function PublicSiteFooter() {
               href="https://padbol.com"
               aria-label="Visitar Padbol"
             >
-              <span className="public-site-footer__padbol-mark" aria-hidden="true"><i /><i /><i /></span>
-              <span>PADBOL</span>
+              <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
             </a>
             <p className="public-site-footer__product-of">Un producto de Padbol.</p>
             <p className="public-site-footer__developed-by">{text('publicSite.footer.developedBy')}</p>

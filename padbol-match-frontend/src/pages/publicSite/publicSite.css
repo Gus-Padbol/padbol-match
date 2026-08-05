@@ -2522,26 +2522,21 @@ html.public-site-active #root {
 }
 
 .public-site-footer__padbol-lockup {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
+  display: inline-block;
+  width: min(230px, 100%);
   margin-top: 0;
-  color: #fff;
-  font-size: 1.12rem;
-  font-weight: 900;
-  letter-spacing: .22em;
   text-decoration: none;
-  transition: color .2s ease, transform .2s ease;
+  transition: transform .2s ease;
 }
 
 .public-site-footer__padbol-lockup:hover,
-.public-site-footer__padbol-lockup:focus-visible { color: #ef233c; transform: translateX(2px); }
+.public-site-footer__padbol-lockup:focus-visible { transform: translateX(2px); }
 
-.public-site-footer__padbol-mark { position: relative; display: inline-block; width: 47px; height: 22px; }
-.public-site-footer__padbol-mark i { position: absolute; display: block; height: 7px; border-radius: 99px; transform: skewX(33deg); }
-.public-site-footer__padbol-mark i:nth-child(1) { left: 0; top: 1px; width: 22px; background: #fff; }
-.public-site-footer__padbol-mark i:nth-child(2) { left: 19px; top: 8px; width: 10px; background: #ef233c; }
-.public-site-footer__padbol-mark i:nth-child(3) { right: 0; bottom: 0; width: 22px; background: #fff; }
+.public-site-footer__padbol-lockup img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
 .public-site-footer__product-of {
   margin-top: 7px !important;
