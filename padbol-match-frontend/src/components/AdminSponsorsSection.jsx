@@ -372,8 +372,11 @@ export default function AdminSponsorsSection({
       return;
     }
 
-    const scope = String(form.scope || 'global').toLowerCase();
-    const sedeId = scope === 'sede' && form.sede_id ? parseInt(String(form.sede_id), 10) : null;
+    // Un administrador de sede solo puede gestionar sus propios spots. Además
+    // de la política de base de datos, fijamos el alcance en la interfaz para
+    // que no intente crear un sponsor global, nacional o de otra sede.
+    const scope = venueScopeId ? 'sede' : String(form.scope || 'global').toLowerCase();
+    const sedeId = venueScopeId || (scope === 'sede' && form.sede_id ? parseInt(String(form.sede_id), 10) : null);
     const torneoId = scope === 'torneo' && form.torneo_id ? parseInt(String(form.torneo_id), 10) : null;
     const pais = scope === 'nacional' ? String(form.pais || '').trim() : null;
 
@@ -863,28 +866,39 @@ export default function AdminSponsorsSection({
           ))}
         </div>
 
-        <label style={labelStyle}>Scope</label>
-        <select
-          style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
-          value={form.scope}
-          onChange={(e) => {
-            const v = e.target.value;
-            setForm((p) => ({ ...p, scope: v }));
-            setFieldErrors((fe) => {
-              const n = { ...fe };
-              delete n.sede_id;
-              delete n.torneo_id;
-              delete n.pais;
-              return n;
-            });
-          }}
-        >
-          {SCOPE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        {venueScopeId ? (
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>{t('admin.sponsors.scopeVenue')}</label>
+            <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: 14, fontWeight: 700 }}>
+              {sedesOpts.find((s) => Number(s.id) === venueScopeId)?.nombre || 'Tu sede'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <label style={labelStyle}>Alcance</label>
+            <select
+              style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
+              value={form.scope}
+              onChange={(e) => {
+                const v = e.target.value;
+                setForm((p) => ({ ...p, scope: v }));
+                setFieldErrors((fe) => {
+                  const n = { ...fe };
+                  delete n.sede_id;
+                  delete n.torneo_id;
+                  delete n.pais;
+                  return n;
+                });
+              }}
+            >
+              {SCOPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
 
         <label style={labelStyle}>Formato de visualización</label>
         <select
@@ -899,7 +913,7 @@ export default function AdminSponsorsSection({
           ))}
         </select>
 
-        {form.scope === 'sede' ? (
+        {!venueScopeId && form.scope === 'sede' ? (
           <div ref={sedeRef} style={{ marginBottom: 12 }}>
             <label style={labelStyle}>Sede</label>
             <select

@@ -8754,7 +8754,7 @@ export default function AdminDashboard({
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           // Mensaje controlado: no ecoar detalles internos ni el request.
-          setMiSedeMsg(`⚠️ ${t('admin.sedes.pagosErrorGuardar', { defaultValue: 'No se pudo guardar la configuración de pagos. Reintentá en unos segundos.' })}`);
+          setMiSedeMsg(t('admin.sedes.pagosErrorGuardar', { defaultValue: 'No se pudo guardar la configuración de pagos. Intenta de nuevo en unos segundos.' }));
           setTimeout(() => setMiSedeMsg(''), 5000);
           return false;
         }
@@ -8777,7 +8777,7 @@ export default function AdminDashboard({
         return true;
       } catch {
         // Error de red: conservar lo escrito para reintentar; nunca loguear la credencial.
-        setMiSedeMsg(`⚠️ ${t('admin.sedes.pagosErrorGuardar', { defaultValue: 'No se pudo guardar la configuración de pagos. Reintentá en unos segundos.' })}`);
+        setMiSedeMsg(t('admin.sedes.pagosErrorGuardar', { defaultValue: 'No se pudo guardar la configuración de pagos. Intenta de nuevo en unos segundos.' }));
         setTimeout(() => setMiSedeMsg(''), 5000);
         return false;
       } finally {
@@ -20793,7 +20793,7 @@ export default function AdminDashboard({
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>{t('admin.sedes.paymentConfigTitle')}</h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '520px' }}>
                 <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 16px', fontSize: '13px', lineHeight: 1.5 }}>
-                  {t('admin.sedes.paymentAccountsHint', 'Each venue charges through its own account. Mercado Pago uses your MP app Access Token; Stripe uses the Account ID (acct_…) for international accounts.')}
+                  {t('admin.sedes.paymentAccountsHint', 'Cada sede cobra mediante su propia cuenta. Mercado Pago usa el Access Token de tu aplicación; Stripe usa el ID de cuenta (acct_…) para cobros internacionales.')}
                 </p>
                 <div
                   style={{
@@ -20835,13 +20835,13 @@ export default function AdminDashboard({
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {pagosMpPanelAbierto ? t('admin.common.hide', 'Hide') : t('admin.sedes.connectMercadoPago', 'Connect Mercado Pago')}
+                    {pagosMpPanelAbierto ? t('admin.common.hide', 'Ocultar') : t('admin.sedes.connectMercadoPago', 'Conectar Mercado Pago')}
                   </button>
                 </div>
                 {pagosMpPanelAbierto ? (
                   <div style={{ marginBottom: '18px', paddingLeft: '4px' }}>
                     <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                      {t('admin.sedes.mpAccessTokenLabel', 'Mercado Pago Access Token')}
+                      {t('admin.sedes.mpAccessTokenLabel', 'Access Token de Mercado Pago')}
                     </label>
                     <div style={{ position: 'relative', marginBottom: '14px' }}>
                       <input
@@ -21000,7 +21000,7 @@ export default function AdminDashboard({
                       color: 'var(--text-primary)',
                     }}
                   >
-                    {pagosStripePanelAbierto ? t('admin.common.hide', 'Hide') : t('admin.sedes.connectStripe', 'Connect Stripe')}
+                    {pagosStripePanelAbierto ? t('admin.common.hide', 'Ocultar') : t('admin.sedes.connectStripe', 'Conectar Stripe')}
                   </button>
                 </div>
                 {pagosStripePanelAbierto ? (
@@ -21055,7 +21055,7 @@ export default function AdminDashboard({
                               : 'pointer',
                         }}
                       >
-                        {pagosParcialSaving ? t('admin.metricas.saving') : t('admin.sedes.saveStripeAccount', 'Save Stripe Account ID')}
+                        {pagosParcialSaving ? t('admin.metricas.saving') : t('admin.sedes.saveStripeAccount', 'Guardar ID de cuenta Stripe')}
                       </button>
                       <button
                         type="button"
@@ -21072,18 +21072,18 @@ export default function AdminDashboard({
                           cursor: stripeOnboardingLoading ? 'not-allowed' : 'pointer',
                         }}
                       >
-                        {stripeOnboardingLoading ? t('admin.sedes.openingStripe', 'Opening Stripe…') : t('admin.sedes.stripeOnboardingAlternative', 'Stripe onboarding (alternative)')}
+                        {stripeOnboardingLoading ? t('admin.sedes.openingStripe', 'Abriendo Stripe…') : t('admin.sedes.stripeOnboardingAlternative', 'Configurar Stripe')}
                       </button>
                     </div>
                     <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                      {t('admin.sedes.stripeAccountHintBefore', 'You can paste the')} <code style={{ fontSize: '11px' }}>{t('admin.sedes.stripeAccountEllipsisPh')}</code> {t('admin.sedes.stripeAccountHintAfter', 'manually or use onboarding; when you return, confirm that the ID was saved.')}
+                      {t('admin.sedes.stripeAccountHintBefore', 'Puedes pegar el')} <code style={{ fontSize: '11px' }}>{t('admin.sedes.stripeAccountEllipsisPh')}</code> {t('admin.sedes.stripeAccountHintAfter', 'manualmente o configurarlo con Stripe. Al volver, confirma que el ID se haya guardado.')}
                     </p>
                   </div>
                 ) : null}
 
                 <hr style={{ border: 0, borderTop: '1px solid var(--border)', margin: '18px 0' }} />
                 <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                  {t('admin.sedes.paymentMethodDescription', 'Payment method for bookings and tournaments')}
+                  {t('admin.sedes.paymentMethodDescription', 'Método de pago para reservas y torneos')}
                 </label>
                 <select
                   className="admin-mi-sede-theme-input"
@@ -21100,18 +21100,18 @@ export default function AdminDashboard({
                 >
                   <option value="mercadopago">{t('admin.sedes.paymentMercadoPago')}</option>
                   <option value="stripe">Stripe</option>
-                  <option value="manual">{t('admin.sedes.paymentManual', 'Manual (bank transfer or other instructions)')}</option>
-                  <option value="efectivo">{t('admin.sedes.paymentCash', 'Cash at venue (no gateway or 3% fee)')}</option>
+                  <option value="manual">{t('admin.sedes.paymentManual', 'Manual (transferencia u otras instrucciones)')}</option>
+                  <option value="efectivo">{t('admin.sedes.paymentCash', 'Efectivo en la sede (sin pasarela ni comisión)')}</option>
                 </select>
                 {String(miSedeForm.metodo_pago || '') === 'efectivo' ? (
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 12px', fontSize: '12px', lineHeight: 1.45 }}>
-                    {t('admin.sedes.paymentCashHint', 'Bookings remain pending at the venue until you confirm receipt of payment.')}
+                    {t('admin.sedes.paymentCashHint', 'Las reservas quedan pendientes hasta que confirmes la recepción del pago en la sede.')}
                   </p>
                 ) : null}
                 {String(miSedeForm.metodo_pago || '') === 'manual' ? (
                   <>
                     <label className="admin-mi-sede-field-label" style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                      {t('admin.sedes.paymentInstructions', 'Instructions for the player')}
+                      {t('admin.sedes.paymentInstructions', 'Instrucciones para el jugador')}
                     </label>
                     <textarea
                       className="admin-mi-sede-theme-input"
