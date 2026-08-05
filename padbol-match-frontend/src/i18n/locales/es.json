@@ -2584,7 +2584,8 @@
     "footer": {
       "aria": "Navegación del pie",
       "tagline": "Juego, comunidad y gestión.",
-      "developedBy": "Desarrollado por Padbol Match Team · by Padbol Internacional.",
+      "developedBy": "Desarrollado por Padbol Match Team.",
+      "byPadbolInternational": "by Padbol Internacional.",
       "platform": "Plataforma",
       "players": "Para jugadores",
       "venues": "Para sedes",

@@ -2550,7 +2550,7 @@ html.public-site-active #root {
 
 .public-site-footer__product-of a {
   display: inline-flex;
-  width: 54px;
+  width: 112px;
 }
 
 .public-site-footer__product-of img {
@@ -2560,9 +2560,18 @@ html.public-site-active #root {
 }
 
 .public-site-footer__developed-by {
+  margin-top: 12px !important;
   color: #fff !important;
   font-size: 0.82rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.public-site-footer__by-padbol {
+  margin-top: 3px !important;
+  color: #8fa0b8 !important;
+  font-size: 0.76rem;
+  font-weight: 650;
   letter-spacing: 0.04em;
 }
 

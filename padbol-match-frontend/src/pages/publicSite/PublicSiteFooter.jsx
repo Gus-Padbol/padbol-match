@@ -38,6 +38,7 @@ export default function PublicSiteFooter() {
               </a>
             </p>
             <p className="public-site-footer__developed-by">{text('publicSite.footer.developedBy')}</p>
+            <p className="public-site-footer__by-padbol">{text('publicSite.footer.byPadbolInternational')}</p>
             <Link to="/contacto" className="public-site-footer__contact">
               ¿Necesitás ayuda? Contactanos <span aria-hidden="true">→</span>
             </Link>
