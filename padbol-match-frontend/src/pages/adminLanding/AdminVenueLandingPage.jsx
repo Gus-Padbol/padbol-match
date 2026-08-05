@@ -76,6 +76,12 @@ export default function AdminVenueLandingPage() {
               alt="Padbol Match"
             />
           </Link>
+          <nav className="admin-landing__site-nav" aria-label="Navegación principal de Padbol Match">
+            <Link to="/plataforma">Inicio</Link>
+            <Link to="/plataforma#jugadores">Para jugadores</Link>
+            <a href="#inicio" aria-current="page">Para sedes</a>
+            <Link to="/contacto">Contacto</Link>
+          </nav>
           <div className="admin-landing__header-actions">
             <a href="#recorrido" className="admin-landing__text-link">Cómo funciona</a>
             <Link to={ADMIN_PANEL_ACCESS_PATH} className="admin-landing__login">Ingresar al panel</Link>
@@ -84,7 +90,7 @@ export default function AdminVenueLandingPage() {
       </header>
 
       <main>
-        <section className="admin-landing__hero">
+        <section className="admin-landing__hero" id="inicio">
           <div className="admin-landing__shell admin-landing__hero-grid">
             <div>
               <p className="admin-landing__eyebrow">PADBOL MATCH / PARA SEDES</p>
