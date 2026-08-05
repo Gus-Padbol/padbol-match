@@ -5,7 +5,7 @@ import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPartidoPreview';
-import { AdminEditIcon, AdminGridIcon, AdminLicenseIcon, AdminPadcoinsIcon, AdminTrophyIcon } from '../components/admin/AdminUiIcons';
+import { AdminEditIcon, AdminGridIcon, AdminLicenseIcon, AdminPadcoinsIcon, AdminSaveIcon, AdminTrophyIcon } from '../components/admin/AdminUiIcons';
 import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
@@ -13756,8 +13756,9 @@ export default function AdminDashboard({
                             </td>
                             <td style={{ padding: '6px 8px' }}>
                               <div style={{ display: 'flex', gap: '4px' }}>
-                                <button type="button" onClick={() => guardarEdicion(r.id)} style={BTN({ background: '#E11B22' })}>
-                                  ✅ Guardar
+                                <button type="button" onClick={() => guardarEdicion(r.id)} style={{ ...BTN({ background: '#E11B22' }), display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                  <AdminSaveIcon size={14} />
+                                  {t('general.save')}
                                 </button>
                                 <button type="button" onClick={cancelarEdicion} style={BTN({ background: '#999' })}>
                                   ✕
@@ -21141,12 +21142,15 @@ export default function AdminDashboard({
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '7px',
                     cursor: pagosParcialSaving ? 'not-allowed' : 'pointer',
                     fontWeight: 'bold',
                     fontSize: '13px',
                   }}
                 >
-                  {pagosParcialSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.savePaymentMethodBtn')}
+                  {pagosParcialSaving ? t('admin.metricas.savingEllipsis') : <><AdminSaveIcon size={15} />{t('admin.sedes.savePaymentMethodBtn')}</>}
                 </button>
 
                 <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>

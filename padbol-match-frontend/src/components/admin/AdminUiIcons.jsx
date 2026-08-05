@@ -19,6 +19,15 @@ export function AdminEditIcon({ size = 16 }) {
   );
 }
 
+export function AdminSaveIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>
+      <path d="M5 3h11l3 3v15H5Z" />
+      <path d="M8 3v6h8V3M8 21v-7h8v7" />
+    </svg>
+  );
+}
+
 export function AdminLicenseIcon({ size = 15 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>

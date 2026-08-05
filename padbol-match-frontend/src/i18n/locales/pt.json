@@ -112,7 +112,7 @@
     "adminPanel": "painel de administração",
     "admin": {
       "resumen": "Resumo",
-      "torneos": "Torneios",
+      "torneos": "Torneios e competições",
       "reservas": "Reservas",
       "validaciones": "Validações",
       "mi_sede": "minha sede",
@@ -617,7 +617,7 @@
       "solicitudes": "Solicitações",
       "personalizarHub": "Personalizar Hub",
       "sponsors": "Patrocinadores / Publicidade",
-      "torneos": "Torneios",
+      "torneos": "Torneios e competições",
       "reservas": "Reservas",
       "validaciones": "Validações",
       "miSede": "Minha Sede",

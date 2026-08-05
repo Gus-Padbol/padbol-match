@@ -112,7 +112,7 @@
     "adminPanel": "pannello di amministrazione",
     "admin": {
       "resumen": "Riepilogo",
-      "torneos": "Tornei",
+      "torneos": "Tornei e competizioni",
       "reservas": "Prenotazioni",
       "validaciones": "Convalide",
       "mi_sede": "la mia sede",
@@ -617,7 +617,7 @@
       "solicitudes": "Richieste",
       "personalizarHub": "Personalizza Hub",
       "sponsors": "Sponsor/Pubblicità",
-      "torneos": "Tornei",
+      "torneos": "Tornei e competizioni",
       "reservas": "Prenotazioni",
       "validaciones": "Validazioni",
       "miSede": "Il mio quartier generale",

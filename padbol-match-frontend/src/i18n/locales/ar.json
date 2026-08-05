@@ -112,7 +112,7 @@
     "adminPanel": "لوحة الإدارة",
     "admin": {
       "resumen": "ملخص",
-      "torneos": "البطولات",
+      "torneos": "البطولات والمسابقات",
       "reservas": "التحفظات",
       "validaciones": "التحقق من الصحة",
       "mi_sede": "مقري",
@@ -646,7 +646,7 @@
       "solicitudes": "الطلبات",
       "personalizarHub": "تخصيص المحور",
       "sponsors": "الرعاة / الإعلان",
-      "torneos": "البطولات",
+      "torneos": "البطولات والمسابقات",
       "reservas": "الحجز",
       "validaciones": "التحقق من الصحة",
       "miSede": "مقري",

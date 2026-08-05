@@ -57,6 +57,9 @@ describe('QA English report — Admin panel', () => {
     expect(guidedSetupSource).toContain("t('admin.sedes.guidedSetup.title'");
     expect(dashboardSource).toContain("t('admin.sedes.paymentMethodDescription'");
     expect(dashboardSource).toContain('`admin.padcoins.smartRules.${key}`');
+    expect(dashboardSource).toContain('<AdminSaveIcon size={15} />');
+    expect(en.admin.tabs.torneos).toBe('Tournaments & Competition');
+    expect(en.admin.sedes.savePaymentMethodBtn).toBe('Save method and instructions');
   });
 
   it('translates every PadCoins key currently rendered by the admin modules', () => {
