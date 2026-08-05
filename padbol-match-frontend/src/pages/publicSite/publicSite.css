@@ -2882,8 +2882,10 @@ html.public-site-active #root {
 .ps-section--voice .ps-section__eyebrow { color: var(--ps-accent); }
 .ps-voice-layout { display: grid; gap: 34px; align-items: center; }
 .ps-voice-cards { display: grid; gap: 10px; margin-top: 16px; }
-.ps-voice-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; padding: 16px 18px; border: 1px solid var(--ps-border); border-radius: 14px; background: rgba(248, 250, 252, 0.025); }
-.ps-voice-card__number { color: #fb7185; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; }
+.ps-voice-card { position: relative; overflow: hidden; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 14px; align-items: start; padding: 12px 14px; border: 1px solid rgba(225, 27, 34, 0.2); border-radius: 14px; background: linear-gradient(110deg, rgba(225, 27, 34, 0.085), rgba(14, 20, 33, 0.72) 52%, rgba(255, 255, 255, 0.025)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 22px rgba(0, 0, 0, 0.16); transition: transform 220ms var(--ps-ease), border-color 220ms ease, box-shadow 220ms ease; }
+.ps-voice-card::after { position: absolute; inset: 0 auto 0 0; width: 3px; border-radius: 3px; background: var(--ps-accent); box-shadow: 0 0 14px rgba(225, 27, 34, 0.78); content: ''; }
+.ps-voice-card:hover { transform: translateX(5px); border-color: rgba(225, 27, 34, 0.55); box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 20px rgba(225, 27, 34, 0.1); }
+.ps-voice-card__number { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(225, 27, 34, 0.6); border-radius: 50%; background: rgba(225, 27, 34, 0.1); color: #ff4b53; font-family: var(--ps-font-display); font-size: 0.86rem; font-weight: 600; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; text-shadow: 0 0 13px rgba(225, 27, 34, 0.52); box-shadow: 0 0 18px rgba(225, 27, 34, 0.16); }
 .ps-voice-card h3 { margin: 0 0 4px; font-size: 1rem; }
 .ps-voice-card p, .ps-voice-note { margin: 0; color: var(--ps-text-muted); line-height: 1.5; }
 .ps-voice-note { margin-top: 14px; font-size: 0.84rem; }
@@ -3048,33 +3050,18 @@ html.public-site-active #root {
 
 .ps-flow-steps li {
   position: relative;
-  overflow: hidden;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 14px;
   align-items: start;
-  padding: 12px 14px;
-  border: 1px solid rgba(225, 27, 34, 0.2);
-  border-radius: 14px;
-  background: linear-gradient(110deg, rgba(225, 27, 34, 0.085), rgba(14, 20, 33, 0.72) 52%, rgba(255, 255, 255, 0.025));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 22px rgba(0, 0, 0, 0.16);
-  transition: transform 220ms var(--ps-ease), border-color 220ms ease, box-shadow 220ms ease;
-}
-
-.ps-flow-steps li::after {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--ps-accent);
-  box-shadow: 0 0 14px rgba(225, 27, 34, 0.78);
-  content: '';
+  padding: 10px 12px 10px 0;
+  border-radius: 12px;
+  transition: background-color 220ms var(--ps-ease), transform 220ms var(--ps-ease);
 }
 
 .ps-flow-steps li:hover {
-  transform: translateX(5px);
-  border-color: rgba(225, 27, 34, 0.55);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 20px rgba(225, 27, 34, 0.1);
+  transform: translateX(4px);
+  background: linear-gradient(90deg, rgba(225, 27, 34, 0.09), transparent 86%);
 }
 
 .ps-flow-steps__num {
@@ -3112,7 +3099,30 @@ html.public-site-active #root {
 }
 
 .ps-flow-steps--scoreboard li {
-  /* Comparte la misma tarjeta operativa que el recorrido de partidos abiertos. */
+  position: relative;
+  overflow: hidden;
+  padding: 12px 14px;
+  border: 1px solid rgba(225, 27, 34, 0.2);
+  border-radius: 14px;
+  background: linear-gradient(110deg, rgba(225, 27, 34, 0.085), rgba(14, 20, 33, 0.72) 52%, rgba(255, 255, 255, 0.025));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 22px rgba(0, 0, 0, 0.16);
+  transition: transform 220ms var(--ps-ease), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.ps-flow-steps--scoreboard li::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--ps-accent);
+  box-shadow: 0 0 14px rgba(225, 27, 34, 0.78);
+  content: '';
+}
+
+.ps-flow-steps--scoreboard li:hover {
+  transform: translateX(5px);
+  border-color: rgba(225, 27, 34, 0.55);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 20px rgba(225, 27, 34, 0.1);
 }
 
 .ps-flow-steps--scoreboard .ps-flow-steps__num {
