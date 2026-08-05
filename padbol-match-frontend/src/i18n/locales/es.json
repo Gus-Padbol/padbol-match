@@ -2575,10 +2575,10 @@
       "webApp": "¿Prefieres usar la web? Ábrela desde tu computadora"
     },
     "contact": {
-      "title": "Empieza hoy",
-      "text": "Suma tu sede, organiza tu comunidad o empieza a jugar.",
+      "title": "Suma tu sede",
+      "text": "Organiza tu comunidad o empieza a jugar hoy.",
       "play": "Quiero jugar",
-      "venue": "Quiero incorporar Padbol Match",
+      "venue": "Suma tu sede",
       "login": "Ingresa a Padbol Match"
     },
     "footer": {
