@@ -6,6 +6,12 @@ ALTER TABLE public.torneos
 
 COMMENT ON COLUMN public.torneos.formato_equipo IS 'Modalidad: singles | dobles | equipo_5 | equipo_7.';
 
+-- Conserva los torneos históricos creados con la etiqueta anterior "Dupla"
+-- antes de restringir la columna a los valores canónicos de la aplicación.
+UPDATE public.torneos
+SET formato_equipo = 'dobles'
+WHERE lower(trim(formato_equipo)) = 'dupla';
+
 ALTER TABLE public.torneos DROP CONSTRAINT IF EXISTS torneos_formato_equipo_chk;
 ALTER TABLE public.torneos
   ADD CONSTRAINT torneos_formato_equipo_chk CHECK (

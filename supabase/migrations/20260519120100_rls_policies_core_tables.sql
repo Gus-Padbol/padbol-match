@@ -280,10 +280,24 @@ BEGIN
     ALTER TABLE public.creditos ENABLE ROW LEVEL SECURITY;
     EXECUTE 'DROP POLICY IF EXISTS "Usuario ve sus créditos" ON public.creditos';
     EXECUTE 'DROP POLICY IF EXISTS "Admin gestiona créditos" ON public.creditos';
-    EXECUTE $p$
-      CREATE POLICY "Usuario ve sus créditos"
-      ON public.creditos FOR SELECT USING (auth.uid() = user_id)
-    $p$;
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'creditos' AND column_name = 'user_id'
+    ) THEN
+      EXECUTE $p$
+        CREATE POLICY "Usuario ve sus créditos"
+        ON public.creditos FOR SELECT USING (auth.uid() = user_id)
+      $p$;
+    ELSIF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'creditos' AND column_name = 'email'
+    ) THEN
+      EXECUTE $p$
+        CREATE POLICY "Usuario ve sus créditos"
+        ON public.creditos FOR SELECT
+        USING (lower(email) = lower(COALESCE(auth.jwt() ->> 'email', '')))
+      $p$;
+    END IF;
     EXECUTE $p$
       CREATE POLICY "Admin gestiona créditos"
       ON public.creditos
