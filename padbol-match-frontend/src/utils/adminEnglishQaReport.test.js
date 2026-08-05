@@ -63,6 +63,8 @@ describe('QA English report — Admin panel', () => {
     expect(en.admin.tabs.torneos).toBe('Tournaments & Competition');
     expect(en.admin.sedes.savePaymentMethodBtn).toBe('Save method and instructions');
     expect(dashboardSource).toContain("t('admin.sedes.paymentAccountsHint'");
+    expect(dashboardSource).toContain("t('admin.sedes.baseAllDisciplines', 'Base / All disciplines')");
+    expect(dashboardSource).toContain("t('admin.sedes.otherCustom', 'Other / Custom')");
   });
 
   it('translates every PadCoins key currently rendered by the admin modules', () => {

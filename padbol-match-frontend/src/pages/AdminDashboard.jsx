@@ -19801,7 +19801,11 @@ export default function AdminDashboard({
                 >
                   {MI_SEDE_PRECIOS_DEPORTE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
-                      {o.label}
+                      {o.value === '__base__'
+                        ? t('admin.sedes.baseAllDisciplines', 'Base / All disciplines')
+                        : o.value === 'custom'
+                          ? t('admin.sedes.otherCustom', 'Other / Custom')
+                          : t(`torneos.deporte.${o.value}`, o.label)}
                     </option>
                   ))}
                 </select>
