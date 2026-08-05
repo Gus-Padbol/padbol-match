@@ -2572,14 +2572,14 @@
       "googlePlay": "Google Play",
       "storeSoon": "Aún no disponible en tiendas",
       "login": "Ingresar a Padbol Match",
-      "webApp": "¿Preferís usar la app web? Abrila desde tu computadora"
+      "webApp": "¿Prefieres usar la web? Ábrela desde tu computadora"
     },
     "contact": {
-      "title": "Empezá hoy",
-      "text": "Sumá tu sede, organizá tu comunidad o empezá a jugar.",
+      "title": "Empieza hoy",
+      "text": "Suma tu sede, organiza tu comunidad o empieza a jugar.",
       "play": "Quiero jugar",
       "venue": "Quiero incorporar Padbol Match",
-      "login": "Ingresar"
+      "login": "Ingresa a Padbol Match"
     },
     "footer": {
       "aria": "Navegación del pie",
