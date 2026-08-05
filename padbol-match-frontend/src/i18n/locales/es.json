@@ -2718,11 +2718,11 @@
       "kicker": "Próximamente · La visión del marcador",
       "accent": "Árbitro de visión inteligente",
       "title": "Árbitro de visión inteligente: una mirada independiente para el juego.",
-      "text": "Estamos entrenando un árbitro de visión inteligente e independiente. Con tres cámaras, aprende a leer el juego y a marcar acciones según lo que ve, como lo haría un árbitro humano. Durante su evolución, jugadores y árbitros podrán supervisar sus decisiones.",
+      "text": "Estamos entrenando un árbitro de visión inteligente e independiente. Con tres o cuatro cámaras, aprende a leer el juego y a marcar acciones según lo que ve, como lo haría un árbitro humano. Durante su evolución, jugadores y árbitros podrán supervisar sus decisiones.",
       "videoAria": "Marcador de partido Padbol en funcionamiento",
       "caption": "Demostración de marcador conectado",
       "features": {
-        "scoreboard": { "title": "Visión de tres cámaras", "text": "Tres cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
+        "scoreboard": { "title": "Visión de cámaras", "text": "Las cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
         "referee": { "title": "Marcado independiente", "text": "La visión interpreta las jugadas y marca acciones a partir de lo que observa en tiempo real." },
         "traceability": { "title": "Entrenamiento supervisado", "text": "En sus primeras etapas, jugadores y árbitros podrán revisar decisiones para seguir entrenando el sistema." }
       },

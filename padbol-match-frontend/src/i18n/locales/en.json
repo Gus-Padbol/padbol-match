@@ -3041,11 +3041,11 @@
       "kicker": "Coming soon · The scoreboard vision",
       "accent": "Intelligent vision referee",
       "title": "Intelligent vision referee: an independent eye for the game.",
-      "text": "We are training an independent intelligent vision referee. With three cameras, it learns to read play and score actions based on what it sees, as a human referee would. As it evolves, players and referees can supervise its decisions.",
+      "text": "We are training an independent intelligent vision referee. With three or four cameras, it learns to read play and score actions based on what it sees, as a human referee would. As it evolves, players and referees can supervise its decisions.",
       "videoAria": "Padbol match scoreboard in action",
       "caption": "Connected scoreboard demonstration",
       "features": {
-        "scoreboard": { "title": "Three-camera vision", "text": "Three cameras can cover play from the angles required by each court." },
+        "scoreboard": { "title": "Camera vision", "text": "The cameras can cover play from the angles required by each court." },
         "referee": { "title": "Independent scoring", "text": "Vision interprets plays and scores actions from what it observes in real time." },
         "traceability": { "title": "Supervised training", "text": "In its first stages, players and referees can review decisions to keep training the system." }
       },
