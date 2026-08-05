@@ -414,7 +414,6 @@ function ScoreboardVideo({ text }) {
       >
         <source src={`${ASSET_ROOT}/marcador-inteligente.mp4`} type="video/mp4" />
       </video>
-      <figcaption>{text('publicSite.matchIntelligence.caption')}</figcaption>
     </figure>
   );
 }

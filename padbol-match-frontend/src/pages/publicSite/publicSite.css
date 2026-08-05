@@ -3399,7 +3399,7 @@ html.public-site-active #root {
 }
 
 .ps-scoreboard__visual {
-  --ps-scoreboard-media-width: min(320px, 100%);
+  --ps-scoreboard-media-width: min(420px, 100%);
   display: grid;
   gap: 18px;
 }
@@ -3415,35 +3415,13 @@ html.public-site-active #root {
   box-shadow: 0 26px 62px rgba(0, 0, 0, 0.46);
 }
 
-.ps-scoreboard__video::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 34%;
-  background: linear-gradient(transparent, rgba(6, 8, 13, 0.84));
-  content: '';
-  pointer-events: none;
-}
-
 .ps-scoreboard__video video {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-}
-
-.ps-scoreboard__video figcaption {
-  position: absolute;
-  z-index: 1;
-  right: 15px;
-  bottom: 14px;
-  left: 15px;
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  transform: scale(1.28);
+  transform-origin: center 58%;
 }
 
 .ps-sb__frame {
