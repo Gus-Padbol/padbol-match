@@ -3048,18 +3048,33 @@ html.public-site-active #root {
 
 .ps-flow-steps li {
   position: relative;
+  overflow: hidden;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 14px;
   align-items: start;
-  padding: 10px 12px 10px 0;
-  border-radius: 12px;
-  transition: background-color 220ms var(--ps-ease), transform 220ms var(--ps-ease);
+  padding: 12px 14px;
+  border: 1px solid rgba(225, 27, 34, 0.2);
+  border-radius: 14px;
+  background: linear-gradient(110deg, rgba(225, 27, 34, 0.085), rgba(14, 20, 33, 0.72) 52%, rgba(255, 255, 255, 0.025));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 22px rgba(0, 0, 0, 0.16);
+  transition: transform 220ms var(--ps-ease), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.ps-flow-steps li::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--ps-accent);
+  box-shadow: 0 0 14px rgba(225, 27, 34, 0.78);
+  content: '';
 }
 
 .ps-flow-steps li:hover {
-  transform: translateX(4px);
-  background: linear-gradient(90deg, rgba(225, 27, 34, 0.09), transparent 86%);
+  transform: translateX(5px);
+  border-color: rgba(225, 27, 34, 0.55);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 20px rgba(225, 27, 34, 0.1);
 }
 
 .ps-flow-steps__num {
@@ -3097,30 +3112,7 @@ html.public-site-active #root {
 }
 
 .ps-flow-steps--scoreboard li {
-  position: relative;
-  overflow: hidden;
-  padding: 12px 14px;
-  border: 1px solid rgba(225, 27, 34, 0.2);
-  border-radius: 14px;
-  background: linear-gradient(110deg, rgba(225, 27, 34, 0.085), rgba(14, 20, 33, 0.72) 52%, rgba(255, 255, 255, 0.025));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 22px rgba(0, 0, 0, 0.16);
-  transition: transform 220ms var(--ps-ease), border-color 220ms ease, box-shadow 220ms ease;
-}
-
-.ps-flow-steps--scoreboard li::after {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--ps-accent);
-  box-shadow: 0 0 14px rgba(225, 27, 34, 0.78);
-  content: '';
-}
-
-.ps-flow-steps--scoreboard li:hover {
-  transform: translateX(5px);
-  border-color: rgba(225, 27, 34, 0.55);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24), 0 0 20px rgba(225, 27, 34, 0.1);
+  /* Comparte la misma tarjeta operativa que el recorrido de partidos abiertos. */
 }
 
 .ps-flow-steps--scoreboard .ps-flow-steps__num {
