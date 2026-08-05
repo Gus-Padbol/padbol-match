@@ -47,7 +47,6 @@ function useDocumentMeta() {
 export default function AdminVenueLandingPage() {
   useDocumentMeta();
   const [activeModule, setActiveModule] = useState(null);
-  const [showSteps, setShowSteps] = useState(false);
 
   useEffect(() => {
     if (!activeModule) return undefined;
@@ -62,7 +61,6 @@ export default function AdminVenueLandingPage() {
   }, [activeModule]);
 
   const openModule = (module) => {
-    setShowSteps(false);
     setActiveModule(module);
   };
   return (
@@ -122,7 +120,14 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__intro">La guía está pensada para que una sede pueda arrancar simple, probar su circuito y activar cada módulo cuando le haga falta.</p>
             <div className="admin-landing__module-grid">
               {modules.map((module) => (
-                <button key={module.number} type="button" className="admin-landing__module-card" onClick={() => openModule(module)}>
+                <button
+                  key={module.number}
+                  type="button"
+                  className="admin-landing__module-card"
+                  onMouseEnter={() => openModule(module)}
+                  onFocus={() => openModule(module)}
+                  onClick={() => openModule(module)}
+                >
                   <span>{module.number}</span><h3>{module.title}</h3><p>{module.description}</p><b>Ver explicación y opciones <i>→</i></b>
                 </button>
               ))}
@@ -170,7 +175,7 @@ export default function AdminVenueLandingPage() {
               ))}
             </div>
             <div className="admin-landing__guide-actions">
-              <a href="/manual-administradores.pdf" className="admin-landing__secondary">Descargar guía PDF</a>
+              <p>La configuración guiada está disponible al activar tu sede.</p>
               <a href="#recorrido" className="admin-landing__text-link">Volver a los módulos operativos ↑</a>
             </div>
           </div>
@@ -190,21 +195,13 @@ export default function AdminVenueLandingPage() {
         <div className="admin-landing__modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveModule(null); }}>
           <section className="admin-landing__modal" role="dialog" aria-modal="true" aria-labelledby={`admin-module-${activeModule.number}`}>
             <button type="button" className="admin-landing__modal-close" onClick={() => setActiveModule(null)} aria-label="Cerrar explicación">×</button>
-            {!showSteps ? <>
-              <p className="admin-landing__eyebrow">MÓDULO {activeModule.number} / ADMINISTRACIÓN DE SEDE</p>
-              <h2 id={`admin-module-${activeModule.number}`}>{activeModule.title}</h2>
-              <p className="admin-landing__modal-copy">{activeModule.overview}</p>
-              <div className="admin-landing__modal-actions">
-                <button type="button" className="admin-landing__primary" onClick={() => setShowSteps(true)}>Ver paso a paso <span>→</span></button>
-                <a href="/manual-administradores.pdf" className="admin-landing__secondary">Descargar guía PDF</a>
-              </div>
-            </> : <>
-              <button type="button" className="admin-landing__modal-back" onClick={() => setShowSteps(false)}>← Volver al resumen</button>
-              <p className="admin-landing__eyebrow">MÓDULO {activeModule.number} / PASO A PASO</p>
-              <h2 id={`admin-module-${activeModule.number}`}>{activeModule.title}</h2>
-              <ol className="admin-landing__steps">{activeModule.steps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>)}</ol>
-              <div className="admin-landing__modal-actions"><a href="/manual-administradores.pdf" className="admin-landing__primary">Descargar guía PDF <span>↓</span></a></div>
-            </>}
+            <p className="admin-landing__eyebrow">MÓDULO {activeModule.number} / PARA SEDES</p>
+            <h2 id={`admin-module-${activeModule.number}`}>{activeModule.title}</h2>
+            <p className="admin-landing__modal-copy">{activeModule.overview}</p>
+            <div className="admin-landing__modal-actions">
+              <Link to="/unirse" className="admin-landing__primary">Ver planes <span>→</span></Link>
+              <Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link>
+            </div>
           </section>
         </div>
       )}
@@ -233,7 +230,7 @@ export default function AdminVenueLandingPage() {
               <div>
                 <p>RECURSOS</p>
                 <a href="#asistente">Configuración guiada con Chivi</a>
-                <a href="/manual-administradores.pdf">Guía para administradores</a>
+                <a href="#recorrido">Módulos para tu sede</a>
                 <Link to="/contacto">Soporte</Link>
               </div>
               <div>

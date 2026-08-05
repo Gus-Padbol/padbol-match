@@ -18,5 +18,8 @@ describe('navegación de la landing para sedes', () => {
 
   it('anticipa que cada módulo abre una explicación con sus opciones', () => {
     expect(page).toMatch(/Ver explicación y opciones/);
+    expect(page).toMatch(/onMouseEnter=\{\(\) => openModule\(module\)\}/);
+    expect(page).not.toMatch(/manual-administradores\.pdf/);
+    expect(page).not.toMatch(/Descargar guía PDF/);
   });
 });

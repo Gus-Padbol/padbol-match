@@ -492,6 +492,12 @@
   margin-top: 26px;
 }
 
+.admin-landing__guide-actions p {
+  margin: 0;
+  color: #aebbd0;
+  font-size: 14px;
+}
+
 @media (max-width: 600px) {
   .admin-landing__guide-actions {
     align-items: stretch;
