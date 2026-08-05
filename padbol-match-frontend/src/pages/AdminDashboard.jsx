@@ -12437,6 +12437,17 @@ export default function AdminDashboard({
       </div>}
 
       {activeTab === 'reservas' && <>
+        {(esAdminClub || isSuperAdmin) ? (
+          <section style={{ marginBottom: '18px', padding: '14px 16px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card)' }}>
+            <strong style={{ display: 'block', marginBottom: '5px' }}>{t('admin.reservas.configurationTitle', 'Booking configuration')}</strong>
+            <span style={{ display: 'block', marginBottom: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              {t('admin.reservas.configurationHint', 'Manage hours, prices and payment rules for your venue from one place.')}
+            </span>
+            <button type="button" onClick={() => { selectAdminTab('mi_sede'); selectMiSedeSection('horarios'); }} style={{ padding: '8px 12px', border: 'none', borderRadius: '8px', background: 'var(--accent)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+              {t('admin.reservas.openConfiguration', 'Open booking configuration')}
+            </button>
+          </section>
+        ) : null}
         <div style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
             {t('admin.reservas.bookingStatusLabel')}

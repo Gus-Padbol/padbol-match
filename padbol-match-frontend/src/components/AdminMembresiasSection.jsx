@@ -465,7 +465,14 @@ export default function AdminMembresiasSection({
   const savePlan = async () => {
     if (planSaving) return;
     const mode = planEditId ? 'update' : 'create';
-    const formWithSede = { ...planForm, sede_id: planForm.sede_id || effectiveSedeId };
+    const computedEnd = planForm.vigencia_desde
+      ? computeVencimientoFromPlan(`${planForm.vigencia_desde}T00:00:00.000Z`, planForm)
+      : null;
+    const formWithSede = {
+      ...planForm,
+      sede_id: planForm.sede_id || effectiveSedeId,
+      vigencia_hasta: computedEnd ? String(computedEnd).slice(0, 10) : '',
+    };
     const built = validateAndBuildPlanPayload(formWithSede, { mode });
     if (!built.ok) {
       setPlanFormError(planErrorMessage(built.errorKey));
@@ -1200,8 +1207,11 @@ export default function AdminMembresiasSection({
                   <input
                     type="date"
                     style={inp}
-                    value={planForm.vigencia_hasta}
-                    onChange={(e) => setPlanForm((p) => ({ ...p, vigencia_hasta: e.target.value }))}
+                    value={planForm.vigencia_desde
+                      ? String(computeVencimientoFromPlan(`${planForm.vigencia_desde}T00:00:00.000Z`, planForm) || '').slice(0, 10)
+                      : ''}
+                    readOnly
+                    aria-readonly="true"
                   />
                 </label>
               </div>
