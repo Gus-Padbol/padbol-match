@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
@@ -47,11 +47,6 @@ function useDocumentMeta() {
 export default function AdminVenueLandingPage() {
   useDocumentMeta();
   const [activeModule, setActiveModule] = useState(null);
-  const moduleHoverTimeoutRef = useRef(null);
-
-  useEffect(() => () => {
-    window.clearTimeout(moduleHoverTimeoutRef.current);
-  }, []);
 
   useEffect(() => {
     if (!activeModule) return undefined;
@@ -66,17 +61,7 @@ export default function AdminVenueLandingPage() {
   }, [activeModule]);
 
   const openModule = (module) => {
-    window.clearTimeout(moduleHoverTimeoutRef.current);
     setActiveModule(module);
-  };
-
-  const scheduleModulePreview = (module) => {
-    window.clearTimeout(moduleHoverTimeoutRef.current);
-    moduleHoverTimeoutRef.current = window.setTimeout(() => openModule(module), 520);
-  };
-
-  const cancelModulePreview = () => {
-    window.clearTimeout(moduleHoverTimeoutRef.current);
   };
   return (
     <div className="admin-landing">
@@ -139,9 +124,6 @@ export default function AdminVenueLandingPage() {
                   key={module.number}
                   type="button"
                   className="admin-landing__module-card"
-                  onMouseEnter={() => scheduleModulePreview(module)}
-                  onMouseLeave={cancelModulePreview}
-                  onFocus={() => openModule(module)}
                   onClick={() => openModule(module)}
                 >
                   <span>{module.number}</span><h3>{module.title}</h3><p>{module.description}</p><b>Ver explicación y opciones <i>→</i></b>
