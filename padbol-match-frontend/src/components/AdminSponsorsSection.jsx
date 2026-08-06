@@ -589,7 +589,7 @@ export default function AdminSponsorsSection({
   const inputErrBorder = (key) => (fieldErrors[key] ? `2px solid ${PADBOL_RED}` : '1px solid #cbd5e1');
 
   return (
-    <div style={{ marginTop: 28, marginBottom: 32, maxWidth: 900 }}>
+    <div className="admin-sponsors-section" style={{ marginTop: 28, marginBottom: 32, maxWidth: 900 }}>
       <h2 style={{ margin: '0 0 12px', paddingBottom: 8, color: 'rgba(255,255,255,0.95)' }}>{t('admin.sponsors.sectionTitle')}</h2>
       <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 1.45 }}>
         Patrocinios por alcance: torneo tiene prioridad sobre sede, país y global.
@@ -654,6 +654,7 @@ export default function AdminSponsorsSection({
           type="button"
           disabled={cuposSaving}
           onClick={() => void guardarCupos()}
+          className="admin-sponsors-primary-action"
           style={{
             padding: '12px 24px',
             borderRadius: 10,
@@ -1059,6 +1060,7 @@ export default function AdminSponsorsSection({
               type="button"
               disabled={saving || uploading}
               onClick={() => void guardar()}
+              className="admin-sponsors-primary-action"
               style={{
                 padding: '12px 24px',
                 borderRadius: 10,
@@ -1095,6 +1097,7 @@ export default function AdminSponsorsSection({
 
       <div style={{ overflowX: 'auto' }}>
         <table
+          className="admin-sponsors-table"
           style={{
             width: '100%',
             minWidth: 980,
@@ -1106,7 +1109,7 @@ export default function AdminSponsorsSection({
           }}
         >
           <thead>
-            <tr style={{ background: PADBOL_RED, color: '#fff' }}>
+            <tr className="admin-table-heading">
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Marca</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Deportes</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: 13 }}>Scope</th>

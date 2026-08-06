@@ -19,6 +19,8 @@ describe('admin visual system', () => {
     expect(css).toContain('color: #86efac !important')
     expect(css).toContain('.admin-validacion-action--approve')
     expect(css).toContain('.admin-validacion-level-chip')
+    expect(css).toContain('.admin-sponsors-primary-action')
+    expect(css).toContain('.admin-dashboard-sidebar-btn__badge--red')
   })
 
   it('does not separate the new points-level row with a dashed divider', () => {

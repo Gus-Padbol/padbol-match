@@ -224,7 +224,9 @@
 }
 
 .admin-dashboard-sidebar-btn__badge--red {
-  background: #dc2626;
+  background: linear-gradient(135deg, #9f1520, #c51d29);
+  border: 1px solid rgba(255, 116, 124, .5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 3px 8px rgba(0,0,0,.22);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1019,6 +1021,36 @@
   border-top-right-radius: 8px;
 }
 
+/* Patrocinios adopta los mismos controles, tablas y acción primaria del panel. */
+.admin-sponsors-section > div[style*="background"] {
+  border: 1px solid var(--admin-panel-border, var(--border)) !important;
+  background: var(--admin-panel-surface, var(--bg-card)) !important;
+  box-shadow: 0 12px 24px rgba(2,6,23,.14), inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+.admin-sponsors-primary-action {
+  min-height: 40px;
+  border: 1px solid rgba(255, 116, 124, .45) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #9f1520, #c51d29) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 5px 12px rgba(2,6,23,.16);
+  transition: transform .16s ease, filter .16s ease;
+}
+
+.admin-sponsors-primary-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.admin-sponsors-table {
+  border: 1px solid var(--admin-panel-border, var(--border));
+  border-radius: 12px !important;
+}
+
+.admin-sponsors-table tbody tr {
+  background: transparent !important;
+}
+
 /* Acciones existentes con estilo en línea: se integran al sistema sin perseguir pantalla por pantalla.
    Los rojos de rechazo/eliminación conservan su color de seguridad y no entran en esta regla. */
 .admin-dashboard :is(button, a)[style*="#E11B22"] {
@@ -1372,9 +1404,10 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   height: 20px;
   padding: 0 5px;
   border-radius: 999px;
-  background: var(--pm-color-error, #dc2626);
+  background: linear-gradient(135deg, #9f1520, #c51d29);
   color: #fff;
   border: 2px solid var(--bg-card);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 3px 8px rgba(0,0,0,.22);
   display: inline-flex;
   align-items: center;
   justify-content: center;
