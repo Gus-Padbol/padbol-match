@@ -17715,7 +17715,7 @@ export default function AdminDashboard({
                 ) : planPricingRows.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ padding: '14px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      {t('admin.metricas.noPlansSqlHint')}
+                      Aún no hay planes configurados.
                     </td>
                   </tr>
                 ) : (

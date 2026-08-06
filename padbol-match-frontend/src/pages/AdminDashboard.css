@@ -996,12 +996,17 @@
   letter-spacing: .015em;
 }
 
-/* Encabezados administrativos: mismo rojo más sutil de la tabla de sedes. */
+/* Encabezados administrativos: la misma superficie sobria de la barra lateral,
+   con el rojo reservado como una señal fina, no como bloque completo. */
 .admin-table-heading > th {
-  background: var(--admin-accent-gradient);
-  color: #fff;
-  border-right: 1px solid rgba(255, 255, 255, .22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), inset 0 -1px 0 rgba(83, 0, 0, .28);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.075), transparent 30%),
+    color-mix(in srgb, var(--bg-input) 88%, transparent);
+  color: var(--text-primary);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 68%, var(--border));
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-right: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), inset 0 -1px 0 rgba(0, 0, 0, .14);
   letter-spacing: .015em;
 }
 
@@ -1022,9 +1027,13 @@
 }
 
 .admin-dashboard tr[style*="#E11B22"] > th {
-  background: var(--admin-accent-gradient) !important;
-  border-bottom-color: rgba(255, 255, 255, .28);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), inset 0 -1px 0 rgba(83, 0, 0, .28);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.075), transparent 30%),
+    color-mix(in srgb, var(--bg-input) 88%, transparent) !important;
+  color: var(--text-primary) !important;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 68%, var(--border));
+  border-bottom-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), inset 0 -1px 0 rgba(0, 0, 0, .14);
 }
 
 .sedes-admin-sedes-table tbody tr {
