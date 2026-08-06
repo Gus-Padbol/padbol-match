@@ -3408,7 +3408,7 @@ html.public-site-active #root {
   position: relative;
   width: var(--ps-scoreboard-media-width);
   margin: 0 auto;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(225, 27, 34, 0.5);
   border-radius: 20px;
   background: #07090e;
@@ -3419,9 +3419,7 @@ html.public-site-active #root {
   display: block;
   width: 100%;
   height: auto;
-  /* Proporción nativa del video de marcador: 832 × 464. */
-  aspect-ratio: 832 / 464;
-  object-fit: contain;
+  /* Sin cover, zoom, ni proporción forzada: se muestra el archivo completo. */
 }
 
 .ps-sb__frame {
