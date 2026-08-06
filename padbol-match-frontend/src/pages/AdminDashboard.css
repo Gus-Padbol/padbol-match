@@ -997,7 +997,7 @@
 }
 
 /* Encabezados administrativos: mismo rojo más sutil de la tabla de sedes. */
-.admin-dashboard--super .admin-table-heading > th {
+.admin-table-heading > th {
   background: var(--admin-accent-gradient);
   color: #fff;
   border-right: 1px solid rgba(255, 255, 255, .22);
@@ -1005,11 +1005,11 @@
   letter-spacing: .015em;
 }
 
-.admin-dashboard--super .admin-table-heading > th:first-child {
+.admin-table-heading > th:first-child {
   border-top-left-radius: 8px;
 }
 
-.admin-dashboard--super .admin-table-heading > th:last-child {
+.admin-table-heading > th:last-child {
   border-right: 0;
   border-top-right-radius: 8px;
 }
@@ -3122,10 +3122,32 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   min-width: 104px;
   max-width: min(100%, 170px);
   padding: 5px 10px !important;
-  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  background: color-mix(in srgb, var(--bg-input) 88%, #64748b 12%) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, #94a3b8) !important;
   border-radius: 999px !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .42), 0 2px 5px rgba(2, 6, 23, .1);
   letter-spacing: .01em;
+}
+
+.admin-torneo-list-card .admin-torneo-list-chip:last-child {
+  background: color-mix(in srgb, #16a34a 17%, var(--bg-input)) !important;
+  color: #166534 !important;
+  border-color: color-mix(in srgb, #16a34a 34%, var(--border)) !important;
+}
+
+.admin-torneo-list-card button[style*="#E11B22"] {
+  min-height: 34px;
+  border: 1px solid rgba(148, 163, 184, .4) !important;
+  border-radius: 9px !important;
+  background: linear-gradient(135deg, #334155, #475569) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 4px 10px rgba(2,6,23,.14);
+}
+
+.admin-torneo-list-card button[style*="linear-gradient(135deg,#E11B22"] {
+  min-height: 34px;
+  border-radius: 9px !important;
+  background: linear-gradient(135deg, #0f766e, #0d9488) !important;
 }
 
 /* Rojos anteriores que llegan desde pantallas y componentes históricos. */

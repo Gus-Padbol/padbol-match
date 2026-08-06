@@ -17698,7 +17698,7 @@ export default function AdminDashboard({
               }}
             >
               <thead>
-                <tr style={{ background: '#E11B22', color: '#fff' }}>
+                <tr className="admin-table-heading">
                   <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>{t('admin.formularios.name')}</th>
                   <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600 }}>{t('admin.formularios.courtsCol')}</th>
                   <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600 }}>{t('admin.metricas.priceUsdMonthCol')}</th>
