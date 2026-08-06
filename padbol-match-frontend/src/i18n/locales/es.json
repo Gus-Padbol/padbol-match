@@ -2194,16 +2194,16 @@
     "heroLine2": "Hoy es para todos los deportes.",
     "heroSub": "La plataforma que lleva el Padbol al mundo, abre sus puertas al Pádel, Pickleball y Tenis.",
     "bookSlot": "Reservar un turno",
-    "enterPlay": "Entrá y empezá a jugar",
+    "enterPlay": "Entra y empieza a jugar",
     "createAccount": "Crear una cuenta",
     "guestNote": "Puedes explorar sin registrarte.",
     "howTitle": "¿Cómo funciona?",
     "step1Title": "Encuentra tu sede",
     "step1Desc": "Busca clubes y elige el que mejor te quede por ubicación y horarios.",
     "step2Title": "Elige tu turno",
-    "step2Desc": "Elegí fecha, horario y cancha disponible online.",
+    "step2Desc": "Elige fecha, horario y cancha disponible en línea.",
     "step3Title": "Paga online",
-    "step3Desc": "Pagá online o según las opciones del club.",
+    "step3Desc": "Paga en línea o según las opciones del club.",
     "step4Title": "Juega",
     "step4Desc": "Recibí la confirmación y a disfrutar del partido.",
     "addClub": "Quiero sumar mi club",
@@ -2323,23 +2323,23 @@
     },
     "playerPath": {
       "title": "Para jugadores",
-      "text": "Hoy, elegí Padbol, encontrá actividad cerca y resolvé todo el recorrido desde un solo lugar. El mismo flujo se abre gradualmente a nuevas disciplinas.",
+      "text": "Hoy, elige Padbol, encuentra actividad cerca y resuelve todo el recorrido desde un solo lugar. El mismo flujo se abre gradualmente a nuevas disciplinas.",
       "items": {
         "find": {
           "title": "Encontrar partidos",
-          "text": "Descubrí encuentros por deporte, zona y nivel."
+          "text": "Descubre encuentros por deporte, zona y nivel."
         },
         "book": {
           "title": "Reservar",
-          "text": "Elegí sede, cancha y horario para jugar."
+          "text": "Elige sede, cancha y horario para jugar."
         },
         "compete": {
           "title": "Competir",
-          "text": "Participá en torneos, equipos y formatos de competencia."
+          "text": "Participa en torneos, equipos y formatos de competencia."
         },
         "community": {
           "title": "Comunidad",
-          "text": "Seguí a tus sedes, jugadores y novedades relevantes."
+          "text": "Sigue a tus sedes, jugadores y novedades relevantes."
         },
         "rewards": {
           "title": "Beneficios",
@@ -2347,21 +2347,21 @@
         },
         "create": {
           "title": "Crear un partido",
-          "text": "Publicá sede, horario, nivel y cupos para convocar jugadores."
+          "text": "Publica sede, horario, nivel y cupos para convocar jugadores."
         },
         "join": {
           "title": "Partidos abiertos",
-          "text": "Pedí un lugar, completá equipos y confirmá tu participación."
+          "text": "Pide un lugar, completa equipos y confirma tu participación."
         },
         "evolve": {
           "title": "Seguir tu evolución",
-          "text": "Consultá historial, ranking y progreso por disciplina."
+          "text": "Consulta historial, ranking y progreso por disciplina."
         }
       }
     },
     "venuePath": {
       "title": "Para sedes y organizaciones",
-      "text": "Una misma operación para Padbol, Pádel, Pickleball y Tenis: activá jugadores, ocupá horarios, registrá resultados y sostené la continuidad de cada sede.",
+      "text": "Una misma operación para Padbol, Pádel, Pickleball y Tenis: activa jugadores, ocupa horarios, registra resultados y sostiene la continuidad de cada sede.",
       "items": {
         "bookings": {
           "title": "Reservas",
@@ -2377,7 +2377,7 @@
         },
         "scoreboard": {
           "title": "Marcador inteligente",
-          "text": "Registrá el encuentro en vivo y sumá información útil a la operación."
+          "text": "Registra el encuentro en vivo y suma información útil a la operación."
         },
         "loyalty": {
           "title": "Fidelización",
@@ -2558,7 +2558,7 @@
       "detail": "Por eso creamos Padbol Match: una aplicación propia que conecta juego, gestión y comunidad en un mismo recorrido. Nace con Padbol y se abre a Pádel, Pickleball y Tenis para que más deportes de cancha crezcan sobre la misma base.",
       "sportsLabel": "Deportes en la plataforma",
       "playersNote": "Una plataforma nacida de la experiencia real de quienes hacen posible el deporte de cancha.",
-      "cta": "Mirá cómo funciona",
+      "cta": "Mira cómo funciona",
       "visualAlt": "Equipo de Padbol Match reunido en su espacio de trabajo"
     },
     "meta": {
@@ -2567,7 +2567,7 @@
     },
     "download": {
       "title": "Descargar la app",
-      "text": "Llevá tu actividad deportiva, tus partidos y tu comunidad en el teléfono.",
+      "text": "Lleva tu actividad deportiva, tus partidos y tu comunidad en el teléfono.",
       "appStore": "App Store",
       "googlePlay": "Google Play",
       "storeSoon": "Aún no disponible en tiendas",
@@ -2631,7 +2631,7 @@
       "steps": {
         "create": {
           "title": "Crear y publicar",
-          "text": "Definí deporte, sede, horario, nivel y cupos disponibles."
+          "text": "Define deporte, sede, horario, nivel y cupos disponibles."
         },
         "publish": {
           "title": "Buscar y solicitar",
@@ -2639,7 +2639,7 @@
         },
         "join": {
           "title": "Completar equipos",
-          "text": "Aceptá solicitudes, cerrá cupos y dejá al grupo listo para jugar."
+          "text": "Acepta solicitudes, cierra cupos y deja al grupo listo para jugar."
         },
         "confirm": {
           "title": "Confirmar y jugar",
@@ -2651,9 +2651,9 @@
       "title": "Chivi por voz: pedí lo que necesitás jugando.",
       "text": "Hablale a la app con palabras simples. Chivi entiende tu consulta, te orienta y te acerca al siguiente paso sin obligarte a recorrer cada pantalla.",
       "items": {
-        "ask": { "title": "Hacé una consulta", "text": "Tocá el micrófono y hablá como lo harías con una persona." },
-        "guide": { "title": "Pedí ayuda para jugar", "text": "Consultá por canchas, partidos abiertos o próximos torneos." },
-        "result": { "title": "Seguí el próximo paso", "text": "Chivi responde por texto y te guía dentro de la experiencia." }
+        "ask": { "title": "Haz una consulta", "text": "Toca el micrófono y habla como lo harías con una persona." },
+        "guide": { "title": "Pide ayuda para jugar", "text": "Consulta por canchas, partidos abiertos o próximos torneos." },
+        "result": { "title": "Sigue el próximo paso", "text": "Chivi responde por texto y te guía dentro de la experiencia." }
       },
       "note": "El uso del micrófono requiere tu permiso y depende de la compatibilidad de cada dispositivo.",
       "demoLabel": "CHIVI · ASISTENTE POR VOZ",
@@ -2679,19 +2679,19 @@
       "steps": {
         "start": {
           "title": "Iniciar el partido",
-          "text": "Seleccioná jugadores o equipos y abrí el marcador."
+          "text": "Selecciona jugadores o equipos y abre el marcador."
         },
         "live": {
           "title": "Seguir en vivo",
-          "text": "Registrá puntos, sets y parciales mientras se juega."
+          "text": "Registra puntos, sets y parciales mientras se juega."
         },
         "correct": {
           "title": "Corregir una acción",
-          "text": "Ajustá un punto o un set si hace falta."
+          "text": "Ajusta un punto o un set si hace falta."
         },
         "close": {
           "title": "Cerrar el resultado",
-          "text": "Confirmá el cierre y mostralo en pantalla cuando corresponda."
+          "text": "Confirma el cierre y muéstralo en pantalla cuando corresponda."
         },
         "connect": {
           "title": "Conectar el resultado",
@@ -2732,7 +2732,7 @@
   },
   "checkin": {
     "titulo": "Check-in Padbol Match",
-    "escanear": "Mostrá tu QR para hacer check-in",
+    "escanear": "Muestra tu QR para hacer check-in",
     "valido": "¡Check-in confirmado!",
     "invalido": "QR no válido",
     "yaRealizado": "Ya se realizó el check-in",

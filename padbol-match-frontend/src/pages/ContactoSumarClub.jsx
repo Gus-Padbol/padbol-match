@@ -88,7 +88,7 @@ export default function ContactoSumarClub() {
             fontWeight: 500,
           }}
         >
-          Completá el formulario y nos ponemos en contacto para darte de alta en la plataforma.
+          Completa el formulario y nos ponemos en contacto para darte de alta en la plataforma.
         </p>
         <Link to="/unirse" style={{ ...btnPrimary, marginBottom: 14 }}>
           Completar formulario de alta
@@ -103,7 +103,7 @@ export default function ContactoSumarClub() {
             fontWeight: 500,
           }}
         >
-          ¿Tenés dudas?{' '}
+          ¿Tienes dudas?{' '}
           <a
             href={WHATSAPP_URL}
             target="_blank"

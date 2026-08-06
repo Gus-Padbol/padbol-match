@@ -20,7 +20,7 @@ const SERVICE_PLANS = [
   {
     id: 'explorar',
     number: '01',
-    name: 'Explorá',
+    name: 'Explora',
     price: 'Gratis',
     period: 'Para conocer la propuesta',
     accent: '#22c55e',
@@ -145,7 +145,7 @@ export default function UnirsePage() {
     if (
       !form.club_nombre.trim() || !form.responsable_nombre.trim() || !form.email.trim() || !form.whatsapp.trim()
     ) {
-      setErr('Completá nombre de sede, responsable, email y WhatsApp para comenzar.');
+      setErr('Completa nombre de sede, responsable, email y WhatsApp para comenzar.');
       return;
     }
 
@@ -245,7 +245,7 @@ export default function UnirsePage() {
               textAlign: 'center',
             }}
           >
-            Elegí la capa que mejor acompaña a tu sede. Podés empezar hoy, completar tus datos después y recibir
+            Elige la capa que mejor acompaña a tu sede. Puedes empezar hoy, completar tus datos después y recibir
             apoyo humano cuando lo necesites.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
@@ -264,7 +264,7 @@ export default function UnirsePage() {
             </span>
           </div>
           <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-            Elegís tu plan, iniciás el alta y completás la operación de tu sede con una configuración guiada.
+            Eliges tu plan, inicias el alta y completas la operación de tu sede con una configuración guiada.
           </p>
         </section>
 
@@ -276,7 +276,7 @@ export default function UnirsePage() {
             Todo lo que necesitás, a tu escala
           </h2>
           <p style={{ margin: '0 0 13px', color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.45 }}>
-            Elegí un plan para empezar. Los valores son de referencia y se pueden ajustar por país, moneda y necesidad de cada sede.
+            Elige un plan para empezar. Los valores son de referencia y se pueden ajustar por país, moneda y necesidad de cada sede.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
             {SERVICE_PLANS.map((plan) => {
@@ -316,7 +316,7 @@ export default function UnirsePage() {
             })}
           </div>
           <p style={{ margin: '14px 0 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.45 }}>
-            ¿Querés conversarlo antes de elegir? Escribinos a <a href="mailto:info@padbol.com?subject=Consulta%20sobre%20planes%20de%20Padbol%20Match" style={{ color: '#E11B22', fontWeight: 800 }}>info@padbol.com</a>. También vas a tener ayuda de Chivi y soporte humano durante el alta.
+            ¿Quieres conversarlo antes de elegir? Escríbenos a <a href="mailto:info@padbol.com?subject=Consulta%20sobre%20planes%20de%20Padbol%20Match" style={{ color: '#E11B22', fontWeight: 800 }}>info@padbol.com</a>. También tendrás ayuda de Chivi y soporte humano durante el alta.
           </p>
         </section>
 
@@ -363,7 +363,7 @@ export default function UnirsePage() {
             boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
           }}
         >
-          <FormSection title={`Empezá ${selectedPlan.name === 'Explorá' ? 'la consulta' : `con ${selectedPlan.name}`}`} subtitle={`Plan elegido: ${selectedPlan.name} · ${selectedPlan.price}. Sólo necesitamos una referencia de la sede y una persona de contacto para abrir el proceso.`}>
+          <FormSection title={`Empieza ${selectedPlan.name === 'Explora' ? 'la consulta' : `con ${selectedPlan.name}`}`} subtitle={`Plan elegido: ${selectedPlan.name} · ${selectedPlan.price}. Solo necesitamos una referencia de la sede y una persona de contacto para abrir el proceso.`}>
             <label style={labelStyle}>Nombre de la sede o club *</label>
             <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
             <label style={labelStyle}>Nombre completo *</label>

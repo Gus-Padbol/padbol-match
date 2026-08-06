@@ -60,11 +60,11 @@ const OPEN_MATCH_AVATAR_ROOT = '/media/public-site/players';
 
 const CONTINUITY_DETAILS = {
   openMatches: {
-    lead: 'Convertí una intención de jugar en un encuentro concreto, sin depender de grupos externos ni cadenas de mensajes.',
-    points: ['Publicás sede, horario, nivel y cupos.', 'Los jugadores cercanos piden lugar desde la app.', 'La sede ve actividad real antes de que empiece el partido.'],
+    lead: 'Convierte una intención de jugar en un encuentro concreto, sin depender de grupos externos ni cadenas de mensajes.',
+    points: ['Publicas sede, horario, nivel y cupos.', 'Los jugadores cercanos piden lugar desde la app.', 'La sede ve actividad real antes de que empiece el partido.'],
   },
   tournaments: {
-    lead: 'Organizá competencias con un calendario claro y una experiencia que acompaña al jugador desde la inscripción hasta el cierre.',
+    lead: 'Organiza competencias con un calendario claro y una experiencia que acompaña al jugador desde la inscripción hasta el cierre.',
     points: ['Inscripciones, cupos y categorías en un solo lugar.', 'Llaves, zonas o formatos según la disciplina y el torneo.', 'Cada fecha sostiene participación y movimiento en la sede.'],
   },
   results: {
@@ -73,7 +73,7 @@ const CONTINUITY_DETAILS = {
   },
   ranking: {
     lead: 'Una evolución entendible, ligada a los partidos que realmente se juegan y a la categoría o alcance de cada competencia.',
-    points: ['Posiciones por club, categoría o alcance de cada circuito.', 'Subís o bajás a partir de resultados validados.', 'Podés reconocer una clasificación externa como punto de partida.'],
+    points: ['Posiciones por club, categoría o alcance de cada circuito.', 'Subes o bajas a partir de resultados validados.', 'Puedes reconocer una clasificación externa como punto de partida.'],
   },
   padcoins: {
     lead: 'La participación activa puede transformarse en reconocimiento dentro del ecosistema, con reglas visibles para todos.',
@@ -85,7 +85,7 @@ const CONTINUITY_DETAILS = {
   },
   community: {
     lead: 'Un espacio propio para que el juego siga conversándose: publicaciones, comentarios, videos y conexiones entre jugadores.',
-    points: ['Compartí jugadas, fotos y novedades de la comunidad.', 'Seguís jugadores, sedes y conversaciones relevantes.', 'El contenido ayuda a que cada experiencia tenga continuidad.'],
+    points: ['Comparte jugadas, fotos y novedades de la comunidad.', 'Sigue jugadores, sedes y conversaciones relevantes.', 'El contenido ayuda a que cada experiencia tenga continuidad.'],
   },
 };
 
