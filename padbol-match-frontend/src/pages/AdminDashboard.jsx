@@ -10468,7 +10468,7 @@ export default function AdminDashboard({
           {adminTabAccessNotice}
         </div>
       ) : null}
-{isSuperAdmin && ['resumen', ADMIN_SEDES_TAB_ID].includes(activeTab) && (
+{isSuperAdmin && activeTab === ADMIN_SEDES_TAB_ID && (
         <div
           style={{
             display: 'flex',
