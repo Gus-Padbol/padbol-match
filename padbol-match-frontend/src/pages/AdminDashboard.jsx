@@ -11297,6 +11297,7 @@ export default function AdminDashboard({
           {!esEmpleado ? (
             <button
               onClick={() => setCrearTorneoEmbedOpen(true)}
+              className="admin-primary-action"
               style={{ padding: '8px 16px', background: '#e53935', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
             >
               {t('admin.notif.newTournament')}
@@ -11362,7 +11363,7 @@ export default function AdminDashboard({
               return (
                 <div
                   key={torneo.id}
-                  className={isSuperAdmin ? 'admin-torneo-list-card' : undefined}
+                  className="admin-torneo-list-card"
                   style={{
                   background: 'var(--bg-card)',
                   border: isEditingThis ? '2px solid #E11B22' : '1px solid #e5e7eb',
@@ -11667,40 +11668,40 @@ export default function AdminDashboard({
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                         {torneo.nivel_torneo
-                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>
+                          ? <span className="admin-torneo-list-chip" style={badge(nivelColor.bg, nivelColor.color)}>
                               {t(`admin.tournamentLabels.level.${String(torneo.nivel_torneo).trim().toLowerCase()}`, {
                                 defaultValue: formatNivelTorneo(torneo.nivel_torneo),
                               })}
                             </span>
                           : null}
-                        <span style={badge('#fef2f2', '#991b1b')}>{resumenDeporteFormatoTorneo(torneo)}</span>
-                        <span style={badge('#f0fdf4', '#166534')}>
+                        <span className="admin-torneo-list-chip" style={badge('#fef2f2', '#991b1b')}>{resumenDeporteFormatoTorneo(torneo)}</span>
+                        <span className="admin-torneo-list-chip" style={badge('#f0fdf4', '#166534')}>
                           {t(`torneos.vista.categoriaNivel.${String(torneo.categoria || 'Libre').trim()}`, {
                             defaultValue: formatCategoriaTorneo(torneo.categoria),
                           })}
                         </span>
                         {torneoTipoCompetenciaDb(torneo) ? (
-                          <span style={badge('#fef9c3', '#854d0e')}>
+                          <span className="admin-torneo-list-chip" style={badge('#fef9c3', '#854d0e')}>
                             {t(`torneos.vista.genero.${String(torneoTipoCompetenciaDb(torneo)).trim().toLowerCase()}`, {
                               defaultValue: formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo)),
                             })}
                           </span>
                         ) : null}
                         {String(torneo.categoria_edad || '').trim() ? (
-                          <span style={badge('#e0f2fe', '#0369a1')}>
+                          <span className="admin-torneo-list-chip" style={badge('#e0f2fe', '#0369a1')}>
                             {t(`torneos.vista.categoriaEdad.${String(torneo.categoria_edad).trim().toLowerCase().replace(/\s+/g, '_')}`, {
                               defaultValue: formatCategoriaEdadTorneo(torneo.categoria_edad),
                             })}
                           </span>
                         ) : null}
                         {torneo.tipo_torneo
-                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>
+                          ? <span className="admin-torneo-list-chip" style={badge(formatoColor.bg, formatoColor.color)}>
                               {t(`torneos.tipo.${String(torneo.tipo_torneo).trim().toLowerCase()}`, {
                                 defaultValue: formatTipoTorneo(torneo.tipo_torneo),
                               })}
                             </span>
                           : null}
-                        <span style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
+                        <span className="admin-torneo-list-chip" style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center', justifyContent: 'space-between' }}>

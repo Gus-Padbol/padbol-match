@@ -10,5 +10,8 @@ describe('admin visual system', () => {
     expect(css).toContain('.admin-dashboard tr[style*="#E11B22"] > th')
     expect(css).toContain('.section h2')
     expect(css).toContain('border-bottom: 1px solid var(--admin-accent-border)')
+    expect(css).toContain('.admin-dashboard--super .admin-config-puntos-table thead th')
+    expect(css).toContain('.admin-torneo-list-card')
+    expect(css).toContain('.admin-torneo-list-chip')
   })
 })

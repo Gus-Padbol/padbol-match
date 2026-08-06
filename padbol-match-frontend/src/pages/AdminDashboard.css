@@ -1693,8 +1693,10 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
 }
 
 .admin-dashboard--super .admin-config-puntos-table thead th {
-  background: var(--accent) !important;
+  background: var(--admin-accent-gradient) !important;
   color: #fff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), inset 0 -1px 0 rgba(83, 0, 0, .28);
 }
 
 .admin-dashboard--super .admin-config-puntos-table tbody tr:nth-child(even) {
@@ -3058,9 +3060,9 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   gap: 6px;
   min-height: 34px;
   padding: 7px 12px;
-  border: 1px solid rgba(225, 27, 34, 0.85);
+  border: 1px solid color-mix(in srgb, var(--accent) 58%, var(--border));
   border-radius: 8px;
-  background: rgba(225, 27, 34, 0.1);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-input));
   color: #fff;
   font: inherit;
   font-size: 13px;
@@ -3090,9 +3092,47 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 
 .admin-edit-button:hover,
 .admin-edit-button:focus-visible {
-  border-color: #ff646b;
-  background: rgba(225, 27, 34, 0.2);
+  border-color: color-mix(in srgb, var(--accent) 74%, var(--border));
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-input));
   outline: none;
+}
+
+/* Fichas de torneos: superficie, metadatos y acciones con la jerarquía visual actual. */
+.admin-torneo-list-card {
+  position: relative;
+  overflow: hidden;
+  padding: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--border) 86%, var(--accent)) !important;
+  border-radius: 14px !important;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 34%),
+    var(--bg-card) !important;
+  box-shadow: 0 10px 22px rgba(2, 6, 23, .12), inset 0 1px 0 rgba(255, 255, 255, .05);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.admin-torneo-list-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--admin-accent-border) !important;
+  box-shadow: 0 14px 28px rgba(2, 6, 23, .18), 0 0 18px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.admin-torneo-list-chip {
+  width: auto !important;
+  min-width: 104px;
+  max-width: min(100%, 170px);
+  padding: 5px 10px !important;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .42), 0 2px 5px rgba(2, 6, 23, .1);
+  letter-spacing: .01em;
+}
+
+/* Rojos anteriores que llegan desde pantallas y componentes históricos. */
+.admin-dashboard :is(button, a)[style*="#e53935"],
+.admin-dashboard :is(button, a)[style*="linear-gradient(135deg,#E11B22"] {
+  background: var(--admin-accent-gradient) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 4px 12px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .admin-mi-sede-block-title--with-icon {
