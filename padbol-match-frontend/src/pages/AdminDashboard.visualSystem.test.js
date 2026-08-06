@@ -13,5 +13,7 @@ describe('admin visual system', () => {
     expect(css).toContain('.admin-dashboard--super .admin-config-puntos-table thead th')
     expect(css).toContain('.admin-torneo-list-card')
     expect(css).toContain('.admin-torneo-list-chip')
+    expect(css).toContain('--admin-panel-surface')
+    expect(css).toContain('--admin-panel-control')
   })
 })

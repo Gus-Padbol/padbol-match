@@ -1121,16 +1121,19 @@
 
 /* ─── Panel Super Admin: colores ligados a `html.theme-dark` / `html.theme-light` (ThemeContext) ─── */
 .admin-dashboard--super {
+  --admin-panel-surface: linear-gradient(155deg, color-mix(in srgb, var(--bg-card) 96%, #05070d), color-mix(in srgb, var(--bg-page) 90%, #05070d));
+  --admin-panel-control: linear-gradient(145deg, rgba(255,255,255,.075), transparent 30%), color-mix(in srgb, var(--bg-input) 88%, transparent);
+  --admin-panel-border: color-mix(in srgb, var(--border) 82%, transparent);
   background: var(--bg-page) !important;
   color: var(--text-primary);
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form),
 .admin-dashboard--super .card {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
+  background: var(--admin-panel-surface) !important;
+  border: 1px solid var(--admin-panel-border) !important;
   color: var(--text-primary) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255,255,255,.045) !important;
 }
 
 html.theme-dark .admin-dashboard--super .section:not(.admin-mi-sede-form),
@@ -1141,12 +1144,12 @@ html.theme-dark .admin-dashboard--super .card {
 .admin-dashboard--super .section:not(.admin-mi-sede-form) h2,
 .admin-dashboard--super .section:not(.admin-mi-sede-form) h3 {
   color: var(--text-primary) !important;
-  border-bottom-color: var(--accent) !important;
+  border-bottom-color: var(--admin-accent-border) !important;
 }
 
 .admin-dashboard--super .card h2 {
   color: var(--text-primary) !important;
-  border-bottom-color: var(--accent) !important;
+  border-bottom-color: var(--admin-accent-border) !important;
 }
 
 .admin-dashboard--super .card .currency {
@@ -1159,13 +1162,14 @@ html.theme-dark .admin-dashboard--super .card {
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingreso-fila {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
+  background: var(--admin-panel-control) !important;
+  border: 1px solid var(--admin-panel-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.14);
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila {
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
+  background: var(--admin-panel-control) !important;
+  border: 1px solid var(--admin-panel-border) !important;
 }
 
 .admin-dashboard--super .card.ingresos .ingreso-fila.ingreso-fila--sin-ingresos {
@@ -1235,7 +1239,19 @@ html.theme-light .admin-dashboard--super .section:not(.admin-mi-sede-form) .ingr
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) table {
-  background-color: var(--bg-card) !important;
+  background-color: transparent !important;
+}
+
+/* El contenido adopta el mismo relieve de controles de la barra lateral. */
+.admin-dashboard--super :is(input, select, textarea) {
+  border-color: var(--admin-panel-border) !important;
+  background: var(--admin-panel-control) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.14);
+}
+
+.admin-dashboard--super :is(input, select, textarea):focus {
+  border-color: var(--admin-accent-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent) !important;
 }
 
 .admin-dashboard--super .section:not(.admin-mi-sede-form) tbody td {
