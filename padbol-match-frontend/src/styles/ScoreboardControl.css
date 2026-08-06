@@ -578,6 +578,30 @@
   font-weight: 700;
 }
 
+.sc-finished-banner__restart {
+  min-height: 42px;
+  margin-top: 1rem;
+  padding: .65rem 1rem;
+  border: 1px solid rgba(134, 239, 172, .55);
+  border-radius: 9px;
+  background: linear-gradient(135deg, #166534, #16a34a);
+  color: #f0fdf4;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 5px 12px rgba(0,0,0,.2);
+}
+
+.sc-finished-banner__restart:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.sc-finished-banner__restart:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
 .sc-error {
   background: rgba(239, 68, 68, 0.12);
   border: 2px solid var(--sc-red);

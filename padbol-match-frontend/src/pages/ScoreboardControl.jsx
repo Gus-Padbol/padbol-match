@@ -316,6 +316,13 @@ export default function ScoreboardControl() {
     if (ok) setOptionsOpen(false);
   }, [partido?.id, undoCount, runAction]);
 
+  const handleRestartMatch = useCallback(async () => {
+    if (!partido?.id || actionLoading) return;
+    const path = `/api/scoreboard/partidos/${encodeURIComponent(partido.id)}/cronometro/reset`;
+    const ok = await runAction(path, { refetchAfter: true });
+    if (ok) setOptionsOpen(false);
+  }, [partido?.id, actionLoading, runAction]);
+
   const handleCronometro = (accion) => {
     const path = `/api/scoreboard/partidos/${resolvePartidoApiId()}/cronometro/${accion}`;
     runAction(path, { refetchAfter: accion === 'reset' });
@@ -396,6 +403,14 @@ export default function ScoreboardControl() {
         <div className="sc-finished-banner">
           <h2>MATCH OVER</h2>
           <p className="sc-finished-banner__winner">{winnerName}</p>
+          <button
+            type="button"
+            className="sc-finished-banner__restart"
+            disabled={actionLoading}
+            onClick={() => void handleRestartMatch()}
+          >
+            Iniciar otro partido
+          </button>
         </div>
       )}
 
