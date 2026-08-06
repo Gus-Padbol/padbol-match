@@ -7,8 +7,8 @@ export const TORNEO_ESTADO_PUBLICO_STYLE = {
   proximo: { label: 'Próximo', bg: '#e5e7eb', color: '#374151' },
   inscripcion_abierta: { label: 'Inscripción abierta', bg: '#dcfce7', color: '#166534' },
   abierto: { label: 'Inscripción abierta', bg: '#dcfce7', color: '#166534' },
-  en_curso: { label: 'En curso', bg: '#bbf7d0', color: '#14532d' },
-  activo: { label: 'En curso', bg: '#bbf7d0', color: '#14532d' },
+  en_curso: { label: 'En curso', bg: '#14532d', color: '#bbf7d0' },
+  activo: { label: 'En curso', bg: '#14532d', color: '#bbf7d0' },
   finalizado: { label: 'Finalizado', bg: '#4b5563', color: '#f9fafb' },
   cancelado: { label: 'Cancelado', bg: '#94a3b8', color: '#fff' },
 };

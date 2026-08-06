@@ -3209,7 +3209,7 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   letter-spacing: .01em;
 }
 
-.admin-torneo-list-card .admin-torneo-list-chip:last-child {
+.admin-torneo-list-chip--status {
   background: color-mix(in srgb, #16a34a 28%, var(--bg-input)) !important;
   color: #86efac !important;
   border-color: color-mix(in srgb, #4ade80 48%, var(--border)) !important;

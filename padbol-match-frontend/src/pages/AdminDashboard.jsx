@@ -11701,7 +11701,7 @@ export default function AdminDashboard({
                               })}
                             </span>
                           : null}
-                        <span className="admin-torneo-list-chip" style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
+                        <span className="admin-torneo-list-chip admin-torneo-list-chip--status" style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center', justifyContent: 'space-between' }}>
