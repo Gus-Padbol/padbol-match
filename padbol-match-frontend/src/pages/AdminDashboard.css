@@ -1,4 +1,8 @@
 .admin-dashboard {
+  /* Sistema de acento administrativo: profundidad antes que bloques rojos planos. */
+  --admin-accent-gradient: linear-gradient(135deg, #c81018 0%, #ef2631 50%, #bf0f1a 100%);
+  --admin-accent-border: color-mix(in srgb, var(--accent) 54%, var(--border));
+  --admin-accent-soft: color-mix(in srgb, var(--accent) 12%, var(--bg-card));
   padding: 0;
   min-height: 0;
   box-sizing: border-box;
@@ -634,7 +638,7 @@
 .section h2 {
   margin-top: 0;
   color: var(--text-primary);
-  border-bottom: 2px solid var(--accent);
+  border-bottom: 1px solid var(--admin-accent-border);
   padding-bottom: 15px;
 }
 
@@ -645,12 +649,13 @@
 }
 
 .reservas-table th, .canchas-table th {
-  background: #e11b22;
+  background: var(--admin-accent-gradient);
   padding: 10px 12px;
   text-align: left;
   font-weight: 600;
   color: #fff;
-  border-bottom: 2px solid #991b1b;
+  border-bottom: 1px solid rgba(83, 0, 0, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 -1px 0 rgba(83, 0, 0, 0.28);
   border-right: 1px solid rgba(255, 255, 255, 0.22);
 }
 
@@ -737,7 +742,7 @@
   padding: 8px 14px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #e11b22 0%, #b91c1c 100%);
+  background: var(--admin-accent-gradient);
   color: #fff;
   font-size: 13px;
   font-weight: 800;
@@ -763,7 +768,7 @@
 }
 
 .btn-edit {
-  background: #E11B22;
+  background: var(--admin-accent-gradient);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -773,7 +778,7 @@
 }
 
 .btn-edit:hover {
-  background: #b91c1c;
+  filter: brightness(1.06);
 }
 
 @media (max-width: 768px) {
@@ -985,7 +990,7 @@
 }
 
 .sedes-admin-sedes-table thead th {
-  background: linear-gradient(135deg, #c81018 0%, #ef2631 50%, #bf0f1a 100%);
+  background: var(--admin-accent-gradient);
   border-bottom-color: rgba(255,255,255,.28);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.26), inset 0 -1px 0 rgba(83,0,0,.28);
   letter-spacing: .015em;
@@ -993,7 +998,7 @@
 
 /* Encabezados administrativos: mismo rojo más sutil de la tabla de sedes. */
 .admin-dashboard--super .admin-table-heading > th {
-  background: linear-gradient(135deg, #c81018 0%, #ef2631 50%, #bf0f1a 100%);
+  background: var(--admin-accent-gradient);
   color: #fff;
   border-right: 1px solid rgba(255, 255, 255, .22);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), inset 0 -1px 0 rgba(83, 0, 0, .28);
@@ -1007,6 +1012,19 @@
 .admin-dashboard--super .admin-table-heading > th:last-child {
   border-right: 0;
   border-top-right-radius: 8px;
+}
+
+/* Acciones existentes con estilo en línea: se integran al sistema sin perseguir pantalla por pantalla.
+   Los rojos de rechazo/eliminación conservan su color de seguridad y no entran en esta regla. */
+.admin-dashboard :is(button, a)[style*="#E11B22"] {
+  background: var(--admin-accent-gradient) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 4px 12px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.admin-dashboard tr[style*="#E11B22"] > th {
+  background: var(--admin-accent-gradient) !important;
+  border-bottom-color: rgba(255, 255, 255, .28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), inset 0 -1px 0 rgba(83, 0, 0, .28);
 }
 
 .sedes-admin-sedes-table tbody tr {
