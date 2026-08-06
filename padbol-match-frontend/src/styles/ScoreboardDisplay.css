@@ -574,9 +574,11 @@
   flex-shrink: 0;
   margin-top: 0;
   min-height: 38vh;
-  max-height: 38vh;
-  overflow: hidden;
-  transform: translateY(40px);
+  /* Los dígitos altos de Oswald ocupan más caja visual que su line-height.
+   * No se deben recortar contra la franja de sets. */
+  overflow: visible;
+  transform: none;
+  padding-bottom: 1.5vh;
 }
 
 @keyframes floatScore {
@@ -673,8 +675,9 @@
   align-items: stretch;
   overflow: visible;
   flex-shrink: 0;
-  margin-top: calc(4vh + 1cm);
-  transform: translateY(-20px);
+  /* Separación real: la franja no se superpone al borde inferior del tanteador. */
+  margin-top: calc(2vh + .4cm);
+  transform: none;
   padding: 0;
 }
 

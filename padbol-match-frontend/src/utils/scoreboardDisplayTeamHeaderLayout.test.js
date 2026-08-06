@@ -70,4 +70,15 @@ describe('ScoreboardDisplay TV team header alignment', () => {
     expect(jsx).not.toMatch(/sc-team-serve-dot/);
     expect(controlCss).toMatch(/\.sc-team-serve-dot/);
   });
+
+  it('deja espacio entre el tanteador y la franja de sets sin recortar los números', () => {
+    const scoreRow = extractRuleBody(css, '.sb-score-row');
+    const setsHistory = extractRuleBody(css, '.sb-sets-history');
+
+    expect(scoreRow).toMatch(/overflow:\s*visible/);
+    expect(scoreRow).toMatch(/transform:\s*none/);
+    expect(scoreRow).toMatch(/padding-bottom:\s*1\.5vh/);
+    expect(setsHistory).toMatch(/transform:\s*none/);
+    expect(setsHistory).toMatch(/margin-top:\s*calc\(2vh \+ \.4cm\)/);
+  });
 });
