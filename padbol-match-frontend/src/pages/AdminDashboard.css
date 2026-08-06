@@ -991,6 +991,24 @@
   letter-spacing: .015em;
 }
 
+/* Encabezados administrativos: mismo rojo más sutil de la tabla de sedes. */
+.admin-dashboard--super .admin-table-heading > th {
+  background: linear-gradient(135deg, #c81018 0%, #ef2631 50%, #bf0f1a 100%);
+  color: #fff;
+  border-right: 1px solid rgba(255, 255, 255, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), inset 0 -1px 0 rgba(83, 0, 0, .28);
+  letter-spacing: .015em;
+}
+
+.admin-dashboard--super .admin-table-heading > th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.admin-dashboard--super .admin-table-heading > th:last-child {
+  border-right: 0;
+  border-top-right-radius: 8px;
+}
+
 .sedes-admin-sedes-table tbody tr {
   transition: background .16s ease, transform .16s ease;
 }

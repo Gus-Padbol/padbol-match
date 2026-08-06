@@ -17876,7 +17876,7 @@ export default function AdminDashboard({
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--bg-card)', borderRadius: '10px', overflow: 'hidden' }}>
                 <thead>
-                  <tr style={{ background: '#E11B22', color: '#fff' }}>
+                  <tr className="admin-table-heading">
                     <th style={{ padding: '8px' }}>{t('admin.franjas.type')}</th>
                     <th style={{ padding: '8px' }}>{t('admin.formularios.emailLabel')}</th>
                     <th style={{ padding: '8px' }}>{t('admin.metricas.suggestedClubCol')}</th>
@@ -18002,13 +18002,13 @@ export default function AdminDashboard({
               >
                 <thead>
                   {rolesTabViewportNarrow ? (
-                    <tr style={{ background: '#E11B22', color: '#fff' }}>
+                    <tr className="admin-table-heading">
                       <th style={{ padding: '8px', textAlign: 'left', width: '34%' }}>{t('admin.formularios.name')}</th>
                       <th style={{ padding: '8px', textAlign: 'left' }}>Rol</th>
                       <th style={{ padding: '8px', textAlign: 'right', width: '22%', whiteSpace: 'nowrap' }}>{t('admin.formularios.actionCol')}</th>
                     </tr>
                   ) : (
-                    <tr style={{ background: '#E11B22', color: '#fff' }}>
+                    <tr className="admin-table-heading">
                       <th style={{ padding: '8px' }}>{t('admin.formularios.name')}</th>
                       <th style={{ padding: '8px' }}>{t('admin.formularios.emailLabel')}</th>
                       <th style={{ padding: '8px' }}>Rol</th>
