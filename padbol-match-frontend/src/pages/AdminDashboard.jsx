@@ -12306,7 +12306,7 @@ export default function AdminDashboard({
         />
       ) : null}
 
-      {activeTab === 'validaciones' && <div className="section">
+      {activeTab === 'validaciones' && <div className="section admin-validaciones-section">
         <h2>{t('admin.formularios.pendingValidationTitle')}</h2>
         {pendientesLoading ? (
           <p style={{ color: 'var(--text-secondary)' }}>{t('admin.metricas.loading')}</p>
@@ -12314,7 +12314,7 @@ export default function AdminDashboard({
           <p style={{ color: 'var(--text-secondary)' }}>{t('admin.formularios.noPendingValidation')}</p>
         ) : (
           <>
-            <div style={{ marginBottom: '14px', maxWidth: '420px' }}>
+            <div className="admin-validaciones-search" style={{ marginBottom: '14px', maxWidth: '420px' }}>
               <label htmlFor="admin-busqueda-validaciones" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
                 {t('admin.formularios.validationSearchLabel')}
               </label>
@@ -12363,7 +12363,7 @@ export default function AdminDashboard({
                     </div>
                     <div style={{ marginTop: '5px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {flag && <span style={{ fontSize: '18px' }}>{flag}</span>}
-                      <span style={{ background: '#fffde7', border: '1px solid #ffc107', color: '#7c5b00', borderRadius: '12px', padding: '2px 10px', fontSize: '12px', fontWeight: 'bold' }}>
+                      <span className="admin-validacion-level-chip" style={{ background: '#fffde7', border: '1px solid #ffc107', color: '#7c5b00', borderRadius: '12px', padding: '2px 10px', fontSize: '12px', fontWeight: 'bold' }}>
                         {t(`torneos.vista.categoriaNivel.${formatNivelValidacionDisplay(jugador.nivel)}`, {
                           defaultValue: formatNivelValidacionDisplay(jugador.nivel),
                         })}
@@ -12396,6 +12396,7 @@ export default function AdminDashboard({
                     <button
                       disabled={vs.saving}
                       onClick={() => aprobarJugador(jugador.email)}
+                      className="admin-validacion-action admin-validacion-action--approve"
                       style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
                       {t('admin.formularios.validationApprove')}
@@ -12403,6 +12404,7 @@ export default function AdminDashboard({
                     <button
                       disabled={vs.saving}
                       onClick={() => toggleCambiarCategoria(jugador.email, jugador.nivel)}
+                      className="admin-validacion-action admin-validacion-action--category"
                       style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
                       {t('admin.formularios.validationChangeCategory')}
@@ -12424,6 +12426,7 @@ export default function AdminDashboard({
                         <button
                           disabled={vs.saving}
                           onClick={() => guardarCategoria(jugador.email)}
+                          className="admin-validacion-action admin-validacion-action--save"
                           style={{ padding: '7px 14px', background: '#7b1fa2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                         >
                           {vs.saving ? t('admin.metricas.savingDots') : t('admin.formularios.saveDisk')}
