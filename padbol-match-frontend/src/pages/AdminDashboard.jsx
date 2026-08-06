@@ -17527,7 +17527,7 @@ export default function AdminDashboard({
               ))}
 
               {/* Add row */}
-              <tr style={{ background: '#f9f7ff', borderTop: '2px dashed #e9d5ff' }}>
+              <tr style={{ background: 'var(--bg-input)', borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '8px 12px' }}>
                   <input type="text" placeholder={t('admin.formularios.tournamentTypeExamplePh')} value={nuevoTipo.nombre}
                     onChange={e => setNuevoTipo(p => ({ ...p, nombre: e.target.value }))}

@@ -20,4 +20,10 @@ describe('admin visual system', () => {
     expect(css).toContain('.admin-validacion-action--approve')
     expect(css).toContain('.admin-validacion-level-chip')
   })
+
+  it('does not separate the new points-level row with a dashed divider', () => {
+    const page = fs.readFileSync(path.join(process.cwd(), 'src/pages/AdminDashboard.jsx'), 'utf8')
+    expect(page).not.toContain("borderTop: '2px dashed #e9d5ff'")
+    expect(page).toContain("borderTop: '1px solid var(--border)'")
+  })
 })
