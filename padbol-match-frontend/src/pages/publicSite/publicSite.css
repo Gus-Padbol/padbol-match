@@ -3420,8 +3420,9 @@ html.public-site-active #root {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  transform: scale(1.28);
-  transform-origin: center 58%;
+  /* El video actual ya ocupa el formato del marco: no se amplía para no
+     recortar marcador, equipos ni resultados parciales. */
+  transform: none;
 }
 
 .ps-sb__frame {
