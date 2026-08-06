@@ -3418,11 +3418,10 @@ html.public-site-active #root {
 .ps-scoreboard__video video {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  /* El video actual ya ocupa el formato del marco: no se amplía para no
-     recortar marcador, equipos ni resultados parciales. */
-  transform: none;
+  height: auto;
+  /* Proporción nativa del video de marcador: 832 × 464. */
+  aspect-ratio: 832 / 464;
+  object-fit: contain;
 }
 
 .ps-sb__frame {
