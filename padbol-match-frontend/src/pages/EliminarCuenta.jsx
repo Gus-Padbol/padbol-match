@@ -19,7 +19,7 @@ export default function EliminarCuenta() {
   return (
     <LegalStaticPageLayout
       title="Eliminar tu cuenta"
-      lead="Podés solicitar la eliminación de tu cuenta de Padbol Match y de los datos personales asociados."
+      lead="Puedes solicitar la eliminación de tu cuenta de Padbol Match y de los datos personales asociados."
     >
       <LegalSectionTitle>Desde tu cuenta</LegalSectionTitle>
       <LegalP>
@@ -33,19 +33,19 @@ export default function EliminarCuenta() {
           </>
         ) : (
           <>
-            Iniciá sesión, abrí “Mi perfil” y tocá “Eliminar mi cuenta”. Si no podés ingresar, usá la alternativa por
+            Inicia sesión, abre “Mi perfil” y toca “Eliminar mi cuenta”. Si no puedes ingresar, usa la alternativa por
             correo indicada abajo.
           </>
         )}
       </LegalP>
 
-      <LegalSectionTitle>Si no podés ingresar</LegalSectionTitle>
+      <LegalSectionTitle>Si no puedes ingresar</LegalSectionTitle>
       <LegalP>
         Escribinos desde el correo asociado a tu cuenta a{' '}
         <a href={EMAIL_HREF} style={linkStyle}>
           {EMAIL}
         </a>
-        . En el mensaje indicá que solicitás la eliminación de tu cuenta. Podemos pedirte información adicional para
+        . En el mensaje indica que solicitas la eliminación de tu cuenta. Podemos pedirte información adicional para
         verificar que la cuenta te pertenece.
       </LegalP>
 

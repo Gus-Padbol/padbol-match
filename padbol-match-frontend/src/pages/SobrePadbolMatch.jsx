@@ -47,7 +47,7 @@ export default function SobrePadbolMatch() {
           todo el mundo. Nació con el deporte Padbol y hoy también conecta jugadores y clubes de Pádel, Pickleball y Tenis.
         </p>
         <p style={{ margin: '0 0 14px', fontSize: 15, lineHeight: 1.55, color: MUTED, fontWeight: 500 }}>
-          Desde un mismo lugar podés explorar clubes, ver disponibilidad, reservar turno y gestionar tu experiencia con
+          Desde un mismo lugar puedes explorar clubes, ver disponibilidad, reservar turno y gestionar tu experiencia con
           el club.
         </p>
         <div

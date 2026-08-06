@@ -15,9 +15,9 @@ describe('español latinoamericano en la web pública', () => {
     expect(source).toMatch(/Muestra y vende/);
   });
 
-  it('mantiene el contenido de la landing pública sin voseo', () => {
+  it('mantiene todo el catálogo español sin voseo', () => {
     const locale = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'i18n', 'locales', 'es.json'), 'utf8'));
-    const publicCopy = JSON.stringify({ landing: locale.landing, publicSite: locale.publicSite });
+    const publicCopy = JSON.stringify(locale);
 
     expect(publicCopy).not.toMatch(voseo);
   });

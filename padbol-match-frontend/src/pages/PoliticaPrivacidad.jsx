@@ -61,11 +61,11 @@ export default function PoliticaPrivacidad() {
 
       <LegalSectionTitle>Derecho a eliminar tu cuenta y tus datos</LegalSectionTitle>
       <LegalP>
-        Podés iniciar la solicitud desde Mi perfil o consultar el proceso completo en{' '}
+        Puedes iniciar la solicitud desde Mi perfil o consultar el proceso completo en{' '}
         <Link to="/eliminar-cuenta" style={{ color: '#a5b4fc', fontWeight: 700 }}>
           Eliminar tu cuenta
         </Link>
-        . Si no podés ingresar, también podés escribir desde el correo asociado a tu cuenta a{' '}
+        . Si no puedes ingresar, también puedes escribir desde el correo asociado a tu cuenta a{' '}
         <a href={CONTACT} style={{ color: '#a5b4fc', fontWeight: 700 }}>padbolinternacional@gmail.com</a>. Algunos datos
         pueden conservarse durante el plazo que exija la ley, por ejemplo registros contables o reclamos.
       </LegalP>
