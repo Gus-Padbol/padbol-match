@@ -2070,10 +2070,10 @@ function adminFilterPillButtonStyle(active, inactiveSurface = 'default') {
   if (active) {
     return {
       ...ADMIN_FILTER_PILL_BASE,
-      background: 'var(--accent)',
+      background: 'linear-gradient(135deg, #9f1520, #c51d29)',
       color: '#fff',
-      border: 'none',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(100,0,0,.2), 0 8px 16px rgba(225,27,34,.28)',
+      border: '1px solid rgba(255,116,124,.48)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 0 rgba(67,0,0,.22), 0 6px 13px rgba(0,0,0,.22)',
     };
   }
   if (inactiveSurface === 'lightMuted') {
@@ -12443,14 +12443,14 @@ export default function AdminDashboard({
         )}
       </div>}
 
-      {activeTab === 'reservas' && <>
+      {activeTab === 'reservas' && <div className="admin-reservas-section">
         {(esAdminClub || isSuperAdmin) ? (
           <section style={{ marginBottom: '18px', padding: '14px 16px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card)' }}>
             <strong style={{ display: 'block', marginBottom: '5px' }}>{t('admin.reservas.configurationTitle', 'Booking configuration')}</strong>
             <span style={{ display: 'block', marginBottom: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
               {t('admin.reservas.configurationHint', 'Manage hours, prices and payment rules for your venue from one place.')}
             </span>
-            <button type="button" onClick={() => { selectAdminTab('mi_sede'); selectMiSedeSection('horarios'); }} style={{ padding: '8px 12px', border: 'none', borderRadius: '8px', background: 'var(--accent)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+            <button type="button" className="admin-reservas-primary-action" onClick={() => { selectAdminTab('mi_sede'); selectMiSedeSection('horarios'); }} style={{ padding: '8px 12px', border: 'none', borderRadius: '8px', background: 'var(--accent)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
               {t('admin.reservas.openConfiguration', 'Open booking configuration')}
             </button>
           </section>
@@ -12558,6 +12558,7 @@ export default function AdminDashboard({
             >
               <button
                 type="button"
+                className="admin-reservas-primary-action"
                 onClick={() => {
                   setReservaManualOpen((open) => {
                     const next = !open;
@@ -12944,6 +12945,7 @@ export default function AdminDashboard({
               return (
                 <button
                   type="button"
+                  className="admin-reservas-ranking-action"
                   onClick={() =>
                     setRankingOrden((prev) =>
                       prev.campo !== campo
@@ -13864,7 +13866,7 @@ export default function AdminDashboard({
           );
         })()}
         </div>
-      </>}
+      </div>}
 
       {activeTab === 'personalizar_hub' && (isSuperAdmin || esEditorContenido) ? (
         <AdminHubPersonalizarSection

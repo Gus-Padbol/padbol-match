@@ -721,6 +721,29 @@
   text-align: center;
 }
 
+/* Reservas: la misma jerarquía de acciones contenidas del panel. */
+.admin-reservas-section > section,
+.admin-reservas-section .section {
+  background: var(--admin-panel-surface, var(--bg-card)) !important;
+  border-color: var(--admin-panel-border, var(--border)) !important;
+  box-shadow: 0 12px 24px rgba(2,6,23,.14), inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+.admin-reservas-primary-action,
+.admin-reservas-ranking-action {
+  border: 1px solid rgba(255,116,124,.45) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #9f1520, #c51d29) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 5px 12px rgba(2,6,23,.16) !important;
+  transition: transform .16s ease, filter .16s ease;
+}
+
+.admin-reservas-primary-action:hover:not(:disabled),
+.admin-reservas-ranking-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
 .admin-sede-torneo-interes-banner {
   display: flex;
   flex-wrap: wrap;

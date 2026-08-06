@@ -21,6 +21,7 @@ describe('admin visual system', () => {
     expect(css).toContain('.admin-validacion-level-chip')
     expect(css).toContain('.admin-sponsors-primary-action')
     expect(css).toContain('.admin-dashboard-sidebar-btn__badge--red')
+    expect(css).toContain('.admin-reservas-primary-action')
   })
 
   it('does not separate the new points-level row with a dashed divider', () => {
