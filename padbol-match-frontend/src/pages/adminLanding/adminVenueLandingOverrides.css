@@ -41,8 +41,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #f5a1a8;
-  opacity: .72;
+  color: #ed1c2e;
+  opacity: 1;
   transform: translateY(3px);
   transition: opacity .18s ease, transform .18s ease, color .18s ease;
 }
@@ -71,7 +71,7 @@
 
 .admin-landing__module-card:hover b,
 .admin-landing__module-card:focus-visible b {
-  color: #ffffff;
+  color: #ed1c2e;
   opacity: 1;
   transform: translateY(0);
 }
@@ -84,7 +84,7 @@
 
 @media (hover: none) {
   .admin-landing__module-card b {
-    color: #ffffff;
+    color: #ed1c2e;
     opacity: 1;
     transform: none;
   }
@@ -187,7 +187,7 @@
 
 .admin-landing__module-card b i {
   font-style: normal;
-  color: #f59aa2;
+  color: #ed1c2e;
 }
 
 .admin-landing__modal-backdrop {
