@@ -10482,6 +10482,7 @@ export default function AdminDashboard({
         >
           <button
             type="button"
+            className="admin-primary-action"
             onClick={abrirNuevaSedeModal}
             style={{
               padding: '10px 16px',

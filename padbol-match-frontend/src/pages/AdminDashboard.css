@@ -1065,6 +1065,30 @@
   filter: brightness(1.08);
 }
 
+/* Acción primaria global: el mismo volumen contenido de la navegación lateral.
+   Se usa en las pantallas nuevas y también cubre los botones históricos que React
+   convierte a rgb() al renderizar los estilos en línea. */
+.admin-primary-action,
+.admin-dashboard :is(button, a)[style*="rgb(225, 27, 34)"],
+.admin-dashboard :is(button, a)[style*="rgb(229, 57, 53)"],
+.admin-dashboard :is(button, a)[style*="rgb(220, 38, 38)"] {
+  border: 1px solid rgba(255, 116, 124, .45) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #9f1520, #c51d29) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 5px 12px rgba(2,6,23,.16) !important;
+  transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+
+.admin-primary-action:hover:not(:disabled),
+.admin-dashboard :is(button, a)[style*="rgb(225, 27, 34)"]:hover:not(:disabled),
+.admin-dashboard :is(button, a)[style*="rgb(229, 57, 53)"]:hover:not(:disabled),
+.admin-dashboard :is(button, a)[style*="rgb(220, 38, 38)"]:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 8px 16px rgba(2,6,23,.22) !important;
+}
+
 .admin-sponsors-table {
   border: 1px solid var(--admin-panel-border, var(--border));
   border-radius: 12px !important;
