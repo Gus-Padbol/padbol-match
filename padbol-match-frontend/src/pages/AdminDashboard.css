@@ -3156,9 +3156,39 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 }
 
 .admin-torneo-list-card .admin-torneo-list-chip:last-child {
-  background: color-mix(in srgb, #16a34a 17%, var(--bg-input)) !important;
-  color: #166534 !important;
-  border-color: color-mix(in srgb, #16a34a 34%, var(--border)) !important;
+  background: color-mix(in srgb, #16a34a 28%, var(--bg-input)) !important;
+  color: #86efac !important;
+  border-color: color-mix(in srgb, #4ade80 48%, var(--border)) !important;
+}
+
+.admin-torneo-action {
+  min-height: 34px;
+  border-radius: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: .01em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 4px 10px rgba(2,6,23,.14) !important;
+  transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+
+.admin-torneo-action:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 7px 15px rgba(2,6,23,.2) !important;
+}
+
+.admin-torneo-action--view {
+  background: linear-gradient(135deg, #9f1520, #c51d29) !important;
+  border: 1px solid rgba(255, 116, 124, .48) !important;
+}
+
+.admin-torneo-action--draw {
+  background: linear-gradient(135deg, #0f766e, #0d9488) !important;
+  border: 1px solid rgba(94, 234, 212, .38) !important;
+}
+
+.admin-torneo-action--danger {
+  background: color-mix(in srgb, #dc2626 35%, var(--bg-input)) !important;
+  border: 1px solid rgba(255, 116, 124, .42) !important;
 }
 
 .admin-torneo-list-card button[style*="#E11B22"] {

@@ -15,5 +15,7 @@ describe('admin visual system', () => {
     expect(css).toContain('.admin-torneo-list-chip')
     expect(css).toContain('--admin-panel-surface')
     expect(css).toContain('--admin-panel-control')
+    expect(css).toContain('.admin-torneo-action--view')
+    expect(css).toContain('color: #86efac !important')
   })
 })

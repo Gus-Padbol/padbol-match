@@ -11753,6 +11753,7 @@ export default function AdminDashboard({
                             <button
                               type="button"
                               onClick={() => void abrirModalSorteoGrupos(torneo)}
+                              className="admin-torneo-action admin-torneo-action--draw"
                               style={{
                                 padding: '6px 12px',
                                 background: 'linear-gradient(135deg,#E11B22,#b91c1c)',
@@ -11772,6 +11773,7 @@ export default function AdminDashboard({
                         })()}
                         <button
                           onClick={() => navigate(`/torneo/${torneo.id}`, { state: { fromAdmin: true } })}
+                          className="admin-torneo-action admin-torneo-action--view"
                           style={{ padding: '6px 14px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
                         >
                           {t('admin.tournamentLabels.view')} →
@@ -11789,6 +11791,7 @@ export default function AdminDashboard({
                         {isSuperAdmin && (
                           <button
                             onClick={() => eliminarTorneo(torneo.id, torneo.nombre)}
+                            className="admin-torneo-action admin-torneo-action--danger"
                             style={{ padding: '6px 10px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
                             title={t('admin.torneosSection.deleteTournament')}
                           >
