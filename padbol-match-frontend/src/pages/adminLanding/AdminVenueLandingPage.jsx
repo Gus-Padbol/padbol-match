@@ -17,24 +17,10 @@ const modules = [
   { number: '07', title: 'Muestra y vende', description: 'Espacios de publicidad, sponsors y Padbol Match Shop cuando la sede los active.', overview: 'Gestiona oportunidades comerciales de la sede: espacios de marca y, cuando esté activado, productos locales de Padbol Match Shop.', steps: ['Define los espacios publicitarios o de sponsor disponibles en tu sede.', 'Carga las piezas, fechas y condiciones de cada campaña.', 'Activa productos, precios y stock local en Padbol Match Shop cuando corresponda.', 'Revisa resultados, pedidos y rendimiento sin afectar la operación deportiva.'] },
 ];
 
-// Estructura de la guía visual que acompaña a los administradores. Estas
-// tarjetas vuelven a hacer visible el alcance completo del manual: no son
-// tareas internas ni reemplazan los módulos operativos de arriba.
-const guideSections = [
-  ['01', 'Mi sede', 'Datos públicos, canchas, imágenes y medios de contacto.'],
-  ['02', 'Precios y horarios', 'Franjas, duración de turnos y valores por cancha.'],
-  ['03', 'Reservas', 'Calendario, estados, confirmaciones y cancelaciones.'],
-  ['04', 'Jugadores', 'Vinculaciones, solicitudes y comunidad de la sede.'],
-  ['05', 'Torneos', 'Cupos, formato, inscripción, resultados y detalle.'],
-  ['06', 'Marcador', 'Partido en vivo, correcciones y cierre del resultado.'],
-  ['07', 'Fidelización', 'PadCoins y membresías habilitados para la sede.'],
-  ['08', 'Comercial', 'Publicidad, sponsors y Padbol Match Shop.'],
-];
-
 function useDocumentMeta() {
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = 'Administrá tu sede | Padbol Match';
+    document.title = 'Administra tu sede | Padbol Match';
     document.documentElement.classList.add('admin-landing-active');
     window.scrollTo(0, 0);
     return () => {
@@ -116,8 +102,8 @@ export default function AdminVenueLandingPage() {
         <section className="admin-landing__section" id="recorrido">
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">RECORRIDO OPERATIVO</p>
-            <h2>Todo lo que necesitás para <span>gestionar</span> una sede.</h2>
-            <p className="admin-landing__intro">La guía está pensada para que una sede pueda arrancar simple, probar su circuito y activar cada módulo cuando le haga falta.</p>
+            <h2>Todo lo que necesitas para <span>gestionar</span> una sede.</h2>
+            <p className="admin-landing__intro">Todo el panel, explicado de forma simple: empieza por lo esencial y activa cada módulo cuando lo necesites.</p>
             <div className="admin-landing__module-grid">
               {modules.map((module) => (
                 <button
@@ -155,26 +141,7 @@ export default function AdminVenueLandingPage() {
               <div className="admin-landing__bubble admin-landing__bubble--bot">¿Qué valor tiene una hora de Cancha 1?</div>
               <div className="admin-landing__bubble admin-landing__bubble--user">ARS 28.000 de lunes a viernes.</div>
               <div className="admin-landing__bubble admin-landing__bubble--bot">Perfecto. ¿El precio cambia en horario pico o fines de semana?</div>
-              <div className="admin-landing__confirmation">Antes de publicar: <strong>te mostramos el resumen y confirmás.</strong></div>
-            </div>
-          </div>
-        </section>
-
-        <section className="admin-landing__section admin-landing__section--guide">
-          <div className="admin-landing__shell">
-            <p className="admin-landing__eyebrow">GUÍA VISUAL PARA ADMINISTRADORES</p>
-            <h2>Todo el panel, explicado de forma <span>simple.</span></h2>
-            <p className="admin-landing__intro">Además de los recorridos paso a paso, la guía reúne ejemplos claros de cada pantalla para que puedas resolver la operación de tu sede con autonomía.</p>
-            <div className="admin-landing__capture-grid">
-              {guideSections.map(([number, title, detail]) => (
-                <article key={number} className="admin-landing__capture">
-                  <b>GUÍA {number}</b><strong>{title}</strong><span>{detail}</span>
-                </article>
-              ))}
-            </div>
-            <div className="admin-landing__guide-actions">
-              <p>La configuración guiada está disponible al activar tu sede.</p>
-              <a href="#recorrido" className="admin-landing__text-link">Volver a los módulos operativos ↑</a>
+              <div className="admin-landing__confirmation">Antes de publicar: <strong>te mostramos el resumen y confirmas.</strong></div>
             </div>
           </div>
         </section>
@@ -219,14 +186,14 @@ export default function AdminVenueLandingPage() {
               </a>
               <p className="admin-landing__footer-product-of">Un producto de Padbol.</p>
               <p className="admin-landing__footer-developed-by">Desarrollado por Padbol Internacional.</p>
-              <Link to="/contacto" className="admin-landing__footer-contact">¿Necesitás ayuda? Contactanos <span>→</span></Link>
+              <Link to="/contacto" className="admin-landing__footer-contact">¿Necesitas ayuda? Contáctanos <span>→</span></Link>
             </div>
 
             <nav className="admin-landing__footer-nav" aria-label="Navegación de Padbol Match">
               <div>
                 <p>PLATAFORMA</p>
                 <Link to="/plataforma">Conoce Padbol Match</Link>
-                <a href="#recorrido">Administrá tu sede</a>
+                <a href="#recorrido">Administra tu sede</a>
                 <Link to={ADMIN_PANEL_ACCESS_PATH}>Ingresar al panel</Link>
               </div>
               <div>
