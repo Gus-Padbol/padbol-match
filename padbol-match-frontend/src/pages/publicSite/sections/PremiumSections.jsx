@@ -418,6 +418,18 @@ function ScoreboardVideo({ text }) {
   );
 }
 
+function ScoreboardSnapshot() {
+  return (
+    <figure className="ps-scoreboard__snapshot" data-ps-reveal data-ps-reveal-order="1">
+      <img
+        src={`${ASSET_ROOT}/marcador-inteligente-captura.jpg`}
+        alt="Marcador Padbol Match durante un partido"
+        loading="lazy"
+      />
+    </figure>
+  );
+}
+
 /** Marcador inteligente */
 export function SmartScoreboardSection() {
   const text = usePublicSiteText();
@@ -450,21 +462,8 @@ export function SmartScoreboardSection() {
           </ol>
         </div>
         <div className="ps-scoreboard__visual">
+          <ScoreboardSnapshot />
           <ScoreboardVideo text={text} />
-          <aside className="ps-scoreboard__future" data-ps-reveal data-ps-reveal-order="2">
-            <img
-              src="/media/public-site/jero/upcoming-facial-access.jpg"
-              alt={text('publicSite.smartScoreboard.futureAccess.imageAlt')}
-              loading="lazy"
-            />
-            <div className="ps-scoreboard__future-copy">
-              <span className="ps-scoreboard__future-label">
-                {text('publicSite.smartScoreboard.futureAccess.label')}
-              </span>
-              <h3>{text('publicSite.smartScoreboard.futureAccess.title')}</h3>
-              <p>{text('publicSite.smartScoreboard.futureAccess.text')}</p>
-            </div>
-          </aside>
         </div>
       </div>
     </SectionShell>
