@@ -62,9 +62,14 @@ export default function AdminVenueLandingPage() {
               <section className="admin-landing__pulse-match" aria-label="Partido en vivo: Luna y Rojas cuatro, Pérez y Díaz tres">
                 <p>PARTIDO EN VIVO</p>
                 <div className="admin-landing__pulse-score">
-                  <strong>LUNA /<br />ROJAS</strong>
+                  <div className="admin-landing__pulse-team admin-landing__pulse-team--serving">
+                    <strong>LUNA /<br />ROJAS</strong>
+                    <span><i aria-hidden="true" />SACA</span>
+                  </div>
                   <b>4 <i>−</i> 3</b>
-                  <strong>PÉREZ /<br />DÍAZ</strong>
+                  <div className="admin-landing__pulse-team admin-landing__pulse-team--right">
+                    <strong>PÉREZ /<br />DÍAZ</strong>
+                  </div>
                 </div>
                 <span>SET 2&nbsp; · &nbsp;18:42</span>
               </section>
