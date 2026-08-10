@@ -4,8 +4,6 @@
  */
 
 export const PUBLIC_SITE_PATH = '/plataforma';
-/** Página pública para sedes interesadas en conocer el panel y su guía. */
-export const PUBLIC_SITE_ADMIN_PATH = '/administradores';
 
 /** CTAs del Hero — flujos productivos existentes. */
 export const PUBLIC_SITE_CTA = {
@@ -13,8 +11,10 @@ export const PUBLIC_SITE_CTA = {
   exploreHash: '#que-es',
   /** Descarga de la app. Mientras no haya stores, baja al bloque "Próximamente". */
   play: '#descargar',
-  /** Incorporar sede: primero conoce la propuesta para sedes y desde allí elige plan o contacto. */
-  venue: PUBLIC_SITE_ADMIN_PATH,
+  /** Incorporar sede: primero presenta la landing comercial específica para sedes. */
+  venue: '/administradores',
+  /** Solicitud de alta: solo después de conocer la propuesta comercial. */
+  venueApplication: '/unirse',
   /** Acceso a cuenta. */
   login: '/acceso',
 };

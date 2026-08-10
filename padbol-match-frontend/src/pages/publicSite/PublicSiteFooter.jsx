@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { PUBLIC_SITE_NAV_ITEMS } from '../../content/publicSiteContent';
+import { PUBLIC_SITE_CTA } from '../../constants/publicSiteLinks';
 import { ES_FALLBACKS, useSafeTranslation } from '../../i18n/tSafe';
 
 export default function PublicSiteFooter() {
@@ -10,8 +11,8 @@ export default function PublicSiteFooter() {
   const links = [
     ...PUBLIC_SITE_NAV_ITEMS.map(({ key, href, to }) => ({
       key,
-      href,
-      to,
+      href: key === 'venues' ? undefined : href,
+      to: key === 'venues' ? PUBLIC_SITE_CTA.venue : to,
       label: text(`publicSite.footer.${key}`),
     })),
     { key: 'contact', to: '/contacto', label: text('publicSite.footer.contact') },
@@ -24,11 +25,7 @@ export default function PublicSiteFooter() {
       <div className="public-site__shell">
         <div className="public-site-footer__top">
           <div className="public-site-footer__brand">
-            <a
-              className="public-site-footer__padbol-match-lockup"
-              href="/plataforma"
-              aria-label="Ir a Padbol Match"
-            >
+            <a className="public-site-footer__padbol-match-lockup" href="/plataforma" aria-label="Ir a Padbol Match">
               <img src="/media/public-site/jero/padbol-match-logo-white.svg" alt="Padbol Match" />
             </a>
             <p className="public-site-footer__product-of">
@@ -56,7 +53,7 @@ export default function PublicSiteFooter() {
         <div className="public-site-footer__bottom">
           <div className="public-site-footer__language">
             <span>{text('publicSite.footer.language')}</span>
-            <LanguageSwitcher variant="landing" />
+            <LanguageSwitcher variant="landing" className="lang-switcher--footer" />
           </div>
           <p className="public-site-footer__copyright">
             © 2026 Padbol. Operated by{' '}

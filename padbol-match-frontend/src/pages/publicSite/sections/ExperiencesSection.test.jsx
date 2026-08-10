@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import ExperiencesSection from './ExperiencesSection';
 import {
   PUBLIC_SITE_EXPERIENCE_IDS,
@@ -55,7 +55,10 @@ describe('cinco experiencias (sección inmersiva)', () => {
     expect(PUBLIC_SITE_EXPERIENCES.signature.accent).toBe('#e8150a');
     /* Cada experiencia apunta a su video real servido como asset estático */
     PUBLIC_SITE_EXPERIENCE_LIST.forEach((exp) => {
-      expect(exp.media).toEqual({ video: `/media/experiences/${exp.id}.mp4` });
+      expect(exp.media).toEqual(expect.objectContaining({
+        video: `/media/experiences/${exp.id}.mp4`,
+        poster: `/media/experiences/posters/${exp.id}.jpg`,
+      }));
     });
   });
 
@@ -98,36 +101,11 @@ describe('cinco experiencias (sección inmersiva)', () => {
     expect(screen.getByRole('tab', { name: /Stadium/i })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('autoplay avanza lento y se detiene al elegir una experiencia', () => {
-    jest.useFakeTimers();
-    try {
-      render(<ExperiencesSection />);
-      act(() => {
-        jest.advanceTimersByTime(7100);
-      });
-      expect(screen.getByRole('tab', { name: /Stadium/i })).toHaveAttribute('aria-selected', 'true');
-      fireEvent.click(screen.getByRole('tab', { name: /Quantum/i }));
-      act(() => {
-        jest.advanceTimersByTime(15000);
-      });
-      expect(screen.getByRole('tab', { name: /Quantum/i })).toHaveAttribute('aria-selected', 'true');
-    } finally {
-      jest.useRealTimers();
-    }
-  });
-
-  it('desactiva el autoplay con prefers-reduced-motion', () => {
-    reducedMotion = true;
-    jest.useFakeTimers();
-    try {
-      render(<ExperiencesSection />);
-      act(() => {
-        jest.advanceTimersByTime(30000);
-      });
-      expect(screen.getByRole('tab', { name: /Signature/i })).toHaveAttribute('aria-selected', 'true');
-    } finally {
-      jest.useRealTimers();
-    }
+  it('mantiene la selección manual, sin avance automático', () => {
+    render(<ExperiencesSection />);
+    expect(screen.getByRole('tab', { name: /Signature/i })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: /Quantum/i }));
+    expect(screen.getByRole('tab', { name: /Quantum/i })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('la preview es demostración sin conexiones (fetch no se invoca)', () => {
@@ -145,31 +123,21 @@ describe('cinco experiencias (sección inmersiva)', () => {
 });
 
 describe('video real por experiencia', () => {
-  let reducedMotion = false;
-  let motionListeners;
   let playSpy;
-  let pauseSpy;
-  let loadSpy;
 
   beforeEach(() => {
-    reducedMotion = false;
-    motionListeners = new Set();
     window.matchMedia = jest.fn().mockImplementation(() => ({
-      matches: reducedMotion,
-      addEventListener: (_event, listener) => motionListeners.add(listener),
-      removeEventListener: (_event, listener) => motionListeners.delete(listener),
+      matches: false,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
     }));
     playSpy = jest
       .spyOn(window.HTMLMediaElement.prototype, 'play')
       .mockImplementation(() => Promise.resolve());
-    pauseSpy = jest.spyOn(window.HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
-    loadSpy = jest.spyOn(window.HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
   });
 
   afterEach(() => {
     playSpy.mockRestore();
-    pauseSpy.mockRestore();
-    loadSpy.mockRestore();
   });
 
   const getVideo = (container) => container.querySelector('video.ps-exp-phone__video');
@@ -178,92 +146,28 @@ describe('video real por experiencia', () => {
     const { container } = render(<ExperiencesSection />);
     const video = getVideo(container);
     expect(video).toBeTruthy();
-    expect(video.getAttribute('src')).toBe('/media/experiences/signature.mp4');
+    expect(video.querySelector('source')).toHaveAttribute('src', '/media/experiences/signature.mp4');
     expect(video).toHaveAttribute('playsinline');
     expect(video.muted).toBe(true);
     expect(video).toHaveAttribute('loop');
-    expect(video.getAttribute('preload')).toBe('metadata');
+    expect(video.getAttribute('preload')).toBe('auto');
+    expect(video).toHaveAttribute('poster', '/media/experiences/posters/signature.jpg');
     expect(video).not.toHaveAttribute('controls');
-    expect(playSpy).toHaveBeenCalled();
   });
 
-  it('cambiar de experiencia pausa el anterior, reinicia desde 0 y cambia la fuente', () => {
+  it('cambiar de experiencia reemplaza la vista previa y su fuente', () => {
     const { container } = render(<ExperiencesSection />);
-    pauseSpy.mockClear();
-    loadSpy.mockClear();
     fireEvent.click(screen.getByRole('tab', { name: /Quantum/i }));
     const video = getVideo(container);
-    expect(video.getAttribute('src')).toBe('/media/experiences/quantum.mp4');
-    expect(pauseSpy).toHaveBeenCalled();
-    /* load() con el src nuevo reinicia la reproducción desde 0 */
-    expect(loadSpy).toHaveBeenCalled();
+    expect(video.querySelector('source')).toHaveAttribute('src', '/media/experiences/quantum.mp4');
+    expect(video).toHaveAttribute('poster', '/media/experiences/posters/quantum.jpg');
   });
 
-  it('ante error de carga cae a la demo conceptual sin dejar hueco ni error visible', () => {
-    const { container } = render(<ExperiencesSection />);
-    const video = getVideo(container);
-    fireEvent.error(video);
-    expect(getVideo(container)).toBeNull();
-    /* La demo conceptual sigue presente dentro del marco */
-    expect(screen.getByText('Reserva')).toBeInTheDocument();
-    expect(screen.getAllByText('Demostración').length).toBeGreaterThan(0);
-    expect(container.textContent).not.toMatch(/error/i);
-  });
-
-  it('con reduced motion el video no se reproduce', () => {
-    reducedMotion = true;
+  it('mantiene la maqueta detrás del video sin conexiones al backend', () => {
     const { container } = render(<ExperiencesSection />);
     expect(getVideo(container)).toBeTruthy();
-    expect(playSpy).not.toHaveBeenCalled();
-  });
-
-  it('pausa si reduced motion se activa con la sección abierta', () => {
-    render(<ExperiencesSection />);
-    pauseSpy.mockClear();
-    act(() => {
-      motionListeners.forEach((listener) => listener({ matches: true }));
-    });
-    expect(pauseSpy).toHaveBeenCalled();
-  });
-
-  it('pausa cuando la pestaña queda oculta y reanuda al volver', () => {
-    render(<ExperiencesSection />);
-    pauseSpy.mockClear();
-    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
-    act(() => {
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    expect(pauseSpy).toHaveBeenCalled();
-    playSpy.mockClear();
-    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
-    act(() => {
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    expect(playSpy).toHaveBeenCalled();
-  });
-
-  it('pausa cuando la sección sale del viewport', () => {
-    const observers = [];
-    global.IntersectionObserver = jest.fn().mockImplementation((cb) => {
-      const instance = {
-        callback: cb,
-        observe: jest.fn(),
-        unobserve: jest.fn(),
-        disconnect: jest.fn(),
-      };
-      observers.push(instance);
-      return instance;
-    });
-    try {
-      render(<ExperiencesSection />);
-      pauseSpy.mockClear();
-      act(() => {
-        observers.forEach((o) => o.callback([{ isIntersecting: false }]));
-      });
-      expect(pauseSpy).toHaveBeenCalled();
-    } finally {
-      delete global.IntersectionObserver;
-    }
+    expect(screen.getByText('Reserva')).toBeInTheDocument();
+    expect(screen.getAllByText('Demostración').length).toBeGreaterThan(0);
   });
 
   it('el video no dispara llamadas al Backend (fetch intacto)', () => {
@@ -273,7 +177,7 @@ describe('video real por experiencia', () => {
     try {
       const { container } = render(<ExperiencesSection />);
       fireEvent.click(screen.getByRole('tab', { name: /Arena/i }));
-      expect(getVideo(container).getAttribute('src')).toBe('/media/experiences/arena.mp4');
+      expect(getVideo(container).querySelector('source')).toHaveAttribute('src', '/media/experiences/arena.mp4');
       expect(fetchSpy).not.toHaveBeenCalled();
     } finally {
       fetchSpy.mockRestore();

@@ -18,7 +18,7 @@ function ScoreboardPreview({ text }) {
         <div className="ps-sb__teams">
           <div className="ps-sb__team is-serving">
             <span className="ps-sb__serve" aria-hidden="true" />
-            <span className="ps-sb__team-name">{text('publicSite.smartScoreboard.demoTeamA')}</span>
+            <span className="ps-sb__team-name">Equipo Rojo</span>
             <span className="ps-sb__sets" aria-hidden="true">
               <i className="is-won" />
               <i />
@@ -27,7 +27,7 @@ function ScoreboardPreview({ text }) {
           </div>
           <div className="ps-sb__team">
             <span className="ps-sb__serve is-idle" aria-hidden="true" />
-            <span className="ps-sb__team-name">{text('publicSite.smartScoreboard.demoTeamB')}</span>
+            <span className="ps-sb__team-name">Equipo Azul</span>
             <span className="ps-sb__sets" aria-hidden="true">
               <i />
               <i />
@@ -36,7 +36,7 @@ function ScoreboardPreview({ text }) {
           </div>
         </div>
         <footer className="ps-sb__meta">
-          <span>{text('publicSite.smartScoreboard.demoSet')}</span>
+          <span>Set 2</span>
           <span>6-4 · 3-2</span>
         </footer>
       </div>
@@ -45,21 +45,21 @@ function ScoreboardPreview({ text }) {
 }
 
 export default function SmartScoreboardSection() {
-  const config = PUBLIC_SITE_SECTIONS.smartScoreboard;
+  const config = PUBLIC_SITE_SECTIONS.scoreboard;
   const text = usePublicSiteText();
 
   return (
     <section id={config.id} className="ps-section ps-section--scoreboard" aria-labelledby="ps-scoreboard-title">
       <div className="public-site__shell">
-        <SectionIntro sectionKey="smartScoreboard" titleId="ps-scoreboard-title" />
+        <SectionIntro sectionKey="scoreboard" titleId="ps-scoreboard-title" />
 
         <div className="ps-sb-layout">
           <ol className="ps-sb-steps">
             {config.items.map(({ key }, index) => (
               <li key={key} data-ps-reveal data-ps-reveal-order={index}>
                 <span className="ps-sb-steps__num" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                <h3>{text(`publicSite.smartScoreboard.steps.${key}.title`)}</h3>
-                <p>{text(`publicSite.smartScoreboard.steps.${key}.text`)}</p>
+                <h3>{text(`publicSite.scoreboard.items.${key}.title`)}</h3>
+                <p>{text(`publicSite.scoreboard.items.${key}.text`)}</p>
               </li>
             ))}
           </ol>
@@ -70,14 +70,14 @@ export default function SmartScoreboardSection() {
         </div>
 
         <div className="ps-sb-flow-wrap" data-ps-reveal>
-          <h3>{text('publicSite.smartScoreboard.title')}</h3>
-          <p>{text('publicSite.smartScoreboard.text')}</p>
-          <ol className="ps-sb-flow" aria-label={text('publicSite.smartScoreboard.title')}>
-            {config.steps.map(({ key }, index) => (
+          <h3>{text('publicSite.scoreboard.secondTitle')}</h3>
+          <p>{text('publicSite.scoreboard.secondText')}</p>
+          <ol className="ps-sb-flow" aria-label={text('publicSite.scoreboard.secondTitle')}>
+            {config.flow.map(({ key }, index) => (
               <li key={key}>
-                <strong>{text(`publicSite.smartScoreboard.steps.${key}.title`)}</strong>
-                <span>{text(`publicSite.smartScoreboard.steps.${key}.text`)}</span>
-                {index < config.steps.length - 1 ? (
+                <strong>{text(`publicSite.scoreboard.flow.${key}.title`)}</strong>
+                <span>{text(`publicSite.scoreboard.flow.${key}.text`)}</span>
+                {index < config.flow.length - 1 ? (
                   <span className="ps-sb-flow__arrow" aria-hidden="true" />
                 ) : null}
               </li>
