@@ -49,18 +49,35 @@ export default function AdminVenueLandingPage() {
                 <Link to="/planes" className="admin-landing__primary">Quiero sumar mi sede <span>→</span></Link>
               </div>
             </div>
-            <div className="admin-landing__hero-panel admin-landing__hero-panel--flow" aria-label="El torneo conecta marcador, ranking y beneficios">
-              <p className="admin-landing__panel-label">EL PARTIDO ACTIVA EL SIGUIENTE PASO</p>
-              <div className="admin-landing__hero-flow">
-                <span><b>01</b>Torneo</span>
-                <i aria-hidden="true" />
-                <span><b>02</b>Marcador</span>
-                <i aria-hidden="true" />
-                <span><b>03</b>Ranking</span>
-                <i aria-hidden="true" />
-                <span><b>04</b>Beneficios</span>
+            <div className="admin-landing__hero-panel admin-landing__pulse" aria-label="Pulso de tu sede: reservas, partido en vivo, resultado, ranking y PadCoins conectados">
+              <header className="admin-landing__pulse-header">
+                <p>PULSO DE TU SEDE</p>
+                <span><i aria-hidden="true" />LIVE</span>
+              </header>
+
+              <div className="admin-landing__pulse-topline">
+                <span>HOY</span><b aria-hidden="true">•</b><span>CANCHA 1</span><b aria-hidden="true">•</b><em><i aria-hidden="true" />EN JUEGO</em>
               </div>
-              <p><strong>Una actividad que continúa.</strong> El resultado genera el próximo motivo para volver.</p>
+
+              <section className="admin-landing__pulse-match" aria-label="Partido en vivo: Luna y Rojas cuatro, Pérez y Díaz tres">
+                <p>PARTIDO EN VIVO</p>
+                <div className="admin-landing__pulse-score">
+                  <strong>LUNA /<br />ROJAS</strong>
+                  <b>4 <i>−</i> 3</b>
+                  <strong>PÉREZ /<br />DÍAZ</strong>
+                </div>
+                <span>SET 2&nbsp; · &nbsp;18:42</span>
+              </section>
+
+              <ol className="admin-landing__pulse-outcomes">
+                <li><i aria-hidden="true">✓</i><div><strong>RESULTADO REGISTRADO</strong><span>El partido se cierra y queda guardado.</span></div></li>
+                <li><i aria-hidden="true">▮▮▮</i><div><strong>RANKING ACTUALIZADO</strong><span>Se recalculan posiciones al instante.</span></div></li>
+                <li><i aria-hidden="true">P</i><div><strong>PADCOINS ACREDITADOS</strong><span>La competencia genera retorno real.</span></div></li>
+              </ol>
+
+              <div className="admin-landing__pulse-return">
+                <span aria-hidden="true">◉</span><b>+32</b><p>JUGADORES VUELVEN<br /><em>ESTA SEMANA</em></p>
+              </div>
             </div>
           </div>
         </section>
