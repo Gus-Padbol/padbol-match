@@ -78,8 +78,8 @@ const ScoreboardJoin = lazy(() => import('./pages/ScoreboardJoin'));
 const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage'));
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
-/** Landing pública de operación para administradores de sede. */
 const AdminVenueLandingPage = lazy(() => import('./pages/adminLanding/AdminVenueLandingPage'));
+const SupportTicketsPage = lazy(() => import('./pages/SupportTicketsPage'));
 
 function RouteLoadingScreen() {
   const { t } = useSafeTranslation();
@@ -160,16 +160,43 @@ function AccesoRoute() {
   return <AccesoCuenta />;
 }
 
-/**
- * La raíz siempre abre la web pública completa. El Hub queda disponible sólo
- * como app web opcional y nunca forma parte del recorrido público obligatorio.
- */
+/** La raíz siempre abre la presentación pública; la app queda en sus rutas internas. */
 function RootHomeRoute() {
   return <Navigate to="/plataforma" replace />;
 }
 
-/** Rutas desconocidas: vuelven a la presentación pública, nunca al Hub. */
+/**
+ * Rutas desconocidas: evita quedarse sin match útil. Con sesión → hub; sin sesión → landing (/).
+ * Mientras `loading` de auth, spinner compacto (no pantalla vacía sobre el gradiente de body).
+ */
 function WildcardFallback() {
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100dvh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(180deg, #0b1020 0%, #151832 100%)',
+          color: 'rgba(248, 250, 252, 0.92)',
+          fontWeight: 600,
+          fontSize: '15px',
+          boxSizing: 'border-box',
+          padding: 24,
+        }}
+      >
+        Cargando…
+      </div>
+    );
+  }
+
+  if (session?.user) {
+    return <Navigate to="/hub" replace />;
+  }
+
   return <Navigate to="/" replace />;
 }
 
@@ -348,6 +375,10 @@ function AppRoutes() {
         <Route path="/competir" element={<Competir />} />
         <Route path="/partidos-abiertos" element={<PartidosAbiertos />} />
         <Route path="/notificaciones" element={<NotificacionesPage />} />
+        <Route
+          path="/soporte"
+          element={<ProtectedRoute><SupportTicketsPage /></ProtectedRoute>}
+        />
         <Route path="/armar-partido" element={<ArmarPartido />} />
 
         <Route path="/torneos" element={<TorneosPublicos />} />
@@ -407,6 +438,10 @@ function AppRoutes() {
               <AdminDashboardGate />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/admin/soporte"
+          element={<ProtectedRoute><SupportTicketsPage adminMode /></ProtectedRoute>}
         />
         <Route
           path="/admin/nueva-sede"
@@ -532,26 +567,8 @@ function App() {
               <Route
                 path="/administradores"
                 element={(
-                  <ErrorBoundary label="la guía pública para administradores de sede">
-                    <Suspense
-                      fallback={(
-                        <div
-                          style={{
-                            minHeight: '100dvh',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: '#070b14',
-                            color: 'rgba(248,250,252,0.85)',
-                            fontWeight: 600,
-                          }}
-                        >
-                          Cargando…
-                        </div>
-                      )}
-                    >
-                      <AdminVenueLandingPage />
-                    </Suspense>
+                  <ErrorBoundary label="la landing para sedes">
+                    <AdminVenueLandingPage />
                   </ErrorBoundary>
                 )}
               />

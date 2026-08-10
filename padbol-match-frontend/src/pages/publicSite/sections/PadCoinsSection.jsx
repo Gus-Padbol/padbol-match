@@ -3,7 +3,7 @@ import { PUBLIC_SITE_SECTIONS } from '../../../content/publicSiteContent';
 import { Closing, SectionIntro, usePublicSiteText } from './SectionElements';
 
 /** Billetera conceptual: saldo, movimientos y membresía (texto y formas, sin isotipo nuevo). */
-function WalletConcept({ text }) {
+function WalletConcept() {
   return (
     <div className="ps-wallet" aria-hidden="true">
       <header className="ps-wallet__balance">
@@ -11,13 +11,13 @@ function WalletConcept({ text }) {
         <strong>340</strong>
       </header>
       <ul className="ps-wallet__moves">
-        <li><span>{text('publicSite.padCoins.wallet.completedMatch')}</span><b>+25</b></li>
-        <li><span>{text('publicSite.padCoins.wallet.confirmedBooking')}</span><b>+10</b></li>
-        <li><span>{text('publicSite.padCoins.wallet.redeemedBenefit')}</span><b className="is-out">−80</b></li>
+        <li><span>Partido completado</span><b>+25</b></li>
+        <li><span>Reserva confirmada</span><b>+10</b></li>
+        <li><span>Beneficio canjeado</span><b className="is-out">−80</b></li>
       </ul>
       <footer className="ps-wallet__membership">
         <span className="ps-wallet__chip" />
-        {text('publicSite.padCoins.wallet.activeMembership')}
+        Membresía activa
       </footer>
     </div>
   );
@@ -43,7 +43,7 @@ export default function PadCoinsSection() {
             ))}
           </div>
           <div className="ps-padcoins-visual" data-ps-reveal data-ps-reveal-order="3">
-            <WalletConcept text={text} />
+            <WalletConcept />
           </div>
         </div>
 

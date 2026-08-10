@@ -34,10 +34,6 @@ export default function DownloadSection() {
         <Link className="ps-button ps-button--primary" to={config.login}>
           {text('publicSite.download.login')}
         </Link>
-        <Link className="ps-download__web-app-link" to="/hub">
-          {text('publicSite.download.webApp')}
-          <span aria-hidden="true"> →</span>
-        </Link>
       </div>
     </section>
   );

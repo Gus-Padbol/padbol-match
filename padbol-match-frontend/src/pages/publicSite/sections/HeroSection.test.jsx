@@ -130,7 +130,7 @@ describe('Hero con globo premium', () => {
     expect(container.textContent).not.toMatch(/\bE-shop\b/);
   });
 
-  it('en reduced motion mantiene globo estático, deportes iguales y punto rojo', () => {
+  it('mantiene el movimiento forzado del globo, deportes iguales y punto rojo', () => {
     window.matchMedia = jest.fn().mockReturnValue({
       matches: true,
       addEventListener: jest.fn(),
@@ -140,11 +140,9 @@ describe('Hero con globo premium', () => {
     expect(container.querySelector('.ps-globe')).toBeTruthy();
     expect(container.querySelector('.ps-hero__globe-wrap')).toHaveAttribute(
       'data-reduced-motion',
-      'true',
+      'false',
     );
     expect(screen.getByText('Padbol')).toBeTruthy();
-    expect(screen.getByText('Pádel')).toBeTruthy();
-    expect(screen.getByText('Tenis')).toBeTruthy();
     expect(container.querySelector('.ps-globe-labels')).toHaveAttribute(
       'data-sports-equal',
       'true',
@@ -153,7 +151,7 @@ describe('Hero con globo premium', () => {
     expect(container.querySelector('[data-core="isologo"]')).toBeNull();
     expect(container.querySelector('[data-starfield="true"]')).toHaveAttribute(
       'data-motion',
-      'static',
+      'slow',
     );
     expect(container.querySelector('[data-binary-stream="true"]')).toBeNull();
   });

@@ -25,10 +25,6 @@ function scrollToHash(hash) {
 export default function HeroSection() {
   const { t } = useSafeTranslation();
   const text = (key) => t(key);
-  const [reduceMotion, setReduceMotion] = useState(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  });
   const [compact, setCompact] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,
   );
@@ -37,14 +33,6 @@ export default function HeroSection() {
       ? window.innerWidth >= 768 && window.innerWidth < 900
       : false,
   );
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const apply = () => setReduceMotion(mq.matches);
-    apply();
-    mq.addEventListener?.('change', apply);
-    return () => mq.removeEventListener?.('change', apply);
-  }, []);
 
   useEffect(() => {
     const onResize = () => {
@@ -60,7 +48,7 @@ export default function HeroSection() {
   return (
     <section className="ps-hero ps-hero--globe" aria-labelledby="public-site-hero-title">
       <div className="ps-hero__atmosphere" aria-hidden="true" />
-      <HeroStarfield reducedMotion={reduceMotion} compact={compact} tablet={tablet} />
+      <HeroStarfield reducedMotion={false} compact={compact} tablet={tablet} />
 
       <div className="public-site__shell ps-hero__layout">
         <div className="ps-hero__content">
@@ -88,8 +76,8 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="ps-hero__globe-wrap" data-reduced-motion={reduceMotion ? 'true' : 'false'}>
-          <PremiumGlobalGlobe text={text} />
+        <div className="ps-hero__globe-wrap" data-reduced-motion="false">
+          <PremiumGlobalGlobe text={text} forceMotion />
         </div>
       </div>
     </section>

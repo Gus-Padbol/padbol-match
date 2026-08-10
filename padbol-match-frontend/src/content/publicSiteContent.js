@@ -1,6 +1,5 @@
 import {
   PUBLIC_SITE_ANCHORS,
-  PUBLIC_SITE_ADMIN_PATH,
   PUBLIC_SITE_CTA,
   PUBLIC_SITE_STORE_LINKS,
 } from '../constants/publicSiteLinks';
@@ -32,6 +31,9 @@ export const PUBLIC_SITE_SECTIONS = {
     id: 'jugadores',
     items: ['find', 'create', 'join', 'book', 'compete', 'evolve', 'community'].map(item),
   },
+  playerRecord: {
+    id: 'tu-recorrido',
+  },
   communityMatches: {
     id: 'comunidad-partidos',
     steps: ['create', 'publish', 'join', 'confirm'].map(item),
@@ -40,15 +42,19 @@ export const PUBLIC_SITE_SECTIONS = {
     id: 'sedes',
     items: ['occupy', 'activate', 'scoreboard', 'continuity'].map(item),
   },
+  venueAdmin: {
+    id: 'administra-tu-sede',
+    // Comercio ya tiene su propio bloque de oportunidades para la sede;
+    // aquí dejamos seis pasos operativos, en una grilla pareja.
+    items: ['setup', 'bookings', 'players', 'competition', 'scoreboard', 'loyalty'].map(item),
+  },
   continuity: {
     id: 'continuidad',
-    items: ['openMatches', 'tournaments', 'results', 'ranking', 'padcoins', 'memberships', 'community'].map(
+    // Los partidos abiertos ya se explican en el recorrido de jugadores.
+    // Aquí quedan las capas que continúan después del encuentro.
+    items: ['tournaments', 'results', 'ranking', 'padcoins', 'memberships', 'community'].map(
       item,
     ),
-  },
-  voice: {
-    id: 'chivi-voz',
-    items: ['ask', 'guide', 'result'].map(item),
   },
   smartScoreboard: {
     id: 'marcador-inteligente',
@@ -96,16 +102,18 @@ export const PUBLIC_SITE_SECTIONS = {
  * para no competir con las funciones que ya pueden usar jugadores y sedes.
  */
 export const PUBLIC_SITE_SECTION_ORDER = [
-  PUBLIC_SITE_SECTIONS.about.id,
   PUBLIC_SITE_SECTIONS.whatIs.id,
   PUBLIC_SITE_SECTIONS.experiences.id,
   PUBLIC_SITE_SECTIONS.playerPath.id,
+  PUBLIC_SITE_SECTIONS.playerRecord.id,
   PUBLIC_SITE_SECTIONS.communityMatches.id,
   PUBLIC_SITE_SECTIONS.smartScoreboard.id,
   PUBLIC_SITE_SECTIONS.venuePath.id,
+  PUBLIC_SITE_SECTIONS.venueAdmin.id,
   PUBLIC_SITE_SECTIONS.continuity.id,
   PUBLIC_SITE_SECTIONS.expansion.id,
   PUBLIC_SITE_SECTIONS.matchIntelligence.id,
+  PUBLIC_SITE_SECTIONS.about.id,
   PUBLIC_SITE_SECTIONS.download.id,
   PUBLIC_SITE_SECTIONS.contact.id,
 ];
@@ -114,7 +122,6 @@ export const PUBLIC_SITE_INTERNAL_ROUTES = [
   PUBLIC_SITE_CTA.play,
   PUBLIC_SITE_CTA.venue,
   PUBLIC_SITE_CTA.login,
-  PUBLIC_SITE_ADMIN_PATH,
   '/sobre',
   '/privacidad',
   '/eliminar-cuenta',

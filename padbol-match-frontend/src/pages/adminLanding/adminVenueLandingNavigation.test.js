@@ -7,23 +7,17 @@ const path = require('path');
 
 const page = fs.readFileSync(path.join(__dirname, 'AdminVenueLandingPage.jsx'), 'utf8');
 
-describe('navegación de la landing para sedes', () => {
-  it('ofrece rutas claras para regresar y recorrer Padbol Match', () => {
-    expect(page).toMatch(/Navegación principal de Padbol Match/);
-    expect(page).toMatch(/to="\/plataforma">Inicio/);
-    expect(page).toMatch(/to="\/plataforma#jugadores">Para jugadores/);
-    expect(page).toMatch(/Para sedes/);
-    expect(page).toMatch(/to="\/contacto">Contacto/);
+describe('planes de la landing para sedes', () => {
+  it('lleva el CTA de captación a los planes y nunca al formulario heredado', () => {
+    expect(page.match(/href="#planes"/g)).toHaveLength(2);
+    expect(page).not.toMatch(/to="\/unirse"/);
+    expect(page).not.toMatch(/UnirsePage/);
   });
 
-  it('anticipa que cada módulo abre una explicación con sus opciones', () => {
-    expect(page).toMatch(/Ver explicación y opciones/);
-    expect(page).toMatch(/onClick=\{\(\) => openModule\(module\)\}/);
-    expect(page).not.toMatch(/onMouseEnter/);
-    expect(page).not.toMatch(/scheduleModulePreview/);
-    expect(page).not.toMatch(/manual-administradores\.pdf/);
-    expect(page).not.toMatch(/Descargar guía PDF/);
-    expect(page).toMatch(/ASÍ FUNCIONA/);
-    expect(page).toMatch(/activeModule\.steps\.map/);
+  it('expone las cuatro opciones comerciales antes de cualquier alta', () => {
+    expect(page).toMatch(/id="planes"/);
+    ['Gratis', 'Start', 'Club', 'Pro', 'US$ 99'].forEach((value) => {
+      expect(page).toContain(value);
+    });
   });
 });

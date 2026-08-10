@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import PublicSiteLayout from '../publicSite/PublicSiteLayout';
+import '../publicSite/publicSite.css';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
 
@@ -8,109 +9,98 @@ import './adminVenueLandingOverrides.css';
 const ADMIN_PANEL_ACCESS_PATH = '/acceso?redirect=%2Fadmin';
 
 const modules = [
-  { number: '01', title: 'Configura tu sede', description: 'Datos públicos, deportes, canchas, horarios, precios y medios de cobro.', overview: 'Deja lista la base operativa de tu sede para que las personas puedan encontrarla, conocer sus canchas y reservar con información clara.', steps: ['Completa nombre, ubicación, contacto, moneda y deportes disponibles.', 'Carga cada cancha con su foto, tipo, duración de turno y condiciones de uso.', 'Define días, horarios, franjas de precio y reglas de cancelación.', 'Revisa el resumen y publica solamente cuando todos los datos estén correctos.'] },
-  { number: '02', title: 'Opera reservas', description: 'Calendario, pagos, asistencia, reprogramaciones y reglas de cancelación.', overview: 'Controla la agenda diaria en un solo lugar: disponibilidad, cupos, confirmaciones y cambios de cada reserva.', steps: ['Revisa el calendario por cancha, día y franja horaria.', 'Confirma el grupo completo y habilita el cobro cuando corresponda.', 'Registra asistencia, reprogramaciones o cancelaciones con su motivo.', 'Consulta el estado final para que el historial de la sede quede actualizado.'] },
-  { number: '03', title: 'Activa jugadores', description: 'Vinculaciones, solicitudes, comunidad y comunicación desde una misma base.', overview: 'Conecta a las personas que juegan en tu sede y usa la comunidad para que encuentren partidos, completen equipos y vuelvan a jugar.', steps: ['Revisa solicitudes de vinculación y aprueba únicamente las que correspondan.', 'Mantén actualizada la ficha deportiva de cada jugador.', 'Publica o acompaña partidos abiertos desde la comunidad.', 'Usa avisos y notificaciones para comunicar cambios importantes.'] },
-  { number: '04', title: 'Crea competencia', description: 'Torneos, equipos, cupos, resultados y rankings de tu sede.', overview: 'Crea competencias con reglas visibles, cupos reales y resultados que alimentan la experiencia deportiva de cada participante.', steps: ['Elige deporte, formato, categoría, fechas, sede y cantidad de cupos.', 'Define equipos, precio, reglas de inscripción y condiciones de participación.', 'Publica el torneo y sigue las inscripciones desde el panel.', 'Usa el marcador para cerrar cada partido: el resultado se vincula automáticamente con el historial y el ranking.'] },
-  { number: '05', title: 'Lleva el marcador', description: 'Inicia, sigue, corrige y cierra resultados para conectarlos con el historial.', overview: 'El marcador registra el partido mientras se juega y convierte el resultado final en información útil para jugadores, torneos y rankings.', steps: ['Selecciona el partido, los jugadores o equipos y abre el marcador.', 'Registra puntos, sets y parciales mientras el encuentro está en juego.', 'Corrige una acción si hace falta antes de cerrar el resultado.', 'Confirma el cierre para conectar el partido con historial, estadísticas y competencia.'] },
-  { number: '06', title: 'Fideliza', description: 'PadCoins y membresías cuando estén habilitados para tu operación.', overview: 'Reconoce la participación y construye continuidad con beneficios, membresías y PadCoins configurados según las reglas de tu sede.', steps: ['Define qué beneficios quieres habilitar para tu comunidad.', 'Configura las reglas de membresía, vigencia y condiciones de uso.', 'Revisa movimientos y canjes antes de confirmarlos.', 'Comunica con claridad los beneficios disponibles para cada jugador.'] },
-  { number: '07', title: 'Muestra y vende', description: 'Espacios de publicidad, sponsors y Padbol Match Shop cuando la sede los active.', overview: 'Gestiona oportunidades comerciales de la sede: espacios de marca y, cuando esté activado, productos locales de Padbol Match Shop.', steps: ['Define los espacios publicitarios o de sponsor disponibles en tu sede.', 'Carga las piezas, fechas y condiciones de cada campaña.', 'Activa productos, precios y stock local en Padbol Match Shop cuando corresponda.', 'Revisa resultados, pedidos y rendimiento sin afectar la operación deportiva.'] },
+  { number: '01', title: 'TORNEOS QUE SE ORDENAN', description: 'Definís formato, categorías, cupos y fechas. El fixture genera los cruces y deja la competencia lista para jugar.' },
+  { number: '02', title: 'CADA PARTIDO YA TIENE MARCADOR', description: 'Cada cruce del fixture llega preparado para registrar puntos, sets y resultado durante el juego.' },
+  { number: '03', title: 'RESULTADOS QUE SIGUEN TRABAJANDO', description: 'Al cerrar un partido, se actualizan tablas, llaves, historial y ranking: no hay planillas paralelas.' },
+  { number: '04', title: 'MÁS REGRESO, NO SOLO MÁS TURNOS', description: 'Con PadCoins, beneficios, membresías y campañas temporales, la sede crea razones reales para volver.' },
+  { number: '05', title: 'UNA COMUNIDAD QUE COMPLETA EQUIPOS', description: 'Jugadores vinculados, partidos abiertos, inscripciones y lista de espera convierten interés en actividad.' },
+  { number: '06', title: 'TU SEDE GANA PRESENCIA', description: 'Torneos, campañas, sponsors y propuestas activas hacen visible lo que pasa en tu sede, dentro y fuera de la cancha.' },
+];
+
+// Comparación comercial previa al alta. La activación, el cobro y la carga de
+// datos de la sede se resuelven después de que la persona elige una opción.
+const plans = [
+  { name: 'Gratis', price: 'US$ 0', summary: 'Para conocer Padbol Match y evaluar la propuesta con tu equipo.' },
+  { name: 'Start', price: 'US$ 29', summary: 'Para ordenar la operación diaria de una sede en un solo lugar.' },
+  { name: 'Club', price: 'US$ 59', summary: 'Para sumar competencia, comunidad y herramientas de fidelización.' },
+  { name: 'Pro', price: 'US$ 99', summary: 'Para una operación más completa, con activación y crecimiento por etapas.' },
 ];
 
 function useDocumentMeta() {
   useEffect(() => {
     const previousTitle = document.title;
     document.title = 'Administra tu sede | Padbol Match';
-    document.documentElement.classList.add('admin-landing-active');
+    // La landing de sedes es una sección de la web pública: comparte el mismo
+    // documento, header, ancho y comportamiento responsive que /plataforma.
+    document.documentElement.classList.add('public-site-active', 'admin-landing-active');
     window.scrollTo(0, 0);
     return () => {
       document.title = previousTitle;
-      document.documentElement.classList.remove('admin-landing-active');
+      document.documentElement.classList.remove('public-site-active', 'admin-landing-active');
     };
   }, []);
 }
 
 export default function AdminVenueLandingPage() {
   useDocumentMeta();
-  const [activeModule, setActiveModule] = useState(null);
-
-  useEffect(() => {
-    if (!activeModule) return undefined;
-    const handleKeyDown = (event) => { if (event.key === 'Escape') setActiveModule(null); };
-    const previousOverflow = document.body.style.overflow;
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [activeModule]);
-
-  const openModule = (module) => {
-    setActiveModule(module);
-  };
   return (
+    <PublicSiteLayout>
     <div className="admin-landing">
-      <header className="admin-landing__header">
-        <div className="admin-landing__shell admin-landing__header-inner">
-          <Link to="/plataforma" aria-label="Ir a Padbol Match" className="admin-landing__brand">
-            <img
-              src="/media/public-site/jero/padbol-match-logo-white.svg"
-              className="admin-landing__brand-logo"
-              alt="Padbol Match"
-            />
-          </Link>
-          <nav className="admin-landing__site-nav" aria-label="Navegación principal de Padbol Match">
-            <Link to="/plataforma">Inicio</Link>
-            <Link to="/plataforma#jugadores">Para jugadores</Link>
-            <a href="#inicio" aria-current="page">Para sedes</a>
-            <Link to="/contacto">Contacto</Link>
-          </nav>
-          <div className="admin-landing__header-actions">
-            <a href="#recorrido" className="admin-landing__text-link">Cómo funciona</a>
-            <Link to={ADMIN_PANEL_ACCESS_PATH} className="admin-landing__login">Ingresar al panel</Link>
-          </div>
-        </div>
-      </header>
-
       <main>
         <section className="admin-landing__hero" id="inicio">
           <div className="admin-landing__shell admin-landing__hero-grid">
             <div>
               <p className="admin-landing__eyebrow">NO ES UNA AGENDA. ES UNA SEDE ACTIVA.</p>
               <h1>Todo lo que soñaste para <span>administrar tu sede está acá.</span></h1>
-              <p className="admin-landing__lead">Padbol Match une competencia, marcador, ranking y beneficios para que la actividad no termine al salir de la cancha: genera comunidad, retorno y valor para tu sede.</p>
+              <p className="admin-landing__lead">Padbol Match une competencia, marcador, ranking y beneficios para que la actividad no termine al salir de la cancha: genera comunidad, retorno y valor para tu sede. Con una operación que sigue siendo tuya.</p>
               <div className="admin-landing__hero-actions">
-                <Link to="/unirse" className="admin-landing__primary">Ver planes <span>→</span></Link>
-                <Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link>
+                <a href="#planes" className="admin-landing__primary">Quiero sumar mi sede <span>→</span></a>
               </div>
             </div>
-            <div className="admin-landing__hero-panel admin-landing__pulse" aria-label="Pulso de tu sede: reservas, partido en vivo, resultado, ranking y PadCoins conectados">
-              <header className="admin-landing__pulse-header"><p>PULSO DE TU SEDE</p><span><i aria-hidden="true" />LIVE</span></header>
-              <div className="admin-landing__pulse-topline"><span>HOY</span><b>•</b><span>CANCHA 1</span><b>•</b><em><i aria-hidden="true" />EN JUEGO</em></div>
-              <section className="admin-landing__pulse-match"><p>PARTIDO EN VIVO</p><div className="admin-landing__pulse-score"><div className="admin-landing__pulse-team admin-landing__pulse-team--serving"><strong>LUNA /<br />ROJAS</strong><span><i aria-hidden="true" />SACA</span></div><b>4 <i>−</i> 3</b><div className="admin-landing__pulse-team admin-landing__pulse-team--right"><strong>PÉREZ /<br />DÍAZ</strong></div></div><span>SET 2&nbsp; · &nbsp;18:42</span></section>
-              <ol className="admin-landing__pulse-outcomes"><li><i>✓</i><div><strong>RESULTADO REGISTRADO</strong><span>El partido se cierra y queda guardado.</span></div></li><li><i>▮▮▮</i><div><strong>RANKING ACTUALIZADO</strong><span>Se recalculan posiciones al instante.</span></div></li><li><i>P</i><div><strong>PADCOINS ACREDITADOS</strong><span>La competencia genera retorno real.</span></div></li></ol>
-              <div className="admin-landing__pulse-return"><span>◉</span><b>+32</b><p>JUGADORES VUELVEN<br /><em>ESTA SEMANA</em></p></div>
+            <div className="admin-landing__hero-panel admin-landing__hero-panel--flow" aria-label="El torneo conecta marcador, ranking y beneficios">
+              <p className="admin-landing__panel-label">EL PARTIDO ACTIVA EL SIGUIENTE PASO</p>
+              <div className="admin-landing__hero-flow">
+                <span><b>01</b>Torneo</span>
+                <i aria-hidden="true" />
+                <span><b>02</b>Marcador</span>
+                <i aria-hidden="true" />
+                <span><b>03</b>Ranking</span>
+                <i aria-hidden="true" />
+                <span><b>04</b>Beneficios</span>
+              </div>
+              <p><strong>Una actividad que continúa.</strong> El resultado genera el próximo motivo para volver.</p>
             </div>
           </div>
         </section>
 
         <section className="admin-landing__section" id="recorrido">
           <div className="admin-landing__shell">
-            <p className="admin-landing__eyebrow">RECORRIDO OPERATIVO</p>
-            <h2>Todo lo que necesitas para <span>gestionar</span> una sede.</h2>
-            <p className="admin-landing__intro">Todo el panel, explicado de forma simple: empieza por lo esencial y activa cada módulo cuando lo necesites.</p>
+            <p className="admin-landing__eyebrow">LO QUE UNA AGENDA SOLA NO HACE</p>
+            <h2>De una cancha ocupada a una sede que <span>genera movimiento.</span></h2>
+            <p className="admin-landing__intro">No se trata de sumar funciones. Se trata de conectar lo que pasa antes, durante y después de cada partido para que tu sede tenga más actividad y jugadores con motivos para regresar.</p>
             <div className="admin-landing__module-grid">
               {modules.map((module) => (
-                <button
+                <article
                   key={module.number}
-                  type="button"
                   className="admin-landing__module-card"
-                  onClick={() => openModule(module)}
                 >
-                  <span>{module.number}</span><h3>{module.title}</h3><p>{module.description}</p><b>Ver explicación y opciones <i>→</i></b>
-                </button>
+                  <span>{module.number}</span><h3>{module.title}</h3><p>{module.description}</p>
+                </article>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="admin-landing__data-ownership" aria-labelledby="datos-propios-title">
+          <div className="admin-landing__shell admin-landing__data-ownership-grid">
+            <p className="admin-landing__data-ownership-kicker">TU SEDE. TU INFORMACIÓN. TU DECISIÓN.</p>
+            <div>
+              <h2 id="datos-propios-title">Tus datos no quedan <span>cautivos.</span></h2>
+              <p className="admin-landing__data-ownership-lead">La comunidad, la operación y el trabajo que construiste son tuyos. Siempre.</p>
+              <p>Podés traer la información de la herramienta que usás hoy para empezar con ventaja. Y si alguna vez decidís irte, te llevás tus datos: no te retenemos ni te obligamos a empezar de cero.</p>
+              <div className="admin-landing__data-ownership-points" aria-label="Principios de portabilidad de datos">
+                <span>Traés tu información</span><span>Construís con libertad</span><span>Te llevás lo que es tuyo</span>
+              </div>
             </div>
           </div>
         </section>
@@ -124,6 +114,7 @@ export default function AdminVenueLandingPage() {
               <div className="admin-landing__assistant-features" aria-label="Funciones de Chivi">
                 <span>◉ Por voz o texto</span><span>✓ Valida datos</span><span>→ Abre el módulo correcto</span>
               </div>
+              <p className="admin-landing__human-support"><strong>Soporte humano cuando lo necesitás.</strong> Si una consulta requiere seguimiento, el equipo toma el caso y te acompaña hasta resolverlo.</p>
               <ul className="admin-landing__check-list">
                 <li>Nombre, país, moneda y deportes de la sede.</li>
                 <li>Canchas, días, horarios y duración de cada turno.</li>
@@ -132,91 +123,45 @@ export default function AdminVenueLandingPage() {
               </ul>
               <p className="admin-landing__note"><strong>Así funciona:</strong> dices o escribes lo que necesitas configurar; Chivi te lleva a la pantalla correcta, ordena las respuestas y solicita confirmación final. La sede conserva siempre la decisión y el guardado.</p>
             </div>
-            <div className="admin-landing__conversation" aria-label="Ejemplo de asistente guiado">
+            <div className="admin-landing__conversation admin-landing__conversation--listening" aria-label="Chivi, asistente de configuración, está escuchando">
               <p className="admin-landing__panel-label">CHIVI / ASISTENTE DE CONFIGURACIÓN</p>
-              <div className="admin-landing__bubble admin-landing__bubble--bot">¿Qué valor tiene una hora de Cancha 1?</div>
-              <div className="admin-landing__bubble admin-landing__bubble--user">ARS 28.000 de lunes a viernes.</div>
-              <div className="admin-landing__bubble admin-landing__bubble--bot">Perfecto. ¿El precio cambia en horario pico o fines de semana?</div>
-              <div className="admin-landing__confirmation">Antes de publicar: <strong>te mostramos el resumen y confirmas.</strong></div>
+              <div className="admin-landing__chivi-pulse" aria-hidden="true">
+                <i /><i /><i /><i /><i /><i /><i />
+              </div>
+              <strong className="admin-landing__chivi-title">Chivi está escuchando</strong>
+              <p className="admin-landing__chivi-copy">Te guía con una pregunta por vez y confirma todo antes de guardar.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="admin-landing__plans" id="planes" aria-labelledby="planes-title">
+          <div className="admin-landing__shell">
+            <p className="admin-landing__eyebrow">ELEGÍ CÓMO QUERÉS EMPEZAR</p>
+            <h2 id="planes-title">Planes para tu <span>sede.</span></h2>
+            <p className="admin-landing__intro">Compará las opciones antes de iniciar el alta. Después vamos a detallar los beneficios de cada plan; no te llevamos a ningún formulario largo desde esta landing.</p>
+            <div className="admin-landing__plan-grid">
+              {plans.map((plan) => (
+                <article className="admin-landing__plan-card" key={plan.name}>
+                  <h3>{plan.name}</h3>
+                  <p className="admin-landing__plan-price">{plan.price}<span>/ mes</span></p>
+                  <p>{plan.summary}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
 
         <section className="admin-landing__cta">
           <div className="admin-landing__shell">
-            <p className="admin-landing__eyebrow">OPERACIÓN ACOMPAÑADA</p>
-            <h2>El <span>resultado</span> no es el final. Es el comienzo de la <span>próxima actividad.</span></h2>
-            <p>Empieza por datos, canchas, horarios y reservas. El resto se activa según la operación real.</p>
-            <div className="admin-landing__hero-actions"><Link to="/unirse" className="admin-landing__primary">Elegir mi plan <span>→</span></Link><Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link></div>
+            <p className="admin-landing__eyebrow">UNA SEDE QUE SIGUE ACTIVA</p>
+            <h2>El resultado no es el final. Es el comienzo de la próxima actividad.</h2>
+            <p>Configurá la operación esencial y activá competencia, marcador, ranking y beneficios a medida que tu comunidad crece. Sin entregar el control de tu información ni de tu trabajo.</p>
+            <div className="admin-landing__hero-actions"><a href="#planes" className="admin-landing__primary">Ver planes para mi sede <span>→</span></a></div>
           </div>
         </section>
       </main>
 
-      {activeModule && (
-        <div className="admin-landing__modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveModule(null); }}>
-          <section className="admin-landing__modal" role="dialog" aria-modal="true" aria-labelledby={`admin-module-${activeModule.number}`}>
-            <button type="button" className="admin-landing__modal-close" onClick={() => setActiveModule(null)} aria-label="Cerrar explicación">×</button>
-            <p className="admin-landing__eyebrow">MÓDULO {activeModule.number} / PARA SEDES</p>
-            <h2 id={`admin-module-${activeModule.number}`}>{activeModule.title}</h2>
-            <p className="admin-landing__modal-copy">{activeModule.overview}</p>
-            <div className="admin-landing__modal-steps">
-              <p>ASÍ FUNCIONA</p>
-              <ol className="admin-landing__steps">
-                {activeModule.steps.map((step, index) => (
-                  <li key={step}><span>{String(index + 1).padStart(2, '0')}</span>{step}</li>
-                ))}
-              </ol>
-            </div>
-          </section>
-        </div>
-      )}
-
-      <footer className="admin-landing__footer">
-        <div className="admin-landing__shell">
-          <div className="admin-landing__footer-top">
-            <div className="admin-landing__footer-brand">
-              <Link to="/plataforma" className="admin-landing__footer-logo" aria-label="Ir a Padbol Match">
-                <img src="/media/public-site/jero/padbol-match-logo-white.svg" alt="Padbol Match" />
-              </Link>
-              <p className="admin-landing__footer-product-of">
-                Un producto de Padbol
-                <a href="https://padbol.com" aria-label="Visitar Padbol">
-                  <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
-                </a>
-              </p>
-              <p className="admin-landing__footer-developed-by">Desarrollado por Padbol Match Team.</p>
-              <p className="admin-landing__footer-by-padbol">by Padbol Internacional.</p>
-              <Link to="/contacto" className="admin-landing__footer-contact">¿Necesitas ayuda? Contáctanos <span>→</span></Link>
-            </div>
-
-            <nav className="admin-landing__footer-nav" aria-label="Navegación de Padbol Match">
-              <div>
-                <p>PLATAFORMA</p>
-                <Link to="/plataforma">Conoce Padbol Match</Link>
-                <a href="#recorrido">Administra tu sede</a>
-                <Link to={ADMIN_PANEL_ACCESS_PATH}>Ingresar al panel</Link>
-              </div>
-              <div>
-                <p>RECURSOS</p>
-                <a href="#asistente">Configuración guiada con Chivi</a>
-                <a href="#recorrido">Módulos para tu sede</a>
-                <Link to="/contacto">Soporte</Link>
-              </div>
-              <div>
-                <p>INFORMACIÓN</p>
-                <Link to="/terminos">Términos y condiciones</Link>
-                <Link to="/privacidad">Política de privacidad</Link>
-                <Link to="/eliminar-cuenta">Eliminar cuenta</Link>
-              </div>
-            </nav>
-          </div>
-
-          <div className="admin-landing__footer-bottom">
-            <p>© 2026 Padbol. Operated by <a href="https://padbol.com/company">Entertainment and Sports Services LLC</a>.</p>
-            <span>Padbol Match · Gestión deportiva conectada</span>
-          </div>
-        </div>
-      </footer>
     </div>
+    </PublicSiteLayout>
   );
 }
