@@ -15,15 +15,16 @@ describe('navegación a los planes para sedes', () => {
     expect(landing).not.toMatch(/href="#planes"/);
   });
 
-  it('expone las cuatro opciones y sus modalidades de pago en la página de planes', () => {
-    ['Gratis', 'Start', 'Club', 'Pro', 'US$ 99', 'Mensual', 'Anual', 'Incluye'].forEach((value) => {
+  it('unifica el acceso inicial en Start y expone sus tres planes con pago mensual o anual', () => {
+    ['Start', 'Club', 'Pro', 'US$ 99', 'Mensual', 'Anual', 'Incluye', '2 meses bonificados'].forEach((value) => {
       expect(plans).toContain(value);
     });
+    expect(plans).not.toContain("name: 'Gratis'");
   });
 
-  it('abre la consulta comercial por WhatsApp, sin pasar por contacto ni por el alta heredada', () => {
-    expect(plans).toContain('https://wa.me/');
-    expect(plans).toContain('Consultar este plan');
+  it('no ofrece una consulta ni deriva a ningún formulario antes de habilitar el checkout', () => {
+    expect(plans).not.toContain('https://wa.me/');
+    expect(plans).not.toContain('Consultar este plan');
     expect(plans).not.toMatch(/to="\/contacto"/);
     expect(plans).not.toMatch(/\/unirse/);
   });
