@@ -5,19 +5,19 @@
 const fs = require('fs');
 const path = require('path');
 
-const page = fs.readFileSync(path.join(__dirname, 'AdminVenueLandingPage.jsx'), 'utf8');
+const landing = fs.readFileSync(path.join(__dirname, 'AdminVenueLandingPage.jsx'), 'utf8');
+const plans = fs.readFileSync(path.join(__dirname, 'VenuePlansPage.jsx'), 'utf8');
 
-describe('planes de la landing para sedes', () => {
-  it('lleva el CTA de captación a los planes y nunca al formulario heredado', () => {
-    expect(page.match(/href="#planes"/g)).toHaveLength(2);
-    expect(page).not.toMatch(/to="\/unirse"/);
-    expect(page).not.toMatch(/UnirsePage/);
+describe('navegación a los planes para sedes', () => {
+  it('lleva los dos CTA a una página propia y nunca al formulario heredado', () => {
+    expect(landing.match(/to="\/planes"/g)).toHaveLength(2);
+    expect(landing).not.toMatch(/\/unirse/);
+    expect(landing).not.toMatch(/href="#planes"/);
   });
 
-  it('expone las cuatro opciones comerciales antes de cualquier alta', () => {
-    expect(page).toMatch(/id="planes"/);
-    ['Gratis', 'Start', 'Club', 'Pro', 'US$ 99'].forEach((value) => {
-      expect(page).toContain(value);
+  it('expone las cuatro opciones y sus modalidades de pago en la página de planes', () => {
+    ['Gratis', 'Start', 'Club', 'Pro', 'US$ 99', 'Mensual', 'Anual', 'Incluye'].forEach((value) => {
+      expect(plans).toContain(value);
     });
   });
 });

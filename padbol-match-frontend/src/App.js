@@ -79,6 +79,7 @@ const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
 const AdminVenueLandingPage = lazy(() => import('./pages/adminLanding/AdminVenueLandingPage'));
+const VenuePlansPage = lazy(() => import('./pages/adminLanding/VenuePlansPage'));
 const SupportTicketsPage = lazy(() => import('./pages/SupportTicketsPage'));
 
 function RouteLoadingScreen() {
@@ -569,6 +570,14 @@ function App() {
                 element={(
                   <ErrorBoundary label="la landing para sedes">
                     <AdminVenueLandingPage />
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
+                path="/planes"
+                element={(
+                  <ErrorBoundary label="los planes para sedes">
+                    <VenuePlansPage />
                   </ErrorBoundary>
                 )}
               />

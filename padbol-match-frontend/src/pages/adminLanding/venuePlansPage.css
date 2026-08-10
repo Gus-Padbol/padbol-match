@@ -1,0 +1,121 @@
+.venue-plans {
+  min-height: 100vh;
+  background: #0a101b;
+  color: #fff;
+}
+
+.venue-plans__hero {
+  padding: 82px 0 54px;
+  background:
+    radial-gradient(circle at 85% 5%, rgba(237, 28, 46, .2), transparent 35%),
+    #101827;
+}
+
+.venue-plans__back {
+  display: inline-flex;
+  margin-bottom: 34px;
+  color: #cbd6e5;
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.venue-plans__back:hover { color: #fff; }
+
+.venue-plans h1 {
+  max-width: 760px;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(42px, 6vw, 76px);
+  line-height: .98;
+  letter-spacing: -.045em;
+}
+
+.venue-plans h1 span { color: #ed1c2e; }
+
+.venue-plans__lead {
+  max-width: 610px;
+  margin: 24px 0 0;
+  color: #c7d1e1;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.venue-plans__billing {
+  display: inline-flex;
+  gap: 5px;
+  margin-top: 30px;
+  padding: 5px;
+  border: 1px solid #3d4a60;
+  border-radius: 999px;
+  background: rgba(8, 14, 24, .75);
+}
+
+.venue-plans__billing button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #bdc8d9;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.venue-plans__billing button.is-active { background: #ed1c2e; color: #fff; }
+.venue-plans__billing button span { margin-left: 4px; font-size: 11px; }
+
+.venue-plans__catalog { padding: 46px 0 88px; }
+
+.venue-plans__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 15px;
+}
+
+.venue-plans__card {
+  display: flex;
+  flex-direction: column;
+  min-height: 510px;
+  padding: 25px;
+  border: 1px solid #2e3b50;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #101827, #0b111c);
+}
+
+.venue-plans__card--pro { border-color: rgba(237, 28, 46, .8); box-shadow: 0 0 0 1px rgba(237, 28, 46, .2); }
+.venue-plans__badge { margin: 0 0 16px; color: #ffabb2; font-size: 11px; font-weight: 900; letter-spacing: .12em; }
+.venue-plans__card h2 { margin: 0; font-size: 30px; line-height: 1; }
+.venue-plans__price { margin: 20px 0 5px; font-size: 31px; font-weight: 900; line-height: 1; }
+.venue-plans__price span { margin-left: 5px; color: #9faec2; font-size: 12px; font-weight: 700; }
+.venue-plans__saving { margin: 0; color: #ffabb2; font-size: 12px; font-weight: 800; }
+.venue-plans__summary { min-height: 67px; margin: 18px 0; color: #bdc8d9; font-size: 14px; line-height: 1.48; }
+.venue-plans__includes { margin-top: auto; padding-top: 19px; border-top: 1px solid #2e3b50; }
+.venue-plans__includes h3 { margin: 0 0 12px; color: #fff; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+.venue-plans__includes ul { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.venue-plans__includes li { display: flex; gap: 8px; color: #c7d1e1; font-size: 13px; line-height: 1.35; }
+.venue-plans__includes li::before { content: '✓'; color: #ed1c2e; font-weight: 900; }
+.venue-plans__action { display: flex; justify-content: space-between; margin-top: 24px; color: #fff; font-size: 14px; font-weight: 850; text-decoration: none; }
+.venue-plans__action:hover { color: #ffb7bd; }
+.venue-plans__note { max-width: 760px; margin: 28px auto 0; color: #8fa0b8; font-size: 13px; line-height: 1.5; text-align: center; }
+.venue-plans__visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+@media (max-width: 1050px) {
+  .venue-plans__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .venue-plans__card { min-height: 450px; }
+}
+
+@media (max-width: 600px) {
+  .venue-plans__hero { padding: 54px 0 38px; }
+  .venue-plans__back { margin-bottom: 26px; }
+  .venue-plans__lead { font-size: 16px; }
+  .venue-plans__billing { width: 100%; }
+  .venue-plans__billing button { flex: 1; padding: 10px 8px; font-size: 13px; }
+  .venue-plans__billing button span { display: block; margin: 3px 0 0; font-size: 10px; }
+  .venue-plans__catalog { padding: 30px 0 62px; }
+  .venue-plans__grid { grid-template-columns: 1fr; }
+  .venue-plans__card { min-height: 0; padding: 23px; }
+  .venue-plans__summary { min-height: 0; }
+}
