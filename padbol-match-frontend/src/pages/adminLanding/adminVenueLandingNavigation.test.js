@@ -20,4 +20,11 @@ describe('navegación a los planes para sedes', () => {
       expect(plans).toContain(value);
     });
   });
+
+  it('abre la consulta comercial por WhatsApp, sin pasar por contacto ni por el alta heredada', () => {
+    expect(plans).toContain('https://wa.me/');
+    expect(plans).toContain('Consultar este plan');
+    expect(plans).not.toMatch(/to="\/contacto"/);
+    expect(plans).not.toMatch(/\/unirse/);
+  });
 });

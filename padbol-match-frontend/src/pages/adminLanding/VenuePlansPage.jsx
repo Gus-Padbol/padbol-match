@@ -36,6 +36,13 @@ const plans = [
   },
 ];
 
+const WHATSAPP_NUMBER = '17864588533';
+
+function consultationUrl(planName) {
+  const message = `Hola, quiero consultar el plan ${planName} para mi sede en Padbol Match.`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 function useDocumentMeta() {
   useEffect(() => {
     const previousTitle = document.title;
@@ -92,7 +99,14 @@ export default function VenuePlansPage() {
                       {plan.includes.map((item) => <li key={item}>{item}</li>)}
                     </ul>
                   </div>
-                  <Link to="/contacto" className="venue-plans__action">Consultar este plan <span>→</span></Link>
+                  <a
+                    className="venue-plans__action"
+                    href={consultationUrl(plan.name)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Consultar este plan <span>→</span>
+                  </a>
                 </article>
               ))}
             </div>
