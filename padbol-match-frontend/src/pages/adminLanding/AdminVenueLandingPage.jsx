@@ -151,7 +151,7 @@ export default function AdminVenueLandingPage() {
         <section className="admin-landing__cta">
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">UNA SEDE QUE SIGUE ACTIVA</p>
-            <h2>El resultado no es el final. Es el comienzo de la próxima actividad.</h2>
+            <h2>El <span>resultado</span> no es el final. Es el comienzo de la <span>próxima actividad.</span></h2>
             <p>Configurá la operación esencial y activá competencia, marcador, ranking y beneficios a medida que tu comunidad crece. Sin entregar el control de tu información ni de tu trabajo.</p>
             <div className="admin-landing__hero-actions"><Link to="/planes" className="admin-landing__primary">Ver planes para mi sede <span>→</span></Link></div>
           </div>
