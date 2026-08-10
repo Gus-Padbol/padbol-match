@@ -77,24 +77,20 @@ export default function AdminVenueLandingPage() {
         <section className="admin-landing__hero" id="inicio">
           <div className="admin-landing__shell admin-landing__hero-grid">
             <div>
-              <p className="admin-landing__eyebrow">PADBOL MATCH / PARA SEDES</p>
-              <h1>Tu sede, <span>en orden</span> desde el primer día.</h1>
-              <p className="admin-landing__lead">Configura canchas, horarios y precios. Opera reservas, jugadores y torneos. Mide el juego y haz crecer la comunidad desde un solo panel.</p>
+              <p className="admin-landing__eyebrow">NO ES UNA AGENDA. ES UNA SEDE ACTIVA.</p>
+              <h1>Todo lo que soñaste para <span>administrar tu sede está acá.</span></h1>
+              <p className="admin-landing__lead">Padbol Match une competencia, marcador, ranking y beneficios para que la actividad no termine al salir de la cancha: genera comunidad, retorno y valor para tu sede.</p>
               <div className="admin-landing__hero-actions">
                 <Link to="/unirse" className="admin-landing__primary">Ver planes <span>→</span></Link>
                 <Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link>
               </div>
             </div>
-            <div className="admin-landing__hero-panel" aria-label="Ejemplo de tablero administrativo">
-              <p className="admin-landing__panel-label">EJEMPLO VISUAL / REEMPLAZAR POR CAPTURA REAL</p>
-              <div className="admin-landing__panel-title">Mi Sede <span>● En línea</span></div>
-              <div className="admin-landing__metric-grid">
-                <div><small>RESERVAS HOY</small><strong>12</strong></div>
-                <div><small>CANCHAS ACTIVAS</small><strong>04</strong></div>
-                <div><small>JUGADORES</small><strong>348</strong></div>
-              </div>
-              <div className="admin-landing__timeline"><i /><i /><i /><i /><i /></div>
-              <p>Precios, disponibilidad, solicitudes y operación diaria conectados.</p>
+            <div className="admin-landing__hero-panel admin-landing__pulse" aria-label="Pulso de tu sede: reservas, partido en vivo, resultado, ranking y PadCoins conectados">
+              <header className="admin-landing__pulse-header"><p>PULSO DE TU SEDE</p><span><i aria-hidden="true" />LIVE</span></header>
+              <div className="admin-landing__pulse-topline"><span>HOY</span><b>•</b><span>CANCHA 1</span><b>•</b><em><i aria-hidden="true" />EN JUEGO</em></div>
+              <section className="admin-landing__pulse-match"><p>PARTIDO EN VIVO</p><div className="admin-landing__pulse-score"><div className="admin-landing__pulse-team admin-landing__pulse-team--serving"><strong>LUNA /<br />ROJAS</strong><span><i aria-hidden="true" />SACA</span></div><b>4 <i>−</i> 3</b><div className="admin-landing__pulse-team admin-landing__pulse-team--right"><strong>PÉREZ /<br />DÍAZ</strong></div></div><span>SET 2&nbsp; · &nbsp;18:42</span></section>
+              <ol className="admin-landing__pulse-outcomes"><li><i>✓</i><div><strong>RESULTADO REGISTRADO</strong><span>El partido se cierra y queda guardado.</span></div></li><li><i>▮▮▮</i><div><strong>RANKING ACTUALIZADO</strong><span>Se recalculan posiciones al instante.</span></div></li><li><i>P</i><div><strong>PADCOINS ACREDITADOS</strong><span>La competencia genera retorno real.</span></div></li></ol>
+              <div className="admin-landing__pulse-return"><span>◉</span><b>+32</b><p>JUGADORES VUELVEN<br /><em>ESTA SEMANA</em></p></div>
             </div>
           </div>
         </section>
@@ -149,7 +145,7 @@ export default function AdminVenueLandingPage() {
         <section className="admin-landing__cta">
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">OPERACIÓN ACOMPAÑADA</p>
-            <h2>Tu sede no tiene que aprender todo de una vez.</h2>
+            <h2>El <span>resultado</span> no es el final. Es el comienzo de la <span>próxima actividad.</span></h2>
             <p>Empieza por datos, canchas, horarios y reservas. El resto se activa según la operación real.</p>
             <div className="admin-landing__hero-actions"><Link to="/unirse" className="admin-landing__primary">Elegir mi plan <span>→</span></Link><Link to="/contacto" className="admin-landing__secondary">Hablar con nosotros</Link></div>
           </div>
