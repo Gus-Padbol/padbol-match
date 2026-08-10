@@ -57,18 +57,12 @@ export default function AdminVenueLandingPage() {
                 <a href="#planes" className="admin-landing__primary">Quiero sumar mi sede <span>→</span></a>
               </div>
             </div>
-            <div className="admin-landing__hero-panel admin-landing__hero-panel--flow" aria-label="El torneo conecta marcador, ranking y beneficios">
-              <p className="admin-landing__panel-label">EL PARTIDO ACTIVA EL SIGUIENTE PASO</p>
-              <div className="admin-landing__hero-flow">
-                <span><b>01</b>Torneo</span>
-                <i aria-hidden="true" />
-                <span><b>02</b>Marcador</span>
-                <i aria-hidden="true" />
-                <span><b>03</b>Ranking</span>
-                <i aria-hidden="true" />
-                <span><b>04</b>Beneficios</span>
-              </div>
-              <p><strong>Una actividad que continúa.</strong> El resultado genera el próximo motivo para volver.</p>
+            <div className="admin-landing__hero-panel admin-landing__pulse" aria-label="Pulso de tu sede: reservas, partido en vivo, resultado, ranking y PadCoins conectados">
+              <header className="admin-landing__pulse-header"><p>PULSO DE TU SEDE</p><span><i aria-hidden="true" />LIVE</span></header>
+              <div className="admin-landing__pulse-topline"><span>HOY</span><b>•</b><span>CANCHA 1</span><b>•</b><em><i aria-hidden="true" />EN JUEGO</em></div>
+              <section className="admin-landing__pulse-match"><p>PARTIDO EN VIVO</p><div className="admin-landing__pulse-score"><div className="admin-landing__pulse-team admin-landing__pulse-team--serving"><strong>LUNA /<br />ROJAS</strong><span><i aria-hidden="true" />SACA</span></div><b>4 <i>−</i> 3</b><div className="admin-landing__pulse-team admin-landing__pulse-team--right"><strong>PÉREZ /<br />DÍAZ</strong></div></div><span>SET 2&nbsp; · &nbsp;18:42</span></section>
+              <ol className="admin-landing__pulse-outcomes"><li><i>✓</i><div><strong>RESULTADO REGISTRADO</strong><span>El partido se cierra y queda guardado.</span></div></li><li><i>▮▮▮</i><div><strong>RANKING ACTUALIZADO</strong><span>Se recalculan posiciones al instante.</span></div></li><li><i>P</i><div><strong>PADCOINS ACREDITADOS</strong><span>La competencia genera retorno real.</span></div></li></ol>
+              <div className="admin-landing__pulse-return"><span>◉</span><b>+32</b><p>JUGADORES VUELVEN<br /><em>ESTA SEMANA</em></p></div>
             </div>
           </div>
         </section>
@@ -154,7 +148,7 @@ export default function AdminVenueLandingPage() {
         <section className="admin-landing__cta">
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">UNA SEDE QUE SIGUE ACTIVA</p>
-            <h2>El resultado no es el final. Es el comienzo de la próxima actividad.</h2>
+            <h2>El resultado no es el <span>final.</span> Es el comienzo de la próxima actividad.</h2>
             <p>Configurá la operación esencial y activá competencia, marcador, ranking y beneficios a medida que tu comunidad crece. Sin entregar el control de tu información ni de tu trabajo.</p>
             <div className="admin-landing__hero-actions"><a href="#planes" className="admin-landing__primary">Ver planes para mi sede <span>→</span></a></div>
           </div>
