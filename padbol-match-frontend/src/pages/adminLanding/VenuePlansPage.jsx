@@ -7,25 +7,33 @@ import './venuePlansPage.css';
 
 const plans = [
   {
+    name: 'Gratis',
+    monthly: 'Sin cargo',
+    annual: 'Sin cargo',
+    isFree: true,
+    summary: 'Para empezar a recibir reservas y mostrar la propuesta de tu sede.',
+    includes: ['Reservas y disponibilidad básica', 'Perfil público de la sede', 'Una experiencia visual a elección', 'Confirmaciones y gestión básica de turnos'],
+  },
+  {
     name: 'Start',
     monthly: 'US$ 29',
     annual: 'US$ 290',
     summary: 'El punto de partida para poner en marcha y ordenar la operación diaria de tu sede.',
-    includes: ['Configuración guiada de la sede', 'Canchas, horarios y precios', 'Reservas y gestión de jugadores', 'Panel de administración de la sede'],
+    includes: ['Todo lo incluido en Gratis', 'Dos experiencias visuales a elección', 'Configuración guiada de la sede', 'Canchas, horarios, precios y gestión de jugadores'],
   },
   {
     name: 'Club',
     monthly: 'US$ 59',
     annual: 'US$ 590',
     summary: 'Para sumar competencia, comunidad y herramientas de fidelización.',
-    includes: ['Todo lo incluido en Start', 'Torneos, fixture y resultados', 'Marcador, tablas y ranking', 'PadCoins, beneficios y membresías'],
+    includes: ['Todo lo incluido en Start', 'Las cinco experiencias visuales', 'Torneos, fixture, marcador, tablas y ranking', 'PadCoins, beneficios y membresías'],
   },
   {
     name: 'Pro',
     monthly: 'US$ 99',
     annual: 'US$ 990',
     summary: 'Para una operación más completa, con activación y crecimiento por etapas.',
-    includes: ['Todo lo incluido en Club', 'Campañas y propuestas activas', 'Herramientas para comunidad y sponsors', 'Acompañamiento para crecimiento de la sede'],
+    includes: ['Todo lo incluido en Club', 'Chivi por voz y texto para configurar y responder', 'Automatizaciones, campañas y comunidad', 'Acceso anticipado a novedades de IA, cuando estén disponibles'],
   },
 ];
 
@@ -75,9 +83,9 @@ export default function VenuePlansPage() {
                   <h2>{plan.name}</h2>
                   <p className="venue-plans__price">
                     {isAnnual ? plan.annual : plan.monthly}
-                    <span>{isAnnual ? '/ año' : '/ mes'}</span>
+                    {!plan.isFree && <span>{isAnnual ? '/ año' : '/ mes'}</span>}
                   </p>
-                  {isAnnual && <p className="venue-plans__saving">Equivale a 10 meses</p>}
+                  {isAnnual && !plan.isFree && <p className="venue-plans__saving">Equivale a 10 meses</p>}
                   <p className="venue-plans__summary">{plan.summary}</p>
                   <div className="venue-plans__includes">
                     <h3>Incluye</h3>
