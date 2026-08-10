@@ -34,6 +34,13 @@ const VENUE_SPORTS = {
   continuity: 'tennis',
 };
 
+const WHAT_IS_SPORTS = [
+  { id: 'padbol', label: 'Padbol', image: 'real-occupancy.jpg' },
+  { id: 'padel', label: 'Pádel', image: 'sport-padel-premium.jpg' },
+  { id: 'tennis', label: 'Tenis', image: 'sport-tennis-premium.jpg' },
+  { id: 'pickleball', label: 'Pickleball', image: 'sport-pickleball-premium.jpg' },
+];
+
 const CONTINUITY_ICONS = {
   openMatches: 'community-small.svg',
   tournaments: 'trophy.svg',
@@ -114,9 +121,11 @@ export function AccentWords({ value, terms = [] }) {
 
   if (!escapedTerms.length) return value;
 
-  const matcher = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+  // Si un título acentuado termina en dos puntos, el signo forma parte de esa
+  // última palabra visual. Así evitamos que quede blanco al final de un bloque rojo.
+  const matcher = new RegExp(`(${escapedTerms.join('|')}:?)`, 'gi');
   return String(value).split(matcher).map((part, index) => (
-    terms.some((term) => term.toLocaleLowerCase('es-AR') === part.toLocaleLowerCase('es-AR'))
+    terms.some((term) => term.toLocaleLowerCase('es-AR') === part.replace(/:$/, '').toLocaleLowerCase('es-AR'))
       ? <span className="ps-title-accent" key={`${part}-${index}`}>{part}</span>
       : part
   ));
@@ -134,6 +143,7 @@ export function SectionShell({ id, className = '', titleId, children }) {
 export function WhatIsSection() {
   const text = usePublicSiteText();
   const id = PUBLIC_SITE_SECTIONS.whatIs.id;
+  const [activeSport, setActiveSport] = useState('padbol');
   return (
     <SectionShell id={id} className="ps-section--what" titleId="ps-what-title">
       <div className="ps-what__layout">
@@ -144,8 +154,30 @@ export function WhatIsSection() {
           <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Padbol Match']} /></h2>
           <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
         </div>
-        <figure className="ps-what__visual" aria-hidden="true">
-          <img src={`${ASSET_ROOT}/real-occupancy.jpg`} alt="" />
+        <figure className="ps-what__visual ps-what__sports-deck">
+          {WHAT_IS_SPORTS.map((sport) => (
+            <img
+              key={sport.id}
+              className={activeSport === sport.id ? 'is-active' : ''}
+              src={`${ASSET_ROOT}/${sport.image}`}
+              alt={`${sport.label}: una experiencia disponible en Padbol Match`}
+              loading={sport.id === 'padbol' ? 'eager' : 'lazy'}
+            />
+          ))}
+          <div className="ps-what__sports-tabs" role="tablist" aria-label="Deportes disponibles en Padbol Match">
+            {WHAT_IS_SPORTS.map((sport) => (
+              <button
+                key={sport.id}
+                type="button"
+                role="tab"
+                aria-selected={activeSport === sport.id}
+                className={activeSport === sport.id ? 'is-active' : ''}
+                onClick={() => setActiveSport(sport.id)}
+              >
+                {sport.label}
+              </button>
+            ))}
+          </div>
           <span className="ps-what__visual-line" />
         </figure>
       </div>
@@ -183,16 +215,51 @@ export function PlayerPathSection() {
       <h2 id="ps-players-title"><AccentWords value={text('publicSite.playerPath.title')} terms={['jugadores']} /></h2>
       <p className="ps-lead">{text('publicSite.playerPath.text')}</p>
       <ul className="ps-paths__list">
-        {config.items.map(({ key }) => (
+        {config.items.map(({ key }, index) => (
           <li key={key}>
-            <img src={`${ASSET_ROOT}/${PLAYER_ICONS[key]}`} alt="" aria-hidden="true" />
-            <div>
-              <strong>{text(`publicSite.playerPath.items.${key}.title`)}</strong>
-              <span>{text(`publicSite.playerPath.items.${key}.text`)}</span>
+            <div className="ps-player-path__card">
+              <span className="ps-player-path__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+              <img src={`${ASSET_ROOT}/${PLAYER_ICONS[key]}`} alt="" aria-hidden="true" />
+              <div>
+                <strong>{text(`publicSite.playerPath.items.${key}.title`)}</strong>
+                <span>{text(`publicSite.playerPath.items.${key}.text`)}</span>
+              </div>
+              <i className="ps-player-path__arrow" aria-hidden="true">↗</i>
             </div>
           </li>
         ))}
       </ul>
+      <div className="ps-player-deck" aria-label="Recorrido para jugadores">
+        {config.items.map(({ key }, index) => (
+          <button key={key} type="button" className="ps-player-deck__card">
+            <span className="ps-player-deck__number">{String(index + 1).padStart(2, '0')}</span>
+            <img src={`${ASSET_ROOT}/${PLAYER_ICONS[key]}`} alt="" aria-hidden="true" />
+            <strong>{text(`publicSite.playerPath.items.${key}.title`)}</strong>
+            <p>{text(`publicSite.playerPath.items.${key}.text`)}</p>
+            {index === 0 && <em>{text('publicSite.playerPath.tapNext')}</em>}
+          </button>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+/** El jugador conserva su recorrido deportivo al incorporarse a la plataforma. */
+export function PlayerRecordSection() {
+  const config = PUBLIC_SITE_SECTIONS.playerRecord;
+  return (
+    <SectionShell id={config.id} className="ps-section--player-record" titleId="ps-player-record-title">
+      <div className="ps-player-record__layout">
+        <p className="ps-kicker">TU JUEGO NO EMPIEZA DE CERO</p>
+        <div>
+          <h2 id="ps-player-record-title">Traé tu <span className="ps-title-accent">recorrido.</span> Lo reconocemos.</h2>
+          <p className="ps-player-record__lead">Si ya jugaste, competiste y construiste un historial, eso vale. No tenés que dejar atrás tu camino para sumarte a Padbol Match.</p>
+          <p className="ps-player-record__copy">Traé los datos de donde jugabas antes: resultados, torneos, ranking, estadísticas y logros. Los revisamos y los incorporamos para que tu perfil refleje el jugador que ya sos.</p>
+          <div className="ps-player-record__items" aria-label="Información que se puede reconocer en el recorrido deportivo">
+            <span>Resultados y partidos</span><span>Torneos y posiciones</span><span>Ranking y estadísticas</span><span>Logros y evolución</span>
+          </div>
+        </div>
+      </div>
     </SectionShell>
   );
 }
@@ -308,7 +375,7 @@ export function VenuePathSection() {
   const config = PUBLIC_SITE_SECTIONS.venuePath;
   return (
     <SectionShell id={config.id} className="ps-section--paths ps-section--venues" titleId="ps-venues-title">
-      <h2 id="ps-venues-title"><AccentWords value={text('publicSite.venuePath.title')} terms={['sedes', 'organizaciones']} /></h2>
+      <h2 id="ps-venues-title"><AccentWords value={text('publicSite.venuePath.title')} terms={['sedes', 'y', 'organizaciones']} /></h2>
       <p className="ps-lead">{text('publicSite.venuePath.text')}</p>
       <ul className="ps-venue-cards">
         {config.items.map(({ key }) => (
@@ -334,6 +401,97 @@ export function VenuePathSection() {
   );
 }
 
+/** Entrada pública para las personas que quieren administrar una sede. */
+export function VenueAdminSection() {
+  const text = usePublicSiteText();
+  const config = PUBLIC_SITE_SECTIONS.venueAdmin;
+  const [activeKey, setActiveKey] = useState(null);
+  const activeItem = activeKey ? config.items.find(({ key }) => key === activeKey) : null;
+
+  useEffect(() => {
+    if (!activeKey) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setActiveKey(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [activeKey]);
+
+  const closeModal = (event) => {
+    if (event.target === event.currentTarget) setActiveKey(null);
+  };
+
+  return (
+    <SectionShell id={config.id} className="ps-section--venue-admin" titleId="ps-venue-admin-title">
+      <div className="ps-venue-admin__heading">
+        <span>{text('publicSite.venueAdmin.eyebrow')}</span>
+        <h2 id="ps-venue-admin-title"><AccentWords value={text('publicSite.venueAdmin.title')} terms={['paso a paso']} /></h2>
+        <p className="ps-lead">{text('publicSite.venueAdmin.text')}</p>
+      </div>
+      <ol className="ps-venue-admin__grid">
+        {config.items.map(({ key }, index) => (
+          <li key={key}>
+            <button
+              type="button"
+              className="ps-venue-admin__card"
+              onClick={() => setActiveKey(key)}
+              aria-haspopup="dialog"
+              aria-expanded={activeKey === key}
+              aria-controls={`ps-venue-admin-modal-${key}`}
+            >
+              <span className="ps-venue-admin__number">{String(index + 1).padStart(2, '0')}</span>
+              <strong>{text(`publicSite.venueAdmin.items.${key}.title`)}</strong>
+              <p>{text(`publicSite.venueAdmin.items.${key}.text`)}</p>
+              <span className="ps-venue-admin__open">{text('publicSite.venueAdmin.openDetail')} <b aria-hidden="true">→</b></span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      <VenueOpportunities />
+      <aside className="ps-venue-admin__next" data-ps-reveal>
+        <div>
+          <span>{text('publicSite.venueAdmin.next.eyebrow')}</span>
+          <strong>{text('publicSite.venueAdmin.next.title')}</strong>
+          <p>{text('publicSite.venueAdmin.next.text')}</p>
+        </div>
+        <div className="ps-venue-admin__actions">
+          <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--primary">{text('publicSite.venueAdmin.next.apply')}</Link>
+        </div>
+      </aside>
+      {activeItem && (
+        <div className="ps-admin-modal-backdrop" role="presentation" onMouseDown={closeModal}>
+          <section
+            id={`ps-venue-admin-modal-${activeKey}`}
+            className="ps-admin-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ps-venue-admin-modal-title"
+          >
+            <button
+              className="ps-admin-modal__close"
+              type="button"
+              aria-label={text('publicSite.venueAdmin.close')}
+              onClick={() => setActiveKey(null)}
+            >×</button>
+            <span className="ps-admin-modal__number">{String(config.items.indexOf(activeItem) + 1).padStart(2, '0')}</span>
+            <h3 id="ps-venue-admin-modal-title">{text(`publicSite.venueAdmin.items.${activeKey}.title`)}</h3>
+            <p className="ps-admin-modal__lead">{text(`publicSite.venueAdmin.items.${activeKey}.detail`)}</p>
+            <ol className="ps-admin-modal__steps">
+              {[1, 2, 3].map((step) => <li key={step}>{text(`publicSite.venueAdmin.items.${activeKey}.steps.${step}`)}</li>)}
+            </ol>
+            <p className="ps-admin-modal__result">{text(`publicSite.venueAdmin.items.${activeKey}.result`)}</p>
+            <div className="ps-admin-modal__actions">
+              <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--primary" onClick={() => setActiveKey(null)}>
+                {text('publicSite.venueAdmin.next.apply')}
+              </Link>
+            </div>
+          </section>
+        </div>
+      )}
+    </SectionShell>
+  );
+}
+
 /** Continuidad: conexión entre bloques */
 export function ContinuitySection() {
   const text = usePublicSiteText();
@@ -348,20 +506,14 @@ export function ContinuitySection() {
     detailRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [activeKey]);
 
-  const closeDetail = (event) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
-  };
-
   return (
     <SectionShell id={config.id} className="ps-section--continuity" titleId="ps-continuity-title">
-      <h2 id="ps-continuity-title"><AccentWords value={text('publicSite.continuity.title')} terms={['durante']} /></h2>
+      <h2 id="ps-continuity-title"><AccentWords value={text('publicSite.continuity.title')} terms={['Después']} /></h2>
       <ul className="ps-chip-row">
         {config.items.map(({ key }) => (
           <li
             key={key}
             className={`ps-chip-wrap${activeKey === key ? ' is-active' : ''}`}
-            onMouseEnter={() => setActiveKey(key)}
-            onMouseLeave={closeDetail}
           >
             <button
               type="button"
@@ -376,40 +528,107 @@ export function ContinuitySection() {
                 <span>{text(`publicSite.continuity.items.${key}.text`)}</span>
               </div>
             </button>
-            {activeKey === key && (
-              <aside ref={detailRef} id={`ps-continuity-detail-${key}`} className="ps-chip__detail" role="status">
-                <span className="ps-chip__eyebrow">Padbol Match</span>
-                <strong>{text(`publicSite.continuity.items.${key}.title`)}</strong>
-                <p>{CONTINUITY_DETAILS[key]?.lead || text(`publicSite.continuity.items.${key}.text`)}</p>
-                {CONTINUITY_DETAILS[key]?.points && (
-                  <ul>
-                    {CONTINUITY_DETAILS[key].points.map((point) => <li key={point}>{point}</li>)}
-                  </ul>
-                )}
-              </aside>
-            )}
           </li>
         ))}
       </ul>
+      {activeKey && (
+        <aside ref={detailRef} id={`ps-continuity-detail-${activeKey}`} className="ps-chip__detail" role="status">
+          <button type="button" className="ps-chip__close" onClick={() => setActiveKey(null)} aria-label="Cerrar detalle">×</button>
+          <span className="ps-chip__eyebrow">Padbol Match</span>
+          <strong>{text(`publicSite.continuity.items.${activeKey}.title`)}</strong>
+          <p>{CONTINUITY_DETAILS[activeKey]?.lead || text(`publicSite.continuity.items.${activeKey}.text`)}</p>
+          {CONTINUITY_DETAILS[activeKey]?.points && (
+            <ul>
+              {CONTINUITY_DETAILS[activeKey].points.map((point) => <li key={point}>{point}</li>)}
+            </ul>
+          )}
+        </aside>
+      )}
     </SectionShell>
   );
 }
 
 function ScoreboardVideo({ text }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return undefined;
+
+    // iOS solo autoriza autoplay cuando el video está silenciado e inline.
+    // Lo iniciamos al entrar en el viewport para que no haya controles ni
+    // interacción manual que exponga la barra nativa del reproductor.
+    const isVisible = () => {
+      const bounds = video.getBoundingClientRect();
+      return bounds.bottom > 0 && bounds.top < window.innerHeight;
+    };
+    const play = () => {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute('muted', '');
+      const attempt = video.play?.();
+      attempt?.catch(() => {});
+    };
+    const playWhenVisible = () => {
+      if (isVisible()) play();
+    };
+    const onPageVisible = () => {
+      if (document.visibilityState === 'visible') playWhenVisible();
+    };
+    if (typeof IntersectionObserver === 'undefined') {
+      play();
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) play();
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(video);
+    video.addEventListener('loadedmetadata', playWhenVisible);
+    video.addEventListener('canplay', playWhenVisible);
+    window.addEventListener('pageshow', playWhenVisible);
+    window.addEventListener('focus', playWhenVisible);
+    document.addEventListener('visibilitychange', onPageVisible);
+    playWhenVisible();
+    return () => {
+      observer.disconnect();
+      video.removeEventListener('loadedmetadata', playWhenVisible);
+      video.removeEventListener('canplay', playWhenVisible);
+      window.removeEventListener('pageshow', playWhenVisible);
+      window.removeEventListener('focus', playWhenVisible);
+      document.removeEventListener('visibilitychange', onPageVisible);
+    };
+  }, []);
+
   return (
     <figure className="ps-scoreboard__video" data-ps-reveal data-ps-reveal-order="1">
       <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        poster={`${ASSET_ROOT}/marcador-01-poster.jpg`}
+      ref={videoRef}
+      autoPlay
+      loop
+      muted
+      playsInline
+        disablePictureInPicture
+        preload="auto"
+        poster={`${ASSET_ROOT}/marcador-inteligente-captura.jpg`}
         aria-label={text('publicSite.matchIntelligence.videoAria')}
       >
-        <source src={`${ASSET_ROOT}/marcador-01.mp4`} type="video/mp4" />
+        <source src={`${ASSET_ROOT}/marcador-inteligente.mp4`} type="video/mp4" />
       </video>
-      <figcaption>{text('publicSite.matchIntelligence.caption')}</figcaption>
+    </figure>
+  );
+}
+
+function ScoreboardSnapshot() {
+  return (
+    <figure className="ps-scoreboard__snapshot" data-ps-reveal data-ps-reveal-order="1">
+      <img
+        src={`${ASSET_ROOT}/marcador-inteligente-captura.jpg`}
+        alt="Marcador Padbol Match durante un partido"
+        loading="lazy"
+      />
     </figure>
   );
 }
@@ -431,7 +650,13 @@ export function SmartScoreboardSection() {
         <div className="ps-scoreboard__copy">
           <h2 id="ps-smart-scoreboard-title"><AccentWords value={text('publicSite.smartScoreboard.title')} terms={['Marcador inteligente']} /></h2>
           <p className="ps-lead">{text('publicSite.smartScoreboard.text')}</p>
-          <ol className="ps-flow-steps ps-flow-steps--scoreboard">
+        </div>
+        <div className="ps-scoreboard__visual">
+          <ScoreboardSnapshot />
+          <ScoreboardVideo text={text} />
+        </div>
+        <div className="ps-scoreboard__steps">
+          <ol className="ps-flow-steps ps-flow-steps--scoreboard" aria-label="Pasos del marcador inteligente">
             {config.steps.map(({ key }, index) => (
               <li key={key}>
                 <span className="ps-flow-steps__num" aria-hidden="true">
@@ -444,23 +669,10 @@ export function SmartScoreboardSection() {
               </li>
             ))}
           </ol>
-        </div>
-        <div className="ps-scoreboard__visual">
-          <ScoreboardVideo text={text} />
-          <aside className="ps-scoreboard__future" data-ps-reveal data-ps-reveal-order="2">
-            <img
-              src="/media/public-site/jero/upcoming-facial-access.jpg"
-              alt={text('publicSite.smartScoreboard.futureAccess.imageAlt')}
-              loading="lazy"
-            />
-            <div className="ps-scoreboard__future-copy">
-              <span className="ps-scoreboard__future-label">
-                {text('publicSite.smartScoreboard.futureAccess.label')}
-              </span>
-              <h3>{text('publicSite.smartScoreboard.futureAccess.title')}</h3>
-              <p>{text('publicSite.smartScoreboard.futureAccess.text')}</p>
-            </div>
-          </aside>
+          <p className="ps-scoreboard__swipe-hint" aria-hidden="true">
+            <span>Desliza para recorrer los 5 pasos</span>
+            <b>→</b>
+          </p>
         </div>
       </div>
     </SectionShell>
@@ -485,8 +697,9 @@ export function MatchIntelligenceSection() {
           </h2>
           <p className="ps-lead">{text('publicSite.matchIntelligence.text')}</p>
           <ul className="ps-match-intelligence__features">
-            {config.features.map(({ key }) => (
+            {config.features.map(({ key }, index) => (
               <li key={key}>
+                <b className="ps-match-intelligence__feature-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</b>
                 <strong>{text(`publicSite.matchIntelligence.features.${key}.title`)}</strong>
                 <span>{text(`publicSite.matchIntelligence.features.${key}.text`)}</span>
               </li>
@@ -505,33 +718,31 @@ export function MatchIntelligenceSection() {
   );
 }
 
-/** Expansión comercial */
-export function ExpansionSection() {
+/** Oportunidades comerciales integradas al recorrido operativo de una sede. */
+function VenueOpportunities({ standalone = false }) {
   const text = usePublicSiteText();
   const config = PUBLIC_SITE_SECTIONS.expansion;
   const [activeKey, setActiveKey] = useState(null);
   const detailRef = useRef(null);
-
-  const closeDetail = (event) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) setActiveKey(null);
-  };
 
   useEffect(() => {
     if (!activeKey || typeof window === 'undefined' || window.innerWidth >= 768) return;
     detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [activeKey]);
 
+  const heading = standalone
+    ? <h2 id="ps-expansion-title"><AccentWords value={text('publicSite.expansion.title')} terms={['oportunidades']} /></h2>
+    : <h3><AccentWords value={text('publicSite.expansion.title')} terms={['oportunidades']} /></h3>;
+
   return (
-    <SectionShell id={config.id} className="ps-section--expansion" titleId="ps-expansion-title">
-      <h2 id="ps-expansion-title"><AccentWords value={text('publicSite.expansion.title')} terms={['oportunidades']} /></h2>
+    <div className={`ps-venue-admin__opportunities${standalone ? '' : ' ps-section--expansion'}`}>
+      {heading}
       <p className="ps-lead">{text('publicSite.expansion.text')}</p>
       <div className="ps-expansion__grid">
         {config.items.map(({ key }) => (
           <div
             key={key}
             className={`ps-expansion__item${activeKey === key ? ' is-active' : ''}`}
-            onMouseEnter={() => setActiveKey(key)}
-            onMouseLeave={closeDetail}
           >
             <button
               type="button"
@@ -547,20 +758,32 @@ export function ExpansionSection() {
                 <span className="ps-expansion__hint" aria-hidden="true">+</span>
               </div>
             </button>
-            {activeKey === key && (
-              <aside ref={detailRef} id={`ps-expansion-detail-${key}`} className="ps-expansion__detail" role="status">
-                <span>Padbol Match · {text(`publicSite.expansion.items.${key}.status`)}</span>
-                <strong>{text(`publicSite.expansion.items.${key}.title`)}</strong>
-                <p>{EXPANSION_DETAILS[key].lead}</p>
-                <ul>
-                  {EXPANSION_DETAILS[key].points.map((point) => <li key={point}>{point}</li>)}
-                </ul>
-              </aside>
-            )}
           </div>
         ))}
+        {activeKey && (
+          <aside ref={detailRef} id={`ps-expansion-detail-${activeKey}`} className="ps-expansion__detail" role="status">
+            <button type="button" className="ps-expansion__close" onClick={() => setActiveKey(null)} aria-label="Cerrar detalle">×</button>
+            <span>Padbol Match · {text(`publicSite.expansion.items.${activeKey}.status`)}</span>
+            <strong>{text(`publicSite.expansion.items.${activeKey}.title`)}</strong>
+            <p>{EXPANSION_DETAILS[activeKey].lead}</p>
+            <ul>
+              {EXPANSION_DETAILS[activeKey].points.map((point) => <li key={point}>{point}</li>)}
+            </ul>
+          </aside>
+        )}
       </div>
       <p className="ps-note">{text('publicSite.expansion.note')}</p>
+    </div>
+  );
+}
+
+/** Mantiene el bloque reutilizable para enlaces antiguos, aunque la landing
+ * principal ahora lo presenta dentro de Administración de sede. */
+export function ExpansionSection() {
+  const config = PUBLIC_SITE_SECTIONS.expansion;
+  return (
+    <SectionShell id={config.id} className="ps-section--expansion" titleId="ps-expansion-title">
+      <VenueOpportunities standalone />
     </SectionShell>
   );
 }
@@ -574,22 +797,27 @@ export function AboutSection() {
       <div className="ps-about__grid">
         <div>
           <span className="ps-about__kicker">{text('publicSite.about.kicker')}</span>
-          <h2 id="ps-about-title"><AccentWords value={text('publicSite.about.title')} terms={['Quiénes somos']} /></h2>
+          <img
+            className="ps-about__mobile-avatar"
+            src="/media/public-site/jero/gustavo-miguens-padbol-match.png"
+            alt={text('publicSite.about.visualAlt')}
+            loading="lazy"
+          />
+          <h2 id="ps-about-title">{text('publicSite.about.title')}</h2>
           <p className="ps-lead">{text('publicSite.about.text')}</p>
-          <p className="ps-about__detail">{text('publicSite.about.detail')}</p>
-          <div className="ps-about__sports" aria-label={text('publicSite.about.sportsLabel')}>
-            {['padbol', 'padel', 'pickleball', 'tennis'].map((sport) => (
-              <span key={sport}>{text(`publicSite.sports.${sport}`)}</span>
-            ))}
+          <blockquote className="ps-about__quote">
+            “{text('publicSite.about.founder.quote')}”
+            <cite>— {text('publicSite.about.founder.name')}</cite>
+          </blockquote>
+          <div className="ps-about__bio ps-about__bio--copy">
+            <span>
+              {text('publicSite.about.founder.padbolRole')} · {text('publicSite.about.founder.federationRole')} · {text('publicSite.about.founder.matchRole')}
+            </span>
           </div>
-          <p className="ps-about__players-note">{text('publicSite.about.playersNote')}</p>
-          <a className="ps-about__cta" href="#jugadores">
-            {text('publicSite.about.cta')} <span aria-hidden="true">→</span>
-          </a>
         </div>
         <div className="ps-about__visual">
           <img
-            src="/media/public-site/jero/padbol-match-team.jpg"
+            src="/media/public-site/jero/gustavo-miguens-padbol-match.png"
             alt={text('publicSite.about.visualAlt')}
             loading="lazy"
           />

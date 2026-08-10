@@ -5,6 +5,7 @@ import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
+import { PUBLIC_SITE_CTA } from '../constants/publicSiteLinks';
 import './LandingPage.css';
 
 const ACCENT = '#E11B22';
@@ -225,7 +226,7 @@ export default function LandingPage() {
             gap: 16,
           }}
         >
-          <Link to="/contacto" style={{ ...btnPrimaryFooter, maxWidth: '100%' }}>
+          <Link to={PUBLIC_SITE_CTA.venue} style={{ ...btnPrimaryFooter, maxWidth: '100%' }}>
             {t('landing.addClub')}
           </Link>
           <Link

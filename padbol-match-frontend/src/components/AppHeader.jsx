@@ -14,6 +14,7 @@ import {
   resolveSedePublicaBackToPath,
 } from '../constants/hubLayout';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
+import { PADBOL_LOGO_ON_DARK_TIGHT } from '../constants/padbolBrandLogo';
 import HubThemeSettingsButton from './HubThemeSettingsButton';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useTheme } from '../context/ThemeContext';
@@ -859,6 +860,11 @@ export default function AppHeader({
         ) : (
           <span aria-hidden style={{ width: 32, height: 32, flexShrink: 0 }} />
         )}
+        <img
+          className="app-header-admin-brand"
+          src={PADBOL_LOGO_ON_DARK_TIGHT}
+          alt="Padbol Match"
+        />
         {searchUiBlock}
         <div
           style={{

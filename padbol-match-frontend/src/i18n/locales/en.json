@@ -2777,6 +2777,63 @@
         }
       }
     },
+    "venueAdmin": {
+      "eyebrow": "Venue administration",
+      "title": "Manage your venue, step by step",
+      "text": "Understand the full operation before you join. Every module has a clear role and a guided setup journey.",
+      "openDetail": "See how it works",
+      "close": "Close detail",
+      "next": {
+        "eyebrow": "Next step",
+        "title": "Bring your venue to Padbol Match",
+        "text": "We review your request, validate the person in charge, and activate a panel with permissions limited to your venue. Admin access is never created automatically.",
+        "apply": "Request venue onboarding"
+      },
+      "items": {
+        "setup": {
+          "title": "Set up your venue", "text": "Public details, sports, courts, schedules, prices, and payments.",
+          "detail": "Build your venue’s operational profile so players and staff work with the same information.",
+          "steps": { "1": "Set name, contact details, location, and public information.", "2": "Enable sports, courts, durations, and time slots.", "3": "Add pricing, policies, and accepted payment methods." },
+          "result": "Outcome: a venue ready to publish availability and receive bookings."
+        },
+        "bookings": {
+          "title": "Run bookings", "text": "Calendar, payments, attendance, rescheduling, and cancellation rules.",
+          "detail": "Organize court availability and follow each booking from request through closing.",
+          "steps": { "1": "Configure calendar, pricing, and usage conditions.", "2": "Define attendance confirmation and payment methods.", "3": "Manage rescheduling, cancellations, and match status." },
+          "result": "Outcome: the booking is charged when the full match is confirmed, according to the venue rule."
+        },
+        "players": {
+          "title": "Activate players", "text": "Links, requests, community, and communication from one base.",
+          "detail": "Turn inquiries and occasional players into a community that comes back to your venue.",
+          "steps": { "1": "Review player requests and links.", "2": "Publish open matches and ways to complete teams.", "3": "Use community and notifications to stay in touch." },
+          "result": "Outcome: more visible activity and players connected to your venue."
+        },
+        "competition": {
+          "title": "Create competition", "text": "Tournaments, teams, slots, results, and venue rankings.",
+          "detail": "Run competitions with clear rules from registration through final results.",
+          "steps": { "1": "Choose sport, format, categories, capacity, and dates.", "2": "Open registration and manage teams or players.", "3": "Publish results and connect them to ranking and history." },
+          "result": "Outcome: an organized tournament for players, referees, and venue staff."
+        },
+        "scoreboard": {
+          "title": "Run the scoreboard", "text": "Start, follow, correct, and close results connected to history.",
+          "detail": "Record the match live so its result supports operations, history, and competition.",
+          "steps": { "1": "Start the match with its players or teams.", "2": "Record points, sets, and corrections while it is played.", "3": "Confirm closing and connect the result." },
+          "result": "Outcome: useful data for history, ranking, tournaments, and management."
+        },
+        "loyalty": {
+          "title": "Build loyalty", "text": "PadCoins and memberships when enabled for your operation.",
+          "detail": "Recognize community participation with benefits controlled by the venue when these modules are enabled.",
+          "steps": { "1": "Define benefits, terms, and validity.", "2": "Configure earning rules or memberships.", "3": "Follow usage and communicate the offers to your community." },
+          "result": "Outcome: a recurring, measurable relationship with your venue’s players."
+        },
+        "commerce": {
+          "title": "Promote and sell", "text": "Advertising, sponsorship slots, and Paddle Match Shop when your venue enables them.",
+          "detail": "Use the available commercial spaces without interrupting the player experience, and enable the store when applicable.",
+          "steps": { "1": "Define which sponsorship or advertising slots you want to offer.", "2": "Add campaigns, benefits, and visibility conditions.", "3": "Enable Paddle Match Shop if your venue is approved for the pilot." },
+          "result": "Outcome: a commercial proposal managed from your own venue."
+        }
+      }
+    },
     "continuity": {
       "title": "Before, during and after",
       "text": "Every match can become history, competition, progress and a new reason to return. Open matches, results, ranking, PadCoins, memberships and community reinforce each other.",
@@ -2873,14 +2930,21 @@
       "note": "Sponsors and advertising are already managed by each venue. Paddle Match Shop is advancing as a pilot."
     },
     "about": {
-      "kicker": "18 years developing Padbol",
-      "title": "About us",
-      "text": "For 18 years, we have worked to develop Padbol and take the sport to the world. Every court, event and community taught us that growth needs tools that can keep up.",
-      "detail": "That is why we created Padbol Match: our own app connecting play, management and community in one journey. It begins with Padbol and opens to Padel, Pickleball and Tennis so more court sports can grow on the same foundation.",
+      "kicker": "BORN WITH PADBOL · OPEN TO OTHER SPORTS",
+      "title": "A platform born with Padbol, open to other sports",
+      "text": "Padbol Match was born to support the evolution of Padbol: connecting players, clubs, courts, tournaments and community in one experience.",
+      "detail": "The experience and tools created for Padbol are now the foundation for opening the platform to other court sports, without losing the spirit that gave it life.",
+      "founder": {
+        "name": "Gustavo Miguens",
+        "padbolRole": "Creator of Padbol",
+        "matchRole": "Founder of Padbol Match",
+        "bio": "Creator of the Padbol sport and promoter of its international development. Padbol Match carries that vision forward: technology designed first for the sport and its community.",
+        "quote": "The experience and tools created for Padbol are now the foundation for opening the platform to other court sports—such as tennis, padel and pickleball—while keeping the spirit Padbol Match was born with."
+      },
       "sportsLabel": "Sports on the platform",
       "playersNote": "A platform born from the real experience of the people who make court sports happen.",
       "cta": "See how it works",
-      "visualAlt": "The Padbol Match team gathered in their workspace"
+      "visualAlt": "Gustavo Miguens, creator of Padbol and founder of Padbol Match"
     },
     "download": {
       "title": "Download the app",
@@ -2900,6 +2964,7 @@
     "footer": {
       "aria": "Footer navigation",
       "tagline": "Game, community and management.",
+      "productOf": "A product by Padbol International",
       "platform": "Platform",
       "players": "For players",
       "venues": "For venues",

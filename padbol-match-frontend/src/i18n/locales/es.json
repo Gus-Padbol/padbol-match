@@ -2315,24 +2315,25 @@
       }
     },
     "playerPath": {
-      "title": "Para jugadores",
-      "text": "Hoy, elegí Padbol, encontrá actividad cerca y resolvé todo el recorrido desde un solo lugar. El mismo flujo se abre gradualmente a nuevas disciplinas.",
+      "title": "Para jugadores: jugar empieza antes de entrar a la cancha.",
+      "text": "Elige tu deporte, encuentra actividad cerca y organiza todo el recorrido: crea o encuentra un partido, completa equipos, reserva, compite y sigue tu evolución.",
+      "tapNext": "Desliza para conocer cada función",
       "items": {
         "find": {
           "title": "Encontrar partidos",
-          "text": "Descubrí encuentros por deporte, zona y nivel."
+          "text": "Encuentra encuentros por deporte, zona y nivel. Revisa cada propuesta y elige el partido que mejor se adapte a ti."
         },
         "book": {
           "title": "Reservar",
-          "text": "Elegí sede, cancha y horario para jugar."
+          "text": "Elige sede, cancha y horario desde un mismo lugar. Revisa la disponibilidad y confirma tu reserva antes de llegar."
         },
         "compete": {
           "title": "Competir",
-          "text": "Participá en torneos, equipos y formatos de competencia."
+          "text": "Participa en torneos, equipos y formatos de competencia. Cada resultado se integra a tu recorrido deportivo."
         },
         "community": {
           "title": "Comunidad",
-          "text": "Seguí a tus sedes, jugadores y novedades relevantes."
+          "text": "Sigue a tus sedes, jugadores y novedades relevantes. Mantente cerca de las personas y la actividad que te interesa."
         },
         "rewards": {
           "title": "Beneficios",
@@ -2340,21 +2341,21 @@
         },
         "create": {
           "title": "Crear un partido",
-          "text": "Publicá sede, horario, nivel y cupos para convocar jugadores."
+          "text": "Publica sede, horario, nivel y cupos para convocar jugadores. La plataforma te ayuda a completar el equipo antes de ir a la cancha."
         },
         "join": {
           "title": "Partidos abiertos",
-          "text": "Pedí un lugar, completá equipos y confirmá tu participación."
+          "text": "Solicita un lugar en un partido publicado, completa equipos y confirma tu participación cuando el encuentro queda listo."
         },
         "evolve": {
           "title": "Seguir tu evolución",
-          "text": "Consultá historial, ranking y progreso por disciplina."
+          "text": "Consulta tu historial, ranking y progreso por disciplina. Cada encuentro aporta información útil para seguir evolucionando."
         }
       }
     },
     "venuePath": {
       "title": "Para sedes y organizaciones",
-      "text": "Una misma operación para Padbol, Pádel, Pickleball y Tenis: activá jugadores, ocupá horarios, registrá resultados y sostené la continuidad de cada sede.",
+      "text": "Una misma operación para Padbol, Pádel, Pickleball y Tenis: activa jugadores, ocupa horarios, registra resultados y sostiene la continuidad de cada sede.",
       "items": {
         "bookings": {
           "title": "Reservas",
@@ -2370,7 +2371,7 @@
         },
         "scoreboard": {
           "title": "Marcador inteligente",
-          "text": "Registrá el encuentro en vivo y sumá información útil a la operación."
+          "text": "Registra el encuentro en vivo y suma información útil a la operación."
         },
         "loyalty": {
           "title": "Fidelización",
@@ -2394,9 +2395,73 @@
         }
       }
     },
+    "venueAdmin": {
+      "eyebrow": "Administración de sede",
+      "title": "Administra tu sede, paso a paso",
+      "text": "Conoce la operación completa antes de incorporarte. Cada módulo tiene una función concreta y un recorrido guiado para configurarlo.",
+      "openDetail": "Ver pasos",
+      "close": "Cerrar detalle",
+      "next": {
+        "eyebrow": "El siguiente paso",
+        "title": "¿Quieres sumar tu sede?",
+        "text": "Conoce las herramientas, los planes y la forma de incorporar tu sede a Padbol Match. Cuando estés listo, podrás iniciar la solicitud.",
+        "apply": "Quiero sumar mi sede"
+      },
+      "items": {
+        "setup": {
+          "title": "Configura tu sede",
+          "text": "Datos públicos, deportes, canchas, horarios, precios y cobros.",
+          "detail": "Construye la ficha operativa de tu sede para que jugadores y equipo trabajen con la misma información.",
+          "steps": { "1": "Define nombre, contacto, ubicación y datos públicos.", "2": "Activa deportes, canchas, duraciones y franjas horarias.", "3": "Carga precios, reglas y medios de cobro disponibles." },
+          "result": "Resultado: una sede preparada para publicar disponibilidad y recibir reservas."
+        },
+        "bookings": {
+          "title": "Opera reservas",
+          "text": "Calendario, pagos, asistencia, reprogramaciones y reglas de cancelación.",
+          "detail": "Ordena la disponibilidad de las canchas y sigue cada reserva desde la solicitud hasta el cierre.",
+          "steps": { "1": "Configura calendario, precios y condiciones de uso.", "2": "Define cómo se confirma la asistencia y qué pagos admite la sede.", "3": "Gestiona reprogramaciones, cancelaciones y el estado del partido." },
+          "result": "Resultado: la reserva se cobra al confirmarse el partido completo, según la regla definida por la sede."
+        },
+        "players": {
+          "title": "Activa jugadores",
+          "text": "Vinculaciones, solicitudes, comunidad y comunicación desde una misma base.",
+          "detail": "Convierte consultas y jugadores ocasionales en una comunidad que vuelve a tu sede.",
+          "steps": { "1": "Revisa solicitudes y vinculaciones de jugadores.", "2": "Publica partidos abiertos y oportunidades para completar equipos.", "3": "Usa comunidad y notificaciones para mantener el contacto." },
+          "result": "Resultado: más actividad visible y jugadores conectados con tu sede."
+        },
+        "competition": {
+          "title": "Crea competencia",
+          "text": "Torneos, equipos, cupos, resultados y rankings de tu sede.",
+          "detail": "Organiza competencias con reglas claras desde la inscripción hasta los resultados finales.",
+          "steps": { "1": "Elige disciplina, formato, categorías, cupos y fechas.", "2": "Abre inscripciones y administra equipos o jugadores.", "3": "Publica resultados y conéctalos con ranking e historial." },
+          "result": "Resultado: un torneo ordenado para jugadores, árbitros y equipo de sede."
+        },
+        "scoreboard": {
+          "title": "Lleva el marcador",
+          "text": "Inicia, sigue, corrige y cierra resultados para conectarlos con el historial.",
+          "detail": "Registra el partido en vivo para que el resultado alimente la operación, el historial y las competencias.",
+          "steps": { "1": "Inicia el encuentro con sus jugadores o equipos.", "2": "Registra puntos, sets y correcciones mientras se juega.", "3": "Confirma el cierre y conecta el resultado." },
+          "result": "Resultado: información útil para historial, ranking, torneos y gestión."
+        },
+        "loyalty": {
+          "title": "Fideliza",
+          "text": "PadCoins y membresías cuando estén habilitados para tu operación.",
+          "detail": "Reconoce la participación de tu comunidad con beneficios que la sede controla cuando estos módulos están habilitados.",
+          "steps": { "1": "Define beneficios, condiciones y vigencia.", "2": "Configura reglas de acreditación o membresía.", "3": "Sigue el uso y comunica las propuestas a tu comunidad." },
+          "result": "Resultado: una relación recurrente y medible con los jugadores de la sede."
+        },
+        "commerce": {
+          "title": "Muestra y vende",
+          "text": "Espacios de publicidad, sponsors y Paddle Match Shop cuando la sede los active.",
+          "detail": "Usa los espacios comerciales disponibles sin interrumpir la experiencia del jugador y activa tienda cuando corresponda.",
+          "steps": { "1": "Define qué espacios de sponsor o publicidad quieres ofrecer.", "2": "Carga campañas, beneficios y condiciones de visibilidad.", "3": "Activa Padbol Match Shop si tu sede está habilitada para el piloto." },
+          "result": "Resultado: una propuesta comercial propia, administrada desde tu sede."
+        }
+      }
+    },
     "continuity": {
-      "title": "Antes, durante y después",
-      "text": "La actividad no queda aislada: lo que ocurre antes, durante y después del encuentro forma un recorrido útil para jugadores, clubes y organizaciones.",
+      "title": "Después del encuentro: la actividad continúa",
+      "text": "El partido no termina al salir de la cancha: resultados, torneos, ranking, beneficios y comunidad sostienen el vínculo entre jugadores, clubes y organizaciones.",
       "items": {
         "matches": {
           "title": "Partidos",
@@ -2537,26 +2602,33 @@
       "note": "Sponsors y publicidad ya se gestionan desde cada sede. Paddle Match Shop avanza como piloto."
     },
     "about": {
-      "kicker": "18 años desarrollando Padbol",
-      "title": "Quiénes somos",
-      "text": "Hace 18 años trabajamos para desarrollar Padbol y llevar este deporte al mundo. Cada cancha, evento y comunidad nos enseñó que el crecimiento necesita herramientas a su altura.",
-      "detail": "Por eso creamos Padbol Match: una aplicación propia que conecta juego, gestión y comunidad en un mismo recorrido. Nace con Padbol y se abre a Pádel, Pickleball y Tenis para que más deportes de cancha crezcan sobre la misma base.",
-      "sportsLabel": "Deportes en la plataforma",
-      "playersNote": "Una plataforma nacida de la experiencia real de quienes hacen posible el deporte de cancha.",
-      "cta": "Mirá cómo funciona",
-      "visualAlt": "Equipo de Padbol Match reunido en su espacio de trabajo"
+      "kicker": "PADBOL MATCH",
+      "title": "Una plataforma nacida en Padbol, abierta a otros deportes",
+      "text": "Padbol Match nació para acompañar la evolución del Padbol: conecta jugadores, clubes, canchas, torneos y comunidad en una misma plataforma.",
+      "detail": "La experiencia y las herramientas creadas para Padbol son hoy la base para abrir la plataforma a otros deportes de cancha, sin perder el espíritu que la hizo nacer.",
+      "founder": {
+        "name": "Gustavo Miguens",
+        "padbolRole": "Creador de Padbol",
+        "federationRole": "Presidente de la Federación Internacional de Padbol",
+        "matchRole": "Fundador de Padbol Match",
+        "quote": "La experiencia y las herramientas creadas para Padbol son hoy la base para abrir la plataforma a otros deportes de cancha —como tenis, pádel y pickleball—, incorporando nuevos deportes según las necesidades de cada comunidad, sin perder el espíritu con el que Padbol Match nació."
+      },
+      "sportsLabel": "Padbol en la plataforma",
+      "playersNote": "Una plataforma creada para fortalecer la comunidad global de Padbol.",
+      "cta": "Mira cómo funciona",
+      "visualAlt": "Gustavo Miguens, creador de Padbol y fundador de Padbol Match"
     },
     "download": {
       "title": "Descargar la app",
-      "text": "Llevá tu actividad deportiva, tus partidos y tu comunidad en el teléfono.",
+      "text": "Lleva tu actividad deportiva, tus partidos y tu comunidad en el teléfono.",
       "appStore": "App Store",
       "googlePlay": "Google Play",
       "storeSoon": "Aún no disponible en tiendas",
       "login": "Ingresar a Padbol Match"
     },
     "contact": {
-      "title": "Empezá hoy",
-      "text": "Sumá tu sede, organizá tu comunidad o empezá a jugar.",
+      "title": "Empieza hoy",
+      "text": "Suma tu sede, organiza tu comunidad o empieza a jugar.",
       "play": "Quiero jugar",
       "venue": "Quiero incorporar Padbol Match",
       "login": "Ingresar"
@@ -2564,6 +2636,9 @@
     "footer": {
       "aria": "Navegación del pie",
       "tagline": "Juego, comunidad y gestión.",
+      "productOf": "Un producto de Padbol Internacional",
+      "developedBy": "Desarrollado por Padbol Match Team.",
+      "byPadbolInternational": "by Padbol Internacional.",
       "platform": "Plataforma",
       "players": "Para jugadores",
       "venues": "Para sedes",
@@ -2608,7 +2683,7 @@
       "steps": {
         "create": {
           "title": "Crear y publicar",
-          "text": "Definí deporte, sede, horario, nivel y cupos disponibles."
+          "text": "Define deporte, sede, horario, nivel y cupos disponibles."
         },
         "publish": {
           "title": "Buscar y solicitar",
@@ -2616,7 +2691,7 @@
         },
         "join": {
           "title": "Completar equipos",
-          "text": "Aceptá solicitudes, cerrá cupos y dejá al grupo listo para jugar."
+          "text": "Acepta solicitudes, cierra cupos y deja al grupo listo para jugar."
         },
         "confirm": {
           "title": "Confirmar y jugar",
@@ -2643,19 +2718,19 @@
       "steps": {
         "start": {
           "title": "Iniciar el partido",
-          "text": "Seleccioná jugadores o equipos y abrí el marcador."
+          "text": "Selecciona jugadores o equipos y abre el marcador."
         },
         "live": {
           "title": "Seguir en vivo",
-          "text": "Registrá puntos, sets y parciales mientras se juega."
+          "text": "Registra puntos, sets y parciales mientras se juega."
         },
         "correct": {
           "title": "Corregir una acción",
-          "text": "Ajustá un punto o un set si hace falta."
+          "text": "Ajusta un punto o un set si hace falta."
         },
         "close": {
           "title": "Cerrar el resultado",
-          "text": "Confirmá el cierre y mostralo en pantalla cuando corresponda."
+          "text": "Confirma el cierre y muéstralo en pantalla cuando corresponda."
         },
         "connect": {
           "title": "Conectar el resultado",
@@ -2665,13 +2740,13 @@
     },
     "matchIntelligence": {
       "kicker": "Próximamente · La visión del marcador",
-      "accent": "Árbitro de visión inteligente",
+      "accent": "Árbitro de visión inteligente:",
       "title": "Árbitro de visión inteligente: una mirada independiente para el juego.",
-      "text": "Estamos entrenando un árbitro de visión inteligente e independiente. Con tres cámaras, aprende a leer el juego y a marcar acciones según lo que ve, como lo haría un árbitro humano. Durante su evolución, jugadores y árbitros podrán supervisar sus decisiones.",
+      "text": "Estamos entrenando un árbitro de visión inteligente e independiente. Con tres o cuatro cámaras, aprende a leer el juego y a marcar acciones según lo que ve, como lo haría un árbitro humano. Durante su evolución, jugadores y árbitros podrán supervisar sus decisiones.",
       "videoAria": "Marcador de partido Padbol en funcionamiento",
       "caption": "Demostración de marcador conectado",
       "features": {
-        "scoreboard": { "title": "Visión de tres cámaras", "text": "Tres cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
+        "scoreboard": { "title": "Visión de tres o cuatro cámaras", "text": "Tres o cuatro cámaras podrán cubrir el juego desde los ángulos que necesite cada cancha." },
         "referee": { "title": "Marcado independiente", "text": "La visión interpreta las jugadas y marca acciones a partir de lo que observa en tiempo real." },
         "traceability": { "title": "Entrenamiento supervisado", "text": "En sus primeras etapas, jugadores y árbitros podrán revisar decisiones para seguir entrenando el sistema." }
       },

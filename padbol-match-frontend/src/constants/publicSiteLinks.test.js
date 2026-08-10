@@ -13,8 +13,9 @@ describe('publicSite links + shell isolation', () => {
   it('expone la ruta /plataforma y CTAs productivos', () => {
     expect(PUBLIC_SITE_PATH).toBe('/plataforma');
     expect(PUBLIC_SITE_CTA.exploreHash).toBe('#que-es');
-    expect(PUBLIC_SITE_CTA.play).toBe('/hub');
-    expect(PUBLIC_SITE_CTA.venue).toBe('/contacto');
+    expect(PUBLIC_SITE_CTA.play).toBe('#descargar');
+    expect(PUBLIC_SITE_CTA.venue).toBe('/administradores');
+    expect(PUBLIC_SITE_CTA.venueApplication).toBe('/unirse');
     expect(PUBLIC_SITE_CTA.login).toBe('/acceso');
   });
 

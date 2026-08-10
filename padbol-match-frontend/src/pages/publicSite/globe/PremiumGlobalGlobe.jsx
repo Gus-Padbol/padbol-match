@@ -114,10 +114,13 @@ function useViewportMode(rootRef) {
  * Globo global premium (Canvas 2D + proyección ortográfica).
  * Iluminación estable; red tipo átomo; etiquetas como paquetes en rutas.
  */
-export default function PremiumGlobalGlobe({ text }) {
+export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
   const rootRef = useRef(null);
   const canvasRef = useRef(null);
-  const reducedMotion = usePrefersReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  // El hero público tiene movimiento como parte de su identidad. Se permite
+  // forzarlo desde la landing para evitar que Safari móvil congele el canvas.
+  const reducedMotion = forceMotion ? false : prefersReducedMotion;
   const { compact, tablet } = useViewportMode(rootRef);
   const [layout, setLayout] = useState({ w: 560, h: 560, cx: 280, cy: 280, radius: 210 });
   const [yawDeg, setYawDeg] = useState(-18);
@@ -296,7 +299,10 @@ export default function PremiumGlobalGlobe({ text }) {
         yawRef.current = yaw;
       }
 
-      if (!visibleRef.current && debugYaw == null) {
+      // Safari móvil puede informar momentáneamente que el canvas no está
+      // visible aun estando en el hero. En el globo compacto mantenemos el
+      // redibujado para que la rotación nunca quede congelada al entrar.
+      if (!visibleRef.current && debugYaw == null && !compact) {
         return;
       }
 
@@ -548,7 +554,7 @@ export default function PremiumGlobalGlobe({ text }) {
     };
 
     const tick = (now) => {
-      if (visibleRef.current || debugYaw != null) paint(now);
+      if (visibleRef.current || compact || debugYaw != null) paint(now);
       if (!reducedMotion && debugYaw == null) raf = requestAnimationFrame(tick);
     };
 

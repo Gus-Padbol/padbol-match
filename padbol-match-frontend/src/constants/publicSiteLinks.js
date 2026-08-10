@@ -11,8 +11,10 @@ export const PUBLIC_SITE_CTA = {
   exploreHash: '#que-es',
   /** Descarga de la app. Mientras no haya stores, baja al bloque "Próximamente". */
   play: '#descargar',
-  /** Incorporar sede: página comercial existente. */
-  venue: '/contacto',
+  /** Incorporar sede: primero presenta la landing comercial específica para sedes. */
+  venue: '/administradores',
+  /** Solicitud de alta: solo después de conocer la propuesta comercial. */
+  venueApplication: '/unirse',
   /** Acceso a cuenta. */
   login: '/acceso',
 };

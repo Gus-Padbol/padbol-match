@@ -1,7 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import PublicSitePage from './PublicSitePage';
-import { PUBLIC_SITE_SECTION_ORDER } from '../../content/publicSiteContent';
 
 jest.mock('react-router-dom', () => ({
   Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a>,
@@ -99,7 +98,11 @@ describe('/plataforma public site', () => {
 
   it('renderiza la estructura nueva, un h1 y ninguna BottomNav', () => {
     const { container } = renderPage();
-    PUBLIC_SITE_SECTION_ORDER.forEach((id) => expect(container.querySelector(`#${id}`)).toBeTruthy());
+    [
+      'que-es', 'experiencias', 'jugadores', 'tu-recorrido',
+      'marcador-inteligente', 'continuidad', 'sedes', 'administra-tu-sede',
+      'arbitro-virtual', 'nosotros', 'descargar', 'contacto',
+    ].forEach((id) => expect(container.querySelector(`#${id}`)).toBeTruthy());
     expect(container.querySelectorAll('h1')).toHaveLength(1);
     expect(container.querySelector('.bottom-nav')).toBeNull();
     expect(container.querySelector('.ps-hero__video')).toBeNull();
@@ -180,35 +183,29 @@ describe('/plataforma public site', () => {
     expect(screen.queryByRole('link', { name: 'Conocer la plataforma' })).toBeNull();
     expect(screen.getAllByRole('link', { name: /Quiero jugar/i })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.getAllByRole('link', { name: 'Quiero incorporar Padbol Match' })[0])
-      .toHaveAttribute('href', '/contacto');
+      .toHaveAttribute('href', '/administradores');
     expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
-    expect(screen.getByRole('heading', { name: 'Quiénes somos' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Descargar la app' })).toBeTruthy();
+    expect(document.querySelector('#nosotros')).toBeTruthy();
+    expect(document.querySelector('#descargar')).toBeTruthy();
     expect(screen.getByText('App Store').closest('a')).toBeNull();
     expect(screen.getByText('Google Play').closest('a')).toBeNull();
     expect(screen.getAllByText('Aún no disponible en tiendas').length).toBeGreaterThanOrEqual(2);
     expect(document.body.textContent).toMatch(/próximamente/i);
   });
 
-  it('explica comunidad, partidos abiertos y marcador inteligente', () => {
+  it('explica el recorrido reconocido y el marcador inteligente', () => {
     const { container } = renderPage();
-    expect(container.querySelector('#comunidad-partidos')).toBeTruthy();
+    expect(container.querySelector('#tu-recorrido')).toBeTruthy();
     expect(container.querySelector('#marcador-inteligente')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /Jugar empieza antes/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Traé tu recorrido/i })).toBeTruthy();
     expect(screen.getByRole('heading', { name: /Marcador inteligente/i })).toBeTruthy();
-    expect(container.textContent).toMatch(/crear un encuentro/i);
-    expect(container.textContent).toMatch(/completar sus cupos/i);
-    expect(container.textContent).toMatch(/Completar equipos/i);
     expect(container.textContent).toMatch(/mientras se juega/i);
     expect(container.textContent).toMatch(/sets y parciales/i);
     expect(container.textContent).toMatch(/Corregir una acción/i);
     expect(container.textContent).toMatch(/Cerrar el resultado/i);
     expect(container.textContent).toMatch(/historial, estadísticas, ranking y torneos/i);
     expect(container.querySelector('.ps-scoreboard__video')).toBeTruthy();
-    expect(container.querySelector('.ps-match')).toBeTruthy();
-    expect(container.textContent).toMatch(/Crear un partido/i);
-    expect(container.textContent).toMatch(/Partidos abiertos/i);
-    expect(container.textContent).toMatch(/ocupación real/i);
+    expect(container.textContent).toMatch(/No tenés que dejar atrás tu camino/i);
   });
 
   it('muestra las cinco experiencias y diferencia expansión futura', () => {
@@ -216,7 +213,7 @@ describe('/plataforma public site', () => {
     ['Signature', 'Stadium', 'Express', 'Arena', 'Quantum'].forEach((name) => {
       expect(screen.getByRole('tab', { name: new RegExp(name, 'i') })).toBeTruthy();
     });
-    expect(screen.getByRole('heading', { name: /más oportunidades para tu sede/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Más oportunidades para tu sede/i })).toBeTruthy();
     expect(screen.getByText('Sponsors')).toBeTruthy();
     expect(screen.getByText('Publicidad')).toBeTruthy();
     expect(screen.getByText('E-shop')).toBeTruthy();
@@ -228,13 +225,15 @@ describe('/plataforma public site', () => {
       'que-es',
       'experiencias',
       'jugadores',
-      'comunidad-partidos',
+      'tu-recorrido',
       'marcador-inteligente',
-      'sedes',
       'continuidad',
-      'expansion',
+      'sedes',
+      'administra-tu-sede',
       'arbitro-virtual',
+      'nosotros',
       'descargar',
+      'contacto',
     ];
     const positions = sectionIds.map((id) => {
       const section = container.querySelector(`#${id}`);
@@ -253,7 +252,7 @@ describe('/plataforma public site', () => {
     ['#problema', '#ecosistema', '#comunidad', '#marcador', '#torneos', '#fidelizacion'].forEach((sel) => {
       expect(container.querySelector(sel)).toBeNull();
     });
-    expect(container.querySelector('#comunidad-partidos')).toBeTruthy();
+    expect(container.querySelector('#tu-recorrido')).toBeTruthy();
     expect(container.querySelector('#marcador-inteligente')).toBeTruthy();
   });
 
@@ -286,7 +285,7 @@ describe('/plataforma public site', () => {
     expect(document.documentElement.classList.contains('public-site-active')).toBe(false);
   });
 
-  it('respeta reduced motion en el hero con globo estático', () => {
+  it('mantiene el movimiento forzado del globo como decisión visual aprobada', () => {
     window.matchMedia = jest.fn().mockReturnValue({
       matches: true,
       addEventListener: jest.fn(),
@@ -296,7 +295,7 @@ describe('/plataforma public site', () => {
     expect(container.querySelector('.ps-globe')).toBeTruthy();
     expect(container.querySelector('.ps-hero__globe-wrap')).toHaveAttribute(
       'data-reduced-motion',
-      'true',
+      'false',
     );
   });
 });

@@ -5,12 +5,12 @@ import ExperiencesSection from './sections/ExperiencesSection';
 import {
   WhatIsSection,
   PlayerPathSection,
-  CommunityMatchesSection,
+  PlayerRecordSection,
   VenuePathSection,
+  VenueAdminSection,
   ContinuitySection,
   SmartScoreboardSection,
   MatchIntelligenceSection,
-  ExpansionSection,
   AboutSection,
   DownloadSection,
   ContactSection,
@@ -52,16 +52,16 @@ export default function PublicSitePage() {
     <PublicSiteLayout>
       <div ref={revealRootRef} className="public-site__reveal-root">
         <HeroSection />
-        <AboutSection />
         <WhatIsSection />
         <ExperiencesSection />
         <PlayerPathSection />
-        <CommunityMatchesSection />
+        <PlayerRecordSection />
         <SmartScoreboardSection />
-        <VenuePathSection />
         <ContinuitySection />
-        <ExpansionSection />
+        <VenuePathSection />
+        <VenueAdminSection />
         <MatchIntelligenceSection />
+        <AboutSection />
         <DownloadSection />
         <ContactSection />
       </div>

@@ -22,9 +22,10 @@ import {
 } from '../constants/hubLayout';
 import { clearAdminNavContext } from '../utils/adminNavContext';
 import PadbolBrandLogo from '../components/PadbolBrandLogo';
-import { padbolBrandLogoSrc } from '../constants/padbolBrandLogo';
+import { PADBOL_ICON_512 } from '../constants/padbolBrandLogo';
 import SportIcon from '../components/common/SportIcon';
 import './AdminDashboard.css';
+import SupportTicketsPage from './SupportTicketsPage';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
@@ -10002,6 +10003,7 @@ export default function AdminDashboard({
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
         ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', 'Membresías') }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
+        { id: 'soporte', label: 'Soporte' },
         { id: 'resumen', label: t('nav.admin.resumen') },
       ]
     : esAdminNacional
@@ -10021,6 +10023,7 @@ export default function AdminDashboard({
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
+        ...(isSuperAdmin ? [{ id: 'soporte', label: 'Soporte' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
@@ -10065,7 +10068,7 @@ export default function AdminDashboard({
       (sedeClubHeader?.logo_url && String(sedeClubHeader.logo_url).trim()) ||
       '';
     if (esAdminClub && clubLogo) return clubLogo;
-    return padbolBrandLogoSrc(theme);
+    return PADBOL_ICON_512;
   })();
 
   const renderAdminNavTabButton = (tab, variant) => {
@@ -10169,7 +10172,7 @@ export default function AdminDashboard({
       <div className="admin-dashboard-brand-shell">
       <div className="admin-header" style={{ marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: 0 }}>
-          <div className="admin-super-header__logo-wrap">
+          <div className={`admin-super-header__logo-wrap${esAdminClub ? '' : ' admin-super-header__logo-wrap--platform'}`}>
             <img className="admin-super-header__logo" src={logoPanelSrc} alt="" />
           </div>
           <p
@@ -11232,25 +11235,6 @@ export default function AdminDashboard({
               const ciudadSede = String(sede?.ciudad || '').trim();
               const paisSede = String(sede?.pais || '').trim();
               const ubicacionSede = [ciudadSede, paisSede].filter(Boolean).join(', ');
-              const NIVEL_COLOR = {
-                club:          { bg: '#e2e8f0', color: 'var(--text-secondary)' },
-                nacional:      { bg: '#dbeafe', color: '#1e40af' },
-                internacional: { bg: '#fef2f2', color: '#991b1b' },
-                fipa:          { bg: '#fef3c7', color: '#b45309' },
-              };
-              const FORMATO_COLOR = {
-                round_robin:     { bg: '#fef2f2', color: '#991b1b' },
-                knockout:        { bg: '#fee2e2', color: '#991b1b' },
-                grupos_knockout: { bg: '#fee2e2', color: '#991b1b' },
-              };
-              const nivelTorneoRaw = String(torneo.nivel_torneo || '').trim().toLowerCase();
-              const nivelCanonico = (
-                nivelTorneoRaw === 'club_no_oficial' || nivelTorneoRaw === 'club_oficial'
-              ) ? 'club' : (
-                nivelTorneoRaw === 'mundial'
-              ) ? 'fipa' : nivelTorneoRaw;
-              const nivelColor   = NIVEL_COLOR[nivelCanonico] || { bg: '#e2e8f0', color: 'var(--text-secondary)' };
-              const formatoColor = FORMATO_COLOR[torneo.tipo_torneo]  || { bg: '#f3f4f6', color: '#374151' };
               const estadoBadgeBase =
                 badgeTorneoEstadoPublico(torneo.estado) || {
                   bg: '#94a3b8',
@@ -11263,15 +11247,7 @@ export default function AdminDashboard({
                   defaultValue: estadoBadgeBase.label,
                 }),
               };
-              // Shared badge style — fixed 120px, centered
-              const badge = (bg, col) => ({
-                background: bg, color: col,
-                borderRadius: '10px', padding: '3px 0',
-                fontSize: '11px', fontWeight: '600',
-                width: '120px', display: 'block',
-                textAlign: 'center',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              });
+              const badge = (tone = 'neutral') => `admin-torneo-meta-chip admin-torneo-meta-chip--${tone}`;
 
               const isEditingThis = editandoTorneoId === torneo.id;
               const inp = { padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '13px', width: '100%', boxSizing: 'border-box' };
@@ -11584,40 +11560,40 @@ export default function AdminDashboard({
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                         {torneo.nivel_torneo
-                          ? <span style={badge(nivelColor.bg, nivelColor.color)}>
+                          ? <span className={badge('venue')}>
                               {t(`admin.tournamentLabels.level.${String(torneo.nivel_torneo).trim().toLowerCase()}`, {
                                 defaultValue: formatNivelTorneo(torneo.nivel_torneo),
                               })}
                             </span>
                           : null}
-                        <span style={badge('#fef2f2', '#991b1b')}>{resumenDeporteFormatoTorneo(torneo)}</span>
-                        <span style={badge('#f0fdf4', '#166534')}>
+                        <span className={badge('sport')}>{resumenDeporteFormatoTorneo(torneo)}</span>
+                        <span className={badge('category')}>
                           {t(`torneos.vista.categoriaNivel.${String(torneo.categoria || 'Libre').trim()}`, {
                             defaultValue: formatCategoriaTorneo(torneo.categoria),
                           })}
                         </span>
                         {torneoTipoCompetenciaDb(torneo) ? (
-                          <span style={badge('#fef9c3', '#854d0e')}>
+                          <span className={badge('competition')}>
                             {t(`torneos.vista.genero.${String(torneoTipoCompetenciaDb(torneo)).trim().toLowerCase()}`, {
                               defaultValue: formatGeneroCompetenciaTorneo(torneoTipoCompetenciaDb(torneo)),
                             })}
                           </span>
                         ) : null}
                         {String(torneo.categoria_edad || '').trim() ? (
-                          <span style={badge('#e0f2fe', '#0369a1')}>
+                          <span className={badge('age')}>
                             {t(`torneos.vista.categoriaEdad.${String(torneo.categoria_edad).trim().toLowerCase().replace(/\s+/g, '_')}`, {
                               defaultValue: formatCategoriaEdadTorneo(torneo.categoria_edad),
                             })}
                           </span>
                         ) : null}
                         {torneo.tipo_torneo
-                          ? <span style={badge(formatoColor.bg, formatoColor.color)}>
+                          ? <span className={badge('format')}>
                               {t(`torneos.tipo.${String(torneo.tipo_torneo).trim().toLowerCase()}`, {
                                 defaultValue: formatTipoTorneo(torneo.tipo_torneo),
                               })}
                             </span>
                           : null}
-                        <span style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
+                        <span className={badge(`status-${String(torneo.estado || 'neutral').trim().toLowerCase().replace(/_/g, '-')}`)}>{estadoBadge.label}</span>
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -11763,6 +11739,8 @@ export default function AdminDashboard({
           <AdminSuspensionesSection apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
         </div>
       ) : null}
+
+      {activeTab === 'soporte' ? <SupportTicketsPage adminMode={isSuperAdmin} /> : null}
 
       {activeTab === 'notificaciones' && puedeEnviarNotificacionesPush && session?.access_token ? (
         <div className="section">

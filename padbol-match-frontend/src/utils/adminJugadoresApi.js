@@ -4,6 +4,45 @@ function resolveApiBase(apiBaseUrl) {
   return String(apiBaseUrl || '').replace(/\/$/, '');
 }
 
+async function postAdminJugadoresImport(apiBaseUrl, accessToken, path, body) {
+  if (!accessToken) {
+    const err = new Error('Sesión expirada. Volvé a iniciar sesión.');
+    err.status = 401;
+    throw err;
+  }
+  const res = await fetch(`${resolveApiBase(apiBaseUrl)}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(parseAdminJugadoresApiError(res.status, json));
+    err.status = res.status;
+    err.code = json.code;
+    throw err;
+  }
+  return json;
+}
+
+export function previewAdminJugadoresImport({ apiBaseUrl, accessToken, sedeId, rows }) {
+  return postAdminJugadoresImport(apiBaseUrl, accessToken, '/api/admin/jugadores/importar/previsualizar', {
+    sede_id: sedeId,
+    rows,
+  });
+}
+
+export function confirmAdminJugadoresImport({ apiBaseUrl, accessToken, sedeId, rows }) {
+  return postAdminJugadoresImport(apiBaseUrl, accessToken, '/api/admin/jugadores/importar/confirmar', {
+    sede_id: sedeId,
+    rows,
+  });
+}
+
 export function normalizeAdminJugadoresSearchItems(json) {
   if (Array.isArray(json)) return json;
   if (Array.isArray(json?.items)) return json.items;

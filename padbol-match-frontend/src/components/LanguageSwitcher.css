@@ -128,6 +128,22 @@
   background: #1e293b;
 }
 
+/* En el footer el menú no puede crecer hacia abajo: en móvil quedaría fuera
+   del viewport. Se abre hacia arriba y se ancla al borde izquierdo del botón
+   para que nunca se recorte fuera de la pantalla. */
+.lang-switcher--footer .lang-switcher__menu {
+  top: auto;
+  right: auto;
+  bottom: calc(100% + 8px);
+  left: 0;
+}
+
+@media (max-width: 480px) {
+  .lang-switcher--footer .lang-switcher__menu {
+    min-width: min(196px, calc(100vw - 40px));
+  }
+}
+
 /* Mi perfil: trigger compacto (44px); menú anclado a la derecha */
 .lang-switcher--profile {
   max-width: 44px;

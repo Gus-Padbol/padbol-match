@@ -594,6 +594,27 @@ export default function UserHome() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            {session?.user ? (
+              <button
+                type="button"
+                onClick={() => navigate('/soporte')}
+                aria-label="Abrir soporte"
+                title="Soporte"
+                style={{
+                  height: 36,
+                  width: 36,
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontSize: 17,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ?
+              </button>
+            ) : null}
             <LanguageSwitcher variant="header" />
             <HubThemeSettingsButton compact />
             {showAdminShortcut ? (

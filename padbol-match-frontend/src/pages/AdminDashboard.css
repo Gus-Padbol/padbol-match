@@ -1109,6 +1109,52 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   color: var(--text-secondary) !important;
 }
 
+/* Metadatos de torneo: una familia de chips propia del panel, no etiquetas pastel. */
+.admin-torneo-meta-chip {
+  --chip-accent: #9fb0c8;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 27px;
+  max-width: 100%;
+  padding: 5px 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--chip-accent) 42%, transparent);
+  border-radius: 999px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--chip-accent) 14%, #111b2d), #111a2a);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
+  color: color-mix(in srgb, var(--chip-accent) 86%, white);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .025em;
+  line-height: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.admin-torneo-meta-chip::before {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--chip-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--chip-accent) 72%, transparent);
+  content: '';
+}
+
+.admin-torneo-meta-chip--venue { --chip-accent: #9eb0c9; }
+.admin-torneo-meta-chip--sport { --chip-accent: #ff3b4d; }
+.admin-torneo-meta-chip--category { --chip-accent: #72d9ff; }
+.admin-torneo-meta-chip--competition { --chip-accent: #d69cff; }
+.admin-torneo-meta-chip--age { --chip-accent: #8aa7ff; }
+.admin-torneo-meta-chip--format { --chip-accent: #ff9b57; }
+.admin-torneo-meta-chip--status-en-curso { --chip-accent: #61e5a1; }
+.admin-torneo-meta-chip--status-inscripcion-abierta { --chip-accent: #ff3b4d; }
+.admin-torneo-meta-chip--status-proximo,
+.admin-torneo-meta-chip--status-planificacion { --chip-accent: #72d9ff; }
+.admin-torneo-meta-chip--status-finalizado { --chip-accent: #c9a7ff; }
+.admin-torneo-meta-chip--status-cancelado { --chip-accent: #f89aa5; }
+
 /* Cabecera panel admin (super + club + editor): colores de tema */
 .admin-dashboard .admin-super-header__title {
   color: var(--text-primary);
@@ -1370,6 +1416,24 @@ html.theme-dark .admin-dashboard--super .sede-admin-card {
   border: none;
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
+}
+
+/* Panel global: identidad Padbol Match completa, blanca y legible. Los clubes
+   conservan su avatar/logo cuadrado propio. */
+.admin-dashboard .admin-super-header__logo-wrap--platform {
+  width: 112px;
+  height: 112px;
+  max-width: 112px;
+  max-height: 112px;
+  margin: 8px auto 12px;
+  border-radius: 22px;
+  box-shadow: none;
+}
+
+.admin-dashboard .admin-super-header__logo-wrap--platform .admin-super-header__logo {
+  max-width: 112px;
+  max-height: 112px;
+  border-radius: 22px;
 }
 
 .admin-dashboard .admin-super-header__logo {
