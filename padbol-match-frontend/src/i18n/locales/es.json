@@ -2556,10 +2556,17 @@
       "title": "Quiénes somos",
       "text": "Hace 18 años trabajamos para desarrollar Padbol y llevar este deporte al mundo. Cada cancha, evento y comunidad nos enseñó que el crecimiento necesita herramientas a su altura.",
       "detail": "Por eso creamos Padbol Match: una aplicación propia que conecta juego, gestión y comunidad en un mismo recorrido. Nace con Padbol y se abre a Pádel, Pickleball y Tenis para que más deportes de cancha crezcan sobre la misma base.",
+      "founder": {
+        "name": "Gustavo Miguens",
+        "padbolRole": "Creador de Padbol",
+        "federationRole": "Presidente de la Federación Internacional de Padbol",
+        "matchRole": "Fundador de Padbol Match",
+        "quote": "La experiencia y las herramientas creadas para Padbol son hoy la base para abrir la plataforma a otros deportes de cancha —como tenis, pádel y pickleball—, incorporando nuevos deportes según las necesidades de cada comunidad, sin perder el espíritu con el que Padbol Match nació."
+      },
       "sportsLabel": "Deportes en la plataforma",
       "playersNote": "Una plataforma nacida de la experiencia real de quienes hacen posible el deporte de cancha.",
       "cta": "Mira cómo funciona",
-      "visualAlt": "Equipo de Padbol Match reunido en su espacio de trabajo"
+      "visualAlt": "Gustavo Miguens, creador de Padbol y fundador de Padbol Match"
     },
     "meta": {
       "title": "Padbol Match — Plataforma",
