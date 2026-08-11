@@ -775,6 +775,7 @@ export default function ChatbotIA() {
   const c = useMemo(() => getChatbotModalTheme(theme === 'dark'), [theme]);
   const [open, setOpen] = useState(false);
   const [fabCollapsed, setFabCollapsed] = useState(readChatbotFabInitiallyCollapsed);
+  const [publicAttentionCycle, setPublicAttentionCycle] = useState(0);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -807,6 +808,8 @@ export default function ChatbotIA() {
   const voiceTimedOutRef = useRef(false);
   const voiceUserCancelledRef = useRef(false);
   const clientGeoRef = useRef(null);
+  const publicAttentionRef = useRef({ lastY: 0, lastAt: 0 });
+  const publicAttentionHashRef = useRef(location.hash);
 
   const micSupported = useMemo(() => isSpeechRecognitionAvailable(), []);
   const ttsSupported = useMemo(() => isSpeechSynthesisAvailable(), []);
@@ -977,6 +980,36 @@ export default function ChatbotIA() {
     const tid = window.setTimeout(() => setFabCollapsed(true), CHATBOT_FAB_EXPAND_MS);
     return () => window.clearTimeout(tid);
   }, [visible, fabCollapsed]);
+
+  useEffect(() => {
+    if (!isPublicLanding || open || typeof window === 'undefined') return undefined;
+
+    const attention = publicAttentionRef.current;
+    attention.lastY = window.scrollY;
+    if (!attention.lastAt) attention.lastAt = Date.now();
+
+    const remind = () => {
+      const now = Date.now();
+      const travelled = Math.abs(window.scrollY - attention.lastY);
+      const minTravel = Math.max(window.innerHeight * 1.35, 720);
+      if (travelled < minTravel || now - attention.lastAt < 18000) return;
+      attention.lastY = window.scrollY;
+      attention.lastAt = now;
+      setPublicAttentionCycle((cycle) => cycle + 1);
+    };
+
+    window.addEventListener('scroll', remind, { passive: true });
+    return () => window.removeEventListener('scroll', remind);
+  }, [isPublicLanding, open, location.hash]);
+
+  useEffect(() => {
+    const previousHash = publicAttentionHashRef.current;
+    publicAttentionHashRef.current = location.hash;
+    if (!isPublicLanding || open || !location.hash || location.hash === previousHash) return;
+    publicAttentionRef.current.lastY = typeof window !== 'undefined' ? window.scrollY : 0;
+    publicAttentionRef.current.lastAt = Date.now();
+    setPublicAttentionCycle((cycle) => cycle + 1);
+  }, [isPublicLanding, location.hash, open]);
 
   const openChatFromFab = useCallback(() => {
     try {
@@ -1564,6 +1597,7 @@ export default function ChatbotIA() {
   return (
     <>
       <div
+        key={isPublicLanding ? `public-attention-${publicAttentionCycle}` : 'chatbot-fab'}
         className={`chatbot-fab-anchor${isPublicLanding ? ' chatbot-fab-anchor--public' : ''}`}
         style={{
           bottom: fabBottom,

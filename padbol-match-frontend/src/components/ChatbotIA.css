@@ -44,7 +44,7 @@
   box-shadow: 0 0 22px rgba(225, 27, 34, 0.78);
   animation:
     chatbot-public-ai-spark-pulse 2.4s ease-in-out infinite,
-    chatbot-public-ai-spark-settle 0.45s ease 9.2s forwards;
+    chatbot-public-ai-spark-settle 0.45s ease 7.1s forwards;
 }
 
 .chatbot-fab-anchor--public .chatbot-fab-circle-btn {
@@ -52,13 +52,13 @@
   border-color: #e11b22;
   background: #090d16;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42), 0 0 22px rgba(225, 27, 34, 0.2);
-  animation: chatbot-public-avatar-collapse 0.45s ease 9.2s forwards;
+  animation: chatbot-public-avatar-collapse 0.45s ease 7.1s forwards;
 }
 
 .chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill {
   border-radius: 50%;
   transform: scale(0.82);
-  animation: chatbot-public-avatar-fade 0.3s ease 9.05s forwards;
+  animation: chatbot-public-avatar-fade 0.3s ease 6.95s forwards;
 }
 
 .chatbot-fab-anchor--public {
@@ -67,7 +67,7 @@
 
 .chatbot-public-ai-label {
   overflow: hidden;
-  animation: chatbot-public-label-collapse 0.35s ease 9.05s forwards;
+  animation: chatbot-public-label-collapse 0.35s ease 6.95s forwards;
 }
 
 .chatbot-fab-anchor--public button:hover .chatbot-fab-circle-btn {
