@@ -16820,6 +16820,7 @@ function buildChatIaBootstrapPayload(ctx) {
 
 function buildChatIaSystemPrompt(ctxForModel) {
   const uiLang = ctxForModel.idioma_ui || 'es';
+  const isPublicLanding = ctxForModel.client_surface === 'public_landing';
   const payload = {
     idioma_ui: ctxForModel.idioma_ui,
     claude_language: ctxForModel.claude_language,
@@ -16842,8 +16843,25 @@ function buildChatIaSystemPrompt(ctxForModel) {
     })),
     usuario_logueado: ctxForModel.usuario_logueado,
     guia_app: ctxForModel.guia_app,
+    client_surface: ctxForModel.client_surface || null,
   };
-  return `You are the Padbol Match assistant for padbol/padel bookings, tournaments and rankings.
+  const publicLandingKnowledge = isPublicLanding
+    ? `
+PUBLIC LANDING MODE (critical):
+- The visitor is on the public Padbol Match website. You may answer questions about the platform, its value, current and future features, players, venues, organizations, onboarding and the Padbol story, in addition to bookings, tournaments and rankings.
+- Padbol Match connects play, venue operations and community in one multi-sport platform. It was born from 18 years of developing Padbol and is designed for Padbol, padel, pickleball and tennis.
+- For players: find or create matches, join open spots, book courts, compete in tournaments, follow results, history, rankings and community activity.
+- For venues and organizations: configure public venue data, sports, courts, schedules, prices and payment methods; manage bookings, attendance, rescheduling and cancellation rules; activate players; organize tournaments; record live results with the smart scoreboard; and use operational summaries and exports.
+- Reports and exports provide operational movement information. Padbol Match does NOT provide accounting, tax or legal services; each venue decides how to use that information with its professionals under local law.
+- PadCoins and memberships are available only when enabled for a venue. Sponsorship and advertising can be managed by venues. Padbol Match Shop is a pilot/in development.
+- The smart scoreboard is available today and connects live results with history, statistics, rankings and tournaments when applicable. The intelligent camera-vision referee is in training and is not yet a released feature.
+- The mobile apps are not yet publicly available in the stores. Do not claim otherwise.
+- A venue can learn more at /administradores and start its application at /unirse. General commercial contact is available at /contacto. Account access is at /acceso.
+- Founder context: Gustavo Miguens is the creator of Padbol, President of the International Padbol Federation and founder of Padbol Match.
+- Never invent prices, launch dates, contracts, country-specific legal/accounting treatment or features not listed here. If the public information does not establish an answer, say so briefly and point to /contacto when a commercial follow-up is appropriate.
+`
+    : '';
+  return `You are the Padbol Match assistant for padbol/padel bookings, tournaments and rankings.${publicLandingKnowledge}
 
 LANGUAGE (critical):
 - Always respond in the same language the user writes in (mirror their Spanish, English, or Portuguese, or whichever language they consistently use in this thread). Match their tone when reasonable.
@@ -16864,7 +16882,9 @@ BREVITY WITH CHIPS OR FRANJAS (critical):
 - Use tools for real data: never invent availability, rankings or tournaments.
 - When you write in Spanish (es), avoid voseo: use "puedes", "quieres", "tienes", "haces", not "podés", "querés", "tenés", "hacés".
 
-Out of scope: if the question is unrelated to padbol/padel bookings, tournaments or rankings on Padbol Match, reply with exactly one short sentence in the SAME language as the user's message, stating only that limitation.
+Out of scope: ${isPublicLanding
+  ? 'if the question is unrelated to Padbol Match, its sports, players, venues, organizations or the public platform information above, reply with exactly one short sentence in the SAME language as the user stating only that limitation.'
+  : 'if the question is unrelated to padbol/padel bookings, tournaments or rankings on Padbol Match, reply with exactly one short sentence in the SAME language as the user stating only that limitation.'}
 
 Context JSON (use sedes_hora_local for "today" per club timezone; fecha_referencia_art and fecha_mañana_art are yyyy-LL-dd in America/Argentina/Buenos_Aires for "hoy" / "mañana"):
 ${JSON.stringify(payload)}
@@ -16933,6 +16953,7 @@ app.post('/api/chat-ia', async (req, res) => {
     }
     const user = await authUserFromBearer(req);
     const b = req.body || {};
+    const clientSurface = b.client_surface === 'public_landing' ? 'public_landing' : null;
     const mensaje = String(b.mensaje || '').trim();
     const historialRaw = Array.isArray(b.historial) ? b.historial : [];
     const clientCal = String(b.client_calendario_art || '').trim().slice(0, 10);
@@ -16998,7 +17019,11 @@ app.post('/api/chat-ia', async (req, res) => {
     );
     const clientSedeRaw = b.client_pagina_sede_id ?? b.pagina_sede_id;
     const disponibilidadSedeImplicita = chatIaResolveDisponibilidadSedeImplicita(ctxBase, clientSedeRaw);
-    const ctxForModel = { ...ctxBase, disponibilidad_sede_implicita: disponibilidadSedeImplicita };
+    const ctxForModel = {
+      ...ctxBase,
+      disponibilidad_sede_implicita: disponibilidadSedeImplicita,
+      client_surface: clientSurface,
+    };
     delete ctxForModel._sedes_rows_chat_ia;
     if (geoParsed) ctxForModel.client_geolocalizacion = geoParsed;
 

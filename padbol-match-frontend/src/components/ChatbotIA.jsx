@@ -760,7 +760,63 @@ export default function ChatbotIA() {
 
   const padbolLang = usePadbolLang();
   usePadbolLangVersion();
-  const ui = useMemo(() => chatUiStrings(padbolLang, t), [padbolLang, t]);
+  const isPublicLanding = useMemo(() => {
+    const p = String(location.pathname || '/').replace(/\/+$/, '') || '/';
+    return p === '/plataforma';
+  }, [location.pathname]);
+  const ui = useMemo(() => {
+    const base = chatUiStrings(padbolLang, t);
+    if (!isPublicLanding) return base;
+    if (padbolLang === 'en') {
+      return {
+        ...base,
+        fabOpen: 'Talk to Chivi, Padbol Match AI assistant',
+        fabCollapsed: 'Chivi AI',
+        fabLine1: 'Questions?',
+        fabLine2: 'Talk to Chivi AI',
+        placeholder: 'Ask about Padbol Match',
+        welcomeAssistant: () => 'Hi. I’m Chivi, Padbol Match’s AI assistant. Ask me how the platform works for players, venues and organizations.',
+        quickSuggestions: [
+          { label: 'What is Padbol Match?' },
+          { label: 'What does it offer venues?' },
+          { label: 'How does it work for players?' },
+          { label: 'What is available today?' },
+        ],
+      };
+    }
+    if (padbolLang === 'pt') {
+      return {
+        ...base,
+        fabOpen: 'Falar com Chivi, assistente de IA do Padbol Match',
+        fabCollapsed: 'Chivi IA',
+        fabLine1: 'Dúvidas?',
+        fabLine2: 'Fale com Chivi IA',
+        placeholder: 'Pergunte sobre o Padbol Match',
+        welcomeAssistant: () => 'Olá. Sou Chivi, a assistente de IA do Padbol Match. Pergunte como a plataforma funciona para jogadores, sedes e organizações.',
+        quickSuggestions: [
+          { label: 'O que é Padbol Match?' },
+          { label: 'O que oferece às sedes?' },
+          { label: 'Como funciona para jogadores?' },
+          { label: 'O que está disponível hoje?' },
+        ],
+      };
+    }
+    return {
+      ...base,
+      fabOpen: 'Hablar con Chivi, asistente de inteligencia artificial de Padbol Match',
+      fabCollapsed: 'Chivi IA',
+      fabLine1: '¿Tenés dudas?',
+      fabLine2: 'Hablá con Chivi IA',
+      placeholder: 'Preguntá sobre Padbol Match',
+      welcomeAssistant: () => 'Hola. Soy Chivi, la asistente de inteligencia artificial de Padbol Match. Preguntame cómo funciona la plataforma para jugadores, sedes y organizaciones.',
+      quickSuggestions: [
+        { label: '¿Qué es Padbol Match?' },
+        { label: '¿Qué ofrece a las sedes?' },
+        { label: '¿Cómo funciona para jugadores?' },
+        { label: '¿Qué está disponible hoy?' },
+      ],
+    };
+  }, [isPublicLanding, padbolLang, t]);
   const { avatarUrl: chiviAvatarUrl } = useHubChiviAvatar();
 
   const chatWelcomeFirstName = useMemo(() => {
@@ -1157,6 +1213,7 @@ export default function ChatbotIA() {
             historial,
             user_id: session?.user?.id || null,
             locale: inferWritingLocaleCodeFromText(text),
+            ...(isPublicLanding ? { client_surface: 'public_landing' } : {}),
             client_calendario_art: ymdBuenosAires(),
             ...(clientPaginaSedeId != null ? { client_pagina_sede_id: clientPaginaSedeId } : {}),
             ...(clientGeoRef.current &&
@@ -1242,6 +1299,7 @@ export default function ChatbotIA() {
       voiceBookingSelection,
       padbolLang,
       navigate,
+      isPublicLanding,
     ]
   );
 
@@ -1434,7 +1492,7 @@ export default function ChatbotIA() {
   return (
     <>
       <div
-        className="chatbot-fab-anchor"
+        className={`chatbot-fab-anchor${isPublicLanding ? ' chatbot-fab-anchor--public' : ''}`}
         style={{
           bottom: fabBottom,
         }}
@@ -1486,6 +1544,7 @@ export default function ChatbotIA() {
             <>
               <span className="chatbot-fab-circle-btn">
                 <ChiviFabAvatar fill src={chiviAvatarUrl} />
+                {isPublicLanding ? <span className="chatbot-public-ai-spark" aria-hidden="true">✦</span> : null}
               </span>
               <span
                 style={{

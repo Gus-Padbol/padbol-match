@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import CookieConsentBanner from '../../components/CookieConsentBanner';
+import ChatbotIASafe from '../../components/ChatbotIASafe';
 import { ES_FALLBACKS, useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import { PUBLIC_SITE_NAV_ITEMS } from '../../content/publicSiteContent';
 import PublicSiteFooter from './PublicSiteFooter';
-import PublicContactDock from './PublicContactDock';
 import {
   PUBLIC_SITE_CTA,
   PUBLIC_SITE_PATH,
@@ -195,8 +195,7 @@ export default function PublicSiteLayout({ children }) {
 
       <main id="public-site-main">{children}</main>
       <PublicSiteFooter />
-      <PublicContactDock />
-
+      <ChatbotIASafe />
       {/* Cookies: misma capa pública que el AppShell; sin BottomNav ni LegalFooter global. */}
       <CookieConsentBanner />
     </div>
