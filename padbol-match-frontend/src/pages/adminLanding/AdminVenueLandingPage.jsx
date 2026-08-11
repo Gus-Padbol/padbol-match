@@ -59,6 +59,21 @@ export default function AdminVenueLandingPage() {
           </div>
         </section>
 
+        <section className="admin-landing__reports" aria-labelledby="reportes-title">
+          <div className="admin-landing__shell">
+            <p className="admin-landing__eyebrow">OPERACIÓN QUE TAMBIÉN SE PUEDE EXPLICAR EN NÚMEROS</p>
+            <div className="admin-landing__reports-heading">
+              <h2 id="reportes-title">Tu sede no solo se mueve. También <span>se entiende.</span></h2>
+              <p>Consultá ingresos y actividad por período, sin perseguir planillas ni reconstruir lo que pasó durante el mes.</p>
+            </div>
+            <div className="admin-landing__reports-grid">
+              <article><span>01</span><h3>Resumen de ingresos</h3><p>Reservas e inscripciones a torneos, transacciones y ticket promedio en un mismo panel.</p></article>
+              <article><span>02</span><h3>Detalle para trabajar</h3><p>Fecha, hora, cancha, jugador, monto, moneda y estado de cada movimiento operativo.</p></article>
+              <article><span>03</span><h3>Excel exportable</h3><p>Un reporte con resumen, reservas y torneos para compartir con tu administración o contador.</p></article>
+            </div>
+          </div>
+        </section>
+
         <section className="admin-landing__section" id="recorrido">
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">LO QUE UNA AGENDA SOLA NO HACE</p>
