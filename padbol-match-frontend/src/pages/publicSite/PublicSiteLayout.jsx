@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import CookieConsentBanner from '../../components/CookieConsentBanner';
 import { ES_FALLBACKS, useSafeTranslation as useTranslation } from '../../i18n/tSafe';
@@ -69,6 +69,7 @@ function useActiveSection() {
 }
 
 export default function PublicSiteLayout({ children }) {
+  const location = useLocation();
   const { t } = useTranslation();
   const text = (key) => t(key, ES_FALLBACKS[key] || '');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,11 +90,23 @@ export default function PublicSiteLayout({ children }) {
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (location.pathname !== PUBLIC_SITE_PATH || !location.hash) return undefined;
+    const raf = window.requestAnimationFrame(() => scrollToHash(location.hash));
+    return () => window.cancelAnimationFrame(raf);
+  }, [location.pathname, location.hash]);
+
   const chooseAnchor = (event, href) => {
-    event.preventDefault();
     setMenuOpen(false);
+    const id = String(href || '').replace(/^#/, '');
+    if (!document.getElementById(id)) return;
+    event.preventDefault();
     scrollToHash(href);
   };
+
+  const publicNavHref = (hash) => (
+    location.pathname === PUBLIC_SITE_PATH ? hash : `${PUBLIC_SITE_PATH}${hash}`
+  );
 
   return (
     <div className="public-site">
@@ -118,7 +131,7 @@ export default function PublicSiteLayout({ children }) {
                 return (
                   <li key={item.key}>
                     <a
-                      href={item.href}
+                      href={publicNavHref(item.href)}
                       className={`public-site__nav-link${isActive ? ' is-active' : ''}`}
                       aria-current={isActive ? 'true' : undefined}
                       onClick={(event) => chooseAnchor(event, item.href)}
@@ -165,7 +178,7 @@ export default function PublicSiteLayout({ children }) {
             {PUBLIC_SITE_NAV_ITEMS.map((item, index) => (
               <a
                 ref={index === 0 ? firstMenuLinkRef : undefined}
-                href={item.href}
+                href={publicNavHref(item.href)}
                 key={item.key}
                 onClick={(event) => chooseAnchor(event, item.href)}
               >

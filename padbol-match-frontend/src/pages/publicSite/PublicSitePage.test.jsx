@@ -4,6 +4,7 @@ import PublicSitePage from './PublicSitePage';
 
 jest.mock('react-router-dom', () => ({
   Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a>,
+  useLocation: () => ({ pathname: '/plataforma' }),
 }), { virtual: true });
 
 jest.mock('../../i18n/tSafe', () => {
