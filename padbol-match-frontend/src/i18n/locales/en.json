@@ -2981,6 +2981,18 @@
       "venue": "I want to bring Padbol Match",
       "login": "Log in"
     },
+    "contactDock": {
+      "aria": "Contact Padbol Match directly",
+      "whatsapp": "WhatsApp",
+      "whatsappHint": "Leave your details",
+      "whatsappAria": "Message Padbol Match on WhatsApp and leave your contact details",
+      "email": "Email",
+      "emailHint": "Send an inquiry",
+      "emailAria": "Email Padbol Match",
+      "talk": "Let's talk",
+      "talkHint": "Commercial channel",
+      "talkAria": "Open the Padbol Match commercial channel"
+    },
     "footer": {
       "aria": "Footer navigation",
       "tagline": "Game, community and management.",

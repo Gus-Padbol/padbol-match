@@ -80,6 +80,100 @@ html.public-site-active #root {
   padding-right: max(20px, env(safe-area-inset-right, 0px));
 }
 
+/* Contacto directo: pertenece sólo al layout de la landing pública. */
+.public-contact-dock {
+  position: fixed;
+  z-index: 50;
+  top: max(104px, 50%);
+  right: max(14px, env(safe-area-inset-right, 0px));
+  display: grid;
+  width: 184px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 16px;
+  background: rgba(8, 12, 22, 0.9);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  transform: translateY(-50%);
+}
+
+.public-contact-dock__item {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  color: var(--ps-text-2);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.public-contact-dock__item:last-child { border-bottom: 0; }
+
+.public-contact-dock__item:hover {
+  color: #fff;
+  background: rgba(225, 27, 34, 0.16);
+  box-shadow: 3px 0 0 var(--ps-accent) inset;
+}
+
+.public-contact-dock__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid rgba(225, 27, 34, 0.38);
+  border-radius: 10px;
+  background: rgba(225, 27, 34, 0.08);
+  color: #fff;
+}
+
+.public-contact-dock__icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.public-contact-dock__copy { min-width: 0; }
+.public-contact-dock__copy strong,
+.public-contact-dock__copy small { display: block; }
+.public-contact-dock__copy strong { font-size: 13px; line-height: 1.2; }
+.public-contact-dock__copy small { margin-top: 3px; color: var(--ps-text-muted); font-size: 10px; line-height: 1.25; }
+.public-contact-dock__item:hover small { color: #f3c4c6; }
+
+@media (max-width: 767px) {
+  .public-contact-dock {
+    top: auto;
+    right: max(14px, env(safe-area-inset-right, 0px));
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    display: flex;
+    padding: 5px;
+    gap: 4px;
+    border-radius: 17px;
+    transform: none;
+  }
+
+  .public-contact-dock__item {
+    width: 46px;
+    min-height: 46px;
+    justify-content: center;
+    padding: 6px;
+    border: 0;
+    border-radius: 12px;
+  }
+
+  .public-contact-dock__item:hover { box-shadow: none; }
+  .public-contact-dock__icon { width: 34px; height: 34px; flex-basis: 34px; }
+  .public-contact-dock__copy { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-contact-dock__item { transition: none; }
+}
+
 .public-site a:focus-visible,
 .public-site button:focus-visible,
 .public-site [tabindex]:focus-visible {
