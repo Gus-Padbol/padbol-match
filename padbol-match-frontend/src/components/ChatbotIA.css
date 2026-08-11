@@ -7,6 +7,7 @@
   box-sizing: border-box;
   display: block;
   flex-shrink: 0;
+  position: relative;
 }
 
 .chatbot-fab-chivi-avatar {
@@ -24,4 +25,35 @@
   height: 100%;
   border: none;
   border-radius: 0;
+}
+
+.chatbot-public-ai-spark {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 2px solid #05070d;
+  border-radius: 50%;
+  background: #e11b22;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  box-shadow: 0 0 18px rgba(225, 27, 34, 0.72);
+}
+
+.chatbot-fab-anchor--public .chatbot-fab-circle-btn {
+  overflow: visible;
+  border-color: #e11b22;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42), 0 0 22px rgba(225, 27, 34, 0.2);
+}
+
+.chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill {
+  border-radius: 50%;
+}
+
+.chatbot-fab-anchor--public button:hover .chatbot-fab-circle-btn {
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.48), 0 0 28px rgba(225, 27, 34, 0.45);
 }

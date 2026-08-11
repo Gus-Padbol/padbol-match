@@ -173,27 +173,6 @@ describe('/plataforma public site', () => {
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeTruthy();
   });
 
-  it('mantiene accesible el contacto directo sólo dentro del layout público', () => {
-    const { container } = renderPage();
-    const dock = screen.getByRole('navigation', { name: 'Contacto directo con Padbol Match' });
-    expect(dock).toHaveClass('public-contact-dock');
-    expect(screen.getByRole('link', { name: /WhatsApp y dejar datos/i })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/^https:\/\/wa\.me\/17864588533/),
-    );
-    expect(screen.getByRole('link', { name: 'Enviar un correo a Padbol Match' })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/^mailto:padbolinternacional@gmail\.com/),
-    );
-    expect(screen.getByRole('link', { name: 'Abrir el canal comercial de Padbol Match' }))
-      .toHaveAttribute('href', '/contacto');
-    expect(container.querySelectorAll('.public-contact-dock__item')).toHaveLength(3);
-
-    const css = require('fs').readFileSync(require('path').join(__dirname, 'publicSite.css'), 'utf8');
-    expect(css).toMatch(/\.public-contact-dock\s*\{[\s\S]*?position:\s*fixed/);
-    expect(css).toMatch(/@media \(max-width:\s*767px\)[\s\S]*?\.public-contact-dock\s*\{[\s\S]*?bottom:/);
-  });
-
   it('expone navegación, CTAs prioritarios y stores no activos', () => {
     renderPage();
     expect(screen.getAllByRole('link', { name: 'Plataforma' })[0]).toHaveAttribute('href', '#que-es');

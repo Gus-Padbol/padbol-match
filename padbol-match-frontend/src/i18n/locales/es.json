@@ -2645,18 +2645,6 @@
       "venue": "Conoce cómo sumar tu sede",
       "login": "Ingresa a Padbol Match"
     },
-    "contactDock": {
-      "aria": "Contacto directo con Padbol Match",
-      "whatsapp": "WhatsApp",
-      "whatsappHint": "Dejanos tus datos",
-      "whatsappAria": "Escribir a Padbol Match por WhatsApp y dejar datos de contacto",
-      "email": "Correo",
-      "emailHint": "Enviar una consulta",
-      "emailAria": "Enviar un correo a Padbol Match",
-      "talk": "Hablemos",
-      "talkHint": "Canal comercial",
-      "talkAria": "Abrir el canal comercial de Padbol Match"
-    },
     "footer": {
       "aria": "Navegación del pie",
       "tagline": "Juego, comunidad y gestión.",
