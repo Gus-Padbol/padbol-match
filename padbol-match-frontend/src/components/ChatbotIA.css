@@ -42,7 +42,9 @@
   font-size: 20px;
   line-height: 1;
   box-shadow: 0 0 22px rgba(225, 27, 34, 0.78);
-  animation: chatbot-public-ai-spark-pulse 2.4s ease-in-out infinite;
+  animation:
+    chatbot-public-ai-spark-pulse 2.4s ease-in-out infinite,
+    chatbot-public-ai-spark-settle 0.45s ease 9.2s forwards;
 }
 
 .chatbot-fab-anchor--public .chatbot-fab-circle-btn {
@@ -50,15 +52,22 @@
   border-color: #e11b22;
   background: #090d16;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42), 0 0 22px rgba(225, 27, 34, 0.2);
+  animation: chatbot-public-avatar-collapse 0.45s ease 9.2s forwards;
 }
 
 .chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill {
   border-radius: 50%;
   transform: scale(0.82);
+  animation: chatbot-public-avatar-fade 0.3s ease 9.05s forwards;
 }
 
 .chatbot-fab-anchor--public {
-  animation: chatbot-public-float 3.6s ease-in-out infinite;
+  animation: chatbot-public-float 2.4s ease-in-out infinite;
+}
+
+.chatbot-public-ai-label {
+  overflow: hidden;
+  animation: chatbot-public-label-collapse 0.35s ease 9.05s forwards;
 }
 
 .chatbot-fab-anchor--public button:hover .chatbot-fab-circle-btn {
@@ -75,9 +84,62 @@
   50% { transform: scale(1.09); filter: brightness(1.18); }
 }
 
+@keyframes chatbot-public-avatar-collapse {
+  to {
+    width: 34px;
+    height: 34px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+@keyframes chatbot-public-avatar-fade {
+  to { opacity: 0; }
+}
+
+@keyframes chatbot-public-ai-spark-settle {
+  to {
+    top: 1px;
+    right: 1px;
+    transform: scale(1);
+  }
+}
+
+@keyframes chatbot-public-label-collapse {
+  to {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chatbot-fab-anchor--public,
-  .chatbot-public-ai-spark {
+  .chatbot-public-ai-spark,
+  .chatbot-fab-anchor--public .chatbot-fab-circle-btn,
+  .chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill,
+  .chatbot-public-ai-label {
     animation: none;
+  }
+
+  .chatbot-fab-anchor--public .chatbot-fab-circle-btn {
+    width: 34px;
+    height: 34px;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill,
+  .chatbot-public-ai-label {
+    display: none;
+  }
+
+  .chatbot-public-ai-spark {
+    top: 1px;
+    right: 1px;
   }
 }

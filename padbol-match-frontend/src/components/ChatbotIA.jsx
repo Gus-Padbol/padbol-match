@@ -1619,6 +1619,7 @@ export default function ChatbotIA() {
                 {isPublicLanding ? <span className="chatbot-public-ai-spark" aria-hidden="true">✦</span> : null}
               </span>
               <span
+                className={isPublicLanding ? 'chatbot-public-ai-label' : undefined}
                 style={{
                   color: '#fff',
                   background: 'var(--accent)',
