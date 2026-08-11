@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import PublicSiteLayout from '../publicSite/PublicSiteLayout';
 import '../publicSite/publicSite.css';
 import './adminVenueLanding.css';
@@ -15,15 +16,6 @@ const modules = [
   { number: '04', title: 'MÁS REGRESO, NO SOLO MÁS TURNOS', description: 'Con PadCoins, beneficios, membresías y campañas temporales, la sede crea razones reales para volver.' },
   { number: '05', title: 'UNA COMUNIDAD QUE COMPLETA EQUIPOS', description: 'Jugadores vinculados, partidos abiertos, inscripciones y lista de espera convierten interés en actividad.' },
   { number: '06', title: 'TU SEDE GANA PRESENCIA', description: 'Torneos, campañas, sponsors y propuestas activas hacen visible lo que pasa en tu sede, dentro y fuera de la cancha.' },
-];
-
-// Comparación comercial previa al alta. La activación, el cobro y la carga de
-// datos de la sede se resuelven después de que la persona elige una opción.
-const plans = [
-  { name: 'Gratis', price: 'US$ 0', summary: 'Para conocer Padbol Match y evaluar la propuesta con tu equipo.' },
-  { name: 'Start', price: 'US$ 29', summary: 'Para ordenar la operación diaria de una sede en un solo lugar.' },
-  { name: 'Club', price: 'US$ 59', summary: 'Para sumar competencia, comunidad y herramientas de fidelización.' },
-  { name: 'Pro', price: 'US$ 99', summary: 'Para una operación más completa, con activación y crecimiento por etapas.' },
 ];
 
 function useDocumentMeta() {
@@ -54,7 +46,7 @@ export default function AdminVenueLandingPage() {
               <h1>Todo lo que soñaste para <span>administrar tu sede está acá.</span></h1>
               <p className="admin-landing__lead">Padbol Match une competencia, marcador, ranking y beneficios para que la actividad no termine al salir de la cancha: genera comunidad, retorno y valor para tu sede. Con una operación que sigue siendo tuya.</p>
               <div className="admin-landing__hero-actions">
-                <a href="#planes" className="admin-landing__primary">Quiero sumar mi sede <span>→</span></a>
+                <Link to="/unirse" className="admin-landing__primary">Quiero sumar mi sede <span>→</span></Link>
               </div>
             </div>
             <div className="admin-landing__hero-panel admin-landing__pulse" aria-label="Pulso de tu sede: reservas, partido en vivo, resultado, ranking y PadCoins conectados">
@@ -128,29 +120,12 @@ export default function AdminVenueLandingPage() {
           </div>
         </section>
 
-        <section className="admin-landing__plans" id="planes" aria-labelledby="planes-title">
-          <div className="admin-landing__shell">
-            <p className="admin-landing__eyebrow">ELEGÍ CÓMO QUERÉS EMPEZAR</p>
-            <h2 id="planes-title">Planes para tu <span>sede.</span></h2>
-            <p className="admin-landing__intro">Compará las opciones antes de iniciar el alta. Después vamos a detallar los beneficios de cada plan; no te llevamos a ningún formulario largo desde esta landing.</p>
-            <div className="admin-landing__plan-grid">
-              {plans.map((plan) => (
-                <article className="admin-landing__plan-card" key={plan.name}>
-                  <h3>{plan.name}</h3>
-                  <p className="admin-landing__plan-price">{plan.price}<span>/ mes</span></p>
-                  <p>{plan.summary}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
         <section className="admin-landing__cta">
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">UNA SEDE QUE SIGUE ACTIVA</p>
             <h2>El resultado no es el <span>final.</span> Es el comienzo de la próxima actividad.</h2>
             <p>Configurá la operación esencial y activá competencia, marcador, ranking y beneficios a medida que tu comunidad crece. Sin entregar el control de tu información ni de tu trabajo.</p>
-            <div className="admin-landing__hero-actions"><a href="#planes" className="admin-landing__primary">Ver planes para mi sede <span>→</span></a></div>
+            <div className="admin-landing__hero-actions"><Link to="/unirse" className="admin-landing__primary">Ver planes para mi sede <span>→</span></Link></div>
           </div>
         </section>
       </main>
