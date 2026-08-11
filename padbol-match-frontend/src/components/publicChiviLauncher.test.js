@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { isChatbotIAVisiblePathname } from '../constants/hubLayout';
+import { publicLandingKnowledgeAnswer } from './ChatbotIA';
 
 describe('Chivi on the public Padbol Match landing', () => {
   it('is visible on the public landing without expanding to player routes', () => {
@@ -17,5 +18,11 @@ describe('Chivi on the public Padbol Match landing', () => {
     expect(source).toContain('chatbot-public-ai-spark');
     expect(source).toContain('¿Qué ofrece a las sedes?');
     expect(layoutSource).toContain('<ChatbotIASafe />');
+  });
+
+  it('keeps useful public answers available when the remote AI is unavailable', () => {
+    expect(publicLandingKnowledgeAnswer('¿Qué ofrece a las sedes?', 'es')).toMatch(/canchas.*reservas.*torneos/i);
+    expect(publicLandingKnowledgeAnswer('¿Tienen reportes contables?', 'es')).toMatch(/no es asesoramiento contable/i);
+    expect(publicLandingKnowledgeAnswer('What is available today?', 'en')).toMatch(/available today/i);
   });
 });

@@ -70,6 +70,64 @@ const API_BASE = (
     : 'https://padbol-backend.onrender.com'
 );
 
+export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
+  const q = String(rawQuestion || '').trim().toLowerCase();
+  const l = locale === 'en' || locale === 'pt' ? locale : 'es';
+  const copy = {
+    es: {
+      venue: 'Para las sedes, Padbol Match integra canchas, horarios, precios, cobros, reservas, jugadores, torneos, resultados y comunicación. También ofrece información operativa y módulos como marcador inteligente, PadCoins y membresías cuando están habilitados.',
+      player: 'Los jugadores pueden encontrar o crear partidos, sumarse a cupos abiertos, reservar, competir y seguir resultados, historial, ranking y comunidad desde un mismo recorrido.',
+      today: 'Hoy están disponibles la operación de sedes, reservas, partidos, torneos, rankings, comunidad y el marcador inteligente. El árbitro de visión está en entrenamiento y la tienda avanza como piloto.',
+      scoreboard: 'El marcador inteligente registra el partido en vivo y conecta el resultado con historial, estadísticas, rankings y torneos cuando corresponde. El árbitro de visión por cámaras todavía está en entrenamiento.',
+      reports: 'Padbol Match entrega resúmenes y exportaciones del movimiento operativo de la sede. Esa información no es asesoramiento contable, fiscal ni legal; cada sede la utiliza con sus profesionales según su país.',
+      loyalty: 'PadCoins y membresías permiten reconocer participación y sostener el vínculo con la sede cuando esos módulos están habilitados. La sede define sus beneficios y condiciones.',
+      commerce: 'Las sedes pueden gestionar oportunidades de sponsors y publicidad. Padbol Match Shop todavía funciona como piloto y no debe presentarse como una tienda plenamente disponible.',
+      about: 'Padbol Match nace de 18 años desarrollando Padbol. Gustavo Miguens es creador de Padbol, presidente de la Federación Internacional de Padbol y fundador de Padbol Match.',
+      price: 'Los precios y condiciones dependen de la propuesta para cada sede. Para una respuesta comercial concreta, podés usar el canal de contacto de Padbol Match en /contacto.',
+      join: 'Podés conocer la propuesta para sedes en /administradores e iniciar la solicitud en /unirse. Para una conversación comercial, el canal general está en /contacto.',
+      general: 'Padbol Match conecta juego, operación y comunidad para Padbol, pádel, pickleball y tenis. Reúne jugadores, sedes, reservas, partidos, competencia, resultados y gestión en una misma plataforma.',
+    },
+    en: {
+      venue: 'For venues, Padbol Match brings together courts, schedules, prices, payments, bookings, players, tournaments, results and communication. It also provides operational information and modules such as the smart scoreboard, PadCoins and memberships when enabled.',
+      player: 'Players can find or create matches, join open spots, book, compete and follow results, history, rankings and community activity in one journey.',
+      today: 'Venue operations, bookings, matches, tournaments, rankings, community and the smart scoreboard are available today. The vision referee is in training and the shop remains a pilot.',
+      scoreboard: 'The smart scoreboard records matches live and connects results with history, statistics, rankings and tournaments when applicable. The camera-vision referee is still in training.',
+      reports: 'Padbol Match provides summaries and exports of venue operations. This is not accounting, tax or legal advice; each venue uses the information with its professionals under local law.',
+      loyalty: 'PadCoins and memberships can recognize participation and strengthen the venue relationship when those modules are enabled. The venue defines its benefits and terms.',
+      commerce: 'Venues can manage sponsorship and advertising opportunities. Padbol Match Shop remains a pilot and should not be presented as fully available.',
+      about: 'Padbol Match grows from 18 years of developing Padbol. Gustavo Miguens created Padbol, presides over the International Padbol Federation and founded Padbol Match.',
+      price: 'Pricing and conditions depend on each venue proposal. For a specific commercial answer, use the Padbol Match contact channel at /contacto.',
+      join: 'Learn about the venue proposal at /administradores and start an application at /unirse. The general commercial channel is /contacto.',
+      general: 'Padbol Match connects play, operations and community for Padbol, padel, pickleball and tennis. It brings players, venues, bookings, matches, competition, results and management into one platform.',
+    },
+    pt: {
+      venue: 'Para as sedes, Padbol Match reúne quadras, horários, preços, pagamentos, reservas, jogadores, torneios, resultados e comunicação, além de informação operacional e módulos como placar inteligente, PadCoins e assinaturas quando habilitados.',
+      player: 'Jogadores podem encontrar ou criar partidas, entrar em vagas abertas, reservar, competir e acompanhar resultados, histórico, ranking e comunidade em uma só jornada.',
+      today: 'Operação de sedes, reservas, partidas, torneios, rankings, comunidade e placar inteligente estão disponíveis hoje. O árbitro de visão está em treinamento e a loja segue como piloto.',
+      scoreboard: 'O placar inteligente registra a partida ao vivo e conecta o resultado ao histórico, estatísticas, rankings e torneios quando aplicável. O árbitro por câmeras ainda está em treinamento.',
+      reports: 'Padbol Match oferece resumos e exportações da operação da sede. Isso não é assessoria contábil, fiscal ou jurídica; cada sede usa a informação com seus profissionais conforme a lei local.',
+      loyalty: 'PadCoins e assinaturas podem reconhecer a participação e fortalecer o vínculo com a sede quando esses módulos estão habilitados. A sede define benefícios e condições.',
+      commerce: 'As sedes podem administrar oportunidades de patrocínio e publicidade. Padbol Match Shop continua como piloto e não deve ser apresentada como totalmente disponível.',
+      about: 'Padbol Match nasce de 18 anos desenvolvendo Padbol. Gustavo Miguens criou o Padbol, preside a Federação Internacional de Padbol e fundou o Padbol Match.',
+      price: 'Preços e condições dependem da proposta para cada sede. Para uma resposta comercial específica, use o canal /contacto.',
+      join: 'Conheça a proposta para sedes em /administradores e inicie a solicitação em /unirse. O canal comercial geral é /contacto.',
+      general: 'Padbol Match conecta jogo, operação e comunidade para Padbol, padel, pickleball e tênis. Reúne jogadores, sedes, reservas, partidas, competição, resultados e gestão em uma plataforma.',
+    },
+  }[l];
+
+  if (/sede|club|venue|court|quadra|administr/.test(q)) return copy.venue;
+  if (/jugador|player|jogador|partido|match|jugar|play|jogar/.test(q)) return copy.player;
+  if (/disponible|available|disponível|hoy|today|hoje|actual/.test(q)) return copy.today;
+  if (/marcador|scoreboard|placar|visión|vision|árbitro|referee/.test(q)) return copy.scoreboard;
+  if (/reporte|report|informe|excel|contab|fiscal|tax|export/.test(q)) return copy.reports;
+  if (/padcoin|membres|beneficio|benefit|fidel/.test(q)) return copy.loyalty;
+  if (/sponsor|publicidad|advert|shop|tienda|loja/.test(q)) return copy.commerce;
+  if (/quién|quien|who|quem|historia|fundador|gustavo/.test(q)) return copy.about;
+  if (/precio|price|preço|costo|cost|plan/.test(q)) return copy.price;
+  if (/sumar|incorpor|join|contact|contacto|hablar|talk|falar/.test(q)) return copy.join;
+  return copy.general;
+}
+
 /** yyyy-LL-dd en America/Argentina/Buenos_Aires (referencia cruzada con el servidor en /api/chat-ia). */
 function ymdBuenosAires(d = new Date()) {
   try {
@@ -1235,8 +1293,15 @@ export default function ChatbotIA() {
             setLoading(false);
             return;
           }
-          setMessages((prev) => prev.slice(0, -1));
-          setError(data?.error || res.statusText || 'Error');
+          if (isPublicLanding) {
+            const fallbackReply = publicLandingKnowledgeAnswer(text, inferWritingLocaleCodeFromText(text));
+            setMessages((prev) => [...prev, { role: 'assistant', content: fallbackReply }]);
+            setError('');
+            scheduleAssistantSpeak(fallbackReply);
+          } else {
+            setMessages((prev) => prev.slice(0, -1));
+            setError(data?.error || res.statusText || 'Error');
+          }
           return;
         }
         const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
@@ -1280,8 +1345,15 @@ export default function ChatbotIA() {
         if (Number.isFinite(used) && used >= MAX_USER_MESSAGES) setSessionEnded(true);
         scheduleAssistantSpeak(reply);
       } catch (e) {
-        setMessages((prev) => prev.slice(0, -1));
-        setError(e?.message || String(e));
+        if (isPublicLanding) {
+          const fallbackReply = publicLandingKnowledgeAnswer(text, inferWritingLocaleCodeFromText(text));
+          setMessages((prev) => [...prev, { role: 'assistant', content: fallbackReply }]);
+          setError('');
+          scheduleAssistantSpeak(fallbackReply);
+        } else {
+          setMessages((prev) => prev.slice(0, -1));
+          setError(e?.message || String(e));
+        }
       } finally {
         setLoading(false);
       }
