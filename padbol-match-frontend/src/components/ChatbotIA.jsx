@@ -1003,11 +1003,18 @@ export default function ChatbotIA() {
       setPublicAttentionCycle((cycle) => cycle + 1);
     };
 
+    const remindForSectionLink = (event) => {
+      const target = event.target instanceof Element ? event.target.closest('a[href^="#"]') : null;
+      if (target) remindForSection();
+    };
+
     window.addEventListener('scroll', remind, { passive: true });
     window.addEventListener('hashchange', remindForSection);
+    document.addEventListener('click', remindForSectionLink);
     return () => {
       window.removeEventListener('scroll', remind);
       window.removeEventListener('hashchange', remindForSection);
+      document.removeEventListener('click', remindForSectionLink);
     };
   }, [isPublicLanding, open, location.hash]);
 
