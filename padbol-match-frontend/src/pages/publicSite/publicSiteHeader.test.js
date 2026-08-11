@@ -36,4 +36,11 @@ describe('header fijo y anchors de la web pública', () => {
     expect(layout).toMatch(/PUBLIC_SITE_NAV_ITEMS|public-site__desktop-nav/);
     expect(layout).toMatch(/Ingresar|ctaLogin|PUBLIC_SITE_CTA/);
   });
+
+  it('lleva los anchors a plataforma cuando el header se usa en otra ruta pública', () => {
+    expect(layout).toMatch(/location\.pathname === PUBLIC_SITE_PATH/);
+    expect(layout).toMatch(/`\$\{PUBLIC_SITE_PATH\}\$\{hash\}`/);
+    expect(layout).toMatch(/if \(!document\.getElementById\(id\)\) return/);
+    expect(layout).toMatch(/scrollToHash\(location\.hash\)/);
+  });
 });
