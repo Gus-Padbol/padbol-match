@@ -2784,6 +2784,63 @@
         }
       }
     },
+    "venueAdmin": {
+      "eyebrow": "Venue administration",
+      "title": "Manage your venue, step by step",
+      "text": "Understand the full operation before you join. Every module has a clear role and a guided setup journey.",
+      "openDetail": "See the steps",
+      "close": "Close detail",
+      "next": {
+        "eyebrow": "Next step",
+        "title": "Bring your venue to Padbol Match",
+        "text": "Explore the tools and how to bring your venue to Padbol Match. When you are ready, you can start the application.",
+        "apply": "Bring my venue"
+      },
+      "items": {
+        "setup": {
+          "title": "Set up your venue",
+          "text": "Public details, sports, courts, schedules, prices and payments.",
+          "detail": "Build your venue's operational profile so players and staff work with the same information.",
+          "steps": { "1": "Set name, contact details, location and public information.", "2": "Enable sports, courts, durations and time slots.", "3": "Add pricing, policies and accepted payment methods." },
+          "result": "Outcome: a venue ready to publish availability and receive bookings."
+        },
+        "bookings": {
+          "title": "Run bookings",
+          "text": "Calendar, payments, attendance, rescheduling and cancellation rules.",
+          "detail": "Organize court availability and follow each booking from request through closing.",
+          "steps": { "1": "Configure calendar, pricing and usage conditions.", "2": "Define attendance confirmation and payment methods.", "3": "Manage rescheduling, cancellations and match status." },
+          "result": "Outcome: the booking is charged when the full match is confirmed, according to the venue rule."
+        },
+        "players": {
+          "title": "Activate players",
+          "text": "Links, requests, community and communication from one base.",
+          "detail": "Turn inquiries and occasional players into a community that comes back to your venue.",
+          "steps": { "1": "Review player requests and links.", "2": "Publish open matches and ways to complete teams.", "3": "Use community and notifications to stay in touch." },
+          "result": "Outcome: more visible activity and players connected to your venue."
+        },
+        "competition": {
+          "title": "Create competition",
+          "text": "Tournaments, teams, slots, results and venue rankings.",
+          "detail": "Run competitions with clear rules from registration through final results.",
+          "steps": { "1": "Choose sport, format, categories, capacity and dates.", "2": "Open registration and manage teams or players.", "3": "Publish results and connect them to ranking and history." },
+          "result": "Outcome: an organized tournament for players, referees and venue staff."
+        },
+        "scoreboard": {
+          "title": "Run the scoreboard",
+          "text": "Start, follow, correct and close results connected to history.",
+          "detail": "Record the match live so its result supports operations, history and competition.",
+          "steps": { "1": "Start the match with its players or teams.", "2": "Record points, sets and corrections while it is played.", "3": "Confirm closing and connect the result." },
+          "result": "Outcome: useful data for history, ranking, tournaments and management."
+        },
+        "loyalty": {
+          "title": "Build loyalty",
+          "text": "PadCoins and memberships when enabled for your operation.",
+          "detail": "Recognize community participation with benefits controlled by the venue when these modules are enabled.",
+          "steps": { "1": "Define benefits, terms and validity.", "2": "Configure earning rules or memberships.", "3": "Follow usage and communicate the offers to your community." },
+          "result": "Outcome: a recurring, measurable relationship with your venue's players."
+        }
+      }
+    },
     "continuity": {
       "title": "Before, during and after",
       "text": "Every match can become history, competition, progress and a new reason to return. Open matches, results, ranking, PadCoins, memberships and community reinforce each other.",

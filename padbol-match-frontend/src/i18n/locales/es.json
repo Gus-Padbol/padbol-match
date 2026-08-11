@@ -2401,6 +2401,63 @@
         }
       }
     },
+    "venueAdmin": {
+      "eyebrow": "Administración de sede",
+      "title": "Administra tu sede, paso a paso",
+      "text": "Conocé la operación completa antes de incorporarte. Cada módulo tiene una función concreta y un recorrido guiado para configurarlo.",
+      "openDetail": "Ver pasos",
+      "close": "Cerrar detalle",
+      "next": {
+        "eyebrow": "El siguiente paso",
+        "title": "¿Querés sumar tu sede?",
+        "text": "Conocé las herramientas y la forma de incorporar tu sede a Padbol Match. Cuando estés listo, podrás iniciar la solicitud.",
+        "apply": "Quiero sumar mi sede"
+      },
+      "items": {
+        "setup": {
+          "title": "Configurá tu sede",
+          "text": "Datos públicos, deportes, canchas, horarios, precios y cobros.",
+          "detail": "Construí la ficha operativa de tu sede para que jugadores y equipo trabajen con la misma información.",
+          "steps": { "1": "Definí nombre, contacto, ubicación y datos públicos.", "2": "Activá deportes, canchas, duraciones y franjas horarias.", "3": "Cargá precios, reglas y medios de cobro disponibles." },
+          "result": "Resultado: una sede preparada para publicar disponibilidad y recibir reservas."
+        },
+        "bookings": {
+          "title": "Operá reservas",
+          "text": "Calendario, pagos, asistencia, reprogramaciones y reglas de cancelación.",
+          "detail": "Ordená la disponibilidad de las canchas y seguí cada reserva desde la solicitud hasta el cierre.",
+          "steps": { "1": "Configurá calendario, precios y condiciones de uso.", "2": "Definí cómo se confirma la asistencia y qué pagos admite la sede.", "3": "Gestioná reprogramaciones, cancelaciones y el estado del partido." },
+          "result": "Resultado: la reserva se cobra al confirmarse el partido completo, según la regla definida por la sede."
+        },
+        "players": {
+          "title": "Activá jugadores",
+          "text": "Vinculaciones, solicitudes, comunidad y comunicación desde una misma base.",
+          "detail": "Convertí consultas y jugadores ocasionales en una comunidad que vuelve a tu sede.",
+          "steps": { "1": "Revisá solicitudes y vinculaciones de jugadores.", "2": "Publicá partidos abiertos y oportunidades para completar equipos.", "3": "Usá comunidad y notificaciones para mantener el contacto." },
+          "result": "Resultado: más actividad visible y jugadores conectados con tu sede."
+        },
+        "competition": {
+          "title": "Creá competencia",
+          "text": "Torneos, equipos, cupos, resultados y rankings de tu sede.",
+          "detail": "Organizá competencias con reglas claras desde la inscripción hasta los resultados finales.",
+          "steps": { "1": "Elegí disciplina, formato, categorías, cupos y fechas.", "2": "Abrí inscripciones y administrá equipos o jugadores.", "3": "Publicá resultados y conectalos con ranking e historial." },
+          "result": "Resultado: un torneo ordenado para jugadores, árbitros y equipo de sede."
+        },
+        "scoreboard": {
+          "title": "Llevá el marcador",
+          "text": "Iniciá, seguí, corregí y cerrá resultados para conectarlos con el historial.",
+          "detail": "Registrá el partido en vivo para que el resultado alimente la operación, el historial y las competencias.",
+          "steps": { "1": "Iniciá el encuentro con sus jugadores o equipos.", "2": "Registrá puntos, sets y correcciones mientras se juega.", "3": "Confirmá el cierre y conectá el resultado." },
+          "result": "Resultado: información útil para historial, ranking, torneos y gestión."
+        },
+        "loyalty": {
+          "title": "Fidelizá",
+          "text": "PadCoins y membresías cuando estén habilitados para tu operación.",
+          "detail": "Reconocé la participación de tu comunidad con beneficios que la sede controla cuando estos módulos están habilitados.",
+          "steps": { "1": "Definí beneficios, condiciones y vigencia.", "2": "Configurá reglas de acreditación o membresía.", "3": "Seguí el uso y comunicá las propuestas a tu comunidad." },
+          "result": "Resultado: una relación recurrente y medible con los jugadores de la sede."
+        }
+      }
+    },
     "continuity": {
       "title": "Antes, durante y después",
       "text": "La actividad no queda aislada: lo que ocurre antes, durante y después del encuentro forma un recorrido útil para jugadores, clubes y organizaciones.",
