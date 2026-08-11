@@ -66,6 +66,18 @@ export default function TerminosCondiciones() {
         </LegalLi>
       </LegalUl>
 
+      <LegalSectionTitle>Reportes operativos de las sedes</LegalSectionTitle>
+      <LegalP>
+        Los resúmenes, movimientos y archivos exportables que ofrece Padbol Match son herramientas de información
+        operativa. Pueden ayudar a cada sede a ordenar y compartir sus datos de reservas, inscripciones y actividad,
+        pero no constituyen asesoramiento contable, tributario, legal ni financiero, ni reemplazan los registros,
+        controles, declaraciones o documentación que exija la normativa aplicable.
+      </LegalP>
+      <LegalP>
+        Cada sede es responsable de revisar la información, definir cómo utilizarla y consultar a sus propios
+        profesionales cuando corresponda, de acuerdo con su país, jurisdicción y obligaciones particulares.
+      </LegalP>
+
       <LegalSectionTitle>Responsabilidad limitada</LegalSectionTitle>
       <LegalP>
         Padbol Match actúa como <strong style={{ color: '#e2e8f0' }}>intermediario tecnológico</strong> entre jugadores y
