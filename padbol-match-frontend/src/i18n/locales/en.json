@@ -2892,10 +2892,17 @@
       "title": "About us",
       "text": "For 18 years, we have worked to develop Padbol and take the sport to the world. Every court, event and community taught us that growth needs tools that can keep up.",
       "detail": "That is why we created Padbol Match: our own app connecting play, management and community in one journey. It begins with Padbol and opens to Padel, Pickleball and Tennis so more court sports can grow on the same foundation.",
+      "founder": {
+        "name": "Gustavo Miguens",
+        "padbolRole": "Creator of Padbol",
+        "federationRole": "President of the International Padbol Federation",
+        "matchRole": "Founder of Padbol Match",
+        "quote": "The experience and tools created for Padbol are now the foundation for opening the platform to other court sports —such as tennis, padel and pickleball—, adding new sports according to each community's needs without losing the spirit with which Padbol Match was born."
+      },
       "sportsLabel": "Sports on the platform",
       "playersNote": "A platform born from the real experience of the people who make court sports happen.",
       "cta": "See how it works",
-      "visualAlt": "The Padbol Match team gathered in their workspace"
+      "visualAlt": "Gustavo Miguens, creator of Padbol and founder of Padbol Match"
     },
     "meta": {
       "title": "Padbol Match — Platform",
