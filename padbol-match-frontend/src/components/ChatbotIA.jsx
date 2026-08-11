@@ -809,7 +809,6 @@ export default function ChatbotIA() {
   const voiceUserCancelledRef = useRef(false);
   const clientGeoRef = useRef(null);
   const publicAttentionRef = useRef({ lastY: 0, lastAt: 0 });
-  const publicAttentionHashRef = useRef(location.hash);
 
   const micSupported = useMemo(() => isSpeechRecognitionAvailable(), []);
   const ttsSupported = useMemo(() => isSpeechSynthesisAvailable(), []);
@@ -998,18 +997,19 @@ export default function ChatbotIA() {
       setPublicAttentionCycle((cycle) => cycle + 1);
     };
 
-    window.addEventListener('scroll', remind, { passive: true });
-    return () => window.removeEventListener('scroll', remind);
-  }, [isPublicLanding, open, location.hash]);
+    const remindForSection = () => {
+      attention.lastY = window.scrollY;
+      attention.lastAt = Date.now();
+      setPublicAttentionCycle((cycle) => cycle + 1);
+    };
 
-  useEffect(() => {
-    const previousHash = publicAttentionHashRef.current;
-    publicAttentionHashRef.current = location.hash;
-    if (!isPublicLanding || open || !location.hash || location.hash === previousHash) return;
-    publicAttentionRef.current.lastY = typeof window !== 'undefined' ? window.scrollY : 0;
-    publicAttentionRef.current.lastAt = Date.now();
-    setPublicAttentionCycle((cycle) => cycle + 1);
-  }, [isPublicLanding, location.hash, open]);
+    window.addEventListener('scroll', remind, { passive: true });
+    window.addEventListener('hashchange', remindForSection);
+    return () => {
+      window.removeEventListener('scroll', remind);
+      window.removeEventListener('hashchange', remindForSection);
+    };
+  }, [isPublicLanding, open, location.hash]);
 
   const openChatFromFab = useCallback(() => {
     try {
