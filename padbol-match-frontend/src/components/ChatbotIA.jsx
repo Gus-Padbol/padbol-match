@@ -1294,7 +1294,7 @@ export default function ChatbotIA() {
             return;
           }
           if (isPublicLanding) {
-            const fallbackReply = publicLandingKnowledgeAnswer(text, inferWritingLocaleCodeFromText(text));
+            const fallbackReply = publicLandingKnowledgeAnswer(text, padbolLang);
             setMessages((prev) => [...prev, { role: 'assistant', content: fallbackReply }]);
             setError('');
             scheduleAssistantSpeak(fallbackReply);
@@ -1346,7 +1346,7 @@ export default function ChatbotIA() {
         scheduleAssistantSpeak(reply);
       } catch (e) {
         if (isPublicLanding) {
-          const fallbackReply = publicLandingKnowledgeAnswer(text, inferWritingLocaleCodeFromText(text));
+          const fallbackReply = publicLandingKnowledgeAnswer(text, padbolLang);
           setMessages((prev) => [...prev, { role: 'assistant', content: fallbackReply }]);
           setError('');
           scheduleAssistantSpeak(fallbackReply);
