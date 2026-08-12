@@ -7,13 +7,13 @@ import {
 const item = (key) => ({ key });
 
 export const PUBLIC_SITE_NAV_ITEMS = [
-  { key: 'about', href: PUBLIC_SITE_ANCHORS.about },
   { key: 'platform', href: PUBLIC_SITE_ANCHORS.platform },
   { key: 'players', href: PUBLIC_SITE_ANCHORS.players },
   { key: 'community', href: PUBLIC_SITE_ANCHORS.community },
   { key: 'scoreboard', href: PUBLIC_SITE_ANCHORS.scoreboard },
   { key: 'venues', href: PUBLIC_SITE_ANCHORS.venues },
   { key: 'download', href: PUBLIC_SITE_ANCHORS.download },
+  { key: 'about', href: PUBLIC_SITE_ANCHORS.about, secondary: true },
 ];
 
 /**

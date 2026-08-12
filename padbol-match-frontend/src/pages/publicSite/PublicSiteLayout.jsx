@@ -92,8 +92,11 @@ export default function PublicSiteLayout({ children }) {
   }, [menuOpen]);
 
   useEffect(() => {
-    if (location.pathname !== PUBLIC_SITE_PATH || !location.hash) return undefined;
-    const raf = window.requestAnimationFrame(() => scrollToHash(location.hash));
+    if (location.pathname !== PUBLIC_SITE_PATH) return undefined;
+    const raf = window.requestAnimationFrame(() => {
+      if (location.hash) scrollToHash(location.hash);
+      else window.scrollTo({ top: 0, behavior: 'auto' });
+    });
     return () => window.cancelAnimationFrame(raf);
   }, [location.pathname, location.hash]);
 
@@ -133,7 +136,7 @@ export default function PublicSiteLayout({ children }) {
                   <li key={item.key}>
                     <a
                       href={publicNavHref(item.href)}
-                      className={`public-site__nav-link${isActive ? ' is-active' : ''}`}
+                      className={`public-site__nav-link${item.secondary ? ' is-secondary' : ''}${isActive ? ' is-active' : ''}`}
                       aria-current={isActive ? 'true' : undefined}
                       onClick={(event) => chooseAnchor(event, item.href)}
                     >
@@ -181,6 +184,7 @@ export default function PublicSiteLayout({ children }) {
                 ref={index === 0 ? firstMenuLinkRef : undefined}
                 href={publicNavHref(item.href)}
                 key={item.key}
+                className={item.secondary ? 'is-secondary' : undefined}
                 onClick={(event) => chooseAnchor(event, item.href)}
               >
                 {text(`publicSite.nav.${item.key}`)}
