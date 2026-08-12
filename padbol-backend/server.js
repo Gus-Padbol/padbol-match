@@ -71,6 +71,8 @@ const allowedOrigins = [
   'http://localhost:3001',
   'https://padbol-match.netlify.app',
   'https://padbol-match-9abn.vercel.app',
+  // Landing pública de Padbol: Chivi puede atender consultas comerciales sin sesión.
+  'https://dev.padbol.com',
 ];
 
 function buildCorsAllowedOrigins() {
