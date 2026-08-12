@@ -2725,8 +2725,8 @@
           "text": "Notifications, messages and connected players."
         },
         "rewards": {
-          "title": "Rewards",
-          "text": "Profile, PadCoins and achievements"
+          "title": "PadCoins and rewards",
+          "text": "Eligible actions earn PadCoins toward rewards when they are enabled."
         },
         "create": {
           "title": "Create a match",

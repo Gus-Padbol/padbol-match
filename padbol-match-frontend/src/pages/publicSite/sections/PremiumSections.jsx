@@ -16,6 +16,7 @@ const PLAYER_ICONS = {
   compete: 'trophy.svg',
   evolve: 'progress.svg',
   community: 'community.svg',
+  rewards: 'padcoins.svg',
 };
 
 const VENUE_MEDIA = {

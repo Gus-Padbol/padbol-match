@@ -1836,8 +1836,8 @@
           "text": "Notificaciones, mensajes y jugadores conectados."
         },
         "rewards": {
-          "title": "Beneficios",
-          "text": "Perfil, PadCoins y logros"
+          "title": "PadCoins et avantages",
+          "text": "Les actions éligibles rapportent des PadCoins donnant accès à des avantages lorsqu’ils sont activés."
         },
         "create": {
           "title": "Crear un partido",
