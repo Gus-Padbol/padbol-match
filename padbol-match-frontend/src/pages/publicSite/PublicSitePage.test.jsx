@@ -100,7 +100,7 @@ describe('/plataforma public site', () => {
   it('renderiza la estructura nueva, un h1 y ninguna BottomNav', () => {
     const { container } = renderPage();
     [
-      'que-es', 'experiencias', 'jugadores', 'tu-recorrido',
+      'que-es', 'experiencias', 'jugadores', 'tu-recorrido', 'comunidad-partidos',
       'marcador-inteligente', 'continuidad', 'sedes', 'administra-tu-sede',
       'arbitro-virtual', 'nosotros', 'descargar', 'contacto',
     ].forEach((id) => expect(container.querySelector(`#${id}`)).toBeTruthy());
@@ -227,6 +227,7 @@ describe('/plataforma public site', () => {
       'experiencias',
       'jugadores',
       'tu-recorrido',
+      'comunidad-partidos',
       'marcador-inteligente',
       'continuidad',
       'sedes',

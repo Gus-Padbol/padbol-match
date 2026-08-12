@@ -6,6 +6,7 @@ import {
   WhatIsSection,
   PlayerPathSection,
   PlayerRecordSection,
+  CommunityMatchesSection,
   VenuePathSection,
   VenueAdminSection,
   ContinuitySection,
@@ -56,6 +57,7 @@ export default function PublicSitePage() {
         <ExperiencesSection />
         <PlayerPathSection />
         <PlayerRecordSection />
+        <CommunityMatchesSection />
         <SmartScoreboardSection />
         <ContinuitySection />
         <VenuePathSection />
