@@ -287,6 +287,14 @@ function logCrearPreferenciaSupabaseQuery(client, table, operation, params = {})
 
 const uploadContrato = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 const uploadHubFoto = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+const uploadRecorridoExterno = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024, files: 5 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
+    cb(allowed.has(file.mimetype) ? null : new Error('Formato no permitido'), allowed.has(file.mimetype));
+  },
+});
 
 /** Galería pública de sede: máximo de URLs en `fotos_urls`. */
 const SEDE_FOTOS_URLS_MAX = 20;
@@ -13465,6 +13473,177 @@ app.get('/api/jugador/reputacion', async (req, res) => {
     res.json(rep);
   } catch (err) {
     console.error('❌ GET /api/jugador/reputacion:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const RECORRIDO_EXTERNO_BUCKET = 'recorridos-externos';
+const RECORRIDO_CATEGORIAS = new Set([
+  'categoria_nivel', 'ranking', 'puntos', 'partidos', 'torneos_posiciones', 'estadisticas', 'logros',
+]);
+
+function sanitizeRecorridoCategorias(raw) {
+  let values = raw;
+  if (typeof raw === 'string') {
+    try { values = JSON.parse(raw); } catch { values = raw.split(','); }
+  }
+  return Array.isArray(values)
+    ? [...new Set(values.map((x) => String(x || '').trim()).filter((x) => RECORRIDO_CATEGORIAS.has(x)))]
+    : [];
+}
+
+/** GET /api/recorrido-externo/mio — historial de solicitudes del jugador. */
+app.get('/api/recorrido-externo/mio', async (req, res) => {
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'No autorizado' });
+    const { data, error } = await supabaseAdmin
+      .from('recorridos_externos')
+      .select('id,origen,categorias,comentario,estado,datos_reconocidos,nota_revision,revisar_antes_de,revisado_at,created_at,updated_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json({ solicitudes: data || [] });
+  } catch (err) {
+    console.error('❌ GET /api/recorrido-externo/mio:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** POST /api/recorrido-externo — una solicitud simple con 1–5 capturas privadas. */
+app.post('/api/recorrido-externo', uploadRecorridoExterno.array('capturas', 5), async (req, res) => {
+  const uploadedPaths = [];
+  try {
+    const user = await authUserFromBearer(req);
+    if (!user?.id) return res.status(401).json({ error: 'No autorizado' });
+    const origen = String(req.body?.origen || '').trim().slice(0, 160);
+    const comentario = String(req.body?.comentario || '').trim().slice(0, 1000) || null;
+    const categorias = sanitizeRecorridoCategorias(req.body?.categorias);
+    const files = Array.isArray(req.files) ? req.files : [];
+    if (!origen) return res.status(400).json({ error: 'Indica de dónde viene tu recorrido.' });
+    if (!categorias.length) return res.status(400).json({ error: 'Elegí al menos un dato para reconocer.' });
+    if (!files.length) return res.status(400).json({ error: 'Subí al menos una captura.' });
+    const { data: solicitudActiva, error: activeError } = await supabaseAdmin
+      .from('recorridos_externos')
+      .select('id')
+      .eq('user_id', user.id)
+      .in('estado', ['recibido', 'en_revision'])
+      .limit(1)
+      .maybeSingle();
+    if (activeError) throw activeError;
+    if (solicitudActiva) return res.status(409).json({ error: 'Ya tenés un recorrido en revisión.' });
+
+    const requestKey = `${Date.now()}-${crypto.randomUUID()}`;
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
+      const extByMime = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+      const path = `${user.id}/${requestKey}/${String(index + 1).padStart(2, '0')}.${extByMime[file.mimetype] || 'bin'}`;
+      const { error } = await supabaseAdmin.storage.from(RECORRIDO_EXTERNO_BUCKET).upload(path, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false,
+      });
+      if (error) throw error;
+      uploadedPaths.push(path);
+    }
+
+    const revisarAntesDe = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabaseAdmin.from('recorridos_externos').insert([{
+      user_id: user.id,
+      email: String(user.email || '').trim().toLowerCase() || null,
+      origen,
+      categorias,
+      comentario,
+      capturas_paths: uploadedPaths,
+      estado: 'recibido',
+      revisar_antes_de: revisarAntesDe,
+    }]).select('id,origen,categorias,estado,revisar_antes_de,created_at').single();
+    if (error) throw error;
+    await crearNotificacionJugador({
+      userId: user.id,
+      email: user.email,
+      tipo: 'recorrido_externo_recibido',
+      titulo: 'Recibimos tu recorrido',
+      mensaje: 'Revisaremos tus capturas y te avisaremos dentro de las próximas 24 horas.',
+      link: '/mi-perfil/recorrido',
+    });
+    res.status(201).json({ ok: true, solicitud: data });
+  } catch (err) {
+    if (uploadedPaths.length) {
+      await supabaseAdmin.storage.from(RECORRIDO_EXTERNO_BUCKET).remove(uploadedPaths).catch(() => {});
+    }
+    console.error('❌ POST /api/recorrido-externo:', err.message);
+    res.status(err?.message === 'Formato no permitido' ? 400 : 500).json({ error: err.message });
+  }
+});
+
+/** GET /api/admin/recorridos-externos — bandeja global para superadministración. */
+app.get('/api/admin/recorridos-externos', async (req, res) => {
+  try {
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope?.superA) return res.status(scope ? 403 : 401).json({ error: 'No autorizado' });
+    const estado = String(req.query?.estado || '').trim();
+    let query = supabaseAdmin.from('recorridos_externos').select('*').order('created_at', { ascending: false });
+    if (estado) query = query.eq('estado', estado);
+    const { data, error } = await query;
+    if (error) throw error;
+    const solicitudes = await Promise.all((data || []).map(async (row) => {
+      const capturas = await Promise.all((row.capturas_paths || []).map(async (path) => {
+        const { data: signed } = await supabaseAdmin.storage.from(RECORRIDO_EXTERNO_BUCKET).createSignedUrl(path, 900);
+        return { path, url: signed?.signedUrl || null };
+      }));
+      return { ...row, capturas };
+    }));
+    res.json({ solicitudes });
+  } catch (err) {
+    console.error('❌ GET /api/admin/recorridos-externos:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** PATCH /api/admin/recorridos-externos/:id — resolución auditable y notificación al jugador. */
+app.patch('/api/admin/recorridos-externos/:id', async (req, res) => {
+  try {
+    const scope = await adminListScopeFromRequest(req);
+    if (!scope?.superA) return res.status(scope ? 403 : 401).json({ error: 'No autorizado' });
+    const reviewer = await authUserFromBearer(req);
+    const id = Number(req.params.id);
+    const estado = String(req.body?.estado || '').trim();
+    const allowed = new Set(['en_revision', 'requiere_informacion', 'aprobado', 'rechazado']);
+    if (!Number.isFinite(id) || id <= 0 || !allowed.has(estado)) return res.status(400).json({ error: 'Resolución inválida' });
+    const notaRevision = String(req.body?.nota_revision || '').trim().slice(0, 1200) || null;
+    const datosReconocidos = req.body?.datos_reconocidos && typeof req.body.datos_reconocidos === 'object'
+      ? req.body.datos_reconocidos
+      : {};
+    if ((estado === 'requiere_informacion' || estado === 'rechazado') && !notaRevision) {
+      return res.status(400).json({ error: 'Escribí una explicación para el jugador.' });
+    }
+    const patch = {
+      estado,
+      nota_revision: notaRevision,
+      datos_reconocidos: datosReconocidos,
+      revisado_por: reviewer?.id || null,
+      revisado_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabaseAdmin.from('recorridos_externos').update(patch).eq('id', id).select('*').single();
+    if (error) throw error;
+    const notificationCopy = {
+      aprobado: ['¡Tu recorrido ya está reconocido!', 'Incorporamos a tu ficha los datos que pudimos verificar. Tu nivel podrá ajustarse con tus próximos partidos.'],
+      requiere_informacion: ['Necesitamos otra captura', notaRevision],
+      rechazado: ['No pudimos verificar tu recorrido', notaRevision],
+      en_revision: ['Estamos revisando tu recorrido', 'Tu solicitud ya está siendo revisada. Te avisaremos cuando esté resuelta.'],
+    }[estado];
+    await crearNotificacionJugador({
+      userId: data.user_id,
+      email: data.email,
+      tipo: `recorrido_externo_${estado}`,
+      titulo: notificationCopy[0],
+      mensaje: notificationCopy[1],
+      link: '/mi-perfil/recorrido',
+    });
+    res.json({ ok: true, solicitud: data });
+  } catch (err) {
+    console.error('❌ PATCH /api/admin/recorridos-externos/:id:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
