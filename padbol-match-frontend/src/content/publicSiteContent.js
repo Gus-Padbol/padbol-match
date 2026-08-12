@@ -12,7 +12,7 @@ export const PUBLIC_SITE_NAV_ITEMS = [
   { key: 'community', href: PUBLIC_SITE_ANCHORS.community },
   { key: 'scoreboard', href: PUBLIC_SITE_ANCHORS.scoreboard },
   { key: 'venues', href: PUBLIC_SITE_ANCHORS.venues },
-  { key: 'about', href: PUBLIC_SITE_ANCHORS.about, secondary: true },
+  { key: 'about', href: PUBLIC_SITE_ANCHORS.about },
   { key: 'download', href: PUBLIC_SITE_ANCHORS.download },
 ];
 

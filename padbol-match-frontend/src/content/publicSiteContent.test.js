@@ -34,7 +34,7 @@ describe('publicSite content structure', () => {
       expect.arrayContaining(['community', 'scoreboard']),
     );
     expect(PUBLIC_SITE_NAV_ITEMS[0].key).toBe('platform');
-    expect(PUBLIC_SITE_NAV_ITEMS.at(-2)).toEqual(expect.objectContaining({ key: 'about', secondary: true }));
+    expect(PUBLIC_SITE_NAV_ITEMS.at(-2).key).toBe('about');
     expect(PUBLIC_SITE_NAV_ITEMS.at(-1).key).toBe('download');
   });
 

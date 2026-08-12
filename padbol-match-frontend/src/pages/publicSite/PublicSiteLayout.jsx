@@ -136,7 +136,7 @@ export default function PublicSiteLayout({ children }) {
                   <li key={item.key}>
                     <a
                       href={publicNavHref(item.href)}
-                      className={`public-site__nav-link${item.secondary ? ' is-secondary' : ''}${isActive ? ' is-active' : ''}`}
+                      className={`public-site__nav-link${isActive ? ' is-active' : ''}`}
                       aria-current={isActive ? 'true' : undefined}
                       onClick={(event) => chooseAnchor(event, item.href)}
                     >
@@ -184,7 +184,6 @@ export default function PublicSiteLayout({ children }) {
                 ref={index === 0 ? firstMenuLinkRef : undefined}
                 href={publicNavHref(item.href)}
                 key={item.key}
-                className={item.secondary ? 'is-secondary' : undefined}
                 onClick={(event) => chooseAnchor(event, item.href)}
               >
                 {text(`publicSite.nav.${item.key}`)}
