@@ -26,7 +26,7 @@ import {
   chiviSpeechRecognitionLanguage,
   requestChiviMicrophoneAccess,
 } from '../utils/chiviMicrophone';
-import { chooseChiviVoice } from '../utils/chiviVoice';
+import { chiviVoiceTargetLanguage, chooseChiviVoice } from '../utils/chiviVoice';
 import './ChatbotIA.css';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
@@ -1192,11 +1192,11 @@ export default function ChatbotIA() {
       const utter = new SpeechSynthesisUtterance(t);
       utter.onend = () => setTtsPlaying(false);
       utter.onerror = () => setTtsPlaying(false);
-      utter.lang = bcp47LangForAssistantTts(t);
+      utter.lang = chiviVoiceTargetLanguage(bcp47LangForAssistantTts(t));
       const preferredVoice = chooseChiviVoice(window.speechSynthesis.getVoices?.(), utter.lang);
       if (preferredVoice) utter.voice = preferredVoice;
-      utter.rate = 1.02;
-      utter.pitch = 0.92;
+      utter.rate = 1.04;
+      utter.pitch = 1;
       setTtsPlaying(true);
       window.speechSynthesis.speak(utter);
     } catch {
