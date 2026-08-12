@@ -214,16 +214,6 @@ html.public-site-active #root {
 .public-site__nav-link:hover,
 .public-site__nav-link.is-active { color: var(--ps-text); }
 
-.public-site__nav-link.is-secondary {
-  padding-inline: 10px;
-  font-size: 12px;
-  font-weight: 500;
-  opacity: 0.72;
-}
-
-.public-site__nav-link.is-secondary:hover,
-.public-site__nav-link.is-secondary.is-active { opacity: 1; }
-
 .public-site__nav-link.is-active::after { transform: scaleX(1); }
 
 .public-site__nav-actions {
@@ -328,16 +318,6 @@ html.public-site-active #root {
 
 .public-site__mobile-nav a:hover {
   background: rgba(248, 250, 252, 0.06);
-}
-
-.public-site__mobile-nav a.is-secondary {
-  min-height: 40px;
-  margin-top: 6px;
-  border-top: 1px solid var(--ps-border);
-  border-radius: 0;
-  color: var(--ps-text-muted);
-  font-size: 13px;
-  font-weight: 500;
 }
 
 /* Buttons */
