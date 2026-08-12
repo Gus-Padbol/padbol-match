@@ -29,7 +29,7 @@ export const PUBLIC_SITE_SECTIONS = {
   },
   playerPath: {
     id: 'jugadores',
-    items: ['find', 'create', 'join', 'book', 'compete', 'evolve', 'community'].map(item),
+    items: ['find', 'create', 'join', 'book', 'compete', 'evolve', 'community', 'rewards'].map(item),
   },
   playerRecord: {
     id: 'tu-recorrido',
