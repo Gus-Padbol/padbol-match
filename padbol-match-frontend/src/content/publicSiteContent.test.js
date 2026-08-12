@@ -33,6 +33,8 @@ describe('publicSite content structure', () => {
     expect(PUBLIC_SITE_NAV_ITEMS.map(({ key }) => key)).toEqual(
       expect.arrayContaining(['community', 'scoreboard']),
     );
+    expect(PUBLIC_SITE_NAV_ITEMS[0].key).toBe('platform');
+    expect(PUBLIC_SITE_NAV_ITEMS.at(-1)).toEqual(expect.objectContaining({ key: 'about', secondary: true }));
   });
 
   it('mantiene stores sin URL y CTAs sobre rutas internas reales', () => {
