@@ -281,7 +281,12 @@ function OpenMatchMockup({ text }) {
   }, []);
 
   return (
-    <div className="ps-match" role="img" aria-label={text('publicSite.communityMatches.mockAria')}>
+    <div
+      className="ps-match"
+      data-filled={demo.filled}
+      role="img"
+      aria-label={text('publicSite.communityMatches.mockAria')}
+    >
       <div className="ps-match__phone">
         <header className="ps-match__bar">
           <span>{text('publicSite.communityMatches.mockBadge')}</span>
@@ -292,7 +297,11 @@ function OpenMatchMockup({ text }) {
           <p className="ps-match__level">{text('publicSite.communityMatches.mockLevel')}</p>
           <ul className="ps-match__slots" aria-hidden="true">
             {[0, 1, 2, 3].map((slot) => (
-              <li key={slot} className={slot < demo.filled ? 'is-filled' : 'is-open'}>
+              <li
+                key={slot}
+                className={slot < demo.filled ? 'is-filled' : 'is-open'}
+                style={{ '--ps-slot-index': slot }}
+              >
                 {slot < demo.filled ? (
                   <span className="ps-match__avatar">
                     <img src={`${OPEN_MATCH_AVATAR_ROOT}/${demo.players[slot]}`} alt="" />
