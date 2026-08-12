@@ -2639,7 +2639,7 @@ export default function MiPerfil() {
           </div>
           <h3 style={{ margin: '8px 0', color: 'var(--text-primary)', fontSize: 21 }}>Traé tu recorrido. Lo reconocemos.</h3>
           <p style={{ margin: '0 0 14px', color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: 14 }}>
-            Subí capturas de tu ranking, categoría, partidos, torneos o logros. Las revisamos y te avisamos dentro de las próximas 24 horas.
+            Subí capturas de tu ranking, categoría, partidos, torneos o logros. Las revisamos y te avisamos dentro de las próximas 24 horas. Tus datos son tuyos y podrás llevártelos cuando quieras.
           </p>
           <button
             type="button"
