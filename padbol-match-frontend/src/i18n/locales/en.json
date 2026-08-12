@@ -2611,7 +2611,7 @@
       "about": "About us"
     },
     "hero": {
-      "claim": "The sports app that connects everything.",
+      "claim": "The sports app that connects everything",
       "lead": "Play, operations and community. Built with Padbol and ready for other court sports.",
       "sportsAria": "Sports rollout status",
       "ctaExplore": "Explore the platform",
@@ -2744,7 +2744,7 @@
     },
     "playerRecord": {
       "kicker": "YOUR GAME DOES NOT START FROM ZERO",
-      "title": "Bring your record. We recognize it.",
+      "title": "Bring your record. We recognize it",
       "lead": "If you have already played, competed and built a history, that matters. You do not have to leave your journey behind to join Padbol Match.",
       "copy": "Send us your previous results, tournaments, ranking, statistics and achievements. We review and add them so your profile reflects the player you already are.",
       "ownershipStrong": "Your data belongs to you.",
@@ -2894,7 +2894,7 @@
       }
     },
     "experiences": {
-      "title": "Five experiences. One platform.",
+      "title": "Five experiences. One platform",
       "text": "The same play and management base, five visual identities.",
       "items": {
         "signature": {
@@ -3018,7 +3018,7 @@
       "aria": "Pathways"
     },
     "communityMatches": {
-      "title": "Playing starts before you walk on court.",
+      "title": "Playing starts before you walk on court",
       "text": "Padbol Match lets you create matches, find players, join open games and complete teams in one community. Venues gain real activity when the intent to play is confirmed.",
       "ctaPlay": "I want to play",
       "mockAria": "Visual example of an open match with available slots",
@@ -3062,7 +3062,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Smart scoreboard: the match live.",
+      "title": "Smart scoreboard: the match live",
       "comingSoon": "Available today · Live",
       "text": "The smart scoreboard already records the match live and keeps the result connected to players, competition and venue operations.",
       "demoAria": "Visual demo of the smart scoreboard",
@@ -3119,7 +3119,7 @@
     "matchIntelligence": {
       "kicker": "Coming soon · The scoreboard vision",
       "accent": "Intelligent vision referee",
-      "title": "Intelligent vision referee: an independent eye for the game.",
+      "title": "Intelligent vision referee: an independent eye for the game",
       "text": "We are training an independent intelligent vision referee. With three or four cameras, it learns to read play and score actions based on what it sees, as a human referee would. As it evolves, players and referees can supervise its decisions.",
       "videoAria": "Padbol match scoreboard in action",
       "caption": "Connected scoreboard demonstration",

@@ -22,8 +22,15 @@ describe('public site translated catalogs', () => {
   });
 
   it('keeps the reported Hebrew experience section fully translated', () => {
-    expect(generated.he.experiences.title).toBe('חמש חוויות. פלטפורמה אחת.');
+    expect(generated.he.experiences.title).toBe('חמש חוויות. פלטפורמה אחת');
     expect(generated.he.experiences.text).not.toMatch(/[A-Za-z]{4,}/);
     expect(generated.he.experiences.items.signature.text).not.toMatch(/[A-Za-z]{4,}/);
+  });
+
+  it.each(generatedCodes)('%s does not end public titles with a period', (code) => {
+    const titles = Object.entries(flatten(generated[code]))
+      .filter(([key]) => /\.(title|claim|kicker)$/.test(`.${key}`))
+      .map(([, value]) => value);
+    expect(titles.filter((value) => value.endsWith('.'))).toEqual([]);
   });
 });

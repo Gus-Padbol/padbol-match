@@ -16,7 +16,7 @@
       "administrators": "Administratoren"
     },
     "hero": {
-      "claim": "Die Sport-App, die alles verbindet.",
+      "claim": "Die Sport-App, die alles verbindet",
       "lead": "Spiel, Betrieb und Community. Mit Padbol entstanden und bereit für weitere Courtsportarten.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
@@ -194,7 +194,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Misma base de juego y gestión, cinco identidades visuales.",
       "items": {
         "signature": {
@@ -320,7 +320,7 @@
       "aria": "Wege"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -364,7 +364,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Heute verfügbar · Live",
       "text": "Die intelligente Anzeigetafel erfasst das Spiel bereits live und verbindet das Ergebnis mit Spielern, Wettbewerb und dem Betrieb des Clubs.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -405,7 +405,7 @@
     "matchIntelligence": {
       "kicker": "Demnächst · Die Vision der Anzeigetafel",
       "accent": "KI-Schiedsrichter",
-      "title": "KI-Schiedsrichter: Sicht, die das Spiel sehen lernt.",
+      "title": "KI-Schiedsrichter: Sicht, die das Spiel sehen lernt",
       "text": "Wir testen eine Sicht-Ebene mit drei oder vier Kameras —je nachdem, was jeder Platz benötigt—, um einen Algorithmus zu trainieren, der das Spiel erkennt, die Schiedsrichter unterstützt und Aktionen automatisch wertet.",
       "videoAria": "Padbol-Spielanzeige in Aktion",
       "caption": "Demonstration einer vernetzten Anzeigetafel",
@@ -462,7 +462,7 @@
     },
     "playerRecord": {
       "kicker": "DEIN SPIEL BEGINNT NICHT BEI NULL",
-      "title": "Bringen Sie Ihre Unterlagen mit. Wir erkennen es.",
+      "title": "Bringen Sie Ihre Unterlagen mit. Wir erkennen es",
       "lead": "Wenn Sie bereits gespielt, an Wettkämpfen teilgenommen und eine Geschichte aufgebaut haben, ist das wichtig. Sie müssen Ihre Reise nicht aufgeben, um Padbol Match beizutreten.",
       "copy": "Senden Sie uns Ihre bisherigen Ergebnisse, Turniere, Ranglisten, Statistiken und Erfolge. Wir überprüfen und fügen sie hinzu, sodass Ihr Profil den Spieler widerspiegelt, der Sie bereits sind.",
       "ownershipStrong": "Deine Daten gehören dir.",
@@ -544,7 +544,7 @@
           "result": "Ergebnis: Nützliche Daten für Verlauf, Rangliste, Turniere und Management."
         },
         "loyalty": {
-          "title": "Bauen Sie Loyalität auf.",
+          "title": "Bauen Sie Loyalität auf",
           "text": "PadCoins und Mitgliedschaften, wenn für Ihren Betrieb aktiviert.",
           "detail": "Erkennen Sie die Beteiligung der Community mit Vorteilen an, die vom Veranstaltungsort kontrolliert werden, wenn diese Module aktiviert sind.",
           "steps": {
@@ -594,7 +594,7 @@
       "administrators": "المسؤولون"
     },
     "hero": {
-      "claim": "التطبيق الرياضي الذي يربط كل شيء.",
+      "claim": "التطبيق الرياضي الذي يربط كل شيء",
       "lead": "لعب وتشغيل ومجتمع. وُلدت مع بادبول وجاهزة لرياضات الملعب الأخرى.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
@@ -772,7 +772,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Misma base de juego y gestión, cinco identidades visuales.",
       "items": {
         "signature": {
@@ -898,7 +898,7 @@
       "aria": "المسارات"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -942,7 +942,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "متاح اليوم · مباشر",
       "text": "تسجل لوحة النتائج الذكية المباراة مباشرة وتُبقي النتيجة مرتبطة باللاعبين والمنافسة وتشغيل النادي.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -983,7 +983,7 @@
     "matchIntelligence": {
       "kicker": "قريبًا · رؤية لوحة النتائج",
       "accent": "حكم بالذكاء الاصطناعي",
-      "title": "حكم بالذكاء الاصطناعي: رؤية تتعلم مشاهدة اللعب.",
+      "title": "حكم بالذكاء الاصطناعي: رؤية تتعلم مشاهدة اللعب",
       "text": "نختبر طبقة رؤية تضم ثلاث أو أربع كاميرات —بحسب ما يحتاجه كل ملعب— لتدريب خوارزمية تتعرف على اللعب وتدعم الحكم وتسجل الأحداث تلقائيًا.",
       "videoAria": "لوحة نتائج مباراة بادبول أثناء العمل",
       "caption": "عرض لوحة النتائج المتصلة",
@@ -1040,7 +1040,7 @@
     },
     "playerRecord": {
       "kicker": "لعبتك لا تبدأ من الصفر",
-      "title": "أحضر سجلك. نحن ندرك ذلك.",
+      "title": "أحضر سجلك. نحن ندرك ذلك",
       "lead": "إذا كنت قد لعبت بالفعل وتنافست وقمت ببناء تاريخ، فهذا مهم. ليس عليك أن تترك رحلتك وراءك للانضمام إلى Padbol Match.",
       "copy": "أرسل لنا نتائجك السابقة، والبطولات، والتصنيف، والإحصائيات، والإنجازات. نحن نقوم بمراجعتها وإضافتها حتى يعكس ملفك الشخصي اللاعب الذي أنت عليه بالفعل.",
       "ownershipStrong": "بياناتك ملك لك.",
@@ -1172,7 +1172,7 @@
       "administrators": "Administrateurs"
     },
     "hero": {
-      "claim": "L’application sportive qui connecte tout.",
+      "claim": "L’application sportive qui connecte tout",
       "lead": "Jeu, gestion et communauté. Née avec Padbol, elle est prête pour d’autres sports de terrain.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
@@ -1350,7 +1350,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Misma base de juego y gestión, cinco identidades visuales.",
       "items": {
         "signature": {
@@ -1476,7 +1476,7 @@
       "aria": "Parcours"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -1520,7 +1520,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Disponible aujourd’hui · En direct",
       "text": "Le tableau de score intelligent enregistre déjà le match en direct et relie le résultat aux joueurs, à la compétition et à l’activité du club.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -1561,7 +1561,7 @@
     "matchIntelligence": {
       "kicker": "Bientôt disponible · La vision du tableau",
       "accent": "Arbitre IA",
-      "title": "Arbitre IA : une vision qui apprend à voir le jeu.",
+      "title": "Arbitre IA : une vision qui apprend à voir le jeu",
       "text": "Nous testons une couche de vision avec trois ou quatre caméras —selon les besoins de chaque terrain— pour entraîner un algorithme qui reconnaît le jeu, aide l'arbitrage et marque les actions automatiquement.",
       "videoAria": "Tableau de score d’un match de Padbol en action",
       "caption": "Démonstration de tableau connecté",
@@ -1618,7 +1618,7 @@
     },
     "playerRecord": {
       "kicker": "VOTRE JEU NE COMMENCE PAS À PARTIR DE ZÉRO",
-      "title": "Apportez votre record. Nous le reconnaissons.",
+      "title": "Apportez votre record. Nous le reconnaissons",
       "lead": "Si vous avez déjà joué, concouru et construit une histoire, cela compte. Vous n'êtes pas obligé d'abandonner votre voyage pour rejoindre Padbol Match.",
       "copy": "Envoyez-nous vos résultats précédents, tournois, classement, statistiques et réalisations. Nous les examinons et les ajoutons afin que votre profil reflète le joueur que vous êtes déjà.",
       "ownershipStrong": "Vos données vous appartiennent.",
@@ -1750,7 +1750,7 @@
       "administrators": "Amministratori"
     },
     "hero": {
-      "claim": "L’app sportiva che collega tutto.",
+      "claim": "L’app sportiva che collega tutto",
       "lead": "Gioco, operatività e community. Nasce con Padbol ed è pronta per altri sport di campo.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
@@ -1928,7 +1928,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Misma base de juego y gestión, cinco identidades visuales.",
       "items": {
         "signature": {
@@ -2054,7 +2054,7 @@
       "aria": "Percorsi"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -2098,7 +2098,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Disponibile oggi · Live",
       "text": "Il tabellone intelligente registra già la partita dal vivo e mantiene il risultato connesso a giocatori, competizione e operatività della sede.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -2139,7 +2139,7 @@
     "matchIntelligence": {
       "kicker": "Prossimamente · La visione del tabellone",
       "accent": "Arbitro IA",
-      "title": "Arbitro IA: una visione che impara a vedere il gioco.",
+      "title": "Arbitro IA: una visione che impara a vedere il gioco",
       "text": "Stiamo testando un livello di visione con tre o quattro telecamere —quelle necessarie per ogni campo— per addestrare un algoritmo che riconosca il gioco, assista l'arbitro e segni automaticamente le azioni.",
       "videoAria": "Tabellone di una partita di Padbol in funzione",
       "caption": "Dimostrazione di tabellone connesso",
@@ -2196,7 +2196,7 @@
     },
     "playerRecord": {
       "kicker": "IL TUO GIOCO NON INIZIA DA ZERO",
-      "title": "Porta il tuo record. Lo riconosciamo.",
+      "title": "Porta il tuo record. Lo riconosciamo",
       "lead": "Se hai già giocato, gareggiato e costruito una storia, questo conta. Non devi lasciare il tuo viaggio alle spalle per iscriverti a Padbol Match.",
       "copy": "Inviaci i tuoi risultati precedenti, tornei, classifiche, statistiche e risultati. Li esaminiamo e li aggiungiamo in modo che il tuo profilo rifletta il giocatore che già sei.",
       "ownershipStrong": "I tuoi dati appartengono a te.",
@@ -2328,7 +2328,7 @@
       "administrators": "Administratori"
     },
     "hero": {
-      "claim": "Aplicația sportivă care conectează totul.",
+      "claim": "Aplicația sportivă care conectează totul",
       "lead": "Joc, operare și comunitate. Născută cu Padbol și pregătită pentru alte sporturi de teren.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
@@ -2506,7 +2506,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Misma base de juego y gestión, cinco identidades visuales.",
       "items": {
         "signature": {
@@ -2632,7 +2632,7 @@
       "aria": "Trasee"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -2676,7 +2676,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Disponibil azi · Live",
       "text": "Tabela inteligentă înregistrează deja meciul live și păstrează rezultatul conectat cu jucătorii, competiția și operațiunea clubului.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -2717,7 +2717,7 @@
     "matchIntelligence": {
       "kicker": "În curând · Viziunea tabelei",
       "accent": "Arbitru IA",
-      "title": "Arbitru IA: o viziune care învață să vadă jocul.",
+      "title": "Arbitru IA: o viziune care învață să vadă jocul",
       "text": "Testăm un strat de viziune cu trei sau patru camere —cele necesare pentru fiecare teren— pentru a antrena un algoritm care recunoaște jocul, asistă arbitrul și marchează automat acțiunile.",
       "videoAria": "Tabelă de scor a unui meci de Padbol în funcțiune",
       "caption": "Demonstrație de tabelă conectată",
@@ -2774,7 +2774,7 @@
     },
     "playerRecord": {
       "kicker": "JOCUL TĂU NU ÎNCEPE DE LA ZERO",
-      "title": "Adu-ți înregistrarea. O recunoaștem.",
+      "title": "Adu-ți înregistrarea. O recunoaștem",
       "lead": "Dacă ai jucat, ai concurat și ai construit deja o istorie, asta contează. Nu trebuie să vă lăsați călătoria în urmă pentru a vă alătura Padbol Match.",
       "copy": "Trimiteți-ne rezultatele, turneele, clasamentul, statisticile și realizările dvs. anterioare. Le examinăm și le adăugăm astfel încât profilul dvs. să reflecte jucătorul care sunteți deja.",
       "ownershipStrong": "Datele dvs. vă aparțin.",
@@ -2906,7 +2906,7 @@
       "administrators": "Administradores"
     },
     "hero": {
-      "claim": "A aplicação desportiva que conecta tudo.",
+      "claim": "A aplicação desportiva que conecta tudo",
       "lead": "Jogo, operação e comunidade. Nasce com o Padbol e está pronta para outros esportes de quadra.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
@@ -3084,7 +3084,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Misma base de juego y gestión, cinco identidades visuales.",
       "items": {
         "signature": {
@@ -3210,7 +3210,7 @@
       "aria": "Percursos"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -3254,7 +3254,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Disponível hoje · Ao vivo",
       "text": "O placar inteligente já registra a partida ao vivo e mantém o resultado conectado a jogadores, competição e operação da sede.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -3295,7 +3295,7 @@
     "matchIntelligence": {
       "kicker": "Em breve · A visão do placar",
       "accent": "Árbitro IA",
-      "title": "Árbitro IA: visão que aprende a ver o jogo.",
+      "title": "Árbitro IA: visão que aprende a ver o jogo",
       "text": "Estamos testando uma camada de visão com três ou quatro câmeras —as necessárias em cada quadra— para treinar um algoritmo que reconheça o jogo, auxilie a arbitragem e marque ações automaticamente.",
       "videoAria": "Placar de partida de Padbol em funcionamento",
       "caption": "Demonstração de placar conectado",
@@ -3352,7 +3352,7 @@
     },
     "playerRecord": {
       "kicker": "SEU JOGO NÃO COMEÇA DO ZERO",
-      "title": "Traga seu recorde. Nós reconhecemos isso.",
+      "title": "Traga seu recorde. Nós reconhecemos isso",
       "lead": "Se você já jogou, competiu e construiu uma história, isso importa. Você não precisa deixar sua jornada para trás para ingressar no Padbol Match.",
       "copy": "Envie-nos seus resultados anteriores, torneios, classificação, estatísticas e conquistas. Nós os revisamos e adicionamos para que seu perfil reflita o jogador que você já é.",
       "ownershipStrong": "Seus dados pertencem a você.",
@@ -3484,7 +3484,7 @@
       "administrators": "Administradores"
     },
     "hero": {
-      "claim": "A aplicação desportiva que conecta tudo.",
+      "claim": "A aplicação desportiva que conecta tudo",
       "lead": "Jogo, operação e comunidade. Nasce com o Padbol e está pronta para outros esportes de quadra.",
       "ctaExplore": "Conocer la plataforma",
       "ctaPlay": "Quiero jugar",
@@ -3662,7 +3662,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Misma base de juego y gestión, cinco identidades visuales.",
       "items": {
         "signature": {
@@ -3788,7 +3788,7 @@
       "aria": "Percursos"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "Padbol Match permite crear partidos, buscar jugadores, sumarse a encuentros abiertos y completar equipos desde una misma comunidad. La sede gana actividad real cuando la intención de jugar se confirma.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -3832,7 +3832,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Disponível hoje · Ao vivo",
       "text": "O placar inteligente já registra a partida ao vivo e mantém o resultado conectado a jogadores, competição e operação da sede.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -3873,7 +3873,7 @@
     "matchIntelligence": {
       "kicker": "Em breve · A visão do placar",
       "accent": "Árbitro IA",
-      "title": "Árbitro IA: visão que aprende a ver o jogo.",
+      "title": "Árbitro IA: visão que aprende a ver o jogo",
       "text": "Estamos testando uma camada de visão com três ou quatro câmeras —as necessárias em cada quadra— para treinar um algoritmo que reconheça o jogo, auxilie a arbitragem e marque ações automaticamente.",
       "videoAria": "Placar de partida de Padbol em funcionamento",
       "caption": "Demonstração de placar conectado",
@@ -3930,7 +3930,7 @@
     },
     "playerRecord": {
       "kicker": "SEU JOGO NÃO COMEÇA DO ZERO",
-      "title": "Traga seu recorde. Nós reconhecemos isso.",
+      "title": "Traga seu recorde. Nós reconhecemos isso",
       "lead": "Se você já jogou, competiu e construiu uma história, isso importa. Você não precisa deixar sua jornada para trás para ingressar no Padbol Match.",
       "copy": "Envie-nos seus resultados anteriores, torneios, classificação, estatísticas e conquistas. Nós os revisamos e adicionamos para que seu perfil reflita o jogador que você já é.",
       "ownershipStrong": "Seus dados pertencem a você.",
@@ -4070,7 +4070,7 @@
           "text": "داده، پیشرفت و کنترل."
         }
       },
-      "title": "پنج تجربه. یک پلت فرم.",
+      "title": "پنج تجربه. یک پلت فرم",
       "text": "همان پایگاه بازی و مدیریت، پنج هویت بصری.",
       "selectorAria": "تجربه بصری را انتخاب کنید",
       "prev": "تجربه قبلی",
@@ -4110,7 +4110,7 @@
       "about": "درباره ما"
     },
     "hero": {
-      "claim": "برنامه ورزشی که همه چیز را به هم متصل می کند.",
+      "claim": "برنامه ورزشی که همه چیز را به هم متصل می کند",
       "lead": "بازی، عملیات و انجمن. ساخته شده با Padbol و آماده برای سایر ورزش‌های زمینی.",
       "sportsAria": "وضعیت عرضه ورزش",
       "ctaExplore": "پلتفرم را کاوش کنید",
@@ -4243,7 +4243,7 @@
     },
     "playerRecord": {
       "kicker": "بازی شما از صفر شروع نمی شود",
-      "title": " رکورد خود را بیاورید. ما آن را تشخیص می دهیم.",
+      "title": " رکورد خود را بیاورید. ما آن را تشخیص می دهیم",
       "lead": "اگر قبلاً بازی کرده‌اید، مسابقه داده‌اید و تاریخچه‌ای ساخته‌اید، مهم است. برای پیوستن به Padbol Match مجبور نیستید سفر خود را پشت سر بگذارید.",
       "copy": "نتایج، مسابقات، رتبه بندی، آمار و دستاوردهای قبلی خود را برای ما ارسال کنید. ما آنها را بررسی و اضافه می کنیم تا نمایه شما نشان دهنده بازیکنی باشد که در حال حاضر هستید.",
       "ownershipStrong": "داده های شما متعلق به شما است.",
@@ -4498,7 +4498,7 @@
       "aria": "مسیرها"
     },
     "communityMatches": {
-      "title": "بازی قبل از راه رفتن در زمین شروع می شود.",
+      "title": "بازی قبل از راه رفتن در زمین شروع می شود",
       "text": "Padbol Match به شما امکان می دهد مسابقات ایجاد کنید، بازیکنان را پیدا کنید، به بازی های باز بپیوندید و تیم ها را در یک انجمن کامل کنید. مکان‌ها زمانی که قصد بازی تأیید شود، فعالیت واقعی پیدا می‌کنند.",
       "ctaPlay": "می‌خواهم بازی کنم",
       "mockAria": "نمونه تصویری یک مسابقه باز با اسلات های موجود",
@@ -4542,7 +4542,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "تابلو امتیاز هوشمند: مسابقه به صورت زنده.",
+      "title": "تابلو امتیاز هوشمند: مسابقه به صورت زنده",
       "comingSoon": "امروز در دسترس است · زنده",
       "text": "تصاویر هوشمند از قبل مسابقه را به صورت زنده ضبط می کند و نتیجه را به بازیکنان، مسابقات و عملیات محل برگزاری متصل نگه می دارد.",
       "demoAria": "نمایش تصویری تابلوی امتیاز هوشمند",
@@ -4599,7 +4599,7 @@
     "matchIntelligence": {
       "kicker": "به زودی · چشم انداز اسکوربورد",
       "accent": "داور هوشمند بینایی",
-      "title": "داور هوشمند بینایی: یک چشم مستقل برای بازی.",
+      "title": "داور هوشمند بینایی: یک چشم مستقل برای بازی",
       "text": "ما در حال آموزش یک داور بینایی هوشمند مستقل هستیم. با سه یا چهار دوربین، یاد می گیرد که بازی را بخواند و بر اساس آنچه که می بیند، حرکات را به ثمر برساند، همانطور که یک داور انسانی انجام می دهد. همانطور که تکامل می یابد، بازیکنان و داوران می توانند بر تصمیمات آن نظارت داشته باشند.",
       "videoAria": "تابلو امتیاز بازی پدبول در عمل",
       "caption": "نمایش تابلوی امتیازی متصل",
@@ -4648,7 +4648,7 @@
           "text": "Data, voortgang en controle."
         }
       },
-      "title": "Vijf ervaringen. Eén platform.",
+      "title": "Vijf ervaringen. Eén platform",
       "text": "Dezelfde speel- en beheerbasis, vijf visuele identiteiten.",
       "selectorAria": "Kies visuele ervaring",
       "prev": "Eerdere ervaring",
@@ -4688,7 +4688,7 @@
       "about": "Over ons"
     },
     "hero": {
-      "claim": "De sport-app die alles met elkaar verbindt.",
+      "claim": "De sport-app die alles met elkaar verbindt",
       "lead": "Spelen, bediening en community. Gebouwd met Padbol en klaar voor andere veldsporten.",
       "sportsAria": "Uitrolstatus van sport",
       "ctaExplore": "Ontdek het platform",
@@ -4821,7 +4821,7 @@
     },
     "playerRecord": {
       "kicker": "JE SPEL BEGINT NIET VAN NUL",
-      "title": "Neem je record mee. Wij herkennen het.",
+      "title": "Neem je record mee. Wij herkennen het",
       "lead": "Als je al hebt gespeeld, deelgenomen en geschiedenis hebt opgebouwd, maakt dat uit. Je hoeft je reis niet achter je te laten om mee te doen aan Padbol Match.",
       "copy": "Stuur ons je eerdere resultaten, toernooien, ranglijsten, statistieken en prestaties. We beoordelen ze en voegen ze toe, zodat je profiel de speler weergeeft die je al bent.",
       "ownershipStrong": "Je gegevens zijn van jou.",
@@ -5076,7 +5076,7 @@
       "aria": "Pathways"
     },
     "communityMatches": {
-      "title": "Het spelen begint voordat je het veld oploopt.",
+      "title": "Het spelen begint voordat je het veld oploopt",
       "text": "Met Padbol Match kun je wedstrijden creëren, spelers vinden, deelnemen aan open wedstrijden en complete teams vormen in één community. Locaties krijgen echte activiteit wanneer de intentie om te spelen wordt bevestigd.",
       "ctaPlay": "Ik wil spelen",
       "mockAria": "Visueel voorbeeld van een open wedstrijd met beschikbare slots",
@@ -5120,7 +5120,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Slim scorebord: de wedstrijd live.",
+      "title": "Slim scorebord: de wedstrijd live",
       "comingSoon": "Vandaag beschikbaar · Live",
       "text": "Het slimme scorebord registreert de wedstrijd al live en houdt het resultaat verbonden met spelers, competitie en locatieactiviteiten.",
       "demoAria": "Visuele demo van het slimme scorebord",
@@ -5177,7 +5177,7 @@
     "matchIntelligence": {
       "kicker": "Binnenkort beschikbaar · De scorebordvisie",
       "accent": "Intelligente visiescheidsrechter",
-      "title": "Intelligente visiescheidsrechter: een onafhankelijk oog voor het spel.",
+      "title": "Intelligente visiescheidsrechter: een onafhankelijk oog voor het spel",
       "text": "We leiden een onafhankelijke intelligente zichtscheidsrechter op. Met drie of vier camera's leert hij het spel te lezen en acties te scoren op basis van wat hij ziet, zoals een menselijke scheidsrechter dat zou doen. Terwijl het evolueert, kunnen spelers en scheidsrechters toezicht houden op de beslissingen.",
       "videoAria": "Padbol-wedstrijdscorebord in actie",
       "caption": "Verbonden scoreborddemonstratie",
@@ -5226,7 +5226,7 @@
           "text": "Data, voortgang en controle."
         }
       },
-      "title": "Vijf ervaringen. Eén platform.",
+      "title": "Vijf ervaringen. Eén platform",
       "text": "Dezelfde speel- en beheerbasis, vijf visuele identiteiten.",
       "selectorAria": "Kies visuele ervaring",
       "prev": "Eerdere ervaring",
@@ -5266,7 +5266,7 @@
       "about": "Over ons"
     },
     "hero": {
-      "claim": "De sport-app die alles met elkaar verbindt.",
+      "claim": "De sport-app die alles met elkaar verbindt",
       "lead": "Spelen, bediening en community. Gebouwd met Padbol en klaar voor andere veldsporten.",
       "sportsAria": "Uitrolstatus van sport",
       "ctaExplore": "Ontdek het platform",
@@ -5399,7 +5399,7 @@
     },
     "playerRecord": {
       "kicker": "JE SPEL BEGINT NIET VAN NUL",
-      "title": "Neem je record mee. Wij herkennen het.",
+      "title": "Neem je record mee. Wij herkennen het",
       "lead": "Als je al hebt gespeeld, deelgenomen en geschiedenis hebt opgebouwd, maakt dat uit. Je hoeft je reis niet achter je te laten om mee te doen aan Padbol Match.",
       "copy": "Stuur ons je eerdere resultaten, toernooien, ranglijsten, statistieken en prestaties. We beoordelen ze en voegen ze toe, zodat je profiel de speler weergeeft die je al bent.",
       "ownershipStrong": "Je gegevens zijn van jou.",
@@ -5654,7 +5654,7 @@
       "aria": "Pathways"
     },
     "communityMatches": {
-      "title": "Het spelen begint voordat je het veld oploopt.",
+      "title": "Het spelen begint voordat je het veld oploopt",
       "text": "Met Padbol Match kun je wedstrijden creëren, spelers vinden, deelnemen aan open wedstrijden en complete teams vormen in één community. Locaties krijgen echte activiteit wanneer de intentie om te spelen wordt bevestigd.",
       "ctaPlay": "Ik wil spelen",
       "mockAria": "Visueel voorbeeld van een open wedstrijd met beschikbare slots",
@@ -5698,7 +5698,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Slim scorebord: de wedstrijd live.",
+      "title": "Slim scorebord: de wedstrijd live",
       "comingSoon": "Vandaag beschikbaar · Live",
       "text": "Het slimme scorebord registreert de wedstrijd al live en houdt het resultaat verbonden met spelers, competitie en locatieactiviteiten.",
       "demoAria": "Visuele demo van het slimme scorebord",
@@ -5755,7 +5755,7 @@
     "matchIntelligence": {
       "kicker": "Binnenkort beschikbaar · De scorebordvisie",
       "accent": "Intelligente visiescheidsrechter",
-      "title": "Intelligente visiescheidsrechter: een onafhankelijk oog voor het spel.",
+      "title": "Intelligente visiescheidsrechter: een onafhankelijk oog voor het spel",
       "text": "We leiden een onafhankelijke intelligente zichtscheidsrechter op. Met drie of vier camera's leert hij het spel te lezen en acties te scoren op basis van wat hij ziet, zoals een menselijke scheidsrechter dat zou doen. Terwijl het evolueert, kunnen spelers en scheidsrechters toezicht houden op de beslissingen.",
       "videoAria": "Padbol-wedstrijdscorebord in actie",
       "caption": "Verbonden scoreborddemonstratie",
@@ -5804,7 +5804,7 @@
           "text": "Data, framsteg och kontroll."
         }
       },
-      "title": "Fem upplevelser. En plattform.",
+      "title": "Fem upplevelser. En plattform",
       "text": "Samma lek- och ledningsbas, fem visuella identiteter.",
       "selectorAria": "Välj visuell upplevelse",
       "prev": "Tidigare erfarenhet",
@@ -5844,7 +5844,7 @@
       "about": "Om oss"
     },
     "hero": {
-      "claim": "Sportappen som kopplar ihop allt.",
+      "claim": "Sportappen som kopplar ihop allt",
       "lead": "Lek, drift och community. Byggd med Padbol och redo för andra bansporter.",
       "sportsAria": "Sportens lanseringsstatus",
       "ctaExplore": "Utforska plattformen",
@@ -5977,7 +5977,7 @@
     },
     "playerRecord": {
       "kicker": "DITT SPEL STARTAR INTE FRÅN NOLL",
-      "title": "Ta med dig. Vi känner igen det.",
+      "title": "Ta med dig. Vi känner igen det",
       "lead": "Om du redan har spelat, tävlat och byggt upp en historia är det viktigt. Du behöver inte lämna din resa bakom dig för att gå med i Padbol Match.",
       "copy": "Skicka oss dina tidigare resultat, turneringar, ranking, statistik och prestationer. Vi granskar och lägger till dem så att din profil återspeglar den spelare du redan är.",
       "ownershipStrong": "Din data tillhör dig.",
@@ -6232,7 +6232,7 @@
       "aria": "Pathways"
     },
     "communityMatches": {
-      "title": "Spelet börjar innan du går på banan.",
+      "title": "Spelet börjar innan du går på banan",
       "text": "Padbol Match låter dig skapa matcher, hitta spelare, gå med i ett öppet spel och slutföra matcher. Spelplatserna får verklig aktivitet när avsikten att spela bekräftas.",
       "ctaPlay": "Jag vill spela",
       "mockAria": "Visuellt exempel på en öppen matchning med tillgängliga platser",
@@ -6276,7 +6276,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Smart resultattavla: matchen live.",
+      "title": "Smart resultattavla: matchen live",
       "comingSoon": "Tillgänglig idag · Live",
       "text": "Den smarta resultattavlan registrerar redan matchen live och håller resultatet kopplat till spelare, tävling och spelplatser.",
       "demoAria": "Visuell demo av den smarta resultattavlan",
@@ -6333,7 +6333,7 @@
     "matchIntelligence": {
       "kicker": "Kommer snart · Resultattavlans vision",
       "accent": "Intelligent vision domare",
-      "title": "Intelligent vision domare: ett oberoende öga för spelet.",
+      "title": "Intelligent vision domare: ett oberoende öga för spelet",
       "text": "Vi utbildar en oberoende intelligent vision domare. Med tre eller fyra kameror lär den sig att läsa spel och göra mål utifrån vad den ser, som en mänsklig domare skulle göra. Allt eftersom det utvecklas kan spelare och domare övervaka dess beslut.",
       "videoAria": "Padbol matchresultattavla i aktion",
       "caption": "Demonstration av ansluten resultattavla",
@@ -6382,7 +6382,7 @@
           "text": "נתונים, התקדמות ושליטה."
         }
       },
-      "title": "חמש חוויות. פלטפורמה אחת.",
+      "title": "חמש חוויות. פלטפורמה אחת",
       "text": "אותו בסיס משחק וניהול, חמש זהויות ויזואליות.",
       "selectorAria": "בחר חוויה חזותית",
       "prev": "ניסיון קודם",
@@ -6422,7 +6422,7 @@
       "about": "אודותינו"
     },
     "hero": {
-      "claim": "אפליקציית הספורט שמחברת הכל.",
+      "claim": "אפליקציית הספורט שמחברת הכל",
       "lead": "משחק, תפעול וקהילה. בנוי עם Padbol ומוכן לענפי ספורט אחרים במגרש.",
       "sportsAria": "סטטוס השקת ספורט",
       "ctaExplore": "חקור את הפלטפורמה",
@@ -6555,7 +6555,7 @@
     },
     "playerRecord": {
       "kicker": "המשחק שלך לא מתחיל מאפס",
-      "title": "הבא את השיא שלך. אנחנו מזהים את זה.",
+      "title": "הבא את השיא שלך. אנחנו מזהים את זה",
       "lead": "אם כבר שיחקת, התחרת ובנית היסטוריה, זה חשוב. אינך צריך לעזוב את המסע שלך מאחור כדי להצטרף ל-Padbol Match.",
       "copy": "שלח לנו את התוצאות הקודמות שלך, טורנירים, דירוג, סטטיסטיקה והישגים. אנו בודקים ומוסיפים אותם כך שהפרופיל שלך ישקף את השחקן שאתה כבר.",
       "ownershipStrong": "הנתונים שלך שייכים לך.",
@@ -6810,7 +6810,7 @@
       "aria": "Pathways"
     },
     "communityMatches": {
-      "title": "המשחק מתחיל לפני שאתה הולך על המגרש.",
+      "title": "המשחק מתחיל לפני שאתה הולך על המגרש",
       "text": "Padbol Match מאפשר לך ליצור משחקים, למצוא שחקנים, להצטרף לקהילה אחת ולהצטרף לקהילה אחת. מקומות זוכים לפעילות אמיתית כאשר הכוונה לשחק מאושרת.",
       "ctaPlay": "אני רוצה לשחק",
       "mockAria": "דוגמה חזותית של התאמה פתוחה עם משבצות זמינות",
@@ -6854,7 +6854,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "לוח תוצאות חכם: המשחק בשידור חי.",
+      "title": "לוח תוצאות חכם: המשחק בשידור חי",
       "comingSoon": "זמין היום · בשידור חי",
       "text": "לוח התוצאות החכם כבר מתעד את המשחק בשידור חי ושומר על התוצאה מחוברת לשחקנים, לתחרות ולפעולות המתחם.",
       "demoAria": "הדגמה חזותית של לוח התוצאות החכם",
@@ -6911,7 +6911,7 @@
     "matchIntelligence": {
       "kicker": "בקרוב · חזון לוח התוצאות",
       "accent": "שופט חזון אינטליגנטי",
-      "title": "שופט ראייה אינטליגנטי: עין עצמאית למשחק.",
+      "title": "שופט ראייה אינטליגנטי: עין עצמאית למשחק",
       "text": "אנו מאמנים שופט ראייה אינטליגנטי עצמאי. עם שלוש או ארבע מצלמות, הוא לומד לקרוא משחק ולקלוע פעולות על סמך מה שהוא רואה, כפי ששופט אנושי היה עושה. ככל שהוא מתפתח, שחקנים ושופטים יכולים לפקח על החלטותיו.",
       "videoAria": "לוח התוצאות של משחקי Padbol בפעולה",
       "caption": "הדגמת לוח תוצאות מחובר",
@@ -6960,7 +6960,7 @@
           "text": "Δεδομένα, πρόοδος και έλεγχος."
         }
       },
-      "title": "Πέντε εμπειρίες. Μία πλατφόρμα.",
+      "title": "Πέντε εμπειρίες. Μία πλατφόρμα",
       "text": "Η ίδια βάση παιχνιδιού και διαχείρισης, πέντε οπτικές ταυτότητες.",
       "selectorAria": "Επιλέξτε οπτική εμπειρία",
       "prev": "Προηγούμενη εμπειρία",
@@ -7000,7 +7000,7 @@
       "about": "Σχετικά με εμάς"
     },
     "hero": {
-      "claim": "Η εφαρμογή αθλητικών που συνδέει τα πάντα.",
+      "claim": "Η εφαρμογή αθλητικών που συνδέει τα πάντα",
       "lead": "Αναπαραγωγή, λειτουργίες και κοινότητα. Κατασκευασμένο με Padbol και έτοιμο για άλλα αθλήματα γηπέδου.",
       "sportsAria": "Κατάσταση διάθεσης αθλημάτων",
       "ctaExplore": "Εξερευνήστε την πλατφόρμα",
@@ -7133,7 +7133,7 @@
     },
     "playerRecord": {
       "kicker": "ΤΟ ΠΑΙΧΝΙΔΙ ΣΑΣ ΔΕΝ ΞΕΚΙΝΑΕΙ ΑΠΟ ΜΗΔΕΝ",
-      "title": "Φέρτε το ρεκόρ σας. Το αναγνωρίζουμε.",
+      "title": "Φέρτε το ρεκόρ σας. Το αναγνωρίζουμε",
       "lead": "Αν έχετε ήδη παίξει, αγωνιστεί και δημιουργήσει ιστορία, αυτό έχει σημασία. Δεν χρειάζεται να αφήσετε πίσω σας το ταξίδι σας για να συμμετάσχετε στο Padbol Match.",
       "copy": "Στείλτε μας τα προηγούμενα αποτελέσματα, τα τουρνουά, την κατάταξη, τα στατιστικά και τα επιτεύγματά σας. Τα εξετάζουμε και τα προσθέτουμε, ώστε το προφίλ σας να αντικατοπτρίζει τον παίκτη που ήδη είστε.",
       "ownershipStrong": "Τα δεδομένα σας ανήκουν σε εσάς.",
@@ -7388,7 +7388,7 @@
       "aria": "Διαδρομές"
     },
     "communityMatches": {
-      "title": "Το παιχνίδι ξεκινά πριν περπατήσετε στο γήπεδο.",
+      "title": "Το παιχνίδι ξεκινά πριν περπατήσετε στο γήπεδο",
       "text": "Το Padbol Match σάς επιτρέπει να δημιουργείτε αγώνες, να βρίσκετε παίκτες, να συμμετέχετε σε ανοιχτά παιχνίδια και να συμπληρώνετε ομάδες σε μία κοινότητα. Οι χώροι αποκτούν πραγματική δραστηριότητα όταν επιβεβαιώνεται η πρόθεση για παιχνίδι.",
       "ctaPlay": "Θέλω να παίξω",
       "mockAria": "Οπτικό παράδειγμα ανοιχτής αντιστοίχισης με διαθέσιμες θέσεις υποδοχής",
@@ -7432,7 +7432,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Έξυπνος πίνακας αποτελεσμάτων: ο αγώνας ζωντανά.",
+      "title": "Έξυπνος πίνακας αποτελεσμάτων: ο αγώνας ζωντανά",
       "comingSoon": "Διαθέσιμο σήμερα · Ζωντανά",
       "text": "Ο έξυπνος πίνακας αποτελεσμάτων καταγράφει ήδη τον αγώνα ζωντανά και διατηρεί το αποτέλεσμα συνδεδεμένο με τους παίκτες, τον αγώνα και τις λειτουργίες του χώρου διεξαγωγής.",
       "demoAria": "Οπτική επίδειξη του έξυπνου πίνακα αποτελεσμάτων",
@@ -7449,7 +7449,7 @@
       },
       "steps": {
         "start": {
-          "title": "Είσοδος αναγνώρισης προσώπου και πίστωση PadCoins από τη στιγμή που θα φτάσετε στον χώρο.",
+          "title": "Είσοδος αναγνώρισης προσώπου και πίστωση PadCoins από τη στιγμή που θα φτάσετε στον χώρο",
           "text": "Είσοδος στο χώρο με χρήση αναγνώρισης προσώπου αντιστοιχία</spantar=\"span=\"st1\" data-i=\"11\">Επιλέξτε παίκτες ή ομάδες και ανοίξτε τον πίνακα αποτελεσμάτων."
         },
         "live": {
@@ -7538,7 +7538,7 @@
           "text": "Adatok, haladás és vezérlés."
         }
       },
-      "title": "Öt élmény. Egy platform.",
+      "title": "Öt élmény. Egy platform",
       "text": "Ugyanaz a játék- és felügyeleti alap, öt vizuális identitás.",
       "selectorAria": "Válassza ki a vizuális élményt",
       "prev": "Korábbi élmény",
@@ -7578,7 +7578,7 @@
       "about": "Rólunk"
     },
     "hero": {
-      "claim": "A sportalkalmazás, amely mindent összeköt.",
+      "claim": "A sportalkalmazás, amely mindent összeköt",
       "lead": "Játék, műveletek és közösség. Padbollal készült, és készen áll más pályás sportokra.",
       "sportsAria": "Sportállapot",
       "ctaExplore": "Fedezze fel a platformot",
@@ -7641,7 +7641,7 @@
     },
     "status": {
       "kicker": "Termékállapot",
-      "title": "A Padbol Match új sportágakat ad hozzá.",
+      "title": "A Padbol Match új sportágakat ad hozzá",
       "text": "Padbol és már connects játék. Most Padel, Pickleball és Tenisz csatlakozik ugyanahhoz az úthoz.",
       "labels": {
         "active": "Ma elérhető",
@@ -7661,7 +7661,7 @@
         },
         "next": {
           "eyebrow": "A szponzorok és a hirdetések aktívak",
-          "title": "Minden helyszín már kezelheti szponzorait és hirdetési felületeit. A Padbol Match Shop a helyi termékek és előnyök kísérleteként halad előre.",
+          "title": "Minden helyszín már kezelheti szponzorait és hirdetési felületeit. A Padbol Match Shop a helyi termékek és előnyök kísérleteként halad előre",
           "text": "Szponzorok · elérhető",
           "badges": {
             "sponsor": "Hirdetés · elérhető",
@@ -7711,7 +7711,7 @@
     },
     "playerRecord": {
       "kicker": "A JÁTÉK NEM NULLÁRÓL KEZDŐDIK",
-      "title": "Hozd el rekordodat. Felismerjük.",
+      "title": "Hozd el rekordodat. Felismerjük",
       "lead": "Ha már játszottál, versenyeztél és történelmet építettél, az számít. Nem kell hátrahagynia az utazást, hogy csatlakozzon a Padbol Matchhez.",
       "copy": "Küldje el nekünk korábbi eredményeit, versenyeit, helyezéseit, statisztikáit és eredményeit. Áttekintjük és hozzáadjuk őket, hogy a profilod tükrözze azt a játékost, aki már most is.",
       "ownershipStrong": "Az adataid az Öné.",
@@ -7966,7 +7966,7 @@
       "aria": "Pathways"
     },
     "communityMatches": {
-      "title": "A játék a pályára lépés előtt kezdődik.",
+      "title": "A játék a pályára lépés előtt kezdődik",
       "text": "A Padbol Match segítségével játékosokat találhat, csapatmérkőzéseket és nyílt játékokat hozhat létre. A helyszínek akkor válnak valódi aktivitásra, ha a játék szándéka megerősítést nyer.",
       "ctaPlay": "Játszani akarok",
       "mockAria": "Vizuális példa nyílt mérkőzésre a rendelkezésre álló helyekkel",
@@ -8010,7 +8010,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Intelligens eredménytábla: a mérkőzés élőben.",
+      "title": "Intelligens eredménytábla: a mérkőzés élőben",
       "comingSoon": "Ma elérhető · Élő",
       "text": "Az intelligens eredményjelző tábla már élőben rögzíti a mérkőzést, és az eredményt a játékosokkal, a versenyekkel és a helyszíni műveletekkel kapcsolatban tartja.",
       "demoAria": "Az intelligens eredménytábla vizuális bemutatója",
@@ -8067,7 +8067,7 @@
     "matchIntelligence": {
       "kicker": "Hamarosan · Az eredményjelző vízió",
       "accent": "Intelligens látásbíró",
-      "title": "Intelligens látóbíró: független szem a játékhoz.",
+      "title": "Intelligens látóbíró: független szem a játékhoz",
       "text": "Független intelligens látóbírót képezünk ki. Három vagy négy kamerával megtanulja a játékot olvasni és a látottak alapján pontozni az akciókat, ahogyan azt egy emberi játékvezető tenné. Ahogy fejlődik, a játékosok és a játékvezetők felügyelhetik a döntéseit.",
       "videoAria": "Padbol mérkőzés eredményjelzője működés közben",
       "caption": "Kapcsolt eredményjelző tábla bemutató",
@@ -8116,7 +8116,7 @@
           "text": "Dane, postęp i kontrola."
         }
       },
-      "title": "Pięć doświadczeń. Jedna platforma.",
+      "title": "Pięć doświadczeń. Jedna platforma",
       "text": "Ta sama baza gier i zarządzania, pięć identyfikacji wizualnych.",
       "selectorAria": "Wybierz wygląd doświadczenie",
       "prev": "Poprzednie doświadczenie",
@@ -8156,7 +8156,7 @@
       "about": "O nas"
     },
     "hero": {
-      "claim": "Aplikacja sportowa, która wszystko łączy.",
+      "claim": "Aplikacja sportowa, która wszystko łączy",
       "lead": "Gra, operacje i społeczność. Zbudowany z Padbolem i gotowy do innych sportów kortowych.",
       "sportsAria": "Stan wdrożenia sportowego",
       "ctaExplore": "Odkryj platformę",
@@ -8289,7 +8289,7 @@
     },
     "playerRecord": {
       "kicker": "TWOJA GRA NIE ZACZYNA SIĘ OD ZERA",
-      "title": "Przynieś swoją płytę. Zdajemy sobie z tego sprawę.",
+      "title": "Przynieś swoją płytę. Zdajemy sobie z tego sprawę",
       "lead": "Jeśli już grałeś, rywalizowałeś i zbudowałeś historię, ma to znaczenie. Nie musisz przerywać swojej podróży, aby dołączyć do Padbol Match.",
       "copy": "Prześlij nam swoje poprzednie wyniki, turnieje, ranking, statystyki i osiągnięcia. Sprawdzamy je i dodajemy, aby Twój profil odzwierciedlał gracza, którym już jesteś.",
       "ownershipStrong": "Twoje dane należą do Ciebie.",
@@ -8544,7 +8544,7 @@
       "aria": "Ścieżki"
     },
     "communityMatches": {
-      "title": "Gra zaczyna się zanim wejdziesz na kort.",
+      "title": "Gra zaczyna się zanim wejdziesz na kort",
       "text": "Padbol Match pozwala tworzyć mecze, znajdować graczy, dołączać do otwartych gier i tworzyć kompletne drużyny w jednej społeczności. Lokale zyskują prawdziwą aktywność, gdy zostanie potwierdzony zamiar gry.",
       "ctaPlay": "Chcę zagrać",
       "mockAria": "Wizualny przykład otwartego meczu z dostępnymi miejscami",
@@ -8588,7 +8588,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Inteligentna tablica wyników: mecz na żywo.",
+      "title": "Inteligentna tablica wyników: mecz na żywo",
       "comingSoon": "Dostępne dzisiaj · Na żywo",
       "text": "Inteligentna tablica wyników rejestruje już mecz na żywo i informuje o wynikach zawodników, zawodach i obiekcie.",
       "demoAria": "Wizualna demonstracja inteligentnej tablicy wyników",
@@ -8645,7 +8645,7 @@
     "matchIntelligence": {
       "kicker": "Już wkrótce · Wizja tablicy wyników",
       "accent": "Inteligentny sędzia wizyjny",
-      "title": "Sędzia inteligentny wzrok: niezależne oko na grę.",
+      "title": "Sędzia inteligentny wzrok: niezależne oko na grę",
       "text": "Szkolimy niezależnego sędziego inteligentnego wzroku. Dzięki trzem lub czterem kamerom uczy się czytać grę i oceniać akcje na podstawie tego, co widzi, tak jak zrobiłby to ludzki sędzia. W miarę rozwoju gracze i sędziowie mogą nadzorować jego decyzje.",
       "videoAria": "Tablica wyników meczów Padbol w akcji",
       "caption": "Demonstracja połączonej tablicy wyników",
@@ -8694,7 +8694,7 @@
           "text": "Дані, прогрес і контроль."
         }
       },
-      "title": "П'ять досвідів. Одна платформа.",
+      "title": "П'ять досвідів. Одна платформа",
       "text": "Та сама база гри та керування, п’ять візуальних ідентифікацій.",
       "selectorAria": "Виберіть візуальний досвід",
       "prev": "Попередній досвід",
@@ -8734,7 +8734,7 @@
       "about": "Про нас"
     },
     "hero": {
-      "claim": "Спортивний додаток, який об’єднує все.",
+      "claim": "Спортивний додаток, який об’єднує все",
       "lead": "Ігри, операції та спільнота. Створено з Padbol і готове до інших видів спорту на корті.",
       "sportsAria": "Статус спортивного розгортання",
       "ctaExplore": "Дослідіть платформу",
@@ -8867,7 +8867,7 @@
     },
     "playerRecord": {
       "kicker": "ВАША ГРА НЕ ПОЧИНАЄТЬСЯ З НУЛЯ",
-      "title": "Поставте свій рекорд. Ми визнаємо це.",
+      "title": "Поставте свій рекорд. Ми визнаємо це",
       "lead": "Якщо ви вже грали, змагалися та створювали історію, це має значення. Вам не потрібно закінчувати свою подорож, щоб приєднатися до Padbol Match.",
       "copy": "Надсилайте нам свої попередні результати, турніри, рейтинг, статистику та досягнення. Ми переглядаємо та додаємо їх, щоб ваш профіль відображав гравця, яким ви вже є.",
       "ownershipStrong": "Ваші дані належать вам.",
@@ -9122,7 +9122,7 @@
       "aria": "Шляхи"
     },
     "communityMatches": {
-      "title": "Гра починається ще до того, як ви виходите на майданчик.",
+      "title": "Гра починається ще до того, як ви виходите на майданчик",
       "text": "Padbol Match дозволяє створювати матчі, знаходити гравців, приєднуватися до відкритих ігор і складати команди в одній спільноті. Місця охоплюють реальну активність, коли намір грати підтверджено.",
       "ctaPlay": "Я хочу грати",
       "mockAria": "Візуальний приклад відкритого матчу з доступними слотами",
@@ -9166,7 +9166,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Розумне табло: матч у прямому ефірі.",
+      "title": "Розумне табло: матч у прямому ефірі",
       "comingSoon": "Доступно сьогодні · Прямий ефір",
       "text": "Розумне табло вже записує матч у прямому ефірі та зберігає пов’язаність результатів із гравцями, змаганнями та операціями на майданчику.",
       "demoAria": "Візуальна демонстрація розумного табло",
@@ -9223,7 +9223,7 @@
     "matchIntelligence": {
       "kicker": "Незабаром · Візуальне табло",
       "accent": "Інтелектуальний арбітр",
-      "title": "Інтелектуальний арбітр: незалежний око для гри.",
+      "title": "Інтелектуальний арбітр: незалежний око для гри",
       "text": "Ми навчаємо незалежного суддю з розумним баченням. Завдяки трьом або чотирьом камерам він вчиться читати гру та забивати дії на основі того, що бачить, як це зробив би людський суддя. Розвиваючись, гравці та судді можуть контролювати його рішення.",
       "videoAria": "Табло матчу Padbol у дії",
       "caption": "Демонстрація підключеного табло",
@@ -9272,7 +9272,7 @@
           "text": "Data, vordering en beheer."
         }
       },
-      "title": "Vyf ervarings. Een platform.",
+      "title": "Vyf ervarings. Een platform",
       "text": "Dieselfde speel- en bestuursbasis, vyf visuele identiteite.",
       "selectorAria": "Kies visuele ervaring",
       "prev": "Vorige ervaring",
@@ -9312,7 +9312,7 @@
       "about": "Meer oor ons"
     },
     "hero": {
-      "claim": "Die sporttoepassing wat alles verbind.",
+      "claim": "Die sporttoepassing wat alles verbind",
       "lead": "Speel, bedrywighede en gemeenskap. Gebou met Padbol en gereed vir ander baansportsoorte.",
       "sportsAria": "Sportontplooiingstatus",
       "ctaExplore": "Verken die platform",
@@ -9445,7 +9445,7 @@
     },
     "playerRecord": {
       "kicker": "JOU SPEL BEGIN NIE VAN NUL af nie",
-      "title": "Bring jou rekord. Ons herken dit.",
+      "title": "Bring jou rekord. Ons herken dit",
       "lead": "As jy reeds gespeel het, meegeding en 'n geskiedenis opgebou het, maak dit saak. Jy hoef nie jou reis agter te laat om by Padbol Match aan te sluit nie.",
       "copy": "Stuur vir ons jou vorige resultate, toernooie, ranglys, statistieke en prestasies. Ons hersien en voeg dit by sodat jou profiel die speler weerspieël wat jy reeds is.",
       "ownershipStrong": "Jou data behoort aan jou.",
@@ -9700,7 +9700,7 @@
       "aria": "Pathways"
     },
     "communityMatches": {
-      "title": "Speel begin voor jy op die baan loop.",
+      "title": "Speel begin voor jy op die baan loop",
       "text": "Padbol Match laat jou wedstryde skep, spelers vind, by oop speletjies aansluit en in een gemeenskap aansluit. Plekke kry werklike aktiwiteit wanneer die voorneme om te speel bevestig word.",
       "ctaPlay": "Ek wil speel",
       "mockAria": "Visuele voorbeeld van 'n oop wedstryd met beskikbare gleuwe",
@@ -9744,7 +9744,7 @@
       }
     },
     "smartScoreboard": {
-      "title": "Slim telbord: die wedstryd regstreeks.",
+      "title": "Slim telbord: die wedstryd regstreeks",
       "comingSoon": "Vandag beskikbaar · Regstreeks",
       "text": "Die slim telbord teken reeds die wedstryd regstreeks aan en hou die uitslag gekoppel aan spelers, kompetisie en venuebedrywighede.",
       "demoAria": "Visuele demonstrasie van die slim telbord",
@@ -9801,7 +9801,7 @@
     "matchIntelligence": {
       "kicker": "Kom binnekort · Die telbordvisie",
       "accent": "Intelligente visie-skeidsregter",
-      "title": "Intelligente visie skeidsregter: 'n onafhanklike oog vir die spel.",
+      "title": "Intelligente visie skeidsregter: 'n onafhanklike oog vir die spel",
       "text": "Ons lei 'n onafhanklike intelligente visie skeidsregter op. Met drie of vier kameras leer dit om spel te lees en aksies te teken op grond van wat dit sien, soos 'n menslike skeidsregter sou. Soos dit ontwikkel, kan spelers en skeidsregters toesig hou oor sy besluite.",
       "videoAria": "Padbol-wedstrydtelbord in aksie",
       "caption": "Gekoppelde telborddemonstrasie",

@@ -2228,7 +2228,7 @@
       "scoreboard": "Marcador"
     },
     "hero": {
-      "claim": "La aplicación deportiva que conecta todo.",
+      "claim": "La aplicación deportiva que conecta todo",
       "lead": "Juego, operación y comunidad. Nace con Padbol y está lista para otros deportes de cancha.",
       "sportsAria": "Estado de las disciplinas deportivas",
       "ctaExplore": "Conocer la plataforma",
@@ -2361,7 +2361,7 @@
     },
     "playerRecord": {
       "kicker": "TU JUEGO NO EMPIEZA DE CERO",
-      "title": "Trae tu recorrido. Lo reconocemos.",
+      "title": "Trae tu recorrido. Lo reconocemos",
       "lead": "Si ya jugaste, competiste y construiste un historial, eso vale. No tienes que dejar atrás tu camino para sumarte a Padbol Match.",
       "copy": "Envíanos tus resultados, torneos, ranking, estadísticas y logros anteriores. Los revisamos y los incorporamos para que tu perfil refleje el jugador que ya eres.",
       "ownershipStrong": "Tus datos son tuyos.",
@@ -2558,7 +2558,7 @@
       }
     },
     "experiences": {
-      "title": "Cinco experiencias. Una plataforma.",
+      "title": "Cinco experiencias. Una plataforma",
       "text": "Cinco identidades visuales sobre la misma base de juego y gestión multideporte.",
       "items": {
         "signature": {
@@ -2683,7 +2683,7 @@
       "aria": "Recorridos"
     },
     "communityMatches": {
-      "title": "Jugar empieza antes de entrar a la cancha.",
+      "title": "Jugar empieza antes de entrar a la cancha",
       "text": "En Padbol, crear un encuentro y completar sus cupos puede empezar antes de llegar a la sede. Ese mismo recorrido se abre gradualmente a Pádel, Pickleball y Tenis.",
       "ctaPlay": "Quiero jugar",
       "mockAria": "Ejemplo visual de un partido abierto con cupos disponibles",
@@ -2727,7 +2727,7 @@
       }
     },
     "voice": {
-      "title": "Chivi por voz: pide lo que necesitas jugando.",
+      "title": "Chivi por voz: pide lo que necesitas jugando",
       "text": "Hablale a la app con palabras simples. Chivi entiende tu consulta, te orienta y te acerca al siguiente paso sin obligarte a recorrer cada pantalla.",
       "items": {
         "ask": { "title": "Haz una consulta", "text": "Toca el micrófono y habla como lo harías con una persona." },
@@ -2740,7 +2740,7 @@
       "demoAnswer": "Te ayudo a encontrar opciones y a continuar con la reserva."
     },
     "smartScoreboard": {
-      "title": "Marcador inteligente: el partido en vivo.",
+      "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Disponible hoy · En vivo",
       "text": "El marcador inteligente ya registra el encuentro en vivo y mantiene el resultado conectado con jugadores, competencia y la operación de la sede.",
       "demoAria": "Demostración visual del marcador inteligente",
@@ -2797,7 +2797,7 @@
     "matchIntelligence": {
       "kicker": "Próximamente · La visión del marcador",
       "accent": "Árbitro de visión inteligente",
-      "title": "Árbitro de visión inteligente: una mirada independiente para el juego.",
+      "title": "Árbitro de visión inteligente: una mirada independiente para el juego",
       "text": "Estamos entrenando un árbitro de visión inteligente e independiente. Con tres o cuatro cámaras, aprende a leer el juego y a marcar acciones según lo que ve, como lo haría un árbitro humano. Durante su evolución, jugadores y árbitros podrán supervisar sus decisiones.",
       "videoAria": "Marcador de partido Padbol en funcionamiento",
       "caption": "Demostración de marcador conectado",
