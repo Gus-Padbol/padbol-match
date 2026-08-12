@@ -22,6 +22,11 @@ import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
 import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
 import { capitalizeName } from '../utils/displayName';
 import { buildVoiceBookingCheckoutHref, resolveVoiceBookingConfirmation } from '../utils/chibiVoiceBooking';
+import {
+  chiviSpeechRecognitionLanguage,
+  requestChiviMicrophoneAccess,
+} from '../utils/chiviMicrophone';
+import { chooseChiviVoice } from '../utils/chiviVoice';
 import './ChatbotIA.css';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
@@ -918,21 +923,10 @@ export default function ChatbotIA() {
   useEffect(() => {
     uiRef.current = ui;
   }, [ui]);
-  const writingLocaleForVoice = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i -= 1) {
-      if (messages[i]?.role === 'user' && String(messages[i].content || '').trim()) {
-        return inferWritingLocaleCodeFromText(messages[i].content);
-      }
-    }
-    return navigatorLanguageToChatCode(typeof navigator !== 'undefined' ? navigator.language : 'es');
-  }, [messages]);
-
-  const speechRecLang = useMemo(() => {
-    const c = writingLocaleForVoice;
-    if (c === 'en') return 'en-US';
-    if (c === 'pt') return 'pt-BR';
-    return 'es-AR';
-  }, [writingLocaleForVoice]);
+  const speechRecLang = useMemo(
+    () => chiviSpeechRecognitionLanguage(padbolLang),
+    [padbolLang],
+  );
 
   const visible = useMemo(() => isChatbotIAVisiblePathname(location.pathname), [location.pathname]);
 
@@ -1199,7 +1193,10 @@ export default function ChatbotIA() {
       utter.onend = () => setTtsPlaying(false);
       utter.onerror = () => setTtsPlaying(false);
       utter.lang = bcp47LangForAssistantTts(t);
-      utter.rate = 0.92;
+      const preferredVoice = chooseChiviVoice(window.speechSynthesis.getVoices?.(), utter.lang);
+      if (preferredVoice) utter.voice = preferredVoice;
+      utter.rate = 1.02;
+      utter.pitch = 0.92;
       setTtsPlaying(true);
       window.speechSynthesis.speak(utter);
     } catch {
@@ -1429,7 +1426,7 @@ export default function ChatbotIA() {
     [navigate, sendMessage],
   );
 
-  const startVoice = useCallback(() => {
+  const startVoice = useCallback(async () => {
     const Ctor = getSpeechRecognitionCtor();
     if (!Ctor || !micSupported) return;
     if (voicePhase === 'processing' || loading || sessionEnded) return;
@@ -1447,6 +1444,23 @@ export default function ChatbotIA() {
     setVoiceFinal('');
     setVoiceInterim('');
     primeSpeechSynthesisFromUserGesture();
+    setVoicePhase('processing');
+
+    const microphoneAccess = await requestChiviMicrophoneAccess(
+      typeof navigator !== 'undefined' ? navigator.mediaDevices : null,
+    );
+    if (!microphoneAccess.ok) {
+      const u = uiRef.current;
+      setVoicePhase('idle');
+      if (microphoneAccess.reason === 'denied') {
+        setError(u?.errMicDenied || 'Permiso de micrófono denegado.');
+      } else if (microphoneAccess.reason === 'missing') {
+        setVoiceNotice(u?.sinVoz || 'No se detectó un micrófono.');
+      } else {
+        setError(u?.errVoiceStart || 'No se pudo iniciar el micrófono.');
+      }
+      return;
+    }
 
     let rec;
     try {
