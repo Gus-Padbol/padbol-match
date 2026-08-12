@@ -13,6 +13,11 @@ function baseLanguage(value) {
   return String(value || '').toLowerCase().split('-')[0];
 }
 
+export function chiviVoiceTargetLanguage(detectedLanguage) {
+  const language = String(detectedLanguage || '').toLowerCase();
+  return baseLanguage(language) === 'es' ? 'es-MX' : detectedLanguage;
+}
+
 export function chooseChiviVoice(voices, targetLanguage) {
   const list = Array.isArray(voices) ? voices : [];
   const target = String(targetLanguage || '').toLowerCase();
@@ -25,6 +30,11 @@ export function chooseChiviVoice(voices, targetLanguage) {
       const name = String(voice?.name || '').toLowerCase();
       const language = String(voice?.lang || '').toLowerCase();
       let score = language === target ? 100 : 55;
+      if (targetBase === 'es') {
+        if (/^es-(mx|us|co|419)$/.test(language)) score += 55;
+        else if (/^es-(ar|cl|pe|uy|ve|ec|bo|py|cr|pa|do|gt|hn|ni|sv|pr)$/.test(language)) score += 30;
+        else if (language === 'es-es') score -= 160;
+      }
       if (MALE_VOICE_NAMES.some((maleName) => name.includes(maleName))) score += 80;
       if (FEMALE_VOICE_NAMES.some((femaleName) => name.includes(femaleName))) score -= 80;
       if (/premium|enhanced|neural|natural|google|microsoft/.test(name)) score += 30;

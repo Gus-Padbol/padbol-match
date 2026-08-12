@@ -1,4 +1,4 @@
-import { chooseChiviVoice } from './chiviVoice';
+import { chiviVoiceTargetLanguage, chooseChiviVoice } from './chiviVoice';
 
 describe('Chivi voice selection', () => {
   it('prioritizes a masculine voice in the response language', () => {
@@ -8,6 +8,20 @@ describe('Chivi voice selection', () => {
       { name: 'Daniel', lang: 'en-GB', localService: true },
     ];
     expect(chooseChiviVoice(voices, 'es-AR')).toBe(voices[1]);
+  });
+
+  it('uses neutral Latin American Spanish for Chivi', () => {
+    expect(chiviVoiceTargetLanguage('es-AR')).toBe('es-MX');
+    expect(chiviVoiceTargetLanguage('fr-FR')).toBe('fr-FR');
+  });
+
+  it('prefers a Latin American male voice over a Spanish male voice', () => {
+    const voices = [
+      { name: 'Jorge Premium', lang: 'es-ES', localService: true },
+      { name: 'Juan', lang: 'es-MX', localService: true },
+      { name: 'Carlos', lang: 'es-CO', localService: true },
+    ];
+    expect(chooseChiviVoice(voices, 'es-MX')).toBe(voices[1]);
   });
 
   it('never chooses a voice from another language', () => {
