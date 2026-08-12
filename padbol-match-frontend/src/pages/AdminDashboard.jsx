@@ -18354,6 +18354,11 @@ export default function AdminDashboard({
             Altas enviadas por admin nacional e interés desde la web. Filtra por estado; las aprobadas y rechazadas siguen
             visibles.
           </p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
+            <button type="button" className="btn-primary" onClick={() => navigate('/admin/recorridos-externos')}>
+              Revisar recorridos de jugadores
+            </button>
+          </div>
           <div
             style={{
               display: 'flex',

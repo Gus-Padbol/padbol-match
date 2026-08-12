@@ -41,6 +41,8 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const TorneoCrear = lazy(() => import('./pages/TorneoCrear'));
 const FormEquipos = lazy(() => import('./pages/FormEquipos'));
 const MiPerfil = lazy(() => import('./pages/MiPerfil'));
+const RecorridoExterno = lazy(() => import('./pages/RecorridoExterno'));
+const AdminRecorridosExternos = lazy(() => import('./pages/AdminRecorridosExternos'));
 const PerfilPublico = lazy(() => import('./PerfilPublico'));
 const TorneoVista = lazy(() => import('./pages/TorneoVista'));
 const Rankings = lazy(() => import('./pages/Rankings'));
@@ -399,6 +401,7 @@ function AppRoutes() {
         <Route path="/join" element={<Navigate to="/unirse" replace />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
         <Route path="/mi-perfil" element={<MiPerfil />} />
+        <Route path="/mi-perfil/recorrido" element={<ProtectedRoute><RecorridoExterno /></ProtectedRoute>} />
         <Route path="/perfil/:userId" element={<PerfilPublico />} />
         <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
@@ -431,6 +434,7 @@ function AppRoutes() {
           path="/admin/padcoins/alertas"
           element={<Navigate to="/admin?tab=padcoins&section=alertas" replace />}
         />
+        <Route path="/admin/recorridos-externos" element={<ProtectedRoute><AdminRecorridosExternos /></ProtectedRoute>} />
         <Route
           path="/admin"
           element={

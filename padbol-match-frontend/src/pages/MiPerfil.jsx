@@ -2623,6 +2623,34 @@ export default function MiPerfil() {
         accessToken={session?.access_token ?? null}
       />
 
+      {!ocultarUiJugadorPorAdmin ? (
+        <section
+          style={{
+            marginBottom: 16,
+            padding: '20px 22px',
+            border: '1px solid rgba(225, 27, 34, 0.38)',
+            borderRadius: 14,
+            background: 'radial-gradient(circle at top right, rgba(225,27,34,.14), transparent 45%), var(--bg-card)',
+            boxShadow: '0 8px 24px rgba(0,0,0,.08)',
+          }}
+        >
+          <div style={{ color: '#e11b22', fontSize: 11, fontWeight: 900, letterSpacing: '.11em', textTransform: 'uppercase' }}>
+            Tu juego no empieza de cero
+          </div>
+          <h3 style={{ margin: '8px 0', color: 'var(--text-primary)', fontSize: 21 }}>Traé tu recorrido. Lo reconocemos.</h3>
+          <p style={{ margin: '0 0 14px', color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: 14 }}>
+            Subí capturas de tu ranking, categoría, partidos, torneos o logros. Las revisamos y te avisamos dentro de las próximas 24 horas.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/mi-perfil/recorrido')}
+            style={{ padding: '11px 16px', border: 0, borderRadius: 10, background: '#e11b22', color: '#fff', fontWeight: 900, cursor: 'pointer' }}
+          >
+            Traer mi recorrido →
+          </button>
+        </section>
+      ) : null}
+
       {errorMsg && !editando ? (
         <div
           style={{
