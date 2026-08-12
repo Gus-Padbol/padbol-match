@@ -9,6 +9,7 @@ import fr from './locales/fr.json';
 import pt from './locales/pt.json';
 import ar from './locales/ar.json';
 import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
+import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
 import { normalizePadbolLang } from '../utils/padbolLang';
 import { usePadbolI18n } from '../context/PadbolI18nContext';
 
@@ -38,16 +39,19 @@ const mergeLocale = (base, override) => {
 
 // Los fallbacks también se arman desde el inglés completo. Esta capa es la
 // que usan componentes antiguos que aún entregan defaults en español.
-const completeLocale = (baseLocale, override) => flattenLocale(mergeLocale(mergeLocale(en, baseLocale), override));
+const completeLocale = (baseLocale, override, code) => flattenLocale(mergeLocale(
+  mergeLocale(mergeLocale(en, baseLocale), { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] }),
+  override,
+));
 
 export const ES_FALLBACKS = completeLocale(es);
 export const EN_FALLBACKS = flattenLocale(en);
-export const IT_FALLBACKS = completeLocale(it);
-export const RO_FALLBACKS = completeLocale(ro);
-export const DE_FALLBACKS = completeLocale(de);
-export const FR_FALLBACKS = completeLocale(fr);
-export const PT_FALLBACKS = completeLocale(pt);
-export const AR_FALLBACKS = completeLocale(ar);
+export const IT_FALLBACKS = completeLocale(it, undefined, 'it');
+export const RO_FALLBACKS = completeLocale(ro, undefined, 'ro');
+export const DE_FALLBACKS = completeLocale(de, undefined, 'de');
+export const FR_FALLBACKS = completeLocale(fr, undefined, 'fr');
+export const PT_FALLBACKS = completeLocale(pt, undefined, 'pt-BR');
+export const AR_FALLBACKS = completeLocale(ar, undefined, 'ar');
 
 const FALLBACKS_BY_LANG = {
   es: ES_FALLBACKS,
@@ -57,18 +61,18 @@ const FALLBACKS_BY_LANG = {
   de: DE_FALLBACKS,
   fr: FR_FALLBACKS,
   'pt-BR': PT_FALLBACKS,
-  'pt-PT': completeLocale(pt, ADDITIONAL_LOCALE_OVERRIDES['pt-PT']),
+  'pt-PT': completeLocale(pt, ADDITIONAL_LOCALE_OVERRIDES['pt-PT'], 'pt-PT'),
   ar: AR_FALLBACKS,
-  'fa-IR': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['fa-IR']),
-  'nl-BE': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['nl-BE']),
-  'nl-NL': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['nl-NL']),
-  sv: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.sv),
-  el: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.el),
-  hu: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.hu),
-  he: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.he),
-  pl: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.pl),
-  uk: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.uk),
-  af: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.af),
+  'fa-IR': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['fa-IR'], 'fa-IR'),
+  'nl-BE': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['nl-BE'], 'nl-BE'),
+  'nl-NL': completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES['nl-NL'], 'nl-NL'),
+  sv: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.sv, 'sv'),
+  el: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.el, 'el'),
+  hu: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.hu, 'hu'),
+  he: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.he, 'he'),
+  pl: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.pl, 'pl'),
+  uk: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.uk, 'uk'),
+  af: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.af, 'af'),
 };
 
 export function getLocaleFallbacks(lang) {

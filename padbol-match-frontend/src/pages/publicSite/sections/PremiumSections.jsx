@@ -248,17 +248,19 @@ export function PlayerPathSection() {
 /** El jugador conserva su recorrido deportivo al incorporarse a la plataforma. */
 export function PlayerRecordSection() {
   const config = PUBLIC_SITE_SECTIONS.playerRecord;
+  const text = usePublicSiteText();
+  const itemKeys = ['results', 'tournaments', 'ranking', 'achievements'];
   return (
     <SectionShell id={config.id} className="ps-section--player-record" titleId="ps-player-record-title">
       <div className="ps-player-record__layout">
-        <p className="ps-kicker">TU JUEGO NO EMPIEZA DE CERO</p>
+        <p className="ps-kicker">{text('publicSite.playerRecord.kicker')}</p>
         <div>
-          <h2 id="ps-player-record-title">Traé tu <span className="ps-title-accent">recorrido.</span> Lo reconocemos.</h2>
-          <p className="ps-player-record__lead">Si ya jugaste, competiste y construiste un historial, eso vale. No tenés que dejar atrás tu camino para sumarte a Padbol Match.</p>
-          <p className="ps-player-record__copy">Traé los datos de donde jugabas antes: resultados, torneos, ranking, estadísticas y logros. Los revisamos y los incorporamos para que tu perfil refleje el jugador que ya sos.</p>
-          <p className="ps-player-record__copy"><strong>Tus datos son tuyos.</strong> Si algún día querés llevarte todo tu recorrido, vas a poder hacerlo cuando quieras.</p>
-          <div className="ps-player-record__items" aria-label="Información que se puede reconocer en el recorrido deportivo">
-            <span>Resultados y partidos</span><span>Torneos y posiciones</span><span>Ranking y estadísticas</span><span>Logros y evolución</span>
+          <h2 id="ps-player-record-title">{text('publicSite.playerRecord.title')}</h2>
+          <p className="ps-player-record__lead">{text('publicSite.playerRecord.lead')}</p>
+          <p className="ps-player-record__copy">{text('publicSite.playerRecord.copy')}</p>
+          <p className="ps-player-record__copy"><strong>{text('publicSite.playerRecord.ownershipStrong')}</strong> {text('publicSite.playerRecord.ownership')}</p>
+          <div className="ps-player-record__items" aria-label={text('publicSite.playerRecord.itemsAria')}>
+            {itemKeys.map((key) => <span key={key}>{text(`publicSite.playerRecord.items.${key}`)}</span>)}
           </div>
         </div>
       </div>

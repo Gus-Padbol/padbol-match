@@ -8,9 +8,9 @@ describe('traducciones seguras', () => {
       .toBe('3 of  spots');
   });
 
-  it('usa el catálogo inglés antes de exponer una clave técnica faltante', () => {
+  it('usa el catálogo completo del idioma antes de exponer una clave técnica', () => {
     expect(resolveTranslation('publicSite.status.title', 'publicSite.status.title', undefined, 'it'))
-      .toBe('Padbol Match adds new sports');
+      .toBe('Padbol Match aggiunge nuovi sport');
   });
 
   it('no deja que un default histórico en español mezcle una interfaz en inglés', () => {
