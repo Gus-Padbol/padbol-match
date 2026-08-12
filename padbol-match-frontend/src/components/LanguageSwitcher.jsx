@@ -59,6 +59,7 @@ export default function LanguageSwitcher({ variant = 'header', compact = false, 
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const listId = useId();
+  const activeLanguage = PADBOL_LANGUAGES.find((option) => option.code === lang) || PADBOL_LANGUAGES[2];
 
   const resolvedVariant =
     variant === 'buttons' && compact ? 'header' : variant === 'buttons' ? 'header' : variant;
@@ -103,13 +104,18 @@ export default function LanguageSwitcher({ variant = 'header', compact = false, 
       <button
         type="button"
         className="lang-switcher__trigger"
-        aria-label={t('general.language')}
+        aria-label={`${t('general.language')}: ${activeLanguage.label}`}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         onClick={() => setOpen((v) => !v)}
       >
         <TablerWorldIcon size={resolvedVariant === 'landing' ? 17 : 16} />
+        {resolvedVariant === 'landing' ? (
+          <span className="lang-switcher__current" aria-hidden="true">
+            {activeLanguage.code.split('-')[0].toUpperCase()}
+          </span>
+        ) : null}
         <ChevronDownIcon size={11} />
       </button>
       {open ? (

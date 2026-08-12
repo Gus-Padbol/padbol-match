@@ -39,10 +39,13 @@ const mergeLocale = (base, override) => {
 
 // Los fallbacks también se arman desde el inglés completo. Esta capa es la
 // que usan componentes antiguos que aún entregan defaults en español.
-const completeLocale = (baseLocale, override, code) => flattenLocale(mergeLocale(
-  mergeLocale(mergeLocale(en, baseLocale), { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] }),
-  override,
-));
+const completeLocale = (baseLocale, override, code) => {
+  const base = mergeLocale(en, baseLocale);
+  const withPublicSite = code && PUBLIC_SITE_GENERATED_LOCALES[code]
+    ? mergeLocale(base, { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] })
+    : base;
+  return flattenLocale(mergeLocale(withPublicSite, override));
+};
 
 export const ES_FALLBACKS = completeLocale(es);
 export const EN_FALLBACKS = flattenLocale(en);
