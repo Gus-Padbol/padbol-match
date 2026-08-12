@@ -93,7 +93,7 @@ export default function RecorridoExterno() {
           <span>Tu juego no empieza de cero</span>
           <h1>Traé tu recorrido. Lo reconocemos.</h1>
           <p>Subí capturas donde se vean tu perfil y los datos que querés reconocer. Las revisaremos y te avisaremos dentro de las próximas 24 horas.</p>
-          <small>Nunca te pediremos la contraseña de otra plataforma.</small>
+          <small>Nunca te pediremos la contraseña de otra plataforma. Tus datos son tuyos y podrás llevarte todo tu recorrido cuando quieras.</small>
         </section>
 
         {!pending && <form className="external-history-form" onSubmit={submit}>

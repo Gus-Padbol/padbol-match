@@ -256,6 +256,7 @@ export function PlayerRecordSection() {
           <h2 id="ps-player-record-title">Traé tu <span className="ps-title-accent">recorrido.</span> Lo reconocemos.</h2>
           <p className="ps-player-record__lead">Si ya jugaste, competiste y construiste un historial, eso vale. No tenés que dejar atrás tu camino para sumarte a Padbol Match.</p>
           <p className="ps-player-record__copy">Traé los datos de donde jugabas antes: resultados, torneos, ranking, estadísticas y logros. Los revisamos y los incorporamos para que tu perfil refleje el jugador que ya sos.</p>
+          <p className="ps-player-record__copy"><strong>Tus datos son tuyos.</strong> Si algún día querés llevarte todo tu recorrido, vas a poder hacerlo cuando quieras.</p>
           <div className="ps-player-record__items" aria-label="Información que se puede reconocer en el recorrido deportivo">
             <span>Resultados y partidos</span><span>Torneos y posiciones</span><span>Ranking y estadísticas</span><span>Logros y evolución</span>
           </div>
