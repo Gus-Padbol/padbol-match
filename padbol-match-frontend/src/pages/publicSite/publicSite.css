@@ -3954,29 +3954,28 @@ html.public-site-active #root {
     padding-right: 0;
   }
 
-  /* El recorrido de jugadores conserva las tarjetas desplazables también en
-     escritorio: evita que una grilla comprima títulos y descripciones. */
+  /* En escritorio el recorrido completo queda visible de una sola mirada.
+     El carrusel desplazable se conserva únicamente en móvil y tablet. */
   .ps-section--players .ps-paths__list { display: none; }
 
   .ps-section--players .ps-player-deck {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
     width: 100%;
     margin: 28px 0 0;
-    padding: 2px 72px 14px 0;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    padding: 2px 0 0;
+    overflow: visible;
   }
 
   .ps-section--players .ps-player-deck::-webkit-scrollbar { display: none; }
 
   .ps-section--players .ps-player-deck__card {
     position: relative;
-    flex: 0 0 min(34vw, 390px);
-    min-height: 218px;
-    padding: 21px 22px;
+    width: 100%;
+    min-width: 0;
+    min-height: 196px;
+    padding: 19px 20px;
     overflow: hidden;
     border: 1px solid rgba(225, 27, 34, 0.42);
     border-radius: 22px;
@@ -3986,7 +3985,6 @@ html.public-site-active #root {
     font-family: var(--ps-font-body);
     text-align: left;
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
-    scroll-snap-align: start;
   }
 
   .ps-section--players .ps-player-deck__card:nth-child(even) {
@@ -3994,9 +3992,9 @@ html.public-site-active #root {
   }
 
   .ps-section--players .ps-player-deck__number { display: block; color: #ff5962; font-size: 0.72rem; font-weight: 850; letter-spacing: 0.08em; }
-  .ps-section--players .ps-player-deck__card > img { width: 34px; height: 34px; margin-top: 10px; object-fit: contain; }
-  .ps-section--players .ps-player-deck__card strong { display: block; margin-top: 14px; font-family: var(--ps-font-display); font-size: 1.18rem; line-height: 1.06; letter-spacing: 0.01em; text-transform: uppercase; }
-  .ps-section--players .ps-player-deck__card p { margin: 12px 0 0; color: #cbd5e1; font-size: 0.94rem; line-height: 1.48; }
+  .ps-section--players .ps-player-deck__card > img { width: 32px; height: 32px; margin-top: 9px; object-fit: contain; }
+  .ps-section--players .ps-player-deck__card strong { display: block; margin-top: 12px; font-family: var(--ps-font-display); font-size: 1.06rem; line-height: 1.06; letter-spacing: 0.01em; text-transform: uppercase; }
+  .ps-section--players .ps-player-deck__card p { margin: 10px 0 0; color: #cbd5e1; font-size: 0.88rem; line-height: 1.44; }
   .ps-section--players .ps-player-deck__card em { display: none; }
 }
 
