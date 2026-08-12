@@ -10,6 +10,7 @@ import fr from './locales/fr.json';
 import pt from './locales/pt.json';
 import ar from './locales/ar.json';
 import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
+import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
 import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
 const STORAGE_KEY = 'padbol_lang';
@@ -38,7 +39,7 @@ function mergeLocale(base, override) {
 // Esto evita pantallas mezcladas (por ejemplo, interfaz inglesa con acciones
 // o estados en español) mientras se mantienen las traducciones existentes.
 const englishBackedLocale = (code, baseLocale = {}) => mergeLocale(
-  mergeLocale(en, baseLocale),
+  mergeLocale(mergeLocale(en, baseLocale), { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] }),
   ADDITIONAL_LOCALE_OVERRIDES[code],
 );
 

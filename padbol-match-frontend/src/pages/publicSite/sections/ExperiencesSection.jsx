@@ -12,7 +12,7 @@ import { AccentWords } from './PremiumSections';
  * Vista fija real de cada experiencia. Una sola opción es protagonista por vez:
  * el usuario elige la identidad y no tiene que perseguir un carrusel automático.
  */
-function ExperiencePhonePreview({ experience, demoLabel }) {
+function ExperiencePhonePreview({ experience, demoLabel, text }) {
   const videoRef = useRef(null);
   const vars = {
     '--exp-accent': experience.accent,
@@ -72,7 +72,7 @@ function ExperiencePhonePreview({ experience, demoLabel }) {
   }, [experience.id]);
 
   return (
-    <div className={`ps-exp-phone is-${experience.id}`} style={vars} aria-label={`Vista previa ${experience.name}`}>
+    <div className={`ps-exp-phone is-${experience.id}`} style={vars} aria-label={`${demoLabel}: ${experience.name}`}>
       <div className="ps-exp-phone__screen">
         <div className="ps-exp-phone__statusbar">
           <span className="ps-exp-phone__brand">Padbol Match</span>
@@ -83,20 +83,20 @@ function ExperiencePhonePreview({ experience, demoLabel }) {
           <strong>{experience.name}</strong>
           <span className="ps-exp-phone__chiprow">
             <SportIcon deporte="padbol" size={14} color="currentColor" />
-            Padbol Club Norte · 20:30
+            {text('publicSite.experiences.preview.club')} · 20:30
           </span>
         </div>
 
         <div className="ps-exp-phone__card ps-exp-phone__card--main">
-          <span className="ps-exp-phone__label">Reserva</span>
-          <strong>Cancha 2 · 60 min</strong>
-          <span className="ps-exp-phone__meta">2/4 jugadores confirmados</span>
-          <span className="ps-exp-phone__cta">Confirmar</span>
+          <span className="ps-exp-phone__label">{text('publicSite.experiences.preview.booking')}</span>
+          <strong>{text('publicSite.experiences.preview.court')}</strong>
+          <span className="ps-exp-phone__meta">{text('publicSite.experiences.preview.playersConfirmed')}</span>
+          <span className="ps-exp-phone__cta">{text('publicSite.experiences.preview.confirm')}</span>
         </div>
 
         <div className="ps-exp-phone__row">
           <div className="ps-exp-phone__card">
-            <span className="ps-exp-phone__label">Ranking</span>
+            <span className="ps-exp-phone__label">{text('publicSite.experiences.preview.ranking')}</span>
             <strong>#12</strong>
           </div>
           <div className="ps-exp-phone__card">
@@ -122,7 +122,7 @@ function ExperiencePhonePreview({ experience, demoLabel }) {
           playsInline
           preload="auto"
           poster={experience.media.poster}
-          aria-label={`Demostración de ${experience.name}`}
+          aria-label={`${demoLabel}: ${experience.name}`}
         >
           <source src={experience.media.video} type="video/mp4" />
         </video>
@@ -218,7 +218,6 @@ export default function ExperiencesSection() {
                 {String(activeIndex + 1).padStart(2, '0')} / 05
               </p>
               <h3>{active.name}</h3>
-              <p className="ps-exp-stage__audience">{active.audience}</p>
               <p>{text(`publicSite.experiences.items.${activeId}.text`)}</p>
 
               <div className="ps-exp-stage__controls">
@@ -247,11 +246,12 @@ export default function ExperiencesSection() {
           <ExperiencePhonePreview
             experience={active}
             demoLabel={text('publicSite.experiences.demoBadge')}
+            text={text}
           />
         </div>
 
         <div className="ps-exp-mobile-detail" aria-live="polite">
-          <p>{active.audience}</p>
+          <p>{text(`publicSite.experiences.items.${activeId}.text`)}</p>
         </div>
 
         <p className="ps-exp-note">{text('publicSite.experiences.note')}</p>

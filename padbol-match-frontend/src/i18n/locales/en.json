@@ -2742,6 +2742,16 @@
         }
       }
     },
+    "playerRecord": {
+      "kicker": "YOUR GAME DOES NOT START FROM ZERO",
+      "title": "Bring your record. We recognize it.",
+      "lead": "If you have already played, competed and built a history, that matters. You do not have to leave your journey behind to join Padbol Match.",
+      "copy": "Send us your previous results, tournaments, ranking, statistics and achievements. We review and add them so your profile reflects the player you already are.",
+      "ownershipStrong": "Your data belongs to you.",
+      "ownership": "You can take your complete sports record with you whenever you want.",
+      "itemsAria": "Information that can be recognized in your sports record",
+      "items": { "results": "Results and matches", "tournaments": "Tournaments and positions", "ranking": "Ranking and statistics", "achievements": "Achievements and progress" }
+    },
     "venuePath": {
       "title": "For venues and organizations",
       "text": "One operation for Padbol, Padel, Pickleball, and Tennis: activate players, fill schedules, record results, and sustain each venue’s continuity.",
@@ -2997,7 +3007,12 @@
       "language": "Language",
       "copyright": "Padbol Match. All rights reserved.",
       "community": "Community",
-      "scoreboard": "Smart scoreboard"
+      "scoreboard": "Smart scoreboard",
+      "productOf": "A Padbol product",
+      "visitPadbol": "Visit Padbol",
+      "contactHelp": "Need help? Contact us",
+      "brandAria": "Go to Padbol Match",
+      "legalOwner": "Operated by Entertainment and Sports Services LLC."
     },
     "paths": {
       "aria": "Pathways"

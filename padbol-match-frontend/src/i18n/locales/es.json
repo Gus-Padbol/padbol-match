@@ -2359,6 +2359,16 @@
         }
       }
     },
+    "playerRecord": {
+      "kicker": "TU JUEGO NO EMPIEZA DE CERO",
+      "title": "Trae tu recorrido. Lo reconocemos.",
+      "lead": "Si ya jugaste, competiste y construiste un historial, eso vale. No tienes que dejar atrás tu camino para sumarte a Padbol Match.",
+      "copy": "Envíanos tus resultados, torneos, ranking, estadísticas y logros anteriores. Los revisamos y los incorporamos para que tu perfil refleje el jugador que ya eres.",
+      "ownershipStrong": "Tus datos son tuyos.",
+      "ownership": "Puedes llevarte todo tu recorrido deportivo cuando quieras.",
+      "itemsAria": "Información que se puede reconocer en el recorrido deportivo",
+      "items": { "results": "Resultados y partidos", "tournaments": "Torneos y posiciones", "ranking": "Ranking y estadísticas", "achievements": "Logros y evolución" }
+    },
     "venuePath": {
       "title": "Para sedes y organizaciones",
       "text": "Una misma operación para Padbol, Pádel, Pickleball y Tenis: activa jugadores, ocupa horarios, registra resultados y sostiene la continuidad de cada sede.",
@@ -2662,7 +2672,12 @@
       "language": "Idioma",
       "copyright": "Padbol Match. Todos los derechos reservados.",
       "community": "Comunidad",
-      "scoreboard": "Marcador inteligente"
+      "scoreboard": "Marcador inteligente",
+      "productOf": "Un producto de Padbol",
+      "visitPadbol": "Visitar Padbol",
+      "contactHelp": "¿Necesitas ayuda? Contáctanos",
+      "brandAria": "Ir a Padbol Match",
+      "legalOwner": "Operado por Entertainment and Sports Services LLC."
     },
     "paths": {
       "aria": "Recorridos"
