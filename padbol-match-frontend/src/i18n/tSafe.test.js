@@ -1,4 +1,4 @@
-import { interpolateTranslation, resolveTranslation } from './tSafe';
+import { getLocaleFallbacks, interpolateTranslation, resolveTranslation } from './tSafe';
 
 describe('traducciones seguras', () => {
   it('nunca deja variables de interpolación visibles', () => {
@@ -20,5 +20,18 @@ describe('traducciones seguras', () => {
       'Padbol Match incorpora nuevos deportes',
       'en',
     )).toBe('Padbol Match adds new sports');
+  });
+
+  it('conserva el catálogo público español en vez de reemplazarlo por inglés', () => {
+    expect(getLocaleFallbacks('es')['publicSite.nav.players']).toBe('Para jugadores');
+    expect(getLocaleFallbacks('es')['publicSite.hero.claim']).toBe('La aplicación deportiva que conecta todo');
+  });
+
+  it.each([
+    ['it', 'Per i giocatori'],
+    ['ro', 'Pentru jucători'],
+    ['fr', 'Pour les joueurs'],
+  ])('aplica el catálogo público completo de %s', (code, expected) => {
+    expect(getLocaleFallbacks(code)['publicSite.nav.players']).toBe(expected);
   });
 });

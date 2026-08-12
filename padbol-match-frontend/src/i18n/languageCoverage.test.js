@@ -35,4 +35,15 @@ describe('language coverage', () => {
       }
     }
   });
+
+  it.each([
+    ['es', 'Para jugadores'],
+    ['it', 'Per i giocatori'],
+    ['ro', 'Pentru jucători'],
+    ['fr', 'Pour les joueurs'],
+  ])('cambia realmente el contenido público a %s', async (language, expected) => {
+    await i18n.changeLanguage(language);
+    expect(i18n.language).toBe(language);
+    expect(i18n.t('publicSite.nav.players')).toBe(expected);
+  });
 });

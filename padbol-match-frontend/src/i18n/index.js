@@ -38,10 +38,13 @@ function mergeLocale(base, override) {
 // inglés y nunca hereda el texto por defecto en español de un componente.
 // Esto evita pantallas mezcladas (por ejemplo, interfaz inglesa con acciones
 // o estados en español) mientras se mantienen las traducciones existentes.
-const englishBackedLocale = (code, baseLocale = {}) => mergeLocale(
-  mergeLocale(mergeLocale(en, baseLocale), { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] }),
-  ADDITIONAL_LOCALE_OVERRIDES[code],
-);
+const englishBackedLocale = (code, baseLocale = {}) => {
+  const base = mergeLocale(en, baseLocale);
+  const withPublicSite = PUBLIC_SITE_GENERATED_LOCALES[code]
+    ? mergeLocale(base, { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] })
+    : base;
+  return mergeLocale(withPublicSite, ADDITIONAL_LOCALE_OVERRIDES[code]);
+};
 
 i18n
   .use(LanguageDetector)

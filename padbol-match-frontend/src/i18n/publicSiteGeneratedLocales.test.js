@@ -33,4 +33,14 @@ describe('public site translated catalogs', () => {
       .map(([, value]) => value);
     expect(titles.filter((value) => value.endsWith('.'))).toEqual([]);
   });
+
+  it.each([
+    ['it', 'Per i giocatori'],
+    ['ro', 'Pentru jucători'],
+    ['fr', 'Pour les joueurs'],
+  ])('%s does not inherit the old Spanish navigation', (code, expected) => {
+    expect(generated[code].nav.players).toBe(expected);
+    expect(generated[code].nav.players).not.toBe('Para jugadores');
+    expect(generated[code].playerPath.items.book.title).not.toBe('Reservar');
+  });
 });
