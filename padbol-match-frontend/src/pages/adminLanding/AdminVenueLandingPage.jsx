@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PublicSiteLayout from '../publicSite/PublicSiteLayout';
 import '../publicSite/publicSite.css';
@@ -19,16 +19,21 @@ const modules = [
 ];
 
 function useDocumentMeta() {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previousTitle = document.title;
+    const previousScrollRestoration = window.history.scrollRestoration;
     document.title = 'Administra tu sede | Padbol Match';
     // La landing de sedes es una sección de la web pública: comparte el mismo
     // documento, header, ancho y comportamiento responsive que /plataforma.
     document.documentElement.classList.add('public-site-active', 'admin-landing-active');
+    // No reutilizar el desplazamiento (incluido X) de otra pantalla pública al
+    // volver a esta ruta. La landing siempre empieza desde su composición.
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
     // Esta ruta no tiene ningún contenido desplazable en X. Safari puede
     // conservar o recuperar una posición horizontal anterior al volver a la
     // página; la normalizamos de forma explícita para que nunca abra corrida.
     let frameId = null;
+    const resetTimers = [];
     const resetHorizontalScroll = () => {
       if (window.scrollX === 0 && document.documentElement.scrollLeft === 0 && document.body.scrollLeft === 0) return;
       window.scrollTo({ left: 0, top: window.scrollY, behavior: 'auto' });
@@ -42,14 +47,28 @@ function useDocumentMeta() {
         resetHorizontalScroll();
       });
     };
+    const scheduleHorizontalReset = () => {
+      // Safari puede restaurar la posición al terminar de pintar, después del
+      // primer frame de React. Repetimos el mismo ajuste brevemente solo al
+      // entrar para que jamás quede fija una vista corrida.
+      [0, 80, 260, 700].forEach((delay) => {
+        resetTimers.push(window.setTimeout(resetHorizontalScroll, delay));
+      });
+    };
 
     window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
-    window.requestAnimationFrame(resetHorizontalScroll);
+    scheduleHorizontalReset();
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('pageshow', scheduleHorizontalReset);
+    window.visualViewport?.addEventListener('scroll', scheduleHorizontalReset, { passive: true });
     return () => {
       if (frameId != null) window.cancelAnimationFrame(frameId);
+      resetTimers.forEach((timerId) => window.clearTimeout(timerId));
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('pageshow', scheduleHorizontalReset);
+      window.visualViewport?.removeEventListener('scroll', scheduleHorizontalReset);
       document.title = previousTitle;
+      if ('scrollRestoration' in window.history) window.history.scrollRestoration = previousScrollRestoration;
       document.documentElement.classList.remove('public-site-active', 'admin-landing-active');
     };
   }, []);
