@@ -800,20 +800,6 @@ html.admin-landing-active body {
   font-weight: 800;
 }
 
-/* En escritorio esta composición necesita respirar a la izquierda de la
- * ilustración. Desplazamos el conjunto (imagen + texto) hacia la derecha sin
- * modificar el ancho del documento ni la lectura en móvil. */
-@media (min-width: 1100px) {
-  .admin-landing__data-ownership::before {
-    transform: translateX(clamp(120px, 15vw, 300px));
-  }
-
-  .admin-landing__data-ownership-grid {
-    width: calc(100% - clamp(120px, 15vw, 300px));
-    margin-left: clamp(120px, 15vw, 300px);
-  }
-}
-
 @media (max-width: 600px) {
   /* Keep every section comfortably inside the viewport on phones. */
   .admin-landing .admin-landing__shell {
