@@ -634,6 +634,22 @@ html.admin-landing-active #root {
     linear-gradient(115deg, #12101a 0%, #080d17 52%, #170e15 100%);
 }
 
+/* La cancha no ilustra una promesa abstracta: es la sede de la que salen y a
+ * la que pueden volver sus datos. El degradado deja la copia completamente
+ * legible y conserva la imagen como un plano de fondo, no como un afiche. */
+.admin-landing__data-ownership::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0 auto 0 0;
+  width: min(48vw, 700px);
+  background:
+    linear-gradient(90deg, rgba(8, 10, 17, .08) 0%, rgba(8, 10, 17, .16) 48%, rgba(8, 10, 17, .94) 100%),
+    linear-gradient(0deg, rgba(8, 10, 17, .14), rgba(8, 10, 17, .14)),
+    url('../../assets/data-ownership-padbol-court.png') left center / cover no-repeat;
+  content: '';
+  pointer-events: none;
+}
+
 .admin-landing__data-ownership::after {
   content: 'TUYO';
   position: absolute;
@@ -733,6 +749,11 @@ html.admin-landing-active #root {
   .admin-landing__hero-flow b { width: 25px; height: 25px; font-size: 9px; }
   .admin-landing__hero-flow i { width: 12px; flex-basis: 12px; }
   .admin-landing__data-ownership { padding: 70px 0; }
+  .admin-landing__data-ownership::before {
+    width: 100%;
+    opacity: .22;
+    background-position: left bottom;
+  }
   .admin-landing__data-ownership-grid { grid-template-columns: 1fr; gap: 22px; }
   .admin-landing__data-ownership-kicker { margin: 0; }
   .admin-landing__data-ownership div > p:not(.admin-landing__data-ownership-lead) { font-size: 16px; }
