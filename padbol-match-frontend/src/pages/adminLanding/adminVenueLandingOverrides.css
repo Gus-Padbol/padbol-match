@@ -11,28 +11,52 @@ html.admin-landing-active body,
 html.admin-landing-active #root {
   background: #070b14;
   color: #f8fafc;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .admin-landing {
   width: 100%;
+  min-width: 0;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
-/* Chrome en iPhone usa WebKit. En ese motor, una ruta cargada desde el shell
- * anterior puede conservar un ancho de bloque calculado. Esta landing es parte
- * de la web pública, por lo que sus tres niveles estructurales se anclan al
- * viewport y no heredan ninguna columna interna. */
+.admin-landing main,
+.admin-landing section,
+.admin-landing__shell,
+.admin-landing__hero-grid,
+.admin-landing__guided-grid,
+.admin-landing__module-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-landing__hero-grid > *,
+.admin-landing__guided-grid > *,
+.admin-landing__module-grid > * {
+  min-width: 0;
+}
+
+/* La landing ocupa el ancho disponible del shell público. `100vw` sumaba el
+ * ancho de la barra de scroll y desplazaba todo el documento lateralmente. */
 @supports (-webkit-touch-callout: none) {
   .public-site:has(.admin-landing),
   .public-site:has(.admin-landing) #public-site-main,
   .public-site:has(.admin-landing) .admin-landing {
-    width: 100vw;
-    min-width: 100vw;
-    max-width: 100vw;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     margin-left: 0;
     margin-right: 0;
   }
+}
+
+/* Ningún panel puede forzar una columna más ancha que el viewport. */
+.admin-landing__hero-panel,
+.admin-landing__conversation {
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-landing__header-inner {
