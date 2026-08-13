@@ -416,10 +416,21 @@ html.admin-landing-active #root {
 
 .admin-landing__conversation--listening {
   display: grid;
+  width: min(100%, 390px);
+  min-height: 324px;
+  aspect-ratio: 1 / .88;
+  justify-self: end;
+  align-content: center;
   justify-items: center;
-  min-height: 0;
-  padding: 24px;
+  padding: 24px 22px;
   text-align: center;
+}
+
+/* La ficha de Chivi es una presencia breve, no una segunda columna panorámica:
+ * mantiene todo el mensaje visible en una pantalla de escritorio normal. */
+.admin-landing__guided-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
+  gap: clamp(32px, 5vw, 64px);
 }
 
 .admin-landing__conversation--listening .admin-landing__panel-label {
@@ -429,18 +440,36 @@ html.admin-landing-active #root {
 }
 
 .admin-landing__chivi-pulse {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  width: 112px;
-  height: 52px;
-  margin-bottom: 14px;
+  width: 132px;
+  height: 76px;
+  margin-bottom: 17px;
   border-radius: 999px;
   background: radial-gradient(circle, rgba(237, 28, 46, .2), transparent 67%);
 }
 
+.admin-landing__chivi-pulse::before,
+.admin-landing__chivi-pulse::after {
+  position: absolute;
+  inset: 9px 28px;
+  border: 1px solid rgba(255, 89, 103, .46);
+  border-radius: 999px;
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(.78);
+  animation: admin-chivi-listening-ring 1.8s ease-out infinite;
+}
+
+.admin-landing__chivi-pulse::after { animation-delay: .9s; }
+
 .admin-landing__chivi-pulse i {
+  position: relative;
+  z-index: 1;
   width: 4px;
   height: 12px;
   border-radius: 999px;
@@ -490,9 +519,31 @@ html.admin-landing-active #root {
   50% { height: 38px; opacity: 1; transform: scaleY(1); }
 }
 
+@keyframes admin-chivi-listening-ring {
+  0% { opacity: 0; transform: scale(.76); }
+  28% { opacity: .8; }
+  100% { opacity: 0; transform: scale(1.36); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .admin-landing__conversation-status i { animation: none; height: 10px; }
   .admin-landing__hero-flow i { animation: none; }
+  .admin-landing__chivi-pulse::before,
+  .admin-landing__chivi-pulse::after,
+  .admin-landing__chivi-pulse i { animation: none; }
+}
+
+@media (max-width: 900px) {
+  .admin-landing__guided-grid { grid-template-columns: 1fr; }
+  .admin-landing__conversation--listening { justify-self: start; }
+}
+
+@media (max-width: 600px) {
+  .admin-landing__conversation--listening {
+    width: 100%;
+    min-height: 290px;
+    aspect-ratio: auto;
+  }
 }
 
 .admin-landing__modal-backdrop {
