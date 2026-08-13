@@ -15,6 +15,16 @@ html.admin-landing-active #root {
   overflow-x: clip;
 }
 
+/* El documento completo no debe desplazarse lateralmente: esta landing no
+ * tiene carruseles de escritorio ni contenido fuera del viewport. */
+html.admin-landing-active,
+html.admin-landing-active body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
 .admin-landing {
   width: 100%;
   min-width: 0;
