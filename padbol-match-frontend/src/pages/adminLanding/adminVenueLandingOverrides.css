@@ -383,6 +383,7 @@ html.admin-landing-active body {
 .admin-landing__serve-status i { width:6px; height:6px; border-radius:50%; background:#57e485; animation:admin-serve 1.25s ease-out infinite; }
 .admin-landing__pulse-team--serving > span { display:none; }
 .admin-landing__pulse-score > b i { color:#ed1c2e; }
+.admin-landing__pulse-team--right { text-align:right; }
 
 @media (min-width: 1024px) {
   .admin-landing__pulse { width:92%; justify-self:end; }
@@ -752,6 +753,23 @@ html.admin-landing-active body {
   align-items: center;
 }
 
+/* La transmisión no es una foto: se extiende debajo del relato y conecta la
+ * información de la sede con la decisión que toma a la derecha. */
+.admin-landing__data-ownership-grid::before {
+  position: absolute;
+  z-index: -1;
+  left: -7%;
+  right: -5%;
+  bottom: -15%;
+  height: min(30vw, 390px);
+  background:
+    linear-gradient(90deg, rgba(8, 11, 19, .06) 0%, rgba(8, 11, 19, .18) 31%, rgba(8, 11, 19, .82) 63%, rgba(8, 11, 19, .96) 100%),
+    url('../../assets/data-ownership-visual.png') left bottom / min(73%, 980px) auto no-repeat;
+  content: '';
+  opacity: .98;
+  pointer-events: none;
+}
+
 .admin-landing__data-ownership-visual {
   align-self: stretch;
   display: flex;
@@ -769,11 +787,7 @@ html.admin-landing-active body {
 }
 
 .admin-landing__data-ownership-visual img {
-  display: block;
-  width: min(100%, 420px);
-  height: auto;
-  margin-top: auto;
-  object-fit: contain;
+  display: none;
 }
 
 .admin-landing__data-ownership-copy {
@@ -849,9 +863,10 @@ html.admin-landing-active body {
   .admin-landing__hero-flow b { width: 25px; height: 25px; font-size: 9px; }
   .admin-landing__hero-flow i { width: 12px; flex-basis: 12px; }
   .admin-landing__data-ownership { padding: 70px 0; }
+  .admin-landing__data-ownership-grid::before { display: none; }
   .admin-landing__data-ownership-grid { grid-template-columns: 1fr; gap: 22px; }
   .admin-landing__data-ownership-kicker { margin: 0; }
-  .admin-landing__data-ownership-visual img { width: min(100%, 340px); margin-top: 18px; }
+  .admin-landing__data-ownership-visual img { display:block; width: min(100%, 340px); margin-top: 18px; }
   .admin-landing__data-ownership-copy { justify-self: start; }
   .admin-landing__data-ownership div > p:not(.admin-landing__data-ownership-lead) { font-size: 16px; }
 }
