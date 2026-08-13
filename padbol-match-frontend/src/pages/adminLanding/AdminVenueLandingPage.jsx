@@ -25,8 +25,30 @@ function useDocumentMeta() {
     // La landing de sedes es una sección de la web pública: comparte el mismo
     // documento, header, ancho y comportamiento responsive que /plataforma.
     document.documentElement.classList.add('public-site-active', 'admin-landing-active');
-    window.scrollTo(0, 0);
+    // Esta ruta no tiene ningún contenido desplazable en X. Safari puede
+    // conservar o recuperar una posición horizontal anterior al volver a la
+    // página; la normalizamos de forma explícita para que nunca abra corrida.
+    let frameId = null;
+    const resetHorizontalScroll = () => {
+      if (window.scrollX === 0 && document.documentElement.scrollLeft === 0 && document.body.scrollLeft === 0) return;
+      window.scrollTo({ left: 0, top: window.scrollY, behavior: 'auto' });
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+    };
+    const handleScroll = () => {
+      if (frameId != null) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        resetHorizontalScroll();
+      });
+    };
+
+    window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
+    window.requestAnimationFrame(resetHorizontalScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
+      if (frameId != null) window.cancelAnimationFrame(frameId);
+      window.removeEventListener('scroll', handleScroll);
       document.title = previousTitle;
       document.documentElement.classList.remove('public-site-active', 'admin-landing-active');
     };
