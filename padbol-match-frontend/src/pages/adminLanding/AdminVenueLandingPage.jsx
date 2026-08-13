@@ -1,6 +1,7 @@
 import React, { useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PublicSiteLayout from '../publicSite/PublicSiteLayout';
+import dataOwnershipVisual from '../../assets/data-ownership-visual.png';
 import '../publicSite/publicSite.css';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
@@ -93,7 +94,7 @@ export default function AdminVenueLandingPage() {
             <div className="admin-landing__hero-panel admin-landing__pulse" aria-label="Pulso de tu sede: reservas, partido en vivo, resultado, ranking y PadCoins conectados">
               <header className="admin-landing__pulse-header"><p>PULSO DE TU SEDE</p><span><i aria-hidden="true" />LIVE</span></header>
               <div className="admin-landing__pulse-topline"><span>HOY</span><b>•</b><span>CANCHA 1</span><b>•</b><em><i aria-hidden="true" />EN JUEGO</em></div>
-              <section className="admin-landing__pulse-match"><p>PARTIDO EN VIVO</p><div className="admin-landing__pulse-score"><div className="admin-landing__pulse-team admin-landing__pulse-team--serving"><strong>LUNA /<br />ROJAS</strong><span><i aria-hidden="true" />SACA</span></div><b>4 <i>−</i> 3</b><div className="admin-landing__pulse-team admin-landing__pulse-team--right"><strong>PÉREZ /<br />DÍAZ</strong></div></div><span>SET 2&nbsp; · &nbsp;18:42</span></section>
+              <section className="admin-landing__pulse-match"><p>PARTIDO EN VIVO</p><div className="admin-landing__pulse-score"><div className="admin-landing__pulse-team admin-landing__pulse-team--serving"><strong>LUNA <span className="admin-landing__serve-status"><i aria-hidden="true" />SACA</span><br />ROJAS</strong></div><b>4 <i>−</i> 3</b><div className="admin-landing__pulse-team admin-landing__pulse-team--right"><strong>PÉREZ /<br />DÍAZ</strong></div></div><span>SET 2&nbsp; · &nbsp;18:42</span></section>
               <ol className="admin-landing__pulse-outcomes"><li><i>✓</i><div><strong>RESULTADO REGISTRADO</strong><span>El partido se cierra y queda guardado.</span></div></li><li><i>▮▮▮</i><div><strong>RANKING ACTUALIZADO</strong><span>Se recalculan posiciones al instante.</span></div></li><li><i>P</i><div><strong>PADCOINS ACREDITADOS</strong><span>La competencia genera retorno real.</span></div></li></ol>
               <div className="admin-landing__pulse-return"><span>◉</span><b>+32</b><p>JUGADORES VUELVEN<br /><em>ESTA SEMANA</em></p></div>
             </div>
@@ -135,8 +136,11 @@ export default function AdminVenueLandingPage() {
 
         <section className="admin-landing__data-ownership" aria-labelledby="datos-propios-title">
           <div className="admin-landing__shell admin-landing__data-ownership-grid">
-            <p className="admin-landing__data-ownership-kicker">TU SEDE. TU INFORMACIÓN. TU DECISIÓN.</p>
-            <div>
+            <div className="admin-landing__data-ownership-visual">
+              <p className="admin-landing__data-ownership-kicker">TU SEDE. TU INFORMACIÓN. TU DECISIÓN.</p>
+              <img src={dataOwnershipVisual} alt="Información de la sede conectada y disponible" />
+            </div>
+            <div className="admin-landing__data-ownership-copy">
               <h2 id="datos-propios-title">Tus datos no quedan <span>cautivos.</span></h2>
               <p className="admin-landing__data-ownership-lead">La comunidad, la operación y el trabajo que construiste son tuyos. Siempre.</p>
               <p>Podés traer la información de la herramienta que usás hoy para empezar con ventaja. Y si alguna vez decidís irte, te llevás tus datos: no te retenemos ni te obligamos a empezar de cero.</p>
