@@ -634,9 +634,8 @@ html.admin-landing-active #root {
     linear-gradient(115deg, #12101a 0%, #080d17 52%, #170e15 100%);
 }
 
-/* La cancha no ilustra una promesa abstracta: es la sede de la que salen y a
- * la que pueden volver sus datos. El degradado deja la copia completamente
- * legible y conserva la imagen como un plano de fondo, no como un afiche. */
+/* La visual representa registros propios y portabilidad: no privilegia a
+ * ningún deporte y deja la copia completamente legible sobre el fondo. */
 .admin-landing__data-ownership::before {
   position: absolute;
   z-index: 0;
@@ -645,7 +644,7 @@ html.admin-landing-active #root {
   background:
     linear-gradient(90deg, rgba(8, 10, 17, .08) 0%, rgba(8, 10, 17, .16) 48%, rgba(8, 10, 17, .94) 100%),
     linear-gradient(0deg, rgba(8, 10, 17, .14), rgba(8, 10, 17, .14)),
-    url('../../assets/data-ownership-padbol-court.png') left center / cover no-repeat;
+    url('../../assets/data-ownership-visual.png') left center / cover no-repeat;
   content: '';
   pointer-events: none;
 }
