@@ -723,7 +723,8 @@ html.admin-landing-active body {
 .admin-landing__data-ownership {
   position: relative;
   overflow: hidden;
-  padding: 114px 0;
+  min-height: 690px;
+  padding: 126px 0 78px;
   border-top: 1px solid rgba(237, 28, 46, .48);
   border-bottom: 1px solid rgba(237, 28, 46, .48);
   background: linear-gradient(115deg, #12101a 0%, #080d17 52%, #170e15 100%);
@@ -747,11 +748,11 @@ html.admin-landing-active body {
   position: absolute;
   z-index: -1;
   left: -7%;
-  width: min(67%, 880px);
-  /* Conserva la transmisión en la base, pero a escala suficiente para que
-   * las placas y el flujo completo no queden recortados por la sección. */
-  bottom: -6%;
-  height: min(38vw, 500px);
+  width: min(76%, 1040px);
+  /* La transmisión ocupa toda la base negra disponible, sin invadir el
+   * contenido editorial de la derecha. */
+  bottom: 4%;
+  height: min(44vw, 590px);
   background: url('../../assets/data-ownership-visual.png') left bottom / 100% auto no-repeat;
   content: '';
   opacity: .98;
@@ -759,6 +760,7 @@ html.admin-landing-active body {
 }
 
 .admin-landing__data-ownership-visual {
+  position: relative;
   align-self: stretch;
   display: flex;
   flex-direction: column;
@@ -766,7 +768,12 @@ html.admin-landing-active body {
 }
 
 .admin-landing__data-ownership-kicker {
-  margin: 0 0 22px;
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  z-index: 1;
+  width: min(100%, 390px);
+  margin: 0;
   color: #ff9ea7;
   font-size: 12px;
   font-weight: 900;
@@ -850,10 +857,10 @@ html.admin-landing-active body {
   .admin-landing__hero-flow span { font-size: 11px; }
   .admin-landing__hero-flow b { width: 25px; height: 25px; font-size: 9px; }
   .admin-landing__hero-flow i { width: 12px; flex-basis: 12px; }
-  .admin-landing__data-ownership { padding: 70px 0; }
+  .admin-landing__data-ownership { min-height: 0; padding: 70px 0; }
   .admin-landing__data-ownership-grid::before { display: none; }
   .admin-landing__data-ownership-grid { grid-template-columns: 1fr; gap: 22px; }
-  .admin-landing__data-ownership-kicker { margin: 0; }
+  .admin-landing__data-ownership-kicker { position: static; width: auto; margin: 0; }
   .admin-landing__data-ownership-visual img { display:block; width: min(100%, 340px); margin-top: 18px; }
   .admin-landing__data-ownership-copy { justify-self: start; }
   .admin-landing__data-ownership div > p:not(.admin-landing__data-ownership-lead) { font-size: 16px; }
