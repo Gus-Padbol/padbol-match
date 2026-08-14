@@ -759,6 +759,8 @@ html.admin-landing-active body {
    * no un rectángulo pegado sobre el fondo. */
   mix-blend-mode: screen;
   opacity: .86;
+  -webkit-mask-image: radial-gradient(ellipse 100% 100% at 24% 34%, #000 56%, rgba(0, 0, 0, .78) 72%, transparent 100%);
+  mask-image: radial-gradient(ellipse 100% 100% at 24% 34%, #000 56%, rgba(0, 0, 0, .78) 72%, transparent 100%);
   pointer-events: none;
 }
 
@@ -772,7 +774,7 @@ html.admin-landing-active body {
 
 .admin-landing__data-ownership-kicker {
   position: absolute;
-  bottom: -82px;
+  bottom: 52px;
   left: 0;
   z-index: 1;
   width: min(100%, 390px);
