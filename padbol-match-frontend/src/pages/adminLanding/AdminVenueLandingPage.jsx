@@ -118,16 +118,16 @@ export default function AdminVenueLandingPage() {
             </div>
             <div className="admin-landing__reports-grid">
               <article className="admin-landing__report-card admin-landing__report-card--income">
-                <span>01</span><h3>{text('reportIncome')}</h3><p>{text('reportIncomeText')}</p>
                 <div className="admin-landing__report-card-visual" aria-hidden="true"><i /><i /><i /><i /><b>↗</b></div>
+                <h3>{text('reportIncome')}</h3><p>{text('reportIncomeText')}</p>
               </article>
               <article className="admin-landing__report-card admin-landing__report-card--detail">
-                <span>02</span><h3>{text('reportDetail')}</h3><p>{text('reportDetailText')}</p>
                 <div className="admin-landing__report-card-visual" aria-hidden="true"><b>14</b><i /><i /><i /><em>✓</em></div>
+                <h3>{text('reportDetail')}</h3><p>{text('reportDetailText')}</p>
               </article>
               <article className="admin-landing__report-card admin-landing__report-card--export">
-                <span>03</span><h3>{text('reportExport')}</h3><p>{text('reportExportText')}</p>
                 <div className="admin-landing__report-card-visual" aria-hidden="true"><div><i /><i /><i /><i /><i /><i /></div><b>↓ XLSX</b></div>
+                <h3>{text('reportExport')}</h3><p>{text('reportExportText')}</p>
               </article>
             </div>
           </div>
