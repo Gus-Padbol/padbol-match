@@ -1454,12 +1454,49 @@ html.public-site-active #root {
 
 .ps-player-record__layout {
   display: grid;
-  grid-template-columns: minmax(170px, .58fr) minmax(0, 1.42fr);
+  grid-template-columns: minmax(340px, .8fr) minmax(0, 1.2fr);
   gap: 46px;
-  align-items: start;
+  align-items: center;
 }
 
-.ps-player-record__layout .ps-kicker { margin-top: 9px; }
+.ps-player-record__visual {
+  position: relative;
+  min-height: 420px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #060a12;
+}
+
+.ps-player-record__visual::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 46%, rgba(5, 8, 15, .16) 62%, #060a12 100%);
+}
+
+.ps-player-record__visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 36% center;
+}
+
+.ps-player-record__visual figcaption {
+  position: absolute;
+  z-index: 1;
+  right: 26px;
+  bottom: 25px;
+  left: 26px;
+  color: #d8e0ef;
+  font-size: clamp(.76rem, 1.18vw, .95rem);
+  font-weight: 850;
+  letter-spacing: .16em;
+  line-height: 1.55;
+  text-transform: uppercase;
+}
 
 .ps-player-record__layout h2 { max-width: 760px; }
 
@@ -4953,8 +4990,15 @@ html.public-site-active #root {
     display: block;
   }
 
-  .ps-player-record__layout .ps-kicker {
-    margin: 0 0 18px;
+  .ps-player-record__visual {
+    min-height: 310px;
+    margin: 0 0 26px;
+  }
+
+  .ps-player-record__visual figcaption {
+    right: 20px;
+    bottom: 19px;
+    left: 20px;
   }
 
   .ps-player-record__layout h2,

@@ -197,6 +197,7 @@
     },
     "playerRecord": {
       "kicker": "DEIN SPIEL BEGINNT NICHT BEI NULL",
+      "visualTagline": "DEINE GESCHICHTE. DEIN FORTSCHRITT. DEINE ENTSCHEIDUNG.",
       "title": "Bringen Sie Ihren Rekord mit. Wir erkennen es",
       "lead": "Wenn Sie bereits gespielt, an Wettkämpfen teilgenommen und eine Geschichte aufgebaut haben, ist das wichtig. Sie müssen Ihre Reise nicht aufgeben, um Padbol Match beizutreten.",
       "copy": "Senden Sie uns Ihre bisherigen Ergebnisse, Turniere, Ranglisten, Statistiken und Erfolge. Wir überprüfen und fügen sie hinzu, sodass Ihr Profil den Spieler widerspiegelt, der Sie bereits sind.",
@@ -775,6 +776,7 @@
     },
     "playerRecord": {
       "kicker": "لعبتك لا تبدأ من الصفر",
+      "visualTagline": "سجلك. تقدمك. قرارك.",
       "title": "أحضر سجلك. نحن ندرك ذلك",
       "lead": "إذا كنت قد لعبت بالفعل وتنافست وقمت ببناء تاريخ، فهذا مهم. ليس عليك أن تترك رحلتك خلفك للانضمام إلى Padbol Match.",
       "copy": "أرسل لنا نتائجك السابقة ودوراتك وتصنيفاتك وإحصائياتك وإنجازاتك. نحن نقوم بمراجعتها وإضافتها بحيث يعكس ملفك الشخصي اللاعب الذي أنت عليه بالفعل.",
@@ -1353,6 +1355,7 @@
     },
     "playerRecord": {
       "kicker": "VOTRE JEU NE COMMENCE PAS À PARTIR DE ZÉRO",
+      "visualTagline": "VOTRE HISTORIQUE. VOTRE PROGRESSION. VOTRE DÉCISION.",
       "title": "Apportez votre dossier. Nous le reconnaissons",
       "lead": "Si vous avez déjà joué, concouru et construit une histoire, cela compte. Vous n'êtes pas obligé d'abandonner votre voyage pour rejoindre Padbol Match.",
       "copy": "Envoyez-nous vos résultats précédents, tournois, classement, statistiques et réalisations. Nous les examinons et les ajoutons afin que votre profil reflète le joueur que vous êtes déjà.",
@@ -1931,6 +1934,7 @@
     },
     "playerRecord": {
       "kicker": "IL TUO GIOCO NON INIZIA DA ZERO",
+      "visualTagline": "LA TUA STORIA. I TUOI PROGRESSI. LA TUA DECISIONE.",
       "title": "Porta il tuo record. Lo riconosciamo",
       "lead": "Se hai già giocato, gareggiato e costruito una storia, questo conta. Non devi lasciare il tuo viaggio alle spalle per iscriverti a Padbol Match.",
       "copy": "Inviaci i tuoi risultati precedenti, tornei, classifiche, statistiche e risultati. Li esaminiamo e li aggiungiamo in modo che il tuo profilo rifletta il giocatore che sei già.",
@@ -2509,6 +2513,7 @@
     },
     "playerRecord": {
       "kicker": "JOCUL TĂU NU ÎNREGISTREAZĂ ZERO. O recunoaștem",
+      "visualTagline": "ISTORICUL TĂU. PROGRESUL TĂU. DECIZIA TA.",
       "title": "Dacă ai jucat deja, ai concurat și ai construit o istorie, asta contează. Nu trebuie să vă lăsați călătoria în urmă pentru a vă alătura Padbol Match",
       "lead": "Trimiteți-ne rezultatele, turneele, clasamentul, statisticile și realizările dvs. anterioare. Le examinăm și le adăugăm astfel încât profilul dvs. să reflecte jucătorul care sunteți deja.",
       "copy": "Datele dvs. vă aparțin.",
@@ -3087,6 +3092,7 @@
     },
     "playerRecord": {
       "kicker": "SEU JOGO NÃO COMEÇA DO ZERO",
+      "visualTagline": "SEU HISTÓRICO. SEU PROGRESSO. SUA DECISÃO.",
       "title": "Traga seu registro. Nós reconhecemos isso",
       "lead": "Se você já jogou, competiu e construiu uma história, isso importa. Você não precisa deixar sua jornada para trás para ingressar no Padbol Match.",
       "copy": "Envie-nos seus resultados anteriores, torneios, classificação, estatísticas e conquistas. Nós os analisamos e adicionamos para que seu perfil reflita o jogador que você já é.",
@@ -3665,6 +3671,7 @@
     },
     "playerRecord": {
       "kicker": "SEU JOGO NÃO COMEÇA DO ZERO",
+      "visualTagline": "SEU HISTÓRICO. SEU PROGRESSO. SUA DECISÃO.",
       "title": "Traga seu registro. Nós reconhecemos isso",
       "lead": "Se você já jogou, competiu e construiu uma história, isso importa. Você não precisa deixar sua jornada para trás para ingressar no Padbol Match.",
       "copy": "Envie-nos seus resultados anteriores, torneios, classificação, estatísticas e conquistas. Nós os analisamos e adicionamos para que seu perfil reflita o jogador que você já é.",
@@ -4243,6 +4250,7 @@
     },
     "playerRecord": {
       "kicker": "بازی شما از صفر شروع نمی شود",
+      "visualTagline": "سابقه شما. پیشرفت شما. تصمیم شما.",
       "title": " رکورد خود را بیاورید. ما آن را می شناسیم",
       "lead": "اگر قبلاً بازی کرده‌اید، مسابقه داده‌اید و تاریخچه‌ای ساخته‌اید، مهم است. برای پیوستن به Padbol Match مجبور نیستید سفر خود را پشت سر بگذارید.",
       "copy": "نتایج، مسابقات، رتبه بندی، آمار و دستاوردهای قبلی خود را برای ما ارسال کنید. ما آنها را بررسی و اضافه می کنیم تا نمایه شما نشان دهنده بازیکنی باشد که در حال حاضر هستید.",
@@ -4821,6 +4829,7 @@
     },
     "playerRecord": {
       "kicker": "JE SPEL BEGINT NIET VAN NUL",
+      "visualTagline": "JOUW GESCHIEDENIS. JOUW VOORUITGANG. JOUW BESLISSING.",
       "title": "Neem je record mee. We erkennen het",
       "lead": "Als je al hebt gespeeld, deelgenomen en geschiedenis hebt opgebouwd, maakt dat uit. Je hoeft je reis niet achter je te laten om mee te doen aan Padbol Match.",
       "copy": "Stuur ons je eerdere resultaten, toernooien, ranglijsten, statistieken en prestaties. We beoordelen ze en voegen ze toe, zodat je profiel de speler weergeeft die je al bent.",
@@ -5399,6 +5408,7 @@
     },
     "playerRecord": {
       "kicker": "JE SPEL BEGINT NIET VAN NUL",
+      "visualTagline": "JOUW GESCHIEDENIS. JOUW VOORUITGANG. JOUW BESLISSING.",
       "title": "Neem je record mee. We erkennen het",
       "lead": "Als je al hebt gespeeld, deelgenomen en geschiedenis hebt opgebouwd, maakt dat uit. Je hoeft je reis niet achter je te laten om mee te doen aan Padbol Match.",
       "copy": "Stuur ons je eerdere resultaten, toernooien, ranglijsten, statistieken en prestaties. We beoordelen ze en voegen ze toe, zodat je profiel de speler weergeeft die je al bent.",
@@ -5977,6 +5987,7 @@
     },
     "playerRecord": {
       "kicker": "המשחק שלך לא מתחיל מאפס",
+      "visualTagline": "ההיסטוריה שלך. ההתקדמות שלך. ההחלטה שלך.",
       "title": "הבא את השיא שלך. אנחנו מזהים את זה",
       "lead": "אם כבר שיחקת, התחרת ובנית היסטוריה, זה חשוב. אינך צריך לעזוב את המסע שלך מאחור כדי להצטרף ל-Padbol Match.",
       "copy": "שלח לנו את התוצאות הקודמות שלך, טורנירים, דירוג, סטטיסטיקה והישגים. אנו בודקים ומוסיפים אותם כך שהפרופיל שלך ישקף את השחקן שאתה כבר.",
@@ -6555,6 +6566,7 @@
     },
     "playerRecord": {
       "kicker": "DITT SPEL STARTAR INTE FRÅN NOLL",
+      "visualTagline": "DIN HISTORIK. DINA FRAMSTEG. DITT BESLUT.",
       "title": "Ta med dig. Vi känner igen det",
       "lead": "Om du redan har spelat, tävlat och byggt upp en historia är det viktigt. Du behöver inte lämna din resa bakom dig för att gå med i Padbol Match.",
       "copy": "Skicka oss dina tidigare resultat, turneringar, ranking, statistik och prestationer. Vi granskar och lägger till dem så att din profil återspeglar den spelare du redan är.",
@@ -7133,6 +7145,7 @@
     },
     "playerRecord": {
       "kicker": "ΤΟ ΠΑΙΧΝΙΔΙ ΣΑΣ ΔΕΝ ΞΕΚΙΝΑΕΙ ΑΠΟ ΜΗΔΕΝ",
+      "visualTagline": "ΤΟ ΙΣΤΟΡΙΚΟ ΣΑΣ. Η ΠΡΟΟΔΟΣ ΣΑΣ. Η ΑΠΟΦΑΣΗ ΣΑΣ.",
       "title": "Φέρτε το ρεκόρ σας. Το αναγνωρίζουμε",
       "lead": "Αν έχετε ήδη παίξει, αγωνιστεί και δημιουργήσει ιστορία, αυτό έχει σημασία. Δεν χρειάζεται να αφήσετε πίσω σας το ταξίδι σας για να συμμετάσχετε στο Padbol Match.",
       "copy": "Στείλτε μας τα προηγούμενα αποτελέσματα, τα τουρνουά, την κατάταξη, τα στατιστικά και τα επιτεύγματά σας. Τα εξετάζουμε και τα προσθέτουμε, ώστε το προφίλ σας να αντικατοπτρίζει τον παίκτη που ήδη είστε.",
@@ -7711,6 +7724,7 @@
     },
     "playerRecord": {
       "kicker": "A JÁTÉK NEM NULLÁRÓL KEZDŐDIK",
+      "visualTagline": "A TE TÖRTÉNETED. A TE FEJLŐDÉSED. A TE DÖNTÉSED.",
       "title": "Hozd el rekordodat. Felismerjük",
       "lead": "Ha már játszottál, versenyeztél és történelmet építettél, az számít. Nem kell hátrahagynia az utazást, hogy csatlakozzon a Padbol Matchhez.",
       "copy": "Küldje el nekünk korábbi eredményeit, versenyeit, helyezéseit, statisztikáit és eredményeit. Áttekintjük és hozzáadjuk őket, hogy a profilod tükrözze azt a játékost, aki már most is.",
@@ -8289,6 +8303,7 @@
     },
     "playerRecord": {
       "kicker": "TWOJA GRA NIE ZACZYNA SIĘ OD ZERA",
+      "visualTagline": "TWOJA HISTORIA. TWÓJ POSTĘP. TWOJA DECYZJA.",
       "title": "Przynieś swoją płytę. Zdajemy sobie z tego sprawę",
       "lead": "Jeśli już grałeś, rywalizowałeś i zbudowałeś historię, ma to znaczenie. Nie musisz przerywać swojej podróży, aby dołączyć do Padbol Match.",
       "copy": "Prześlij nam swoje poprzednie wyniki, turnieje, ranking, statystyki i osiągnięcia. Sprawdzamy je i dodajemy, aby Twój profil odzwierciedlał gracza, którym już jesteś.",
@@ -8867,6 +8882,7 @@
     },
     "playerRecord": {
       "kicker": "ВАША ГРА НЕ ПОЧИНАЄТЬСЯ З НУЛЯ",
+      "visualTagline": "ВАША ІСТОРІЯ. ВАШ ПРОГРЕС. ВАШЕ РІШЕННЯ.",
       "title": "Поставте свій рекорд. Ми визнаємо це",
       "lead": "Якщо ви вже грали, змагалися та створювали історію, це має значення. Вам не потрібно закінчувати свою подорож, щоб приєднатися до Padbol Match.",
       "copy": "Надсилайте нам свої попередні результати, турніри, рейтинг, статистику та досягнення. Ми переглядаємо та додаємо їх, щоб ваш профіль відображав гравця, яким ви вже є.",
@@ -9445,6 +9461,7 @@
     },
     "playerRecord": {
       "kicker": "JOU SPEL BEGIN NIE VAN NUL af nie",
+      "visualTagline": "JOU GESKIEDENIS. JOU VORDERING. JOU BESLUIT.",
       "title": "Bring jou rekord. Ons herken dit",
       "lead": "As jy reeds gespeel het, meegeding en 'n geskiedenis opgebou het, maak dit saak. Jy hoef nie jou reis agter te laat om by Padbol Match aan te sluit nie.",
       "copy": "Stuur vir ons jou vorige resultate, toernooie, ranglys, statistieke en prestasies. Ons hersien en voeg dit by sodat jou profiel die speler weerspieël wat jy reeds is.",
