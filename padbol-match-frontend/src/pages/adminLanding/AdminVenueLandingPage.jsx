@@ -122,11 +122,14 @@ export default function AdminVenueLandingPage() {
                 <h3>{text('reportIncome')}</h3><p>{text('reportIncomeText')}</p>
               </article>
               <article className="admin-landing__report-card admin-landing__report-card--detail">
-                <div className="admin-landing__report-card-visual" aria-hidden="true"><b>14</b><i /><i /><i /><em>✓</em></div>
+                <div className="admin-landing__report-card-visual" aria-hidden="true">
+                  <div><b>14</b><span>18:30 · CANCHA 2</span><em>$ 42K</em></div>
+                  <div><b>15</b><span>TORNEO · INSCRIPCIÓN</span><em>✓</em></div>
+                </div>
                 <h3>{text('reportDetail')}</h3><p>{text('reportDetailText')}</p>
               </article>
               <article className="admin-landing__report-card admin-landing__report-card--export">
-                <div className="admin-landing__report-card-visual" aria-hidden="true"><div><i /><i /><i /><i /><i /><i /></div><b>↓ XLSX</b></div>
+                <div className="admin-landing__report-card-visual" aria-hidden="true"><div><i /><i /><i /><i /><i /><i /><i /><i /><i /></div><b>↓ XLSX</b></div>
                 <h3>{text('reportExport')}</h3><p>{text('reportExportText')}</p>
               </article>
             </div>
