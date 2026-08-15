@@ -751,7 +751,7 @@ html.admin-landing-active body {
   width: min(76%, 1040px);
   /* La transmisión ocupa toda la base negra disponible, sin invadir el
    * contenido editorial de la derecha. */
-  bottom: calc(-12% - 144px);
+  bottom: calc(-12% - 74px);
   height: min(44vw, 590px);
   background: url('../../assets/data-ownership-visual.png') left bottom / 100% auto no-repeat;
   content: '';
@@ -774,7 +774,7 @@ html.admin-landing-active body {
 
 .admin-landing__data-ownership-kicker {
   position: absolute;
-  bottom: -92px;
+  bottom: -22px;
   left: 0;
   z-index: 1;
   width: min(100%, 390px);
