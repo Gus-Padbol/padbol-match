@@ -1461,16 +1461,7 @@ html.public-site-active #root {
 }
 
 .ps-player-record__layout::before {
-  position: absolute;
-  z-index: 0;
-  top: 47%;
-  left: 30%;
-  width: min(43%, 530px);
-  height: 100px;
-  content: '';
-  background: url("data:image/svg+xml,%3Csvg width='530' height='100' viewBox='0 0 530 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 74C70 74 78 31 146 31C211 31 225 68 290 68C358 68 371 25 440 25H511' stroke='%23ff6b73' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='4' cy='74' r='4' fill='%23ffced1'/%3E%3Ccircle cx='511' cy='25' r='3' fill='%23ffced1'/%3E%3C/svg%3E") left center / 100% 100% no-repeat;
-  filter: drop-shadow(0 0 5px rgba(255, 91, 99, .95)) drop-shadow(0 0 18px rgba(225, 27, 34, .5));
-  pointer-events: none;
+  content: none;
 }
 
 .ps-player-record__visual {
@@ -1482,11 +1473,21 @@ html.public-site-active #root {
 }
 
 .ps-player-record__visual::after {
+  content: none;
+}
+
+.ps-player-record__visual::before {
   position: absolute;
-  inset: 0;
+  z-index: 1;
+  bottom: 14%;
+  left: 11%;
+  width: 68%;
+  height: 48%;
   content: '';
+  background: url("data:image/svg+xml,%3Csvg width='360' height='200' viewBox='0 0 360 200' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M52 184C56 142 86 126 120 109C153 92 157 68 196 44' stroke='%23ff6b73' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M86 149C124 150 143 132 180 112C211 95 232 91 264 71' stroke='%23ff6b73' stroke-width='1.2' stroke-linecap='round' opacity='.78'/%3E%3Cpath d='M121 119C154 111 175 92 210 83C244 75 270 54 307 27' stroke='%23ff6b73' stroke-width='1.1' stroke-linecap='round' opacity='.62'/%3E%3Ccircle cx='52' cy='184' r='3.2' fill='%23ffd4d6'/%3E%3Ccircle cx='196' cy='44' r='2.4' fill='%23ffd4d6'/%3E%3Ccircle cx='264' cy='71' r='2.1' fill='%23ffd4d6'/%3E%3Ccircle cx='307' cy='27' r='2' fill='%23ffd4d6'/%3E%3C/svg%3E") left bottom / 100% 100% no-repeat;
+  filter: drop-shadow(0 0 4px rgba(255, 91, 99, .9)) drop-shadow(0 0 12px rgba(225, 27, 34, .38));
+  opacity: .82;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent 46%, rgba(5, 8, 15, .1) 62%, var(--ps-bg) 100%);
 }
 
 .ps-player-record__visual img {
@@ -1496,9 +1497,9 @@ html.public-site-active #root {
   mix-blend-mode: screen;
   object-fit: cover;
   object-position: 36% center;
-  opacity: .92;
-  -webkit-mask-image: radial-gradient(ellipse 104% 96% at 39% 43%, #000 31%, rgba(0, 0, 0, .94) 52%, rgba(0, 0, 0, .58) 71%, transparent 100%);
-  mask-image: radial-gradient(ellipse 104% 96% at 39% 43%, #000 31%, rgba(0, 0, 0, .94) 52%, rgba(0, 0, 0, .58) 71%, transparent 100%);
+  opacity: .86;
+  -webkit-mask-image: radial-gradient(ellipse 76% 78% at 33% 38%, #000 24%, rgba(0, 0, 0, .9) 47%, rgba(0, 0, 0, .48) 64%, transparent 91%);
+  mask-image: radial-gradient(ellipse 76% 78% at 33% 38%, #000 24%, rgba(0, 0, 0, .9) 47%, rgba(0, 0, 0, .48) 64%, transparent 91%);
 }
 
 .ps-player-record__visual figcaption {
