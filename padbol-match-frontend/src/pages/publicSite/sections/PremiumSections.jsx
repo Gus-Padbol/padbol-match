@@ -750,8 +750,12 @@ function VenueOpportunities({ standalone = false }) {
   const detailRef = useRef(null);
 
   useEffect(() => {
-    if (!activeKey || typeof window === 'undefined' || window.innerWidth >= 768) return;
-    detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (!activeKey) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setActiveKey(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [activeKey]);
 
   const heading = standalone
@@ -785,15 +789,25 @@ function VenueOpportunities({ standalone = false }) {
           </div>
         ))}
         {activeKey && (
-          <aside ref={detailRef} id={`ps-expansion-detail-${activeKey}`} className="ps-expansion__detail" role="status">
-            <button type="button" className="ps-expansion__close" onClick={() => setActiveKey(null)} aria-label="Cerrar detalle">×</button>
-            <span>Padbol Match · {text(`publicSite.expansion.items.${activeKey}.status`)}</span>
-            <strong>{text(`publicSite.expansion.items.${activeKey}.title`)}</strong>
-            <p>{EXPANSION_DETAILS[activeKey].lead}</p>
-            <ul>
-              {EXPANSION_DETAILS[activeKey].points.map((point) => <li key={point}>{point}</li>)}
-            </ul>
-          </aside>
+          <>
+            <button type="button" className="ps-expansion__backdrop" onClick={() => setActiveKey(null)} aria-label="Cerrar detalle" />
+            <aside
+              ref={detailRef}
+              id={`ps-expansion-detail-${activeKey}`}
+              className="ps-expansion__detail"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`ps-expansion-detail-title-${activeKey}`}
+            >
+              <button type="button" className="ps-expansion__close" onClick={() => setActiveKey(null)} aria-label="Cerrar detalle">×</button>
+              <span>Padbol Match · {text(`publicSite.expansion.items.${activeKey}.status`)}</span>
+              <strong id={`ps-expansion-detail-title-${activeKey}`}>{text(`publicSite.expansion.items.${activeKey}.title`)}</strong>
+              <p>{EXPANSION_DETAILS[activeKey].lead}</p>
+              <ul>
+                {EXPANSION_DETAILS[activeKey].points.map((point) => <li key={point}>{point}</li>)}
+              </ul>
+            </aside>
+          </>
         )}
       </div>
       <p className="ps-note">{text('publicSite.expansion.note')}</p>
