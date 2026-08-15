@@ -253,7 +253,15 @@ export function PlayerRecordSection() {
   return (
     <SectionShell id={config.id} className="ps-section--player-record" titleId="ps-player-record-title">
       <div className="ps-player-record__layout">
-        <p className="ps-kicker">{text('publicSite.playerRecord.kicker')}</p>
+        <figure className="ps-player-record__visual">
+          <img
+            src="/media/public-site/player-history-profile.png"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>{text('publicSite.playerRecord.visualTagline')}</figcaption>
+        </figure>
         <div>
           <h2 id="ps-player-record-title">{text('publicSite.playerRecord.title')}</h2>
           <p className="ps-player-record__lead">{text('publicSite.playerRecord.lead')}</p>
