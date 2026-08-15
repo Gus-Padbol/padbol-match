@@ -103,12 +103,32 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__eyebrow">{text('reportsEyebrow')}</p>
             <div className="admin-landing__reports-heading">
               <h2 id="reportes-title">{text('reportsTitle')}<span>{text('reportsTitleAccent')}</span></h2>
-              <p>{text('reportsLead')}</p>
+              <div className="admin-landing__reports-insight">
+                <div className="admin-landing__report-sheet" aria-hidden="true">
+                  <div className="admin-landing__report-sheet-head"><span>RESUMEN OPERATIVO</span><b>↓ XLSX</b></div>
+                  <div className="admin-landing__report-sheet-row admin-landing__report-sheet-row--head"><span>FECHA</span><span>CANCHA</span><span>MONTO</span><span>EST.</span></div>
+                  <div className="admin-landing__report-sheet-row"><span><i />14 AGO</span><span>CANCHA 2</span><span>$ 42.000</span><em /></div>
+                  <div className="admin-landing__report-sheet-row"><span><i />15 AGO</span><span>TORNEO</span><span>$ 68.500</span><em /></div>
+                  <div className="admin-landing__report-sheet-summary">
+                    <span><b>↗</b> INGRESOS</span><span><b>▦</b> RESERVAS</span><span><b>◎</b> TICKET</span>
+                  </div>
+                </div>
+                <p>{text('reportsLead')}</p>
+              </div>
             </div>
             <div className="admin-landing__reports-grid">
-              <article><span>01</span><h3>{text('reportIncome')}</h3><p>{text('reportIncomeText')}</p></article>
-              <article><span>02</span><h3>{text('reportDetail')}</h3><p>{text('reportDetailText')}</p></article>
-              <article><span>03</span><h3>{text('reportExport')}</h3><p>{text('reportExportText')}</p></article>
+              <article className="admin-landing__report-card admin-landing__report-card--income">
+                <span>01</span><h3>{text('reportIncome')}</h3><p>{text('reportIncomeText')}</p>
+                <div className="admin-landing__report-card-visual" aria-hidden="true"><i /><i /><i /><i /><b>↗</b></div>
+              </article>
+              <article className="admin-landing__report-card admin-landing__report-card--detail">
+                <span>02</span><h3>{text('reportDetail')}</h3><p>{text('reportDetailText')}</p>
+                <div className="admin-landing__report-card-visual" aria-hidden="true"><b>14</b><i /><i /><i /><em>✓</em></div>
+              </article>
+              <article className="admin-landing__report-card admin-landing__report-card--export">
+                <span>03</span><h3>{text('reportExport')}</h3><p>{text('reportExportText')}</p>
+                <div className="admin-landing__report-card-visual" aria-hidden="true"><div><i /><i /><i /><i /><i /><i /></div><b>↓ XLSX</b></div>
+              </article>
             </div>
           </div>
         </section>
