@@ -880,6 +880,50 @@ html.public-site-active #root {
   -webkit-line-clamp: 2;
 }
 
+.ps-venue-path__cta {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+  padding: 22px 24px;
+  border: 1px solid rgba(225, 27, 34, 0.34);
+  border-radius: 22px;
+  background: linear-gradient(115deg, rgba(225, 27, 34, 0.12), rgba(15, 23, 42, 0.38));
+}
+
+.ps-venue-path__cta > span {
+  color: #ffb4b8;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ps-venue-path__cta > div {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ps-venue-path__cta strong {
+  display: block;
+  font-family: var(--ps-font-display);
+  font-size: clamp(1.35rem, 2.3vw, 2rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ps-venue-path__cta p {
+  max-width: 680px;
+  margin: 6px 0 0;
+  color: var(--ps-text-2);
+  line-height: 1.5;
+}
+
+@media (max-width: 680px) {
+  .ps-venue-path__cta > div { align-items: flex-start; flex-direction: column; }
+}
+
 /* Las imágenes multideporte tienen proporciones distintas. La tarjeta conserva
    una altura estable para que el recorrido no salte entre disciplinas. */
 .ps-venue-card--occupy .ps-venue-card__image,

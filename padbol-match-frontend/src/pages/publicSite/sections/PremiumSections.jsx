@@ -410,6 +410,18 @@ export function VenuePathSection() {
           </li>
         ))}
       </ul>
+      <aside className="ps-venue-path__cta">
+        <span>{text('publicSite.venueAdmin.next.eyebrow')}</span>
+        <div>
+          <div>
+            <strong>{text('publicSite.venueAdmin.next.title')}</strong>
+            <p>{text('publicSite.venueAdmin.next.text')}</p>
+          </div>
+          <Link to={PUBLIC_SITE_CTA.venue} className="ps-btn ps-btn--primary">
+            {text('publicSite.venueAdmin.next.apply')}
+          </Link>
+        </div>
+      </aside>
     </SectionShell>
   );
 }
