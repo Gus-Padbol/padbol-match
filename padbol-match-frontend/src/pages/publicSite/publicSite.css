@@ -5000,9 +5000,22 @@ html.public-site-active #root {
   }
 
   .ps-player-record__visual {
-    min-height: 310px;
-    margin: 0 0 26px;
+    position: absolute;
+    top: 2px;
+    right: 0;
+    width: min(31vw, 155px);
+    min-height: 132px;
+    margin: 0;
     overflow: hidden;
+  }
+
+  .ps-player-record__visual img { opacity: .56; }
+
+  .ps-player-record__visual figcaption { display: none; }
+
+  .ps-player-record__layout h2 {
+    width: calc(100% - min(35vw, 176px));
+    min-height: 142px;
   }
 
   .ps-player-record__layout::before { display: none; }
