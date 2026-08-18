@@ -2086,6 +2086,11 @@
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Disponibil azi · Live",
       "text": "Tabela inteligentă înregistrează deja meciul live și păstrează rezultatul conectat cu jucătorii, competiția și operațiunea clubului.",
+      "sponsorSlots": {
+        "aria": "Spații pentru sponsori și publicitate pe tabelă",
+        "live": { "eyebrow": "ÎN TIMPUL MECIULUI", "title": "Bandă de sponsori live", "text": "Brandurile însoțesc jocul într-o bandă vizibilă pe tabelă." },
+        "closing": { "eyebrow": "LA ÎNCHEIEREA REZULTATULUI", "title": "Publicitate de încheiere", "text": "Rezultatul final deschide un spațiu pentru un brand în momentul de maximă atenție." }
+      },
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",
