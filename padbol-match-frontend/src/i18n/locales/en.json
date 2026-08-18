@@ -2837,11 +2837,11 @@
           "result": "Outcome: an organized tournament for players, referees and venue staff."
         },
         "scoreboard": {
-          "title": "Run the scoreboard",
-          "text": "Start, follow, correct and close results connected to history.",
-          "detail": "Record the match live so its result supports operations, history and competition.",
-          "steps": { "1": "Start the match with its players or teams.", "2": "Record points, sets and corrections while it is played.", "3": "Confirm closing and connect the result." },
-          "result": "Outcome: useful data for history, ranking, tournaments and management."
+          "title": "Run the scoreboard and activate your screen",
+          "text": "Live results and advertising spaces for sponsors, shop and snack bar.",
+          "detail": "The scoreboard records the match and, during planned breaks, can become a commercial screen managed by your venue.",
+          "steps": { "1": "Start the match with its players or teams.", "2": "Upload sponsor, shop, snack bar or benefit campaigns and choose when they appear.", "3": "During breaks, side changes, set changes or closing, the screen rotates campaigns and returns to play automatically." },
+          "result": "Outcome: useful information for history and ranking, plus a measurable commercial screen without interrupting the match."
         },
         "loyalty": {
           "title": "Build loyalty",
