@@ -144,7 +144,32 @@ export function SectionShell({ id, className = '', titleId, children }) {
 export function WhatIsSection() {
   const text = usePublicSiteText();
   const id = PUBLIC_SITE_SECTIONS.whatIs.id;
-  const [activeSport, setActiveSport] = useState('padbol');
+  const visualRef = useRef(null);
+  const [isVisualInView, setIsVisualInView] = useState(false);
+  const [activeSport, setActiveSport] = useState('padel');
+
+  useEffect(() => {
+    const visual = visualRef.current;
+    if (!visual || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisualInView(entry.isIntersecting),
+      { threshold: 0.5 },
+    );
+    observer.observe(visual);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisualInView || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const rotation = window.setInterval(() => {
+      setActiveSport((current) => {
+        const currentIndex = WHAT_IS_SPORTS.findIndex((sport) => sport.id === current);
+        return WHAT_IS_SPORTS[(currentIndex + 1) % WHAT_IS_SPORTS.length].id;
+      });
+    }, 500);
+    return () => window.clearInterval(rotation);
+  }, [isVisualInView]);
+
   return (
     <SectionShell id={id} className="ps-section--what" titleId="ps-what-title">
       <div className="ps-what__layout">
@@ -155,14 +180,14 @@ export function WhatIsSection() {
           <h2 id="ps-what-title"><AccentWords value={text('publicSite.whatIs.title')} terms={['Padbol Match']} /></h2>
           <p className="ps-lead">{text('publicSite.whatIs.text')}</p>
         </div>
-        <figure className="ps-what__visual ps-what__sports-deck">
+        <figure ref={visualRef} className="ps-what__visual ps-what__sports-deck">
           {WHAT_IS_SPORTS.map((sport) => (
             <img
               key={sport.id}
               className={activeSport === sport.id ? 'is-active' : ''}
               src={`${ASSET_ROOT}/${sport.image}`}
               alt={`${sport.label}: una experiencia disponible en Padbol Match`}
-              loading={sport.id === 'padbol' ? 'eager' : 'lazy'}
+              loading="eager"
             />
           ))}
           <div className="ps-what__sports-tabs" role="tablist" aria-label="Deportes disponibles en Padbol Match">
