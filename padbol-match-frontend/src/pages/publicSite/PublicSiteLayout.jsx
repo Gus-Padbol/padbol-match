@@ -25,15 +25,6 @@ function scrollToHash(hash) {
   el.focus({ preventScroll: true });
 }
 
-function arrivesFromOfficialPadbol() {
-  try {
-    const hostname = new URL(document.referrer).hostname.toLowerCase();
-    return hostname === 'padbol.com' || hostname.endsWith('.padbol.com');
-  } catch {
-    return false;
-  }
-}
-
 /** Header transparente al inicio; glass al hacer scroll. */
 function useHeaderScrolled() {
   const [scrolled, setScrolled] = useState(false);
@@ -103,9 +94,9 @@ export default function PublicSiteLayout({ children }) {
   useEffect(() => {
     if (location.pathname !== PUBLIC_SITE_PATH) return undefined;
     const raf = window.requestAnimationFrame(() => {
-      // Desde padbol.com el enlace es de presentación de la plataforma, no
-      // un acceso a la descarga. Se descarta la ancla antigua #descargar.
-      if (location.hash === '#descargar' && arrivesFromOfficialPadbol()) {
+      // La ruta pública de Plataforma siempre empieza por su presentación.
+      // Una ancla antigua #descargar no puede desviar la entrada al final.
+      if (location.hash === '#descargar') {
         window.history.replaceState(null, '', PUBLIC_SITE_PATH);
         window.scrollTo({ top: 0, behavior: 'auto' });
         return;
