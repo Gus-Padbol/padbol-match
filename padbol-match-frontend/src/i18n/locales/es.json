@@ -2454,11 +2454,11 @@
           "result": "Resultado: un torneo ordenado para jugadores, árbitros y equipo de sede."
         },
         "scoreboard": {
-          "title": "Llevá el marcador",
-          "text": "Iniciá, seguí, corregí y cerrá resultados para conectarlos con el historial.",
-          "detail": "Registrá el partido en vivo para que el resultado alimente la operación, el historial y las competencias.",
-          "steps": { "1": "Iniciá el encuentro con sus jugadores o equipos.", "2": "Registrá puntos, sets y correcciones mientras se juega.", "3": "Confirmá el cierre y conectá el resultado." },
-          "result": "Resultado: información útil para historial, ranking, torneos y gestión."
+          "title": "Llevá el marcador y activá tu pantalla",
+          "text": "Resultado en vivo y espacios publicitarios para sponsors, shop y buffet.",
+          "detail": "El marcador registra el partido y, en las pausas previstas, podrá convertirse en una pantalla comercial administrada por tu sede.",
+          "steps": { "1": "Iniciá el encuentro con sus jugadores o equipos.", "2": "Cargá campañas de sponsors, shop, buffet o beneficios y definí cuándo aparecen.", "3": "En descansos, cambios de lado, cambios de set o cierre, la pantalla rota campañas y vuelve sola al juego." },
+          "result": "Resultado: información útil para historial y ranking, más una pantalla comercial medible sin interrumpir el partido."
         },
         "loyalty": {
           "title": "Fidelizá",
