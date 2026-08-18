@@ -166,7 +166,7 @@ export function WhatIsSection() {
         const currentIndex = WHAT_IS_SPORTS.findIndex((sport) => sport.id === current);
         return WHAT_IS_SPORTS[(currentIndex + 1) % WHAT_IS_SPORTS.length].id;
       });
-    }, 500);
+    }, 1200);
     return () => window.clearInterval(rotation);
   }, [isVisualInView]);
 
