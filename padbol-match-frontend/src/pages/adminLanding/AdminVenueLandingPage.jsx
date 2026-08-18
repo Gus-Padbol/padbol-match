@@ -103,18 +103,7 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__eyebrow">{text('reportsEyebrow')}</p>
             <div className="admin-landing__reports-heading">
               <h2 id="reportes-title">{text('reportsTitle')}<span>{text('reportsTitleAccent')}</span></h2>
-              <div className="admin-landing__reports-insight">
-                <div className="admin-landing__report-sheet" aria-hidden="true">
-                  <div className="admin-landing__report-sheet-head"><span>RESUMEN OPERATIVO</span><b>↓ XLSX</b></div>
-                  <div className="admin-landing__report-sheet-row admin-landing__report-sheet-row--head"><span>FECHA</span><span>CANCHA</span><span>MONTO</span><span>EST.</span></div>
-                  <div className="admin-landing__report-sheet-row"><span><i />14 AGO</span><span>CANCHA 2</span><span>$ 42.000</span><em /></div>
-                  <div className="admin-landing__report-sheet-row"><span><i />15 AGO</span><span>TORNEO</span><span>$ 68.500</span><em /></div>
-                  <div className="admin-landing__report-sheet-summary">
-                    <span><b>↗</b> INGRESOS</span><span><b>▦</b> RESERVAS</span><span><b>◎</b> TICKET</span>
-                  </div>
-                </div>
-                <p>{text('reportsLead')}</p>
-              </div>
+              <p>{text('reportsLead')}</p>
             </div>
             <div className="admin-landing__reports-grid">
               <article className="admin-landing__report-card admin-landing__report-card--income">
