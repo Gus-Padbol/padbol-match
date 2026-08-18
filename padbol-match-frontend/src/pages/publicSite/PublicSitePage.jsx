@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import PublicSiteLayout from './PublicSiteLayout';
 import HeroSection from './sections/HeroSection';
 import ExperiencesSection from './sections/ExperiencesSection';
@@ -44,8 +44,28 @@ function usePublicSiteDocumentMeta() {
   }, []);
 }
 
+/**
+ * La web oficial de Padbol llega desde otro sitio. En algunos navegadores se
+ * restaura la posición anterior del documento y la plataforma abría en el
+ * footer. Esta ruta siempre debe empezar por el hero.
+ */
+function usePlatformEntryAtTop() {
+  useLayoutEffect(() => {
+    const resetScroll = () => {
+      window.scrollTo(0, 0);
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    };
+
+    resetScroll();
+    const frame = window.requestAnimationFrame(resetScroll);
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+}
+
 export default function PublicSitePage() {
   usePublicSiteDocumentMeta();
+  usePlatformEntryAtTop();
   const revealRootRef = useRef(null);
   useRevealOnScroll(revealRootRef);
 
