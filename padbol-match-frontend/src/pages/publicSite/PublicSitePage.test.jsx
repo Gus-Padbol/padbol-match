@@ -97,6 +97,11 @@ describe('/plataforma public site', () => {
     expect(container.querySelectorAll('[data-binary-stream="true"]')).toHaveLength(0);
   });
 
+  it('al entrar en la plataforma empieza siempre arriba', () => {
+    renderPage();
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+  });
+
   it('renderiza la estructura nueva, un h1 y ninguna BottomNav', () => {
     const { container } = renderPage();
     [
