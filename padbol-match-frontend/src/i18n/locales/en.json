@@ -3066,6 +3066,11 @@
       "title": "Smart scoreboard: the match live",
       "comingSoon": "Available today · Live",
       "text": "The smart scoreboard already records the match live and keeps the result connected to players, competition and venue operations.",
+      "sponsorSlots": {
+        "aria": "Scoreboard sponsor and advertising placements",
+        "live": { "eyebrow": "DURING THE MATCH", "title": "Live sponsor band", "text": "Brands stay with the match through a visible strip on the scoreboard." },
+        "closing": { "eyebrow": "WHEN THE RESULT CLOSES", "title": "Closing advertisement", "text": "The final result opens a space for a brand to accompany the highest-attention moment." }
+      },
       "demoAria": "Visual demo of the smart scoreboard",
       "demoBadge": "Live",
       "demoTeamA": "Team A",

@@ -2091,6 +2091,11 @@
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "متاح اليوم · مباشر",
       "text": "تسجل لوحة النتائج الذكية المباراة مباشرة وتُبقي النتيجة مرتبطة باللاعبين والمنافسة وتشغيل النادي.",
+      "sponsorSlots": {
+        "aria": "مساحات الرعاة والإعلانات في لوحة النتائج",
+        "live": { "eyebrow": "أثناء المباراة", "title": "شريط رعاة مباشر", "text": "ترافق العلامات التجارية اللعب عبر شريط ظاهر في لوحة النتائج." },
+        "closing": { "eyebrow": "عند إغلاق النتيجة", "title": "إعلان الختام", "text": "تفتح النتيجة النهائية مساحة للعلامة التجارية في لحظة الاهتمام الأكبر." }
+      },
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

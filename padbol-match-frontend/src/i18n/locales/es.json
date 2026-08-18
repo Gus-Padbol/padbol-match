@@ -2744,6 +2744,11 @@
       "title": "Marcador inteligente: el partido en vivo",
       "comingSoon": "Disponible hoy · En vivo",
       "text": "El marcador inteligente ya registra el encuentro en vivo y mantiene el resultado conectado con jugadores, competencia y la operación de la sede.",
+      "sponsorSlots": {
+        "aria": "Espacios de sponsors y publicidad del marcador",
+        "live": { "eyebrow": "DURANTE EL PARTIDO", "title": "Banda de sponsors en vivo", "text": "Las marcas acompañan el juego desde una franja visible en el marcador." },
+        "closing": { "eyebrow": "AL CERRAR EL RESULTADO", "title": "Publicidad de cierre", "text": "El resultado final abre un espacio para que una marca acompañe el momento de mayor atención." }
+      },
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

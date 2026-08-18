@@ -2086,6 +2086,11 @@
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Heute verfügbar · Live",
       "text": "Die intelligente Anzeigetafel erfasst das Spiel bereits live und verbindet das Ergebnis mit Spielern, Wettbewerb und dem Betrieb des Clubs.",
+      "sponsorSlots": {
+        "aria": "Sponsor- und Werbeflächen der Anzeigetafel",
+        "live": { "eyebrow": "WÄHREND DES SPIELS", "title": "Live-Sponsorband", "text": "Marken begleiten das Spiel über einen sichtbaren Streifen auf der Anzeigetafel." },
+        "closing": { "eyebrow": "BEIM ERGEBNISABSCHLUSS", "title": "Abschlusswerbung", "text": "Das Endergebnis schafft Raum für eine Marke im Moment größter Aufmerksamkeit." }
+      },
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

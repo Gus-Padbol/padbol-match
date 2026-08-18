@@ -2086,6 +2086,11 @@
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Disponible aujourd’hui · En direct",
       "text": "Le tableau de score intelligent enregistre déjà le match en direct et relie le résultat aux joueurs, à la compétition et à l’activité du club.",
+      "sponsorSlots": {
+        "aria": "Espaces sponsors et publicité du tableau de score",
+        "live": { "eyebrow": "PENDANT LE MATCH", "title": "Bande de sponsors en direct", "text": "Les marques accompagnent le jeu dans une bande visible sur le tableau de score." },
+        "closing": { "eyebrow": "À LA CLÔTURE DU RÉSULTAT", "title": "Publicité de clôture", "text": "Le résultat final ouvre un espace pour accompagner le moment de plus grande attention." }
+      },
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

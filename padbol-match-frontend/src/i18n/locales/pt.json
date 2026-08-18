@@ -2086,6 +2086,11 @@
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Disponível hoje · Ao vivo",
       "text": "O placar inteligente já registra a partida ao vivo e mantém o resultado conectado a jogadores, competição e operação da sede.",
+      "sponsorSlots": {
+        "aria": "Espaços de patrocinadores e publicidade do placar",
+        "live": { "eyebrow": "DURANTE A PARTIDA", "title": "Faixa de patrocinadores ao vivo", "text": "As marcas acompanham o jogo em uma faixa visível no placar." },
+        "closing": { "eyebrow": "AO FECHAR O RESULTADO", "title": "Publicidade de encerramento", "text": "O resultado final abre espaço para uma marca acompanhar o momento de maior atenção." }
+      },
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

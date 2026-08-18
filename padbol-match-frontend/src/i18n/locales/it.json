@@ -2086,6 +2086,11 @@
       "title": "Marcador inteligente: el partido en vivo.",
       "comingSoon": "Disponibile oggi · Live",
       "text": "Il tabellone intelligente registra già la partita dal vivo e mantiene il risultato connesso a giocatori, competizione e operatività della sede.",
+      "sponsorSlots": {
+        "aria": "Spazi per sponsor e pubblicità del tabellone",
+        "live": { "eyebrow": "DURANTE LA PARTITA", "title": "Fascia sponsor dal vivo", "text": "I brand accompagnano il gioco in una fascia visibile sul tabellone." },
+        "closing": { "eyebrow": "ALLA CHIUSURA DEL RISULTATO", "title": "Pubblicità di chiusura", "text": "Il risultato finale apre uno spazio per accompagnare il momento di maggiore attenzione." }
+      },
       "demoAria": "Demostración visual del marcador inteligente",
       "demoBadge": "En vivo",
       "demoTeamA": "Equipo A",

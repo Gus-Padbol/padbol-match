@@ -703,6 +703,24 @@ export function SmartScoreboardSection() {
         <div className="ps-scoreboard__visual">
           <ScoreboardSnapshot />
           <ScoreboardVideo text={text} />
+          <div className="ps-scoreboard__sponsor-slots" aria-label={text('publicSite.smartScoreboard.sponsorSlots.aria')}>
+            <article className="ps-scoreboard__sponsor-slot">
+              <span>{text('publicSite.smartScoreboard.sponsorSlots.live.eyebrow')}</span>
+              <strong>{text('publicSite.smartScoreboard.sponsorSlots.live.title')}</strong>
+              <p>{text('publicSite.smartScoreboard.sponsorSlots.live.text')}</p>
+              <div className="ps-scoreboard__sponsor-ticker" aria-hidden="true">
+                <b>CHIVI CUP</b><b>NEXORA</b><b>VOLTA</b><b>ORBITA</b>
+              </div>
+            </article>
+            <article className="ps-scoreboard__sponsor-slot ps-scoreboard__sponsor-slot--closing">
+              <span>{text('publicSite.smartScoreboard.sponsorSlots.closing.eyebrow')}</span>
+              <strong>{text('publicSite.smartScoreboard.sponsorSlots.closing.title')}</strong>
+              <p>{text('publicSite.smartScoreboard.sponsorSlots.closing.text')}</p>
+              <div className="ps-scoreboard__closing-ad" aria-hidden="true">
+                <i>✓</i><b>RESULTADO REGISTRADO</b><em>ESPACIO PARA MARCA</em>
+              </div>
+            </article>
+          </div>
         </div>
         <div className="ps-scoreboard__steps">
           <ol className="ps-flow-steps ps-flow-steps--scoreboard" aria-label="Pasos del marcador inteligente">
