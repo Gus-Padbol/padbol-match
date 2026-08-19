@@ -140,6 +140,11 @@ export default function AdminVenueLandingPage() {
                 </article>
               ))}
             </div>
+            <div className="admin-landing__modules-cta">
+              <Link to="/unirse" className="admin-landing__primary">
+                {text('modulesCta')} <span>→</span>
+              </Link>
+            </div>
           </div>
         </section>
 

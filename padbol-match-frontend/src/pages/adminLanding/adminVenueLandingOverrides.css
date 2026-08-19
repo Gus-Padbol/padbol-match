@@ -48,6 +48,12 @@ html.admin-landing-active body {
   min-width: 0;
 }
 
+.admin-landing__modules-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
 /* La landing ocupa el ancho disponible del shell público. `100vw` sumaba el
  * ancho de la barra de scroll y desplazaba todo el documento lateralmente. */
 @supports (-webkit-touch-callout: none) {
