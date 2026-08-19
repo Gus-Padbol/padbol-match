@@ -1303,6 +1303,7 @@ html.public-site-active #root {
   height: 100%;
   position: relative;
   z-index: 1;
+  transform: translateZ(0);
 }
 
 .ps-globe-labels {
@@ -4606,10 +4607,13 @@ html.public-site-active #root {
   display: grid;
   gap: 10px;
   width: var(--ps-scoreboard-media-width);
+  max-width: 100%;
+  min-width: 0;
   margin: 0 auto;
 }
 
 .ps-scoreboard__sponsor-slot {
+  min-width: 0;
   min-height: 142px;
   padding: 14px;
   border: 1px solid rgba(112, 132, 165, 0.38);
@@ -4642,6 +4646,7 @@ html.public-site-active #root {
 .ps-scoreboard__sponsor-ticker {
   display: flex;
   gap: 8px;
+  min-width: 0;
   overflow: hidden;
   padding: 7px 8px;
   border-top: 1px solid rgba(225, 27, 34, 0.65);
@@ -4661,6 +4666,7 @@ html.public-site-active #root {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   padding: 8px;
   border-radius: 8px;
   background: linear-gradient(90deg, rgba(225, 27, 34, 0.19), rgba(225, 27, 34, 0.03));
@@ -4680,13 +4686,39 @@ html.public-site-active #root {
 
 .ps-scoreboard__closing-ad b,
 .ps-scoreboard__closing-ad em {
+  min-width: 0;
   font-size: 0.56rem;
   font-style: normal;
   letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
 }
 
 .ps-scoreboard__closing-ad b { color: #fff; }
 .ps-scoreboard__closing-ad em { margin-left: auto; color: #ff9ca1; }
+
+@media (max-width: 899px) {
+  /* En móvil estas tarjetas forman parte de un visual a ancho de viewport.
+     La grilla y cada aviso respetan ese ancho, incluso con textos traducidos. */
+  .ps-section--scoreboard .ps-scoreboard__sponsor-slots {
+    flex: 0 1 var(--ps-scoreboard-media-width);
+    width: min(var(--ps-scoreboard-media-width), 100%);
+  }
+
+  .ps-section--scoreboard .ps-scoreboard__sponsor-slot {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .ps-section--scoreboard .ps-scoreboard__closing-ad {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+
+  .ps-section--scoreboard .ps-scoreboard__closing-ad em {
+    grid-column: 2;
+    margin-left: 0;
+  }
+}
 
 .ps-sb__frame {
   padding: 18px 18px 16px;
