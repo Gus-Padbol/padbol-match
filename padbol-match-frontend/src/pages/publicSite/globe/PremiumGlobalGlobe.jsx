@@ -266,15 +266,22 @@ export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
 
     let raf = 0;
     const start = performance.now();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // En escritorio el globo es grande: limitar levemente la densidad evita
+    // que una pantalla Retina multiplique el trabajo de dibujo sin mejorar
+    // perceptiblemente el detalle. En móvil conservamos la nitidez completa.
+    const dpr = Math.min(window.devicePixelRatio || 1, compact ? 2 : 1.5);
     const maxLinks = linkSamples.length;
+
+    // El tamaño del canvas solo cambia cuando cambia el layout. Hacerlo dentro
+    // de cada frame reinicia el contexto y obliga al navegador a realocar la
+    // superficie completa unas 60 veces por segundo.
+    canvas.width = Math.floor(layout.w * dpr);
+    canvas.height = Math.floor(layout.h * dpr);
+    canvas.style.width = `${layout.w}px`;
+    canvas.style.height = `${layout.h}px`;
 
     const paint = (now) => {
       const { w, h, cx, cy, radius } = layout;
-      canvas.width = Math.floor(w * dpr);
-      canvas.height = Math.floor(h * dpr);
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
 
@@ -291,7 +298,11 @@ export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
         yaw = -18 + (rotationElapsedRef.current / rotationMs) * 360;
         yawRef.current = yaw;
         labelTickRef.current += 1;
-        if (labelTickRef.current % 3 === 0) {
+        // Las etiquetas no necesitan actualizarse a 60 fps. En escritorio
+        // hacerlo a 10 fps mantiene su lectura fluida y libera al hilo de
+        // React para que el primer scroll no compita con la animación.
+        const labelUpdateEvery = compact ? 3 : 6;
+        if (labelTickRef.current % labelUpdateEvery === 0) {
           setYawDeg(((yaw % 360) + 360) % 360);
           setElapsedMs(rotationElapsedRef.current);
         }

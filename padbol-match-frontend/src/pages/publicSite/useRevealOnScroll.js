@@ -33,7 +33,12 @@ export default function useRevealOnScroll(rootRef) {
           const el = entry.target;
           const order = Number(el.getAttribute('data-ps-reveal-order') || 0);
           el.style.setProperty('--ps-reveal-delay', `${Math.min(order, 8) * 90}ms`);
+          el.style.willChange = 'opacity, transform';
           el.classList.add('ps-reveal-in');
+          const releaseLayer = () => {
+            el.style.willChange = '';
+          };
+          el.addEventListener('transitionend', releaseLayer, { once: true });
           observer.unobserve(el);
         });
       },
@@ -47,7 +52,10 @@ export default function useRevealOnScroll(rootRef) {
 
     return () => {
       observer.disconnect();
-      targets.forEach((el) => el.classList.remove('ps-reveal-armed'));
+      targets.forEach((el) => {
+        el.classList.remove('ps-reveal-armed');
+        el.style.willChange = '';
+      });
     };
   }, [rootRef]);
 }
