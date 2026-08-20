@@ -8,7 +8,7 @@
  * - /static/* hasheado: cache-first (immutable).
  * - Iconos/manifest: cache-first con revalidación al fallar red.
  */
-const CACHE_VERSION = 'pwa-1787259932722';
+const CACHE_VERSION = 'pwa-1787261297675';
 
 /** postMessage al cliente cuando se reemplazó una caché anterior (actualización real). */
 const MSG_UPDATED = 'PM_SW_UPDATED';

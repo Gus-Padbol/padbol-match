@@ -858,6 +858,95 @@
   letter-spacing: 0.08em;
 }
 
+.sb-waiting--advertising {
+  position: relative;
+  display: block;
+  width: 100vw;
+  min-height: 100vh;
+  background: var(--sb-bg);
+}
+
+.sb-waiting__court-label {
+  position: absolute;
+  right: 3vw;
+  bottom: 3vh;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 2;
+}
+
+.sb-waiting--advertising .sb-waiting__logo { width: min(12vw, 180px); }
+.sb-waiting--advertising .sb-waiting__cancha { font-size: clamp(0.8rem, 1.4vw, 1.1rem); }
+
+.sb-ad-break {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: clamp(24px, 4vw, 72px);
+  color: #fff;
+  background:
+    radial-gradient(circle at 18% 25%, rgba(225, 27, 34, 0.34), transparent 30%),
+    radial-gradient(circle at 80% 72%, rgba(39, 131, 255, 0.2), transparent 34%),
+    #05070d;
+}
+
+.sb-ad-break::before,
+.sb-ad-break::after {
+  position: absolute;
+  z-index: -1;
+  width: min(46vw, 760px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  content: '';
+}
+
+.sb-ad-break::before { top: -26%; right: -10%; }
+.sb-ad-break::after { bottom: -36%; left: -10%; border-color: rgba(225, 27, 34, 0.32); }
+
+.sb-ad-break__topline,
+.sb-ad-break__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: clamp(0.7rem, 1vw, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.sb-ad-break__topline span:last-child { color: #ff5962; }
+.sb-ad-break__content { max-width: min(76vw, 1220px); animation: sb-ad-break-in 500ms ease both; }
+.sb-ad-break__media { display: block; width: min(64vw, 920px); max-height: min(42vh, 470px); margin: 0 0 clamp(20px, 3vw, 42px); border: 1px solid rgba(255,255,255,.2); border-radius: 18px; object-fit: contain; background: #05070d; }
+.sb-ad-break__logo { display: block; max-width: min(36vw, 460px); max-height: min(20vh, 200px); margin-bottom: clamp(20px, 3vw, 42px); object-fit: contain; object-position: left center; }
+.sb-ad-break__eyebrow { margin: 0 0 12px; color: #ff7379; font-size: clamp(0.75rem, 1.2vw, 1.1rem); font-weight: 900; letter-spacing: 0.16em; }
+.sb-ad-break h1 { max-width: 14ch; margin: 0; font-family: var(--sb-font-display); font-size: clamp(3.8rem, 11vw, 12rem); line-height: 0.86; letter-spacing: 0.02em; text-transform: uppercase; }
+.sb-ad-break__message { max-width: 48ch; margin: clamp(20px, 3vw, 40px) 0 0; color: rgba(255, 255, 255, 0.7); font-size: clamp(1rem, 2vw, 1.7rem); line-height: 1.35; }
+.sb-ad-break__pulse { width: 11px; height: 11px; border-radius: 999px; background: #ff2632; box-shadow: 0 0 0 7px rgba(255, 38, 50, 0.14); }
+
+@keyframes sb-ad-break-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sb-ticker-sponsor {
+  display: inline-flex;
+  align-items: center;
+  min-width: 170px;
+  gap: 12px;
+  padding: 0 22px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(0.72rem, 1vw, 1rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sb-ticker-sponsor__logo { width: auto; max-width: 90px; height: 28px; object-fit: contain; }
+
 .sb-loading,
 .sb-error {
   width: 100vw;
