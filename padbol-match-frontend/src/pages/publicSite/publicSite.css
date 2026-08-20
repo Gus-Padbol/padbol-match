@@ -3607,6 +3607,8 @@ html.public-site-active #root {
        del texto: así conserva exactamente el mismo aire a izquierda y derecha. */
     --ps-scoreboard-media-width: min(calc(100vw - 48px), 430px);
     display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100vw;
     justify-content: center;
     margin-left: calc(50% - 50vw);
@@ -4700,7 +4702,7 @@ html.public-site-active #root {
   /* En móvil estas tarjetas forman parte de un visual a ancho de viewport.
      La grilla y cada aviso respetan ese ancho, incluso con textos traducidos. */
   .ps-section--scoreboard .ps-scoreboard__sponsor-slots {
-    flex: 0 1 var(--ps-scoreboard-media-width);
+    flex: 0 0 auto;
     width: min(var(--ps-scoreboard-media-width), 100%);
   }
 
