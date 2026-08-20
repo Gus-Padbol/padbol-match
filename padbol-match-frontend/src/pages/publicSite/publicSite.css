@@ -3600,8 +3600,8 @@ html.public-site-active #root {
 
   .ps-section--community .ps-match__cta { margin-top: 0; padding: 6px 10px; font-size: 0.65rem; }
 
-  /* En teléfono no duplicamos captura y video del marcador: el video ocupa
-     todo el ancho útil y conserva su encuadre completo, sin recortes. */
+  /* En teléfono se conservan la captura y el video. La captura es además el
+     respaldo inmediato si el navegador demora o bloquea el autoplay. */
   .ps-section--scoreboard .ps-scoreboard__visual {
     /* El video se centra contra el viewport, no contra la columna interna
        del texto: así conserva exactamente el mismo aire a izquierda y derecha. */
@@ -3612,12 +3612,17 @@ html.public-site-active #root {
     width: 100vw;
     justify-content: center;
     margin-left: calc(50% - 50vw);
-    gap: 0;
+    gap: 12px;
     margin-top: 0;
     margin-bottom: 0;
   }
 
-  .ps-section--scoreboard .ps-scoreboard__snapshot { display: none; }
+  .ps-section--scoreboard .ps-scoreboard__snapshot {
+    display: block;
+    flex: 0 0 var(--ps-scoreboard-media-width);
+    margin: 0;
+    border-radius: 16px;
+  }
 
   .ps-section--scoreboard .ps-scoreboard__video {
     flex: 0 0 var(--ps-scoreboard-media-width);
