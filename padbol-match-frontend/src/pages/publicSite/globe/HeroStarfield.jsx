@@ -27,7 +27,9 @@ export default function HeroStarfield({
     let start = performance.now();
     let w = 0;
     let h = 0;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // El fondo no requiere la misma densidad que el globo: limitarlo en
+    // escritorio deja más tiempo al scroll y a la interacción inicial.
+    const dpr = Math.min(window.devicePixelRatio || 1, compact ? 2 : 1.25);
 
     const hash = (n) => {
       const x = Math.sin(n * 127.1) * 43758.5453;
@@ -187,8 +189,15 @@ export default function HeroStarfield({
       drawLayer(near, nearOx, nearOy, 1.05, t);
     };
 
+    let lastPaint = 0;
+    const minFrameMs = compact ? 0 : tablet ? 25 : 42;
     const tick = (now) => {
-      paint(now);
+      // El fondo estelar se mueve muy lentamente; a ~24 fps en escritorio se
+      // percibe igual, pero deja libre el hilo principal para el primer scroll.
+      if (now - lastPaint >= minFrameMs) {
+        paint(now);
+        lastPaint = now;
+      }
       if (!reducedMotion) raf = requestAnimationFrame(tick);
     };
 

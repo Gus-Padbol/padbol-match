@@ -50,7 +50,9 @@ export const GLOBE_ATMOSPHERIC_ROUTES = ATM_BUILT.routes.map((r) => ({
 export const GLOBE_ATM_SEED = ATM_BUILT.seed;
 
 export const GLOBE_ATM_COUNTS = {
-  desktop: GLOBE_ATMOSPHERIC_ROUTES.length,
+  // La envolvente sigue siendo amplia, pero evita dibujar toda la malla en
+  // cada frame de escritorio durante el scroll inicial.
+  desktop: 30,
   tablet: 28,
   mobile: 14,
 };

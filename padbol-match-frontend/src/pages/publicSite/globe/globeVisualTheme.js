@@ -144,16 +144,16 @@ export const GLOBE_INLAND_THEME = {
 
 /** Nube atmosférica + líneas de datos (no nodos funcionales). */
 export const GLOBE_ATMOSPHERE_FX = {
-  points: { desktop: 420, tablet: 240, mobile: 110 },
-  dataLines: { desktop: 9, tablet: 6, mobile: 3 },
-  orbitArcs: { desktop: 7, tablet: 4, mobile: 2 },
-  sparkles: { desktop: 18, tablet: 10, mobile: 5 },
+  points: { desktop: 280, tablet: 240, mobile: 110 },
+  dataLines: { desktop: 6, tablet: 6, mobile: 3 },
+  orbitArcs: { desktop: 5, tablet: 4, mobile: 2 },
+  sparkles: { desktop: 12, tablet: 10, mobile: 5 },
   shellMin: 1.04,
   shellMax: 1.28,
 };
 
 export const STARFIELD_THEME = {
-  desktop: { far: 170, mid: 64, near: 22 },
+  desktop: { far: 120, mid: 46, near: 16 },
   tablet: { far: 110, mid: 40, near: 14 },
   mobile: { far: 64, mid: 22, near: 8 },
   sizes: {
