@@ -11,6 +11,7 @@ export default function HeroStarfield({
   tablet = false,
 }) {
   const canvasRef = useRef(null);
+  const scrollingRef = useRef(false);
   const counts = compact
     ? STARFIELD_THEME.mobile
     : tablet
@@ -27,6 +28,7 @@ export default function HeroStarfield({
     let start = performance.now();
     let w = 0;
     let h = 0;
+    let settleTimer = 0;
     // El fondo no requiere la misma densidad que el globo: limitarlo en
     // escritorio deja más tiempo al scroll y a la interacción inicial.
     const dpr = Math.min(window.devicePixelRatio || 1, compact ? 2 : 1.25);
@@ -82,10 +84,20 @@ export default function HeroStarfield({
       near = makeStars(counts.near, 73, nz[0], nz[1], 0.48, 0.9);
     };
 
+    const markScrolling = () => {
+      if (compact) return;
+      scrollingRef.current = true;
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        scrollingRef.current = false;
+      }, 140);
+    };
+
     resize();
     const ro =
       typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     if (ro && canvas.parentElement) ro.observe(canvas.parentElement);
+    window.addEventListener('scroll', markScrolling, { passive: true });
 
     const drawNebula = (t) => {
       const drift = reducedMotion ? 0 : Math.sin(t * 0.04) * 0.015;
@@ -194,7 +206,7 @@ export default function HeroStarfield({
     const tick = (now) => {
       // El fondo estelar se mueve muy lentamente; a ~24 fps en escritorio se
       // percibe igual, pero deja libre el hilo principal para el primer scroll.
-      if (now - lastPaint >= minFrameMs) {
+      if ((!scrollingRef.current || compact) && now - lastPaint >= minFrameMs) {
         paint(now);
         lastPaint = now;
       }
@@ -205,12 +217,16 @@ export default function HeroStarfield({
       paint(performance.now());
       return () => {
         if (ro) ro.disconnect();
+        window.removeEventListener('scroll', markScrolling);
+        window.clearTimeout(settleTimer);
       };
     }
     raf = requestAnimationFrame(tick);
     return () => {
       if (raf) cancelAnimationFrame(raf);
       if (ro) ro.disconnect();
+      window.removeEventListener('scroll', markScrolling);
+      window.clearTimeout(settleTimer);
     };
   }, [reducedMotion, compact, tablet, counts.far, counts.mid, counts.near]);
 

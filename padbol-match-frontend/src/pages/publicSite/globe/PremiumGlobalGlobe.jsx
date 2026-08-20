@@ -130,6 +130,7 @@ export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
   const lastRotationFrameRef = useRef(null);
   const hoverRef = useRef(false);
   const visibleRef = useRef(true);
+  const scrollingRef = useRef(false);
   const labelTickRef = useRef(0);
 
   const debugYaw = useMemo(() => {
@@ -257,6 +258,23 @@ export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
     io.observe(root);
     return () => io.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (compact) return undefined;
+    let settleTimer = 0;
+    const markScrolling = () => {
+      scrollingRef.current = true;
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        scrollingRef.current = false;
+      }, 140);
+    };
+    window.addEventListener('scroll', markScrolling, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', markScrolling);
+      window.clearTimeout(settleTimer);
+    };
+  }, [compact]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -565,7 +583,11 @@ export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
     };
 
     const tick = (now) => {
-      if (visibleRef.current || compact || debugYaw != null) paint(now);
+      // Durante un desplazamiento de escritorio el usuario prioriza navegar;
+      // congelar este canvas por unos milisegundos evita que compita con la
+      // respuesta del scroll. Al detenerse, la animación continúa sola.
+      const canPaint = compact || debugYaw != null || (visibleRef.current && !scrollingRef.current);
+      if (canPaint) paint(now);
       if (!reducedMotion && debugYaw == null) raf = requestAnimationFrame(tick);
     };
 
