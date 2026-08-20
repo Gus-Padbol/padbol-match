@@ -636,17 +636,21 @@ function ScoreboardVideo({ text }) {
     );
     observer.observe(video);
     video.addEventListener('loadedmetadata', playWhenVisible);
+    video.addEventListener('loadeddata', playWhenVisible);
     video.addEventListener('canplay', playWhenVisible);
     window.addEventListener('pageshow', playWhenVisible);
     window.addEventListener('focus', playWhenVisible);
+    window.addEventListener('touchstart', playWhenVisible, { passive: true });
     document.addEventListener('visibilitychange', onPageVisible);
     playWhenVisible();
     return () => {
       observer.disconnect();
       video.removeEventListener('loadedmetadata', playWhenVisible);
+      video.removeEventListener('loadeddata', playWhenVisible);
       video.removeEventListener('canplay', playWhenVisible);
       window.removeEventListener('pageshow', playWhenVisible);
       window.removeEventListener('focus', playWhenVisible);
+      window.removeEventListener('touchstart', playWhenVisible);
       document.removeEventListener('visibilitychange', onPageVisible);
     };
   }, []);
@@ -676,7 +680,7 @@ function ScoreboardSnapshot() {
       <img
         src={`${ASSET_ROOT}/marcador-inteligente-captura.jpg`}
         alt="Marcador Padbol Match durante un partido"
-        loading="lazy"
+        loading="eager"
       />
     </figure>
   );
