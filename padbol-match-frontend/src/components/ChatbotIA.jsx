@@ -827,7 +827,7 @@ export default function ChatbotIA() {
   usePadbolLangVersion();
   const isPublicLanding = useMemo(() => {
     const p = String(location.pathname || '/').replace(/\/+$/, '') || '/';
-    return p === '/plataforma';
+    return p === '/plataforma' || p === '/administradores';
   }, [location.pathname]);
   const ui = useMemo(() => {
     const base = chatUiStrings(padbolLang, t);
@@ -984,8 +984,10 @@ export default function ChatbotIA() {
     const remind = () => {
       const now = Date.now();
       const travelled = Math.abs(window.scrollY - attention.lastY);
-      const minTravel = Math.max(window.innerHeight * 1.35, 720);
-      if (travelled < minTravel || now - attention.lastAt < 18000) return;
+      // Chivi vuelve a llamar la atención recién al atravesar tres pantallas;
+      // así acompaña el recorrido sin aparecer en cada pequeño desplazamiento.
+      const minTravel = Math.max(window.innerHeight * 3, 1200);
+      if (travelled < minTravel || now - attention.lastAt < 1800) return;
       attention.lastY = window.scrollY;
       attention.lastAt = now;
       setPublicAttentionCycle((cycle) => cycle + 1);
@@ -1618,7 +1620,7 @@ export default function ChatbotIA() {
   return (
     <>
       <div
-        key={isPublicLanding ? `public-attention-${publicAttentionCycle}` : 'chatbot-fab'}
+        key={isPublicLanding ? `public-attention-${location.pathname}-${publicAttentionCycle}` : 'chatbot-fab'}
         className={`chatbot-fab-anchor${isPublicLanding ? ' chatbot-fab-anchor--public' : ''}`}
         style={{
           bottom: fabBottom,
