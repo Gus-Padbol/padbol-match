@@ -407,7 +407,9 @@ export function resolveLabelNode() {
 }
 
 export function selectNodesForViewport(compact, tablet) {
-  const target = compact ? 54 : tablet ? 90 : GLOBE_NODES.length;
+  // En escritorio conservar todos los nodos no aporta lectura adicional, pero
+  // sí suma proyecciones por cuadro mientras la portada está animada.
+  const target = compact ? 54 : tablet ? 90 : GLOBE_NODE_COUNTS.desktop.min;
   if (target >= GLOBE_NODES.length) return GLOBE_NODES;
 
   const byRegion = new Map();
@@ -453,7 +455,7 @@ export function selectNodesForViewport(compact, tablet) {
 
 export function selectLinksForViewport(nodes, compact, tablet) {
   const ids = new Set(nodes.map((n) => n.id));
-  const target = compact ? 78 : tablet ? 145 : GLOBE_LINKS.length;
+  const target = compact ? 78 : tablet ? 145 : 180;
   const filtered = GLOBE_LINKS.filter((l) => ids.has(l.from) && ids.has(l.to));
   const ranked = [...filtered].sort((a, b) => {
     const order = { local: 0, regional: 1, international: 2 };
