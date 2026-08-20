@@ -42,7 +42,9 @@
   font-size: 20px;
   line-height: 1;
   box-shadow: 0 0 22px rgba(225, 27, 34, 0.78);
-  animation: chatbot-public-ai-spark-pulse 2.4s ease-in-out infinite;
+  animation:
+    chatbot-public-ai-spark-pulse 0.7s ease-in-out 3,
+    chatbot-public-ai-spark-settle 0.35s ease 2.1s forwards;
 }
 
 .chatbot-fab-anchor--public .chatbot-fab-circle-btn {
@@ -50,24 +52,22 @@
   border-color: #e11b22;
   background: #090d16;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42), 0 0 22px rgba(225, 27, 34, 0.2);
-  /* Chivi debe seguir siendo reconocible después de la llamada inicial.
-     Antes este bloque se encogía hasta parecer un punto rojo. */
-  animation: none;
+  animation: chatbot-public-avatar-collapse 0.35s ease 2.1s forwards;
 }
 
 .chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill {
   border-radius: 50%;
   transform: scale(0.82);
-  animation: none;
+  animation: chatbot-public-avatar-fade 0.25s ease 2.02s forwards;
 }
 
 .chatbot-fab-anchor--public {
-  animation: chatbot-public-float 2.4s ease-in-out infinite;
+  animation: chatbot-public-float 0.7s ease-in-out 3;
 }
 
 .chatbot-public-ai-label {
   overflow: hidden;
-  animation: none;
+  animation: chatbot-public-label-collapse 0.3s ease 2.02s forwards;
 }
 
 .chatbot-fab-anchor--public button:hover .chatbot-fab-circle-btn {
