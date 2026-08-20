@@ -7,8 +7,25 @@ describe('Chivi on the public Padbol Match landing', () => {
   it('is visible on the public landing without expanding to player routes', () => {
     expect(isChatbotIAVisiblePathname('/plataforma')).toBe(true);
     expect(isChatbotIAVisiblePathname('/plataforma/')).toBe(true);
+    expect(isChatbotIAVisiblePathname('/administradores')).toBe(true);
     expect(isChatbotIAVisiblePathname('/jugar')).toBe(false);
     expect(isChatbotIAVisiblePathname('/acceso')).toBe(false);
+  });
+
+  it('preserves the approved attention cycle and scoreboard media fallback', () => {
+    const source = fs.readFileSync(path.join(__dirname, 'ChatbotIA.jsx'), 'utf8');
+    const styles = fs.readFileSync(path.join(__dirname, 'ChatbotIA.css'), 'utf8');
+    const premiumSections = fs.readFileSync(path.join(__dirname, '..', 'pages', 'publicSite', 'sections', 'PremiumSections.jsx'), 'utf8');
+    const publicStyles = fs.readFileSync(path.join(__dirname, '..', 'pages', 'publicSite', 'publicSite.css'), 'utf8');
+
+    expect(source).toContain("p === '/administradores'");
+    expect(source).toContain('window.innerHeight * 3');
+    expect(styles).toContain('chatbot-public-float 0.7s ease-in-out 3');
+    expect(styles).toContain('chatbot-public-avatar-collapse 0.35s ease 2.1s forwards');
+    expect(styles).toContain('chatbot-public-label-collapse 0.3s ease 2.02s forwards');
+    expect(premiumSections).toContain('<ScoreboardSnapshot />');
+    expect(premiumSections).toContain('<ScoreboardVideo text={text} />');
+    expect(publicStyles).toContain('.ps-section--scoreboard .ps-scoreboard__snapshot {\n    display: block;');
   });
 
   it('sends explicit public context and renders the AI spark', () => {
