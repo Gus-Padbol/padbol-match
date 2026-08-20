@@ -115,31 +115,3 @@
     transform: scale(0.8);
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .chatbot-fab-anchor--public,
-  .chatbot-public-ai-spark,
-  .chatbot-fab-anchor--public .chatbot-fab-circle-btn,
-  .chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill,
-  .chatbot-public-ai-label {
-    animation: none;
-  }
-
-  .chatbot-fab-anchor--public .chatbot-fab-circle-btn {
-    width: 56px;
-    height: 56px;
-    border-color: #e11b22;
-    background: #090d16;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42), 0 0 22px rgba(225, 27, 34, 0.2);
-  }
-
-  .chatbot-fab-anchor--public .chatbot-fab-chivi-avatar--fill,
-  .chatbot-public-ai-label {
-    display: block;
-  }
-
-  .chatbot-public-ai-spark {
-    top: 1px;
-    right: 1px;
-  }
-}
