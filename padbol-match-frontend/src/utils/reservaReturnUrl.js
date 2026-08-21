@@ -324,7 +324,9 @@ export function getPostLoginReservaPath() {
   }
 
   if (!parsed || typeof parsed !== 'object') {
-    return '/';
+    // Un ingreso normal no debe volver a la landing pública: lleva al inicio
+    // autenticado. Las reservas pendientes ya fueron resueltas arriba.
+    return '/hub';
   }
 
   try {
@@ -349,7 +351,7 @@ export function getPostLoginReservaPath() {
     /* ignore */
   }
 
-  return '/';
+  return '/hub';
 }
 
 /**
