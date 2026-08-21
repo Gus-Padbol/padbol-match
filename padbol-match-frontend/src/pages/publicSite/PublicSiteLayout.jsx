@@ -159,9 +159,9 @@ export default function PublicSiteLayout({ children }) {
             <div className="public-site__lang">
               <LanguageSwitcher variant="landing" />
             </div>
-            <Link to={PUBLIC_SITE_CTA.login} className="public-site__login">
+            <a href={PUBLIC_SITE_CTA.login} className="public-site__login">
               {text('publicSite.nav.login')}
-            </Link>
+            </a>
             <button
               ref={menuButtonRef}
               type="button"
@@ -196,9 +196,9 @@ export default function PublicSiteLayout({ children }) {
                 {text(`publicSite.nav.${item.key}`)}
               </a>
             ))}
-            <Link to={PUBLIC_SITE_CTA.login} onClick={() => setMenuOpen(false)}>
+            <a href={PUBLIC_SITE_CTA.login} onClick={() => setMenuOpen(false)}>
               {text('publicSite.nav.login')}
-            </Link>
+            </a>
           </div>
         </nav>
       </header>
