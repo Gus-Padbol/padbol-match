@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
+import ScoreboardAdBreak from './ScoreboardAdBreak';
 import UniformJerseyStrip from './UniformJerseyStrip';
 import { fetchJugadoresTemp } from '../../utils/scoreboardApi';
 import {
@@ -9,6 +10,7 @@ import {
   scoreboardPlayerName,
 } from '../../utils/scoreboardPlayers';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
+import { sponsorsForScoreboardPlacement } from '../../utils/scoreboardAdvertising';
 import '../../styles/ScoreboardDisplay.css';
 
 function mergeJugadoresWithTemp(jugadores, equipo, tempList, jerseyFields = []) {
@@ -329,6 +331,14 @@ export default function ScoreboardBoard({
   const uniformB = resolveUniformJerseyColors(partido, 'B');
   const [jugadoresTemp, setJugadoresTemp] = useState([]);
   const [showConfettiWinner, setShowConfettiWinner] = useState(false);
+  const completedSets = Array.isArray(partido.historial_sets) ? partido.historial_sets.length : 0;
+  const completedSetsRef = React.useRef(completedSets);
+  const completedGames = Number(partido.games_a || 0) + Number(partido.games_b || 0);
+  const completedGamesRef = React.useRef(completedGames);
+  const adSlotRef = React.useRef(0);
+  const [adBreak, setAdBreak] = useState(null);
+  const isPaused = partido.cronometro_pausado === true || partido.cronometro_pausado === 1 || partido.cronometro_pausado === 'true';
+  const tickerSponsors = useMemo(() => sponsorsForScoreboardPlacement(sponsors, 'ticker'), [sponsors]);
 
   const jerseyFieldsA = useMemo(
     () => [partido.jersey_a1, partido.jersey_a2, partido.jersey_a3, partido.jersey_a4],
@@ -382,6 +392,36 @@ export default function ScoreboardBoard({
     return () => window.clearTimeout(id);
   }, [terminado, winnerName, partido?.id]);
 
+  useEffect(() => {
+    const previousSets = completedSetsRef.current;
+    completedSetsRef.current = completedSets;
+    if (terminado || completedSets <= previousSets) return undefined;
+
+    // El final de set admite un bloque comercial más largo: rota los sponsors
+    // hasta que se retome el juego o se complete la ventana prevista.
+    const duration = 30000;
+    setAdBreak({ moment: 'set-break', slot: adSlotRef.current, until: Date.now() + duration });
+    adSlotRef.current += 1;
+    const id = window.setTimeout(() => setAdBreak(null), duration);
+    return () => window.clearTimeout(id);
+  }, [completedSets, terminado]);
+
+  useEffect(() => {
+    const previousGames = completedGamesRef.current;
+    completedGamesRef.current = completedGames;
+    if (terminado || completedGames <= previousGames) return undefined;
+
+    // Entre games se muestra solo una pieza. El índice circular hace que, con
+    // cinco sponsors, cada corte breve entregue el turno al siguiente.
+    const duration = 4500;
+    setAdBreak({ moment: 'game-break', slot: adSlotRef.current, until: Date.now() + duration });
+    adSlotRef.current += 1;
+    const id = window.setTimeout(() => setAdBreak(null), duration);
+    return () => window.clearTimeout(id);
+  }, [completedGames, terminado]);
+
+  const showAdvertisingBreak = !terminado && (isPaused || adBreak?.until > Date.now());
+
   if (terminado && winnerName) {
     if (!showConfettiWinner) {
       return <ScoreboardDramaticResultScreen partido={partido} />;
@@ -391,6 +431,16 @@ export default function ScoreboardBoard({
         partido={partido}
         timerSeconds={timerSeconds}
         onDismiss={onWinnerDismiss}
+      />
+    );
+  }
+
+  if (showAdvertisingBreak) {
+    return (
+      <ScoreboardAdBreak
+        sponsors={sponsors}
+        moment={isPaused ? 'break' : adBreak?.moment}
+        startIndex={adBreak?.slot || 0}
       />
     );
   }
@@ -508,14 +558,21 @@ export default function ScoreboardBoard({
       <footer className="sb-footer" aria-label="Padbol Match">
         <div className="sb-ticker-track">
           <div className="sb-ticker-content">
-            {TICKER_LOGOS.map((index) => (
-              <img
-                key={`ticker-logo-${index}`}
-                src="/brand/padbol-match-logo-on-dark.png"
-                alt={index === 0 ? 'Padbol Match' : ''}
-                className="sb-ticker-logo"
-              />
-            ))}
+            {tickerSponsors.length
+              ? Array.from({ length: 2 }, (_, repeat) => tickerSponsors.slice(0, 10).map((sponsor, index) => (
+                <span className="sb-ticker-sponsor" key={`sponsor-${repeat}-${sponsor.id || index}`}>
+                  {sponsor.logo_url ? <img src={sponsor.logo_url} alt="" className="sb-ticker-sponsor__logo" /> : null}
+                  <b>{sponsor.nombre}</b>
+                </span>
+              )))
+              : TICKER_LOGOS.map((index) => (
+                <img
+                  key={`ticker-logo-${index}`}
+                  src="/brand/padbol-match-logo-on-dark.png"
+                  alt={index === 0 ? 'Padbol Match' : ''}
+                  className="sb-ticker-logo"
+                />
+              ))}
           </div>
         </div>
       </footer>

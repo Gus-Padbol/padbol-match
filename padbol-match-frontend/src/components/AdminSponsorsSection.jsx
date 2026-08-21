@@ -14,6 +14,11 @@ import {
   etiquetaFormatoSponsorRow,
   normalizeSponsorFormato,
 } from '../utils/sponsorDisplayFormato';
+import {
+  SCOREBOARD_AD_DEFAULT_PLACEMENTS,
+  SCOREBOARD_AD_PLACEMENTS,
+  normalizeScoreboardPlacements,
+} from '../utils/scoreboardAdvertising';
 
 const PADBOL_RED = '#E11B22';
 const ERROR_TEXT = '#E11B22';
@@ -121,6 +126,8 @@ export default function AdminSponsorsSection({
       fecha_desde: '',
       fecha_hasta: '',
       deportes_keys: [],
+      scoreboard_placements: SCOREBOARD_AD_DEFAULT_PLACEMENTS,
+      scoreboard_order: 0,
     }),
     [t, venueScopeId],
   );
@@ -253,6 +260,8 @@ export default function AdminSponsorsSection({
         const allowed = new Set(DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => o.key));
         return [...new Set(arr.map((x) => String(x || '').trim().toLowerCase()).filter((k) => allowed.has(k)))];
       })(),
+      scoreboard_placements: normalizeScoreboardPlacements(r.scoreboard_placements),
+      scoreboard_order: Number(r.scoreboard_order) || 0,
     });
     setMsg('');
     setFieldErrors({});
@@ -274,8 +283,8 @@ export default function AdminSponsorsSection({
       scrollToEl(formCardRef);
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      setMsg(t('admin.formularios.logoMax4mb'));
+    if (file.size > 3 * 1024 * 1024) {
+      setMsg('La pieza para el marcador admite hasta 3 MB.');
       scrollToEl(formCardRef);
       return;
     }
@@ -424,6 +433,8 @@ export default function AdminSponsorsSection({
       fecha_desde: form.fecha_desde ? String(form.fecha_desde).slice(0, 10) : null,
       fecha_hasta: form.fecha_hasta ? String(form.fecha_hasta).slice(0, 10) : null,
       deportes: depKeys.length ? depKeys : null,
+      scoreboard_placements: normalizeScoreboardPlacements(form.scoreboard_placements),
+      scoreboard_order: Math.max(0, Math.floor(Number(form.scoreboard_order) || 0)),
     };
 
     const isNew = form.id == null || form.id === '';
@@ -913,6 +924,38 @@ export default function AdminSponsorsSection({
             </option>
           ))}
         </select>
+
+        <div style={{ margin: '4px 0 16px', padding: 14, border: '1px solid rgba(225,27,34,.28)', borderRadius: 10, background: 'rgba(225,27,34,.04)' }}>
+          <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: 5 }}>Publicidad en el marcador</strong>
+          <p style={{ margin: '0 0 10px', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45 }}>
+            Subís una sola pieza y definís en qué momentos aparece. Para pantalla completa: 1920 × 1080 px, 16:9, JPG/PNG/WebP o MP4, máximo 3 MB.
+          </p>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {SCOREBOARD_AD_PLACEMENTS.map((placement) => (
+              <label key={placement.value} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={normalizeScoreboardPlacements(form.scoreboard_placements).includes(placement.value)}
+                  onChange={() => setForm((current) => {
+                    const next = new Set(normalizeScoreboardPlacements(current.scoreboard_placements));
+                    if (next.has(placement.value)) next.delete(placement.value);
+                    else next.add(placement.value);
+                    return { ...current, scoreboard_placements: [...next] };
+                  })}
+                />
+                {placement.label}
+              </label>
+            ))}
+          </div>
+          <label style={{ ...labelStyle, marginTop: 12 }}>Orden de rotación</label>
+          <input
+            type="number"
+            min="0"
+            style={{ ...inputStyle, maxWidth: 160 }}
+            value={form.scoreboard_order}
+            onChange={(e) => setForm((current) => ({ ...current, scoreboard_order: e.target.value }))}
+          />
+        </div>
 
         {!venueScopeId && form.scope === 'sede' ? (
           <div ref={sedeRef} style={{ marginBottom: 12 }}>
