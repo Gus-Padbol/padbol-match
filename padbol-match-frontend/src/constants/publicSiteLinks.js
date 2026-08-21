@@ -15,8 +15,11 @@ export const PUBLIC_SITE_CTA = {
   venue: '/administradores',
   /** Solicitud de alta: solo después de conocer la propuesta comercial. */
   venueApplication: '/unirse',
-  /** Acceso a cuenta. */
-  login: '/acceso',
+  /**
+   * Acceso a cuenta. URL absoluta + parámetro de intención para que una PWA
+   * con un shell anterior no reinterprete el clic como navegación al hero.
+   */
+  login: 'https://www.padbolmatch.com/acceso?login=1',
 };
 
 /** Anchors principales de navegación pública. */

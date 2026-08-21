@@ -174,7 +174,7 @@ describe('/plataforma public site', () => {
     const { container } = renderPage();
     expect(container.querySelector('.public-site__nav')).toBeTruthy();
     expect(container.querySelector('.public-site__brand-logo')).toBeTruthy();
-    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
+    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', 'https://www.padbolmatch.com/acceso?login=1');
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeTruthy();
   });
 
@@ -190,7 +190,7 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: /Quiero jugar/i })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.getAllByRole('link', { name: 'Quiero incorporar Padbol Match' })[0])
       .toHaveAttribute('href', '/administradores');
-    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
+    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', 'https://www.padbolmatch.com/acceso?login=1');
     expect(document.querySelector('#nosotros')).toBeTruthy();
     expect(document.querySelector('#descargar')).toBeTruthy();
     expect(screen.getByText('App Store').closest('a')).toBeNull();
