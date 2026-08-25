@@ -1238,8 +1238,8 @@
       "nationalAdminRole": "🌍 Admin Nacional",
       "saveOk": "✅ Guardar",
       "saveDisk": "Guardar",
-      "validationApprove": "✅ Aprobar",
-      "validationChangeCategory": "✏️ Cambiar categoría",
+      "validationApprove": "Aprobar",
+      "validationChangeCategory": "Cambiar categoría",
       "validationViewProfile": "Ver perfil",
       "validationSearchLabel": "Buscar por nombre, apellido o email",
       "validationGenderLabel": "Género"
