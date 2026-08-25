@@ -5,7 +5,7 @@ import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPartidoPreview';
-import { AdminEditIcon, AdminGridIcon, AdminLicenseIcon, AdminPadcoinsIcon, AdminSaveIcon, AdminTrophyIcon } from '../components/admin/AdminUiIcons';
+import { AdminChartIcon, AdminCheckIcon, AdminDeleteIcon, AdminEditIcon, AdminGridIcon, AdminLicenseIcon, AdminPadcoinsIcon, AdminSaveIcon, AdminTrophyIcon } from '../components/admin/AdminUiIcons';
 import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
@@ -4695,6 +4695,8 @@ export default function AdminDashboard({
   const [adminScopeMeta, setAdminScopeMeta] = useState(null);
   const [adminRolesRows, setAdminRolesRows] = useState([]);
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
+  const [adminRoleEdit, setAdminRoleEdit] = useState(null);
+  const [adminRoleEditSaving, setAdminRoleEditSaving] = useState(false);
   const [adminInvitacionesRows, setAdminInvitacionesRows] = useState([]);
   const [adminInvitacionesLoading, setAdminInvitacionesLoading] = useState(false);
   /** GET /api/admin/analytics-globales (solo super_admin, mismo ciclo que fetchData). */
@@ -5211,6 +5213,50 @@ export default function AdminDashboard({
       alert(e?.message || t('admin.alerts.revokeRole'));
     }
   }, [apiBaseUrl, isSuperAdmin, cargarRolesAdmin, t]);
+
+  const abrirEdicionRolAdmin = useCallback((row) => {
+    if (!row || row.role === 'super_admin' || row.role === 'editor_contenido') return;
+    setAdminRoleEdit({
+      email: String(row.email || '').trim().toLowerCase(),
+      nombre: row.nombre || '',
+      role: row.role || 'admin_club',
+      alcance: row.alcance || 'sede',
+      sede_id: row.sede_id ? String(row.sede_id) : '',
+      ciudad: row.ciudad || '',
+      provincia: row.provincia || '',
+      pais: row.pais || '',
+    });
+  }, []);
+
+  const guardarEdicionRolAdmin = useCallback(async (event) => {
+    event.preventDefault();
+    if (!isSuperAdmin || !adminRoleEdit?.email) return;
+    setAdminRoleEditSaving(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error(t('admin.formularios.noSession'));
+      const res = await fetch(`${apiBaseUrl}/api/admin/roles`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...adminRoleEdit,
+          sede_id: adminRoleEdit.alcance === 'sede' ? Number(adminRoleEdit.sede_id) : undefined,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || res.statusText);
+      setAdminRoleEdit(null);
+      setMensajeExito('Administrador actualizado');
+      setTimeout(() => setMensajeExito(''), 3500);
+      void cargarRolesAdmin();
+      void fetchDataRef.current?.();
+    } catch (e) {
+      alert(e?.message || 'No se pudo actualizar el administrador');
+    } finally {
+      setAdminRoleEditSaving(false);
+    }
+  }, [adminRoleEdit, apiBaseUrl, cargarRolesAdmin, isSuperAdmin, t]);
 
   const aprobarSedePendiente = useCallback(
     async (id) => {
@@ -11073,7 +11119,7 @@ export default function AdminDashboard({
               cursor: 'pointer',
             }}
           >
-            Exportar
+            {`Exportar: ${labelPeriodoFinanciero(superAdminPeriodo)}`}
           </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '10px', marginTop: '12px' }}>
@@ -12398,16 +12444,18 @@ export default function AdminDashboard({
                       disabled={vs.saving}
                       onClick={() => aprobarJugador(jugador.email)}
                       className="admin-validacion-action admin-validacion-action--approve"
-                      style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
+                      style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
+                      <AdminCheckIcon size={15} />
                       {t('admin.formularios.validationApprove')}
                     </button>
                     <button
                       disabled={vs.saving}
                       onClick={() => toggleCambiarCategoria(jugador.email, jugador.nivel)}
                       className="admin-validacion-action admin-validacion-action--category"
-                      style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
+                      style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
+                      <AdminEditIcon size={15} />
                       {t('admin.formularios.validationChangeCategory')}
                     </button>
 
@@ -13325,9 +13373,13 @@ export default function AdminDashboard({
                     fontSize: '16px',
                     cursor: 'pointer',
                     boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
                   }}
                 >
-                  📊 Ver ranking de clubes
+                  <AdminChartIcon size={17} />
+                  Ver ranking de clubes
                 </button>
 
                 {reservasResumenPais.length === 0 ? (
@@ -17457,7 +17509,7 @@ export default function AdminDashboard({
                           setConfigNivelesLabels(prev => ({ ...prev, [key]: editandoTipoData.nombre }));
                           setConfigNiveles(prev => ({ ...prev, [key]: editandoTipoData.puntos }));
                           setEditandoTipoId(null);
-                        }} style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✅</button>
+                        }} aria-label="Guardar cambios" title="Guardar cambios" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminCheckIcon size={14} /></button>
                         <button onClick={() => setEditandoTipoId(null)}
                           style={{ padding: '3px 8px', background: '#999', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
                       </td>
@@ -17473,9 +17525,9 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
-                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
+                          aria-label="Editar nivel" title="Editar nivel" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminEditIcon size={14} /></button>
                         <button onClick={() => { if (window.confirm(t('admin.confirmaciones.deleteLevel', { name: configNivelesLabels[key] }))) setConfigNivelesHidden(prev => new Set([...prev, key])); }}
-                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
+                          aria-label="Eliminar nivel" title="Eliminar nivel" style={{ padding: '5px 7px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'inline-flex' }}><AdminDeleteIcon size={14} /></button>
                       </td>
                     </>
                   )}
@@ -17506,7 +17558,7 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
                         <button onClick={() => { setConfigTiposCustom(prev => prev.map(t => t.id === tipo.id ? { ...t, ...editandoTipoData } : t)); setEditandoTipoId(null); }}
-                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✅</button>
+                          aria-label="Guardar cambios" title="Guardar cambios" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminCheckIcon size={14} /></button>
                         <button onClick={() => setEditandoTipoId(null)}
                           style={{ padding: '3px 8px', background: '#999', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
                       </td>
@@ -17520,9 +17572,9 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
-                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
+                          aria-label="Editar nivel" title="Editar nivel" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminEditIcon size={14} /></button>
                         <button onClick={() => setConfigTiposCustom(prev => prev.filter(t => t.id !== tipo.id))}
-                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
+                          aria-label="Eliminar nivel" title="Eliminar nivel" style={{ padding: '5px 7px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'inline-flex' }}><AdminDeleteIcon size={14} /></button>
                       </td>
                     </>
                   )}
@@ -17999,6 +18051,109 @@ export default function AdminDashboard({
                 />
               </div>
             </div>
+            {adminRoleEdit ? (
+              <form
+                onSubmit={guardarEdicionRolAdmin}
+                style={{
+                  marginBottom: '16px',
+                  padding: '16px',
+                  border: '1px solid var(--accent)',
+                  borderRadius: '10px',
+                  background: 'var(--bg-page)',
+                  display: 'grid',
+                  gap: '12px',
+                }}
+              >
+                <div>
+                  <strong style={{ color: 'var(--text-primary)' }}>Editar administrador</strong>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '3px' }}>
+                    {adminRoleEdit.email}
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Nombre
+                    <input
+                      value={adminRoleEdit.nombre}
+                      onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, nombre: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                    />
+                  </label>
+                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Rol
+                    <select
+                      value={adminRoleEdit.role}
+                      onChange={(e) => setAdminRoleEdit((prev) => ({
+                        ...prev,
+                        role: e.target.value,
+                        alcance: e.target.value === 'empleado' ? 'sede' : prev.alcance,
+                      }))}
+                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                    >
+                      <option value="admin_club">Administrador de sede</option>
+                      <option value="admin_nacional">Administrador nacional</option>
+                      <option value="empleado">Empleado de sede</option>
+                    </select>
+                  </label>
+                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Alcance
+                    <select
+                      value={adminRoleEdit.alcance}
+                      disabled={adminRoleEdit.role === 'empleado'}
+                      onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, alcance: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                    >
+                      <option value="sede">Sede</option>
+                      <option value="ciudad">Ciudad</option>
+                      <option value="provincia">Provincia</option>
+                      <option value="pais">País</option>
+                    </select>
+                  </label>
+                </div>
+                {adminRoleEdit.alcance === 'sede' ? (
+                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
+                    Sede asignada
+                    <select
+                      required
+                      value={adminRoleEdit.sede_id}
+                      onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, sede_id: e.target.value }))}
+                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                    >
+                      <option value="">Elegir sede</option>
+                      {Object.values(sedesMap).sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''))).map((sede) => (
+                        <option key={sede.id} value={String(sede.id)}>{sede.nombre || `Sede ${sede.id}`}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                {adminRoleEdit.alcance === 'ciudad' ? (
+                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
+                    Ciudad
+                    <input required value={adminRoleEdit.ciudad} onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, ciudad: e.target.value }))} style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
+                  </label>
+                ) : null}
+                {adminRoleEdit.alcance === 'provincia' ? (
+                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
+                    Provincia
+                    <input required value={adminRoleEdit.provincia} onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, provincia: e.target.value }))} style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
+                  </label>
+                ) : null}
+                {adminRoleEdit.alcance === 'pais' ? (
+                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
+                    País
+                    <input required value={adminRoleEdit.pais} onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, pais: e.target.value }))} style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
+                  </label>
+                ) : null}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <button type="submit" disabled={adminRoleEditSaving} style={{ padding: '8px 12px', border: 'none', borderRadius: '7px', background: 'var(--accent)', color: '#fff', cursor: adminRoleEditSaving ? 'not-allowed' : 'pointer', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <AdminSaveIcon size={15} /> {adminRoleEditSaving ? 'Guardando...' : 'Guardar cambios'}
+                  </button>
+                  <button type="button" onClick={() => setAdminRoleEdit(null)} disabled={adminRoleEditSaving} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '7px', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : null}
             <div style={{ overflowX: rolesTabViewportNarrow ? 'visible' : 'auto' }}>
               <table
                 style={{
@@ -18105,25 +18260,16 @@ export default function AdminDashboard({
                             {row.role === 'super_admin' ? (
                               <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
                             ) : (
-                              <button
-                                type="button"
-                                onClick={() => void revocarRolAdmin(row.email)}
-                                style={{
-                                  padding: '6px 10px',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  background: '#dc2626',
-                                  color: '#fff',
-                                  cursor: 'pointer',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  whiteSpace: 'normal',
-                                  maxWidth: '100%',
-                                  lineHeight: 1.2,
-                                }}
-                              >
-                                Revocar rol
-                              </button>
+                              <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', gap: '6px', maxWidth: '100%' }}>
+                                {row.role !== 'editor_contenido' ? (
+                                  <button type="button" onClick={() => abrirEdicionRolAdmin(row)} style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                    <AdminEditIcon size={13} /> Editar
+                                  </button>
+                                ) : null}
+                                <button type="button" onClick={() => void revocarRolAdmin(row.email)} style={{ padding: '6px 10px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 700, whiteSpace: 'normal', maxWidth: '100%', lineHeight: 1.2, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                  <AdminDeleteIcon size={13} /> Revocar rol
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -18157,20 +18303,16 @@ export default function AdminDashboard({
                             {row.role === 'super_admin' ? (
                               <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
                             ) : (
-                              <button
-                                type="button"
-                                onClick={() => void revocarRolAdmin(row.email)}
-                                style={{
-                                  padding: '4px 9px',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  background: '#dc2626',
-                                  color: '#fff',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Revocar rol
-                              </button>
+                              <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {row.role !== 'editor_contenido' ? (
+                                  <button type="button" onClick={() => abrirEdicionRolAdmin(row)} style={{ padding: '5px 9px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                    <AdminEditIcon size={13} /> Editar
+                                  </button>
+                                ) : null}
+                                <button type="button" onClick={() => void revocarRolAdmin(row.email)} style={{ padding: '5px 9px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                  <AdminDeleteIcon size={13} /> Revocar rol
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>

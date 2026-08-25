@@ -19,6 +19,31 @@ export function AdminEditIcon({ size = 16 }) {
   );
 }
 
+export function AdminCheckIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>
+      <path d="m5 12 4.2 4.2L19 6.5" />
+    </svg>
+  );
+}
+
+export function AdminDeleteIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>
+      <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" />
+    </svg>
+  );
+}
+
+export function AdminChartIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>
+      <path d="M4 19V5M4 19h16" />
+      <path d="M8 16v-4M12 16V8M16 16v-7" />
+    </svg>
+  );
+}
+
 export function AdminSaveIcon({ size = 16 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" {...baseProps}>

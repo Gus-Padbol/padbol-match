@@ -5,6 +5,7 @@ import {
   normalizePadbolLang,
   setPadbolLanguage as persistPadbolLanguage,
 } from '../utils/padbolLang';
+import { supabase } from '../supabaseClient';
 
 const PadbolI18nContext = createContext({
   language: 'en',
@@ -42,6 +43,15 @@ export function PadbolI18nProvider({ children }) {
     const lang = await persistPadbolLanguage(code);
     setLanguageState(lang);
     setVersion((v) => v + 1);
+    void (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) return;
+        await supabase.from('jugadores_perfil').update({ idioma_preferido: lang }).eq('user_id', user.id);
+      } catch {
+        // La preferencia local sigue funcionando aun si el perfil todavía no existe.
+      }
+    })();
     return lang;
   }, []);
 
