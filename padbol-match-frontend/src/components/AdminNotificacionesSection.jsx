@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
+import { PADBOL_LANGUAGES } from '../constants/padbolLanguages';
 import {
   fetchAdminPushHistory,
   fetchAdminPushQuota,
@@ -25,7 +26,7 @@ function translatedPushError(error, t, fallbackKey) {
   return t(fallbackKey);
 }
 
-function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub }) {
+function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, idioma, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub }) {
   if (segmentKind === 'jugador' && selectedPlayer?.userId) {
     return { type: 'jugador', userId: selectedPlayer.userId, email: selectedPlayer.email || undefined };
   }
@@ -34,6 +35,7 @@ function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, selectedPlaye
     if (segmentKind === 'pais') return { type: 'pais', pais };
     if (segmentKind === 'sede') return { type: 'sede', sedeId: Number(sedeId) };
     if (segmentKind === 'deporte') return { type: 'deporte', deporte };
+    if (segmentKind === 'idioma') return { type: 'idioma', idioma };
   }
   if (esAdminNacional) {
     if (segmentKind === 'todos_pais') return { type: 'todos_pais' };
@@ -67,6 +69,7 @@ export default function AdminNotificacionesSection({
   const [pais, setPais] = useState('');
   const [sedeSel, setSedeSel] = useState('');
   const [deporte, setDeporte] = useState('');
+  const [idioma, setIdioma] = useState('');
   const [playerQuery, setPlayerQuery] = useState('');
   const [playerResults, setPlayerResults] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -86,12 +89,13 @@ export default function AdminNotificacionesSection({
         pais,
         sedeId: sedeSel,
         deporte,
+        idioma,
         selectedPlayer,
         isSuperAdmin,
         esAdminNacional,
         esAdminClub,
       }),
-    [segmentKind, pais, sedeSel, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub],
+    [segmentKind, pais, sedeSel, deporte, idioma, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub],
   );
 
   const segmentOptions = useMemo(() => {
@@ -101,6 +105,7 @@ export default function AdminNotificacionesSection({
       opts.push({ value: 'pais', label: t('admin.pushNotif.segments.byCountry') });
       opts.push({ value: 'sede', label: t('admin.pushNotif.segments.byVenue') });
       opts.push({ value: 'deporte', label: t('admin.pushNotif.segments.bySport') });
+      opts.push({ value: 'idioma', label: t('admin.pushNotif.segments.byLanguage') });
     } else if (esAdminNacional) {
       opts.push({ value: 'todos_pais', label: t('admin.pushNotif.segments.allCountry') });
       opts.push({ value: 'sede', label: t('admin.pushNotif.segments.byVenueCountry') });
@@ -216,6 +221,7 @@ export default function AdminNotificacionesSection({
     (segmentKind !== 'pais' || pais) &&
     (segmentKind !== 'sede' || sedeSel) &&
     (segmentKind !== 'deporte' || deporte) &&
+    (segmentKind !== 'idioma' || idioma) &&
     !sending;
 
   const formatDate = (iso) => {
@@ -335,6 +341,20 @@ export default function AdminNotificacionesSection({
               {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
                 <option key={d.key} value={d.key}>
                   {t(`torneos.deporte.${d.key}`, { defaultValue: d.label })}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
+        {segmentKind === 'idioma' ? (
+          <div className="admin-push-notif__field">
+            <label htmlFor="admin-push-idioma">{t('admin.pushNotif.languageLabel')}</label>
+            <select id="admin-push-idioma" value={idioma} onChange={(e) => setIdioma(e.target.value)}>
+              <option value="">{t('admin.pushNotif.selectLanguage')}</option>
+              {PADBOL_LANGUAGES.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.label}
                 </option>
               ))}
             </select>

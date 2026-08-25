@@ -66,6 +66,8 @@ export function formatAdminPushSegmentLabel(segment, t) {
       return t('admin.pushNotif.segments.venue', { id: seg.sedeId ?? seg.sede_id ?? '—' });
     case 'deporte':
       return t('admin.pushNotif.segments.sport', { sport: seg.deporte || '—' });
+    case 'idioma':
+      return t('admin.pushNotif.segments.language', { language: seg.idioma || '—' });
     case 'jugador':
       return seg.email
         ? t('admin.pushNotif.segments.playerEmail', { email: seg.email })

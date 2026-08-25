@@ -6,6 +6,10 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const EXPO_PUSH_BATCH = 100;
 
 const ADMIN_PUSH_ROLES = new Set(['super_admin', 'admin_nacional', 'admin_club']);
+const ADMIN_PUSH_LANGUAGE_CODES = new Set([
+  'de', 'es', 'en', 'ar', 'fa-IR', 'nl-BE', 'fr', 'it', 'ro', 'nl-NL',
+  'sv', 'pt-BR', 'pt-PT', 'el', 'hu', 'he', 'pl', 'uk', 'af',
+]);
 
 const WEEKLY_LIMITS = {
   admin_club: 3,
@@ -146,6 +150,15 @@ export async function validateAdminPushSegment(scope, segment, { supabase, sedes
         throw e;
       }
       return { type: 'deporte', deporte };
+    }
+    if (type === 'idioma') {
+      const idioma = String(segment.idioma || '').trim();
+      if (!ADMIN_PUSH_LANGUAGE_CODES.has(idioma)) {
+        const e = new Error('Selecciona un idioma válido');
+        e.status = 400;
+        throw e;
+      }
+      return { type: 'idioma', idioma };
     }
   }
 
@@ -288,6 +301,15 @@ export async function resolveAdminPushRecipientUserIds(supabase, scope, segment)
       .filter((p) => profileMatchesDeporte(p, segment.deporte))
       .map((p) => String(p.user_id).trim())
       .filter(Boolean);
+  }
+
+  if (type === 'idioma') {
+    const { data: perfiles } = await supabase
+      .from('jugadores_perfil')
+      .select('user_id, idioma_preferido')
+      .eq('idioma_preferido', segment.idioma)
+      .not('user_id', 'is', null);
+    return distinctUserIdsFromProfilesQuery(perfiles);
   }
 
   return [];
