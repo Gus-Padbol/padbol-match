@@ -419,6 +419,32 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
     { claim: 'Sportovní aplikace, která propojuje vše.', lead: 'Hráči, kluby, zápasy, turnaje, žebříček, komunita a správa na jedné platformě.', sportsAria: 'Stav zpřístupnění sportů', ctaExplore: 'Prozkoumat platformu', ctaPlay: 'Chci hrát', ctaVenue: 'Chci zavést Padbol Match', videoAria: 'Zápas Padbol na kurtu' },
     czechPublicSite,
     {
+      admin: {
+        mi_sede: "Můj klub", canchas: "Kurty", ingresos: "Příjmy", productos: "Produkty",
+        loading: "Načítání…", nueva_sede: "Nový klub", guardar: "Uložit",
+        onboarding: {
+          welcomeTitle: "Vítejte", welcomeBody: "Vítejte ve svém panelu správy. Provedeme vás prvními kroky.",
+          miSedeBody: "Zde nastavíte údaje klubu, kurty a rozvrhy.",
+          reservasBody: "Zde zobrazíte a spravujete všechny rezervace kurtů.",
+          torneosBody: "Zde vytváříte a spravujete turnaje pro svou komunitu.",
+          pagosTitle: "Nastavení plateb",
+          pagosBody: "Pro příjem plateb propojte svůj účet Mercado Pago nebo Stripe.",
+          doneBody: "Váš panel je připraven! V případě dotazů kontaktujte podporu.",
+        },
+        role: {
+          super: "Hlavní správce", national: "Národní správce", club: "Správce klubu",
+          employee: "Zaměstnanec", editor: "Editor hlavního panelu",
+        },
+        panel: {
+          superTitle: "Panel hlavního správce", clubTitle: "Panel správy · {{name}}",
+          nationalTitle: "Panel národního správce", genericTitle: "Panel · {{role}}",
+          editorDescription: "Přizpůsobte hlavní panel hráče a spravujte sponzory a reklamy ve všech klubech.",
+          backToHub: "Zpět na hlavní panel", accessUnavailable: "Tento modul není pro vaši roli dostupný.",
+          redirectedToSafeTab: "Přesměrovali jsme vás do dostupné sekce.",
+          padcoinsUnavailable: "PadCoins nejsou pro vaši roli dostupné.",
+          sponsorsInConfig: "Sponzoři jsou k dispozici v Nastavení.",
+        },
+      },
       paises: {
         argentina: "Argentina", espana: "Španělsko", estados_unidos: "Spojené státy",
         italia: "Itálie", francia: "Francie", alemania: "Německo", rumania: "Rumunsko",

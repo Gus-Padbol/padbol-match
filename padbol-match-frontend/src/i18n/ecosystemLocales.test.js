@@ -62,6 +62,16 @@ describe('canonical Padbol ecosystem locales', () => {
     });
   });
 
+  it('has direct Czech copy for the foundational admin panel', () => {
+    ['onboarding', 'role', 'panel'].forEach((section) => {
+      const englishPaths = leafPaths(en.admin[section]);
+      const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[section]));
+      expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
+    });
+    ['mi_sede', 'canchas', 'ingresos', 'productos', 'loading', 'nueva_sede', 'guardar']
+      .forEach((key) => expect(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[key]).toBeTruthy());
+  });
+
   it('protects the international Padbol Court name', () => {
     expect(PADBOL_COURT_TERM).toBe('Padbol Court');
     expect(PROTECTED_PADBOL_TERMS).toContain('Padbol Court');
