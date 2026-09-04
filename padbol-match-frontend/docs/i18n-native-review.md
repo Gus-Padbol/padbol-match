@@ -25,7 +25,7 @@ Este documento prepara la validación humana de Padbol Match web. Español e ing
 | pl | Polski | LTR | Borrador con respaldo inglés | A confirmar |
 | uk | Українська | LTR | Borrador con respaldo inglés | A confirmar |
 | af | Afrikaans | LTR | Borrador con respaldo inglés | A confirmar |
-| cs | Čeština | LTR | Primera capa incorporada; traducción integral pendiente | A confirmar |
+| cs | Čeština | LTR | Web pública: borrador completo sin respaldo inglés; aplicación interna pendiente | A confirmar |
 
 ## Situación técnica verificada
 
