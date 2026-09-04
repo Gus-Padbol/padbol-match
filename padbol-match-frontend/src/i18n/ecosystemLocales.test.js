@@ -65,7 +65,7 @@ describe('canonical Padbol ecosystem locales', () => {
   it('has direct Czech copy for the foundational admin panel', () => {
     [
       'onboarding', 'role', 'panel', 'tabs', 'notifications', 'alerts', 'torneosSection',
-      'weekdays', 'confirmaciones', 'overview', 'bookingsSummary', 'tournamentLabels', 'common', 'franjas', 'roles', 'reservas', 'jugadores', 'resenas', 'scoreboard', 'metrics', 'metricas', 'pushNotif', 'notif', 'profesores', 'sponsors', 'hub', 'formularios',
+      'weekdays', 'confirmaciones', 'overview', 'bookingsSummary', 'tournamentLabels', 'common', 'franjas', 'roles', 'reservas', 'jugadores', 'resenas', 'scoreboard', 'metrics', 'metricas', 'pushNotif', 'notif', 'profesores', 'sponsors', 'hub', 'formularios', 'membresias',
     ].forEach((section) => {
       const englishPaths = leafPaths(en.admin[section]);
       const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[section]));
