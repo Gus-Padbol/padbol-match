@@ -51,7 +51,7 @@ describe('canonical Padbol ecosystem locales', () => {
   it('has direct Czech copy for account access and global navigation', () => {
     [
       'general', 'auth', 'nav', 'jugar', 'competir',
-      'armarPartido', 'partidosAbiertos', 'checkin',
+      'torneos', 'armarPartido', 'partidosAbiertos', 'checkin',
       'reservas', 'sedes', 'precios', 'pago', 'clases', 'sponsors', 'ranking', 'equipos', 'notificaciones',
       'hub', 'perfil', 'perfilPublico', 'pwa', 'legal', 'landing',
     ].forEach((section) => {
