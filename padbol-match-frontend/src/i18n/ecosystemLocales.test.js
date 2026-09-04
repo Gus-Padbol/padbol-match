@@ -49,7 +49,10 @@ describe('canonical Padbol ecosystem locales', () => {
   });
 
   it('has direct Czech copy for account access and global navigation', () => {
-    ['general', 'auth', 'nav'].forEach((section) => {
+    [
+      'general', 'auth', 'nav', 'jugar', 'competir',
+      'armarPartido', 'partidosAbiertos', 'checkin',
+    ].forEach((section) => {
       const englishPaths = leafPaths(en[section]);
       const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs[section]));
       expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
