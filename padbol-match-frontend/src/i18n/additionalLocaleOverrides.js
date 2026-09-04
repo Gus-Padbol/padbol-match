@@ -419,6 +419,19 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
     { claim: 'Sportovní aplikace, která propojuje vše.', lead: 'Hráči, kluby, zápasy, turnaje, žebříček, komunita a správa na jedné platformě.', sportsAria: 'Stav zpřístupnění sportů', ctaExplore: 'Prozkoumat platformu', ctaPlay: 'Chci hrát', ctaVenue: 'Chci zavést Padbol Match', videoAria: 'Zápas Padbol na kurtu' },
     czechPublicSite,
     {
+      paises: {
+        argentina: "Argentina", espana: "Španělsko", estados_unidos: "Spojené státy",
+        italia: "Itálie", francia: "Francie", alemania: "Německo", rumania: "Rumunsko",
+        austria: "Rakousko", brasil: "Brazílie", uruguay: "Uruguay", chile: "Chile",
+        colombia: "Kolumbie", mexico: "Mexiko", australia: "Austrálie", belgica: "Belgie",
+        bolivia: "Bolívie", canada: "Kanada", china: "Čína", croacia: "Chorvatsko",
+        ecuador: "Ekvádor", grecia: "Řecko", honduras: "Honduras", hungria: "Maďarsko",
+        israel: "Izrael", japon: "Japonsko", marruecos: "Maroko", noruega: "Norsko",
+        paises_bajos: "Nizozemsko", paraguay: "Paraguay", peru: "Peru", polonia: "Polsko",
+        portugal: "Portugalsko", reino_unido: "Spojené království", rusia: "Rusko",
+        serbia: "Srbsko", suecia: "Švédsko", suiza: "Švýcarsko", turquia: "Turecko",
+        ucrania: "Ukrajina", venezuela: "Venezuela",
+      },
       adminLanding: {
         metaTitle: "Spravujte svůj klub | Padbol Match", eyebrow: "NE JEN KALENDÁŘ. AKTIVNÍ KLUB.",
         title: "Vše, o čem jste snili pro ", titleAccent: "správu svého klubu, je zde.",
