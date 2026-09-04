@@ -52,6 +52,7 @@ describe('canonical Padbol ecosystem locales', () => {
     [
       'general', 'auth', 'nav', 'jugar', 'competir',
       'armarPartido', 'partidosAbiertos', 'checkin',
+      'sedes', 'precios', 'pago', 'clases', 'sponsors', 'ranking', 'equipos', 'notificaciones',
     ].forEach((section) => {
       const englishPaths = leafPaths(en[section]);
       const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs[section]));

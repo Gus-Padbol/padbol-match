@@ -419,6 +419,44 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
     { claim: 'Sportovní aplikace, která propojuje vše.', lead: 'Hráči, kluby, zápasy, turnaje, žebříček, komunita a správa na jedné platformě.', sportsAria: 'Stav zpřístupnění sportů', ctaExplore: 'Prozkoumat platformu', ctaPlay: 'Chci hrát', ctaVenue: 'Chci zavést Padbol Match', videoAria: 'Zápas Padbol na kurtu' },
     czechPublicSite,
     {
+      sedes: {
+        publica: {
+          deportesDisponibles: "Dostupné sporty", licenciaActiva: "Aktivní licence Padbol",
+          reservarTurno: "Rezervovat termín", verTorneos: "Zobrazit turnaje", infoTitulo: "Informace",
+          instructores: "Trenéři", instructorCertFipa: "Cert. FIPA", instructorCertificadoBadge: "Certifikovaný",
+          infoHorario: "Otevírací doba", infoCanchas: "Kurty", canchasDisponibles: "{{count}} dostupných kurtů",
+          proximoTorneo: "Příští turnaj", instructorCertificado: "Certifikovaný trenér",
+          instructorBadgeFipa: "Trenér FIPA", instructorBadgePadbol: "Trenér Padbol",
+          infoDireccion: "Adresa", whatsappCta: "Napište nám přes WhatsApp",
+          instructoresCertificados: "{{count}} certifikovaných trenérů", seguinosEn: "Sledujte nás na",
+          resenas: "★ {{rating}} ({{count}} recenzí)", clubTiene: "Klub nabízí",
+        },
+      },
+      precios: {
+        porDeporte: "Ceny podle sportu", sinPrecio: "Cena není nastavena", agregar: "Přidat cenu",
+        precioARS: "Cena v ARS", precioUSD: "Cena v USD", guardado: "Cena uložena",
+      },
+      pago: {
+        titulo: "Platba", confirmando: "Potvrzování platby...", exitoso: "Platba proběhla úspěšně",
+        fallido: "Platba nebyla dokončena", reintentar: "Zkusit znovu",
+      },
+      clases: {
+        titulo: "Lekce", pageTitle: "Absolvovat lekci",
+        pageSubtitle: "Vyberte trenéra a rezervujte si termín.", detalle: "Podrobnosti lekce",
+        profesores: "Trenéři", loading: "Načítání lekce…",
+        noProfesores: "Ve vašem klubu nejsou k dispozici žádní trenéři.",
+      },
+      sponsors: {
+        publicidad: "Reklama", tipoMedia: "Typ média", videoUrl: "URL videa (MP4)",
+      },
+      ranking: { titulo: "Žebříček" },
+      equipos: {
+        titulo: "Tým", gestion: "Správa turnaje", inscripcion: "Registrace",
+      },
+      notificaciones: {
+        tipo: { partido: "Zápas", torneo: "Turnaj", reserva: "Rezervace", aviso: "Oznámení" },
+        titulo: "Vaše oznámení", vacio: "Zatím nemáte žádná oznámení.",
+      },
       jugar: {
         titulo: "Pojďme hrát!", reservar: "Rezervovat kurt",
         reservarBody: "Mám kompletní tým a potřebuji kurt.",
