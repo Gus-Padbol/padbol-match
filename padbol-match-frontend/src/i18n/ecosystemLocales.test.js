@@ -22,6 +22,8 @@ describe('canonical Padbol ecosystem locales', () => {
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.whatIs.title).toBe('Co je Padbol Match');
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.status.title).toBe('Padbol Match přidává nové sporty');
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.playerPath.items.book.title).toBe('Rezervovat');
+    expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.playerRecord.ownershipStrong).toBe('Vaše data patří vám.');
+    expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.venuePath.items.scoreboard.title).toBe('Chytrá výsledková tabule');
   });
 
   it('protects the international Padbol Court name', () => {
