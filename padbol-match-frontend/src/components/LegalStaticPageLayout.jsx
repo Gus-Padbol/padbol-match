@@ -123,7 +123,7 @@ export default function LegalStaticPageLayout({ title, lead, children }) {
             ·
           </span>
           <Link to="/eliminar-cuenta" style={bottomLink}>
-            Eliminar cuenta
+            Cuenta y privacidad
           </Link>
           <span style={{ color: 'rgba(226,232,240,0.35)' }} aria-hidden>
             ·

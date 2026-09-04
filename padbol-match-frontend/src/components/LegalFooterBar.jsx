@@ -63,7 +63,7 @@ export default function LegalFooterBar() {
           Política de Privacidad
         </Link>
         <Link to="/eliminar-cuenta" style={linkBase}>
-          Eliminar cuenta
+          Cuenta y privacidad
         </Link>
       </nav>
       <p style={companyStyle}>

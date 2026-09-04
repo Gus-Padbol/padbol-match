@@ -42,7 +42,6 @@ import {
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
 import { fetchMisClases } from '../utils/clasesApi';
-import { requestAccountDeletion } from '../utils/accountDeletionApi';
 import InstructorFipaSection from '../components/InstructorFipaSection';
 import JugadorFichaTorneosSection from '../components/JugadorFichaTorneosSection';
 import { normalizeHoraClase } from '../utils/clasesFechas';
@@ -349,8 +348,6 @@ export default function MiPerfil() {
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
   const [modalConfirmarCerrarSesion, setModalConfirmarCerrarSesion] = useState(false);
-  const [modalConfirmarEliminarCuenta, setModalConfirmarEliminarCuenta] = useState(false);
-  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
 
   const sessionOwnerEmail = useMemo(() => session?.user?.email?.trim() || null, [session?.user?.email]);
 
@@ -2532,29 +2529,6 @@ export default function MiPerfil() {
     headerNombreVisible(filaParaCabeceraPerfil, session) ||
     getDisplayName(filaParaCabeceraPerfil, session) ||
     'Jugador';
-
-  const handleSolicitarEliminacionCuenta = async () => {
-    if (eliminandoCuenta) return;
-    setEliminandoCuenta(true);
-    setErrorMsg('');
-    try {
-      await requestAccountDeletion({
-        accessToken: session?.access_token,
-        source: 'web',
-      });
-      setModalConfirmarEliminarCuenta(false);
-      signOutAndClear();
-      navigate('/', {
-        replace: true,
-        state: { accountDeletionRequested: true },
-      });
-    } catch (error) {
-      setErrorMsg(error?.message || 'No pudimos registrar la solicitud de eliminación.');
-      setModalConfirmarEliminarCuenta(false);
-    } finally {
-      setEliminandoCuenta(false);
-    }
-  };
 
   return (
     <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
@@ -4768,27 +4742,6 @@ export default function MiPerfil() {
           >
             {t('auth.cerrar_sesion')}
           </button>
-          <button
-            type="button"
-            disabled={eliminandoCuenta}
-            onClick={() => setModalConfirmarEliminarCuenta(true)}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '10px 8px',
-              border: 'none',
-              background: 'transparent',
-              color: '#dc2626',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: eliminandoCuenta ? 'wait' : 'pointer',
-              fontFamily: 'inherit',
-              textAlign: 'center',
-              opacity: eliminandoCuenta ? 0.65 : 1,
-            }}
-          >
-            Eliminar mi cuenta
-          </button>
         </div>
       ) : null}
 
@@ -4804,19 +4757,6 @@ export default function MiPerfil() {
           navigate('/');
         }}
         titleId="cerrar-sesion-titulo"
-      />
-
-      <ConfirmModal
-        open={modalConfirmarEliminarCuenta}
-        title="¿Solicitar la eliminación de tu cuenta?"
-        message="Esta acción cierra tu sesión e inicia la eliminación o anonimización permanente de tus datos. Algunos registros pueden conservarse cuando exista una obligación legal."
-        confirmLabel={eliminandoCuenta ? 'Enviando solicitud…' : 'Sí, eliminar mi cuenta'}
-        dismissLabel="Cancelar"
-        busy={eliminandoCuenta}
-        confirmDanger
-        onDismiss={() => setModalConfirmarEliminarCuenta(false)}
-        onConfirm={() => void handleSolicitarEliminacionCuenta()}
-        titleId="eliminar-cuenta-titulo"
       />
 
       <BottomNav />
