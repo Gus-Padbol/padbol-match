@@ -65,13 +65,13 @@ describe('canonical Padbol ecosystem locales', () => {
   it('has direct Czech copy for the foundational admin panel', () => {
     [
       'onboarding', 'role', 'panel', 'tabs', 'notifications', 'alerts', 'torneosSection',
-      'weekdays', 'confirmaciones', 'overview', 'bookingsSummary', 'tournamentLabels', 'common', 'franjas', 'roles',
+      'weekdays', 'confirmaciones', 'overview', 'bookingsSummary', 'tournamentLabels', 'common', 'franjas', 'roles', 'reservas', 'jugadores', 'resenas',
     ].forEach((section) => {
       const englishPaths = leafPaths(en.admin[section]);
       const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[section]));
       expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
     });
-    ['mi_sede', 'canchas', 'ingresos', 'productos', 'loading', 'nueva_sede', 'guardar']
+    ['mi_sede', 'canchas', 'ingresos', 'productos', 'loading', 'nueva_sede', 'guardar', 'reservasLabel']
       .forEach((key) => expect(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[key]).toBeTruthy());
   });
 
