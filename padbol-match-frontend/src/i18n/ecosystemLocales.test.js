@@ -1,4 +1,5 @@
 import { PADBOL_LANGUAGE_CODES, canonicalPadbolLanguageCode } from '../constants/padbolLanguages';
+import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
 import { PADBOL_COURT_TERM, PROTECTED_PADBOL_TERMS } from './terminology';
 
 const CANONICAL_ECOSYSTEM_EDITIONS = [
@@ -15,6 +16,12 @@ describe('canonical Padbol ecosystem locales', () => {
     expect(canonicalPadbolLanguageCode('cs')).toBe('cs');
     expect(canonicalPadbolLanguageCode('cs-CZ')).toBe('cs');
     expect(canonicalPadbolLanguageCode('cz')).toBe('cs');
+  });
+
+  it('includes Czech copy beyond the language selector', () => {
+    expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.whatIs.title).toBe('Co je Padbol Match');
+    expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.status.title).toBe('Padbol Match přidává nové sporty');
+    expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.playerPath.items.book.title).toBe('Rezervovat');
   });
 
   it('protects the international Padbol Court name', () => {

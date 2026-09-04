@@ -3,7 +3,57 @@
  * inglés como respaldo. Así cada pantalla siempre muestra texto legible y
  * nunca claves técnicas mientras se completa la revisión editorial total.
  */
-const locale = (general, nav, publicNav, hero) => ({ general, nav, publicSite: { nav: publicNav, hero } });
+const locale = (general, nav, publicNav, hero, publicSite = {}) => ({
+  general,
+  nav,
+  publicSite: { ...publicSite, nav: publicNav, hero },
+});
+
+const czechPublicSite = {
+  whatIs: {
+    title: 'Co je Padbol Match',
+    text: 'Propojuje hráče a sportovní kluby. Spojuje soutěž, komunitu a správu. Každý zápas vytváří návaznost: nejde jen o rezervační nástroj, ale o vztah, který pokračuje i po hře.',
+  },
+  status: {
+    kicker: 'Stav produktu',
+    title: 'Padbol Match přidává nové sporty',
+    text: 'Padbol už propojuje hru, komunitu a provoz. Nyní se ke stejné cestě přidávají Padel, Pickleball a Tenis.',
+    labels: { active: 'Dostupné dnes', rollingOut: 'Dostupné dnes', next: 'Dostupné dnes' },
+    items: {
+      active: {
+        eyebrow: 'Dostupné dnes',
+        title: 'Padbol, aktivní základ',
+        text: 'Přihlášení, profily, rezervace, otevřené zápasy, turnaje, žebříček, komunita, fotografie a videa jsou už propojené v jedné platformě.',
+      },
+      rollingOut: {
+        eyebrow: 'Dostupné dnes',
+        title: 'Nové sporty, stejná cesta',
+        text: 'Padel, Pickleball a Tenis se postupně zapojují do herní, správní a komunitní cesty Padbol Match.',
+      },
+      next: {
+        eyebrow: 'Dostupné dnes',
+        title: 'Sponzoři a reklama jsou aktivní',
+        text: 'Každý klub už může spravovat své sponzorské a reklamní plochy. Padbol Match Shop pokračuje jako pilotní projekt místních produktů a výhod.',
+        badges: { sponsor: 'Sponzoři · dostupné', ads: 'Reklama · dostupné', shop: 'Padbol Match Shop · pilotní provoz' },
+      },
+    },
+  },
+  playerPath: {
+    title: 'Pro hráče',
+    text: 'Najděte zápasy, vytvářejte hry, připojte se na volná místa, rezervujte, soutěžte a sledujte svůj pokrok v komunitě.',
+    tapNext: 'Přejetím zobrazíte jednotlivé funkce',
+    items: {
+      find: { title: 'Najít zápasy', text: 'Objevte zápasy v okolí a nové možnosti hry.' },
+      book: { title: 'Rezervovat', text: 'Zajistěte si čas na hřišti ve svém klubu.' },
+      compete: { title: 'Soutěžit', text: 'Turnaje, týmy a výsledky, které se počítají.' },
+      community: { title: 'Komunita', text: 'Oznámení, zprávy a propojení hráči.' },
+      rewards: { title: 'PadCoins a odměny', text: 'Vybrané aktivity získávají PadCoins na odměny, když jsou povoleny.' },
+      create: { title: 'Vytvořit zápas', text: 'Nastavte klub, čas a úroveň a pozvěte hráče.' },
+      join: { title: 'Otevřené zápasy', text: 'Požádejte o místo, doplňte týmy a potvrďte svou účast.' },
+      evolve: { title: 'Sledujte svůj pokrok', text: 'Historie, žebříček a rozvoj ve vašem profilu.' },
+    },
+  },
+};
 
 export const ADDITIONAL_LOCALE_OVERRIDES = {
   'fa-IR': locale(
@@ -77,5 +127,6 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
     { mainAria: 'Hlavní navigace', perfil: 'Profil', jugar: 'Hrát', competir: 'Soutěžit', notificaciones: 'Oznámení', search: 'Hledat', logout: 'Odhlásit se', backToHub: 'Zpět', myProfile: 'Můj profil', adminPanel: 'Panel správy' },
     { platform: 'Platforma', players: 'Pro hráče', venues: 'Pro sportovní kluby', download: 'Stáhnout aplikaci', login: 'Přihlásit se', community: 'Komunita', scoreboard: 'Výsledková tabule' },
     { claim: 'Sportovní aplikace, která propojuje vše.', lead: 'Hráči, kluby, zápasy, turnaje, žebříček, komunita a správa na jedné platformě.', ctaExplore: 'Prozkoumat platformu', ctaPlay: 'Chci hrát', ctaVenue: 'Chci zavést Padbol Match' },
+    czechPublicSite,
   ),
 };
