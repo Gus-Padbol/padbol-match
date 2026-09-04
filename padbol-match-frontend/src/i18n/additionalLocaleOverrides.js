@@ -10,6 +10,25 @@ const locale = (general, nav, publicNav, hero, publicSite = {}) => ({
 });
 
 const czechPublicSite = {
+  sports: {
+    padbol: "Padbol", padel: "Padel", pickleball: "Pickleball", tennis: "Tenis",
+  },
+  hero: {
+    globe: {
+      aria: "Globální síť Padbol Match propojující hráče, kluby, zápasy, komunitu, turnaje, chytrou výsledkovou tabuli a sporty.",
+      labels: {
+        players: "Hráči", venues: "Sportovní kluby", matches: "Zápasy", community: "Komunita",
+        tournaments: "Turnaje", scoreboard: "Chytrá výsledková tabule", ranking: "Žebříček", bookings: "Rezervace",
+        padcoins: "PadCoins", memberships: "Členství", clubs: "Kluby", organizations: "Organizace",
+        padbol: "Padbol", padel: "Padel", pickleball: "Pickleball", tennis: "Tenis", teams: "Týmy",
+        stats: "Statistiky", notifications: "Oznámení", courts: "Kurty", events: "Události", loyalty: "Věrnost",
+        experiences: "Prostředí", associations: "Asociace", federations: "Federace", academies: "Akademie",
+        coaches: "Trenéři", referees: "Rozhodčí", competitions: "Soutěže", standings: "Pořadí",
+        calendar: "Kalendář", registrations: "Registrace", liveResults: "Živé výsledky", invitations: "Pozvánky",
+        profiles: "Profily", history: "Historie", awards: "Ocenění", benefits: "Výhody",
+      },
+    },
+  },
   whatIs: {
     title: 'Co je Padbol Match',
     text: 'Propojuje hráče a sportovní kluby. Spojuje soutěž, komunitu a správu. Každý zápas vytváří návaznost: nejde jen o rezervační nástroj, ale o vztah, který pokračuje i po hře.',
@@ -224,6 +243,55 @@ const czechPublicSite = {
       occupy: { title: 'Skutečná obsazenost', text: 'Otevřené zápasy a rezervace, které zaplní hřiště i volné termíny.' },
       activate: { title: 'Aktivujte hráče', text: 'Komunita vašeho klubu najde spoluhráče a vrací se.' },
       continuity: { title: 'Návaznost', text: 'Turnaje, žebříček, PadCoins a členství po každé hře.' },
+    },
+  },
+  venueAdmin: {
+    eyebrow: "Správa sportovního klubu",
+    title: "Spravujte svůj klub krok za krokem",
+    text: "Než se připojíte, seznamte se s celým provozem. Každý modul má jasnou úlohu a provede vás nastavením.",
+    openDetail: "Zobrazit kroky", close: "Zavřít podrobnosti",
+    next: {
+      eyebrow: "Další krok", title: "Přiveďte svůj klub do Padbol Match",
+      text: "Prohlédněte si nástroje a postup zapojení klubu do Padbol Match. Až budete připraveni, můžete zahájit registraci.",
+      apply: "Přidat můj klub",
+    },
+    items: {
+      setup: {
+        title: "Nastavte svůj klub", text: "Veřejné údaje, sporty, kurty, rozvrhy, ceny a platby.",
+        detail: "Vytvořte provozní profil klubu, aby hráči i personál pracovali se stejnými informacemi.",
+        steps: { 1: "Nastavte název, kontaktní údaje, polohu a veřejné informace.", 2: "Povolte sporty, kurty, délky hry a časové bloky.", 3: "Přidejte ceny, pravidla a přijímané platební metody." },
+        result: "Výsledek: klub připravený zveřejnit dostupnost a přijímat rezervace.",
+      },
+      bookings: {
+        title: "Spravujte rezervace", text: "Kalendář, platby, docházka, změny termínů a pravidla zrušení.",
+        detail: "Uspořádejte dostupnost kurtů a sledujte každou rezervaci od žádosti až po uzavření.",
+        steps: { 1: "Nastavte kalendář, ceny a podmínky používání.", 2: "Určete potvrzení účasti a platební metody.", 3: "Spravujte změny termínů, zrušení a stav zápasu." },
+        result: "Výsledek: rezervace se účtuje po potvrzení kompletního zápasu podle pravidel klubu.",
+      },
+      players: {
+        title: "Aktivujte hráče", text: "Propojení, žádosti, komunita a komunikace na jednom místě.",
+        detail: "Proměňte dotazy a příležitostné hráče v komunitu, která se do vašeho klubu vrací.",
+        steps: { 1: "Kontrolujte žádosti hráčů a propojení.", 2: "Zveřejňujte otevřené zápasy a možnosti doplnění týmů.", 3: "Udržujte kontakt pomocí komunity a oznámení." },
+        result: "Výsledek: více viditelné aktivity a hráči propojení s vaším klubem.",
+      },
+      competition: {
+        title: "Vytvářejte soutěže", text: "Turnaje, týmy, kapacita, výsledky a klubové žebříčky.",
+        detail: "Pořádejte soutěže s jasnými pravidly od registrace až po konečné výsledky.",
+        steps: { 1: "Vyberte sport, formát, kategorie, kapacitu a termíny.", 2: "Spusťte registraci a spravujte týmy nebo hráče.", 3: "Zveřejněte výsledky a propojte je se žebříčkem a historií." },
+        result: "Výsledek: organizovaný turnaj pro hráče, rozhodčí a personál klubu.",
+      },
+      scoreboard: {
+        title: "Ovládejte výsledkovou tabuli a aktivujte obrazovku", text: "Živé výsledky a reklamní plochy pro sponzory, obchod a občerstvení.",
+        detail: "Výsledková tabule zaznamenává zápas a během plánovaných přestávek nebo čekání na další zápas může fungovat jako komerční obrazovka spravovaná klubem.",
+        steps: { 1: "Zahajte zápas s příslušnými hráči nebo týmy.", 2: "Nahrajte kampaně sponzorů, obchodu, občerstvení nebo výhod a určete, kdy se zobrazí.", 3: "Během přestávek, změn stran, změn setů nebo po skončení obrazovka střídá kampaně a automaticky se vrací ke hře." },
+        result: "Výsledek: užitečné údaje pro historii a žebříček a měřitelná komerční obrazovka bez přerušení zápasu.",
+      },
+      loyalty: {
+        title: "Budujte věrnost", text: "PadCoins a členství, pokud jsou pro váš provoz povoleny.",
+        detail: "Oceňujte účast komunity výhodami, které klub řídí, pokud jsou tyto moduly aktivní.",
+        steps: { 1: "Určete výhody, podmínky a dobu platnosti.", 2: "Nastavte pravidla získávání odměn nebo členství.", 3: "Sledujte využití a informujte komunitu o nabídkách." },
+        result: "Výsledek: opakovaný a měřitelný vztah s hráči vašeho klubu.",
+      },
     },
   },
   playerPath: {
