@@ -48,6 +48,14 @@ describe('canonical Padbol ecosystem locales', () => {
     expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
   });
 
+  it('has direct Czech copy for account access and global navigation', () => {
+    ['general', 'auth', 'nav'].forEach((section) => {
+      const englishPaths = leafPaths(en[section]);
+      const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs[section]));
+      expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
+    });
+  });
+
   it('protects the international Padbol Court name', () => {
     expect(PADBOL_COURT_TERM).toBe('Padbol Court');
     expect(PROTECTED_PADBOL_TERMS).toContain('Padbol Court');
