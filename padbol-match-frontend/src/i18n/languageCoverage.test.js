@@ -27,7 +27,7 @@ describe('language coverage', () => {
     });
   });
 
-  it('no devuelve claves técnicas al cambiar entre los 19 idiomas', async () => {
+  it('no devuelve claves técnicas al cambiar entre los 20 idiomas', async () => {
     for (const language of PADBOL_LANGUAGE_CODES) {
       await i18n.changeLanguage(language);
       for (const key of englishKeys) {
@@ -41,6 +41,7 @@ describe('language coverage', () => {
     ['it', 'Per i giocatori'],
     ['ro', 'Pentru jucători'],
     ['fr', 'Pour les joueurs'],
+    ['cs', 'Pro hráče'],
   ])('cambia realmente el contenido público a %s', async (language, expected) => {
     await i18n.changeLanguage(language);
     expect(i18n.language).toBe(language);

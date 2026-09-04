@@ -26,6 +26,7 @@ export function normalizePadbolLang(code) {
   if (s.startsWith('pl')) return 'pl';
   if (s.startsWith('uk') || s.startsWith('ua')) return 'uk';
   if (s.startsWith('af')) return 'af';
+  if (s.startsWith('cs') || s.startsWith('cz')) return 'cs';
   return 'en';
 }
 
@@ -52,6 +53,7 @@ export function padbolLangToIntlLocale(lang) {
     pl: 'pl-PL',
     uk: 'uk-UA',
     af: 'af-ZA',
+    cs: 'cs-CZ',
   };
   return map[code] || code;
 }

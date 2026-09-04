@@ -72,4 +72,10 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
     { platform: 'Platform', players: 'Vir spelers', venues: 'Vir sportklubs', download: 'Laai die toepassing af', login: 'Teken in', community: 'Gemeenskap', scoreboard: 'Telbord' },
     { claim: 'Die sporttoepassing wat alles verbind.', lead: 'Spelers, sportklubs, wedstryde, toernooie, ranglys, gemeenskap en bestuur op een platform.', ctaExplore: 'Verken die platform', ctaPlay: 'Ek wil speel', ctaVenue: 'Ek wil Padbol Match aanbied' },
   ),
+  cs: locale(
+    { language: 'Jazyk', loading: 'Načítání…', confirm: 'Potvrdit', cancel: 'Zrušit', close: 'Zavřít', save: 'Uložit', edit: 'Upravit', delete: 'Smazat', search: 'Hledat', back: 'Zpět', continue: 'Pokračovat', accept: 'Přijmout', optional: 'Volitelné' },
+    { mainAria: 'Hlavní navigace', perfil: 'Profil', jugar: 'Hrát', competir: 'Soutěžit', notificaciones: 'Oznámení', search: 'Hledat', logout: 'Odhlásit se', backToHub: 'Zpět', myProfile: 'Můj profil', adminPanel: 'Panel správy' },
+    { platform: 'Platforma', players: 'Pro hráče', venues: 'Pro sportovní kluby', download: 'Stáhnout aplikaci', login: 'Přihlásit se', community: 'Komunita', scoreboard: 'Výsledková tabule' },
+    { claim: 'Sportovní aplikace, která propojuje vše.', lead: 'Hráči, kluby, zápasy, turnaje, žebříček, komunita a správa na jedné platformě.', ctaExplore: 'Prozkoumat platformu', ctaPlay: 'Chci hrát', ctaVenue: 'Chci zavést Padbol Match' },
+  ),
 };

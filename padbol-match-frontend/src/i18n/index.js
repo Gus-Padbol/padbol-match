@@ -61,7 +61,7 @@ i18n
       sv: { translation: englishBackedLocale('sv') }, el: { translation: englishBackedLocale('el') },
       hu: { translation: englishBackedLocale('hu') }, he: { translation: englishBackedLocale('he') },
       pl: { translation: englishBackedLocale('pl') }, uk: { translation: englishBackedLocale('uk') },
-      af: { translation: englishBackedLocale('af') },
+      af: { translation: englishBackedLocale('af') }, cs: { translation: englishBackedLocale('cs') },
     },
     lng: readInitialLng(), fallbackLng: 'en', supportedLngs: [...PADBOL_LANGUAGE_CODES], load: 'currentOnly',
     interpolation: { escapeValue: false }, returnNull: false, returnEmptyString: false,
