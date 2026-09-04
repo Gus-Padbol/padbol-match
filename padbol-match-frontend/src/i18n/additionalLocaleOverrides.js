@@ -6,10 +6,24 @@
 const locale = (general, nav, publicNav, hero, publicSite = {}) => ({
   general,
   nav,
-  publicSite: { ...publicSite, nav: publicNav, hero },
+  publicSite: { ...publicSite, nav: publicNav, hero: { ...publicSite.hero, ...hero } },
 });
 
 const czechPublicSite = {
+  brandAlt: "Padbol Match",
+  padCoins: {
+    wallet: {
+      completedMatch: "Dokončený zápas",
+      confirmedBooking: "Potvrzená rezervace",
+      redeemedBenefit: "Uplatněná výhoda",
+      activeMembership: "Aktivní členství",
+    },
+  },
+  tournaments: {
+    preview: {
+      teamA: "Tým A", teamB: "Tým B", teamC: "Tým C", teamD: "Tým D",
+    },
+  },
   sports: {
     padbol: "Padbol", padel: "Padel", pickleball: "Pickleball", tennis: "Tenis",
   },
@@ -381,8 +395,8 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
   cs: locale(
     { language: 'Jazyk', loading: 'Načítání…', confirm: 'Potvrdit', cancel: 'Zrušit', close: 'Zavřít', save: 'Uložit', edit: 'Upravit', delete: 'Smazat', search: 'Hledat', back: 'Zpět', continue: 'Pokračovat', accept: 'Přijmout', optional: 'Volitelné' },
     { mainAria: 'Hlavní navigace', perfil: 'Profil', jugar: 'Hrát', competir: 'Soutěžit', notificaciones: 'Oznámení', search: 'Hledat', logout: 'Odhlásit se', backToHub: 'Zpět', myProfile: 'Můj profil', adminPanel: 'Panel správy' },
-    { platform: 'Platforma', players: 'Pro hráče', venues: 'Pro sportovní kluby', download: 'Stáhnout aplikaci', login: 'Přihlásit se', community: 'Komunita', scoreboard: 'Výsledková tabule' },
-    { claim: 'Sportovní aplikace, která propojuje vše.', lead: 'Hráči, kluby, zápasy, turnaje, žebříček, komunita a správa na jedné platformě.', ctaExplore: 'Prozkoumat platformu', ctaPlay: 'Chci hrát', ctaVenue: 'Chci zavést Padbol Match' },
+    { aria: 'Navigace webu', menu: 'Otevřít nabídku', close: 'Zavřít nabídku', platform: 'Platforma', players: 'Pro hráče', venues: 'Pro sportovní kluby', administrators: 'Správci', download: 'Stáhnout aplikaci', login: 'Přihlásit se', community: 'Komunita', scoreboard: 'Výsledková tabule', about: 'O nás' },
+    { claim: 'Sportovní aplikace, která propojuje vše.', lead: 'Hráči, kluby, zápasy, turnaje, žebříček, komunita a správa na jedné platformě.', sportsAria: 'Stav zpřístupnění sportů', ctaExplore: 'Prozkoumat platformu', ctaPlay: 'Chci hrát', ctaVenue: 'Chci zavést Padbol Match', videoAria: 'Zápas Padbol na kurtu' },
     czechPublicSite,
   ),
 };

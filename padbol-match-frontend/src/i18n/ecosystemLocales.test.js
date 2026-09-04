@@ -1,6 +1,14 @@
 import { PADBOL_LANGUAGE_CODES, canonicalPadbolLanguageCode } from '../constants/padbolLanguages';
 import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
 import { PADBOL_COURT_TERM, PROTECTED_PADBOL_TERMS } from './terminology';
+import en from './locales/en.json';
+
+const leafPaths = (value, prefix = '') => Object.entries(value).flatMap(([key, child]) => {
+  const path = prefix ? `${prefix}.${key}` : key;
+  return child && typeof child === 'object' && !Array.isArray(child)
+    ? leafPaths(child, path)
+    : [path];
+});
 
 const CANONICAL_ECOSYSTEM_EDITIONS = [
   'de', 'es', 'en', 'ar', 'fa-IR', 'nl-BE', 'fr', 'it', 'ro', 'nl-NL',
@@ -32,6 +40,12 @@ describe('canonical Padbol ecosystem locales', () => {
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.meta.title).toBe('Padbol Match — Platforma');
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.smartScoreboard.comingSoon).toBe('Dostupné dnes · Živě');
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.matchIntelligence.signal.title).toContain('TRÉNINK');
+  });
+
+  it('has direct Czech copy for every public-site field', () => {
+    const englishPaths = leafPaths(en.publicSite);
+    const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite));
+    expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
   });
 
   it('protects the international Padbol Court name', () => {
