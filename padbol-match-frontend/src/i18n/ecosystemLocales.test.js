@@ -53,7 +53,7 @@ describe('canonical Padbol ecosystem locales', () => {
       'general', 'auth', 'nav', 'jugar', 'competir',
       'torneos', 'armarPartido', 'partidosAbiertos', 'checkin',
       'reservas', 'sedes', 'precios', 'pago', 'clases', 'sponsors', 'ranking', 'equipos', 'notificaciones',
-      'chatbot', 'hub', 'perfil', 'perfilPublico', 'pwa', 'legal', 'landing',
+      'adminLanding', 'chatbot', 'hub', 'perfil', 'perfilPublico', 'pwa', 'legal', 'landing',
       'resenas', 'reputacion', 'campanita', 'instructor', 'profesor',
     ].forEach((section) => {
       const englishPaths = leafPaths(en[section]);
