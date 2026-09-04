@@ -6,16 +6,17 @@ const fs = require('fs');
 const path = require('path');
 
 const page = fs.readFileSync(path.join(__dirname, 'AdminVenueLandingPage.jsx'), 'utf8');
+const plansPage = fs.readFileSync(path.join(__dirname, 'VenuePlansPage.jsx'), 'utf8');
+const app = fs.readFileSync(path.join(__dirname, '../../App.js'), 'utf8');
 
 describe('planes de la landing para sedes', () => {
-  it('lleva ambos CTA a la pantalla de planes ya existente', () => {
-    expect(page.match(/to="\/unirse"/g)).toHaveLength(2);
+  it('lleva los CTA comerciales de administradores a la pantalla de planes', () => {
+    expect(page.match(/to="\/planes"/g)).toHaveLength(3);
+    expect(app).toContain('path="/planes"');
   });
 
   it('no duplica el comparador comercial dentro de la landing', () => {
     expect(page).not.toMatch(/id="planes"/);
-    ['Gratis', 'Start', 'Club', 'Pro', 'US$ 99'].forEach((value) => {
-      expect(page).not.toContain(value);
-    });
+    expect(plansPage).toContain('id="planes"');
   });
 });

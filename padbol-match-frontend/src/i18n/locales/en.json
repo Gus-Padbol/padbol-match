@@ -2707,6 +2707,7 @@
     "playerPath": {
       "title": "For players",
       "text": "Find matches, create games, join open slots, book, compete and follow your progress inside the community.",
+      "tapNext": "Swipe to explore each feature",
       "items": {
         "find": {
           "title": "Find matches",

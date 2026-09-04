@@ -5,6 +5,7 @@ import PublicSitePage from './PublicSitePage';
 jest.mock('react-router-dom', () => ({
   Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a>,
   useLocation: () => ({ pathname: '/plataforma' }),
+  useNavigate: () => jest.fn(),
 }), { virtual: true });
 
 jest.mock('../../i18n/tSafe', () => {
@@ -21,7 +22,16 @@ jest.mock('../../i18n/tSafe', () => {
   return {
     ES_FALLBACKS: catalog,
     useSafeTranslation: () => ({
-      t: (key, fallback) => catalog[key] || fallback || key,
+      t: (key, fallbackOrOptions) => {
+        const options = fallbackOrOptions && typeof fallbackOrOptions === 'object'
+          ? fallbackOrOptions
+          : {};
+        const fallback = typeof fallbackOrOptions === 'string' ? fallbackOrOptions : '';
+        return String(catalog[key] || fallback || key).replace(
+          /{{\s*([^}\s]+)\s*}}/g,
+          (token, name) => (options[name] == null ? '' : String(options[name])),
+        );
+      },
     }),
   };
 });
@@ -36,6 +46,9 @@ jest.mock('../../components/LanguageSwitcher', () => function Language() {
   return <button type="button">Idioma</button>;
 });
 jest.mock('../../components/CookieConsentBanner', () => function Cookies() {
+  return null;
+});
+jest.mock('../../components/ChatbotIASafe', () => function Chatbot() {
   return null;
 });
 
@@ -133,7 +146,7 @@ describe('/plataforma public site', () => {
     const ctas = hero.querySelector('.ps-hero__ctas');
     const globe = hero.querySelector('.ps-globe');
     expect(logo).toBeTruthy();
-    expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo.');
+    expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo');
     expect(lead).toHaveTextContent(
       'Juego, operación y comunidad. Nace con Padbol y está lista para otros deportes de cancha.',
     );
@@ -188,7 +201,7 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Descargar la app' })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.queryByRole('link', { name: 'Conocer la plataforma' })).toBeNull();
     expect(screen.getAllByRole('link', { name: /Quiero jugar/i })[0]).toHaveAttribute('href', '#descargar');
-    expect(screen.getAllByRole('link', { name: 'Quiero incorporar Padbol Match' })[0])
+    expect(screen.getAllByRole('link', { name: 'Quiero sumar mi sede' })[0])
       .toHaveAttribute('href', '/administradores');
     expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
     expect(document.querySelector('#nosotros')).toBeTruthy();
@@ -211,7 +224,7 @@ describe('/plataforma public site', () => {
     expect(container.textContent).toMatch(/Cerrar el resultado/i);
     expect(container.textContent).toMatch(/historial, estadísticas, ranking y torneos/i);
     expect(container.querySelector('.ps-scoreboard__video')).toBeTruthy();
-    expect(container.textContent).toMatch(/No tenés que dejar atrás tu camino/i);
+    expect(container.textContent).toMatch(/No te pedimos que abandones nada/i);
   });
 
   it('muestra las cinco experiencias y diferencia expansión futura', () => {

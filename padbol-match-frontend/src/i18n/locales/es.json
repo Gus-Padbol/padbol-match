@@ -2324,6 +2324,7 @@
     "playerPath": {
       "title": "Para jugadores",
       "text": "Hoy, elige tu deporte favorito: Padbol, pádel, tenis o pickleball. Encuentra actividad cerca y resuelve todo tu recorrido desde un solo lugar.",
+      "tapNext": "Desliza para conocer cada función",
       "items": {
         "find": {
           "title": "Encontrar partidos",
@@ -2362,11 +2363,11 @@
     "playerRecord": {
       "kicker": "TU JUEGO NO EMPIEZA DE CERO",
       "visualTagline": "TU HISTORIAL. TU PROGRESO. TU DECISIÓN.",
-      "title": "Trae tu recorrido. Lo reconocemos",
-      "lead": "Si ya jugaste, competiste y construiste un historial, eso vale. No tienes que dejar atrás tu camino para sumarte a Padbol Match.",
-      "copy": "Envíanos tus resultados, torneos, ranking, estadísticas y logros anteriores. Los revisamos y los incorporamos para que tu perfil refleje el jugador que ya eres.",
-      "ownershipStrong": "Tus datos son tuyos.",
-      "ownership": "Puedes llevarte todo tu recorrido deportivo cuando quieras.",
+      "title": "Traé tu recorrido. Lo reconocemos",
+      "lead": "Tu recorrido ya tiene valor. Podés traerlo a Padbol Match sin dejar de usar la app que usás hoy.",
+      "copy": "Probá ambas en paralelo: compartinos capturas de tus resultados, torneos, ranking, estadísticas y logros. Las revisamos y las incorporamos para que tu perfil refleje el jugador que ya sos.",
+      "ownershipStrong": "No te pedimos que abandones nada.",
+      "ownership": "Tus datos son tuyos y podés llevártelos cuando quieras.",
       "itemsAria": "Información que se puede reconocer en el recorrido deportivo",
       "items": { "results": "Resultados y partidos", "tournaments": "Torneos y posiciones", "ranking": "Ranking y estadísticas", "achievements": "Logros y evolución" }
     },

@@ -7,10 +7,6 @@ import '../publicSite/publicSite.css';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
 
-// El Hub queda como área interna de la app. La captación de sedes entra al
-// acceso autenticado y, tras validar la sesión, abre directamente el panel.
-const ADMIN_PANEL_ACCESS_PATH = '/acceso?redirect=%2Fadmin';
-
 function useDocumentMeta(title) {
   useLayoutEffect(() => {
     const previousTitle = document.title;
@@ -85,7 +81,7 @@ export default function AdminVenueLandingPage() {
               <h1>{text('title')}<span>{text('titleAccent')}</span></h1>
               <p className="admin-landing__lead">{text('lead')}</p>
               <div className="admin-landing__hero-actions">
-                <Link to="/unirse" className="admin-landing__primary">{text('primaryCta')} <span>→</span></Link>
+                <Link to="/planes" className="admin-landing__primary">{text('primaryCta')} <span>→</span></Link>
               </div>
             </div>
             <div className="admin-landing__hero-panel admin-landing__pulse" aria-label={text('pulseAria')}>
@@ -141,7 +137,7 @@ export default function AdminVenueLandingPage() {
               ))}
             </div>
             <div className="admin-landing__modules-cta">
-              <Link to="/unirse" className="admin-landing__primary">
+              <Link to="/planes" className="admin-landing__primary">
                 {text('modulesCta')} <span>→</span>
               </Link>
             </div>
@@ -196,7 +192,7 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__eyebrow">{text('closingEyebrow')}</p>
             <h2>{text('closingTitle')}<span>{text('closingTitleAccent')}</span></h2>
             <p>{text('closingText')}</p>
-            <div className="admin-landing__hero-actions"><Link to="/unirse" className="admin-landing__primary">{text('plansCta')} <span>→</span></Link></div>
+            <div className="admin-landing__hero-actions"><Link to="/planes" className="admin-landing__primary">{text('plansCta')} <span>→</span></Link></div>
           </div>
         </section>
       </main>
