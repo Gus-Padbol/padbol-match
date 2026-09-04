@@ -30,6 +30,8 @@ describe('canonical Padbol ecosystem locales', () => {
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.communityMatches.mockSlots).toContain('{{filled}}');
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.about.text).toContain('Padbol Court');
     expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.meta.title).toBe('Padbol Match — Platforma');
+    expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.smartScoreboard.comingSoon).toBe('Dostupné dnes · Živě');
+    expect(ADDITIONAL_LOCALE_OVERRIDES.cs.publicSite.matchIntelligence.signal.title).toContain('TRÉNINK');
   });
 
   it('protects the international Padbol Court name', () => {
