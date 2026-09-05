@@ -107,6 +107,21 @@
     "experience": "Dintr-un singur loc poți explora cluburi, verifica disponibilitatea, rezerva un interval și gestiona relația ta cu clubul.",
     "ready": "Ești gata de joc?", "explore": "Explorează cluburile", "terms": "Termeni", "privacy": "Confidențialitate"
   },
+  "accountDeletion": {
+    "title": "Ștergerea contului", "lead": "Poți solicita ștergerea contului tău Padbol Match și a datelor personale asociate.",
+    "fromAccount": "Din contul tău", "security": "Din motive de securitate, această opțiune este separată de deconectare și necesită o confirmare suplimentară.",
+    "signInSuffix": " pentru a solicita ștergerea din această pagină. Dacă nu te poți autentifica, folosește opțiunea prin e-mail de mai jos.",
+    "requestButton": "Solicită ștergerea contului", "cannotSignIn": "Dacă nu te poți autentifica",
+    "emailPrefix": "Scrie-ne de la adresa de e-mail asociată contului tău la",
+    "emailSuffix": ". Menționează în mesaj că soliciți ștergerea contului. Îți putem cere informații suplimentare pentru a verifica dacă îți aparține contul.",
+    "dataTitle": "Ce se întâmplă cu datele tale", "dataUnavailable": "Contul nu mai este disponibil după procesarea solicitării.",
+    "dataRemoved": "Datele personale sunt șterse sau anonimizate în sistemele active asociate contului.",
+    "dataRetention": "Unele înregistrări pot fi păstrate pe perioada impusă de obligații legale, contabile, de securitate sau de prevenire a fraudei.",
+    "processing": "Solicitarea este procesată cât mai curând posibil. Pentru a verifica starea ei, răspunde de la aceeași adresă de e-mail folosită pentru inițiere.",
+    "confirmTitle": "Soliciți ștergerea contului?",
+    "confirmMessage": "Această acțiune te deconectează și începe ștergerea sau anonimizarea permanentă a datelor tale. Unele înregistrări pot fi păstrate atunci când există o obligație legală.",
+    "sending": "Se trimite solicitarea…", "confirm": "Da, șterge contul", "error": "Solicitarea de ștergere nu a putut fi înregistrată."
+  },
   "paises": {
     "estados_unidos": "Statele Unite",
     "francia": "Franța",

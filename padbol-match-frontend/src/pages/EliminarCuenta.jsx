@@ -9,6 +9,7 @@ import LegalStaticPageLayout, {
 import ConfirmModal from '../components/ConfirmModal';
 import { useAuth } from '../context/AuthContext';
 import { requestAccountDeletion } from '../utils/accountDeletionApi';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const EMAIL = 'padbolinternacional@gmail.com';
 const EMAIL_HREF =
@@ -16,6 +17,7 @@ const EMAIL_HREF =
 const linkStyle = { color: '#a5b4fc', fontWeight: 700 };
 
 export default function EliminarCuenta() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { session, signOutAndClear } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -38,7 +40,7 @@ export default function EliminarCuenta() {
         state: { accountDeletionRequested: true },
       });
     } catch (error) {
-      setErrorMessage(error?.message || 'No pudimos registrar la solicitud de eliminación.');
+      setErrorMessage(error?.message || t('accountDeletion.error'));
       setConfirmOpen(false);
     } finally {
       setBusy(false);
@@ -47,20 +49,19 @@ export default function EliminarCuenta() {
 
   return (
     <LegalStaticPageLayout
-      title="Eliminar tu cuenta"
-      lead="Puedes solicitar la eliminación de tu cuenta de Padbol Match y de los datos personales asociados."
+      title={t('accountDeletion.title')}
+      lead={t('accountDeletion.lead')}
     >
-      <LegalSectionTitle>Desde tu cuenta</LegalSectionTitle>
+      <LegalSectionTitle>{t('accountDeletion.fromAccount')}</LegalSectionTitle>
       <LegalP>
         {session?.user ? (
-          <>Por seguridad, esta opción está separada del cierre de sesión y requiere una confirmación adicional.</>
+          <>{t('accountDeletion.security')}</>
         ) : (
           <>
             <Link to="/acceso?redirect=%2Feliminar-cuenta" style={linkStyle}>
-              Inicia sesión
+              {t('auth.login')}
             </Link>{' '}
-            para solicitar la eliminación desde esta página. Si no puedes ingresar, usa la alternativa por correo
-            indicada abajo.
+            {t('accountDeletion.signInSuffix')}
           </>
         )}
       </LegalP>
@@ -86,7 +87,7 @@ export default function EliminarCuenta() {
               opacity: busy ? 0.65 : 1,
             }}
           >
-            Solicitar eliminación de cuenta
+            {t('accountDeletion.requestButton')}
           </button>
           {errorMessage ? (
             <p role="alert" style={{ color: '#fca5a5', fontWeight: 700, margin: '0 0 24px' }}>
@@ -96,37 +97,34 @@ export default function EliminarCuenta() {
         </>
       ) : null}
 
-      <LegalSectionTitle>Si no puedes ingresar</LegalSectionTitle>
+      <LegalSectionTitle>{t('accountDeletion.cannotSignIn')}</LegalSectionTitle>
       <LegalP>
-        Escribinos desde el correo asociado a tu cuenta a{' '}
+        {t('accountDeletion.emailPrefix')}{' '}
         <a href={EMAIL_HREF} style={linkStyle}>
           {EMAIL}
         </a>
-        . En el mensaje indica que solicitas la eliminación de tu cuenta. Podemos pedirte información adicional para
-        verificar que la cuenta te pertenece.
+        {t('accountDeletion.emailSuffix')}
       </LegalP>
 
-      <LegalSectionTitle>Qué ocurre con tus datos</LegalSectionTitle>
+      <LegalSectionTitle>{t('accountDeletion.dataTitle')}</LegalSectionTitle>
       <LegalUl>
-        <LegalLi>La cuenta deja de estar disponible una vez procesada la solicitud.</LegalLi>
-        <LegalLi>Los datos personales se eliminan o anonimizan de los sistemas activos vinculados a la cuenta.</LegalLi>
+        <LegalLi>{t('accountDeletion.dataUnavailable')}</LegalLi>
+        <LegalLi>{t('accountDeletion.dataRemoved')}</LegalLi>
         <LegalLi>
-          Algunos registros pueden conservarse durante el plazo exigido por obligaciones legales, contables, de seguridad
-          o prevención de fraude.
+          {t('accountDeletion.dataRetention')}
         </LegalLi>
       </LegalUl>
 
       <LegalP>
-        La solicitud se procesa tan pronto como sea razonablemente posible. Si necesitás consultar su estado, respondé al
-        mismo correo con el que la iniciaste.
+        {t('accountDeletion.processing')}
       </LegalP>
 
       <ConfirmModal
         open={confirmOpen}
-        title="¿Solicitar la eliminación de tu cuenta?"
-        message="Esta acción cierra tu sesión e inicia la eliminación o anonimización permanente de tus datos. Algunos registros pueden conservarse cuando exista una obligación legal."
-        confirmLabel={busy ? 'Enviando solicitud…' : 'Sí, eliminar mi cuenta'}
-        dismissLabel="Cancelar"
+        title={t('accountDeletion.confirmTitle')}
+        message={t('accountDeletion.confirmMessage')}
+        confirmLabel={busy ? t('accountDeletion.sending') : t('accountDeletion.confirm')}
+        dismissLabel={t('general.cancel')}
         busy={busy}
         confirmDanger
         onDismiss={() => setConfirmOpen(false)}

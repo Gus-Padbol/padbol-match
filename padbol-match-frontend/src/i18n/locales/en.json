@@ -60,6 +60,21 @@
     "experience": "From one place, you can explore clubs, check availability, book a time and manage your experience with the club.",
     "ready": "Ready to play?", "explore": "Explore venues", "terms": "Terms", "privacy": "Privacy"
   },
+  "accountDeletion": {
+    "title": "Delete your account", "lead": "You can request deletion of your Padbol Match account and its associated personal data.",
+    "fromAccount": "From your account", "security": "For security, this option is separate from signing out and requires an additional confirmation.",
+    "signInSuffix": " to request deletion from this page. If you cannot sign in, use the email option below.",
+    "requestButton": "Request account deletion", "cannotSignIn": "If you cannot sign in",
+    "emailPrefix": "Email us from the address associated with your account at",
+    "emailSuffix": ". State that you are requesting account deletion. We may ask for additional information to verify that the account belongs to you.",
+    "dataTitle": "What happens to your data", "dataUnavailable": "The account becomes unavailable once the request is processed.",
+    "dataRemoved": "Personal data is deleted or anonymized in the active systems linked to the account.",
+    "dataRetention": "Some records may be retained for the period required by legal, accounting, security or fraud-prevention obligations.",
+    "processing": "The request is processed as soon as reasonably possible. To ask about its status, reply from the same email address used to start it.",
+    "confirmTitle": "Request deletion of your account?",
+    "confirmMessage": "This action signs you out and begins the permanent deletion or anonymization of your data. Some records may be retained where legally required.",
+    "sending": "Sending request…", "confirm": "Yes, delete my account", "error": "We could not register the deletion request."
+  },
   "auth": {
     "access": "Sign in",
     "login": "Sign in",

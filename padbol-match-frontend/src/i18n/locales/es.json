@@ -60,6 +60,21 @@
     "experience": "Desde un mismo lugar podés explorar clubes, ver disponibilidad, reservar un turno y gestionar tu experiencia con el club.",
     "ready": "¿Listo para jugar?", "explore": "Explorar sedes", "terms": "Términos", "privacy": "Privacidad"
   },
+  "accountDeletion": {
+    "title": "Eliminar tu cuenta", "lead": "Podés solicitar la eliminación de tu cuenta de Padbol Match y de los datos personales asociados.",
+    "fromAccount": "Desde tu cuenta", "security": "Por seguridad, esta opción está separada del cierre de sesión y requiere una confirmación adicional.",
+    "signInSuffix": " para solicitar la eliminación desde esta página. Si no podés ingresar, usá la alternativa por correo indicada abajo.",
+    "requestButton": "Solicitar eliminación de cuenta", "cannotSignIn": "Si no podés ingresar",
+    "emailPrefix": "Escribinos desde el correo asociado a tu cuenta a",
+    "emailSuffix": ". En el mensaje indicá que solicitás la eliminación de tu cuenta. Podemos pedirte información adicional para verificar que la cuenta te pertenece.",
+    "dataTitle": "Qué ocurre con tus datos", "dataUnavailable": "La cuenta deja de estar disponible una vez procesada la solicitud.",
+    "dataRemoved": "Los datos personales se eliminan o anonimizan de los sistemas activos vinculados a la cuenta.",
+    "dataRetention": "Algunos registros pueden conservarse durante el plazo exigido por obligaciones legales, contables, de seguridad o prevención de fraude.",
+    "processing": "La solicitud se procesa tan pronto como sea razonablemente posible. Si necesitás consultar su estado, respondé desde el mismo correo con el que la iniciaste.",
+    "confirmTitle": "¿Solicitar la eliminación de tu cuenta?",
+    "confirmMessage": "Esta acción cierra tu sesión e inicia la eliminación o anonimización permanente de tus datos. Algunos registros pueden conservarse cuando exista una obligación legal.",
+    "sending": "Enviando solicitud…", "confirm": "Sí, eliminar mi cuenta", "error": "No pudimos registrar la solicitud de eliminación."
+  },
   "auth": {
     "access": "Acceso",
     "login": "Iniciar sesión",
