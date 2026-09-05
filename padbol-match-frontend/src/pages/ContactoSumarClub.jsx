@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
+import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES, paisTelefonoTranslationKey } from '../constants/paisesTelefono';
 import './LandingPage.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { commercialFlowCopy } from './commercialFlowCopy';
 
 const ACCENT = '#E11B22';
 
@@ -35,10 +36,10 @@ const API_BASE = String(
 ).replace(/\/$/, '');
 
 const BUSINESS_SPORTS = [
-  ['padbol', 'Padbol'],
-  ['padel', 'Pádel'],
-  ['pickleball', 'Pickleball'],
-  ['tenis', 'Tenis'],
+  ['padbol', 'padbol'],
+  ['padel', 'padel'],
+  ['pickleball', 'pickleball'],
+  ['tenis', 'tennis'],
 ];
 
 const BUSINESS_FORM_INITIAL = {
@@ -56,6 +57,9 @@ const BUSINESS_FORM_INITIAL = {
 
 function BusinessContactForm() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const flowCopy = commercialFlowCopy(i18n.resolvedLanguage || i18n.language);
+  const copy = flowCopy.business;
   const [form, setForm] = useState(BUSINESS_FORM_INITIAL);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -81,11 +85,11 @@ function BusinessContactForm() {
     const venueCount = Number.parseInt(form.sedes, 10);
     const courtCount = Number.parseInt(form.canchas, 10);
     if (!Number.isInteger(venueCount) || venueCount < 2) {
-      setError('Indicá cuántas sedes tiene la organización. Para una sola sede podés elegir Starter o Pro.');
+      setError(copy.invalidVenues);
       return;
     }
     if (!Number.isInteger(courtCount) || courtCount < 1) {
-      setError('Indicá la cantidad total aproximada de canchas.');
+      setError(copy.invalidCourts);
       return;
     }
     const email = form.email.trim().toLowerCase();
@@ -120,9 +124,9 @@ function BusinessContactForm() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || response.statusText);
       setForm(BUSINESS_FORM_INITIAL);
-      setSuccess('Recibimos tu consulta Business. Nuestro equipo te contactará para definir la estructura multisede y una propuesta por volumen.');
+      setSuccess(copy.success);
     } catch (submitError) {
-      setError(submitError?.message || 'No se pudo enviar la consulta.');
+      setError(submitError?.message || copy.error);
     } finally {
       setSaving(false);
     }
@@ -130,7 +134,7 @@ function BusinessContactForm() {
 
   return (
     <div className="landing-page" style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-primary)' }}>
-      <AppHeader title="Consulta Plan Business" onBack={() => navigate('/planes')} backLabel="← Volver a planes" />
+      <AppHeader title={copy.header} onBack={() => navigate('/planes')} backLabel={`← ${copy.back}`} />
       <main style={{ width: 'min(760px, calc(100% - 32px))', margin: '0 auto', padding: '112px 0 48px' }}>
         <img
           src="/media/public-site/jero/padbol-match-logo-white.svg"
@@ -138,60 +142,60 @@ function BusinessContactForm() {
           style={{ width: 180, height: 'auto', display: 'block', margin: '0 auto 22px' }}
         />
         <section style={{ padding: '25px 22px', border: '1px solid rgba(242,201,76,.35)', borderRadius: 16, background: 'linear-gradient(145deg,#1e2635,#171d28)', textAlign: 'center' }}>
-          <p style={{ margin: '0 0 8px', color: '#f2c94c', fontSize: 12, fontWeight: 900, letterSpacing: '.12em' }}>BUSINESS · CADENAS Y OPERADORES MULTISEDE</p>
-          <h1 style={{ margin: '0 0 10px', color: '#fff', fontSize: 'clamp(1.55rem, 4vw, 2.1rem)', lineHeight: 1.15 }}>Contanos cómo está formada tu organización</h1>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,.68)', lineHeight: 1.55 }}>Preparamos la administración central, los permisos de cada sede y una propuesta acorde al volumen.</p>
+          <p style={{ margin: '0 0 8px', color: '#f2c94c', fontSize: 12, fontWeight: 900, letterSpacing: '.12em' }}>{copy.eyebrow}</p>
+          <h1 style={{ margin: '0 0 10px', color: '#fff', fontSize: 'clamp(1.55rem, 4vw, 2.1rem)', lineHeight: 1.15 }}>{copy.title}</h1>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,.68)', lineHeight: 1.55 }}>{copy.lead}</p>
         </section>
 
         {error ? <p role="alert" style={{ padding: 13, borderRadius: 10, background: '#fee2e2', color: '#991b1b', fontWeight: 700 }}>{error}</p> : null}
         {success ? <p role="status" style={{ padding: 13, borderRadius: 10, background: '#dcfce7', color: '#166534', fontWeight: 700 }}>{success}</p> : null}
 
         <form onSubmit={submit} style={{ marginTop: 18, padding: '24px 22px', border: '1px solid rgba(242,201,76,.28)', borderRadius: 16, background: '#f4f1e9', colorScheme: 'light', boxShadow: '0 16px 42px rgba(0,0,0,.2)' }}>
-          <h2 style={{ margin: '0 0 4px', color: '#172033', fontSize: 20 }}>Datos para preparar la propuesta</h2>
-          <p style={{ margin: '0 0 14px', color: '#626b78', fontSize: 13, lineHeight: 1.5 }}>La consulta no activa ningún plan, suscripción ni cobro.</p>
+          <h2 style={{ margin: '0 0 4px', color: '#172033', fontSize: 20 }}>{copy.formTitle}</h2>
+          <p style={{ margin: '0 0 14px', color: '#626b78', fontSize: 13, lineHeight: 1.5 }}>{copy.disclaimer}</p>
 
-          <label htmlFor="business-organizacion" style={labelStyle}>Nombre de la organización o cadena *</label>
+          <label htmlFor="business-organizacion" style={labelStyle}>{copy.organization} *</label>
           <input id="business-organizacion" style={inputStyle} value={form.organizacion} onChange={(e) => field('organizacion', e.target.value)} required autoComplete="organization" />
 
-          <label htmlFor="business-responsable" style={labelStyle}>Nombre y apellido del responsable *</label>
+          <label htmlFor="business-responsable" style={labelStyle}>{copy.manager} *</label>
           <input id="business-responsable" style={inputStyle} value={form.responsable} onChange={(e) => field('responsable', e.target.value)} required autoComplete="name" />
 
-          <label htmlFor="business-pais" style={labelStyle}>País principal *</label>
+          <label htmlFor="business-pais" style={labelStyle}>{copy.country} *</label>
           <select id="business-pais" style={inputStyle} value={form.pais} onChange={(e) => field('pais', e.target.value)} required>
-            <option value="">Seleccioná un país</option>
-            {countries.map((country) => <option key={`${country.nombre}-${country.codigo}`} value={country.nombre}>{country.bandera} {country.nombre}</option>)}
+            <option value="">{flowCopy.chooseCountry}</option>
+            {countries.map((country) => <option key={`${country.nombre}-${country.codigo}`} value={country.nombre}>{country.bandera} {t(`paises.${paisTelefonoTranslationKey(country.nombre)}`, { defaultValue: country.nombre })}</option>)}
           </select>
 
-          <label htmlFor="business-ubicacion" style={labelStyle}>Ciudad o ubicación central *</label>
+          <label htmlFor="business-ubicacion" style={labelStyle}>{copy.location} *</label>
           <input id="business-ubicacion" style={inputStyle} value={form.ubicacion} onChange={(e) => field('ubicacion', e.target.value)} required autoComplete="address-level2" />
 
-          <label htmlFor="business-sedes" style={labelStyle}>¿Cuántas sedes tiene la organización? *</label>
+          <label htmlFor="business-sedes" style={labelStyle}>{copy.venues} *</label>
           <input id="business-sedes" type="number" min="2" step="1" inputMode="numeric" style={inputStyle} value={form.sedes} onChange={(e) => field('sedes', e.target.value)} required />
 
-          <label htmlFor="business-canchas" style={labelStyle}>Cantidad total aproximada de canchas *</label>
+          <label htmlFor="business-canchas" style={labelStyle}>{copy.courts} *</label>
           <input id="business-canchas" type="number" min="1" step="1" inputMode="numeric" style={inputStyle} value={form.canchas} onChange={(e) => field('canchas', e.target.value)} required />
 
-          <label htmlFor="business-deporte" style={labelStyle}>Deporte principal *</label>
+          <label htmlFor="business-deporte" style={labelStyle}>{copy.sport} *</label>
           <select id="business-deporte" style={inputStyle} value={form.deporte} onChange={(e) => field('deporte', e.target.value)} required>
-            <option value="">Seleccioná un deporte</option>
-            {BUSINESS_SPORTS.map(([key, name]) => <option key={key} value={key}>{name}</option>)}
+            <option value="">{copy.chooseSport}</option>
+            {BUSINESS_SPORTS.map(([key, translationKey]) => <option key={key} value={key}>{t(`publicSite.sports.${translationKey}`)}</option>)}
           </select>
 
-          <label htmlFor="business-otros" style={labelStyle}>¿Ofrece otros deportes? *</label>
+          <label htmlFor="business-otros" style={labelStyle}>{copy.otherSports} *</label>
           <select id="business-otros" style={inputStyle} value={form.otros_deportes} onChange={(e) => field('otros_deportes', e.target.value)} required>
-            <option value="">Seleccioná una opción</option>
-            <option value="si">Sí</option>
-            <option value="no">No</option>
+            <option value="">{flowCopy.chooseOption}</option>
+            <option value="si">{flowCopy.yes}</option>
+            <option value="no">{flowCopy.no}</option>
           </select>
 
-          <label htmlFor="business-email" style={labelStyle}>Email de contacto *</label>
+          <label htmlFor="business-email" style={labelStyle}>{copy.email} *</label>
           <input id="business-email" type="email" style={inputStyle} value={form.email} onChange={(e) => field('email', e.target.value)} required autoComplete="email" />
 
-          <label htmlFor="business-whatsapp" style={labelStyle}>WhatsApp con código de país *</label>
+          <label htmlFor="business-whatsapp" style={labelStyle}>{copy.whatsapp} *</label>
           <input id="business-whatsapp" type="tel" style={inputStyle} value={form.whatsapp} onChange={(e) => field('whatsapp', e.target.value)} placeholder="+34…" required autoComplete="tel" />
 
           <button type="submit" disabled={saving} style={{ ...btnPrimary, marginTop: 22, opacity: saving ? .75 : 1 }}>
-            {saving ? 'Enviando…' : 'Enviar consulta Business'}
+            {saving ? copy.sending : copy.submit}
           </button>
         </form>
       </main>

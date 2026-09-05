@@ -43,3 +43,11 @@ export const PAISES_TELEFONO_OTROS = [
   { nombre: 'Ucrania',        bandera: '🇺🇦', codigo: '+380' },
   { nombre: 'Venezuela',      bandera: '🇻🇪', codigo: '+58'  },
 ];
+
+export function paisTelefonoTranslationKey(nombre) {
+  return String(nombre || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+}

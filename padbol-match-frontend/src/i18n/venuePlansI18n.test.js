@@ -11,6 +11,8 @@ describe('venue plans localization', () => {
     expect(ro.plans.pro.features).toHaveLength(9);
     expect(ro.plans.business.features).toHaveLength(7);
     expect(ro.membershipText).toMatch(/prețul.*rezervările incluse.*PadCoins/iu);
+    expect(ro.faqs).toHaveLength(6);
+    expect(ro.faqHelpTitle).toBe('Mai ai întrebări?');
   });
 
   it('uses English instead of Spanish as the safe fallback for remaining editions', () => {
@@ -79,5 +81,16 @@ describe('venue plans localization', () => {
     expect(source).not.toContain('Reservas, jugadores, partidos');
     expect(source).not.toContain('BENEFICIO EXCLUSIVO PARA SEDES');
     expect(source).not.toContain('CREÁ TU PROPIA MEMBRESÍA');
+    expect(source).not.toContain('¿Hay cargos ocultos?');
+    expect(source).not.toContain('PREGUNTALE A CHIVI');
+  });
+
+  it('describes the current renewable six-month Padbol benefit in every direct edition', () => {
+    ['es', 'en', 'ro', 'cs', 'pt-BR', 'pt-PT', 'it', 'fr', 'de'].forEach((language) => {
+      const copy = venuePlansCopy(language);
+      expect(copy.padbolOwnerText).not.toMatch(/\b12\b/);
+      expect(copy.padbolOwnerCta).not.toMatch(/\b12\b/);
+      expect(copy.padbolOwnerText).toMatch(/6/);
+    });
   });
 });

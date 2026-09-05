@@ -19,9 +19,11 @@ describe('Terms and conditions translations', () => {
     const cs = i18n.getResourceBundle('cs', 'translation').legal.termsPage;
     expect(Object.keys(ro)).toHaveLength(31);
     expect(Object.keys(cs)).toHaveLength(31);
-    expect(ro.bookingFee).toMatch(/3%.*Mercado Pago|Mercado Pago.*3%/iu);
+    expect(ro.bookingFee).toMatch(/0%.*Padbol Match|Padbol Match.*0%/iu);
+    expect(ro.bookingFee).not.toMatch(/3%/u);
     expect(ro.lawBody).toMatch(/Florida.*consumatorilor/iu);
-    expect(cs.bookingFee).toMatch(/3 %.*Mercado Pago|Mercado Pago.*3 %/iu);
+    expect(cs.bookingFee).toMatch(/0 %.*Padbol Match|Padbol Match.*0 %/iu);
+    expect(cs.bookingFee).not.toMatch(/3 %/u);
     expect(cs.lawBody).toMatch(/Florida.*spotřebitelů/iu);
   });
 });

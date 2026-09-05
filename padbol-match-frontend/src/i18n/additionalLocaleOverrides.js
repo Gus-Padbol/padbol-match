@@ -1637,7 +1637,7 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
           useProhibited: "Platformu nesmíte používat podvodně, poškozovat třetí osoby ani porušovat zákon.", useSuspend: "V případě závažného porušení nebo rizika pro komunitu můžeme účet pozastavit či omezit.",
           bookingTitle: "Rezervace Padbol Courts", bookingPayment: "Platební metody: způsob platby určuje každý klub. Některé kluby fungují výhradně s online platbou, jiné mohou podle svého předplatného nabídnout platbu na místě.",
           bookingCancellation: "Zrušení a vrácení peněz: pravidla pro zrušení, změny a sankce se řídí zásadami zveřejněnými nebo sdělenými jednotlivými kluby. Před potvrzením vždy zkontrolujte podrobnosti.",
-          bookingFee: "Servisní poplatek: při online platbě přes Padbol Match, například prostřednictvím Mercado Pago nebo Stripe, může být k ceně rezervace připočten servisní poplatek 3 %. Rozpis se zobrazí před platbou. Rezervace placené v hotovosti v klubu tento poplatek platformy nezahrnují.",
+          bookingFee: "Provize hráče: hráči platí Padbol Match provizi 0 %. Při online platbě hradí pouze cenu uvedenou klubem. Obchodní provize Padbol Match se vztahuje na službu poskytovanou klubu a náklady zpracovatele plateb jsou samostatné.",
           tournamentsTitle: "Turnaje", tournamentApproval: "Registrace do turnaje může podléhat schválení organizátorem akce.",
           tournamentCategories: "Kategorie podle pohlaví a formátu, včetně mužských, ženských, smíšených či jiných divizí, stanoví organizátor turnaje podle svých interních pravidel a platných předpisů.",
           reportsTitle: "Provozní přehledy klubů", reportsBody: "Souhrny, transakce a exportovatelné soubory nabízené Padbol Match jsou nástroji provozních informací. Mohou klubům pomoci uspořádat a sdílet údaje o rezervacích, registracích a aktivitě, nepředstavují však účetní, daňové, právní ani finanční poradenství a nenahrazují evidence, kontroly, přiznání či dokumentaci vyžadovanou platnými předpisy.",
@@ -1681,6 +1681,7 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         terms: "Podmínky", privacy: "Soukromí",
       },
       reservas: {
+        playerCommissionZero: "Provize Padbol Match pro hráče: 0 %",
         titulo: "Rezervovat kurt", header: "Rezervace", heroTitle: "Rezervujte si kurt",
         heroSubtitle: "Vyberte klub a čas", seleccionar_fecha: "Vybrat datum",
         seleccionar_hora: "Vybrat čas", confirmar: "Potvrdit rezervaci",

@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import UnirsePage from './UnirsePage';
+import i18n from '../i18n';
 
 jest.mock('../components/AppHeader', () => function AppHeaderMock({ title }) {
   return <header>{title}</header>;
@@ -12,11 +13,26 @@ jest.mock('../context/HubNavLayoutContext', () => ({
 }));
 
 describe('solicitud promocional para sedes Padbol', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('es');
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, id: 1 }),
     });
+  });
+
+  it('renders the complete promotional journey in Romanian without Spanish UI copy', async () => {
+    await i18n.changeLanguage('ro');
+    const { container } = render(
+      <MemoryRouter initialEntries={['/unirse?plan=pro&promo=padbol-pro-renovable']}>
+        <UnirsePage />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Folosește gratuit Padbol Match Pro și dezvoltă-ți clubul')).toBeInTheDocument();
+    expect(screen.getByText('6 luni gratuite')).toBeInTheDocument();
+    expect(screen.getByText('Și promovarea sportului contează')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Solicită cele 6 luni Pro gratuite' })).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/Seleccion|Nombre de|¿|Empez|meses sin cargo/);
   });
 
   afterEach(() => {
@@ -55,7 +71,7 @@ describe('solicitud promocional para sedes Padbol', () => {
     fireEvent.change(screen.getByLabelText('Nombre y apellido del propietario *'), { target: { value: 'Gustavo Miguens' } });
     fireEvent.change(screen.getByLabelText('País *'), { target: { value: 'Argentina' } });
     fireEvent.change(screen.getByLabelText('Ubicación de la sede *'), { target: { value: 'La Plata, Buenos Aires' } });
-    fireEvent.change(screen.getByLabelText('¿Cuántas canchas de Padbol tiene? *'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('¿Cuántos Padbol Courts tiene? *'), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText('¿La sede ofrece otros deportes? *'), { target: { value: 'si' } });
     fireEvent.change(screen.getByLabelText('Email de contacto *'), { target: { value: 'club@example.com' } });
     fireEvent.change(screen.getByLabelText('WhatsApp con código de país *'), { target: { value: '+54 9 221 555 1234' } });

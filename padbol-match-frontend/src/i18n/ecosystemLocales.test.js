@@ -1,5 +1,6 @@
 import { PADBOL_LANGUAGE_CODES, canonicalPadbolLanguageCode } from '../constants/padbolLanguages';
 import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
+import CZECH_POLISH_OVERRIDES from './czechPolishOverrides.json';
 import { PADBOL_COURT_TERM, PROTECTED_PADBOL_TERMS } from './terminology';
 import en from './locales/en.json';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
@@ -10,6 +11,8 @@ const leafPaths = (value, prefix = '') => Object.entries(value).flatMap(([key, c
     ? leafPaths(child, path)
     : [path];
 });
+
+const directCzechPaths = (...sections) => new Set(sections.flatMap((section) => leafPaths(section || {})));
 
 const CANONICAL_ECOSYSTEM_EDITIONS = [
   'de', 'es', 'en', 'ar', 'fa-IR', 'nl-BE', 'fr', 'it', 'ro', 'nl-NL',
@@ -66,7 +69,7 @@ describe('canonical Padbol ecosystem locales', () => {
       'resenas', 'reputacion', 'campanita', 'instructor', 'profesor',
     ].forEach((section) => {
       const englishPaths = leafPaths(en[section]);
-      const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs[section]));
+      const czechPaths = directCzechPaths(ADDITIONAL_LOCALE_OVERRIDES.cs[section], CZECH_POLISH_OVERRIDES[section]);
       expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
     });
   });
@@ -77,7 +80,7 @@ describe('canonical Padbol ecosystem locales', () => {
       'weekdays', 'confirmaciones', 'overview', 'bookingsSummary', 'tournamentLabels', 'common', 'franjas', 'roles', 'reservas', 'jugadores', 'resenas', 'scoreboard', 'metrics', 'metricas', 'pushNotif', 'notif', 'profesores', 'sponsors', 'hub', 'formularios', 'membresias', 'sedes', 'padcoins',
     ].forEach((section) => {
       const englishPaths = leafPaths(en.admin[section]);
-      const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[section]));
+      const czechPaths = directCzechPaths(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[section], CZECH_POLISH_OVERRIDES.admin?.[section]);
       expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
     });
     ['mi_sede', 'canchas', 'ingresos', 'productos', 'loading', 'nueva_sede', 'guardar', 'reservasLabel']
@@ -86,7 +89,7 @@ describe('canonical Padbol ecosystem locales', () => {
 
   it('has direct Czech copy for every English catalog field', () => {
     const englishPaths = leafPaths(en);
-    const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs));
+    const czechPaths = directCzechPaths(ADDITIONAL_LOCALE_OVERRIDES.cs, CZECH_POLISH_OVERRIDES);
     expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
   });
 

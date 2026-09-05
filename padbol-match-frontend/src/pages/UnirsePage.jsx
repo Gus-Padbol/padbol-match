@@ -4,8 +4,9 @@ import AppHeader from '../components/AppHeader';
 import '../pages/LandingPage.css';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
-import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
+import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES, paisTelefonoTranslationKey } from '../constants/paisesTelefono';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { commercialFlowCopy } from './commercialFlowCopy';
 
 const API_BASE =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -76,7 +77,9 @@ function FormSection({ title, subtitle, children }) {
 }
 
 export default function UnirsePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const flowCopy = commercialFlowCopy(i18n.resolvedLanguage || i18n.language);
+  const promoCopy = flowCopy.promo;
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -137,12 +140,12 @@ export default function UnirsePage() {
         form.tiene_otros_deportes,
       ];
       if (requiredPromoFields.some((value) => !String(value || '').trim())) {
-        setErr('Completa los datos solicitados para enviar la solicitud.');
+        setErr(promoCopy.required);
         return;
       }
       const courtCount = Number.parseInt(form.cantidad_canchas_padbol, 10);
       if (!Number.isInteger(courtCount) || courtCount < 1) {
-        setErr('Indicá cuántas canchas de Padbol tiene la sede.');
+        setErr(promoCopy.invalidCourts);
         return;
       }
     } else if (
@@ -194,7 +197,7 @@ export default function UnirsePage() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || res.statusText);
       setMsg(isPadbolPromo
-        ? 'Listo. Recibimos tu solicitud del beneficio Pro renovable. Nuestro equipo te contactará para continuar.'
+        ? promoCopy.success
         : t('clubOnboarding.success', { plan: selectedPlan.name }));
       setForm(getInitialForm());
     } catch {
@@ -235,9 +238,9 @@ export default function UnirsePage() {
       }}
     >
       <AppHeader
-        title={isPadbolPromo ? 'Solicitud Pro para sedes Padbol' : 'Alta de club'}
+        title={isPadbolPromo ? promoCopy.header : t('clubOnboarding.header')}
         onBack={() => (isPadbolPromo ? navigate('/planes') : navigate(-1))}
-        backLabel={isPadbolPromo ? `← ${t('common.back')}` : undefined}
+        backLabel={isPadbolPromo ? `← ${t('general.back')}` : undefined}
       />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px' }}>
         <img
@@ -261,18 +264,18 @@ export default function UnirsePage() {
               }}
             >
               <p style={{ margin: '0 0 8px', color: '#f7c948', fontSize: 12, fontWeight: 900, letterSpacing: '.1em', textTransform: 'uppercase' }}>
-                Beneficio exclusivo para sedes Padbol
+                {promoCopy.eyebrow}
               </p>
               <h1 style={{ color: 'var(--text-primary)', margin: '0 0 10px', fontSize: 'clamp(1.55rem, 4vw, 2.15rem)', fontWeight: 900, lineHeight: 1.12 }}>
-                Usa Padbol Match Pro sin cargo y haz crecer tu sede
+                {promoCopy.title}
               </h1>
               <p style={{ color: 'var(--text-secondary)', margin: '0 auto', lineHeight: 1.55, fontSize: '15px', maxWidth: 650 }}>
-                Empiezas con 6 meses completos. Después puedes renovarlo un mes por vez demostrando actividad real y continua dentro de Padbol Match.
+                {promoCopy.lead}
               </p>
             </section>
 
             <section
-              aria-label="Cómo funciona el beneficio Pro"
+              aria-label={promoCopy.howAria}
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
@@ -280,11 +283,7 @@ export default function UnirsePage() {
                 marginBottom: 18,
               }}
             >
-              {[
-                ['01', '6 meses sin cargo', 'Activamos todas las herramientas Pro sin abono mensual durante los primeros 6 meses.'],
-                ['02', 'Renovación mensual', 'El beneficio continúa mientras cumples los objetivos de uso real y sostenido.'],
-                ['03', 'Sin sorpresas', 'No pedimos una tarjeta ni hacemos cobros automáticos. Si no renuevas, continúas en Starter.'],
-              ].map(([number, title, detail]) => (
+              {promoCopy.benefits.map(([number, title, detail]) => (
                 <article
                   key={number}
                   style={{
@@ -312,23 +311,18 @@ export default function UnirsePage() {
               }}
             >
               <p style={{ margin: '0 0 5px', color: '#f7c948', fontSize: 11, fontWeight: 900, letterSpacing: '.09em', textTransform: 'uppercase' }}>
-                Objetivos que hacen crecer tu sede
+                {promoCopy.goalsEyebrow}
               </p>
               <h2 style={{ margin: '0 0 8px', color: 'var(--text-primary)', fontSize: 19, lineHeight: 1.2 }}>
-                Usar bien la plataforma es la forma de renovar
+                {promoCopy.goalsTitle}
               </h2>
               <p style={{ margin: '0 0 12px', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>
-                Cada mes se valora la actividad real generada dentro de Padbol Match. No son trámites: son acciones pensadas para atraer jugadores, ordenar la operación y dar visibilidad a tu sede.
+                {promoCopy.goalsLead}
               </p>
               <details style={{ color: 'var(--text-primary)', fontSize: 13 }}>
-                <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Ver objetivos mensuales</summary>
+                <summary style={{ cursor: 'pointer', fontWeight: 800 }}>{promoCopy.goalsSummary}</summary>
                 <ul style={{ margin: '12px 0 2px', paddingLeft: 20, display: 'grid', gap: 7, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                  <li>Organizar y finalizar al menos 1 torneo dentro de Padbol Match.</li>
-                  <li>Registrar 8 jugadores y equipos confirmados en el torneo.</li>
-                  <li>Finalizar 3 partidos usando el marcador digital.</li>
-                  <li>Concretar 10 reservas con usuarios verificados.</li>
-                  <li>Mantener 10 jugadores vinculados con actividad real durante el mes.</li>
-                  <li>Registrar 5 movimientos reales de PadCoins.</li>
+                  {promoCopy.goals.map((goal) => <li key={goal}>{goal}</li>)}
                 </ul>
               </details>
               <div
@@ -341,10 +335,10 @@ export default function UnirsePage() {
                 }}
               >
                 <strong style={{ display: 'block', marginBottom: 5, color: 'var(--text-primary)', fontSize: 13 }}>
-                  La difusión del deporte también cuenta
+                  {promoCopy.outreachTitle}
                 </strong>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.5 }}>
-                  También valoramos el tiempo, el esfuerzo y la inversión destinados a hacer crecer Padbol: campañas regionales, contenidos, convocatorias, activaciones y alianzas. Las acciones reales, continuas y comprobables pueden recibir reconocimiento adicional; no es necesario invertir dinero para demostrar compromiso.
+                  {promoCopy.outreachText}
                 </p>
               </div>
             </section>
@@ -361,16 +355,16 @@ export default function UnirsePage() {
             >
               <div>
                 <p style={{ margin: '0 0 4px', color: '#f7c948', fontSize: 11, fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                  Tu primer mes acompañado
+                  {promoCopy.supportEyebrow}
                 </p>
                 <h2 id="promo-launch-support-title" style={{ margin: '0 0 7px', color: 'var(--text-primary)', fontSize: 19, lineHeight: 1.2 }}>
-                  Te ayudamos a poner en marcha tu club
+                  {promoCopy.supportTitle}
                 </h2>
                 <p style={{ margin: '0 0 9px', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>
-                  Te guiamos en el onboarding de Padbol Match y, si tu club es nuevo, te orientamos para crear u ordenar sus redes, preparar contenidos de lanzamiento y planificar su primera campaña y anuncios.
+                  {promoCopy.supportText}
                 </p>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45 }}>
-                  Es un acompañamiento inicial para que puedas comenzar. La administración continua de redes, las campañas posteriores y la inversión publicitaria son servicios adicionales.
+                  {promoCopy.supportNote}
                 </p>
               </div>
             </section>
@@ -538,42 +532,42 @@ export default function UnirsePage() {
         >
           {isPadbolPromo ? (
             <FormSection
-              title="Empecemos por tu sede"
-              subtitle="Son solo los datos esenciales. Revisamos la solicitud y te contactamos para activar los 6 meses Pro."
+              title={promoCopy.formTitle}
+              subtitle={promoCopy.formSubtitle}
             >
-              <label htmlFor="promo-club-nombre" style={labelStyle}>Nombre de la sede *</label>
+              <label htmlFor="promo-club-nombre" style={labelStyle}>{promoCopy.clubName} *</label>
               <input id="promo-club-nombre" style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required autoComplete="organization" />
 
-              <label htmlFor="promo-propietario" style={{ ...labelStyle, ...rowGap }}>Nombre y apellido del propietario *</label>
+              <label htmlFor="promo-propietario" style={{ ...labelStyle, ...rowGap }}>{promoCopy.ownerName} *</label>
               <input id="promo-propietario" style={inputStyle} value={form.responsable_nombre} onChange={(e) => onField('responsable_nombre', e.target.value)} required autoComplete="name" />
 
-              <label htmlFor="promo-pais" style={{ ...labelStyle, ...rowGap }}>País *</label>
+              <label htmlFor="promo-pais" style={{ ...labelStyle, ...rowGap }}>{promoCopy.country} *</label>
               <select id="promo-pais" style={inputStyle} value={form.pais} onChange={(e) => onField('pais', e.target.value)} required>
-                <option value="">Selecciona un país</option>
+                <option value="">{flowCopy.chooseCountry}</option>
                 {countryOptions.map((country) => (
                   <option key={`${country.nombre}-${country.codigo}`} value={country.nombre}>
-                    {country.bandera} {country.nombre}
+                    {country.bandera} {t(`paises.${paisTelefonoTranslationKey(country.nombre)}`, { defaultValue: country.nombre })}
                   </option>
                 ))}
               </select>
 
-              <label htmlFor="promo-ubicacion" style={{ ...labelStyle, ...rowGap }}>Ubicación de la sede *</label>
-              <input id="promo-ubicacion" style={inputStyle} value={form.ubicacion_sede} onChange={(e) => onField('ubicacion_sede', e.target.value)} placeholder="Ciudad, provincia o estado" required autoComplete="address-level2" />
+              <label htmlFor="promo-ubicacion" style={{ ...labelStyle, ...rowGap }}>{promoCopy.location} *</label>
+              <input id="promo-ubicacion" style={inputStyle} value={form.ubicacion_sede} onChange={(e) => onField('ubicacion_sede', e.target.value)} placeholder={promoCopy.locationPlaceholder} required autoComplete="address-level2" />
 
-              <label htmlFor="promo-canchas-padbol" style={{ ...labelStyle, ...rowGap }}>¿Cuántas canchas de Padbol tiene? *</label>
+              <label htmlFor="promo-canchas-padbol" style={{ ...labelStyle, ...rowGap }}>{promoCopy.courtCount} *</label>
               <input id="promo-canchas-padbol" type="number" min="1" step="1" inputMode="numeric" style={inputStyle} value={form.cantidad_canchas_padbol} onChange={(e) => onField('cantidad_canchas_padbol', e.target.value)} required />
 
-              <label htmlFor="promo-otros-deportes" style={{ ...labelStyle, ...rowGap }}>¿La sede ofrece otros deportes? *</label>
+              <label htmlFor="promo-otros-deportes" style={{ ...labelStyle, ...rowGap }}>{promoCopy.otherSports} *</label>
               <select id="promo-otros-deportes" style={inputStyle} value={form.tiene_otros_deportes} onChange={(e) => onField('tiene_otros_deportes', e.target.value)} required>
-                <option value="">Selecciona una opción</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
+                <option value="">{flowCopy.chooseOption}</option>
+                <option value="si">{flowCopy.yes}</option>
+                <option value="no">{flowCopy.no}</option>
               </select>
 
-              <label htmlFor="promo-email" style={{ ...labelStyle, ...rowGap }}>Email de contacto *</label>
+              <label htmlFor="promo-email" style={{ ...labelStyle, ...rowGap }}>{promoCopy.email} *</label>
               <input id="promo-email" type="email" style={inputStyle} value={form.email} onChange={(e) => onField('email', e.target.value)} required autoComplete="email" />
 
-              <label htmlFor="promo-whatsapp" style={{ ...labelStyle, ...rowGap }}>WhatsApp con código de país *</label>
+              <label htmlFor="promo-whatsapp" style={{ ...labelStyle, ...rowGap }}>{promoCopy.whatsapp} *</label>
               <input id="promo-whatsapp" type="tel" style={inputStyle} value={form.whatsapp} onChange={(e) => onField('whatsapp', e.target.value)} placeholder="+54 9…" required autoComplete="tel" />
             </FormSection>
           ) : (
@@ -618,7 +612,7 @@ export default function UnirsePage() {
             {saving
               ? t('clubOnboarding.form.sending')
               : isPadbolPromo
-                ? 'Pedir mis 6 meses Pro sin cargo'
+                ? promoCopy.submit
                 : selectedPlan.id === 'explorar'
                   ? t('clubOnboarding.form.sendInquiry')
                   : t('clubOnboarding.form.startPlan', { plan: selectedPlan.name })}

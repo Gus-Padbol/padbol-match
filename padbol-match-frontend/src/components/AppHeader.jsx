@@ -560,7 +560,7 @@ export default function AppHeader({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Buscar en Padbol Match"
+                aria-label={`${t('general.search')} Padbol Match`}
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
@@ -608,7 +608,7 @@ export default function AppHeader({
               <button
                 type="button"
                 onClick={closeSearchPanel}
-                aria-label="Cerrar búsqueda"
+                aria-label={t('general.close')}
                 style={{
                   flexShrink: 0,
                   width: 40,
@@ -1137,8 +1137,8 @@ export default function AppHeader({
                 width: '100%',
                 maxWidth: '100%',
               }}
-              title={`${headerTitleDisplay} — Ir al inicio`}
-              aria-label={`${headerTitleDisplay}, ir al inicio`}
+              title={`${headerTitleDisplay} — ${t('general.goHome')}`}
+              aria-label={`${headerTitleDisplay}, ${t('general.goHome')}`}
             >
               {headerTitleDisplay}
             </button>

@@ -93,33 +93,6 @@ function FeaturePanel({ eyebrow, title, children }) {
   );
 }
 
-const PLAN_FAQS = [
-  {
-    question: '¿Hay cargos ocultos?',
-    answer: 'No. Antes de activar un plan, la sede conoce y acepta el abono y la comisión correspondientes. Los costos del procesador de pago son independientes y no los cobra Padbol Match.',
-  },
-  {
-    question: '¿Me cobran por enviar una solicitud?',
-    answer: 'No. Enviar el formulario solamente inicia el contacto. No activa ningún cobro ni suscripción.',
-  },
-  {
-    question: '¿El jugador paga comisión?',
-    answer: 'No. El jugador paga 0% de comisión a Padbol Match.',
-  },
-  {
-    question: '¿Necesito equipamiento especial para el marcador?',
-    answer: 'No. El marcador puede utilizarse desde un teléfono, una tablet o una computadora y visualizarse en una TV.',
-  },
-  {
-    question: '¿Puedo traer información de otro sistema?',
-    answer: 'Sí, cuando el formato sea compatible. El alcance de la migración se revisa con la sede antes de comenzar.',
-  },
-  {
-    question: '¿Qué pasa si tengo varias sedes?',
-    answer: 'Business está pensado para cadenas y operadores multisede. La administración central, los permisos de cada sede, los reportes consolidados y el precio por volumen se definen con cada organización antes de activar el servicio.',
-  },
-];
-
 export default function VenuePlansPage({ catalogOverride = null }) {
   const { i18n } = useSafeTranslation();
   const copy = venuePlansCopy(i18n.resolvedLanguage || i18n.language);
@@ -272,27 +245,27 @@ export default function VenuePlansPage({ catalogOverride = null }) {
 
         <section className="venue-plans__section venue-plans__faq" aria-labelledby="plans-faq-title">
           <div className="public-site__shell">
-            <p className="venue-plans__eyebrow">PREGUNTAS CLARAS. RESPUESTAS DIRECTAS.</p>
-            <h2 id="plans-faq-title">Sin sorpresas.<br /><span>Sin cargos ocultos.</span></h2>
+            <p className="venue-plans__eyebrow">{copy.faqEyebrow}</p>
+            <h2 id="plans-faq-title">{copy.faqTitle}<br /><span>{copy.faqAccent}</span></h2>
             <div className="venue-plans__faq-list">
-              {PLAN_FAQS.map((item) => (
-                <details key={item.question} className="venue-plans__faq-item">
-                  <summary>{item.question}</summary>
-                  <p>{item.answer}</p>
+              {copy.faqs.map(([question, answer]) => (
+                <details key={question} className="venue-plans__faq-item">
+                  <summary>{question}</summary>
+                  <p>{answer}</p>
                 </details>
               ))}
             </div>
             <div className="venue-plans__chivi-help">
               <div>
-                <strong>¿Te quedó alguna duda?</strong>
-                <span>Chivi puede explicarte los planes y ayudarte a encontrar la opción adecuada para tu sede.</span>
+                <strong>{copy.faqHelpTitle}</strong>
+                <span>{copy.faqHelpText}</span>
               </div>
               <button
                 type="button"
                 className="venue-plans__cta venue-plans__cta--primary"
                 onClick={() => window.dispatchEvent(new Event('padbol:open-chivi'))}
               >
-                PREGUNTALE A CHIVI
+                {copy.faqHelpCta}
               </button>
             </div>
           </div>

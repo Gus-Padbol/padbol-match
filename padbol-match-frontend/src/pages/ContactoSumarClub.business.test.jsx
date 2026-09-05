@@ -2,17 +2,33 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ContactoSumarClub from './ContactoSumarClub';
+import i18n from '../i18n';
 
 jest.mock('../components/AppHeader', () => function AppHeaderMock({ title }) {
   return <header>{title}</header>;
 });
 
 describe('consulta del plan Business', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('es');
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, id: 22 }),
     });
+  });
+
+  it('renders the complete Business form in Romanian', async () => {
+    await i18n.changeLanguage('ro');
+    const { container } = render(
+      <MemoryRouter initialEntries={['/contacto?tema=business']}>
+        <ContactoSumarClub />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Solicitare plan Business')).toBeInTheDocument();
+    expect(screen.getByText('Spune-ne cum este structurată organizația ta')).toBeInTheDocument();
+    expect(screen.getByLabelText('Țara principală *')).toContainHTML('România');
+    expect(screen.getByRole('button', { name: 'Trimite solicitarea Business' })).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/Seleccion|Nombre de|¿|Cantidad total|Enviar consulta/);
   });
 
   afterEach(() => {

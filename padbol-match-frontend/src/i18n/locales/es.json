@@ -402,7 +402,7 @@
       "qualifiersPerGroupError": "Indicá al menos 1 clasificado por grupo.", "autoOpenDateError": "La fecha y hora de apertura automática no son válidas.",
       "createdSuccess": "✅ Torneo creado correctamente", "createError": "No se pudo crear el torneo.", "errorWithDetail": "Error: {{error}}",
       "nameLabel": "Nombre del torneo", "namePlaceholder": "Ejemplo: Torneo La Meca 2026", "sportLabel": "Deporte",
-      "teamFormatLabel": "Formato (jugadores por equipo)", "teamFormat": { "singles": "Singles (1v1)", "dobles": "Dobles (2v2)" },
+      "teamFormatLabel": "Formato (jugadores por equipo)", "teamFormat": { "singles": "Individual (1 contra 1)", "dobles": "Dobles (2v2)" },
       "teamFormatHint": "Padbol y Pádel: dobles. Pickleball y tenis: singles o dobles.",
       "levelLabel": "Nivel", "restrictedLevelsHint": "Los niveles Oficial, Nacional, Internacional y Mundial requieren permisos de Admin Nacional o Super Admin.",
       "multiVenueLabel": "Multisede (varios países)", "venueLabel": "Sede", "loadingVenue": "Cargando sede…",
