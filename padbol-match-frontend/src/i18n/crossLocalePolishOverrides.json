@@ -1,4 +1,42 @@
 {
+  "ar": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "أحضر مسيرتك. نحن نعترف بها",
+        "lead": "لمسيرتك قيمة بالفعل. يمكنك نقلها إلى Padbol Match من دون التوقف عن استخدام التطبيق الذي تستخدمه اليوم.",
+        "copy": "جرّب التطبيقين بالتوازي: أرسل إلينا لقطات شاشة لنتائجك وبطولاتك وتصنيفك وإحصاءاتك وإنجازاتك. نراجعها وندمجها حتى يعكس ملفك الشخصي اللاعب الذي أنت عليه بالفعل.",
+        "ownershipStrong": "لا نطلب منك التخلي عن أي شيء.",
+        "ownership": "بياناتك ملك لك، ويمكنك نقلها متى شئت.",
+        "itemsAria": "المعلومات التي يمكن اعتمادها ضمن مسيرتك الرياضية"
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "أدِر لوحة النتائج وفعّل شاشة ناديك",
+            "text": "نتيجة مباشرة ومساحات إعلانية للرعاة والمتجر والبوفيه.",
+            "detail": "تسجّل لوحة النتائج المباراة، ويمكنها خلال فترات التوقف المحددة أو أثناء انتظار المباراة التالية أن تتحول إلى شاشة تجارية يديرها ناديك.",
+            "steps": {
+              "1": "ابدأ المباراة مع اللاعبين أو الفرق المشاركة.",
+              "2": "حمّل حملات الرعاة أو المتجر أو البوفيه أو المزايا، وحدد مواعيد ظهورها.",
+              "3": "خلال فترات التوقف أو تبديل الجوانب أو تبديل الأشواط أو عند النهاية، تعرض الشاشة الحملات بالتناوب ثم تعود تلقائيًا إلى المباراة."
+            },
+            "result": "النتيجة: معلومات مفيدة للسجل والتصنيف، بالإضافة إلى شاشة تجارية قابلة للقياس من دون مقاطعة المباراة."
+          }
+        }
+      }
+    }
+  },
+  "cs": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Přeneste si svou sportovní cestu. My ji uznáme",
+        "lead": "Vaše dosavadní cesta už má hodnotu. Můžete ji přenést do Padbol Match, aniž byste přestali používat aplikaci, kterou používáte dnes.",
+        "copy": "Vyzkoušejte obě aplikace souběžně: pošlete nám snímky obrazovky svých výsledků, turnajů, žebříčku, statistik a úspěchů. Ověříme je a doplníme, aby váš profil odpovídal hráči, kterým už jste.",
+        "ownershipStrong": "Nežádáme vás, abyste se čehokoli vzdali.",
+        "ownership": "Vaše data patří vám a můžete si je kdykoli odnést."
+      }
+    }
+  },
   "de": {
     "publicSite": {
       "playerRecord": {
