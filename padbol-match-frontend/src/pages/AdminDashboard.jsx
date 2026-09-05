@@ -3737,7 +3737,7 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar beneficios');
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignBenefitsLoadFailed'));
       const list = Array.isArray(data) ? data : (data.premios || data.data || []);
       setPremios(list);
     } catch (err) {
@@ -3871,7 +3871,7 @@ export default function AdminDashboard({
           body: JSON.stringify(body),
         },
       );
-      const data = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       if (res.status === 403) {
         throw new Error(
           data.error || data.message || 'No tenés permisos para modificar la participación de esta sede.',
@@ -4457,7 +4457,7 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar campaña');
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignLoadFailed'));
       const entity = parsePadcoinsCampaignEntity(data) || campaign;
       const form = padcoinsCampaignToForm(entity);
       if (esAdminClub) {
@@ -4469,7 +4469,7 @@ export default function AdminDashboard({
       setPcCampaignEditId(entity.id);
       if (form.sede_id) void fetchPadcoinsCampaignBenefits(form.sede_id);
     } catch (err) {
-      alert(err.message || 'Error al cargar campaña');
+      alert(err.message || t('admin.padcoins.campaignLoadFailed'));
     } finally {
       setPcCampaignActionId(null);
     }
@@ -4532,17 +4532,17 @@ export default function AdminDashboard({
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para guardar esta campaña.');
+        throw new Error(t('admin.padcoins.campaignPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al guardar campaña');
+        throw new Error(t('admin.padcoins.campaignSaveFailed'));
       }
-      setMensajeExito(isEdit ? '✅ Campaña actualizada' : '✅ Campaña creada');
+      setMensajeExito(isEdit ? t('admin.padcoins.campaignUpdated') : t('admin.padcoins.campaignCreated'));
       setTimeout(() => setMensajeExito(''), 3000);
       cerrarCampanaForm();
       await fetchPadcoinsCampaigns();
     } catch (err) {
-      setPcCampaignFormError(err.message || 'Error al guardar campaña');
+      setPcCampaignFormError(err.message || t('admin.padcoins.campaignSaveFailed'));
     } finally {
       setPcCampaignSaving(false);
     }
@@ -4552,8 +4552,8 @@ export default function AdminDashboard({
     if (!campaign?.id) return;
     const highImpact = isPadcoinsCampaignHighImpact(campaign);
     const msg = highImpact
-      ? `La campaña "${campaign.name}" está marcada como alto impacto. No se bloqueará, pero quedará registrada para auditoría.\n\n¿Activar de todos modos?`
-      : `¿Activar la campaña "${campaign.name}"?`;
+      ? t('admin.padcoins.campaignActivateHighImpactConfirm', { name: campaign.name })
+      : t('admin.padcoins.campaignActivateConfirm', { name: campaign.name });
     if (!window.confirm(msg)) return;
     setPcCampaignActionId(campaign.id);
     try {
@@ -4562,13 +4562,13 @@ export default function AdminDashboard({
         `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}/activate`,
         { method: 'POST', headers },
       );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al activar campaña');
-      setMensajeExito('✅ Campaña activada');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignActivateFailed'));
+      setMensajeExito(t('admin.padcoins.campaignActivated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsCampaigns();
     } catch (err) {
-      alert(err.message || 'Error al activar campaña');
+      alert(err.message || t('admin.padcoins.campaignActivateFailed'));
     } finally {
       setPcCampaignActionId(null);
     }
@@ -4576,7 +4576,7 @@ export default function AdminDashboard({
 
   async function pausarCampana(campaign) {
     if (!campaign?.id) return;
-    if (!window.confirm(`¿Pausar la campaña "${campaign.name}"?`)) return;
+    if (!window.confirm(t('admin.padcoins.campaignPauseConfirm', { name: campaign.name }))) return;
     setPcCampaignActionId(campaign.id);
     try {
       const headers = await getAuthHeaders();
@@ -4584,13 +4584,13 @@ export default function AdminDashboard({
         `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}/pause`,
         { method: 'POST', headers },
       );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al pausar campaña');
-      setMensajeExito('✅ Campaña pausada');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignPauseFailed'));
+      setMensajeExito(t('admin.padcoins.campaignPaused'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsCampaigns();
     } catch (err) {
-      alert(err.message || 'Error al pausar campaña');
+      alert(err.message || t('admin.padcoins.campaignPauseFailed'));
     } finally {
       setPcCampaignActionId(null);
     }
@@ -4616,13 +4616,13 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar resumen de campaña');
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignSummaryLoadFailed'));
       setPcCampaignSummary({
         campaign,
         summary: parsePadcoinsCampaignSummary(data),
       });
     } catch (err) {
-      setPcCampaignSummaryError(err.message || 'Error al cargar resumen de campaña');
+      setPcCampaignSummaryError(err.message || t('admin.padcoins.campaignSummaryLoadFailed'));
     } finally {
       setPcCampaignSummaryLoading(false);
     }

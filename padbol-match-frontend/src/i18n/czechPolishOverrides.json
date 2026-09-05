@@ -39,5 +39,23 @@
       "sending": "Odesílání…",
       "sendInquiry": "Odeslat konzultaci"
     }
+  },
+  "admin": {
+    "padcoins": {
+      "campaignBenefitsLoadFailed": "Výhody kampaně se nepodařilo načíst.",
+      "campaignLoadFailed": "Kampaň se nepodařilo načíst.",
+      "campaignPermissionDenied": "K uložení této kampaně nemáte oprávnění.",
+      "campaignSaveFailed": "Kampaň se nepodařilo uložit.",
+      "campaignUpdated": "✅ Kampaň aktualizována",
+      "campaignCreated": "✅ Kampaň vytvořena",
+      "campaignActivateHighImpactConfirm": "Kampaň „{{name}}“ je označena jako vysoce dopadová. Nebude zablokována, ale bude zaznamenána pro audit.\n\nPřesto ji aktivovat?",
+      "campaignActivateConfirm": "Aktivovat kampaň „{{name}}“?",
+      "campaignActivateFailed": "Kampaň se nepodařilo aktivovat.",
+      "campaignActivated": "✅ Kampaň aktivována",
+      "campaignPauseConfirm": "Pozastavit kampaň „{{name}}“?",
+      "campaignPauseFailed": "Kampaň se nepodařilo pozastavit.",
+      "campaignPaused": "✅ Kampaň pozastavena",
+      "campaignSummaryLoadFailed": "Souhrn kampaně se nepodařilo načíst."
+    }
   }
 }
