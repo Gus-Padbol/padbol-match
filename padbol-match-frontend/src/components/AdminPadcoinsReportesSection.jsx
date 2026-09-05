@@ -364,7 +364,7 @@ export default function AdminPadcoinsReportesSection({
               {tr('reportsClubSedeFixed', 'Sede')}:{' '}
               <strong style={{ color: 'var(--text-primary)' }}>
                 {sedesOptions.find((s) => String(s.id) === String(fixedSedeId))?.nombre
-                  || (fixedSedeId ? `Sede ${fixedSedeId}` : '—')}
+                  || (fixedSedeId ? `${tr('reportsClubSedeFixed', 'Venue')} ${fixedSedeId}` : '—')}
               </strong>
             </div>
           )}
