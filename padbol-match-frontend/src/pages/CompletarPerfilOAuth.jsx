@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import AppHeader from '../components/AppHeader';
 import {
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
@@ -23,7 +24,7 @@ import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
-import { mensajeErrorDbSupabase, mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
+import { mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
 
@@ -82,6 +83,7 @@ function capitalizar(s) {
 }
 
 export default function CompletarPerfilOAuth() {
+  const { t } = useTranslation();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const navigate = useNavigate();
@@ -120,26 +122,26 @@ export default function CompletarPerfilOAuth() {
     setErrorMsg('');
     const gen = String(genero || '').trim().toLowerCase();
     if (gen !== 'masculino' && gen !== 'femenino') {
-      setErrorMsg('Selecciona género (Masculino o Femenino).');
+      setErrorMsg(t('auth.selectGender'));
       return false;
     }
     const waLoc = digitsOnly(waLocal);
     const waLoc2 = digitsOnly(waLocalConfirm);
     if (waLoc !== waLoc2) {
-      setErrorMsg('Los números no coinciden.');
+      setErrorMsg(t('auth.phoneMismatch'));
       return false;
     }
     if (!whatsappNacionalValido(waLoc)) {
-      setErrorMsg('Número de WhatsApp inválido.');
+      setErrorMsg(t('auth.invalidWhatsapp'));
       return false;
     }
     const waDigitsFull = buildFullWhatsDigits(waCodigo, waLoc);
     if (!whatsappDigitsValido(waDigitsFull)) {
-      setErrorMsg('Número de WhatsApp inválido.');
+      setErrorMsg(t('auth.invalidWhatsapp'));
       return false;
     }
     return true;
-  }, [genero, waLocal, waLocalConfirm, waCodigo]);
+  }, [genero, waLocal, waLocalConfirm, waCodigo, t]);
 
   const irAlHubPrincipal = useCallback(() => {
     const from = location.state?.from;
@@ -157,17 +159,17 @@ export default function CompletarPerfilOAuth() {
       const waE164 = formatWhatsAppE164(waCodigo, waLoc);
       const token = session?.access_token;
       if (!token) {
-        setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
+        setErrorMsg(t('profileCompletion.sessionExpired'));
         return;
       }
       try {
         const { disponible } = await fetchWhatsappDisponibleRegistro(waE164, token);
         if (!disponible) {
-          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+          setErrorMsg(t('auth.phoneAlreadyRegistered'));
           return;
         }
-      } catch (e) {
-        setErrorMsg(e.message || 'No se pudo validar el teléfono');
+      } catch {
+        setErrorMsg(t('auth.phoneValidationFailed'));
         return;
       }
 
@@ -215,10 +217,11 @@ export default function CompletarPerfilOAuth() {
         await refreshSession();
         irAlHubPrincipal();
       } catch (err) {
+        const duplicateMessage = mensajeErrorJugadoresPerfilDuplicado(err);
         setErrorMsg(
-          mensajeErrorJugadoresPerfilDuplicado(err) ||
-            mensajeErrorDbSupabase(err) ||
-            'No se pudo guardar el perfil.'
+          duplicateMessage
+            ? t('profileCompletion.duplicateData')
+            : t('profileCompletion.saveFailed')
         );
       } finally {
         setBusy(false);
@@ -233,6 +236,7 @@ export default function CompletarPerfilOAuth() {
       validarPasoDatos,
       refreshSession,
       irAlHubPrincipal,
+      t,
     ]
   );
 
@@ -246,7 +250,7 @@ export default function CompletarPerfilOAuth() {
         if (!validarPasoDatos()) return;
         const token = session?.access_token;
         if (!token) {
-          setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
+          setErrorMsg(t('profileCompletion.sessionExpired'));
           return;
         }
         setBusy(true);
@@ -256,17 +260,17 @@ export default function CompletarPerfilOAuth() {
           });
           const j = await res.json().catch(() => ({}));
           if (!res.ok) {
-            setErrorMsg(String(j?.error || 'No se pudo verificar el email.'));
+            setErrorMsg(t('profileCompletion.emailCheckFailed'));
             return;
           }
           if (!j?.disponible) {
             setEmailConflicto(true);
-            setErrorMsg('Este email ya tiene una cuenta. ¿Quieres iniciar sesión?');
+            setErrorMsg(t('profileCompletion.emailInUse'));
             return;
           }
           setPaso(1);
         } catch {
-          setErrorMsg('No se pudo verificar el email. Intenta de nuevo.');
+          setErrorMsg(t('profileCompletion.emailCheckRetry'));
         } finally {
           setBusy(false);
         }
@@ -274,7 +278,7 @@ export default function CompletarPerfilOAuth() {
       }
       await guardarPerfilYContinuar(deportesPreferidos);
     },
-    [session, paso, deportesPreferidos, validarPasoDatos, guardarPerfilYContinuar]
+    [session, paso, deportesPreferidos, validarPasoDatos, guardarPerfilYContinuar, t]
   );
 
   const handleOmitirDeportes = useCallback(
@@ -310,7 +314,7 @@ export default function CompletarPerfilOAuth() {
         alignItems: 'center',
       }}
     >
-      <AppHeader title="Completar perfil" showBack={false} contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+      <AppHeader title={t('auth.completeProfile')} showBack={false} contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
       <div
         style={{
           width: '100%',
@@ -336,12 +340,12 @@ export default function CompletarPerfilOAuth() {
             margin: '0 0 8px',
           }}
         >
-          {paso === 0 ? 'Completa tu perfil' : '¿Qué deportes practicas?'}
+          {paso === 0 ? t('profileCompletion.title') : t('profileCompletion.sportsTitle')}
         </h1>
         <p style={{ color: '#374151', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
           {paso === 0
-            ? 'Completa tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.'
-            : 'Elige uno o más (opcional pero recomendado). Puedes cambiarlos después en Mi perfil.'}
+            ? t('profileCompletion.intro')
+            : t('profileCompletion.sportsIntro')}
         </p>
         <form
           onSubmit={(ev) => void handleGuardar(ev)}
@@ -369,7 +373,7 @@ export default function CompletarPerfilOAuth() {
               marginBottom: '6px',
             }}
           >
-            Género <span style={{ color: '#dc2626' }}>*</span>
+            {t('auth.gender')} <span style={{ color: '#dc2626' }}>*</span>
           </label>
           <select
             value={genero}
@@ -384,9 +388,9 @@ export default function CompletarPerfilOAuth() {
               boxSizing: 'border-box',
             }}
           >
-            <option value="">— Elegir —</option>
-            <option value="masculino">Masculino</option>
-            <option value="femenino">Femenino</option>
+            <option value="">{t('auth.choose')}</option>
+            <option value="masculino">{t('auth.male')}</option>
+            <option value="femenino">{t('auth.female')}</option>
           </select>
           <div
             style={{
@@ -412,14 +416,14 @@ export default function CompletarPerfilOAuth() {
               }}
             >
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                País
+                {t('profileCompletion.country')}
               </label>
               <select
                 value={waCodigo}
                 onChange={(e) => setWaCodigo(e.target.value)}
                 disabled={busy}
-                title="País / código"
-                aria-label="País y código de área"
+                title={t('profileCompletion.countryCodeTitle')}
+                aria-label={t('profileCompletion.countryCodeAria')}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -450,7 +454,7 @@ export default function CompletarPerfilOAuth() {
               }}
             >
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                Número
+                {t('profileCompletion.number')}
               </label>
               <input
                 type="tel"
@@ -458,8 +462,8 @@ export default function CompletarPerfilOAuth() {
                 value={waLocal}
                 onChange={(e) => setWaLocal(digitsOnly(e.target.value))}
                 disabled={busy}
-                placeholder="Ej: 2213032019"
-                aria-label="Número de celular sin código de país"
+                placeholder={t('profileCompletion.numberPlaceholder')}
+                aria-label={t('profileCompletion.numberAria')}
                 autoComplete="tel-national"
                 style={{
                   width: '100%',
@@ -484,7 +488,7 @@ export default function CompletarPerfilOAuth() {
               }}
             >
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                Confirmar número <span style={{ color: '#dc2626' }}>*</span>
+                {t('profileCompletion.confirmNumber')} <span style={{ color: '#dc2626' }}>*</span>
               </label>
               <input
                 type="tel"
@@ -492,8 +496,8 @@ export default function CompletarPerfilOAuth() {
                 value={waLocalConfirm}
                 onChange={(e) => setWaLocalConfirm(digitsOnly(e.target.value))}
                 disabled={busy}
-                placeholder="Repite el número"
-                aria-label="Confirmar número local"
+                placeholder={t('profileCompletion.confirmNumberPlaceholder')}
+                aria-label={t('profileCompletion.confirmNumberAria')}
                 autoComplete="off"
                 style={{
                   width: '100%',
@@ -513,7 +517,7 @@ export default function CompletarPerfilOAuth() {
           ) : (
             <>
               <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 12px', lineHeight: 1.45 }}>
-                Elige los que apliquen. Si prefieres no decirlo ahora, deja todo sin marcar y pulsa «Guardar y continuar».
+                {t('profileCompletion.sportsHelp')}
               </p>
               <DeportesPreferidosChips
                 value={deportesPreferidos}
@@ -535,7 +539,7 @@ export default function CompletarPerfilOAuth() {
                 cursor: 'pointer',
               }}
             >
-              Ir a iniciar sesión
+              {t('auth.goToLogin')}
             </button>
           ) : null}
           {paso === 1 ? (
@@ -554,7 +558,7 @@ export default function CompletarPerfilOAuth() {
                 opacity: busy || loading || profileLoading ? 0.7 : 1,
               }}
             >
-              Atrás
+              {t('profileCompletion.back')}
             </button>
           ) : null}
           <button
@@ -566,7 +570,7 @@ export default function CompletarPerfilOAuth() {
               opacity: busy || loading || profileLoading ? 0.85 : 1,
             }}
           >
-            {busy ? 'Guardando…' : paso === 0 ? 'Continuar' : 'Guardar y continuar'}
+            {busy ? t('profileCompletion.saving') : paso === 0 ? t('profileCompletion.continue') : t('profileCompletion.saveContinue')}
           </button>
           {paso === 1 ? (
             <button
@@ -579,7 +583,7 @@ export default function CompletarPerfilOAuth() {
                 opacity: busy || loading || profileLoading ? 0.5 : 1,
               }}
             >
-              Omitir
+              {t('profileCompletion.skip')}
             </button>
           ) : null}
         </form>
