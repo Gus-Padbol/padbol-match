@@ -10,7 +10,6 @@ import { precioDesdeFranjas } from '../utils/franjasHorarias';
 import { duracionesReservaDisponibles, precioReservaTurno, RESERVA_DURACIONES_MIN } from '../utils/sedePreciosDuracion';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
-import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   clearReservaPendienteArmar,
   parseReservaPendienteArmarPayload,
@@ -23,6 +22,7 @@ import SedeExtraProductCard from '../components/SedeExtraProductCard';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { formatSedeCiudadPaisLinea } from '../utils/paisI18n';
 import { labelDiaReservaCorta } from '../utils/reservaDiaLabels';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 const API_BASE = (
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
@@ -31,14 +31,14 @@ const API_BASE = (
 
 const ACCENT = '#e53935';
 
-function formatoPrecioExtraCadaUnidad(unitMain, monedaCode) {
+function formatoPrecioExtraCadaUnidad(unitMain, monedaCode, locale, perUnitLabel) {
   const m = String(monedaCode || 'ARS').toUpperCase();
   const u = Math.round(Number(unitMain));
-  if (!Number.isFinite(u)) return `— c/u`;
+  if (!Number.isFinite(u)) return `— ${perUnitLabel}`;
   try {
-    return `${new Intl.NumberFormat('es-AR', { style: 'currency', currency: m, maximumFractionDigits: 0 }).format(u)} c/u`;
+    return `${new Intl.NumberFormat(locale, { style: 'currency', currency: m, maximumFractionDigits: 0 }).format(u)} ${perUnitLabel}`;
   } catch {
-    return `${monedaCode} ${u.toLocaleString('es-AR')} c/u`;
+    return `${monedaCode} ${u.toLocaleString(locale)} ${perUnitLabel}`;
   }
 }
 
@@ -68,10 +68,10 @@ function normalizarDuracionesDisponibilidadSlotsPayload(d) {
 }
 
 const DEPORTES = [
-  { id: 'padbol', label: 'Padbol', jugadores: 4 },
-  { id: 'padel', label: 'Pádel', jugadores: 4 },
-  { id: 'pickleball', label: 'Pickleball', jugadores: 4 },
-  { id: 'tenis', label: 'Tenis', jugadores: 4 },
+  { id: 'padbol', jugadores: 4 },
+  { id: 'padel', jugadores: 4 },
+  { id: 'pickleball', jugadores: 4 },
+  { id: 'tenis', jugadores: 4 },
 ];
 
 function todayISO() {
@@ -92,8 +92,9 @@ function nextNDaysFrom(todayStr, count) {
   return Array.from({ length: len }, (_, i) => addDaysISO(todayStr, i));
 }
 
-function shareUrl() {
-  const text = `Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`;
+function shareUrl(t) {
+  const matchUrl = `${window.location.origin}/partidos-abiertos`;
+  const text = t('armarPartido.whatsappShareText', { url: matchUrl });
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
@@ -148,7 +149,7 @@ function deportesOfrecidosResumen(sede, t) {
   ];
   if (!keys.length) return '—';
   return keys
-    .map((k) => DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === k)?.label || k)
+    .map((k) => t(`torneo.deporte.${k}`, { defaultValue: k }))
     .join(', ');
 }
 
@@ -251,6 +252,8 @@ export default function ArmarPartido() {
   const [searchParams] = useSearchParams();
   const { session, userProfile, loading: authLoading } = useAuth();
   usePerfilJugadorMinimoEnRuta();
+  const intlLocale = padbolLangToIntlLocale(i18n.language);
+  const formatInteger = (value) => Number(value).toLocaleString(intlLocale);
 
   const armarPaddingTopCss = useMemo(
     () => hubContentPaddingTopCss(location.pathname, navDock),
@@ -352,8 +355,8 @@ export default function ArmarPartido() {
 
   const deporteLabelFijo = useMemo(() => {
     const item = DEPORTES.find((x) => x.id === form.deporte);
-    return item?.label || form.deporte;
-  }, [form.deporte]);
+    return item ? t(`torneo.deporte.${item.id}`, { defaultValue: item.id }) : form.deporte;
+  }, [form.deporte, t]);
 
   useEffect(() => {
     if (!deporteDesdeContexto) return;
@@ -427,9 +430,9 @@ export default function ArmarPartido() {
     fetch(`${API_BASE}/api/sedes${q}`)
       .then((r) => r.json())
       .then((d) => setSedes(Array.isArray(d) ? d : []))
-      .catch((err) => setMsg(err.message || 'No se pudieron cargar sedes'))
+      .catch((err) => setMsg(err.message || t('armarPartido.loadVenuesError')))
       .finally(() => setLoadingSedes(false));
-  }, [form.deporte]);
+  }, [form.deporte, t]);
 
   const sede = useMemo(() => findSedeById(sedes, form.sedeId), [sedes, form.sedeId]);
 
@@ -741,15 +744,15 @@ export default function ArmarPartido() {
   const irPaso2 = () => {
     setMsg('');
     if (!String(form.sedeId || '').trim()) {
-      setMsg('Seleccioná una sede.');
+      setMsg(t('armarPartido.selectVenueError'));
       return;
     }
     if (!form.fecha) {
-      setMsg('Elegí una fecha.');
+      setMsg(t('armarPartido.selectDateError'));
       return;
     }
     if (!form.hora) {
-      setMsg('Elegí un horario disponible.');
+      setMsg(t('armarPartido.selectTimeError'));
       return;
     }
     setForm((f) => ({ ...f, cancha: '' }));
@@ -761,30 +764,30 @@ export default function ArmarPartido() {
     (horaInicio) => {
       setMsg('');
       if (!String(form.sedeId || '').trim()) {
-        setMsg('Seleccioná una sede.');
+        setMsg(t('armarPartido.selectVenueError'));
         return;
       }
       if (!form.fecha) {
-        setMsg('Elegí una fecha.');
+        setMsg(t('armarPartido.selectDateError'));
         return;
       }
       const h = String(horaInicio || '').trim();
       if (!h) return;
       if (!form.duracion) {
-        setMsg('Elegí una duración.');
+        setMsg(t('armarPartido.selectDurationError'));
         return;
       }
       setForm((f) => ({ ...f, hora: h, cancha: '' }));
       setStep(2);
     },
-    [form.sedeId, form.fecha, form.duracion],
+    [form.sedeId, form.fecha, form.duracion, t],
   );
 
   const irPaso3 = () => {
     setMsg('');
     const num = parseInt(String(form.cancha), 10);
     if (!Number.isFinite(num) || num < 1) {
-      setMsg('Elegí una cancha libre.');
+      setMsg(t('armarPartido.selectCourtError'));
       return;
     }
     if (!session?.user) {
@@ -806,12 +809,12 @@ export default function ArmarPartido() {
 
   const pagarYPublicar = async () => {
     if (!session?.user) {
-      setMsg('Tenés que iniciar sesión para pagar. Volvé al paso anterior y reservá la cancha de nuevo.');
+      setMsg(t('armarPartido.loginToPayError'));
       return;
     }
     const sedeActual = findSedeById(sedes, form.sedeId);
     if (!sedeActual || !form.cancha || !form.fecha || !form.hora) {
-      setMsg('Completá sede, cancha, fecha y horario.');
+      setMsg(t('armarPartido.incompleteBookingError'));
       return;
     }
     setPaying(true);
@@ -864,7 +867,7 @@ export default function ArmarPartido() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          titulo: `Partido abierto — ${sedeActual.nombre}`,
+          titulo: t('armarPartido.paymentTitle', { venue: sedeActual.nombre }),
           precio: precioTotal,
           moneda: sedeActual.moneda || 'ARS',
           sedeNombre: sedeActual.nombre,
@@ -891,13 +894,13 @@ export default function ArmarPartido() {
       if (res.ok && data.stripe_checkout_pending) {
         setMsg(
           data.message ||
-            'El cobro con tarjeta para esta sede está en configuración. Probá con otra sede o contactá al club.',
+            t('armarPartido.cardSetupPending'),
         );
         return;
       }
-      throw new Error(data?.error || data?.message || 'No se pudo iniciar el pago');
+      throw new Error(data?.error || data?.message || t('armarPartido.paymentStartError'));
     } catch (err) {
-      setMsg(err.message || 'Error al publicar partido');
+      setMsg(err.message || t('armarPartido.publishError'));
     } finally {
       setPaying(false);
     }
@@ -905,7 +908,7 @@ export default function ArmarPartido() {
 
   const sedeNombreCancha = (num) => {
     const row = dispCanchas.find((c) => Number(c.numero) === Number(num));
-    return row?.nombre || `Cancha ${num}`;
+    return row?.nombre || t('armarPartido.courtNumber', { num });
   };
 
   const canchaLibreSeleccionada = useMemo(() => {
@@ -980,7 +983,7 @@ export default function ArmarPartido() {
                   >
                     {DEPORTES.map((d) => (
                       <option key={d.id} value={d.id}>
-                        {d.label} · {d.jugadores} {t('armarPartido.playersSuffix')}
+                        {t(`torneo.deporte.${d.id}`, { defaultValue: d.id })} · {d.jugadores} {t('armarPartido.playersSuffix')}
                       </option>
                     ))}
                   </select>
@@ -1191,7 +1194,7 @@ export default function ArmarPartido() {
                           const mon = sede?.moneda || 'ARS';
                           const labelPrecio =
                             opt.precio != null && Number.isFinite(Number(opt.precio))
-                              ? `${mon} ${Number(opt.precio).toLocaleString('es-AR')}`
+                              ? `${mon} ${formatInteger(opt.precio)}`
                               : null;
                           const minLabel = t('reservas.minutos', { defaultValue: 'min' });
                           const label = labelPrecio ? `${d} ${minLabel} — ${labelPrecio}` : `${d} ${minLabel}`;
@@ -1246,7 +1249,7 @@ export default function ArmarPartido() {
                         const mon = sede?.moneda || 'ARS';
                         const pr =
                           only?.precio != null && Number.isFinite(Number(only.precio))
-                            ? `${mon} ${Number(only.precio).toLocaleString('es-AR')}`
+                            ? `${mon} ${formatInteger(only.precio)}`
                             : null;
                         return pr
                           ? t('reservas.durationWithPrice', { min: dm, price: pr })
@@ -1472,11 +1475,11 @@ export default function ArmarPartido() {
                   <strong>{t('reservas.labelTime')}</strong> {String(form.hora).split(' - ')[0]}
                 </div>
                 <div>
-                  <strong>{t('reservas.labelDuration')}</strong> {form.duracion} minutos
+                  <strong>{t('reservas.labelDuration')}</strong> {form.duracion} {t('armarPartido.minutesLong')}
                 </div>
                 <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
                 <div>
-                  <strong>{t('reservas.slotPrice')}</strong> {sede?.moneda || 'ARS'} {precioBase.toLocaleString('es-AR')}
+                  <strong>{t('reservas.slotPrice')}</strong> {sede?.moneda || 'ARS'} {formatInteger(precioBase)}
                 </div>
               </div>
 
@@ -1501,7 +1504,7 @@ export default function ArmarPartido() {
                             nombre={ex.nombre}
                             descripcion={ex.descripcion}
                             imagenUrl={ex.imagen_url}
-                            priceLabel={formatoPrecioExtraCadaUnidad(unit, mon)}
+                            priceLabel={formatoPrecioExtraCadaUnidad(unit, mon, intlLocale, t('armarPartido.perUnit'))}
                             qty={qty}
                             onDecrement={() =>
                               setExtrasCantidad((prev) => ({
@@ -1537,15 +1540,15 @@ export default function ArmarPartido() {
               >
                 <div>
                   <strong>{t('reservas.subtotal')}</strong> {sede?.moneda || 'ARS'}{' '}
-                  {precioSubtotal.toLocaleString('es-AR')}
+                  {formatInteger(precioSubtotal)}
                 </div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>
                   <strong>{t('reservas.cargoServicio')}</strong> {sede?.moneda || 'ARS'}{' '}
-                  {cargoPlataforma.toLocaleString('es-AR')}
+                  {formatInteger(cargoPlataforma)}
                 </div>
                 <div style={{ marginTop: 10, fontWeight: 900, fontSize: 18, lineHeight: 1.3 }}>
                   <strong>{t('reservas.totalPagar')}</strong> {sede?.moneda || 'ARS'}{' '}
-                  {precioTotal.toLocaleString('es-AR')}
+                  {formatInteger(precioTotal)}
                 </div>
               </div>
 
@@ -1600,7 +1603,7 @@ export default function ArmarPartido() {
               {publicado ? (
                 <div style={{ display: 'grid', gap: 10 }}>
                   <a
-                    href={shareUrl()}
+                    href={shareUrl(t)}
                     target="_blank"
                     rel="noreferrer"
                     style={{
@@ -1613,7 +1616,7 @@ export default function ArmarPartido() {
                       textDecoration: 'none',
                     }}
                   >
-                    Compartir por WhatsApp
+                    {t('armarPartido.shareWhatsapp')}
                   </a>
                 </div>
               ) : null}
@@ -1632,7 +1635,7 @@ export default function ArmarPartido() {
                   cursor: 'pointer',
                 }}
               >
-                Ir a buscar partido
+                {t('armarPartido.goFindMatch')}
               </button>
             </>
           ) : null}
