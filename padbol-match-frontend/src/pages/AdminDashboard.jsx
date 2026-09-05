@@ -20786,7 +20786,7 @@ export default function AdminDashboard({
                     fontSize: '13px',
                   }}
                 >
-                  + Agregar franja
+                  + {t('admin.franjas.addSlot')}
                 </button>
                 <button
                   type="button"
@@ -21336,7 +21336,7 @@ export default function AdminDashboard({
                                       persistSurgeConfigDeporte(key, next);
                                     }}
                                   />
-                                  Activo
+                                  {t('admin.franjas.surgeActive')}
                                   {saving ? (
                                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
                                       {t('admin.metricas.savingEllipsis')}
@@ -21347,16 +21347,16 @@ export default function AdminDashboard({
                               {[
                                 {
                                   field: 'descuento_max_pct',
-                                  label: 'Descuento máximo (%)',
-                                  helper: 'precio mínimo posible',
+                                  label: t('admin.franjas.surgeMaxDiscount'),
+                                  helper: t('admin.franjas.surgeMinPrice'),
                                   min: 0,
                                   max: 50,
                                   fallback: 20,
                                 },
                                 {
                                   field: 'aumento_max_pct',
-                                  label: 'Aumento máximo (%)',
-                                  helper: 'precio máximo posible',
+                                  label: t('admin.franjas.surgeMaxIncrease'),
+                                  helper: t('admin.franjas.surgeMaxPrice'),
                                   min: 0,
                                   max: 100,
                                   fallback: 40,
@@ -21394,7 +21394,7 @@ export default function AdminDashboard({
                                 </div>
                               ))}
                               <p style={{ margin: '6px 0 0', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
-                                {previewLine ?? '90 min: configurá el precio base de 90 min en Precios por duración para ver la vista previa'}
+                                {previewLine ?? t('admin.franjas.surgePreviewMissing')}
                               </p>
                             </div>
                           );
@@ -21416,7 +21416,7 @@ export default function AdminDashboard({
                                 fontSize: '13px',
                               }}
                             >
-                              {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : 'Guardar Surge'}
+                              {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : t('admin.franjas.surgeSave')}
                             </button>
                             {surgeSaveMsg ? (
                               <span
@@ -21435,19 +21435,19 @@ export default function AdminDashboard({
                       )
                   ) : null}
                   <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo (% sobre el precio base).
+                    {t('admin.franjas.surgeExplanation')}
                   </p>
                   <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
-                    0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
+                    {t('admin.franjas.surgeBands')}
                   </p>
                 </div>
 
                 <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                   <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                    🕐 Precios por Franja Horaria
+                    🕐 {t('admin.franjas.pricingTitle')}
                   </h4>
                   <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    Define precios distintos según día y horario. Cuando hay una franja activa que coincide con el turno, el precio de franja reemplaza al precio base y Surge no aplica.
+                    {t('admin.franjas.pricingHelp')}
                   </p>
                   {franjasPrecioOverlapMsg ? (
                     <div
@@ -21470,22 +21470,23 @@ export default function AdminDashboard({
 
                   {/* Tabla de franjas existentes */}
                   {franjasLoading ? (
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando franjas…</p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('admin.franjas.loading')}</p>
                   ) : franjasPrecios.length === 0 ? (
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Sin franjas configuradas.</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>{t('admin.franjas.empty')}</p>
                   ) : (
                     <div style={{ overflowX: 'auto', marginBottom: '16px' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                         <thead>
                           <tr style={{ background: 'var(--accent)' }}>
-                            {['Deporte', 'Día', 'Desde', 'Hasta', '60 min', '90 min', '120 min', ''].map(h => (
+                            {[t('admin.franjas.sport'), t('admin.franjas.day'), t('admin.franjas.start'), t('admin.franjas.end'), '60 min', '90 min', '120 min', ''].map(h => (
                               <th key={h} style={{ padding: '7px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {franjasPrecios.map(f => {
-                            const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                            const dias = ['sunShort', 'monShort', 'tueShort', 'wedShort', 'thuShort', 'friShort', 'satShort']
+                              .map((day) => t(`admin.franjas.${day}`));
                             return (
                               <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '8px 10px', textTransform: 'capitalize' }}>
@@ -21493,7 +21494,7 @@ export default function AdminDashboard({
                                     ? t('admin.sedes.customSportOption')
                                     : f.deporte}
                                 </td>
-                                <td style={{ padding: '8px 10px' }}>{f.dia_semana !== null ? dias[f.dia_semana] : 'Todos'}</td>
+                                <td style={{ padding: '8px 10px' }}>{f.dia_semana !== null ? dias[f.dia_semana] : t('admin.franjas.all')}</td>
                                 <td style={{ padding: '8px 10px' }}>{f.hora_inicio?.slice(0,5)}</td>
                                 <td style={{ padding: '8px 10px' }}>{f.hora_fin?.slice(0,5)}</td>
                                 <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_60min ? precioDuracionInputDisplay(f.precio_60min) : '—'}</td>
@@ -21502,7 +21503,7 @@ export default function AdminDashboard({
                                 <td style={{ padding: '8px 6px' }}>
                                   <button type="button" onClick={() => deleteFranja(f.id)}
                                     style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #fca5a5', background: 'transparent', color: '#fca5a5', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                                    Eliminar
+                                    {t('admin.franjas.deleteSlot')}
                                   </button>
                                 </td>
                               </tr>
@@ -21515,10 +21516,10 @@ export default function AdminDashboard({
 
                   {/* Formulario nueva franja */}
                   <div style={{ padding: '14px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', display: 'grid', gap: '10px' }}>
-                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Nueva franja</p>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{t('admin.franjas.newSlot')}</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Deporte</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.sport')}</label>
                         <select value={franjaDraft.deporte} onChange={e => setFranjaDraft(p => ({ ...p, deporte: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
                           {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
@@ -21526,26 +21527,26 @@ export default function AdminDashboard({
                         </select>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Día</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.day')}</label>
                         <select value={franjaDraft.dia_semana} onChange={e => setFranjaDraft(p => ({ ...p, dia_semana: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                          <option value=''>Todos los días</option>
-                          {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map((d,i) => <option key={i} value={i}>{d}</option>)}
+                          <option value=''>{t('admin.franjas.allDays')}</option>
+                          {['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].map((day,i) => <option key={day} value={i}>{t(`admin.franjas.${day}`)}</option>)}
                         </select>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Desde</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.start')}</label>
                         <input type="time" value={franjaDraft.hora_inicio} onChange={e => setFranjaDraft(p => ({ ...p, hora_inicio: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Hasta</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.end')}</label>
                         <input type="time" value={franjaDraft.hora_fin} onChange={e => setFranjaDraft(p => ({ ...p, hora_fin: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
                       </div>
                       {['60', '90', '120'].map(min => (
                         <div key={min} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Precio {min} min</label>
+                          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.priceMinutes', { min })}</label>
                           <input type="text" inputMode="numeric" placeholder="0"
                             value={precioDuracionInputDisplay(franjaDraft[`precio_${min}min`])}
                             onChange={e => { const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, ''); setFranjaDraft(p => ({ ...p, [`precio_${min}min`]: digits })); }}
@@ -21572,7 +21573,7 @@ export default function AdminDashboard({
                       ) : null}
                       <button type="button" onClick={saveFranja} disabled={franjaSaving || !!franjasPrecioOverlapMsg}
                         style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: franjaSaving || franjasPrecioOverlapMsg ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: franjaSaving || franjasPrecioOverlapMsg ? 'not-allowed' : 'pointer', alignSelf: 'flex-end' }}>
-                        {franjaSaving ? 'Guardando…' : 'Agregar franja'}
+                        {franjaSaving ? t('admin.metricas.savingEllipsis') : t('admin.franjas.addSlot')}
                       </button>
                     </div>
                     {franjaPreciosMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjaPreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{franjaPreciosMsg}</p> : null}
