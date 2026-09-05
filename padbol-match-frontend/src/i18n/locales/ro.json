@@ -2146,5 +2146,43 @@
       },
       "signal": { "eyebrow": "VIZIUNE / IA", "title": "ANTRENARE\nÎN CURS" }
     }
+  },
+  "clubOnboarding": {
+    "header": "Înregistrează o bază sportivă",
+    "hero": {
+      "title": "Adaugă baza ta sportivă în Padbol Match",
+      "lead": "Alege nivelul de servicii potrivit bazei tale. Poți începe astăzi, completa datele ulterior și primi sprijin uman ori de câte ori ai nevoie.",
+      "badge": "Configurare simplă, fără foi de calcul",
+      "guide": "Alege planul, începe înregistrarea și configurează activitatea bazei tale prin pași ghidați."
+    },
+    "plansEyebrow": "Planuri pentru a crește cu Padbol Match",
+    "plansTitle": "Tot ce ai nevoie, la dimensiunea ta",
+    "plansLead": "Alege un plan pentru a începe. Prețurile sunt orientative și pot fi adaptate țării, monedei și nevoilor fiecărei baze sportive.",
+    "selected": "Plan selectat",
+    "choose": "Alege {{plan}}",
+    "plans": {
+      "explorar": { "name": "Explorează", "price": "Gratuit", "period": "Pentru a descoperi serviciul", "description": "O primă imagine asupra modului în care Padbol Match poate sprijini baza ta sportivă.", "include1": "Tur al produsului", "include2": "Asistentul Chivi", "include3": "Discuție cu echipa noastră" },
+      "base": { "name": "Bază Standard", "period": "per bază / lună", "description": "Elementele esențiale pentru a porni activitatea sportivă dintr-un singur panou.", "include1": "Padbol Courts, programe și prețuri", "include2": "Rezervări și jucători", "include3": "Panou de administrare" },
+      "pro": { "name": "Bază Pro", "period": "per bază / lună", "description": "Pentru baze care vor să dezvolte și comunitatea, și competițiile.", "include1": "Turnee și clasamente", "include2": "Tabelă de scor conectată", "include3": "PadCoins și abonamente" },
+      "360": { "name": "Bază 360", "period": "per bază / lună", "description": "Soluția completă pentru operarea, comunicarea și prezentarea bazei într-o experiență extinsă.", "include1": "Ecrane și publicitate", "include2": "Sponsori și magazin", "include3": "Automatizări în etape" }
+    },
+    "contact": { "before": "Vrei să discutăm înainte de a alege? Scrie-ne la", "subject": "Întrebare despre planurile Padbol Match", "after": "Chivi și echipa noastră de asistență te vor ajuta și pe parcursul configurării." },
+    "request": { "planLabel": "Plan selectat" },
+    "validation": { "required": "Completează numele bazei, persoana de contact, adresa de e-mail și numărul de WhatsApp pentru a începe." },
+    "success": "Gata. Am primit solicitarea ta pentru {{plan}}. Te vom ajuta să activezi contul, să confirmi planul și să configurezi baza prin pașii ghidați.",
+    "error": { "submit": "Solicitarea nu a putut fi trimisă. Încearcă din nou." },
+    "form": {
+      "startInquiry": "Începe solicitarea",
+      "startPlan": "Începe cu {{plan}}",
+      "subtitle": "Plan selectat: {{plan}} · {{price}}. Pentru a începe avem nevoie doar de câteva date despre bază și de o persoană de contact.",
+      "clubName": "Numele bazei sportive sau al clubului",
+      "fullName": "Nume complet",
+      "email": "E-mail de contact",
+      "whatsapp": "WhatsApp (inclusiv prefixul țării)",
+      "message": "Mai dorești să ne spui ceva? (opțional)",
+      "disclaimer": "Această solicitare începe procesul de configurare. Vom confirma împreună activarea planului și metoda de plată înainte de orice debitare.",
+      "sending": "Se trimite…",
+      "sendInquiry": "Trimite solicitarea"
+    }
   }
 }

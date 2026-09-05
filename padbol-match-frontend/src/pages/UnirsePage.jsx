@@ -5,6 +5,7 @@ import '../pages/LandingPage.css';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE =
   typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
@@ -16,48 +17,11 @@ const PRECIO_MENSUAL_USD =
     ? String(process.env.REACT_APP_PRECIO_MENSUAL_USD).trim()
     : '$29 USD/mes';
 
-const SERVICE_PLANS = [
-  {
-    id: 'explorar',
-    number: '01',
-    name: 'Explora',
-    price: 'Gratis',
-    period: 'Para conocer la propuesta',
-    accent: '#22c55e',
-    description: 'Una primera vista para entender cómo Padbol Match puede acompañar a tu sede.',
-    includes: ['Recorrido de producto', 'Asistente Chivi', 'Consulta con el equipo'],
-  },
-  {
-    id: 'base',
-    number: '02',
-    name: 'Sede Base',
-    price: PRECIO_MENSUAL_USD,
-    period: 'por sede / mes',
-    accent: '#38bdf8',
-    description: 'La base para abrir tu operación deportiva desde un único panel.',
-    includes: ['Canchas, horarios y precios', 'Reservas y jugadores', 'Panel de administración'],
-  },
-  {
-    id: 'pro',
-    number: '03',
-    name: 'Sede Pro',
-    price: '$59 USD/mes',
-    period: 'por sede / mes',
-    accent: '#E11B22',
-    featured: true,
-    description: 'Para sedes que además quieren activar comunidad y competencia.',
-    includes: ['Torneos y rankings', 'Marcador conectado', 'PadCoins y membresías'],
-  },
-  {
-    id: '360',
-    number: '04',
-    name: 'Sede 360',
-    price: '$99 USD/mes',
-    period: 'por sede / mes',
-    accent: '#f59e0b',
-    description: 'La capa para operar, comunicar y mostrar tu sede en una experiencia ampliada.',
-    includes: ['Pantallas y publicidad', 'Sponsor y tienda', 'Automatizaciones por etapas'],
-  },
+const SERVICE_PLAN_DEFINITIONS = [
+  { id: 'explorar', number: '01', accent: '#22c55e' },
+  { id: 'base', number: '02', price: PRECIO_MENSUAL_USD, accent: '#38bdf8' },
+  { id: 'pro', number: '03', price: '$59 USD/mes', accent: '#E11B22', featured: true },
+  { id: '360', number: '04', price: '$99 USD/mes', accent: '#f59e0b' },
 ];
 
 function normalizeWs(s) {
@@ -112,6 +76,7 @@ function FormSection({ title, subtitle, children }) {
 }
 
 export default function UnirsePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -123,10 +88,18 @@ export default function UnirsePage() {
   const isPadbolPromo = ['padbol-pro-renovable', 'padbol-pro-12m'].includes(query.get('promo'));
   const requestedPlanId = query.get('plan');
   const [selectedPlanId, setSelectedPlanId] = useState(() => (
-    SERVICE_PLANS.some((plan) => plan.id === requestedPlanId) ? requestedPlanId : 'base'
+    SERVICE_PLAN_DEFINITIONS.some((plan) => plan.id === requestedPlanId) ? requestedPlanId : 'base'
   ));
   const formRef = useRef(null);
-  const selectedPlan = SERVICE_PLANS.find((plan) => plan.id === selectedPlanId) || SERVICE_PLANS[1];
+  const servicePlans = SERVICE_PLAN_DEFINITIONS.map((plan) => ({
+    ...plan,
+    name: t(`clubOnboarding.plans.${plan.id}.name`),
+    price: plan.price || t(`clubOnboarding.plans.${plan.id}.price`),
+    period: t(`clubOnboarding.plans.${plan.id}.period`),
+    description: t(`clubOnboarding.plans.${plan.id}.description`),
+    includes: [1, 2, 3].map((item) => t(`clubOnboarding.plans.${plan.id}.include${item}`)),
+  }));
+  const selectedPlan = servicePlans.find((plan) => plan.id === selectedPlanId) || servicePlans[1];
   const countryOptions = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
 
   useEffect(() => {
@@ -175,7 +148,7 @@ export default function UnirsePage() {
     } else if (
       !form.club_nombre.trim() || !form.responsable_nombre.trim() || !form.email.trim() || !form.whatsapp.trim()
     ) {
-      setErr('Completa nombre de sede, responsable, email y WhatsApp para comenzar.');
+      setErr(t('clubOnboarding.validation.required'));
       return;
     }
 
@@ -207,7 +180,7 @@ export default function UnirsePage() {
           responsable_nombre: form.responsable_nombre.trim(),
           email: em,
           whatsapp: wa,
-          mensaje: `[Plan elegido: ${selectedPlan.name} — ${selectedPlan.price}]${form.mensaje.trim() ? `\n${form.mensaje.trim()}` : ''}`,
+          mensaje: `[${t('clubOnboarding.request.planLabel')}: ${selectedPlan.name} — ${selectedPlan.price}]${form.mensaje.trim() ? `\n${form.mensaje.trim()}` : ''}`,
           solicitud_inicial: true,
         };
 
@@ -222,10 +195,10 @@ export default function UnirsePage() {
       if (!res.ok) throw new Error(j.error || res.statusText);
       setMsg(isPadbolPromo
         ? 'Listo. Recibimos tu solicitud del beneficio Pro renovable. Nuestro equipo te contactará para continuar.'
-        : `Listo. Recibimos tu solicitud para ${selectedPlan.name}. Te acompañamos a activar la cuenta, confirmar el plan y completar tu sede con la configuración guiada.`);
+        : t('clubOnboarding.success', { plan: selectedPlan.name }));
       setForm(getInitialForm());
-    } catch (e2) {
-      setErr(e2?.message || 'No se pudo enviar la solicitud');
+    } catch {
+      setErr(t('clubOnboarding.error.submit'));
     } finally {
       setSaving(false);
     }
@@ -264,7 +237,7 @@ export default function UnirsePage() {
       <AppHeader
         title={isPadbolPromo ? 'Solicitud Pro para sedes Padbol' : 'Alta de club'}
         onBack={() => (isPadbolPromo ? navigate('/planes') : navigate(-1))}
-        backLabel={isPadbolPromo ? '← Volver' : undefined}
+        backLabel={isPadbolPromo ? `← ${t('common.back')}` : undefined}
       />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px' }}>
         <img
@@ -424,7 +397,7 @@ export default function UnirsePage() {
               lineHeight: 1.2,
             }}
           >
-            Suma tu club a Padbol Match
+            {t('clubOnboarding.hero.title')}
           </h1>
           <p
             style={{
@@ -435,8 +408,7 @@ export default function UnirsePage() {
               textAlign: 'center',
             }}
           >
-            Elige la capa que mejor acompaña a tu sede. Puedes empezar hoy, completar tus datos después y recibir
-            apoyo humano cuando lo necesites.
+            {t('clubOnboarding.hero.lead')}
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
             <span
@@ -450,26 +422,26 @@ export default function UnirsePage() {
                 borderRadius: '999px',
               }}
             >
-              Alta simple, sin planillas
+              {t('clubOnboarding.hero.badge')}
             </span>
           </div>
           <p style={{ margin: 0, textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-            Eliges tu plan, inicias el alta y completas la operación de tu sede con una configuración guiada.
+            {t('clubOnboarding.hero.guide')}
           </p>
         </section>
 
         <section style={{ margin: '0 0 20px' }}>
           <p style={{ margin: '0 0 7px', color: '#E11B22', fontSize: 12, fontWeight: 900, letterSpacing: '.09em', textTransform: 'uppercase' }}>
-            Planes para crecer con Padbol Match
+            {t('clubOnboarding.plansEyebrow')}
           </p>
           <h2 style={{ margin: '0 0 9px', color: 'var(--text-primary)', fontSize: 'clamp(1.25rem, 3vw, 1.55rem)', lineHeight: 1.12 }}>
-            Todo lo que necesitas, a tu escala
+            {t('clubOnboarding.plansTitle')}
           </h2>
           <p style={{ margin: '0 0 13px', color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.45 }}>
-            Elige un plan para empezar. Los valores son de referencia y se pueden ajustar por país, moneda y necesidad de cada sede.
+            {t('clubOnboarding.plansLead')}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
-            {SERVICE_PLANS.map((plan) => {
+            {servicePlans.map((plan) => {
               const selected = selectedPlanId === plan.id;
               return (
               <article
@@ -499,14 +471,14 @@ export default function UnirsePage() {
                   onClick={() => selectPlan(plan.id)}
                   style={{ width: '100%', padding: '9px 10px', borderRadius: 9, border: `1px solid ${plan.accent}`, background: selected ? plan.accent : 'transparent', color: selected ? '#fff' : plan.accent, cursor: 'pointer', fontWeight: 800, fontSize: 12 }}
                 >
-                  {selected ? 'Plan elegido' : `Elegir ${plan.name}`}
+                  {selected ? t('clubOnboarding.selected') : t('clubOnboarding.choose', { plan: plan.name })}
                 </button>
               </article>
               );
             })}
           </div>
           <p style={{ margin: '14px 0 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.45 }}>
-            ¿Quieres conversarlo antes de elegir? Escríbenos a <a href="mailto:info@padbol.com?subject=Consulta%20sobre%20planes%20de%20Padbol%20Match" style={{ color: '#E11B22', fontWeight: 800 }}>info@padbol.com</a>. También tendrás ayuda de Chivi y soporte humano durante el alta.
+            {t('clubOnboarding.contact.before')} <a href={`mailto:info@padbol.com?subject=${encodeURIComponent(t('clubOnboarding.contact.subject'))}`} style={{ color: '#E11B22', fontWeight: 800 }}>info@padbol.com</a>. {t('clubOnboarding.contact.after')}
           </p>
         </section>
           </>
@@ -606,21 +578,21 @@ export default function UnirsePage() {
             </FormSection>
           ) : (
             <>
-              <FormSection title={`Empieza ${selectedPlan.name === 'Explora' ? 'la consulta' : `con ${selectedPlan.name}`}`} subtitle={`Plan elegido: ${selectedPlan.name} · ${selectedPlan.price}. Solo necesitamos una referencia de la sede y una persona de contacto para abrir el proceso.`}>
-                <label style={labelStyle}>Nombre de la sede o club *</label>
+              <FormSection title={selectedPlan.id === 'explorar' ? t('clubOnboarding.form.startInquiry') : t('clubOnboarding.form.startPlan', { plan: selectedPlan.name })} subtitle={t('clubOnboarding.form.subtitle', { plan: selectedPlan.name, price: selectedPlan.price })}>
+                <label style={labelStyle}>{t('clubOnboarding.form.clubName')} *</label>
                 <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
-                <label style={{ ...labelStyle, ...rowGap }}>Nombre completo *</label>
+                <label style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.fullName')} *</label>
                 <input style={inputStyle} value={form.responsable_nombre} onChange={(e) => onField('responsable_nombre', e.target.value)} required />
-                <label style={{ ...labelStyle, ...rowGap }}>Email de contacto *</label>
+                <label style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.email')} *</label>
                 <input type="email" style={inputStyle} value={form.email} onChange={(e) => onField('email', e.target.value)} required autoComplete="email" />
-                <label style={{ ...labelStyle, ...rowGap }}>WhatsApp (con código de país) *</label>
+                <label style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.whatsapp')} *</label>
                 <input style={inputStyle} value={form.whatsapp} onChange={(e) => onField('whatsapp', e.target.value)} placeholder="+549…" required autoComplete="tel" />
               </FormSection>
-              <label style={{ ...labelStyle, marginTop: 4 }}>¿Algo que quieras contarnos? (opcional)</label>
+              <label style={{ ...labelStyle, marginTop: 4 }}>{t('clubOnboarding.form.message')}</label>
               <textarea rows={3} style={{ ...inputStyle, resize: 'vertical', maxWidth: '100%' }} value={form.mensaje} onChange={(e) => onField('mensaje', e.target.value)} />
 
               <p style={{ margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45 }}>
-                Esta solicitud inicia el alta. La activación del plan y el medio de pago se confirman contigo antes de cualquier cobro.
+                {t('clubOnboarding.form.disclaimer')}
               </p>
             </>
           )}
@@ -644,12 +616,12 @@ export default function UnirsePage() {
             }}
           >
             {saving
-              ? 'Enviando…'
+              ? t('clubOnboarding.form.sending')
               : isPadbolPromo
                 ? 'Pedir mis 6 meses Pro sin cargo'
                 : selectedPlan.id === 'explorar'
-                  ? 'Enviar mi consulta'
-                  : `Comenzar con ${selectedPlan.name}`}
+                  ? t('clubOnboarding.form.sendInquiry')
+                  : t('clubOnboarding.form.startPlan', { plan: selectedPlan.name })}
           </button>
         </form>
       </div>

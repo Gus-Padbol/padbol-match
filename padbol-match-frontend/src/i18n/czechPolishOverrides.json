@@ -1,5 +1,43 @@
 {
   "publicSite": {
     "experiences": { "preview": { "club": "Padbol Club Sever" } }
+  },
+  "clubOnboarding": {
+    "header": "Přidat sportovní centrum",
+    "hero": {
+      "title": "Přidejte své sportovní centrum do Padbol Match",
+      "lead": "Vyberte úroveň služeb, která vašemu centru vyhovuje nejlépe. Začít můžete ještě dnes, údaje doplnit později a kdykoli využít osobní podporu.",
+      "badge": "Jednoduché nastavení bez tabulek",
+      "guide": "Vyberte si plán, zahajte registraci a nastavte provoz centra pomocí průvodce."
+    },
+    "plansEyebrow": "Plány pro růst s Padbol Match",
+    "plansTitle": "Vše, co potřebujete, v rozsahu pro vás",
+    "plansLead": "Začněte výběrem plánu. Ceny jsou orientační a lze je upravit podle země, měny a potřeb každého sportovního centra.",
+    "selected": "Vybraný plán",
+    "choose": "Vybrat {{plan}}",
+    "plans": {
+      "explorar": { "name": "Vyzkoušet", "price": "Zdarma", "period": "Pro seznámení se službou", "description": "První pohled na to, jak může Padbol Match podpořit vaše sportovní centrum.", "include1": "Prohlídka produktu", "include2": "Asistent Chivi", "include3": "Konzultace s naším týmem" },
+      "base": { "name": "Centrum Base", "period": "za centrum / měsíc", "description": "Základní nástroje pro spuštění sportovního provozu z jednoho panelu.", "include1": "Padbol Courts, rozvrhy a ceny", "include2": "Rezervace a hráči", "include3": "Administrační panel" },
+      "pro": { "name": "Centrum Pro", "period": "za centrum / měsíc", "description": "Pro centra, která chtějí rozvíjet komunitu i soutěže.", "include1": "Turnaje a žebříčky", "include2": "Propojená výsledková tabule", "include3": "PadCoins a členství" },
+      "360": { "name": "Centrum 360", "period": "za centrum / měsíc", "description": "Kompletní řešení pro provoz, komunikaci a prezentaci centra v rozšířeném prostředí.", "include1": "Obrazovky a reklama", "include2": "Sponzoři a obchod", "include3": "Postupné automatizace" }
+    },
+    "contact": { "before": "Chcete se před výběrem poradit? Napište nám na", "subject": "Dotaz k plánům Padbol Match", "after": "S nastavením vám pomůže také Chivi a náš tým podpory." },
+    "request": { "planLabel": "Vybraný plán" },
+    "validation": { "required": "Pro zahájení vyplňte název centra, kontaktní osobu, e-mail a WhatsApp." },
+    "success": "Hotovo. Obdrželi jsme vaši žádost o {{plan}}. Pomůžeme vám aktivovat účet, potvrdit plán a dokončit nastavení centra pomocí průvodce.",
+    "error": { "submit": "Žádost se nepodařilo odeslat. Zkuste to znovu." },
+    "form": {
+      "startInquiry": "Zahájit konzultaci",
+      "startPlan": "Začít s {{plan}}",
+      "subtitle": "Vybraný plán: {{plan}} · {{price}}. Pro zahájení potřebujeme jen základní údaje o centru a kontaktní osobu.",
+      "clubName": "Název sportovního centra nebo klubu",
+      "fullName": "Celé jméno",
+      "email": "Kontaktní e-mail",
+      "whatsapp": "WhatsApp (včetně předvolby země)",
+      "message": "Chcete nám ještě něco sdělit? (nepovinné)",
+      "disclaimer": "Tato žádost zahájí proces nastavení. Aktivaci plánu a platební metodu s vámi potvrdíme před jakýmkoli účtováním.",
+      "sending": "Odesílání…",
+      "sendInquiry": "Odeslat konzultaci"
+    }
   }
 }

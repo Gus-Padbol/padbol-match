@@ -3435,6 +3435,44 @@
     "allReviewsTitle": "Todas las reseñas",
     "close": "Cerrar"
   },
+  "clubOnboarding": {
+    "header": "Alta de club",
+    "hero": {
+      "title": "Sumá tu club a Padbol Match",
+      "lead": "Elegí la propuesta que mejor acompaña a tu sede. Podés empezar hoy, completar tus datos después y recibir apoyo humano cuando lo necesites.",
+      "badge": "Alta simple, sin planillas",
+      "guide": "Elegí tu plan, iniciá el alta y completá la operación de tu sede con una configuración guiada."
+    },
+    "plansEyebrow": "Planes para crecer con Padbol Match",
+    "plansTitle": "Todo lo que necesitás, a tu escala",
+    "plansLead": "Elegí un plan para empezar. Los valores son de referencia y pueden ajustarse según el país, la moneda y las necesidades de cada sede.",
+    "selected": "Plan elegido",
+    "choose": "Elegir {{plan}}",
+    "plans": {
+      "explorar": { "name": "Explorá", "price": "Gratis", "period": "Para conocer la propuesta", "description": "Una primera mirada para entender cómo Padbol Match puede acompañar a tu sede.", "include1": "Recorrido del producto", "include2": "Asistente Chivi", "include3": "Consulta con nuestro equipo" },
+      "base": { "name": "Sede Base", "period": "por sede / mes", "description": "La base para iniciar tu operación deportiva desde un único panel.", "include1": "Padbol Courts, horarios y precios", "include2": "Reservas y jugadores", "include3": "Panel de administración" },
+      "pro": { "name": "Sede Pro", "period": "por sede / mes", "description": "Para sedes que además quieren activar comunidad y competencia.", "include1": "Torneos y rankings", "include2": "Marcador conectado", "include3": "PadCoins y membresías" },
+      "360": { "name": "Sede 360", "period": "por sede / mes", "description": "La propuesta completa para operar, comunicar y mostrar tu sede en una experiencia ampliada.", "include1": "Pantallas y publicidad", "include2": "Patrocinadores y tienda", "include3": "Automatizaciones por etapas" }
+    },
+    "contact": { "before": "¿Querés conversarlo antes de elegir? Escribinos a", "subject": "Consulta sobre planes de Padbol Match", "after": "También vas a contar con la ayuda de Chivi y soporte humano durante el alta." },
+    "request": { "planLabel": "Plan elegido" },
+    "validation": { "required": "Completá el nombre de la sede, responsable, email y WhatsApp para comenzar." },
+    "success": "Listo. Recibimos tu solicitud para {{plan}}. Te vamos a acompañar para activar la cuenta, confirmar el plan y completar tu sede con la configuración guiada.",
+    "error": { "submit": "No pudimos enviar la solicitud. Intentá nuevamente." },
+    "form": {
+      "startInquiry": "Empezá la consulta",
+      "startPlan": "Empezar con {{plan}}",
+      "subtitle": "Plan elegido: {{plan}} · {{price}}. Solo necesitamos una referencia de la sede y una persona de contacto para iniciar el proceso.",
+      "clubName": "Nombre de la sede o club",
+      "fullName": "Nombre completo",
+      "email": "Email de contacto",
+      "whatsapp": "WhatsApp (con código de país)",
+      "message": "¿Algo que quieras contarnos? (opcional)",
+      "disclaimer": "Esta solicitud inicia el alta. La activación del plan y el medio de pago se confirman con vos antes de cualquier cobro.",
+      "sending": "Enviando…",
+      "sendInquiry": "Enviar mi consulta"
+    }
+  },
   "adminLanding": {
     "metaTitle": "Administrá tu sede | Padbol Match",
     "eyebrow": "NO ES UNA AGENDA. ES UNA SEDE ACTIVA.", "title": "Todo lo que soñaste para ", "titleAccent": "administrar tu sede está acá.", "lead": "Padbol Match une competencia, marcador, ranking y beneficios para que la actividad no termine al salir de la cancha: genera comunidad, retorno y valor para tu sede. Con una operación que sigue siendo tuya.", "primaryCta": "Quiero sumar mi sede",

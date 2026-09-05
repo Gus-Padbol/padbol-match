@@ -3705,6 +3705,44 @@
       "signal": { "eyebrow": "SCOREBOARD VISION / AI", "title": "TRAINING\nIN PROGRESS" }
     }
   },
+  "clubOnboarding": {
+    "header": "Add a venue",
+    "hero": {
+      "title": "Bring your venue to Padbol Match",
+      "lead": "Choose the service level that best fits your venue. You can start today, complete your details later and receive human support whenever you need it.",
+      "badge": "Simple setup, no spreadsheets",
+      "guide": "Choose your plan, start registration and complete your venue operations through guided setup."
+    },
+    "plansEyebrow": "Plans to grow with Padbol Match",
+    "plansTitle": "Everything you need, at your scale",
+    "plansLead": "Choose a plan to get started. Prices are indicative and may be adapted to each venue's country, currency and needs.",
+    "selected": "Plan selected",
+    "choose": "Choose {{plan}}",
+    "plans": {
+      "explorar": { "name": "Explore", "price": "Free", "period": "To discover the service", "description": "A first look at how Padbol Match can support your venue.", "include1": "Product tour", "include2": "Chivi assistant", "include3": "Consultation with our team" },
+      "base": { "name": "Venue Base", "period": "per venue / month", "description": "The essentials to launch your sports operation from one dashboard.", "include1": "Padbol Courts, schedules and prices", "include2": "Bookings and players", "include3": "Administration dashboard" },
+      "pro": { "name": "Venue Pro", "period": "per venue / month", "description": "For venues that also want to activate community and competition.", "include1": "Tournaments and rankings", "include2": "Connected scoreboard", "include3": "PadCoins and memberships" },
+      "360": { "name": "Venue 360", "period": "per venue / month", "description": "The complete layer to operate, communicate and showcase your venue through an expanded experience.", "include1": "Screens and advertising", "include2": "Sponsors and shop", "include3": "Phased automations" }
+    },
+    "contact": { "before": "Want to talk before choosing? Write to us at", "subject": "Question about Padbol Match plans", "after": "Chivi and our support team will also help you during setup." },
+    "request": { "planLabel": "Selected plan" },
+    "validation": { "required": "Enter the venue name, contact person, email and WhatsApp to get started." },
+    "success": "Done. We received your request for {{plan}}. We will help you activate the account, confirm the plan and complete your venue through guided setup.",
+    "error": { "submit": "We couldn't send your request. Please try again." },
+    "form": {
+      "startInquiry": "Start your enquiry",
+      "startPlan": "Start with {{plan}}",
+      "subtitle": "Selected plan: {{plan}} · {{price}}. We only need basic venue details and a contact person to begin.",
+      "clubName": "Venue or club name",
+      "fullName": "Full name",
+      "email": "Contact email",
+      "whatsapp": "WhatsApp (including country code)",
+      "message": "Anything else you'd like to tell us? (optional)",
+      "disclaimer": "This request starts the setup process. We will confirm plan activation and payment method with you before any charge.",
+      "sending": "Sending…",
+      "sendInquiry": "Send my enquiry"
+    }
+  },
   "adminLanding": {
     "metaTitle": "Manage your venue | Padbol Match",
     "eyebrow": "NOT A CALENDAR. AN ACTIVE VENUE.", "title": "Everything you dreamed of to ", "titleAccent": "manage your venue is here.", "lead": "Padbol Match brings together competition, scoring, rankings and benefits so activity does not end when players leave the court: it creates community, return visits and value for your venue. With operations that remain yours.", "primaryCta": "Add my venue",
