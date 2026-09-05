@@ -125,7 +125,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     fetch(`${apiBaseUrl}/api/sedes`)
       .then((res) => res.json())
       .then((data) => setSedes(data || []))
-      .catch(() => setError('Error al cargar sedes'));
+      .catch(() => setError(t('torneos.create.loadVenuesError')));
 
     try {
       const cfg = JSON.parse(localStorage.getItem('config_puntos') || '{}');
@@ -133,7 +133,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     } catch {
       /* ignore */
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, t]);
 
   useEffect(() => {
     if (!esAdminClub || sedeId == null || sedeId === '') return;
@@ -239,24 +239,24 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     setError('');
 
     if (!formData.nombre || !formData.tipo_torneo || !formData.fecha_inicio || !formData.fecha_fin) {
-      setError('Completa los campos obligatorios');
+      setError(t('torneos.create.requiredFieldsError'));
       setLoading(false);
       return;
     }
     if (!String(formData.categoria || '').trim()) {
-      setError('Selecciona la categoría del torneo');
+      setError(t('torneos.create.selectCategoryError'));
       setLoading(false);
       return;
     }
 
     if (!String(formData.deporte || '').trim()) {
-      setError('Selecciona el deporte del torneo');
+      setError(t('torneos.create.selectSportError'));
       setLoading(false);
       return;
     }
 
     if (!formData.es_multisede && !formData.sede_id) {
-      setError('Selecciona una sede (o marca multisede)');
+      setError(t('torneos.create.selectVenueError'));
       setLoading(false);
       return;
     }
@@ -325,12 +325,12 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       const cp = parseInt(String(formData.clasificados_por_grupo), 10);
       const mt = parseInt(String(formData.mejores_terceros_clasificados), 10);
       if (!Number.isFinite(ep) || ep < 2) {
-        setError('Indica equipos por grupo (mínimo 2)');
+        setError(t('torneos.create.teamsPerGroupError'));
         setLoading(false);
         return;
       }
       if (!Number.isFinite(cp) || cp < 1) {
-        setError('Indica clasificados por grupo (mínimo 1)');
+        setError(t('torneos.create.qualifiersPerGroupError'));
         setLoading(false);
         return;
       }
@@ -343,7 +343,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     if (rawFap) {
       const d = new Date(rawFap);
       if (Number.isNaN(d.getTime())) {
-        setError('La fecha/hora de apertura automática no es válida');
+        setError(t('torneos.create.autoOpenDateError'));
         setLoading(false);
         return;
       }
@@ -361,7 +361,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       console.log('Result recibido:', result);
 
       if (response.ok) {
-        setMensaje('✅ Torneo creado correctamente');
+        setMensaje(t('torneos.create.createdSuccess'));
         resetFormClean();
         const nuevoId = result?.[0]?.id;
         if (embedded) {
@@ -375,10 +375,10 @@ const TorneoCrear = forwardRef(function TorneoCrear({
           }, 1500);
         }
       } else {
-        setError(result.error || 'Error al crear torneo');
+        setError(result.error || t('torneos.create.createError'));
       }
     } catch (err) {
-      setError('Error: ' + err.message);
+      setError(t('torneos.create.errorWithDetail', { error: err.message }));
     } finally {
       setLoading(false);
     }
@@ -407,63 +407,63 @@ const TorneoCrear = forwardRef(function TorneoCrear({
               cursor: 'pointer',
             }}
           >
-            ← Volver a torneos
+            ← {t('torneos.create.backToTournaments')}
           </button>
         ) : null}
-        <h1>🏆 Crear Nuevo Torneo</h1>
+        <h1>🏆 {t('torneos.create.title')}</h1>
         <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Nombre del Torneo *</label>
+                <label>{t('torneos.create.nameLabel')} *</label>
                 <input
                   type="text"
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleChange}
-                  placeholder="Ej: Torneo La Meca 2026"
+                  placeholder={t('torneos.create.namePlaceholder')}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>Deporte *</label>
+                <label>{t('torneos.create.sportLabel')} *</label>
                 <select name="deporte" value={formData.deporte} onChange={handleChange} required>
                   {TORNEO_DEPORTE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
-                      {o.label}
+                      {t(`torneo.deporte.${o.value}`, { defaultValue: o.label })}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Formato (jugadores por equipo) *</label>
+                <label>{t('torneos.create.teamFormatLabel')} *</label>
                 {torneoDeportePermiteSinglesDobles(formData.deporte) ? (
                   <select name="formato_equipo" value={formData.formato_equipo} onChange={handleChange} required>
                     {TORNEO_FORMATO_SINGLES_DOBLES_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
-                        {o.label}
+                        {t(`torneos.create.teamFormat.${o.value}`, { defaultValue: o.label })}
                       </option>
                     ))}
                   </select>
                 ) : (
                   <select name="formato_equipo" value={TORNEO_FORMATO_DOBLES} disabled style={{ opacity: 0.92, cursor: 'not-allowed' }}>
-                    <option value={TORNEO_FORMATO_DOBLES}>Dobles (2v2)</option>
+                    <option value={TORNEO_FORMATO_DOBLES}>{t('torneos.create.teamFormat.dobles')}</option>
                   </select>
                 )}
                 <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Padbol y Pádel: dobles. Pickleball y tenis: singles o dobles.
+                  {t('torneos.create.teamFormatHint')}
                 </small>
               </div>
 
               <div className="form-group">
-                <label>Nivel *</label>
+                <label>{t('torneos.create.levelLabel')} *</label>
                 <select name="nivel_torneo" value={formData.nivel_torneo} onChange={handleChange}>
-                  <option value="club">Club</option>
-                  <option value="club_no_oficial">Club No Oficial</option>
-                  {rol !== 'admin_club' && <option value="club_oficial">Club Oficial</option>}
-                  {rol !== 'admin_club' && <option value="nacional">Nacional</option>}
-                  {rol !== 'admin_club' && <option value="internacional">Internacional</option>}
-                  {rol !== 'admin_club' && <option value="mundial">Mundial</option>}
+                  <option value="club">{t('admin.tournamentLabels.level.club')}</option>
+                  <option value="club_no_oficial">{t('admin.tournamentLabels.level.club_no_oficial')}</option>
+                  {rol !== 'admin_club' && <option value="club_oficial">{t('admin.tournamentLabels.level.club_oficial')}</option>}
+                  {rol !== 'admin_club' && <option value="nacional">{t('admin.tournamentLabels.level.nacional')}</option>}
+                  {rol !== 'admin_club' && <option value="internacional">{t('admin.tournamentLabels.level.internacional')}</option>}
+                  {rol !== 'admin_club' && <option value="mundial">{t('admin.tournamentLabels.level.mundial')}</option>}
                   {tiposCustom.length > 0 && <option disabled>──────────</option>}
                   {tiposCustom.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -473,7 +473,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                 </select>
                 {rol === 'admin_club' && (
                   <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    Los niveles Oficial, Nacional, Internacional y Mundial requieren permisos de Admin Nacional o Super Admin.
+                    {t('torneos.create.restrictedLevelsHint')}
                   </small>
                 )}
               </div>
@@ -487,13 +487,13 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                     onChange={handleChange}
                     id="multisede"
                   />
-                  <label htmlFor="multisede">Multisede (varios países)</label>
+                  <label htmlFor="multisede">{t('torneos.create.multiVenueLabel')}</label>
                 </div>
               )}
 
               {!formData.es_multisede && (
                 <div className="form-group">
-                  <label>Sede *</label>
+                  <label>{t('torneos.create.venueLabel')} *</label>
                   {esAdminClub ? (
                     <>
                       <SedeSearchInput
@@ -506,11 +506,11 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                       />
                       {!sedeSeleccionada ? (
                         <small style={{ color: '#888', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                          Cargando sede…
+                          {t('torneos.create.loadingVenue')}
                         </small>
                       ) : null}
                       <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                        La sede corresponde a tu club y no se puede cambiar desde aquí.
+                        {t('torneos.create.fixedVenueHint')}
                       </small>
                     </>
                   ) : (
@@ -525,116 +525,115 @@ const TorneoCrear = forwardRef(function TorneoCrear({
               )}
 
               <div className="form-group">
-                <label>Tipo de torneo (Masculino / Femenino / Mixto) *</label>
+                <label>{t('torneos.create.competitionTypeLabel')} *</label>
                 <select
                   name="tipo_competencia"
                   value={formData.tipo_competencia}
                   onChange={handleChange}
-                  required aria-label="Tipo de torneo del torneo"
+                  required aria-label={t('torneos.create.competitionTypeAria')}
                 >
                   {TORNEO_TIPO_COMPETENCIA_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>{t(`torneos.vista.genero.${o.value}`, { defaultValue: o.label })}</option>
                   ))}
                 </select>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                  Quién puede inscribirse (Masculino, Femenino o Mixto). Distinto del formato (Round Robin, etc.).
+                  {t('torneos.create.competitionTypeHint')}
                 </small>
               </div>
 
               <div className="form-group">
-                <label>Categoría de edad *</label>
+                <label>{t('torneos.create.ageCategoryLabel')} *</label>
                 <select
                   name="categoria_edad"
                   value={formData.categoria_edad}
                   onChange={handleChange}
-                  required aria-label="Categoría de edad del torneo"
+                  required aria-label={t('torneos.create.ageCategoryAria')}
                 >
                   {TORNEO_CATEGORIA_EDAD_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>{t(`torneos.vista.categoriaEdad.${o.value}`, { defaultValue: o.label })}</option>
                   ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Categoría *</label>
+                <label>{t('torneos.create.categoryLabel')} *</label>
                 <select name="categoria" value={formData.categoria} onChange={handleChange} required>
                   {TORNEO_CATEGORIA_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
-                      {o.label}
+                      {t(`torneos.vista.categoriaNivel.${o.value}`, { defaultValue: o.label })}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Formato *</label>
+                <label>{t('torneos.create.fixtureFormatLabel')} *</label>
                 <select name="tipo_torneo" value={formData.tipo_torneo} onChange={handleChange}>
-                  <option value="round_robin">Round Robin (todos vs todos)</option>
-                  <option value="knockout">Knockout (eliminación directa)</option>
-                  <option value="grupos_knockout">Grupos + Knockout</option>
+                  <option value="round_robin">{t('torneos.tipo.round_robin')}</option>
+                  <option value="knockout">{t('torneos.tipo.knockout')}</option>
+                  <option value="grupos_knockout">{t('torneos.tipo.grupos_knockout')}</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Estado inicial del torneo</label>
+                <label>{t('torneos.create.initialStatusLabel')}</label>
                 <select name="estado" value={formData.estado} onChange={handleChange}>
-                  <option value="proximo">Próximo</option>
-                  <option value="abierto">Inscripción abierta</option>
-                  <option value="en_curso">En curso</option>
-                  <option value="finalizado">Finalizado</option>
-                  <option value="cancelado">Cancelado</option>
+                  <option value="proximo">{t('torneos.vista.estado.proximo')}</option>
+                  <option value="abierto">{t('torneos.vista.estado.abierto')}</option>
+                  <option value="en_curso">{t('torneos.vista.estado.en_curso')}</option>
+                  <option value="finalizado">{t('torneos.vista.estado.finalizado')}</option>
+                  <option value="cancelado">{t('torneos.vista.estado.cancelado')}</option>
                 </select>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                  «Próximo» equivale a planificación; el servidor guarda el valor canónico. Puedes abrir inscripción al crear
-                  o editarlo después en el panel.
+                  {t('torneos.create.initialStatusHint')}
                 </small>
               </div>
 
               {esGruposKnockout && (
                 <>
                   <div className="form-group">
-                    <label>Equipos por grupo *</label>
+                    <label>{t('torneos.create.teamsPerGroupLabel')} *</label>
                     <input
                       type="number"
                       name="equipos_por_grupo"
                       value={formData.equipos_por_grupo}
                       onChange={handleChange}
                       min={2}
-                      placeholder="Ej: 4"
+                      placeholder="4"
                       required
                     />
                   </div>
                   <div className="form-group">
-                    <label>Clasificados por grupo *</label>
+                    <label>{t('torneos.create.qualifiersPerGroupLabel')} *</label>
                     <input
                       type="number"
                       name="clasificados_por_grupo"
                       value={formData.clasificados_por_grupo}
                       onChange={handleChange}
                       min={1}
-                      placeholder="Ej: 2"
+                      placeholder="2"
                       required
                     />
                   </div>
                   <div className="form-group">
-                    <label>Mejores terceros clasificados</label>
+                    <label>{t('torneos.create.bestThirdsLabel')}</label>
                     <input
                       type="number"
                       name="mejores_terceros_clasificados"
                       value={formData.mejores_terceros_clasificados}
                       onChange={handleChange}
                       min={0}
-                      placeholder="0 = ninguno"
+                      placeholder={t('torneos.create.nonePlaceholder')}
                     />
                     <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                      Cantidad de mejores terceros que pasan a la fase final (0 si no aplica).
+                      {t('torneos.create.bestThirdsHint')}
                     </small>
                   </div>
                 </>
               )}
 
               <div className="form-group">
-                <label>Apertura automática de inscripción (opcional)</label>
+                <label>{t('torneos.create.autoOpenLabel')}</label>
                 <input
                   type="datetime-local"
                   name="fecha_apertura_inscripcion"
@@ -642,14 +641,13 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                   onChange={handleChange}
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
-                  Si lo completas, el sistema pasa el torneo a «Inscripción abierta» en esa fecha y hora (torneo en
-                  planificación).
+                  {t('torneos.create.autoOpenHint')}
                 </small>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Fecha Inicio *</label>
+                  <label>{t('torneos.create.startDateLabel')} *</label>
                   <input
                     type="date"
                     name="fecha_inicio"
@@ -659,7 +657,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                   />
                 </div>
                 <div className="form-group">
-                  <label>Fecha Fin *</label>
+                  <label>{t('torneos.create.endDateLabel')} *</label>
                   <input
                     type="date"
                     name="fecha_fin"
@@ -671,26 +669,26 @@ const TorneoCrear = forwardRef(function TorneoCrear({
               </div>
 
               <div className="form-group">
-                <label>Cantidad de Equipos (opcional)</label>
+                <label>{t('torneos.create.teamCountLabel')}</label>
                 <input
                   type="number"
                   name="cantidad_equipos"
                   value={formData.cantidad_equipos}
                   onChange={handleChange}
-                  placeholder="Ej: 8"
+                  placeholder="8"
                   min="2"
                 />
               </div>
 
               <div className="form-group">
-                <label>Inscripción por equipo (opcional)</label>
+                <label>{t('torneos.create.registrationFeeLabel')}</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 96px', gap: '8px' }}>
                   <input
                     type="number"
                     name="inscripcion_monto"
                     value={formData.inscripcion_monto}
                     onChange={handleChange}
-                    placeholder="Vacío = gratis"
+                    placeholder={t('torneos.create.freePlaceholder')}
                     min="0"
                     step="1"
                   />
@@ -698,7 +696,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                     name="inscripcion_moneda"
                     value={formData.inscripcion_moneda}
                     onChange={handleChange}
-                    aria-label="Moneda de inscripción"
+                    aria-label={t('torneos.create.registrationCurrencyAria')}
                   >
                     <option value="ARS">ARS</option>
                     <option value="USD">USD</option>
@@ -706,30 +704,30 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                   </select>
                 </div>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Monto total por equipo. Deja vacío si no hay costo.
+                  {t('torneos.create.registrationFeeHint')}
                 </small>
               </div>
 
               <div className="form-group">
-                <label>Premios (opcional)</label>
+                <label>{t('torneos.create.prizesLabel')}</label>
                 <textarea
                   name="premios_descripcion"
                   value={formData.premios_descripcion}
                   onChange={handleChange}
-                  placeholder="Ej: 1er lugar $50.000, 2do lugar $20.000"
+                  placeholder={t('torneos.create.prizesPlaceholder')}
                   rows={3}
                   style={{ resize: 'vertical' }}
                 />
               </div>
 
               <div className="form-group">
-                <label>Puntos del torneo (opcional)</label>
+                <label>{t('torneos.create.pointsLabel')}</label>
                 <input
                   type="number"
                   name="puntos_total"
                   value={formData.puntos_total}
                   onChange={handleChange}
-                  placeholder="Ej: 1000"
+                  placeholder="1000"
                   min="0"
                   step="1"
                 />
@@ -749,29 +747,29 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                       cursor: 'pointer',
                     }}
                   >
-                    Ver distribución
+                    {t('torneos.create.viewDistribution')}
                   </button>
                 ) : null}
               </div>
 
               <div className="form-group">
-                <label>Cupos máximos de equipos (opcional)</label>
+                <label>{t('torneos.create.maxTeamsLabel')}</label>
                 <input
                   type="number"
                   name="cupos_maximos"
                   value={formData.cupos_maximos}
                   onChange={handleChange}
-                  placeholder="Ej: 16 — para mostrar cupos disponibles en el listado público"
+                  placeholder={t('torneos.create.maxTeamsPlaceholder')}
                   min="1"
                   step="1"
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Si lo defines, en la lista de torneos se muestran los cupos libres según equipos con inscripción confirmada.
+                  {t('torneos.create.maxTeamsHint')}
                 </small>
               </div>
 
               <div className="form-group">
-                <label>Horas antes del inicio para revelar equipos participantes</label>
+                <label>{t('torneos.create.revealHoursLabel')}</label>
                 <input
                   type="number"
                   name="horas_revelar_equipos"
@@ -782,7 +780,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                   step="1"
                 />
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Hasta entonces, en la pestaña Equipos los jugadores ven un mensaje en lugar de la lista (los admins del torneo siempre ven los equipos). Puedes cambiar este valor desde el panel.
+                  {t('torneos.create.revealHoursHint')}
                 </small>
               </div>
 
@@ -790,7 +788,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
               {mensaje && <div className="success-message">{mensaje}</div>}
 
               <button type="submit" disabled={loading} className="btn-submit">
-                {loading ? 'Creando...' : '✅ Crear Torneo'}
+                {loading ? t('torneos.create.creating') : t('torneos.create.submit')}
               </button>
         </form>
       </div>
@@ -847,7 +845,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Crear torneo" />
+      <AppHeader title={t('torneos.create.header')} />
       <div
         style={{
           flex: 1,
