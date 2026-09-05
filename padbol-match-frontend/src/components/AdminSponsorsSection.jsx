@@ -474,7 +474,7 @@ export default function AdminSponsorsSection({
           body: JSON.stringify(payload),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'No se pudo actualizar el sponsor');
+        if (!res.ok) throw new Error(data?.error || t('admin.sponsors.updateFailed'));
         setFieldErrors({});
         setMsg(t('admin.sponsors.sponsorUpdated'));
       } else {
@@ -568,7 +568,7 @@ export default function AdminSponsorsSection({
 
   const torneoLabel = useCallback(
     (torneoRow) => {
-      const sid = torneoRow.sede_id != null ? ` · sede ${torneoRow.sede_id}` : '';
+      const sid = torneoRow.sede_id != null ? ` · ${t('admin.sponsors.venueRef', { id: torneoRow.sede_id })}` : '';
       return `${String(torneoRow.nombre || t('admin.formularios.tournament')).slice(0, 80)} (id ${torneoRow.id})${sid}`;
     },
     [t],
@@ -632,9 +632,9 @@ export default function AdminSponsorsSection({
         >
           {[
             { key: 'max_global', label: t('admin.sponsors.maxGlobal') },
-            { key: 'max_por_sede_starter', label: 'Sponsors por sede — Starter' },
-            { key: 'max_por_sede_pro', label: 'Sponsors por sede — Pro' },
-            { key: 'max_por_sede_elite', label: 'Sponsors por sede — Elite' },
+            { key: 'max_por_sede_starter', label: t('admin.sponsors.maxPerVenueStarter') },
+            { key: 'max_por_sede_pro', label: t('admin.sponsors.maxPerVenuePro') },
+            { key: 'max_por_sede_elite', label: t('admin.sponsors.maxPerVenueElite') },
             { key: 'max_por_nacion', label: t('admin.sponsors.maxPerNation') },
           ].map(({ key, label }) => (
             <div key={key}>
@@ -815,7 +815,7 @@ export default function AdminSponsorsSection({
           placeholder={t('admin.sponsors.seeOffer')}
         />
 
-        <label style={labelStyle}>Descripción corta (opcional, p. ej. hub 3er tiempo)</label>
+        <label style={labelStyle}>{t('admin.sponsors.shortDescriptionOptional')}</label>
         <textarea
           style={{
             ...inputStyle,
@@ -871,7 +871,7 @@ export default function AdminSponsorsSection({
           <div style={{ marginBottom: 12 }}>
             <label style={labelStyle}>{t('admin.sponsors.scopeVenue')}</label>
             <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: 14, fontWeight: 700 }}>
-              {sedesOpts.find((s) => Number(s.id) === venueScopeId)?.nombre || 'Tu sede'}
+              {sedesOpts.find((s) => Number(s.id) === venueScopeId)?.nombre || t('admin.sponsors.myVenue')}
             </p>
           </div>
         ) : (
@@ -901,7 +901,7 @@ export default function AdminSponsorsSection({
           </>
         )}
 
-        <label style={labelStyle}>Formato de visualización</label>
+        <label style={labelStyle}>{t('admin.sponsors.displayFormat')}</label>
         <select
           style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
           value={form.formato}
@@ -1150,8 +1150,8 @@ export default function AdminSponsorsSection({
                   </td>
                   <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
                     {String(r.scope || '')}
-                    {r.sede_id != null ? ` · sede ${r.sede_id}` : ''}
-                    {r.torneo_id != null ? ` · torneo ${r.torneo_id}` : ''}
+                    {r.sede_id != null ? ` · ${t('admin.sponsors.venueRef', { id: r.sede_id })}` : ''}
+                    {r.torneo_id != null ? ` · ${t('admin.sponsors.tournamentRef', { id: r.torneo_id })}` : ''}
                     {r.pais ? ` · ${r.pais}` : ''}
                   </td>
                   <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
