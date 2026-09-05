@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { isChatbotIAVisiblePathname } from '../constants/hubLayout';
-import { publicLandingKnowledgeAnswer } from './ChatbotIA';
+import { inferWritingLocaleCodeFromText, publicLandingKnowledgeAnswer } from './ChatbotIA';
 
 describe('Chivi on the public Padbol Match landing', () => {
   it('is visible on the public landing without expanding to player routes', () => {
@@ -10,6 +10,11 @@ describe('Chivi on the public Padbol Match landing', () => {
     expect(isChatbotIAVisiblePathname('/planes')).toBe(true);
     expect(isChatbotIAVisiblePathname('/jugar')).toBe(false);
     expect(isChatbotIAVisiblePathname('/acceso')).toBe(false);
+  });
+
+  it('sends Romanian questions to the Romanian assistant path', () => {
+    expect(inferWritingLocaleCodeFromText('Vreau să rezerv un teren mâine')).toBe('ro');
+    expect(inferWritingLocaleCodeFromText('Ce turneu este disponibil astăzi?')).toBe('ro');
   });
 
   it('sends explicit public context and renders the AI spark', () => {
@@ -27,5 +32,7 @@ describe('Chivi on the public Padbol Match landing', () => {
     expect(publicLandingKnowledgeAnswer('¿Qué ofrece a las sedes?', 'es')).toMatch(/canchas.*reservas.*torneos/i);
     expect(publicLandingKnowledgeAnswer('¿Tienen reportes contables?', 'es')).toMatch(/no es asesoramiento contable/i);
     expect(publicLandingKnowledgeAnswer('What is available today?', 'en')).toMatch(/available today/i);
+    expect(publicLandingKnowledgeAnswer('Ce oferă cluburilor?', 'ro')).toMatch(/terenuri.*rezervări.*turnee/iu);
+    expect(publicLandingKnowledgeAnswer('Aveți rapoarte contabile?', 'ro')).toMatch(/nu reprezintă consultanță contabilă/iu);
   });
 });

@@ -77,7 +77,7 @@ const API_BASE = (
 
 export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
   const q = String(rawQuestion || '').trim().toLowerCase();
-  const l = locale === 'en' || locale === 'pt' ? locale : 'es';
+  const l = ['en', 'pt', 'ro'].includes(locale) ? locale : 'es';
   const copy = {
     es: {
       venue: 'Para las sedes, Padbol Match integra canchas, horarios, precios, cobros, reservas, jugadores, torneos, resultados y comunicación. También ofrece información operativa y módulos como marcador inteligente, PadCoins y membresías cuando están habilitados.',
@@ -118,18 +118,31 @@ export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
       join: 'Conheça a proposta para sedes em /administradores e inicie a solicitação em /unirse. O canal comercial geral é /contacto.',
       general: 'Padbol Match conecta jogo, operação e comunidade para Padbol, padel, pickleball e tênis. Reúne jogadores, sedes, reservas, partidas, competição, resultados e gestão em uma plataforma.',
     },
+    ro: {
+      venue: 'Pentru cluburi, Padbol Match reunește terenuri, programe, prețuri, plăți, rezervări, jucători, turnee, rezultate și comunicare. Oferă și informații operaționale și module precum tabela inteligentă, PadCoins și abonamente, atunci când sunt activate.',
+      player: 'Jucătorii pot găsi sau crea meciuri, pot ocupa locuri libere, pot rezerva, concura și urmări rezultatele, istoricul, clasamentul și activitatea comunității într-un singur parcurs.',
+      today: 'Administrarea cluburilor, rezervările, meciurile, turneele, clasamentele, comunitatea și tabela inteligentă sunt disponibile astăzi. Arbitrul prin viziune este în etapa de pregătire, iar magazinul rămâne un proiect-pilot.',
+      scoreboard: 'Tabela inteligentă înregistrează meciul în direct și conectează rezultatul la istoric, statistici, clasamente și turnee, atunci când este cazul. Arbitrul bazat pe camere este încă în etapa de pregătire.',
+      reports: 'Padbol Match oferă rezumate și exporturi ale activității clubului. Acestea nu reprezintă consultanță contabilă, fiscală sau juridică; fiecare club folosește informațiile împreună cu specialiștii săi, conform legislației locale.',
+      loyalty: 'PadCoins și abonamentele pot recompensa participarea și pot consolida relația cu clubul atunci când aceste module sunt activate. Clubul își definește beneficiile și condițiile.',
+      commerce: 'Cluburile pot administra oportunitățile de sponsorizare și publicitate. Padbol Match Shop rămâne un proiect-pilot și nu trebuie prezentat ca fiind disponibil integral.',
+      about: 'Padbol Match se bazează pe 18 ani de dezvoltare a Padbolului. Gustavo Miguens a creat Padbol, conduce Federația Internațională de Padbol și a fondat Padbol Match.',
+      price: 'Prețurile și condițiile depind de propunerea pentru fiecare club. Pentru un răspuns comercial concret, folosește canalul de contact Padbol Match de la /contacto.',
+      join: 'Poți vedea propunerea pentru cluburi la /administradores și poți începe solicitarea la /unirse. Canalul comercial general este /contacto.',
+      general: 'Padbol Match conectează jocul, administrarea și comunitatea pentru Padbol, Padel, Pickleball și Tenis. Reunește jucători, cluburi, rezervări, meciuri, competiții, rezultate și administrare într-o singură platformă.',
+    },
   }[l];
 
-  if (/sede|club|venue|court|quadra|administr/.test(q)) return copy.venue;
-  if (/jugador|player|jogador|partido|match|jugar|play|jogar/.test(q)) return copy.player;
-  if (/disponible|available|disponível|hoy|today|hoje|actual/.test(q)) return copy.today;
-  if (/marcador|scoreboard|placar|visión|vision|árbitro|referee/.test(q)) return copy.scoreboard;
-  if (/reporte|report|informe|excel|contab|fiscal|tax|export/.test(q)) return copy.reports;
-  if (/padcoin|membres|beneficio|benefit|fidel/.test(q)) return copy.loyalty;
-  if (/sponsor|publicidad|advert|shop|tienda|loja/.test(q)) return copy.commerce;
-  if (/quién|quien|who|quem|historia|fundador|gustavo/.test(q)) return copy.about;
-  if (/precio|price|preço|costo|cost|plan/.test(q)) return copy.price;
-  if (/sumar|incorpor|join|contact|contacto|hablar|talk|falar/.test(q)) return copy.join;
+  if (/sede|club|venue|court|quadra|teren|administr/.test(q)) return copy.venue;
+  if (/jugador|player|jogador|jucător|partido|match|meci|jugar|play|jogar|joac/.test(q)) return copy.player;
+  if (/disponible|available|disponível|disponibil|hoy|today|hoje|astăzi|actual|acum/.test(q)) return copy.today;
+  if (/marcador|scoreboard|placar|tabel|scor|visión|vision|viziune|árbitro|referee|arbitru/.test(q)) return copy.scoreboard;
+  if (/reporte|report|raport|informe|excel|contab|fiscal|tax|export/.test(q)) return copy.reports;
+  if (/padcoin|membres|abonament|beneficio|benefit|benefici|fidel/.test(q)) return copy.loyalty;
+  if (/sponsor|publicidad|publicitat|advert|shop|tienda|loja|magazin/.test(q)) return copy.commerce;
+  if (/quién|quien|who|quem|cine|historia|istor|fundador|fondator|gustavo/.test(q)) return copy.about;
+  if (/precio|price|preço|preț|costo|cost|plan/.test(q)) return copy.price;
+  if (/sumar|incorpor|join|alătur|înscri|contact|contacto|hablar|talk|falar|vorb/.test(q)) return copy.join;
   return copy.general;
 }
 
@@ -217,6 +230,7 @@ function normalizeUiLocale(raw) {
   if (s.startsWith('es')) return 'es';
   if (s.startsWith('pt')) return 'pt';
   if (s.startsWith('en')) return 'en';
+  if (s.startsWith('ro')) return 'ro';
   return 'es';
 }
 
@@ -243,13 +257,19 @@ function deporteSlugDisplayLabel(slug, loc) {
       tenis: 'Tênis',
       pickleball: 'Pickleball',
     },
+    ro: {
+      padbol: 'Padbol',
+      padel: 'Padel',
+      tenis: 'Tenis',
+      pickleball: 'Pickleball',
+    },
   };
   const m = maps[l] || maps.es;
   return m[s] || s.replace(/_/g, ' ');
 }
 
 /** es|en|pt según el texto escrito por el usuario (heurística alineada con el backend). */
-function inferWritingLocaleCodeFromText(textRaw) {
+export function inferWritingLocaleCodeFromText(textRaw) {
   const text = String(textRaw || '').trim();
   if (!text) return 'es';
   const fold = text
@@ -261,18 +281,22 @@ function inferWritingLocaleCodeFromText(textRaw) {
   let pt = 0;
   let es = 0;
   let en = 0;
+  let ro = 0;
 
   if (/[ãõ]|\b(nao|nao)\b/i.test(text) || /não/i.test(text)) pt += 4;
   if (/ñ|¿|¡/.test(text)) es += 4;
+  if (/[ăâîșțĂÂÎȘȚ]/.test(text)) ro += 4;
   if (/\b(nao|nao|voce|voces|torneio|obrigado|obrigada|quadras|disponivel|tambem|amanha)\b/.test(pad)) pt += 3;
   if (/\b(manana|hoy|cuando|donde|cancha|turno|disponibilidad|quiero|gracias|sedes?|horarios)\b/.test(pad)) es += 3;
   if (/\b(tomorrow|today|when|where|booking|available|slot|courts|tournament|thanks|please|what\s+time|how\s+do)\b/.test(pad)) en += 3;
+  if (/\b(vreau|joc|juca|maine|astăzi|unde|teren|rezervare|multumesc|turneu|disponibil)\b/.test(pad)) ro += 3;
   if (/\b(voce|voces)\b/.test(pad)) pt += 2;
   if (/\b(the|and|with|for)\b/.test(pad)) en += 1;
   if (/\b(el|la|los|las|una|por|para)\b/.test(pad)) es += 1;
 
-  if (pt > es && pt > en) return 'pt';
-  if (en > es && en > pt) return 'en';
+  if (pt > es && pt > en && pt > ro) return 'pt';
+  if (en > es && en > pt && en > ro) return 'en';
+  if (ro > es && ro > pt && ro > en) return 'ro';
   return 'es';
 }
 
@@ -319,6 +343,7 @@ function navigatorLanguageToChatCode(nav) {
   const n = String(nav || 'es').toLowerCase();
   if (n.startsWith('pt')) return 'pt';
   if (n.startsWith('en')) return 'en';
+  if (n.startsWith('ro')) return 'ro';
   return 'es';
 }
 
@@ -863,6 +888,23 @@ export default function ChatbotIA() {
           { label: 'O que oferece às sedes?' },
           { label: 'Como funciona para jogadores?' },
           { label: 'O que está disponível hoje?' },
+        ],
+      };
+    }
+    if (padbolLang === 'ro') {
+      return {
+        ...base,
+        fabOpen: 'Vorbește cu Chivi, asistenta AI Padbol Match',
+        fabCollapsed: 'Chivi AI',
+        fabLine1: 'Ai întrebări?',
+        fabLine2: 'Vorbește cu Chivi AI',
+        placeholder: 'Întreabă despre Padbol Match',
+        welcomeAssistant: () => 'Bună. Sunt Chivi, asistenta AI Padbol Match. Întreabă-mă cum funcționează platforma pentru jucători, cluburi și organizații.',
+        quickSuggestions: [
+          { label: 'Ce este Padbol Match?' },
+          { label: 'Ce oferă cluburilor?' },
+          { label: 'Cum funcționează pentru jucători?' },
+          { label: 'Ce este disponibil astăzi?' },
         ],
       };
     }
