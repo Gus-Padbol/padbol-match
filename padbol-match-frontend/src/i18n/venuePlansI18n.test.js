@@ -41,6 +41,16 @@ describe('venue plans localization', () => {
     expect(portugal.plans.business.features).toHaveLength(7);
   });
 
+  it('provides a complete direct Italian commercial page', () => {
+    const it = venuePlansCopy('it');
+    expect(it.title).toBe('Tutto il tuo club.');
+    expect(it.start).toBe('INIZIA SENZA CANONE');
+    expect(it.padbolOwnerTitle).toContain('Padbol Courts');
+    expect(it.plans.starter.features).toHaveLength(10);
+    expect(it.plans.pro.features).toHaveLength(9);
+    expect(it.plans.business.features).toHaveLength(7);
+  });
+
   it('keeps visible copy out of the page component', () => {
     const source = fs.readFileSync(
       path.join(__dirname, '..', 'pages', 'adminLanding', 'VenuePlansPage.jsx'),
