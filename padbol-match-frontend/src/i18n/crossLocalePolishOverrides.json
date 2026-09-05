@@ -37,6 +37,278 @@
       }
     }
   },
+  "fa-IR": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "مسیر ورزشی‌تان را همراه بیاورید. ما آن را به رسمیت می‌شناسیم",
+        "lead": "مسیر ورزشی شما از همین حالا ارزشمند است. می‌توانید آن را به Padbol Match منتقل کنید، بدون اینکه استفاده از اپلیکیشن فعلی‌تان را کنار بگذارید.",
+        "copy": "هر دو را به‌طور هم‌زمان امتحان کنید: اسکرین‌شات نتایج، تورنمنت‌ها، رتبه‌بندی، آمار و دستاوردهای خود را برای ما بفرستید. آن‌ها را بررسی و اضافه می‌کنیم تا پروفایل شما بازتاب‌دهنده بازیکنی باشد که اکنون هستید.",
+        "ownershipStrong": "از شما نمی‌خواهیم چیزی را کنار بگذارید.",
+        "ownership": "داده‌های شما متعلق به خودتان است و هر زمان بخواهید می‌توانید آن‌ها را منتقل کنید."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "امتیاز را مدیریت و نمایشگر باشگاه را فعال کنید",
+            "text": "امتیاز زنده و فضاهای تبلیغاتی برای حامیان مالی، فروشگاه و بوفه.",
+            "detail": "تابلوی امتیازات مسابقه را ثبت می‌کند و در توقف‌های برنامه‌ریزی‌شده یا هنگام انتظار برای مسابقه بعدی می‌تواند به نمایشگر تجاری تحت مدیریت باشگاه شما تبدیل شود.",
+            "steps": {
+              "1": "مسابقه را با بازیکنان یا تیم‌های شرکت‌کننده آغاز کنید.",
+              "2": "کمپین‌های حامیان مالی، فروشگاه، بوفه یا مزایا را بارگذاری و زمان نمایش آن‌ها را تعیین کنید.",
+              "3": "در زمان استراحت، تعویض زمین، تغییر ست یا پایان مسابقه، نمایشگر کمپین‌ها را به نوبت نشان می‌دهد و به‌طور خودکار به بازی برمی‌گردد."
+            },
+            "result": "نتیجه: اطلاعات مفید برای سابقه و رتبه‌بندی، به‌علاوه یک نمایشگر تجاری قابل‌اندازه‌گیری بدون ایجاد وقفه در مسابقه."
+          }
+        }
+      }
+    }
+  },
+  "nl-BE": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Neem je sportieve traject mee. Wij erkennen het",
+        "lead": "Je sportieve traject heeft nu al waarde. Je kunt het meenemen naar Padbol Match zonder te stoppen met de app die je vandaag gebruikt.",
+        "copy": "Probeer beide naast elkaar: stuur ons screenshots van je resultaten, toernooien, ranking, statistieken en prestaties. We controleren en verwerken ze, zodat je profiel de speler weerspiegelt die je nu al bent.",
+        "ownershipStrong": "We vragen je niet om iets op te geven.",
+        "ownership": "Je gegevens zijn van jou en je kunt ze meenemen wanneer je wilt."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Houd de score bij en activeer het clubscherm",
+            "text": "Livescore en advertentieruimte voor sponsors, shop en horeca.",
+            "detail": "Het scorebord registreert de wedstrijd en kan tijdens geplande pauzes of in afwachting van de volgende wedstrijd veranderen in een commercieel scherm dat je club beheert.",
+            "steps": {
+              "1": "Start de wedstrijd met de deelnemende spelers of teams.",
+              "2": "Upload campagnes voor sponsors, shop, horeca of voordelen en bepaal wanneer ze verschijnen.",
+              "3": "Tijdens pauzes, kantwissels, setwissels of aan het einde toont het scherm afwisselend campagnes en keert het automatisch terug naar de wedstrijd."
+            },
+            "result": "Resultaat: nuttige informatie voor historie en ranking, plus een meetbaar commercieel scherm zonder de wedstrijd te onderbreken."
+          }
+        }
+      }
+    }
+  },
+  "nl-NL": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Neem je sportieve traject mee. Wij erkennen het",
+        "lead": "Je sportieve traject heeft nu al waarde. Je kunt het meenemen naar Padbol Match zonder te stoppen met de app die je vandaag gebruikt.",
+        "copy": "Probeer beide naast elkaar: stuur ons screenshots van je resultaten, toernooien, ranking, statistieken en prestaties. We controleren en verwerken ze, zodat je profiel de speler weerspiegelt die je nu al bent.",
+        "ownershipStrong": "We vragen je niet om iets op te geven.",
+        "ownership": "Je gegevens zijn van jou en je kunt ze meenemen wanneer je wilt."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Houd de score bij en activeer het clubscherm",
+            "text": "Livescore en advertentieruimte voor sponsors, shop en horeca.",
+            "detail": "Het scorebord registreert de wedstrijd en kan tijdens geplande pauzes of in afwachting van de volgende wedstrijd veranderen in een commercieel scherm dat je club beheert.",
+            "steps": {
+              "1": "Start de wedstrijd met de deelnemende spelers of teams.",
+              "2": "Upload campagnes voor sponsors, shop, horeca of voordelen en bepaal wanneer ze verschijnen.",
+              "3": "Tijdens pauzes, kantwissels, setwissels of aan het einde toont het scherm afwisselend campagnes en keert het automatisch terug naar de wedstrijd."
+            },
+            "result": "Resultaat: nuttige informatie voor historie en ranking, plus een meetbaar commercieel scherm zonder de wedstrijd te onderbreken."
+          }
+        }
+      }
+    }
+  },
+  "sv": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Ta med din idrottsresa. Vi erkänner den",
+        "lead": "Din resa har redan ett värde. Du kan ta med den till Padbol Match utan att sluta använda appen du använder i dag.",
+        "copy": "Prova båda parallellt: skicka skärmbilder av dina resultat, turneringar, ranking, statistik och prestationer. Vi granskar och lägger in dem så att din profil speglar den spelare du redan är.",
+        "ownershipStrong": "Vi ber dig inte att lämna något.",
+        "ownership": "Dina uppgifter är dina och du kan ta med dem när du vill."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Hantera ställningen och aktivera klubbens skärm",
+            "text": "Liveresultat och annonsutrymme för sponsorer, butik och servering.",
+            "detail": "Resultattavlan registrerar matchen och kan under planerade pauser eller i väntan på nästa match bli en kommersiell skärm som hanteras av din klubb.",
+            "steps": {
+              "1": "Starta matchen med de deltagande spelarna eller lagen.",
+              "2": "Ladda upp kampanjer för sponsorer, butik, servering eller förmåner och ange när de ska visas.",
+              "3": "Under pauser, sidbyten, setbyten eller vid avslutning växlar skärmen mellan kampanjerna och återgår automatiskt till spelet."
+            },
+            "result": "Resultat: användbar information för historik och ranking samt en mätbar kommersiell skärm utan att avbryta matchen."
+          }
+        }
+      }
+    }
+  },
+  "el": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Μεταφέρετε την αθλητική σας πορεία. Εμείς την αναγνωρίζουμε",
+        "lead": "Η πορεία σας έχει ήδη αξία. Μπορείτε να τη μεταφέρετε στο Padbol Match χωρίς να σταματήσετε να χρησιμοποιείτε την εφαρμογή που χρησιμοποιείτε σήμερα.",
+        "copy": "Δοκιμάστε και τις δύο παράλληλα: στείλτε μας στιγμιότυπα οθόνης με τα αποτελέσματα, τα τουρνουά, την κατάταξη, τα στατιστικά και τα επιτεύγματά σας. Τα ελέγχουμε και τα ενσωματώνουμε, ώστε το προφίλ σας να αντικατοπτρίζει τον παίκτη που είστε ήδη.",
+        "ownershipStrong": "Δεν σας ζητάμε να εγκαταλείψετε τίποτα.",
+        "ownership": "Τα δεδομένα σας σάς ανήκουν και μπορείτε να τα μεταφέρετε όποτε θέλετε."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Διαχειριστείτε το σκορ και ενεργοποιήστε την οθόνη του συλλόγου",
+            "text": "Ζωντανό σκορ και διαφημιστικοί χώροι για χορηγούς, κατάστημα και κυλικείο.",
+            "detail": "Ο πίνακας σκορ καταγράφει τον αγώνα και, στα προγραμματισμένα διαλείμματα ή όσο περιμένει τον επόμενο αγώνα, μπορεί να μετατρέπεται σε εμπορική οθόνη που διαχειρίζεται ο σύλλογός σας.",
+            "steps": {
+              "1": "Ξεκινήστε τον αγώνα με τους συμμετέχοντες παίκτες ή τις ομάδες.",
+              "2": "Ανεβάστε καμπάνιες χορηγών, καταστήματος, κυλικείου ή προνομίων και ορίστε πότε θα εμφανίζονται.",
+              "3": "Στα διαλείμματα, στις αλλαγές πλευράς, στις αλλαγές σετ ή στο τέλος, η οθόνη προβάλλει εναλλάξ τις καμπάνιες και επιστρέφει αυτόματα στο παιχνίδι."
+            },
+            "result": "Αποτέλεσμα: χρήσιμες πληροφορίες για το ιστορικό και την κατάταξη, μαζί με μια μετρήσιμη εμπορική οθόνη χωρίς διακοπή του αγώνα."
+          }
+        }
+      }
+    }
+  },
+  "hu": {
+    "publicSite": {
+      "status": {
+        "items": {
+          "next": {
+            "text": "Minden klub már most kezelheti a szponzori és hirdetési felületeit. A Padbol Match Shop helyi termékek és előnyök kísérleti programjaként halad tovább."
+          }
+        }
+      },
+      "playerRecord": {
+        "title": "Hozd magaddal a sportmúltadat. Mi elismerjük",
+        "lead": "A sportmúltad már most értéket képvisel. Átviheted a Padbol Matchbe anélkül, hogy abbahagynád a jelenleg használt alkalmazás használatát.",
+        "copy": "Próbáld ki a kettőt párhuzamosan: küldj képernyőképeket az eredményeidről, versenyeidről, ranglistádról, statisztikáidról és sikereidről. Ellenőrizzük és beépítjük őket, hogy a profilod azt a játékost tükrözze, aki már most is vagy.",
+        "ownershipStrong": "Nem kérjük, hogy bármiről lemondj.",
+        "ownership": "Az adataid a tieid, és bármikor magaddal viheted őket."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Kezeld az eredményt, és aktiváld a klub képernyőjét",
+            "text": "Élő eredmény és hirdetési felületek szponzoroknak, üzletnek és büfének.",
+            "detail": "Az eredményjelző rögzíti a mérkőzést, és a tervezett szünetekben vagy a következő mérkőzésre várva a klubod által kezelt kereskedelmi képernyővé válhat.",
+            "steps": {
+              "1": "Indítsd el a mérkőzést a részt vevő játékosokkal vagy csapatokkal.",
+              "2": "Tölts fel szponzori, üzleti, büfé- vagy kedvezménykampányokat, és állítsd be, mikor jelenjenek meg.",
+              "3": "Szünetekben, térfélcserénél, szettváltásnál vagy a végén a képernyő váltogatja a kampányokat, majd automatikusan visszatér a játékhoz."
+            },
+            "result": "Eredmény: hasznos információk az előzményekhez és a ranglistához, valamint mérhető kereskedelmi képernyő a mérkőzés megszakítása nélkül."
+          }
+        }
+      }
+    }
+  },
+  "he": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "הביאו את המסלול הספורטיבי שלכם. אנחנו מכירים בו",
+        "lead": "למסלול שלכם כבר יש ערך. אפשר להעביר אותו ל-Padbol Match בלי להפסיק להשתמש באפליקציה שבה אתם משתמשים כיום.",
+        "copy": "נסו את שתיהן במקביל: שלחו לנו צילומי מסך של התוצאות, הטורנירים, הדירוג, הנתונים וההישגים שלכם. נבדוק ונשלב אותם כדי שהפרופיל שלכם ישקף את השחקנים שאתם כבר היום.",
+        "ownershipStrong": "אנחנו לא מבקשים מכם לוותר על דבר.",
+        "ownership": "הנתונים שלכם שייכים לכם, ותוכלו להעביר אותם בכל עת."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "נהלו את התוצאה והפעילו את מסך המועדון",
+            "text": "תוצאה חיה ושטחי פרסום לנותני חסות, לחנות ולמזנון.",
+            "detail": "לוח התוצאות מתעד את המשחק, ובהפסקות המתוכננות או בזמן ההמתנה למשחק הבא הוא יכול להפוך למסך מסחרי שמנוהל בידי המועדון שלכם.",
+            "steps": {
+              "1": "התחילו את המשחק עם השחקנים או הקבוצות המשתתפים.",
+              "2": "העלו קמפיינים של נותני חסות, החנות, המזנון או הטבות, והגדירו מתי הם יוצגו.",
+              "3": "בהפסקות, בהחלפת צדדים, בהחלפת מערכות או בסיום, המסך מציג את הקמפיינים לסירוגין וחוזר אוטומטית למשחק."
+            },
+            "result": "תוצאה: מידע שימושי להיסטוריה ולדירוג, לצד מסך מסחרי מדיד בלי להפריע למשחק."
+          }
+        }
+      }
+    }
+  },
+  "pl": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Przenieś swoją sportową historię. My ją uznamy",
+        "lead": "Twoja sportowa droga już ma wartość. Możesz przenieść ją do Padbol Match bez rezygnowania z aplikacji, której używasz dzisiaj.",
+        "copy": "Wypróbuj obie równolegle: prześlij nam zrzuty ekranu swoich wyników, turniejów, rankingu, statystyk i osiągnięć. Sprawdzimy je i uwzględnimy, aby Twój profil odzwierciedlał zawodnika, którym już jesteś.",
+        "ownershipStrong": "Nie prosimy Cię, żebyś z czegokolwiek rezygnował.",
+        "ownership": "Twoje dane należą do Ciebie i możesz je przenieść w dowolnym momencie."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Prowadź wynik i aktywuj ekran klubu",
+            "text": "Wynik na żywo i przestrzeń reklamowa dla sponsorów, sklepu i bufetu.",
+            "detail": "Tablica wyników rejestruje mecz, a podczas zaplanowanych przerw lub oczekiwania na kolejne spotkanie może zmienić się w ekran reklamowy zarządzany przez Twój klub.",
+            "steps": {
+              "1": "Rozpocznij spotkanie z uczestniczącymi zawodnikami lub drużynami.",
+              "2": "Dodaj kampanie sponsorów, sklepu, bufetu lub korzyści i określ, kiedy mają się wyświetlać.",
+              "3": "Podczas przerw, zmian stron, zmian setów lub po zakończeniu ekran wyświetla naprzemiennie kampanie i automatycznie wraca do meczu."
+            },
+            "result": "Wynik: przydatne informacje do historii i rankingu oraz mierzalny ekran reklamowy bez przerywania meczu."
+          }
+        }
+      }
+    }
+  },
+  "uk": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Перенесіть свій спортивний шлях. Ми його визнаємо",
+        "lead": "Ваш спортивний шлях уже має цінність. Ви можете перенести його до Padbol Match, не припиняючи користуватися застосунком, яким користуєтеся сьогодні.",
+        "copy": "Спробуйте обидва паралельно: надішліть нам знімки екрана ваших результатів, турнірів, рейтингу, статистики та досягнень. Ми перевіримо й додамо їх, щоб ваш профіль відображав гравця, яким ви вже є.",
+        "ownershipStrong": "Ми не просимо вас відмовлятися від чогось.",
+        "ownership": "Ваші дані належать вам, і ви можете перенести їх у будь-який момент."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Ведіть рахунок і активуйте екран клубу",
+            "text": "Рахунок наживо та рекламні місця для спонсорів, магазину й буфету.",
+            "detail": "Табло фіксує матч і під час запланованих перерв або очікування наступної зустрічі може перетворюватися на комерційний екран, яким керує ваш клуб.",
+            "steps": {
+              "1": "Розпочніть матч з гравцями або командами-учасниками.",
+              "2": "Завантажте кампанії спонсорів, магазину, буфету чи переваг і визначте, коли вони відображатимуться.",
+              "3": "Під час перерв, зміни сторін, зміни сетів або завершення екран почергово показує кампанії та автоматично повертається до гри."
+            },
+            "result": "Результат: корисна інформація для історії та рейтингу, а також вимірюваний комерційний екран без переривання матчу."
+          }
+        }
+      }
+    }
+  },
+  "af": {
+    "publicSite": {
+      "hero": {
+        "globe": {
+          "aria": "Padbol Match se wêreldwye netwerk wat spelers, klubs, wedstryde, die gemeenskap, toernooie, die slim telbord en sportsoorte verbind."
+        }
+      },
+      "playerRecord": {
+        "title": "Bring jou sportreis saam. Ons erken dit",
+        "lead": "Jou sportreis het reeds waarde. Jy kan dit na Padbol Match bring sonder om op te hou om die app te gebruik wat jy vandag gebruik.",
+        "copy": "Probeer albei parallel: stuur vir ons skermskote van jou uitslae, toernooie, ranglys, statistieke en prestasies. Ons verifieer en voeg dit by sodat jou profiel die speler weerspieël wat jy reeds is.",
+        "ownershipStrong": "Ons vra jou nie om enigiets prys te gee nie.",
+        "ownership": "Jou data behoort aan jou en jy kan dit enige tyd saamneem."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Hou die telling en aktiveer die klubskerm",
+            "text": "Regstreekse telling en advertensieruimte vir borge, winkel en kafeteria.",
+            "detail": "Die telbord teken die wedstryd aan en kan tydens beplande pouses of terwyl dit vir die volgende wedstryd wag, 'n kommersiële skerm word wat deur jou klub bestuur word.",
+            "steps": {
+              "1": "Begin die wedstryd met die deelnemende spelers of spanne.",
+              "2": "Laai veldtogte vir borge, winkel, kafeteria of voordele op en bepaal wanneer hulle verskyn.",
+              "3": "Tydens pouses, kantwisselings, stelwisselings of aan die einde wys die skerm veldtogte om die beurt en keer dit outomaties terug na die wedstryd."
+            },
+            "result": "Uitkoms: nuttige inligting vir geskiedenis en ranglys, plus 'n meetbare kommersiële skerm sonder om die wedstryd te onderbreek."
+          }
+        }
+      }
+    }
+  },
   "de": {
     "publicSite": {
       "playerRecord": {

@@ -12,6 +12,16 @@ function flatten(value, prefix = '', output = {}) {
 describe('Cross-locale editorial corrections', () => {
   test.each([
     ['ar', /لقطات شاشة.*نتائجك.*بطولاتك/iu, /حملات.*الرعاة/iu],
+    ['fa-IR', /اسکرین‌شات.*نتایج.*تورنمنت/iu, /کمپین.*حامیان مالی/iu],
+    ['nl-BE', /screenshots.*resultaten.*toernooien/iu, /campagnes.*sponsors/iu],
+    ['nl-NL', /screenshots.*resultaten.*toernooien/iu, /campagnes.*sponsors/iu],
+    ['sv', /skärmbilder.*resultat.*turneringar/iu, /kampanjer.*sponsorer/iu],
+    ['el', /στιγμιότυπα οθόνης.*αποτελέσματα.*τουρνουά/iu, /καμπάνιες.*χορηγών/iu],
+    ['hu', /képernyőképeket.*eredményeidről.*versenyeidről/iu, /szponzori.*kampányokat/iu],
+    ['he', /צילומי מסך.*התוצאות.*הטורנירים/iu, /קמפיינים.*חסות/iu],
+    ['pl', /zrzuty ekranu.*wyników.*turniejów/iu, /kampanie.*sponsorów/iu],
+    ['uk', /знімки екрана.*результатів.*турнірів/iu, /кампанії.*спонсорів/iu],
+    ['af', /skermskote.*uitslae.*toernooie/iu, /veldtogte.*borge/iu],
     ['de', /Screenshots.*Ergebnisse.*Turniere/iu, /Kampagnen.*Sponsoren/iu],
     ['fr', /captures d'écran.*résultats.*tournois/iu, /campagnes.*sponsors/iu],
     ['it', /schermate.*risultati.*tornei/iu, /campagne.*sponsor/iu],
@@ -30,5 +40,12 @@ describe('Cross-locale editorial corrections', () => {
     const resolved = flatten(i18n.getResourceBundle('cs', 'translation'));
     expect(resolved['publicSite.playerRecord.copy']).toMatch(/snímky obrazovky.*výsledků.*turnajů/iu);
     expect(resolved['publicSite.playerRecord.ownershipStrong']).toMatch(/Nežádáme.*vzdali/iu);
+  });
+
+  it('keeps isolated Hungarian and Afrikaans public fields aligned', () => {
+    const hungarian = flatten(i18n.getResourceBundle('hu', 'translation'));
+    const afrikaans = flatten(i18n.getResourceBundle('af', 'translation'));
+    expect(hungarian['publicSite.status.items.next.text']).toMatch(/szponzori.*hirdetési.*Padbol Match Shop/iu);
+    expect(afrikaans['publicSite.hero.globe.aria']).toMatch(/spelers.*klubs.*wedstryde.*toernooie/iu);
   });
 });
