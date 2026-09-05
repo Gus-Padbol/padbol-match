@@ -445,9 +445,9 @@ export default function MiPerfil() {
   const avisoPerfilTorneoMsg = useMemo(
     () =>
       (location.state && location.state.avisoPerfilTorneo) ||
-      (torneoIdValido ? 'Completa tu perfil para participar en torneos' : '') ||
-      (redirectAfterAuth ? 'Completa tu perfil (incluido WhatsApp) para continuar.' : ''),
-    [location.state, torneoIdValido, redirectAfterAuth]
+      (torneoIdValido ? t('perfil.flow.completeForTournament') : '') ||
+      (redirectAfterAuth ? t('perfil.flow.completeToContinue') : ''),
+    [location.state, torneoIdValido, redirectAfterAuth, t]
   );
 
   /** Sin fila o faltan datos obligatorios (foto no obligatoria). */
@@ -1097,9 +1097,9 @@ export default function MiPerfil() {
       });
     } catch (err) {
       console.error(err);
-      setErrorMsg(String(err?.message || 'No se pudo recortar la imagen.'));
+      setErrorMsg(String(err?.message || t('perfil.flow.cropFailed')));
     }
-  }, [cropImageSrc, cerrarModalRecorte]);
+  }, [cropImageSrc, cerrarModalRecorte, t]);
 
   const handlePhotoSelected = (e) => {
     setFotoAccionModalOpen(false);
@@ -1107,7 +1107,7 @@ export default function MiPerfil() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!String(file.type || '').startsWith('image/')) {
-      setErrorMsg('Elige un archivo de imagen.');
+      setErrorMsg(t('perfil.flow.chooseImageFile'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -1137,7 +1137,7 @@ export default function MiPerfil() {
 
     try {
       if (pendingFoto.size > 2 * 1024 * 1024) {
-        setErrorMsg('La imagen supera los 2MB.');
+        setErrorMsg(t('perfil.flow.imageOver2mb'));
         return;
       }
       const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
@@ -1147,7 +1147,7 @@ export default function MiPerfil() {
         .from(AVATAR_STORAGE_BUCKET)
         .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
       if (upErr) {
-        setErrorMsg(`No se pudo subir la foto: ${upErr.message}`);
+        setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
         return;
       }
       const {
@@ -1250,7 +1250,7 @@ export default function MiPerfil() {
         return;
       }
       if (!perfil) {
-        setErrorMsg('No encontramos tu ficha de jugador.');
+        setErrorMsg(t('perfil.flow.playerRecordNotFound'));
         return;
       }
 
@@ -1331,7 +1331,7 @@ export default function MiPerfil() {
         fe.genero = t('perfil.selectGender');
       }
       if (!String(formData.lateralidad || '').trim()) {
-        fe.lateralidad = 'Selecciona lateralidad.';
+        fe.lateralidad = t('perfil.flow.selectLaterality');
       }
 
       const emRaw = emailRegistro.trim();
@@ -1542,7 +1542,7 @@ export default function MiPerfil() {
       setErrorMsg(
         mensajeErrorJugadoresPerfilDuplicado(err) ||
           mensajeErrorDbSupabase(err) ||
-          'Error al registrar la cuenta.'
+          t('perfil.flow.registrationFailed')
       );
     } finally {
       perfilSubmitLockRef.current = false;
@@ -1579,7 +1579,7 @@ export default function MiPerfil() {
         fe.genero = t('perfil.selectGender');
       }
       if (!String(formData.nivel || '').trim()) fe.nivel = t('perfil.selectCategory');
-      if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Selecciona lateralidad.';
+      if (!String(formData.lateralidad || '').trim()) fe.lateralidad = t('perfil.flow.selectLaterality');
       if (Object.keys(fe).length) {
         setFichaFieldErrors(fe);
         return;
@@ -1673,7 +1673,7 @@ export default function MiPerfil() {
       const pendingFoto = pendingFotoFileRef.current;
       if (pendingFoto) {
         if (pendingFoto.size > 2 * 1024 * 1024) {
-          setErrorMsg('La imagen supera los 2MB.');
+          setErrorMsg(t('perfil.flow.imageOver2mb'));
           return;
         }
         const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
@@ -1683,7 +1683,7 @@ export default function MiPerfil() {
           .from(AVATAR_STORAGE_BUCKET)
           .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
         if (upErr) {
-          setErrorMsg(`No se pudo subir la foto: ${upErr.message}`);
+          setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
           return;
         }
         const {
@@ -1764,7 +1764,7 @@ export default function MiPerfil() {
         body: JSON.stringify({ reservaId: r.id, email: owner }),
       });
       const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Error al cancelar');
+      if (!resp.ok) throw new Error(data.error || t('perfil.flow.cancelFailed'));
       if (data.credito) {
         alert(t('perfil.cancelCreditAlert', { amount: Number(data.credito.monto).toLocaleString('es-AR') }));
       } else {
@@ -1992,7 +1992,7 @@ export default function MiPerfil() {
               </select>
               {regErrP('genero')}
 
-              <label style={guestLabelStyle}>¿Cómo quieres que te llamemos?</label>
+              <label style={guestLabelStyle}>{t('perfil.displayName')}</label>
               <input
                 type="text"
                 name="apodo"
@@ -2305,7 +2305,7 @@ export default function MiPerfil() {
               <input
                 type="text"
                 name="localidad"
-                placeholder="Ej: La Plata, Buenos Aires, Madrid..."
+                placeholder={t('perfil.flow.cityPlaceholder')}
                 value={formData.localidad}
                 onChange={handleChange}
                 style={{ ...guestInputStyle, marginBottom: '14px' }}
@@ -2325,7 +2325,7 @@ export default function MiPerfil() {
                   debounceMs={320}
                   minChars={2}
                   inputStyle={guestInputStyle}
-                  aria-label="Buscar club habitual"
+                  aria-label={t('perfil.flow.searchUsualClub')}
                 />
               </div>
 
@@ -2472,7 +2472,7 @@ export default function MiPerfil() {
                   opacity: isSubmitting ? 0.65 : 1,
                 }}
               >
-                {isSubmitting ? 'Guardando...' : registroPasoDeportes === 0 ? 'Continuar' : torneoIdValido ? 'Guardar y volver al torneo' : t('auth.registerTitle')}
+                {isSubmitting ? 'Guardando...' : registroPasoDeportes === 0 ? 'Continuar' : torneoIdValido ? t('perfil.flow.saveReturnTournament') : t('auth.registerTitle')}
               </button>
             </form>
           </div>
@@ -2611,7 +2611,7 @@ export default function MiPerfil() {
           <div style={{ color: '#e11b22', fontSize: 11, fontWeight: 900, letterSpacing: '.11em', textTransform: 'uppercase' }}>
             Tu juego no empieza de cero
           </div>
-          <h3 style={{ margin: '8px 0', color: 'var(--text-primary)', fontSize: 21 }}>Traé tu recorrido. Lo reconocemos.</h3>
+          <h3 style={{ margin: '8px 0', color: 'var(--text-primary)', fontSize: 21 }}>{t('perfil.flow.bringHistoryTitle')}</h3>
           <p style={{ margin: '0 0 14px', color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: 14 }}>
             Subí capturas de tu ranking, categoría, partidos, torneos o logros. Las revisamos y te avisamos dentro de las próximas 24 horas. Tus datos son tuyos y podrás llevártelos cuando quieras.
           </p>
@@ -2655,7 +2655,7 @@ export default function MiPerfil() {
         />
         <button
           type="button"
-          aria-label="Cambiar foto de perfil"
+          aria-label={t('perfil.flow.changeProfilePhoto')}
           onClick={() => {
             if (!sessionOwnerEmail) {
               fileInputRef.current?.click();
@@ -2761,7 +2761,7 @@ export default function MiPerfil() {
               boxShadow: guardandoFoto ? 'none' : '0 4px 12px rgba(21,128,61,0.35)',
             }}
           >
-            {guardandoFoto ? 'Guardando…' : 'Guardar foto'}
+            {guardandoFoto ? t('perfil.flow.saving') : t('perfil.flow.savePhoto')}
           </button>
         ) : null}
 
@@ -3068,7 +3068,7 @@ export default function MiPerfil() {
             </select>
             {fichErrP('genero')}
 
-            <label style={labelStyle}>¿Cómo quieres que te llamemos?</label>
+            <label style={labelStyle}>{t('perfil.displayName')}</label>
             <input
               type="text"
               name="apodo"
@@ -3292,7 +3292,7 @@ export default function MiPerfil() {
             </select>
             {fichErrP('lateralidad')}
 
-            <label style={labelStyle}>Categoría {reqAst}</label>
+            <label style={labelStyle}>{t('perfil.categoryLabel')} {reqAst}</label>
             <select
               name="nivel"
               value={formData.nivel}
@@ -3347,7 +3347,7 @@ export default function MiPerfil() {
             <input
               type="text"
               name="localidad"
-              placeholder="Ej: La Plata, Buenos Aires, Madrid..."
+              placeholder={t('perfil.flow.cityPlaceholder')}
               value={formData.localidad}
               onChange={handleChange}
               style={{ ...inputStyle, marginBottom: '14px' }}
@@ -3367,7 +3367,7 @@ export default function MiPerfil() {
                 debounceMs={320}
                 minChars={2}
                 inputStyle={inputStyle}
-                aria-label="Buscar club habitual"
+                aria-label={t('perfil.flow.searchUsualClub')}
               />
             </div>
 
@@ -3452,7 +3452,7 @@ export default function MiPerfil() {
                   onBlur={() => {
                     window.setTimeout(() => setCompaneroMenuAbierto(false), 180);
                   }}
-                  placeholder="Buscar por nombre o alias..."
+                  placeholder={t('perfil.flow.searchPlayer')}
                   autoComplete="off"
                   spellCheck={false}
                   style={{ ...inputStyle, marginBottom: 0 }}
@@ -3563,7 +3563,7 @@ export default function MiPerfil() {
             <label style={labelStyle}>{t('perfil.birthDate')}</label>
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
-            <label style={labelStyle}>N° FIPA (número de federación)</label>
+            <label style={labelStyle}>{t('perfil.fipaNumberLong')}</label>
             <input type="text" name="numero_fipa" placeholder="Ej: 12345" value={formData.numero_fipa} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
             <label style={{ ...labelStyle, marginBottom: '8px' }}>{t('perfil.federatedQuestion')}</label>
@@ -3605,7 +3605,7 @@ export default function MiPerfil() {
                 {isSubmitting
                   ? 'Guardando...'
                   : torneoIdValido
-                    ? 'Guardar y volver al torneo'
+                    ? t('perfil.flow.saveReturnTournament')
                     : '✅ Guardar'}
               </button>
               <button
@@ -3725,7 +3725,7 @@ export default function MiPerfil() {
                   {isSubmitting
                     ? 'Guardando...'
                     : torneoIdValido
-                      ? 'Guardar y volver al torneo'
+                      ? t('perfil.flow.saveReturnTournament')
                       : '✅ Guardar'}
                 </button>
               </div>
@@ -4115,7 +4115,7 @@ export default function MiPerfil() {
                   cursor: 'pointer',
                 }}
               >
-                {mostrarTodosTorneosMiPerfil ? 'Ver menos' : 'Ver todos'}
+                {mostrarTodosTorneosMiPerfil ? t('perfil.flow.showLess') : t('perfil.flow.showAll')}
               </button>
             </div>
           ) : null}
@@ -4329,7 +4329,7 @@ export default function MiPerfil() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {misClases.map((c) => {
               const asistioLabel =
-                c.asistio === true ? '✅ Asistió' : c.asistio === false ? '❌ No asistió' : '— Pendiente';
+                c.asistio === true ? t('perfil.flow.attended') : c.asistio === false ? t('perfil.flow.notAttended') : t('perfil.flow.attendancePending');
               const hora = normalizeHoraClase(c.hora_inicio) || c.hora_inicio || '—';
               return (
                 <div
@@ -4366,7 +4366,7 @@ export default function MiPerfil() {
         title={t("perfil.cancelBookingTitle")}
         message={t("perfil.cancelBookingBody")}
         confirmLabel={t("perfil.cancelBookingConfirm")}
-        dismissLabel="No, mantener la reserva"
+        dismissLabel={t('perfil.flow.keepBooking')}
         onDismiss={() => setReservaCancelModal(null)}
         onConfirm={() => {
           const r = reservaCancelModal;
