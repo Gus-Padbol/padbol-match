@@ -328,6 +328,86 @@ const ROMANIAN_LOCALE_OVERRIDES = {
       contactHelp: 'Ai nevoie de ajutor? Contactează-ne',
     },
     paths: { aria: 'Parcursuri' },
+    venueAdmin: {
+      eyebrow: 'Administrarea clubului',
+      title: 'Administrează-ți clubul, pas cu pas',
+      text: 'Descoperă întregul flux operațional înainte de a te alătura. Fiecare modul are un rol clar și o configurare ghidată.',
+      openDetail: 'Vezi pașii', close: 'Închide detaliile',
+      next: {
+        title: 'Adaugă-ți clubul în Padbol Match',
+        text: 'Descoperă instrumentele și modul în care îți poți adăuga clubul în Padbol Match. Când ești gata, poți deschide aplicația.',
+        apply: 'Adaugă clubul meu',
+      },
+      items: {
+        setup: {
+          title: 'Configurează-ți clubul',
+          detail: 'Creează profilul operațional al clubului, astfel încât jucătorii și echipa ta să folosească aceleași informații.',
+          result: 'Rezultat: un club pregătit să publice disponibilitatea și să primească rezervări.',
+        },
+        bookings: {
+          title: 'Administrează rezervările',
+          detail: 'Organizează disponibilitatea terenurilor și urmărește fiecare rezervare, de la solicitare până la încheiere.',
+          result: 'Rezultat: rezervarea este taxată când meciul complet este confirmat, conform regulilor clubului.',
+        },
+        players: {
+          title: 'Activează jucătorii',
+          detail: 'Transformă solicitările și jucătorii ocazionali într-o comunitate care revine în clubul tău.',
+          result: 'Rezultat: mai multă activitate vizibilă și jucători conectați la clubul tău.',
+        },
+        competition: {
+          title: 'Creează competiții',
+          text: 'Turnee, echipe, intervale, rezultate și clasamente ale clubului.',
+          detail: 'Organizează competiții cu reguli clare, de la înscriere până la rezultatele finale.',
+          result: 'Rezultat: un turneu bine organizat pentru jucători, arbitri și echipa clubului.',
+        },
+        scoreboard: {
+          title: 'Folosește tabela inteligentă',
+          text: 'Pornește, urmărește, corectează și încheie rezultatele conectate la istoric.',
+          detail: 'Înregistrează meciul în direct, astfel încât rezultatul să alimenteze administrarea, istoricul și competiția.',
+          result: 'Rezultat: date utile pentru istoric, clasament, turnee și administrare.',
+        },
+        loyalty: {
+          text: 'PadCoins și abonamente, atunci când sunt activate pentru clubul tău.',
+          detail: 'Recompensează participarea comunității cu beneficii controlate de club, atunci când modulele sunt active.',
+          result: 'Rezultat: o relație recurentă și măsurabilă cu jucătorii clubului.',
+        },
+      },
+    },
+    communityMatches: {
+      title: 'Jocul începe înainte să intri pe teren',
+      text: 'Padbol Match îți permite să creezi meciuri, să găsești jucători, să intri în meciuri deschise și să completezi echipele într-o singură comunitate. Cluburile câștigă activitate reală atunci când intenția de a juca este confirmată.',
+      mockMeta: 'Club · Astăzi la 19:30', mockAction: 'Solicită un loc',
+      mockOccupancy: 'Grad de ocupare', mockCompleteWhenFull: 'Când toate locurile sunt ocupate',
+      mockSlotsComplete: 'Toate locurile sunt ocupate: rezervarea este confirmată.',
+      mockReleaseNote: 'Dacă meciul nu se completează, rezervarea este eliberată cu 8 ore înainte.',
+      mockFull: 'Toate locurile sunt ocupate',
+      mockStatuses: {
+        looking: 'Se caută {{count}} jucători', playerConfirmed: 'Un jucător confirmat',
+        matchConfirmed: 'Meci confirmat',
+      },
+      steps: {
+        create: { title: 'Creează și publică', text: 'Configurează meciul: club, oră, nivel și locuri disponibile.' },
+        publish: { title: 'Găsește și solicită', text: 'Jucătorii descoperă meciul deschis și solicită să participe.' },
+        join: { title: 'Completează echipele', text: 'Acceptă solicitări, ocupă locurile și comunică cu grupul.' },
+        confirm: { title: 'Confirmă și joacă', text: 'Notificările și confirmările transformă intenția în activitate reală pentru club.' },
+      },
+    },
+    smartScoreboard: {
+      title: 'Tabela inteligentă: meciul în direct',
+      text: 'Tabela inteligentă înregistrează deja meciul în direct și păstrează rezultatul conectat la jucători, competiții și activitatea clubului.',
+      demoAria: 'Demonstrație vizuală a tabelei inteligente',
+      futureAccess: {
+        text: 'Acces prin recunoaștere facială și credit PadCoins chiar din momentul sosirii la club.',
+        imageAlt: 'Intrare în club prin recunoaștere facială',
+      },
+      steps: {
+        start: { title: 'Selectează jucătorii', text: 'Selectează jucătorii sau echipele și deschide tabela.' },
+        live: { title: 'Urmărește în direct', text: 'Înregistrează puncte, seturi și scorul parțial pe măsură ce se desfășoară meciul.' },
+        correct: { title: 'Corectează o acțiune', text: 'Ajustează un punct sau un set atunci când este necesar.' },
+        close: { title: 'Încheie rezultatul pe ecran', text: 'Confirmă scorul final și păstrează datele relevante.' },
+        connect: { title: 'Conectează rezultatul', text: 'Meciul alimentează istoricul, statisticile, clasamentul și turneele, atunci când este cazul.' },
+      },
+    },
   },
 };
 
