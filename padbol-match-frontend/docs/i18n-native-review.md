@@ -14,7 +14,7 @@ Este documento prepara la validación humana de Padbol Match web. Español e ing
 | nl-BE | Nederlands (België) | LTR | Borrador con respaldo inglés | A confirmar |
 | fr | Français | LTR | Borrador con respaldo inglés | A confirmar |
 | it | Italiano | LTR | Borrador con respaldo inglés | A confirmar |
-| ro | Română | LTR | Borrador con respaldo inglés | Elisabeta / a confirmar |
+| ro | Română | LTR | Borrador directo completo · 3.010/3.010 campos · revisión nativa pendiente | Elisabeta / a confirmar |
 | nl-NL | Nederlands (Nederland) | LTR | Borrador con respaldo inglés | A confirmar |
 | sv | Svenska | LTR | Borrador con respaldo inglés | A confirmar |
 | pt-BR | Português (Brasil) | LTR | Borrador con respaldo inglés | A confirmar |
@@ -30,6 +30,7 @@ Este documento prepara la validación humana de Padbol Match web. Español e ing
 ## Situación técnica verificada
 
 - El selector ya contempla las 20 ediciones y conserva portugués y neerlandés por región.
+- Rumano ya dispone de texto directo para los 3.010 campos de la web pública y la aplicación interna; no depende del respaldo inglés.
 - Checo ya dispone de un borrador directo para toda la web pública y la aplicación interna, sin respaldo inglés.
 - Las claves todavía no traducidas muestran inglés en lugar de una clave técnica o una mezcla silenciosa con español.
 - Los 17 catálogos públicos generados ya incluyen los 371 textos directos, incluidas las ocho incorporaciones más recientes.

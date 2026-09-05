@@ -1,4 +1,19 @@
 {
+  "admin": {
+    "canchas": "Terenuri",
+    "metrics": { "courtsToday": "Terenurile mele astăzi" },
+    "formularios": { "courtsCol": "Terenuri" },
+    "sedes": {
+      "courtNameExamplePh": "Ex.: Terenul 1",
+      "addCourt": "Adaugă teren",
+      "editCourt": "Editează terenul"
+    },
+    "reservas": { "courtNumberPrefix": "Teren" },
+    "metricas": { "courtCol": "Teren" }
+  },
+  "hub": {
+    "card": { "reservarSub": "Am deja echipa, vreau să rezerv un teren." }
+  },
   "publicSite": {
     "experiences": { "preview": { "club": "Padbol Club Nord" } },
     "smartScoreboard": { "demoBadge": "În direct" }

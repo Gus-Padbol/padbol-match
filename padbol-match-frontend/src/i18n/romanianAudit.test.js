@@ -42,4 +42,19 @@ describe('Romanian audit', () => {
     expect(missingDirect).toEqual([]);
     expect(identicalResolved.sort()).toEqual(ROMANIAN_IDENTICAL_ALLOWLIST);
   });
+
+  it('does not expose legal or basketball mistranslations for the playing court', () => {
+    const resolved = flatten(i18n.getResourceBundle('ro', 'translation'));
+    const forbidden = Object.entries(resolved)
+      .filter(([, value]) => /\b(?:tribunal(?:ul|e|ele|elor)?|instan(?:ță|ţa|te|ței)|baschet)\b/iu.test(value));
+    expect(forbidden).toEqual([]);
+  });
+
+  it('keeps the international Padbol Court name wherever the source uses it', () => {
+    const english = flatten(en);
+    const resolved = flatten(i18n.getResourceBundle('ro', 'translation'));
+    const missingBrand = Object.keys(english)
+      .filter((key) => english[key].includes('Padbol Court') && !resolved[key]?.includes('Padbol Court'));
+    expect(missingBrand).toEqual([]);
+  });
 });
