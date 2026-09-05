@@ -58,6 +58,27 @@
   "reservas": {
     "payAtVenueBody": "Acest club acceptă plata la fața locului. Nu te redirecționăm către Mercado Pago sau către plata cu cardul: după confirmare, rezervarea rămâne în așteptare până când plătești la club."
   },
+  "sedes": {
+    "listado": {
+      "header": "Cluburi",
+      "reserveTitle": "Rezervă un Padbol Court",
+      "exploreTitle": "Explorează cluburile",
+      "nearbyTitle": "Cluburi din apropiere",
+      "sortedByDistance": "Sortate după distanță",
+      "showingAllCourts": "Se afișează toate Padbol Courts",
+      "fullCatalog": "Catalog complet (ordine alfabetică)",
+      "sportFilter": "Disciplină: {{sport}}",
+      "searchPlaceholder": "Caută după nume, oraș sau țară…",
+      "loading": "Se încarcă cluburile…",
+      "noSearchResults": "Nu există rezultate pentru această căutare.",
+      "noVenues": "Momentan nu există cluburi disponibile.",
+      "logoAlt": "Sigla {{name}}",
+      "openVenue": "Atinge cardul pentru a vedea clubul",
+      "joinClub": "Vrei să adaugi clubul tău?",
+      "fromTime": "De la {{time}}",
+      "untilTime": "Până la {{time}}"
+    }
+  },
   "hub": {
     "card": { "reservarSub": "Am deja echipa, vreau să rezerv un teren." }
   },

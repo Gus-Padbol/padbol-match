@@ -505,6 +505,25 @@
     "guardado": "Precio guardado"
   },
   "sedes": {
+    "listado": {
+      "header": "Sedes",
+      "reserveTitle": "Reservá tu Padbol Court",
+      "exploreTitle": "Explorá sedes",
+      "nearbyTitle": "Clubes cerca de vos",
+      "sortedByDistance": "Ordenadas por distancia",
+      "showingAllCourts": "Mostrando todas las Padbol Courts",
+      "fullCatalog": "Catálogo completo (orden alfabético)",
+      "sportFilter": "Deporte: {{sport}}",
+      "searchPlaceholder": "Buscá por nombre, ciudad o país…",
+      "loading": "Cargando sedes…",
+      "noSearchResults": "No hay resultados para esa búsqueda.",
+      "noVenues": "No hay sedes habilitadas por el momento.",
+      "logoAlt": "Logo de {{name}}",
+      "openVenue": "Tocá la tarjeta para ver la sede",
+      "joinClub": "¿Querés sumar tu club?",
+      "fromTime": "Desde {{time}}",
+      "untilTime": "Hasta {{time}}"
+    },
     "publica": {
       "deportesDisponibles": "Deportes disponibles",
       "licenciaActiva": "Licencia Padbol activa",

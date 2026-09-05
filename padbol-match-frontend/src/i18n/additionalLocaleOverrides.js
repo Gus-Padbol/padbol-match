@@ -1717,6 +1717,16 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         canchasLibres: "volné", calendarPrevMonth: "Předchozí měsíc", calendarNextMonth: "Následující měsíc",
       },
       sedes: {
+        listado: {
+          header: "Kluby", reserveTitle: "Rezervovat Padbol Court", exploreTitle: "Prozkoumat kluby",
+          nearbyTitle: "Kluby ve vašem okolí", sortedByDistance: "Seřazeno podle vzdálenosti",
+          showingAllCourts: "Zobrazeny všechny Padbol Courts", fullCatalog: "Úplný katalog (abecedně)",
+          sportFilter: "Disciplína: {{sport}}", searchPlaceholder: "Hledat podle názvu, města nebo země…",
+          loading: "Načítání klubů…", noSearchResults: "Pro toto hledání nejsou žádné výsledky.",
+          noVenues: "Momentálně nejsou dostupné žádné kluby.", logoAlt: "Logo {{name}}",
+          openVenue: "Klepnutím na kartu zobrazíte klub", joinClub: "Chcete přidat svůj klub?",
+          fromTime: "Od {{time}}", untilTime: "Do {{time}}",
+        },
         publica: {
           deportesDisponibles: "Dostupné sporty", licenciaActiva: "Aktivní licence Padbol",
           reservarTurno: "Rezervovat termín", verTorneos: "Zobrazit turnaje", infoTitulo: "Informace",

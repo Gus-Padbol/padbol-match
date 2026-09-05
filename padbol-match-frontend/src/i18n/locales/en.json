@@ -481,6 +481,25 @@
     "guardado": "Price saved"
   },
   "sedes": {
+    "listado": {
+      "header": "Venues",
+      "reserveTitle": "Book your Padbol Court",
+      "exploreTitle": "Explore venues",
+      "nearbyTitle": "Clubs near you",
+      "sortedByDistance": "Sorted by distance",
+      "showingAllCourts": "Showing all Padbol Courts",
+      "fullCatalog": "Full catalog (alphabetical order)",
+      "sportFilter": "Sport: {{sport}}",
+      "searchPlaceholder": "Search by name, city or country…",
+      "loading": "Loading venues…",
+      "noSearchResults": "No results for this search.",
+      "noVenues": "No venues are available at the moment.",
+      "logoAlt": "{{name}} logo",
+      "openVenue": "Tap the card to view the venue",
+      "joinClub": "Want to add your club?",
+      "fromTime": "From {{time}}",
+      "untilTime": "Until {{time}}"
+    },
     "publica": {
       "deportesDisponibles": "Sports available",
       "licenciaActiva": "Active Padbol license",
