@@ -24,6 +24,7 @@ import SPANISH_PADCOINS_EXPERIENCE_OVERRIDES from './spanishPadcoinsExperienceOv
 import SPANISH_POLISH_OVERRIDES from './spanishPolishOverrides.json';
 import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
 import NATIVE_SHARED_LOCALE_OVERRIDES from './nativeSharedLocaleOverrides.json';
+import CROSS_LOCALE_POLISH_OVERRIDES from './crossLocalePolishOverrides.json';
 import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
 const STORAGE_KEY = 'padbol_lang';
@@ -71,15 +72,16 @@ const englishBackedLocale = (code, baseLocale = {}) => {
     ? mergeLocale(base, { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] })
     : base;
   const withAdditionalOverrides = mergeLocale(withPublicSite, ADDITIONAL_LOCALE_OVERRIDES[code]);
+  const withCrossLocalePolish = mergeLocale(withAdditionalOverrides, CROSS_LOCALE_POLISH_OVERRIDES[code]);
   if (code === 'ro') {
-    return ROMANIAN_LOCALE_LAYERS.reduce((locale, layer) => mergeLocale(locale, layer), withAdditionalOverrides);
+    return ROMANIAN_LOCALE_LAYERS.reduce((locale, layer) => mergeLocale(locale, layer), withCrossLocalePolish);
   }
-  if (code === 'cs') return mergeLocale(withAdditionalOverrides, CZECH_POLISH_OVERRIDES);
+  if (code === 'cs') return mergeLocale(withCrossLocalePolish, CZECH_POLISH_OVERRIDES);
   if (code === 'es') {
     return [SPANISH_PADCOINS_CORE_OVERRIDES, SPANISH_PADCOINS_EXPERIENCE_OVERRIDES, SPANISH_POLISH_OVERRIDES]
-      .reduce((locale, layer) => mergeLocale(locale, layer), withAdditionalOverrides);
+      .reduce((locale, layer) => mergeLocale(locale, layer), withCrossLocalePolish);
   }
-  return withAdditionalOverrides;
+  return withCrossLocalePolish;
 };
 
 i18n

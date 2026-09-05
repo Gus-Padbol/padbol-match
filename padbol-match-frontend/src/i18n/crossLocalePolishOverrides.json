@@ -1,0 +1,132 @@
+{
+  "de": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Bringen Sie Ihren sportlichen Weg mit. Wir erkennen ihn an",
+        "lead": "Ihr bisheriger Weg hat bereits Wert. Sie können ihn zu Padbol Match mitbringen, ohne die App aufzugeben, die Sie heute nutzen.",
+        "copy": "Testen Sie beides parallel: Senden Sie uns Screenshots Ihrer Ergebnisse, Turniere, Rangliste, Statistiken und Erfolge. Wir prüfen und übernehmen sie, damit Ihr Profil den Spieler widerspiegelt, der Sie bereits sind.",
+        "ownershipStrong": "Wir verlangen nicht, dass Sie etwas aufgeben.",
+        "ownership": "Ihre Daten gehören Ihnen und Sie können sie jederzeit mitnehmen."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Spielstand führen und Bildschirm aktivieren",
+            "text": "Live-Spielstand und Werbeflächen für Sponsoren, Shop und Gastronomie.",
+            "detail": "Die Anzeigetafel zeichnet das Spiel auf und kann in vorgesehenen Pausen oder während sie auf die nächste Begegnung wartet zu einem von Ihrem Club verwalteten Werbebildschirm werden.",
+            "steps": {
+              "1": "Starten Sie die Begegnung mit den teilnehmenden Spielern oder Teams.",
+              "2": "Laden Sie Kampagnen für Sponsoren, Shop, Gastronomie oder Vorteile hoch und legen Sie fest, wann sie erscheinen.",
+              "3": "In Pausen, bei Seiten- und Satzwechseln oder zum Abschluss wechselt der Bildschirm durch die Kampagnen und kehrt automatisch zum Spiel zurück."
+            },
+            "result": "Ergebnis: nützliche Informationen für Verlauf und Rangliste sowie ein messbarer Werbebildschirm, ohne das Spiel zu unterbrechen."
+          }
+        }
+      }
+    }
+  },
+  "fr": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Apportez votre parcours. Nous le reconnaissons",
+        "lead": "Votre parcours a déjà de la valeur. Vous pouvez l'importer dans Padbol Match sans cesser d'utiliser l'application que vous utilisez aujourd'hui.",
+        "copy": "Testez les deux en parallèle : envoyez-nous des captures d'écran de vos résultats, tournois, classement, statistiques et réussites. Nous les vérifions et les intégrons afin que votre profil reflète le joueur que vous êtes déjà.",
+        "ownershipStrong": "Nous ne vous demandons de rien abandonner.",
+        "ownership": "Vos données vous appartiennent et vous pouvez les emporter à tout moment."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Gérez le score et activez l'écran du club",
+            "text": "Score en direct et espaces publicitaires pour les sponsors, la boutique et la buvette.",
+            "detail": "Le tableau de score enregistre le match et, pendant les pauses prévues ou dans l'attente de la rencontre suivante, peut devenir un écran publicitaire géré par votre club.",
+            "steps": {
+              "1": "Démarrez la rencontre avec les joueurs ou les équipes participantes.",
+              "2": "Chargez les campagnes des sponsors, de la boutique, de la buvette ou des avantages et définissez quand elles apparaissent.",
+              "3": "Pendant les pauses, les changements de côté, les changements de set ou à la fin, l'écran fait défiler les campagnes puis revient automatiquement au jeu."
+            },
+            "result": "Résultat : des informations utiles pour l'historique et le classement, ainsi qu'un écran publicitaire mesurable sans interrompre le match."
+          }
+        }
+      }
+    }
+  },
+  "it": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Porta con te il tuo percorso. Noi lo riconosciamo",
+        "lead": "Il tuo percorso ha già valore. Puoi portarlo in Padbol Match senza smettere di usare l'app che utilizzi oggi.",
+        "copy": "Provale entrambe in parallelo: inviaci schermate dei tuoi risultati, tornei, classifica, statistiche e traguardi. Le verifichiamo e le integriamo, così il tuo profilo riflette il giocatore che sei già.",
+        "ownershipStrong": "Non ti chiediamo di rinunciare a nulla.",
+        "ownership": "I tuoi dati ti appartengono e puoi portarli con te quando vuoi."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Gestisci il punteggio e attiva lo schermo del club",
+            "text": "Punteggio in diretta e spazi pubblicitari per sponsor, shop e punto ristoro.",
+            "detail": "Il tabellone registra la partita e, nelle pause previste o mentre attende l'incontro successivo, può diventare uno schermo pubblicitario gestito dal tuo club.",
+            "steps": {
+              "1": "Avvia l'incontro con i giocatori o le squadre partecipanti.",
+              "2": "Carica le campagne di sponsor, shop, punto ristoro o vantaggi e definisci quando mostrarle.",
+              "3": "Durante le pause, i cambi di campo, i cambi di set o alla fine, lo schermo alterna le campagne e torna automaticamente alla partita."
+            },
+            "result": "Risultato: informazioni utili per lo storico e la classifica, oltre a uno schermo pubblicitario misurabile senza interrompere la partita."
+          }
+        }
+      }
+    }
+  },
+  "pt-BR": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Traga sua trajetória. Nós a reconhecemos",
+        "lead": "Sua trajetória já tem valor. Você pode trazê-la para o Padbol Match sem deixar de usar o aplicativo que usa hoje.",
+        "copy": "Experimente os dois em paralelo: envie capturas de tela dos seus resultados, torneios, ranking, estatísticas e conquistas. Nós analisamos e incorporamos tudo para que seu perfil represente o jogador que você já é.",
+        "ownershipStrong": "Não pedimos que você abandone nada.",
+        "ownership": "Seus dados são seus e você pode levá-los quando quiser."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Controle o placar e ative a tela do clube",
+            "text": "Placar ao vivo e espaços publicitários para patrocinadores, loja e lanchonete.",
+            "detail": "O placar registra a partida e, nas pausas programadas ou enquanto aguarda o próximo jogo, pode se transformar em uma tela comercial administrada pelo seu clube.",
+            "steps": {
+              "1": "Inicie a partida com os jogadores ou equipes participantes.",
+              "2": "Carregue campanhas de patrocinadores, loja, lanchonete ou benefícios e defina quando elas serão exibidas.",
+              "3": "Nos intervalos, nas trocas de lado, nas mudanças de set ou no encerramento, a tela alterna as campanhas e volta automaticamente ao jogo."
+            },
+            "result": "Resultado: informações úteis para o histórico e o ranking, além de uma tela comercial mensurável sem interromper a partida."
+          }
+        }
+      }
+    }
+  },
+  "pt-PT": {
+    "publicSite": {
+      "playerRecord": {
+        "title": "Traga o seu percurso. Nós reconhecemo-lo",
+        "lead": "O seu percurso já tem valor. Pode trazê-lo para o Padbol Match sem deixar de usar a aplicação que utiliza atualmente.",
+        "copy": "Experimente ambas em paralelo: envie-nos capturas dos seus resultados, torneios, classificação, estatísticas e conquistas. Nós verificamo-las e incorporamo-las para que o seu perfil reflita o jogador que já é.",
+        "ownershipStrong": "Não lhe pedimos que abandone nada.",
+        "ownership": "Os seus dados são seus e pode levá-los consigo quando quiser."
+      },
+      "venueAdmin": {
+        "items": {
+          "scoreboard": {
+            "title": "Gerir o marcador e ativar o ecrã do clube",
+            "text": "Resultado em direto e espaços publicitários para patrocinadores, loja e bar.",
+            "detail": "O marcador regista o encontro e, nas pausas previstas ou enquanto aguarda o encontro seguinte, pode tornar-se num ecrã comercial gerido pelo seu clube.",
+            "steps": {
+              "1": "Inicie o encontro com os jogadores ou equipas participantes.",
+              "2": "Carregue campanhas de patrocinadores, loja, bar ou benefícios e defina quando são apresentadas.",
+              "3": "Nos intervalos, nas mudanças de lado, nas mudanças de set ou no final, o ecrã alterna as campanhas e regressa automaticamente ao jogo."
+            },
+            "result": "Resultado: informação útil para o histórico e a classificação, além de um ecrã comercial mensurável sem interromper o encontro."
+          }
+        }
+      }
+    }
+  }
+}
