@@ -2593,6 +2593,26 @@
       "ipTitle": "Intellectual property", "ipPrefix": "The name", "ipMiddle": "is a registered trademark of", "ipSuffix": " (International Padbol Federation). The app's content, including its design, text, Padbol Match logos and software, is protected and may not be copied or redistributed without authorization.",
       "lawTitle": "Governing law", "lawBody": "These terms are governed by the laws of the State of Florida, United States, without prejudice to mandatory consumer rights that may apply in other countries.",
       "contactTitle": "Contact", "contactBody": "Questions about these terms:"
+    },
+    "privacyPage": {
+      "title": "Privacy Policy", "lead": "We clearly explain what data Padbol Match uses and why. You can contact us at any time.",
+      "dataTitle": "Data we collect", "dataIntro": "Depending on how you use your account and profile, we may process:",
+      "dataName": "First and last name", "dataEmail": "Email address", "dataPhone": "Phone and WhatsApp number",
+      "dataProfile": "Gender or other sports-profile information you provide", "dataPhoto": "Profile photo, if you upload one",
+      "dataActivity": "Booking history and tournament participation within the platform",
+      "dataTechnical": "Minimum technical data, such as device type or security logs, required to provide the service",
+      "useTitle": "How we use your data", "useBookings": "Manage Padbol Court bookings and related payments",
+      "useTournaments": "Organize tournaments and register participants", "useNotifications": "Send service-related notifications, including confirmations, changes and reminders",
+      "useCommunity": "Provide community and sports matchmaking features when enabled in the app", "useSecurity": "Improve security, prevent fraud and comply with legal obligations",
+      "noSaleTitle": "We do not sell your data", "noSaleBody": "We do not sell your personal information to third parties for marketing unrelated to Padbol Match. We share data only where necessary to provide the service, for example with the venue where you booked, or where required by law.",
+      "paymentsTitle": "Payments: Mercado Pago and Stripe", "paymentsBody": "Payments may be processed through Mercado Pago and/or Stripe. These providers receive only the data required for the transaction and apply their own privacy and security policies:",
+      "privacyPolicyLink": "privacy policy", "privacyCenterLink": "privacy center",
+      "deletionTitle": "Your right to delete your account and data", "deletionPrefix": "You can start the request from My Profile or view the complete process under",
+      "deletionMiddle": ". If you cannot sign in, you can also write from the email address associated with your account to",
+      "deletionSuffix": ". Some data may be retained for the period required by law, such as accounting records or claims.",
+      "cookiesTitle": "Cookies and similar technologies", "cookiesBody": "We use only the cookies and local storage required for the session to function, remember basic preferences and keep the app secure. We do not use third-party advertising cookies for commercial profiling.",
+      "gdprTitle": "Users in Europe (GDPR)", "gdprBody": "If you live in the European Economic Area or the United Kingdom, you generally have rights under the GDPR: to access and correct your data, restrict or object to certain processing, request portability where applicable and lodge a complaint with your country's data-protection authority. To exercise these rights, write to the contact address below.",
+      "contactTitle": "Privacy contact", "contactBody": "Questions about this policy or your data:"
     }
   },
   "ranking": {

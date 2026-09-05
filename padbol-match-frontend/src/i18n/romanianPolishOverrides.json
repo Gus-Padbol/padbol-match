@@ -140,6 +140,26 @@
       "ipTitle": "Proprietate intelectuală", "ipPrefix": "Denumirea", "ipMiddle": "este marcă înregistrată a", "ipSuffix": " (Federația Internațională de Padbol). Conținutul aplicației, inclusiv designul, textele, siglele proprii Padbol Match și software-ul, este protejat și nu poate fi copiat sau redistribuit fără autorizație.",
       "lawTitle": "Legea aplicabilă", "lawBody": "Acești termeni sunt guvernați de legile statului Florida, Statele Unite, fără a aduce atingere drepturilor obligatorii ale consumatorilor care se pot aplica în alte țări.",
       "contactTitle": "Date de contact", "contactBody": "Întrebări despre acești termeni:"
+    },
+    "privacyPage": {
+      "title": "Politica de confidențialitate", "lead": "Îți explicăm clar ce date utilizează Padbol Match și în ce scopuri. Ne poți contacta oricând.",
+      "dataTitle": "Datele pe care le colectăm", "dataIntro": "În funcție de modul în care folosești contul și profilul, putem prelucra:",
+      "dataName": "Numele și prenumele", "dataEmail": "Adresa de e-mail", "dataPhone": "Numărul de telefon și de WhatsApp",
+      "dataProfile": "Genul sau alte informații despre profilul sportiv pe care le furnizezi", "dataPhoto": "Fotografia de profil, dacă o încarci",
+      "dataActivity": "Istoricul rezervărilor și participarea la turnee în cadrul platformei",
+      "dataTechnical": "Datele tehnice minime, precum tipul dispozitivului sau jurnalele de securitate, necesare furnizării serviciului",
+      "useTitle": "Cum folosim datele tale", "useBookings": "Gestionarea rezervărilor de Padbol Courts și a plăților asociate",
+      "useTournaments": "Organizarea turneelor și înscrierea participanților", "useNotifications": "Trimiterea notificărilor legate de serviciu, inclusiv confirmări, modificări și mementouri",
+      "useCommunity": "Furnizarea funcțiilor de comunitate și de găsire a partenerilor sportivi atunci când sunt activate în aplicație", "useSecurity": "Îmbunătățirea securității, prevenirea fraudei și respectarea obligațiilor legale",
+      "noSaleTitle": "Nu vindem datele tale", "noSaleBody": "Nu vindem informațiile tale personale unor terți pentru activități de marketing fără legătură cu Padbol Match. Distribuim date numai atunci când este necesar pentru furnizarea serviciului, de exemplu clubului la care ai făcut rezervarea, sau când legea o impune.",
+      "paymentsTitle": "Plăți: Mercado Pago și Stripe", "paymentsBody": "Plățile pot fi procesate prin Mercado Pago și/sau Stripe. Acești furnizori primesc numai datele necesare tranzacției și aplică propriile politici de confidențialitate și securitate:",
+      "privacyPolicyLink": "politica de confidențialitate", "privacyCenterLink": "centrul de confidențialitate",
+      "deletionTitle": "Dreptul de a-ți șterge contul și datele", "deletionPrefix": "Poți iniția solicitarea din Profilul meu sau poți consulta procesul complet la",
+      "deletionMiddle": ". Dacă nu te poți autentifica, poți scrie și de la adresa de e-mail asociată contului tău la",
+      "deletionSuffix": ". Unele date pot fi păstrate pe perioada impusă de lege, de exemplu evidențe contabile sau reclamații.",
+      "cookiesTitle": "Cookie-uri și tehnologii similare", "cookiesBody": "Folosim numai cookie-urile și stocarea locală necesare funcționării sesiunii, memorării preferințelor de bază și menținerii securității aplicației. Nu folosim cookie-uri publicitare ale terților pentru profilare comercială.",
+      "gdprTitle": "Utilizatori din Europa (GDPR)", "gdprBody": "Dacă locuiești în Spațiul Economic European sau în Regatul Unit, ai în general drepturile recunoscute de GDPR: accesul la date, rectificarea lor, restricționarea sau opoziția față de anumite prelucrări, portabilitatea atunci când se aplică și depunerea unei plângeri la autoritatea pentru protecția datelor din țara ta. Pentru exercitarea acestor drepturi, scrie-ne la adresa de contact de mai jos.",
+      "contactTitle": "Contact pentru confidențialitate", "contactBody": "Întrebări despre această politică sau despre datele tale:"
     }
   },
   "paises": {

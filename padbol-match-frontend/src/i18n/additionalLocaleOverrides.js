@@ -1647,6 +1647,26 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
           lawTitle: "Rozhodné právo", lawBody: "Tyto podmínky se řídí právem státu Florida ve Spojených státech, aniž jsou dotčena kogentní práva spotřebitelů, která mohou platit v jiných zemích.",
           contactTitle: "Kontakt", contactBody: "Dotazy k těmto podmínkám:"
         },
+        privacyPage: {
+          title: "Zásady ochrany soukromí", lead: "Srozumitelně vysvětlujeme, jaké údaje Padbol Match používá a za jakým účelem. Kdykoli nás můžete kontaktovat.",
+          dataTitle: "Údaje, které shromažďujeme", dataIntro: "Podle toho, jak používáte účet a profil, můžeme zpracovávat:",
+          dataName: "Jméno a příjmení", dataEmail: "E-mailovou adresu", dataPhone: "Telefonní číslo a číslo WhatsApp",
+          dataProfile: "Pohlaví nebo jiné vámi uvedené informace o sportovním profilu", dataPhoto: "Profilovou fotografii, pokud ji nahrajete",
+          dataActivity: "Historii rezervací a účast na turnajích v rámci platformy",
+          dataTechnical: "Minimální technické údaje, například typ zařízení nebo bezpečnostní záznamy, nezbytné k poskytování služby",
+          useTitle: "Jak vaše údaje používáme", useBookings: "Správa rezervací Padbol Courts a souvisejících plateb",
+          useTournaments: "Organizace turnajů a registrace účastníků", useNotifications: "Zasílání oznámení souvisejících se službou, včetně potvrzení, změn a připomenutí",
+          useCommunity: "Poskytování komunitních funkcí a hledání sportovních spoluhráčů, jsou-li v aplikaci aktivní", useSecurity: "Zvyšování bezpečnosti, předcházení podvodům a plnění právních povinností",
+          noSaleTitle: "Vaše údaje neprodáváme", noSaleBody: "Vaše osobní údaje neprodáváme třetím stranám pro marketing nesouvisející s Padbol Match. Údaje sdílíme pouze tehdy, je-li to nutné k poskytnutí služby, například s klubem, kde jste rezervovali, nebo pokud to vyžaduje zákon.",
+          paymentsTitle: "Platby: Mercado Pago a Stripe", paymentsBody: "Platby mohou být zpracovávány prostřednictvím Mercado Pago a/nebo Stripe. Tito poskytovatelé obdrží pouze údaje nezbytné pro transakci a uplatňují vlastní zásady ochrany soukromí a bezpečnosti:",
+          privacyPolicyLink: "zásady ochrany soukromí", privacyCenterLink: "centrum ochrany soukromí",
+          deletionTitle: "Právo smazat účet a údaje", deletionPrefix: "Žádost můžete zahájit v části Můj profil nebo si přečíst celý postup na stránce",
+          deletionMiddle: ". Pokud se nemůžete přihlásit, můžete také napsat z e-mailové adresy přidružené k účtu na",
+          deletionSuffix: ". Některé údaje mohou být uchovány po dobu vyžadovanou zákonem, například účetní záznamy nebo reklamace.",
+          cookiesTitle: "Soubory cookie a podobné technologie", cookiesBody: "Používáme pouze soubory cookie a místní úložiště nezbytné pro fungování relace, zapamatování základních preferencí a zabezpečení aplikace. Pro komerční profilování nepoužíváme reklamní soubory cookie třetích stran.",
+          gdprTitle: "Uživatelé v Evropě (GDPR)", gdprBody: "Pokud žijete v Evropském hospodářském prostoru nebo ve Spojeném království, máte obecně práva uznaná GDPR: přístup k údajům a jejich opravu, omezení či vznesení námitky proti určitému zpracování, přenositelnost, je-li použitelná, a možnost podat stížnost u úřadu pro ochranu osobních údajů ve vaší zemi. Chcete-li tato práva uplatnit, napište na níže uvedenou kontaktní adresu.",
+          contactTitle: "Kontakt pro ochranu soukromí", contactBody: "Dotazy k těmto zásadám nebo vašim údajům:"
+        },
       },
       landing: {
         heroLine1: "Zrozeno s Padbolem.", heroLine2: "Nyní pro každý sport.",

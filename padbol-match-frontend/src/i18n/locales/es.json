@@ -2286,6 +2286,26 @@
       "ipTitle": "Propiedad intelectual", "ipPrefix": "El nombre", "ipMiddle": "es marca registrada de", "ipSuffix": " (Federación Internacional de Padbol). Los contenidos de la aplicación, incluidos el diseño, los textos, los logos propios de Padbol Match y el software, están protegidos y no pueden copiarse ni redistribuirse sin autorización.",
       "lawTitle": "Ley aplicable", "lawBody": "Estos términos se rigen por las leyes del Estado de Florida, Estados Unidos, sin perjuicio de los derechos imperativos que correspondan a consumidores en otros países.",
       "contactTitle": "Contacto", "contactBody": "Consultas sobre estos términos:"
+    },
+    "privacyPage": {
+      "title": "Política de Privacidad", "lead": "Te explicamos claramente qué datos usamos en Padbol Match y con qué fines. Podés contactarnos cuando quieras.",
+      "dataTitle": "Qué datos recolectamos", "dataIntro": "Según cómo uses la cuenta y el perfil, podemos tratar, entre otros:",
+      "dataName": "Nombre y apellido", "dataEmail": "Correo electrónico", "dataPhone": "Teléfono y número de WhatsApp",
+      "dataProfile": "Género u otra información de perfil deportivo que indiques", "dataPhoto": "Foto de perfil, si la subís",
+      "dataActivity": "Historial de reservas y participación en torneos dentro de la plataforma",
+      "dataTechnical": "Datos técnicos mínimos, como el tipo de dispositivo o registros de seguridad, necesarios para prestar el servicio",
+      "useTitle": "Para qué usamos tus datos", "useBookings": "Gestionar reservas de Padbol Courts y pagos asociados",
+      "useTournaments": "Organizar torneos e inscribir participantes", "useNotifications": "Enviarte notificaciones relacionadas con el servicio, como confirmaciones, cambios y recordatorios",
+      "useCommunity": "Ofrecer funciones de comunidad y búsqueda de compañeros deportivos cuando estén habilitadas en la aplicación", "useSecurity": "Mejorar la seguridad, prevenir el fraude y cumplir obligaciones legales",
+      "noSaleTitle": "No vendemos tus datos", "noSaleBody": "No vendemos tu información personal a terceros para que realicen marketing ajeno a Padbol Match. Solo compartimos datos cuando es necesario para prestar el servicio, por ejemplo con la sede donde reservaste, o cuando la ley lo exige.",
+      "paymentsTitle": "Pagos: Mercado Pago y Stripe", "paymentsBody": "Los cobros pueden procesarse mediante Mercado Pago y/o Stripe. Esos proveedores reciben solo los datos necesarios para la transacción y aplican sus propias políticas de privacidad y seguridad:",
+      "privacyPolicyLink": "política de privacidad", "privacyCenterLink": "centro de privacidad",
+      "deletionTitle": "Derecho a eliminar tu cuenta y tus datos", "deletionPrefix": "Podés iniciar la solicitud desde Mi perfil o consultar el proceso completo en",
+      "deletionMiddle": ". Si no podés ingresar, también podés escribir desde el correo asociado a tu cuenta a",
+      "deletionSuffix": ". Algunos datos pueden conservarse durante el plazo que exija la ley, por ejemplo registros contables o reclamos.",
+      "cookiesTitle": "Cookies y tecnologías similares", "cookiesBody": "Usamos solo las cookies y el almacenamiento local necesarios para que la sesión funcione, recordar preferencias básicas y mantener segura la aplicación. No usamos cookies publicitarias de terceros con fines de perfilado comercial.",
+      "gdprTitle": "Usuarios en Europa (GDPR)", "gdprBody": "Si residís en el Espacio Económico Europeo o en el Reino Unido, en general tenés derechos reconocidos por el RGPD (GDPR): acceder a tus datos, rectificarlos, limitar u oponerte a ciertos tratamientos, solicitar portabilidad cuando corresponda y presentar una reclamación ante la autoridad de protección de datos de tu país. Para ejercer estos derechos, escribinos al correo de contacto indicado abajo.",
+      "contactTitle": "Contacto por privacidad", "contactBody": "Consultas sobre esta política o sobre tus datos:"
     }
   },
   "ranking": {
