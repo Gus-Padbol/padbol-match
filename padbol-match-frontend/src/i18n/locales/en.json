@@ -1841,6 +1841,14 @@
     "padcoins": {
       "from": "From",
       "until": "Until",
+      "validation": {
+        "nameRequired": "Name is required",
+        "costPositive": "PadCoins cost must be greater than 0",
+        "totalStockNonNegative": "Total stock cannot be negative",
+        "availableStockNonNegative": "Available stock cannot be negative",
+        "availableStockOverTotal": "Available stock cannot exceed total stock",
+        "invalidDateRange": "Start date cannot be after end date"
+      },
       "campaignType": {
         "multiplier": "Multiplier",
         "percentage_override": "Temporary percentage",

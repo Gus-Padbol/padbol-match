@@ -809,6 +809,13 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         roles: { invitePendingSignup: "Pozván — čeká na registraci", editorScopeLabel: "Hlavní panel hráče (karty)" },
         padcoins: {
           from: "Od", until: "Do",
+          validation: {
+            nameRequired: "Název je povinný", costPositive: "Cena v PadCoins musí být vyšší než 0",
+            totalStockNonNegative: "Celková zásoba nesmí být záporná",
+            availableStockNonNegative: "Dostupná zásoba nesmí být záporná",
+            availableStockOverTotal: "Dostupná zásoba nesmí překročit celkovou zásobu",
+            invalidDateRange: "Datum zahájení nesmí být pozdější než datum ukončení",
+          },
           campaignType: {
             multiplier: "Násobitel", percentage_override: "Dočasné procento",
             fixed_padcoins: "Pevné PadCoins", benefit_equivalent: "Ekvivalent výhody",

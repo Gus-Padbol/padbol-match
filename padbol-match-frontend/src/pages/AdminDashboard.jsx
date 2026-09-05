@@ -1069,11 +1069,11 @@ const EMPTY_PREMIO_FORM = () => ({
   activo: true,
 });
 
-function validatePremioForm(form) {
-  if (!(form.nombre || '').trim()) return 'El nombre es obligatorio';
+function validatePremioForm(form, t) {
+  if (!(form.nombre || '').trim()) return t('admin.padcoins.validation.nameRequired');
 
   const costo = parseInt(form.costo_padcoins, 10);
-  if (!Number.isFinite(costo) || costo <= 0) return 'El costo en PadCoins debe ser mayor a 0';
+  if (!Number.isFinite(costo) || costo <= 0) return t('admin.padcoins.validation.costPositive');
 
   const hasStockTotal = form.stock_total !== '' && form.stock_total != null;
   const hasStockDisp = form.stock_disponible !== '' && form.stock_disponible != null;
@@ -1081,18 +1081,18 @@ function validatePremioForm(form) {
   const stockDisp = hasStockDisp ? parseInt(form.stock_disponible, 10) : null;
 
   if (stockTotal !== null && (!Number.isFinite(stockTotal) || stockTotal < 0)) {
-    return 'El stock total no puede ser negativo';
+    return t('admin.padcoins.validation.totalStockNonNegative');
   }
   if (stockDisp !== null && (!Number.isFinite(stockDisp) || stockDisp < 0)) {
-    return 'El stock disponible no puede ser negativo';
+    return t('admin.padcoins.validation.availableStockNonNegative');
   }
   if (stockTotal !== null && stockDisp !== null && stockDisp > stockTotal) {
-    return 'El stock disponible no puede superar el stock total';
+    return t('admin.padcoins.validation.availableStockOverTotal');
   }
 
   const fi = String(form.fecha_inicio || '').trim();
   const ff = String(form.fecha_fin || '').trim();
-  if (fi && ff && fi > ff) return 'La fecha de inicio no puede ser posterior a la fecha de fin';
+  if (fi && ff && fi > ff) return t('admin.padcoins.validation.invalidDateRange');
 
   return null;
 }
@@ -4120,7 +4120,7 @@ export default function AdminDashboard({
       setPremioFormError('Seleccioná una sede para gestionar beneficios PadCoins');
       return;
     }
-    const validationError = validatePremioForm(premioForm);
+    const validationError = validatePremioForm(premioForm, t);
     if (validationError) {
       setPremioFormError(validationError);
       return;

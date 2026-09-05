@@ -1865,6 +1865,16 @@
       "copy": "Copiar",
       "arbiterLink": "Panel del árbitro"
     },
+    "padcoins": {
+      "validation": {
+        "nameRequired": "El nombre es obligatorio",
+        "costPositive": "El costo en PadCoins debe ser mayor a 0",
+        "totalStockNonNegative": "El stock total no puede ser negativo",
+        "availableStockNonNegative": "El stock disponible no puede ser negativo",
+        "availableStockOverTotal": "El stock disponible no puede superar el stock total",
+        "invalidDateRange": "La fecha de inicio no puede ser posterior a la fecha de fin"
+      }
+    },
     "metricas": {
       "processing": "Procesando…",
       "confirmPayment": "Confirmar pago",
