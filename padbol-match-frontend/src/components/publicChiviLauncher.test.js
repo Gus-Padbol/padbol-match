@@ -15,6 +15,7 @@ describe('Chivi on the public Padbol Match landing', () => {
   it('sends Romanian questions to the Romanian assistant path', () => {
     expect(inferWritingLocaleCodeFromText('Vreau să rezerv un teren mâine')).toBe('ro');
     expect(inferWritingLocaleCodeFromText('Ce turneu este disponibil astăzi?')).toBe('ro');
+    expect(inferWritingLocaleCodeFromText('OK', 'de')).toBe('de');
   });
 
   it('sends explicit public context and renders the AI spark', () => {
@@ -32,6 +33,8 @@ describe('Chivi on the public Padbol Match landing', () => {
     expect(publicLandingKnowledgeAnswer('¿Qué ofrece a las sedes?', 'es')).toMatch(/canchas.*reservas.*torneos/i);
     expect(publicLandingKnowledgeAnswer('¿Tienen reportes contables?', 'es')).toMatch(/no es asesoramiento contable/i);
     expect(publicLandingKnowledgeAnswer('What is available today?', 'en')).toMatch(/available today/i);
+    expect(publicLandingKnowledgeAnswer('O que está disponível hoje?', 'pt-BR')).toMatch(/disponíveis hoje/i);
+    expect(publicLandingKnowledgeAnswer('Was ist heute verfügbar?', 'de')).toMatch(/Padbol Match connects/i);
     expect(publicLandingKnowledgeAnswer('Ce oferă cluburilor?', 'ro')).toMatch(/terenuri.*rezervări.*turnee/iu);
     expect(publicLandingKnowledgeAnswer('Aveți rapoarte contabile?', 'ro')).toMatch(/nu reprezintă consultanță contabilă/iu);
   });

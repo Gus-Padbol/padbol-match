@@ -20,6 +20,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
 import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
+import { canonicalPadbolLanguageCode } from '../constants/padbolLanguages';
 import { capitalizeName } from '../utils/displayName';
 import { buildVoiceBookingCheckoutHref, resolveVoiceBookingConfirmation } from '../utils/chibiVoiceBooking';
 import {
@@ -77,7 +78,8 @@ const API_BASE = (
 
 export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
   const q = String(rawQuestion || '').trim().toLowerCase();
-  const l = ['en', 'pt', 'ro'].includes(locale) ? locale : 'es';
+  const requestedLocale = normalizeUiLocale(locale);
+  const l = ['es', 'en', 'pt', 'ro'].includes(requestedLocale) ? requestedLocale : 'en';
   const copy = {
     es: {
       venue: 'Para las sedes, Padbol Match integra canchas, horarios, precios, cobros, reservas, jugadores, torneos, resultados y comunicación. También ofrece información operativa y módulos como marcador inteligente, PadCoins y membresías cuando están habilitados.',
@@ -231,7 +233,12 @@ function normalizeUiLocale(raw) {
   if (s.startsWith('pt')) return 'pt';
   if (s.startsWith('en')) return 'en';
   if (s.startsWith('ro')) return 'ro';
-  return 'es';
+  const canonical = canonicalPadbolLanguageCode(s);
+  if (!canonical) return 'es';
+  if (canonical.startsWith('pt-')) return 'pt';
+  if (canonical.startsWith('nl-')) return 'nl';
+  if (canonical === 'fa-IR') return 'fa';
+  return canonical;
 }
 
 /** Etiqueta corta para chips de elección de deporte (slug canónico del backend). */
@@ -264,14 +271,14 @@ function deporteSlugDisplayLabel(slug, loc) {
       pickleball: 'Pickleball',
     },
   };
-  const m = maps[l] || maps.es;
+  const m = maps[l] || maps.en;
   return m[s] || s.replace(/_/g, ' ');
 }
 
 /** es|en|pt según el texto escrito por el usuario (heurística alineada con el backend). */
-export function inferWritingLocaleCodeFromText(textRaw) {
+export function inferWritingLocaleCodeFromText(textRaw, fallbackLocaleRaw = 'es') {
   const text = String(textRaw || '').trim();
-  if (!text) return 'es';
+  if (!text) return normalizeUiLocale(fallbackLocaleRaw);
   const fold = text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -297,7 +304,7 @@ export function inferWritingLocaleCodeFromText(textRaw) {
   if (pt > es && pt > en && pt > ro) return 'pt';
   if (en > es && en > pt && en > ro) return 'en';
   if (ro > es && ro > pt && ro > en) return 'ro';
-  return 'es';
+  return normalizeUiLocale(fallbackLocaleRaw);
 }
 
 /**
@@ -340,11 +347,7 @@ function bcp47LangForAssistantTts(textRaw) {
 }
 
 function navigatorLanguageToChatCode(nav) {
-  const n = String(nav || 'es').toLowerCase();
-  if (n.startsWith('pt')) return 'pt';
-  if (n.startsWith('en')) return 'en';
-  if (n.startsWith('ro')) return 'ro';
-  return 'es';
+  return normalizeUiLocale(nav);
 }
 
 function chatUiStringsFromI18n(tr, loc) {
@@ -857,7 +860,7 @@ export default function ChatbotIA() {
   const ui = useMemo(() => {
     const base = chatUiStrings(padbolLang, t);
     if (!isPublicLanding) return base;
-    if (padbolLang === 'en') {
+    if (normalizeUiLocale(padbolLang) === 'en') {
       return {
         ...base,
         fabOpen: 'Talk to Chivi, Padbol Match AI assistant',
@@ -874,7 +877,7 @@ export default function ChatbotIA() {
         ],
       };
     }
-    if (padbolLang === 'pt') {
+    if (normalizeUiLocale(padbolLang) === 'pt') {
       return {
         ...base,
         fabOpen: 'Falar com Chivi, assistente de IA do Padbol Match',
@@ -891,7 +894,7 @@ export default function ChatbotIA() {
         ],
       };
     }
-    if (padbolLang === 'ro') {
+    if (normalizeUiLocale(padbolLang) === 'ro') {
       return {
         ...base,
         fabOpen: 'Vorbește cu Chivi, asistenta AI Padbol Match',
@@ -908,21 +911,24 @@ export default function ChatbotIA() {
         ],
       };
     }
-    return {
-      ...base,
-      fabOpen: 'Hablar con Chivi, asistente de inteligencia artificial de Padbol Match',
-      fabCollapsed: 'Chivi IA',
-      fabLine1: '¿Tenés dudas?',
-      fabLine2: 'Hablá con Chivi IA',
-      placeholder: 'Preguntá sobre Padbol Match',
-      welcomeAssistant: () => 'Hola. Soy Chivi, la asistente de inteligencia artificial de Padbol Match. Preguntame cómo funciona la plataforma para jugadores, sedes y organizaciones.',
-      quickSuggestions: [
-        { label: '¿Qué es Padbol Match?' },
-        { label: '¿Qué ofrece a las sedes?' },
-        { label: '¿Cómo funciona para jugadores?' },
-        { label: '¿Qué está disponible hoy?' },
-      ],
-    };
+    if (normalizeUiLocale(padbolLang) === 'es') {
+      return {
+        ...base,
+        fabOpen: 'Hablar con Chivi, asistente de inteligencia artificial de Padbol Match',
+        fabCollapsed: 'Chivi IA',
+        fabLine1: '¿Tenés dudas?',
+        fabLine2: 'Hablá con Chivi IA',
+        placeholder: 'Preguntá sobre Padbol Match',
+        welcomeAssistant: () => 'Hola. Soy Chivi, la asistente de inteligencia artificial de Padbol Match. Preguntame cómo funciona la plataforma para jugadores, sedes y organizaciones.',
+        quickSuggestions: [
+          { label: '¿Qué es Padbol Match?' },
+          { label: '¿Qué ofrece a las sedes?' },
+          { label: '¿Cómo funciona para jugadores?' },
+          { label: '¿Qué está disponible hoy?' },
+        ],
+      };
+    }
+    return base;
   }, [isPublicLanding, padbolLang, t]);
   const { avatarUrl: chiviAvatarUrl } = useHubChiviAvatar();
 
@@ -1122,7 +1128,7 @@ export default function ChatbotIA() {
         const loc = (() => {
           for (let i = messages.length - 1; i >= 0; i -= 1) {
             if (messages[i]?.role === 'user' && String(messages[i].content || '').trim()) {
-              return inferWritingLocaleCodeFromText(messages[i].content);
+              return inferWritingLocaleCodeFromText(messages[i].content, padbolLang);
             }
           }
           return navigatorLanguageToChatCode(typeof navigator !== 'undefined' ? navigator.language : 'es');
@@ -1355,7 +1361,7 @@ export default function ChatbotIA() {
             mensaje: text,
             historial,
             user_id: session?.user?.id || null,
-            locale: inferWritingLocaleCodeFromText(text),
+            locale: inferWritingLocaleCodeFromText(text, padbolLang),
             ...(isPublicLanding ? { client_surface: 'public_landing' } : {}),
             client_calendario_art: ymdBuenosAires(),
             ...(clientPaginaSedeId != null ? { client_pagina_sede_id: clientPaginaSedeId } : {}),
