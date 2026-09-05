@@ -9,6 +9,20 @@
       "city": "Stadt",
       "noNotifications": "Noch keine Benachrichtigungen."
     },
+    "support": {
+      "category": {
+        "configuracion": "Konfiguration"
+      },
+      "status": {
+        "cerrado": "Geschlossen"
+      }
+    },
+    "aboutPage": {
+      "explore": "Spielstätten entdecken"
+    },
+    "accountDeletion": {
+      "sending": "Anfrage wird gesendet…"
+    },
     "auth": {
       "login": "Login",
       "register": "Registrieren",
@@ -23,6 +37,12 @@
       "female": "Weiblich",
       "handednessRight": "Rechtshänder",
       "handednessLeft": "Linkshänder"
+    },
+    "profileCompletion": {
+      "title": "Vervollständige dein Profil",
+      "sportsTitle": "Welche Sportarten spielst du?",
+      "skip": "Überspringen",
+      "saveFailed": "Dein Profil konnte nicht gespeichert werden."
     },
     "nav": {
       "logout": "Abmelden",
@@ -99,7 +119,10 @@
           "2da": "2",
           "3ra": "3",
           "Femenino": "Weiblich"
-        }
+        },
+        "venueFallback": "die Spielstätte",
+        "rightHanded": "Rechtshänder",
+        "leftHanded": "Linkshänder"
       },
       "partidoDetalle": {
         "titulo": "Spieldetails",
@@ -116,10 +139,20 @@
       "detalle": "Klassendetails"
     },
     "sedes": {
+      "listado": {
+        "header": "Spielstätten",
+        "exploreTitle": "Spielstätten entdecken",
+        "sortedByDistance": "Nach Entfernung sortiert"
+      },
       "publica": {
         "infoCanchas": "Felder",
         "seguinosEn": "Folge uns auf",
-        "clubTiene": "Der Club bietet"
+        "clubTiene": "Der Club bietet",
+        "waitlistLeaveError": "Du konntest nicht von der Warteliste entfernt werden.",
+        "waitlistJoinError": "Du konntest nicht zur Warteliste hinzugefügt werden.",
+        "openGoogleMaps": "In Google Maps öffnen",
+        "venueNotFound": "Spielstätte nicht gefunden.",
+        "openMatches": "Offene Spiele"
       }
     },
     "sponsors": {
@@ -202,6 +235,7 @@
         "markAllRead": "Alles als gelesen markieren"
       },
       "metrics": {
+        "cityLabel": "Stadt",
         "periodToday": "Heute"
       },
       "alerts": {
@@ -333,8 +367,33 @@
       "titulo": "Zahlung",
       "reintentar": "versuchen Sie es erneut"
     },
+    "ranking": {
+      "filter": "Filtern",
+      "points": "Punkte",
+      "city": "Stadt"
+    },
+    "scoreboardDisplay": {
+      "loading": "Anzeigetafel wird geladen…"
+    },
     "equipos": {
       "inscripcion": "Anmeldung"
+    },
+    "teamDetail": {
+      "shareLink": "Link teilen",
+      "teamClosed": "Geschlossenes Team",
+      "paymentPending": "Zahlung ausstehend",
+      "goToProfile": "Zu meinem Profil",
+      "requestToJoin": "Teilnahme anfragen",
+      "invitePlayers": "Spieler einladen",
+      "noPendingRequests": "Keine ausstehenden Anfragen.",
+      "leave": "Verlassen"
+    },
+    "teamRegistration": {
+      "teamName": "Teamname",
+      "closed": "Geschlossen",
+      "invitation": "Einladung",
+      "results": "Ergebnisse",
+      "understood": "Verstanden"
     },
     "notificaciones": {
       "tipo": {
@@ -366,7 +425,9 @@
       "boton": "Fragen?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Datum und Uhrzeit"
+      "titleDateAndTime": "Datum und Uhrzeit",
+      "selectVenueError": "Wähle eine Spielstätte.",
+      "minutesLong": "Minuten"
     },
     "perfilPublico": {
       "shareProfile": "Profil teilen",
@@ -455,6 +516,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TURNIERE UND RANGLISTEN"
+        }
+      }
+    },
     "adminLanding": {
       "today": "HEUTE"
     }
@@ -468,6 +536,20 @@
       "email": "البريد الإلكتروني",
       "city": "المدينة",
       "noNotifications": "لا توجد إشعارات بعد."
+    },
+    "support": {
+      "category": {
+        "configuracion": "الإعدادات"
+      },
+      "status": {
+        "cerrado": "مغلق"
+      }
+    },
+    "aboutPage": {
+      "explore": "استكشاف الأندية"
+    },
+    "accountDeletion": {
+      "sending": "جارٍ إرسال الطلب…"
     },
     "auth": {
       "login": "تسجيل الدخول",
@@ -483,6 +565,12 @@
       "female": "أنثى",
       "handednessRight": "أيمن",
       "handednessLeft": "أعسر"
+    },
+    "profileCompletion": {
+      "title": "أكمل ملفك الشخصي",
+      "sportsTitle": "ما الرياضات التي تمارسها؟",
+      "skip": "تخطي",
+      "saveFailed": "تعذر حفظ ملفك الشخصي."
     },
     "nav": {
       "logout": "تسجيل الخروج",
@@ -559,7 +647,10 @@
           "2da": "٢",
           "3ra": "٣",
           "Femenino": "أنثى"
-        }
+        },
+        "venueFallback": "النادي",
+        "rightHanded": "أيمن",
+        "leftHanded": "أعسر"
       },
       "partidoDetalle": {
         "titulo": "تفاصيل المباراة",
@@ -576,10 +667,20 @@
       "detalle": "تفاصيل الحصة"
     },
     "sedes": {
+      "listado": {
+        "header": "الأندية",
+        "exploreTitle": "استكشاف الأندية",
+        "sortedByDistance": "مرتبة حسب المسافة"
+      },
       "publica": {
         "infoCanchas": "ملاعب",
         "seguinosEn": "تابعنا على",
-        "clubTiene": "يقدم النادي"
+        "clubTiene": "يقدم النادي",
+        "waitlistLeaveError": "تعذرت إزالتك من قائمة الانتظار.",
+        "waitlistJoinError": "تعذرت إضافتك إلى قائمة الانتظار.",
+        "openGoogleMaps": "فتح في خرائط Google",
+        "venueNotFound": "النادي غير موجود.",
+        "openMatches": "مباريات مفتوحة"
       }
     },
     "sponsors": {
@@ -662,6 +763,7 @@
         "markAllRead": "تعليم الكل كمقروء"
       },
       "metrics": {
+        "cityLabel": "المدينة",
         "periodToday": "اليوم"
       },
       "alerts": {
@@ -793,8 +895,33 @@
       "titulo": "دفع",
       "reintentar": "إعادة المحاولة"
     },
+    "ranking": {
+      "filter": "تصفية",
+      "points": "النقاط",
+      "city": "المدينة"
+    },
+    "scoreboardDisplay": {
+      "loading": "جارٍ تحميل لوحة النتائج…"
+    },
     "equipos": {
       "inscripcion": "التسجيل"
+    },
+    "teamDetail": {
+      "shareLink": "مشاركة الرابط",
+      "teamClosed": "فريق مغلق",
+      "paymentPending": "الدفع معلق",
+      "goToProfile": "الانتقال إلى ملفي الشخصي",
+      "requestToJoin": "طلب الانضمام",
+      "invitePlayers": "دعوة لاعبين",
+      "noPendingRequests": "لا توجد طلبات معلقة.",
+      "leave": "مغادرة"
+    },
+    "teamRegistration": {
+      "teamName": "اسم الفريق",
+      "closed": "مغلق",
+      "invitation": "دعوة",
+      "results": "النتائج",
+      "understood": "فهمت"
     },
     "notificaciones": {
       "tipo": {
@@ -826,7 +953,9 @@
       "boton": "استفسارات؟"
     },
     "armarPartido": {
-      "titleDateAndTime": "التاريخ والوقت"
+      "titleDateAndTime": "التاريخ والوقت",
+      "selectVenueError": "اختر ناديًا.",
+      "minutesLong": "دقائق"
     },
     "perfilPublico": {
       "shareProfile": "مشاركة الملف",
@@ -915,6 +1044,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "البطولات والتصنيفات"
+        }
+      }
+    },
     "adminLanding": {
       "today": "اليوم"
     }
@@ -928,6 +1064,20 @@
       "email": "ایمیل",
       "city": "شهر",
       "noNotifications": "هنوز اعلانی وجود ندارد."
+    },
+    "support": {
+      "category": {
+        "configuracion": "تنظیمات"
+      },
+      "status": {
+        "cerrado": "بسته"
+      }
+    },
+    "aboutPage": {
+      "explore": "کاوش باشگاه‌ها"
+    },
+    "accountDeletion": {
+      "sending": "در حال ارسال درخواست…"
     },
     "auth": {
       "login": "ورود",
@@ -943,6 +1093,12 @@
       "female": "زن",
       "handednessRight": "راست‌دست",
       "handednessLeft": "چپ‌دست"
+    },
+    "profileCompletion": {
+      "title": "پروفایل خود را کامل کنید",
+      "sportsTitle": "چه ورزش‌هایی انجام می‌دهید؟",
+      "skip": "رد کردن",
+      "saveFailed": "ذخیره پروفایل شما انجام نشد."
     },
     "nav": {
       "logout": "خروج از حساب",
@@ -1019,7 +1175,10 @@
           "2da": "دوم",
           "3ra": "سوم",
           "Femenino": "زن"
-        }
+        },
+        "venueFallback": "باشگاه",
+        "rightHanded": "راست‌دست",
+        "leftHanded": "چپ‌دست"
       },
       "partidoDetalle": {
         "titulo": "جزئیات مسابقه",
@@ -1036,10 +1195,20 @@
       "detalle": "جزئیات کلاس"
     },
     "sedes": {
+      "listado": {
+        "header": "باشگاه‌ها",
+        "exploreTitle": "کاوش باشگاه‌ها",
+        "sortedByDistance": "مرتب‌شده بر اساس فاصله"
+      },
       "publica": {
         "infoCanchas": "زمین‌ها",
         "seguinosEn": "ما را دنبال کنید",
-        "clubTiene": "امکانات باشگاه"
+        "clubTiene": "امکانات باشگاه",
+        "waitlistLeaveError": "حذف شما از فهرست انتظار انجام نشد.",
+        "waitlistJoinError": "افزودن شما به فهرست انتظار انجام نشد.",
+        "openGoogleMaps": "باز کردن در Google Maps",
+        "venueNotFound": "باشگاه پیدا نشد.",
+        "openMatches": "مسابقه‌های آزاد"
       }
     },
     "sponsors": {
@@ -1122,6 +1291,7 @@
         "markAllRead": "علامت‌گذاری همه به‌عنوان خوانده‌شده"
       },
       "metrics": {
+        "cityLabel": "شهر",
         "periodToday": "امروز"
       },
       "alerts": {
@@ -1253,8 +1423,33 @@
       "titulo": "پرداخت",
       "reintentar": "تلاش دوباره"
     },
+    "ranking": {
+      "filter": "فیلتر",
+      "points": "امتیازها",
+      "city": "شهر"
+    },
+    "scoreboardDisplay": {
+      "loading": "در حال بارگذاری تابلوی امتیاز…"
+    },
     "equipos": {
       "inscripcion": "هزینه ورودی"
+    },
+    "teamDetail": {
+      "shareLink": "اشتراک‌گذاری پیوند",
+      "teamClosed": "تیم بسته",
+      "paymentPending": "پرداخت در انتظار",
+      "goToProfile": "رفتن به پروفایل من",
+      "requestToJoin": "درخواست پیوستن",
+      "invitePlayers": "دعوت از بازیکنان",
+      "noPendingRequests": "درخواست در انتظاری وجود ندارد.",
+      "leave": "ترک مسابقه"
+    },
+    "teamRegistration": {
+      "teamName": "نام تیم",
+      "closed": "بسته",
+      "invitation": "دعوت‌نامه",
+      "results": "نتایج",
+      "understood": "متوجه شدم"
     },
     "notificaciones": {
       "tipo": {
@@ -1286,7 +1481,9 @@
       "boton": "پرسشی دارید؟"
     },
     "armarPartido": {
-      "titleDateAndTime": "تاریخ و ساعت"
+      "titleDateAndTime": "تاریخ و ساعت",
+      "selectVenueError": "یک باشگاه انتخاب کنید.",
+      "minutesLong": "دقیقه"
     },
     "perfilPublico": {
       "shareProfile": "اشتراک‌گذاری پروفایل",
@@ -1375,6 +1572,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "مسابقات و رتبه‌بندی‌ها"
+        }
+      }
+    },
     "adminLanding": {
       "today": "امروز"
     }
@@ -1388,6 +1592,20 @@
       "email": "E-mail",
       "city": "Plaats",
       "noNotifications": "Nog geen meldingen."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Instellingen"
+      },
+      "status": {
+        "cerrado": "Gesloten"
+      }
+    },
+    "aboutPage": {
+      "explore": "Clubs ontdekken"
+    },
+    "accountDeletion": {
+      "sending": "Verzoek verzenden…"
     },
     "auth": {
       "login": "Inloggen",
@@ -1403,6 +1621,12 @@
       "female": "Vrouw",
       "handednessRight": "Rechtshandig",
       "handednessLeft": "Linkshandig"
+    },
+    "profileCompletion": {
+      "title": "Voltooi je profiel",
+      "sportsTitle": "Welke sporten beoefen je?",
+      "skip": "Overslaan",
+      "saveFailed": "Je profiel kon niet worden opgeslagen."
     },
     "nav": {
       "logout": "Uitloggen",
@@ -1479,7 +1703,10 @@
           "2da": "2e",
           "3ra": "3e",
           "Femenino": "Vrouw"
-        }
+        },
+        "venueFallback": "de club",
+        "rightHanded": "Rechtshandig",
+        "leftHanded": "Linkshandig"
       },
       "partidoDetalle": {
         "titulo": "Wedstrijddetails",
@@ -1496,10 +1723,20 @@
       "detalle": "Lesgegevens"
     },
     "sedes": {
+      "listado": {
+        "header": "Clubs",
+        "exploreTitle": "Clubs ontdekken",
+        "sortedByDistance": "Gesorteerd op afstand"
+      },
       "publica": {
         "infoCanchas": "Banen",
         "seguinosEn": "Volg ons op",
-        "clubTiene": "De club biedt"
+        "clubTiene": "De club biedt",
+        "waitlistLeaveError": "Je kon niet van de wachtlijst worden verwijderd.",
+        "waitlistJoinError": "Je kon niet aan de wachtlijst worden toegevoegd.",
+        "openGoogleMaps": "Openen in Google Maps",
+        "venueNotFound": "Club niet gevonden.",
+        "openMatches": "Open wedstrijden"
       }
     },
     "sponsors": {
@@ -1582,6 +1819,7 @@
         "markAllRead": "Alles als gelezen markeren"
       },
       "metrics": {
+        "cityLabel": "Plaats",
         "periodToday": "Vandaag"
       },
       "alerts": {
@@ -1713,8 +1951,33 @@
       "titulo": "Betaling",
       "reintentar": "Opnieuw proberen"
     },
+    "ranking": {
+      "filter": "Filteren",
+      "points": "Punten",
+      "city": "Plaats"
+    },
+    "scoreboardDisplay": {
+      "loading": "Scorebord laden…"
+    },
     "equipos": {
       "inscripcion": "Inschrijfgeld"
+    },
+    "teamDetail": {
+      "shareLink": "Link delen",
+      "teamClosed": "Gesloten team",
+      "paymentPending": "Betaling in afwachting",
+      "goToProfile": "Naar mijn profiel",
+      "requestToJoin": "Verzoek om mee te doen",
+      "invitePlayers": "Spelers uitnodigen",
+      "noPendingRequests": "Geen openstaande verzoeken.",
+      "leave": "Verlaten"
+    },
+    "teamRegistration": {
+      "teamName": "Teamnaam",
+      "closed": "Gesloten",
+      "invitation": "Uitnodiging",
+      "results": "Resultaten",
+      "understood": "Begrepen"
     },
     "notificaciones": {
       "tipo": {
@@ -1746,7 +2009,9 @@
       "boton": "Vragen?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Datum en tijd"
+      "titleDateAndTime": "Datum en tijd",
+      "selectVenueError": "Selecteer een club.",
+      "minutesLong": "minuten"
     },
     "perfilPublico": {
       "shareProfile": "Profiel delen",
@@ -1835,6 +2100,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TOERNOOIEN EN RANGLIJSTEN"
+        }
+      }
+    },
     "adminLanding": {
       "today": "VANDAAG"
     }
@@ -1848,6 +2120,20 @@
       "email": "E-mail",
       "city": "Ville",
       "noNotifications": "Aucune notification."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Configuration"
+      },
+      "status": {
+        "cerrado": "Fermée"
+      }
+    },
+    "aboutPage": {
+      "explore": "Explorer les sites"
+    },
+    "accountDeletion": {
+      "sending": "Envoi de la demande…"
     },
     "auth": {
       "login": "Se connecter",
@@ -1863,6 +2149,12 @@
       "female": "Féminin",
       "handednessRight": "Droitier",
       "handednessLeft": "Gaucher"
+    },
+    "profileCompletion": {
+      "title": "Complétez votre profil",
+      "sportsTitle": "Quels sports pratiquez-vous ?",
+      "skip": "Ignorer",
+      "saveFailed": "Impossible d'enregistrer ton profil."
     },
     "nav": {
       "logout": "se déconnecter",
@@ -1939,7 +2231,10 @@
           "2da": "2ème",
           "3ra": "3ème",
           "Femenino": "Féminin"
-        }
+        },
+        "venueFallback": "le site",
+        "rightHanded": "Droitier",
+        "leftHanded": "Gaucher"
       },
       "partidoDetalle": {
         "titulo": "Détail du match",
@@ -1956,10 +2251,20 @@
       "detalle": "Détail de la classe"
     },
     "sedes": {
+      "listado": {
+        "header": "Sites",
+        "exploreTitle": "Explorer les sites",
+        "sortedByDistance": "Triés par distance"
+      },
       "publica": {
         "infoCanchas": "Terrains",
         "seguinosEn": "Suivez-nous sur",
-        "clubTiene": "Le club propose"
+        "clubTiene": "Le club propose",
+        "waitlistLeaveError": "Impossible de te retirer de la liste d'attente.",
+        "waitlistJoinError": "Impossible de t'ajouter à la liste d'attente.",
+        "openGoogleMaps": "Ouvrir dans Google Maps",
+        "venueNotFound": "Site introuvable.",
+        "openMatches": "Matchs ouverts"
       }
     },
     "sponsors": {
@@ -2042,6 +2347,7 @@
         "markAllRead": "Marquer tout comme lu"
       },
       "metrics": {
+        "cityLabel": "Ville",
         "periodToday": "Aujourd'hui"
       },
       "alerts": {
@@ -2173,8 +2479,33 @@
       "titulo": "Paiement",
       "reintentar": "essayer à nouveau"
     },
+    "ranking": {
+      "filter": "Filtrer",
+      "points": "Points",
+      "city": "Ville"
+    },
+    "scoreboardDisplay": {
+      "loading": "Chargement du tableau de score…"
+    },
     "equipos": {
       "inscripcion": "Inscription"
+    },
+    "teamDetail": {
+      "shareLink": "Partager le lien",
+      "teamClosed": "Équipe fermée",
+      "paymentPending": "Paiement en attente",
+      "goToProfile": "Accéder à mon profil",
+      "requestToJoin": "Demander à rejoindre",
+      "invitePlayers": "Inviter des joueurs",
+      "noPendingRequests": "Aucune demande en attente.",
+      "leave": "Quitter"
+    },
+    "teamRegistration": {
+      "teamName": "Nom de l'équipe",
+      "closed": "Fermée",
+      "invitation": "Invitation",
+      "results": "Résultats",
+      "understood": "Compris"
     },
     "notificaciones": {
       "tipo": {
@@ -2206,7 +2537,9 @@
       "boton": "Des questions ?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Date et heure"
+      "titleDateAndTime": "Date et heure",
+      "selectVenueError": "Sélectionne un site.",
+      "minutesLong": "minutes"
     },
     "perfilPublico": {
       "shareProfile": "Partager le profil",
@@ -2295,6 +2628,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TOURNOIS ET CLASSEMENTS"
+        }
+      }
+    },
     "adminLanding": {
       "today": "AUJOURD'HUI"
     }
@@ -2308,6 +2648,20 @@
       "email": "E-mail",
       "city": "Città",
       "noNotifications": "Nessuna notifica."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Configurazione"
+      },
+      "status": {
+        "cerrado": "Chiusa"
+      }
+    },
+    "aboutPage": {
+      "explore": "Esplora sedi"
+    },
+    "accountDeletion": {
+      "sending": "Invio richiesta…"
     },
     "auth": {
       "login": "Login",
@@ -2323,6 +2677,12 @@
       "female": "Femminile",
       "handednessRight": "Destrimano",
       "handednessLeft": "Mancino"
+    },
+    "profileCompletion": {
+      "title": "Completa il tuo profilo",
+      "sportsTitle": "Quali sport pratichi?",
+      "skip": "Salta",
+      "saveFailed": "Non è stato possibile salvare il profilo."
     },
     "nav": {
       "logout": "disconnessione",
@@ -2399,7 +2759,10 @@
           "2da": "2°",
           "3ra": "3°",
           "Femenino": "Femminile"
-        }
+        },
+        "venueFallback": "la sede",
+        "rightHanded": "Destrimano",
+        "leftHanded": "Mancino"
       },
       "partidoDetalle": {
         "titulo": "Dettaglio partita",
@@ -2416,10 +2779,20 @@
       "detalle": "Dettaglio della classe"
     },
     "sedes": {
+      "listado": {
+        "header": "Sedi",
+        "exploreTitle": "Esplora sedi",
+        "sortedByDistance": "Ordinate per distanza"
+      },
       "publica": {
         "infoCanchas": "Campi",
         "seguinosEn": "Seguici su",
-        "clubTiene": "Il club offre"
+        "clubTiene": "Il club offre",
+        "waitlistLeaveError": "Non è stato possibile rimuoverti dalla lista.",
+        "waitlistJoinError": "Non è stato possibile iscriverti alla lista d'attesa.",
+        "openGoogleMaps": "Apri in Google Maps",
+        "venueNotFound": "Sede non trovata.",
+        "openMatches": "Partite aperte"
       }
     },
     "sponsors": {
@@ -2502,6 +2875,7 @@
         "markAllRead": "Segna tutto letto"
       },
       "metrics": {
+        "cityLabel": "Città",
         "periodToday": "Oggi"
       },
       "alerts": {
@@ -2633,8 +3007,33 @@
       "titulo": "Pagamento",
       "reintentar": "riprova"
     },
+    "ranking": {
+      "filter": "Filtra",
+      "points": "Punti",
+      "city": "Città"
+    },
+    "scoreboardDisplay": {
+      "loading": "Caricamento del segnapunti…"
+    },
     "equipos": {
       "inscripcion": "Registrazione"
+    },
+    "teamDetail": {
+      "shareLink": "Condividi link",
+      "teamClosed": "Squadra chiusa",
+      "paymentPending": "Pagamento in sospeso",
+      "goToProfile": "Vai al mio profilo",
+      "requestToJoin": "Chiedi di partecipare",
+      "invitePlayers": "Invita giocatori",
+      "noPendingRequests": "Nessuna richiesta in sospeso.",
+      "leave": "Lascia"
+    },
+    "teamRegistration": {
+      "teamName": "Nome della squadra",
+      "closed": "Chiusa",
+      "invitation": "Invito",
+      "results": "Risultati",
+      "understood": "Ho capito"
     },
     "notificaciones": {
       "tipo": {
@@ -2666,7 +3065,9 @@
       "boton": "Domande?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Data e ora"
+      "titleDateAndTime": "Data e ora",
+      "selectVenueError": "Seleziona una sede.",
+      "minutesLong": "minuti"
     },
     "perfilPublico": {
       "shareProfile": "Condividi profilo",
@@ -2755,6 +3156,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TORNEI E CLASSIFICHE"
+        }
+      }
+    },
     "adminLanding": {
       "today": "OGGI"
     }
@@ -2768,6 +3176,20 @@
       "email": "Email",
       "city": "Oraș",
       "noNotifications": "Momentan nu sunt notificări."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Setări"
+      },
+      "status": {
+        "cerrado": "Închisă"
+      }
+    },
+    "aboutPage": {
+      "explore": "Explorează cluburile"
+    },
+    "accountDeletion": {
+      "sending": "Se trimite solicitarea…"
     },
     "auth": {
       "login": "Autentificare",
@@ -2783,6 +3205,12 @@
       "female": "Feminin",
       "handednessRight": "Dreptaci",
       "handednessLeft": "Stângaci"
+    },
+    "profileCompletion": {
+      "title": "Completează-ți profilul",
+      "sportsTitle": "Ce sporturi practici?",
+      "skip": "Omite",
+      "saveFailed": "Profilul nu a putut fi salvat."
     },
     "nav": {
       "logout": "Deconectare",
@@ -2859,7 +3287,10 @@
           "2da": "2",
           "3ra": "3",
           "Femenino": "Feminin"
-        }
+        },
+        "venueFallback": "locația",
+        "rightHanded": "Dreptaci",
+        "leftHanded": "Stângaci"
       },
       "partidoDetalle": {
         "titulo": "Detaliile meciului",
@@ -2876,10 +3307,20 @@
       "detalle": "Detaliu de clasă"
     },
     "sedes": {
+      "listado": {
+        "header": "Cluburi",
+        "exploreTitle": "Explorează cluburile",
+        "sortedByDistance": "Sortate după distanță"
+      },
       "publica": {
         "infoCanchas": "Terenuri",
         "seguinosEn": "Urmărește-ne",
-        "clubTiene": "Clubul oferă"
+        "clubTiene": "Clubul oferă",
+        "waitlistLeaveError": "Nu am putut elimina înscrierea ta.",
+        "waitlistJoinError": "Nu te-am putut înscrie pe lista de așteptare.",
+        "openGoogleMaps": "Deschide în Google Maps",
+        "venueNotFound": "Sala nu a fost găsită.",
+        "openMatches": "Meciuri deschise"
       }
     },
     "sponsors": {
@@ -2962,6 +3403,7 @@
         "markAllRead": "Marchează toate ca citite"
       },
       "metrics": {
+        "cityLabel": "Oraș",
         "periodToday": "Astăzi"
       },
       "alerts": {
@@ -3093,8 +3535,33 @@
       "titulo": "Plată",
       "reintentar": "Încearcă din nou"
     },
+    "ranking": {
+      "filter": "Filtrează",
+      "points": "Puncte",
+      "city": "Oraș"
+    },
+    "scoreboardDisplay": {
+      "loading": "Se încarcă tabela de scor…"
+    },
     "equipos": {
       "inscripcion": "Înscriere"
+    },
+    "teamDetail": {
+      "shareLink": "Distribuie linkul",
+      "teamClosed": "Echipă închisă",
+      "paymentPending": "În așteptarea plății",
+      "goToProfile": "Accesați profilul meu",
+      "requestToJoin": "Solicită să te alături",
+      "invitePlayers": "Invită jucători",
+      "noPendingRequests": "Nu există cereri în așteptare.",
+      "leave": "Părăsește"
+    },
+    "teamRegistration": {
+      "teamName": "Numele echipei",
+      "closed": "Închisă",
+      "invitation": "Invitație",
+      "results": "Rezultate",
+      "understood": "Înțeles"
     },
     "notificaciones": {
       "tipo": {
@@ -3126,7 +3593,9 @@
       "boton": "Întrebări?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Data și ora"
+      "titleDateAndTime": "Data și ora",
+      "selectVenueError": "Selectează un club.",
+      "minutesLong": "minute"
     },
     "perfilPublico": {
       "shareProfile": "Distribuie profilul",
@@ -3215,6 +3684,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TURNEE ȘI CLASAMENTE"
+        }
+      }
+    },
     "adminLanding": {
       "today": "ASTĂZI"
     }
@@ -3228,6 +3704,20 @@
       "email": "E-mail",
       "city": "Plaats",
       "noNotifications": "Nog geen meldingen."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Instellingen"
+      },
+      "status": {
+        "cerrado": "Gesloten"
+      }
+    },
+    "aboutPage": {
+      "explore": "Clubs ontdekken"
+    },
+    "accountDeletion": {
+      "sending": "Verzoek verzenden…"
     },
     "auth": {
       "login": "Inloggen",
@@ -3243,6 +3733,12 @@
       "female": "Vrouw",
       "handednessRight": "Rechtshandig",
       "handednessLeft": "Linkshandig"
+    },
+    "profileCompletion": {
+      "title": "Voltooi je profiel",
+      "sportsTitle": "Welke sporten beoefen je?",
+      "skip": "Overslaan",
+      "saveFailed": "Je profiel kon niet worden opgeslagen."
     },
     "nav": {
       "logout": "Uitloggen",
@@ -3319,7 +3815,10 @@
           "2da": "2e",
           "3ra": "3e",
           "Femenino": "Vrouw"
-        }
+        },
+        "venueFallback": "de club",
+        "rightHanded": "Rechtshandig",
+        "leftHanded": "Linkshandig"
       },
       "partidoDetalle": {
         "titulo": "Wedstrijddetails",
@@ -3336,10 +3835,20 @@
       "detalle": "Lesgegevens"
     },
     "sedes": {
+      "listado": {
+        "header": "Clubs",
+        "exploreTitle": "Clubs ontdekken",
+        "sortedByDistance": "Gesorteerd op afstand"
+      },
       "publica": {
         "infoCanchas": "Banen",
         "seguinosEn": "Volg ons op",
-        "clubTiene": "De club biedt"
+        "clubTiene": "De club biedt",
+        "waitlistLeaveError": "Je kon niet van de wachtlijst worden verwijderd.",
+        "waitlistJoinError": "Je kon niet aan de wachtlijst worden toegevoegd.",
+        "openGoogleMaps": "Openen in Google Maps",
+        "venueNotFound": "Club niet gevonden.",
+        "openMatches": "Open wedstrijden"
       }
     },
     "sponsors": {
@@ -3422,6 +3931,7 @@
         "markAllRead": "Alles als gelezen markeren"
       },
       "metrics": {
+        "cityLabel": "Plaats",
         "periodToday": "Vandaag"
       },
       "alerts": {
@@ -3553,8 +4063,33 @@
       "titulo": "Betaling",
       "reintentar": "Opnieuw proberen"
     },
+    "ranking": {
+      "filter": "Filteren",
+      "points": "Punten",
+      "city": "Plaats"
+    },
+    "scoreboardDisplay": {
+      "loading": "Scorebord laden…"
+    },
     "equipos": {
       "inscripcion": "Inschrijfgeld"
+    },
+    "teamDetail": {
+      "shareLink": "Link delen",
+      "teamClosed": "Gesloten team",
+      "paymentPending": "Betaling in afwachting",
+      "goToProfile": "Naar mijn profiel",
+      "requestToJoin": "Verzoek om mee te doen",
+      "invitePlayers": "Spelers uitnodigen",
+      "noPendingRequests": "Geen openstaande verzoeken.",
+      "leave": "Verlaten"
+    },
+    "teamRegistration": {
+      "teamName": "Teamnaam",
+      "closed": "Gesloten",
+      "invitation": "Uitnodiging",
+      "results": "Resultaten",
+      "understood": "Begrepen"
     },
     "notificaciones": {
       "tipo": {
@@ -3586,7 +4121,9 @@
       "boton": "Vragen?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Datum en tijd"
+      "titleDateAndTime": "Datum en tijd",
+      "selectVenueError": "Selecteer een club.",
+      "minutesLong": "minuten"
     },
     "perfilPublico": {
       "shareProfile": "Profiel delen",
@@ -3675,6 +4212,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TOERNOOIEN EN RANGLIJSTEN"
+        }
+      }
+    },
     "adminLanding": {
       "today": "VANDAAG"
     }
@@ -3688,6 +4232,20 @@
       "email": "E-post",
       "city": "Stad",
       "noNotifications": "Inga aviseringar ännu."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Inställningar"
+      },
+      "status": {
+        "cerrado": "Stängt"
+      }
+    },
+    "aboutPage": {
+      "explore": "Utforska anläggningar"
+    },
+    "accountDeletion": {
+      "sending": "Skickar begäran…"
     },
     "auth": {
       "login": "Logga in",
@@ -3703,6 +4261,12 @@
       "female": "Kvinna",
       "handednessRight": "Högerhänt",
       "handednessLeft": "Vänsterhänt"
+    },
+    "profileCompletion": {
+      "title": "Slutför din profil",
+      "sportsTitle": "Vilka sporter utövar du?",
+      "skip": "Hoppa över",
+      "saveFailed": "Vi kunde inte spara din profil."
     },
     "nav": {
       "logout": "Logga ut",
@@ -3779,7 +4343,10 @@
           "2da": "2:a",
           "3ra": "3:e",
           "Femenino": "Kvinna"
-        }
+        },
+        "venueFallback": "anläggningen",
+        "rightHanded": "Högerhänt",
+        "leftHanded": "Vänsterhänt"
       },
       "partidoDetalle": {
         "titulo": "Matchdetaljer",
@@ -3796,10 +4363,20 @@
       "detalle": "Lektionsdetaljer"
     },
     "sedes": {
+      "listado": {
+        "header": "Anläggningar",
+        "exploreTitle": "Utforska anläggningar",
+        "sortedByDistance": "Sorterat efter avstånd"
+      },
       "publica": {
         "infoCanchas": "Banor",
         "seguinosEn": "Följ oss",
-        "clubTiene": "Klubben erbjuder"
+        "clubTiene": "Klubben erbjuder",
+        "waitlistLeaveError": "Vi kunde inte ta bort dig från väntelistan.",
+        "waitlistJoinError": "Vi kunde inte lägga till dig på väntelistan.",
+        "openGoogleMaps": "Öppna i Google Maps",
+        "venueNotFound": "Anläggningen hittades inte.",
+        "openMatches": "Öppna matcher"
       }
     },
     "sponsors": {
@@ -3882,6 +4459,7 @@
         "markAllRead": "Markera alla som lästa"
       },
       "metrics": {
+        "cityLabel": "Stad",
         "periodToday": "I dag"
       },
       "alerts": {
@@ -4013,8 +4591,33 @@
       "titulo": "Betalning",
       "reintentar": "Försök igen"
     },
+    "ranking": {
+      "filter": "Filter",
+      "points": "Poäng",
+      "city": "Stad"
+    },
+    "scoreboardDisplay": {
+      "loading": "Läser in resultattavlan…"
+    },
     "equipos": {
       "inscripcion": "Anmälningsavgift"
+    },
+    "teamDetail": {
+      "shareLink": "Dela länk",
+      "teamClosed": "Stängt lag",
+      "paymentPending": "Betalning väntar",
+      "goToProfile": "Gå till min profil",
+      "requestToJoin": "Ansök om att gå med",
+      "invitePlayers": "Bjud in spelare",
+      "noPendingRequests": "Inga väntande förfrågningar.",
+      "leave": "Lämna"
+    },
+    "teamRegistration": {
+      "teamName": "Lagnamn",
+      "closed": "Stängt",
+      "invitation": "Inbjudan",
+      "results": "Resultat",
+      "understood": "Jag förstår"
     },
     "notificaciones": {
       "tipo": {
@@ -4046,7 +4649,9 @@
       "boton": "Frågor?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Datum och tid"
+      "titleDateAndTime": "Datum och tid",
+      "selectVenueError": "Välj en anläggning.",
+      "minutesLong": "minuter"
     },
     "perfilPublico": {
       "shareProfile": "Dela profil",
@@ -4135,6 +4740,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TURNERINGAR OCH RANKINGAR"
+        }
+      }
+    },
     "adminLanding": {
       "today": "I DAG"
     }
@@ -4148,6 +4760,20 @@
       "email": "E-mail",
       "city": "Cidade",
       "noNotifications": "Nenhuma notificação por enquanto."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Configuração"
+      },
+      "status": {
+        "cerrado": "Fechada"
+      }
+    },
+    "aboutPage": {
+      "explore": "Explorar locais"
+    },
+    "accountDeletion": {
+      "sending": "Enviando solicitação…"
     },
     "auth": {
       "login": "Conecte-se",
@@ -4163,6 +4789,12 @@
       "female": "Feminino",
       "handednessRight": "Destro",
       "handednessLeft": "Canhoto"
+    },
+    "profileCompletion": {
+      "title": "Complete seu perfil",
+      "sportsTitle": "Quais esportes você pratica?",
+      "skip": "Pular",
+      "saveFailed": "Não foi possível salvar seu perfil."
     },
     "nav": {
       "logout": "sair",
@@ -4239,7 +4871,10 @@
           "2da": "2º",
           "3ra": "3º",
           "Femenino": "Feminino"
-        }
+        },
+        "venueFallback": "o local",
+        "rightHanded": "Destro",
+        "leftHanded": "Canhoto"
       },
       "partidoDetalle": {
         "titulo": "Detalhe do jogo",
@@ -4256,10 +4891,20 @@
       "detalle": "Detalhe da aula"
     },
     "sedes": {
+      "listado": {
+        "header": "Locais",
+        "exploreTitle": "Explorar locais",
+        "sortedByDistance": "Ordenados por distância"
+      },
       "publica": {
         "infoCanchas": "Quadras",
         "seguinosEn": "Siga-nos",
-        "clubTiene": "O clube oferece"
+        "clubTiene": "O clube oferece",
+        "waitlistLeaveError": "Não foi possível remover você da lista de espera.",
+        "waitlistJoinError": "Não foi possível adicionar você à lista de espera.",
+        "openGoogleMaps": "Abrir no Google Maps",
+        "venueNotFound": "Local não encontrado.",
+        "openMatches": "Partidas abertas"
       }
     },
     "sponsors": {
@@ -4342,6 +4987,7 @@
         "markAllRead": "Marcar tudo como lido"
       },
       "metrics": {
+        "cityLabel": "Cidade",
         "periodToday": "Hoje"
       },
       "alerts": {
@@ -4473,8 +5119,33 @@
       "titulo": "Pagamento",
       "reintentar": "tente novamente"
     },
+    "ranking": {
+      "filter": "Filtrar",
+      "points": "Pontos",
+      "city": "Cidade"
+    },
+    "scoreboardDisplay": {
+      "loading": "Carregando o placar…"
+    },
     "equipos": {
       "inscripcion": "Cadastro"
+    },
+    "teamDetail": {
+      "shareLink": "Compartilhar link",
+      "teamClosed": "Equipe fechada",
+      "paymentPending": "Pagamento pendente",
+      "goToProfile": "Ir para meu perfil",
+      "requestToJoin": "Solicitar participação",
+      "invitePlayers": "Convidar jogadores",
+      "noPendingRequests": "Nenhuma solicitação pendente.",
+      "leave": "Sair"
+    },
+    "teamRegistration": {
+      "teamName": "Nome da equipe",
+      "closed": "Fechada",
+      "invitation": "Convite",
+      "results": "Resultados",
+      "understood": "Entendi"
     },
     "notificaciones": {
       "tipo": {
@@ -4506,7 +5177,9 @@
       "boton": "Dúvidas?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Data e hora"
+      "titleDateAndTime": "Data e hora",
+      "selectVenueError": "Selecione um local.",
+      "minutesLong": "minutos"
     },
     "perfilPublico": {
       "shareProfile": "Compartilhar perfil",
@@ -4595,6 +5268,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TORNEIOS E RANKINGS"
+        }
+      }
+    },
     "adminLanding": {
       "today": "HOJE"
     }
@@ -4608,6 +5288,20 @@
       "email": "E-mail",
       "city": "Cidade",
       "noNotifications": "Nenhuma notificação de momento."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Configuração"
+      },
+      "status": {
+        "cerrado": "Fechada"
+      }
+    },
+    "aboutPage": {
+      "explore": "Explorar recintos"
+    },
+    "accountDeletion": {
+      "sending": "A enviar pedido…"
     },
     "auth": {
       "login": "Conecte-se",
@@ -4623,6 +5317,12 @@
       "female": "Feminino",
       "handednessRight": "Destro",
       "handednessLeft": "Canhoto"
+    },
+    "profileCompletion": {
+      "title": "Completa o teu perfil",
+      "sportsTitle": "Que desportos pratica?",
+      "skip": "Ignorar",
+      "saveFailed": "Não foi possível guardar o teu perfil."
     },
     "nav": {
       "logout": "Terminar sessão",
@@ -4699,7 +5399,10 @@
           "2da": "2º",
           "3ra": "3º",
           "Femenino": "Feminino"
-        }
+        },
+        "venueFallback": "o recinto",
+        "rightHanded": "Destro",
+        "leftHanded": "Canhoto"
       },
       "partidoDetalle": {
         "titulo": "Detalhe do jogo",
@@ -4716,10 +5419,20 @@
       "detalle": "Detalhe da aula"
     },
     "sedes": {
+      "listado": {
+        "header": "Locais",
+        "exploreTitle": "Explorar recintos",
+        "sortedByDistance": "Ordenados por distância"
+      },
       "publica": {
         "infoCanchas": "Campos",
         "seguinosEn": "Siga-nos",
-        "clubTiene": "O clube oferece"
+        "clubTiene": "O clube oferece",
+        "waitlistLeaveError": "Não foi possível remover-te da lista de espera.",
+        "waitlistJoinError": "Não foi possível adicionar-te à lista de espera.",
+        "openGoogleMaps": "Abrir no Google Maps",
+        "venueNotFound": "Clube não encontrado.",
+        "openMatches": "Jogos abertos"
       }
     },
     "sponsors": {
@@ -4802,6 +5515,7 @@
         "markAllRead": "Marcar tudo como lido"
       },
       "metrics": {
+        "cityLabel": "Cidade",
         "periodToday": "Hoje"
       },
       "alerts": {
@@ -4933,8 +5647,33 @@
       "titulo": "Pagar",
       "reintentar": "tente novamente"
     },
+    "ranking": {
+      "filter": "Filtrar",
+      "points": "Pontos",
+      "city": "Cidade"
+    },
+    "scoreboardDisplay": {
+      "loading": "A carregar o marcador…"
+    },
     "equipos": {
       "inscripcion": "Inscrição"
+    },
+    "teamDetail": {
+      "shareLink": "Partilhar link",
+      "teamClosed": "EQUIPA fechada",
+      "paymentPending": "Pagamento pendente",
+      "goToProfile": "Vá para o meu perfil",
+      "requestToJoin": "Solicitar participação",
+      "invitePlayers": "Convidar jogadores",
+      "noPendingRequests": "Nenhuma pedido pendente.",
+      "leave": "Sair"
+    },
+    "teamRegistration": {
+      "teamName": "Nome da equipa",
+      "closed": "Fechada",
+      "invitation": "Convite",
+      "results": "Resultados",
+      "understood": "Entendido"
     },
     "notificaciones": {
       "tipo": {
@@ -4966,7 +5705,9 @@
       "boton": "Dúvidas?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Data e hora"
+      "titleDateAndTime": "Data e hora",
+      "selectVenueError": "Seleciona um recinto.",
+      "minutesLong": "minutos"
     },
     "perfilPublico": {
       "shareProfile": "Partilhar perfil",
@@ -5055,6 +5796,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TORNEIOS E RANKINGS"
+        }
+      }
+    },
     "adminLanding": {
       "today": "HOJE"
     }
@@ -5068,6 +5816,20 @@
       "email": "Email",
       "city": "Πόλη",
       "noNotifications": "Δεν υπάρχουν ακόμη ειδοποιήσεις."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Ρυθμίσεις"
+      },
+      "status": {
+        "cerrado": "Κλειστή"
+      }
+    },
+    "aboutPage": {
+      "explore": "Εξερεύνηση εγκαταστάσεων"
+    },
+    "accountDeletion": {
+      "sending": "Αποστολή αιτήματος…"
     },
     "auth": {
       "login": "Σύνδεση",
@@ -5083,6 +5845,12 @@
       "female": "Γυναίκα",
       "handednessRight": "Δεξιόχειρας",
       "handednessLeft": "Αριστερόχειρας"
+    },
+    "profileCompletion": {
+      "title": "Ολοκλήρωσε το προφίλ σου",
+      "sportsTitle": "Ποια αθλήματα παίζεις;",
+      "skip": "Παράλειψη",
+      "saveFailed": "Δεν ήταν δυνατή η αποθήκευση του προφίλ σας."
     },
     "nav": {
       "logout": "Αποσύνδεση",
@@ -5159,7 +5927,10 @@
           "2da": "2η",
           "3ra": "3η",
           "Femenino": "Γυναίκα"
-        }
+        },
+        "venueFallback": "η εγκατάσταση",
+        "rightHanded": "Δεξιόχειρας",
+        "leftHanded": "Αριστερόχειρας"
       },
       "partidoDetalle": {
         "titulo": "Λεπτομέρειες αγώνα",
@@ -5176,10 +5947,20 @@
       "detalle": "Λεπτομέρειες μαθήματος"
     },
     "sedes": {
+      "listado": {
+        "header": "Εγκαταστάσεις",
+        "exploreTitle": "Εξερεύνηση εγκαταστάσεων",
+        "sortedByDistance": "Ταξινόμηση κατά απόσταση"
+      },
       "publica": {
         "infoCanchas": "Γήπεδα",
         "seguinosEn": "Ακολουθήστε μας στο",
-        "clubTiene": "Ο σύλλογος προσφέρει"
+        "clubTiene": "Ο σύλλογος προσφέρει",
+        "waitlistLeaveError": "Δεν ήταν δυνατή η αφαίρεσή σας από τη λίστα αναμονής.",
+        "waitlistJoinError": "Δεν ήταν δυνατή η προσθήκη σας στη λίστα αναμονής.",
+        "openGoogleMaps": "Άνοιγμα στους Χάρτες Google",
+        "venueNotFound": "Η εγκατάσταση δεν βρέθηκε.",
+        "openMatches": "Ανοιχτοί αγώνες"
       }
     },
     "sponsors": {
@@ -5262,6 +6043,7 @@
         "markAllRead": "Επισήμανση όλων ως αναγνωσμένων"
       },
       "metrics": {
+        "cityLabel": "Πόλη",
         "periodToday": "Σήμερα"
       },
       "alerts": {
@@ -5393,8 +6175,33 @@
       "titulo": "Πληρωμή",
       "reintentar": "Δοκιμή ξανά"
     },
+    "ranking": {
+      "filter": "Φίλτρο",
+      "points": "Πόντοι",
+      "city": "Πόλη"
+    },
+    "scoreboardDisplay": {
+      "loading": "Φόρτωση πίνακα αποτελεσμάτων…"
+    },
     "equipos": {
       "inscripcion": "Κόστος συμμετοχής"
+    },
+    "teamDetail": {
+      "shareLink": "Κοινοποίηση συνδέσμου",
+      "teamClosed": "Κλειστή ομάδα",
+      "paymentPending": "Η πληρωμή εκκρεμεί",
+      "goToProfile": "Μετάβαση στο προφίλ μου",
+      "requestToJoin": "Αίτημα συμμετοχής",
+      "invitePlayers": "Πρόσκληση παικτών",
+      "noPendingRequests": "Δεν υπάρχουν εκκρεμή αιτήματα.",
+      "leave": "Αποχώρηση"
+    },
+    "teamRegistration": {
+      "teamName": "Όνομα ομάδας",
+      "closed": "Κλειστή",
+      "invitation": "Πρόσκληση",
+      "results": "Αποτελέσματα",
+      "understood": "Κατάλαβα"
     },
     "notificaciones": {
       "tipo": {
@@ -5426,7 +6233,9 @@
       "boton": "Ερωτήσεις;"
     },
     "armarPartido": {
-      "titleDateAndTime": "Ημερομηνία και ώρα"
+      "titleDateAndTime": "Ημερομηνία και ώρα",
+      "selectVenueError": "Επιλέξτε εγκατάσταση.",
+      "minutesLong": "λεπτά"
     },
     "perfilPublico": {
       "shareProfile": "Κοινοποίηση προφίλ",
@@ -5515,6 +6324,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "ΤΟΥΡΝΟΥΑ ΚΑΙ ΚΑΤΑΤΑΞΕΙΣ"
+        }
+      }
+    },
     "adminLanding": {
       "today": "ΣΉΜΕΡΑ"
     }
@@ -5528,6 +6344,20 @@
       "email": "E-mail",
       "city": "Város",
       "noNotifications": "Még nincs értesítés."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Beállítások"
+      },
+      "status": {
+        "cerrado": "Zárt"
+      }
+    },
+    "aboutPage": {
+      "explore": "Helyszínek böngészése"
+    },
+    "accountDeletion": {
+      "sending": "Kérelem küldése…"
     },
     "auth": {
       "login": "Bejelentkezés",
@@ -5543,6 +6373,12 @@
       "female": "Nő",
       "handednessRight": "Jobbkezes",
       "handednessLeft": "Balkezes"
+    },
+    "profileCompletion": {
+      "title": "Egészítsd ki a profilodat",
+      "sportsTitle": "Milyen sportokat űzöl?",
+      "skip": "Kihagyás",
+      "saveFailed": "Nem sikerült menteni a profilt."
     },
     "nav": {
       "logout": "Kijelentkezés",
@@ -5619,7 +6455,10 @@
           "2da": "2.",
           "3ra": "3.",
           "Femenino": "Nő"
-        }
+        },
+        "venueFallback": "helyszín",
+        "rightHanded": "Jobbkezes",
+        "leftHanded": "Balkezes"
       },
       "partidoDetalle": {
         "titulo": "Mérkőzés részletei",
@@ -5636,10 +6475,20 @@
       "detalle": "Edzés részletei"
     },
     "sedes": {
+      "listado": {
+        "header": "Helyszínek",
+        "exploreTitle": "Helyszínek böngészése",
+        "sortedByDistance": "Távolság szerint rendezve"
+      },
       "publica": {
         "infoCanchas": "Pályák",
         "seguinosEn": "Kövess minket",
-        "clubTiene": "A klub szolgáltatásai"
+        "clubTiene": "A klub szolgáltatásai",
+        "waitlistLeaveError": "Nem sikerült eltávolítani a várólistáról.",
+        "waitlistJoinError": "Nem sikerült felvenni a várólistára.",
+        "openGoogleMaps": "Megnyitás a Google Térképen",
+        "venueNotFound": "A helyszín nem található.",
+        "openMatches": "Nyitott mérkőzések"
       }
     },
     "sponsors": {
@@ -5722,6 +6571,7 @@
         "markAllRead": "Összes megjelölése olvasottként"
       },
       "metrics": {
+        "cityLabel": "Város",
         "periodToday": "Ma"
       },
       "alerts": {
@@ -5853,8 +6703,33 @@
       "titulo": "Fizetés",
       "reintentar": "Újrapróbálkozás"
     },
+    "ranking": {
+      "filter": "Szűrő",
+      "points": "Pontok",
+      "city": "Város"
+    },
+    "scoreboardDisplay": {
+      "loading": "Eredményjelző betöltése…"
+    },
     "equipos": {
       "inscripcion": "Nevezési díj"
+    },
+    "teamDetail": {
+      "shareLink": "Hivatkozás megosztása",
+      "teamClosed": "Zárt csapat",
+      "paymentPending": "Fizetésre vár",
+      "goToProfile": "Ugrás a profilomhoz",
+      "requestToJoin": "Csatlakozási kérelem",
+      "invitePlayers": "Játékosok meghívása",
+      "noPendingRequests": "Nincs függőben lévő kérelem.",
+      "leave": "Elhagyás"
+    },
+    "teamRegistration": {
+      "teamName": "Csapat neve",
+      "closed": "Zárt",
+      "invitation": "Meghívás",
+      "results": "Eredmények",
+      "understood": "Értem"
     },
     "notificaciones": {
       "tipo": {
@@ -5886,7 +6761,9 @@
       "boton": "Kérdésed van?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Dátum és idő"
+      "titleDateAndTime": "Dátum és idő",
+      "selectVenueError": "Válassz helyszínt.",
+      "minutesLong": "perc"
     },
     "perfilPublico": {
       "shareProfile": "Profil megosztása",
@@ -5975,6 +6852,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "VERSENYEK ÉS RANGLISTÁK"
+        }
+      }
+    },
     "adminLanding": {
       "today": "MA"
     }
@@ -5988,6 +6872,20 @@
       "email": "אימייל",
       "city": "עיר",
       "noNotifications": "עדיין אין התראות."
+    },
+    "support": {
+      "category": {
+        "configuracion": "הגדרות"
+      },
+      "status": {
+        "cerrado": "סגורה"
+      }
+    },
+    "aboutPage": {
+      "explore": "חיפוש מועדונים"
+    },
+    "accountDeletion": {
+      "sending": "שולח בקשה…"
     },
     "auth": {
       "login": "התחברות",
@@ -6003,6 +6901,12 @@
       "female": "אישה",
       "handednessRight": "יד ימין",
       "handednessLeft": "יד שמאל"
+    },
+    "profileCompletion": {
+      "title": "השלמת הפרופיל",
+      "sportsTitle": "באילו ענפי ספורט אתם משחקים?",
+      "skip": "דילוג",
+      "saveFailed": "לא ניתן לשמור את הפרופיל."
     },
     "nav": {
       "logout": "התנתקות",
@@ -6079,7 +6983,10 @@
           "2da": "מקום שני",
           "3ra": "מקום שלישי",
           "Femenino": "אישה"
-        }
+        },
+        "venueFallback": "המועדון",
+        "rightHanded": "יד ימין",
+        "leftHanded": "יד שמאל"
       },
       "partidoDetalle": {
         "titulo": "פרטי המשחק",
@@ -6096,10 +7003,20 @@
       "detalle": "פרטי השיעור"
     },
     "sedes": {
+      "listado": {
+        "header": "מועדונים",
+        "exploreTitle": "חיפוש מועדונים",
+        "sortedByDistance": "ממוין לפי מרחק"
+      },
       "publica": {
         "infoCanchas": "מגרשים",
         "seguinosEn": "עקבו אחרינו",
-        "clubTiene": "במועדון יש"
+        "clubTiene": "במועדון יש",
+        "waitlistLeaveError": "לא ניתן להסיר אותך מרשימת ההמתנה.",
+        "waitlistJoinError": "לא ניתן להוסיף אותך לרשימת ההמתנה.",
+        "openGoogleMaps": "פתיחה ב־Google Maps",
+        "venueNotFound": "המועדון לא נמצא.",
+        "openMatches": "משחקים פתוחים"
       }
     },
     "sponsors": {
@@ -6182,6 +7099,7 @@
         "markAllRead": "סימון הכול כנקרא"
       },
       "metrics": {
+        "cityLabel": "עיר",
         "periodToday": "היום"
       },
       "alerts": {
@@ -6313,8 +7231,33 @@
       "titulo": "תשלום",
       "reintentar": "לנסות שוב"
     },
+    "ranking": {
+      "filter": "סינון",
+      "points": "נקודות",
+      "city": "עיר"
+    },
+    "scoreboardDisplay": {
+      "loading": "טוען לוח תוצאות…"
+    },
     "equipos": {
       "inscripcion": "דמי הרשמה"
+    },
+    "teamDetail": {
+      "shareLink": "שיתוף קישור",
+      "teamClosed": "קבוצה סגורה",
+      "paymentPending": "התשלום ממתין",
+      "goToProfile": "מעבר לפרופיל שלי",
+      "requestToJoin": "בקשת הצטרפות",
+      "invitePlayers": "הזמנת שחקנים",
+      "noPendingRequests": "אין בקשות ממתינות.",
+      "leave": "עזיבה"
+    },
+    "teamRegistration": {
+      "teamName": "שם הקבוצה",
+      "closed": "סגורה",
+      "invitation": "הזמנה",
+      "results": "תוצאות",
+      "understood": "הבנתי"
     },
     "notificaciones": {
       "tipo": {
@@ -6346,7 +7289,9 @@
       "boton": "יש שאלות?"
     },
     "armarPartido": {
-      "titleDateAndTime": "תאריך ושעה"
+      "titleDateAndTime": "תאריך ושעה",
+      "selectVenueError": "יש לבחור מועדון.",
+      "minutesLong": "דקות"
     },
     "perfilPublico": {
       "shareProfile": "שיתוף פרופיל",
@@ -6435,6 +7380,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "טורנירים ודירוגים"
+        }
+      }
+    },
     "adminLanding": {
       "today": "היום"
     }
@@ -6448,6 +7400,20 @@
       "email": "E-mail",
       "city": "Miasto",
       "noNotifications": "Brak powiadomień."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Ustawienia"
+      },
+      "status": {
+        "cerrado": "Zamknięta"
+      }
+    },
+    "aboutPage": {
+      "explore": "Przeglądaj obiekty"
+    },
+    "accountDeletion": {
+      "sending": "Wysyłanie prośby…"
     },
     "auth": {
       "login": "Zaloguj się",
@@ -6463,6 +7429,12 @@
       "female": "Kobieta",
       "handednessRight": "Praworęczny",
       "handednessLeft": "Leworęczny"
+    },
+    "profileCompletion": {
+      "title": "Uzupełnij swój profil",
+      "sportsTitle": "Jakie sporty uprawiasz?",
+      "skip": "Pomiń",
+      "saveFailed": "Nie udało się zapisać profilu."
     },
     "nav": {
       "logout": "Wyloguj się",
@@ -6539,7 +7511,10 @@
           "2da": "2.",
           "3ra": "3.",
           "Femenino": "Kobieta"
-        }
+        },
+        "venueFallback": "obiekt",
+        "rightHanded": "Praworęczny",
+        "leftHanded": "Leworęczny"
       },
       "partidoDetalle": {
         "titulo": "Szczegóły meczu",
@@ -6556,10 +7531,20 @@
       "detalle": "Szczegóły zajęć"
     },
     "sedes": {
+      "listado": {
+        "header": "Obiekty",
+        "exploreTitle": "Przeglądaj obiekty",
+        "sortedByDistance": "Posortowano według odległości"
+      },
       "publica": {
         "infoCanchas": "Korty",
         "seguinosEn": "Obserwuj nas",
-        "clubTiene": "Klub oferuje"
+        "clubTiene": "Klub oferuje",
+        "waitlistLeaveError": "Nie udało się usunąć Cię z listy oczekujących.",
+        "waitlistJoinError": "Nie udało się dodać Cię do listy oczekujących.",
+        "openGoogleMaps": "Otwórz w Mapach Google",
+        "venueNotFound": "Nie znaleziono obiektu.",
+        "openMatches": "Otwarte mecze"
       }
     },
     "sponsors": {
@@ -6642,6 +7627,7 @@
         "markAllRead": "Oznacz wszystkie jako przeczytane"
       },
       "metrics": {
+        "cityLabel": "Miasto",
         "periodToday": "Dzisiaj"
       },
       "alerts": {
@@ -6773,8 +7759,33 @@
       "titulo": "Płatność",
       "reintentar": "Spróbuj ponownie"
     },
+    "ranking": {
+      "filter": "Filtr",
+      "points": "Punkty",
+      "city": "Miasto"
+    },
+    "scoreboardDisplay": {
+      "loading": "Wczytywanie tablicy wyników…"
+    },
     "equipos": {
       "inscripcion": "Opłata wpisowa"
+    },
+    "teamDetail": {
+      "shareLink": "Udostępnij link",
+      "teamClosed": "Drużyna zamknięta",
+      "paymentPending": "Płatność oczekuje",
+      "goToProfile": "Przejdź do mojego profilu",
+      "requestToJoin": "Poproś o dołączenie",
+      "invitePlayers": "Zaproś zawodników",
+      "noPendingRequests": "Brak oczekujących próśb.",
+      "leave": "Opuść"
+    },
+    "teamRegistration": {
+      "teamName": "Nazwa drużyny",
+      "closed": "Zamknięta",
+      "invitation": "Zaproszenie",
+      "results": "Wyniki",
+      "understood": "Rozumiem"
     },
     "notificaciones": {
       "tipo": {
@@ -6806,7 +7817,9 @@
       "boton": "Masz pytania?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Data i godzina"
+      "titleDateAndTime": "Data i godzina",
+      "selectVenueError": "Wybierz obiekt.",
+      "minutesLong": "minut"
     },
     "perfilPublico": {
       "shareProfile": "Udostępnij profil",
@@ -6895,6 +7908,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TURNIEJE I RANKINGI"
+        }
+      }
+    },
     "adminLanding": {
       "today": "DZISIAJ"
     }
@@ -6908,6 +7928,20 @@
       "email": "Електронна пошта",
       "city": "Місто",
       "noNotifications": "Сповіщень ще немає."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Налаштування"
+      },
+      "status": {
+        "cerrado": "Закрита"
+      }
+    },
+    "aboutPage": {
+      "explore": "Переглянути заклади"
+    },
+    "accountDeletion": {
+      "sending": "Надсилання запиту…"
     },
     "auth": {
       "login": "Увійти",
@@ -6923,6 +7957,12 @@
       "female": "Жіноча",
       "handednessRight": "Правша",
       "handednessLeft": "Лівша"
+    },
+    "profileCompletion": {
+      "title": "Заповніть свій профіль",
+      "sportsTitle": "Якими видами спорту ви займаєтеся?",
+      "skip": "Пропустити",
+      "saveFailed": "Не вдалося зберегти профіль."
     },
     "nav": {
       "logout": "Вийти",
@@ -6999,7 +8039,10 @@
           "2da": "2-ге",
           "3ra": "3-тє",
           "Femenino": "Жіноча"
-        }
+        },
+        "venueFallback": "заклад",
+        "rightHanded": "Правша",
+        "leftHanded": "Лівша"
       },
       "partidoDetalle": {
         "titulo": "Деталі матчу",
@@ -7016,10 +8059,20 @@
       "detalle": "Деталі заняття"
     },
     "sedes": {
+      "listado": {
+        "header": "Заклади",
+        "exploreTitle": "Переглянути заклади",
+        "sortedByDistance": "Відсортовано за відстанню"
+      },
       "publica": {
         "infoCanchas": "Корти",
         "seguinosEn": "Стежте за нами",
-        "clubTiene": "У клубі є"
+        "clubTiene": "У клубі є",
+        "waitlistLeaveError": "Не вдалося видалити вас зі списку очікування.",
+        "waitlistJoinError": "Не вдалося додати вас до списку очікування.",
+        "openGoogleMaps": "Відкрити в Google Maps",
+        "venueNotFound": "Заклад не знайдено.",
+        "openMatches": "Відкриті матчі"
       }
     },
     "sponsors": {
@@ -7102,6 +8155,7 @@
         "markAllRead": "Позначити всі як прочитані"
       },
       "metrics": {
+        "cityLabel": "Місто",
         "periodToday": "Сьогодні"
       },
       "alerts": {
@@ -7233,8 +8287,33 @@
       "titulo": "Оплата",
       "reintentar": "Спробувати ще раз"
     },
+    "ranking": {
+      "filter": "Фільтр",
+      "points": "Очки",
+      "city": "Місто"
+    },
+    "scoreboardDisplay": {
+      "loading": "Завантаження табло…"
+    },
     "equipos": {
       "inscripcion": "Реєстраційний внесок"
+    },
+    "teamDetail": {
+      "shareLink": "Поділитися посиланням",
+      "teamClosed": "Закрита команда",
+      "paymentPending": "Очікує оплати",
+      "goToProfile": "Перейти до мого профілю",
+      "requestToJoin": "Надіслати запит на приєднання",
+      "invitePlayers": "Запросити гравців",
+      "noPendingRequests": "Немає запитів, що очікують.",
+      "leave": "Залишити"
+    },
+    "teamRegistration": {
+      "teamName": "Назва команди",
+      "closed": "Закрита",
+      "invitation": "Запрошення",
+      "results": "Результати",
+      "understood": "Зрозуміло"
     },
     "notificaciones": {
       "tipo": {
@@ -7266,7 +8345,9 @@
       "boton": "Є запитання?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Дата й час"
+      "titleDateAndTime": "Дата й час",
+      "selectVenueError": "Оберіть заклад.",
+      "minutesLong": "хвилин"
     },
     "perfilPublico": {
       "shareProfile": "Поділитися профілем",
@@ -7355,6 +8436,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "ТУРНІРИ ТА РЕЙТИНГИ"
+        }
+      }
+    },
     "adminLanding": {
       "today": "СЬОГОДНІ"
     }
@@ -7368,6 +8456,20 @@
       "email": "E-pos",
       "city": "Stad",
       "noNotifications": "Nog geen kennisgewings nie."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Instellings"
+      },
+      "status": {
+        "cerrado": "Gesluit"
+      }
+    },
+    "aboutPage": {
+      "explore": "Verken klubs"
+    },
+    "accountDeletion": {
+      "sending": "Stuur versoek…"
     },
     "auth": {
       "login": "Meld aan",
@@ -7383,6 +8485,12 @@
       "female": "Vroulik",
       "handednessRight": "Regshandig",
       "handednessLeft": "Linkshandig"
+    },
+    "profileCompletion": {
+      "title": "Voltooi jou profiel",
+      "sportsTitle": "Watter sportsoorte beoefen jy?",
+      "skip": "Slaan oor",
+      "saveFailed": "Ons kon nie jou profiel stoor nie."
     },
     "nav": {
       "logout": "Meld af",
@@ -7459,7 +8567,10 @@
           "2da": "2de",
           "3ra": "3de",
           "Femenino": "Vroulik"
-        }
+        },
+        "venueFallback": "die klub",
+        "rightHanded": "Regshandig",
+        "leftHanded": "Linkshandig"
       },
       "partidoDetalle": {
         "titulo": "Wedstrydbesonderhede",
@@ -7476,10 +8587,20 @@
       "detalle": "Lesbesonderhede"
     },
     "sedes": {
+      "listado": {
+        "header": "Klubs",
+        "exploreTitle": "Verken klubs",
+        "sortedByDistance": "Volgens afstand gesorteer"
+      },
       "publica": {
         "infoCanchas": "Bane",
         "seguinosEn": "Volg ons op",
-        "clubTiene": "Die klub bied"
+        "clubTiene": "Die klub bied",
+        "waitlistLeaveError": "Ons kon jou nie van die waglys verwyder nie.",
+        "waitlistJoinError": "Ons kon jou nie by die waglys voeg nie.",
+        "openGoogleMaps": "Maak in Google Maps oop",
+        "venueNotFound": "Klub nie gevind nie.",
+        "openMatches": "Oop wedstryde"
       }
     },
     "sponsors": {
@@ -7562,6 +8683,7 @@
         "markAllRead": "Merk alles as gelees"
       },
       "metrics": {
+        "cityLabel": "Stad",
         "periodToday": "Vandag"
       },
       "alerts": {
@@ -7693,8 +8815,33 @@
       "titulo": "Betaling",
       "reintentar": "Probeer weer"
     },
+    "ranking": {
+      "filter": "Filter",
+      "points": "Punte",
+      "city": "Stad"
+    },
+    "scoreboardDisplay": {
+      "loading": "Laai telbord…"
+    },
     "equipos": {
       "inscripcion": "Inskrywingsfooi"
+    },
+    "teamDetail": {
+      "shareLink": "Deel skakel",
+      "teamClosed": "Geslote span",
+      "paymentPending": "Betaling hangende",
+      "goToProfile": "Gaan na my profiel",
+      "requestToJoin": "Versoek om aan te sluit",
+      "invitePlayers": "Nooi spelers",
+      "noPendingRequests": "Geen hangende versoeke nie.",
+      "leave": "Verlaat"
+    },
+    "teamRegistration": {
+      "teamName": "Spannaam",
+      "closed": "Gesluit",
+      "invitation": "Uitnodiging",
+      "results": "Uitslae",
+      "understood": "Reg so"
     },
     "notificaciones": {
       "tipo": {
@@ -7726,7 +8873,9 @@
       "boton": "Vrae?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Datum en tyd"
+      "titleDateAndTime": "Datum en tyd",
+      "selectVenueError": "Kies ’n klub.",
+      "minutesLong": "minute"
     },
     "perfilPublico": {
       "shareProfile": "Deel profiel",
@@ -7815,6 +8964,13 @@
         }
       }
     },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TOERNOOIE EN RANGLYSTE"
+        }
+      }
+    },
     "adminLanding": {
       "today": "VANDAG"
     }
@@ -7828,6 +8984,20 @@
       "email": "E-mail",
       "city": "Město",
       "noNotifications": "Momentálně žádná oznámení."
+    },
+    "support": {
+      "category": {
+        "configuracion": "Nastavení"
+      },
+      "status": {
+        "cerrado": "Uzavřený"
+      }
+    },
+    "aboutPage": {
+      "explore": "Procházet místa"
+    },
+    "accountDeletion": {
+      "sending": "Odesílání žádosti…"
     },
     "auth": {
       "login": "Přihlásit se",
@@ -7843,6 +9013,12 @@
       "female": "Žena",
       "handednessRight": "Pravák",
       "handednessLeft": "Levák"
+    },
+    "profileCompletion": {
+      "title": "Dokončete svůj profil",
+      "sportsTitle": "Které sporty hrajete?",
+      "skip": "Přeskočit",
+      "saveFailed": "Profil se nepodařilo uložit."
     },
     "nav": {
       "logout": "Odhlásit se",
@@ -7919,7 +9095,10 @@
           "2da": "2.",
           "3ra": "3.",
           "Femenino": "Žena"
-        }
+        },
+        "venueFallback": "místo",
+        "rightHanded": "Pravák",
+        "leftHanded": "Levák"
       },
       "partidoDetalle": {
         "titulo": "Podrobnosti zápasu",
@@ -7936,10 +9115,20 @@
       "detalle": "Podrobnosti lekce"
     },
     "sedes": {
+      "listado": {
+        "header": "Místa",
+        "exploreTitle": "Procházet místa",
+        "sortedByDistance": "Seřazeno podle vzdálenosti"
+      },
       "publica": {
         "infoCanchas": "Hřiště",
         "seguinosEn": "Sledujte nás na",
-        "clubTiene": "Klub nabízí"
+        "clubTiene": "Klub nabízí",
+        "waitlistLeaveError": "Z čekací listiny se vás nepodařilo odebrat.",
+        "waitlistJoinError": "Na čekací listinu se vás nepodařilo přihlásit.",
+        "openGoogleMaps": "Otevřít v Mapách Google",
+        "venueNotFound": "Místo nebylo nalezeno.",
+        "openMatches": "Otevřené zápasy"
       }
     },
     "sponsors": {
@@ -8022,6 +9211,7 @@
         "markAllRead": "Označit vše jako přečtené"
       },
       "metrics": {
+        "cityLabel": "Město",
         "periodToday": "Dnes"
       },
       "alerts": {
@@ -8153,8 +9343,33 @@
       "titulo": "Platba",
       "reintentar": "Zkusit znovu"
     },
+    "ranking": {
+      "filter": "Filtrovat",
+      "points": "Body",
+      "city": "Město"
+    },
+    "scoreboardDisplay": {
+      "loading": "Načítání výsledkové tabule…"
+    },
     "equipos": {
       "inscripcion": "Registrace"
+    },
+    "teamDetail": {
+      "shareLink": "Sdílet odkaz",
+      "teamClosed": "Uzavřený tým",
+      "paymentPending": "Čeká na platbu",
+      "goToProfile": "Přejít na můj profil",
+      "requestToJoin": "Požádat o připojení",
+      "invitePlayers": "Pozvat hráče",
+      "noPendingRequests": "Žádné čekající žádosti.",
+      "leave": "Opustit"
+    },
+    "teamRegistration": {
+      "teamName": "Název týmu",
+      "closed": "Uzavřený",
+      "invitation": "Pozvánka",
+      "results": "Výsledky",
+      "understood": "Rozumím"
     },
     "notificaciones": {
       "tipo": {
@@ -8186,7 +9401,9 @@
       "boton": "Máte dotaz?"
     },
     "armarPartido": {
-      "titleDateAndTime": "Datum a čas"
+      "titleDateAndTime": "Datum a čas",
+      "selectVenueError": "Vyberte klub.",
+      "minutesLong": "minut"
     },
     "perfilPublico": {
       "shareProfile": "Sdílet profil",
@@ -8272,6 +9489,13 @@
         "demoBadge": "Živě",
         "futureAccess": {
           "label": "Již brzy"
+        }
+      }
+    },
+    "clubOnboarding": {
+      "plans": {
+        "pro": {
+          "include1": "TURNAJE A ŽEBŘÍČKY"
         }
       }
     },
