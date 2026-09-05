@@ -1872,7 +1872,16 @@
         "totalStockNonNegative": "El stock total no puede ser negativo",
         "availableStockNonNegative": "El stock disponible no puede ser negativo",
         "availableStockOverTotal": "El stock disponible no puede superar el stock total",
-        "invalidDateRange": "La fecha de inicio no puede ser posterior a la fecha de fin"
+        "invalidDateRange": "La fecha de inicio no puede ser posterior a la fecha de fin",
+        "campaignTypeRequired": "El tipo de campaña es obligatorio",
+        "selectVenue": "Selecciona una sede",
+        "campaignDateOrder": "La fecha de fin debe ser posterior a la fecha de inicio",
+        "numericNonNegative": "Los valores numéricos no pueden ser negativos",
+        "multiplierPositive": "Indica un multiplicador mayor a 0",
+        "loyaltyPctRequired": "Indica el porcentaje de fidelización",
+        "fixedPadcoinsPositive": "Indica una cantidad de PadCoins fijos mayor a 0",
+        "benefitRequired": "Selecciona un beneficio asociado",
+        "selectVenueCampaign": "Selecciona una sede para la campaña"
       }
     },
     "metricas": {

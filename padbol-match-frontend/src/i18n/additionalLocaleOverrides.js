@@ -815,6 +815,12 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
             availableStockNonNegative: "Dostupná zásoba nesmí být záporná",
             availableStockOverTotal: "Dostupná zásoba nesmí překročit celkovou zásobu",
             invalidDateRange: "Datum zahájení nesmí být pozdější než datum ukončení",
+            campaignTypeRequired: "Typ kampaně je povinný", selectVenue: "Vyberte klub",
+            campaignDateOrder: "Datum ukončení musí být pozdější než datum zahájení",
+            numericNonNegative: "Číselné hodnoty nesmí být záporné",
+            multiplierPositive: "Zadejte násobitel vyšší než 0", loyaltyPctRequired: "Zadejte procento věrnosti",
+            fixedPadcoinsPositive: "Zadejte pevné množství PadCoins vyšší než 0",
+            benefitRequired: "Vyberte související výhodu", selectVenueCampaign: "Vyberte klub pro kampaň",
           },
           campaignType: {
             multiplier: "Násobitel", percentage_override: "Dočasné procento",

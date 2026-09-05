@@ -1847,7 +1847,16 @@
         "totalStockNonNegative": "Total stock cannot be negative",
         "availableStockNonNegative": "Available stock cannot be negative",
         "availableStockOverTotal": "Available stock cannot exceed total stock",
-        "invalidDateRange": "Start date cannot be after end date"
+        "invalidDateRange": "Start date cannot be after end date",
+        "campaignTypeRequired": "Campaign type is required",
+        "selectVenue": "Select a venue",
+        "campaignDateOrder": "End date must be after start date",
+        "numericNonNegative": "Numeric values cannot be negative",
+        "multiplierPositive": "Enter a multiplier greater than 0",
+        "loyaltyPctRequired": "Enter the loyalty percentage",
+        "fixedPadcoinsPositive": "Enter a fixed PadCoins amount greater than 0",
+        "benefitRequired": "Select an associated benefit",
+        "selectVenueCampaign": "Select a venue for the campaign"
       },
       "campaignType": {
         "multiplier": "Multiplier",

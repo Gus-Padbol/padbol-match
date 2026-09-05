@@ -1477,14 +1477,14 @@ function padcoinsCampaignNumericOptional(value) {
   return Number.isFinite(n) ? n : undefined;
 }
 
-function validatePadcoinsCampaignForm(form, { requireSedeId = false } = {}) {
-  if (!(form?.name || '').trim()) return 'El nombre es obligatorio';
-  if (!(form?.campaign_type || '').trim()) return 'El tipo de campaña es obligatorio';
-  if (requireSedeId && !String(form?.sede_id || '').trim()) return 'Seleccione una sede';
+function validatePadcoinsCampaignForm(form, { requireSedeId = false, t } = {}) {
+  if (!(form?.name || '').trim()) return t('admin.padcoins.validation.nameRequired');
+  if (!(form?.campaign_type || '').trim()) return t('admin.padcoins.validation.campaignTypeRequired');
+  if (requireSedeId && !String(form?.sede_id || '').trim()) return t('admin.padcoins.validation.selectVenue');
 
   const start = String(form?.start_at || '').trim();
   const end = String(form?.end_at || '').trim();
-  if (start && end && start >= end) return 'La fecha de fin debe ser posterior a la fecha de inicio';
+  if (start && end && start >= end) return t('admin.padcoins.validation.campaignDateOrder');
 
   const numericFields = [
     form?.multiplier,
@@ -1497,25 +1497,25 @@ function validatePadcoinsCampaignForm(form, { requireSedeId = false } = {}) {
   for (const val of numericFields) {
     if (val === '' || val == null) continue;
     const n = Number(val);
-    if (!Number.isFinite(n) || n < 0) return 'Los valores numéricos no pueden ser negativos';
+    if (!Number.isFinite(n) || n < 0) return t('admin.padcoins.validation.numericNonNegative');
   }
 
   const type = String(form?.campaign_type || '').trim();
   if (type === 'multiplier') {
     const m = Number(form?.multiplier);
-    if (!Number.isFinite(m) || m <= 0) return 'Indique un multiplicador mayor a 0';
+    if (!Number.isFinite(m) || m <= 0) return t('admin.padcoins.validation.multiplierPositive');
   }
   if (type === 'percentage_override') {
     const p = Number(form?.loyalty_percentage_override);
-    if (!Number.isFinite(p) || p < 0) return 'Indique el porcentaje de fidelización';
+    if (!Number.isFinite(p) || p < 0) return t('admin.padcoins.validation.loyaltyPctRequired');
   }
   if (type === 'fixed_padcoins') {
     const f = Number(form?.fixed_padcoins);
-    if (!Number.isFinite(f) || f <= 0) return 'Indique una cantidad de PadCoins fijos mayor a 0';
+    if (!Number.isFinite(f) || f <= 0) return t('admin.padcoins.validation.fixedPadcoinsPositive');
   }
   if (type === 'benefit_equivalent') {
     const bid = String(form?.benefit_id || '').trim();
-    if (!bid) return 'Seleccione un beneficio asociado';
+    if (!bid) return t('admin.padcoins.validation.benefitRequired');
   }
   return null;
 }
@@ -4506,13 +4506,14 @@ export default function AdminDashboard({
     const formSedeId = clubSid || pcCampaignForm.sede_id;
     const validationError = validatePadcoinsCampaignForm(pcCampaignForm, {
       requireSedeId: isSuperAdmin && !clubSid,
+      t,
     });
     if (validationError) {
       setPcCampaignFormError(validationError);
       return;
     }
     if (!formSedeId) {
-      setPcCampaignFormError('Seleccione una sede para la campaña');
+      setPcCampaignFormError(t('admin.padcoins.validation.selectVenueCampaign'));
       return;
     }
     setPcCampaignSaving(true);
