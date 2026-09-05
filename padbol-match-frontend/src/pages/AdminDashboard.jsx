@@ -4414,7 +4414,7 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar beneficios');
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignBenefitsLoadFailed'));
       const list = Array.isArray(data) ? data : (data.premios || data.data || []);
       setPcCampaignBenefits(list);
     } catch {
@@ -8401,7 +8401,7 @@ export default function AdminDashboard({
         if (!courtRes.ok) {
           return {
             ok: false,
-            message: courtData.error || courtRes.statusText || 'La sede se guardó, pero no se pudo crear la cancha. Podés agregarla desde Canchas.',
+            message: t('admin.sedes.guidedCourtCreateFailed'),
           };
         }
         if (courtData.cancha) {
@@ -8409,8 +8409,8 @@ export default function AdminDashboard({
         }
       }
       return { ok: true };
-    } catch (error) {
-      return { ok: false, message: error?.message || String(error) };
+    } catch {
+      return { ok: false, message: t('admin.metricas.saveError') };
     } finally {
       setMiSedeSaving(false);
     }
@@ -8419,7 +8419,7 @@ export default function AdminDashboard({
 
   const guardarInstalacionesMiSede = async (amenitiesOverride) => {
     if (!sedeId || !session?.access_token) {
-      setMiSedeInstalacionesMsg('⚠️ Inicia sesión de nuevo');
+      setMiSedeInstalacionesMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setMiSedeInstalacionesMsg(''), 4000);
       return;
     }
@@ -9120,7 +9120,7 @@ export default function AdminDashboard({
       .from('avatars')
       .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
     if (uploadError) {
-      setLogoMsg(`⚠️ ${uploadError.message}`);
+      setLogoMsg(`⚠️ ${t('admin.sedes.logoUploadFailed')}`);
       setLogoUploading(false);
       return;
     }
@@ -9129,14 +9129,14 @@ export default function AdminDashboard({
     } = supabase.storage.from('avatars').getPublicUrl(path);
     const urlGuardar = String(publicUrl || '').trim();
     if (!urlGuardar) {
-      setLogoMsg('⚠️ No se obtuvo URL pública del logo');
+      setLogoMsg(`⚠️ ${t('admin.sedes.logoPublicUrlMissing')}`);
       setLogoUploading(false);
       return;
     }
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
-      if (!token) throw new Error('No autorizado');
+      if (!token) throw new Error(t('admin.formularios.loginAgainAlt'));
       const res = await fetch(`${apiBaseUrl}/api/admin/sedes/${encodeURIComponent(String(sedeId))}`, {
         method: 'PATCH',
         headers: {
@@ -9146,13 +9146,13 @@ export default function AdminDashboard({
         body: JSON.stringify({ logo_url: urlGuardar }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo guardar el logo');
+      if (!res.ok) throw new Error(t('admin.sedes.logoSaveFailed'));
       const savedUrl = String(j?.sede?.logo_url || urlGuardar).trim();
       aplicarLogoUrlEnPanel(savedUrl);
       setLogoMsg(t('admin.sedes.logoGuardado'));
       window.setTimeout(() => setLogoMsg(''), 3000);
     } catch (e) {
-      setLogoMsg(`⚠️ ${e?.message || 'Error al guardar'}`);
+      setLogoMsg(`⚠️ ${e?.message || t('admin.sedes.logoSaveFailed')}`);
     } finally {
       setLogoUploading(false);
     }
@@ -9294,7 +9294,7 @@ export default function AdminDashboard({
     const { error } = await supabase.from(ADMIN_SEDES_TABLE).update({ franjas_horarias: validation.payload }).eq('id', sedeId);
     setFranjasSaving(false);
     if (error) {
-      setFranjasMsg(`⚠️ ${error.message}`);
+      setFranjasMsg(`⚠️ ${t('admin.metricas.saveError')}`);
     } else {
       setFranjasOverlapMsg('');
       setFranjasMsg(t('admin.franjas.slotsSaved'));
@@ -9322,7 +9322,7 @@ export default function AdminDashboard({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setFotosMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
+        setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
         setTimeout(() => setFotosMsg(''), 5000);
         return false;
       }
@@ -9332,8 +9332,8 @@ export default function AdminDashboard({
       setFotosUrls(saved);
       setMiSede((prev) => (prev ? { ...prev, fotos_urls: saved } : prev));
       return true;
-    } catch (e) {
-      setFotosMsg(`⚠️ ${e?.message || String(e)}`);
+    } catch {
+      setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
       setTimeout(() => setFotosMsg(''), 5000);
       return false;
     }
@@ -9347,7 +9347,7 @@ export default function AdminDashboard({
     }
     const heroUrl = url != null && String(url).trim() !== '' ? String(url).trim() : null;
     if (heroUrl && !fotosUrls.includes(heroUrl)) {
-      setFotosMsg('⚠️ La foto debe estar en la galería');
+      setFotosMsg(`⚠️ ${t('admin.sedes.photoMustBeInGallery')}`);
       setTimeout(() => setFotosMsg(''), 4000);
       return false;
     }
@@ -9363,7 +9363,7 @@ export default function AdminDashboard({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setFotosMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
+        setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
         setTimeout(() => setFotosMsg(''), 5000);
         return false;
       }
@@ -9382,8 +9382,8 @@ export default function AdminDashboard({
           : prev,
       );
       return true;
-    } catch (e) {
-      setFotosMsg(`⚠️ ${e?.message || String(e)}`);
+    } catch {
+      setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
       setTimeout(() => setFotosMsg(''), 5000);
       return false;
     } finally {
@@ -9396,7 +9396,7 @@ export default function AdminDashboard({
     if (!heroKey || heroKey === fotoPortada) return;
     const ok = await persistFotoPortada(heroKey);
     if (ok) {
-      setHeroToast('Foto del hero actualizada');
+      setHeroToast(t('admin.sedes.heroPhotoUpdated'));
       window.setTimeout(() => setHeroToast(''), 2600);
     }
   };
@@ -9537,7 +9537,7 @@ export default function AdminDashboard({
 
   const fetchScoreboardSedes = useCallback(async () => {
     if (!session?.access_token) {
-      const msg = 'Sin token de sesión para cargar sedes';
+      const msg = t('admin.formularios.loginAgainAlt');
       console.warn('[Scoreboard] fetch sedes:', msg);
       setScoreboardSedesError(msg);
       setScoreboardSedes([]);
@@ -9560,12 +9560,12 @@ export default function AdminDashboard({
       }
     } catch (err) {
       console.error('[Scoreboard] GET /api/sedes error:', err);
-      setScoreboardSedesError(err?.message || String(err));
+      setScoreboardSedesError(t('admin.scoreboard.venuesLoadFailed'));
       setScoreboardSedes([]);
     } finally {
       setScoreboardSedesLoading(false);
     }
-  }, [session?.access_token, esAdminClub, sedeIdKey, sbSedeId]);
+  }, [session?.access_token, esAdminClub, sedeIdKey, sbSedeId, t]);
 
   useEffect(() => {
     if (!puedeVerScoreboard || activeTab !== 'scoreboard') return;
@@ -9598,7 +9598,7 @@ export default function AdminDashboard({
   useEffect(() => {
     setSbPartidosExpanded(false);
     setSbPartidosSearch('');
-  }, [sbSedeId]);
+  }, [sbSedeId, t]);
 
   useEffect(() => {
     if (!puedeVerScoreboard || activeTab !== 'scoreboard') return undefined;
@@ -9619,7 +9619,7 @@ export default function AdminDashboard({
       .catch((err) => {
         if (!cancelled) {
           setSbPartidosList([]);
-          setSbPartidosError(err?.message || 'Error al cargar partidos');
+          setSbPartidosError(t('admin.scoreboard.matchesLoadFailed'));
         }
       })
       .finally(() => {
@@ -9695,7 +9695,7 @@ export default function AdminDashboard({
         document.getElementById('admin-scoreboard-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } catch (err) {
-      setSbError(err?.message || 'No se pudo cargar el partido');
+      setSbError(t('admin.scoreboard.matchLoadFailed'));
     }
   }, [sbSedeId]);
 

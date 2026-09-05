@@ -105,7 +105,14 @@
       "durationAlreadyExistsSport": "Pro {{sport}} již existuje délka {{minutes}} minut.",
       "lastDurationRemoveConfirm": "Toto je poslední aktivní délka. Pokud ji odeberete, rezervace mohou zůstat bez základní ceny. Pokračovat?",
       "removeDurationConfirm": "Odebrat délku {{minutes}} minut ({{sport}})?"
+      ,"guidedCourtCreateFailed": "Sportovní centrum bylo uloženo, ale Padbol Court se nepodařilo vytvořit. Můžete ho přidat v části Kurty."
+      ,"logoUploadFailed": "Logo se nepodařilo nahrát."
+      ,"logoPublicUrlMissing": "Pro logo nebyla přijata veřejná adresa."
+      ,"logoSaveFailed": "Logo se nepodařilo uložit."
+      ,"photoMustBeInGallery": "Fotografie musí být v galerii."
+      ,"heroPhotoUpdated": "Titulní fotografie aktualizována"
     },
-    "franjas": { "slotSaved": "✅ Časové pásmo uloženo", "surgeSaved": "✅ Surge uloženo", "surgeSaveFailed": "⚠️ Surge se nepodařilo uložit" }
+    "franjas": { "slotSaved": "✅ Časové pásmo uloženo", "surgeSaved": "✅ Surge uloženo", "surgeSaveFailed": "⚠️ Surge se nepodařilo uložit" },
+    "scoreboard": { "venuesLoadFailed": "Sportovní centra se nepodařilo načíst.", "matchesLoadFailed": "Zápasy se nepodařilo načíst.", "matchLoadFailed": "Zápas se nepodařilo načíst." }
   }
 }

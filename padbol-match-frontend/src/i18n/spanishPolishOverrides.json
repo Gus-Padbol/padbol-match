@@ -11,8 +11,15 @@
       "durationAlreadyExistsSport": "Ya existe una duración de {{minutes}} minutos para {{sport}}.",
       "lastDurationRemoveConfirm": "Esta es la última duración activa. Si la quitás, las reservas pueden quedar sin precio base. ¿Continuar?",
       "removeDurationConfirm": "¿Quitar la duración de {{minutes}} minutos ({{sport}})?"
+      ,"guidedCourtCreateFailed": "La sede se guardó, pero no se pudo crear el Padbol Court. Podés agregarlo desde Canchas."
+      ,"logoUploadFailed": "No se pudo subir el logo."
+      ,"logoPublicUrlMissing": "No se recibió la URL pública del logo."
+      ,"logoSaveFailed": "No se pudo guardar el logo."
+      ,"photoMustBeInGallery": "La foto debe estar en la galería."
+      ,"heroPhotoUpdated": "Foto de portada actualizada"
     },
-    "franjas": { "slotSaved": "✅ Franja guardada", "surgeSaved": "✅ Surge guardado", "surgeSaveFailed": "⚠️ No se pudo guardar Surge" }
+    "franjas": { "slotSaved": "✅ Franja guardada", "surgeSaved": "✅ Surge guardado", "surgeSaveFailed": "⚠️ No se pudo guardar Surge" },
+    "scoreboard": { "venuesLoadFailed": "No se pudieron cargar las sedes.", "matchesLoadFailed": "No se pudieron cargar los partidos.", "matchLoadFailed": "No se pudo cargar el partido." }
   },
   "armarPartido": { "singlesPickle": "Individual (2)" }
 }

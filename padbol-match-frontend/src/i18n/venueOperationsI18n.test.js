@@ -9,6 +9,11 @@ const KEYS = [
   'admin.sedes.durationAlreadyExistsSport', 'admin.sedes.lastDurationRemoveConfirm',
   'admin.sedes.removeDurationConfirm', 'admin.franjas.slotSaved', 'admin.franjas.surgeSaved',
   'admin.franjas.surgeSaveFailed',
+  'admin.sedes.guidedCourtCreateFailed', 'admin.sedes.logoUploadFailed',
+  'admin.sedes.logoPublicUrlMissing', 'admin.sedes.logoSaveFailed',
+  'admin.sedes.photoMustBeInGallery', 'admin.sedes.heroPhotoUpdated',
+  'admin.scoreboard.venuesLoadFailed', 'admin.scoreboard.matchesLoadFailed',
+  'admin.scoreboard.matchLoadFailed',
 ];
 
 describe('venue operation internationalization', () => {
@@ -30,6 +35,8 @@ describe('venue operation internationalization', () => {
       'No se pudo generar el QR', 'Tenés cambios sin guardar en la promoción',
       'Solo se permiten duraciones de 60, 90 o 120 minutos', 'Esta es la última duración activa',
       'No se pudo guardar Surge', '✅ Franja guardada',
+      'No se obtuvo URL pública del logo', 'La foto debe estar en la galería',
+      'Sin token de sesión para cargar sedes', 'Error al cargar partidos',
     ].forEach((literal) => expect(source).not.toContain(literal));
   });
 });
