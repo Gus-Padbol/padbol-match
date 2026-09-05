@@ -6,7 +6,8 @@
       "sponsorAdBadge": "Werbung",
       "share": "Teilen",
       "email": "E-Mail",
-      "city": "Stadt"
+      "city": "Stadt",
+      "noNotifications": "Noch keine Benachrichtigungen."
     },
     "auth": {
       "login": "Login",
@@ -32,12 +33,17 @@
     },
     "reservas": {
       "heroTitle": "Reservieren Sie Ihren Platz",
+      "seleccionar_fecha": "DATUM AUSWÄHLEN",
+      "confirmar": "BUCHUNG BESTÄTIGEN",
       "cancelar": "Reservierung stornieren",
       "pagar_mp": "Bezahlen Sie mit Mercado Pago",
+      "total": "Gesamt:",
       "sedes": "Spielstätten",
       "nearestVenue": "Nächste Spielstätte bei dir",
       "slotFree": "frei",
       "summaryTitle": "Zusammenfassung der Reservierung",
+      "labelEmail": "E-Mail:",
+      "labelExtras": "Extras:",
       "modifyBooking": "Reservierung ändern",
       "confirmedTitle": "Reservierung bestätigt!",
       "paymentIncomplete": "Die Zahlung wurde nicht abgeschlossen.",
@@ -45,7 +51,9 @@
       "understood": "Verstanden",
       "dayToday": "Heute",
       "dayTomorrow": "Morgen",
+      "slotPrice": "Preis des Zeitfensters:",
       "courtOccupied": "Belegt",
+      "loadingSlots": "Zeiten werden geladen…",
       "canchasLibres": "frei"
     },
     "torneos": {
@@ -59,6 +67,7 @@
       "listado": {
         "titleAvailable": "Verfügbare Turniere",
         "clearSearch": "Suche löschen",
+        "venueNotFound": "Spielstätte nicht gefunden",
         "participants": "{{count}} Teilnehmer",
         "emptyFinalizados": "Noch keine beendeten Turniere."
       },
@@ -70,10 +79,14 @@
       },
       "vista": {
         "tabGrupos": "GRUPPEN",
+        "tabLlave": "K.-O.-SYSTEM",
+        "tabResultados": "ERGEBNISSE",
         "statPj": "P.J.",
         "statPg": "P.G.",
         "statPp": "PP",
+        "statPts": "PKT",
         "sinPartidos": "Keine Übereinstimmungen",
+        "pts": "Pkt",
         "genero": {
           "masculino": "Männlich",
           "femenino": "Weiblich"
@@ -104,6 +117,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Felder",
         "seguinosEn": "Folge uns auf",
         "clubTiene": "Der Club bietet"
       }
@@ -145,6 +159,7 @@
       "usualPartner": "Regelmäßiger Begleiter",
       "passwordMismatch": "Passwörter stimmen nicht überein.",
       "placeholderPasswordMin": "Mindestens 6 Zeichen",
+      "expires": "Läuft ab",
       "winRate": "Siegquote",
       "diestro": "Rechtshänder",
       "zurdo": "Linkshänder",
@@ -159,6 +174,7 @@
       "regularPartner": "Regelmäßiger Begleiter"
     },
     "admin": {
+      "canchas": "Felder",
       "profesores": {
         "todasLasSedes": "Alle Spielstätten",
         "colFoto": "Foto",
@@ -188,6 +204,9 @@
       "metrics": {
         "periodToday": "Heute"
       },
+      "alerts": {
+        "genericError": "Fehler:"
+      },
       "notif": {
         "paymentNotCompleted": "Die Zahlung wurde nicht abgeschlossen."
       },
@@ -198,6 +217,9 @@
         "chooseAtLeastOneSport": "Ich habe mich für mindestens eine Sportart entschieden.",
         "name": "Name",
         "price": "Preis",
+        "minutesPh": "Minuten",
+        "pointsAbbrPh": "Pkt",
+        "courtsCol": "Felder",
         "cityLabel": "Stadt",
         "emailLabel": "E-Mail",
         "deleteBtn": "Löschen",
@@ -210,6 +232,7 @@
       },
       "sedes": {
         "venueNumber": "Spielstätte Nr. {{id}}",
+        "extrasStockLabel": "Bestand",
         "description": "Beschreibung",
         "delete": "Löschen",
         "reviews": "Bewertungen",
@@ -221,6 +244,7 @@
         "subscriptionActive": "Aktiv",
         "paymentPending": "Ausstehende Zahlung",
         "whatsappCountryCodeAria": "Ländervorwahl",
+        "customPlayersShort": "{{count}} SPIELER",
         "saveChanges": "Änderungen speichern"
       },
       "reservas": {
@@ -241,6 +265,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Spielstätte auswählen...",
         "playerPhotoRemove": "Foto entfernen",
         "saveBtn": "Änderungen speichern"
       },
@@ -275,7 +300,13 @@
         "markAllRead": "Alles als gelesen markieren",
         "pointsCol": "Punkte",
         "expiresCol": "Läuft ab",
-        "statusConfirmed": "Bestätigt"
+        "statusConfirmed": "Bestätigt",
+        "totalLabel": "Gesamt:",
+        "venuesCount": "Spielstätten"
+      },
+      "common": {
+        "cityColon": "Stadt:",
+        "emailColon": "E-Mail:"
       },
       "jugadores": {
         "viewProfile": "Profil ansehen",
@@ -289,6 +320,7 @@
         "colPlan": "Tarif",
         "filterPlan": "Tarif",
         "activate": "Aktivieren",
+        "infoOnly": "Informativ",
         "fieldNombre": "Name",
         "fieldDescripcion": "Beschreibung",
         "fieldPrecio": "Preis",
@@ -313,7 +345,10 @@
       "hello": "Hallo",
       "chooseSport": "Wählen Sie Sport",
       "goToProfile": "Zu meinem Profil",
-      "backToStart": "Zurück nach oben"
+      "backToStart": "Zurück nach oben",
+      "card": {
+        "torneosSub": "TURNIERE UND RANGLISTEN."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Fragen?",
@@ -325,6 +360,9 @@
       "micDictateAria": "Diktieren Sie per Stimme",
       "leerVozAlta": "Lesen Sie die Antworten laut vor",
       "franjaManana": "Morgen",
+      "welcomeLeadNamed": "Hallo {{name}}.",
+      "welcomeLead": "Hallo.",
+      "online": "ONLINE",
       "boton": "Fragen?"
     },
     "armarPartido": {
@@ -338,7 +376,8 @@
       "sportsTitle": "Ausgeübte Sportarten",
       "recentTournamentsTitle": "Letzte Turniere",
       "badgeParticipantGeneric": "Teilnehmer",
-      "usualClub": "Stammklub"
+      "usualClub": "Stammklub",
+      "usualPartner": "Regelmäßiger Begleiter:"
     },
     "publicSite": {
       "nav": {
@@ -354,7 +393,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tennis",
-            "stats": "Statistik"
+            "stats": "Statistik",
+            "courts": "Felder"
           }
         }
       },
@@ -414,6 +454,9 @@
           "label": "Demnächst"
         }
       }
+    },
+    "adminLanding": {
+      "today": "HEUTE"
     }
   },
   "ar": {
@@ -423,7 +466,8 @@
       "sponsorAdBadge": "إعلان",
       "share": "مشاركة",
       "email": "البريد الإلكتروني",
-      "city": "المدينة"
+      "city": "المدينة",
+      "noNotifications": "لا توجد إشعارات بعد."
     },
     "auth": {
       "login": "تسجيل الدخول",
@@ -449,12 +493,17 @@
     },
     "reservas": {
       "heroTitle": "احجز ملعبك",
+      "seleccionar_fecha": "اختيار التاريخ",
+      "confirmar": "تأكيد الحجز",
       "cancelar": "إلغاء الحجز",
       "pagar_mp": "الدفع عبر Mercado Pago",
+      "total": "الإجمالي:",
       "sedes": "الأندية",
       "nearestVenue": "أقرب نادٍ إليك",
       "slotFree": "متاح",
       "summaryTitle": "ملخص الحجز",
+      "labelEmail": "البريد الإلكتروني:",
+      "labelExtras": "إضافات:",
       "modifyBooking": "تعديل الحجز",
       "confirmedTitle": "تم تأكيد الحجز!",
       "paymentIncomplete": "لم يكتمل الدفع.",
@@ -462,7 +511,9 @@
       "understood": "فهمت",
       "dayToday": "اليوم",
       "dayTomorrow": "غدًا",
+      "slotPrice": "سعر الموعد:",
       "courtOccupied": "مشغول",
+      "loadingSlots": "جارٍ تحميل المواعيد…",
       "canchasLibres": "متاح"
     },
     "torneos": {
@@ -476,6 +527,7 @@
       "listado": {
         "titleAvailable": "البطولات المتاحة",
         "clearSearch": "مسح البحث",
+        "venueNotFound": "النادي غير موجود",
         "participants": "{{count}} مشاركين",
         "emptyFinalizados": "لا توجد بطولات منتهية حالياً."
       },
@@ -487,10 +539,14 @@
       },
       "vista": {
         "tabGrupos": "مجموعات",
+        "tabLlave": "الأدوار",
+        "tabResultados": "النتائج",
         "statPj": "م",
         "statPg": "ف",
         "statPp": "خ",
+        "statPts": "نقطة",
         "sinPartidos": "لا توجد مباريات",
+        "pts": "نقطة",
         "genero": {
           "masculino": "ذكر",
           "femenino": "أنثى"
@@ -521,6 +577,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "ملاعب",
         "seguinosEn": "تابعنا على",
         "clubTiene": "يقدم النادي"
       }
@@ -562,6 +619,7 @@
       "usualPartner": "الشريك المعتاد",
       "passwordMismatch": "كلمتا المرور غير متطابقتين.",
       "placeholderPasswordMin": "6 أحرف على الأقل",
+      "expires": "انتهاء الصلاحية",
       "winRate": "نسبة الفوز",
       "diestro": "أيمن",
       "zurdo": "أعسر",
@@ -576,6 +634,7 @@
       "regularPartner": "الشريك المعتاد"
     },
     "admin": {
+      "canchas": "ملاعب",
       "profesores": {
         "todasLasSedes": "جميع الأندية",
         "colFoto": "صورة",
@@ -605,6 +664,9 @@
       "metrics": {
         "periodToday": "اليوم"
       },
+      "alerts": {
+        "genericError": "خطأ:"
+      },
       "notif": {
         "paymentNotCompleted": "لم يكتمل الدفع."
       },
@@ -615,6 +677,9 @@
         "chooseAtLeastOneSport": "اختر رياضة واحدة على الأقل.",
         "name": "الاسم",
         "price": "السعر",
+        "minutesPh": "دقائق",
+        "pointsAbbrPh": "نقطة",
+        "courtsCol": "ملاعب",
         "cityLabel": "المدينة",
         "emailLabel": "البريد الإلكتروني",
         "deleteBtn": "حذف",
@@ -627,6 +692,7 @@
       },
       "sedes": {
         "venueNumber": "النادي #{{id}}",
+        "extrasStockLabel": "المخزون",
         "description": "الوصف",
         "delete": "حذف",
         "reviews": "المراجعات",
@@ -638,6 +704,7 @@
         "subscriptionActive": "نشطة",
         "paymentPending": "الدفع معلق",
         "whatsappCountryCodeAria": "رمز البلد",
+        "customPlayersShort": "{{count}} لاعبين",
         "saveChanges": "حفظ التغييرات"
       },
       "reservas": {
@@ -658,6 +725,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "اختر النادي...",
         "playerPhotoRemove": "إزالة الصورة",
         "saveBtn": "حفظ التغييرات"
       },
@@ -692,7 +760,13 @@
         "markAllRead": "تعليم الكل كمقروء",
         "pointsCol": "النقاط",
         "expiresCol": "انتهاء الصلاحية",
-        "statusConfirmed": "مؤكد"
+        "statusConfirmed": "مؤكد",
+        "totalLabel": "الإجمالي:",
+        "venuesCount": "الأندية"
+      },
+      "common": {
+        "cityColon": "المدينة:",
+        "emailColon": "البريد الإلكتروني:"
       },
       "jugadores": {
         "viewProfile": "عرض الملف الشخصي",
@@ -706,6 +780,7 @@
         "colPlan": "الخطة",
         "filterPlan": "الخطة",
         "activate": "تفعيل",
+        "infoOnly": "معلوماتية",
         "fieldNombre": "الاسم",
         "fieldDescripcion": "الوصف",
         "fieldPrecio": "السعر",
@@ -730,7 +805,10 @@
       "hello": "مرحباً",
       "chooseSport": "اختيار الرياضة",
       "goToProfile": "الانتقال إلى ملفي الشخصي",
-      "backToStart": "العودة إلى الرئيسية"
+      "backToStart": "العودة إلى الرئيسية",
+      "card": {
+        "torneosSub": "البطولات والتصنيفات."
+      }
     },
     "chatbot": {
       "fabCollapsed": "استفسارات؟",
@@ -742,6 +820,9 @@
       "micDictateAria": "إدخال صوتي",
       "leerVozAlta": "قراءة الردود بصوت عالٍ",
       "franjaManana": "غدًا",
+      "welcomeLeadNamed": "مرحباً {{name}}.",
+      "welcomeLead": "مرحباً.",
+      "online": "متصل",
       "boton": "استفسارات؟"
     },
     "armarPartido": {
@@ -755,7 +836,8 @@
       "sportsTitle": "الرياضات التي يمارسها",
       "recentTournamentsTitle": "البطولات الأخيرة",
       "badgeParticipantGeneric": "مشارك",
-      "usualClub": "النادي المعتاد"
+      "usualClub": "النادي المعتاد",
+      "usualPartner": "الشريك المعتاد:"
     },
     "publicSite": {
       "nav": {
@@ -771,7 +853,8 @@
             "padel": "بادل",
             "pickleball": "بيكلبول",
             "tennis": "تنس",
-            "stats": "الإحصاءات"
+            "stats": "الإحصاءات",
+            "courts": "ملاعب"
           }
         }
       },
@@ -831,6 +914,9 @@
           "label": "قريبًا"
         }
       }
+    },
+    "adminLanding": {
+      "today": "اليوم"
     }
   },
   "fa-IR": {
@@ -840,7 +926,8 @@
       "sponsorAdBadge": "تبلیغات",
       "share": "اشتراک‌گذاری",
       "email": "ایمیل",
-      "city": "شهر"
+      "city": "شهر",
+      "noNotifications": "هنوز اعلانی وجود ندارد."
     },
     "auth": {
       "login": "ورود",
@@ -866,12 +953,17 @@
     },
     "reservas": {
       "heroTitle": "زمین خود را رزرو کنید",
+      "seleccionar_fecha": "انتخاب تاریخ",
+      "confirmar": "تأیید رزرو",
       "cancelar": "لغو رزرو",
       "pagar_mp": "پرداخت با Mercado Pago",
+      "total": "مجموع:",
       "sedes": "باشگاه‌ها",
       "nearestVenue": "نزدیک‌ترین باشگاه به شما",
       "slotFree": "خالی",
       "summaryTitle": "خلاصه رزرو",
+      "labelEmail": "ایمیل:",
+      "labelExtras": "افزودنی‌ها:",
       "modifyBooking": "تغییر رزرو",
       "confirmedTitle": "رزرو تأیید شد!",
       "paymentIncomplete": "پرداخت تکمیل نشد.",
@@ -879,7 +971,9 @@
       "understood": "متوجه شدم",
       "dayToday": "امروز",
       "dayTomorrow": "فردا",
+      "slotPrice": "قیمت نوبت:",
       "courtOccupied": "اشغال",
+      "loadingSlots": "در حال بارگذاری ساعت‌ها…",
       "canchasLibres": "خالی"
     },
     "torneos": {
@@ -893,6 +987,7 @@
       "listado": {
         "titleAvailable": "تورنمنت‌های در دسترس",
         "clearSearch": "پاک کردن جست‌وجو",
+        "venueNotFound": "باشگاه پیدا نشد",
         "participants": "{{count}} شرکت‌کننده",
         "emptyFinalizados": "هنوز تورنمنت پایان‌یافته‌ای وجود ندارد."
       },
@@ -904,10 +999,14 @@
       },
       "vista": {
         "tabGrupos": "گروهی",
+        "tabLlave": "جدول حذفی",
+        "tabResultados": "نتایج",
         "statPj": "بازی",
         "statPg": "برد",
         "statPp": "باخت",
+        "statPts": "امتیاز",
         "sinPartidos": "مسابقه‌ای وجود ندارد",
+        "pts": "امتیاز",
         "genero": {
           "masculino": "مرد",
           "femenino": "زن"
@@ -938,6 +1037,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "زمین‌ها",
         "seguinosEn": "ما را دنبال کنید",
         "clubTiene": "امکانات باشگاه"
       }
@@ -979,6 +1079,7 @@
       "usualPartner": "هم‌تیمی همیشگی",
       "passwordMismatch": "رمزهای عبور یکسان نیستند.",
       "placeholderPasswordMin": "حداقل ۶ نویسه",
+      "expires": "انقضا",
       "winRate": "درصد برد",
       "diestro": "راست‌دست",
       "zurdo": "چپ‌دست",
@@ -993,6 +1094,7 @@
       "regularPartner": "هم‌تیمی همیشگی"
     },
     "admin": {
+      "canchas": "زمین‌ها",
       "profesores": {
         "todasLasSedes": "همه باشگاه‌ها",
         "colFoto": "عکس",
@@ -1022,6 +1124,9 @@
       "metrics": {
         "periodToday": "امروز"
       },
+      "alerts": {
+        "genericError": "خطا:"
+      },
       "notif": {
         "paymentNotCompleted": "پرداخت تکمیل نشد."
       },
@@ -1032,6 +1137,9 @@
         "chooseAtLeastOneSport": "حداقل یک ورزش انتخاب کنید.",
         "name": "نام",
         "price": "قیمت",
+        "minutesPh": "دقیقه",
+        "pointsAbbrPh": "امتیاز",
+        "courtsCol": "زمین‌ها",
         "cityLabel": "شهر",
         "emailLabel": "ایمیل",
         "deleteBtn": "حذف",
@@ -1044,6 +1152,7 @@
       },
       "sedes": {
         "venueNumber": "باشگاه شماره {{id}}",
+        "extrasStockLabel": "موجودی",
         "description": "توضیحات",
         "delete": "حذف",
         "reviews": "نظرها",
@@ -1055,6 +1164,7 @@
         "subscriptionActive": "فعال",
         "paymentPending": "در انتظار پرداخت",
         "whatsappCountryCodeAria": "پیش‌شماره کشور",
+        "customPlayersShort": "{{count}} بازیکن",
         "saveChanges": "ذخیره تغییرات"
       },
       "reservas": {
@@ -1075,6 +1185,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "انتخاب باشگاه...",
         "playerPhotoRemove": "حذف عکس",
         "saveBtn": "ذخیره تغییرات"
       },
@@ -1109,7 +1220,13 @@
         "markAllRead": "علامت‌گذاری همه به‌عنوان خوانده‌شده",
         "pointsCol": "امتیازها",
         "expiresCol": "انقضا",
-        "statusConfirmed": "تأییدشده"
+        "statusConfirmed": "تأییدشده",
+        "totalLabel": "مجموع:",
+        "venuesCount": "باشگاه‌ها"
+      },
+      "common": {
+        "cityColon": "شهر:",
+        "emailColon": "ایمیل:"
       },
       "jugadores": {
         "viewProfile": "مشاهده پروفایل",
@@ -1123,6 +1240,7 @@
         "colPlan": "طرح",
         "filterPlan": "طرح",
         "activate": "فعال‌سازی",
+        "infoOnly": "اطلاعاتی",
         "fieldNombre": "نام",
         "fieldDescripcion": "توضیحات",
         "fieldPrecio": "قیمت",
@@ -1147,7 +1265,10 @@
       "hello": "سلام",
       "chooseSport": "انتخاب ورزش",
       "goToProfile": "رفتن به پروفایل من",
-      "backToStart": "بازگشت به صفحه اصلی"
+      "backToStart": "بازگشت به صفحه اصلی",
+      "card": {
+        "torneosSub": "مسابقات و رتبه‌بندی‌ها."
+      }
     },
     "chatbot": {
       "fabCollapsed": "پرسشی دارید؟",
@@ -1159,6 +1280,9 @@
       "micDictateAria": "ورودی صوتی",
       "leerVozAlta": "خواندن پاسخ‌ها با صدای بلند",
       "franjaManana": "فردا",
+      "welcomeLeadNamed": "سلام {{name}}.",
+      "welcomeLead": "سلام.",
+      "online": "آنلاین",
       "boton": "پرسشی دارید؟"
     },
     "armarPartido": {
@@ -1172,7 +1296,8 @@
       "sportsTitle": "ورزش‌ها",
       "recentTournamentsTitle": "تورنمنت‌های اخیر",
       "badgeParticipantGeneric": "شرکت‌کننده",
-      "usualClub": "باشگاه همیشگی"
+      "usualClub": "باشگاه همیشگی",
+      "usualPartner": "هم‌تیمی همیشگی:"
     },
     "publicSite": {
       "nav": {
@@ -1188,7 +1313,8 @@
             "padel": "پادل",
             "pickleball": "پیکل‌بال",
             "tennis": "تنیس",
-            "stats": "آمار"
+            "stats": "آمار",
+            "courts": "زمین‌ها"
           }
         }
       },
@@ -1248,6 +1374,9 @@
           "label": "به‌زودی"
         }
       }
+    },
+    "adminLanding": {
+      "today": "امروز"
     }
   },
   "nl-BE": {
@@ -1257,7 +1386,8 @@
       "sponsorAdBadge": "Advertentie",
       "share": "Delen",
       "email": "E-mail",
-      "city": "Plaats"
+      "city": "Plaats",
+      "noNotifications": "Nog geen meldingen."
     },
     "auth": {
       "login": "Inloggen",
@@ -1283,12 +1413,17 @@
     },
     "reservas": {
       "heroTitle": "Reserveer je baan",
+      "seleccionar_fecha": "DATUM SELECTEREN",
+      "confirmar": "RESERVERING BEVESTIGEN",
       "cancelar": "Reservering annuleren",
       "pagar_mp": "Betalen met Mercado Pago",
+      "total": "Totaal:",
       "sedes": "Clubs",
       "nearestVenue": "Dichtstbijzijnde club bij jou",
       "slotFree": "vrij",
       "summaryTitle": "Reserveringsoverzicht",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Extra's:",
       "modifyBooking": "Reservering wijzigen",
       "confirmedTitle": "Reservering bevestigd!",
       "paymentIncomplete": "De betaling is niet voltooid.",
@@ -1296,7 +1431,9 @@
       "understood": "Begrepen",
       "dayToday": "Vandaag",
       "dayTomorrow": "Morgen",
+      "slotPrice": "Prijs van het tijdslot:",
       "courtOccupied": "Bezet",
+      "loadingSlots": "Tijden laden…",
       "canchasLibres": "vrij"
     },
     "torneos": {
@@ -1310,6 +1447,7 @@
       "listado": {
         "titleAvailable": "Beschikbare toernooien",
         "clearSearch": "Zoekopdracht wissen",
+        "venueNotFound": "Club niet gevonden",
         "participants": "{{count}} deelnemers",
         "emptyFinalizados": "Nog geen afgelopen toernooien."
       },
@@ -1321,10 +1459,14 @@
       },
       "vista": {
         "tabGrupos": "GROEPEN",
+        "tabLlave": "TOERNOOISCHEMA",
+        "tabResultados": "RESULTATEN",
         "statPj": "GW",
         "statPg": "W",
         "statPp": "V",
+        "statPts": "PTN",
         "sinPartidos": "Geen wedstrijden",
+        "pts": "ptn",
         "genero": {
           "masculino": "Man",
           "femenino": "Vrouw"
@@ -1355,6 +1497,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Banen",
         "seguinosEn": "Volg ons op",
         "clubTiene": "De club biedt"
       }
@@ -1396,6 +1539,7 @@
       "usualPartner": "Vaste partner",
       "passwordMismatch": "De wachtwoorden komen niet overeen.",
       "placeholderPasswordMin": "Minimaal 6 tekens",
+      "expires": "Verloopt",
       "winRate": "Winstpercentage",
       "diestro": "Rechtshandig",
       "zurdo": "Linkshandig",
@@ -1410,6 +1554,7 @@
       "regularPartner": "Vaste partner"
     },
     "admin": {
+      "canchas": "Banen",
       "profesores": {
         "todasLasSedes": "Alle clubs",
         "colFoto": "Foto",
@@ -1439,6 +1584,9 @@
       "metrics": {
         "periodToday": "Vandaag"
       },
+      "alerts": {
+        "genericError": "Fout:"
+      },
       "notif": {
         "paymentNotCompleted": "De betaling is niet voltooid."
       },
@@ -1449,6 +1597,9 @@
         "chooseAtLeastOneSport": "Kies minimaal één sport.",
         "name": "Naam",
         "price": "Prijs",
+        "minutesPh": "Minuten",
+        "pointsAbbrPh": "Ptn",
+        "courtsCol": "Banen",
         "cityLabel": "Plaats",
         "emailLabel": "E-mail",
         "deleteBtn": "Verwijderen",
@@ -1461,6 +1612,7 @@
       },
       "sedes": {
         "venueNumber": "Club #{{id}}",
+        "extrasStockLabel": "Voorraad",
         "description": "Beschrijving",
         "delete": "Verwijderen",
         "reviews": "Beoordelingen",
@@ -1472,6 +1624,7 @@
         "subscriptionActive": "Actief",
         "paymentPending": "Wacht op betaling",
         "whatsappCountryCodeAria": "Landcode",
+        "customPlayersShort": "{{count}} SPELERS",
         "saveChanges": "Wijzigingen opslaan"
       },
       "reservas": {
@@ -1492,6 +1645,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Club selecteren...",
         "playerPhotoRemove": "Foto verwijderen",
         "saveBtn": "Wijzigingen opslaan"
       },
@@ -1526,7 +1680,13 @@
         "markAllRead": "Alles als gelezen markeren",
         "pointsCol": "Punten",
         "expiresCol": "Verloopt",
-        "statusConfirmed": "Bevestigd"
+        "statusConfirmed": "Bevestigd",
+        "totalLabel": "Totaal:",
+        "venuesCount": "Clubs"
+      },
+      "common": {
+        "cityColon": "Plaats:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Profiel bekijken",
@@ -1540,6 +1700,7 @@
         "colPlan": "Abonnement",
         "filterPlan": "Abonnement",
         "activate": "Activeren",
+        "infoOnly": "Ter informatie",
         "fieldNombre": "Naam",
         "fieldDescripcion": "Beschrijving",
         "fieldPrecio": "Prijs",
@@ -1564,7 +1725,10 @@
       "hello": "Hoi",
       "chooseSport": "Sport kiezen",
       "goToProfile": "Naar mijn profiel",
-      "backToStart": "Terug naar start"
+      "backToStart": "Terug naar start",
+      "card": {
+        "torneosSub": "TOERNOOIEN EN RANGLIJSTEN."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Vragen?",
@@ -1576,6 +1740,9 @@
       "micDictateAria": "Spraakinvoer",
       "leerVozAlta": "Antwoorden voorlezen",
       "franjaManana": "Morgen",
+      "welcomeLeadNamed": "Hoi {{name}}.",
+      "welcomeLead": "Hoi.",
+      "online": "ONLINE",
       "boton": "Vragen?"
     },
     "armarPartido": {
@@ -1589,7 +1756,8 @@
       "sportsTitle": "Beoefende sporten",
       "recentTournamentsTitle": "Recente toernooien",
       "badgeParticipantGeneric": "Deelnemer",
-      "usualClub": "Vaste club"
+      "usualClub": "Vaste club",
+      "usualPartner": "Vaste partner:"
     },
     "publicSite": {
       "nav": {
@@ -1605,7 +1773,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tennis",
-            "stats": "Statistieken"
+            "stats": "Statistieken",
+            "courts": "Banen"
           }
         }
       },
@@ -1665,6 +1834,9 @@
           "label": "Binnenkort beschikbaar"
         }
       }
+    },
+    "adminLanding": {
+      "today": "VANDAAG"
     }
   },
   "fr": {
@@ -1674,7 +1846,8 @@
       "sponsorAdBadge": "Publicité",
       "share": "Partager",
       "email": "E-mail",
-      "city": "Ville"
+      "city": "Ville",
+      "noNotifications": "Aucune notification."
     },
     "auth": {
       "login": "Se connecter",
@@ -1700,12 +1873,17 @@
     },
     "reservas": {
       "heroTitle": "Réservez votre terrain",
+      "seleccionar_fecha": "SÉLECTIONNER LA DATE",
+      "confirmar": "CONFIRMER LA RÉSERVATION",
       "cancelar": "Annuler la réservation",
       "pagar_mp": "Payer avec Mercado Pago",
+      "total": "Total:",
       "sedes": "Sites",
       "nearestVenue": "Site le plus proche de toi",
       "slotFree": "libre",
       "summaryTitle": "Récapitulatif de la réservation",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Suppléments:",
       "modifyBooking": "Modifier la réservation",
       "confirmedTitle": "Réservation confirmée !",
       "paymentIncomplete": "Le paiement n'a pas été effectué.",
@@ -1713,7 +1891,9 @@
       "understood": "Compris",
       "dayToday": "Aujourd'hui",
       "dayTomorrow": "Demain",
+      "slotPrice": "Prix du créneau:",
       "courtOccupied": "Occupé",
+      "loadingSlots": "Chargement des horaires…",
       "canchasLibres": "libre"
     },
     "torneos": {
@@ -1727,6 +1907,7 @@
       "listado": {
         "titleAvailable": "Tournois disponibles",
         "clearSearch": "Effacer la recherche",
+        "venueNotFound": "Site introuvable",
         "participants": "{{count}} participants",
         "emptyFinalizados": "Aucun tournoi terminé pour le moment."
       },
@@ -1738,10 +1919,14 @@
       },
       "vista": {
         "tabGrupos": "GROUPES",
+        "tabLlave": "TABLEAU",
+        "tabResultados": "RÉSULTATS",
         "statPj": "P.J.",
         "statPg": "P.G.",
         "statPp": "PP",
+        "statPts": "PTS",
         "sinPartidos": "Aucune correspondance",
+        "pts": "pts",
         "genero": {
           "masculino": "Masculin",
           "femenino": "Féminin"
@@ -1772,6 +1957,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Terrains",
         "seguinosEn": "Suivez-nous sur",
         "clubTiene": "Le club propose"
       }
@@ -1813,6 +1999,7 @@
       "usualPartner": "Compagnon régulier",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "placeholderPasswordMin": "Minimum 6 caractères",
+      "expires": "Expiration",
       "winRate": "Taux de victoire",
       "diestro": "Droitier",
       "zurdo": "Gaucher",
@@ -1827,6 +2014,7 @@
       "regularPartner": "Compagnon régulier"
     },
     "admin": {
+      "canchas": "Terrains",
       "profesores": {
         "todasLasSedes": "Tous les sites",
         "colFoto": "Photo",
@@ -1856,6 +2044,9 @@
       "metrics": {
         "periodToday": "Aujourd'hui"
       },
+      "alerts": {
+        "genericError": "Erreur:"
+      },
       "notif": {
         "paymentNotCompleted": "Le paiement n'a pas été effectué."
       },
@@ -1866,6 +2057,9 @@
         "chooseAtLeastOneSport": "J'ai choisi au moins un sport.",
         "name": "Nom",
         "price": "Prix",
+        "minutesPh": "Minutes",
+        "pointsAbbrPh": "Pts",
+        "courtsCol": "Terrains",
         "cityLabel": "Ville",
         "emailLabel": "E-mail",
         "deleteBtn": "Supprimer",
@@ -1878,6 +2072,7 @@
       },
       "sedes": {
         "venueNumber": "Site n° {{id}}",
+        "extrasStockLabel": "Stock ",
         "description": "Description",
         "delete": "Supprimer",
         "reviews": "Avis",
@@ -1889,6 +2084,7 @@
         "subscriptionActive": "Active",
         "paymentPending": "En attente de paiement",
         "whatsappCountryCodeAria": "Indicatif du pays",
+        "customPlayersShort": "{{count}} JOUEURS",
         "saveChanges": "Enregistrer les modifications"
       },
       "reservas": {
@@ -1909,6 +2105,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Sélectionner le site...",
         "playerPhotoRemove": "Retirer la photo",
         "saveBtn": "Enregistrer les modifications"
       },
@@ -1943,7 +2140,13 @@
         "markAllRead": "Marquer tout comme lu",
         "pointsCol": "Points",
         "expiresCol": "Expiration",
-        "statusConfirmed": "Confirmé"
+        "statusConfirmed": "Confirmé",
+        "totalLabel": "Total:",
+        "venuesCount": "Sites"
+      },
+      "common": {
+        "cityColon": "Ville:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Voir le profil",
@@ -1957,6 +2160,7 @@
         "colPlan": "Formule",
         "filterPlan": "Formule",
         "activate": "Activer",
+        "infoOnly": "Informatif",
         "fieldNombre": "Nom",
         "fieldDescripcion": "Description",
         "fieldPrecio": "Prix",
@@ -1981,7 +2185,10 @@
       "hello": "Bonjour",
       "chooseSport": "Choisissez le sport",
       "goToProfile": "Accéder à mon profil",
-      "backToStart": "Retour en haut"
+      "backToStart": "Retour en haut",
+      "card": {
+        "torneosSub": "TOURNOIS ET CLASSEMENTS."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Des questions ?",
@@ -1993,6 +2200,9 @@
       "micDictateAria": "Dicter à la voix",
       "leerVozAlta": "Lire les réponses à haute voix",
       "franjaManana": "Demain",
+      "welcomeLeadNamed": "Bonjour {{name}}.",
+      "welcomeLead": "Bonjour.",
+      "online": "EN LIGNE",
       "boton": "Des questions ?"
     },
     "armarPartido": {
@@ -2006,7 +2216,8 @@
       "sportsTitle": "Sports pratiqués",
       "recentTournamentsTitle": "Tournois récents",
       "badgeParticipantGeneric": "Participant",
-      "usualClub": "Club régulier"
+      "usualClub": "Club régulier",
+      "usualPartner": "Compagnon régulier:"
     },
     "publicSite": {
       "nav": {
@@ -2022,7 +2233,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tennis",
-            "stats": "Statistiques"
+            "stats": "Statistiques",
+            "courts": "Terrains"
           }
         }
       },
@@ -2082,6 +2294,9 @@
           "label": "Bientôt disponible"
         }
       }
+    },
+    "adminLanding": {
+      "today": "AUJOURD'HUI"
     }
   },
   "it": {
@@ -2091,7 +2306,8 @@
       "sponsorAdBadge": "Pubblicità",
       "share": "Condividi",
       "email": "E-mail",
-      "city": "Città"
+      "city": "Città",
+      "noNotifications": "Nessuna notifica."
     },
     "auth": {
       "login": "Login",
@@ -2117,12 +2333,17 @@
     },
     "reservas": {
       "heroTitle": "Prenota la tua corte",
+      "seleccionar_fecha": "SELEZIONA DATA",
+      "confirmar": "CONFERMA PRENOTAZIONE",
       "cancelar": "Cancella la prenotazione",
       "pagar_mp": "Paga con Mercado Pago",
+      "total": "Totale:",
       "sedes": "Sedi",
       "nearestVenue": "Sede più vicina a te",
       "slotFree": "libero",
       "summaryTitle": "Riepilogo della prenotazione",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Extra:",
       "modifyBooking": "Modifica prenotazione",
       "confirmedTitle": "Prenotazione confermata!",
       "paymentIncomplete": "Il pagamento non è stato completato.",
@@ -2130,7 +2351,9 @@
       "understood": "Ho capito",
       "dayToday": "Oggi",
       "dayTomorrow": "Domani",
+      "slotPrice": "Prezzo del turno:",
       "courtOccupied": "Occupato",
+      "loadingSlots": "Caricamento degli orari…",
       "canchasLibres": "libero"
     },
     "torneos": {
@@ -2144,6 +2367,7 @@
       "listado": {
         "titleAvailable": "Tornei disponibili",
         "clearSearch": "Cancella ricerca",
+        "venueNotFound": "Sede non trovata",
         "participants": "{{count}} partecipanti",
         "emptyFinalizados": "Nessun torneo concluso per ora."
       },
@@ -2155,10 +2379,14 @@
       },
       "vista": {
         "tabGrupos": "GIRONI",
+        "tabLlave": "TABELLONE",
+        "tabResultados": "RISULTATI",
         "statPj": "P.J.",
         "statPg": "P.G.",
         "statPp": "PP",
+        "statPts": "PT",
         "sinPartidos": "Nessuna corrispondenza",
+        "pts": "pt",
         "genero": {
           "masculino": "Maschile",
           "femenino": "Femminile"
@@ -2189,6 +2417,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Campi",
         "seguinosEn": "Seguici su",
         "clubTiene": "Il club offre"
       }
@@ -2230,6 +2459,7 @@
       "usualPartner": "Compagno abituale",
       "passwordMismatch": "Le password non corrispondono.",
       "placeholderPasswordMin": "Minimo 6 caratteri",
+      "expires": "Scadenza",
       "winRate": "Percentuale di vittorie",
       "diestro": "Destrimano",
       "zurdo": "Mancino",
@@ -2244,6 +2474,7 @@
       "regularPartner": "Compagno abituale"
     },
     "admin": {
+      "canchas": "Campi",
       "profesores": {
         "todasLasSedes": "Tutte le sedi",
         "colFoto": "Foto",
@@ -2273,6 +2504,9 @@
       "metrics": {
         "periodToday": "Oggi"
       },
+      "alerts": {
+        "genericError": "Errore:"
+      },
       "notif": {
         "paymentNotCompleted": "Il pagamento non è stato completato."
       },
@@ -2283,6 +2517,9 @@
         "chooseAtLeastOneSport": "Ho scelto almeno uno sport.",
         "name": "Nome",
         "price": "Prezzo",
+        "minutesPh": "Minuti",
+        "pointsAbbrPh": "Pt",
+        "courtsCol": "Campi",
         "cityLabel": "Città",
         "emailLabel": "E-mail",
         "deleteBtn": "Elimina",
@@ -2295,6 +2532,7 @@
       },
       "sedes": {
         "venueNumber": "Sede n. {{id}}",
+        "extrasStockLabel": "Disponibilità",
         "description": "Descrizione",
         "delete": "Elimina",
         "reviews": "Recensioni",
@@ -2306,6 +2544,7 @@
         "subscriptionActive": "Attivo",
         "paymentPending": "Pagamento in sospeso",
         "whatsappCountryCodeAria": "Prefisso internazionale",
+        "customPlayersShort": "{{count}} GIOCATORI",
         "saveChanges": "Salva modifiche"
       },
       "reservas": {
@@ -2326,6 +2565,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Seleziona sede...",
         "playerPhotoRemove": "Rimuovi foto",
         "saveBtn": "Salva modifiche"
       },
@@ -2360,7 +2600,13 @@
         "markAllRead": "Segna tutto letto",
         "pointsCol": "Punti",
         "expiresCol": "Scadenza",
-        "statusConfirmed": "Confermata"
+        "statusConfirmed": "Confermata",
+        "totalLabel": "Totale:",
+        "venuesCount": "Sedi"
+      },
+      "common": {
+        "cityColon": "Città:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Vedi profilo",
@@ -2374,6 +2620,7 @@
         "colPlan": "Piano",
         "filterPlan": "Piano",
         "activate": "Attiva",
+        "infoOnly": "Informativo",
         "fieldNombre": "Nome",
         "fieldDescripcion": "Descrizione",
         "fieldPrecio": "Prezzo",
@@ -2398,7 +2645,10 @@
       "hello": "Ciao",
       "chooseSport": "Scegli lo sport",
       "goToProfile": "Vai al mio profilo",
-      "backToStart": "Torna all'inizio"
+      "backToStart": "Torna all'inizio",
+      "card": {
+        "torneosSub": "TORNEI E CLASSIFICHE."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Domande?",
@@ -2410,6 +2660,9 @@
       "micDictateAria": "Dettare con la voce",
       "leerVozAlta": "Leggi le risposte ad alta voce",
       "franjaManana": "Domani",
+      "welcomeLeadNamed": "Ciao {{name}}.",
+      "welcomeLead": "Ciao.",
+      "online": "ONLINE",
       "boton": "Domande?"
     },
     "armarPartido": {
@@ -2423,7 +2676,8 @@
       "sportsTitle": "Sport praticati",
       "recentTournamentsTitle": "Tornei recenti",
       "badgeParticipantGeneric": "Partecipante",
-      "usualClub": "Circolo regolare"
+      "usualClub": "Circolo regolare",
+      "usualPartner": "Compagno abituale:"
     },
     "publicSite": {
       "nav": {
@@ -2439,7 +2693,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tennis",
-            "stats": "Statistiche"
+            "stats": "Statistiche",
+            "courts": "Campi"
           }
         }
       },
@@ -2499,6 +2754,9 @@
           "label": "Prossimamente"
         }
       }
+    },
+    "adminLanding": {
+      "today": "OGGI"
     }
   },
   "ro": {
@@ -2508,7 +2766,8 @@
       "sponsorAdBadge": "Publicitate",
       "share": "Distribuie",
       "email": "Email",
-      "city": "Oraș"
+      "city": "Oraș",
+      "noNotifications": "Momentan nu sunt notificări."
     },
     "auth": {
       "login": "Autentificare",
@@ -2534,12 +2793,17 @@
     },
     "reservas": {
       "heroTitle": "Rezervă terenul",
+      "seleccionar_fecha": "SELECTEAZĂ DATA",
+      "confirmar": "CONFIRMĂ REZERVAREA",
       "cancelar": "Anulează rezervarea",
       "pagar_mp": "Plătește cu Mercado Pago",
+      "total": "Total:",
       "sedes": "Cluburi",
       "nearestVenue": "Clubul cel mai apropiat de tine",
       "slotFree": "liber",
       "summaryTitle": "Rezumatul rezervării",
+      "labelEmail": "Email:",
+      "labelExtras": "Extraopțiuni:",
       "modifyBooking": "Modifică rezervarea",
       "confirmedTitle": "Rezervare confirmată!",
       "paymentIncomplete": "Plata nu a fost finalizată.",
@@ -2547,7 +2811,9 @@
       "understood": "Înțeles",
       "dayToday": "Astăzi",
       "dayTomorrow": "Mâine",
+      "slotPrice": "Prețul intervalului:",
       "courtOccupied": "Ocupat",
+      "loadingSlots": "Se încarcă programul…",
       "canchasLibres": "liber"
     },
     "torneos": {
@@ -2561,6 +2827,7 @@
       "listado": {
         "titleAvailable": "Turnee disponibile",
         "clearSearch": "Ștergeți căutarea",
+        "venueNotFound": "Sala nu a fost găsită",
         "participants": "{{count}} participanți",
         "emptyFinalizados": "Niciun turneu finalizat deocamdată."
       },
@@ -2572,10 +2839,14 @@
       },
       "vista": {
         "tabGrupos": "GRUPURI",
+        "tabLlave": "TABLOU",
+        "tabResultados": "REZULTATE",
         "statPj": "MJ",
         "statPg": "P.G.",
         "statPp": "PP",
+        "statPts": "PCT",
         "sinPartidos": "Fără meciuri",
+        "pts": "pct",
         "genero": {
           "masculino": "Masculin",
           "femenino": "Feminin"
@@ -2606,6 +2877,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Terenuri",
         "seguinosEn": "Urmărește-ne",
         "clubTiene": "Clubul oferă"
       }
@@ -2647,6 +2919,7 @@
       "usualPartner": "Partener obișnuit",
       "passwordMismatch": "Parolele nu coincid.",
       "placeholderPasswordMin": "Cel puțin 6 caractere",
+      "expires": "Câştiga",
       "winRate": "Rată victorii",
       "diestro": "Dreptaci",
       "zurdo": "Stângaci",
@@ -2661,6 +2934,7 @@
       "regularPartner": "Partener obișnuit"
     },
     "admin": {
+      "canchas": "Terenuri",
       "profesores": {
         "todasLasSedes": "Toate cluburile",
         "colFoto": "Fotografie",
@@ -2690,6 +2964,9 @@
       "metrics": {
         "periodToday": "Astăzi"
       },
+      "alerts": {
+        "genericError": "Eroare:"
+      },
       "notif": {
         "paymentNotCompleted": "Plata nu a fost finalizată."
       },
@@ -2700,6 +2977,9 @@
         "chooseAtLeastOneSport": "Alege cel puțin un sport.",
         "name": "Nume",
         "price": "Preț",
+        "minutesPh": "Minute",
+        "pointsAbbrPh": "Pct",
+        "courtsCol": "Terenuri",
         "cityLabel": "Oraș",
         "emailLabel": "Email",
         "deleteBtn": "Șterge",
@@ -2712,6 +2992,7 @@
       },
       "sedes": {
         "venueNumber": "Locația nr. {{id}}",
+        "extrasStockLabel": "Stoc",
         "description": "Descriere",
         "delete": "Șterge",
         "reviews": "Recenzii",
@@ -2723,6 +3004,7 @@
         "subscriptionActive": "Activ",
         "paymentPending": "Plată în așteptare",
         "whatsappCountryCodeAria": "Prefix de țară",
+        "customPlayersShort": "{{count}} JUCĂTORI",
         "saveChanges": "Salvează modificările"
       },
       "reservas": {
@@ -2743,6 +3025,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Selectați locația...",
         "playerPhotoRemove": "Elimină fotografia",
         "saveBtn": "Salvează modificările"
       },
@@ -2777,7 +3060,13 @@
         "markAllRead": "Marchează toate ca citite",
         "pointsCol": "Puncte",
         "expiresCol": "Câştiga",
-        "statusConfirmed": "Confirmat"
+        "statusConfirmed": "Confirmat",
+        "totalLabel": "Total:",
+        "venuesCount": "Cluburi"
+      },
+      "common": {
+        "cityColon": "Oraș:",
+        "emailColon": "Email:"
       },
       "jugadores": {
         "viewProfile": "Vezi profilul",
@@ -2791,6 +3080,7 @@
         "colPlan": "Plan",
         "filterPlan": "Plan",
         "activate": "Activează",
+        "infoOnly": "Informativă",
         "fieldNombre": "Nume",
         "fieldDescripcion": "Descriere",
         "fieldPrecio": "Preț",
@@ -2815,7 +3105,10 @@
       "hello": "Salut",
       "chooseSport": "Alege sportul",
       "goToProfile": "Accesați profilul meu",
-      "backToStart": "Înapoi la pagina principală"
+      "backToStart": "Înapoi la pagina principală",
+      "card": {
+        "torneosSub": "TURNEE ȘI CLASAMENTE."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Întrebări?",
@@ -2827,6 +3120,9 @@
       "micDictateAria": "Intrare vocală",
       "leerVozAlta": "Citește răspunsurile cu voce tare",
       "franjaManana": "Mâine",
+      "welcomeLeadNamed": "Salut {{name}}.",
+      "welcomeLead": "Salut.",
+      "online": "ONLINE",
       "boton": "Întrebări?"
     },
     "armarPartido": {
@@ -2840,7 +3136,8 @@
       "sportsTitle": "Sporturi practicate",
       "recentTournamentsTitle": "Turnee recente",
       "badgeParticipantGeneric": "Participant",
-      "usualClub": "Club obișnuit"
+      "usualClub": "Club obișnuit",
+      "usualPartner": "Partener obișnuit:"
     },
     "publicSite": {
       "nav": {
@@ -2856,7 +3153,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tenis",
-            "stats": "Statistici"
+            "stats": "Statistici",
+            "courts": "Terenuri"
           }
         }
       },
@@ -2916,6 +3214,9 @@
           "label": "În curând"
         }
       }
+    },
+    "adminLanding": {
+      "today": "ASTĂZI"
     }
   },
   "nl-NL": {
@@ -2925,7 +3226,8 @@
       "sponsorAdBadge": "Advertentie",
       "share": "Delen",
       "email": "E-mail",
-      "city": "Plaats"
+      "city": "Plaats",
+      "noNotifications": "Nog geen meldingen."
     },
     "auth": {
       "login": "Inloggen",
@@ -2951,12 +3253,17 @@
     },
     "reservas": {
       "heroTitle": "Reserveer je baan",
+      "seleccionar_fecha": "DATUM SELECTEREN",
+      "confirmar": "RESERVERING BEVESTIGEN",
       "cancelar": "Reservering annuleren",
       "pagar_mp": "Betalen met Mercado Pago",
+      "total": "Totaal:",
       "sedes": "Clubs",
       "nearestVenue": "Dichtstbijzijnde club bij jou",
       "slotFree": "vrij",
       "summaryTitle": "Reserveringsoverzicht",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Extra's:",
       "modifyBooking": "Reservering wijzigen",
       "confirmedTitle": "Reservering bevestigd!",
       "paymentIncomplete": "De betaling is niet voltooid.",
@@ -2964,7 +3271,9 @@
       "understood": "Begrepen",
       "dayToday": "Vandaag",
       "dayTomorrow": "Morgen",
+      "slotPrice": "Prijs van het tijdslot:",
       "courtOccupied": "Bezet",
+      "loadingSlots": "Tijden laden…",
       "canchasLibres": "vrij"
     },
     "torneos": {
@@ -2978,6 +3287,7 @@
       "listado": {
         "titleAvailable": "Beschikbare toernooien",
         "clearSearch": "Zoekopdracht wissen",
+        "venueNotFound": "Club niet gevonden",
         "participants": "{{count}} deelnemers",
         "emptyFinalizados": "Nog geen afgelopen toernooien."
       },
@@ -2989,10 +3299,14 @@
       },
       "vista": {
         "tabGrupos": "GROEPEN",
+        "tabLlave": "TOERNOOISCHEMA",
+        "tabResultados": "RESULTATEN",
         "statPj": "GW",
         "statPg": "W",
         "statPp": "V",
+        "statPts": "PTN",
         "sinPartidos": "Geen wedstrijden",
+        "pts": "ptn",
         "genero": {
           "masculino": "Man",
           "femenino": "Vrouw"
@@ -3023,6 +3337,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Banen",
         "seguinosEn": "Volg ons op",
         "clubTiene": "De club biedt"
       }
@@ -3064,6 +3379,7 @@
       "usualPartner": "Vaste partner",
       "passwordMismatch": "De wachtwoorden komen niet overeen.",
       "placeholderPasswordMin": "Minimaal 6 tekens",
+      "expires": "Verloopt",
       "winRate": "Winstpercentage",
       "diestro": "Rechtshandig",
       "zurdo": "Linkshandig",
@@ -3078,6 +3394,7 @@
       "regularPartner": "Vaste partner"
     },
     "admin": {
+      "canchas": "Banen",
       "profesores": {
         "todasLasSedes": "Alle clubs",
         "colFoto": "Foto",
@@ -3107,6 +3424,9 @@
       "metrics": {
         "periodToday": "Vandaag"
       },
+      "alerts": {
+        "genericError": "Fout:"
+      },
       "notif": {
         "paymentNotCompleted": "De betaling is niet voltooid."
       },
@@ -3117,6 +3437,9 @@
         "chooseAtLeastOneSport": "Kies minimaal één sport.",
         "name": "Naam",
         "price": "Prijs",
+        "minutesPh": "Minuten",
+        "pointsAbbrPh": "Ptn",
+        "courtsCol": "Banen",
         "cityLabel": "Plaats",
         "emailLabel": "E-mail",
         "deleteBtn": "Verwijderen",
@@ -3129,6 +3452,7 @@
       },
       "sedes": {
         "venueNumber": "Club #{{id}}",
+        "extrasStockLabel": "Voorraad",
         "description": "Beschrijving",
         "delete": "Verwijderen",
         "reviews": "Beoordelingen",
@@ -3140,6 +3464,7 @@
         "subscriptionActive": "Actief",
         "paymentPending": "Wacht op betaling",
         "whatsappCountryCodeAria": "Landcode",
+        "customPlayersShort": "{{count}} SPELERS",
         "saveChanges": "Wijzigingen opslaan"
       },
       "reservas": {
@@ -3160,6 +3485,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Club selecteren...",
         "playerPhotoRemove": "Foto verwijderen",
         "saveBtn": "Wijzigingen opslaan"
       },
@@ -3194,7 +3520,13 @@
         "markAllRead": "Alles als gelezen markeren",
         "pointsCol": "Punten",
         "expiresCol": "Verloopt",
-        "statusConfirmed": "Bevestigd"
+        "statusConfirmed": "Bevestigd",
+        "totalLabel": "Totaal:",
+        "venuesCount": "Clubs"
+      },
+      "common": {
+        "cityColon": "Plaats:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Profiel bekijken",
@@ -3208,6 +3540,7 @@
         "colPlan": "Abonnement",
         "filterPlan": "Abonnement",
         "activate": "Activeren",
+        "infoOnly": "Ter informatie",
         "fieldNombre": "Naam",
         "fieldDescripcion": "Beschrijving",
         "fieldPrecio": "Prijs",
@@ -3232,7 +3565,10 @@
       "hello": "Hoi",
       "chooseSport": "Sport kiezen",
       "goToProfile": "Naar mijn profiel",
-      "backToStart": "Terug naar start"
+      "backToStart": "Terug naar start",
+      "card": {
+        "torneosSub": "TOERNOOIEN EN RANGLIJSTEN."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Vragen?",
@@ -3244,6 +3580,9 @@
       "micDictateAria": "Spraakinvoer",
       "leerVozAlta": "Antwoorden voorlezen",
       "franjaManana": "Morgen",
+      "welcomeLeadNamed": "Hoi {{name}}.",
+      "welcomeLead": "Hoi.",
+      "online": "ONLINE",
       "boton": "Vragen?"
     },
     "armarPartido": {
@@ -3257,7 +3596,8 @@
       "sportsTitle": "Beoefende sporten",
       "recentTournamentsTitle": "Recente toernooien",
       "badgeParticipantGeneric": "Deelnemer",
-      "usualClub": "Vaste club"
+      "usualClub": "Vaste club",
+      "usualPartner": "Vaste partner:"
     },
     "publicSite": {
       "nav": {
@@ -3273,7 +3613,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tennis",
-            "stats": "Statistieken"
+            "stats": "Statistieken",
+            "courts": "Banen"
           }
         }
       },
@@ -3333,6 +3674,9 @@
           "label": "Binnenkort beschikbaar"
         }
       }
+    },
+    "adminLanding": {
+      "today": "VANDAAG"
     }
   },
   "sv": {
@@ -3342,7 +3686,8 @@
       "sponsorAdBadge": "Annons",
       "share": "Dela",
       "email": "E-post",
-      "city": "Stad"
+      "city": "Stad",
+      "noNotifications": "Inga aviseringar ännu."
     },
     "auth": {
       "login": "Logga in",
@@ -3368,12 +3713,17 @@
     },
     "reservas": {
       "heroTitle": "Boka din bana",
+      "seleccionar_fecha": "VÄLJ DATUM",
+      "confirmar": "BEKRÄFTA BOKNING",
       "cancelar": "Avboka bokning",
       "pagar_mp": "Betala med Mercado Pago",
+      "total": "Totalt:",
       "sedes": "Anläggningar",
       "nearestVenue": "Närmaste anläggning för dig",
       "slotFree": "ledig",
       "summaryTitle": "Bokningsöversikt",
+      "labelEmail": "E-post:",
+      "labelExtras": "Tillval:",
       "modifyBooking": "Ändra bokning",
       "confirmedTitle": "Bokning bekräftad!",
       "paymentIncomplete": "Betalningen slutfördes inte.",
@@ -3381,7 +3731,9 @@
       "understood": "Jag förstår",
       "dayToday": "I dag",
       "dayTomorrow": "I morgon",
+      "slotPrice": "Pris för tiden:",
       "courtOccupied": "Upptagen",
+      "loadingSlots": "Läser in tider…",
       "canchasLibres": "ledig"
     },
     "torneos": {
@@ -3395,6 +3747,7 @@
       "listado": {
         "titleAvailable": "Tillgängliga turneringar",
         "clearSearch": "Rensa sökning",
+        "venueNotFound": "Anläggningen hittades inte",
         "participants": "{{count}} deltagare",
         "emptyFinalizados": "Inga avslutade turneringar ännu."
       },
@@ -3406,10 +3759,14 @@
       },
       "vista": {
         "tabGrupos": "GRUPPER",
+        "tabLlave": "SLUTSPELSTRÄD",
+        "tabResultados": "RESULTAT",
         "statPj": "SM",
         "statPg": "V",
         "statPp": "F",
+        "statPts": "P",
         "sinPartidos": "Inga matcher",
+        "pts": "p",
         "genero": {
           "masculino": "Man",
           "femenino": "Kvinna"
@@ -3440,6 +3797,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Banor",
         "seguinosEn": "Följ oss",
         "clubTiene": "Klubben erbjuder"
       }
@@ -3481,6 +3839,7 @@
       "usualPartner": "Ordinarie partner",
       "passwordMismatch": "Lösenorden matchar inte.",
       "placeholderPasswordMin": "Minst 6 tecken",
+      "expires": "Går ut",
       "winRate": "Vinstprocent",
       "diestro": "Högerhänt",
       "zurdo": "Vänsterhänt",
@@ -3495,6 +3854,7 @@
       "regularPartner": "Ordinarie partner"
     },
     "admin": {
+      "canchas": "Banor",
       "profesores": {
         "todasLasSedes": "Alla anläggningar",
         "colFoto": "Foto",
@@ -3524,6 +3884,9 @@
       "metrics": {
         "periodToday": "I dag"
       },
+      "alerts": {
+        "genericError": "Fel:"
+      },
       "notif": {
         "paymentNotCompleted": "Betalningen slutfördes inte."
       },
@@ -3534,6 +3897,9 @@
         "chooseAtLeastOneSport": "Välj minst en sport.",
         "name": "Namn",
         "price": "Pris",
+        "minutesPh": "Minuter",
+        "pointsAbbrPh": "P",
+        "courtsCol": "Banor",
         "cityLabel": "Stad",
         "emailLabel": "E-post",
         "deleteBtn": "Ta bort",
@@ -3546,6 +3912,7 @@
       },
       "sedes": {
         "venueNumber": "Anläggning nr {{id}}",
+        "extrasStockLabel": "Lager",
         "description": "Beskrivning",
         "delete": "Ta bort",
         "reviews": "Omdömen",
@@ -3557,6 +3924,7 @@
         "subscriptionActive": "Aktivt",
         "paymentPending": "Väntar på betalning",
         "whatsappCountryCodeAria": "Landskod",
+        "customPlayersShort": "{{count}} SPELARE",
         "saveChanges": "Spara ändringar"
       },
       "reservas": {
@@ -3577,6 +3945,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Välj anläggning...",
         "playerPhotoRemove": "Ta bort foto",
         "saveBtn": "Spara ändringar"
       },
@@ -3611,7 +3980,13 @@
         "markAllRead": "Markera alla som lästa",
         "pointsCol": "Poäng",
         "expiresCol": "Går ut",
-        "statusConfirmed": "Bekräftad"
+        "statusConfirmed": "Bekräftad",
+        "totalLabel": "Totalt:",
+        "venuesCount": "Anläggningar"
+      },
+      "common": {
+        "cityColon": "Stad:",
+        "emailColon": "E-post:"
       },
       "jugadores": {
         "viewProfile": "Visa profil",
@@ -3625,6 +4000,7 @@
         "colPlan": "Abonnemang",
         "filterPlan": "Abonnemang",
         "activate": "Aktivera",
+        "infoOnly": "Information",
         "fieldNombre": "Namn",
         "fieldDescripcion": "Beskrivning",
         "fieldPrecio": "Pris",
@@ -3649,7 +4025,10 @@
       "hello": "Hej",
       "chooseSport": "Välj sport",
       "goToProfile": "Gå till min profil",
-      "backToStart": "Tillbaka till startsidan"
+      "backToStart": "Tillbaka till startsidan",
+      "card": {
+        "torneosSub": "TURNERINGAR OCH RANKINGAR."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Frågor?",
@@ -3661,6 +4040,9 @@
       "micDictateAria": "Röstinmatning",
       "leerVozAlta": "Läs upp svar",
       "franjaManana": "I morgon",
+      "welcomeLeadNamed": "Hej {{name}}.",
+      "welcomeLead": "Hej.",
+      "online": "ONLINE",
       "boton": "Frågor?"
     },
     "armarPartido": {
@@ -3674,7 +4056,8 @@
       "sportsTitle": "Utövade sporter",
       "recentTournamentsTitle": "Senaste turneringar",
       "badgeParticipantGeneric": "Deltagare",
-      "usualClub": "Ordinarie klubb"
+      "usualClub": "Ordinarie klubb",
+      "usualPartner": "Ordinarie partner:"
     },
     "publicSite": {
       "nav": {
@@ -3690,7 +4073,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tennis",
-            "stats": "Statistik"
+            "stats": "Statistik",
+            "courts": "Banor"
           }
         }
       },
@@ -3750,6 +4134,9 @@
           "label": "Kommer snart"
         }
       }
+    },
+    "adminLanding": {
+      "today": "I DAG"
     }
   },
   "pt-BR": {
@@ -3759,7 +4146,8 @@
       "sponsorAdBadge": "Publicidade",
       "share": "Compartilhar",
       "email": "E-mail",
-      "city": "Cidade"
+      "city": "Cidade",
+      "noNotifications": "Nenhuma notificação por enquanto."
     },
     "auth": {
       "login": "Conecte-se",
@@ -3785,12 +4173,17 @@
     },
     "reservas": {
       "heroTitle": "Reserve sua quadra",
+      "seleccionar_fecha": "SELECIONAR DATA",
+      "confirmar": "CONFIRMAR RESERVA",
       "cancelar": "Cancelar reserva",
       "pagar_mp": "Pague com Mercado Pago",
+      "total": "Total:",
       "sedes": "Locais",
       "nearestVenue": "Local mais próximo de você",
       "slotFree": "livre",
       "summaryTitle": "Resumo da reserva",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Extras:",
       "modifyBooking": "Modificar reserva",
       "confirmedTitle": "Reserva confirmada!",
       "paymentIncomplete": "O pagamento não foi concluído.",
@@ -3798,7 +4191,9 @@
       "understood": "Entendi",
       "dayToday": "Hoje",
       "dayTomorrow": "Amanhã",
+      "slotPrice": "Preço do horário:",
       "courtOccupied": "Ocupada",
+      "loadingSlots": "Carregando horários…",
       "canchasLibres": "livre"
     },
     "torneos": {
@@ -3812,6 +4207,7 @@
       "listado": {
         "titleAvailable": "Torneios disponíveis",
         "clearSearch": "Limpar busca",
+        "venueNotFound": "Local não encontrado",
         "participants": "{{count}} participantes",
         "emptyFinalizados": "Ainda não há torneios encerrados."
       },
@@ -3823,10 +4219,14 @@
       },
       "vista": {
         "tabGrupos": "GRUPOS",
+        "tabLlave": "CHAVE",
+        "tabResultados": "RESULTADOS",
         "statPj": "PJ",
         "statPg": "P.G.",
         "statPp": "PP",
+        "statPts": "PTS",
         "sinPartidos": "Nenhuma correspondência",
+        "pts": "pts",
         "genero": {
           "masculino": "Masculino",
           "femenino": "Feminino"
@@ -3857,6 +4257,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Quadras",
         "seguinosEn": "Siga-nos",
         "clubTiene": "O clube oferece"
       }
@@ -3898,6 +4299,7 @@
       "usualPartner": "Companheiro regular",
       "passwordMismatch": "As senhas não coincidem.",
       "placeholderPasswordMin": "Mínimo 6 caracteres",
+      "expires": "Expira",
       "winRate": "Taxa de vitórias",
       "diestro": "Destro",
       "zurdo": "Canhoto",
@@ -3912,6 +4314,7 @@
       "regularPartner": "Companheiro regular"
     },
     "admin": {
+      "canchas": "Quadras",
       "profesores": {
         "todasLasSedes": "Todos os locais",
         "colFoto": "Foto",
@@ -3941,6 +4344,9 @@
       "metrics": {
         "periodToday": "Hoje"
       },
+      "alerts": {
+        "genericError": "Erro:"
+      },
       "notif": {
         "paymentNotCompleted": "O pagamento não foi concluído."
       },
@@ -3951,6 +4357,9 @@
         "chooseAtLeastOneSport": "Escolhi pelo menos um esporte.",
         "name": "Nome",
         "price": "Preço",
+        "minutesPh": "Minutos",
+        "pointsAbbrPh": "Pts",
+        "courtsCol": "Quadras",
         "cityLabel": "Cidade",
         "emailLabel": "E-mail",
         "deleteBtn": "Excluir",
@@ -3963,6 +4372,7 @@
       },
       "sedes": {
         "venueNumber": "Local nº {{id}}",
+        "extrasStockLabel": "Estoque",
         "description": "Descrição",
         "delete": "Excluir",
         "reviews": "Avaliações",
@@ -3974,6 +4384,7 @@
         "subscriptionActive": "Ativa",
         "paymentPending": "Pagamento pendente",
         "whatsappCountryCodeAria": "Código do país",
+        "customPlayersShort": "{{count}} JOGADORES",
         "saveChanges": "Salvar alterações"
       },
       "reservas": {
@@ -3994,6 +4405,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Selecionar local...",
         "playerPhotoRemove": "Remover foto",
         "saveBtn": "Salvar alterações"
       },
@@ -4028,7 +4440,13 @@
         "markAllRead": "Marcar tudo como lido",
         "pointsCol": "Pontos",
         "expiresCol": "Expira",
-        "statusConfirmed": "Confirmado"
+        "statusConfirmed": "Confirmado",
+        "totalLabel": "Total:",
+        "venuesCount": "Locais"
+      },
+      "common": {
+        "cityColon": "Cidade:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Ver perfil",
@@ -4042,6 +4460,7 @@
         "colPlan": "Plano",
         "filterPlan": "Plano",
         "activate": "Ativar",
+        "infoOnly": "Informativo",
         "fieldNombre": "Nome",
         "fieldDescripcion": "Descrição",
         "fieldPrecio": "Preço",
@@ -4066,7 +4485,10 @@
       "hello": "Olá",
       "chooseSport": "Escolha o esporte",
       "goToProfile": "Ir para meu perfil",
-      "backToStart": "Voltar ao topo"
+      "backToStart": "Voltar ao topo",
+      "card": {
+        "torneosSub": "TORNEIOS E RANKINGS."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Dúvidas?",
@@ -4078,6 +4500,9 @@
       "micDictateAria": "Ditar por voz",
       "leerVozAlta": "Leia as respostas em voz alta",
       "franjaManana": "Amanhã",
+      "welcomeLeadNamed": "Olá, {{name}}.",
+      "welcomeLead": "Olá.",
+      "online": "ONLINE",
       "boton": "Dúvidas?"
     },
     "armarPartido": {
@@ -4091,7 +4516,8 @@
       "sportsTitle": "Esportes praticados",
       "recentTournamentsTitle": "Torneios recentes",
       "badgeParticipantGeneric": "Participante",
-      "usualClub": "Clube normal"
+      "usualClub": "Clube normal",
+      "usualPartner": "Companheiro regular:"
     },
     "publicSite": {
       "nav": {
@@ -4107,7 +4533,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tênis",
-            "stats": "Estatísticas"
+            "stats": "Estatísticas",
+            "courts": "Quadras"
           }
         }
       },
@@ -4167,6 +4594,9 @@
           "label": "Em breve"
         }
       }
+    },
+    "adminLanding": {
+      "today": "HOJE"
     }
   },
   "pt-PT": {
@@ -4176,7 +4606,8 @@
       "sponsorAdBadge": "Publicidade",
       "share": "Partilhar",
       "email": "E-mail",
-      "city": "Cidade"
+      "city": "Cidade",
+      "noNotifications": "Nenhuma notificação de momento."
     },
     "auth": {
       "login": "Conecte-se",
@@ -4202,12 +4633,17 @@
     },
     "reservas": {
       "heroTitle": "Reserva o teu campo",
+      "seleccionar_fecha": "SELECIONAR DATA",
+      "confirmar": "CONFIRMAR RESERVA",
       "cancelar": "Cancelar reserva",
       "pagar_mp": "Pague com Mercado Pago",
+      "total": "Total:",
       "sedes": "Locais",
       "nearestVenue": "Recinto mais próximo de ti",
       "slotFree": "livre",
       "summaryTitle": "Resumo da reserva",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Extras:",
       "modifyBooking": "Modificar reserva",
       "confirmedTitle": "Reserva confirmada!",
       "paymentIncomplete": "O pagamento não foi concluído.",
@@ -4215,7 +4651,9 @@
       "understood": "Entendido",
       "dayToday": "Hoje",
       "dayTomorrow": "Amanhã",
+      "slotPrice": "Preço do hora:",
       "courtOccupied": "Ocupada",
+      "loadingSlots": "A carregar horas…",
       "canchasLibres": "livre"
     },
     "torneos": {
@@ -4229,6 +4667,7 @@
       "listado": {
         "titleAvailable": "Torneios disponíveis",
         "clearSearch": "Limpar pesquisa",
+        "venueNotFound": "Clube não encontrado",
         "participants": "{{count}} participantes",
         "emptyFinalizados": "Ainda não há torneios finalizados."
       },
@@ -4240,10 +4679,14 @@
       },
       "vista": {
         "tabGrupos": "GRUPOS",
+        "tabLlave": "CHAVE",
+        "tabResultados": "RESULTADOS",
         "statPj": "PJ",
         "statPg": "P.G.",
         "statPp": "PP",
+        "statPts": "PTS",
         "sinPartidos": "Nenhuma correspondência",
+        "pts": "pts",
         "genero": {
           "masculino": "Masculino",
           "femenino": "Feminino"
@@ -4274,6 +4717,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Campos",
         "seguinosEn": "Siga-nos",
         "clubTiene": "O clube oferece"
       }
@@ -4315,6 +4759,7 @@
       "usualPartner": "Companheiro regular",
       "passwordMismatch": "As palavras-passe não coincidem.",
       "placeholderPasswordMin": "Mínimo 6 caracteres",
+      "expires": "Ganhar",
       "winRate": "Taxa de vitórias",
       "diestro": "Destro",
       "zurdo": "Canhoto",
@@ -4329,6 +4774,7 @@
       "regularPartner": "Companheiro regular"
     },
     "admin": {
+      "canchas": "Campos",
       "profesores": {
         "todasLasSedes": "Todos os recintos",
         "colFoto": "Foto",
@@ -4358,6 +4804,9 @@
       "metrics": {
         "periodToday": "Hoje"
       },
+      "alerts": {
+        "genericError": "Erro:"
+      },
       "notif": {
         "paymentNotCompleted": "O pagamento não foi concluído."
       },
@@ -4368,6 +4817,9 @@
         "chooseAtLeastOneSport": "Escolhe pelo menos um desporto.",
         "name": "Nome",
         "price": "Preço",
+        "minutesPh": "Minutos",
+        "pointsAbbrPh": "Pts",
+        "courtsCol": "Campos",
         "cityLabel": "Cidade",
         "emailLabel": "E-mail",
         "deleteBtn": "Eliminar",
@@ -4380,6 +4832,7 @@
       },
       "sedes": {
         "venueNumber": "Clube nº {{id}}",
+        "extrasStockLabel": "Stock",
         "description": "Descrição",
         "delete": "Eliminar",
         "reviews": "Avaliações",
@@ -4391,6 +4844,7 @@
         "subscriptionActive": "Ativo",
         "paymentPending": "Pagamento pendente",
         "whatsappCountryCodeAria": "Código do país",
+        "customPlayersShort": "{{count}} JOGADORES",
         "saveChanges": "Guardar alterações"
       },
       "reservas": {
@@ -4411,6 +4865,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Seleciona o recinto...",
         "playerPhotoRemove": "Remover foto",
         "saveBtn": "Guardar alterações"
       },
@@ -4445,7 +4900,13 @@
         "markAllRead": "Marcar tudo como lido",
         "pointsCol": "Pontos",
         "expiresCol": "Ganhar",
-        "statusConfirmed": "Confirmado"
+        "statusConfirmed": "Confirmado",
+        "totalLabel": "Total:",
+        "venuesCount": "Locais"
+      },
+      "common": {
+        "cityColon": "Cidade:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Ver perfil",
@@ -4459,6 +4920,7 @@
         "colPlan": "Plano",
         "filterPlan": "Plano",
         "activate": "Ativar",
+        "infoOnly": "Informativo",
         "fieldNombre": "Nome",
         "fieldDescripcion": "Descrição",
         "fieldPrecio": "Preço",
@@ -4483,7 +4945,10 @@
       "hello": "Olá",
       "chooseSport": "Escolhe o desporto",
       "goToProfile": "Vá para o meu perfil",
-      "backToStart": "Voltar ao topo"
+      "backToStart": "Voltar ao topo",
+      "card": {
+        "torneosSub": "TORNEIOS E RANKINGS."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Dúvidas?",
@@ -4495,6 +4960,9 @@
       "micDictateAria": "Ditar por voz",
       "leerVozAlta": "Leia as respostas em voz alta",
       "franjaManana": "Amanhã",
+      "welcomeLeadNamed": "Olá {{name}}.",
+      "welcomeLead": "Olá.",
+      "online": "ONLINE",
       "boton": "Dúvidas?"
     },
     "armarPartido": {
@@ -4508,7 +4976,8 @@
       "sportsTitle": "DESPORTOS praticados",
       "recentTournamentsTitle": "Torneios recentes",
       "badgeParticipantGeneric": "Participante",
-      "usualClub": "Clube normal"
+      "usualClub": "Clube normal",
+      "usualPartner": "Companheiro regular:"
     },
     "publicSite": {
       "nav": {
@@ -4524,7 +4993,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tênis",
-            "stats": "Estatísticas"
+            "stats": "Estatísticas",
+            "courts": "Campos"
           }
         }
       },
@@ -4584,6 +5054,9 @@
           "label": "Em breve em breve"
         }
       }
+    },
+    "adminLanding": {
+      "today": "HOJE"
     }
   },
   "el": {
@@ -4593,7 +5066,8 @@
       "sponsorAdBadge": "Διαφήμιση",
       "share": "Κοινοποίηση",
       "email": "Email",
-      "city": "Πόλη"
+      "city": "Πόλη",
+      "noNotifications": "Δεν υπάρχουν ακόμη ειδοποιήσεις."
     },
     "auth": {
       "login": "Σύνδεση",
@@ -4619,12 +5093,17 @@
     },
     "reservas": {
       "heroTitle": "Κλείσε το γήπεδό σου",
+      "seleccionar_fecha": "ΕΠΙΛΟΓΗ ΗΜΕΡΟΜΗΝΙΑΣ",
+      "confirmar": "ΕΠΙΒΕΒΑΙΩΣΗ ΚΡΑΤΗΣΗΣ",
       "cancelar": "Ακύρωση κράτησης",
       "pagar_mp": "Πληρωμή με Mercado Pago",
+      "total": "Σύνολο:",
       "sedes": "Εγκαταστάσεις",
       "nearestVenue": "Κοντινότερη εγκατάσταση σε εσάς",
       "slotFree": "διαθέσιμη",
       "summaryTitle": "Σύνοψη κράτησης",
+      "labelEmail": "Email:",
+      "labelExtras": "Πρόσθετα:",
       "modifyBooking": "Αλλαγή κράτησης",
       "confirmedTitle": "Η κράτηση επιβεβαιώθηκε!",
       "paymentIncomplete": "Η πληρωμή δεν ολοκληρώθηκε.",
@@ -4632,7 +5111,9 @@
       "understood": "Κατάλαβα",
       "dayToday": "Σήμερα",
       "dayTomorrow": "Αύριο",
+      "slotPrice": "Τιμή ώρας:",
       "courtOccupied": "Κατειλημμένο",
+      "loadingSlots": "Φόρτωση ωρών…",
       "canchasLibres": "διαθέσιμη"
     },
     "torneos": {
@@ -4646,6 +5127,7 @@
       "listado": {
         "titleAvailable": "Διαθέσιμες διοργανώσεις",
         "clearSearch": "Εκκαθάριση αναζήτησης",
+        "venueNotFound": "Η εγκατάσταση δεν βρέθηκε",
         "participants": "{{count}} συμμετέχοντες",
         "emptyFinalizados": "Δεν υπάρχουν ακόμη ολοκληρωμένες διοργανώσεις."
       },
@@ -4657,10 +5139,14 @@
       },
       "vista": {
         "tabGrupos": "ΟΜΙΛΟΙ",
+        "tabLlave": "ΤΑΜΠΛΌ",
+        "tabResultados": "ΑΠΟΤΕΛΈΣΜΑΤΑ",
         "statPj": "ΑΓ",
         "statPg": "Ν",
         "statPp": "Η",
+        "statPts": "ΒΑΘ",
         "sinPartidos": "Δεν υπάρχουν αγώνες",
+        "pts": "βαθ",
         "genero": {
           "masculino": "Άνδρας",
           "femenino": "Γυναίκα"
@@ -4691,6 +5177,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Γήπεδα",
         "seguinosEn": "Ακολουθήστε μας στο",
         "clubTiene": "Ο σύλλογος προσφέρει"
       }
@@ -4732,6 +5219,7 @@
       "usualPartner": "Σταθερός συμπαίκτης",
       "passwordMismatch": "Οι κωδικοί πρόσβασης δεν ταιριάζουν.",
       "placeholderPasswordMin": "Τουλάχιστον 6 χαρακτήρες",
+      "expires": "Λήγει",
       "winRate": "Ποσοστό νικών",
       "diestro": "Δεξιόχειρας",
       "zurdo": "Αριστερόχειρας",
@@ -4746,6 +5234,7 @@
       "regularPartner": "Σταθερός συμπαίκτης"
     },
     "admin": {
+      "canchas": "Γήπεδα",
       "profesores": {
         "todasLasSedes": "Όλες οι εγκαταστάσεις",
         "colFoto": "Φωτογραφία",
@@ -4775,6 +5264,9 @@
       "metrics": {
         "periodToday": "Σήμερα"
       },
+      "alerts": {
+        "genericError": "Σφάλμα:"
+      },
       "notif": {
         "paymentNotCompleted": "Η πληρωμή δεν ολοκληρώθηκε."
       },
@@ -4785,6 +5277,9 @@
         "chooseAtLeastOneSport": "Επίλεξε τουλάχιστον ένα άθλημα.",
         "name": "Όνομα",
         "price": "Τιμή",
+        "minutesPh": "Λεπτά",
+        "pointsAbbrPh": "Βαθ",
+        "courtsCol": "Γήπεδα",
         "cityLabel": "Πόλη",
         "emailLabel": "Email",
         "deleteBtn": "Διαγραφή",
@@ -4797,6 +5292,7 @@
       },
       "sedes": {
         "venueNumber": "Εγκατάσταση #{{id}}",
+        "extrasStockLabel": "Απόθεμα",
         "description": "Περιγραφή",
         "delete": "Διαγραφή",
         "reviews": "Αξιολογήσεις",
@@ -4808,6 +5304,7 @@
         "subscriptionActive": "Ενεργή",
         "paymentPending": "Αναμονή πληρωμής",
         "whatsappCountryCodeAria": "Κωδικός χώρας",
+        "customPlayersShort": "{{count}} ΠΑΙΚΤΕΣ",
         "saveChanges": "Αποθήκευση αλλαγών"
       },
       "reservas": {
@@ -4828,6 +5325,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Επιλογή εγκατάστασης...",
         "playerPhotoRemove": "Αφαίρεση φωτογραφίας",
         "saveBtn": "Αποθήκευση αλλαγών"
       },
@@ -4862,7 +5360,13 @@
         "markAllRead": "Επισήμανση όλων ως αναγνωσμένων",
         "pointsCol": "Πόντοι",
         "expiresCol": "Λήγει",
-        "statusConfirmed": "Επιβεβαιωμένη"
+        "statusConfirmed": "Επιβεβαιωμένη",
+        "totalLabel": "Σύνολο:",
+        "venuesCount": "Εγκαταστάσεις"
+      },
+      "common": {
+        "cityColon": "Πόλη:",
+        "emailColon": "Email:"
       },
       "jugadores": {
         "viewProfile": "Προβολή προφίλ",
@@ -4876,6 +5380,7 @@
         "colPlan": "Πρόγραμμα",
         "filterPlan": "Πρόγραμμα",
         "activate": "Ενεργοποίηση",
+        "infoOnly": "Ενημερωτικό",
         "fieldNombre": "Όνομα",
         "fieldDescripcion": "Περιγραφή",
         "fieldPrecio": "Τιμή",
@@ -4900,7 +5405,10 @@
       "hello": "Γεια σας",
       "chooseSport": "Επιλογή αθλήματος",
       "goToProfile": "Μετάβαση στο προφίλ μου",
-      "backToStart": "Επιστροφή στην αρχική"
+      "backToStart": "Επιστροφή στην αρχική",
+      "card": {
+        "torneosSub": "ΤΟΥΡΝΟΥΑ ΚΑΙ ΚΑΤΑΤΑΞΕΙΣ."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Ερωτήσεις;",
@@ -4912,6 +5420,9 @@
       "micDictateAria": "Φωνητική εισαγωγή",
       "leerVozAlta": "Εκφώνηση απαντήσεων",
       "franjaManana": "Αύριο",
+      "welcomeLeadNamed": "Γεια σας, {{name}}.",
+      "welcomeLead": "Γεια σας.",
+      "online": "ΣΕ ΣΥΝΔΕΣΗ",
       "boton": "Ερωτήσεις;"
     },
     "armarPartido": {
@@ -4925,7 +5436,8 @@
       "sportsTitle": "Αθλήματα που παίζει",
       "recentTournamentsTitle": "Πρόσφατες διοργανώσεις",
       "badgeParticipantGeneric": "Συμμετέχων",
-      "usualClub": "Σταθερός σύλλογος"
+      "usualClub": "Σταθερός σύλλογος",
+      "usualPartner": "Σταθερός συμπαίκτης:"
     },
     "publicSite": {
       "nav": {
@@ -4941,7 +5453,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Τένις",
-            "stats": "Στατιστικά"
+            "stats": "Στατιστικά",
+            "courts": "Γήπεδα"
           }
         }
       },
@@ -5001,6 +5514,9 @@
           "label": "Σύντομα κοντά σας"
         }
       }
+    },
+    "adminLanding": {
+      "today": "ΣΉΜΕΡΑ"
     }
   },
   "hu": {
@@ -5010,7 +5526,8 @@
       "sponsorAdBadge": "Hirdetés",
       "share": "Megosztás",
       "email": "E-mail",
-      "city": "Város"
+      "city": "Város",
+      "noNotifications": "Még nincs értesítés."
     },
     "auth": {
       "login": "Bejelentkezés",
@@ -5036,12 +5553,17 @@
     },
     "reservas": {
       "heroTitle": "Foglalj pályát",
+      "seleccionar_fecha": "DÁTUM KIVÁLASZTÁSA",
+      "confirmar": "FOGLALÁS MEGERŐSÍTÉSE",
       "cancelar": "Foglalás lemondása",
       "pagar_mp": "Fizetés Mercado Pagóval",
+      "total": "Összesen:",
       "sedes": "Helyszínek",
       "nearestVenue": "Hozzád legközelebbi helyszín",
       "slotFree": "szabad",
       "summaryTitle": "Foglalás összefoglalója",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Extrák:",
       "modifyBooking": "Foglalás módosítása",
       "confirmedTitle": "Foglalás megerősítve!",
       "paymentIncomplete": "A fizetés nem fejeződött be.",
@@ -5049,7 +5571,9 @@
       "understood": "Értem",
       "dayToday": "Ma",
       "dayTomorrow": "Holnap",
+      "slotPrice": "Időpont ára:",
       "courtOccupied": "Foglalt",
+      "loadingSlots": "Időpontok betöltése…",
       "canchasLibres": "szabad"
     },
     "torneos": {
@@ -5063,6 +5587,7 @@
       "listado": {
         "titleAvailable": "Elérhető versenyek",
         "clearSearch": "Keresés törlése",
+        "venueNotFound": "A helyszín nem található",
         "participants": "{{count}} résztvevő",
         "emptyFinalizados": "Még nincs befejezett verseny."
       },
@@ -5074,10 +5599,14 @@
       },
       "vista": {
         "tabGrupos": "CSOPORTKÖR",
+        "tabLlave": "ÁGRAJZ",
+        "tabResultados": "EREDMÉNYEK",
         "statPj": "M",
         "statPg": "GY",
         "statPp": "V",
+        "statPts": "PONT",
         "sinPartidos": "Nincs mérkőzés",
+        "pts": "pont",
         "genero": {
           "masculino": "Férfi",
           "femenino": "Nő"
@@ -5108,6 +5637,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Pályák",
         "seguinosEn": "Kövess minket",
         "clubTiene": "A klub szolgáltatásai"
       }
@@ -5149,6 +5679,7 @@
       "usualPartner": "Állandó partner",
       "passwordMismatch": "A jelszavak nem egyeznek.",
       "placeholderPasswordMin": "Legalább 6 karakter",
+      "expires": "Lejárat",
       "winRate": "Győzelmi arány",
       "diestro": "Jobbkezes",
       "zurdo": "Balkezes",
@@ -5163,6 +5694,7 @@
       "regularPartner": "Állandó partner"
     },
     "admin": {
+      "canchas": "Pályák",
       "profesores": {
         "todasLasSedes": "Összes helyszín",
         "colFoto": "Fénykép",
@@ -5192,6 +5724,9 @@
       "metrics": {
         "periodToday": "Ma"
       },
+      "alerts": {
+        "genericError": "Hiba:"
+      },
       "notif": {
         "paymentNotCompleted": "A fizetés nem fejeződött be."
       },
@@ -5202,6 +5737,9 @@
         "chooseAtLeastOneSport": "Válassz legalább egy sportot.",
         "name": "Név",
         "price": "Ár",
+        "minutesPh": "Perc",
+        "pointsAbbrPh": "Pont",
+        "courtsCol": "Pályák",
         "cityLabel": "Város",
         "emailLabel": "E-mail",
         "deleteBtn": "Törlés",
@@ -5214,6 +5752,7 @@
       },
       "sedes": {
         "venueNumber": "{{id}}. helyszín",
+        "extrasStockLabel": "Készlet",
         "description": "Leírás",
         "delete": "Törlés",
         "reviews": "Értékelések",
@@ -5225,6 +5764,7 @@
         "subscriptionActive": "Aktív",
         "paymentPending": "Fizetésre vár",
         "whatsappCountryCodeAria": "Országhívó",
+        "customPlayersShort": "{{count}} JÁTÉKOS",
         "saveChanges": "Módosítások mentése"
       },
       "reservas": {
@@ -5245,6 +5785,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Válassz helyszínt...",
         "playerPhotoRemove": "Fénykép eltávolítása",
         "saveBtn": "Módosítások mentése"
       },
@@ -5279,7 +5820,13 @@
         "markAllRead": "Összes megjelölése olvasottként",
         "pointsCol": "Pontok",
         "expiresCol": "Lejárat",
-        "statusConfirmed": "Megerősítve"
+        "statusConfirmed": "Megerősítve",
+        "totalLabel": "Összesen:",
+        "venuesCount": "Helyszínek"
+      },
+      "common": {
+        "cityColon": "Város:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Profil megtekintése",
@@ -5293,6 +5840,7 @@
         "colPlan": "Csomag",
         "filterPlan": "Csomag",
         "activate": "Bekapcsolás",
+        "infoOnly": "Tájékoztató",
         "fieldNombre": "Név",
         "fieldDescripcion": "Leírás",
         "fieldPrecio": "Ár",
@@ -5317,7 +5865,10 @@
       "hello": "Szia",
       "chooseSport": "Sportág kiválasztása",
       "goToProfile": "Ugrás a profilomhoz",
-      "backToStart": "Vissza a kezdőlapra"
+      "backToStart": "Vissza a kezdőlapra",
+      "card": {
+        "torneosSub": "VERSENYEK ÉS RANGLISTÁK."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Kérdésed van?",
@@ -5329,6 +5880,9 @@
       "micDictateAria": "Hangbevitel",
       "leerVozAlta": "Válasz felolvasása",
       "franjaManana": "Holnap",
+      "welcomeLeadNamed": "Szia, {{name}}.",
+      "welcomeLead": "Szia.",
+      "online": "ONLINE",
       "boton": "Kérdésed van?"
     },
     "armarPartido": {
@@ -5342,7 +5896,8 @@
       "sportsTitle": "Űzött sportágak",
       "recentTournamentsTitle": "Legutóbbi versenyek",
       "badgeParticipantGeneric": "Résztvevő",
-      "usualClub": "Állandó klub"
+      "usualClub": "Állandó klub",
+      "usualPartner": "Állandó partner:"
     },
     "publicSite": {
       "nav": {
@@ -5358,7 +5913,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tenisz",
-            "stats": "Statisztikák"
+            "stats": "Statisztikák",
+            "courts": "Pályák"
           }
         }
       },
@@ -5418,6 +5974,9 @@
           "label": "Hamarosan"
         }
       }
+    },
+    "adminLanding": {
+      "today": "MA"
     }
   },
   "he": {
@@ -5427,7 +5986,8 @@
       "sponsorAdBadge": "פרסומת",
       "share": "שיתוף",
       "email": "אימייל",
-      "city": "עיר"
+      "city": "עיר",
+      "noNotifications": "עדיין אין התראות."
     },
     "auth": {
       "login": "התחברות",
@@ -5453,12 +6013,17 @@
     },
     "reservas": {
       "heroTitle": "הזמנת מגרש",
+      "seleccionar_fecha": "בחירת תאריך",
+      "confirmar": "אישור ההזמנה",
       "cancelar": "ביטול הזמנה",
       "pagar_mp": "תשלום באמצעות Mercado Pago",
+      "total": "סך הכול:",
       "sedes": "מועדונים",
       "nearestVenue": "המועדון הקרוב אליך",
       "slotFree": "פנוי",
       "summaryTitle": "סיכום ההזמנה",
+      "labelEmail": "אימייל:",
+      "labelExtras": "תוספות:",
       "modifyBooking": "שינוי ההזמנה",
       "confirmedTitle": "ההזמנה אושרה!",
       "paymentIncomplete": "התשלום לא הושלם.",
@@ -5466,7 +6031,9 @@
       "understood": "הבנתי",
       "dayToday": "היום",
       "dayTomorrow": "מחר",
+      "slotPrice": "מחיר השעה:",
       "courtOccupied": "תפוס",
+      "loadingSlots": "טוען שעות…",
       "canchasLibres": "פנוי"
     },
     "torneos": {
@@ -5480,6 +6047,7 @@
       "listado": {
         "titleAvailable": "טורנירים זמינים",
         "clearSearch": "ניקוי החיפוש",
+        "venueNotFound": "המועדון לא נמצא",
         "participants": "{{count}} משתתפים",
         "emptyFinalizados": "עדיין אין טורנירים שהסתיימו."
       },
@@ -5491,10 +6059,14 @@
       },
       "vista": {
         "tabGrupos": "בתים",
+        "tabLlave": "טבלת נוקאאוט",
+        "tabResultados": "תוצאות",
         "statPj": "מש׳",
         "statPg": "נ׳",
         "statPp": "ה׳",
+        "statPts": "נק׳",
         "sinPartidos": "אין משחקים",
+        "pts": "נק׳",
         "genero": {
           "masculino": "גבר",
           "femenino": "אישה"
@@ -5525,6 +6097,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "מגרשים",
         "seguinosEn": "עקבו אחרינו",
         "clubTiene": "במועדון יש"
       }
@@ -5566,6 +6139,7 @@
       "usualPartner": "שותף קבוע",
       "passwordMismatch": "הסיסמאות אינן תואמות.",
       "placeholderPasswordMin": "לפחות 6 תווים",
+      "expires": "תוקף",
       "winRate": "אחוז ניצחונות",
       "diestro": "יד ימין",
       "zurdo": "יד שמאל",
@@ -5580,6 +6154,7 @@
       "regularPartner": "שותף קבוע"
     },
     "admin": {
+      "canchas": "מגרשים",
       "profesores": {
         "todasLasSedes": "כל המועדונים",
         "colFoto": "תמונה",
@@ -5609,6 +6184,9 @@
       "metrics": {
         "periodToday": "היום"
       },
+      "alerts": {
+        "genericError": "שגיאה:"
+      },
       "notif": {
         "paymentNotCompleted": "התשלום לא הושלם."
       },
@@ -5619,6 +6197,9 @@
         "chooseAtLeastOneSport": "יש לבחור ענף ספורט אחד לפחות.",
         "name": "שם",
         "price": "מחיר",
+        "minutesPh": "דקות",
+        "pointsAbbrPh": "נק׳",
+        "courtsCol": "מגרשים",
         "cityLabel": "עיר",
         "emailLabel": "אימייל",
         "deleteBtn": "מחיקה",
@@ -5631,6 +6212,7 @@
       },
       "sedes": {
         "venueNumber": "מועדון מס׳ {{id}}",
+        "extrasStockLabel": "מלאי",
         "description": "תיאור",
         "delete": "מחיקה",
         "reviews": "ביקורות",
@@ -5642,6 +6224,7 @@
         "subscriptionActive": "פעילה",
         "paymentPending": "ממתינה לתשלום",
         "whatsappCountryCodeAria": "קידומת מדינה",
+        "customPlayersShort": "{{count}} שחקנים",
         "saveChanges": "שמירת שינויים"
       },
       "reservas": {
@@ -5662,6 +6245,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "בחירת מועדון...",
         "playerPhotoRemove": "הסרת תמונה",
         "saveBtn": "שמירת שינויים"
       },
@@ -5696,7 +6280,13 @@
         "markAllRead": "סימון הכול כנקרא",
         "pointsCol": "נקודות",
         "expiresCol": "תוקף",
-        "statusConfirmed": "מאושרת"
+        "statusConfirmed": "מאושרת",
+        "totalLabel": "סך הכול:",
+        "venuesCount": "מועדונים"
+      },
+      "common": {
+        "cityColon": "עיר:",
+        "emailColon": "אימייל:"
       },
       "jugadores": {
         "viewProfile": "הצגת פרופיל",
@@ -5710,6 +6300,7 @@
         "colPlan": "תוכנית",
         "filterPlan": "תוכנית",
         "activate": "הפעלה",
+        "infoOnly": "למידע",
         "fieldNombre": "שם",
         "fieldDescripcion": "תיאור",
         "fieldPrecio": "מחיר",
@@ -5734,7 +6325,10 @@
       "hello": "שלום",
       "chooseSport": "בחירת ענף",
       "goToProfile": "מעבר לפרופיל שלי",
-      "backToStart": "חזרה לדף הבית"
+      "backToStart": "חזרה לדף הבית",
+      "card": {
+        "torneosSub": "טורנירים ודירוגים."
+      }
     },
     "chatbot": {
       "fabCollapsed": "יש שאלות?",
@@ -5746,6 +6340,9 @@
       "micDictateAria": "קלט קולי",
       "leerVozAlta": "הקראת תשובות",
       "franjaManana": "מחר",
+      "welcomeLeadNamed": "שלום {{name}}.",
+      "welcomeLead": "שלום.",
+      "online": "מקוון",
       "boton": "יש שאלות?"
     },
     "armarPartido": {
@@ -5759,7 +6356,8 @@
       "sportsTitle": "ענפי ספורט",
       "recentTournamentsTitle": "טורנירים אחרונים",
       "badgeParticipantGeneric": "משתתף",
-      "usualClub": "מועדון קבוע"
+      "usualClub": "מועדון קבוע",
+      "usualPartner": "שותף קבוע:"
     },
     "publicSite": {
       "nav": {
@@ -5775,7 +6373,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "טניס",
-            "stats": "נתונים"
+            "stats": "נתונים",
+            "courts": "מגרשים"
           }
         }
       },
@@ -5835,6 +6434,9 @@
           "label": "בקרוב"
         }
       }
+    },
+    "adminLanding": {
+      "today": "היום"
     }
   },
   "pl": {
@@ -5844,7 +6446,8 @@
       "sponsorAdBadge": "Reklama",
       "share": "Udostępnij",
       "email": "E-mail",
-      "city": "Miasto"
+      "city": "Miasto",
+      "noNotifications": "Brak powiadomień."
     },
     "auth": {
       "login": "Zaloguj się",
@@ -5870,12 +6473,17 @@
     },
     "reservas": {
       "heroTitle": "Zarezerwuj kort",
+      "seleccionar_fecha": "WYBIERZ DATĘ",
+      "confirmar": "POTWIERDŹ REZERWACJĘ",
       "cancelar": "Anuluj rezerwację",
       "pagar_mp": "Zapłać przez Mercado Pago",
+      "total": "Łącznie:",
       "sedes": "Obiekty",
       "nearestVenue": "Najbliższy obiekt",
       "slotFree": "wolne",
       "summaryTitle": "Podsumowanie rezerwacji",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Dodatki:",
       "modifyBooking": "Zmień rezerwację",
       "confirmedTitle": "Rezerwacja potwierdzona!",
       "paymentIncomplete": "Płatność nie została ukończona.",
@@ -5883,7 +6491,9 @@
       "understood": "Rozumiem",
       "dayToday": "Dzisiaj",
       "dayTomorrow": "Jutro",
+      "slotPrice": "Cena terminu:",
       "courtOccupied": "Zajęty",
+      "loadingSlots": "Wczytywanie terminów…",
       "canchasLibres": "wolne"
     },
     "torneos": {
@@ -5897,6 +6507,7 @@
       "listado": {
         "titleAvailable": "Dostępne turnieje",
         "clearSearch": "Wyczyść wyszukiwanie",
+        "venueNotFound": "Nie znaleziono obiektu",
         "participants": "{{count}} uczestników",
         "emptyFinalizados": "Nie ma jeszcze zakończonych turniejów."
       },
@@ -5908,10 +6519,14 @@
       },
       "vista": {
         "tabGrupos": "GRUPY",
+        "tabLlave": "DRABINKA",
+        "tabResultados": "WYNIKI",
         "statPj": "RM",
         "statPg": "Z",
         "statPp": "P",
+        "statPts": "PKT",
         "sinPartidos": "Brak meczów",
+        "pts": "pkt",
         "genero": {
           "masculino": "Mężczyzna",
           "femenino": "Kobieta"
@@ -5942,6 +6557,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Korty",
         "seguinosEn": "Obserwuj nas",
         "clubTiene": "Klub oferuje"
       }
@@ -5983,6 +6599,7 @@
       "usualPartner": "Stały partner",
       "passwordMismatch": "Hasła nie są takie same.",
       "placeholderPasswordMin": "Co najmniej 6 znaków",
+      "expires": "Wygasa",
       "winRate": "Skuteczność",
       "diestro": "Praworęczny",
       "zurdo": "Leworęczny",
@@ -5997,6 +6614,7 @@
       "regularPartner": "Stały partner"
     },
     "admin": {
+      "canchas": "Korty",
       "profesores": {
         "todasLasSedes": "Wszystkie obiekty",
         "colFoto": "Zdjęcie",
@@ -6026,6 +6644,9 @@
       "metrics": {
         "periodToday": "Dzisiaj"
       },
+      "alerts": {
+        "genericError": "Błąd:"
+      },
       "notif": {
         "paymentNotCompleted": "Płatność nie została ukończona."
       },
@@ -6036,6 +6657,9 @@
         "chooseAtLeastOneSport": "Wybierz co najmniej jeden sport.",
         "name": "Imię",
         "price": "Cena",
+        "minutesPh": "Minut",
+        "pointsAbbrPh": "Pkt",
+        "courtsCol": "Korty",
         "cityLabel": "Miasto",
         "emailLabel": "E-mail",
         "deleteBtn": "Usuń",
@@ -6048,6 +6672,7 @@
       },
       "sedes": {
         "venueNumber": "Obiekt nr {{id}}",
+        "extrasStockLabel": "Stan",
         "description": "Opis",
         "delete": "Usuń",
         "reviews": "Opinie",
@@ -6059,6 +6684,7 @@
         "subscriptionActive": "Aktywne",
         "paymentPending": "Oczekuje na płatność",
         "whatsappCountryCodeAria": "Kod kraju",
+        "customPlayersShort": "{{count}} ZAWODNIKÓW",
         "saveChanges": "Zapisz zmiany"
       },
       "reservas": {
@@ -6079,6 +6705,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Wybierz obiekt...",
         "playerPhotoRemove": "Usuń zdjęcie",
         "saveBtn": "Zapisz zmiany"
       },
@@ -6113,7 +6740,13 @@
         "markAllRead": "Oznacz wszystkie jako przeczytane",
         "pointsCol": "Punkty",
         "expiresCol": "Wygasa",
-        "statusConfirmed": "Potwierdzona"
+        "statusConfirmed": "Potwierdzona",
+        "totalLabel": "Łącznie:",
+        "venuesCount": "Obiekty"
+      },
+      "common": {
+        "cityColon": "Miasto:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Zobacz profil",
@@ -6127,6 +6760,7 @@
         "colPlan": "Plan",
         "filterPlan": "Plan",
         "activate": "Włącz",
+        "infoOnly": "Informacyjne",
         "fieldNombre": "Imię",
         "fieldDescripcion": "Opis",
         "fieldPrecio": "Cena",
@@ -6151,7 +6785,10 @@
       "hello": "Cześć",
       "chooseSport": "Wybierz dyscyplinę",
       "goToProfile": "Przejdź do mojego profilu",
-      "backToStart": "Wróć na stronę główną"
+      "backToStart": "Wróć na stronę główną",
+      "card": {
+        "torneosSub": "TURNIEJE I RANKINGI."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Masz pytania?",
@@ -6163,6 +6800,9 @@
       "micDictateAria": "Wprowadzanie głosowe",
       "leerVozAlta": "Przeczytaj odpowiedź na głos",
       "franjaManana": "Jutro",
+      "welcomeLeadNamed": "Cześć, {{name}}.",
+      "welcomeLead": "Cześć.",
+      "online": "ONLINE",
       "boton": "Masz pytania?"
     },
     "armarPartido": {
@@ -6176,7 +6816,8 @@
       "sportsTitle": "Uprawiane sporty",
       "recentTournamentsTitle": "Ostatnie turnieje",
       "badgeParticipantGeneric": "Uczestnik",
-      "usualClub": "Stały klub"
+      "usualClub": "Stały klub",
+      "usualPartner": "Stały partner:"
     },
     "publicSite": {
       "nav": {
@@ -6192,7 +6833,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tenis",
-            "stats": "Statystyki"
+            "stats": "Statystyki",
+            "courts": "Korty"
           }
         }
       },
@@ -6252,6 +6894,9 @@
           "label": "Już wkrótce"
         }
       }
+    },
+    "adminLanding": {
+      "today": "DZISIAJ"
     }
   },
   "uk": {
@@ -6261,7 +6906,8 @@
       "sponsorAdBadge": "Реклама",
       "share": "Поділитися",
       "email": "Електронна пошта",
-      "city": "Місто"
+      "city": "Місто",
+      "noNotifications": "Сповіщень ще немає."
     },
     "auth": {
       "login": "Увійти",
@@ -6287,12 +6933,17 @@
     },
     "reservas": {
       "heroTitle": "Забронюйте корт",
+      "seleccionar_fecha": "ОБЕРІТЬ ДАТУ",
+      "confirmar": "ПІДТВЕРДИТИ БРОНЮВАННЯ",
       "cancelar": "Скасувати бронювання",
       "pagar_mp": "Сплатити через Mercado Pago",
+      "total": "Загалом:",
       "sedes": "Заклади",
       "nearestVenue": "Найближчий до вас заклад",
       "slotFree": "вільне",
       "summaryTitle": "Підсумок бронювання",
+      "labelEmail": "Електронна пошта:",
+      "labelExtras": "Додатково:",
       "modifyBooking": "Змінити бронювання",
       "confirmedTitle": "Бронювання підтверджено!",
       "paymentIncomplete": "Платіж не було завершено.",
@@ -6300,7 +6951,9 @@
       "understood": "Зрозуміло",
       "dayToday": "Сьогодні",
       "dayTomorrow": "Завтра",
+      "slotPrice": "Ціна часу:",
       "courtOccupied": "Зайнято",
+      "loadingSlots": "Завантаження часу…",
       "canchasLibres": "вільне"
     },
     "torneos": {
@@ -6314,6 +6967,7 @@
       "listado": {
         "titleAvailable": "Доступні турніри",
         "clearSearch": "Очистити пошук",
+        "venueNotFound": "Заклад не знайдено",
         "participants": "{{count}} учасників",
         "emptyFinalizados": "Завершених турнірів ще немає."
       },
@@ -6325,10 +6979,14 @@
       },
       "vista": {
         "tabGrupos": "ГРУПИ",
+        "tabLlave": "СІТКА",
+        "tabResultados": "РЕЗУЛЬТАТИ",
         "statPj": "М",
         "statPg": "П",
         "statPp": "По",
+        "statPts": "ОЧ",
         "sinPartidos": "Немає матчів",
+        "pts": "оч",
         "genero": {
           "masculino": "Чоловіча",
           "femenino": "Жіноча"
@@ -6359,6 +7017,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Корти",
         "seguinosEn": "Стежте за нами",
         "clubTiene": "У клубі є"
       }
@@ -6400,6 +7059,7 @@
       "usualPartner": "Постійний партнер",
       "passwordMismatch": "Паролі не збігаються.",
       "placeholderPasswordMin": "Щонайменше 6 символів",
+      "expires": "Завершується",
       "winRate": "Відсоток перемог",
       "diestro": "Правша",
       "zurdo": "Лівша",
@@ -6414,6 +7074,7 @@
       "regularPartner": "Постійний партнер"
     },
     "admin": {
+      "canchas": "Корти",
       "profesores": {
         "todasLasSedes": "Усі заклади",
         "colFoto": "Фото",
@@ -6443,6 +7104,9 @@
       "metrics": {
         "periodToday": "Сьогодні"
       },
+      "alerts": {
+        "genericError": "Помилка:"
+      },
       "notif": {
         "paymentNotCompleted": "Платіж не було завершено."
       },
@@ -6453,6 +7117,9 @@
         "chooseAtLeastOneSport": "Виберіть щонайменше один вид спорту.",
         "name": "Ім’я",
         "price": "Ціна",
+        "minutesPh": "Хвилин",
+        "pointsAbbrPh": "Оч",
+        "courtsCol": "Корти",
         "cityLabel": "Місто",
         "emailLabel": "Електронна пошта",
         "deleteBtn": "Видалити",
@@ -6465,6 +7132,7 @@
       },
       "sedes": {
         "venueNumber": "Заклад №{{id}}",
+        "extrasStockLabel": "Залишок",
         "description": "Опис",
         "delete": "Видалити",
         "reviews": "Відгуки",
@@ -6476,6 +7144,7 @@
         "subscriptionActive": "Активне",
         "paymentPending": "Очікує оплати",
         "whatsappCountryCodeAria": "Код країни",
+        "customPlayersShort": "{{count}} ГРАВЦІВ",
         "saveChanges": "Зберегти зміни"
       },
       "reservas": {
@@ -6496,6 +7165,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Оберіть заклад...",
         "playerPhotoRemove": "Видалити фото",
         "saveBtn": "Зберегти зміни"
       },
@@ -6530,7 +7200,13 @@
         "markAllRead": "Позначити всі як прочитані",
         "pointsCol": "Очки",
         "expiresCol": "Завершується",
-        "statusConfirmed": "Підтверджено"
+        "statusConfirmed": "Підтверджено",
+        "totalLabel": "Загалом:",
+        "venuesCount": "Заклади"
+      },
+      "common": {
+        "cityColon": "Місто:",
+        "emailColon": "Електронна пошта:"
       },
       "jugadores": {
         "viewProfile": "Переглянути профіль",
@@ -6544,6 +7220,7 @@
         "colPlan": "План",
         "filterPlan": "План",
         "activate": "Увімкнути",
+        "infoOnly": "Інформаційно",
         "fieldNombre": "Ім’я",
         "fieldDescripcion": "Опис",
         "fieldPrecio": "Ціна",
@@ -6568,7 +7245,10 @@
       "hello": "Привіт",
       "chooseSport": "Оберіть вид спорту",
       "goToProfile": "Перейти до мого профілю",
-      "backToStart": "Повернутися на головну"
+      "backToStart": "Повернутися на головну",
+      "card": {
+        "torneosSub": "ТУРНІРИ ТА РЕЙТИНГИ."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Є запитання?",
@@ -6580,6 +7260,9 @@
       "micDictateAria": "Голосове введення",
       "leerVozAlta": "Прочитати відповідь уголос",
       "franjaManana": "Завтра",
+      "welcomeLeadNamed": "Привіт, {{name}}.",
+      "welcomeLead": "Привіт.",
+      "online": "ОНЛАЙН",
       "boton": "Є запитання?"
     },
     "armarPartido": {
@@ -6593,7 +7276,8 @@
       "sportsTitle": "Види спорту",
       "recentTournamentsTitle": "Останні турніри",
       "badgeParticipantGeneric": "Учасник",
-      "usualClub": "Постійний клуб"
+      "usualClub": "Постійний клуб",
+      "usualPartner": "Постійний партнер:"
     },
     "publicSite": {
       "nav": {
@@ -6609,7 +7293,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Теніс",
-            "stats": "Статистика"
+            "stats": "Статистика",
+            "courts": "Корти"
           }
         }
       },
@@ -6669,6 +7354,9 @@
           "label": "Незабаром"
         }
       }
+    },
+    "adminLanding": {
+      "today": "СЬОГОДНІ"
     }
   },
   "af": {
@@ -6678,7 +7366,8 @@
       "sponsorAdBadge": "Advertensie",
       "share": "Deel",
       "email": "E-pos",
-      "city": "Stad"
+      "city": "Stad",
+      "noNotifications": "Nog geen kennisgewings nie."
     },
     "auth": {
       "login": "Meld aan",
@@ -6704,12 +7393,17 @@
     },
     "reservas": {
       "heroTitle": "Bespreek jou baan",
+      "seleccionar_fecha": "KIES DATUM",
+      "confirmar": "BEVESTIG BESPREKING",
       "cancelar": "Kanselleer bespreking",
       "pagar_mp": "Betaal met Mercado Pago",
+      "total": "Totaal:",
       "sedes": "Klubs",
       "nearestVenue": "Naaste klub aan jou",
       "slotFree": "oop",
       "summaryTitle": "Besprekingsopsomming",
+      "labelEmail": "E-pos:",
+      "labelExtras": "Ekstras:",
       "modifyBooking": "Verander bespreking",
       "confirmedTitle": "Bespreking bevestig!",
       "paymentIncomplete": "Die betaling is nie voltooi nie.",
@@ -6717,7 +7411,9 @@
       "understood": "Reg so",
       "dayToday": "Vandag",
       "dayTomorrow": "Môre",
+      "slotPrice": "Tydgleufprys:",
       "courtOccupied": "Beset",
+      "loadingSlots": "Laai tye…",
       "canchasLibres": "oop"
     },
     "torneos": {
@@ -6731,6 +7427,7 @@
       "listado": {
         "titleAvailable": "Beskikbare toernooie",
         "clearSearch": "Maak soektog skoon",
+        "venueNotFound": "Klub nie gevind nie",
         "participants": "{{count}} deelnemers",
         "emptyFinalizados": "Nog geen voltooide toernooie nie."
       },
@@ -6742,10 +7439,14 @@
       },
       "vista": {
         "tabGrupos": "GROEPE",
+        "tabLlave": "UITSPEELSKEMA",
+        "tabResultados": "UITSLAE",
         "statPj": "WG",
         "statPg": "W",
         "statPp": "V",
+        "statPts": "PUNTE",
         "sinPartidos": "Geen wedstryde nie",
+        "pts": "punte",
         "genero": {
           "masculino": "Manlik",
           "femenino": "Vroulik"
@@ -6776,6 +7477,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Bane",
         "seguinosEn": "Volg ons op",
         "clubTiene": "Die klub bied"
       }
@@ -6817,6 +7519,7 @@
       "usualPartner": "Vaste speelmaat",
       "passwordMismatch": "Die wagwoorde stem nie ooreen nie.",
       "placeholderPasswordMin": "Minstens 6 karakters",
+      "expires": "Verstryk",
       "winRate": "Wenpersentasie",
       "diestro": "Regshandig",
       "zurdo": "Linkshandig",
@@ -6831,6 +7534,7 @@
       "regularPartner": "Vaste speelmaat"
     },
     "admin": {
+      "canchas": "Bane",
       "profesores": {
         "todasLasSedes": "Alle klubs",
         "colFoto": "Foto",
@@ -6860,6 +7564,9 @@
       "metrics": {
         "periodToday": "Vandag"
       },
+      "alerts": {
+        "genericError": "Fout:"
+      },
       "notif": {
         "paymentNotCompleted": "Die betaling is nie voltooi nie."
       },
@@ -6870,6 +7577,9 @@
         "chooseAtLeastOneSport": "Kies minstens een sport.",
         "name": "Naam",
         "price": "Prys",
+        "minutesPh": "Minute",
+        "pointsAbbrPh": "Punte",
+        "courtsCol": "Bane",
         "cityLabel": "Stad",
         "emailLabel": "E-pos",
         "deleteBtn": "Vee uit",
@@ -6882,6 +7592,7 @@
       },
       "sedes": {
         "venueNumber": "Klub #{{id}}",
+        "extrasStockLabel": "Voorraad",
         "description": "Beskrywing",
         "delete": "Vee uit",
         "reviews": "Resensies",
@@ -6893,6 +7604,7 @@
         "subscriptionActive": "Aktief",
         "paymentPending": "Wag op betaling",
         "whatsappCountryCodeAria": "Landkode",
+        "customPlayersShort": "{{count}} SPELERS",
         "saveChanges": "Stoor veranderings"
       },
       "reservas": {
@@ -6913,6 +7625,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Kies klub...",
         "playerPhotoRemove": "Verwyder foto",
         "saveBtn": "Stoor veranderings"
       },
@@ -6947,7 +7660,13 @@
         "markAllRead": "Merk alles as gelees",
         "pointsCol": "Punte",
         "expiresCol": "Verstryk",
-        "statusConfirmed": "Bevestig"
+        "statusConfirmed": "Bevestig",
+        "totalLabel": "Totaal:",
+        "venuesCount": "Klubs"
+      },
+      "common": {
+        "cityColon": "Stad:",
+        "emailColon": "E-pos:"
       },
       "jugadores": {
         "viewProfile": "Bekyk profiel",
@@ -6961,6 +7680,7 @@
         "colPlan": "Plan",
         "filterPlan": "Plan",
         "activate": "Aktiveer",
+        "infoOnly": "Ter inligting",
         "fieldNombre": "Naam",
         "fieldDescripcion": "Beskrywing",
         "fieldPrecio": "Prys",
@@ -6985,7 +7705,10 @@
       "hello": "Hallo",
       "chooseSport": "Kies sport",
       "goToProfile": "Gaan na my profiel",
-      "backToStart": "Terug na tuis"
+      "backToStart": "Terug na tuis",
+      "card": {
+        "torneosSub": "TOERNOOIE EN RANGLYSTE."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Vrae?",
@@ -6997,6 +7720,9 @@
       "micDictateAria": "Steminvoer",
       "leerVozAlta": "Lees antwoorde hardop",
       "franjaManana": "Môre",
+      "welcomeLeadNamed": "Hallo {{name}}.",
+      "welcomeLead": "Hallo.",
+      "online": "AANLYN",
       "boton": "Vrae?"
     },
     "armarPartido": {
@@ -7010,7 +7736,8 @@
       "sportsTitle": "Sportsoorte gespeel",
       "recentTournamentsTitle": "Onlangse toernooie",
       "badgeParticipantGeneric": "Deelnemer",
-      "usualClub": "Gereelde klub"
+      "usualClub": "Gereelde klub",
+      "usualPartner": "Vaste speelmaat:"
     },
     "publicSite": {
       "nav": {
@@ -7026,7 +7753,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tennis",
-            "stats": "Statistiek"
+            "stats": "Statistiek",
+            "courts": "Bane"
           }
         }
       },
@@ -7086,6 +7814,9 @@
           "label": "Kom binnekort"
         }
       }
+    },
+    "adminLanding": {
+      "today": "VANDAG"
     }
   },
   "cs": {
@@ -7095,7 +7826,8 @@
       "sponsorAdBadge": "Reklama",
       "share": "Sdílet",
       "email": "E-mail",
-      "city": "Město"
+      "city": "Město",
+      "noNotifications": "Momentálně žádná oznámení."
     },
     "auth": {
       "login": "Přihlásit se",
@@ -7121,12 +7853,17 @@
     },
     "reservas": {
       "heroTitle": "Rezervujte si kurt",
+      "seleccionar_fecha": "VYBRAT DATUM",
+      "confirmar": "POTVRDIT REZERVACI",
       "cancelar": "Zrušit rezervaci",
       "pagar_mp": "Zaplatit přes Mercado Pago",
+      "total": "Celkem:",
       "sedes": "Místa",
       "nearestVenue": "Nejbližší klub",
       "slotFree": "volné",
       "summaryTitle": "Souhrn rezervace",
+      "labelEmail": "E-mail:",
+      "labelExtras": "Doplňky:",
       "modifyBooking": "Upravit rezervaci",
       "confirmedTitle": "Rezervace potvrzena!",
       "paymentIncomplete": "Platba nebyla dokončena.",
@@ -7134,7 +7871,9 @@
       "understood": "Rozumím",
       "dayToday": "Dnes",
       "dayTomorrow": "Zítra",
+      "slotPrice": "Cena termínu:",
       "courtOccupied": "Obsazený",
+      "loadingSlots": "Načítání časů…",
       "canchasLibres": "volné"
     },
     "torneos": {
@@ -7148,6 +7887,7 @@
       "listado": {
         "titleAvailable": "Dostupné turnaje",
         "clearSearch": "Vymazat hledání",
+        "venueNotFound": "Místo nebylo nalezeno",
         "participants": "{{count}} účastníků",
         "emptyFinalizados": "Zatím nejsou žádné dokončené turnaje."
       },
@@ -7159,10 +7899,14 @@
       },
       "vista": {
         "tabGrupos": "SKUPINY",
+        "tabLlave": "PAVOUK",
+        "tabResultados": "VÝSLEDKY",
         "statPj": "Z",
         "statPg": "V",
         "statPp": "P",
+        "statPts": "BODŮ",
         "sinPartidos": "Žádné zápasy",
+        "pts": "bodů",
         "genero": {
           "masculino": "Muž",
           "femenino": "Žena"
@@ -7193,6 +7937,7 @@
     },
     "sedes": {
       "publica": {
+        "infoCanchas": "Hřiště",
         "seguinosEn": "Sledujte nás na",
         "clubTiene": "Klub nabízí"
       }
@@ -7234,6 +7979,7 @@
       "usualPartner": "Stálý spoluhráč",
       "passwordMismatch": "Hesla se neshodují.",
       "placeholderPasswordMin": "Alespoň 6 znaků",
+      "expires": "Platnost do",
       "winRate": "Úspěšnost výher",
       "diestro": "Pravák",
       "zurdo": "Levák",
@@ -7248,6 +7994,7 @@
       "regularPartner": "Stálý spoluhráč"
     },
     "admin": {
+      "canchas": "Hřiště",
       "profesores": {
         "todasLasSedes": "Všechny kluby",
         "colFoto": "Fotografie",
@@ -7277,6 +8024,9 @@
       "metrics": {
         "periodToday": "Dnes"
       },
+      "alerts": {
+        "genericError": "Chyba:"
+      },
       "notif": {
         "paymentNotCompleted": "Platba nebyla dokončena."
       },
@@ -7287,6 +8037,9 @@
         "chooseAtLeastOneSport": "Vyberte alespoň jeden sport.",
         "name": "Jméno",
         "price": "Cena",
+        "minutesPh": "Minut",
+        "pointsAbbrPh": "Bodů",
+        "courtsCol": "Hřiště",
         "cityLabel": "Město",
         "emailLabel": "E-mail",
         "deleteBtn": "Smazat",
@@ -7299,6 +8052,7 @@
       },
       "sedes": {
         "venueNumber": "Místo č. {{id}}",
+        "extrasStockLabel": "Skladem",
         "description": "Popis",
         "delete": "Smazat",
         "reviews": "Recenze",
@@ -7310,6 +8064,7 @@
         "subscriptionActive": "Aktivní",
         "paymentPending": "Čeká na platbu",
         "whatsappCountryCodeAria": "Předvolba země",
+        "customPlayersShort": "{{count}} HRÁČŮ",
         "saveChanges": "Uložit změny"
       },
       "reservas": {
@@ -7330,6 +8085,7 @@
         }
       },
       "scoreboard": {
+        "selectSede": "Vyberte klub...",
         "playerPhotoRemove": "Odstranit fotografii",
         "saveBtn": "Uložit změny"
       },
@@ -7364,7 +8120,13 @@
         "markAllRead": "Označit vše jako přečtené",
         "pointsCol": "Body",
         "expiresCol": "Platnost do",
-        "statusConfirmed": "Potvrzeno"
+        "statusConfirmed": "Potvrzeno",
+        "totalLabel": "Celkem:",
+        "venuesCount": "Místa"
+      },
+      "common": {
+        "cityColon": "Město:",
+        "emailColon": "E-mail:"
       },
       "jugadores": {
         "viewProfile": "Zobrazit profil",
@@ -7378,6 +8140,7 @@
         "colPlan": "Plán",
         "filterPlan": "Plán",
         "activate": "Aktivovat",
+        "infoOnly": "Informativní",
         "fieldNombre": "Jméno",
         "fieldDescripcion": "Popis",
         "fieldPrecio": "Cena",
@@ -7402,7 +8165,10 @@
       "hello": "Dobrý den",
       "chooseSport": "Vyberte sport",
       "goToProfile": "Přejít na můj profil",
-      "backToStart": "Zpět na úvod"
+      "backToStart": "Zpět na úvod",
+      "card": {
+        "torneosSub": "TURNAJE A ŽEBŘÍČKY."
+      }
     },
     "chatbot": {
       "fabCollapsed": "Máte dotaz?",
@@ -7414,6 +8180,9 @@
       "micDictateAria": "Hlasové zadávání",
       "leerVozAlta": "Číst odpovědi nahlas",
       "franjaManana": "Zítra",
+      "welcomeLeadNamed": "Dobrý den, {{name}}.",
+      "welcomeLead": "Dobrý den.",
+      "online": "ONLINE",
       "boton": "Máte dotaz?"
     },
     "armarPartido": {
@@ -7427,7 +8196,8 @@
       "sportsTitle": "Hrané sporty",
       "recentTournamentsTitle": "Nedávné turnaje",
       "badgeParticipantGeneric": "Účastník",
-      "usualClub": "Domovský klub"
+      "usualClub": "Domovský klub",
+      "usualPartner": "Stálý spoluhráč:"
     },
     "publicSite": {
       "nav": {
@@ -7443,7 +8213,8 @@
             "padel": "Padel",
             "pickleball": "Pickleball",
             "tennis": "Tenis",
-            "stats": "Statistiky"
+            "stats": "Statistiky",
+            "courts": "Hřiště"
           }
         }
       },
@@ -7503,6 +8274,9 @@
           "label": "Již brzy"
         }
       }
+    },
+    "adminLanding": {
+      "today": "DNES"
     }
   }
 }

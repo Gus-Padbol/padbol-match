@@ -22,7 +22,7 @@ test('the native translation-memory bridge is complete and structurally safe', (
   const englishFlat = flatten(english);
   Object.entries(shared).forEach(([code, catalog]) => {
     const entries = flatten(catalog);
-    expect(Object.keys(entries)).toHaveLength(253);
+    expect(Object.keys(entries)).toHaveLength(288);
     Object.entries(entries).forEach(([key, value]) => {
       expect(Object.hasOwn(englishFlat, key)).toBe(true);
       expect(typeof value).toBe('string');

@@ -39,6 +39,40 @@ const placeholders = (text) => [...String(text).matchAll(/{{\s*([^},\s]+)[^}]*}}
   .map((match) => match[1])
   .sort()
   .join('|');
+const comparable = (text) => String(text ?? '')
+  .normalize('NFKC')
+  .toLocaleLowerCase('und')
+  .replace(/[“”«»]/g, '"')
+  .replace(/’/g, "'")
+  .replace(/(?:…|\.{3})/g, '')
+  .replace(/[.!?:;,\s]+$/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const indexByComparableSource = (entries) => {
+  const index = {};
+  Object.entries(entries).forEach(([key, source]) => {
+    (index[comparable(source)] ||= []).push(key);
+  });
+  return index;
+};
+
+function carryDisplayStyle(translation, nativeSource, webSource) {
+  let value = String(translation).trim();
+  const webPunctuation = String(webSource).match(/(?:\.{3}|…|[.!?:])+$/u)?.[0] ?? '';
+  value = value.replace(/(?:\.{3}|…|[.!?:])+$/u, '') + webPunctuation;
+
+  const webLetters = String(webSource).replace(/[^\p{L}]/gu, '');
+  const nativeLetters = String(nativeSource).replace(/[^\p{L}]/gu, '');
+  if (webLetters && webLetters === webLetters.toLocaleUpperCase('und')
+    && nativeLetters !== nativeLetters.toLocaleUpperCase('und')) {
+    return value.toLocaleUpperCase('und');
+  }
+  if (/^\p{Lu}/u.test(String(webSource).trim()) && /^\p{Ll}/u.test(String(nativeSource).trim())) {
+    return value.replace(/\p{L}/u, (letter) => letter.toLocaleUpperCase('und'));
+  }
+  return value;
+}
 
 const nativeEnglishPath = path.join(nativeRoot, 'src/i18n/locales/en.json');
 const parityTestPath = path.join(nativeRoot, 'scripts/test-i18n-parity.cjs');
@@ -84,6 +118,8 @@ const nativeKeysBySpanishSource = {};
 Object.entries(nativeSpanish).forEach(([key, source]) => {
   (nativeKeysBySpanishSource[source] ||= []).push(key);
 });
+const nativeKeysByComparableEnglish = indexByComparableSource(nativeEnglish);
+const nativeKeysByComparableSpanish = indexByComparableSource(nativeSpanish);
 
 const webToNativeCodes = {
   de: 'de',
@@ -128,10 +164,21 @@ for (const [webCode, nativeCode] of Object.entries(webToNativeCodes)) {
 
     // Spanish is the editorial source of truth for the ecosystem. English is
     // a safe secondary bridge when the Spanish phrase has no unique match.
-    const nativeKey = spanishNativeKey || englishNativeKey;
+    let nativeKey = spanishNativeKey || englishNativeKey;
+    let normalizedMatch = false;
+    if (!nativeKey && spanishSource) {
+      const spanishMatches = nativeKeysByComparableSpanish[comparable(spanishSource)] || [];
+      const englishMatches = nativeKeysByComparableEnglish[comparable(englishSource)] || [];
+      if (spanishMatches.length === 1 && englishMatches.length === 1 && spanishMatches[0] === englishMatches[0]) {
+        [nativeKey] = spanishMatches;
+        normalizedMatch = true;
+      }
+    }
     if (!nativeKey || !Object.hasOwn(nativeResolved, nativeKey)) return;
 
-    const translation = nativeResolved[nativeKey];
+    const translation = normalizedMatch
+      ? carryDisplayStyle(nativeResolved[nativeKey], nativeEnglish[nativeKey], englishSource)
+      : nativeResolved[nativeKey];
     if (placeholders(translation) !== placeholders(englishSource)) {
       throw new Error(`${webCode}:${webKey} no conserva las variables del texto de origen.`);
     }
