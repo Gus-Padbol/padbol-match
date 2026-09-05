@@ -577,10 +577,7 @@ export default function AdminPadcoinsReportesSection({
       ) : null}
       {localSearchNote ? (
         <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '0 0 12px' }}>
-          {tr(
-            'reportsSearchLocalHint',
-            'La búsqueda por texto filtra la página actual. Usá UUID para filtrar en el servidor.',
-          )}
+          {tr('reportsSearchLocalHint')}
         </p>
       ) : null}
 

@@ -1,5 +1,6 @@
 import {
   filterAdminJugadoresByVinculacion,
+  formatJugadorActivity,
   normalizeAdminJugadoresSearchItems,
   parseAdminJugadoresApiError,
   sortAdminJugadoresItems,
@@ -17,6 +18,12 @@ describe('adminJugadoresApi helpers', () => {
     expect(parseAdminJugadoresApiError(401, {})).toMatch(/401|sesión/i);
     expect(parseAdminJugadoresApiError(403, {})).toMatch(/403|permiso/i);
     expect(parseAdminJugadoresApiError(500, { error: 'boom' })).toBe('boom');
+  });
+
+  it('formatea la actividad con la región elegida', () => {
+    const iso = '2026-06-15T12:00:00Z';
+    expect(formatJugadorActivity(iso, 'de-DE')).toContain('Juni');
+    expect(formatJugadorActivity(iso, 'de-DE')).not.toBe(formatJugadorActivity(iso, 'en-US'));
   });
 
   it('ordena y filtra por vinculación', () => {

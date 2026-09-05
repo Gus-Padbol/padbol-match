@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useSafeTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
   fetchAdminJugadoresList,
@@ -257,9 +258,10 @@ export default function AdminJugadoresSection({
   canSelectSede = false,
   esAdminClub = false,
 }) {
-  const { t } = useSafeTranslation();
+  const { t, i18n } = useSafeTranslation();
+  const locale = padbolLangToIntlLocale(i18n.language);
   const sedesList = Object.values(sedesMap || {}).sort((a, b) =>
-    String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' }),
+    String(a?.nombre || '').localeCompare(String(b?.nombre || ''), locale, { sensitivity: 'base' }),
   );
 
   const [sedeId, setSedeId] = useState(() => {
@@ -505,7 +507,7 @@ export default function AdminJugadoresSection({
                     <td className="admin-jugadores-table__contact admin-jugadores-table__email" style={{ fontSize: 13 }}>{j.email || '—'}</td>
                     <td className="admin-jugadores-table__contact admin-jugadores-table__phone" style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
                     <td style={{ fontSize: 12 }}>{formatJugadorVinculacionLabel(j.vinculacion, t)}</td>
-                    <td className="admin-jugadores-table__activity" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at) || '—'}</td>
+                    <td className="admin-jugadores-table__activity" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at, locale) || '—'}</td>
                     <td className="admin-jugadores-table__profile" style={{ fontSize: 13 }}>
                       {perfilPath ? (
                         <a className="admin-jugadores-table__profile-link" href={perfilPath} target="_blank" rel="noopener noreferrer">
@@ -584,14 +586,11 @@ export default function AdminJugadoresSection({
               </div>
               <div>
                 <dt style={{ fontWeight: 800 }}>{t('admin.jugadores.activityCol')}</dt>
-                <dd style={{ margin: 0 }}>{formatJugadorActivity(ficha.last_activity_at) || '—'}</dd>
+                <dd style={{ margin: 0 }}>{formatJugadorActivity(ficha.last_activity_at, locale) || '—'}</dd>
               </div>
             </dl>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, margin: '0 0 14px' }}>
-              {t(
-                'admin.jugadores.fichaLinkBlocked',
-                'Vincular / desvincular formalmente a la sede aún no está disponible en Backend. La relación actual se infiere del historial de reservas.',
-              )}
+              {t('admin.jugadores.fichaLinkBlocked')}
             </p>
             <button
               type="button"
