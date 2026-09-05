@@ -1869,14 +1869,14 @@ function padcoinsAlertSeveridadBadge(severidad, t) {
 function padcoinsAlertTipoLabel(tipo, t) {
   const key = String(tipo || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const map = {
-    campania_identificada: 'Campaña detectada',
-    volumen_anormal: 'Actividad poco habitual',
-    acreditacion_masiva: 'Acreditaciones inusuales',
-    uso_concentrado: 'Uso concentrado',
-    canje_masivo: 'Canjes inusuales',
-    ajuste_frecuente: 'Ajustes frecuentes',
-    posible_abuso: 'Posible abuso',
-    uso_anormal: 'Uso anormal',
+    campania_identificada: 'Campaign detected',
+    volumen_anormal: 'Unusual activity',
+    acreditacion_masiva: 'Unusual credits',
+    uso_concentrado: 'Concentrated usage',
+    canje_masivo: 'Unusual redemptions',
+    ajuste_frecuente: 'Frequent adjustments',
+    posible_abuso: 'Possible abuse',
+    uso_anormal: 'Unusual use',
   };
   const fallback = map[key] || (tipo ? String(tipo).replace(/_/g, ' ') : '—');
   return t ? t(`admin.padcoins.alertType.${key}`, { defaultValue: fallback }) : fallback;
@@ -1885,7 +1885,7 @@ function padcoinsAlertTipoLabel(tipo, t) {
 function padcoinsAlertTipoBadge(tipo, t) {
   const key = String(tipo || '').trim().toLowerCase();
   if (key === 'campania_identificada') {
-    return { label: t ? t('admin.padcoins.alertType.campania_identificada', 'Campaña detectada') : 'Campaña detectada', bg: '#f3e8ff', color: '#6b21a8' };
+    return { label: t ? t('admin.padcoins.alertType.campania_identificada', 'Campaign detected') : 'Campaign detected', bg: '#f3e8ff', color: '#6b21a8' };
   }
   return { label: padcoinsAlertTipoLabel(tipo, t), bg: '#f1f5f9', color: '#334155' };
 }
@@ -2783,7 +2783,7 @@ function torneoProximoSinEmpezar(t) {
   return true;
 }
 
-function formatoIngresosHoyMultimoneda(porMoneda, emptyLabel = 'sin ingresos registrados') {
+function formatoIngresosHoyMultimoneda(porMoneda, emptyLabel = 'no revenue recorded') {
   const MON = ['ARS', 'USD', 'EUR'];
   const parts = MON.filter((m) => (Number(porMoneda[m]) || 0) > 0).map((m) => {
     const n = Number(porMoneda[m]) || 0;
@@ -6210,7 +6210,7 @@ export default function AdminDashboard({
               return [
                 {
                   tipo: 'proxima',
-                  sedeNombre: String(sedeRow?.nombre || `Sede ${sedeRow?.id}`).trim(),
+                  sedeNombre: String(sedeRow?.nombre || t('admin.sponsors.venueRef', { id: sedeRow?.id })).trim(),
                   sedeId: sedeRow?.id,
                   fecha: sedeRow.suscripcion_proximo_cobro,
                 },
@@ -14702,7 +14702,7 @@ export default function AdminDashboard({
                 <span style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
                   {t(
                     'admin.padcoins.sedeParticipationClubToggleHelp',
-                    'Al activar esta opción, tu sede podrá ofrecer beneficios y recibir canjes con PadCoins.',
+                    'Enable or pause Padbol Benefits for this venue.',
                   )}
                 </span>
               ) : null}
@@ -14718,7 +14718,7 @@ export default function AdminDashboard({
                 rows={3}
                 placeholder={t(
                   'admin.padcoins.sedeParticipationDescPlaceholder',
-                  'Notas internas sobre la participación de esta sede (opcional)',
+                  'Explain the benefits available at this venue.',
                 )}
                 style={{ ...pcInp, resize: 'vertical' }}
               />
@@ -14877,7 +14877,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '640px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.globalConfigDescription',
-                    'Padbol define cómo se ganan o pierden PadCoins. Los beneficios y canjes siguen siendo por sede.',
+                'Set the global rules that apply when a venue has no local override.',
                   )}
                 </p>
                 <p style={{
@@ -14893,12 +14893,12 @@ export default function AdminDashboard({
                 }}>
                   {t(
                     'admin.padcoins.globalConfigExample',
-                    'Ejemplo: con 5% de acreditación promocional y conversión interna 100, una reserva de referencia equivalente a 50 unidades genera 250 PadCoins.',
+                'Example: award a percentage of each completed booking as PadCoins.',
                   )}
                   {' '}
                   {t(
                     'admin.padcoins.globalConfigNoMonetaryHint',
-                    'La equivalencia monetaria no se muestra al jugador.',
+                'PadCoins are loyalty points, not money or a payment method.',
                   )}
                 </p>
 
@@ -15004,13 +15004,13 @@ export default function AdminDashboard({
                   <p style={{ color: 'var(--text-muted)', margin: '0 0 10px', maxWidth: '720px', fontSize: '14px' }}>
                     {t(
                       'admin.padcoins.sedeParticipationSuperIntro',
-                      'Supervisá la participación de las sedes en Beneficios Padbol.',
+                    'Control which venues participate in Padbol Benefits.',
                     )}
                   </p>
                   <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                     {t(
                       'admin.padcoins.sedeParticipationSuperHelp',
-                      'El Admin Club puede activar o desactivar su sede. Como Super Admin podés intervenir ante abuso, reclamos o cuestiones comerciales.',
+                    'A venue can be enabled or paused without changing its local operation.',
                     )}
                   </p>
                 </>
@@ -15018,14 +15018,14 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeParticipationClubIntro',
-                    'Administrá si tu sede participa en Beneficios Padbol y cuándo ofrece beneficios o recibe canjes.',
+                    "Manage your venue's participation in Padbol Benefits.",
                   )}
                 </p>
               ) : (
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeParticipationReadIntro',
-                    'Consultá el estado de participación de la sede en Beneficios Padbol.',
+                    "This venue's participation is configured by its administrators.",
                   )}
                 </p>
               )}
@@ -15041,7 +15041,7 @@ export default function AdminDashboard({
               }}>
                 {t(
                   'admin.padcoins.sedeParticipationNote',
-                  'Si una sede desactiva Beneficios Padbol, no se generan nuevos PadCoins por esa sede ni se permiten nuevos canjes. Los canjes pendientes deben respetarse.',
+                    'Changes affect future activity and are recorded for audit purposes.',
                 )}
               </p>
 
@@ -15093,7 +15093,7 @@ export default function AdminDashboard({
                   <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-muted)' }}>
                     {t(
                       'admin.padcoins.sedeParticipationListCount',
-                      '{{shown}} de {{total}} sedes',
+                        '{{shown}} of {{total}} venues',
                     )
                       .replace('{{shown}}', String(pcSedesParticipacionFiltradas.length))
                       .replace('{{total}}', String(pcSedesParticipacionList.length))}
@@ -15261,7 +15261,7 @@ export default function AdminDashboard({
                     }}>
                       {t(
                         'admin.padcoins.sedeParticipationClubInactive',
-                        'Beneficios Padbol están desactivados en tu sede. Activá la opción de arriba para ofrecer beneficios y recibir canjes.',
+                      'Padbol Benefits are currently inactive for this venue.',
                       )}
                     </p>
                   ) : null}
@@ -15289,7 +15289,7 @@ export default function AdminDashboard({
                       <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
                         {t(
                           'admin.padcoins.sedeParticipationNacionalReadOnly',
-                          'La participación de cada sede la gestiona su Admin Club. Como Admin Nacional podés consultar el estado.',
+                        'National administrators can view this setting but cannot change it here.',
                         )}
                       </p>
                     </div>
@@ -15310,13 +15310,13 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeSmartConfigIntro',
-                    'Define reglas propias para esta sede o deja los campos vacíos para heredar la configuración global.',
+                'Define a venue override only when its local rule should differ from the global rule.',
                   )}
                 </p>
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeSmartConfigGovernance',
-                    'El Super Admin define la regla global. Cada sede puede heredarla o ajustar sus propios valores si tiene autorización.',
+                'Global governance remains available to the Super Admin.',
                   )}
                 </p>
 
@@ -15350,7 +15350,7 @@ export default function AdminDashboard({
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
                     {t(
                       'admin.padcoins.sedeSmartConfigSelectVenue',
-                      'Seleccione una sede para ver o editar su configuración inteligente.',
+                    'Select a venue to configure its smart rules.',
                     )}
                   </p>
                 ) : null}
@@ -15523,7 +15523,7 @@ export default function AdminDashboard({
                       <p style={{ margin: '0 0 16px', color: 'var(--text-muted)', fontSize: '14px', maxWidth: '720px' }}>
                         {t(
                           'admin.padcoins.loyaltySimIntro',
-                          'Calcula cuántos PadCoins genera una reserva y cuántas reservas necesita un jugador para canjear un beneficio.',
+                'Estimate the loyalty impact before activating a campaign.',
                         )}
                       </p>
                       <div style={{
@@ -15576,7 +15576,7 @@ export default function AdminDashboard({
                           <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                             {t(
                               'admin.padcoins.loyaltySimConversionHint',
-                              'Referencia de cálculo interno (equivalente interno).',
+                  'Use a reference conversion; it does not represent money or a guaranteed discount.',
                             )}
                           </span>
                         </label>
@@ -15608,7 +15608,7 @@ export default function AdminDashboard({
                           <p style={{ margin: '0 0 8px' }}>
                             {t(
                               'admin.padcoins.loyaltySimResultReserva',
-                              'Con un turno de {{turno}} y una fidelización del {{pct}}%, cada reserva genera {{padcoins}} PadCoins.',
+                    'Estimated PadCoins per booking: {{padcoins}} (booking {{turno}}, loyalty {{pct}}%).',
                               {
                                 turno: formatPcSimDisplay(pcSedeSimTurno),
                                 pct: formatPcSimDisplay(pcSedeSimPct),
@@ -15620,7 +15620,7 @@ export default function AdminDashboard({
                             <p style={{ margin: 0 }}>
                               {t(
                                 'admin.padcoins.loyaltySimResultBeneficio',
-                                'Si el beneficio estimado cuesta {{beneficio}}, el jugador necesita aproximadamente {{reservas}} reservas para canjearlo.',
+                    'An estimated benefit of {{beneficio}} requires approximately {{reservas}} bookings.',
                                 {
                                   beneficio: formatPcSimDisplay(pcSedeSimBeneficio),
                                   reservas: pcLoyaltySim.reservasNecesarias,
@@ -15631,7 +15631,7 @@ export default function AdminDashboard({
                             <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                               {t(
                                 'admin.padcoins.loyaltySimZeroReserva',
-                                'Con estos valores la reserva no genera PadCoins; ajuste el valor del turno o el porcentaje de fidelización.',
+                    'Enter a booking value greater than zero to simulate a result.',
                               )}
                             </p>
                           )}
@@ -15640,7 +15640,7 @@ export default function AdminDashboard({
                         <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
                           {t(
                             'admin.padcoins.loyaltySimIncomplete',
-                            'Completa los valores para ver la estimación.',
+                  'Complete the fields to see the estimate.',
                           )}
                         </p>
                       )}
@@ -15674,25 +15674,25 @@ export default function AdminDashboard({
                     <p style={{ color: 'var(--text-muted)', margin: '0 0 8px', maxWidth: '720px', fontSize: '14px' }}>
                       {t(
                         'admin.padcoins.campaignsIntro',
-                        'Crea campañas temporales para impulsar reservas y fidelización con PadCoins.',
+                'Create automatic rules for rewards, bonuses and venue-specific benefits.',
                       )}
                     </p>
                     <p style={{ color: 'var(--text-muted)', margin: '0 0 4px', maxWidth: '720px', fontSize: '13px' }}>
                       {t(
                         'admin.padcoins.campaignsDisclaimerCost',
-                        'La sede asume el costo y cumplimiento de esta campaña.',
+                  'Estimated impact is informational and does not create a financial charge.',
                       )}
                     </p>
                     <p style={{ color: 'var(--text-muted)', margin: '0 0 4px', maxWidth: '720px', fontSize: '13px' }}>
                       {t(
                         'admin.padcoins.campaignsDisclaimerTrace',
-                        'Padbol Match registra la trazabilidad y el impacto.',
+                  'Every change is tracked with its venue, author and date.',
                       )}
                     </p>
                     <p style={{ color: 'var(--text-muted)', margin: 0, maxWidth: '720px', fontSize: '13px' }}>
                       {t(
                         'admin.padcoins.campaignsDisclaimerHighImpact',
-                        'Las campañas de alto impacto no se bloquean, pero quedan marcadas para auditoría.',
+                  'High-impact campaigns require special review before activation.',
                       )}
                     </p>
                   </div>
@@ -15987,7 +15987,7 @@ export default function AdminDashboard({
                       }}>
                         {t(
                           'admin.padcoins.campaignsLikelyHighImpact',
-                          'Esta configuración parece de alto impacto. Al activarla quedará marcada para auditoría.',
+                    'This campaign may have a high impact.',
                         )}
                       </p>
                     ) : null}
@@ -16314,7 +16314,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: 0, maxWidth: '560px' }}>
                   {t(
                     'admin.padcoins.description',
-                    'Administrá los beneficios canjeables visibles para los jugadores.',
+                'Manage the benefits available for players to redeem.',
                   )}
                 </p>
               </div>
@@ -16354,7 +16354,7 @@ export default function AdminDashboard({
               }}>
                 {t(
                   'admin.padcoins.sedeNotParticipating',
-                  'Esta sede no participa actualmente en Beneficios Padbol.',
+                  'This venue is not participating in Padbol Benefits.',
                 )}
               </p>
             ) : null}
@@ -16644,7 +16644,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '640px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.redemptionsDescription',
-                    'Canjes de beneficios de esta sede. Cada sede entrega solo sus propios beneficios; no se mezclan canjes de otras sedes.',
+                  'Review and manage benefits redeemed by players.',
                   )}
                 </p>
 
@@ -16800,7 +16800,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 18px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.alertsDescription',
-                    'Supervisión de posibles abusos, usos poco creíbles o acciones promocionales no justificadas en Beneficios Padbol.',
+                'Monitor unusual PadCoins activity and follow the recommended action.',
                   )}
                 </p>
 
@@ -16958,7 +16958,7 @@ export default function AdminDashboard({
                       {pcAlertTotal > 0
                         ? t(
                           'admin.padcoins.alertsCount',
-                          'Mostrando {{from}}–{{to}} de {{total}} alertas',
+                        'Showing {{from}}–{{to}} of {{total}} alerts',
                         )
                           .replace('{{from}}', String(pcAlertPaginaInicio))
                           .replace('{{to}}', String(pcAlertPaginaFin))
@@ -16972,7 +16972,7 @@ export default function AdminDashboard({
                         const tipoBadge = padcoinsAlertTipoBadge(alerta.tipo_alerta, t);
                         const sedeAlerta = alerta.sede_nombre
                           || sedesMap[String(alerta.sede_id)]?.nombre
-                          || (alerta.sede_id != null ? `Sede ${alerta.sede_id}` : '—');
+                                  || (alerta.sede_id != null ? t('admin.sponsors.venueRef', { id: alerta.sede_id }) : '—');
                         const movs = Array.isArray(alerta.movimientos_relacionados)
                           ? alerta.movimientos_relacionados
                           : [];
@@ -17142,11 +17142,11 @@ export default function AdminDashboard({
                 {esAdminClub
                   ? t(
                     'admin.padcoins.movementsClubDescription',
-                    'Consulta de movimientos PadCoins de tu sede para resolver consultas de jugadores.',
+                    'Review the transactions generated at your venue.',
                   )
                   : t(
                     'admin.padcoins.movementsDescription',
-                    'Auditoría de acreditaciones, canjes, penalizaciones y ajustes de PadCoins en Beneficios Padbol.',
+                    'Review PadCoins transactions across the selected venues.',
                   )}
               </p>
 
@@ -17182,7 +17182,7 @@ export default function AdminDashboard({
                   <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
                     {t('admin.padcoins.movementsClubVenue', 'Movimientos de tu sede')}:{' '}
                     <strong style={{ color: 'var(--text-primary)' }}>
-                      {sedeNombre || pcMovSedeFiltroNombre || `Sede ${pcMovClubSedeId}`}
+                      {sedeNombre || pcMovSedeFiltroNombre || t('admin.sponsors.venueRef', { id: pcMovClubSedeId })}
                     </strong>
                   </p>
                 ) : null}
@@ -17328,7 +17328,7 @@ export default function AdminDashboard({
                     {pcMovTotal > 0
                       ? t(
                         'admin.padcoins.movementsCount',
-                        'Mostrando {{from}}–{{to}} de {{total}} movimientos',
+                        'Showing {{from}}–{{to}} of {{total}} transactions',
                       )
                         .replace('{{from}}', String(pcMovPaginaInicio))
                         .replace('{{to}}', String(pcMovPaginaFin))
@@ -17362,7 +17362,7 @@ export default function AdminDashboard({
                           const badge = padcoinsMovTipoBadge(mov, t);
                           const sedeMov = mov.sede_nombre
                             || sedesMap[String(mov.sede_id)]?.nombre
-                            || (mov.sede_id != null ? `Sede ${mov.sede_id}` : '—');
+                            || (mov.sede_id != null ? t('admin.sponsors.venueRef', { id: mov.sede_id }) : '—');
                           const j = mov?.jugador;
                           const jugadorNombre = [j?.nombre, j?.apellido].filter(Boolean).join(' ').trim()
                             || String(j?.nombre || mov?.jugador_nombre || '').trim();
@@ -18228,7 +18228,7 @@ export default function AdminDashboard({
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>
                             {row.role === 'editor_contenido' ? t('admin.roles.editorScopeLabel') : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'sede'
-                              ? row.sede_nombre || `Sede ${row.sede_id || '—'}`
+                              ? row.sede_nombre || t('admin.sponsors.venueRef', { id: row.sede_id || '—' })
                               : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'ciudad' ? row.ciudad || '—' : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'provincia' ? row.provincia || '—' : null}
