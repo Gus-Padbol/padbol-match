@@ -33,7 +33,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudieron cargar los extras');
+      if (!res.ok) throw new Error(j.error || t('admin.sedes.extrasLoadError'));
       const list = Array.isArray(j.extras) ? j.extras : [];
       setExtras(list);
       const nextEdits = {};
@@ -51,7 +51,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl, accessToken, sedeId]);
+  }, [apiBaseUrl, accessToken, sedeId, t]);
 
   useEffect(() => {
     void load();
@@ -93,7 +93,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
       const { data } = supabase.storage.from('sponsors').getPublicUrl(filePath);
       const publicUrl = data?.publicUrl != null ? String(data.publicUrl).trim() : '';
       if (!publicUrl) {
-        setMsg('⚠️ No se obtuvo URL pública de la imagen');
+        setMsg(`⚠️ ${t('admin.sedes.extrasPublicUrlError')}`);
         return;
       }
       assign(publicUrl);
@@ -141,7 +141,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
             cursor: busy ? 'wait' : 'pointer',
           }}
         >
-          {busy ? '⏳ Subiendo…' : url ? 'Cambiar imagen' : '📤 Subir imagen'}
+          {busy ? `⏳ ${t('admin.sedes.extrasUploading')}` : url ? t('admin.sedes.extrasChangeImage') : `📤 ${t('admin.sedes.extrasUploadImage')}`}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -170,7 +170,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               cursor: busy ? 'wait' : 'pointer',
             }}
           >
-            Quitar
+            {t('admin.sedes.extrasRemoveImage')}
           </button>
         ) : null}
       </div>
@@ -205,7 +205,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo crear');
+      if (!res.ok) throw new Error(j.error || t('admin.sedes.extrasCreateError'));
       resetNewForm();
       await load();
     } catch (e) {
@@ -256,7 +256,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         },
       );
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo aprobar');
+      if (!res.ok) throw new Error(j.error || t('admin.sedes.extrasApproveError'));
       await load();
     } catch (e) {
       setMsg(e.message || 'Error');
@@ -306,7 +306,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } },
       );
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo eliminar');
+      if (!res.ok) throw new Error(j.error || t('admin.sedes.extrasDeleteError'));
       setDeleteTarget(null);
       await load();
     } catch (e) {
@@ -329,7 +329,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         },
       );
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo actualizar');
+      if (!res.ok) throw new Error(j.error || t('admin.sedes.extrasUpdateError'));
       await load();
     } catch (e) {
       setMsg(e.message || 'Error');
@@ -354,8 +354,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
   return (
     <div style={{ maxWidth: 520 }}>
       <p className="admin-mi-sede-theme-muted" style={{ margin: '0 0 14px', fontSize: 13, lineHeight: 1.5 }}>
-        Sumá productos o servicios opcionales (por ejemplo pizza o bebidas). Los jugadores los pueden elegir al pagar
-        una reserva «Armar partido». Los nuevos extras quedan pendientes hasta que un super admin los apruebe.
+        {t('admin.sedes.extrasIntro')}
       </p>
       {msg ? (
         <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p>
@@ -366,7 +365,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         <>
           {extras.length === 0 && !showNewForm ? (
             <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-              No hay extras cargados todavía.
+              {t('admin.sedes.extrasEmpty')}
             </p>
           ) : null}
           {extras.map((row) => {
@@ -399,7 +398,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 10 }}>
                   <label style={{ fontSize: 13, fontWeight: 600 }}>
-                    Precio ({row.precio_moneda || monedaSede})
+                    {t('admin.sedes.extrasPrice', { currency: row.precio_moneda || monedaSede })}
                     <input
                       type="text"
                       inputMode="decimal"
@@ -415,10 +414,10 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                       checked={ed.activo}
                       onChange={(e) => setEdits((prev) => ({ ...prev, [row.id]: { ...ed, activo: e.target.checked } }))}
                     />
-                    Activo
+                    {t('admin.sedes.subscriptionActive')}
                   </label>
                   <label style={{ fontSize: 13, fontWeight: 600 }}>
-                    Stock
+                    {t('admin.sedes.extrasStockLabel')}
                     <input
                       type="number"
                       min={0}
@@ -446,7 +445,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                       cursor: savingId === row.id ? 'wait' : 'pointer',
                     }}
                   >
-                    Guardar cambios
+                    {t('admin.sedes.saveChanges')}
                   </button>
                   <button
                     type="button"
@@ -472,7 +471,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                       cursor: savingId === row.id ? 'wait' : 'pointer',
                     }}
                   >
-                    Editar
+                    {t('general.edit')}
                   </button>
                   <button
                     type="button"
@@ -489,7 +488,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                       cursor: savingId === row.id ? 'wait' : 'pointer',
                     }}
                   >
-                    Eliminar
+                    {t('general.delete')}
                   </button>
                   {isSuperAdmin && pendiente ? (
                     <>
@@ -508,7 +507,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                           cursor: savingId === row.id ? 'wait' : 'pointer',
                         }}
                       >
-                        Aprobar
+                        {t('admin.sedes.approve')}
                       </button>
                       <button
                         type="button"
@@ -525,7 +524,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                           cursor: savingId === row.id ? 'wait' : 'pointer',
                         }}
                       >
-                        Rechazar
+                        {t('admin.sedes.extrasReject')}
                       </button>
                     </>
                   ) : null}
@@ -549,11 +548,11 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                 cursor: 'pointer',
               }}
             >
-              + Agregar extra
+              {t('admin.sedes.extrasAdd')}
             </button>
           ) : (
           <div style={{ ...card, marginTop: extras.length ? 8 : 0 }}>
-            <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>Nuevo extra</div>
+            <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 10 }}>{t('admin.sedes.extrasNew')}</div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.formularios.name')}</label>
             <input
               className="admin-mi-sede-theme-input"
@@ -569,7 +568,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               value={draft.descripcion}
               onChange={(e) => setDraft((d) => ({ ...d, descripcion: e.target.value }))}
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Precio ({monedaSede})</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.extrasPrice', { currency: monedaSede })}</label>
             <input
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', maxWidth: 200, marginBottom: 10 }}
@@ -585,9 +584,9 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               onChange={(e) => setDraft((d) => ({ ...d, stock: e.target.value }))}
               inputMode="numeric"
               min={0}
-              placeholder="Ilimitado"
+              placeholder={t('admin.sedes.extrasUnlimited')}
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Imagen (opcional)</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.extrasImageOptional')}</label>
             {imagenUploadControl({
               target: 'draft',
               value: draft.imagen_url,
@@ -609,7 +608,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
                   cursor: creating ? 'wait' : 'pointer',
                 }}
               >
-                {creating ? 'Creando…' : 'Crear extra'}
+                {creating ? t('admin.sedes.extrasCreating') : t('admin.sedes.extrasCreate')}
               </button>
               <button
                 type="button"
@@ -673,7 +672,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               padding: 18,
             }}
           >
-            <h3 style={{ margin: '0 0 12px', color: 'var(--text-primary)', fontSize: 16 }}>Editar producto</h3>
+            <h3 style={{ margin: '0 0 12px', color: 'var(--text-primary)', fontSize: 16 }}>{t('admin.sedes.extrasEditTitle')}</h3>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.formularios.name')}</label>
             <input
               className="admin-mi-sede-theme-input"
@@ -688,7 +687,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               value={editRow.descripcion}
               onChange={(e) => setEditRow((r) => ({ ...r, descripcion: e.target.value }))}
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Precio ({monedaSede})</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.extrasPrice', { currency: monedaSede })}</label>
             <input
               className="admin-mi-sede-theme-input"
               style={{ width: '100%', marginBottom: 10 }}
@@ -703,7 +702,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               onChange={(e) => setEditRow((r) => ({ ...r, stock: e.target.value }))}
               inputMode="numeric"
             />
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Imagen (opcional)</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.sedes.extrasImageOptional')}</label>
             {imagenUploadControl({
               target: 'edit',
               value: editRow.imagen_url,
@@ -711,10 +710,10 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
             })}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setEditRow(null)} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                Cancelar
+                {t('general.cancel')}
               </button>
               <button type="button" disabled={savingId === editRow.id} onClick={() => void guardarEdicionModal()} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#E11B22', color: '#fff', fontWeight: 700 }}>
-                Guardar
+                {t('general.save')}
               </button>
             </div>
           </div>
