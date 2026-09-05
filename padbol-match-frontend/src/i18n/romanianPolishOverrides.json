@@ -6,14 +6,28 @@
     "sedes": {
       "courtNameExamplePh": "Ex.: Terenul 1",
       "addCourt": "Adaugă teren",
-      "editCourt": "Editează terenul"
+      "editCourt": "Editează terenul",
+      "myCourtsTitle": "⚽ Terenurile mele",
+      "venueDataConfigHint": "Datele clubului: dacă ai fila „Clubul meu”, folosește „Editează clubul” pentru nume, localizare, contact, prețuri și metoda de plată. Modificările se salvează prin API și apar în profilul public. În aceeași filă, „Terenurile mele” îți permite să adaugi terenuri și să le activezi sau să le dezactivezi; terenurile inactive nu sunt oferite la rezervare."
     },
-    "reservas": { "courtNumberPrefix": "Teren" },
-    "metricas": { "courtCol": "Teren" }
+    "reservas": {
+      "courtNumberPrefix": "Teren",
+      "noActiveCourts": "Nu există terenuri active",
+      "selectCourt": "Alege terenul",
+      "chooseCourtAndDate": "Alege terenul și data"
+    },
+    "metricas": { "courtCol": "Teren" },
+    "notif": {
+      "tournamentSoonBody": "{{count}} echipe fără înscriere confirmată în „{{name}}”.",
+      "startsSoonBody": "„{{name}}” ({{date}}) nu are meciurile generate și începe în mai puțin de 48 de ore.",
+      "registrationClosingBody": "{{count}} echipe neconfirmate în „{{name}}”."
+    }
   },
   "hub": {
     "card": { "reservarSub": "Am deja echipa, vreau să rezerv un teren." }
   },
+  "chatbot": { "quickBookCourt": "Rezervă un teren" },
+  "landing": { "step2Desc": "Am ales online data, ora și terenul disponibil." },
   "publicSite": {
     "experiences": { "preview": { "club": "Padbol Club Nord" } },
     "smartScoreboard": { "demoBadge": "În direct" }

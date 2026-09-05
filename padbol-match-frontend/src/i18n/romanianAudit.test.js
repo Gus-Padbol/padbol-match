@@ -46,7 +46,7 @@ describe('Romanian audit', () => {
   it('does not expose legal or basketball mistranslations for the playing court', () => {
     const resolved = flatten(i18n.getResourceBundle('ro', 'translation'));
     const forbidden = Object.entries(resolved)
-      .filter(([, value]) => /\b(?:tribunal(?:ul|e|ele|elor)?|instan(?:ță|ţa|te|ței)|baschet)\b/iu.test(value));
+      .filter(([, value]) => /(?:\btribunal|\binstan[țţ]|\bbaschet\b|câmpuri active)/iu.test(value));
     expect(forbidden).toEqual([]);
   });
 
