@@ -564,17 +564,37 @@
   "pwa": { "close": "Închide" },
   "landing": { "step2Desc": "Am ales online data, ora și terenul disponibil." },
   "publicSite": {
-    "experiences": { "preview": { "club": "Padbol Club Nord" } },
+    "experiences": {
+      "selectorAria": "Alege experiența vizuală",
+      "note": "Demonstrație cu date fictive.",
+      "preview": {
+        "club": "Padbol Club Nord",
+        "confirm": "Confirmă"
+      }
+    },
     "smartScoreboard": { "demoBadge": "În direct" },
     "matchIntelligence": {
-      "kicker": "În curând · Viziunea tabelei de marcaj",
-      "title": "Arbitraj prin viziune inteligentă: o perspectivă independentă asupra jocului",
+      "kicker": "În curând · Arbitraj asistat de viziune",
+      "title": "Arbitru inteligent bazat pe viziune: o perspectivă independentă asupra jocului",
+      "text": "Antrenăm un arbitru inteligent independent, bazat pe analiză video. Cu trei sau patru camere, sistemul învață să urmărească jocul și să acorde punctele pe baza imaginilor, așa cum ar face un arbitru uman. Pe măsură ce evoluează, jucătorii și arbitrii îi pot verifica deciziile.",
       "caption": "Demonstrație a tabelei de marcaj conectate",
       "features": {
         "scoreboard": {
-          "title": "Viziunea camerelor",
-          "text": "Camerele vor putea acoperi jocul din unghiurile necesare pentru fiecare teren."
+          "title": "Analiză video",
+          "text": "Camerele acoperă jocul din unghiurile necesare fiecărui teren."
+        },
+        "referee": {
+          "title": "Arbitraj independent",
+          "text": "Sistemul interpretează fazele și acordă punctele pe baza imaginilor analizate în timp real."
+        },
+        "traceability": {
+          "title": "Antrenament supravegheat",
+          "text": "În primele etape, jucătorii și arbitrii pot verifica deciziile pentru a contribui la antrenarea sistemului."
         }
+      },
+      "signal": {
+        "eyebrow": "VIZIUNE / AI",
+        "title": "ANTRENAMENT\nÎN DESFĂȘURARE"
       }
     },
     "playerRecord": {

@@ -65,6 +65,10 @@ describe('Romanian audit', () => {
     expect(resolved['publicSite.venueAdmin.items.scoreboard.steps.2']).toMatch(/campanii.*sponsori/iu);
     expect(resolved['publicSite.venueAdmin.items.scoreboard.steps.3']).toMatch(/pauze.*campaniile.*joc/iu);
     expect(resolved['publicSite.venueAdmin.items.scoreboard.result']).toMatch(/clasament.*ecran comercial/iu);
+    expect(resolved['publicSite.experiences.selectorAria']).toBe('Alege experiența vizuală');
+    expect(resolved['publicSite.experiences.preview.confirm']).toBe('Confirmă');
+    expect(resolved['publicSite.matchIntelligence.text']).toMatch(/analiză video.*acorde punctele/iu);
+    expect(resolved['publicSite.matchIntelligence.features.referee.text']).toMatch(/interpretează fazele.*timp real/iu);
     expect(resolved['admin.guardar']).toBe('Salvează');
     expect(resolved['equipos.titulo']).toBe('Echipă');
     expect(resolved['chatbot.cerrar']).toBe('Închide');
