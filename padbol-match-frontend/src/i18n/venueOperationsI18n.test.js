@@ -15,6 +15,10 @@ const KEYS = [
   'admin.scoreboard.venuesLoadFailed', 'admin.scoreboard.matchesLoadFailed',
   'admin.scoreboard.matchLoadFailed',
   'admin.scoreboard.copyLinkPrompt',
+  'admin.metrics.scopeLabel', 'admin.metrics.cityLabel', 'admin.metrics.provinceLabel',
+  'admin.metrics.countryLabel', 'admin.sedes.taglineHint', 'admin.sedes.customAmenityPlaceholder',
+  'admin.sedes.addAmenity', 'admin.sedes.courtPhotoAlt', 'admin.sedes.heroPhotoTitle',
+  'admin.sedes.heroPhotoCurrent', 'admin.sedes.useAsHeroPhotoTitle', 'admin.sedes.useAsHeroPhoto',
 ];
 
 describe('venue operation internationalization', () => {
@@ -23,7 +27,7 @@ describe('venue operation internationalization', () => {
   test.each(['en', 'es', 'ro', 'cs'])('%s resolves venue operation messages', async (lang) => {
     await i18n.changeLanguage(lang);
     KEYS.forEach((key) => {
-      const value = i18n.t(key, { minutes: 90, sport: 'Padbol' });
+      const value = i18n.t(key, { minutes: 90, sport: 'Padbol', number: 1 });
       expect(value).not.toBe(key);
       expect(value.trim()).not.toBe('');
       expect(value).not.toMatch(/{{\s*\w+\s*}}/);

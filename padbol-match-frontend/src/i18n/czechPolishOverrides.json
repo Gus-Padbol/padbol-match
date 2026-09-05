@@ -41,6 +41,7 @@
     }
   },
   "admin": {
+    "metrics": { "scopeLabel": "Rozsah", "cityLabel": "Město", "provinceLabel": "Kraj / stát", "countryLabel": "Země" },
     "padcoins": {
       "all": "Vše",
       "smartRuleHelp": {
@@ -117,6 +118,14 @@
       ,"logoSaveFailed": "Logo se nepodařilo uložit."
       ,"photoMustBeInGallery": "Fotografie musí být v galerii."
       ,"heroPhotoUpdated": "Titulní fotografie aktualizována"
+      ,"taglineHint": "Krátký slogan pod názvem na"
+      ,"customAmenityPlaceholder": "Další vybavení (např. kavárna)"
+      ,"addAmenity": "Přidat"
+      ,"courtPhotoAlt": "Padbol Court č. {{number}}"
+      ,"heroPhotoTitle": "Titulní obrázek na veřejné stránce"
+      ,"heroPhotoCurrent": "Titulní fotografie"
+      ,"useAsHeroPhotoTitle": "Použít jako titulní obrázek veřejné stránky"
+      ,"useAsHeroPhoto": "Použít jako titulní fotografii"
     },
     "franjas": { "slotSaved": "✅ Časové pásmo uloženo", "surgeSaved": "✅ Surge uloženo", "surgeSaveFailed": "⚠️ Surge se nepodařilo uložit" },
     "scoreboard": { "venuesLoadFailed": "Sportovní centra se nepodařilo načíst.", "matchesLoadFailed": "Zápasy se nepodařilo načíst.", "matchLoadFailed": "Zápas se nepodařilo načíst.", "copyLinkPrompt": "Zkopírujte tento odkaz:" }

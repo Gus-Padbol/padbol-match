@@ -5681,18 +5681,18 @@ export default function AdminDashboard({
     });
     const reservasIngresoDetalle = reservasDetalle.filter((r) => r.cuenta_ingreso);
     const torneosDetalle = inscripcionesPeriodo.map((eq) => {
-      const t = torneoById[eq?.torneo_id] || null;
-      const mon = bucketMonedaAdmin(t?.moneda || 'ARS');
-      const ingreso = precioInscripcionTorneo(t);
+      const torneoRow = torneoById[eq?.torneo_id] || null;
+      const mon = bucketMonedaAdmin(torneoRow?.moneda || 'ARS');
+      const ingreso = precioInscripcionTorneo(torneoRow);
       addDay(fechaInscripcionEquipo(eq), mon, ingreso);
       return {
         torneo_id: eq?.torneo_id,
-        nombre: t?.nombre || `Torneo #${eq?.torneo_id ?? ''}`,
-        fecha: t?.fecha_inicio || '',
-        equipos: getTorneoResumenStat(torneoStats, t?.id)?.equipos_count ?? 0,
+        nombre: torneoRow?.nombre || t('admin.sponsors.tournamentRef', { id: eq?.torneo_id ?? '' }),
+        fecha: torneoRow?.fecha_inicio || '',
+        equipos: getTorneoResumenStat(torneoStats, torneoRow?.id)?.equipos_count ?? 0,
         ingreso,
         moneda: mon,
-        estado: t?.estado || '',
+        estado: torneoRow?.estado || '',
       };
     });
     const totalTx = reservasIngresoDetalle.length + torneosDetalle.length;
@@ -6018,7 +6018,7 @@ export default function AdminDashboard({
       const sedeNombreRow =
         (sidRes && String(sedesMap?.[sidRes]?.nombre || '').trim()) ||
         String(r?.sede || '').trim() ||
-        'Sin sede';
+        t('admin.reservas.noVenue');
       const dk =
         resolveDeporteKeyReservaAdmin(r, sidRes, canchasDetallePorSede) || `sede:${sedeNombreRow}`;
       depMap[dk] = (depMap[dk] || 0) + 1;
@@ -6029,7 +6029,7 @@ export default function AdminDashboard({
       .slice(0, 3)
       .map(([key, count]) => {
         const label = key.startsWith('sede:')
-          ? (key.slice(5).trim() || 'Sin sede')
+          ? (key.slice(5).trim() || t('admin.reservas.noVenue'))
           : deporteLabelAdminDash(key, t);
         const pct = depTotal > 0 ? Math.round((count / depTotal) * 100) : 0;
         return { key, label, count, pct };
@@ -6108,14 +6108,14 @@ export default function AdminDashboard({
       .map((c) => ({
         id: c.id,
         numero: Number(c.numero_reserva),
-        nombre: String(c.nombre || '').trim() || `Cancha ${c.numero_reserva}`,
+        nombre: String(c.nombre || '').trim() || `${t('admin.reservas.courtNumberPrefix')}${c.numero_reserva}`,
       }))
       .sort((a, b) => a.numero - b.numero);
     if (!filasCancha.length && stats.activas > 0) {
       filasCancha = Array.from({ length: stats.activas }, (_, i) => ({
         id: null,
         numero: i + 1,
-        nombre: `Cancha ${i + 1}`,
+        nombre: `${t('admin.reservas.courtNumberPrefix')}${i + 1}`,
       }));
     }
 
@@ -6179,7 +6179,7 @@ export default function AdminDashboard({
             const sede = sedesMap[String(c.sede_id)] || {};
             return {
               sedeId: c.sede_id,
-              sedeNombre: String(sede?.nombre || `Sede ${c.sede_id}`),
+              sedeNombre: String(sede?.nombre || t('admin.sponsors.venueRef', { id: c.sede_id })),
               fecha_vencimiento: fv,
               days,
             };
@@ -6199,7 +6199,7 @@ export default function AdminDashboard({
             return [
               {
                 tipo: 'vencida',
-                sedeNombre: String(sedeRow?.nombre || `Sede ${sedeRow?.id}`).trim(),
+                sedeNombre: String(sedeRow?.nombre || t('admin.sponsors.venueRef', { id: sedeRow?.id })).trim(),
                 sedeId: sedeRow?.id,
               },
             ];
@@ -10701,12 +10701,12 @@ export default function AdminDashboard({
             }}
           >
             {esAdminCadena
-              ? `Organización: ${organizacionActual?.nombre || 'cadena asignada'} · ${sedesNacionalLista.length} sedes vinculadas`
-              : `Alcance: ${String(adminScopeMeta?.alcance || 'pais')}${
-              adminScopeMeta?.ciudad ? ` · Ciudad: ${adminScopeMeta.ciudad}` : ''
-            }${adminScopeMeta?.provincia ? ` · Provincia: ${adminScopeMeta.provincia}` : ''}${
-              adminScopeMeta?.pais ? ` · País: ${adminScopeMeta.pais}` : ''
-            }`}
+              ? `${t('publicSite.hero.globe.labels.organizations')}: ${organizacionActual?.nombre || '—'} · ${sedesNacionalLista.length} ${t('admin.metrics.totalVenues')}`
+              : `${t('admin.metrics.scopeLabel')}: ${String(adminScopeMeta?.alcance || 'pais')}${
+                adminScopeMeta?.ciudad ? ` · ${t('admin.metrics.cityLabel')}: ${adminScopeMeta.ciudad}` : ''
+              }${adminScopeMeta?.provincia ? ` · ${t('admin.metrics.provinceLabel')}: ${adminScopeMeta.provincia}` : ''}${
+                adminScopeMeta?.pais ? ` · ${t('admin.metrics.countryLabel')}: ${adminScopeMeta.pais}` : ''
+              }`}
           </div>
           <>
             <div className="dashboard-grid">
@@ -12597,7 +12597,7 @@ export default function AdminDashboard({
                 .sort((a, b) => a.numero - b.numero)
             : Array.from(
                 { length: Math.max(0, Number(sedeManualRow?.cantidad_canchas) || Number(canchasResumenPorSede[sedeManualId]?.activas) || 0) },
-                (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}`, deporte: null, duracion_sugerida_min: null })
+                (_, idx) => ({ numero: idx + 1, nombre: `${t('admin.reservas.courtNumberPrefix')}${idx + 1}`, deporte: null, duracion_sugerida_min: null })
               );
           const reservaManualSlots = slotsReservaManualDisponibles({
             sedeRow: sedeManualRow,
@@ -14465,7 +14465,7 @@ export default function AdminDashboard({
                         onChange={(e) => setSbPartidosSearch(e.target.value)}
                         placeholder={t(
                           'admin.scoreboard.searchPartidosPlaceholder',
-                          'Torneo, equipo o fecha...',
+                          'Tournament, team or date...',
                         )}
                         autoComplete="off"
                       />
@@ -19617,7 +19617,7 @@ export default function AdminDashboard({
                     type="text"
                     maxLength={80}
                     value={miSedeForm.slogan || ''}
-                    placeholder="Ej: El mejor padbol de la zona"
+                    placeholder={t('admin.sedes.taglinePlaceholder')}
                     onChange={(e) => setMiSedeForm((p) => ({ ...p, slogan: e.target.value.slice(0, 80) }))}
                     className="admin-mi-sede-theme-input"
                     style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
@@ -19626,7 +19626,7 @@ export default function AdminDashboard({
                     {(miSedeForm.slogan || '').length}/80
                   </div>
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '4px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
-                    Tagline corta debajo del nombre en <strong>/sede/…</strong>.
+                    {t('admin.sedes.taglineHint')} <strong>/sede/…</strong>.
                   </p>
                 </div>
               </div>
@@ -19639,7 +19639,7 @@ export default function AdminDashboard({
                     rows={4}
                     maxLength={300}
                     value={miSedeForm.descripcion || ''}
-                    placeholder="Contá en pocas líneas qué ofrece tu club…"
+                    placeholder={t('admin.sedes.aboutPlaceholder')}
                     onChange={e => setMiSedeForm(p => ({ ...p, descripcion: e.target.value }))}
                     className="admin-mi-sede-theme-input"
                     style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
@@ -19707,7 +19707,7 @@ export default function AdminDashboard({
                     <input
                       type="text"
                       value={miSedeCustomAmenity}
-                      placeholder="Otra instalación (ej. Cafetería)"
+                      placeholder={t('admin.sedes.customAmenityPlaceholder')}
                       maxLength={50}
                       onChange={(e) => setMiSedeCustomAmenity(e.target.value)}
                       className="admin-mi-sede-theme-input"
@@ -19725,7 +19725,7 @@ export default function AdminDashboard({
                       }}
                       style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }}
                     >
-                      Agregar
+                      {t('admin.sedes.addAmenity')}
                     </button>
                   </div>
                   {[...amenitiesArrayToSelectionSet(miSedeForm.amenities)].filter((key) => key.startsWith('custom:')).map((key) => (
@@ -21764,12 +21764,12 @@ export default function AdminDashboard({
                     <div key={url} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', background: '#f1f5f9' }}>
                       <img
                         src={url}
-                        alt={`Cancha ${i + 1}`}
+                        alt={t('admin.sedes.courtPhotoAlt', { number: i + 1 })}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
                       {isHeroFoto ? (
-                        <span className="admin-mi-sede-photo-hero-current" title="Fondo del hero en la página pública">
-                          ✓ Foto del hero
+                        <span className="admin-mi-sede-photo-hero-current" title={t('admin.sedes.heroPhotoTitle')}>
+                          ✓ {t('admin.sedes.heroPhotoCurrent')}
                         </span>
                       ) : (
                         <button
@@ -21777,9 +21777,9 @@ export default function AdminDashboard({
                           className="admin-mi-sede-photo-hero-btn"
                           onClick={() => void usarComoHero(url)}
                           disabled={fotoPortadaSaving}
-                          title="Usar como foto del hero en la página pública"
+                          title={t('admin.sedes.useAsHeroPhotoTitle')}
                         >
-                          Usar como foto del hero
+                          {t('admin.sedes.useAsHeroPhoto')}
                         </button>
                       )}
                       <button

@@ -2,7 +2,7 @@
   "admin": {
     "guardar": "Salvează",
     "canchas": "Terenuri",
-    "metrics": { "courtsToday": "Terenurile mele astăzi" },
+    "metrics": { "courtsToday": "Terenurile mele astăzi", "scopeLabel": "Domeniu", "cityLabel": "Oraș", "provinceLabel": "Județ / regiune", "countryLabel": "Țară" },
     "formularios": { "courtsCol": "Terenuri" },
     "sedes": {
       "courtNameExamplePh": "Ex.: Terenul 1",
@@ -22,6 +22,14 @@
       "logoSaveFailed": "Sigla nu a putut fi salvată.",
       "photoMustBeInGallery": "Fotografia trebuie să se afle în galerie.",
       "heroPhotoUpdated": "Fotografia de copertă a fost actualizată",
+      "taglineHint": "Scurtă descriere sub numele afișat la",
+      "customAmenityPlaceholder": "Altă dotare (de exemplu, cafenea)",
+      "addAmenity": "Adaugă",
+      "courtPhotoAlt": "Padbol Court numărul {{number}}",
+      "heroPhotoTitle": "Imagine de copertă pe pagina publică",
+      "heroPhotoCurrent": "Fotografie de copertă",
+      "useAsHeroPhotoTitle": "Folosește drept imagine de copertă a paginii publice",
+      "useAsHeroPhoto": "Folosește drept copertă",
       "venueDataConfigHint": "Datele clubului: dacă ai fila „Clubul meu”, folosește „Editează clubul” pentru nume, localizare, contact, prețuri și metoda de plată. Modificările se salvează prin API și apar în profilul public. În aceeași filă, „Terenurile mele” îți permite să adaugi terenuri și să le activezi sau să le dezactivezi; terenurile inactive nu sunt oferite la rezervare."
     },
     "franjas": {
