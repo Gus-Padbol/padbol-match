@@ -65,7 +65,7 @@ describe('canonical Padbol ecosystem locales', () => {
   it('has direct Czech copy for the foundational admin panel', () => {
     [
       'onboarding', 'role', 'panel', 'tabs', 'notifications', 'alerts', 'torneosSection',
-      'weekdays', 'confirmaciones', 'overview', 'bookingsSummary', 'tournamentLabels', 'common', 'franjas', 'roles', 'reservas', 'jugadores', 'resenas', 'scoreboard', 'metrics', 'metricas', 'pushNotif', 'notif', 'profesores', 'sponsors', 'hub', 'formularios', 'membresias', 'sedes',
+      'weekdays', 'confirmaciones', 'overview', 'bookingsSummary', 'tournamentLabels', 'common', 'franjas', 'roles', 'reservas', 'jugadores', 'resenas', 'scoreboard', 'metrics', 'metricas', 'pushNotif', 'notif', 'profesores', 'sponsors', 'hub', 'formularios', 'membresias', 'sedes', 'padcoins',
     ].forEach((section) => {
       const englishPaths = leafPaths(en.admin[section]);
       const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[section]));
@@ -73,6 +73,12 @@ describe('canonical Padbol ecosystem locales', () => {
     });
     ['mi_sede', 'canchas', 'ingresos', 'productos', 'loading', 'nueva_sede', 'guardar', 'reservasLabel']
       .forEach((key) => expect(ADDITIONAL_LOCALE_OVERRIDES.cs.admin[key]).toBeTruthy());
+  });
+
+  it('has direct Czech copy for every English catalog field', () => {
+    const englishPaths = leafPaths(en);
+    const czechPaths = new Set(leafPaths(ADDITIONAL_LOCALE_OVERRIDES.cs));
+    expect(englishPaths.filter((path) => !czechPaths.has(path))).toEqual([]);
   });
 
   it('protects the international Padbol Court name', () => {
