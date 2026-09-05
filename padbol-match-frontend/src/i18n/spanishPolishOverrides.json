@@ -1,0 +1,8 @@
+{
+  "perfil": { "winRate": "Porcentaje de victorias" },
+  "admin": {
+    "profesores": { "fichaBio": "Biografía" },
+    "metricas": { "formatKnockout": "Eliminación directa" }
+  },
+  "armarPartido": { "singlesPickle": "Individual (2)" }
+}

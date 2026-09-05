@@ -19,6 +19,9 @@ import ROMANIAN_PADCOINS_OVERRIDES from './romanianPadcoinsOverrides.json';
 import ROMANIAN_ENGLISH_LEAK_OVERRIDES from './romanianEnglishLeakOverrides.json';
 import ROMANIAN_POLISH_OVERRIDES from './romanianPolishOverrides.json';
 import CZECH_POLISH_OVERRIDES from './czechPolishOverrides.json';
+import SPANISH_PADCOINS_CORE_OVERRIDES from './spanishPadcoinsCoreOverrides.json';
+import SPANISH_PADCOINS_EXPERIENCE_OVERRIDES from './spanishPadcoinsExperienceOverrides.json';
+import SPANISH_POLISH_OVERRIDES from './spanishPolishOverrides.json';
 import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
 import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
@@ -67,7 +70,12 @@ const englishBackedLocale = (code, baseLocale = {}) => {
   if (code === 'ro') {
     return ROMANIAN_LOCALE_LAYERS.reduce((locale, layer) => mergeLocale(locale, layer), withAdditionalOverrides);
   }
-  return code === 'cs' ? mergeLocale(withAdditionalOverrides, CZECH_POLISH_OVERRIDES) : withAdditionalOverrides;
+  if (code === 'cs') return mergeLocale(withAdditionalOverrides, CZECH_POLISH_OVERRIDES);
+  if (code === 'es') {
+    return [SPANISH_PADCOINS_CORE_OVERRIDES, SPANISH_PADCOINS_EXPERIENCE_OVERRIDES, SPANISH_POLISH_OVERRIDES]
+      .reduce((locale, layer) => mergeLocale(locale, layer), withAdditionalOverrides);
+  }
+  return withAdditionalOverrides;
 };
 
 i18n
