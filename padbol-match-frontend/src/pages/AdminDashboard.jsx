@@ -1301,14 +1301,14 @@ function formatPadcoinsSmartConfigValue(value) {
   return String(value);
 }
 
-function validatePcSedeSmartOverrideForm(form) {
+function validatePcSedeSmartOverrideForm(form, t) {
   for (const key of PC_SEDE_SMART_RULE_KEYS) {
     const raw = String(form?.[key] ?? '').trim();
     if (!raw) continue;
     if (isPcSedeSmartRuleText(key)) continue;
     const n = Number(raw);
     if (!Number.isFinite(n) || !Number.isInteger(n)) {
-      return `«${PC_SEDE_SMART_RULE_LABELS[key]}» debe ser un número entero`;
+      return t('admin.padcoins.validation.smartInteger', { label: padcoinsConfigKeyLabel(key, t) });
     }
   }
   return null;
@@ -1581,11 +1581,11 @@ function isPadcoinsConfigTextRule(key) {
   return String(key || '').trim() === 'modo_calculo_reserva';
 }
 
-function padcoinsConfigKeyLabel(key) {
+function padcoinsConfigKeyLabel(key, t) {
   const k = String(key || '').trim();
   if (!k) return '—';
-  if (PADCOINS_CONFIG_KEY_LABELS[k]) return PADCOINS_CONFIG_KEY_LABELS[k];
-  return k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const fallback = PADCOINS_CONFIG_KEY_LABELS[k] || k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return t ? t(`admin.padcoins.smartRules.${k}`, { defaultValue: fallback }) : fallback;
 }
 
 function parsePadcoinsConfigList(data) {
@@ -1622,21 +1622,21 @@ function sortPadcoinsConfigRows(rows) {
   return sorted;
 }
 
-function validatePadcoinsConfigFormRows(rows) {
+function validatePadcoinsConfigFormRows(rows, t) {
   for (const row of rows) {
     const key = String(row?.key || '').trim();
-    if (!key) return 'Hay una regla sin clave (key) válida';
+    if (!key) return t('admin.padcoins.validation.invalidRuleKey');
     if (isPadcoinsConfigTextRule(key)) {
       if (!String(row?.value_text ?? '').trim()) {
-        return `El valor de «${padcoinsConfigKeyLabel(key)}» es obligatorio`;
+        return t('admin.padcoins.validation.valueRequired', { label: padcoinsConfigKeyLabel(key, t) });
       }
       continue;
     }
     const raw = String(row?.value_integer ?? '').trim();
-    if (raw === '') return `El valor de «${padcoinsConfigKeyLabel(key)}» es obligatorio`;
+    if (raw === '') return t('admin.padcoins.validation.valueRequired', { label: padcoinsConfigKeyLabel(key, t) });
     const n = Number(raw);
     if (!Number.isFinite(n) || !Number.isInteger(n)) {
-      return `El valor de «${padcoinsConfigKeyLabel(key)}» debe ser un número entero`;
+      return t('admin.padcoins.validation.valueInteger', { label: padcoinsConfigKeyLabel(key, t) });
     }
   }
   return null;
@@ -3965,7 +3965,7 @@ export default function AdminDashboard({
       setPcSedeSmartSaveError('Seleccione una sede para guardar la configuración inteligente');
       return;
     }
-    const validationError = validatePcSedeSmartOverrideForm(pcSedeSmartForm);
+    const validationError = validatePcSedeSmartOverrideForm(pcSedeSmartForm, t);
     if (validationError) {
       setPcSedeSmartSaveError(validationError);
       return;
@@ -4055,7 +4055,7 @@ export default function AdminDashboard({
   async function guardarPadcoinsGlobalConfig(e) {
     e.preventDefault();
     if (!isSuperAdmin) return;
-    const validationError = validatePadcoinsConfigFormRows(pcGlobalConfigRows);
+    const validationError = validatePadcoinsConfigFormRows(pcGlobalConfigRows, t);
     if (validationError) {
       setPcGlobalConfigSaveError(validationError);
       return;
@@ -14805,7 +14805,7 @@ export default function AdminDashboard({
             >
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
                 <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
-                  {padcoinsConfigKeyLabel(rule.key)}
+                  {padcoinsConfigKeyLabel(rule.key, t)}
                 </strong>
                 <span style={{
                   fontSize: '11px',
@@ -15417,7 +15417,7 @@ export default function AdminDashboard({
                                 <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, verticalAlign: 'top' }}>
                                   {t(
                                     `admin.padcoins.smartRules.${key}`,
-                                    PC_SEDE_SMART_RULE_EN_LABELS[key] || PC_SEDE_SMART_RULE_LABELS[key] || padcoinsConfigKeyLabel(key),
+                                    PC_SEDE_SMART_RULE_EN_LABELS[key] || PC_SEDE_SMART_RULE_LABELS[key] || padcoinsConfigKeyLabel(key, t),
                                   )}
                                 </td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>

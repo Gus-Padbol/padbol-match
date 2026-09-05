@@ -1856,7 +1856,21 @@
         "loyaltyPctRequired": "Enter the loyalty percentage",
         "fixedPadcoinsPositive": "Enter a fixed PadCoins amount greater than 0",
         "benefitRequired": "Select an associated benefit",
-        "selectVenueCampaign": "Select a venue for the campaign"
+        "selectVenueCampaign": "Select a venue for the campaign",
+        "smartInteger": "“{{label}}” must be an integer",
+        "invalidRuleKey": "A rule has no valid key",
+        "valueRequired": "A value is required for “{{label}}”",
+        "valueInteger": "The value of “{{label}}” must be an integer"
+      },
+      "smartRules": {
+        "partido_jugado": "Match played", "partido_ganado": "Match won",
+        "logro_desbloqueado": "Achievement unlocked", "inscripcion_torneo": "Tournament registration",
+        "reserva_confirmada": "Booking confirmed", "cancelacion_tarde": "Late cancellation penalty",
+        "no_show": "No-show penalty", "limite_diario_jugador": "Daily limit per player",
+        "limite_mensual_jugador": "Monthly limit per player",
+        "porcentaje_devolucion_reserva": "Promotional credit per booking",
+        "padcoins_por_usd_equivalente": "Internal reference conversion",
+        "modo_calculo_reserva": "Booking calculation mode"
       },
       "campaignType": {
         "multiplier": "Multiplier",

@@ -1881,7 +1881,21 @@
         "loyaltyPctRequired": "Indica el porcentaje de fidelización",
         "fixedPadcoinsPositive": "Indica una cantidad de PadCoins fijos mayor a 0",
         "benefitRequired": "Selecciona un beneficio asociado",
-        "selectVenueCampaign": "Selecciona una sede para la campaña"
+        "selectVenueCampaign": "Selecciona una sede para la campaña",
+        "smartInteger": "«{{label}}» debe ser un número entero",
+        "invalidRuleKey": "Hay una regla sin clave válida",
+        "valueRequired": "El valor de «{{label}}» es obligatorio",
+        "valueInteger": "El valor de «{{label}}» debe ser un número entero"
+      },
+      "smartRules": {
+        "partido_jugado": "Partido jugado", "partido_ganado": "Partido ganado",
+        "logro_desbloqueado": "Logro desbloqueado", "inscripcion_torneo": "Inscripción a torneo",
+        "reserva_confirmada": "Reserva confirmada", "cancelacion_tarde": "Penalización por cancelación tardía",
+        "no_show": "Penalización por no-show", "limite_diario_jugador": "Límite diario por jugador",
+        "limite_mensual_jugador": "Límite mensual por jugador",
+        "porcentaje_devolucion_reserva": "Acreditación promocional por reserva",
+        "padcoins_por_usd_equivalente": "Conversión interna de referencia",
+        "modo_calculo_reserva": "Modo de cálculo de reservas"
       }
     },
     "metricas": {

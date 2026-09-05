@@ -821,6 +821,18 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
             multiplierPositive: "Zadejte násobitel vyšší než 0", loyaltyPctRequired: "Zadejte procento věrnosti",
             fixedPadcoinsPositive: "Zadejte pevné množství PadCoins vyšší než 0",
             benefitRequired: "Vyberte související výhodu", selectVenueCampaign: "Vyberte klub pro kampaň",
+            smartInteger: "„{{label}}“ musí být celé číslo", invalidRuleKey: "Pravidlo nemá platný klíč",
+            valueRequired: "Hodnota pro „{{label}}“ je povinná", valueInteger: "Hodnota „{{label}}“ musí být celé číslo",
+          },
+          smartRules: {
+            partido_jugado: "Odehraný zápas", partido_ganado: "Vyhraný zápas",
+            logro_desbloqueado: "Odemčený úspěch", inscripcion_torneo: "Registrace do turnaje",
+            reserva_confirmada: "Potvrzená rezervace", cancelacion_tarde: "Sankce za pozdní zrušení",
+            no_show: "Sankce za nedostavení se", limite_diario_jugador: "Denní limit na hráče",
+            limite_mensual_jugador: "Měsíční limit na hráče",
+            porcentaje_devolucion_reserva: "Propagační připsání za rezervaci",
+            padcoins_por_usd_equivalente: "Interní referenční převod",
+            modo_calculo_reserva: "Způsob výpočtu rezervace",
           },
           campaignType: {
             multiplier: "Násobitel", percentage_override: "Dočasné procento",
