@@ -8,6 +8,7 @@ import {
 } from '../constants/hubLayout';
 import { useTheme } from '../context/ThemeContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /**
  * Pie global con enlaces a documentos legales. No se muestra en la landing (tiene su propio pie) ni en las páginas legales.
@@ -16,6 +17,7 @@ export default function LegalFooterBar() {
   const { pathname } = useLocation();
   const { theme } = useTheme();
   const { navDock } = useHubNavLayout();
+  const { t } = useTranslation();
   if (!isLegalFooterGlobalBarVisiblePathname(pathname)) return null;
 
   const linkColor =
@@ -53,23 +55,23 @@ export default function LegalFooterBar() {
   return (
     <footer role="contentinfo" style={footerStyle}>
       <nav
-        aria-label="Información legal"
+        aria-label={t('legal.terminos')}
         style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '14px' }}
       >
         <Link to="/terminos" style={linkBase}>
-          Términos y Condiciones
+          {t('legal.terminos')}
         </Link>
         <Link to="/privacidad" style={linkBase}>
-          Política de Privacidad
+          {t('legal.privacidad')}
         </Link>
         <Link to="/eliminar-cuenta" style={linkBase}>
-          Cuenta y privacidad
+          {t('accountDeletion.title')}
         </Link>
       </nav>
       <p style={companyStyle}>
-        © 2026 Padbol. Operated by{' '}
+        © 2026 Padbol.{' '}
         <a href="https://padbol.com/company" style={linkBase}>
-          Entertainment and Sports Services LLC
+          {t('publicSite.footer.legalOwner')}
         </a>
         .
       </p>

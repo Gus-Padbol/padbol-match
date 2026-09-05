@@ -108,8 +108,8 @@ export default function AdminVenueLandingPage() {
               </article>
               <article className="admin-landing__report-card admin-landing__report-card--detail">
                 <div className="admin-landing__report-card-visual" aria-hidden="true">
-                  <div><b>14</b><span>18:30 · CANCHA 2</span><em>$ 42K</em></div>
-                  <div><b>15</b><span>TORNEO · INSCRIPCIÓN</span><em>✓</em></div>
+                  <div><b>14</b><span>18:30 · {text('court').replace(/\d+/, '2')}</span><em>$ 42K</em></div>
+                  <div><b>15</b><span>{t('admin.tabs.torneos')} · {t('equipos.inscripcion')}</span><em>✓</em></div>
                 </div>
                 <h3>{text('reportDetail')}</h3><p>{text('reportDetailText')}</p>
               </article>

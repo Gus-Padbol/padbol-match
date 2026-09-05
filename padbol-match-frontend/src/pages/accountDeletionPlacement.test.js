@@ -17,17 +17,17 @@ describe('ubicación segura de la eliminación de cuenta', () => {
   test('la eliminación permanece disponible en una página separada con confirmación', () => {
     const deletionSource = source('./EliminarCuenta.jsx');
 
-    expect(deletionSource).toContain('Solicitar eliminación de cuenta');
+    expect(deletionSource).toContain("t('accountDeletion.requestButton')");
     expect(deletionSource).toContain('requestAccountDeletion');
     expect(deletionSource).toContain('confirmDanger');
-    expect(deletionSource).toContain('Sí, eliminar mi cuenta');
+    expect(deletionSource).toContain("t('accountDeletion.confirm')");
   });
 
   test('el pie muestra un acceso discreto de cuenta y privacidad', () => {
     const footerSource = source('../components/LegalFooterBar.jsx');
 
     expect(footerSource).toContain('to="/eliminar-cuenta"');
-    expect(footerSource).toContain('Cuenta y privacidad');
+    expect(footerSource).toContain("t('accountDeletion.title')");
     expect(footerSource).not.toContain('>\n          Eliminar cuenta\n');
   });
 });

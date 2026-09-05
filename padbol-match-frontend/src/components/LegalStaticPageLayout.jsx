@@ -4,6 +4,7 @@ import AppHeader from './AppHeader';
 import { hubContentPaddingTopCss, HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX } from '../constants/hubLayout';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const titleColor = '#f1f5f9';
 const bodyColor = '#cbd5e1';
@@ -62,6 +63,7 @@ export default function LegalStaticPageLayout({ title, lead, children }) {
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const { session } = useAuth();
+  const { t } = useTranslation();
   const home = session?.user ? '/hub' : '/';
   const paddingTop = hubContentPaddingTopCss(location.pathname, navDock);
 
@@ -109,27 +111,27 @@ export default function LegalStaticPageLayout({ title, lead, children }) {
           <p style={{ ...paragraph, color: muted, fontSize: '0.92rem', marginBottom: '20px' }}>{lead}</p>
         ) : null}
         {children}
-        <nav aria-label="Enlaces legales" style={bottomNav}>
+        <nav aria-label={t('legal.terminos')} style={bottomNav}>
           <Link to="/terminos" style={bottomLink}>
-            Términos y Condiciones
+            {t('legal.terminos')}
           </Link>
           <span style={{ color: 'rgba(226,232,240,0.35)' }} aria-hidden>
             ·
           </span>
           <Link to="/privacidad" style={bottomLink}>
-            Política de Privacidad
+            {t('legal.privacidad')}
           </Link>
           <span style={{ color: 'rgba(226,232,240,0.35)' }} aria-hidden>
             ·
           </span>
           <Link to="/eliminar-cuenta" style={bottomLink}>
-            Cuenta y privacidad
+            {t('accountDeletion.title')}
           </Link>
           <span style={{ color: 'rgba(226,232,240,0.35)' }} aria-hidden>
             ·
           </span>
           <Link to={home} style={bottomLink}>
-            Inicio
+            {t('aboutPage.home')}
           </Link>
         </nav>
       </article>
