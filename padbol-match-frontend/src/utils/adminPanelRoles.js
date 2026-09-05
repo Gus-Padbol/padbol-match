@@ -2,6 +2,7 @@
 export const ADMIN_PANEL_ROLES = [
   'super_admin',
   'admin_nacional',
+  'admin_cadena',
   'admin_club',
   'empleado',
   'editor_contenido',
@@ -29,6 +30,7 @@ export function normalizeUserRole(rol) {
   if (r === 'adminclub' || r === 'admin_de_club') return 'admin_club';
   if (r === 'superadmin') return 'super_admin';
   if (r === 'adminnacional') return 'admin_nacional';
+  if (r === 'admincadena' || r === 'admin_multisede') return 'admin_cadena';
   if (r === 'editorcontenido') return 'editor_contenido';
   return r;
 }

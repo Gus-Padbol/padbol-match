@@ -197,7 +197,7 @@ export default function AdminSponsorsSection({
       setRows(Array.isArray(data) ? data : []);
     }
     setLoading(false);
-  }, []);
+  }, [venueScopeId]);
 
   const loadSponsorCupos = useCallback(async () => {
     setCuposMsg('');

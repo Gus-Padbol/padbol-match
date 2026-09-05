@@ -68,7 +68,7 @@ export async function checkMorasSedes({ supabase, sendWhatsApp, now = new Date()
   const nowIso = now.toISOString();
   const { data: rows, error } = await supabase
     .from('sedes')
-    .select('id, nombre, telefono, suscripcion_estado, suscripcion_proximo_cobro, metodo_pago')
+    .select('id, nombre, telefono, suscripcion_estado, suscripcion_proximo_cobro, metodo_pago, plan_comercial')
     .not('suscripcion_proximo_cobro', 'is', null)
     .lt('suscripcion_proximo_cobro', nowIso);
 
@@ -79,7 +79,24 @@ export async function checkMorasSedes({ supabase, sendWhatsApp, now = new Date()
 
   let actualizados = 0;
   for (const row of rows || []) {
+    // Starter no tiene abono: nunca debe entrar en mora ni recibir avisos de deuda.
+    if (String(row.plan_comercial || '').trim().toLowerCase() === 'starter') continue;
     if (normalizeMetodoPago(row.metodo_pago) === 'manual') continue;
+
+    const today = now.toISOString().slice(0, 10);
+    const { data: benefit, error: benefitError } = await supabase
+      .from('sede_programas_beneficios')
+      .select('id')
+      .eq('sede_id', row.id)
+      .eq('codigo', 'padbol_pro_renovable')
+      .eq('estado', 'activo')
+      .gte('beneficio_hasta', today)
+      .maybeSingle();
+    if (benefitError) {
+      console.warn(`⚠️ checkMorasSedes incentivo sede ${row.id}:`, benefitError.message);
+    } else if (benefit?.id) {
+      continue;
+    }
 
     const estAct = String(row.suscripcion_estado || '').trim().toLowerCase();
     if (estAct === 'cancelado') continue;

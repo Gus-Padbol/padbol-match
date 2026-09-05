@@ -273,7 +273,10 @@ describe('estética unificada (nodos blancos / rojo solo movimiento)', () => {
     expect(GLOBE_INLAND_THEME.counts.desktop.groups).toBeLessThanOrEqual(40);
     expect(GLOBE_INLAND_THEME.counts.mobile.groups).toBeLessThanOrEqual(12);
     expect(GLOBE_INLAND_THEME.dotRadius.desktop).toBeLessThan(GLOBE_INLAND_THEME.nodeMinCore);
-    expect(GLOBE_ATMOSPHERE_FX.points.desktop).toBeGreaterThanOrEqual(300);
+    // La optimización de escritorio redujo la nube de 420 a 280 puntos para
+    // sostener el movimiento sin degradar el aspecto visual.
+    expect(GLOBE_ATMOSPHERE_FX.points.desktop).toBeGreaterThanOrEqual(260);
+    expect(GLOBE_ATMOSPHERE_FX.points.desktop).toBeLessThanOrEqual(300);
     expect(GLOBE_ATMOSPHERE_FX.dataLines.desktop).toBeGreaterThanOrEqual(6);
   });
 

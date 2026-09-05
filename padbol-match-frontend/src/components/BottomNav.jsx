@@ -13,7 +13,7 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
-const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_club', 'empleado'];
+const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_cadena', 'admin_club', 'empleado'];
 
 function readCachedRol() {
   try {

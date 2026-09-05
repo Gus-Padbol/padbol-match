@@ -291,7 +291,7 @@ export function hubBottomNavFixedTopCss() {
 export function isChatbotIAVisiblePathname(pathname) {
   let p = String(pathname || '/').split('?')[0].split('#')[0];
   p = p.replace(/\/+$/, '') || '/';
-  return p === '/hub' || p === '/inicio' || p === '/home' || p === '/plataforma' || isSedeProfilePathname(pathname);
+  return p === '/hub' || p === '/inicio' || p === '/home' || p === '/plataforma' || p === '/planes' || isSedeProfilePathname(pathname);
 }
 
 /** Altura aproximada del pie global de enlaces legales (padding + texto). */

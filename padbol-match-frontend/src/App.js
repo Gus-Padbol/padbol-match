@@ -465,6 +465,8 @@ function AppRoutes() {
 
 function AppShell() {
   const location = useLocation();
+  const normalizedPath = String(location.pathname || '/').replace(/\/+$/, '') || '/';
+  const publicLayoutOwnsChatbot = normalizedPath === '/plataforma' || normalizedPath === '/planes';
   const legalFooterPad = isLegalFooterGlobalBarVisiblePathname(location.pathname)
     ? LEGAL_FOOTER_GLOBAL_SPACER_PX
     : 0;
@@ -484,7 +486,7 @@ function AppShell() {
         <AppRoutes />
       </div>
       <LegalFooterBar />
-      <ChatbotIASafe />
+      {!publicLayoutOwnsChatbot ? <ChatbotIASafe /> : null}
       <CookieConsentBanner />
       <PwaUpdateBanner />
     </>

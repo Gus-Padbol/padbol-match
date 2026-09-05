@@ -24,7 +24,7 @@ export function createCheckSuscripcionActiva({ supabase, authUserFromBearer, fet
       if (p === '/api/reservas' && req.method === 'POST') {
         const nombre = String(req.body?.sede || '').trim();
         if (!nombre) return next();
-        const { data, error } = await supabase.from('sedes').select('id, suscripcion_estado').eq('nombre', nombre).maybeSingle();
+        const { data, error } = await supabase.from('sedes').select('id, suscripcion_estado, plan_comercial').eq('nombre', nombre).maybeSingle();
         if (error) throw error;
         sedeId = data?.id ?? null;
       } else if (p === '/api/torneos' && req.method === 'POST') {
@@ -41,12 +41,24 @@ export function createCheckSuscripcionActiva({ supabase, authUserFromBearer, fet
 
       const { data: sedeRow, error: sErr } = await supabase
         .from('sedes')
-        .select('id, suscripcion_estado')
+        .select('id, suscripcion_estado, plan_comercial')
         .eq('id', sedeId)
         .maybeSingle();
       if (sErr) throw sErr;
       const est = String(sedeRow?.suscripcion_estado || '').trim().toLowerCase();
+      if (String(sedeRow?.plan_comercial || '').trim().toLowerCase() === 'starter') return next();
       if (BLOQUEADOS.has(est)) {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data: benefit, error: benefitError } = await supabase
+          .from('sede_programas_beneficios')
+          .select('id, beneficio_hasta')
+          .eq('sede_id', sedeId)
+          .eq('codigo', 'padbol_pro_renovable')
+          .eq('estado', 'activo')
+          .gte('beneficio_hasta', today)
+          .maybeSingle();
+        if (benefitError) throw benefitError;
+        if (benefit?.id) return next();
         return res.status(403).json({
           error:
             est === 'cancelado'

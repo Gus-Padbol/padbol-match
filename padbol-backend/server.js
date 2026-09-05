@@ -30,6 +30,9 @@ import { registerModuloSponsorsRoutes } from './lib/moduloSponsors.js';
 import { mountScoreboardRoutes } from './routes/scoreboard.js';
 import { registerAdminPushRoutes } from './lib/adminPushNotifications.js';
 import { registerModuloComunidadMediaRoutes } from './lib/moduloComunidadMedia.js';
+import { registerAdminOrganizationsRoutes } from './lib/adminOrganizations.js';
+import { evaluateAllActiveSedeIncentives, reconcileExpiredSedeIncentives, registerSedeIncentiveRoutes } from './lib/sedeIncentives.js';
+import { commercialCommissionMinor, commercialCommissionPercent } from './lib/commercialPlanCommission.js';
 import {
   isMercadoPagoTestAccessToken,
   mercadoPagoGlobalAccessToken,
@@ -587,7 +590,7 @@ async function fetchUserRoleRow(email) {
   if (!em) return null;
   let q = await supabase
     .from('user_roles')
-    .select('role, alcance, sede_id, nombre, pais, provincia, ciudad')
+    .select('role, alcance, sede_id, organizacion_id, nombre, pais, provincia, ciudad')
     .eq('email', em)
     .maybeSingle();
   if (q.error && /colum|column/i.test(String(q.error.message || ''))) {
@@ -609,7 +612,7 @@ async function fetchUserRoleRowForAuthUser(user) {
     let q = await supabase
       .from('user_roles')
       .select(
-        'role, alcance, sede_id, nombre, pais, provincia, ciudad, email, torneos_oficiales_habilitados',
+        'role, alcance, sede_id, organizacion_id, nombre, pais, provincia, ciudad, email, torneos_oficiales_habilitados',
       )
       .eq('user_id', uid)
       .maybeSingle();
@@ -637,6 +640,8 @@ function buildMiRolJsonPayload(email, row) {
       nombre: null,
       pais: null,
       torneosOficialesHabilitados: false,
+      organizacion_id: null,
+      organizacionId: null,
     };
   }
   const sedeIdRaw = row.sede_id;
@@ -654,6 +659,8 @@ function buildMiRolJsonPayload(email, row) {
     nombre: row.nombre ?? null,
     pais: row.pais ?? null,
     torneosOficialesHabilitados: Boolean(row.torneos_oficiales_habilitados),
+    organizacion_id: row.organizacion_id ?? null,
+    organizacionId: row.organizacion_id ?? null,
   };
 }
 
@@ -725,8 +732,8 @@ async function sedePaymentConfigBySedeId(sedeId, { mpViaPg = false } = {}) {
 
   const columns =
     mpViaPg
-      ? 'id, nombre, metodo_pago, stripe_account_id, pago_manual_instrucciones'
-      : 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones';
+      ? 'id, nombre, metodo_pago, stripe_account_id, pago_manual_instrucciones, plan_comercial, comision_plataforma_porcentaje'
+      : 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones, plan_comercial, comision_plataforma_porcentaje';
 
   logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
     columns,
@@ -752,12 +759,12 @@ async function sedePaymentConfigByNombre(sedeNombre) {
   const n = String(sedeNombre || '').trim();
   if (!n) return null;
   logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'sedes', 'select.maybeSingle', {
-    columns: 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones',
+    columns: 'id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones, plan_comercial, comision_plataforma_porcentaje',
     eq: { nombre: n },
   });
   const { data, error } = await supabaseAdmin
     .from('sedes')
-    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones')
+    .select('id, nombre, metodo_pago, stripe_account_id, mp_access_token, mp_public_key, pago_manual_instrucciones, plan_comercial, comision_plataforma_porcentaje')
     .eq('nombre', n)
     .maybeSingle();
   if (error) throw error;
@@ -779,11 +786,12 @@ function normalizeGeoText(raw) {
 
 function resolveAlcanceFromRoleRow(row) {
   const raw = String(row?.alcance || '').trim().toLowerCase();
-  if (['sede', 'ciudad', 'provincia', 'pais', 'global'].includes(raw)) return raw;
+  if (['sede', 'organizacion', 'ciudad', 'provincia', 'pais', 'global'].includes(raw)) return raw;
   const role = String(row?.role || '').trim().toLowerCase();
   if (role === 'super_admin') return 'global';
   if (role === 'editor_contenido') return 'global';
   if (role === 'admin_nacional') return 'pais';
+  if (role === 'admin_cadena') return 'organizacion';
   if (role === 'admin_club') return 'sede';
   if (role === 'empleado') return 'sede';
   return null;
@@ -804,6 +812,18 @@ async function sedesPermitidasPorScope(scope) {
     const { data, error } = await supabase.from('sedes').select('*').eq('id', scope.sedeId);
     if (error) throw error;
     return { mode: 'sede', sedes: data || [] };
+  }
+  if (alcance === 'organizacion' && scope.organizacionId) {
+    const { data: links, error: linksError } = await supabase
+      .from('organizacion_sedes')
+      .select('sede_id')
+      .eq('organizacion_id', scope.organizacionId);
+    if (linksError) throw linksError;
+    const sedeIds = (links || []).map((row) => Number(row.sede_id)).filter(Number.isFinite);
+    if (!sedeIds.length) return { mode: 'organizacion', sedes: [] };
+    const { data, error } = await supabase.from('sedes').select('*').in('id', sedeIds);
+    if (error) throw error;
+    return { mode: 'organizacion', sedes: data || [] };
   }
   const { data: allSedes, error } = await supabase.from('sedes').select('*');
   if (error) throw error;
@@ -845,11 +865,13 @@ async function adminListScopeFromRequest(req) {
   const ciudadNorm = normalizeGeoText(row?.ciudad || '');
   const provinciaNorm = normalizeGeoText(row?.provincia || '');
   const paisNorm = normalizeGeoText(row?.pais || '');
+  const organizacionId = row?.organizacion_id ? String(row.organizacion_id).trim().toLowerCase() : null;
   return {
     email,
     rol,
     alcance,
     sedeId: Number.isFinite(sedeId) ? sedeId : null,
+    organizacionId,
     pais: row?.pais || null,
     ciudad: row?.ciudad || null,
     provincia: row?.provincia || null,
@@ -886,6 +908,224 @@ async function assertUsuarioPuedeAdministrarSede(req, sedeIdNum) {
   }
   return scope;
 }
+
+async function assertFuncionOrganizacionHabilitada(scope, funcion) {
+  if (scope?.rol !== 'admin_cadena') return;
+  if (!scope.organizacionId) {
+    const error = new Error('Tu usuario no tiene una organización multisede asignada');
+    error.status = 403;
+    throw error;
+  }
+  const { data, error } = await supabaseAdmin
+    .from('organizaciones')
+    .select('estado, funciones_habilitadas')
+    .eq('id', scope.organizacionId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data || data.estado !== 'activa') {
+    const accessError = new Error('La organización multisede no está activa');
+    accessError.status = 403;
+    throw accessError;
+  }
+  if (!(data.funciones_habilitadas || []).includes(funcion)) {
+    const accessError = new Error(`La función ${funcion} no está habilitada para esta cadena`);
+    accessError.status = 403;
+    throw accessError;
+  }
+}
+
+async function assertOrganizacionPuedeAgregarCancha(scope) {
+  if (scope?.rol !== 'admin_cadena') return;
+  const { data: organization, error: orgError } = await supabaseAdmin
+    .from('organizaciones')
+    .select('limite_canchas_total, estado')
+    .eq('id', scope.organizacionId)
+    .maybeSingle();
+  if (orgError) throw orgError;
+  if (!organization || organization.estado !== 'activa') {
+    const error = new Error('La organización multisede no está activa');
+    error.status = 403;
+    throw error;
+  }
+  const { data: links, error: linksError } = await supabaseAdmin
+    .from('organizacion_sedes')
+    .select('sede_id')
+    .eq('organizacion_id', scope.organizacionId);
+  if (linksError) throw linksError;
+  const sedeIds = (links || []).map((row) => Number(row.sede_id)).filter(Number.isFinite);
+  let total = 0;
+  if (sedeIds.length) {
+    const [canchasResult, sedesResult] = await Promise.all([
+      supabaseAdmin.from('canchas').select('id, sede_id').in('sede_id', sedeIds),
+      supabaseAdmin.from('sedes').select('id, cantidad_canchas').in('id', sedeIds),
+    ]);
+    if (canchasResult.error) throw canchasResult.error;
+    if (sedesResult.error) throw sedesResult.error;
+    const reales = new Map();
+    for (const cancha of canchasResult.data || []) {
+      const sid = Number(cancha.sede_id);
+      reales.set(sid, (reales.get(sid) || 0) + 1);
+    }
+    total = (sedesResult.data || []).reduce(
+      (sum, sede) => sum + Math.max(reales.get(Number(sede.id)) || 0, Number(sede.cantidad_canchas) || 0),
+      0,
+    );
+  }
+  if (total >= Number(organization.limite_canchas_total || 0)) {
+    const error = new Error(`La cadena alcanzó su límite de ${organization.limite_canchas_total} canchas`);
+    error.status = 409;
+    throw error;
+  }
+}
+
+function adminJugadorRecordKey(row) {
+  const userId = String(row?.user_id || '').trim();
+  if (userId) return `u:${userId}`;
+  const email = String(row?.email || '').trim().toLowerCase();
+  if (email) return `e:${email}`;
+  return null;
+}
+
+async function loadAdminJugadoresForSede(req, sedeId) {
+  const scope = await assertUsuarioPuedeAdministrarSede(req, sedeId);
+  await assertFuncionOrganizacionHabilitada(scope, 'jugadores');
+  const { data: sede, error: sedeError } = await supabaseAdmin
+    .from('sedes')
+    .select('id, nombre')
+    .eq('id', sedeId)
+    .maybeSingle();
+  if (sedeError) throw sedeError;
+  if (!sede) {
+    const error = new Error('Sede no encontrada');
+    error.status = 404;
+    throw error;
+  }
+
+  const [linksResult, reservasResult] = await Promise.all([
+    supabaseAdmin
+      .from('sede_jugadores')
+      .select('user_id, created_at, estado')
+      .eq('sede_id', sedeId)
+      .eq('estado', 'activo'),
+    supabaseAdmin
+      .from('reservas')
+      .select('user_id, email, nombre, telefono, whatsapp, created_at, fecha')
+      .eq('sede', sede.nombre)
+      .order('created_at', { ascending: false })
+      .limit(5000),
+  ]);
+  if (linksResult.error) throw linksResult.error;
+  if (reservasResult.error) throw reservasResult.error;
+
+  const records = new Map();
+  for (const link of linksResult.data || []) {
+    const key = adminJugadorRecordKey(link);
+    if (!key) continue;
+    records.set(key, {
+      user_id: link.user_id || null,
+      email: null,
+      display_name: 'Jugador registrado',
+      username: null,
+      telefono: null,
+      vinculacion: 'registrado',
+      last_activity_at: link.created_at || null,
+    });
+  }
+  for (const reserva of reservasResult.data || []) {
+    const key = adminJugadorRecordKey(reserva);
+    if (!key) continue;
+    const current = records.get(key) || {};
+    const activity = reserva.created_at || reserva.fecha || current.last_activity_at || null;
+    records.set(key, {
+      ...current,
+      user_id: reserva.user_id || current.user_id || null,
+      email: String(reserva.email || current.email || '').trim().toLowerCase() || null,
+      display_name: String(reserva.nombre || current.display_name || '').trim() || 'Jugador',
+      telefono: String(reserva.telefono || reserva.whatsapp || current.telefono || '').trim() || null,
+      vinculacion: 'con_historial',
+      last_activity_at: activity,
+    });
+  }
+
+  const baseRows = [...records.values()];
+  const userIds = [...new Set(baseRows.map((row) => row.user_id).filter(Boolean))];
+  const emails = [...new Set(baseRows.map((row) => row.email).filter(Boolean))];
+  const profileRows = [];
+  if (userIds.length) {
+    const { data, error } = await supabaseAdmin
+      .from('jugadores_perfil')
+      .select('user_id, email, nombre, apellido, apodo, alias, whatsapp, created_at')
+      .in('user_id', userIds);
+    if (error) throw error;
+    profileRows.push(...(data || []));
+  }
+  if (emails.length) {
+    const { data, error } = await supabaseAdmin
+      .from('jugadores_perfil')
+      .select('user_id, email, nombre, apellido, apodo, alias, whatsapp, created_at')
+      .in('email', emails);
+    if (error) throw error;
+    profileRows.push(...(data || []));
+  }
+  const profilesByUser = new Map();
+  const profilesByEmail = new Map();
+  for (const profile of profileRows) {
+    if (profile.user_id) profilesByUser.set(String(profile.user_id), profile);
+    if (profile.email) profilesByEmail.set(String(profile.email).trim().toLowerCase(), profile);
+  }
+  return baseRows.map((row) => {
+    const profile = profilesByUser.get(String(row.user_id || '')) || profilesByEmail.get(String(row.email || '').toLowerCase());
+    const profileName = [profile?.nombre, profile?.apellido].map((value) => String(value || '').trim()).filter(Boolean).join(' ');
+    return {
+      ...row,
+      user_id: profile?.user_id || row.user_id || null,
+      email: String(profile?.email || row.email || '').trim().toLowerCase() || null,
+      display_name: profileName || String(profile?.apodo || row.display_name || '').trim() || 'Jugador',
+      username: String(profile?.alias || '').trim() || null,
+      telefono: String(profile?.whatsapp || row.telefono || '').trim() || null,
+    };
+  });
+}
+
+app.get('/api/admin/jugadores', async (req, res) => {
+  try {
+    const sedeId = Number(req.query?.sede_id);
+    if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'Selecciona una sede' });
+    const q = String(req.query?.q || '').trim().toLowerCase();
+    const page = Math.max(1, Number.parseInt(String(req.query?.page || '1'), 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(String(req.query?.limit || '20'), 10) || 20));
+    const rows = await loadAdminJugadoresForSede(req, sedeId);
+    const filtered = q
+      ? rows.filter((row) => [row.display_name, row.username, row.email, row.telefono].some((value) => String(value || '').toLowerCase().includes(q)))
+      : rows;
+    filtered.sort((a, b) => String(a.display_name || '').localeCompare(String(b.display_name || ''), 'es'));
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const start = (page - 1) * limit;
+    return res.json({ items: filtered.slice(start, start + limit), total, page, total_pages: totalPages });
+  } catch (error) {
+    console.error('❌ GET /api/admin/jugadores:', error.message);
+    return res.status(error.status || 500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/jugadores/buscar', async (req, res) => {
+  try {
+    const sedeId = Number(req.query?.sede_id);
+    if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'Selecciona una sede' });
+    const q = String(req.query?.q || '').trim().toLowerCase();
+    const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query?.limit || '12'), 10) || 12));
+    const rows = await loadAdminJugadoresForSede(req, sedeId);
+    const items = rows
+      .filter((row) => !q || [row.display_name, row.username, row.email, row.telefono].some((value) => String(value || '').toLowerCase().includes(q)))
+      .sort((a, b) => String(a.display_name || '').localeCompare(String(b.display_name || ''), 'es'))
+      .slice(0, limit);
+    return res.json({ items });
+  } catch (error) {
+    console.error('❌ GET /api/admin/jugadores/buscar:', error.message);
+    return res.status(error.status || 500).json({ error: error.message });
+  }
+});
 
 function normalizeEstadoCancha(raw) {
   const s = String(raw || '').trim().toLowerCase();
@@ -1050,6 +1290,7 @@ async function assertUsuarioPuedeAdministrarTorneo(req, torneo) {
       rol,
       alcance: resolveAlcanceFromRoleRow(row),
       sedeId: row?.sede_id != null && row.sede_id !== '' ? Number(row.sede_id) : null,
+      organizacionId: row?.organizacion_id ? String(row.organizacion_id).trim().toLowerCase() : null,
       paisNorm: normalizeGeoText(row?.pais || ''),
       provinciaNorm: normalizeGeoText(row?.provincia || ''),
       ciudadNorm: normalizeGeoText(row?.ciudad || ''),
@@ -1057,7 +1298,10 @@ async function assertUsuarioPuedeAdministrarTorneo(req, torneo) {
     };
     const allowed = await sedesPermitidasPorScope(scope);
     const ids = new Set((allowed.sedes || []).map((s) => Number(s.id)).filter((id) => Number.isFinite(id)));
-    if (ids.has(tsede)) return;
+    if (ids.has(tsede)) {
+      await assertFuncionOrganizacionHabilitada(scope, 'torneos');
+      return scope;
+    }
   }
 
   const e = new Error('No autorizado para administrar este torneo');
@@ -3478,6 +3722,7 @@ app.patch('/api/sedes/:id', async (req, res) => {
         'cancelado',
         'sin_suscripcion',
         'pendiente_pago',
+        'beneficio',
         'vencida',
         'cancelada',
       ]);
@@ -3542,7 +3787,8 @@ app.post('/api/sedes/:id/canchas', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'ID de sede inválido' });
-    await assertUsuarioPuedeAdministrarSede(req, id);
+    const scope = await assertUsuarioPuedeAdministrarSede(req, id);
+    await assertOrganizacionPuedeAgregarCancha(scope);
     const b = req.body || {};
     const nombreVal = validateCanchaNombreVisible(b.nombre, { required: true });
     if (!nombreVal.ok) return res.status(nombreVal.status).json({ error: nombreVal.error });
@@ -5132,7 +5378,7 @@ app.post('/api/admin/reservas/manual', async (req, res) => {
   try {
     const scope = await adminListScopeFromRequest(req);
     if (!scope) return res.status(401).json({ error: 'No autorizado' });
-    if (!scope.superA && !['admin_club', 'empleado'].includes(String(scope.rol || ''))) {
+    if (!scope.superA && !['admin_club', 'admin_cadena', 'empleado'].includes(String(scope.rol || ''))) {
       return res.status(403).json({ error: 'No tienes permiso para crear reservas manuales' });
     }
 
@@ -5142,6 +5388,7 @@ app.post('/api/admin/reservas/manual', async (req, res) => {
     if (!Number.isFinite(sedeIdNum)) return res.status(400).json({ error: 'Selecciona una sede' });
 
     await assertUsuarioPuedeAdministrarSede(req, sedeIdNum);
+    await assertFuncionOrganizacionHabilitada(scope, 'reservas');
 
     const { data: sedeRow, error: sedeErr } = await supabase
       .from('sedes')
@@ -5329,6 +5576,7 @@ async function assertReservaAccesibleHistorial(req, reservaId) {
     e.status = 401;
     throw e;
   }
+  await assertFuncionOrganizacionHabilitada(scope, 'reservas');
   const { data: r, error } = await supabaseAdmin.from('reservas').select('id, sede, user_id').eq('id', rid).maybeSingle();
   if (error) throw error;
   if (!r) {
@@ -5337,7 +5585,7 @@ async function assertReservaAccesibleHistorial(req, reservaId) {
     throw e;
   }
   if (scope.superA || scope.alcance === 'global') return r;
-  if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
+  if (scope.rol === 'admin_club' || scope.rol === 'admin_cadena' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
     const allowed = await sedesPermitidasPorScope(scope);
     const nombres = new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean));
     if (nombres.has(String(r.sede || '').trim())) return r;
@@ -5363,9 +5611,10 @@ app.get('/api/reservas', async (req, res) => {
     let query = supabaseAdmin.from('reservas').select('*');
 
     if (scope) {
+      await assertFuncionOrganizacionHabilitada(scope, 'reservas');
       if (scope.superA || scope.alcance === 'global') {
         // sin filtro
-      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
+      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_cadena' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
         const allowed = await sedesPermitidasPorScope(scope);
         const nombres = [
           ...new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean)),
@@ -5384,7 +5633,7 @@ app.get('/api/reservas', async (req, res) => {
     const enriched = await enrichReservasConJugadorWhatsappPerfil(supabase, data || []);
     res.json(enriched);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
@@ -5567,6 +5816,7 @@ app.put('/api/reservas/:id', async (req, res) => {
       scopePut &&
       (scopePut.superA ||
         scopePut.rol === 'admin_club' ||
+        scopePut.rol === 'admin_cadena' ||
         scopePut.rol === 'empleado' ||
         scopePut.rol === 'admin_nacional' ||
         scopePut.alcance === 'global');
@@ -5636,6 +5886,7 @@ app.put('/api/reservas/:id', async (req, res) => {
           scopeH &&
           (scopeH.superA ||
             scopeH.rol === 'admin_club' ||
+            scopeH.rol === 'admin_cadena' ||
             scopeH.rol === 'empleado' ||
             scopeH.rol === 'admin_nacional' ||
             scopeH.alcance === 'global')
@@ -5724,6 +5975,7 @@ app.delete('/api/reservas/:id', async (req, res) => {
       scopeDel &&
       (scopeDel.superA ||
         scopeDel.rol === 'admin_club' ||
+        scopeDel.rol === 'admin_cadena' ||
         scopeDel.rol === 'empleado' ||
         scopeDel.rol === 'admin_nacional' ||
         scopeDel.alcance === 'global');
@@ -6772,6 +7024,15 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       formato_equipo: formatoEquipoBody,
     } = req.body;
 
+    const createScope = await adminListScopeFromRequest(req);
+    if (!createScope) return res.status(401).json({ error: 'No autorizado' });
+    await assertFuncionOrganizacionHabilitada(createScope, 'torneos');
+    if (sede_id != null && String(sede_id).trim() !== '') {
+      await assertUsuarioPuedeAdministrarSede(req, Number(sede_id));
+    } else if (!createScope.superA && createScope.rol !== 'admin_nacional') {
+      return res.status(403).json({ error: 'Selecciona una sede dentro de tu alcance' });
+    }
+
     const estadoNorm = normalizeTorneoEstadoForDb(estadoBody);
     const tipoCompRaw =
       tipoCompBody !== undefined
@@ -6900,7 +7161,7 @@ app.get('/api/torneos', async (req, res) => {
     if (scope) {
       if (scope.superA || scope.alcance === 'global') {
         // sin filtro
-      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
+      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_cadena' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
         const allowed = await sedesPermitidasPorScope(scope);
         const ids = (allowed.sedes || [])
           .map((s) => s?.id)
@@ -10732,8 +10993,8 @@ function stripeMetadataPayload(payloadObj) {
 }
 
 /**
- * Stripe Connect: un solo PaymentIntent por monto_base + 3 %.
- * `application_fee_amount` + `transfer_data.destination` envían la base al club y el fee queda en la plataforma.
+ * Stripe Connect: el jugador paga exactamente monto_base.
+ * `application_fee_amount` descuenta del cobro la comisión comercial de la sede para Padbol Match.
  */
 app.post('/api/stripe/crear-payment-intent', async (req, res) => {
   try {
@@ -10838,8 +11099,16 @@ app.post('/api/stripe/crear-payment-intent', async (req, res) => {
     }
 
     const metaPayload = stripeMetadataPayload(payloadNorm);
-    const cargo_servicio = Math.round(monto_base * 0.03);
-    const total = monto_base + cargo_servicio;
+    const comision_porcentaje = commercialCommissionPercent(
+      sedeCfg.plan_comercial,
+      sedeCfg.comision_plataforma_porcentaje,
+    );
+    const cargo_servicio = commercialCommissionMinor(
+      monto_base,
+      sedeCfg.plan_comercial,
+      sedeCfg.comision_plataforma_porcentaje,
+    );
+    const total = monto_base;
     if (!Number.isFinite(cargo_servicio) || cargo_servicio < 0 || total <= 0) {
       return res.status(400).json({ error: 'Monto total inválido' });
     }
@@ -10856,6 +11125,8 @@ app.post('/api/stripe/crear-payment-intent', async (req, res) => {
         tipo,
         monto_base: String(monto_base),
         cargo_servicio: String(cargo_servicio),
+        comision_porcentaje: String(comision_porcentaje),
+        fee_model: 'sede_deduction_v1',
         ...metaPayload,
       },
     });
@@ -10895,7 +11166,7 @@ app.post('/api/stripe/confirmar-pago', async (req, res) => {
     const md = pi.metadata || {};
     const monto_base = parseInt(String(md.monto_base || ''), 10);
     const cargo = parseInt(String(md.cargo_servicio || ''), 10);
-    const expectedTotal = monto_base + cargo;
+    const expectedTotal = md.fee_model === 'sede_deduction_v1' ? monto_base : monto_base + cargo;
     if (!Number.isFinite(monto_base) || !Number.isFinite(cargo) || pi.amount !== expectedTotal) {
       console.error('Stripe confirmar-pago: monto inconsistente', { piAmount: pi.amount, expectedTotal, md });
       return res.status(400).json({ error: 'Datos de pago inconsistentes' });
@@ -11230,6 +11501,7 @@ async function handleStripeBillingWebhook(req, res) {
           .from('sedes')
           .update({
             suscripcion_estado: 'activa',
+            plan_comercial: 'pro',
             suscripcion_proximo_cobro: periodEndIso,
             ...(subId ? { stripe_subscription_id: subId } : {}),
           })
@@ -11281,9 +11553,10 @@ async function handleStripeBillingWebhook(req, res) {
           .from('sedes')
           .update({
             suscripcion_estado: 'cancelada',
+            plan_comercial: 'starter',
             suscripcion_proximo_cobro: null,
             stripe_subscription_id: null,
-            licencia_activa: false,
+            licencia_activa: true,
           })
           .eq('id', sedeId);
         if (error) throw error;
@@ -12482,7 +12755,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         });
         const baseDb = await precioBaseReservaSedeDuracion(db, sidR, durR);
         if (baseDb != null) {
-          const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
+          const totalSrv = baseDb + extrasSum;
           if (Number.isFinite(totalSrv) && totalSrv >= 0) {
             unitPrice = totalSrv;
             rd.precio = totalSrv;
@@ -12527,7 +12800,7 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
           });
           const baseDb = await precioBaseReservaSedeDuracion(db, sidR, durR);
           if (baseDb != null) {
-            const totalSrv = baseDb + Math.round(baseDb * 0.03) + extrasSum;
+            const totalSrv = baseDb + extrasSum;
             if (Number.isFinite(totalSrv) && totalSrv >= 0) {
               unitPrice = totalSrv;
               rd.precio = totalSrv;
@@ -13798,6 +14071,7 @@ app.get('/api/admin/sedes-alcance', async (req, res) => {
       provincia: scope.provincia || null,
       ciudad: scope.ciudad || null,
       sede_id: scope.sedeId ?? null,
+      organizacion_id: scope.organizacionId ?? null,
       sedes: allowed.sedes || [],
     });
   } catch (err) {
@@ -13812,8 +14086,8 @@ app.get('/api/admin/roles', async (req, res) => {
     await assertSuperAdminReq(req);
     const { data: rolesRows, error: rErr } = await supabase
       .from('user_roles')
-      .select('email, nombre, role, alcance, sede_id, ciudad, provincia, pais')
-      .in('role', ['admin_club', 'admin_nacional', 'super_admin', 'empleado', 'editor_contenido'])
+      .select('email, nombre, role, alcance, sede_id, organizacion_id, ciudad, provincia, pais')
+      .in('role', ['admin_club', 'admin_cadena', 'admin_nacional', 'super_admin', 'empleado', 'editor_contenido'])
       .order('email', { ascending: true });
     if (rErr) throw rErr;
     const sedeIds = [...new Set((rolesRows || []).map((r) => r.sede_id).filter((id) => id != null))];
@@ -13888,9 +14162,15 @@ app.post('/api/admin/roles', async (req, res) => {
     }
 
     const alcance = String(b.alcance || '').trim().toLowerCase();
-    if (!['admin_club', 'admin_nacional', 'empleado'].includes(role)) return res.status(400).json({ error: 'Rol inválido' });
-    if (!['sede', 'ciudad', 'provincia', 'pais'].includes(alcance)) {
+    if (!['admin_club', 'admin_cadena', 'admin_nacional', 'empleado'].includes(role)) return res.status(400).json({ error: 'Rol inválido' });
+    if (!['sede', 'organizacion', 'ciudad', 'provincia', 'pais'].includes(alcance)) {
       return res.status(400).json({ error: 'Alcance inválido' });
+    }
+    if (role === 'admin_cadena' && alcance !== 'organizacion') {
+      return res.status(400).json({ error: 'El administrador de cadena debe tener alcance organización' });
+    }
+    if (role !== 'admin_cadena' && alcance === 'organizacion') {
+      return res.status(400).json({ error: 'El alcance organización corresponde al administrador de cadena' });
     }
     if (role === 'empleado' && alcance !== 'sede') {
       return res.status(400).json({ error: 'El rol empleado debe tener alcance sede' });
@@ -13899,12 +14179,19 @@ app.post('/api/admin/roles', async (req, res) => {
     const ciudad = String(b.ciudad || '').trim() || null;
     const provincia = String(b.provincia || '').trim() || null;
     const pais = String(b.pais || '').trim() || null;
+    const organizacionId = b.organizacion_id ? String(b.organizacion_id).trim().toLowerCase() : null;
     if (alcance === 'sede' && !Number.isFinite(sedeId)) {
       return res.status(400).json({ error: 'sede_id es obligatorio para alcance sede' });
     }
     if (alcance === 'ciudad' && !ciudad) return res.status(400).json({ error: 'Ciudad obligatoria' });
     if (alcance === 'provincia' && !provincia) return res.status(400).json({ error: 'Provincia obligatoria' });
     if (alcance === 'pais' && !pais) return res.status(400).json({ error: 'País obligatorio' });
+    if (alcance === 'organizacion') {
+      if (!organizacionId) return res.status(400).json({ error: 'organizacion_id obligatorio' });
+      const { data: org, error: orgError } = await supabase.from('organizaciones').select('id').eq('id', organizacionId).maybeSingle();
+      if (orgError) throw orgError;
+      if (!org) return res.status(404).json({ error: 'Organización no encontrada' });
+    }
 
     const payload = {
       email,
@@ -13912,6 +14199,7 @@ app.post('/api/admin/roles', async (req, res) => {
       alcance,
       nombre: String(b.nombre || '').trim() || null,
       sede_id: alcance === 'sede' ? sedeId : null,
+      organizacion_id: alcance === 'organizacion' ? organizacionId : null,
       ciudad: alcance === 'ciudad' ? ciudad : null,
       provincia: alcance === 'provincia' ? provincia : null,
       pais: alcance === 'pais' ? pais : null,
@@ -14116,7 +14404,7 @@ app.post('/api/admin/invite-magic-link', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email obligatorio' });
     if (!rol || !MAGIC_INVITE_ROLES.has(rol)) {
       return res.status(400).json({
-        error: 'Rol inválido (editor_contenido, admin_club, admin_nacional, empleado)',
+        error: 'Rol inválido (editor_contenido, admin_cadena, admin_club, admin_nacional, empleado)',
       });
     }
     const assignRole =
@@ -14599,6 +14887,7 @@ function mapPendingRowToSedeInsert(row) {
     pago_manual_instrucciones: row.pago_manual_instrucciones || null,
     telefono: row.whatsapp || null,
     email_contacto: row.email_contacto || null,
+    cantidad_canchas: Number(row.cantidad_canchas_solicitadas) || 0,
     numero_licencia: row.numero_licencia || null,
     fecha_licencia: row.fecha_contrato || null,
     licencia_activa: true,
@@ -14607,7 +14896,7 @@ function mapPendingRowToSedeInsert(row) {
   };
 }
 
-/** POST /api/admin/sedes-pendientes — solo admin_nacional: inserta fila pendiente + aviso a super admin. */
+/** POST /api/admin/sedes-pendientes — admin nacional o de cadena: solicita una nueva sede. */
 app.post('/api/admin/sedes-pendientes', async (req, res) => {
   try {
     const user = await authUserFromBearer(req);
@@ -14617,18 +14906,57 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
     if (isSuperAdminApi(user.email, role)) {
       return res.status(403).json({ error: 'Usa “Crear sede” desde el formulario de super admin' });
     }
-    if (role !== 'admin_nacional') {
-      return res.status(403).json({ error: 'Solo admin nacional puede enviar solicitudes pendientes' });
+    if (!['admin_nacional', 'admin_cadena'].includes(role)) {
+      return res.status(403).json({ error: 'Solo un administrador nacional o de cadena puede enviar solicitudes pendientes' });
+    }
+    const organizacionId = role === 'admin_cadena' ? rowRole?.organizacion_id || null : null;
+    if (role === 'admin_cadena' && !organizacionId) {
+      return res.status(403).json({ error: 'Tu usuario no tiene una organización multisede asignada' });
     }
     const b = req.body || {};
     const nombre = String(b.nombre || '').trim();
     if (!nombre) return res.status(400).json({ error: 'Nombre del club obligatorio' });
+    const cantidadCanchas = Number.parseInt(String(b.cantidad_canchas ?? ''), 10);
+    if (!Number.isFinite(cantidadCanchas) || cantidadCanchas <= 0) {
+      return res.status(400).json({ error: 'Indica cuántas canchas tendrá la sede' });
+    }
     const licEmail = String(b.licenciatario_email || '').trim().toLowerCase();
     if (!licEmail) return res.status(400).json({ error: 'Email del licenciatario obligatorio' });
+
+    if (organizacionId) {
+      const [orgResult, linksResult, pendingResult] = await Promise.all([
+        supabase.from('organizaciones').select('estado, limite_sedes, limite_canchas_total').eq('id', organizacionId).maybeSingle(),
+        supabase.from('organizacion_sedes').select('sede_id').eq('organizacion_id', organizacionId),
+        supabase.from('sedes_pendientes').select('cantidad_canchas_solicitadas').eq('organizacion_id', organizacionId).eq('estado', 'pendiente'),
+      ]);
+      if (orgResult.error) throw orgResult.error;
+      if (linksResult.error) throw linksResult.error;
+      if (pendingResult.error) throw pendingResult.error;
+      if (!orgResult.data || orgResult.data.estado !== 'activa') {
+        return res.status(403).json({ error: 'La organización multisede no está activa' });
+      }
+      const linkedIds = (linksResult.data || []).map((link) => Number(link.sede_id)).filter(Number.isFinite);
+      const pendingRows = pendingResult.data || [];
+      if (linkedIds.length + pendingRows.length >= Number(orgResult.data.limite_sedes)) {
+        return res.status(409).json({ error: `La cadena alcanzó su límite de ${orgResult.data.limite_sedes} sedes, incluyendo solicitudes pendientes` });
+      }
+      let linkedCourts = 0;
+      if (linkedIds.length) {
+        const { data: linkedSedes, error: linkedError } = await supabase.from('sedes').select('cantidad_canchas').in('id', linkedIds);
+        if (linkedError) throw linkedError;
+        linkedCourts = (linkedSedes || []).reduce((sum, sede) => sum + (Number(sede.cantidad_canchas) || 0), 0);
+      }
+      const pendingCourts = pendingRows.reduce((sum, pending) => sum + (Number(pending.cantidad_canchas_solicitadas) || 0), 0);
+      if (linkedCourts + pendingCourts + cantidadCanchas > Number(orgResult.data.limite_canchas_total)) {
+        return res.status(409).json({ error: `La solicitud supera el límite total de ${orgResult.data.limite_canchas_total} canchas de la cadena` });
+      }
+    }
 
     const insert = {
       created_by: String(user.email).trim().toLowerCase(),
       estado: 'pendiente',
+      organizacion_id: organizacionId,
+      cantidad_canchas_solicitadas: cantidadCanchas,
       nombre,
       direccion: b.direccion || null,
       ciudad: b.ciudad || null,
@@ -14662,11 +14990,17 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
     };
 
     let { data: ins, error } = await supabase.from('sedes_pendientes').insert(insert).select('id').single();
-    if (error && /ciudad_representa|provincia_representa|pais_representa/i.test(String(error.message || ''))) {
+    if (
+      error &&
+      !organizacionId &&
+      /ciudad_representa|provincia_representa|pais_representa|organizacion_id/i.test(String(error.message || ''))
+    ) {
       const legacyInsert = { ...insert };
       delete legacyInsert.ciudad_representa;
       delete legacyInsert.provincia_representa;
       delete legacyInsert.pais_representa;
+      delete legacyInsert.organizacion_id;
+      delete legacyInsert.cantidad_canchas_solicitadas;
       const retry = await supabase.from('sedes_pendientes').insert(legacyInsert).select('id').single();
       ins = retry.data;
       error = retry.error;
@@ -14680,7 +15014,7 @@ app.post('/api/admin/sedes-pendientes', async (req, res) => {
         `Club: ${nombre}\n` +
         `País: ${insert.pais || '—'}\n` +
         `Licenciatario: ${insert.licenciatario_nombre || '—'} (${licEmail})\n` +
-        `Enviado por: ${insert.created_by}\n` +
+        `Enviado por: ${insert.created_by}${organizacionId ? ' (cadena multisede)' : ''}\n` +
         `Revisar en: padbolmatch.com/admin`;
       await sendTwilioWhatsAppBodyToRaw(toSuper, msg);
     }
@@ -14742,6 +15076,17 @@ app.post('/api/admin/sedes-directa', async (req, res) => {
     const { data: sedeRow, error: sedeErr } = await supabase.from('sedes').insert(sedePayload).select('id').single();
     if (sedeErr) throw sedeErr;
     const sedeId = sedeRow.id;
+
+    const organizacionId = b.organizacion_id ? String(b.organizacion_id).trim().toLowerCase() : null;
+    if (organizacionId) {
+      const { error: orgLinkError } = await supabase
+        .from('organizacion_sedes')
+        .insert({ organizacion_id: organizacionId, sede_id: sedeId });
+      if (orgLinkError) {
+        await supabase.from('sedes').delete().eq('id', sedeId);
+        throw orgLinkError;
+      }
+    }
 
     const urErr = await upsertUserRoleLicenciaAsignada({
       email: licEmail,
@@ -15095,17 +15440,32 @@ app.post('/api/admin/sedes-pendientes/:id/aprobar', async (req, res) => {
     if (sedeErr) throw sedeErr;
     const sedeId = sedeRow.id;
 
+    if (pend.organizacion_id) {
+      const { error: orgLinkError } = await supabase
+        .from('organizacion_sedes')
+        .insert({ organizacion_id: pend.organizacion_id, sede_id: sedeId });
+      if (orgLinkError) {
+        await supabase.from('sedes').delete().eq('id', sedeId);
+        throw orgLinkError;
+      }
+    }
+
     const licEmail = String(pend.licenciatario_email || '').trim().toLowerCase();
     if (!licEmail) {
       await supabase.from('sedes').delete().eq('id', sedeId);
       return res.status(400).json({ error: 'Solicitud sin email de licenciatario' });
     }
-    const urErr = await upsertUserRoleLicenciaAsignada({
-      email: licEmail,
-      nombre: pend.licenciatario_nombre || null,
-      payload: pend,
-      sedeId,
-    });
+    const preservaAdminCadena = Boolean(
+      pend.organizacion_id && licEmail === String(pend.created_by || '').trim().toLowerCase()
+    );
+    const urErr = preservaAdminCadena
+      ? null
+      : await upsertUserRoleLicenciaAsignada({
+          email: licEmail,
+          nombre: pend.licenciatario_nombre || null,
+          payload: pend,
+          sedeId,
+        });
     if (urErr) {
       await supabase.from('sedes').delete().eq('id', sedeId);
       throw urErr;
@@ -17398,6 +17758,37 @@ registerModuloComunidadMediaRoutes(app, {
   authUserFromBearer,
   multer,
 });
+
+registerAdminOrganizationsRoutes(app, {
+  supabase,
+  adminListScopeFromRequest,
+  assertSuperAdminReq,
+  generateAdminInviteMagicLink,
+});
+
+registerSedeIncentiveRoutes(app, {
+  supabase: supabaseAdmin,
+  adminListScopeFromRequest,
+  assertUsuarioPuedeAdministrarSede,
+  assertSuperAdminReq,
+});
+
+/** Evalúa ayer/mes anterior: la función SQL evita otorgar dos veces el mismo crédito. */
+cron.schedule('15 2 * * *', async () => {
+  try {
+    const previousMonth = new Date();
+    previousMonth.setUTCMonth(previousMonth.getUTCMonth() - 1);
+    const results = await evaluateAllActiveSedeIncentives(supabaseAdmin, previousMonth);
+    const failed = results.filter((row) => !row.ok);
+    if (failed.length) console.warn(`⚠️ Incentivos: ${failed.length} evaluación(es) fallidas`);
+    const reconciliation = await reconcileExpiredSedeIncentives(supabaseAdmin);
+    if (reconciliation?.sedes_en_starter) {
+      console.log(`✓ Incentivos: ${reconciliation.sedes_en_starter} sede(s) pasaron a Starter sin deuda`);
+    }
+  } catch (err) {
+    console.error('❌ Cron incentivos sedes:', err.message);
+  }
+}, { timezone: 'America/Argentina/Buenos_Aires' });
 
 cron.schedule('*/10 * * * *', async () => {
   try {

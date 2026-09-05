@@ -93,6 +93,33 @@ function FeaturePanel({ eyebrow, title, children }) {
   );
 }
 
+const PLAN_FAQS = [
+  {
+    question: '¿Hay cargos ocultos?',
+    answer: 'No. Antes de activar un plan, la sede conoce y acepta el abono y la comisión correspondientes. Los costos del procesador de pago son independientes y no los cobra Padbol Match.',
+  },
+  {
+    question: '¿Me cobran por enviar una solicitud?',
+    answer: 'No. Enviar el formulario solamente inicia el contacto. No activa ningún cobro ni suscripción.',
+  },
+  {
+    question: '¿El jugador paga comisión?',
+    answer: 'No. El jugador paga 0% de comisión a Padbol Match.',
+  },
+  {
+    question: '¿Necesito equipamiento especial para el marcador?',
+    answer: 'No. El marcador puede utilizarse desde un teléfono, una tablet o una computadora y visualizarse en una TV.',
+  },
+  {
+    question: '¿Puedo traer información de otro sistema?',
+    answer: 'Sí, cuando el formato sea compatible. El alcance de la migración se revisa con la sede antes de comenzar.',
+  },
+  {
+    question: '¿Qué pasa si tengo varias sedes?',
+    answer: 'Business está pensado para cadenas y operadores multisede. La administración central, los permisos de cada sede, los reportes consolidados y el precio por volumen se definen con cada organización antes de activar el servicio.',
+  },
+];
+
 export default function VenuePlansPage({ catalogOverride = null }) {
   const plans = catalogOverride || COMMERCIAL_PLANS_PREVIEW;
   useDocumentMeta();
@@ -128,7 +155,7 @@ export default function VenuePlansPage({ catalogOverride = null }) {
         <section className="venue-plans__player-fee" aria-label="Comisiones al jugador">
           <div className="public-site__shell">
             <strong>EL JUGADOR PAGA 0% DE COMISIÓN A PADBOL MATCH.</strong>
-            <p>Las comisiones de los planes corresponden al servicio prestado a la sede. Los costos de Mercado Pago, Stripe u otro procesador son independientes.</p>
+            <p>Las comisiones de los planes corresponden al servicio prestado a la sede. Los costos de los procesadores de pago son independientes.</p>
           </div>
         </section>
 
@@ -136,15 +163,15 @@ export default function VenuePlansPage({ catalogOverride = null }) {
           <div className="public-site__shell venue-plans__padbol-owner-grid">
             <div>
               <p className="venue-plans__eyebrow">BENEFICIO EXCLUSIVO PARA SEDES PADBOL</p>
-              <h2 id="padbol-owner-title">¿Sos propietario de una o más canchas de Padbol?</h2>
-              <p>Solicitá Padbol Match Pro sin cargo durante 12 meses y administrá tu sede desde una sola plataforma.</p>
-              <small>Contanos sobre tu sede. Nuestro equipo te contactará para evaluar la solicitud y los próximos pasos.</small>
+              <h2 id="padbol-owner-title">¿Eres propietario de una o más canchas de Padbol?</h2>
+              <p>Empieza con 6 meses de Padbol Match Pro sin cargo y renuévalo mes a mes usando la plataforma de forma continua.</p>
+              <small>Los objetivos son claros, se verifican dentro de Padbol Match y no generan cargos automáticos ni ocultos.</small>
             </div>
             <Link
               className="venue-plans__cta venue-plans__cta--primary"
-              to="/unirse?plan=pro&promo=padbol-pro-12m"
+              to="/unirse?plan=pro&promo=padbol-pro-renovable"
             >
-              SOLICITAR 12 MESES PRO
+              EMPEZAR 6 MESES PRO SIN CARGO
             </Link>
           </div>
         </section>
@@ -152,7 +179,7 @@ export default function VenuePlansPage({ catalogOverride = null }) {
         <section id="planes" className="venue-plans__section venue-plans__catalog" aria-labelledby="planes-title">
           <div className="public-site__shell">
             <p className="venue-plans__eyebrow">PLANES PARA CRECER A TU RITMO</p>
-            <h2 id="planes-title">Empezá administrando.<br /><span>Pasá a Pro para automatizar.</span></h2>
+            <h2 id="planes-title">Empieza administrando.<br /><span>Pasa a Pro para automatizar.</span></h2>
             <div className="venue-plans__grid">
               {plans.map((plan) => <PlanCard key={plan.slug} plan={plan} />)}
             </div>
@@ -160,56 +187,15 @@ export default function VenuePlansPage({ catalogOverride = null }) {
           </div>
         </section>
 
-        <section className="venue-plans__section venue-plans__scoreboard" aria-labelledby="scoreboard-title">
-          <div className="public-site__shell venue-plans__split">
-            <div>
-              <p className="venue-plans__eyebrow">TU MARCADOR DIGITAL, INCLUIDO DESDE STARTER</p>
-              <h2 id="scoreboard-title">El partido en vivo.<br /><span>Sin equipamiento específico.</span></h2>
-              <p>Teléfono · Tablet · Computadora · TV</p>
-              <ul>
-                <li>Score y actualización en vivo.</li>
-                <li>Visualización en pantalla o TV.</li>
-                <li>Uso inalámbrico desde los dispositivos del club.</li>
-              </ul>
-              <p className="venue-plans__note">Pro suma sponsors propios, torneos automatizados, reportes exportables, campañas PadCoins y notificaciones segmentadas.</p>
-            </div>
-            <figure>
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-                poster="/media/public-site/jero/marcador-inteligente-captura.jpg"
-                aria-label="Marcador digital de Padbol Match durante un partido"
-              >
-                <source src="/media/public-site/jero/marcador-inteligente.mp4" type="video/mp4" />
-              </video>
-              <figcaption>Marcador actualmente disponible en Padbol Match.</figcaption>
-            </figure>
-          </div>
-        </section>
-
-        <section className="venue-plans__section venue-plans__multisport" aria-labelledby="multisport-title">
-          <div className="public-site__shell">
-            <p className="venue-plans__eyebrow">UN CLUB. CUATRO DEPORTES.</p>
-            <h2 id="multisport-title">Padbol · Pádel · Pickleball · Tenis</h2>
-            <p>Administrá todas tus canchas desde una misma plataforma, aunque tu club practique diferentes deportes.</p>
-            <div className="venue-plans__sport-grid" aria-hidden="true">
-              <span>PADBOL</span><span>PÁDEL</span><span>PICKLEBALL</span><span>TENIS</span>
-            </div>
-          </div>
-        </section>
-
         <section className="venue-plans__section venue-plans__automation" aria-labelledby="automation-title">
           <div className="public-site__shell">
-            <p className="venue-plans__eyebrow">STARTER ADMINISTRA. PRO AUTOMATIZA.</p>
-            <h2 id="automation-title">Más movimiento para tu club.<br /><span>Menos tareas repetidas.</span></h2>
+            <p className="venue-plans__eyebrow">LO QUE GANA TU CLUB</p>
+            <h2 id="automation-title">Más movimiento.<br /><span>Una operación más simple.</span></h2>
             <div className="venue-plans__feature-grid">
-              <FeaturePanel eyebrow="01" title="Torneos automáticos">Sorteo → zonas → partidos → resultados → clasificación → cruces → finales.</FeaturePanel>
-              <FeaturePanel eyebrow="02" title="Generá nuevos ingresos">Membresías, promociones y espacios propios para sponsors.</FeaturePanel>
-              <FeaturePanel eyebrow="03" title="Fidelizá jugadores">PadCoins, campañas y beneficios configurados por el club.</FeaturePanel>
-              <FeaturePanel eyebrow="04" title="Reducí el costo de plataforma">Starter: 1% · Pro: 0,65%. Valores administrables por región.</FeaturePanel>
+              <FeaturePanel eyebrow="01" title="Menos tareas repetidas">Pro automatiza sorteos, zonas, partidos, resultados, clasificación, cruces y finales.</FeaturePanel>
+              <FeaturePanel eyebrow="02" title="Nuevos ingresos">Creá membresías, promociones y espacios propios para sponsors dentro de la operación del club.</FeaturePanel>
+              <FeaturePanel eyebrow="03" title="Jugadores que vuelven">Activá PadCoins, campañas y beneficios configurados por tu sede.</FeaturePanel>
+              <FeaturePanel eyebrow="04" title="Marcador incluido">Llevá el partido en vivo desde teléfono, tablet o computadora y mostralo en una TV, sin equipamiento específico.</FeaturePanel>
             </div>
           </div>
         </section>
@@ -218,7 +204,7 @@ export default function VenuePlansPage({ catalogOverride = null }) {
           <div className="public-site__shell venue-plans__split">
             <div>
               <p className="venue-plans__eyebrow">¿YA USÁS OTRO SISTEMA?</p>
-              <h2 id="migration-title">No empezás de cero.</h2>
+              <h2 id="migration-title">No empiezas de cero.</h2>
               <p>Podemos importar información que pertenezca legítimamente a la sede y que tenga un formato compatible. El alcance se valida antes de comenzar.</p>
             </div>
             <ol className="venue-plans__migration-list">
@@ -229,28 +215,41 @@ export default function VenuePlansPage({ catalogOverride = null }) {
           </div>
         </section>
 
-        <section className="venue-plans__section venue-plans__growth" aria-label="Herramientas de crecimiento Pro">
-          <div className="public-site__shell venue-plans__feature-grid venue-plans__feature-grid--two">
-            <FeaturePanel eyebrow="PRO" title="CREÁ TU PROPIA MEMBRESÍA">Definí precio, duración, beneficios, descuentos, horarios, prioridad, reservas incluidas y PadCoins. Es una membresía propia del club, separada de cualquier futura membresía global del jugador.</FeaturePanel>
-            <FeaturePanel eyebrow="PRO" title="CONVERTÍ TUS PANTALLAS EN UN ACTIVO">Gestioná sponsors propios en marcador, TV, torneos y espacios locales disponibles. El inventario de la sede se mantiene separado del inventario Global Padbol Match y del de FIPA.</FeaturePanel>
-          </div>
-        </section>
-
-        <section className="venue-plans__section venue-plans__experiences" aria-labelledby="experiences-title">
+        <section className="venue-plans__section venue-plans__faq" aria-labelledby="plans-faq-title">
           <div className="public-site__shell">
-            <p className="venue-plans__eyebrow">CINCO EXPERIENCIAS. UN SOLO PRODUCTO.</p>
-            <h2 id="experiences-title">Signature · Stadium · Express · Arena · Quantum</h2>
-            <p>Son interfaces visuales de Padbol Match. No son planes comerciales y no determinan si un club usa Starter, Pro o Business.</p>
+            <p className="venue-plans__eyebrow">PREGUNTAS CLARAS. RESPUESTAS DIRECTAS.</p>
+            <h2 id="plans-faq-title">Sin sorpresas.<br /><span>Sin cargos ocultos.</span></h2>
+            <div className="venue-plans__faq-list">
+              {PLAN_FAQS.map((item) => (
+                <details key={item.question} className="venue-plans__faq-item">
+                  <summary>{item.question}</summary>
+                  <p>{item.answer}</p>
+                </details>
+              ))}
+            </div>
+            <div className="venue-plans__chivi-help">
+              <div>
+                <strong>¿Te quedó alguna duda?</strong>
+                <span>Chivi puede explicarte los planes y ayudarte a encontrar la opción adecuada para tu sede.</span>
+              </div>
+              <button
+                type="button"
+                className="venue-plans__cta venue-plans__cta--primary"
+                onClick={() => window.dispatchEvent(new Event('padbol:open-chivi'))}
+              >
+                PREGUNTALE A CHIVI
+              </button>
+            </div>
           </div>
         </section>
 
         <section className="venue-plans__section venue-plans__final-cta">
           <div className="public-site__shell">
             <p className="venue-plans__eyebrow">PADBOL MATCH PARA CLUBES</p>
-            <h2>Empezá sin costo fijo.<br /><span>La operación sigue siendo tuya.</span></h2>
+            <h2>Empieza sin costo fijo.<br /><span>La operación sigue siendo tuya.</span></h2>
             <div className="venue-plans__hero-actions">
               <Link to="/unirse?plan=starter" className="venue-plans__cta venue-plans__cta--primary">EMPEZAR SIN ABONO</Link>
-              <Link to="/contacto?tema=business" className="venue-plans__cta venue-plans__cta--secondary">HABLEMOS</Link>
+              <Link to="/contacto?tema=business" className="venue-plans__cta venue-plans__cta--secondary">CONSULTAR PLAN BUSINESS</Link>
             </div>
           </div>
         </section>

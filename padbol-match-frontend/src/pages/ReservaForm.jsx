@@ -360,15 +360,6 @@ function formatMoneyMain(amountMain, currencyCode) {
   }
 }
 
-/** Tasa de fee de plataforma solo para desglose en resumen (3% club; 6% Padbol Point). */
-function reservaPlatformFeeRateForSede(sede) {
-  const raw = String(sede?.tipo || sede?.tipo_licencia || sede?.tipo_interes || '')
-    .trim()
-    .toLowerCase();
-  if (raw === 'padbol_point') return 0.06;
-  return 0.03;
-}
-
 const STRIPE_PUBLISHABLE_KEY =
   typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
     ? String(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).trim()
@@ -1295,25 +1286,11 @@ export default function ReservaForm() {
     return precioFijoTurno;
   }, [surgeQuote, precioFijoTurno]);
 
-  const reservaFeeRateDisplay = useMemo(
-    () => reservaPlatformFeeRateForSede(sedeSeleccionada),
-    [sedeSeleccionada],
-  );
-  const reservaFeePctDisplay = Math.round(reservaFeeRateDisplay * 100);
   const reservaSubtotalTurnoExtras = useMemo(
     () => precioReservaTurnoBase + reservaExtrasSubtotal,
     [precioReservaTurnoBase, reservaExtrasSubtotal],
   );
-  const reservaCargoPlataforma = useMemo(
-    () => Math.round(reservaSubtotalTurnoExtras * reservaFeeRateDisplay),
-    [reservaSubtotalTurnoExtras, reservaFeeRateDisplay],
-  );
-  const reservaTotalPagarConCargoYExtras = useMemo(
-    () => reservaSubtotalTurnoExtras + reservaCargoPlataforma,
-    [reservaSubtotalTurnoExtras, reservaCargoPlataforma],
-  );
-  const reservaCargoPlataformaDisplay = reservaCargoPlataforma;
-  const reservaTotalDisplay = reservaTotalPagarConCargoYExtras;
+  const reservaTotalDisplay = reservaSubtotalTurnoExtras;
 
   const reservaExtrasPayload = useMemo(
     () => buildReservaExtrasPayload(reservaExtrasDisponibles, reservaExtrasCantidad),
@@ -2233,7 +2210,7 @@ export default function ReservaForm() {
 
     const creditoAplicado = 0;
     const extrasPayload = reservaExtrasPayload;
-    const precioFinal = Math.max(0, reservaTotalPagarConCargoYExtras - creditoAplicado);
+    const precioFinal = Math.max(0, reservaSubtotalTurnoExtras - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
       sede_id: sedeSeleccionada.id,
@@ -2835,9 +2812,7 @@ export default function ReservaForm() {
     const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
     const stripeCuentaOk = String(sedeSeleccionada?.stripe_account_id || '').trim().startsWith('acct_');
     const montoBaseMinor = amountMainToStripeMinor(stripeMontoMainConExtras, moneda);
-    const cargoServicioMinor = Math.round(montoBaseMinor * reservaFeeRateDisplay);
-    const totalMinor = montoBaseMinor + cargoServicioMinor;
-    const precioPayloadStripe = Number(stripeMinorToMain(totalMinor, moneda));
+    const precioPayloadStripe = Number(stripeMinorToMain(montoBaseMinor, moneda));
     const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
     const muestraInputWhatsappResumen =
       Boolean(session?.user) &&
@@ -2969,22 +2944,8 @@ export default function ReservaForm() {
                       <strong>{t('reservas.labelExtras')}</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
                     </p>
                   ) : null}
-                  <p
-                    style={{
-                      margin: '0 0 4px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    <strong>
-                      {t('reservas.platformFee', {
-                        pct: reservaFeePctDisplay,
-                        defaultValue: `Fee de plataforma (${reservaFeePctDisplay}%):`,
-                      })}
-                    </strong>{' '}
-                    {formatMoneyMain(reservaCargoPlataformaDisplay, moneda)}
+                  <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    {t('reservas.playerCommissionZero', 'Comisión de Padbol Match al jugador: 0%')}
                   </p>
                   <p style={{ margin: '8px 0 0', fontWeight: 800, fontSize: 16, lineHeight: 1.3 }}>
                     <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalDisplay, moneda)}

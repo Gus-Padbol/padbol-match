@@ -25,7 +25,7 @@ function translatedPushError(error, t, fallbackKey) {
   return t(fallbackKey);
 }
 
-function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub }) {
+function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminCadena, esAdminClub }) {
   if (segmentKind === 'jugador' && selectedPlayer?.userId) {
     return { type: 'jugador', userId: selectedPlayer.userId, email: selectedPlayer.email || undefined };
   }
@@ -39,6 +39,10 @@ function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, selectedPlaye
     if (segmentKind === 'todos_pais') return { type: 'todos_pais' };
     if (segmentKind === 'sede') return { type: 'sede', sedeId: Number(sedeId) };
   }
+  if (esAdminCadena) {
+    if (segmentKind === 'toda_cadena') return { type: 'toda_cadena' };
+    if (segmentKind === 'sede') return { type: 'sede', sedeId: Number(sedeId) };
+  }
   if (esAdminClub && segmentKind === 'sede_mia') return { type: 'sede_mia' };
   return null;
 }
@@ -48,6 +52,7 @@ export default function AdminNotificacionesSection({
   accessToken,
   isSuperAdmin = false,
   esAdminNacional = false,
+  esAdminCadena = false,
   esAdminClub = false,
   sedeId = null,
   sedesOptions = [],
@@ -61,6 +66,7 @@ export default function AdminNotificacionesSection({
   const [segmentKind, setSegmentKind] = useState(() => {
     if (isSuperAdmin) return 'todos_usuarios';
     if (esAdminNacional) return 'todos_pais';
+    if (esAdminCadena) return 'toda_cadena';
     if (esAdminClub) return 'sede_mia';
     return 'jugador';
   });
@@ -89,9 +95,10 @@ export default function AdminNotificacionesSection({
         selectedPlayer,
         isSuperAdmin,
         esAdminNacional,
+        esAdminCadena,
         esAdminClub,
       }),
-    [segmentKind, pais, sedeSel, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub],
+    [segmentKind, pais, sedeSel, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminCadena, esAdminClub],
   );
 
   const segmentOptions = useMemo(() => {
@@ -104,12 +111,15 @@ export default function AdminNotificacionesSection({
     } else if (esAdminNacional) {
       opts.push({ value: 'todos_pais', label: t('admin.pushNotif.segments.allCountry') });
       opts.push({ value: 'sede', label: t('admin.pushNotif.segments.byVenueCountry') });
+    } else if (esAdminCadena) {
+      opts.push({ value: 'toda_cadena', label: 'Todas las sedes de la cadena' });
+      opts.push({ value: 'sede', label: 'Una sede de la cadena' });
     } else if (esAdminClub) {
       opts.push({ value: 'sede_mia', label: t('admin.pushNotif.segments.allVenue') });
     }
     opts.push({ value: 'jugador', label: t('admin.pushNotif.segments.onePlayer') });
     return opts;
-  }, [isSuperAdmin, esAdminNacional, esAdminClub, t]);
+  }, [isSuperAdmin, esAdminNacional, esAdminCadena, esAdminClub, t]);
 
   const loadMeta = useCallback(async () => {
     if (!accessToken) {

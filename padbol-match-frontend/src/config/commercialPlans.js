@@ -82,7 +82,7 @@ export const COMMERCIAL_PLANS_PREVIEW = Object.freeze([
     courtsLabel: '13+ canchas',
     adminsLabel: 'Condiciones personalizadas',
     summary: 'Soluciones multisede y personalizadas para cadenas, operadores y licenciatarios.',
-    ctaLabel: 'HABLEMOS',
+    ctaLabel: 'CONSULTAR PLAN BUSINESS',
     ctaPath: '/contacto?tema=business',
     contactOnly: true,
     features: [

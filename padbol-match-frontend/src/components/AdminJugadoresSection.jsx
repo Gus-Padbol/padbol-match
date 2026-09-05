@@ -254,6 +254,7 @@ export default function AdminJugadoresSection({
   sedeId: sedeIdProp,
   sedesMap = {},
   isSuperAdmin = false,
+  canSelectSede = false,
   esAdminClub = false,
 }) {
   const { t } = useSafeTranslation();
@@ -263,7 +264,7 @@ export default function AdminJugadoresSection({
 
   const [sedeId, setSedeId] = useState(() => {
     if (sedeIdProp != null && sedeIdProp !== '') return String(sedeIdProp);
-    if (isSuperAdmin && sedesList[0]?.id != null) return String(sedesList[0].id);
+    if ((isSuperAdmin || canSelectSede) && sedesList[0]?.id != null) return String(sedesList[0].id);
     return '';
   });
   const [q, setQ] = useState('');
@@ -284,6 +285,12 @@ export default function AdminJugadoresSection({
   }, [sedeIdProp, esAdminClub]);
 
   useEffect(() => {
+    if ((isSuperAdmin || canSelectSede) && !sedeId && sedesList[0]?.id != null) {
+      setSedeId(String(sedesList[0].id));
+    }
+  }, [canSelectSede, isSuperAdmin, sedeId, sedesList]);
+
+  useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
       setQDebounced(q);
@@ -299,7 +306,7 @@ export default function AdminJugadoresSection({
     }
     if (!sedeId) {
       setData({ items: [], total: 0, total_pages: 1 });
-      setError(isSuperAdmin ? t('admin.jugadores.selectSede') : '');
+      setError(isSuperAdmin || canSelectSede ? t('admin.jugadores.selectSede') : '');
       return;
     }
     setLoading(true);
@@ -325,7 +332,7 @@ export default function AdminJugadoresSection({
     } finally {
       setLoading(false);
     }
-  }, [accessToken, apiBaseUrl, isSuperAdmin, page, qDebounced, sedeId, t]);
+  }, [accessToken, apiBaseUrl, canSelectSede, isSuperAdmin, page, qDebounced, sedeId, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -369,7 +376,7 @@ export default function AdminJugadoresSection({
           marginBottom: 14,
         }}
       >
-        {isSuperAdmin ? (
+        {isSuperAdmin || canSelectSede ? (
           <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
             {t('admin.jugadores.sedeLabel')}
             <select

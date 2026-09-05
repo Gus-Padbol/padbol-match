@@ -827,7 +827,7 @@ export default function ChatbotIA() {
   usePadbolLangVersion();
   const isPublicLanding = useMemo(() => {
     const p = String(location.pathname || '/').replace(/\/+$/, '') || '/';
-    return p === '/plataforma';
+    return p === '/plataforma' || p === '/planes';
   }, [location.pathname]);
   const ui = useMemo(() => {
     const base = chatUiStrings(padbolLang, t);
@@ -1023,6 +1023,12 @@ export default function ChatbotIA() {
     setError('');
     setVoiceNotice('');
   }, []);
+
+  useEffect(() => {
+    const openFromPage = () => openChatFromFab();
+    window.addEventListener('padbol:open-chivi', openFromPage);
+    return () => window.removeEventListener('padbol:open-chivi', openFromPage);
+  }, [openChatFromFab]);
 
   useEffect(() => {
     if (!open) return;
@@ -1671,7 +1677,7 @@ export default function ChatbotIA() {
             <>
               <span className="chatbot-fab-circle-btn">
                 <ChiviFabAvatar fill src={chiviAvatarUrl} />
-                {isPublicLanding ? <span className="chatbot-public-ai-spark" aria-hidden="true">✦</span> : null}
+                {isPublicLanding ? <span className="chatbot-public-ai-spark" aria-hidden="true" /> : null}
               </span>
               <span
                 className={isPublicLanding ? 'chatbot-public-ai-label' : undefined}

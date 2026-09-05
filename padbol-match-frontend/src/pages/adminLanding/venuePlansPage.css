@@ -165,16 +165,7 @@
 .venue-plans__catalog-state--error { color: #ff9aa2; }
 .venue-plans__fine-print { max-width: 920px; margin: 28px 0 0; color: rgba(255,255,255,.45); font-size: 12px; line-height: 1.55; }
 
-.venue-plans__scoreboard figure { margin: 0; }
-.venue-plans__scoreboard video { display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover; border: 1px solid rgba(242,201,76,.3); border-radius: 18px; background: #05070c; }
-.venue-plans__scoreboard figcaption { margin-top: 10px; color: rgba(255,255,255,.42); font-size: 12px; }
-.venue-plans__scoreboard ul { padding-left: 18px; color: rgba(255,255,255,.72); line-height: 1.8; }
-.venue-plans__note { color: rgba(255,255,255,.48); font-size: 13px; line-height: 1.55; }
-
-.venue-plans__sport-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 40px; }
-.venue-plans__sport-grid span { padding: 36px 16px; border: 1px solid rgba(242,201,76,.24); color: #fff; text-align: center; font: 800 clamp(20px, 3vw, 34px)/1 "Oswald", sans-serif; }
 .venue-plans__feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 46px; }
-.venue-plans__feature-grid--two { grid-template-columns: repeat(2, 1fr); margin-top: 0; }
 .venue-plans__feature-panel { padding: 30px; border-top: 2px solid var(--vp-gold); background: rgba(255,255,255,.035); }
 .venue-plans__feature-panel > p { color: var(--vp-red); font-weight: 900; }
 .venue-plans__feature-panel h3 { margin: 12px 0 18px; font-size: 25px; }
@@ -183,8 +174,18 @@
 .venue-plans__migration-list li { display: grid; grid-template-columns: 120px 1fr; gap: 18px; padding: 22px 0; border-bottom: 1px solid rgba(255,255,255,.1); }
 .venue-plans__migration-list b { color: var(--vp-gold); text-transform: uppercase; }
 .venue-plans__migration-list span { color: rgba(255,255,255,.65); }
-.venue-plans__experiences { text-align: center; }
-.venue-plans__experiences h2, .venue-plans__experiences p { margin-inline: auto; }
+.venue-plans__faq-list { display: grid; gap: 12px; max-width: 920px; margin-top: 46px; }
+.venue-plans__faq-item { border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.035); }
+.venue-plans__faq-item summary { position: relative; padding: 22px 58px 22px 24px; color: #fff; cursor: pointer; font-weight: 800; list-style: none; }
+.venue-plans__faq-item summary::-webkit-details-marker { display: none; }
+.venue-plans__faq-item summary::after { content: "+"; position: absolute; top: 50%; right: 24px; color: var(--vp-gold); font-size: 26px; font-weight: 500; transform: translateY(-50%); }
+.venue-plans__faq-item[open] summary::after { content: "−"; }
+.venue-plans__faq-item p { margin: 0; padding: 0 58px 24px 24px; color: rgba(255,255,255,.68); line-height: 1.65; }
+.venue-plans__chivi-help { display: flex; align-items: center; justify-content: space-between; gap: 30px; max-width: 920px; margin-top: 28px; padding: 26px; border: 1px solid rgba(242,201,76,.3); border-radius: 14px; background: rgba(242,201,76,.06); }
+.venue-plans__chivi-help strong, .venue-plans__chivi-help span { display: block; }
+.venue-plans__chivi-help strong { color: #fff; font-size: 20px; }
+.venue-plans__chivi-help span { margin-top: 6px; color: rgba(255,255,255,.62); line-height: 1.5; }
+.venue-plans__chivi-help .venue-plans__cta { flex: 0 0 auto; border: 0; cursor: pointer; }
 .venue-plans__final-cta { text-align: center; background: radial-gradient(circle at 50% 0, rgba(239,51,64,.19), transparent 58%), #08090d; }
 .venue-plans__final-cta h2 { margin-inline: auto; }
 .venue-plans__final-cta .venue-plans__hero-actions { justify-content: center; }
@@ -211,9 +212,10 @@
   .venue-plans__card { padding: 28px 22px; }
   .venue-plans__hero-actions, .venue-plans__cta { width: 100%; }
   .venue-plans__padbol-owner .venue-plans__cta { width: 100%; min-width: 0; }
-  .venue-plans__sport-grid, .venue-plans__feature-grid, .venue-plans__feature-grid--two { grid-template-columns: 1fr; }
-  .venue-plans__sport-grid span { padding: 24px 12px; }
+  .venue-plans__feature-grid { grid-template-columns: 1fr; }
   .venue-plans__migration-list li { grid-template-columns: 1fr; gap: 6px; }
+  .venue-plans__chivi-help { align-items: stretch; flex-direction: column; }
+  .venue-plans__chivi-help .venue-plans__cta { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

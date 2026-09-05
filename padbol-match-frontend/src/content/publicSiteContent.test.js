@@ -8,16 +8,17 @@ const es = require('../i18n/locales/es.json');
 
 describe('publicSite content structure', () => {
   const expectedAnchors = [
-    'nosotros',
     'que-es',
     'experiencias',
     'jugadores',
+    'tu-recorrido',
     'comunidad-partidos',
     'marcador-inteligente',
-    'sedes',
     'continuidad',
-    'expansion',
+    'sedes',
+    'administra-tu-sede',
     'arbitro-virtual',
+    'nosotros',
     'descargar',
     'contacto',
   ];
@@ -65,7 +66,7 @@ describe('publicSite content structure', () => {
   it('tiene contenido español para todos los títulos, textos e items configurados', () => {
     Object.entries(PUBLIC_SITE_SECTIONS).forEach(([sectionKey, section]) => {
       expect(es.publicSite[sectionKey]?.title).toEqual(expect.any(String));
-      expect(es.publicSite[sectionKey]?.text).toEqual(expect.any(String));
+      expect(es.publicSite[sectionKey]?.text || es.publicSite[sectionKey]?.lead).toEqual(expect.any(String));
       (section.items || []).forEach(({ key }) => {
         expect(es.publicSite[sectionKey]?.items?.[key]?.title).toEqual(expect.any(String));
         expect(es.publicSite[sectionKey]?.items?.[key]?.text).toEqual(expect.any(String));

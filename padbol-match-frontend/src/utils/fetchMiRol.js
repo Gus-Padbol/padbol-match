@@ -16,6 +16,7 @@ function parseMiRolResponse(data) {
   const sedeIdRaw = data.sedeId ?? data.sede_id;
   const sedeIdNum = sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
   const rolRaw = data.rol ?? data.role;
+  const organizacionId = data.organizacionId ?? data.organizacion_id ?? null;
 
   return {
     email,
@@ -23,6 +24,7 @@ function parseMiRolResponse(data) {
     nombre: data.nombre ?? null,
     pais: data.pais ?? null,
     sedeId: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
+    organizacionId: organizacionId ? String(organizacionId) : null,
     torneosOficialesHabilitados: Boolean(data.torneosOficialesHabilitados),
   };
 }

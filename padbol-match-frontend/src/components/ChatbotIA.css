@@ -47,6 +47,19 @@
     chatbot-public-ai-spark-settle 0.45s ease 7.1s forwards;
 }
 
+.chatbot-public-ai-spark::before,
+.chatbot-public-ai-spark::after {
+  content: '';
+  position: absolute;
+  inset: 7px 14px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.chatbot-public-ai-spark::after {
+  transform: rotate(90deg);
+}
+
 .chatbot-fab-anchor--public .chatbot-fab-circle-btn {
   overflow: visible;
   border-color: #e11b22;

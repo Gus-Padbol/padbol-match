@@ -5,11 +5,12 @@
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 const EXPO_PUSH_BATCH = 100;
 
-const ADMIN_PUSH_ROLES = new Set(['super_admin', 'admin_nacional', 'admin_club']);
+const ADMIN_PUSH_ROLES = new Set(['super_admin', 'admin_nacional', 'admin_cadena', 'admin_club']);
 
 const WEEKLY_LIMITS = {
   admin_club: 3,
   admin_nacional: 2,
+  admin_cadena: 3,
   super_admin: 1,
 };
 
@@ -169,6 +170,37 @@ export async function validateAdminPushSegment(scope, segment, { supabase, sedes
     }
   }
 
+  if (role === 'admin_cadena') {
+    const { data: organization, error: organizationError } = await supabase
+      .from('organizaciones')
+      .select('estado, funciones_habilitadas')
+      .eq('id', scope.organizacionId)
+      .maybeSingle();
+    if (organizationError) throw organizationError;
+    if (!organization || organization.estado !== 'activa' || !(organization.funciones_habilitadas || []).includes('notificaciones')) {
+      const e = new Error('Las notificaciones no están habilitadas para esta cadena');
+      e.status = 403;
+      throw e;
+    }
+    const allowed = await sedesPermitidasPorScopeFn(scope);
+    const sedeIds = (allowed.sedes || []).map((s) => Number(s.id)).filter(Number.isFinite);
+    if (type === 'toda_cadena') return { type: 'toda_cadena', sedeIds };
+    if (type === 'sede') {
+      const sedeId = parseInt(String(segment.sedeId ?? segment.sede_id ?? ''), 10);
+      if (!Number.isFinite(sedeId) || sedeId <= 0) {
+        const e = new Error('Selecciona una sede');
+        e.status = 400;
+        throw e;
+      }
+      if (!sedeIds.includes(sedeId)) {
+        const e = new Error('La sede no pertenece a tu organización');
+        e.status = 403;
+        throw e;
+      }
+      return { type: 'sede', sedeId };
+    }
+  }
+
   if (role === 'admin_club') {
     if (type === 'sede_mia') {
       const sedeId = scope.sedeId;
@@ -277,6 +309,15 @@ export async function resolveAdminPushRecipientUserIds(supabase, scope, segment)
 
   if (type === 'sede') {
     return userIdsFromSedeActivity(supabase, segment.sedeId);
+  }
+
+  if (type === 'toda_cadena') {
+    const ids = new Set();
+    for (const sedeId of segment.sedeIds || []) {
+      const users = await userIdsFromSedeActivity(supabase, sedeId);
+      users.forEach((userId) => ids.add(userId));
+    }
+    return [...ids];
   }
 
   if (type === 'deporte') {

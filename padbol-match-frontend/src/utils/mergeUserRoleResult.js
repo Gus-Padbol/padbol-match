@@ -17,6 +17,7 @@ export function readCachedUserRoleForEmail(email) {
     nombre: cached.nombre ?? null,
     pais: cached.pais ?? null,
     sedeId: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
+    organizacionId: cached.organizacionId ?? null,
     torneosOficialesHabilitados: cached.torneosOficialesHabilitados ?? false,
     source: 'cache',
   };
@@ -38,6 +39,7 @@ export function mergeUserRoleResults({ apiResult, supabaseResult, email }) {
         nombre: c.nombre ?? null,
         pais: c.pais ?? null,
         sedeId: c.sedeId ?? null,
+        organizacionId: c.organizacionId ?? null,
         torneosOficialesHabilitados: c.torneosOficialesHabilitados ?? false,
       };
     }
@@ -49,6 +51,7 @@ export function mergeUserRoleResults({ apiResult, supabaseResult, email }) {
         nombre: apiResult?.nombre ?? supabaseResult?.nombre ?? null,
         pais: apiResult?.pais ?? supabaseResult?.pais ?? null,
         sedeId: apiResult?.sedeId ?? supabaseResult?.sedeId ?? null,
+        organizacionId: apiResult?.organizacionId ?? supabaseResult?.organizacionId ?? null,
         torneosOficialesHabilitados: false,
       }
     : null;

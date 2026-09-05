@@ -35,6 +35,7 @@ const LICENCIA_TIPO_OPTIONS = [
 
 const emptyForm = () => ({
   nombre: '',
+  cantidad_canchas: '1',
   direccion: '',
   ciudad: '',
   provincia: '',
@@ -100,7 +101,8 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const emailLower = String(session?.user?.email || '').trim().toLowerCase();
   const isSuper = rol === 'super_admin' || LEGACY_SUPER.includes(emailLower);
   const isNacional = rol === 'admin_nacional';
-  const puede = isSuper || isNacional;
+  const isAdminCadena = rol === 'admin_cadena';
+  const puede = isSuper || isNacional || isAdminCadena;
 
   const [form, setForm] = useState(emptyForm);
   const [sending, setSending] = useState(false);
@@ -147,6 +149,10 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
       setErr('El nombre del club es obligatorio.');
       return;
     }
+    if (!Number.isFinite(Number(form.cantidad_canchas)) || Number(form.cantidad_canchas) <= 0) {
+      setErr('La cantidad de canchas debe ser mayor a cero.');
+      return;
+    }
     if (!form.licenciatario_email.trim()) {
       setErr('El email del licenciatario es obligatorio.');
       return;
@@ -171,6 +177,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
     try {
       const body = {
         nombre: form.nombre.trim(),
+        cantidad_canchas: Number(form.cantidad_canchas),
         direccion: form.direccion.trim() || null,
         ciudad: form.ciudad.trim() || null,
         provincia: form.provincia.trim() || null,
@@ -223,7 +230,9 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
           method: 'POST',
           body: JSON.stringify(body),
         });
-        setMsg('Solicitud enviada. Gus revisará y aprobará en breve.');
+        setMsg(isAdminCadena
+          ? 'Solicitud enviada. Al aprobarse, la sede quedará vinculada a tu cadena.'
+          : 'Solicitud enviada. Gus revisará y aprobará en breve.');
       }
       setTimeout(() => navigate('/admin?tab=resumen'), 2200);
     } catch (ex) {
@@ -325,6 +334,16 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               style={inputStyle}
               value={form.nombre}
               onChange={(e) => setField('nombre', e.target.value)}
+            />
+            <label style={{ ...labelStyle, marginTop: 12 }}>Cantidad de canchas *</label>
+            <input
+              required
+              type="number"
+              min="1"
+              step="1"
+              style={inputStyle}
+              value={form.cantidad_canchas}
+              onChange={(e) => setField('cantidad_canchas', e.target.value)}
             />
             <label style={{ ...labelStyle, marginTop: 12 }}>Dirección</label>
             <input style={inputStyle} value={form.direccion} onChange={(e) => setField('direccion', e.target.value)} />
@@ -482,7 +501,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               <option value="mercadopago">Mercado Pago</option>
               <option value="stripe">Stripe</option>
               <option value="manual">Manual (transferencia u otras instrucciones)</option>
-              <option value="efectivo">Efectivo en sede (sin pasarela ni fee 3%)</option>
+              <option value="efectivo">Efectivo en sede (sin procesador de pago online)</option>
             </select>
             {form.metodo_pago === 'mercadopago' ? (
               <>

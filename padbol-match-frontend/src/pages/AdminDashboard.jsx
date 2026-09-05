@@ -95,6 +95,8 @@ import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
 import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
+import AdminOrganizacionesSection from '../components/AdminOrganizacionesSection';
+import AdminIncentivosSection from '../components/AdminIncentivosSection';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
@@ -2610,13 +2612,13 @@ function mismoPaisFiltroAdmin(paisRow, paisFiltroValor) {
   return p.toLowerCase() === want.toLowerCase();
 }
 
-function comisionPadbolTresPorcientoPorMoneda(ingresosPorMoneda) {
-  const out = {};
-  ['ARS', 'USD', 'EUR'].forEach((m) => {
-    const n = Number(ingresosPorMoneda?.[m]) || 0;
-    if (n > 0) out[m] = Math.round(n * 0.03 * 100) / 100;
-  });
-  return out;
+function porcentajeComisionComercialSede(sede) {
+  const custom = Number(sede?.comision_plataforma_porcentaje);
+  if (sede?.comision_plataforma_porcentaje != null && Number.isFinite(custom) && custom >= 0) return custom;
+  const plan = String(sede?.plan_comercial || 'starter').trim().toLowerCase();
+  if (plan === 'pro') return 0.65;
+  if (plan === 'business') return 0.35;
+  return 1;
 }
 
 function monetarioObjTodoCero(obj) {
@@ -3436,16 +3438,18 @@ export default function AdminDashboard({
   const esEmpleado = rolPanel === 'empleado';
   const esEditorContenido = rolPanel === 'editor_contenido';
   const isAdmin =
-    isSuperAdmin || rolPanel === 'admin_nacional' || rolPanel === 'admin_club' || esEmpleado;
+    isSuperAdmin || rolPanel === 'admin_nacional' || rolPanel === 'admin_cadena' || rolPanel === 'admin_club' || esEmpleado;
 
   // Role-based access flags
   const esAdminNacional = rolPanel === 'admin_nacional';
+  const esAdminCadena   = rolPanel === 'admin_cadena';
+  const esAdminMultiplesSedes = esAdminNacional || esAdminCadena;
   const esAdminClub     = rolPanel === 'admin_club';
   /** Clave estable para sedesMap / canchasDetallePorSede (prop puede llegar tarde). */
   const sedeIdKey =
     sedeId != null && sedeId !== '' && String(sedeId).trim() !== '' ? String(sedeId) : '';
   const puedeVerConfig  = isSuperAdmin;
-  const puedeVerScoreboard = isSuperAdmin || esAdminClub;
+  const puedeVerScoreboard = isSuperAdmin || esAdminClub || esAdminCadena;
   const puedeVerPadCoins = canRoleSeePadCoins(rolPanel);
   const puedeVerMembresias = isSuperAdmin || esAdminClub;
   const puedeVerFinanzas = !esEmpleado;
@@ -3467,10 +3471,11 @@ export default function AdminDashboard({
   const [totalJugadoresPais, setTotalJugadoresPais] = useState(0);
   const [nacionalJugadoresLoading, setNacionalJugadoresLoading] = useState(false);
   const puedeVerSedesPendientes = isSuperAdmin;
-  const puedeEnviarNotificacionesPush = isSuperAdmin || esAdminNacional || esAdminClub;
+  const puedeEnviarNotificacionesPush = isSuperAdmin || esAdminNacional || esAdminCadena || esAdminClub;
   const ROLE_BADGE = useMemo(() => ({
     super_admin:    `👑 ${t('admin.role.super')}`,
     admin_nacional: `🌎 ${t('admin.role.national')}`,
+    admin_cadena:   '🏢 Admin Multisede',
     admin_club:     `🏠 ${t('admin.role.club')}`,
     empleado:       `👤 ${t('admin.role.employee')}`,
     editor_contenido: `📝 ${t('admin.role.editor')}`,
@@ -3478,6 +3483,25 @@ export default function AdminDashboard({
   const roleBadgeLabel = ROLE_BADGE[rolPanel] || ROLE_BADGE[rol] || 'Admin';
 
   const [reservas, setReservas] = useState([]);
+  const [organizacionActual, setOrganizacionActual] = useState(null);
+  useEffect(() => {
+    if (!esAdminCadena || !session?.access_token) {
+      setOrganizacionActual(null);
+      return undefined;
+    }
+    let cancelled = false;
+    fetch(`${apiBaseUrl}/api/admin/organizaciones`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then(async (response) => {
+        const json = await response.json().catch(() => ([]));
+        if (!response.ok) throw new Error(json?.error || 'No se pudo cargar la organización');
+        return Array.isArray(json) ? json[0] || null : null;
+      })
+      .then((row) => { if (!cancelled) setOrganizacionActual(row); })
+      .catch(() => { if (!cancelled) setOrganizacionActual(null); });
+    return () => { cancelled = true; };
+  }, [apiBaseUrl, esAdminCadena, session?.access_token]);
   const [torneos, setTorneos] = useState([]);
   const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
   const torneoCrearRef = useRef(null);
@@ -6698,11 +6722,11 @@ export default function AdminDashboard({
   );
 
   const sedesNacionalLista = useMemo(() => {
-    if (!esAdminNacional) return [];
+    if (!esAdminMultiplesSedes) return [];
     return Object.values(sedesMap || {}).sort((a, b) =>
       String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' })
     );
-  }, [esAdminNacional, sedesMap]);
+  }, [esAdminMultiplesSedes, sedesMap]);
 
   const sedesSuperAdminLista = useMemo(() => {
     if (!isSuperAdmin) return [];
@@ -10059,7 +10083,7 @@ export default function AdminDashboard({
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
   })();
 
-  const TABS = esEmpleado
+  const TABS_BASE = esEmpleado
     ? [
         { id: 'reservas', label: t('admin.tabs.reservas') },
         { id: 'torneos', label: t('admin.tabs.torneos') },
@@ -10069,6 +10093,7 @@ export default function AdminDashboard({
         { id: 'mi_sede', label: t('admin.tabs.miSede') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
+        { id: 'incentivos', label: 'Beneficio Pro' },
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
         ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: 'Scoreboard' }] : []),
@@ -10077,18 +10102,23 @@ export default function AdminDashboard({
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         { id: 'resumen', label: t('nav.admin.resumen') },
       ]
-    : esAdminNacional
+    : esAdminMultiplesSedes
     ? [
         { id: 'resumen', label: t('nav.admin.resumen') },
+        ...(esAdminCadena ? [{ id: 'reservas', label: t('admin.tabs.reservas') }] : []),
         { id: 'torneos', label: t('torneos.titulo') },
         { id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') },
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
+        ...(esAdminCadena ? [{ id: 'incentivos', label: 'Beneficio Pro' }] : []),
+        ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: 'Scoreboard' }] : []),
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
       ]
     : [
         { id: 'resumen', label: t('admin.tabs.resumen') },
         ...(isSuperAdmin ? [{ id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') }] : []),
+        ...(isSuperAdmin ? [{ id: 'organizaciones', label: 'Multisede' }] : []),
+        ...(isSuperAdmin ? [{ id: 'incentivos', label: 'Incentivos' }] : []),
         ...(isSuperAdmin ? [{ id: 'solicitudes', label: t('admin.tabs.solicitudes') }] : []),
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
@@ -10112,6 +10142,19 @@ export default function AdminDashboard({
             ]
           : []),
       ];
+  const funcionesCadena = new Set(organizacionActual?.funciones_habilitadas || []);
+  const funcionPorTabCadena = {
+    reservas: 'reservas',
+    torneos: 'torneos',
+    jugadores: 'jugadores',
+    notificaciones: 'notificaciones',
+    scoreboard: 'scoreboard',
+    membresias: 'membresias',
+    padcoins: 'padcoins',
+  };
+  const TABS = esAdminCadena
+    ? TABS_BASE.filter((tab) => !funcionPorTabCadena[tab.id] || funcionesCadena.has(funcionPorTabCadena[tab.id]))
+    : TABS_BASE;
 
   const sedeClubHeader =
     sedeId != null && sedeId !== ''
@@ -10126,6 +10169,9 @@ export default function AdminDashboard({
     }
     if (esAdminNacional) {
       return t('admin.panel.nationalTitle');
+    }
+    if (esAdminCadena) {
+      return organizacionActual?.nombre ? `Panel central · ${organizacionActual.nombre}` : 'Panel central multisede';
     }
     return t('admin.panel.genericTitle', {
       role: roleBadgeLabel.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '').trim(),
@@ -10468,6 +10514,25 @@ export default function AdminDashboard({
           {adminTabAccessNotice}
         </div>
       ) : null}
+{isSuperAdmin && activeTab === 'organizaciones' && session?.access_token ? (
+  <AdminOrganizacionesSection
+    apiBaseUrl={apiBaseUrl}
+    accessToken={session.access_token}
+    sedes={sedesSuperAdminLista}
+  />
+) : null}
+
+{activeTab === 'incentivos' && session?.access_token && (isSuperAdmin || esAdminClub || esAdminCadena) ? (
+  <AdminIncentivosSection
+    apiBaseUrl={apiBaseUrl}
+    accessToken={session.access_token}
+    sedes={isSuperAdmin ? sedesSuperAdminLista : esAdminCadena ? sedesNacionalLista : Object.values(sedesMap || {})}
+    sedeId={esAdminClub ? sedeId : null}
+    isSuperAdmin={isSuperAdmin}
+    canSelectSede={isSuperAdmin || esAdminCadena}
+  />
+) : null}
+
 {isSuperAdmin && activeTab === ADMIN_SEDES_TAB_ID && (
         <div
           style={{
@@ -10500,6 +10565,19 @@ export default function AdminDashboard({
           </button>
         </div>
       )}
+
+      {esAdminMultiplesSedes && activeTab === ADMIN_SEDES_TAB_ID ? (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+          <button
+            type="button"
+            className="admin-primary-action"
+            onClick={() => navigate('/admin/nueva-sede')}
+            style={{ padding: '10px 16px', borderRadius: 10, border: 0, background: '#E11B22', color: '#fff', fontWeight: 800, cursor: 'pointer' }}
+          >
+            ➕ Solicitar nueva sede
+          </button>
+        </div>
+      ) : null}
 
       {mensajeExito && (
         <div style={{ background: '#4caf50', color: 'white', padding: '15px', borderRadius: '5px', marginBottom: '20px', textAlign: 'center' }}>
@@ -10618,7 +10696,7 @@ export default function AdminDashboard({
           })()
         : null}
 
-      {activeTab === 'resumen' && (esAdminNacional ? (
+      {activeTab === 'resumen' && (esAdminMultiplesSedes ? (
         <>
           <div
             style={{
@@ -10629,7 +10707,9 @@ export default function AdminDashboard({
               fontWeight: 600,
             }}
           >
-            {`Alcance: ${String(adminScopeMeta?.alcance || 'pais')}${
+            {esAdminCadena
+              ? `Organización: ${organizacionActual?.nombre || 'cadena asignada'} · ${sedesNacionalLista.length} sedes vinculadas`
+              : `Alcance: ${String(adminScopeMeta?.alcance || 'pais')}${
               adminScopeMeta?.ciudad ? ` · Ciudad: ${adminScopeMeta.ciudad}` : ''
             }${adminScopeMeta?.provincia ? ` · Provincia: ${adminScopeMeta.provincia}` : ''}${
               adminScopeMeta?.pais ? ` · País: ${adminScopeMeta.pais}` : ''
@@ -10644,8 +10724,14 @@ export default function AdminDashboard({
               </div>
               <div className="card torneos">
                 <h2>{t('admin.metrics.totalPlayers')}</h2>
-                <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>{t('admin.metrics.playersScope')}</p>
+                <p className="count">
+                  {esAdminCadena
+                    ? Number(organizacionActual?.resumen?.jugadores_vinculados_total) || 0
+                    : nacionalJugadoresLoading ? '…' : totalJugadoresPais}
+                </p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>
+                  {esAdminCadena ? 'Jugadores vinculados a las sedes de la cadena' : t('admin.metrics.playersScope')}
+                </p>
               </div>
               <div className="card torneos">
                 <h2>{t('admin.metrics.activeTournaments')}</h2>
@@ -11860,6 +11946,7 @@ export default function AdminDashboard({
             accessToken={session.access_token}
             isSuperAdmin={isSuperAdmin}
             esAdminNacional={esAdminNacional}
+            esAdminCadena={esAdminCadena}
             esAdminClub={esAdminClub}
             sedeId={sedeId}
             sedesOptions={
@@ -11867,6 +11954,8 @@ export default function AdminDashboard({
                 ? sedesSuperAdminLista
                 : esAdminNacional
                   ? sedesNacionalLista
+                  : esAdminCadena
+                    ? sedesNacionalLista
                   : esAdminClub && sedeId
                     ? [
                         {
@@ -11884,9 +11973,9 @@ export default function AdminDashboard({
         </div>
       ) : null}
 
-      {activeTab === ADMIN_SEDES_TAB_ID && (esAdminNacional || isSuperAdmin) && (
+      {activeTab === ADMIN_SEDES_TAB_ID && (esAdminMultiplesSedes || isSuperAdmin) && (
         <div className="section">
-          <h2>{isSuperAdmin ? t('admin.sedes.registeredVenues') : t('admin.sedes.venuesInCountry')}</h2>
+          <h2>{isSuperAdmin ? t('admin.sedes.registeredVenues') : esAdminCadena ? 'Sedes de la cadena' : t('admin.sedes.venuesInCountry')}</h2>
           {isSuperAdmin && session?.access_token ? (
             <AdminSedeExtrasPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
           ) : null}
@@ -11894,7 +11983,7 @@ export default function AdminDashboard({
             <p style={{ color: 'var(--text-secondary)' }}>
               {isSuperAdmin
                 ? t('admin.sedes.noVenuesYet')
-                : t('admin.sedes.noVenuesNationalScope')}
+                : esAdminCadena ? 'La cadena todavía no tiene sedes vinculadas.' : t('admin.sedes.noVenuesNationalScope')}
             </p>
           ) : (
             <>
@@ -12296,13 +12385,14 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {activeTab === 'jugadores' && (esAdminClub || isSuperAdmin) && !esAdminNacional ? (
+      {activeTab === 'jugadores' && (esAdminClub || esAdminCadena || isSuperAdmin) && !esAdminNacional ? (
         <AdminJugadoresSection
           apiBaseUrl={apiBaseUrl}
           accessToken={session?.access_token}
           sedeId={esAdminClub ? sedeId : undefined}
           sedesMap={sedesMap}
           isSuperAdmin={isSuperAdmin}
+          canSelectSede={esAdminCadena}
           esAdminClub={esAdminClub}
         />
       ) : null}
@@ -12822,13 +12912,15 @@ export default function AdminDashboard({
               return mismoPaisFiltroAdmin(sedeInfo?.pais, superReservasFiltroPais);
             });
             const ingresosResumenPais = {};
+            const comisionPmResumen = {};
             reservasResumenPais.forEach((r) => {
               const sedeInfo = resolveSedeDesdeReserva(r) || {};
               const moneda = getMonedaCanonica({ moneda: sedeInfo?.moneda || r?.moneda });
               const precio = Number(r?.precio) || 0;
               ingresosResumenPais[moneda] = (ingresosResumenPais[moneda] || 0) + precio;
+              const comision = precio * porcentajeComisionComercialSede(sedeInfo) / 100;
+              comisionPmResumen[moneda] = Math.round(((comisionPmResumen[moneda] || 0) + comision) * 100) / 100;
             });
-            const comisionPmResumen = comisionPadbolTresPorcientoPorMoneda(ingresosResumenPais);
 
             const paisesOpts = [
               ...new Set(
@@ -13292,7 +13384,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                      Padbol Match (3% comisión)
+                      Padbol Match (comisión según plan)
                     </div>
                     <div
                       style={{
@@ -13463,8 +13555,13 @@ export default function AdminDashboard({
               (sedeId != null && sedeId !== '' ? sedesMap[String(sedeId)]?.moneda : null) ||
               'ARS'
           );
+          const sedeComisionClubId = sedeIdDesdeNombreReserva(sortedRows[0]?.sede, sedesMap);
+          const sedeComisionClub =
+            (sedeId != null && sedeId !== '' ? sedesMap[String(sedeId)] : null)
+            || (sedeComisionClubId != null ? sedesMap[String(sedeComisionClubId)] : null)
+            || {};
           const comisClubPm = isSuperAdmin
-            ? Math.round(totalFactResClub * 0.03 * 100) / 100
+            ? Math.round(totalFactResClub * porcentajeComisionComercialSede(sedeComisionClub) / 100 * 100) / 100
             : 0;
           const usarTarjetasReservasClub = vistaReservasAdminTarjetas && editandoId == null;
 
@@ -13522,7 +13619,7 @@ export default function AdminDashboard({
                   }}
                 >
                   <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                    Padbol Match (3% comisión)
+                    Padbol Match ({porcentajeComisionComercialSede(sedeComisionClub)}% según plan)
                   </div>
                   <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800, marginTop: '8px' }}>
                     {monResClub}{' '}
@@ -18908,7 +19005,7 @@ export default function AdminDashboard({
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'efectivo' ? (
                   <p className="admin-editar-sede-hint" style={{ margin: '0 0 12px' }}>
-                    Reservas sin Mercado Pago ni Stripe; el jugador paga al llegar. Sin fee del 3% en el flujo de reserva.
+                    Reservas sin procesador online; el jugador paga al llegar a la sede.
                   </p>
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'manual' ? (

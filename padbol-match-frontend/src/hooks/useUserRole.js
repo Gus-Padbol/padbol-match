@@ -27,6 +27,7 @@ function roleDataFromCached(email) {
     nombre: cached.nombre,
     pais: cached.pais,
     sedeId: cached.sedeId,
+    organizacionId: cached.organizacionId ?? null,
     torneosOficialesHabilitados: cached.torneosOficialesHabilitados ?? false,
   };
 }
@@ -39,6 +40,7 @@ function roleDataFromApi(apiResult, emailKey) {
     nombre: apiResult.nombre ?? null,
     pais: apiResult.pais ?? null,
     sedeId: apiResult.sedeId ?? null,
+    organizacionId: apiResult.organizacionId ?? null,
     torneosOficialesHabilitados: apiResult.torneosOficialesHabilitados ?? false,
   };
 }
@@ -133,6 +135,7 @@ export default function useUserRole(currentCliente) {
     nombre: roleData?.nombre ?? null,
     pais: roleData?.pais ?? null,
     sedeId: roleData?.sedeId ?? null,
+    organizacionId: roleData?.organizacionId ?? null,
     torneosOficialesHabilitados: roleData?.torneosOficialesHabilitados ?? false,
     loading,
     error,

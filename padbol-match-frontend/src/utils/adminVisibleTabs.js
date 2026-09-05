@@ -17,6 +17,8 @@ export const SUPER_ADMIN_VISIBLE_TABS = Object.freeze([
   'membresias',
   'roles',
   'sedes',
+  'organizaciones',
+  'incentivos',
   'jugadores',
   'solicitudes',
   'profesores',
@@ -42,6 +44,7 @@ export const ADMIN_CLUB_VISIBLE_TABS = Object.freeze([
   'notificaciones',
   'resumen',
   'jugadores',
+  'incentivos',
 ]);
 
 /** Sin PadCoins: Backend actual responde 403 a admin_nacional. */
@@ -53,12 +56,25 @@ export const ADMIN_NACIONAL_VISIBLE_TABS = Object.freeze([
   'notificaciones',
 ]);
 
+/** Administración central de una cadena privada; el backend limita las sedes por organización. */
+export const ADMIN_CADENA_VISIBLE_TABS = Object.freeze([
+  'resumen',
+  'reservas',
+  'torneos',
+  'sedes',
+  'jugadores',
+  'notificaciones',
+  'scoreboard',
+  'incentivos',
+]);
+
 export function defaultAdminTabForRole(rolUsuario) {
   const rol = normalizeUserRole(rolUsuario);
   if (rol === 'empleado') return 'reservas';
   if (rol === 'editor_contenido') return 'personalizar_hub';
   if (rol === 'admin_club') return 'mi_sede';
   if (rol === 'admin_nacional') return 'resumen';
+  if (rol === 'admin_cadena') return 'resumen';
   return 'resumen';
 }
 
@@ -68,6 +84,7 @@ export function getAllowedAdminTabsForRole(rolUsuario) {
   if (rol === 'empleado') return EMPLEADO_VISIBLE_TABS;
   if (rol === 'admin_club') return ADMIN_CLUB_VISIBLE_TABS;
   if (rol === 'admin_nacional') return ADMIN_NACIONAL_VISIBLE_TABS;
+  if (rol === 'admin_cadena') return ADMIN_CADENA_VISIBLE_TABS;
   if (rol === 'super_admin') return SUPER_ADMIN_VISIBLE_TABS;
   return Object.freeze([defaultAdminTabForRole(rol)]);
 }

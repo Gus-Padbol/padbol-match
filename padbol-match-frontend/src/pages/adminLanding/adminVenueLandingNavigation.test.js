@@ -19,4 +19,16 @@ describe('planes de la landing para sedes', () => {
     expect(page).not.toMatch(/id="planes"/);
     expect(plansPage).toContain('id="planes"');
   });
+
+  it('concentra la decisión después de los precios y evita nombres que parecen planes adicionales', () => {
+    expect(plansPage).toContain('Sin cargos ocultos.');
+    expect(plansPage).toContain('¿Me cobran por enviar una solicitud?');
+    expect(plansPage).toContain("new Event('padbol:open-chivi')");
+    expect(plansPage).toContain('CONSULTAR PLAN BUSINESS');
+    expect(plansPage).not.toMatch(/>HABLEMOS</);
+    expect(require('../../config/commercialPlans').COMMERCIAL_PLANS_PREVIEW.at(-1).ctaLabel).toBe('CONSULTAR PLAN BUSINESS');
+    expect(plansPage).not.toMatch(/Signature|Stadium|Express|Arena|Quantum/);
+    expect(plansPage).not.toContain('venue-plans__multisport');
+    expect(plansPage).not.toContain('venue-plans__scoreboard');
+  });
 });

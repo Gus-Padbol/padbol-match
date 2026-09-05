@@ -264,6 +264,7 @@ export default function AppHeader({
     }
     if (r === 'super_admin') return 'Super Admin';
     if (r === 'admin_nacional') return 'Admin Nacional';
+    if (r === 'admin_cadena') return 'Admin Multisede';
     if (r === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
     return hubNombreCorto;
   }, [

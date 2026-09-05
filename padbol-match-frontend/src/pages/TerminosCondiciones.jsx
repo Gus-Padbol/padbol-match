@@ -46,10 +46,9 @@ export default function TerminosCondiciones() {
           comunicada por el club. Revisa siempre los detalles antes de confirmar.
         </LegalLi>
         <LegalLi>
-          <strong style={{ color: '#e2e8f0' }}>Comisión de servicio:</strong> cuando el pago se procesa online a través
-          de Padbol Match (por ejemplo Mercado Pago o Stripe), puede aplicarse un{' '}
-          <strong style={{ color: '#e2e8f0' }}>fee de servicio del 3%</strong> sobre el precio de la reserva; el desglose
-          se muestra antes de pagar. Las reservas con cobro en efectivo en la sede no incluyen ese cargo de la plataforma.
+          <strong style={{ color: '#e2e8f0' }}>Comisión al jugador:</strong> el jugador paga 0% de comisión a Padbol Match.
+          Cuando el pago se procesa online, abona únicamente el precio informado por la sede. La comisión comercial de
+          Padbol Match corresponde al servicio prestado a la sede y los costos del procesador de pagos son independientes.
         </LegalLi>
       </LegalUl>
 
