@@ -1,5 +1,6 @@
 {
   "admin": {
+    "guardar": "Salvează",
     "canchas": "Terenuri",
     "metrics": { "courtsToday": "Terenurile mele astăzi" },
     "formularios": { "courtsCol": "Terenuri" },
@@ -21,16 +22,74 @@
     "notif": {
       "tournamentSoonBody": "{{count}} echipe fără înscriere confirmată în „{{name}}”.",
       "startsSoonBody": "„{{name}}” ({{date}}) nu are meciurile generate și începe în mai puțin de 48 de ore.",
-      "registrationClosingBody": "{{count}} echipe neconfirmate în „{{name}}”."
+      "registrationClosingBody": "{{count}} echipe neconfirmate în „{{name}}”.",
+      "contractExpiringBody": "{{venue}} expiră la {{date}} ({{days}} zile)."
+    },
+    "hub": {
+      "promoJugarIntro": "Card promoțional sub cele trei acțiuni (Rezervă / Caută / Creează un meci) din ecranul Joacă. Este afișat jucătorilor clubului tău doar când este activ și conține datele minime."
+    },
+    "onboarding": {
+      "reservasBody": "Aici vezi și gestionezi toate rezervările terenurilor tale."
     }
+  },
+  "reservas": {
+    "payAtVenueBody": "Acest club acceptă plata la fața locului. Nu te redirecționăm către Mercado Pago sau către plata cu cardul: după confirmare, rezervarea rămâne în așteptare până când plătești la club."
   },
   "hub": {
     "card": { "reservarSub": "Am deja echipa, vreau să rezerv un teren." }
   },
-  "chatbot": { "quickBookCourt": "Rezervă un teren" },
+  "equipos": { "titulo": "Echipă" },
+  "notificaciones": { "tipo": { "partido": "Meci" } },
+  "pwa": { "close": "Închide" },
   "landing": { "step2Desc": "Am ales online data, ora și terenul disponibil." },
   "publicSite": {
     "experiences": { "preview": { "club": "Padbol Club Nord" } },
-    "smartScoreboard": { "demoBadge": "În direct" }
+    "smartScoreboard": { "demoBadge": "În direct" },
+    "matchIntelligence": {
+      "kicker": "În curând · Viziunea tabelei de marcaj",
+      "title": "Arbitraj prin viziune inteligentă: o perspectivă independentă asupra jocului",
+      "caption": "Demonstrație a tabelei de marcaj conectate",
+      "features": {
+        "scoreboard": {
+          "title": "Viziunea camerelor",
+          "text": "Camerele vor putea acoperi jocul din unghiurile necesare pentru fiecare teren."
+        }
+      }
+    },
+    "playerRecord": {
+      "kicker": "JOCUL TĂU NU ÎNCEPE DE LA ZERO",
+      "title": "Adu-ți parcursul. Noi îl recunoaștem",
+      "lead": "Parcursul tău are deja valoare. Îl poți aduce în Padbol Match fără să renunți la aplicația pe care o folosești astăzi.",
+      "copy": "Testează-le în paralel: trimite-ne capturi de ecran cu rezultatele, turneele, clasamentul, statisticile și realizările tale. Le verificăm și le integrăm, astfel încât profilul tău să reflecte jucătorul care ești deja.",
+      "ownershipStrong": "Nu îți cerem să renunți la nimic.",
+      "ownership": "Datele tale îți aparțin și le poți transfera oricând.",
+      "itemsAria": "Informații care pot fi recunoscute în parcursul sportiv"
+    },
+    "venueAdmin": {
+      "items": {
+        "scoreboard": {
+          "title": "Ține scorul și activează ecranul clubului",
+          "text": "Scor în direct și spații publicitare pentru sponsori, magazin și bufet.",
+          "detail": "Tabela înregistrează meciul și, în pauzele prevăzute sau cât așteaptă următoarea partidă, poate deveni un ecran comercial administrat de clubul tău.",
+          "steps": {
+            "1": "Începe meciul cu jucătorii sau echipele participante.",
+            "2": "Încarcă campanii pentru sponsori, magazin, bufet sau beneficii și stabilește când apar.",
+            "3": "În pauze, la schimbarea părților de teren, la schimbarea setului sau la final, ecranul afișează pe rând campaniile și revine automat la joc."
+          },
+          "result": "Rezultat: informații utile pentru istoric și clasament, plus un ecran comercial măsurabil, fără să întrerupă meciul."
+        }
+      }
+    },
+    "download": {
+      "text": "Ia cu tine pe telefon activitatea sportivă, meciurile și comunitatea ta."
+    },
+    "padCoins": {
+      "wallet": { "activeMembership": "Abonament activ" }
+    }
+  },
+  "chatbot": {
+    "quickBookCourt": "Rezervă un teren",
+    "quickFindGame": "Caută un meci în apropiere",
+    "cerrar": "Închide"
   }
 }

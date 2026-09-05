@@ -37,11 +37,11 @@ const jsonLayers = {
   ro: [
     'romanianGeneratedOverrides.json', 'romanianAdminOverrides.json', 'romanianOperationsOverrides.json',
     'romanianAdminLandingOverrides.json', 'romanianPadcoinsOverrides.json',
-    'romanianEnglishLeakOverrides.json', 'romanianPolishOverrides.json',
   ],
   cs: ['czechPolishOverrides.json'],
 };
 
+const directByCode = {};
 const report = codes.map((code) => {
   const direct = {};
   Object.assign(direct, flatten(nativeShared[code] || {}));
@@ -49,7 +49,12 @@ const report = codes.map((code) => {
   if (publicSite[code]) Object.assign(direct, flatten({ publicSite: publicSite[code] }));
   Object.assign(direct, flatten(additional[code] || {}));
   for (const file of jsonLayers[code] || []) Object.assign(direct, flatten(readJson(`src/i18n/${file}`)));
-  if (code === 'ro') Object.assign(direct, flatten(romanianEditorial));
+  if (code === 'ro') {
+    Object.assign(direct, flatten(romanianEditorial));
+    Object.assign(direct, flatten(readJson('src/i18n/romanianEnglishLeakOverrides.json')));
+    Object.assign(direct, flatten(readJson('src/i18n/romanianPolishOverrides.json')));
+  }
+  directByCode[code] = direct;
   const covered = englishKeys.filter((key) => Object.hasOwn(direct, key));
   return {
     code,
@@ -60,7 +65,12 @@ const report = codes.map((code) => {
   };
 });
 
-if (process.argv.includes('--json')) console.log(JSON.stringify(report, null, 2));
+const dumpArgument = process.argv.find((argument) => argument.startsWith('--dump='));
+const dumpCode = dumpArgument?.slice('--dump='.length);
+if (dumpCode) {
+  if (!directByCode[dumpCode]) throw new Error(`Unknown locale: ${dumpCode}`);
+  console.log(JSON.stringify(directByCode[dumpCode], null, 2));
+} else if (process.argv.includes('--json')) console.log(JSON.stringify(report, null, 2));
 else report.forEach(({ code, covered, total, missing, identicalToEnglish }) => {
   console.log(`${code}: ${covered}/${total} direct · ${missing} English fallbacks · ${identicalToEnglish} identical`);
 });

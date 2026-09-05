@@ -46,7 +46,7 @@ describe('Romanian audit', () => {
   it('does not expose legal or basketball mistranslations for the playing court', () => {
     const resolved = flatten(i18n.getResourceBundle('ro', 'translation'));
     const forbidden = Object.entries(resolved)
-      .filter(([, value]) => /(?:\btribunal|\binstan[țţ]|\bbaschet\b|câmpuri active|încărca câmpurile)/iu.test(value));
+      .filter(([, value]) => /(?:\btribunal|\binstan[țţ]|\bjudecat[ăa]|\bbaschet\b|câmpuri active|încărca câmpurile)/iu.test(value));
     expect(forbidden).toEqual([]);
   });
 
@@ -56,5 +56,18 @@ describe('Romanian audit', () => {
     const missingBrand = Object.keys(english)
       .filter((key) => english[key].includes('Padbol Court') && !resolved[key]?.includes('Padbol Court'));
     expect(missingBrand).toEqual([]);
+  });
+
+  it('keeps the player-history and scoreboard messages aligned with their source fields', () => {
+    const resolved = flatten(i18n.getResourceBundle('ro', 'translation'));
+    expect(resolved['publicSite.playerRecord.copy']).toMatch(/capturi de ecran.*rezultatele.*turneele/iu);
+    expect(resolved['publicSite.playerRecord.ownership']).toMatch(/Datele tale.*oricând/iu);
+    expect(resolved['publicSite.venueAdmin.items.scoreboard.steps.2']).toMatch(/campanii.*sponsori/iu);
+    expect(resolved['publicSite.venueAdmin.items.scoreboard.steps.3']).toMatch(/pauze.*campaniile.*joc/iu);
+    expect(resolved['publicSite.venueAdmin.items.scoreboard.result']).toMatch(/clasament.*ecran comercial/iu);
+    expect(resolved['admin.guardar']).toBe('Salvează');
+    expect(resolved['equipos.titulo']).toBe('Echipă');
+    expect(resolved['chatbot.cerrar']).toBe('Închide');
+    expect(resolved['pwa.close']).toBe('Închide');
   });
 });
