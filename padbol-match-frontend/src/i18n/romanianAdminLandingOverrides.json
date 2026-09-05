@@ -1,0 +1,102 @@
+{
+  "perfilPublico": { "instagram": "Instagram" },
+  "adminLanding": {
+    "metaTitle": "Administrează-ți clubul | Padbol Match",
+    "eyebrow": "NU ESTE UN CALENDAR. ESTE UN CLUB ACTIV.",
+    "title": "Tot ce ai visat pentru a-ți ",
+    "titleAccent": "administra clubul este aici.",
+    "lead": "Padbol Match reunește competiția, scorurile, clasamentele și beneficiile, astfel încât activitatea să nu se încheie când jucătorii părăsesc terenul: creează comunitate, reveniri și valoare pentru clubul tău. Cu operațiuni care rămân ale tale.",
+    "primaryCta": "Adaugă clubul meu",
+    "pulseAria": "Pulsul clubului tău: rezervări, meci în direct, rezultat, clasament și PadCoins conectate",
+    "pulse": "PULSUL CLUBULUI TĂU",
+    "today": "ASTĂZI",
+    "court": "TERENUL 1",
+    "inPlay": "ÎN JOC",
+    "liveMatch": "MECI ÎN DIRECT",
+    "serves": "SERVEȘTE",
+    "set": "SETUL 2",
+    "resultRegistered": "REZULTAT ÎNREGISTRAT",
+    "resultRegisteredText": "Meciul se încheie și este salvat.",
+    "rankingUpdated": "CLASAMENT ACTUALIZAT",
+    "rankingUpdatedText": "Competiția creează o revenire reală.",
+    "padcoinsCredited": "PADCOINS ACORDATE",
+    "padcoinsCreditedText": "Beneficiile consolidează fidelitatea.",
+    "playersReturn": "JUCĂTORII REVIN\nSĂPTĂMÂNA ACEASTA",
+    "reportsEyebrow": "OPERAȚIUNI PE CARE LE POȚI EXPLICA ȘI ÎN CIFRE",
+    "reportsTitle": "Clubul tău nu doar funcționează. De asemenea, ",
+    "reportsTitleAccent": "are logică.",
+    "reportsLead": "Vezi veniturile și activitatea pe perioade fără să urmărești foi de calcul sau să reconstruiești ce s-a întâmplat în timpul lunii.",
+    "reportIncome": "Rezumatul veniturilor",
+    "reportIncomeText": "Rezervări și înscrieri la turnee, tranzacții și valoarea medie într-un singur panou.",
+    "reportDetail": "Detaliu operațional",
+    "reportDetailText": "Data, ora, terenul, jucătorul, suma, moneda și starea fiecărei operațiuni.",
+    "reportExport": "Excel exportabil",
+    "reportExportText": "Un raport cu rezumat, rezervări și turnee, pe care îl poți trimite administrației sau contabilului.",
+    "modulesEyebrow": "CE NU POATE FACE UN CALENDAR SINGUR",
+    "modulesTitle": "De la un teren ocupat la un club care ",
+    "modulesTitleAccent": "creează dinamism.",
+    "modulesLead": "Nu este vorba despre a adăuga funcții. Este vorba despre a conecta ceea ce se întâmplă înainte, în timpul și după fiecare meci, pentru ca clubul tău să aibă mai multă activitate, iar jucătorii motive să revină.",
+    "modulesCta": "Vreau să-mi adaug clubul",
+    "dataKicker": "CLUBUL TĂU. INFORMAȚIILE TALE. DECIZIA TA.",
+    "dataVisualAlt": "Informațiile clubului, conectate și disponibile",
+    "dataTitle": "Datele tale nu sunt ",
+    "dataTitleAccent": "ținute captive.",
+    "dataLead": "Comunitatea, operațiunile și munca pe care le-ai construit îți aparțin. Întotdeauna.",
+    "dataText": "Poți aduce informațiile din instrumentul pe care îl folosești acum și poți porni cu un avantaj. Iar dacă vreodată decizi să pleci, îți iei datele cu tine: nu le reținem și nu te obligăm să începi de la zero.",
+    "dataAria": "Principiile portabilității datelor",
+    "dataBring": "Îți aduci informațiile",
+    "dataBuild": "Construiești liber",
+    "dataTake": "Iei cu tine ceea ce îți aparține",
+    "guidedEyebrow": "CONFIGURARE GHIDATĂ CU CHIVI",
+    "guidedTitle": "Mai puține foi de calcul. Mai multe ",
+    "guidedTitleAccent": "întrebări clare.",
+    "guidedLead": "Chivi te ghidează în configurare direct din panou, prin text sau voce: întreabă câte un lucru, validează ce lipsește și îți arată un rezumat înainte de salvare.",
+    "featuresAria": "Funcțiile Chivi",
+    "voiceOrText": "Prin voce sau text",
+    "validates": "Validează datele",
+    "opensModule": "Deschide modulul potrivit",
+    "humanSupport": "Asistență umană când ai nevoie.",
+    "humanSupportText": "Dacă o întrebare necesită urmărire, echipa preia cazul și rămâne alături de tine până la rezolvare.",
+    "check1": "Numele clubului, țara, moneda și sporturile.",
+    "check2": "Terenurile, zilele, programul și durata fiecărei rezervări.",
+    "check3": "Prețul pe interval, plata, avansurile și politica de anulare.",
+    "check4": "Verificarea finală și publicarea controlată.",
+    "howItWorks": "Cum funcționează:",
+    "howItWorksText": "spune sau scrie ce ai nevoie să configurezi; Chivi te duce la ecranul potrivit, îți organizează răspunsurile și cere confirmarea finală. Clubul păstrează întotdeauna decizia și controlul salvării.",
+    "conversationAria": "Chivi, asistentul de configurare, ascultă",
+    "assistantLabel": "CHIVI / ASISTENT DE CONFIGURARE",
+    "listening": "Chivi ascultă",
+    "listeningText": "Te ghidează cu câte o întrebare și confirmă totul înainte de salvare.",
+    "closingEyebrow": "UN CLUB CARE RĂMÂNE ACTIV",
+    "closingTitle": "Fiecare meci pune în mișcare ceea ce ",
+    "closingTitleAccent": "urmează.",
+    "closingText": "Înregistrezi rezultatul o singură dată, iar Padbol Match pune în mișcare clasamentul, competiția și beneficiile clubului tău. Mai multă activitate, mai multe reveniri și întotdeauna cu datele sub controlul tău.",
+    "plansCta": "Vezi planurile pentru clubul meu",
+    "modules": {
+      "one": {
+        "title": "TURNEE CARE RĂMÂN ORGANIZATE",
+        "text": "Stabilește formatul, categoriile, locurile și datele. Programul generează confruntările și lasă competiția pregătită pentru joc."
+      },
+      "two": {
+        "title": "ȘI TABELA DE MARCAJ VINDE",
+        "text": "În timpul jocului, înregistrează scorul. La fiecare pauză și cât se așteaptă următorul meci, devine un ecran comercial pentru sponsori, bufet, magazin și beneficiile clubului."
+      },
+      "three": {
+        "title": "REZULTATE CARE CONTINUĂ SĂ LUCREZE",
+        "text": "Când un meci se încheie, tabelele, tablourile, istoricul și clasamentul se actualizează: fără foi de calcul paralele."
+      },
+      "four": {
+        "title": "MAI MULTE REVENIRI, NU DOAR MAI MULTE REZERVĂRI",
+        "text": "Prin PadCoins, beneficii, abonamente și campanii temporare, clubul creează motive reale pentru revenire."
+      },
+      "five": {
+        "title": "O COMUNITATE CARE COMPLETEAZĂ ECHIPELE",
+        "text": "Jucătorii conectați, meciurile deschise, înscrierile și listele de așteptare transformă interesul în activitate."
+      },
+      "six": {
+        "title": "CLUBUL TĂU CÂȘTIGĂ VIZIBILITATE",
+        "text": "Turneele, campaniile, sponsorii și propunerile active fac vizibil ceea ce se întâmplă în clubul tău, pe teren și în afara lui."
+      }
+    }
+  }
+}

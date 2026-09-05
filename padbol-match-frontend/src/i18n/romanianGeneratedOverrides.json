@@ -1,0 +1,129 @@
+{
+  "precios": {
+    "porDeporte": "Prețuri pe sport",
+    "sinPrecio": "Niciun preț configurat",
+    "agregar": "Adaugă preț",
+    "precioARS": "Preț în ARS",
+    "precioUSD": "Preț în USD",
+    "guardado": "Preț salvat"
+  },
+  "sedes": {
+    "publica": {
+      "deportesDisponibles": "Sporturi disponibile",
+      "licenciaActiva": "Licență Padbol activă",
+      "reservarTurno": "Rezervă un interval",
+      "verTorneos": "Vezi turneele",
+      "infoTitulo": "Informații",
+      "instructores": "Instructori",
+      "instructorCertFipa": "Certificare FIPA",
+      "instructorCertificadoBadge": "Certificat",
+      "infoHorario": "Program",
+      "infoCanchas": "Terenuri",
+      "canchasDisponibles": "{{count}} terenuri disponibile",
+      "proximoTorneo": "Următorul turneu",
+      "instructorCertificado": "Instructor certificat",
+      "instructorBadgeFipa": "Instructor FIPA",
+      "instructorBadgePadbol": "Instructor Padbol",
+      "infoDireccion": "Adresă",
+      "whatsappCta": "Scrie-ne pe WhatsApp",
+      "instructoresCertificados": "{{count}} instructor(i) certificat(ți)",
+      "seguinosEn": "Urmărește-ne pe",
+      "resenas": "★ {{rating}} ({{count}} recenzii)",
+      "clubTiene": "Clubul dispune de"
+    }
+  },
+  "sponsors": {
+    "publicidad": "Publicitate",
+    "tipoMedia": "Tip media",
+    "videoUrl": "URL video (MP4)"
+  },
+  "resenas": {
+    "title": "Recenzii",
+    "loading": "Se încarcă recenziile…",
+    "totalCount": "{{count}} recenzie",
+    "totalCount_plural": "{{count}} recenzii",
+    "noReviewsYet": "Nu există încă recenzii",
+    "loginToReview": "Autentifică-te",
+    "loginSuffix": "pentru a lăsa o recenzie.",
+    "alreadyReviewed": "Ai evaluat deja acest club. Mulțumim!",
+    "needConfirmedBooking": "Doar jucătorii care au cel puțin o rezervare confirmată la acest club pot lăsa o recenzie.",
+    "ratingLabel": "Evaluare",
+    "commentLabel": "Comentariu (opțional, maximum {{max}} caractere)",
+    "submit": "Trimite",
+    "submitting": "Se trimite…",
+    "submitSuccess": "Mulțumim pentru recenzie!",
+    "submitError": "Recenzia nu a putut fi trimisă",
+    "pickStars": "Alege o evaluare de la 1 la 5 stele.",
+    "emptyList": "Nu există încă recenzii",
+    "clubReply": "Răspunsul clubului"
+  },
+  "reputacion": {
+    "suspendedBanner": "Contul tău este suspendat până la {{date}}. Nu poți efectua rezervări.",
+    "warningBanner": "Ai {{count}} anulări în ultimele 30 de zile. Dacă ajungi la 5, contul tău va fi suspendat timp de 7 zile.",
+    "recentCancellations": "Anulări în ultimele 30 de zile: {{count}}",
+    "badgeManyCancellations": "⚠️ Minimum 3 anulări",
+    "badgeSuspended": "🚫 Suspendat",
+    "admin": {
+      "intro": "Jucători cu suspendare activă din cauza anulărilor repetate.",
+      "loading": "Se încarcă suspendările…",
+      "loadError": "Suspendările nu au putut fi încărcate",
+      "empty": "Momentan nu există jucători suspendați.",
+      "colName": "Jucător",
+      "colEmail": "E-mail",
+      "colUntil": "Suspendat până la",
+      "lift": "Ridică suspendarea",
+      "lifting": "Se ridică suspendarea…",
+      "liftError": "Suspendarea nu a putut fi ridicată"
+    }
+  },
+  "campanita": {
+    "sinAlertas": "Nu există alerte în așteptare",
+    "marcarLeido": "Marchează totul ca citit",
+    "instructoresPendientes": "instructor(i) în așteptarea aprobării",
+    "sedesPendientes": "club(uri) nou(noi) în așteptarea aprobării",
+    "pagosFallidos": "plată(plăți) eșuată(e) în ultimele 7 zile",
+    "cancelaciones": "anulare(anulări) în ultimele 24 de ore"
+  },
+  "instructor": {
+    "quieroSerInstructor": "Vreau să devin instructor FIPA",
+    "solicitudEnviada": "Cerere trimisă — în curs de evaluare",
+    "instructorActivo": "Instructor FIPA activ",
+    "formTitulo": "Cerere pentru instructor FIPA",
+    "campoFoto": "Fotografie de profil",
+    "campoNombre": "Prenume",
+    "campoApellido": "Nume",
+    "campoFechaNac": "Data nașterii",
+    "campoGenero": "Gen",
+    "campoWhatsapp": "WhatsApp",
+    "campoSede": "Clubul în care vrei să predai",
+    "campoDeportes": "Sporturile pe care le predai",
+    "campoCertificado": "Dețin un certificat FIPA",
+    "campoBio": "Experiența și motivația ta",
+    "enviarSolicitud": "Trimite cererea",
+    "solicitudExitosa": "Cerere trimisă! Te vom contacta în curând.",
+    "generoMasculino": "Masculin",
+    "generoFemenino": "Feminin",
+    "generoNoDice": "Prefer să nu precizez",
+    "eligeSede": "Alege un club",
+    "errorFoto": "Fotografia nu a putut fi încărcată. Încearcă o altă imagine.",
+    "errorFotoRequerida": "Încarcă o fotografie de profil.",
+    "errorFechaNac": "Introdu data nașterii.",
+    "errorGenero": "Selectează genul.",
+    "errorSede": "Alege clubul în care vrei să predai.",
+    "errorWhatsapp": "Introdu un număr WhatsApp valid.",
+    "errorBio": "Povestește-ne despre experiența și motivația ta.",
+    "errorBioMax": "Textul nu poate depăși 500 de caractere.",
+    "editarPerfil": "Editează profilul meu",
+    "guardarCambios": "Salvează modificările",
+    "cancelar": "Anulează"
+  },
+  "profesor": {
+    "miPerfil": {
+      "titulo": "Profil de instructor",
+      "subtitulo": "Fișă asociată contului tău ({{nombre}})",
+      "whatsappLabel": "WhatsApp (contact intern, nu este public în hub)",
+      "guardar": "Salvează numărul WhatsApp",
+      "guardado": "Profilul instructorului a fost actualizat."
+    }
+  }
+}

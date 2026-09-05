@@ -11,6 +11,13 @@ import pt from './locales/pt.json';
 import ar from './locales/ar.json';
 import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
 import ROMANIAN_LOCALE_OVERRIDES from './romanianLocaleOverrides';
+import ROMANIAN_GENERATED_OVERRIDES from './romanianGeneratedOverrides.json';
+import ROMANIAN_ADMIN_OVERRIDES from './romanianAdminOverrides.json';
+import ROMANIAN_OPERATIONS_OVERRIDES from './romanianOperationsOverrides.json';
+import ROMANIAN_ADMIN_LANDING_OVERRIDES from './romanianAdminLandingOverrides.json';
+import ROMANIAN_PADCOINS_OVERRIDES from './romanianPadcoinsOverrides.json';
+import ROMANIAN_ENGLISH_LEAK_OVERRIDES from './romanianEnglishLeakOverrides.json';
+import ROMANIAN_POLISH_OVERRIDES from './romanianPolishOverrides.json';
 import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
 import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
@@ -34,6 +41,17 @@ function mergeLocale(base, override) {
   return result;
 }
 
+const ROMANIAN_LOCALE_LAYERS = [
+  ROMANIAN_GENERATED_OVERRIDES,
+  ROMANIAN_ADMIN_OVERRIDES,
+  ROMANIAN_OPERATIONS_OVERRIDES,
+  ROMANIAN_ADMIN_LANDING_OVERRIDES,
+  ROMANIAN_PADCOINS_OVERRIDES,
+  ROMANIAN_LOCALE_OVERRIDES,
+  ROMANIAN_ENGLISH_LEAK_OVERRIDES,
+  ROMANIAN_POLISH_OVERRIDES,
+];
+
 // Todo idioma se construye sobre el catálogo inglés completo. Así, una clave
 // que todavía no tenga versión editorial local conserva una frase legible en
 // inglés y nunca hereda el texto por defecto en español de un componente.
@@ -46,7 +64,7 @@ const englishBackedLocale = (code, baseLocale = {}) => {
     : base;
   const withAdditionalOverrides = mergeLocale(withPublicSite, ADDITIONAL_LOCALE_OVERRIDES[code]);
   return code === 'ro'
-    ? mergeLocale(withAdditionalOverrides, ROMANIAN_LOCALE_OVERRIDES)
+    ? ROMANIAN_LOCALE_LAYERS.reduce((locale, layer) => mergeLocale(locale, layer), withAdditionalOverrides)
     : withAdditionalOverrides;
 };
 
