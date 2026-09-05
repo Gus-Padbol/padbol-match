@@ -533,38 +533,39 @@ function sedeStatCountVisible(raw) {
 }
 
 /** Ítems visibles para «En números» (oculta ceros y null). */
-function buildSedeEnNumerosItems(stats) {
+function buildSedeEnNumerosItems(stats, t, language = 'en') {
   if (!stats || typeof stats !== 'object') return [];
+  const locale = padbolLangToIntlLocale(language);
   const items = [];
   const pushCount = (key, label, raw) => {
     if (!sedeStatCountVisible(raw)) return;
     items.push({
       key,
       label,
-      value: Number(raw).toLocaleString('es-AR'),
+      value: Number(raw).toLocaleString(locale),
     });
   };
   pushCount(
     'reservas',
-    'Total reservas realizadas',
+    t('sedes.publica.totalBookings'),
     stats.reservas_realizadas_total ?? stats.reservas_total,
   );
-  pushCount('torneos', 'Total torneos jugados', stats.torneos_realizados_total);
+  pushCount('torneos', t('sedes.publica.totalTournaments'), stats.torneos_realizados_total);
   pushCount(
     'jugadores',
-    'Total jugadores registrados en la sede',
+    t('sedes.publica.totalRegisteredPlayers'),
     stats.jugadores_registrados_total ?? stats.jugadores_reservaron_total,
   );
   const promRaw = stats.promedio_resenas ?? stats.promedio;
   const prom = Number(promRaw);
   if (Number.isFinite(prom) && prom > 0) {
-    items.push({ key: 'promedio', label: 'Promedio de reseñas', promedio: prom });
+    items.push({ key: 'promedio', label: t('sedes.publica.averageReviews'), promedio: prom });
   }
   return items;
 }
 
-function sedeTieneSeccionEnNumeros(stats) {
-  return buildSedeEnNumerosItems(stats).length > 0;
+function sedeTieneSeccionEnNumeros(stats, t, language) {
+  return buildSedeEnNumerosItems(stats, t, language).length > 0;
 }
 
 /** Misma prioridad que la app nativa: perfil → campos sede → canchas activas → deportes. */
@@ -649,7 +650,7 @@ function SedeHeroOverlayIdentity({ sede, direccionLinea, ubicacionLinea, licenci
             )}
           </div>
           <h1 className="sede-publica-hero-fotos__nombre">
-            {sede.nombre || '(sin nombre)'}
+            {sede.nombre || t('sedes.publica.unnamedVenue')}
           </h1>
         </div>
       </div>
@@ -840,7 +841,7 @@ function SedeProximoTorneoSection({ sedeId, sedeIdNum, session, navigate, locati
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'No se pudo salir de la lista');
+        if (!res.ok) throw new Error(data.error || t('sedes.publica.waitlistLeaveError'));
         setEnListaEspera(false);
       } else {
         const res = await fetch(`${apiBase}/api/sedes/${encodeURIComponent(String(sedeIdNum))}/torneo-interes`, {
@@ -852,7 +853,7 @@ function SedeProximoTorneoSection({ sedeId, sedeIdNum, session, navigate, locati
           body: '{}',
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || 'No se pudo anotar en la lista');
+        if (!res.ok) throw new Error(data.error || t('sedes.publica.waitlistJoinError'));
         setEnListaEspera(true);
       }
     } catch (e) {
@@ -860,7 +861,7 @@ function SedeProximoTorneoSection({ sedeId, sedeIdNum, session, navigate, locati
     } finally {
       setInteresLoading(false);
     }
-  }, [sedeIdNum, session?.access_token, enListaEspera, apiBase, navigate, location]);
+  }, [sedeIdNum, session?.access_token, enListaEspera, apiBase, navigate, location, t]);
 
   const verTorneosBtn =
     sedeId != null && String(sedeId).trim() !== '' ? (
@@ -1176,6 +1177,7 @@ function SedeInformacionClub({ sede, horario, proximoTorneo, lang, t, canchasCou
 }
 
 function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
+  const { t } = useTranslation();
   const openMapsHref = toHttps(buildOpenMapsHref(direccion, ciudad, pais, latitud, longitud));
   const embedSrc = useMemo(
     () => buildMapsEmbedSrc({ latitud, longitud, direccion, ciudad, pais }),
@@ -1187,7 +1189,7 @@ function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
   return (
     <div className="sede-publica-map">
       {embedSrc ? (
-        <iframe title="Ubicación en Google Maps" src={toHttps(embedSrc)} loading="lazy" />
+        <iframe title={t('sedes.publica.mapTitle')} src={toHttps(embedSrc)} loading="lazy" />
       ) : null}
       {openMapsHref ? (
         <div className="sede-publica-map__link-wrap">
@@ -1197,7 +1199,7 @@ function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Abrir en Google Maps
+            {t('sedes.publica.openGoogleMaps')}
           </a>
         </div>
       ) : null}
@@ -1206,6 +1208,7 @@ function SedeMapaFinal({ direccion, ciudad, pais, latitud, longitud }) {
 }
 
 function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
+  const { t } = useTranslation();
   const touchStartX = useRef(null);
 
   useEffect(() => {
@@ -1231,7 +1234,7 @@ function SedeFotosLightbox({ fotos, index, onClose, onIndexChange }) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Galería de fotos"
+      aria-label={t('sedes.publica.photoGallery')}
       style={{
         position: 'fixed',
         inset: 0,
@@ -1406,12 +1409,13 @@ async function fetchPartidosSedePublica(sedeIdNum, headers = {}) {
 
 
 function EstrellasSoloLectura({ value }) {
+  const { t } = useTranslation();
   const v = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
   return (
     <span
       style={{ display: 'inline-flex', gap: '1px', alignItems: 'center' }}
-      title={`${v} de 5`}
-      aria-label={`${v} de 5 estrellas`}
+      title={t('sedes.publica.ratingOutOfFive', { rating: v })}
+      aria-label={t('sedes.publica.starsOutOfFive', { rating: v })}
     >
       {[1, 2, 3, 4, 5].map((i) => (
         <span
@@ -1429,7 +1433,8 @@ function EstrellasSoloLectura({ value }) {
 }
 
 function SedeEnNumerosBloque({ stats }) {
-  const items = buildSedeEnNumerosItems(stats);
+  const { t, i18n } = useTranslation();
+  const items = buildSedeEnNumerosItems(stats, t, i18n.language);
   if (!items.length) return null;
 
   return (
@@ -1438,7 +1443,7 @@ function SedeEnNumerosBloque({ stats }) {
       aria-labelledby="sede-en-numeros-title"
     >
       <h2 id="sede-en-numeros-title" className="sede-publica-section__title">
-        En números
+        {t('sedes.publica.inNumbers')}
       </h2>
       <div className="sede-publica-en-numeros__grid">
         {items.map((item) => (
@@ -1530,9 +1535,9 @@ export default function SedePublica() {
   const handleShareSede = useCallback(async () => {
     if (typeof window === 'undefined' || !sedeId) return;
     const url = `${window.location.origin}/sede/${encodeURIComponent(String(sedeId))}`;
-    const nombreSede = String(sede?.nombre || 'Sede').trim() || 'Sede';
+    const nombreSede = String(sede?.nombre || t('sedes.publica.venueFallback')).trim() || t('sedes.publica.venueFallback');
     const title = nombreSede;
-    const text = `¡Reserva tu cancha en ${nombreSede}! 🏆⚽`;
+    const text = t('sedes.publica.shareText', { venue: nombreSede });
     if (canUseNavigatorShare()) {
       try {
         await navigator.share({ title, text, url });
@@ -1572,7 +1577,7 @@ export default function SedePublica() {
   const sedeIdNumLoad = useMemo(() => {
     const n = parseInt(String(sedeId), 10);
     return Number.isFinite(n) && n > 0 ? n : null;
-  }, [sedeId]);
+  }, [sedeId, sede?.nombre, t]);
 
   const { campaign: sedePadcoinsCampaign } = usePadcoinsActiveCampaign(sedeIdNumLoad, {
     apiBaseUrl: API_BASE_RESENAS,
@@ -1716,13 +1721,13 @@ export default function SedePublica() {
 
   useEffect(() => {
     if (!sedeId) {
-      setError('No se recibió un ID de sede.');
+      setError(t('sedes.publica.missingVenueId'));
       setLoading(false);
       return;
     }
     const idNum = parseInt(String(sedeId), 10);
     if (!Number.isFinite(idNum)) {
-      setError('ID de sede inválido.');
+      setError(t('sedes.publica.invalidVenueId'));
       setLoading(false);
       return;
     }
@@ -1741,7 +1746,7 @@ export default function SedePublica() {
         if (r.ok) {
           const { estadisticas_publicas: stats, duraciones_oferta: durOferta, ...rest } = j;
           if (!rest || rest.id == null) {
-            setError(`Sede con id ${sedeId} no encontrada.`);
+            setError(t('sedes.publica.venueIdNotFound', { id: sedeId }));
             setSede(null);
             setEstadisticasPublicas(null);
             setDuracionesOferta([]);
@@ -1760,8 +1765,8 @@ export default function SedePublica() {
         try {
           const { data, error: err } = await supabase.from('sedes').select('*').eq('id', idNum).maybeSingle();
           if (cancelled) return;
-          if (err) setError(`Error al cargar sede: ${err.message}`);
-          else if (!data) setError(`Sede con id ${sedeId} no encontrada.`);
+          if (err) setError(t('sedes.publica.venueLoadErrorDetail', { error: err.message }));
+          else if (!data) setError(t('sedes.publica.venueIdNotFound', { id: sedeId }));
           else {
             setError('');
             setSede(normalizeSedeHttps(data));
@@ -1769,7 +1774,7 @@ export default function SedePublica() {
             setDuracionesOferta([]);
           }
         } catch (err) {
-          if (!cancelled) setError('Error inesperado: ' + (err?.message || String(err)));
+          if (!cancelled) setError(t('sedes.publica.unexpectedError', { error: err?.message || String(err) }));
         }
       }
       if (cancelled) return;
@@ -1814,7 +1819,7 @@ export default function SedePublica() {
     return () => {
       cancelled = true;
     };
-  }, [sedeId, session?.access_token]);
+  }, [sedeId, session?.access_token, t]);
 
   const sedeViewReady = !loading && !error && sede;
 
@@ -1865,7 +1870,7 @@ export default function SedePublica() {
             justifyContent: 'center',
           }}
         >
-          <p style={{ color: SEDE_DS.subtitle, fontSize: '15px', fontWeight: 600 }}>Cargando sede…</p>
+          <p style={{ color: SEDE_DS.subtitle, fontSize: '15px', fontWeight: 600 }}>{t('sedes.publica.loadingVenue')}</p>
         </div>
       )}
 
@@ -1882,9 +1887,9 @@ export default function SedePublica() {
           }}
         >
           <p style={{ color: '#b91c1c', fontSize: '15px', fontWeight: 600, textAlign: 'center' }}>
-            {error || 'Sede no encontrada.'}
+            {error || t('sedes.publica.venueNotFound')}
           </p>
-          <p style={{ color: '#64748b', fontSize: '12px' }}>sedeId: {sedeId ?? '(undefined)'}</p>
+          <p style={{ color: '#64748b', fontSize: '12px' }}>{t('sedes.publica.venueIdLabel')}: {sedeId ?? '—'}</p>
         </div>
       )}
 
@@ -2016,7 +2021,7 @@ export default function SedePublica() {
 
             {!partidosSedeLoading && partidosSedeOrdenados.length > 0 ? (
               <section className="sede-publica-section sede-publica-partidos">
-                <h2 className="sede-publica-section__title">Partidos abiertos</h2>
+                <h2 className="sede-publica-section__title">{t('sedes.publica.openMatches')}</h2>
                 <div className="sede-publica-partidos__list">
                   {partidosSedeVisibles.map((p) => (
                     <PartidoAbiertoSedeRow key={p.id} partido={p} onJoin={() => navigate('/jugar/buscar')} />
@@ -2028,13 +2033,13 @@ export default function SedePublica() {
                     className="partidos-abiertos-ver-mas"
                     onClick={() => setPartidosSedeVerTodos(true)}
                   >
-                    Ver más partidos →
+                    {t('sedes.publica.seeMoreMatches')} →
                   </button>
                 ) : null}
               </section>
             ) : null}
 
-            {sedeTieneSeccionEnNumeros(estadisticasPublicas) ? (
+            {sedeTieneSeccionEnNumeros(estadisticasPublicas, t, padbolLang) ? (
               <SedeEnNumerosBloque stats={estadisticasPublicas} />
             ) : null}
 

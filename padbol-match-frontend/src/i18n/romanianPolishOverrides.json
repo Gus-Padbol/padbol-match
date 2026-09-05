@@ -304,6 +304,33 @@
       "joinClub": "Vrei să adaugi clubul tău?",
       "fromTime": "De la {{time}}",
       "untilTime": "Până la {{time}}"
+    },
+    "publica": {
+      "totalBookings": "Total rezervări finalizate",
+      "totalTournaments": "Total turnee jucate",
+      "totalRegisteredPlayers": "Jucători înscriși la acest club",
+      "averageReviews": "Media recenziilor",
+      "inNumbers": "În cifre",
+      "ratingOutOfFive": "{{rating}} din 5",
+      "starsOutOfFive": "{{rating}} din 5 stele",
+      "unnamedVenue": "Club fără nume",
+      "waitlistLeaveError": "Nu ai putut fi retras de pe lista de așteptare.",
+      "waitlistJoinError": "Nu ai putut fi înscris pe lista de așteptare.",
+      "mapTitle": "Locație pe Google Maps",
+      "openGoogleMaps": "Deschide în Google Maps",
+      "photoGallery": "Galerie foto",
+      "venueFallback": "Club",
+      "shareText": "Rezervă un Padbol Court la {{venue}}! 🏆⚽",
+      "missingVenueId": "Nu a fost furnizat ID-ul clubului.",
+      "invalidVenueId": "ID-ul clubului nu este valid.",
+      "venueIdNotFound": "Clubul cu ID-ul {{id}} nu a fost găsit.",
+      "venueLoadErrorDetail": "Eroare la încărcarea clubului: {{error}}",
+      "unexpectedError": "Eroare neașteptată: {{error}}",
+      "loadingVenue": "Se încarcă pagina clubului…",
+      "venueNotFound": "Clubul nu a fost găsit.",
+      "venueIdLabel": "ID club",
+      "openMatches": "Meciuri deschise",
+      "seeMoreMatches": "Vezi mai multe meciuri"
     }
   },
   "hub": {
