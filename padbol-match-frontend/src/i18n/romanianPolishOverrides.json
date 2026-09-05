@@ -93,6 +93,12 @@
     "status": { "abierto": "Deschisă", "en_revision": "În curs de verificare", "esperando_usuario": "Se așteaptă răspunsul", "resuelto": "Rezolvată", "cerrado": "Închisă" },
     "priority": { "baja": "Scăzută", "normal": "Normală", "alta": "Ridicată", "urgente": "Urgentă" }
   },
+  "aboutPage": {
+    "home": "Acasă", "title": "Ce este Padbol Match?",
+    "intro": "Padbol Match este platforma oficială pentru descoperirea cluburilor, rezervarea Padbol Courts și conectarea la rețeaua mondială a cluburilor Padbol. S-a născut odată cu Padbol, iar astăzi conectează și jucători și cluburi de Padel, Pickleball și Tenis.",
+    "experience": "Dintr-un singur loc poți explora cluburi, verifica disponibilitatea, rezerva un interval și gestiona relația ta cu clubul.",
+    "ready": "Ești gata de joc?", "explore": "Explorează cluburile", "terms": "Termeni", "privacy": "Confidențialitate"
+  },
   "paises": {
     "estados_unidos": "Statele Unite",
     "francia": "Franța",

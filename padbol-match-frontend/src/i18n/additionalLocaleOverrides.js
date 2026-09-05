@@ -1933,6 +1933,12 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         status: { abierto: "Otevřený", en_revision: "Probíhá kontrola", esperando_usuario: "Čeká se na odpověď", resuelto: "Vyřešený", cerrado: "Uzavřený" },
         priority: { baja: "Nízká", normal: "Normální", alta: "Vysoká", urgente: "Naléhavá" },
       },
+      aboutPage: {
+        home: "Domů", title: "Co je Padbol Match?",
+        intro: "Padbol Match je oficiální platforma pro objevování klubů, rezervaci Padbol Courts a zapojení do celosvětové sítě klubů Padbol. Vznikla s Padbolem a dnes propojuje také hráče a kluby Padelu, Pickleballu a Tenisu.",
+        experience: "Na jednom místě můžete procházet kluby, kontrolovat dostupnost, rezervovat termín a spravovat svou zkušenost s klubem.",
+        ready: "Jste připraveni hrát?", explore: "Prozkoumat kluby", terms: "Podmínky", privacy: "Soukromí",
+      },
     },
   ),
 };

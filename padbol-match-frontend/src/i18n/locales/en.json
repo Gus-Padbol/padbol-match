@@ -54,6 +54,12 @@
     "status": { "abierto": "Open", "en_revision": "Under review", "esperando_usuario": "Waiting for reply", "resuelto": "Resolved", "cerrado": "Closed" },
     "priority": { "baja": "Low", "normal": "Normal", "alta": "High", "urgente": "Urgent" }
   },
+  "aboutPage": {
+    "home": "Home", "title": "What is Padbol Match?",
+    "intro": "Padbol Match is the official platform for discovering venues, booking Padbol Courts and experiencing the global Padbol club network. It was born with Padbol and now also connects players and clubs across Padel, Pickleball and Tennis.",
+    "experience": "From one place, you can explore clubs, check availability, book a time and manage your experience with the club.",
+    "ready": "Ready to play?", "explore": "Explore venues", "terms": "Terms", "privacy": "Privacy"
+  },
   "auth": {
     "access": "Sign in",
     "login": "Sign in",
