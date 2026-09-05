@@ -124,6 +124,14 @@ const LATERALIDAD_TORNEO_LABEL_KEY = {
   Ambidiestro: 'auth.handednessAmbi',
 };
 
+function paisLabelKey(nombre) {
+  return `paises.${String(nombre || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')}`;
+}
+
 /** `select` / inputs del formulario de registro (tema). */
 function accesoRegFieldStyle(mb = '14px') {
   return {
@@ -858,13 +866,13 @@ export default function AccesoCuenta() {
               className="acceso-cuenta-input"
               value={regPaisJugador}
               onChange={(e) => setRegPaisJugador(e.target.value)}
-              aria-label="País del jugador"
+              aria-label={t('general.country')}
               style={accesoRegFieldStyle('14px')}
             >
               <option value="">{t('auth.chooseCountry')}</option>
               {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                 <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
-                  {p.bandera} {p.nombre}
+                  {p.bandera} {t(paisLabelKey(p.nombre))}
                 </option>
               ))}
             </select>
@@ -999,7 +1007,7 @@ export default function AccesoCuenta() {
                   value={regLateralidadTorneo}
                   onChange={(e) => setRegLateralidadTorneo(e.target.value)}
                   style={accesoRegFieldStyle('10px')}
-                  aria-label="Lateralidad para torneos"
+                  aria-label={t('auth.handedness')}
                 >
                   <option value="">{t('auth.choose')}</option>
                   {LATERALIDAD_TORNEO_OPCIONES.map((lat) => (
@@ -1025,7 +1033,7 @@ export default function AccesoCuenta() {
                   value={regNivelTorneo}
                   onChange={(e) => setRegNivelTorneo(e.target.value)}
                   style={accesoRegFieldStyle('10px')}
-                  aria-label="Nivel o categoría para torneos"
+                  aria-label={t('auth.levelCategory')}
                 >
                   <option value="">{t('auth.choose')}</option>
                   {categoriasTorneoRegistro.map((c) => (
@@ -1045,20 +1053,20 @@ export default function AccesoCuenta() {
                         marginBottom: '6px',
                       }}
                     >
-                      País{' '}
-                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                      {t('general.country')}{' '}
+                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>({t('auth.optional')})</span>
                     </label>
                     <select
                       className="acceso-cuenta-input"
                       value={regPaisTorneoExtra}
                       onChange={(e) => setRegPaisTorneoExtra(e.target.value)}
-                      aria-label="País para torneos"
+                      aria-label={t('general.country')}
                       style={accesoRegFieldStyle('14px')}
                     >
                       <option value="">{t('auth.chooseCountry')}</option>
                       {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                         <option key={`torneo-${p.nombre}`} value={`${p.bandera} ${p.nombre}`}>
-                          {p.bandera} {p.nombre}
+                          {p.bandera} {t(paisLabelKey(p.nombre))}
                         </option>
                       ))}
                     </select>

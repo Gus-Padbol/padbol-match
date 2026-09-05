@@ -58,6 +58,28 @@
   "reservas": {
     "payAtVenueBody": "Acest club acceptă plata la fața locului. Nu te redirecționăm către Mercado Pago sau către plata cu cardul: după confirmare, rezervarea rămâne în așteptare până când plătești la club."
   },
+  "auth": {
+    "completeFirstName": "Introdu prenumele.",
+    "completeLastName": "Introdu numele de familie.",
+    "firstName": "Prenume",
+    "lastName": "Nume de familie",
+    "placeholderFirstName": "Ex.: Andrei",
+    "placeholderLastName": "Ex.: Popescu",
+    "handedness": "Mâna dominantă",
+    "levelCategory": "Nivel / categorie",
+    "acceptTermsPrefix": "Accept",
+    "andThe": "și",
+    "handednessRight": "Dreptaci",
+    "handednessLeft": "Stângaci",
+    "handednessAmbi": "Ambidextru"
+  },
+  "paises": {
+    "estados_unidos": "Statele Unite",
+    "francia": "Franța",
+    "croacia": "Croația",
+    "paises_bajos": "Țările de Jos",
+    "suiza": "Elveția"
+  },
   "sedes": {
     "listado": {
       "header": "Cluburi",
