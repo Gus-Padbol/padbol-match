@@ -1786,6 +1786,7 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
       pago: {
         titulo: "Platba", confirmando: "Potvrzování platby...", exitoso: "Platba proběhla úspěšně",
         fallido: "Platba nebyla dokončena", reintentar: "Zkusit znovu",
+        qrGenerationFailed: "QR kód se nepodařilo vygenerovat.", networkError: "Chyba sítě",
       },
       clases: {
         titulo: "Lekce", pageTitle: "Absolvovat lekci",
@@ -1920,6 +1921,11 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         categoryFilterAria: "Filtrovat žebříček podle kategorie",
         tournamentTypeFilterAria: "Filtrovat žebříček podle typu turnaje: mužský, ženský nebo smíšený",
         apply: "Použít", clearAll: "Vymazat vše", loadVenuesError: "Kluby se nepodařilo načíst.",
+      },
+      scoreboardDisplay: {
+        loading: "Načítání výsledkové tabule…", waiting: "Čeká se na zápas…",
+        matchLoadError: "Zápas se nepodařilo načíst.",
+        courtMatchLoadError: "Zápas pro tento kurt se nepodařilo načíst.",
       },
       armarPartido: {
         header: "Vytvořit zápas", titleVenueAndSlot: "Klub a čas",

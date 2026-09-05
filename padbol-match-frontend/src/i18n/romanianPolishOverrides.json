@@ -64,7 +64,12 @@
     "cancelModalConfirm": "Da, anulează rezervarea",
     "cancelModalDismiss": "Rămâi pe acest ecran"
   },
-  "pago": { "fallido": "Plata nu a fost finalizată", "reintentar": "Încearcă din nou" },
+  "pago": {
+    "fallido": "Plata nu a fost finalizată",
+    "reintentar": "Încearcă din nou",
+    "qrGenerationFailed": "Codul QR nu a putut fi generat.",
+    "networkError": "Eroare de rețea"
+  },
   "clases": { "detalle": "Detaliile lecției" },
   "auth": {
     "completeFirstName": "Introdu prenumele.",
@@ -168,6 +173,12 @@
     "croacia": "Croația",
     "paises_bajos": "Țările de Jos",
     "suiza": "Elveția"
+  },
+  "scoreboardDisplay": {
+    "loading": "Se încarcă tabela de marcaj…",
+    "waiting": "Se așteaptă începerea unui meci…",
+    "matchLoadError": "Meciul nu a putut fi încărcat.",
+    "courtMatchLoadError": "Meciul de pe acest teren nu a putut fi încărcat."
   },
   "ranking": {
     "titulo": "Clasament",

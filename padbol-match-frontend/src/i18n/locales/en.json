@@ -2571,7 +2571,9 @@
     "confirmando": "Confirming payment...",
     "exitoso": "Payment successful",
     "fallido": "Payment was not completed",
-    "reintentar": "Try again"
+    "reintentar": "Try again",
+    "qrGenerationFailed": "We couldn't generate the QR code.",
+    "networkError": "Network error"
   },
   "legal": {
     "terminos": "Terms and Conditions",
@@ -2660,6 +2662,12 @@
     "apply": "Apply",
     "clearAll": "Clear all",
     "loadVenuesError": "We couldn't load the venues."
+  },
+  "scoreboardDisplay": {
+    "loading": "Loading scoreboard…",
+    "waiting": "Waiting for a match…",
+    "matchLoadError": "We couldn't load the match.",
+    "courtMatchLoadError": "We couldn't load the match for this court."
   },
   "equipos": {
     "titulo": "Team",

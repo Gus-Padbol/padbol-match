@@ -165,14 +165,14 @@ export default function PagoExitoso() {
         const j = await res.json().catch(() => ({}));
         if (cancelled) return;
         if (!res.ok) {
-          setQrError(j?.error || 'No se pudo generar el QR');
+          setQrError(j?.error || t('pago.qrGenerationFailed'));
           setQrToken(null);
           return;
         }
         setQrToken(String(j?.qr_token || '').trim() || null);
       } catch (e) {
         if (!cancelled) {
-          setQrError(e?.message || 'Error de red');
+          setQrError(e?.message || t('pago.networkError'));
           setQrToken(null);
         }
       } finally {
@@ -182,7 +182,7 @@ export default function PagoExitoso() {
     return () => {
       cancelled = true;
     };
-  }, [reserva?.id, pagoKind, saving, confirmError]);
+  }, [reserva?.id, pagoKind, saving, confirmError, t]);
 
   const descargarQrPago = () => {
     const canvas = qrCanvasWrapRef.current?.querySelector('canvas');

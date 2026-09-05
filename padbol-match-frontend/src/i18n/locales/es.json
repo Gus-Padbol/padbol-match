@@ -2299,7 +2299,9 @@
     "confirmando": "Confirmando pago...",
     "exitoso": "Pago exitoso",
     "fallido": "El pago no se completó",
-    "reintentar": "Intentar de nuevo"
+    "reintentar": "Intentar de nuevo",
+    "qrGenerationFailed": "No se pudo generar el código QR.",
+    "networkError": "Error de red"
   },
   "legal": {
     "terminos": "Términos y Condiciones",
@@ -2388,6 +2390,12 @@
     "apply": "Aplicar",
     "clearAll": "Limpiar todo",
     "loadVenuesError": "No se pudieron cargar las sedes."
+  },
+  "scoreboardDisplay": {
+    "loading": "Cargando marcador…",
+    "waiting": "Esperando un partido…",
+    "matchLoadError": "No se pudo cargar el partido.",
+    "courtMatchLoadError": "No se pudo cargar el partido de esta cancha."
   },
   "equipos": {
     "titulo": "Equipo",

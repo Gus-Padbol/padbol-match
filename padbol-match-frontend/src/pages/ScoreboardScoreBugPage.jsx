@@ -4,9 +4,11 @@ import ScoreboardScoreBug from '../components/scoreboard/ScoreboardScoreBug';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido } from '../utils/scoreboardApi';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import '../styles/ScoreboardScoreBug.css';
 
 export default function ScoreboardScoreBugPage() {
+  const { t } = useTranslation();
   const { partidoId } = useParams();
   const [partido, setPartido] = useState(null);
   const [error, setError] = useState('');
@@ -25,9 +27,9 @@ export default function ScoreboardScoreBugPage() {
       handleUpdate(p);
       setError('');
     } catch (err) {
-      setError(err.message || 'Error loading match');
+      setError(err.message || t('scoreboardDisplay.matchLoadError'));
     }
-  }, [partidoId, handleUpdate]);
+  }, [partidoId, handleUpdate, t]);
 
   useEffect(() => {
     void fetchPartidoNow();
@@ -47,7 +49,7 @@ export default function ScoreboardScoreBugPage() {
   }
 
   if (!partido) {
-    return <div className="sb-scorebug-page sb-scorebug__loading">Loading…</div>;
+    return <div className="sb-scorebug-page sb-scorebug__loading">{t('scoreboardDisplay.loading')}</div>;
   }
 
   return (
