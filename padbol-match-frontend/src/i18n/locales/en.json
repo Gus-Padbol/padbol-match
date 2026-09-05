@@ -2575,7 +2575,25 @@
   },
   "legal": {
     "terminos": "Terms and Conditions",
-    "privacidad": "Privacy Policy"
+    "privacidad": "Privacy Policy",
+    "termsPage": {
+      "title": "Terms and Conditions", "lead": "Last updated: general information for Padbol Match users. Contact us if you have any questions.",
+      "ownerTitle": "Service provider", "ownerPrefix": "Padbol Match is operated by", "ownerSuffix": ", based in the State of Florida, United States. By using the platform, you accept these terms.",
+      "whatTitle": "What Padbol Match is", "whatBody": "Padbol Match is a digital sports-booking platform that connects players with clubs and venues through Padbol Court bookings, tournaments, rankings and venue information. The service may add new features without waiving these foundational terms.",
+      "useTitle": "Platform terms of use", "useTruth": "You must provide accurate information and keep your account secure, including your password and device.",
+      "useProhibited": "You may not use the platform fraudulently, harm third parties or violate the law.", "useSuspend": "We may suspend or limit accounts in cases of serious breach or risk to the community.",
+      "bookingTitle": "Padbol Court bookings", "bookingPayment": "Payment methods: each venue determines its payment method. Some operate exclusively with online payment; others may offer in-person payment according to their subscription plan.",
+      "bookingCancellation": "Cancellations and refunds: cancellation, change and penalty rules depend on the policy published or communicated by each venue. Always review the details before confirming.",
+      "bookingFee": "Player commission: players pay 0% commission to Padbol Match. When payment is processed online, they pay only the price shown by the club. Padbol Match's commercial commission applies to the service provided to the club, and payment processor costs are separate.",
+      "tournamentsTitle": "Tournaments", "tournamentApproval": "Tournament registration may be subject to approval by the event organizer.",
+      "tournamentCategories": "Gender and format categories, including men's, women's, mixed or other divisions, are defined by the tournament organizer under its internal rules and applicable regulations.",
+      "reportsTitle": "Venue operational reports", "reportsBody": "The summaries, transactions and exportable files offered by Padbol Match are operational information tools. They can help each venue organize and share booking, registration and activity data, but they are not accounting, tax, legal or financial advice and do not replace records, controls, declarations or documentation required by applicable regulations.",
+      "reportsResponsibility": "Each venue is responsible for reviewing the information, deciding how to use it and consulting its own professionals where appropriate, according to its country, jurisdiction and particular obligations.",
+      "liabilityTitle": "Limited liability", "liabilityBody": "Padbol Match acts as a technology intermediary between players and venues. We do not own or directly operate the physical facilities. Any incident at the premises, including security, Padbol Court condition, disputes between users or injuries, should primarily be resolved with the venue and the parties involved. To the extent permitted by applicable law, our liability for use of the platform is limited to what is reasonably foreseeable.",
+      "ipTitle": "Intellectual property", "ipPrefix": "The name", "ipMiddle": "is a registered trademark of", "ipSuffix": " (International Padbol Federation). The app's content, including its design, text, Padbol Match logos and software, is protected and may not be copied or redistributed without authorization.",
+      "lawTitle": "Governing law", "lawBody": "These terms are governed by the laws of the State of Florida, United States, without prejudice to mandatory consumer rights that may apply in other countries.",
+      "contactTitle": "Contact", "contactBody": "Questions about these terms:"
+    }
   },
   "ranking": {
     "titulo": "Ranking"

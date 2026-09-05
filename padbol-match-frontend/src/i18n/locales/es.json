@@ -2268,7 +2268,25 @@
   },
   "legal": {
     "terminos": "Términos y Condiciones",
-    "privacidad": "Política de Privacidad"
+    "privacidad": "Política de Privacidad",
+    "termsPage": {
+      "title": "Términos y Condiciones", "lead": "Última actualización: información general para usuarios de Padbol Match. Si tenés dudas, escribinos.",
+      "ownerTitle": "Titular del servicio", "ownerPrefix": "Padbol Match es operado por", "ownerSuffix": ", con domicilio en el Estado de Florida, Estados Unidos. Al usar la plataforma aceptás estos términos.",
+      "whatTitle": "Qué es Padbol Match", "whatBody": "Padbol Match es una plataforma digital de reservas deportivas que conecta jugadores con clubes y sedes mediante reservas de Padbol Courts, torneos, rankings e información de sedes. El servicio puede ampliarse con nuevas funciones sin que ello implique renuncia a estas condiciones base.",
+      "useTitle": "Condiciones de uso de la plataforma", "useTruth": "Debés proporcionar datos veraces y mantener segura tu cuenta, incluida la contraseña y el dispositivo.",
+      "useProhibited": "Está prohibido usar la plataforma de forma fraudulenta, perjudicar a terceros o vulnerar la ley.", "useSuspend": "Podemos suspender o limitar cuentas ante incumplimientos graves o riesgos para la comunidad.",
+      "bookingTitle": "Reservas de Padbol Courts", "bookingPayment": "Medios de pago: el método depende de cada sede. Algunas operan exclusivamente con pago online; otras pueden ofrecer pago presencial según su plan de suscripción.",
+      "bookingCancellation": "Cancelación y reembolsos: las reglas de cancelación, cambios y penalidades dependen de la política publicada o comunicada por cada sede. Revisá siempre los detalles antes de confirmar.",
+      "bookingFee": "Comisión al jugador: el jugador paga 0% de comisión a Padbol Match. Cuando el pago se procesa online, abona únicamente el precio informado por la sede. La comisión comercial de Padbol Match corresponde al servicio prestado a la sede y los costos del procesador de pagos son independientes.",
+      "tournamentsTitle": "Torneos", "tournamentApproval": "La inscripción a un torneo puede quedar sujeta a la aprobación del organizador del evento.",
+      "tournamentCategories": "Las categorías de género y formato, incluidas divisiones masculinas, femeninas, mixtas u otras, las define el organizador del torneo conforme a sus reglas internas y a la normativa aplicable.",
+      "reportsTitle": "Reportes operativos de las sedes", "reportsBody": "Los resúmenes, movimientos y archivos exportables que ofrece Padbol Match son herramientas de información operativa. Pueden ayudar a cada sede a ordenar y compartir sus datos de reservas, inscripciones y actividad, pero no constituyen asesoramiento contable, tributario, legal ni financiero, ni reemplazan los registros, controles, declaraciones o documentación que exija la normativa aplicable.",
+      "reportsResponsibility": "Cada sede es responsable de revisar la información, definir cómo utilizarla y consultar a sus propios profesionales cuando corresponda, de acuerdo con su país, jurisdicción y obligaciones particulares.",
+      "liabilityTitle": "Responsabilidad limitada", "liabilityBody": "Padbol Match actúa como intermediario tecnológico entre jugadores y sedes. No somos dueños ni operadores directos de las instalaciones físicas. Cualquier incidente en el predio, incluidos la seguridad, el estado de las Padbol Courts, los conflictos entre usuarios o las lesiones, debe resolverse principalmente con la sede y las partes involucradas. En la medida permitida por la ley aplicable, limitamos nuestra responsabilidad por el uso de la plataforma a lo razonablemente previsible.",
+      "ipTitle": "Propiedad intelectual", "ipPrefix": "El nombre", "ipMiddle": "es marca registrada de", "ipSuffix": " (Federación Internacional de Padbol). Los contenidos de la aplicación, incluidos el diseño, los textos, los logos propios de Padbol Match y el software, están protegidos y no pueden copiarse ni redistribuirse sin autorización.",
+      "lawTitle": "Ley aplicable", "lawBody": "Estos términos se rigen por las leyes del Estado de Florida, Estados Unidos, sin perjuicio de los derechos imperativos que correspondan a consumidores en otros países.",
+      "contactTitle": "Contacto", "contactBody": "Consultas sobre estos términos:"
+    }
   },
   "ranking": {
     "titulo": "Ranking"

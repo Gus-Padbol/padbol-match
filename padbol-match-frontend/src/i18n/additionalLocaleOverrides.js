@@ -1627,7 +1627,27 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         installDesktopHint: "Pokud možnost nevidíte, prohlížeč možná instalaci na tomto zařízení zatím nepodporuje; zkuste aktualizovaný Chrome nebo to později ověřte znovu.",
         close: "Zavřít",
       },
-      legal: { terminos: "Smluvní podmínky", privacidad: "Zásady ochrany soukromí" },
+      legal: {
+        terminos: "Smluvní podmínky", privacidad: "Zásady ochrany soukromí",
+        termsPage: {
+          title: "Smluvní podmínky", lead: "Poslední aktualizace: obecné informace pro uživatele Padbol Match. Máte-li dotazy, napište nám.",
+          ownerTitle: "Poskytovatel služby", ownerPrefix: "Padbol Match provozuje", ownerSuffix: ", se sídlem ve státě Florida, Spojené státy. Používáním platformy tyto podmínky přijímáte.",
+          whatTitle: "Co je Padbol Match", whatBody: "Padbol Match je digitální platforma pro sportovní rezervace, která propojuje hráče s kluby prostřednictvím rezervací Padbol Courts, turnajů, žebříčků a informací o klubech. Služba může být rozšířena o nové funkce, aniž by tím byly dotčeny tyto základní podmínky.",
+          useTitle: "Podmínky používání platformy", useTruth: "Musíte uvádět pravdivé údaje a chránit svůj účet, včetně hesla a zařízení.",
+          useProhibited: "Platformu nesmíte používat podvodně, poškozovat třetí osoby ani porušovat zákon.", useSuspend: "V případě závažného porušení nebo rizika pro komunitu můžeme účet pozastavit či omezit.",
+          bookingTitle: "Rezervace Padbol Courts", bookingPayment: "Platební metody: způsob platby určuje každý klub. Některé kluby fungují výhradně s online platbou, jiné mohou podle svého předplatného nabídnout platbu na místě.",
+          bookingCancellation: "Zrušení a vrácení peněz: pravidla pro zrušení, změny a sankce se řídí zásadami zveřejněnými nebo sdělenými jednotlivými kluby. Před potvrzením vždy zkontrolujte podrobnosti.",
+          bookingFee: "Servisní poplatek: při online platbě přes Padbol Match, například prostřednictvím Mercado Pago nebo Stripe, může být k ceně rezervace připočten servisní poplatek 3 %. Rozpis se zobrazí před platbou. Rezervace placené v hotovosti v klubu tento poplatek platformy nezahrnují.",
+          tournamentsTitle: "Turnaje", tournamentApproval: "Registrace do turnaje může podléhat schválení organizátorem akce.",
+          tournamentCategories: "Kategorie podle pohlaví a formátu, včetně mužských, ženských, smíšených či jiných divizí, stanoví organizátor turnaje podle svých interních pravidel a platných předpisů.",
+          reportsTitle: "Provozní přehledy klubů", reportsBody: "Souhrny, transakce a exportovatelné soubory nabízené Padbol Match jsou nástroji provozních informací. Mohou klubům pomoci uspořádat a sdílet údaje o rezervacích, registracích a aktivitě, nepředstavují však účetní, daňové, právní ani finanční poradenství a nenahrazují evidence, kontroly, přiznání či dokumentaci vyžadovanou platnými předpisy.",
+          reportsResponsibility: "Každý klub odpovídá za kontrolu informací, rozhodnutí o jejich použití a případnou konzultaci s vlastními odborníky podle své země, jurisdikce a konkrétních povinností.",
+          liabilityTitle: "Omezení odpovědnosti", liabilityBody: "Padbol Match působí jako technologický prostředník mezi hráči a kluby. Fyzická zařízení nevlastníme ani přímo neprovozujeme. Jakýkoli incident v areálu, včetně bezpečnosti, stavu Padbol Courts, sporů mezi uživateli či zranění, musí být řešen především s klubem a zúčastněnými stranami. V rozsahu povoleném platným právem omezujeme svou odpovědnost za používání platformy na rozumně předvídatelné následky.",
+          ipTitle: "Duševní vlastnictví", ipPrefix: "Název", ipMiddle: "je registrovanou ochrannou známkou", ipSuffix: " (Mezinárodní federace Padbolu). Obsah aplikace, včetně designu, textů, vlastních log Padbol Match a softwaru, je chráněn a bez povolení jej nelze kopírovat ani dále šířit.",
+          lawTitle: "Rozhodné právo", lawBody: "Tyto podmínky se řídí právem státu Florida ve Spojených státech, aniž jsou dotčena kogentní práva spotřebitelů, která mohou platit v jiných zemích.",
+          contactTitle: "Kontakt", contactBody: "Dotazy k těmto podmínkám:"
+        },
+      },
       landing: {
         heroLine1: "Zrozeno s Padbolem.", heroLine2: "Nyní pro každý sport.",
         heroSub: "Platforma, která přivedla Padbol do světa, se otevírá Padlu, Pickleballu a Tenisu.",

@@ -122,6 +122,26 @@
     "confirmMessage": "Această acțiune te deconectează și începe ștergerea sau anonimizarea permanentă a datelor tale. Unele înregistrări pot fi păstrate atunci când există o obligație legală.",
     "sending": "Se trimite solicitarea…", "confirm": "Da, șterge contul", "error": "Solicitarea de ștergere nu a putut fi înregistrată."
   },
+  "legal": {
+    "termsPage": {
+      "title": "Termeni și condiții", "lead": "Ultima actualizare: informații generale pentru utilizatorii Padbol Match. Dacă ai întrebări, scrie-ne.",
+      "ownerTitle": "Furnizorul serviciului", "ownerPrefix": "Padbol Match este operat de", "ownerSuffix": ", cu sediul în statul Florida, Statele Unite. Prin utilizarea platformei accepți acești termeni.",
+      "whatTitle": "Ce este Padbol Match", "whatBody": "Padbol Match este o platformă digitală de rezervări sportive care conectează jucătorii cu cluburile prin rezervări de Padbol Courts, turnee, clasamente și informații despre cluburi. Serviciul poate fi extins cu funcții noi, fără a se renunța la aceste condiții de bază.",
+      "useTitle": "Condiții de utilizare a platformei", "useTruth": "Trebuie să furnizezi informații corecte și să îți păstrezi contul în siguranță, inclusiv parola și dispozitivul.",
+      "useProhibited": "Este interzisă utilizarea frauduloasă a platformei, prejudicierea terților sau încălcarea legii.", "useSuspend": "Putem suspenda sau limita conturile în cazul unor încălcări grave ori al unui risc pentru comunitate.",
+      "bookingTitle": "Rezervări de Padbol Courts", "bookingPayment": "Metode de plată: fiecare club își stabilește metoda de plată. Unele cluburi operează exclusiv cu plată online, iar altele pot oferi plata la fața locului, în funcție de planul lor de abonament.",
+      "bookingCancellation": "Anulări și rambursări: regulile privind anularea, modificările și penalizările depind de politica publicată sau comunicată de fiecare club. Verifică întotdeauna detaliile înainte de confirmare.",
+      "bookingFee": "Comision de serviciu: atunci când plata este procesată online prin Padbol Match, de exemplu prin Mercado Pago sau Stripe, se poate aplica un comision de serviciu de 3% din prețul rezervării. Detalierea este afișată înainte de plată. Rezervările plătite în numerar la club nu includ acest comision al platformei.",
+      "tournamentsTitle": "Turnee", "tournamentApproval": "Înscrierea la un turneu poate fi supusă aprobării organizatorului evenimentului.",
+      "tournamentCategories": "Categoriile de gen și format, inclusiv diviziile masculine, feminine, mixte sau altele, sunt stabilite de organizatorul turneului în conformitate cu regulile sale interne și cu normele aplicabile.",
+      "reportsTitle": "Rapoartele operaționale ale cluburilor", "reportsBody": "Rezumatele, tranzacțiile și fișierele exportabile oferite de Padbol Match sunt instrumente de informare operațională. Ele pot ajuta fiecare club să își organizeze și să își distribuie datele despre rezervări, înscrieri și activitate, dar nu constituie consultanță contabilă, fiscală, juridică sau financiară și nu înlocuiesc evidențele, controalele, declarațiile ori documentele impuse de normele aplicabile.",
+      "reportsResponsibility": "Fiecare club este responsabil să verifice informațiile, să decidă cum le utilizează și să își consulte propriii specialiști atunci când este cazul, potrivit țării, jurisdicției și obligațiilor sale specifice.",
+      "liabilityTitle": "Limitarea răspunderii", "liabilityBody": "Padbol Match acționează ca intermediar tehnologic între jucători și cluburi. Nu deținem și nu operăm direct instalațiile fizice. Orice incident produs în incintă, inclusiv cele privind securitatea, starea Padbol Courts, conflictele dintre utilizatori sau accidentările, trebuie soluționat în principal împreună cu respectivul club și cu părțile implicate. În măsura permisă de legea aplicabilă, răspunderea noastră pentru utilizarea platformei este limitată la ceea ce poate fi prevăzut în mod rezonabil.",
+      "ipTitle": "Proprietate intelectuală", "ipPrefix": "Denumirea", "ipMiddle": "este marcă înregistrată a", "ipSuffix": " (Federația Internațională de Padbol). Conținutul aplicației, inclusiv designul, textele, siglele proprii Padbol Match și software-ul, este protejat și nu poate fi copiat sau redistribuit fără autorizație.",
+      "lawTitle": "Legea aplicabilă", "lawBody": "Acești termeni sunt guvernați de legile statului Florida, Statele Unite, fără a aduce atingere drepturilor obligatorii ale consumatorilor care se pot aplica în alte țări.",
+      "contactTitle": "Date de contact", "contactBody": "Întrebări despre acești termeni:"
+    }
+  },
   "paises": {
     "estados_unidos": "Statele Unite",
     "francia": "Franța",
