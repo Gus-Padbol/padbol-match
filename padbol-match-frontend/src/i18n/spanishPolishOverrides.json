@@ -2,7 +2,17 @@
   "perfil": { "winRate": "Porcentaje de victorias" },
   "admin": {
     "profesores": { "fichaBio": "Biografía" },
-    "metricas": { "formatKnockout": "Eliminación directa" }
+    "metricas": { "formatKnockout": "Eliminación directa" },
+    "hub": { "unsavedPromoConfirm": "Tenés cambios sin guardar en la promoción de tu sede. ¿Querés salir y descartarlos?" },
+    "sedes": {
+      "lastDurationDeactivateConfirm": "Esta es la última duración activa. Si la desactivás, las reservas pueden quedar sin precio base. ¿Continuar?",
+      "standardDurationsOnly": "Solo se permiten duraciones de 60, 90 o 120 minutos.",
+      "durationAlreadyConfigured": "La duración de {{minutes}} minutos ya está configurada para esta disciplina.",
+      "durationAlreadyExistsSport": "Ya existe una duración de {{minutes}} minutos para {{sport}}.",
+      "lastDurationRemoveConfirm": "Esta es la última duración activa. Si la quitás, las reservas pueden quedar sin precio base. ¿Continuar?",
+      "removeDurationConfirm": "¿Quitar la duración de {{minutes}} minutos ({{sport}})?"
+    },
+    "franjas": { "slotSaved": "✅ Franja guardada", "surgeSaved": "✅ Surge guardado", "surgeSaveFailed": "⚠️ No se pudo guardar Surge" }
   },
   "armarPartido": { "singlesPickle": "Individual (2)" }
 }

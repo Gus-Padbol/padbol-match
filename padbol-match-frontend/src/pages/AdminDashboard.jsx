@@ -7545,7 +7545,7 @@ export default function AdminDashboard({
       });
       const j = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setReservaQrModal({ reserva: r, qr_token: null, error: j?.error || 'No se pudo generar el QR' });
+        setReservaQrModal({ reserva: r, qr_token: null, error: t('pago.qrGenerationFailed') });
         return;
       }
       setReservaQrModal({
@@ -7553,8 +7553,8 @@ export default function AdminDashboard({
         qr_token: String(j?.qr_token || '').trim() || null,
         error: null,
       });
-    } catch (err) {
-      setReservaQrModal({ reserva: r, qr_token: null, error: err.message || 'Error de red' });
+    } catch {
+      setReservaQrModal({ reserva: r, qr_token: null, error: t('pago.networkError') });
     } finally {
       setReservaQrModalLoading(false);
     }
@@ -7867,7 +7867,7 @@ export default function AdminDashboard({
       const id = sanitizeAdminActiveTab(tabId, rolPanel);
       if (miSedePromoDirty && activeTab === 'mi_sede' && id !== 'mi_sede') {
         const confirmed = window.confirm(
-          'Tenés cambios sin guardar en la promoción de tu sede. ¿Querés salir y descartarlos?',
+          t('admin.hub.unsavedPromoConfirm'),
         );
         if (!confirmed) return;
         setMiSedePromoDirty(false);
@@ -7900,7 +7900,7 @@ export default function AdminDashboard({
       }
       if (miSedePromoDirty && validId !== 'info') {
         const confirmed = window.confirm(
-          'Tenés cambios sin guardar en la promoción de tu sede. ¿Querés salir y descartarlos?',
+          t('admin.hub.unsavedPromoConfirm'),
         );
         if (!confirmed) return;
         setMiSedePromoDirty(false);
@@ -8078,11 +8078,11 @@ export default function AdminDashboard({
           deporte: miSedePreciosDeporte,
         });
         if (!cancelled) setMiSedeDuraciones(duraciones);
-      } catch (e) {
+      } catch {
         if (!cancelled) {
           setMiSedeDuraciones([]);
           setMiSedeDuracionesLoadError(
-            e?.message || 'No pudimos cargar las duraciones. Reintentá o revisá la conexión.',
+            t('admin.sedes.durationsLoadFailed'),
           );
         }
       } finally {
@@ -8505,10 +8505,10 @@ export default function AdminDashboard({
         ),
       );
       if (results.every(Boolean)) {
-        setSurgeSaveMsg('✅ Surge guardado');
+        setSurgeSaveMsg(t('admin.franjas.surgeSaved'));
         setTimeout(() => setSurgeSaveMsg(''), 3000);
       } else {
-        setSurgeSaveMsg('⚠️ No se pudo guardar Surge');
+        setSurgeSaveMsg(t('admin.franjas.surgeSaveFailed'));
         setTimeout(() => setSurgeSaveMsg(''), 5000);
       }
     } finally {
@@ -8567,12 +8567,12 @@ export default function AdminDashboard({
       };
       const { error } = await supabase.from('franjas_precio').insert(row);
       if (error) throw error;
-      setFranjaPreciosMsg('✅ Franja guardada.');
+      setFranjaPreciosMsg(t('admin.franjas.slotSaved'));
       setFranjasPrecioOverlapMsg('');
       setFranjaDraft({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
       await loadFranjasPrecios(miSedeForm.id);
-    } catch (e) {
-      setFranjaPreciosMsg(`❌ ${e.message}`);
+    } catch {
+      setFranjaPreciosMsg(`❌ ${t('admin.metricas.saveError')}`);
     } finally {
       setFranjaSaving(false);
     }
@@ -8599,10 +8599,10 @@ export default function AdminDashboard({
         deporte: miSedePreciosDeporte,
       });
       setMiSedeDuraciones(duraciones);
-    } catch (e) {
+    } catch {
       setMiSedeDuraciones([]);
       setMiSedeDuracionesLoadError(
-        e?.message || 'No pudimos cargar las duraciones. Reintentá o revisá la conexión.',
+        t('admin.sedes.durationsLoadFailed'),
       );
     } finally {
       setMiSedeDuracionesLoading(false);
@@ -8627,7 +8627,7 @@ export default function AdminDashboard({
     const activas = countDuracionesActivas(miSedeDuraciones);
     if (row?.activo && !draft.activo && activas <= 1) {
       const ok = window.confirm(
-        'Esta es la última duración activa. Si la desactivás, las reservas pueden quedar sin precio base. ¿Continuar?',
+        t('admin.sedes.lastDurationDeactivateConfirm'),
       );
       if (!ok) return;
     }
@@ -8645,8 +8645,8 @@ export default function AdminDashboard({
       }
       setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
-    } catch (e) {
-      setMiSedeDuracionesMsg(e?.message || String(e));
+    } catch {
+      setMiSedeDuracionesMsg(t('admin.metricas.saveError'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
     } finally {
       setMiSedeDuracionGuardandoId(null);
@@ -8662,12 +8662,12 @@ export default function AdminDashboard({
     const dm = parseInt(String(miSedeNuevaDuracion.modo || ''), 10);
     const pr = parseInt(String(miSedeNuevaDuracion.precio || '').replace(/\D/g, ''), 10);
     if (!esDuracionPrecioAdminEstandar(dm)) {
-      setMiSedeDuracionesMsg('Solo se permiten duraciones de 60, 90 o 120 minutos.');
+      setMiSedeDuracionesMsg(t('admin.sedes.standardDurationsOnly'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
       return;
     }
     if (!miSedeDuracionesAgregarOpciones.includes(dm)) {
-      setMiSedeDuracionesMsg(`La duración de ${dm} min ya está configurada para esta disciplina.`);
+      setMiSedeDuracionesMsg(t('admin.sedes.durationAlreadyConfigured', { minutes: dm }));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
       return;
     }
@@ -8678,7 +8678,10 @@ export default function AdminDashboard({
     }
     if (tieneDuracionDuplicada(miSedeDuraciones, dm, miSedePreciosDeporte)) {
       setMiSedeDuracionesMsg(
-        `Ya existe una duración de ${dm} min para ${deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}.`,
+        t('admin.sedes.durationAlreadyExistsSport', {
+          minutes: dm,
+          sport: deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte)),
+        }),
       );
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
       return;
@@ -8698,8 +8701,8 @@ export default function AdminDashboard({
       await cargarMiSedeDuraciones();
       setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
-    } catch (e) {
-      setMiSedeDuracionesMsg(e?.message || String(e));
+    } catch {
+      setMiSedeDuracionesMsg(t('admin.metricas.saveError'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
     } finally {
       setMiSedeDuracionAgregando(false);
@@ -8711,12 +8714,15 @@ export default function AdminDashboard({
     const activas = countDuracionesActivas(miSedeDuraciones);
     if (row.activo && activas <= 1) {
       const ok = window.confirm(
-        'Esta es la última duración activa. Si la quitás, las reservas pueden quedar sin precio base. ¿Continuar?',
+        t('admin.sedes.lastDurationRemoveConfirm'),
       );
       if (!ok) return;
     } else if (
       !window.confirm(
-        `¿Quitar la duración de ${row.duracion_minutos} min (${deporteLabelMiSedePrecios(row.deporte)})?`,
+        t('admin.sedes.removeDurationConfirm', {
+          minutes: row.duracion_minutos,
+          sport: deporteLabelMiSedePrecios(row.deporte),
+        }),
       )
     ) {
       return;
@@ -8736,7 +8742,7 @@ export default function AdminDashboard({
         await guardarMiSedeFilaDuracion(row.id);
         return;
       }
-      setMiSedeDuracionesMsg(msg);
+      setMiSedeDuracionesMsg(t('admin.metricas.saveError'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
     } finally {
       setMiSedeDuracionEliminandoId(null);

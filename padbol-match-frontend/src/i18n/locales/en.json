@@ -1534,6 +1534,7 @@
       "imageUrlCardBackground": "Image URL (card background)",
       "uploading": "Uploading…",
       "imageStorageHint": "The image is saved in the club storage (venues bucket). You can paste an external URL or upload a file."
+      ,"unsavedPromoConfirm": "Your venue promotion has unsaved changes. Leave and discard them?"
     },
     "sedes": {
       "extrasPendingApproval": "Extras pending approval",
@@ -1655,6 +1656,12 @@
       "licenseStatus": "license status",
       "fileOver2mb": "⚠️ File exceeds 2MB",
       "durationsLoadFailed": "Could not load durations",
+      "lastDurationDeactivateConfirm": "This is the last active duration. If you deactivate it, bookings may have no base price. Continue?",
+      "standardDurationsOnly": "Only 60, 90 or 120-minute durations are allowed.",
+      "durationAlreadyConfigured": "The {{minutes}}-minute duration is already configured for this sport.",
+      "durationAlreadyExistsSport": "A {{minutes}}-minute duration already exists for {{sport}}.",
+      "lastDurationRemoveConfirm": "This is the last active duration. If you remove it, bookings may have no base price. Continue?",
+      "removeDurationConfirm": "Remove the {{minutes}}-minute duration ({{sport}})?",
       "subscriptionActive": "Active",
       "subscriptionExpired": "Expired",
       "paymentPending": "Payment pending",
@@ -2567,6 +2574,7 @@
       "applicationLabel": "Application",
       "completeSlotFields": "⚠️ Complete times and at least one day or date per slot",
       "slotsSaved": "✅ Time slots saved",
+      "slotSaved": "✅ Time band saved",
       "deleteSlot": "Delete slot",
       "slotsAndPricesTitle": "Time slots and prices",
       "surgeActive": "Active",
@@ -2576,6 +2584,8 @@
       "surgeMaxPrice": "highest possible price",
       "surgePreviewMissing": "90 min: set the 90-minute base price under Prices by duration to see a preview",
       "surgeSave": "Save Surge",
+      "surgeSaved": "✅ Surge saved",
+      "surgeSaveFailed": "⚠️ Surge could not be saved",
       "surgeExplanation": "The price adjusts automatically according to occupancy, booking speed and time of day, always within your minimum–maximum band (% of the base price).",
       "surgeBands": "0–30% occupancy → minimum · 30–60% → medium · 60–85% → high · 85–100% → maximum · Last available hour → automatic discount",
       "pricingTitle": "Pricing by time band",

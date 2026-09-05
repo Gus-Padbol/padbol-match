@@ -10,9 +10,18 @@
       "editCourt": "Editează terenul",
       "myCourtsTitle": "⚽ Terenurile mele",
       "courtsLoadFailed": "Terenurile nu au putut fi încărcate",
+      "lastDurationDeactivateConfirm": "Aceasta este ultima durată activă. Dacă o dezactivezi, rezervările pot rămâne fără preț de bază. Continui?",
+      "standardDurationsOnly": "Sunt permise numai durate de 60, 90 sau 120 de minute.",
+      "durationAlreadyConfigured": "Durata de {{minutes}} de minute este deja configurată pentru această disciplină.",
+      "durationAlreadyExistsSport": "Există deja o durată de {{minutes}} de minute pentru {{sport}}.",
+      "lastDurationRemoveConfirm": "Aceasta este ultima durată activă. Dacă o elimini, rezervările pot rămâne fără preț de bază. Continui?",
+      "removeDurationConfirm": "Elimini durata de {{minutes}} de minute ({{sport}})?",
       "venueDataConfigHint": "Datele clubului: dacă ai fila „Clubul meu”, folosește „Editează clubul” pentru nume, localizare, contact, prețuri și metoda de plată. Modificările se salvează prin API și apar în profilul public. În aceeași filă, „Terenurile mele” îți permite să adaugi terenuri și să le activezi sau să le dezactivezi; terenurile inactive nu sunt oferite la rezervare."
     },
     "franjas": {
+      "slotSaved": "✅ Interval salvat",
+      "surgeSaved": "✅ Surge a fost salvat",
+      "surgeSaveFailed": "⚠️ Surge nu a putut fi salvat",
       "surgeActive": "Activ",
       "surgeMaxDiscount": "Reducere maximă (%)",
       "surgeMinPrice": "cel mai mic preț posibil",
@@ -49,6 +58,7 @@
       "contractExpiringBody": "{{venue}} expiră la {{date}} ({{days}} zile)."
     },
     "hub": {
+      "unsavedPromoConfirm": "Promoția bazei tale are modificări nesalvate. Dorești să ieși și să le anulezi?",
       "promoJugarIntro": "Card promoțional sub cele trei acțiuni (Rezervă / Caută / Creează un meci) din ecranul Joacă. Este afișat jucătorilor clubului tău doar când este activ și conține datele minime."
     },
     "onboarding": {
