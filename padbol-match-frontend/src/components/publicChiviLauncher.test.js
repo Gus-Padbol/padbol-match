@@ -1,7 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { isChatbotIAVisiblePathname } from '../constants/hubLayout';
-import { inferWritingLocaleCodeFromText, publicLandingKnowledgeAnswer } from './ChatbotIA';
+import {
+  bcp47LangForAssistantTts,
+  inferWritingLocaleCodeFromText,
+  publicLandingKnowledgeAnswer,
+} from './ChatbotIA';
 
 describe('Chivi on the public Padbol Match landing', () => {
   it('is visible on the public landing without expanding to player routes', () => {
@@ -37,5 +41,13 @@ describe('Chivi on the public Padbol Match landing', () => {
     expect(publicLandingKnowledgeAnswer('Was ist heute verfügbar?', 'de')).toMatch(/Padbol Match connects/i);
     expect(publicLandingKnowledgeAnswer('Ce oferă cluburilor?', 'ro')).toMatch(/terenuri.*rezervări.*turnee/iu);
     expect(publicLandingKnowledgeAnswer('Aveți rapoarte contabile?', 'ro')).toMatch(/nu reprezintă consultanță contabilă/iu);
+    expect(publicLandingKnowledgeAnswer('Co nabízíte klubům?', 'cs')).toMatch(/kurtů.*rezervací.*turnajů/iu);
+    expect(publicLandingKnowledgeAnswer('Máte účetní přehledy?', 'cs')).toMatch(/Nejde o účetní.*poradenství/iu);
+  });
+
+  it('uses the selected language for read-aloud replies', () => {
+    expect(bcp47LangForAssistantTts('Vyberte dostupný čas.', 'cs')).toBe('cs-CZ');
+    expect(bcp47LangForAssistantTts('Short neutral reply.', 'de')).toBe('de-DE');
+    expect(bcp47LangForAssistantTts('Mulțumesc pentru rezervare.', 'en')).toBe('ro-RO');
   });
 });
