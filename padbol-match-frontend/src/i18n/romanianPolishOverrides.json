@@ -8,6 +8,7 @@
       "addCourt": "Adaugă teren",
       "editCourt": "Editează terenul",
       "myCourtsTitle": "⚽ Terenurile mele",
+      "courtsLoadFailed": "Terenurile nu au putut fi încărcate",
       "venueDataConfigHint": "Datele clubului: dacă ai fila „Clubul meu”, folosește „Editează clubul” pentru nume, localizare, contact, prețuri și metoda de plată. Modificările se salvează prin API și apar în profilul public. În aceeași filă, „Terenurile mele” îți permite să adaugi terenuri și să le activezi sau să le dezactivezi; terenurile inactive nu sunt oferite la rezervare."
     },
     "reservas": {
