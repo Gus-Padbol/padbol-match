@@ -285,12 +285,12 @@ export default function ScoreboardControl() {
         partidoId: partido?.id ?? partidoId,
         message: err?.message || err,
       });
-      setError(err?.message || 'Error en la acción');
+      setError(err?.message || t('general.somethingWentWrong'));
       return false;
     } finally {
       setActionLoading(false);
     }
-  }, [partido?.id, partidoId, refreshPartido]);
+  }, [partido?.id, partidoId, refreshPartido, t]);
 
   runActionRef.current = runAction;
 

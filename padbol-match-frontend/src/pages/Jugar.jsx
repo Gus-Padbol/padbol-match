@@ -345,7 +345,7 @@ export default function Jugar() {
                   border: '1px solid rgba(255,255,255,0.25)',
                 }}
               >
-                Del club
+                {t('jugar.fromClub')}
               </span>
               <div className="jugar-card-copy">
                 <strong className="jugar-card-title">{String(hubPromoRow.titulo).trim()}</strong>
@@ -353,7 +353,7 @@ export default function Jugar() {
                   <span className="jugar-card-body">{String(hubPromoRow.subtitulo).trim()}</span>
                 ) : null}
                 <span className="jugar-card-body" style={{ marginTop: 6, display: 'block', fontWeight: 800 }}>
-                  {String(hubPromoRow.texto_boton || 'Ver más').trim()}
+                  {String(hubPromoRow.texto_boton || t('general.seeMore')).trim()}
                 </span>
               </div>
             </div>

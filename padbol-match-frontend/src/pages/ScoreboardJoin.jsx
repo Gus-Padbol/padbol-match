@@ -251,10 +251,7 @@ export default function ScoreboardJoin() {
 
         {!loading && !activo?.partido_id ? (
           <p className="sb-join__empty">
-            {t(
-              'scoreboard.join.noMatch',
-              'No hay partido activo ahora. Volvé cuando sea tu turno.',
-            )}
+            {t('scoreboard.join.noMatch')}
           </p>
         ) : null}
 

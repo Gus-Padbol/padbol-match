@@ -1766,6 +1766,7 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
       },
       jugar: {
         titulo: "Pojďme hrát!", reservar: "Rezervovat kurt",
+        fromClub: "Od klubu",
         reservarBody: "Mám kompletní tým a potřebuji kurt.",
         buscar: "Najít zápas", buscarBody: "Chci se připojit k existujícímu zápasu.",
         clase: "Absolvovat lekci", claseBody: "Trénujte s trenérem ve svém klubu.",

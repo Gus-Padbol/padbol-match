@@ -56,8 +56,16 @@
     }
   },
   "reservas": {
-    "payAtVenueBody": "Acest club acceptă plata la fața locului. Nu te redirecționăm către Mercado Pago sau către plata cu cardul: după confirmare, rezervarea rămâne în așteptare până când plătești la club."
+    "payAtVenueBody": "Acest club acceptă plata la fața locului. Nu te redirecționăm către Mercado Pago sau către plata cu cardul: după confirmare, rezervarea rămâne în așteptare până când plătești la club.",
+    "cancelar": "Anulează rezervarea",
+    "paymentIncomplete": "Plata nu a fost finalizată. Poți încerca din nou sau poți anula rezervarea.",
+    "cancelModalTitle": "Anulezi rezervarea și ieși?",
+    "cancelModalMessage": "Vei ieși din procesul de plată, iar intervalul reținut va fi eliberat.",
+    "cancelModalConfirm": "Da, anulează rezervarea",
+    "cancelModalDismiss": "Rămâi pe acest ecran"
   },
+  "pago": { "fallido": "Plata nu a fost finalizată", "reintentar": "Încearcă din nou" },
+  "clases": { "detalle": "Detaliile lecției" },
   "auth": {
     "completeFirstName": "Introdu prenumele.",
     "completeLastName": "Introdu numele de familie.",
@@ -130,6 +138,7 @@
   "hub": {
     "card": { "reservarSub": "Am deja echipa, vreau să rezerv un teren." }
   },
+  "jugar": { "fromClub": "Din partea clubului" },
   "equipos": { "titulo": "Echipă" },
   "notificaciones": { "tipo": { "partido": "Meci" } },
   "pwa": { "close": "Închide" },

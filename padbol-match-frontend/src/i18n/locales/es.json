@@ -511,7 +511,8 @@
     "armar": "Armar partido",
     "armarBody": "Quiero crear un partido y sumar jugadores.",
     "publicidad": "Tu marca aquí",
-    "publicidadShort": "Tu marca"
+    "publicidadShort": "Tu marca",
+    "fromClub": "Del club"
   },
   "clases": {
     "titulo": "Clases",

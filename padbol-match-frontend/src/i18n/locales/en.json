@@ -487,7 +487,8 @@
     "armar": "Create a match",
     "armarBody": "I want to create a match and find players.",
     "publicidad": "Your brand here",
-    "publicidadShort": "Your brand"
+    "publicidadShort": "Your brand",
+    "fromClub": "From the club"
   },
   "clases": {
     "titulo": "Classes",

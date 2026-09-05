@@ -30,14 +30,15 @@ function tipoEtiqueta(t, tipo) {
   return map[tipo] || t('notificaciones.tipo.aviso');
 }
 
-function fechaNotifLabel(value) {
+function fechaNotifLabel(value, locale) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+  return d.toLocaleString(locale || 'en', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 export default function NotificacionesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.resolvedLanguage || i18n.language || 'en';
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -63,14 +64,14 @@ export default function NotificacionesPage() {
       const headers = await authHeaders();
       const res = await fetch(`${API_BASE}/api/notificaciones`, { headers });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'No se pudieron cargar notificaciones');
+      if (!res.ok) throw new Error(data?.error || t('general.somethingWentWrong'));
       setItems(Array.isArray(data) ? data : []);
     } catch (err) {
-      setMsg(err.message || 'Error de red');
+      setMsg(err.message || t('general.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, session?.user]);
+  }, [authHeaders, session?.user, t]);
 
   const markRead = useCallback(
     async (ids = []) => {
@@ -254,7 +255,7 @@ export default function NotificacionesPage() {
                       {n.mensaje}
                     </span>
                     <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, marginTop: 8 }}>
-                      {fechaNotifLabel(n.created_at)}
+                      {fechaNotifLabel(n.created_at, dateLocale)}
                     </span>
                   </button>
                 ))}
