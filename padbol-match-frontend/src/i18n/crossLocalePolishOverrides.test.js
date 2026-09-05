@@ -1,4 +1,6 @@
 import i18n from './index';
+import en from './locales/en.json';
+import { PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
 function flatten(value, prefix = '', output = {}) {
   Object.entries(value || {}).forEach(([key, child]) => {
@@ -47,5 +49,20 @@ describe('Cross-locale editorial corrections', () => {
     const afrikaans = flatten(i18n.getResourceBundle('af', 'translation'));
     expect(hungarian['publicSite.status.items.next.text']).toMatch(/szponzori.*hirdetési.*Padbol Match Shop/iu);
     expect(afrikaans['publicSite.hero.globe.aria']).toMatch(/spelers.*klubs.*wedstryde.*toernooie/iu);
+  });
+
+  it('does not contain severely truncated or displaced long messages in any edition', () => {
+    const english = flatten(en);
+    const longKeys = Object.keys(english).filter((key) => english[key].length > 90);
+    const suspicious = [];
+    PADBOL_LANGUAGE_CODES.filter((code) => !['en', 'es'].includes(code)).forEach((code) => {
+      const resolved = flatten(i18n.getResourceBundle(code, 'translation'));
+      longKeys.forEach((key) => {
+        if (!resolved[key]) return;
+        const ratio = resolved[key].length / english[key].length;
+        if (ratio < 0.42 || ratio > 2.35) suspicious.push(`${code}:${key}`);
+      });
+    });
+    expect(suspicious).toEqual([]);
   });
 });
