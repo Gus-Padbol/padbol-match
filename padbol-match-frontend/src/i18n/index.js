@@ -18,6 +18,7 @@ import ROMANIAN_ADMIN_LANDING_OVERRIDES from './romanianAdminLandingOverrides.js
 import ROMANIAN_PADCOINS_OVERRIDES from './romanianPadcoinsOverrides.json';
 import ROMANIAN_ENGLISH_LEAK_OVERRIDES from './romanianEnglishLeakOverrides.json';
 import ROMANIAN_POLISH_OVERRIDES from './romanianPolishOverrides.json';
+import CZECH_POLISH_OVERRIDES from './czechPolishOverrides.json';
 import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
 import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
@@ -63,9 +64,10 @@ const englishBackedLocale = (code, baseLocale = {}) => {
     ? mergeLocale(base, { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] })
     : base;
   const withAdditionalOverrides = mergeLocale(withPublicSite, ADDITIONAL_LOCALE_OVERRIDES[code]);
-  return code === 'ro'
-    ? ROMANIAN_LOCALE_LAYERS.reduce((locale, layer) => mergeLocale(locale, layer), withAdditionalOverrides)
-    : withAdditionalOverrides;
+  if (code === 'ro') {
+    return ROMANIAN_LOCALE_LAYERS.reduce((locale, layer) => mergeLocale(locale, layer), withAdditionalOverrides);
+  }
+  return code === 'cs' ? mergeLocale(withAdditionalOverrides, CZECH_POLISH_OVERRIDES) : withAdditionalOverrides;
 };
 
 i18n
