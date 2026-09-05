@@ -10,6 +10,7 @@ import fr from './locales/fr.json';
 import pt from './locales/pt.json';
 import ar from './locales/ar.json';
 import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
+import ROMANIAN_LOCALE_OVERRIDES from './romanianLocaleOverrides';
 import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
 import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
@@ -43,7 +44,10 @@ const englishBackedLocale = (code, baseLocale = {}) => {
   const withPublicSite = PUBLIC_SITE_GENERATED_LOCALES[code]
     ? mergeLocale(base, { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] })
     : base;
-  return mergeLocale(withPublicSite, ADDITIONAL_LOCALE_OVERRIDES[code]);
+  const withAdditionalOverrides = mergeLocale(withPublicSite, ADDITIONAL_LOCALE_OVERRIDES[code]);
+  return code === 'ro'
+    ? mergeLocale(withAdditionalOverrides, ROMANIAN_LOCALE_OVERRIDES)
+    : withAdditionalOverrides;
 };
 
 i18n

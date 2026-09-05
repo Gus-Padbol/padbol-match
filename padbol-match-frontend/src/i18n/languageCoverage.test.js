@@ -47,4 +47,33 @@ describe('language coverage', () => {
     expect(i18n.language).toBe(language);
     expect(i18n.t('publicSite.nav.players')).toBe(expected);
   });
+
+  it('mantiene en rumano los recorridos prioritarios para jugadores', async () => {
+    await i18n.changeLanguage('ro');
+
+    expect(i18n.t('auth.login')).toBe('Autentificare');
+    expect(i18n.t('auth.firstName')).toBe('Prenume');
+    expect(i18n.t('auth.handednessLeft')).toBe('Stângaci');
+    expect(i18n.t('nav.jugar')).toBe('Joacă');
+    expect(i18n.t('reservas.heroTitle')).toBe('Rezervă-ți terenul');
+    expect(i18n.t('reservas.court')).toBe('Teren');
+    expect(i18n.t('torneos.listado.tabActivos')).toBe('În curând / În desfășurare');
+    expect(i18n.t('perfilPublico.shareProfile')).toBe('Distribuie profilul');
+    expect(i18n.t('publicSite.nav.platform')).toBe('Platformă');
+    expect(i18n.t('publicSite.hero.globe.labels.courts')).toBe('Terenuri');
+    expect(i18n.t('publicSite.venuePath.items.reports.title')).toBe('Administrare');
+  });
+
+  it('nu folosește în română termeni juridici sau alte sporturi pentru teren', async () => {
+    await i18n.changeLanguage('ro');
+    const priorityKeys = [
+      'reservas.titulo', 'reservas.heroTitle', 'reservas.chooseCourt',
+      'reservas.court', 'reservas.labelCourt', 'reservas.searchCourtsError',
+      'publicSite.hero.globe.labels.courts', 'publicSite.playerPath.items.book.text',
+      'publicSite.about.text',
+    ];
+    const copy = priorityKeys.map((key) => i18n.t(key)).join(' ').toLowerCase();
+
+    expect(copy).not.toMatch(/tribunal|instanță|baschet/);
+  });
 });
