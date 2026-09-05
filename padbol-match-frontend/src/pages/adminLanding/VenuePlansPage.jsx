@@ -8,32 +8,32 @@ import {
 import '../publicSite/publicSite.css';
 import './adminVenueLanding.css';
 import './venuePlansPage.css';
+import { useSafeTranslation } from '../../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../../utils/padbolLang';
+import { venuePlansCopy } from './venuePlansCopy';
 
-function formatAmount(value, currency = 'USD') {
+function formatAmount(value, currency = 'USD', locale = 'en-US') {
   if (value == null || value === '') return null;
   const number = Number(value);
   if (!Number.isFinite(number)) return null;
-  return `${currency} ${new Intl.NumberFormat('es-AR', {
+  return `${currency} ${new Intl.NumberFormat(locale, {
     maximumFractionDigits: number % 1 === 0 ? 0 : 2,
   }).format(number)}`;
 }
 
-function formatCommission(value) {
+function formatCommission(value, locale = 'en-US', notDefined = 'To be defined') {
   const number = Number(value);
-  if (!Number.isFinite(number)) return 'A definir';
-  return `${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(number)}%`;
+  if (!Number.isFinite(number)) return notDefined;
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(number)}%`;
 }
 
-function useDocumentMeta() {
+function useDocumentMeta(title, metaDescription) {
   useEffect(() => {
     const previousTitle = document.title;
     const description = document.querySelector('meta[name="description"]');
     const previousDescription = description?.getAttribute('content') || '';
-    document.title = 'Padbol Match para clubes — Planes';
-    description?.setAttribute(
-      'content',
-      'Padbol Match reúne reservas, jugadores, partidos, torneos, rankings, marcador digital y gestión de clubes multideporte.',
-    );
+    document.title = title;
+    description?.setAttribute('content', metaDescription);
     document.documentElement.classList.add('public-site-active', 'venue-plans-active');
     window.scrollTo(0, 0);
 
@@ -42,31 +42,31 @@ function useDocumentMeta() {
       description?.setAttribute('content', previousDescription);
       document.documentElement.classList.remove('public-site-active', 'venue-plans-active');
     };
-  }, []);
+  }, [metaDescription, title]);
 }
 
-function PlanCard({ plan }) {
-  const monthly = formatAmount(plan.monthlyAmount, plan.currency);
-  const annual = formatAmount(plan.annualAmount, plan.currency);
+function PlanCard({ plan, copy, locale }) {
+  const monthly = formatAmount(plan.monthlyAmount, plan.currency, locale);
+  const annual = formatAmount(plan.annualAmount, plan.currency, locale);
   const prefix = plan.pricePrefix ? `${plan.pricePrefix} ` : '';
   const commissionPrefix = plan.commissionPrefix ? `${plan.commissionPrefix} ` : '';
 
   return (
     <article className={`venue-plans__card${plan.featured ? ' venue-plans__card--featured' : ''}`}>
-      {plan.featured ? <p className="venue-plans__badge">MÁS ELEGIDO</p> : null}
+      {plan.featured ? <p className="venue-plans__badge">{copy.featured}</p> : null}
       <header>
         <h3>{plan.name}</h3>
         <p className="venue-plans__summary">{plan.summary}</p>
       </header>
       <div className="venue-plans__price-block">
         <p className="venue-plans__price">
-          <span>{prefix}</span>{monthly}<small>/ mes</small>
+          <span>{prefix}</span>{monthly}<small>{copy.perMonth}</small>
         </p>
         {annual != null && Number(plan.annualAmount) !== Number(plan.monthlyAmount) ? (
-          <p className="venue-plans__annual">o {annual} / año</p>
+          <p className="venue-plans__annual">{copy.or} {annual} {copy.perYear}</p>
         ) : null}
       </div>
-      <div className="venue-plans__limits" aria-label={`Límites del plan ${plan.name}`}>
+      <div className="venue-plans__limits" aria-label={`${copy.limits} ${plan.name}`}>
         <span>{plan.courtsLabel}</span>
         <span>{plan.adminsLabel}</span>
       </div>
@@ -74,9 +74,9 @@ function PlanCard({ plan }) {
         {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
       </ul>
       <div className="venue-plans__commission">
-        <span>Servicio a la sede</span>
-        <strong>{commissionPrefix}{formatCommission(plan.commissionPercent)}</strong>
-        <small>sobre operaciones procesadas mediante Padbol Match</small>
+        <span>{copy.venueService}</span>
+        <strong>{commissionPrefix}{formatCommission(plan.commissionPercent, locale, copy.notDefined)}</strong>
+        <small>{copy.commissionNote}</small>
       </div>
       <Link className="venue-plans__plan-cta" to={plan.ctaPath}>{plan.ctaLabel}</Link>
     </article>
@@ -121,8 +121,12 @@ const PLAN_FAQS = [
 ];
 
 export default function VenuePlansPage({ catalogOverride = null }) {
-  const plans = catalogOverride || COMMERCIAL_PLANS_PREVIEW;
-  useDocumentMeta();
+  const { i18n } = useSafeTranslation();
+  const copy = venuePlansCopy(i18n.resolvedLanguage || i18n.language);
+  const locale = padbolLangToIntlLocale(i18n.resolvedLanguage || i18n.language);
+  const sourcePlans = catalogOverride || COMMERCIAL_PLANS_PREVIEW;
+  const plans = sourcePlans.map((plan) => ({ ...plan, ...(copy.plans[plan.slug] || {}) }));
+  useDocumentMeta(copy.metaTitle, copy.metaDescription);
 
   return (
     <PublicSiteLayout currentPage="plans">
@@ -130,72 +134,110 @@ export default function VenuePlansPage({ catalogOverride = null }) {
         <section className="venue-plans__hero">
           <div className="public-site__shell venue-plans__hero-grid">
             <div className="venue-plans__hero-copy">
-              {!COMMERCIAL_PRICING_PUBLIC ? <p className="venue-plans__draft">BORRADOR INTERNO · NO PUBLICADO</p> : null}
-              <Link to="/administradores" className="venue-plans__back">← Para administradores</Link>
-              <p className="venue-plans__eyebrow">PADBOL MATCH PARA CLUBES</p>
-              <h1>Todo tu club.<br /><span>Una sola plataforma.</span></h1>
-              <p className="venue-plans__sports">Padbol <i>·</i> Pádel <i>·</i> Pickleball <i>·</i> Tenis</p>
-              <p className="venue-plans__lead">Reservas, jugadores, partidos, torneos, rankings, marcador en vivo, membresías y gestión desde un mismo lugar.</p>
+              {!COMMERCIAL_PRICING_PUBLIC ? <p className="venue-plans__draft">{copy.draft}</p> : null}
+              <Link to="/administradores" className="venue-plans__back">{copy.back}</Link>
+              <p className="venue-plans__eyebrow">{copy.eyebrow}</p>
+              <h1>{copy.title}<br /><span>{copy.titleAccent}</span></h1>
+              <p className="venue-plans__sports">{copy.sports}</p>
+              <p className="venue-plans__lead">{copy.lead}</p>
               <div className="venue-plans__hero-actions">
-                <Link to="/unirse?plan=starter" className="venue-plans__cta venue-plans__cta--primary">EMPEZAR SIN ABONO</Link>
-                <a href="#planes" className="venue-plans__cta venue-plans__cta--secondary">VER PLANES</a>
+                <Link to="/unirse?plan=starter" className="venue-plans__cta venue-plans__cta--primary">{copy.start}</Link>
+                <a href="#planes" className="venue-plans__cta venue-plans__cta--secondary">{copy.seePlans}</a>
               </div>
             </div>
-            <div className="venue-plans__hero-visual" aria-label="Operación conectada del club">
-              <span>CLUB EN VIVO</span>
-              <strong>4 deportes</strong>
-              <div className="venue-plans__pulse-row"><i /> Reservas y disponibilidad</div>
-              <div className="venue-plans__pulse-row"><i /> Partido y marcador en vivo</div>
-              <div className="venue-plans__pulse-row"><i /> Resultados, ranking y retorno</div>
-              <p>Una operación conectada antes, durante y después de jugar.</p>
+            <div className="venue-plans__hero-visual" aria-label={copy.operationAria}>
+              <span>{copy.liveClub}</span>
+              <strong>{copy.fourSports}</strong>
+              <div className="venue-plans__pulse-row"><i /> {copy.bookings}</div>
+              <div className="venue-plans__pulse-row"><i /> {copy.liveMatch}</div>
+              <div className="venue-plans__pulse-row"><i /> {copy.results}</div>
+              <p>{copy.connected}</p>
             </div>
           </div>
         </section>
 
-        <section className="venue-plans__player-fee" aria-label="Comisiones al jugador">
+        <section className="venue-plans__player-fee" aria-label={copy.playerFeeAria}>
           <div className="public-site__shell">
-            <strong>EL JUGADOR PAGA 0% DE COMISIÓN A PADBOL MATCH.</strong>
-            <p>Las comisiones de los planes corresponden al servicio prestado a la sede. Los costos de los procesadores de pago son independientes.</p>
+            <strong>{copy.playerFeeTitle}</strong>
+            <p>{copy.playerFeeText}</p>
           </div>
         </section>
 
         <section className="venue-plans__padbol-owner" aria-labelledby="padbol-owner-title">
           <div className="public-site__shell venue-plans__padbol-owner-grid">
             <div>
-              <p className="venue-plans__eyebrow">BENEFICIO EXCLUSIVO PARA SEDES PADBOL</p>
-              <h2 id="padbol-owner-title">¿Eres propietario de una o más canchas de Padbol?</h2>
-              <p>Empieza con 6 meses de Padbol Match Pro sin cargo y renuévalo mes a mes usando la plataforma de forma continua.</p>
-              <small>Los objetivos son claros, se verifican dentro de Padbol Match y no generan cargos automáticos ni ocultos.</small>
+              <p className="venue-plans__eyebrow">{copy.padbolBenefit}</p>
+              <h2 id="padbol-owner-title">{copy.padbolOwnerTitle}</h2>
+              <p>{copy.padbolOwnerText}</p>
+              <small>{copy.padbolOwnerHint}</small>
             </div>
             <Link
               className="venue-plans__cta venue-plans__cta--primary"
               to="/unirse?plan=pro&promo=padbol-pro-renovable"
             >
-              EMPEZAR 6 MESES PRO SIN CARGO
+              {copy.padbolOwnerCta}
             </Link>
           </div>
         </section>
 
         <section id="planes" className="venue-plans__section venue-plans__catalog" aria-labelledby="planes-title">
           <div className="public-site__shell">
-            <p className="venue-plans__eyebrow">PLANES PARA CRECER A TU RITMO</p>
-            <h2 id="planes-title">Empieza administrando.<br /><span>Pasa a Pro para automatizar.</span></h2>
+            <p className="venue-plans__eyebrow">{copy.plansEyebrow}</p>
+            <h2 id="planes-title">{copy.plansTitle}<br /><span>{copy.plansAccent}</span></h2>
             <div className="venue-plans__grid">
-              {plans.map((plan) => <PlanCard key={plan.slug} plan={plan} />)}
+              {plans.map((plan) => <PlanCard key={plan.slug} plan={plan} copy={copy} locale={locale} />)}
             </div>
-            <p className="venue-plans__fine-print">Los límites, precios, promociones y comisiones dependen de la región y de la configuración vigente. Business se define por contacto comercial y validación técnica.</p>
+            <p className="venue-plans__fine-print">{copy.finePrint}</p>
+          </div>
+        </section>
+
+        <section className="venue-plans__section venue-plans__scoreboard" aria-labelledby="scoreboard-title">
+          <div className="public-site__shell venue-plans__split">
+            <div>
+              <p className="venue-plans__eyebrow">{copy.scoreboardEyebrow}</p>
+              <h2 id="scoreboard-title">{copy.scoreboardTitle}<br /><span>{copy.scoreboardAccent}</span></h2>
+              <p>{copy.devices}</p>
+              <ul>
+                {copy.scoreboardItems.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+              <p className="venue-plans__note">{copy.scoreboardNote}</p>
+            </div>
+            <figure>
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
+                poster="/media/public-site/jero/marcador-inteligente-captura.jpg"
+                aria-label={copy.scoreboardAria}
+              >
+                <source src="/media/public-site/jero/marcador-inteligente.mp4" type="video/mp4" />
+              </video>
+              <figcaption>{copy.scoreboardCaption}</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section className="venue-plans__section venue-plans__multisport" aria-labelledby="multisport-title">
+          <div className="public-site__shell">
+            <p className="venue-plans__eyebrow">{copy.multisportEyebrow}</p>
+            <h2 id="multisport-title">{copy.multisportTitle}</h2>
+            <p>{copy.multisportText}</p>
+            <div className="venue-plans__sport-grid" aria-hidden="true">
+              {copy.multisportTitle.split(' · ').map((sport) => <span key={sport}>{sport.toUpperCase()}</span>)}
+            </div>
           </div>
         </section>
 
         <section className="venue-plans__section venue-plans__automation" aria-labelledby="automation-title">
           <div className="public-site__shell">
-            <p className="venue-plans__eyebrow">LO QUE GANA TU CLUB</p>
-            <h2 id="automation-title">Más movimiento.<br /><span>Una operación más simple.</span></h2>
+            <p className="venue-plans__eyebrow">{copy.automationEyebrow}</p>
+            <h2 id="automation-title">{copy.automationTitle}<br /><span>{copy.automationAccent}</span></h2>
             <div className="venue-plans__feature-grid">
-              <FeaturePanel eyebrow="01" title="Menos tareas repetidas">Pro automatiza sorteos, zonas, partidos, resultados, clasificación, cruces y finales.</FeaturePanel>
-              <FeaturePanel eyebrow="02" title="Nuevos ingresos">Creá membresías, promociones y espacios propios para sponsors dentro de la operación del club.</FeaturePanel>
-              <FeaturePanel eyebrow="03" title="Jugadores que vuelven">Activá PadCoins, campañas y beneficios configurados por tu sede.</FeaturePanel>
-              <FeaturePanel eyebrow="04" title="Marcador incluido">Llevá el partido en vivo desde teléfono, tablet o computadora y mostralo en una TV, sin equipamiento específico.</FeaturePanel>
+              {copy.automation.map(([title, body], index) => (
+                <FeaturePanel key={title} eyebrow={String(index + 1).padStart(2, '0')} title={title}>{body}</FeaturePanel>
+              ))}
             </div>
           </div>
         </section>
@@ -203,15 +245,28 @@ export default function VenuePlansPage({ catalogOverride = null }) {
         <section className="venue-plans__section venue-plans__migration" aria-labelledby="migration-title">
           <div className="public-site__shell venue-plans__split">
             <div>
-              <p className="venue-plans__eyebrow">¿YA USÁS OTRO SISTEMA?</p>
-              <h2 id="migration-title">No empiezas de cero.</h2>
-              <p>Podemos importar información que pertenezca legítimamente a la sede y que tenga un formato compatible. El alcance se valida antes de comenzar.</p>
+              <p className="venue-plans__eyebrow">{copy.migrationEyebrow}</p>
+              <h2 id="migration-title">{copy.migrationTitle}</h2>
+              <p>{copy.migrationText}</p>
             </div>
             <ol className="venue-plans__migration-list">
-              <li><b>Starter</b><span>Importación de archivos compatibles, sujeta a validación.</span></li>
-              <li><b>Pro</b><span>Migración asistida.</span></li>
-              <li><b>Business</b><span>Migración personalizada.</span></li>
+              {copy.migration.map(([name, body]) => <li key={name}><b>{name}</b><span>{body}</span></li>)}
             </ol>
+          </div>
+        </section>
+
+        <section className="venue-plans__section venue-plans__growth" aria-label={copy.growthAria}>
+          <div className="public-site__shell venue-plans__feature-grid venue-plans__feature-grid--two">
+            <FeaturePanel eyebrow="PRO" title={copy.membershipTitle}>{copy.membershipText}</FeaturePanel>
+            <FeaturePanel eyebrow="PRO" title={copy.screensTitle}>{copy.screensText}</FeaturePanel>
+          </div>
+        </section>
+
+        <section className="venue-plans__section venue-plans__experiences" aria-labelledby="experiences-title">
+          <div className="public-site__shell">
+            <p className="venue-plans__eyebrow">{copy.experiencesEyebrow}</p>
+            <h2 id="experiences-title">Signature · Stadium · Express · Arena · Quantum</h2>
+            <p>{copy.experiencesText}</p>
           </div>
         </section>
 
@@ -245,11 +300,11 @@ export default function VenuePlansPage({ catalogOverride = null }) {
 
         <section className="venue-plans__section venue-plans__final-cta">
           <div className="public-site__shell">
-            <p className="venue-plans__eyebrow">PADBOL MATCH PARA CLUBES</p>
-            <h2>Empieza sin costo fijo.<br /><span>La operación sigue siendo tuya.</span></h2>
+            <p className="venue-plans__eyebrow">{copy.eyebrow}</p>
+            <h2>{copy.finalTitle}<br /><span>{copy.finalAccent}</span></h2>
             <div className="venue-plans__hero-actions">
-              <Link to="/unirse?plan=starter" className="venue-plans__cta venue-plans__cta--primary">EMPEZAR SIN ABONO</Link>
-              <Link to="/contacto?tema=business" className="venue-plans__cta venue-plans__cta--secondary">CONSULTAR PLAN BUSINESS</Link>
+              <Link to="/unirse?plan=starter" className="venue-plans__cta venue-plans__cta--primary">{copy.start}</Link>
+              <Link to="/contacto?tema=business" className="venue-plans__cta venue-plans__cta--secondary">{copy.talk}</Link>
             </div>
           </div>
         </section>
