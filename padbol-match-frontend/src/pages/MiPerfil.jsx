@@ -1793,7 +1793,7 @@ export default function MiPerfil() {
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
         <AppHeader title={t('perfil.titulo')} />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-          Verificando sesión...
+          {t('perfil.verifyingSession')}
         </div>
         <BottomNav />
       </div>
@@ -1834,7 +1834,7 @@ export default function MiPerfil() {
             >
               <h3 style={{ marginTop: 0, marginBottom: '12px', color: 'var(--text-primary)' }}>{t('perfil.guestTitle')}</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
-                Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión.
+                {t('perfil.guestExploreHint')}
               </p>
               <button
                 type="button"
@@ -1852,7 +1852,7 @@ export default function MiPerfil() {
                   marginBottom: '10px',
                 }}
               >
-                Iniciar sesión o registrarte
+                {t('perfil.guestLoginCta')}
               </button>
               <button
                 type="button"
@@ -1869,7 +1869,7 @@ export default function MiPerfil() {
                   fontSize: '14px',
                 }}
               >
-                Volver al inicio
+                {t('hub.backToStart')}
               </button>
             </div>
           </div>

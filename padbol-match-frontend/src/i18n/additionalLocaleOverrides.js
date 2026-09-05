@@ -317,7 +317,7 @@ const czechPublicSite = {
       find: { title: 'Najít zápasy', text: 'Objevte zápasy v okolí a nové možnosti hry.' },
       book: { title: 'Rezervovat', text: 'Zajistěte si čas na hřišti ve svém klubu.' },
       compete: { title: 'Soutěžit', text: 'Turnaje, týmy a výsledky, které se počítají.' },
-      community: { title: 'Komunita', text: 'Oznámení, zprávy a propojení hráči.' },
+      community: { title: 'Komunita', text: 'Oznámení, zprávy a propojení hráčů.' },
       rewards: { title: 'PadCoins a odměny', text: 'Vybrané aktivity získávají PadCoins na odměny, když jsou povoleny.' },
       create: { title: 'Vytvořit zápas', text: 'Nastavte klub, čas a úroveň a pozvěte hráče.' },
       join: { title: 'Otevřené zápasy', text: 'Požádejte o místo, doplňte týmy a potvrďte svou účast.' },

@@ -46,5 +46,13 @@ describe('profile completion internationalization', () => {
       'Los números no coinciden', 'Número de WhatsApp inválido', 'Ir a iniciar sesión',
       'Guardar y continuar', 'Omitir',
     ].forEach((literal) => expect(source).not.toContain(`'${literal}'`));
+
+    const mainProfileSource = fs.readFileSync(path.join(__dirname, '../pages/MiPerfil.jsx'), 'utf8');
+    [
+      'Verificando sesión...',
+      'Para ver y editar tu ficha necesitas una cuenta.',
+      'Iniciar sesión o registrarte',
+      'Volver al inicio',
+    ].forEach((literal) => expect(mainProfileSource).not.toContain(literal));
   });
 });

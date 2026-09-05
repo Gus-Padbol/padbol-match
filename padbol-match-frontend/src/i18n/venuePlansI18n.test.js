@@ -15,8 +15,17 @@ describe('venue plans localization', () => {
 
   it('uses English instead of Spanish as the safe fallback for remaining editions', () => {
     expect(venuePlansCopy('de').title).toBe('Your entire club.');
-    expect(venuePlansCopy('cs').start).toBe('START WITHOUT A SUBSCRIPTION');
     expect(venuePlansCopy('es').title).toBe('Todo tu club.');
+  });
+
+  it('provides a complete direct Czech commercial page', () => {
+    const cs = venuePlansCopy('cs');
+    expect(cs.title).toBe('Celý váš klub.');
+    expect(cs.start).toBe('ZAČÍT BEZ PAUŠÁLU');
+    expect(cs.padbolOwnerTitle).toContain('Padbol Courts');
+    expect(cs.plans.starter.features).toHaveLength(10);
+    expect(cs.plans.pro.features).toHaveLength(9);
+    expect(cs.plans.business.features).toHaveLength(7);
   });
 
   it('keeps visible copy out of the page component', () => {
