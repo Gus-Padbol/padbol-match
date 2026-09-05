@@ -14,7 +14,7 @@ describe('venue plans localization', () => {
   });
 
   it('uses English instead of Spanish as the safe fallback for remaining editions', () => {
-    expect(venuePlansCopy('de').title).toBe('Your entire club.');
+    expect(venuePlansCopy('nl-NL').title).toBe('Your entire club.');
     expect(venuePlansCopy('es').title).toBe('Todo tu club.');
   });
 
@@ -59,6 +59,16 @@ describe('venue plans localization', () => {
     expect(fr.plans.starter.features).toHaveLength(10);
     expect(fr.plans.pro.features).toHaveLength(9);
     expect(fr.plans.business.features).toHaveLength(7);
+  });
+
+  it('provides a complete direct German commercial page', () => {
+    const de = venuePlansCopy('de');
+    expect(de.title).toBe('Ihr gesamter Club.');
+    expect(de.start).toBe('OHNE MONATSGEBÜHR STARTEN');
+    expect(de.padbolOwnerTitle).toContain('Padbol Courts');
+    expect(de.plans.starter.features).toHaveLength(10);
+    expect(de.plans.pro.features).toHaveLength(9);
+    expect(de.plans.business.features).toHaveLength(7);
   });
 
   it('keeps visible copy out of the page component', () => {
