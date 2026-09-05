@@ -1165,7 +1165,7 @@ export default function ChatbotIA() {
     return () => {
       canceled = true;
     };
-  }, [open, session?.user?.id, messages]);
+  }, [open, session?.user?.id, messages, padbolLang]);
 
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === 'user').length, [messages]);
 

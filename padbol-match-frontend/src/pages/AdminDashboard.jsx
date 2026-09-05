@@ -3858,7 +3858,7 @@ export default function AdminDashboard({
           body: JSON.stringify(body),
         },
       );
-      const data = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       if (res.status === 403) {
         throw new Error(t('admin.padcoins.participationPermissionDenied'));
       }
@@ -4515,7 +4515,7 @@ export default function AdminDashboard({
         headers,
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       if (res.status === 403) {
         throw new Error(t('admin.padcoins.campaignPermissionDenied'));
       }
@@ -5730,6 +5730,7 @@ export default function AdminDashboard({
     torneoStats,
     isSuperAdmin,
     cifrasFinanzasResumen,
+    t,
   ]);
 
   const exportarFinanzasExcel = useCallback(() => {
@@ -7874,7 +7875,7 @@ export default function AdminDashboard({
       }
       selectAdminTabInner(id);
     },
-    [activeTab, miSedePromoDirty, rolPanel, selectAdminTabInner],
+    [activeTab, miSedePromoDirty, rolPanel, selectAdminTabInner, t],
   );
 
   const selectMiSedeSection = useCallback(
@@ -7895,7 +7896,7 @@ export default function AdminDashboard({
       setActiveMiSedeSection(validId);
       resetAdminPanelScroll();
     },
-    [activeTab, miSedeNavItems, miSedePromoDirty, resetAdminPanelScroll, selectAdminTab],
+    [activeTab, miSedeNavItems, miSedePromoDirty, resetAdminPanelScroll, selectAdminTab, t],
   );
   selectMiSedeSectionRef.current = selectMiSedeSection;
   const [fotosUrls,      setFotosUrls]      = useState([]);
@@ -8079,7 +8080,7 @@ export default function AdminDashboard({
     return () => {
       cancelled = true;
     };
-  }, [activeTab, activeMiSedeSection, apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token]);
+  }, [activeTab, activeMiSedeSection, apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token, t]);
 
   useEffect(() => {
     if (!sedeId || !session?.access_token) {
@@ -8594,7 +8595,7 @@ export default function AdminDashboard({
     } finally {
       setMiSedeDuracionesLoading(false);
     }
-  }, [apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token]);
+  }, [apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token, t]);
 
   const guardarMiSedeFilaDuracion = async (rowId) => {
     if (!sedeId || !session?.access_token) {
@@ -9613,7 +9614,7 @@ export default function AdminDashboard({
         if (!cancelled) setSbPartidosLoading(false);
       });
     return () => { cancelled = true; };
-  }, [activeTab, puedeVerScoreboard, sbSedeId, sbPartidosRefreshKey]);
+  }, [activeTab, puedeVerScoreboard, sbSedeId, sbPartidosRefreshKey, t]);
 
   const resetScoreboardForm = useCallback(() => {
     setSbEditingId(null);
@@ -9684,7 +9685,7 @@ export default function AdminDashboard({
     } catch (err) {
       setSbError(t('admin.scoreboard.matchLoadFailed'));
     }
-  }, [sbSedeId]);
+  }, [sbSedeId, t]);
 
   const resolveSbJugadorNombre = (jugador) => String(jugador?.nombre || '').trim();
 

@@ -1810,7 +1810,6 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
       sponsors: {
         publicidad: "Reklama", tipoMedia: "Typ média", videoUrl: "URL videa (MP4)",
       },
-      ranking: { titulo: "Žebříček" },
       equipos: {
         titulo: "Tým", gestion: "Správa turnaje", inscripcion: "Registrace",
       },

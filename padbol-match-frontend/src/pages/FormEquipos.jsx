@@ -511,7 +511,7 @@ export default function FormEquipos() {
     return () => {
       cancelled = true;
     };
-  }, [inviteEquipoIdNum, torneoId]);
+  }, [inviteEquipoIdNum, torneoId, t]);
 
   useEffect(() => {
     if (!Number.isFinite(inviteEquipoIdNum) || !Number.isFinite(torneoId)) return;

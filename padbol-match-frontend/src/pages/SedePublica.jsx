@@ -1567,7 +1567,7 @@ export default function SedePublica() {
     } catch {
       window.prompt('Copia este link:', url);
     }
-  }, [sedeId, sede]);
+  }, [sedeId, sede, t]);
 
   const proximoTorneoInfo = useMemo(
     () => pickProximoTorneoInfoClub(torneosSedeLista),
@@ -1577,7 +1577,7 @@ export default function SedePublica() {
   const sedeIdNumLoad = useMemo(() => {
     const n = parseInt(String(sedeId), 10);
     return Number.isFinite(n) && n > 0 ? n : null;
-  }, [sedeId, sede?.nombre, t]);
+  }, [sedeId]);
 
   const { campaign: sedePadcoinsCampaign } = usePadcoinsActiveCampaign(sedeIdNumLoad, {
     apiBaseUrl: API_BASE_RESENAS,
