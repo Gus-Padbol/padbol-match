@@ -23,6 +23,7 @@ import SPANISH_PADCOINS_CORE_OVERRIDES from './spanishPadcoinsCoreOverrides.json
 import SPANISH_PADCOINS_EXPERIENCE_OVERRIDES from './spanishPadcoinsExperienceOverrides.json';
 import SPANISH_POLISH_OVERRIDES from './spanishPolishOverrides.json';
 import PUBLIC_SITE_GENERATED_LOCALES from './publicSiteGeneratedLocales.json';
+import NATIVE_SHARED_LOCALE_OVERRIDES from './nativeSharedLocaleOverrides.json';
 import { canonicalPadbolLanguageCode, PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
 
 const STORAGE_KEY = 'padbol_lang';
@@ -62,7 +63,10 @@ const ROMANIAN_LOCALE_LAYERS = [
 // Esto evita pantallas mezcladas (por ejemplo, interfaz inglesa con acciones
 // o estados en español) mientras se mantienen las traducciones existentes.
 const englishBackedLocale = (code, baseLocale = {}) => {
-  const base = mergeLocale(en, baseLocale);
+  // Shared app copy is only generated when its English source matches this
+  // web catalog exactly. Existing web catalogs and editorial layers always win.
+  const withNativeSharedCopy = mergeLocale(en, NATIVE_SHARED_LOCALE_OVERRIDES[code]);
+  const base = mergeLocale(withNativeSharedCopy, baseLocale);
   const withPublicSite = PUBLIC_SITE_GENERATED_LOCALES[code]
     ? mergeLocale(base, { publicSite: PUBLIC_SITE_GENERATED_LOCALES[code] })
     : base;

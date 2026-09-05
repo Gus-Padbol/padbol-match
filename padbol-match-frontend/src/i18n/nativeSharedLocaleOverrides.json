@@ -1,0 +1,6554 @@
+{
+  "de": {
+    "general": {
+      "language": "Sprache",
+      "delete": "Löschen",
+      "share": "Teilen",
+      "email": "E-Mail",
+      "city": "Stadt"
+    },
+    "auth": {
+      "login": "Login",
+      "register": "Registrieren",
+      "password": "Passwort",
+      "google": "Weiter mit Google",
+      "cerrar_sesion": "Abmelden",
+      "passwordMismatch": "Passwörter stimmen nicht überein.",
+      "firstName": "Name",
+      "lastName": "Nachname",
+      "male": "Männlich",
+      "female": "Weiblich",
+      "handednessRight": "Rechtshänder",
+      "handednessLeft": "Linkshänder"
+    },
+    "nav": {
+      "logout": "Abmelden",
+      "admin": {
+        "solicitudes": "Anfragen",
+        "config": "Konfiguration"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Reservieren Sie Ihren Platz",
+      "cancelar": "Reservierung stornieren",
+      "pagar_mp": "Bezahlen Sie mit Mercado Pago",
+      "sedes": "Spielstätten",
+      "nearestVenue": "Nächste Spielstätte bei dir",
+      "summaryTitle": "Zusammenfassung der Reservierung",
+      "modifyBooking": "Reservierung ändern",
+      "confirmedTitle": "Reservierung bestätigt!",
+      "phoneCountriesMain": "Hauptsächlich",
+      "understood": "Verstanden",
+      "dayToday": "Heute",
+      "dayTomorrow": "Morgen",
+      "courtOccupied": "Belegt"
+    },
+    "torneos": {
+      "inscribirse": "Registrieren",
+      "pendiente_pago": "Zahlung ausstehend",
+      "tipo": {
+        "eliminacion": "Direkte Entfernung",
+        "knockout": "Direkte Entfernung",
+        "eliminatoria": "Direkte Entfernung"
+      },
+      "listado": {
+        "titleAvailable": "Verfügbare Turniere",
+        "clearSearch": "Suche löschen",
+        "participants": "{{count}} Teilnehmer",
+        "emptyFinalizados": "Noch keine beendeten Turniere."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tennis"
+      },
+      "vista": {
+        "tabGrupos": "GRUPPEN",
+        "statPg": "P.G.",
+        "statPp": "PP",
+        "sinPartidos": "Keine Übereinstimmungen",
+        "genero": {
+          "masculino": "Männlich",
+          "femenino": "Weiblich"
+        },
+        "categoriaNivel": {
+          "1ra": "1",
+          "2da": "2",
+          "3ra": "3"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Spieldetails",
+        "fechaHora": "Datum und Uhrzeit"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Ich möchte einer bereits bestehenden Partei beitreten.",
+      "armarBody": "Ich möchte ein Spiel erstellen und Spieler hinzufügen."
+    },
+    "clases": {
+      "detalle": "Klassendetails"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Folge uns auf"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Werbung"
+    },
+    "resenas": {
+      "title": "Bewertungen",
+      "totalCount_plural": "{{count}} Bewertungen"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-Mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Alles als gelesen markieren"
+    },
+    "instructor": {
+      "campoNombre": "Name",
+      "campoApellido": "Nachname",
+      "campoFechaNac": "Geburtsdatum",
+      "generoMasculino": "Männlich",
+      "generoFemenino": "Weiblich",
+      "generoNoDice": "Keine Angabe",
+      "guardarCambios": "Änderungen speichern"
+    },
+    "perfil": {
+      "viewPublicProfile": "Öffentliches Profil anzeigen",
+      "editar": "Profil bearbeiten",
+      "nivel": "Spielniveau",
+      "notificaciones": "Benachrichtigungen",
+      "city": "Stadt",
+      "birthDate": "Geburtsdatum",
+      "usualPartner": "Regelmäßiger Begleiter",
+      "passwordMismatch": "Passwörter stimmen nicht überein.",
+      "placeholderPasswordMin": "Mindestens 6 Zeichen",
+      "diestro": "Rechtshänder",
+      "zurdo": "Linkshänder",
+      "firstName": "Name",
+      "lastName": "Nachname",
+      "partnerHabitual": "Regelmäßiger Begleiter",
+      "genero": {
+        "masculino": "Männlich",
+        "femenino": "Weiblich"
+      },
+      "regularPartner": "Regelmäßiger Begleiter"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Alle Spielstätten",
+        "colFoto": "Foto",
+        "colNombre": "Name",
+        "verFicha": "Profil ansehen",
+        "editarFicha": "Profil bearbeiten",
+        "fichaNombre": "Name",
+        "fichaApellido": "Nachname",
+        "fichaFechaNac": "Geburtsdatum",
+        "fichaEmailLabel": "E-Mail"
+      },
+      "tabs": {
+        "sedes": "Spielstätten",
+        "solicitudes": "Anfragen",
+        "config": "Konfiguration"
+      },
+      "pushNotif": {
+        "selectVenue": "Spielstätte wählen",
+        "selectSport": "Wählen Sie Sport",
+        "segments": {
+          "venue": "Spielstätte Nr. {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Alles als gelesen markieren"
+      },
+      "metrics": {
+        "periodToday": "Heute"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Ich habe mich für mindestens eine Sportart entschieden.",
+        "name": "Name",
+        "price": "Preis",
+        "cityLabel": "Stadt",
+        "emailLabel": "E-Mail",
+        "deleteBtn": "Löschen",
+        "validationViewProfile": "Profil ansehen"
+      },
+      "hub": {
+        "changePhoto": "Foto ändern",
+        "previewLabel": "Vorschau"
+      },
+      "sedes": {
+        "venueNumber": "Spielstätte Nr. {{id}}",
+        "description": "Beschreibung",
+        "delete": "Löschen",
+        "reviews": "Bewertungen",
+        "listaEsperaTorneos": "Warteliste",
+        "guidedSetup": {
+          "city": "Stadt",
+          "summaryLocation": "Standort"
+        },
+        "paymentPending": "Zahlung ausstehend",
+        "whatsappCountryCodeAria": "Ländervorwahl",
+        "saveChanges": "Änderungen speichern"
+      },
+      "reservas": {
+        "cancelBooking": "Reservierung stornieren",
+        "selectVenue": "Spielstätte auswählen",
+        "noVenue": "Kein Hauptquartier"
+      },
+      "overview": {
+        "today": "Heute"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Fortgeschritten",
+          "advanced": "Fortgeschritten"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Foto entfernen",
+        "saveBtn": "Änderungen speichern"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informativ"
+        },
+        "reportsAllSedes": "Alle Spielstätten",
+        "reportsFilterBeneficio": "Vorteil",
+        "reportsColDesc": "Beschreibung",
+        "reportsColBeneficio": "Vorteil",
+        "reportsColCodigo": "Code",
+        "reportsColSaldoDisp": "Verfügbares Guthaben",
+        "descriptionField": "Beschreibung",
+        "globalConfigDescriptionField": "Beschreibung",
+        "globalConfigSave": "Änderungen speichern",
+        "campaignsAllVenues": "Alle Spielstätten",
+        "campaignsName": "Name",
+        "campaignsDescription": "Beschreibung",
+        "campaignsColName": "Name",
+        "campaignsTotalUses": "Gesamt",
+        "description": "Beschreibung",
+        "name": "Name",
+        "conditions": "Bedingungen",
+        "redeemCode": "Code",
+        "redeemPrize": "Vorteil",
+        "alertsAllVenues": "Alle Spielstätten",
+        "movementsAllVenues": "Alle Spielstätten",
+        "movementsDescriptionCol": "Beschreibung"
+      },
+      "metricas": {
+        "markAllRead": "Alles als gelesen markieren",
+        "pointsCol": "Punkte",
+        "expiresCol": "Läuft ab"
+      },
+      "jugadores": {
+        "viewProfile": "Profil ansehen",
+        "fichaTitle": "Spielerkarte"
+      },
+      "membresias": {
+        "colNombre": "Name",
+        "colDescripcion": "Beschreibung",
+        "colPrecio": "Preis",
+        "colVigencia": "Gültigkeit",
+        "colPlan": "Tarif",
+        "filterPlan": "Tarif",
+        "fieldNombre": "Name",
+        "fieldDescripcion": "Beschreibung",
+        "fieldPrecio": "Preis",
+        "fieldPlan": "Tarif",
+        "errSedeRequired": "Wähle eine Spielstätte."
+      }
+    },
+    "pago": {
+      "titulo": "Zahlung",
+      "reintentar": "versuchen Sie es erneut"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Spiel"
+      }
+    },
+    "hub": {
+      "goToProfile": "Zu meinem Profil",
+      "backToStart": "Zurück nach oben"
+    },
+    "chatbot": {
+      "fabCollapsed": "Fragen?",
+      "fabLine1": "Fragen?",
+      "fabLine2": "Chat mit Chivi",
+      "enviar": "Senden",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Verfügbare Turniere",
+      "micDictateAria": "Diktieren Sie per Stimme",
+      "leerVozAlta": "Lesen Sie die Antworten laut vor",
+      "boton": "Fragen?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Datum und Uhrzeit"
+    },
+    "perfilPublico": {
+      "shareProfile": "Profil teilen",
+      "statsTitle": "Statistik",
+      "tournamentsWon": "Gewonnene Turniere",
+      "matchesWon": "Gewonnene Spiele",
+      "sportsTitle": "Ausgeübte Sportarten",
+      "recentTournamentsTitle": "Letzte Turniere",
+      "badgeParticipantGeneric": "Teilnehmer"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Ich möchte spielen",
+        "globe": {
+          "labels": {
+            "venues": "Spielstätten",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tennis",
+            "stats": "Statistik"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tennis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Offene Spiele"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Offene Spiele"
+          },
+          "results": {
+            "title": "Ergebnisse"
+          }
+        }
+      },
+      "contact": {
+        "play": "Ich möchte spielen"
+      },
+      "footer": {
+        "language": "Sprache"
+      },
+      "communityMatches": {
+        "ctaPlay": "Ich möchte spielen",
+        "mockTitle": "Offenes Spiel"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Live",
+        "futureAccess": {
+          "label": "Demnächst"
+        }
+      }
+    }
+  },
+  "ar": {
+    "general": {
+      "language": "اللغة",
+      "delete": "حذف",
+      "share": "مشاركة",
+      "email": "البريد الإلكتروني",
+      "city": "المدينة"
+    },
+    "auth": {
+      "login": "تسجيل الدخول",
+      "register": "التسجيل",
+      "password": "كلمة المرور",
+      "google": "المتابعة باستخدام Google",
+      "cerrar_sesion": "تسجيل الخروج",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "male": "ذكر",
+      "female": "أنثى",
+      "handednessRight": "أيمن",
+      "handednessLeft": "أعسر"
+    },
+    "nav": {
+      "logout": "تسجيل الخروج",
+      "admin": {
+        "solicitudes": "الطلبات",
+        "config": "الإعدادات"
+      }
+    },
+    "reservas": {
+      "heroTitle": "احجز ملعبك",
+      "cancelar": "إلغاء الحجز",
+      "pagar_mp": "الدفع عبر Mercado Pago",
+      "sedes": "الأندية",
+      "nearestVenue": "أقرب نادٍ إليك",
+      "summaryTitle": "ملخص الحجز",
+      "modifyBooking": "تعديل الحجز",
+      "confirmedTitle": "تم تأكيد الحجز!",
+      "phoneCountriesMain": "الرئيسية",
+      "understood": "فهمت",
+      "dayToday": "اليوم",
+      "dayTomorrow": "غدًا",
+      "courtOccupied": "مشغول"
+    },
+    "torneos": {
+      "inscribirse": "سجّلني",
+      "pendiente_pago": "الدفع معلق",
+      "tipo": {
+        "eliminacion": "خروج المغلوب",
+        "knockout": "خروج المغلوب",
+        "eliminatoria": "خروج المغلوب"
+      },
+      "listado": {
+        "titleAvailable": "البطولات المتاحة",
+        "clearSearch": "مسح البحث",
+        "participants": "{{count}} مشاركين",
+        "emptyFinalizados": "لا توجد بطولات منتهية حالياً."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "بادل",
+        "pickleball": "بيكلبول",
+        "tenis": "تنس"
+      },
+      "vista": {
+        "tabGrupos": "مجموعات",
+        "statPg": "ف",
+        "statPp": "خ",
+        "sinPartidos": "لا توجد مباريات",
+        "genero": {
+          "masculino": "ذكر",
+          "femenino": "أنثى"
+        },
+        "categoriaNivel": {
+          "1ra": "١",
+          "2da": "٢",
+          "3ra": "٣"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "تفاصيل المباراة",
+        "fechaHora": "التاريخ والوقت"
+      }
+    },
+    "jugar": {
+      "buscarBody": "أريد الانضمام لمباراة موجودة.",
+      "armarBody": "أريد إنشاء مباراة وإيجاد لاعبين."
+    },
+    "clases": {
+      "detalle": "تفاصيل الحصة"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "تابعنا على"
+      }
+    },
+    "sponsors": {
+      "publicidad": "إعلان"
+    },
+    "resenas": {
+      "title": "المراجعات",
+      "totalCount_plural": "{{count}} مراجعات"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "البريد الإلكتروني"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "تعليم الكل كمقروء"
+    },
+    "instructor": {
+      "campoNombre": "الاسم الأول",
+      "campoApellido": "اسم العائلة",
+      "campoFechaNac": "تاريخ الميلاد",
+      "generoMasculino": "ذكر",
+      "generoFemenino": "أنثى",
+      "generoNoDice": "أفضل عدم الإفصاح",
+      "guardarCambios": "حفظ التغييرات"
+    },
+    "perfil": {
+      "viewPublicProfile": "عرض ملفي العام",
+      "editar": "تعديل الملف",
+      "nivel": "مستوى اللعب",
+      "notificaciones": "الإشعارات",
+      "city": "المدينة",
+      "birthDate": "تاريخ الميلاد",
+      "usualPartner": "الشريك المعتاد",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "placeholderPasswordMin": "6 أحرف على الأقل",
+      "diestro": "أيمن",
+      "zurdo": "أعسر",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "partnerHabitual": "الشريك المعتاد",
+      "genero": {
+        "masculino": "ذكر",
+        "femenino": "أنثى"
+      },
+      "regularPartner": "الشريك المعتاد"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "جميع الأندية",
+        "colFoto": "صورة",
+        "colNombre": "الاسم",
+        "verFicha": "عرض الملف الشخصي",
+        "editarFicha": "تعديل الملف",
+        "fichaNombre": "الاسم الأول",
+        "fichaApellido": "اسم العائلة",
+        "fichaFechaNac": "تاريخ الميلاد",
+        "fichaEmailLabel": "البريد الإلكتروني"
+      },
+      "tabs": {
+        "sedes": "الأندية",
+        "solicitudes": "الطلبات",
+        "config": "الإعدادات"
+      },
+      "pushNotif": {
+        "selectVenue": "اختر النادي",
+        "selectSport": "اختيار الرياضة",
+        "segments": {
+          "venue": "النادي #{{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "تعليم الكل كمقروء"
+      },
+      "metrics": {
+        "periodToday": "اليوم"
+      },
+      "confirmaciones": {
+        "cannotUndo": "لا يمكن التراجع عن هذا الإجراء."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "اختر رياضة واحدة على الأقل.",
+        "name": "الاسم",
+        "price": "السعر",
+        "cityLabel": "المدينة",
+        "emailLabel": "البريد الإلكتروني",
+        "deleteBtn": "حذف",
+        "validationViewProfile": "عرض الملف الشخصي"
+      },
+      "hub": {
+        "changePhoto": "تغيير الصورة",
+        "previewLabel": "معاينة"
+      },
+      "sedes": {
+        "venueNumber": "النادي #{{id}}",
+        "description": "الوصف",
+        "delete": "حذف",
+        "reviews": "المراجعات",
+        "listaEsperaTorneos": "قائمة الانتظار",
+        "guidedSetup": {
+          "city": "المدينة",
+          "summaryLocation": "الموقع"
+        },
+        "paymentPending": "الدفع معلق",
+        "whatsappCountryCodeAria": "رمز البلد",
+        "saveChanges": "حفظ التغييرات"
+      },
+      "reservas": {
+        "cancelBooking": "إلغاء الحجز",
+        "selectVenue": "اختر النادي",
+        "noVenue": "لا يوجد نادٍ"
+      },
+      "overview": {
+        "today": "اليوم"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "متقدم",
+          "advanced": "متقدم"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "إزالة الصورة",
+        "saveBtn": "حفظ التغييرات"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "معلوماتية"
+        },
+        "reportsAllSedes": "جميع الأندية",
+        "reportsFilterBeneficio": "الميزة",
+        "reportsColDesc": "الوصف",
+        "reportsColBeneficio": "الميزة",
+        "reportsColCodigo": "الرمز",
+        "reportsColSaldoDisp": "الرصيد المتاح",
+        "descriptionField": "الوصف",
+        "globalConfigDescriptionField": "الوصف",
+        "globalConfigSave": "حفظ التغييرات",
+        "campaignsAllVenues": "جميع الأندية",
+        "campaignsName": "الاسم",
+        "campaignsDescription": "الوصف",
+        "campaignsColName": "الاسم",
+        "campaignsTotalUses": "الإجمالي",
+        "description": "الوصف",
+        "name": "الاسم",
+        "conditions": "الشروط",
+        "redeemCode": "الرمز",
+        "redeemPrize": "الميزة",
+        "alertsAllVenues": "جميع الأندية",
+        "movementsAllVenues": "جميع الأندية",
+        "movementsDescriptionCol": "الوصف"
+      },
+      "metricas": {
+        "markAllRead": "تعليم الكل كمقروء",
+        "pointsCol": "النقاط",
+        "expiresCol": "انتهاء الصلاحية"
+      },
+      "jugadores": {
+        "viewProfile": "عرض الملف الشخصي",
+        "fichaTitle": "بطاقة اللاعب"
+      },
+      "membresias": {
+        "colNombre": "الاسم",
+        "colDescripcion": "الوصف",
+        "colPrecio": "السعر",
+        "colVigencia": "الصلاحية",
+        "colPlan": "الخطة",
+        "filterPlan": "الخطة",
+        "fieldNombre": "الاسم",
+        "fieldDescripcion": "الوصف",
+        "fieldPrecio": "السعر",
+        "fieldPlan": "الخطة",
+        "errSedeRequired": "اختر ناديًا."
+      }
+    },
+    "pago": {
+      "titulo": "دفع",
+      "reintentar": "إعادة المحاولة"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "المباراة"
+      }
+    },
+    "hub": {
+      "goToProfile": "الانتقال إلى ملفي الشخصي",
+      "backToStart": "العودة إلى الرئيسية"
+    },
+    "chatbot": {
+      "fabCollapsed": "استفسارات؟",
+      "fabLine1": "استفسارات؟",
+      "fabLine2": "استشارة تشيفي",
+      "enviar": "إرسال",
+      "titulo": "تشيفي",
+      "torneosSugerencia": "البطولات المتاحة",
+      "micDictateAria": "إدخال صوتي",
+      "leerVozAlta": "قراءة الردود بصوت عالٍ",
+      "boton": "استفسارات؟"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "التاريخ والوقت"
+    },
+    "perfilPublico": {
+      "shareProfile": "مشاركة الملف",
+      "statsTitle": "الإحصاءات",
+      "tournamentsWon": "البطولات التي فاز بها",
+      "matchesWon": "المباريات التي فاز بها",
+      "sportsTitle": "الرياضات التي يمارسها",
+      "recentTournamentsTitle": "البطولات الأخيرة",
+      "badgeParticipantGeneric": "مشارك"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "أريد اللعب",
+        "globe": {
+          "labels": {
+            "venues": "الأندية",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "بادل",
+            "pickleball": "بيكلبول",
+            "tennis": "تنس",
+            "stats": "الإحصاءات"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "بادل",
+        "pickleball": "بيكلبول",
+        "tennis": "تنس"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "مباريات مفتوحة"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "مباريات مفتوحة"
+          },
+          "results": {
+            "title": "النتائج"
+          }
+        }
+      },
+      "contact": {
+        "play": "أريد اللعب"
+      },
+      "footer": {
+        "language": "اللغة"
+      },
+      "communityMatches": {
+        "ctaPlay": "أريد اللعب",
+        "mockTitle": "مباراة مفتوحة"
+      },
+      "smartScoreboard": {
+        "demoBadge": "مباشر",
+        "futureAccess": {
+          "label": "قريبًا"
+        }
+      }
+    }
+  },
+  "fa-IR": {
+    "general": {
+      "language": "زبان",
+      "delete": "حذف",
+      "share": "اشتراک‌گذاری",
+      "email": "ایمیل",
+      "city": "شهر"
+    },
+    "auth": {
+      "login": "ورود",
+      "register": "ثبت‌نام",
+      "password": "رمز عبور",
+      "google": "ادامه با Google",
+      "cerrar_sesion": "خروج از حساب",
+      "passwordMismatch": "رمزهای عبور یکسان نیستند.",
+      "firstName": "نام",
+      "lastName": "نام خانوادگی",
+      "male": "مرد",
+      "female": "زن",
+      "handednessRight": "راست‌دست",
+      "handednessLeft": "چپ‌دست"
+    },
+    "nav": {
+      "logout": "خروج از حساب",
+      "admin": {
+        "solicitudes": "درخواست‌ها",
+        "config": "تنظیمات"
+      }
+    },
+    "reservas": {
+      "heroTitle": "زمین خود را رزرو کنید",
+      "cancelar": "لغو رزرو",
+      "pagar_mp": "پرداخت با Mercado Pago",
+      "sedes": "باشگاه‌ها",
+      "nearestVenue": "نزدیک‌ترین باشگاه به شما",
+      "summaryTitle": "خلاصه رزرو",
+      "modifyBooking": "تغییر رزرو",
+      "confirmedTitle": "رزرو تأیید شد!",
+      "phoneCountriesMain": "اصلی",
+      "understood": "متوجه شدم",
+      "dayToday": "امروز",
+      "dayTomorrow": "فردا",
+      "courtOccupied": "اشغال"
+    },
+    "torneos": {
+      "inscribirse": "ثبت‌نام",
+      "pendiente_pago": "پرداخت در انتظار",
+      "tipo": {
+        "eliminacion": "حذفی تک‌مرحله‌ای",
+        "knockout": "حذفی تک‌مرحله‌ای",
+        "eliminatoria": "حذفی تک‌مرحله‌ای"
+      },
+      "listado": {
+        "titleAvailable": "تورنمنت‌های در دسترس",
+        "clearSearch": "پاک کردن جست‌وجو",
+        "participants": "{{count}} شرکت‌کننده",
+        "emptyFinalizados": "هنوز تورنمنت پایان‌یافته‌ای وجود ندارد."
+      },
+      "deporte": {
+        "padbol": "پادبول",
+        "padel": "پادل",
+        "pickleball": "پیکل‌بال",
+        "tenis": "تنیس"
+      },
+      "vista": {
+        "tabGrupos": "گروهی",
+        "statPg": "برد",
+        "statPp": "باخت",
+        "sinPartidos": "مسابقه‌ای وجود ندارد",
+        "genero": {
+          "masculino": "مرد",
+          "femenino": "زن"
+        },
+        "categoriaNivel": {
+          "1ra": "اول",
+          "2da": "دوم",
+          "3ra": "سوم"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "جزئیات مسابقه",
+        "fechaHora": "تاریخ و ساعت"
+      }
+    },
+    "jugar": {
+      "buscarBody": "می‌خواهم به یک مسابقه موجود بپیوندم.",
+      "armarBody": "می‌خواهم مسابقه‌ای ایجاد کنم و بازیکن پیدا کنم."
+    },
+    "clases": {
+      "detalle": "جزئیات کلاس"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "ما را دنبال کنید"
+      }
+    },
+    "sponsors": {
+      "publicidad": "تبلیغات"
+    },
+    "resenas": {
+      "title": "نظرها",
+      "totalCount_plural": "{{count}} نظر"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "ایمیل"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "علامت‌گذاری همه به‌عنوان خوانده‌شده"
+    },
+    "instructor": {
+      "campoNombre": "نام",
+      "campoApellido": "نام خانوادگی",
+      "campoFechaNac": "تاریخ تولد",
+      "generoMasculino": "مرد",
+      "generoFemenino": "زن",
+      "generoNoDice": "ترجیح می‌دهم نگویم",
+      "guardarCambios": "ذخیره تغییرات"
+    },
+    "perfil": {
+      "viewPublicProfile": "مشاهده پروفایل عمومی من",
+      "editar": "ویرایش پروفایل",
+      "nivel": "سطح مهارت",
+      "notificaciones": "اعلان‌ها",
+      "city": "شهر",
+      "birthDate": "تاریخ تولد",
+      "usualPartner": "هم‌تیمی همیشگی",
+      "passwordMismatch": "رمزهای عبور یکسان نیستند.",
+      "placeholderPasswordMin": "حداقل ۶ نویسه",
+      "diestro": "راست‌دست",
+      "zurdo": "چپ‌دست",
+      "firstName": "نام",
+      "lastName": "نام خانوادگی",
+      "partnerHabitual": "هم‌تیمی همیشگی",
+      "genero": {
+        "masculino": "مرد",
+        "femenino": "زن"
+      },
+      "regularPartner": "هم‌تیمی همیشگی"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "همه باشگاه‌ها",
+        "colFoto": "عکس",
+        "colNombre": "نام",
+        "verFicha": "مشاهده پروفایل",
+        "editarFicha": "ویرایش پروفایل",
+        "fichaNombre": "نام",
+        "fichaApellido": "نام خانوادگی",
+        "fichaFechaNac": "تاریخ تولد",
+        "fichaEmailLabel": "ایمیل"
+      },
+      "tabs": {
+        "sedes": "باشگاه‌ها",
+        "solicitudes": "درخواست‌ها",
+        "config": "تنظیمات"
+      },
+      "pushNotif": {
+        "selectVenue": "انتخاب باشگاه",
+        "selectSport": "انتخاب ورزش",
+        "segments": {
+          "venue": "باشگاه شماره {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "علامت‌گذاری همه به‌عنوان خوانده‌شده"
+      },
+      "metrics": {
+        "periodToday": "امروز"
+      },
+      "confirmaciones": {
+        "cannotUndo": "این کار قابل بازگشت نیست."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "حداقل یک ورزش انتخاب کنید.",
+        "name": "نام",
+        "price": "قیمت",
+        "cityLabel": "شهر",
+        "emailLabel": "ایمیل",
+        "deleteBtn": "حذف",
+        "validationViewProfile": "مشاهده پروفایل"
+      },
+      "hub": {
+        "changePhoto": "تغییر عکس",
+        "previewLabel": "پیش‌نمایش"
+      },
+      "sedes": {
+        "venueNumber": "باشگاه شماره {{id}}",
+        "description": "توضیحات",
+        "delete": "حذف",
+        "reviews": "نظرها",
+        "listaEsperaTorneos": "فهرست انتظار",
+        "guidedSetup": {
+          "city": "شهر",
+          "summaryLocation": "مکان"
+        },
+        "paymentPending": "پرداخت در انتظار",
+        "whatsappCountryCodeAria": "پیش‌شماره کشور",
+        "saveChanges": "ذخیره تغییرات"
+      },
+      "reservas": {
+        "cancelBooking": "لغو رزرو",
+        "selectVenue": "انتخاب باشگاه",
+        "noVenue": "باشگاهی وجود ندارد"
+      },
+      "overview": {
+        "today": "امروز"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "پیشرفته",
+          "advanced": "پیشرفته"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "حذف عکس",
+        "saveBtn": "ذخیره تغییرات"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "اطلاعاتی"
+        },
+        "reportsAllSedes": "همه باشگاه‌ها",
+        "reportsFilterBeneficio": "مزیت",
+        "reportsColDesc": "توضیحات",
+        "reportsColBeneficio": "مزیت",
+        "reportsColCodigo": "کد",
+        "reportsColSaldoDisp": "موجودی قابل استفاده",
+        "descriptionField": "توضیحات",
+        "globalConfigDescriptionField": "توضیحات",
+        "globalConfigSave": "ذخیره تغییرات",
+        "campaignsAllVenues": "همه باشگاه‌ها",
+        "campaignsName": "نام",
+        "campaignsDescription": "توضیحات",
+        "campaignsColName": "نام",
+        "campaignsTotalUses": "مجموع",
+        "description": "توضیحات",
+        "name": "نام",
+        "conditions": "شرایط",
+        "redeemCode": "کد",
+        "redeemPrize": "مزیت",
+        "alertsAllVenues": "همه باشگاه‌ها",
+        "movementsAllVenues": "همه باشگاه‌ها",
+        "movementsDescriptionCol": "توضیحات"
+      },
+      "metricas": {
+        "markAllRead": "علامت‌گذاری همه به‌عنوان خوانده‌شده",
+        "pointsCol": "امتیازها",
+        "expiresCol": "انقضا"
+      },
+      "jugadores": {
+        "viewProfile": "مشاهده پروفایل",
+        "fichaTitle": "کارت بازیکن"
+      },
+      "membresias": {
+        "colNombre": "نام",
+        "colDescripcion": "توضیحات",
+        "colPrecio": "قیمت",
+        "colVigencia": "اعتبار",
+        "colPlan": "طرح",
+        "filterPlan": "طرح",
+        "fieldNombre": "نام",
+        "fieldDescripcion": "توضیحات",
+        "fieldPrecio": "قیمت",
+        "fieldPlan": "طرح",
+        "errSedeRequired": "یک باشگاه انتخاب کنید."
+      }
+    },
+    "pago": {
+      "titulo": "پرداخت",
+      "reintentar": "تلاش دوباره"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "مسابقه"
+      }
+    },
+    "hub": {
+      "goToProfile": "رفتن به پروفایل من",
+      "backToStart": "بازگشت به صفحه اصلی"
+    },
+    "chatbot": {
+      "fabCollapsed": "پرسشی دارید؟",
+      "fabLine1": "پرسشی دارید؟",
+      "fabLine2": "گفت‌وگو با Chivi",
+      "enviar": "ارسال",
+      "titulo": "Chivi",
+      "torneosSugerencia": "تورنمنت‌های در دسترس",
+      "micDictateAria": "ورودی صوتی",
+      "leerVozAlta": "خواندن پاسخ‌ها با صدای بلند",
+      "boton": "پرسشی دارید؟"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "تاریخ و ساعت"
+    },
+    "perfilPublico": {
+      "shareProfile": "اشتراک‌گذاری پروفایل",
+      "statsTitle": "آمار",
+      "tournamentsWon": "تورنمنت‌های برده‌شده",
+      "matchesWon": "مسابقه‌های برده‌شده",
+      "sportsTitle": "ورزش‌ها",
+      "recentTournamentsTitle": "تورنمنت‌های اخیر",
+      "badgeParticipantGeneric": "شرکت‌کننده"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "می‌خواهم بازی کنم",
+        "globe": {
+          "labels": {
+            "venues": "باشگاه‌ها",
+            "padcoins": "PadCoins",
+            "padbol": "پادبول",
+            "padel": "پادل",
+            "pickleball": "پیکل‌بال",
+            "tennis": "تنیس",
+            "stats": "آمار"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "پادبول",
+        "padel": "پادل",
+        "pickleball": "پیکل‌بال",
+        "tennis": "تنیس"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "مسابقه‌های آزاد"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "مسابقه‌های آزاد"
+          },
+          "results": {
+            "title": "نتایج"
+          }
+        }
+      },
+      "contact": {
+        "play": "می‌خواهم بازی کنم"
+      },
+      "footer": {
+        "language": "زبان"
+      },
+      "communityMatches": {
+        "ctaPlay": "می‌خواهم بازی کنم",
+        "mockTitle": "مسابقه آزاد"
+      },
+      "smartScoreboard": {
+        "demoBadge": "زنده",
+        "futureAccess": {
+          "label": "به‌زودی"
+        }
+      }
+    }
+  },
+  "nl-BE": {
+    "general": {
+      "language": "Taal",
+      "delete": "Verwijderen",
+      "share": "Delen",
+      "email": "E-mail",
+      "city": "Plaats"
+    },
+    "auth": {
+      "login": "Inloggen",
+      "register": "Registreren",
+      "password": "Wachtwoord",
+      "google": "Doorgaan met Google",
+      "cerrar_sesion": "Uitloggen",
+      "passwordMismatch": "De wachtwoorden komen niet overeen.",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "male": "Man",
+      "female": "Vrouw",
+      "handednessRight": "Rechtshandig",
+      "handednessLeft": "Linkshandig"
+    },
+    "nav": {
+      "logout": "Uitloggen",
+      "admin": {
+        "solicitudes": "Verzoeken",
+        "config": "Instellingen"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Reserveer je baan",
+      "cancelar": "Reservering annuleren",
+      "pagar_mp": "Betalen met Mercado Pago",
+      "sedes": "Clubs",
+      "nearestVenue": "Dichtstbijzijnde club bij jou",
+      "summaryTitle": "Reserveringsoverzicht",
+      "modifyBooking": "Reservering wijzigen",
+      "confirmedTitle": "Reservering bevestigd!",
+      "phoneCountriesMain": "Hoofdsport",
+      "understood": "Begrepen",
+      "dayToday": "Vandaag",
+      "dayTomorrow": "Morgen",
+      "courtOccupied": "Bezet"
+    },
+    "torneos": {
+      "inscribirse": "Inschrijven",
+      "pendiente_pago": "Betaling in afwachting",
+      "tipo": {
+        "eliminacion": "Rechtstreekse uitschakeling",
+        "knockout": "Rechtstreekse uitschakeling",
+        "eliminatoria": "Rechtstreekse uitschakeling"
+      },
+      "listado": {
+        "titleAvailable": "Beschikbare toernooien",
+        "clearSearch": "Zoekopdracht wissen",
+        "participants": "{{count}} deelnemers",
+        "emptyFinalizados": "Nog geen afgelopen toernooien."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tennis"
+      },
+      "vista": {
+        "tabGrupos": "GROEPEN",
+        "statPg": "W",
+        "statPp": "V",
+        "sinPartidos": "Geen wedstrijden",
+        "genero": {
+          "masculino": "Man",
+          "femenino": "Vrouw"
+        },
+        "categoriaNivel": {
+          "1ra": "1e",
+          "2da": "2e",
+          "3ra": "3e"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Wedstrijddetails",
+        "fechaHora": "Datum en tijd"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Ik wil aan een bestaande wedstrijd meedoen.",
+      "armarBody": "Ik wil een wedstrijd maken en spelers vinden."
+    },
+    "clases": {
+      "detalle": "Lesgegevens"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Volg ons op"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Advertentie"
+    },
+    "resenas": {
+      "title": "Beoordelingen",
+      "totalCount_plural": "{{count}} beoordelingen"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Alles als gelezen markeren"
+    },
+    "instructor": {
+      "campoNombre": "Voornaam",
+      "campoApellido": "Achternaam",
+      "campoFechaNac": "Geboortedatum",
+      "generoMasculino": "Man",
+      "generoFemenino": "Vrouw",
+      "generoNoDice": "Zeg ik liever niet",
+      "guardarCambios": "Wijzigingen opslaan"
+    },
+    "perfil": {
+      "viewPublicProfile": "Mijn openbare profiel bekijken",
+      "editar": "Profiel bewerken",
+      "nivel": "Speelniveau",
+      "notificaciones": "Meldingen",
+      "city": "Plaats",
+      "birthDate": "Geboortedatum",
+      "usualPartner": "Vaste partner",
+      "passwordMismatch": "De wachtwoorden komen niet overeen.",
+      "placeholderPasswordMin": "Minimaal 6 tekens",
+      "diestro": "Rechtshandig",
+      "zurdo": "Linkshandig",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "partnerHabitual": "Vaste partner",
+      "genero": {
+        "masculino": "Man",
+        "femenino": "Vrouw"
+      },
+      "regularPartner": "Vaste partner"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Alle clubs",
+        "colFoto": "Foto",
+        "colNombre": "Naam",
+        "verFicha": "Profiel bekijken",
+        "editarFicha": "Profiel bewerken",
+        "fichaNombre": "Voornaam",
+        "fichaApellido": "Achternaam",
+        "fichaFechaNac": "Geboortedatum",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Clubs",
+        "solicitudes": "Verzoeken",
+        "config": "Instellingen"
+      },
+      "pushNotif": {
+        "selectVenue": "Club kiezen",
+        "selectSport": "Sport kiezen",
+        "segments": {
+          "venue": "Club #{{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Alles als gelezen markeren"
+      },
+      "metrics": {
+        "periodToday": "Vandaag"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Deze actie kan niet ongedaan worden gemaakt."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Kies minimaal één sport.",
+        "name": "Naam",
+        "price": "Prijs",
+        "cityLabel": "Plaats",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Verwijderen",
+        "validationViewProfile": "Profiel bekijken"
+      },
+      "hub": {
+        "changePhoto": "Foto wijzigen",
+        "previewLabel": "Voorbeeld"
+      },
+      "sedes": {
+        "venueNumber": "Club #{{id}}",
+        "description": "Beschrijving",
+        "delete": "Verwijderen",
+        "reviews": "Beoordelingen",
+        "listaEsperaTorneos": "Wachtlijst",
+        "guidedSetup": {
+          "city": "Plaats",
+          "summaryLocation": "Locatie"
+        },
+        "paymentPending": "Betaling in afwachting",
+        "whatsappCountryCodeAria": "Landcode",
+        "saveChanges": "Wijzigingen opslaan"
+      },
+      "reservas": {
+        "cancelBooking": "Reservering annuleren",
+        "selectVenue": "Club selecteren",
+        "noVenue": "Geen club"
+      },
+      "overview": {
+        "today": "Vandaag"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Gevorderd",
+          "advanced": "Gevorderd"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Foto verwijderen",
+        "saveBtn": "Wijzigingen opslaan"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Ter informatie"
+        },
+        "reportsAllSedes": "Alle clubs",
+        "reportsFilterBeneficio": "Voordeel",
+        "reportsColDesc": "Beschrijving",
+        "reportsColBeneficio": "Voordeel",
+        "reportsColCodigo": "Code",
+        "reportsColSaldoDisp": "Beschikbaar saldo",
+        "descriptionField": "Beschrijving",
+        "globalConfigDescriptionField": "Beschrijving",
+        "globalConfigSave": "Wijzigingen opslaan",
+        "campaignsAllVenues": "Alle clubs",
+        "campaignsName": "Naam",
+        "campaignsDescription": "Beschrijving",
+        "campaignsColName": "Naam",
+        "campaignsTotalUses": "Totaal",
+        "description": "Beschrijving",
+        "name": "Naam",
+        "conditions": "Voorwaarden",
+        "redeemCode": "Code",
+        "redeemPrize": "Voordeel",
+        "alertsAllVenues": "Alle clubs",
+        "movementsAllVenues": "Alle clubs",
+        "movementsDescriptionCol": "Beschrijving"
+      },
+      "metricas": {
+        "markAllRead": "Alles als gelezen markeren",
+        "pointsCol": "Punten",
+        "expiresCol": "Verloopt"
+      },
+      "jugadores": {
+        "viewProfile": "Profiel bekijken",
+        "fichaTitle": "Spelerskaart"
+      },
+      "membresias": {
+        "colNombre": "Naam",
+        "colDescripcion": "Beschrijving",
+        "colPrecio": "Prijs",
+        "colVigencia": "Geldigheid",
+        "colPlan": "Abonnement",
+        "filterPlan": "Abonnement",
+        "fieldNombre": "Naam",
+        "fieldDescripcion": "Beschrijving",
+        "fieldPrecio": "Prijs",
+        "fieldPlan": "Abonnement",
+        "errSedeRequired": "Selecteer een club."
+      }
+    },
+    "pago": {
+      "titulo": "Betaling",
+      "reintentar": "Opnieuw proberen"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Wedstrijd"
+      }
+    },
+    "hub": {
+      "goToProfile": "Naar mijn profiel",
+      "backToStart": "Terug naar start"
+    },
+    "chatbot": {
+      "fabCollapsed": "Vragen?",
+      "fabLine1": "Vragen?",
+      "fabLine2": "Chatten met Chivi",
+      "enviar": "Verzenden",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Beschikbare toernooien",
+      "micDictateAria": "Spraakinvoer",
+      "leerVozAlta": "Antwoorden voorlezen",
+      "boton": "Vragen?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Datum en tijd"
+    },
+    "perfilPublico": {
+      "shareProfile": "Profiel delen",
+      "statsTitle": "Statistieken",
+      "tournamentsWon": "Gewonnen toernooien",
+      "matchesWon": "Gewonnen wedstrijden",
+      "sportsTitle": "Beoefende sporten",
+      "recentTournamentsTitle": "Recente toernooien",
+      "badgeParticipantGeneric": "Deelnemer"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Ik wil spelen",
+        "globe": {
+          "labels": {
+            "venues": "Clubs",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tennis",
+            "stats": "Statistieken"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tennis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Open wedstrijden"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Open wedstrijden"
+          },
+          "results": {
+            "title": "Resultaten"
+          }
+        }
+      },
+      "contact": {
+        "play": "Ik wil spelen"
+      },
+      "footer": {
+        "language": "Taal"
+      },
+      "communityMatches": {
+        "ctaPlay": "Ik wil spelen",
+        "mockTitle": "Open wedstrijd"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Live",
+        "futureAccess": {
+          "label": "Binnenkort beschikbaar"
+        }
+      }
+    }
+  },
+  "fr": {
+    "general": {
+      "language": "Langue",
+      "delete": "Supprimer",
+      "share": "Partager",
+      "email": "E-mail",
+      "city": "Ville"
+    },
+    "auth": {
+      "login": "Se connecter",
+      "register": "Registre",
+      "password": "Mot de passe",
+      "google": "Continuer avec Google",
+      "cerrar_sesion": "se déconnecter",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "firstName": "Nom",
+      "lastName": "Nom de famille",
+      "male": "Masculin",
+      "female": "Féminin",
+      "handednessRight": "Droitier",
+      "handednessLeft": "Gaucher"
+    },
+    "nav": {
+      "logout": "se déconnecter",
+      "admin": {
+        "solicitudes": "Demandes",
+        "config": "Configuration"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Réservez votre terrain",
+      "cancelar": "Annuler la réservation",
+      "pagar_mp": "Payer avec Mercado Pago",
+      "sedes": "Sites",
+      "nearestVenue": "Site le plus proche de toi",
+      "summaryTitle": "Récapitulatif de la réservation",
+      "modifyBooking": "Modifier la réservation",
+      "confirmedTitle": "Réservation confirmée !",
+      "phoneCountriesMain": "Principal",
+      "understood": "Compris",
+      "dayToday": "Aujourd'hui",
+      "dayTomorrow": "Demain",
+      "courtOccupied": "Occupé"
+    },
+    "torneos": {
+      "inscribirse": "Registre",
+      "pendiente_pago": "Paiement en attente",
+      "tipo": {
+        "eliminacion": "Suppression directe",
+        "knockout": "Suppression directe",
+        "eliminatoria": "Suppression directe"
+      },
+      "listado": {
+        "titleAvailable": "Tournois disponibles",
+        "clearSearch": "Effacer la recherche",
+        "participants": "{{count}} participants",
+        "emptyFinalizados": "Aucun tournoi terminé pour le moment."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tennis"
+      },
+      "vista": {
+        "tabGrupos": "GROUPES",
+        "statPg": "P.G.",
+        "statPp": "PP",
+        "sinPartidos": "Aucune correspondance",
+        "genero": {
+          "masculino": "Masculin",
+          "femenino": "Féminin"
+        },
+        "categoriaNivel": {
+          "1ra": "1er",
+          "2da": "2ème",
+          "3ra": "3ème"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Détail du match",
+        "fechaHora": "Date et heure"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Je veux rejoindre un parti qui existe déjà.",
+      "armarBody": "Je veux créer un jeu et ajouter des joueurs."
+    },
+    "clases": {
+      "detalle": "Détail de la classe"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Suivez-nous sur"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Publicité"
+    },
+    "resenas": {
+      "title": "Avis",
+      "totalCount_plural": "{{count}} avis"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Marquer tout comme lu"
+    },
+    "instructor": {
+      "campoNombre": "Nom",
+      "campoApellido": "Nom de famille",
+      "campoFechaNac": "Date de naissance",
+      "generoMasculino": "Masculin",
+      "generoFemenino": "Féminin",
+      "generoNoDice": "Préfère ne pas répondre",
+      "guardarCambios": "Enregistrer les modifications"
+    },
+    "perfil": {
+      "viewPublicProfile": "Voir mon profil public",
+      "editar": "Modifier le profil",
+      "nivel": "niveau de jeu",
+      "notificaciones": "Notifications",
+      "city": "Ville",
+      "birthDate": "Date de naissance",
+      "usualPartner": "Compagnon régulier",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "placeholderPasswordMin": "Minimum 6 caractères",
+      "diestro": "Droitier",
+      "zurdo": "Gaucher",
+      "firstName": "Nom",
+      "lastName": "Nom de famille",
+      "partnerHabitual": "Compagnon régulier",
+      "genero": {
+        "masculino": "Masculin",
+        "femenino": "Féminin"
+      },
+      "regularPartner": "Compagnon régulier"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Tous les sites",
+        "colFoto": "Photo",
+        "colNombre": "Nom",
+        "verFicha": "Voir le profil",
+        "editarFicha": "Modifier le profil",
+        "fichaNombre": "Nom",
+        "fichaApellido": "Nom de famille",
+        "fichaFechaNac": "Date de naissance",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Sites",
+        "solicitudes": "Demandes",
+        "config": "Configuration"
+      },
+      "pushNotif": {
+        "selectVenue": "Choisir le site",
+        "selectSport": "Choisissez le sport",
+        "segments": {
+          "venue": "Site n° {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Marquer tout comme lu"
+      },
+      "metrics": {
+        "periodToday": "Aujourd'hui"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Cette action est irréversible."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "J'ai choisi au moins un sport.",
+        "name": "Nom",
+        "price": "Prix",
+        "cityLabel": "Ville",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Supprimer",
+        "validationViewProfile": "Voir le profil"
+      },
+      "hub": {
+        "changePhoto": "Changer la photo",
+        "previewLabel": "Aperçu"
+      },
+      "sedes": {
+        "venueNumber": "Site n° {{id}}",
+        "description": "Description",
+        "delete": "Supprimer",
+        "reviews": "Avis",
+        "listaEsperaTorneos": "Liste d'attente",
+        "guidedSetup": {
+          "city": "Ville",
+          "summaryLocation": "Emplacement"
+        },
+        "paymentPending": "Paiement en attente",
+        "whatsappCountryCodeAria": "Indicatif du pays",
+        "saveChanges": "Enregistrer les modifications"
+      },
+      "reservas": {
+        "cancelBooking": "Annuler la réservation",
+        "selectVenue": "Sélectionner le site",
+        "noVenue": "Pas de siège social"
+      },
+      "overview": {
+        "today": "Aujourd'hui"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Avancé",
+          "advanced": "Avancé"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Retirer la photo",
+        "saveBtn": "Enregistrer les modifications"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informatif"
+        },
+        "reportsAllSedes": "Tous les sites",
+        "reportsFilterBeneficio": "Avantage",
+        "reportsColDesc": "Description",
+        "reportsColBeneficio": "Avantage",
+        "reportsColCodigo": "Code",
+        "reportsColSaldoDisp": "Solde disponible",
+        "descriptionField": "Description",
+        "globalConfigDescriptionField": "Description",
+        "globalConfigSave": "Enregistrer les modifications",
+        "campaignsAllVenues": "Tous les sites",
+        "campaignsName": "Nom",
+        "campaignsDescription": "Description",
+        "campaignsColName": "Nom",
+        "campaignsTotalUses": "Total",
+        "description": "Description",
+        "name": "Nom",
+        "conditions": "Conditions",
+        "redeemCode": "Code",
+        "redeemPrize": "Avantage",
+        "alertsAllVenues": "Tous les sites",
+        "movementsAllVenues": "Tous les sites",
+        "movementsDescriptionCol": "Description"
+      },
+      "metricas": {
+        "markAllRead": "Marquer tout comme lu",
+        "pointsCol": "Points",
+        "expiresCol": "Expiration"
+      },
+      "jugadores": {
+        "viewProfile": "Voir le profil",
+        "fichaTitle": "Fiche du joueur"
+      },
+      "membresias": {
+        "colNombre": "Nom",
+        "colDescripcion": "Description",
+        "colPrecio": "Prix",
+        "colVigencia": "Validité",
+        "colPlan": "Formule",
+        "filterPlan": "Formule",
+        "fieldNombre": "Nom",
+        "fieldDescripcion": "Description",
+        "fieldPrecio": "Prix",
+        "fieldPlan": "Formule",
+        "errSedeRequired": "Sélectionne un site."
+      }
+    },
+    "pago": {
+      "titulo": "Paiement",
+      "reintentar": "essayer à nouveau"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Match"
+      }
+    },
+    "hub": {
+      "goToProfile": "Accéder à mon profil",
+      "backToStart": "Retour en haut"
+    },
+    "chatbot": {
+      "fabCollapsed": "Des questions ?",
+      "fabLine1": "Des questions ?",
+      "fabLine2": "Parler avec Chivi",
+      "enviar": "Envoyer",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Tournois disponibles",
+      "micDictateAria": "Dicter à la voix",
+      "leerVozAlta": "Lire les réponses à haute voix",
+      "boton": "Des questions ?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Date et heure"
+    },
+    "perfilPublico": {
+      "shareProfile": "Partager le profil",
+      "statsTitle": "Statistiques",
+      "tournamentsWon": "Tournois gagnés",
+      "matchesWon": "Matchs gagnés",
+      "sportsTitle": "Sports pratiqués",
+      "recentTournamentsTitle": "Tournois récents",
+      "badgeParticipantGeneric": "Participant"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Je veux jouer",
+        "globe": {
+          "labels": {
+            "venues": "Sites",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tennis",
+            "stats": "Statistiques"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tennis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Matchs ouverts"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Matchs ouverts"
+          },
+          "results": {
+            "title": "Résultats"
+          }
+        }
+      },
+      "contact": {
+        "play": "Je veux jouer"
+      },
+      "footer": {
+        "language": "Langue"
+      },
+      "communityMatches": {
+        "ctaPlay": "Je veux jouer",
+        "mockTitle": "Match ouvert"
+      },
+      "smartScoreboard": {
+        "demoBadge": "En direct",
+        "futureAccess": {
+          "label": "Bientôt disponible"
+        }
+      }
+    }
+  },
+  "it": {
+    "general": {
+      "language": "Lingua",
+      "delete": "Elimina",
+      "share": "Condividi",
+      "email": "E-mail",
+      "city": "Città"
+    },
+    "auth": {
+      "login": "Login",
+      "register": "Registro",
+      "password": "Password",
+      "google": "Continua con Google",
+      "cerrar_sesion": "disconnessione",
+      "passwordMismatch": "Le password non corrispondono.",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "male": "Maschile",
+      "female": "Femminile",
+      "handednessRight": "Destrimano",
+      "handednessLeft": "Mancino"
+    },
+    "nav": {
+      "logout": "disconnessione",
+      "admin": {
+        "solicitudes": "Richieste",
+        "config": "Configurazione"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Prenota la tua corte",
+      "cancelar": "Cancella la prenotazione",
+      "pagar_mp": "Paga con Mercado Pago",
+      "sedes": "Sedi",
+      "nearestVenue": "Sede più vicina a te",
+      "summaryTitle": "Riepilogo della prenotazione",
+      "modifyBooking": "Modifica prenotazione",
+      "confirmedTitle": "Prenotazione confermata!",
+      "phoneCountriesMain": "Principale",
+      "understood": "Ho capito",
+      "dayToday": "Oggi",
+      "dayTomorrow": "Domani",
+      "courtOccupied": "Occupato"
+    },
+    "torneos": {
+      "inscribirse": "Registro",
+      "pendiente_pago": "Pagamento in sospeso",
+      "tipo": {
+        "eliminacion": "Rimozione diretta",
+        "knockout": "Rimozione diretta",
+        "eliminatoria": "Rimozione diretta"
+      },
+      "listado": {
+        "titleAvailable": "Tornei disponibili",
+        "clearSearch": "Cancella ricerca",
+        "participants": "{{count}} partecipanti",
+        "emptyFinalizados": "Nessun torneo concluso per ora."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tennis"
+      },
+      "vista": {
+        "tabGrupos": "GIRONI",
+        "statPg": "P.G.",
+        "statPp": "PP",
+        "sinPartidos": "Nessuna corrispondenza",
+        "genero": {
+          "masculino": "Maschile",
+          "femenino": "Femminile"
+        },
+        "categoriaNivel": {
+          "1ra": "1°",
+          "2da": "2°",
+          "3ra": "3°"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Dettaglio partita",
+        "fechaHora": "Data e ora"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Voglio unirmi ad un gruppo già esistente.",
+      "armarBody": "Voglio creare un gioco e aggiungere giocatori."
+    },
+    "clases": {
+      "detalle": "Dettaglio della classe"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Seguici su"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Pubblicità"
+    },
+    "resenas": {
+      "title": "Recensioni",
+      "totalCount_plural": "{{count}} recensioni"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Segna tutto letto"
+    },
+    "instructor": {
+      "campoNombre": "Nome",
+      "campoApellido": "Cognome",
+      "campoFechaNac": "Data di nascita",
+      "generoMasculino": "Maschile",
+      "generoFemenino": "Femminile",
+      "generoNoDice": "Preferisco non dirlo",
+      "guardarCambios": "Salva modifiche"
+    },
+    "perfil": {
+      "viewPublicProfile": "Vedi il mio profilo pubblico",
+      "editar": "Modifica profilo",
+      "nivel": "livello di gioco",
+      "notificaciones": "Notifiche",
+      "city": "Città",
+      "birthDate": "Data di nascita",
+      "usualPartner": "Compagno abituale",
+      "passwordMismatch": "Le password non corrispondono.",
+      "placeholderPasswordMin": "Minimo 6 caratteri",
+      "diestro": "Destrimano",
+      "zurdo": "Mancino",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "partnerHabitual": "Compagno abituale",
+      "genero": {
+        "masculino": "Maschile",
+        "femenino": "Femminile"
+      },
+      "regularPartner": "Compagno abituale"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Tutte le sedi",
+        "colFoto": "Foto",
+        "colNombre": "Nome",
+        "verFicha": "Vedi profilo",
+        "editarFicha": "Modifica profilo",
+        "fichaNombre": "Nome",
+        "fichaApellido": "Cognome",
+        "fichaFechaNac": "Data di nascita",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Sedi",
+        "solicitudes": "Richieste",
+        "config": "Configurazione"
+      },
+      "pushNotif": {
+        "selectVenue": "Scegli la sede",
+        "selectSport": "Scegli lo sport",
+        "segments": {
+          "venue": "Sede n. {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Segna tutto letto"
+      },
+      "metrics": {
+        "periodToday": "Oggi"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Questa azione non può essere annullata."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Ho scelto almeno uno sport.",
+        "name": "Nome",
+        "price": "Prezzo",
+        "cityLabel": "Città",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Elimina",
+        "validationViewProfile": "Vedi profilo"
+      },
+      "hub": {
+        "changePhoto": "Cambia foto",
+        "previewLabel": "Anteprima"
+      },
+      "sedes": {
+        "venueNumber": "Sede n. {{id}}",
+        "description": "Descrizione",
+        "delete": "Elimina",
+        "reviews": "Recensioni",
+        "listaEsperaTorneos": "Lista d'attesa",
+        "guidedSetup": {
+          "city": "Città",
+          "summaryLocation": "Posizione"
+        },
+        "paymentPending": "Pagamento in sospeso",
+        "whatsappCountryCodeAria": "Prefisso internazionale",
+        "saveChanges": "Salva modifiche"
+      },
+      "reservas": {
+        "cancelBooking": "Cancella la prenotazione",
+        "selectVenue": "Seleziona sede",
+        "noVenue": "Nessuna sede"
+      },
+      "overview": {
+        "today": "Oggi"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Avanzato",
+          "advanced": "Avanzato"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Rimuovi foto",
+        "saveBtn": "Salva modifiche"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informativo"
+        },
+        "reportsAllSedes": "Tutte le sedi",
+        "reportsFilterBeneficio": "Vantaggio",
+        "reportsColDesc": "Descrizione",
+        "reportsColBeneficio": "Vantaggio",
+        "reportsColCodigo": "Codice",
+        "reportsColSaldoDisp": "Saldo disponibile",
+        "descriptionField": "Descrizione",
+        "globalConfigDescriptionField": "Descrizione",
+        "globalConfigSave": "Salva modifiche",
+        "campaignsAllVenues": "Tutte le sedi",
+        "campaignsName": "Nome",
+        "campaignsDescription": "Descrizione",
+        "campaignsColName": "Nome",
+        "campaignsTotalUses": "Totale",
+        "description": "Descrizione",
+        "name": "Nome",
+        "conditions": "Condizioni",
+        "redeemCode": "Codice",
+        "redeemPrize": "Vantaggio",
+        "alertsAllVenues": "Tutte le sedi",
+        "movementsAllVenues": "Tutte le sedi",
+        "movementsDescriptionCol": "Descrizione"
+      },
+      "metricas": {
+        "markAllRead": "Segna tutto letto",
+        "pointsCol": "Punti",
+        "expiresCol": "Scadenza"
+      },
+      "jugadores": {
+        "viewProfile": "Vedi profilo",
+        "fichaTitle": "Scheda giocatore"
+      },
+      "membresias": {
+        "colNombre": "Nome",
+        "colDescripcion": "Descrizione",
+        "colPrecio": "Prezzo",
+        "colVigencia": "Validità",
+        "colPlan": "Piano",
+        "filterPlan": "Piano",
+        "fieldNombre": "Nome",
+        "fieldDescripcion": "Descrizione",
+        "fieldPrecio": "Prezzo",
+        "fieldPlan": "Piano",
+        "errSedeRequired": "Seleziona una sede."
+      }
+    },
+    "pago": {
+      "titulo": "Pagamento",
+      "reintentar": "riprova"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Partita"
+      }
+    },
+    "hub": {
+      "goToProfile": "Vai al mio profilo",
+      "backToStart": "Torna all'inizio"
+    },
+    "chatbot": {
+      "fabCollapsed": "Domande?",
+      "fabLine1": "Domande?",
+      "fabLine2": "Parla con Chivi",
+      "enviar": "Invia",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Tornei disponibili",
+      "micDictateAria": "Dettare con la voce",
+      "leerVozAlta": "Leggi le risposte ad alta voce",
+      "boton": "Domande?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Data e ora"
+    },
+    "perfilPublico": {
+      "shareProfile": "Condividi profilo",
+      "statsTitle": "Statistiche",
+      "tournamentsWon": "Tornei vinti",
+      "matchesWon": "Partite vinte",
+      "sportsTitle": "Sport praticati",
+      "recentTournamentsTitle": "Tornei recenti",
+      "badgeParticipantGeneric": "Partecipante"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Voglio giocare",
+        "globe": {
+          "labels": {
+            "venues": "Sedi",
+            "padcoins": "PadCoin",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tennis",
+            "stats": "Statistiche"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tennis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Partite aperte"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoin"
+          },
+          "openMatches": {
+            "title": "Partite aperte"
+          },
+          "results": {
+            "title": "Risultati"
+          }
+        }
+      },
+      "contact": {
+        "play": "Voglio giocare"
+      },
+      "footer": {
+        "language": "Lingua"
+      },
+      "communityMatches": {
+        "ctaPlay": "Voglio giocare",
+        "mockTitle": "Partita aperta"
+      },
+      "smartScoreboard": {
+        "demoBadge": "In diretta",
+        "futureAccess": {
+          "label": "Prossimamente"
+        }
+      }
+    }
+  },
+  "ro": {
+    "general": {
+      "language": "Limbă",
+      "delete": "Șterge",
+      "share": "Distribuie",
+      "email": "Email",
+      "city": "Oraș"
+    },
+    "auth": {
+      "login": "Autentificare",
+      "register": "Înregistrează-mă",
+      "password": "Parolă",
+      "google": "Continuă cu Google",
+      "cerrar_sesion": "Deconectare",
+      "passwordMismatch": "Parolele nu coincid.",
+      "firstName": "Prenume",
+      "lastName": "Nume",
+      "male": "Masculin",
+      "female": "Feminin",
+      "handednessRight": "Dreptaci",
+      "handednessLeft": "Stângaci"
+    },
+    "nav": {
+      "logout": "Deconectare",
+      "admin": {
+        "solicitudes": "Cereri",
+        "config": "Setări"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Rezervă terenul",
+      "cancelar": "Anulează rezervarea",
+      "pagar_mp": "Plătește cu Mercado Pago",
+      "sedes": "Cluburi",
+      "nearestVenue": "Clubul cel mai apropiat de tine",
+      "summaryTitle": "Rezumatul rezervării",
+      "modifyBooking": "Modifică rezervarea",
+      "confirmedTitle": "Rezervare confirmată!",
+      "phoneCountriesMain": "Principal",
+      "understood": "Înțeles",
+      "dayToday": "Astăzi",
+      "dayTomorrow": "Mâine",
+      "courtOccupied": "Ocupat"
+    },
+    "torneos": {
+      "inscribirse": "Înscrie-mă",
+      "pendiente_pago": "În așteptarea plății",
+      "tipo": {
+        "eliminacion": "Eliminare directă",
+        "knockout": "Eliminare directă",
+        "eliminatoria": "Eliminare directă"
+      },
+      "listado": {
+        "titleAvailable": "Turnee disponibile",
+        "clearSearch": "Ștergeți căutarea",
+        "participants": "{{count}} participanți",
+        "emptyFinalizados": "Niciun turneu finalizat deocamdată."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tenis"
+      },
+      "vista": {
+        "tabGrupos": "GRUPURI",
+        "statPg": "P.G.",
+        "statPp": "PP",
+        "sinPartidos": "Fără meciuri",
+        "genero": {
+          "masculino": "Masculin",
+          "femenino": "Feminin"
+        },
+        "categoriaNivel": {
+          "1ra": "1",
+          "2da": "2",
+          "3ra": "3"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Detaliile meciului",
+        "fechaHora": "Data și ora"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Vreau să mă alătur unui meci existent.",
+      "armarBody": "Vreau să creez un meci și să găsesc jucători."
+    },
+    "clases": {
+      "detalle": "Detaliu de clasă"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Urmărește-ne"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Publicitate"
+    },
+    "resenas": {
+      "title": "Recenzii",
+      "totalCount_plural": "{{count}} recenzii"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "Email"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Marchează toate ca citite"
+    },
+    "instructor": {
+      "campoNombre": "Prenume",
+      "campoApellido": "Nume",
+      "campoFechaNac": "Data nașterii",
+      "generoMasculino": "Masculin",
+      "generoFemenino": "Feminin",
+      "generoNoDice": "Prefer să nu precizez",
+      "guardarCambios": "Salvează modificările"
+    },
+    "perfil": {
+      "viewPublicProfile": "Vezi profilul public",
+      "editar": "Editează profilul",
+      "nivel": "Nivel de joc",
+      "notificaciones": "Notificări",
+      "city": "Oraș",
+      "birthDate": "Data nașterii",
+      "usualPartner": "Partener obișnuit",
+      "passwordMismatch": "Parolele nu coincid.",
+      "placeholderPasswordMin": "Cel puțin 6 caractere",
+      "diestro": "Dreptaci",
+      "zurdo": "Stângaci",
+      "firstName": "Prenume",
+      "lastName": "Nume",
+      "partnerHabitual": "Partener obișnuit",
+      "genero": {
+        "masculino": "Masculin",
+        "femenino": "Feminin"
+      },
+      "regularPartner": "Partener obișnuit"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Toate cluburile",
+        "colFoto": "Fotografie",
+        "colNombre": "Nume",
+        "verFicha": "Vezi profilul",
+        "editarFicha": "Editează profilul",
+        "fichaNombre": "Prenume",
+        "fichaApellido": "Nume",
+        "fichaFechaNac": "Data nașterii",
+        "fichaEmailLabel": "Email"
+      },
+      "tabs": {
+        "sedes": "Cluburi",
+        "solicitudes": "Cereri",
+        "config": "Setări"
+      },
+      "pushNotif": {
+        "selectVenue": "Alege clubul",
+        "selectSport": "Alege sportul",
+        "segments": {
+          "venue": "Locația nr. {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Marchează toate ca citite"
+      },
+      "metrics": {
+        "periodToday": "Astăzi"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Această acțiune nu poate fi anulată."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Alege cel puțin un sport.",
+        "name": "Nume",
+        "price": "Preț",
+        "cityLabel": "Oraș",
+        "emailLabel": "Email",
+        "deleteBtn": "Șterge",
+        "validationViewProfile": "Vezi profilul"
+      },
+      "hub": {
+        "changePhoto": "Schimbă fotografia",
+        "previewLabel": "Previzualizare"
+      },
+      "sedes": {
+        "venueNumber": "Locația nr. {{id}}",
+        "description": "Descriere",
+        "delete": "Șterge",
+        "reviews": "Recenzii",
+        "listaEsperaTorneos": "Listă de așteptare",
+        "guidedSetup": {
+          "city": "Oraș",
+          "summaryLocation": "Locație"
+        },
+        "paymentPending": "În așteptarea plății",
+        "whatsappCountryCodeAria": "Prefix de țară",
+        "saveChanges": "Salvează modificările"
+      },
+      "reservas": {
+        "cancelBooking": "Anulează rezervarea",
+        "selectVenue": "Selectați locația",
+        "noVenue": "Fără sediu"
+      },
+      "overview": {
+        "today": "Astăzi"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Avansat",
+          "advanced": "Avansat"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Elimină fotografia",
+        "saveBtn": "Salvează modificările"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informativă"
+        },
+        "reportsAllSedes": "Toate cluburile",
+        "reportsFilterBeneficio": "Beneficiu",
+        "reportsColDesc": "Descriere",
+        "reportsColBeneficio": "Beneficiu",
+        "reportsColCodigo": "Cod",
+        "reportsColSaldoDisp": "Sold disponibil",
+        "descriptionField": "Descriere",
+        "globalConfigDescriptionField": "Descriere",
+        "globalConfigSave": "Salvează modificările",
+        "campaignsAllVenues": "Toate cluburile",
+        "campaignsName": "Nume",
+        "campaignsDescription": "Descriere",
+        "campaignsColName": "Nume",
+        "campaignsTotalUses": "Total",
+        "description": "Descriere",
+        "name": "Nume",
+        "conditions": "Condiții",
+        "redeemCode": "Cod",
+        "redeemPrize": "Beneficiu",
+        "alertsAllVenues": "Toate cluburile",
+        "movementsAllVenues": "Toate cluburile",
+        "movementsDescriptionCol": "Descriere"
+      },
+      "metricas": {
+        "markAllRead": "Marchează toate ca citite",
+        "pointsCol": "Puncte",
+        "expiresCol": "Câştiga"
+      },
+      "jugadores": {
+        "viewProfile": "Vezi profilul",
+        "fichaTitle": "Fișa jucătorului"
+      },
+      "membresias": {
+        "colNombre": "Nume",
+        "colDescripcion": "Descriere",
+        "colPrecio": "Preț",
+        "colVigencia": "Valabilitate",
+        "colPlan": "Plan",
+        "filterPlan": "Plan",
+        "fieldNombre": "Nume",
+        "fieldDescripcion": "Descriere",
+        "fieldPrecio": "Preț",
+        "fieldPlan": "Plan",
+        "errSedeRequired": "Selectează un club."
+      }
+    },
+    "pago": {
+      "titulo": "Plată",
+      "reintentar": "Încearcă din nou"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Joc"
+      }
+    },
+    "hub": {
+      "goToProfile": "Accesați profilul meu",
+      "backToStart": "Înapoi la pagina principală"
+    },
+    "chatbot": {
+      "fabCollapsed": "Întrebări?",
+      "fabLine1": "Întrebări?",
+      "fabLine2": "Întreabă pe Chivi",
+      "enviar": "Trimite",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Turnee disponibile",
+      "micDictateAria": "Intrare vocală",
+      "leerVozAlta": "Citește răspunsurile cu voce tare",
+      "boton": "Întrebări?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Data și ora"
+    },
+    "perfilPublico": {
+      "shareProfile": "Distribuie profilul",
+      "statsTitle": "Statistici",
+      "tournamentsWon": "Turnee câștigate",
+      "matchesWon": "Meciuri câștigate",
+      "sportsTitle": "Sporturi practicate",
+      "recentTournamentsTitle": "Turnee recente",
+      "badgeParticipantGeneric": "Participant"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Vreau să joc",
+        "globe": {
+          "labels": {
+            "venues": "Cluburi",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tenis",
+            "stats": "Statistici"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tenis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Meciuri deschise"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Meciuri deschise"
+          },
+          "results": {
+            "title": "Rezultate"
+          }
+        }
+      },
+      "contact": {
+        "play": "Vreau să joc"
+      },
+      "footer": {
+        "language": "Limbă"
+      },
+      "communityMatches": {
+        "ctaPlay": "Vreau să joc",
+        "mockTitle": "Meci deschis"
+      },
+      "smartScoreboard": {
+        "demoBadge": "În direct",
+        "futureAccess": {
+          "label": "În curând"
+        }
+      }
+    }
+  },
+  "nl-NL": {
+    "general": {
+      "language": "Taal",
+      "delete": "Verwijderen",
+      "share": "Delen",
+      "email": "E-mail",
+      "city": "Plaats"
+    },
+    "auth": {
+      "login": "Inloggen",
+      "register": "Registreren",
+      "password": "Wachtwoord",
+      "google": "Doorgaan met Google",
+      "cerrar_sesion": "Uitloggen",
+      "passwordMismatch": "De wachtwoorden komen niet overeen.",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "male": "Man",
+      "female": "Vrouw",
+      "handednessRight": "Rechtshandig",
+      "handednessLeft": "Linkshandig"
+    },
+    "nav": {
+      "logout": "Uitloggen",
+      "admin": {
+        "solicitudes": "Verzoeken",
+        "config": "Instellingen"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Reserveer je baan",
+      "cancelar": "Reservering annuleren",
+      "pagar_mp": "Betalen met Mercado Pago",
+      "sedes": "Clubs",
+      "nearestVenue": "Dichtstbijzijnde club bij jou",
+      "summaryTitle": "Reserveringsoverzicht",
+      "modifyBooking": "Reservering wijzigen",
+      "confirmedTitle": "Reservering bevestigd!",
+      "phoneCountriesMain": "Hoofdsport",
+      "understood": "Begrepen",
+      "dayToday": "Vandaag",
+      "dayTomorrow": "Morgen",
+      "courtOccupied": "Bezet"
+    },
+    "torneos": {
+      "inscribirse": "Inschrijven",
+      "pendiente_pago": "Betaling in afwachting",
+      "tipo": {
+        "eliminacion": "Rechtstreekse uitschakeling",
+        "knockout": "Rechtstreekse uitschakeling",
+        "eliminatoria": "Rechtstreekse uitschakeling"
+      },
+      "listado": {
+        "titleAvailable": "Beschikbare toernooien",
+        "clearSearch": "Zoekopdracht wissen",
+        "participants": "{{count}} deelnemers",
+        "emptyFinalizados": "Nog geen afgelopen toernooien."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tennis"
+      },
+      "vista": {
+        "tabGrupos": "GROEPEN",
+        "statPg": "W",
+        "statPp": "V",
+        "sinPartidos": "Geen wedstrijden",
+        "genero": {
+          "masculino": "Man",
+          "femenino": "Vrouw"
+        },
+        "categoriaNivel": {
+          "1ra": "1e",
+          "2da": "2e",
+          "3ra": "3e"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Wedstrijddetails",
+        "fechaHora": "Datum en tijd"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Ik wil aan een bestaande wedstrijd meedoen.",
+      "armarBody": "Ik wil een wedstrijd maken en spelers vinden."
+    },
+    "clases": {
+      "detalle": "Lesgegevens"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Volg ons op"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Advertentie"
+    },
+    "resenas": {
+      "title": "Beoordelingen",
+      "totalCount_plural": "{{count}} beoordelingen"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Alles als gelezen markeren"
+    },
+    "instructor": {
+      "campoNombre": "Voornaam",
+      "campoApellido": "Achternaam",
+      "campoFechaNac": "Geboortedatum",
+      "generoMasculino": "Man",
+      "generoFemenino": "Vrouw",
+      "generoNoDice": "Zeg ik liever niet",
+      "guardarCambios": "Wijzigingen opslaan"
+    },
+    "perfil": {
+      "viewPublicProfile": "Mijn openbare profiel bekijken",
+      "editar": "Profiel bewerken",
+      "nivel": "Speelniveau",
+      "notificaciones": "Meldingen",
+      "city": "Plaats",
+      "birthDate": "Geboortedatum",
+      "usualPartner": "Vaste partner",
+      "passwordMismatch": "De wachtwoorden komen niet overeen.",
+      "placeholderPasswordMin": "Minimaal 6 tekens",
+      "diestro": "Rechtshandig",
+      "zurdo": "Linkshandig",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "partnerHabitual": "Vaste partner",
+      "genero": {
+        "masculino": "Man",
+        "femenino": "Vrouw"
+      },
+      "regularPartner": "Vaste partner"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Alle clubs",
+        "colFoto": "Foto",
+        "colNombre": "Naam",
+        "verFicha": "Profiel bekijken",
+        "editarFicha": "Profiel bewerken",
+        "fichaNombre": "Voornaam",
+        "fichaApellido": "Achternaam",
+        "fichaFechaNac": "Geboortedatum",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Clubs",
+        "solicitudes": "Verzoeken",
+        "config": "Instellingen"
+      },
+      "pushNotif": {
+        "selectVenue": "Club kiezen",
+        "selectSport": "Sport kiezen",
+        "segments": {
+          "venue": "Club #{{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Alles als gelezen markeren"
+      },
+      "metrics": {
+        "periodToday": "Vandaag"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Deze actie kan niet ongedaan worden gemaakt."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Kies minimaal één sport.",
+        "name": "Naam",
+        "price": "Prijs",
+        "cityLabel": "Plaats",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Verwijderen",
+        "validationViewProfile": "Profiel bekijken"
+      },
+      "hub": {
+        "changePhoto": "Foto wijzigen",
+        "previewLabel": "Voorbeeld"
+      },
+      "sedes": {
+        "venueNumber": "Club #{{id}}",
+        "description": "Beschrijving",
+        "delete": "Verwijderen",
+        "reviews": "Beoordelingen",
+        "listaEsperaTorneos": "Wachtlijst",
+        "guidedSetup": {
+          "city": "Plaats",
+          "summaryLocation": "Locatie"
+        },
+        "paymentPending": "Betaling in afwachting",
+        "whatsappCountryCodeAria": "Landcode",
+        "saveChanges": "Wijzigingen opslaan"
+      },
+      "reservas": {
+        "cancelBooking": "Reservering annuleren",
+        "selectVenue": "Club selecteren",
+        "noVenue": "Geen club"
+      },
+      "overview": {
+        "today": "Vandaag"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Gevorderd",
+          "advanced": "Gevorderd"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Foto verwijderen",
+        "saveBtn": "Wijzigingen opslaan"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Ter informatie"
+        },
+        "reportsAllSedes": "Alle clubs",
+        "reportsFilterBeneficio": "Voordeel",
+        "reportsColDesc": "Beschrijving",
+        "reportsColBeneficio": "Voordeel",
+        "reportsColCodigo": "Code",
+        "reportsColSaldoDisp": "Beschikbaar saldo",
+        "descriptionField": "Beschrijving",
+        "globalConfigDescriptionField": "Beschrijving",
+        "globalConfigSave": "Wijzigingen opslaan",
+        "campaignsAllVenues": "Alle clubs",
+        "campaignsName": "Naam",
+        "campaignsDescription": "Beschrijving",
+        "campaignsColName": "Naam",
+        "campaignsTotalUses": "Totaal",
+        "description": "Beschrijving",
+        "name": "Naam",
+        "conditions": "Voorwaarden",
+        "redeemCode": "Code",
+        "redeemPrize": "Voordeel",
+        "alertsAllVenues": "Alle clubs",
+        "movementsAllVenues": "Alle clubs",
+        "movementsDescriptionCol": "Beschrijving"
+      },
+      "metricas": {
+        "markAllRead": "Alles als gelezen markeren",
+        "pointsCol": "Punten",
+        "expiresCol": "Verloopt"
+      },
+      "jugadores": {
+        "viewProfile": "Profiel bekijken",
+        "fichaTitle": "Spelerskaart"
+      },
+      "membresias": {
+        "colNombre": "Naam",
+        "colDescripcion": "Beschrijving",
+        "colPrecio": "Prijs",
+        "colVigencia": "Geldigheid",
+        "colPlan": "Abonnement",
+        "filterPlan": "Abonnement",
+        "fieldNombre": "Naam",
+        "fieldDescripcion": "Beschrijving",
+        "fieldPrecio": "Prijs",
+        "fieldPlan": "Abonnement",
+        "errSedeRequired": "Selecteer een club."
+      }
+    },
+    "pago": {
+      "titulo": "Betaling",
+      "reintentar": "Opnieuw proberen"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Wedstrijd"
+      }
+    },
+    "hub": {
+      "goToProfile": "Naar mijn profiel",
+      "backToStart": "Terug naar start"
+    },
+    "chatbot": {
+      "fabCollapsed": "Vragen?",
+      "fabLine1": "Vragen?",
+      "fabLine2": "Chatten met Chivi",
+      "enviar": "Verzenden",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Beschikbare toernooien",
+      "micDictateAria": "Spraakinvoer",
+      "leerVozAlta": "Antwoorden voorlezen",
+      "boton": "Vragen?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Datum en tijd"
+    },
+    "perfilPublico": {
+      "shareProfile": "Profiel delen",
+      "statsTitle": "Statistieken",
+      "tournamentsWon": "Gewonnen toernooien",
+      "matchesWon": "Gewonnen wedstrijden",
+      "sportsTitle": "Beoefende sporten",
+      "recentTournamentsTitle": "Recente toernooien",
+      "badgeParticipantGeneric": "Deelnemer"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Ik wil spelen",
+        "globe": {
+          "labels": {
+            "venues": "Clubs",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tennis",
+            "stats": "Statistieken"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tennis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Open wedstrijden"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Open wedstrijden"
+          },
+          "results": {
+            "title": "Resultaten"
+          }
+        }
+      },
+      "contact": {
+        "play": "Ik wil spelen"
+      },
+      "footer": {
+        "language": "Taal"
+      },
+      "communityMatches": {
+        "ctaPlay": "Ik wil spelen",
+        "mockTitle": "Open wedstrijd"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Live",
+        "futureAccess": {
+          "label": "Binnenkort beschikbaar"
+        }
+      }
+    }
+  },
+  "sv": {
+    "general": {
+      "language": "Språk",
+      "delete": "Ta bort",
+      "share": "Dela",
+      "email": "E-post",
+      "city": "Stad"
+    },
+    "auth": {
+      "login": "Logga in",
+      "register": "Registrera dig",
+      "password": "Lösenord",
+      "google": "Fortsätt med Google",
+      "cerrar_sesion": "Logga ut",
+      "passwordMismatch": "Lösenorden matchar inte.",
+      "firstName": "Förnamn",
+      "lastName": "Efternamn",
+      "male": "Man",
+      "female": "Kvinna",
+      "handednessRight": "Högerhänt",
+      "handednessLeft": "Vänsterhänt"
+    },
+    "nav": {
+      "logout": "Logga ut",
+      "admin": {
+        "solicitudes": "Förfrågningar",
+        "config": "Inställningar"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Boka din bana",
+      "cancelar": "Avboka bokning",
+      "pagar_mp": "Betala med Mercado Pago",
+      "sedes": "Anläggningar",
+      "nearestVenue": "Närmaste anläggning för dig",
+      "summaryTitle": "Bokningsöversikt",
+      "modifyBooking": "Ändra bokning",
+      "confirmedTitle": "Bokning bekräftad!",
+      "phoneCountriesMain": "Huvudsport",
+      "understood": "Jag förstår",
+      "dayToday": "I dag",
+      "dayTomorrow": "I morgon",
+      "courtOccupied": "Upptagen"
+    },
+    "torneos": {
+      "inscribirse": "Anmäl mig",
+      "pendiente_pago": "Betalning väntar",
+      "tipo": {
+        "eliminacion": "Direktutslagning",
+        "knockout": "Direktutslagning",
+        "eliminatoria": "Direktutslagning"
+      },
+      "listado": {
+        "titleAvailable": "Tillgängliga turneringar",
+        "clearSearch": "Rensa sökning",
+        "participants": "{{count}} deltagare",
+        "emptyFinalizados": "Inga avslutade turneringar ännu."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tennis"
+      },
+      "vista": {
+        "tabGrupos": "GRUPPER",
+        "statPg": "V",
+        "statPp": "F",
+        "sinPartidos": "Inga matcher",
+        "genero": {
+          "masculino": "Man",
+          "femenino": "Kvinna"
+        },
+        "categoriaNivel": {
+          "1ra": "1:a",
+          "2da": "2:a",
+          "3ra": "3:e"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Matchdetaljer",
+        "fechaHora": "Datum och tid"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Jag vill gå med i en befintlig match.",
+      "armarBody": "Jag vill skapa en match och hitta spelare."
+    },
+    "clases": {
+      "detalle": "Lektionsdetaljer"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Följ oss"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Annons"
+    },
+    "resenas": {
+      "title": "Omdömen",
+      "totalCount_plural": "{{count}} omdömen"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-post"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Markera alla som lästa"
+    },
+    "instructor": {
+      "campoNombre": "Förnamn",
+      "campoApellido": "Efternamn",
+      "campoFechaNac": "Födelsedatum",
+      "generoMasculino": "Man",
+      "generoFemenino": "Kvinna",
+      "generoNoDice": "Vill inte uppge",
+      "guardarCambios": "Spara ändringar"
+    },
+    "perfil": {
+      "viewPublicProfile": "Visa min offentliga profil",
+      "editar": "Redigera profil",
+      "nivel": "Spelnivå",
+      "notificaciones": "Aviseringar",
+      "city": "Stad",
+      "birthDate": "Födelsedatum",
+      "usualPartner": "Ordinarie partner",
+      "passwordMismatch": "Lösenorden matchar inte.",
+      "placeholderPasswordMin": "Minst 6 tecken",
+      "diestro": "Högerhänt",
+      "zurdo": "Vänsterhänt",
+      "firstName": "Förnamn",
+      "lastName": "Efternamn",
+      "partnerHabitual": "Ordinarie partner",
+      "genero": {
+        "masculino": "Man",
+        "femenino": "Kvinna"
+      },
+      "regularPartner": "Ordinarie partner"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Alla anläggningar",
+        "colFoto": "Foto",
+        "colNombre": "Namn",
+        "verFicha": "Visa profil",
+        "editarFicha": "Redigera profil",
+        "fichaNombre": "Förnamn",
+        "fichaApellido": "Efternamn",
+        "fichaFechaNac": "Födelsedatum",
+        "fichaEmailLabel": "E-post"
+      },
+      "tabs": {
+        "sedes": "Anläggningar",
+        "solicitudes": "Förfrågningar",
+        "config": "Inställningar"
+      },
+      "pushNotif": {
+        "selectVenue": "Välj anläggning",
+        "selectSport": "Välj sport",
+        "segments": {
+          "venue": "Anläggning nr {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Markera alla som lästa"
+      },
+      "metrics": {
+        "periodToday": "I dag"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Åtgärden kan inte ångras."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Välj minst en sport.",
+        "name": "Namn",
+        "price": "Pris",
+        "cityLabel": "Stad",
+        "emailLabel": "E-post",
+        "deleteBtn": "Ta bort",
+        "validationViewProfile": "Visa profil"
+      },
+      "hub": {
+        "changePhoto": "Byt foto",
+        "previewLabel": "Förhandsvisning"
+      },
+      "sedes": {
+        "venueNumber": "Anläggning nr {{id}}",
+        "description": "Beskrivning",
+        "delete": "Ta bort",
+        "reviews": "Omdömen",
+        "listaEsperaTorneos": "Väntelista",
+        "guidedSetup": {
+          "city": "Stad",
+          "summaryLocation": "Plats"
+        },
+        "paymentPending": "Betalning väntar",
+        "whatsappCountryCodeAria": "Landskod",
+        "saveChanges": "Spara ändringar"
+      },
+      "reservas": {
+        "cancelBooking": "Avboka bokning",
+        "selectVenue": "Välj anläggning",
+        "noVenue": "Ingen anläggning"
+      },
+      "overview": {
+        "today": "I dag"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Avancerad",
+          "advanced": "Avancerad"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Ta bort foto",
+        "saveBtn": "Spara ändringar"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Information"
+        },
+        "reportsAllSedes": "Alla anläggningar",
+        "reportsFilterBeneficio": "Förmån",
+        "reportsColDesc": "Beskrivning",
+        "reportsColBeneficio": "Förmån",
+        "reportsColCodigo": "Kod",
+        "reportsColSaldoDisp": "Tillgängligt saldo",
+        "descriptionField": "Beskrivning",
+        "globalConfigDescriptionField": "Beskrivning",
+        "globalConfigSave": "Spara ändringar",
+        "campaignsAllVenues": "Alla anläggningar",
+        "campaignsName": "Namn",
+        "campaignsDescription": "Beskrivning",
+        "campaignsColName": "Namn",
+        "campaignsTotalUses": "Totalt",
+        "description": "Beskrivning",
+        "name": "Namn",
+        "conditions": "Villkor",
+        "redeemCode": "Kod",
+        "redeemPrize": "Förmån",
+        "alertsAllVenues": "Alla anläggningar",
+        "movementsAllVenues": "Alla anläggningar",
+        "movementsDescriptionCol": "Beskrivning"
+      },
+      "metricas": {
+        "markAllRead": "Markera alla som lästa",
+        "pointsCol": "Poäng",
+        "expiresCol": "Går ut"
+      },
+      "jugadores": {
+        "viewProfile": "Visa profil",
+        "fichaTitle": "Spelarkort"
+      },
+      "membresias": {
+        "colNombre": "Namn",
+        "colDescripcion": "Beskrivning",
+        "colPrecio": "Pris",
+        "colVigencia": "Giltighet",
+        "colPlan": "Abonnemang",
+        "filterPlan": "Abonnemang",
+        "fieldNombre": "Namn",
+        "fieldDescripcion": "Beskrivning",
+        "fieldPrecio": "Pris",
+        "fieldPlan": "Abonnemang",
+        "errSedeRequired": "Välj en anläggning."
+      }
+    },
+    "pago": {
+      "titulo": "Betalning",
+      "reintentar": "Försök igen"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Match"
+      }
+    },
+    "hub": {
+      "goToProfile": "Gå till min profil",
+      "backToStart": "Tillbaka till startsidan"
+    },
+    "chatbot": {
+      "fabCollapsed": "Frågor?",
+      "fabLine1": "Frågor?",
+      "fabLine2": "Chatta med Chivi",
+      "enviar": "Skicka",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Tillgängliga turneringar",
+      "micDictateAria": "Röstinmatning",
+      "leerVozAlta": "Läs upp svar",
+      "boton": "Frågor?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Datum och tid"
+    },
+    "perfilPublico": {
+      "shareProfile": "Dela profil",
+      "statsTitle": "Statistik",
+      "tournamentsWon": "Vunna turneringar",
+      "matchesWon": "Vunna matcher",
+      "sportsTitle": "Utövade sporter",
+      "recentTournamentsTitle": "Senaste turneringar",
+      "badgeParticipantGeneric": "Deltagare"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Jag vill spela",
+        "globe": {
+          "labels": {
+            "venues": "Anläggningar",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tennis",
+            "stats": "Statistik"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tennis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Öppna matcher"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Öppna matcher"
+          },
+          "results": {
+            "title": "Resultat"
+          }
+        }
+      },
+      "contact": {
+        "play": "Jag vill spela"
+      },
+      "footer": {
+        "language": "Språk"
+      },
+      "communityMatches": {
+        "ctaPlay": "Jag vill spela",
+        "mockTitle": "Öppen match"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Live",
+        "futureAccess": {
+          "label": "Kommer snart"
+        }
+      }
+    }
+  },
+  "pt-BR": {
+    "general": {
+      "language": "Idioma",
+      "delete": "Excluir",
+      "share": "Compartilhar",
+      "email": "E-mail",
+      "city": "Cidade"
+    },
+    "auth": {
+      "login": "Conecte-se",
+      "register": "Cadastre-se",
+      "password": "Senha",
+      "google": "Continuar com o Google",
+      "cerrar_sesion": "sair",
+      "passwordMismatch": "As senhas não coincidem.",
+      "firstName": "Nome",
+      "lastName": "Sobrenome",
+      "male": "Masculino",
+      "female": "Feminino",
+      "handednessRight": "Destro",
+      "handednessLeft": "Canhoto"
+    },
+    "nav": {
+      "logout": "sair",
+      "admin": {
+        "solicitudes": "Solicitações",
+        "config": "Configuração"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Reserve sua quadra",
+      "cancelar": "Cancelar reserva",
+      "pagar_mp": "Pague com Mercado Pago",
+      "sedes": "Locais",
+      "nearestVenue": "Local mais próximo de você",
+      "summaryTitle": "Resumo da reserva",
+      "modifyBooking": "Modificar reserva",
+      "confirmedTitle": "Reserva confirmada!",
+      "phoneCountriesMain": "Principal",
+      "understood": "Entendi",
+      "dayToday": "Hoje",
+      "dayTomorrow": "Amanhã",
+      "courtOccupied": "Ocupada"
+    },
+    "torneos": {
+      "inscribirse": "Cadastre-se",
+      "pendiente_pago": "Pagamento pendente",
+      "tipo": {
+        "eliminacion": "Remoção direta",
+        "knockout": "Remoção direta",
+        "eliminatoria": "Remoção direta"
+      },
+      "listado": {
+        "titleAvailable": "Torneios disponíveis",
+        "clearSearch": "Limpar busca",
+        "participants": "{{count}} participantes",
+        "emptyFinalizados": "Ainda não há torneios encerrados."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tênis"
+      },
+      "vista": {
+        "tabGrupos": "GRUPOS",
+        "statPg": "P.G.",
+        "statPp": "PP",
+        "sinPartidos": "Nenhuma correspondência",
+        "genero": {
+          "masculino": "Masculino",
+          "femenino": "Feminino"
+        },
+        "categoriaNivel": {
+          "1ra": "1º",
+          "2da": "2º",
+          "3ra": "3º"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Detalhe do jogo",
+        "fechaHora": "Data e hora"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Quero participar de um partido que já existe.",
+      "armarBody": "Quero criar um jogo e adicionar jogadores."
+    },
+    "clases": {
+      "detalle": "Detalhe da aula"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Siga-nos"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Publicidade"
+    },
+    "resenas": {
+      "title": "Avaliações",
+      "totalCount_plural": "{{count}} avaliações"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Marcar tudo como lido"
+    },
+    "instructor": {
+      "campoNombre": "Nome",
+      "campoApellido": "Sobrenome",
+      "campoFechaNac": "Data de nascimento",
+      "generoMasculino": "Masculino",
+      "generoFemenino": "Feminino",
+      "generoNoDice": "Prefiro não informar",
+      "guardarCambios": "Salvar alterações"
+    },
+    "perfil": {
+      "viewPublicProfile": "Ver meu perfil público",
+      "editar": "Editar perfil",
+      "nivel": "nível de jogo",
+      "notificaciones": "Notificações",
+      "city": "Cidade",
+      "birthDate": "Data de nascimento",
+      "usualPartner": "Companheiro regular",
+      "passwordMismatch": "As senhas não coincidem.",
+      "placeholderPasswordMin": "Mínimo 6 caracteres",
+      "diestro": "Destro",
+      "zurdo": "Canhoto",
+      "firstName": "Nome",
+      "lastName": "Sobrenome",
+      "partnerHabitual": "Companheiro regular",
+      "genero": {
+        "masculino": "Masculino",
+        "femenino": "Feminino"
+      },
+      "regularPartner": "Companheiro regular"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Todos os locais",
+        "colFoto": "Foto",
+        "colNombre": "Nome",
+        "verFicha": "Ver perfil",
+        "editarFicha": "Editar perfil",
+        "fichaNombre": "Nome",
+        "fichaApellido": "Sobrenome",
+        "fichaFechaNac": "Data de nascimento",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Locais",
+        "solicitudes": "Solicitações",
+        "config": "Configuração"
+      },
+      "pushNotif": {
+        "selectVenue": "Escolher local",
+        "selectSport": "Escolha o esporte",
+        "segments": {
+          "venue": "Local nº {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Marcar tudo como lido"
+      },
+      "metrics": {
+        "periodToday": "Hoje"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Esta ação não pode ser desfeita."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Escolhi pelo menos um esporte.",
+        "name": "Nome",
+        "price": "Preço",
+        "cityLabel": "Cidade",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Excluir",
+        "validationViewProfile": "Ver perfil"
+      },
+      "hub": {
+        "changePhoto": "Alterar foto",
+        "previewLabel": "Prévia"
+      },
+      "sedes": {
+        "venueNumber": "Local nº {{id}}",
+        "description": "Descrição",
+        "delete": "Excluir",
+        "reviews": "Avaliações",
+        "listaEsperaTorneos": "Lista de espera",
+        "guidedSetup": {
+          "city": "Cidade",
+          "summaryLocation": "Localização"
+        },
+        "paymentPending": "Pagamento pendente",
+        "whatsappCountryCodeAria": "Código do país",
+        "saveChanges": "Salvar alterações"
+      },
+      "reservas": {
+        "cancelBooking": "Cancelar reserva",
+        "selectVenue": "Selecionar local",
+        "noVenue": "Sem sede"
+      },
+      "overview": {
+        "today": "Hoje"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Avançado",
+          "advanced": "Avançado"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Remover foto",
+        "saveBtn": "Salvar alterações"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informativo"
+        },
+        "reportsAllSedes": "Todos os locais",
+        "reportsFilterBeneficio": "Benefício",
+        "reportsColDesc": "Descrição",
+        "reportsColBeneficio": "Benefício",
+        "reportsColCodigo": "Código",
+        "reportsColSaldoDisp": "Saldo disponível",
+        "descriptionField": "Descrição",
+        "globalConfigDescriptionField": "Descrição",
+        "globalConfigSave": "Salvar alterações",
+        "campaignsAllVenues": "Todos os locais",
+        "campaignsName": "Nome",
+        "campaignsDescription": "Descrição",
+        "campaignsColName": "Nome",
+        "campaignsTotalUses": "Total",
+        "description": "Descrição",
+        "name": "Nome",
+        "conditions": "Condições",
+        "redeemCode": "Código",
+        "redeemPrize": "Benefício",
+        "alertsAllVenues": "Todos os locais",
+        "movementsAllVenues": "Todos os locais",
+        "movementsDescriptionCol": "Descrição"
+      },
+      "metricas": {
+        "markAllRead": "Marcar tudo como lido",
+        "pointsCol": "Pontos",
+        "expiresCol": "Expira"
+      },
+      "jugadores": {
+        "viewProfile": "Ver perfil",
+        "fichaTitle": "Cartão do jogador"
+      },
+      "membresias": {
+        "colNombre": "Nome",
+        "colDescripcion": "Descrição",
+        "colPrecio": "Preço",
+        "colVigencia": "Validade",
+        "colPlan": "Plano",
+        "filterPlan": "Plano",
+        "fieldNombre": "Nome",
+        "fieldDescripcion": "Descrição",
+        "fieldPrecio": "Preço",
+        "fieldPlan": "Plano",
+        "errSedeRequired": "Selecione um local."
+      }
+    },
+    "pago": {
+      "titulo": "Pagamento",
+      "reintentar": "tente novamente"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Partida"
+      }
+    },
+    "hub": {
+      "goToProfile": "Ir para meu perfil",
+      "backToStart": "Voltar ao topo"
+    },
+    "chatbot": {
+      "fabCollapsed": "Dúvidas?",
+      "fabLine1": "Dúvidas?",
+      "fabLine2": "Fale com a Chivi",
+      "enviar": "Enviar",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Torneios disponíveis",
+      "micDictateAria": "Ditar por voz",
+      "leerVozAlta": "Leia as respostas em voz alta",
+      "boton": "Dúvidas?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Data e hora"
+    },
+    "perfilPublico": {
+      "shareProfile": "Compartilhar perfil",
+      "statsTitle": "Estatísticas",
+      "tournamentsWon": "Torneios vencidos",
+      "matchesWon": "Partidas vencidas",
+      "sportsTitle": "Esportes praticados",
+      "recentTournamentsTitle": "Torneios recentes",
+      "badgeParticipantGeneric": "Participante"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Quero jogar",
+        "globe": {
+          "labels": {
+            "venues": "Locais",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tênis",
+            "stats": "Estatísticas"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tênis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Partidas abertas"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Partidas abertas"
+          },
+          "results": {
+            "title": "Resultados"
+          }
+        }
+      },
+      "contact": {
+        "play": "Quero jogar"
+      },
+      "footer": {
+        "language": "Idioma"
+      },
+      "communityMatches": {
+        "ctaPlay": "Quero jogar",
+        "mockTitle": "Jogo aberto"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Ao vivo",
+        "futureAccess": {
+          "label": "Em breve"
+        }
+      }
+    }
+  },
+  "pt-PT": {
+    "general": {
+      "language": "Idioma",
+      "delete": "Eliminar",
+      "share": "Partilhar",
+      "email": "E-mail",
+      "city": "Cidade"
+    },
+    "auth": {
+      "login": "Conecte-se",
+      "register": "Regista-te",
+      "password": "Palavra-passe",
+      "google": "Continuar com o Google",
+      "cerrar_sesion": "Terminar sessão",
+      "passwordMismatch": "As palavras-passe não coincidem.",
+      "firstName": "Nome",
+      "lastName": "Apelido",
+      "male": "Masculino",
+      "female": "Feminino",
+      "handednessRight": "Destro",
+      "handednessLeft": "Canhoto"
+    },
+    "nav": {
+      "logout": "Terminar sessão",
+      "admin": {
+        "solicitudes": "Solicitações",
+        "config": "Configuração"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Reserva o teu campo",
+      "cancelar": "Cancelar reserva",
+      "pagar_mp": "Pague com Mercado Pago",
+      "sedes": "Locais",
+      "nearestVenue": "Recinto mais próximo de ti",
+      "summaryTitle": "Resumo da reserva",
+      "modifyBooking": "Modificar reserva",
+      "confirmedTitle": "Reserva confirmada!",
+      "phoneCountriesMain": "Principal",
+      "understood": "Entendido",
+      "dayToday": "Hoje",
+      "dayTomorrow": "Amanhã",
+      "courtOccupied": "Ocupada"
+    },
+    "torneos": {
+      "inscribirse": "Inscrever-me",
+      "pendiente_pago": "Pagamento pendente",
+      "tipo": {
+        "eliminacion": "Remoção direta",
+        "knockout": "Remoção direta",
+        "eliminatoria": "Remoção direta"
+      },
+      "listado": {
+        "titleAvailable": "Torneios disponíveis",
+        "clearSearch": "Limpar pesquisa",
+        "participants": "{{count}} participantes",
+        "emptyFinalizados": "Ainda não há torneios finalizados."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tênis"
+      },
+      "vista": {
+        "tabGrupos": "GRUPOS",
+        "statPg": "P.G.",
+        "statPp": "PP",
+        "sinPartidos": "Nenhuma correspondência",
+        "genero": {
+          "masculino": "Masculino",
+          "femenino": "Feminino"
+        },
+        "categoriaNivel": {
+          "1ra": "1º",
+          "2da": "2º",
+          "3ra": "3º"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Detalhe do jogo",
+        "fechaHora": "Data e hora"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Quero participar de um partido que já existe.",
+      "armarBody": "Quero criar um jogo e adicionar jogadores."
+    },
+    "clases": {
+      "detalle": "Detalhe da aula"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Siga-nos"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Publicidade"
+    },
+    "resenas": {
+      "title": "Avaliações",
+      "totalCount_plural": "{{count}} avaliações"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Marcar tudo como lido"
+    },
+    "instructor": {
+      "campoNombre": "Nome",
+      "campoApellido": "Apelido",
+      "campoFechaNac": "Data de nascimento",
+      "generoMasculino": "Masculino",
+      "generoFemenino": "Feminino",
+      "generoNoDice": "Prefiro não informar",
+      "guardarCambios": "Guardar alterações"
+    },
+    "perfil": {
+      "viewPublicProfile": "Ver o meu perfil público",
+      "editar": "Editar perfil",
+      "nivel": "nível de jogo",
+      "notificaciones": "Notificações",
+      "city": "Cidade",
+      "birthDate": "Data de nascimento",
+      "usualPartner": "Companheiro regular",
+      "passwordMismatch": "As palavras-passe não coincidem.",
+      "placeholderPasswordMin": "Mínimo 6 caracteres",
+      "diestro": "Destro",
+      "zurdo": "Canhoto",
+      "firstName": "Nome",
+      "lastName": "Apelido",
+      "partnerHabitual": "Companheiro regular",
+      "genero": {
+        "masculino": "Masculino",
+        "femenino": "Feminino"
+      },
+      "regularPartner": "Companheiro regular"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Todos os recintos",
+        "colFoto": "Foto",
+        "colNombre": "Nome",
+        "verFicha": "Ver perfil",
+        "editarFicha": "Editar perfil",
+        "fichaNombre": "Nome",
+        "fichaApellido": "Apelido",
+        "fichaFechaNac": "Data de nascimento",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Locais",
+        "solicitudes": "Solicitações",
+        "config": "Configuração"
+      },
+      "pushNotif": {
+        "selectVenue": "Escolher local",
+        "selectSport": "Escolhe o desporto",
+        "segments": {
+          "venue": "Clube nº {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Marcar tudo como lido"
+      },
+      "metrics": {
+        "periodToday": "Hoje"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Esta ação não pode ser desfeita."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Escolhe pelo menos um desporto.",
+        "name": "Nome",
+        "price": "Preço",
+        "cityLabel": "Cidade",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Eliminar",
+        "validationViewProfile": "Ver perfil"
+      },
+      "hub": {
+        "changePhoto": "Alterar foto",
+        "previewLabel": "Visualização"
+      },
+      "sedes": {
+        "venueNumber": "Clube nº {{id}}",
+        "description": "Descrição",
+        "delete": "Eliminar",
+        "reviews": "Avaliações",
+        "listaEsperaTorneos": "Lista de espera",
+        "guidedSetup": {
+          "city": "Cidade",
+          "summaryLocation": "Localização"
+        },
+        "paymentPending": "Pagamento pendente",
+        "whatsappCountryCodeAria": "Código do país",
+        "saveChanges": "Guardar alterações"
+      },
+      "reservas": {
+        "cancelBooking": "Cancelar reserva",
+        "selectVenue": "Seleciona o recinto",
+        "noVenue": "Sem sede"
+      },
+      "overview": {
+        "today": "Hoje"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Avançado",
+          "advanced": "Avançado"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Remover foto",
+        "saveBtn": "Guardar alterações"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informativo"
+        },
+        "reportsAllSedes": "Todos os recintos",
+        "reportsFilterBeneficio": "Benefício",
+        "reportsColDesc": "Descrição",
+        "reportsColBeneficio": "Benefício",
+        "reportsColCodigo": "Código",
+        "reportsColSaldoDisp": "Saldo disponível",
+        "descriptionField": "Descrição",
+        "globalConfigDescriptionField": "Descrição",
+        "globalConfigSave": "Guardar alterações",
+        "campaignsAllVenues": "Todos os recintos",
+        "campaignsName": "Nome",
+        "campaignsDescription": "Descrição",
+        "campaignsColName": "Nome",
+        "campaignsTotalUses": "Total",
+        "description": "Descrição",
+        "name": "Nome",
+        "conditions": "Condições",
+        "redeemCode": "Código",
+        "redeemPrize": "Benefício",
+        "alertsAllVenues": "Todos os recintos",
+        "movementsAllVenues": "Todos os recintos",
+        "movementsDescriptionCol": "Descrição"
+      },
+      "metricas": {
+        "markAllRead": "Marcar tudo como lido",
+        "pointsCol": "Pontos",
+        "expiresCol": "Ganhar"
+      },
+      "jugadores": {
+        "viewProfile": "Ver perfil",
+        "fichaTitle": "Cartão do jogador"
+      },
+      "membresias": {
+        "colNombre": "Nome",
+        "colDescripcion": "Descrição",
+        "colPrecio": "Preço",
+        "colVigencia": "Validade",
+        "colPlan": "Plano",
+        "filterPlan": "Plano",
+        "fieldNombre": "Nome",
+        "fieldDescripcion": "Descrição",
+        "fieldPrecio": "Preço",
+        "fieldPlan": "Plano",
+        "errSedeRequired": "Seleciona um recinto."
+      }
+    },
+    "pago": {
+      "titulo": "Pagar",
+      "reintentar": "tente novamente"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Jogo"
+      }
+    },
+    "hub": {
+      "goToProfile": "Vá para o meu perfil",
+      "backToStart": "Voltar ao topo"
+    },
+    "chatbot": {
+      "fabCollapsed": "Dúvidas?",
+      "fabLine1": "Dúvidas?",
+      "fabLine2": "Fale com a Chivi",
+      "enviar": "Enviar",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Torneios disponíveis",
+      "micDictateAria": "Ditar por voz",
+      "leerVozAlta": "Leia as respostas em voz alta",
+      "boton": "Dúvidas?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Data e hora"
+    },
+    "perfilPublico": {
+      "shareProfile": "Partilhar perfil",
+      "statsTitle": "Estatísticas",
+      "tournamentsWon": "Torneios vencidos",
+      "matchesWon": "JOGOS vencidas",
+      "sportsTitle": "DESPORTOS praticados",
+      "recentTournamentsTitle": "Torneios recentes",
+      "badgeParticipantGeneric": "Participante"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Quero jogar",
+        "globe": {
+          "labels": {
+            "venues": "Locais",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tênis",
+            "stats": "Estatísticas"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tênis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Jogos abertos"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Jogos abertos"
+          },
+          "results": {
+            "title": "Resultados"
+          }
+        }
+      },
+      "contact": {
+        "play": "Quero jogar"
+      },
+      "footer": {
+        "language": "Idioma"
+      },
+      "communityMatches": {
+        "ctaPlay": "Quero jogar",
+        "mockTitle": "Jogo aberto"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Ao vivo",
+        "futureAccess": {
+          "label": "Em breve em breve"
+        }
+      }
+    }
+  },
+  "el": {
+    "general": {
+      "language": "Γλώσσα",
+      "delete": "Διαγραφή",
+      "share": "Κοινοποίηση",
+      "email": "Email",
+      "city": "Πόλη"
+    },
+    "auth": {
+      "login": "Σύνδεση",
+      "register": "Εγγραφή",
+      "password": "Κωδικός πρόσβασης",
+      "google": "Συνέχεια με Google",
+      "cerrar_sesion": "Αποσύνδεση",
+      "passwordMismatch": "Οι κωδικοί πρόσβασης δεν ταιριάζουν.",
+      "firstName": "Όνομα",
+      "lastName": "Επώνυμο",
+      "male": "Άνδρας",
+      "female": "Γυναίκα",
+      "handednessRight": "Δεξιόχειρας",
+      "handednessLeft": "Αριστερόχειρας"
+    },
+    "nav": {
+      "logout": "Αποσύνδεση",
+      "admin": {
+        "solicitudes": "Αιτήματα",
+        "config": "Ρυθμίσεις"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Κλείσε το γήπεδό σου",
+      "cancelar": "Ακύρωση κράτησης",
+      "pagar_mp": "Πληρωμή με Mercado Pago",
+      "sedes": "Εγκαταστάσεις",
+      "nearestVenue": "Κοντινότερη εγκατάσταση σε εσάς",
+      "summaryTitle": "Σύνοψη κράτησης",
+      "modifyBooking": "Αλλαγή κράτησης",
+      "confirmedTitle": "Η κράτηση επιβεβαιώθηκε!",
+      "phoneCountriesMain": "Βασικό",
+      "understood": "Κατάλαβα",
+      "dayToday": "Σήμερα",
+      "dayTomorrow": "Αύριο",
+      "courtOccupied": "Κατειλημμένο"
+    },
+    "torneos": {
+      "inscribirse": "Εγγραφή",
+      "pendiente_pago": "Η πληρωμή εκκρεμεί",
+      "tipo": {
+        "eliminacion": "Απλός αποκλεισμός",
+        "knockout": "Απλός αποκλεισμός",
+        "eliminatoria": "Απλός αποκλεισμός"
+      },
+      "listado": {
+        "titleAvailable": "Διαθέσιμες διοργανώσεις",
+        "clearSearch": "Εκκαθάριση αναζήτησης",
+        "participants": "{{count}} συμμετέχοντες",
+        "emptyFinalizados": "Δεν υπάρχουν ακόμη ολοκληρωμένες διοργανώσεις."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Τένις"
+      },
+      "vista": {
+        "tabGrupos": "ΟΜΙΛΟΙ",
+        "statPg": "Ν",
+        "statPp": "Η",
+        "sinPartidos": "Δεν υπάρχουν αγώνες",
+        "genero": {
+          "masculino": "Άνδρας",
+          "femenino": "Γυναίκα"
+        },
+        "categoriaNivel": {
+          "1ra": "1η",
+          "2da": "2η",
+          "3ra": "3η"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Λεπτομέρειες αγώνα",
+        "fechaHora": "Ημερομηνία και ώρα"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Θέλω να συμμετάσχω σε υπάρχοντα αγώνα.",
+      "armarBody": "Θέλω να δημιουργήσω αγώνα και να βρω παίκτες."
+    },
+    "clases": {
+      "detalle": "Λεπτομέρειες μαθήματος"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Ακολουθήστε μας στο"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Διαφήμιση"
+    },
+    "resenas": {
+      "title": "Αξιολογήσεις",
+      "totalCount_plural": "{{count}} αξιολογήσεις"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "Email"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Επισήμανση όλων ως αναγνωσμένων"
+    },
+    "instructor": {
+      "campoNombre": "Όνομα",
+      "campoApellido": "Επώνυμο",
+      "campoFechaNac": "Ημερομηνία γέννησης",
+      "generoMasculino": "Άνδρας",
+      "generoFemenino": "Γυναίκα",
+      "generoNoDice": "Προτιμώ να μην απαντήσω",
+      "guardarCambios": "Αποθήκευση αλλαγών"
+    },
+    "perfil": {
+      "viewPublicProfile": "Προβολή του δημόσιου προφίλ μου",
+      "editar": "Επεξεργασία προφίλ",
+      "nivel": "Επίπεδο δεξιότητας",
+      "notificaciones": "Ειδοποιήσεις",
+      "city": "Πόλη",
+      "birthDate": "Ημερομηνία γέννησης",
+      "usualPartner": "Σταθερός συμπαίκτης",
+      "passwordMismatch": "Οι κωδικοί πρόσβασης δεν ταιριάζουν.",
+      "placeholderPasswordMin": "Τουλάχιστον 6 χαρακτήρες",
+      "diestro": "Δεξιόχειρας",
+      "zurdo": "Αριστερόχειρας",
+      "firstName": "Όνομα",
+      "lastName": "Επώνυμο",
+      "partnerHabitual": "Σταθερός συμπαίκτης",
+      "genero": {
+        "masculino": "Άνδρας",
+        "femenino": "Γυναίκα"
+      },
+      "regularPartner": "Σταθερός συμπαίκτης"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Όλες οι εγκαταστάσεις",
+        "colFoto": "Φωτογραφία",
+        "colNombre": "Όνομα",
+        "verFicha": "Προβολή προφίλ",
+        "editarFicha": "Επεξεργασία προφίλ",
+        "fichaNombre": "Όνομα",
+        "fichaApellido": "Επώνυμο",
+        "fichaFechaNac": "Ημερομηνία γέννησης",
+        "fichaEmailLabel": "Email"
+      },
+      "tabs": {
+        "sedes": "Εγκαταστάσεις",
+        "solicitudes": "Αιτήματα",
+        "config": "Ρυθμίσεις"
+      },
+      "pushNotif": {
+        "selectVenue": "Επιλέξτε εγκατάσταση",
+        "selectSport": "Επιλογή αθλήματος",
+        "segments": {
+          "venue": "Εγκατάσταση #{{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Επισήμανση όλων ως αναγνωσμένων"
+      },
+      "metrics": {
+        "periodToday": "Σήμερα"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Αυτή η ενέργεια δεν αναιρείται."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Επίλεξε τουλάχιστον ένα άθλημα.",
+        "name": "Όνομα",
+        "price": "Τιμή",
+        "cityLabel": "Πόλη",
+        "emailLabel": "Email",
+        "deleteBtn": "Διαγραφή",
+        "validationViewProfile": "Προβολή προφίλ"
+      },
+      "hub": {
+        "changePhoto": "Αλλαγή φωτογραφίας",
+        "previewLabel": "Προεπισκόπηση"
+      },
+      "sedes": {
+        "venueNumber": "Εγκατάσταση #{{id}}",
+        "description": "Περιγραφή",
+        "delete": "Διαγραφή",
+        "reviews": "Αξιολογήσεις",
+        "listaEsperaTorneos": "Λίστα αναμονής",
+        "guidedSetup": {
+          "city": "Πόλη",
+          "summaryLocation": "Τοποθεσία"
+        },
+        "paymentPending": "Η πληρωμή εκκρεμεί",
+        "whatsappCountryCodeAria": "Κωδικός χώρας",
+        "saveChanges": "Αποθήκευση αλλαγών"
+      },
+      "reservas": {
+        "cancelBooking": "Ακύρωση κράτησης",
+        "selectVenue": "Επιλογή εγκατάστασης",
+        "noVenue": "Δεν υπάρχει εγκατάσταση"
+      },
+      "overview": {
+        "today": "Σήμερα"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Προχωρημένο",
+          "advanced": "Προχωρημένο"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Αφαίρεση φωτογραφίας",
+        "saveBtn": "Αποθήκευση αλλαγών"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Ενημερωτικό"
+        },
+        "reportsAllSedes": "Όλες οι εγκαταστάσεις",
+        "reportsFilterBeneficio": "Προνόμιο",
+        "reportsColDesc": "Περιγραφή",
+        "reportsColBeneficio": "Προνόμιο",
+        "reportsColCodigo": "Κωδικός",
+        "reportsColSaldoDisp": "Διαθέσιμο υπόλοιπο",
+        "descriptionField": "Περιγραφή",
+        "globalConfigDescriptionField": "Περιγραφή",
+        "globalConfigSave": "Αποθήκευση αλλαγών",
+        "campaignsAllVenues": "Όλες οι εγκαταστάσεις",
+        "campaignsName": "Όνομα",
+        "campaignsDescription": "Περιγραφή",
+        "campaignsColName": "Όνομα",
+        "campaignsTotalUses": "Σύνολο",
+        "description": "Περιγραφή",
+        "name": "Όνομα",
+        "conditions": "Όροι",
+        "redeemCode": "Κωδικός",
+        "redeemPrize": "Προνόμιο",
+        "alertsAllVenues": "Όλες οι εγκαταστάσεις",
+        "movementsAllVenues": "Όλες οι εγκαταστάσεις",
+        "movementsDescriptionCol": "Περιγραφή"
+      },
+      "metricas": {
+        "markAllRead": "Επισήμανση όλων ως αναγνωσμένων",
+        "pointsCol": "Πόντοι",
+        "expiresCol": "Λήγει"
+      },
+      "jugadores": {
+        "viewProfile": "Προβολή προφίλ",
+        "fichaTitle": "Κάρτα παίκτη"
+      },
+      "membresias": {
+        "colNombre": "Όνομα",
+        "colDescripcion": "Περιγραφή",
+        "colPrecio": "Τιμή",
+        "colVigencia": "Διάρκεια ισχύος",
+        "colPlan": "Πρόγραμμα",
+        "filterPlan": "Πρόγραμμα",
+        "fieldNombre": "Όνομα",
+        "fieldDescripcion": "Περιγραφή",
+        "fieldPrecio": "Τιμή",
+        "fieldPlan": "Πρόγραμμα",
+        "errSedeRequired": "Επιλέξτε εγκατάσταση."
+      }
+    },
+    "pago": {
+      "titulo": "Πληρωμή",
+      "reintentar": "Δοκιμή ξανά"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Αγώνας"
+      }
+    },
+    "hub": {
+      "goToProfile": "Μετάβαση στο προφίλ μου",
+      "backToStart": "Επιστροφή στην αρχική"
+    },
+    "chatbot": {
+      "fabCollapsed": "Ερωτήσεις;",
+      "fabLine1": "Ερωτήσεις;",
+      "fabLine2": "Συνομιλία με τη Chivi",
+      "enviar": "Αποστολή",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Διαθέσιμες διοργανώσεις",
+      "micDictateAria": "Φωνητική εισαγωγή",
+      "leerVozAlta": "Εκφώνηση απαντήσεων",
+      "boton": "Ερωτήσεις;"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Ημερομηνία και ώρα"
+    },
+    "perfilPublico": {
+      "shareProfile": "Κοινοποίηση προφίλ",
+      "statsTitle": "Στατιστικά",
+      "tournamentsWon": "Διοργανώσεις που κερδήθηκαν",
+      "matchesWon": "Αγώνες που κερδήθηκαν",
+      "sportsTitle": "Αθλήματα που παίζει",
+      "recentTournamentsTitle": "Πρόσφατες διοργανώσεις",
+      "badgeParticipantGeneric": "Συμμετέχων"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Θέλω να παίξω",
+        "globe": {
+          "labels": {
+            "venues": "Εγκαταστάσεις",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Τένις",
+            "stats": "Στατιστικά"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Τένις"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Ανοιχτοί αγώνες"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Ανοιχτοί αγώνες"
+          },
+          "results": {
+            "title": "Αποτελέσματα"
+          }
+        }
+      },
+      "contact": {
+        "play": "Θέλω να παίξω"
+      },
+      "footer": {
+        "language": "Γλώσσα"
+      },
+      "communityMatches": {
+        "ctaPlay": "Θέλω να παίξω",
+        "mockTitle": "Ανοιχτός αγώνας"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Ζωντανά",
+        "futureAccess": {
+          "label": "Σύντομα κοντά σας"
+        }
+      }
+    }
+  },
+  "hu": {
+    "general": {
+      "language": "Nyelv",
+      "delete": "Törlés",
+      "share": "Megosztás",
+      "email": "E-mail",
+      "city": "Város"
+    },
+    "auth": {
+      "login": "Bejelentkezés",
+      "register": "Regisztráció",
+      "password": "Jelszó",
+      "google": "Folytatás a Google-lel",
+      "cerrar_sesion": "Kijelentkezés",
+      "passwordMismatch": "A jelszavak nem egyeznek.",
+      "firstName": "Keresztnév",
+      "lastName": "Vezetéknév",
+      "male": "Férfi",
+      "female": "Nő",
+      "handednessRight": "Jobbkezes",
+      "handednessLeft": "Balkezes"
+    },
+    "nav": {
+      "logout": "Kijelentkezés",
+      "admin": {
+        "solicitudes": "Kérelmek",
+        "config": "Beállítások"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Foglalj pályát",
+      "cancelar": "Foglalás lemondása",
+      "pagar_mp": "Fizetés Mercado Pagóval",
+      "sedes": "Helyszínek",
+      "nearestVenue": "Hozzád legközelebbi helyszín",
+      "summaryTitle": "Foglalás összefoglalója",
+      "modifyBooking": "Foglalás módosítása",
+      "confirmedTitle": "Foglalás megerősítve!",
+      "phoneCountriesMain": "Fő sport",
+      "understood": "Értem",
+      "dayToday": "Ma",
+      "dayTomorrow": "Holnap",
+      "courtOccupied": "Foglalt"
+    },
+    "torneos": {
+      "inscribirse": "Nevezés",
+      "pendiente_pago": "Fizetésre vár",
+      "tipo": {
+        "eliminacion": "Egyenes kiesés",
+        "knockout": "Egyenes kiesés",
+        "eliminatoria": "Egyenes kiesés"
+      },
+      "listado": {
+        "titleAvailable": "Elérhető versenyek",
+        "clearSearch": "Keresés törlése",
+        "participants": "{{count}} résztvevő",
+        "emptyFinalizados": "Még nincs befejezett verseny."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tenisz"
+      },
+      "vista": {
+        "tabGrupos": "CSOPORTKÖR",
+        "statPg": "GY",
+        "statPp": "V",
+        "sinPartidos": "Nincs mérkőzés",
+        "genero": {
+          "masculino": "Férfi",
+          "femenino": "Nő"
+        },
+        "categoriaNivel": {
+          "1ra": "1.",
+          "2da": "2.",
+          "3ra": "3."
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Mérkőzés részletei",
+        "fechaHora": "Dátum és idő"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Csatlakozni szeretnék egy meglévő mérkőzéshez.",
+      "armarBody": "Mérkőzést szeretnék létrehozni és játékosokat keresni."
+    },
+    "clases": {
+      "detalle": "Edzés részletei"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Kövess minket"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Hirdetés"
+    },
+    "resenas": {
+      "title": "Értékelések",
+      "totalCount_plural": "{{count}} értékelés"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Összes megjelölése olvasottként"
+    },
+    "instructor": {
+      "campoNombre": "Keresztnév",
+      "campoApellido": "Vezetéknév",
+      "campoFechaNac": "Születési dátum",
+      "generoMasculino": "Férfi",
+      "generoFemenino": "Nő",
+      "generoNoDice": "Nem szeretném megadni",
+      "guardarCambios": "Módosítások mentése"
+    },
+    "perfil": {
+      "viewPublicProfile": "Nyilvános profilom megtekintése",
+      "editar": "Profil szerkesztése",
+      "nivel": "Játékszint",
+      "notificaciones": "Értesítések",
+      "city": "Város",
+      "birthDate": "Születési dátum",
+      "usualPartner": "Állandó partner",
+      "passwordMismatch": "A jelszavak nem egyeznek.",
+      "placeholderPasswordMin": "Legalább 6 karakter",
+      "diestro": "Jobbkezes",
+      "zurdo": "Balkezes",
+      "firstName": "Keresztnév",
+      "lastName": "Vezetéknév",
+      "partnerHabitual": "Állandó partner",
+      "genero": {
+        "masculino": "Férfi",
+        "femenino": "Nő"
+      },
+      "regularPartner": "Állandó partner"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Összes helyszín",
+        "colFoto": "Fénykép",
+        "colNombre": "Név",
+        "verFicha": "Profil megtekintése",
+        "editarFicha": "Profil szerkesztése",
+        "fichaNombre": "Keresztnév",
+        "fichaApellido": "Vezetéknév",
+        "fichaFechaNac": "Születési dátum",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Helyszínek",
+        "solicitudes": "Kérelmek",
+        "config": "Beállítások"
+      },
+      "pushNotif": {
+        "selectVenue": "Válassz helyszínt",
+        "selectSport": "Sportág kiválasztása",
+        "segments": {
+          "venue": "{{id}}. helyszín"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Összes megjelölése olvasottként"
+      },
+      "metrics": {
+        "periodToday": "Ma"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Ez a művelet nem vonható vissza."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Válassz legalább egy sportot.",
+        "name": "Név",
+        "price": "Ár",
+        "cityLabel": "Város",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Törlés",
+        "validationViewProfile": "Profil megtekintése"
+      },
+      "hub": {
+        "changePhoto": "Fénykép módosítása",
+        "previewLabel": "Előnézet"
+      },
+      "sedes": {
+        "venueNumber": "{{id}}. helyszín",
+        "description": "Leírás",
+        "delete": "Törlés",
+        "reviews": "Értékelések",
+        "listaEsperaTorneos": "Várólista",
+        "guidedSetup": {
+          "city": "Város",
+          "summaryLocation": "Helyszín"
+        },
+        "paymentPending": "Fizetésre vár",
+        "whatsappCountryCodeAria": "Országhívó",
+        "saveChanges": "Módosítások mentése"
+      },
+      "reservas": {
+        "cancelBooking": "Foglalás lemondása",
+        "selectVenue": "Válassz helyszínt",
+        "noVenue": "Nincs helyszín"
+      },
+      "overview": {
+        "today": "Ma"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Haladó",
+          "advanced": "Haladó"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Fénykép eltávolítása",
+        "saveBtn": "Módosítások mentése"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Tájékoztató"
+        },
+        "reportsAllSedes": "Összes helyszín",
+        "reportsFilterBeneficio": "Előny",
+        "reportsColDesc": "Leírás",
+        "reportsColBeneficio": "Előny",
+        "reportsColCodigo": "Kód",
+        "reportsColSaldoDisp": "Elérhető egyenleg",
+        "descriptionField": "Leírás",
+        "globalConfigDescriptionField": "Leírás",
+        "globalConfigSave": "Módosítások mentése",
+        "campaignsAllVenues": "Összes helyszín",
+        "campaignsName": "Név",
+        "campaignsDescription": "Leírás",
+        "campaignsColName": "Név",
+        "campaignsTotalUses": "Összesen",
+        "description": "Leírás",
+        "name": "Név",
+        "conditions": "Feltételek",
+        "redeemCode": "Kód",
+        "redeemPrize": "Előny",
+        "alertsAllVenues": "Összes helyszín",
+        "movementsAllVenues": "Összes helyszín",
+        "movementsDescriptionCol": "Leírás"
+      },
+      "metricas": {
+        "markAllRead": "Összes megjelölése olvasottként",
+        "pointsCol": "Pontok",
+        "expiresCol": "Lejárat"
+      },
+      "jugadores": {
+        "viewProfile": "Profil megtekintése",
+        "fichaTitle": "Játékoskártya"
+      },
+      "membresias": {
+        "colNombre": "Név",
+        "colDescripcion": "Leírás",
+        "colPrecio": "Ár",
+        "colVigencia": "Érvényesség",
+        "colPlan": "Csomag",
+        "filterPlan": "Csomag",
+        "fieldNombre": "Név",
+        "fieldDescripcion": "Leírás",
+        "fieldPrecio": "Ár",
+        "fieldPlan": "Csomag",
+        "errSedeRequired": "Válassz helyszínt."
+      }
+    },
+    "pago": {
+      "titulo": "Fizetés",
+      "reintentar": "Újrapróbálkozás"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Mérkőzés"
+      }
+    },
+    "hub": {
+      "goToProfile": "Ugrás a profilomhoz",
+      "backToStart": "Vissza a kezdőlapra"
+    },
+    "chatbot": {
+      "fabCollapsed": "Kérdésed van?",
+      "fabLine1": "Kérdésed van?",
+      "fabLine2": "Beszélgetés Chivivel",
+      "enviar": "Küldés",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Elérhető versenyek",
+      "micDictateAria": "Hangbevitel",
+      "leerVozAlta": "Válasz felolvasása",
+      "boton": "Kérdésed van?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Dátum és idő"
+    },
+    "perfilPublico": {
+      "shareProfile": "Profil megosztása",
+      "statsTitle": "Statisztikák",
+      "tournamentsWon": "Megnyert versenyek",
+      "matchesWon": "Megnyert mérkőzések",
+      "sportsTitle": "Űzött sportágak",
+      "recentTournamentsTitle": "Legutóbbi versenyek",
+      "badgeParticipantGeneric": "Résztvevő"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Játszani szeretnék",
+        "globe": {
+          "labels": {
+            "venues": "Helyszínek",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tenisz",
+            "stats": "Statisztikák"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tenisz"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Nyitott mérkőzések"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Nyitott mérkőzések"
+          },
+          "results": {
+            "title": "Eredmények"
+          }
+        }
+      },
+      "contact": {
+        "play": "Játszani szeretnék"
+      },
+      "footer": {
+        "language": "Nyelv"
+      },
+      "communityMatches": {
+        "ctaPlay": "Játszani szeretnék",
+        "mockTitle": "Nyitott mérkőzés"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Élő",
+        "futureAccess": {
+          "label": "Hamarosan"
+        }
+      }
+    }
+  },
+  "he": {
+    "general": {
+      "language": "שפה",
+      "delete": "מחיקה",
+      "share": "שיתוף",
+      "email": "אימייל",
+      "city": "עיר"
+    },
+    "auth": {
+      "login": "התחברות",
+      "register": "הרשמה",
+      "password": "סיסמה",
+      "google": "המשך באמצעות Google",
+      "cerrar_sesion": "התנתקות",
+      "passwordMismatch": "הסיסמאות אינן תואמות.",
+      "firstName": "שם פרטי",
+      "lastName": "שם משפחה",
+      "male": "גבר",
+      "female": "אישה",
+      "handednessRight": "יד ימין",
+      "handednessLeft": "יד שמאל"
+    },
+    "nav": {
+      "logout": "התנתקות",
+      "admin": {
+        "solicitudes": "בקשות",
+        "config": "הגדרות"
+      }
+    },
+    "reservas": {
+      "heroTitle": "הזמנת מגרש",
+      "cancelar": "ביטול הזמנה",
+      "pagar_mp": "תשלום באמצעות Mercado Pago",
+      "sedes": "מועדונים",
+      "nearestVenue": "המועדון הקרוב אליך",
+      "summaryTitle": "סיכום ההזמנה",
+      "modifyBooking": "שינוי ההזמנה",
+      "confirmedTitle": "ההזמנה אושרה!",
+      "phoneCountriesMain": "ראשי",
+      "understood": "הבנתי",
+      "dayToday": "היום",
+      "dayTomorrow": "מחר",
+      "courtOccupied": "תפוס"
+    },
+    "torneos": {
+      "inscribirse": "הרשמה",
+      "pendiente_pago": "התשלום ממתין",
+      "tipo": {
+        "eliminacion": "נוקאאוט",
+        "knockout": "נוקאאוט",
+        "eliminatoria": "נוקאאוט"
+      },
+      "listado": {
+        "titleAvailable": "טורנירים זמינים",
+        "clearSearch": "ניקוי החיפוש",
+        "participants": "{{count}} משתתפים",
+        "emptyFinalizados": "עדיין אין טורנירים שהסתיימו."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "טניס"
+      },
+      "vista": {
+        "tabGrupos": "בתים",
+        "statPg": "נ׳",
+        "statPp": "ה׳",
+        "sinPartidos": "אין משחקים",
+        "genero": {
+          "masculino": "גבר",
+          "femenino": "אישה"
+        },
+        "categoriaNivel": {
+          "1ra": "מקום ראשון",
+          "2da": "מקום שני",
+          "3ra": "מקום שלישי"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "פרטי המשחק",
+        "fechaHora": "תאריך ושעה"
+      }
+    },
+    "jugar": {
+      "buscarBody": "אני רוצה להצטרף למשחק קיים.",
+      "armarBody": "אני רוצה ליצור משחק ולמצוא שחקנים."
+    },
+    "clases": {
+      "detalle": "פרטי השיעור"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "עקבו אחרינו"
+      }
+    },
+    "sponsors": {
+      "publicidad": "פרסומת"
+    },
+    "resenas": {
+      "title": "ביקורות",
+      "totalCount_plural": "{{count}} ביקורות"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "אימייל"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "סימון הכול כנקרא"
+    },
+    "instructor": {
+      "campoNombre": "שם פרטי",
+      "campoApellido": "שם משפחה",
+      "campoFechaNac": "תאריך לידה",
+      "generoMasculino": "גבר",
+      "generoFemenino": "אישה",
+      "generoNoDice": "מעדיפ/ה לא לציין",
+      "guardarCambios": "שמירת שינויים"
+    },
+    "perfil": {
+      "viewPublicProfile": "הצגת הפרופיל הציבורי שלי",
+      "editar": "עריכת פרופיל",
+      "nivel": "רמת משחק",
+      "notificaciones": "התראות",
+      "city": "עיר",
+      "birthDate": "תאריך לידה",
+      "usualPartner": "שותף קבוע",
+      "passwordMismatch": "הסיסמאות אינן תואמות.",
+      "placeholderPasswordMin": "לפחות 6 תווים",
+      "diestro": "יד ימין",
+      "zurdo": "יד שמאל",
+      "firstName": "שם פרטי",
+      "lastName": "שם משפחה",
+      "partnerHabitual": "שותף קבוע",
+      "genero": {
+        "masculino": "גבר",
+        "femenino": "אישה"
+      },
+      "regularPartner": "שותף קבוע"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "כל המועדונים",
+        "colFoto": "תמונה",
+        "colNombre": "שם",
+        "verFicha": "הצגת פרופיל",
+        "editarFicha": "עריכת פרופיל",
+        "fichaNombre": "שם פרטי",
+        "fichaApellido": "שם משפחה",
+        "fichaFechaNac": "תאריך לידה",
+        "fichaEmailLabel": "אימייל"
+      },
+      "tabs": {
+        "sedes": "מועדונים",
+        "solicitudes": "בקשות",
+        "config": "הגדרות"
+      },
+      "pushNotif": {
+        "selectVenue": "בחירת מועדון",
+        "selectSport": "בחירת ענף",
+        "segments": {
+          "venue": "מועדון מס׳ {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "סימון הכול כנקרא"
+      },
+      "metrics": {
+        "periodToday": "היום"
+      },
+      "confirmaciones": {
+        "cannotUndo": "לא ניתן לבטל פעולה זו."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "יש לבחור ענף ספורט אחד לפחות.",
+        "name": "שם",
+        "price": "מחיר",
+        "cityLabel": "עיר",
+        "emailLabel": "אימייל",
+        "deleteBtn": "מחיקה",
+        "validationViewProfile": "הצגת פרופיל"
+      },
+      "hub": {
+        "changePhoto": "החלפת תמונה",
+        "previewLabel": "תצוגה מקדימה"
+      },
+      "sedes": {
+        "venueNumber": "מועדון מס׳ {{id}}",
+        "description": "תיאור",
+        "delete": "מחיקה",
+        "reviews": "ביקורות",
+        "listaEsperaTorneos": "רשימת המתנה",
+        "guidedSetup": {
+          "city": "עיר",
+          "summaryLocation": "מיקום"
+        },
+        "paymentPending": "התשלום ממתין",
+        "whatsappCountryCodeAria": "קידומת מדינה",
+        "saveChanges": "שמירת שינויים"
+      },
+      "reservas": {
+        "cancelBooking": "ביטול הזמנה",
+        "selectVenue": "בחירת מועדון",
+        "noVenue": "אין מועדון"
+      },
+      "overview": {
+        "today": "היום"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "מתקדם",
+          "advanced": "מתקדם"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "הסרת תמונה",
+        "saveBtn": "שמירת שינויים"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "למידע"
+        },
+        "reportsAllSedes": "כל המועדונים",
+        "reportsFilterBeneficio": "הטבה",
+        "reportsColDesc": "תיאור",
+        "reportsColBeneficio": "הטבה",
+        "reportsColCodigo": "קוד",
+        "reportsColSaldoDisp": "יתרה זמינה",
+        "descriptionField": "תיאור",
+        "globalConfigDescriptionField": "תיאור",
+        "globalConfigSave": "שמירת שינויים",
+        "campaignsAllVenues": "כל המועדונים",
+        "campaignsName": "שם",
+        "campaignsDescription": "תיאור",
+        "campaignsColName": "שם",
+        "campaignsTotalUses": "סך הכול",
+        "description": "תיאור",
+        "name": "שם",
+        "conditions": "תנאים",
+        "redeemCode": "קוד",
+        "redeemPrize": "הטבה",
+        "alertsAllVenues": "כל המועדונים",
+        "movementsAllVenues": "כל המועדונים",
+        "movementsDescriptionCol": "תיאור"
+      },
+      "metricas": {
+        "markAllRead": "סימון הכול כנקרא",
+        "pointsCol": "נקודות",
+        "expiresCol": "תוקף"
+      },
+      "jugadores": {
+        "viewProfile": "הצגת פרופיל",
+        "fichaTitle": "כרטיס שחקן"
+      },
+      "membresias": {
+        "colNombre": "שם",
+        "colDescripcion": "תיאור",
+        "colPrecio": "מחיר",
+        "colVigencia": "תוקף",
+        "colPlan": "תוכנית",
+        "filterPlan": "תוכנית",
+        "fieldNombre": "שם",
+        "fieldDescripcion": "תיאור",
+        "fieldPrecio": "מחיר",
+        "fieldPlan": "תוכנית",
+        "errSedeRequired": "יש לבחור מועדון."
+      }
+    },
+    "pago": {
+      "titulo": "תשלום",
+      "reintentar": "לנסות שוב"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "משחק"
+      }
+    },
+    "hub": {
+      "goToProfile": "מעבר לפרופיל שלי",
+      "backToStart": "חזרה לדף הבית"
+    },
+    "chatbot": {
+      "fabCollapsed": "יש שאלות?",
+      "fabLine1": "יש שאלות?",
+      "fabLine2": "שיחה עם Chivi",
+      "enviar": "שליחה",
+      "titulo": "Chivi",
+      "torneosSugerencia": "טורנירים זמינים",
+      "micDictateAria": "קלט קולי",
+      "leerVozAlta": "הקראת תשובות",
+      "boton": "יש שאלות?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "תאריך ושעה"
+    },
+    "perfilPublico": {
+      "shareProfile": "שיתוף פרופיל",
+      "statsTitle": "נתונים",
+      "tournamentsWon": "טורנירים שנוצחו",
+      "matchesWon": "משחקים שנוצחו",
+      "sportsTitle": "ענפי ספורט",
+      "recentTournamentsTitle": "טורנירים אחרונים",
+      "badgeParticipantGeneric": "משתתף"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "אני רוצה לשחק",
+        "globe": {
+          "labels": {
+            "venues": "מועדונים",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "טניס",
+            "stats": "נתונים"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "טניס"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "משחקים פתוחים"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "משחקים פתוחים"
+          },
+          "results": {
+            "title": "תוצאות"
+          }
+        }
+      },
+      "contact": {
+        "play": "אני רוצה לשחק"
+      },
+      "footer": {
+        "language": "שפה"
+      },
+      "communityMatches": {
+        "ctaPlay": "אני רוצה לשחק",
+        "mockTitle": "משחק פתוח"
+      },
+      "smartScoreboard": {
+        "demoBadge": "שידור חי",
+        "futureAccess": {
+          "label": "בקרוב"
+        }
+      }
+    }
+  },
+  "pl": {
+    "general": {
+      "language": "Język",
+      "delete": "Usuń",
+      "share": "Udostępnij",
+      "email": "E-mail",
+      "city": "Miasto"
+    },
+    "auth": {
+      "login": "Zaloguj się",
+      "register": "Zarejestruj się",
+      "password": "Hasło",
+      "google": "Kontynuuj przez Google",
+      "cerrar_sesion": "Wyloguj się",
+      "passwordMismatch": "Hasła nie są takie same.",
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "male": "Mężczyzna",
+      "female": "Kobieta",
+      "handednessRight": "Praworęczny",
+      "handednessLeft": "Leworęczny"
+    },
+    "nav": {
+      "logout": "Wyloguj się",
+      "admin": {
+        "solicitudes": "Prośby",
+        "config": "Ustawienia"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Zarezerwuj kort",
+      "cancelar": "Anuluj rezerwację",
+      "pagar_mp": "Zapłać przez Mercado Pago",
+      "sedes": "Obiekty",
+      "nearestVenue": "Najbliższy obiekt",
+      "summaryTitle": "Podsumowanie rezerwacji",
+      "modifyBooking": "Zmień rezerwację",
+      "confirmedTitle": "Rezerwacja potwierdzona!",
+      "phoneCountriesMain": "Główny",
+      "understood": "Rozumiem",
+      "dayToday": "Dzisiaj",
+      "dayTomorrow": "Jutro",
+      "courtOccupied": "Zajęty"
+    },
+    "torneos": {
+      "inscribirse": "Zapisz się",
+      "pendiente_pago": "Płatność oczekuje",
+      "tipo": {
+        "eliminacion": "System pucharowy",
+        "knockout": "System pucharowy",
+        "eliminatoria": "System pucharowy"
+      },
+      "listado": {
+        "titleAvailable": "Dostępne turnieje",
+        "clearSearch": "Wyczyść wyszukiwanie",
+        "participants": "{{count}} uczestników",
+        "emptyFinalizados": "Nie ma jeszcze zakończonych turniejów."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tenis"
+      },
+      "vista": {
+        "tabGrupos": "GRUPY",
+        "statPg": "Z",
+        "statPp": "P",
+        "sinPartidos": "Brak meczów",
+        "genero": {
+          "masculino": "Mężczyzna",
+          "femenino": "Kobieta"
+        },
+        "categoriaNivel": {
+          "1ra": "1.",
+          "2da": "2.",
+          "3ra": "3."
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Szczegóły meczu",
+        "fechaHora": "Data i godzina"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Chcę dołączyć do istniejącego meczu.",
+      "armarBody": "Chcę utworzyć mecz i znaleźć zawodników."
+    },
+    "clases": {
+      "detalle": "Szczegóły zajęć"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Obserwuj nas"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Reklama"
+    },
+    "resenas": {
+      "title": "Opinie",
+      "totalCount_plural": "{{count}} opinii"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Oznacz wszystkie jako przeczytane"
+    },
+    "instructor": {
+      "campoNombre": "Imię",
+      "campoApellido": "Nazwisko",
+      "campoFechaNac": "Data urodzenia",
+      "generoMasculino": "Mężczyzna",
+      "generoFemenino": "Kobieta",
+      "generoNoDice": "Wolę nie podawać",
+      "guardarCambios": "Zapisz zmiany"
+    },
+    "perfil": {
+      "viewPublicProfile": "Zobacz mój profil publiczny",
+      "editar": "Edytuj profil",
+      "nivel": "Poziom gry",
+      "notificaciones": "Powiadomienia",
+      "city": "Miasto",
+      "birthDate": "Data urodzenia",
+      "usualPartner": "Stały partner",
+      "passwordMismatch": "Hasła nie są takie same.",
+      "placeholderPasswordMin": "Co najmniej 6 znaków",
+      "diestro": "Praworęczny",
+      "zurdo": "Leworęczny",
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "partnerHabitual": "Stały partner",
+      "genero": {
+        "masculino": "Mężczyzna",
+        "femenino": "Kobieta"
+      },
+      "regularPartner": "Stały partner"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Wszystkie obiekty",
+        "colFoto": "Zdjęcie",
+        "colNombre": "Imię",
+        "verFicha": "Zobacz profil",
+        "editarFicha": "Edytuj profil",
+        "fichaNombre": "Imię",
+        "fichaApellido": "Nazwisko",
+        "fichaFechaNac": "Data urodzenia",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Obiekty",
+        "solicitudes": "Prośby",
+        "config": "Ustawienia"
+      },
+      "pushNotif": {
+        "selectVenue": "Wybierz obiekt",
+        "selectSport": "Wybierz dyscyplinę",
+        "segments": {
+          "venue": "Obiekt nr {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Oznacz wszystkie jako przeczytane"
+      },
+      "metrics": {
+        "periodToday": "Dzisiaj"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Tej czynności nie można cofnąć."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Wybierz co najmniej jeden sport.",
+        "name": "Imię",
+        "price": "Cena",
+        "cityLabel": "Miasto",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Usuń",
+        "validationViewProfile": "Zobacz profil"
+      },
+      "hub": {
+        "changePhoto": "Zmień zdjęcie",
+        "previewLabel": "Podgląd"
+      },
+      "sedes": {
+        "venueNumber": "Obiekt nr {{id}}",
+        "description": "Opis",
+        "delete": "Usuń",
+        "reviews": "Opinie",
+        "listaEsperaTorneos": "Lista oczekujących",
+        "guidedSetup": {
+          "city": "Miasto",
+          "summaryLocation": "Lokalizacja"
+        },
+        "paymentPending": "Płatność oczekuje",
+        "whatsappCountryCodeAria": "Kod kraju",
+        "saveChanges": "Zapisz zmiany"
+      },
+      "reservas": {
+        "cancelBooking": "Anuluj rezerwację",
+        "selectVenue": "Wybierz obiekt",
+        "noVenue": "Brak obiektu"
+      },
+      "overview": {
+        "today": "Dzisiaj"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Zaawansowany",
+          "advanced": "Zaawansowany"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Usuń zdjęcie",
+        "saveBtn": "Zapisz zmiany"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informacyjne"
+        },
+        "reportsAllSedes": "Wszystkie obiekty",
+        "reportsFilterBeneficio": "Korzyść",
+        "reportsColDesc": "Opis",
+        "reportsColBeneficio": "Korzyść",
+        "reportsColCodigo": "Kod",
+        "reportsColSaldoDisp": "Dostępne saldo",
+        "descriptionField": "Opis",
+        "globalConfigDescriptionField": "Opis",
+        "globalConfigSave": "Zapisz zmiany",
+        "campaignsAllVenues": "Wszystkie obiekty",
+        "campaignsName": "Imię",
+        "campaignsDescription": "Opis",
+        "campaignsColName": "Imię",
+        "campaignsTotalUses": "Łącznie",
+        "description": "Opis",
+        "name": "Imię",
+        "conditions": "Warunki",
+        "redeemCode": "Kod",
+        "redeemPrize": "Korzyść",
+        "alertsAllVenues": "Wszystkie obiekty",
+        "movementsAllVenues": "Wszystkie obiekty",
+        "movementsDescriptionCol": "Opis"
+      },
+      "metricas": {
+        "markAllRead": "Oznacz wszystkie jako przeczytane",
+        "pointsCol": "Punkty",
+        "expiresCol": "Wygasa"
+      },
+      "jugadores": {
+        "viewProfile": "Zobacz profil",
+        "fichaTitle": "Karta zawodnika"
+      },
+      "membresias": {
+        "colNombre": "Imię",
+        "colDescripcion": "Opis",
+        "colPrecio": "Cena",
+        "colVigencia": "Ważność",
+        "colPlan": "Plan",
+        "filterPlan": "Plan",
+        "fieldNombre": "Imię",
+        "fieldDescripcion": "Opis",
+        "fieldPrecio": "Cena",
+        "fieldPlan": "Plan",
+        "errSedeRequired": "Wybierz obiekt."
+      }
+    },
+    "pago": {
+      "titulo": "Płatność",
+      "reintentar": "Spróbuj ponownie"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Mecz"
+      }
+    },
+    "hub": {
+      "goToProfile": "Przejdź do mojego profilu",
+      "backToStart": "Wróć na stronę główną"
+    },
+    "chatbot": {
+      "fabCollapsed": "Masz pytania?",
+      "fabLine1": "Masz pytania?",
+      "fabLine2": "Porozmawiaj z Chivi",
+      "enviar": "Wyślij",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Dostępne turnieje",
+      "micDictateAria": "Wprowadzanie głosowe",
+      "leerVozAlta": "Przeczytaj odpowiedź na głos",
+      "boton": "Masz pytania?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Data i godzina"
+    },
+    "perfilPublico": {
+      "shareProfile": "Udostępnij profil",
+      "statsTitle": "Statystyki",
+      "tournamentsWon": "Wygrane turnieje",
+      "matchesWon": "Wygrane mecze",
+      "sportsTitle": "Uprawiane sporty",
+      "recentTournamentsTitle": "Ostatnie turnieje",
+      "badgeParticipantGeneric": "Uczestnik"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Chcę zagrać",
+        "globe": {
+          "labels": {
+            "venues": "Obiekty",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tenis",
+            "stats": "Statystyki"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tenis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Otwarte mecze"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Otwarte mecze"
+          },
+          "results": {
+            "title": "Wyniki"
+          }
+        }
+      },
+      "contact": {
+        "play": "Chcę zagrać"
+      },
+      "footer": {
+        "language": "Język"
+      },
+      "communityMatches": {
+        "ctaPlay": "Chcę zagrać",
+        "mockTitle": "Otwarty mecz"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Na żywo",
+        "futureAccess": {
+          "label": "Już wkrótce"
+        }
+      }
+    }
+  },
+  "uk": {
+    "general": {
+      "language": "Мова",
+      "delete": "Видалити",
+      "share": "Поділитися",
+      "email": "Електронна пошта",
+      "city": "Місто"
+    },
+    "auth": {
+      "login": "Увійти",
+      "register": "Зареєструватися",
+      "password": "Пароль",
+      "google": "Продовжити через Google",
+      "cerrar_sesion": "Вийти",
+      "passwordMismatch": "Паролі не збігаються.",
+      "firstName": "Ім’я",
+      "lastName": "Прізвище",
+      "male": "Чоловіча",
+      "female": "Жіноча",
+      "handednessRight": "Правша",
+      "handednessLeft": "Лівша"
+    },
+    "nav": {
+      "logout": "Вийти",
+      "admin": {
+        "solicitudes": "Запити",
+        "config": "Налаштування"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Забронюйте корт",
+      "cancelar": "Скасувати бронювання",
+      "pagar_mp": "Сплатити через Mercado Pago",
+      "sedes": "Заклади",
+      "nearestVenue": "Найближчий до вас заклад",
+      "summaryTitle": "Підсумок бронювання",
+      "modifyBooking": "Змінити бронювання",
+      "confirmedTitle": "Бронювання підтверджено!",
+      "phoneCountriesMain": "Основний",
+      "understood": "Зрозуміло",
+      "dayToday": "Сьогодні",
+      "dayTomorrow": "Завтра",
+      "courtOccupied": "Зайнято"
+    },
+    "torneos": {
+      "inscribirse": "Зареєструватися",
+      "pendiente_pago": "Очікує оплати",
+      "tipo": {
+        "eliminacion": "Плей-оф",
+        "knockout": "Плей-оф",
+        "eliminatoria": "Плей-оф"
+      },
+      "listado": {
+        "titleAvailable": "Доступні турніри",
+        "clearSearch": "Очистити пошук",
+        "participants": "{{count}} учасників",
+        "emptyFinalizados": "Завершених турнірів ще немає."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Теніс"
+      },
+      "vista": {
+        "tabGrupos": "ГРУПИ",
+        "statPg": "П",
+        "statPp": "По",
+        "sinPartidos": "Немає матчів",
+        "genero": {
+          "masculino": "Чоловіча",
+          "femenino": "Жіноча"
+        },
+        "categoriaNivel": {
+          "1ra": "1-ше",
+          "2da": "2-ге",
+          "3ra": "3-тє"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Деталі матчу",
+        "fechaHora": "Дата й час"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Я хочу приєднатися до наявного матчу.",
+      "armarBody": "Я хочу створити матч і знайти гравців."
+    },
+    "clases": {
+      "detalle": "Деталі заняття"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Стежте за нами"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Реклама"
+    },
+    "resenas": {
+      "title": "Відгуки",
+      "totalCount_plural": "{{count}} відгуків"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "Електронна пошта"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Позначити всі як прочитані"
+    },
+    "instructor": {
+      "campoNombre": "Ім’я",
+      "campoApellido": "Прізвище",
+      "campoFechaNac": "Дата народження",
+      "generoMasculino": "Чоловіча",
+      "generoFemenino": "Жіноча",
+      "generoNoDice": "Не хочу вказувати",
+      "guardarCambios": "Зберегти зміни"
+    },
+    "perfil": {
+      "viewPublicProfile": "Переглянути мій публічний профіль",
+      "editar": "Редагувати профіль",
+      "nivel": "Рівень гри",
+      "notificaciones": "Сповіщення",
+      "city": "Місто",
+      "birthDate": "Дата народження",
+      "usualPartner": "Постійний партнер",
+      "passwordMismatch": "Паролі не збігаються.",
+      "placeholderPasswordMin": "Щонайменше 6 символів",
+      "diestro": "Правша",
+      "zurdo": "Лівша",
+      "firstName": "Ім’я",
+      "lastName": "Прізвище",
+      "partnerHabitual": "Постійний партнер",
+      "genero": {
+        "masculino": "Чоловіча",
+        "femenino": "Жіноча"
+      },
+      "regularPartner": "Постійний партнер"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Усі заклади",
+        "colFoto": "Фото",
+        "colNombre": "Ім’я",
+        "verFicha": "Переглянути профіль",
+        "editarFicha": "Редагувати профіль",
+        "fichaNombre": "Ім’я",
+        "fichaApellido": "Прізвище",
+        "fichaFechaNac": "Дата народження",
+        "fichaEmailLabel": "Електронна пошта"
+      },
+      "tabs": {
+        "sedes": "Заклади",
+        "solicitudes": "Запити",
+        "config": "Налаштування"
+      },
+      "pushNotif": {
+        "selectVenue": "Оберіть заклад",
+        "selectSport": "Оберіть вид спорту",
+        "segments": {
+          "venue": "Заклад №{{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Позначити всі як прочитані"
+      },
+      "metrics": {
+        "periodToday": "Сьогодні"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Цю дію неможливо скасувати."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Виберіть щонайменше один вид спорту.",
+        "name": "Ім’я",
+        "price": "Ціна",
+        "cityLabel": "Місто",
+        "emailLabel": "Електронна пошта",
+        "deleteBtn": "Видалити",
+        "validationViewProfile": "Переглянути профіль"
+      },
+      "hub": {
+        "changePhoto": "Змінити фото",
+        "previewLabel": "Попередній перегляд"
+      },
+      "sedes": {
+        "venueNumber": "Заклад №{{id}}",
+        "description": "Опис",
+        "delete": "Видалити",
+        "reviews": "Відгуки",
+        "listaEsperaTorneos": "Список очікування",
+        "guidedSetup": {
+          "city": "Місто",
+          "summaryLocation": "Розташування"
+        },
+        "paymentPending": "Очікує оплати",
+        "whatsappCountryCodeAria": "Код країни",
+        "saveChanges": "Зберегти зміни"
+      },
+      "reservas": {
+        "cancelBooking": "Скасувати бронювання",
+        "selectVenue": "Оберіть заклад",
+        "noVenue": "Немає закладу"
+      },
+      "overview": {
+        "today": "Сьогодні"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Просунутий",
+          "advanced": "Просунутий"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Видалити фото",
+        "saveBtn": "Зберегти зміни"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Інформаційно"
+        },
+        "reportsAllSedes": "Усі заклади",
+        "reportsFilterBeneficio": "Перевага",
+        "reportsColDesc": "Опис",
+        "reportsColBeneficio": "Перевага",
+        "reportsColCodigo": "Код",
+        "reportsColSaldoDisp": "Доступний баланс",
+        "descriptionField": "Опис",
+        "globalConfigDescriptionField": "Опис",
+        "globalConfigSave": "Зберегти зміни",
+        "campaignsAllVenues": "Усі заклади",
+        "campaignsName": "Ім’я",
+        "campaignsDescription": "Опис",
+        "campaignsColName": "Ім’я",
+        "campaignsTotalUses": "Загалом",
+        "description": "Опис",
+        "name": "Ім’я",
+        "conditions": "Умови",
+        "redeemCode": "Код",
+        "redeemPrize": "Перевага",
+        "alertsAllVenues": "Усі заклади",
+        "movementsAllVenues": "Усі заклади",
+        "movementsDescriptionCol": "Опис"
+      },
+      "metricas": {
+        "markAllRead": "Позначити всі як прочитані",
+        "pointsCol": "Очки",
+        "expiresCol": "Завершується"
+      },
+      "jugadores": {
+        "viewProfile": "Переглянути профіль",
+        "fichaTitle": "Картка гравця"
+      },
+      "membresias": {
+        "colNombre": "Ім’я",
+        "colDescripcion": "Опис",
+        "colPrecio": "Ціна",
+        "colVigencia": "Термін дії",
+        "colPlan": "План",
+        "filterPlan": "План",
+        "fieldNombre": "Ім’я",
+        "fieldDescripcion": "Опис",
+        "fieldPrecio": "Ціна",
+        "fieldPlan": "План",
+        "errSedeRequired": "Оберіть заклад."
+      }
+    },
+    "pago": {
+      "titulo": "Оплата",
+      "reintentar": "Спробувати ще раз"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Матч"
+      }
+    },
+    "hub": {
+      "goToProfile": "Перейти до мого профілю",
+      "backToStart": "Повернутися на головну"
+    },
+    "chatbot": {
+      "fabCollapsed": "Є запитання?",
+      "fabLine1": "Є запитання?",
+      "fabLine2": "Поспілкуватися з Chivi",
+      "enviar": "Надіслати",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Доступні турніри",
+      "micDictateAria": "Голосове введення",
+      "leerVozAlta": "Прочитати відповідь уголос",
+      "boton": "Є запитання?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Дата й час"
+    },
+    "perfilPublico": {
+      "shareProfile": "Поділитися профілем",
+      "statsTitle": "Статистика",
+      "tournamentsWon": "Перемоги в турнірах",
+      "matchesWon": "Перемоги в матчах",
+      "sportsTitle": "Види спорту",
+      "recentTournamentsTitle": "Останні турніри",
+      "badgeParticipantGeneric": "Учасник"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Хочу грати",
+        "globe": {
+          "labels": {
+            "venues": "Заклади",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Теніс",
+            "stats": "Статистика"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Теніс"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Відкриті матчі"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Відкриті матчі"
+          },
+          "results": {
+            "title": "Результати"
+          }
+        }
+      },
+      "contact": {
+        "play": "Хочу грати"
+      },
+      "footer": {
+        "language": "Мова"
+      },
+      "communityMatches": {
+        "ctaPlay": "Хочу грати",
+        "mockTitle": "Відкритий матч"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Наживо",
+        "futureAccess": {
+          "label": "Незабаром"
+        }
+      }
+    }
+  },
+  "af": {
+    "general": {
+      "language": "Taal",
+      "delete": "Vee uit",
+      "share": "Deel",
+      "email": "E-pos",
+      "city": "Stad"
+    },
+    "auth": {
+      "login": "Meld aan",
+      "register": "Registreer",
+      "password": "Wagwoord",
+      "google": "Gaan voort met Google",
+      "cerrar_sesion": "Meld af",
+      "passwordMismatch": "Die wagwoorde stem nie ooreen nie.",
+      "firstName": "Voornaam",
+      "lastName": "Van",
+      "male": "Manlik",
+      "female": "Vroulik",
+      "handednessRight": "Regshandig",
+      "handednessLeft": "Linkshandig"
+    },
+    "nav": {
+      "logout": "Meld af",
+      "admin": {
+        "solicitudes": "Versoeke",
+        "config": "Instellings"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Bespreek jou baan",
+      "cancelar": "Kanselleer bespreking",
+      "pagar_mp": "Betaal met Mercado Pago",
+      "sedes": "Klubs",
+      "nearestVenue": "Naaste klub aan jou",
+      "summaryTitle": "Besprekingsopsomming",
+      "modifyBooking": "Verander bespreking",
+      "confirmedTitle": "Bespreking bevestig!",
+      "phoneCountriesMain": "Hoofsport",
+      "understood": "Reg so",
+      "dayToday": "Vandag",
+      "dayTomorrow": "Môre",
+      "courtOccupied": "Beset"
+    },
+    "torneos": {
+      "inscribirse": "Skryf in",
+      "pendiente_pago": "Betaling hangende",
+      "tipo": {
+        "eliminacion": "Enkeluitskakeling",
+        "knockout": "Enkeluitskakeling",
+        "eliminatoria": "Enkeluitskakeling"
+      },
+      "listado": {
+        "titleAvailable": "Beskikbare toernooie",
+        "clearSearch": "Maak soektog skoon",
+        "participants": "{{count}} deelnemers",
+        "emptyFinalizados": "Nog geen voltooide toernooie nie."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tennis"
+      },
+      "vista": {
+        "tabGrupos": "GROEPE",
+        "statPg": "W",
+        "statPp": "V",
+        "sinPartidos": "Geen wedstryde nie",
+        "genero": {
+          "masculino": "Manlik",
+          "femenino": "Vroulik"
+        },
+        "categoriaNivel": {
+          "1ra": "1ste",
+          "2da": "2de",
+          "3ra": "3de"
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Wedstrydbesonderhede",
+        "fechaHora": "Datum en tyd"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Ek wil by ’n bestaande wedstryd aansluit.",
+      "armarBody": "Ek wil ’n wedstryd skep en spelers vind."
+    },
+    "clases": {
+      "detalle": "Lesbesonderhede"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Volg ons op"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Advertensie"
+    },
+    "resenas": {
+      "title": "Resensies",
+      "totalCount_plural": "{{count}} resensies"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-pos"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Merk alles as gelees"
+    },
+    "instructor": {
+      "campoNombre": "Voornaam",
+      "campoApellido": "Van",
+      "campoFechaNac": "Geboortedatum",
+      "generoMasculino": "Manlik",
+      "generoFemenino": "Vroulik",
+      "generoNoDice": "Verkies om nie te sê nie",
+      "guardarCambios": "Stoor veranderings"
+    },
+    "perfil": {
+      "viewPublicProfile": "Bekyk my openbare profiel",
+      "editar": "Wysig profiel",
+      "nivel": "Vaardigheidsvlak",
+      "notificaciones": "Kennisgewings",
+      "city": "Stad",
+      "birthDate": "Geboortedatum",
+      "usualPartner": "Vaste speelmaat",
+      "passwordMismatch": "Die wagwoorde stem nie ooreen nie.",
+      "placeholderPasswordMin": "Minstens 6 karakters",
+      "diestro": "Regshandig",
+      "zurdo": "Linkshandig",
+      "firstName": "Voornaam",
+      "lastName": "Van",
+      "partnerHabitual": "Vaste speelmaat",
+      "genero": {
+        "masculino": "Manlik",
+        "femenino": "Vroulik"
+      },
+      "regularPartner": "Vaste speelmaat"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Alle klubs",
+        "colFoto": "Foto",
+        "colNombre": "Naam",
+        "verFicha": "Bekyk profiel",
+        "editarFicha": "Wysig profiel",
+        "fichaNombre": "Voornaam",
+        "fichaApellido": "Van",
+        "fichaFechaNac": "Geboortedatum",
+        "fichaEmailLabel": "E-pos"
+      },
+      "tabs": {
+        "sedes": "Klubs",
+        "solicitudes": "Versoeke",
+        "config": "Instellings"
+      },
+      "pushNotif": {
+        "selectVenue": "Kies klub",
+        "selectSport": "Kies sport",
+        "segments": {
+          "venue": "Klub #{{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Merk alles as gelees"
+      },
+      "metrics": {
+        "periodToday": "Vandag"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Hierdie handeling kan nie ongedaan gemaak word nie."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Kies minstens een sport.",
+        "name": "Naam",
+        "price": "Prys",
+        "cityLabel": "Stad",
+        "emailLabel": "E-pos",
+        "deleteBtn": "Vee uit",
+        "validationViewProfile": "Bekyk profiel"
+      },
+      "hub": {
+        "changePhoto": "Verander foto",
+        "previewLabel": "Voorskou"
+      },
+      "sedes": {
+        "venueNumber": "Klub #{{id}}",
+        "description": "Beskrywing",
+        "delete": "Vee uit",
+        "reviews": "Resensies",
+        "listaEsperaTorneos": "Waglys",
+        "guidedSetup": {
+          "city": "Stad",
+          "summaryLocation": "Ligging"
+        },
+        "paymentPending": "Betaling hangende",
+        "whatsappCountryCodeAria": "Landkode",
+        "saveChanges": "Stoor veranderings"
+      },
+      "reservas": {
+        "cancelBooking": "Kanselleer bespreking",
+        "selectVenue": "Kies klub",
+        "noVenue": "Geen klub nie"
+      },
+      "overview": {
+        "today": "Vandag"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Gevorderd",
+          "advanced": "Gevorderd"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Verwyder foto",
+        "saveBtn": "Stoor veranderings"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Ter inligting"
+        },
+        "reportsAllSedes": "Alle klubs",
+        "reportsFilterBeneficio": "Voordeel",
+        "reportsColDesc": "Beskrywing",
+        "reportsColBeneficio": "Voordeel",
+        "reportsColCodigo": "Kode",
+        "reportsColSaldoDisp": "Beskikbare saldo",
+        "descriptionField": "Beskrywing",
+        "globalConfigDescriptionField": "Beskrywing",
+        "globalConfigSave": "Stoor veranderings",
+        "campaignsAllVenues": "Alle klubs",
+        "campaignsName": "Naam",
+        "campaignsDescription": "Beskrywing",
+        "campaignsColName": "Naam",
+        "campaignsTotalUses": "Totaal",
+        "description": "Beskrywing",
+        "name": "Naam",
+        "conditions": "Voorwaardes",
+        "redeemCode": "Kode",
+        "redeemPrize": "Voordeel",
+        "alertsAllVenues": "Alle klubs",
+        "movementsAllVenues": "Alle klubs",
+        "movementsDescriptionCol": "Beskrywing"
+      },
+      "metricas": {
+        "markAllRead": "Merk alles as gelees",
+        "pointsCol": "Punte",
+        "expiresCol": "Verstryk"
+      },
+      "jugadores": {
+        "viewProfile": "Bekyk profiel",
+        "fichaTitle": "Spelerkaart"
+      },
+      "membresias": {
+        "colNombre": "Naam",
+        "colDescripcion": "Beskrywing",
+        "colPrecio": "Prys",
+        "colVigencia": "Geldigheid",
+        "colPlan": "Plan",
+        "filterPlan": "Plan",
+        "fieldNombre": "Naam",
+        "fieldDescripcion": "Beskrywing",
+        "fieldPrecio": "Prys",
+        "fieldPlan": "Plan",
+        "errSedeRequired": "Kies ’n klub."
+      }
+    },
+    "pago": {
+      "titulo": "Betaling",
+      "reintentar": "Probeer weer"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Wedstryd"
+      }
+    },
+    "hub": {
+      "goToProfile": "Gaan na my profiel",
+      "backToStart": "Terug na tuis"
+    },
+    "chatbot": {
+      "fabCollapsed": "Vrae?",
+      "fabLine1": "Vrae?",
+      "fabLine2": "Gesels met Chivi",
+      "enviar": "Stuur",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Beskikbare toernooie",
+      "micDictateAria": "Steminvoer",
+      "leerVozAlta": "Lees antwoorde hardop",
+      "boton": "Vrae?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Datum en tyd"
+    },
+    "perfilPublico": {
+      "shareProfile": "Deel profiel",
+      "statsTitle": "Statistiek",
+      "tournamentsWon": "Toernooie gewen",
+      "matchesWon": "Wedstryde gewen",
+      "sportsTitle": "Sportsoorte gespeel",
+      "recentTournamentsTitle": "Onlangse toernooie",
+      "badgeParticipantGeneric": "Deelnemer"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Ek wil speel",
+        "globe": {
+          "labels": {
+            "venues": "Klubs",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tennis",
+            "stats": "Statistiek"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tennis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Oop wedstryde"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Oop wedstryde"
+          },
+          "results": {
+            "title": "Uitslae"
+          }
+        }
+      },
+      "contact": {
+        "play": "Ek wil speel"
+      },
+      "footer": {
+        "language": "Taal"
+      },
+      "communityMatches": {
+        "ctaPlay": "Ek wil speel",
+        "mockTitle": "Oop wedstryd"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Regstreeks",
+        "futureAccess": {
+          "label": "Kom binnekort"
+        }
+      }
+    }
+  },
+  "cs": {
+    "general": {
+      "language": "Jazyk",
+      "delete": "Smazat",
+      "share": "Sdílet",
+      "email": "E-mail",
+      "city": "Město"
+    },
+    "auth": {
+      "login": "Přihlásit se",
+      "register": "Registrovat se",
+      "password": "Heslo",
+      "google": "Pokračovat přes Google",
+      "cerrar_sesion": "Odhlásit se",
+      "passwordMismatch": "Hesla se neshodují.",
+      "firstName": "Jméno",
+      "lastName": "Příjmení",
+      "male": "Muž",
+      "female": "Žena",
+      "handednessRight": "Pravák",
+      "handednessLeft": "Levák"
+    },
+    "nav": {
+      "logout": "Odhlásit se",
+      "admin": {
+        "solicitudes": "Žádosti",
+        "config": "Nastavení"
+      }
+    },
+    "reservas": {
+      "heroTitle": "Rezervujte si kurt",
+      "cancelar": "Zrušit rezervaci",
+      "pagar_mp": "Zaplatit přes Mercado Pago",
+      "sedes": "Místa",
+      "nearestVenue": "Nejbližší klub",
+      "summaryTitle": "Souhrn rezervace",
+      "modifyBooking": "Upravit rezervaci",
+      "confirmedTitle": "Rezervace potvrzena!",
+      "phoneCountriesMain": "Hlavní",
+      "understood": "Rozumím",
+      "dayToday": "Dnes",
+      "dayTomorrow": "Zítra",
+      "courtOccupied": "Obsazený"
+    },
+    "torneos": {
+      "inscribirse": "Registrovat se",
+      "pendiente_pago": "Čeká na platbu",
+      "tipo": {
+        "eliminacion": "Vyřazovací systém",
+        "knockout": "Vyřazovací systém",
+        "eliminatoria": "Vyřazovací systém"
+      },
+      "listado": {
+        "titleAvailable": "Dostupné turnaje",
+        "clearSearch": "Vymazat hledání",
+        "participants": "{{count}} účastníků",
+        "emptyFinalizados": "Zatím nejsou žádné dokončené turnaje."
+      },
+      "deporte": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tenis": "Tenis"
+      },
+      "vista": {
+        "tabGrupos": "SKUPINY",
+        "statPg": "V",
+        "statPp": "P",
+        "sinPartidos": "Žádné zápasy",
+        "genero": {
+          "masculino": "Muž",
+          "femenino": "Žena"
+        },
+        "categoriaNivel": {
+          "1ra": "1.",
+          "2da": "2.",
+          "3ra": "3."
+        }
+      },
+      "partidoDetalle": {
+        "titulo": "Podrobnosti zápasu",
+        "fechaHora": "Datum a čas"
+      }
+    },
+    "jugar": {
+      "buscarBody": "Chci se připojit k existujícímu zápasu.",
+      "armarBody": "Chci vytvořit zápas a najít hráče."
+    },
+    "clases": {
+      "detalle": "Podrobnosti lekce"
+    },
+    "sedes": {
+      "publica": {
+        "seguinosEn": "Sledujte nás na"
+      }
+    },
+    "sponsors": {
+      "publicidad": "Reklama"
+    },
+    "resenas": {
+      "title": "Recenze",
+      "totalCount_plural": "{{count}} recenzí"
+    },
+    "reputacion": {
+      "admin": {
+        "colEmail": "E-mail"
+      }
+    },
+    "campanita": {
+      "marcarLeido": "Označit vše jako přečtené"
+    },
+    "instructor": {
+      "campoNombre": "Jméno",
+      "campoApellido": "Příjmení",
+      "campoFechaNac": "Datum narození",
+      "generoMasculino": "Muž",
+      "generoFemenino": "Žena",
+      "generoNoDice": "Nechci uvádět",
+      "guardarCambios": "Uložit změny"
+    },
+    "perfil": {
+      "viewPublicProfile": "Zobrazit můj veřejný profil",
+      "editar": "Upravit profil",
+      "nivel": "Úroveň hry",
+      "notificaciones": "Oznámení",
+      "city": "Město",
+      "birthDate": "Datum narození",
+      "usualPartner": "Stálý spoluhráč",
+      "passwordMismatch": "Hesla se neshodují.",
+      "placeholderPasswordMin": "Alespoň 6 znaků",
+      "diestro": "Pravák",
+      "zurdo": "Levák",
+      "firstName": "Jméno",
+      "lastName": "Příjmení",
+      "partnerHabitual": "Stálý spoluhráč",
+      "genero": {
+        "masculino": "Muž",
+        "femenino": "Žena"
+      },
+      "regularPartner": "Stálý spoluhráč"
+    },
+    "admin": {
+      "profesores": {
+        "todasLasSedes": "Všechny kluby",
+        "colFoto": "Fotografie",
+        "colNombre": "Jméno",
+        "verFicha": "Zobrazit profil",
+        "editarFicha": "Upravit profil",
+        "fichaNombre": "Jméno",
+        "fichaApellido": "Příjmení",
+        "fichaFechaNac": "Datum narození",
+        "fichaEmailLabel": "E-mail"
+      },
+      "tabs": {
+        "sedes": "Místa",
+        "solicitudes": "Žádosti",
+        "config": "Nastavení"
+      },
+      "pushNotif": {
+        "selectVenue": "Vyberte klub",
+        "selectSport": "Vyberte sport",
+        "segments": {
+          "venue": "Místo č. {{id}}"
+        }
+      },
+      "notifications": {
+        "markAllRead": "Označit vše jako přečtené"
+      },
+      "metrics": {
+        "periodToday": "Dnes"
+      },
+      "confirmaciones": {
+        "cannotUndo": "Tuto akci nelze vrátit."
+      },
+      "formularios": {
+        "chooseAtLeastOneSport": "Vyberte alespoň jeden sport.",
+        "name": "Jméno",
+        "price": "Cena",
+        "cityLabel": "Město",
+        "emailLabel": "E-mail",
+        "deleteBtn": "Smazat",
+        "validationViewProfile": "Zobrazit profil"
+      },
+      "hub": {
+        "changePhoto": "Změnit fotografii",
+        "previewLabel": "Náhled"
+      },
+      "sedes": {
+        "venueNumber": "Místo č. {{id}}",
+        "description": "Popis",
+        "delete": "Smazat",
+        "reviews": "Recenze",
+        "listaEsperaTorneos": "Čekací listina",
+        "guidedSetup": {
+          "city": "Město",
+          "summaryLocation": "Poloha"
+        },
+        "paymentPending": "Čeká na platbu",
+        "whatsappCountryCodeAria": "Předvolba země",
+        "saveChanges": "Uložit změny"
+      },
+      "reservas": {
+        "cancelBooking": "Zrušit rezervaci",
+        "selectVenue": "Vyberte klub",
+        "noVenue": "Bez klubu"
+      },
+      "overview": {
+        "today": "Dnes"
+      },
+      "tournamentLabels": {
+        "level": {
+          "avanzado": "Pokročilý",
+          "advanced": "Pokročilý"
+        }
+      },
+      "scoreboard": {
+        "playerPhotoRemove": "Odstranit fotografii",
+        "saveBtn": "Uložit změny"
+      },
+      "padcoins": {
+        "alertSeverity": {
+          "low": "Informativní"
+        },
+        "reportsAllSedes": "Všechny kluby",
+        "reportsFilterBeneficio": "Výhoda",
+        "reportsColDesc": "Popis",
+        "reportsColBeneficio": "Výhoda",
+        "reportsColCodigo": "Kód",
+        "reportsColSaldoDisp": "Dostupný zůstatek",
+        "descriptionField": "Popis",
+        "globalConfigDescriptionField": "Popis",
+        "globalConfigSave": "Uložit změny",
+        "campaignsAllVenues": "Všechny kluby",
+        "campaignsName": "Jméno",
+        "campaignsDescription": "Popis",
+        "campaignsColName": "Jméno",
+        "campaignsTotalUses": "Celkem",
+        "description": "Popis",
+        "name": "Jméno",
+        "conditions": "Podmínky",
+        "redeemCode": "Kód",
+        "redeemPrize": "Výhoda",
+        "alertsAllVenues": "Všechny kluby",
+        "movementsAllVenues": "Všechny kluby",
+        "movementsDescriptionCol": "Popis"
+      },
+      "metricas": {
+        "markAllRead": "Označit vše jako přečtené",
+        "pointsCol": "Body",
+        "expiresCol": "Platnost do"
+      },
+      "jugadores": {
+        "viewProfile": "Zobrazit profil",
+        "fichaTitle": "Karta hráče"
+      },
+      "membresias": {
+        "colNombre": "Jméno",
+        "colDescripcion": "Popis",
+        "colPrecio": "Cena",
+        "colVigencia": "Platnost",
+        "colPlan": "Plán",
+        "filterPlan": "Plán",
+        "fieldNombre": "Jméno",
+        "fieldDescripcion": "Popis",
+        "fieldPrecio": "Cena",
+        "fieldPlan": "Plán",
+        "errSedeRequired": "Vyberte klub."
+      }
+    },
+    "pago": {
+      "titulo": "Platba",
+      "reintentar": "Zkusit znovu"
+    },
+    "notificaciones": {
+      "tipo": {
+        "partido": "Zápas"
+      }
+    },
+    "hub": {
+      "goToProfile": "Přejít na můj profil",
+      "backToStart": "Zpět na úvod"
+    },
+    "chatbot": {
+      "fabCollapsed": "Máte dotaz?",
+      "fabLine1": "Máte dotaz?",
+      "fabLine2": "Napište Chivi",
+      "enviar": "Odeslat",
+      "titulo": "Chivi",
+      "torneosSugerencia": "Dostupné turnaje",
+      "micDictateAria": "Hlasové zadávání",
+      "leerVozAlta": "Číst odpovědi nahlas",
+      "boton": "Máte dotaz?"
+    },
+    "armarPartido": {
+      "titleDateAndTime": "Datum a čas"
+    },
+    "perfilPublico": {
+      "shareProfile": "Sdílet profil",
+      "statsTitle": "Statistiky",
+      "tournamentsWon": "Vyhrané turnaje",
+      "matchesWon": "Vyhrané zápasy",
+      "sportsTitle": "Hrané sporty",
+      "recentTournamentsTitle": "Nedávné turnaje",
+      "badgeParticipantGeneric": "Účastník"
+    },
+    "publicSite": {
+      "hero": {
+        "ctaPlay": "Chci hrát",
+        "globe": {
+          "labels": {
+            "venues": "Místa",
+            "padcoins": "PadCoins",
+            "padbol": "Padbol",
+            "padel": "Padel",
+            "pickleball": "Pickleball",
+            "tennis": "Tenis",
+            "stats": "Statistiky"
+          }
+        }
+      },
+      "sports": {
+        "padbol": "Padbol",
+        "padel": "Padel",
+        "pickleball": "Pickleball",
+        "tennis": "Tenis"
+      },
+      "playerPath": {
+        "items": {
+          "join": {
+            "title": "Otevřené zápasy"
+          }
+        }
+      },
+      "continuity": {
+        "items": {
+          "padcoins": {
+            "title": "PadCoins"
+          },
+          "openMatches": {
+            "title": "Otevřené zápasy"
+          },
+          "results": {
+            "title": "Výsledky"
+          }
+        }
+      },
+      "contact": {
+        "play": "Chci hrát"
+      },
+      "footer": {
+        "language": "Jazyk"
+      },
+      "communityMatches": {
+        "ctaPlay": "Chci hrát",
+        "mockTitle": "Otevřený zápas"
+      },
+      "smartScoreboard": {
+        "demoBadge": "Živě",
+        "futureAccess": {
+          "label": "Již brzy"
+        }
+      }
+    }
+  }
+}

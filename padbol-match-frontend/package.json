@@ -36,6 +36,7 @@
     "lint": "eslint src --ext .js,.jsx --ignore-pattern '*.test.js' --ignore-pattern '*.test.jsx'",
     "i18n:coverage": "node scripts/audit-i18n-direct-coverage.cjs",
     "i18n:coverage:strict": "node scripts/audit-i18n-direct-coverage.cjs --strict",
+    "i18n:seed-native": "node scripts/seed-i18n-from-native.cjs",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

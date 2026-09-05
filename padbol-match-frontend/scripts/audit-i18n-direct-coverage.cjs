@@ -25,6 +25,7 @@ const codes = [...codesBlock.matchAll(/code: '([^']+)'/g)].map((match) => match[
 const english = flatten(readJson('src/i18n/locales/en.json'));
 const englishKeys = Object.keys(english);
 const publicSite = readJson('src/i18n/publicSiteGeneratedLocales.json');
+const nativeShared = readJson('src/i18n/nativeSharedLocaleOverrides.json');
 const additional = evaluateExport('src/i18n/additionalLocaleOverrides.js', 'export const ADDITIONAL_LOCALE_OVERRIDES =');
 const romanianEditorial = evaluateExport('src/i18n/romanianLocaleOverrides.js', 'export default');
 const baseFiles = {
@@ -43,6 +44,7 @@ const jsonLayers = {
 
 const report = codes.map((code) => {
   const direct = {};
+  Object.assign(direct, flatten(nativeShared[code] || {}));
   if (baseFiles[code]) Object.assign(direct, flatten(readJson(`src/i18n/locales/${baseFiles[code]}.json`)));
   if (publicSite[code]) Object.assign(direct, flatten({ publicSite: publicSite[code] }));
   Object.assign(direct, flatten(additional[code] || {}));
