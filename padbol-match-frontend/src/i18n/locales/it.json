@@ -1005,6 +1005,11 @@
     },
     "sedes": {
       "extrasPendingApproval": "Extra in attesa di approvazione",
+      "extrasReviewIntro": "I club aggiungono opzioni per la pausa; qui puoi approvarle o rifiutarle. Solo gli extra approvati vengono mostrati ai giocatori durante il pagamento.",
+      "extrasReviewLoadError": "Impossibile aggiornare la verifica degli extra. Ricarica la pagina e riprova.",
+      "extrasReviewEmpty": "Nessun extra in attesa.",
+      "extrasReject": "Rifiuta",
+      "venueNumber": "Club n. {{id}}",
       "pendingApproval": "In attesa di approvazione",
       "pendingApprovalShort": "In attesa di approvazione",
       "descriptionOptional": "Descrizione (facoltativa)",

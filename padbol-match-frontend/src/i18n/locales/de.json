@@ -1005,6 +1005,11 @@
     },
     "sedes": {
       "extrasPendingApproval": "Extras müssen noch genehmigt werden",
+      "extrasReviewIntro": "Clubs fügen Optionen für die Pause hinzu; hier können Sie sie genehmigen oder ablehnen. Nur genehmigte Extras werden Spielern beim Bezahlen angezeigt.",
+      "extrasReviewLoadError": "Die Extras-Prüfung konnte nicht aktualisiert werden. Laden Sie die Seite neu und versuchen Sie es erneut.",
+      "extrasReviewEmpty": "Keine Extras warten auf Genehmigung.",
+      "extrasReject": "Ablehnen",
+      "venueNumber": "Sportstätte #{{id}}",
       "pendingApproval": "Genehmigung ausstehend",
       "pendingApprovalShort": "Genehmigung ausstehend",
       "descriptionOptional": "Beschreibung (optional)",

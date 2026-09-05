@@ -1317,6 +1317,11 @@
     },
     "sedes": {
       "extrasPendingApproval": "Extras pendientes de aprobación",
+      "extrasReviewIntro": "Los clubes cargan opciones para el tercer tiempo; acá las aprobás o las rechazás. Solo los extras aprobados se muestran al jugador al pagar.",
+      "extrasReviewLoadError": "No se pudo actualizar la revisión de extras. Recargá la pantalla e intentá de nuevo.",
+      "extrasReviewEmpty": "No hay extras pendientes.",
+      "extrasReject": "Rechazar",
+      "venueNumber": "Sede #{{id}}",
       "pendingApproval": "Pendiente de aprobación",
       "pendingApprovalShort": "Pendiente aprobación",
       "descriptionOptional": "Descripción (opcional)",

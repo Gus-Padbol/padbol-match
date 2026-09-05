@@ -1005,6 +1005,11 @@
     },
     "sedes": {
       "extrasPendingApproval": "Suplimente în așteptarea aprobării",
+      "extrasReviewIntro": "Cluburile adaugă opțiuni pentru pauză; aici le puteți aproba sau respinge. Doar opțiunile aprobate sunt afișate jucătorilor la plată.",
+      "extrasReviewLoadError": "Verificarea opțiunilor nu a putut fi actualizată. Reîncărcați pagina și încercați din nou.",
+      "extrasReviewEmpty": "Nu există opțiuni în așteptare.",
+      "extrasReject": "Respinge",
+      "venueNumber": "Club nr. {{id}}",
       "pendingApproval": "În așteptarea aprobării",
       "pendingApprovalShort": "În așteptarea aprobării",
       "descriptionOptional": "Descriere (opțional)",

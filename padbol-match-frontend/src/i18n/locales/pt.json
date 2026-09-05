@@ -1012,6 +1012,11 @@
     },
     "sedes": {
       "extrasPendingApproval": "Extras pendentes de aprovação",
+      "extrasReviewIntro": "Os clubes adicionam opções para o intervalo; aqui você pode aprová-las ou rejeitá-las. Apenas os extras aprovados aparecem para os jogadores no pagamento.",
+      "extrasReviewLoadError": "Não foi possível atualizar a revisão dos extras. Recarregue a página e tente novamente.",
+      "extrasReviewEmpty": "Não há extras pendentes.",
+      "extrasReject": "Rejeitar",
+      "venueNumber": "Clube nº {{id}}",
       "pendingApproval": "Aprovação pendente",
       "pendingApprovalShort": "Aprovação pendente",
       "descriptionOptional": "Descrição (opcional)",

@@ -1034,6 +1034,11 @@
     },
     "sedes": {
       "extrasPendingApproval": "الإضافات في انتظار الموافقة",
+      "extrasReviewIntro": "تضيف الأندية خيارات لفترة الاستراحة؛ ويمكنك الموافقة عليها أو رفضها هنا. تظهر للاعب عند الدفع الإضافات المعتمدة فقط.",
+      "extrasReviewLoadError": "تعذر تحديث مراجعة الإضافات. أعد تحميل الصفحة وحاول مرة أخرى.",
+      "extrasReviewEmpty": "لا توجد إضافات بانتظار الموافقة.",
+      "extrasReject": "رفض",
+      "venueNumber": "النادي #{{id}}",
       "pendingApproval": "في انتظار الموافقة",
       "pendingApprovalShort": "في انتظار الموافقة",
       "descriptionOptional": "الوصف (اختياري)",

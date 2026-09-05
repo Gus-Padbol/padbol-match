@@ -973,7 +973,11 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
           movementsPage: "Strana", movementsNext: "Další",
         },
         sedes: {
-          extrasPendingApproval: "Doplňky čekající na schválení", pendingApproval: "Čeká na schválení",
+          extrasPendingApproval: "Doplňky čekající na schválení",
+          extrasReviewIntro: "Kluby přidávají možnosti pro přestávku; zde je můžete schválit nebo odmítnout. Hráčům se při platbě zobrazí pouze schválené doplňky.",
+          extrasReviewLoadError: "Kontrolu doplňků se nepodařilo aktualizovat. Načtěte stránku znovu a zkuste to ještě jednou.",
+          extrasReviewEmpty: "Žádné doplňky nečekají na schválení.", extrasReject: "Odmítnout",
+          venueNumber: "Klub č. {{id}}", pendingApproval: "Čeká na schválení",
           pendingApprovalShort: "Čeká na schválení", descriptionOptional: "Popis (volitelný)",
           stockOptional: "Dostupné zásoby (volitelné, prázdné = neomezené)",
           stockEmptyUnlimited: "Zásoby (prázdné = neomezené)", description: "Popis", delete: "Smazat",

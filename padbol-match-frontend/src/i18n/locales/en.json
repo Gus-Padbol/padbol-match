@@ -1293,6 +1293,11 @@
     },
     "sedes": {
       "extrasPendingApproval": "Extras pending approval",
+      "extrasReviewIntro": "Clubs add options for halftime; approve or reject them here. Only approved extras are shown to players at checkout.",
+      "extrasReviewLoadError": "Could not update extras review. Reload the page and try again.",
+      "extrasReviewEmpty": "No extras pending.",
+      "extrasReject": "Reject",
+      "venueNumber": "Venue #{{id}}",
       "pendingApproval": "Pending approval",
       "pendingApprovalShort": "Pending approval",
       "descriptionOptional": "Description (optional)",
