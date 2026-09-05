@@ -209,9 +209,37 @@ textarea:focus-visible {
   padding-top: 16px;
 }
 
+body.lang-rtl {
+  direction: rtl;
+  text-align: start;
+}
+
+body.lang-rtl input,
+body.lang-rtl select,
+body.lang-rtl textarea {
+  direction: rtl;
+  text-align: start;
+}
+
+body.lang-rtl input[type='email'],
+body.lang-rtl input[type='tel'],
+body.lang-rtl input[type='url'],
+body.lang-rtl input[inputmode='numeric'],
+body.lang-rtl input[inputmode='decimal'] {
+  direction: ltr;
+  text-align: left;
+}
+
 body.lang-ar {
   font-family: 'Cairo', 'Segoe UI', sans-serif;
-  direction: rtl;
+}
+
+body.lang-he {
+  font-family: 'Arial Hebrew', Arial, 'Segoe UI', sans-serif;
+}
+
+body.lang-fa {
+  font-family: Tahoma, 'Segoe UI', sans-serif;
 }
 
 code {
