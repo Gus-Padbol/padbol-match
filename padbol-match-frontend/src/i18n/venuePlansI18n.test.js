@@ -28,6 +28,19 @@ describe('venue plans localization', () => {
     expect(cs.plans.business.features).toHaveLength(7);
   });
 
+  it('keeps Brazilian and European Portuguese as distinct direct editions', () => {
+    const brazil = venuePlansCopy('pt-BR');
+    const portugal = venuePlansCopy('pt-PT');
+    expect(brazil.title).toBe('Todo o seu clube.');
+    expect(brazil.plans.starter.features[2]).toContain('quadras');
+    expect(portugal.plans.starter.features[2]).toContain('campos');
+    expect(portugal.plans.starter.features[6]).toContain('ecrã');
+    expect(portugal.sports).toContain('Ténis');
+    expect(portugal.devices).toContain('Telemóvel');
+    expect(brazil.plans.pro.features).toHaveLength(9);
+    expect(portugal.plans.business.features).toHaveLength(7);
+  });
+
   it('keeps visible copy out of the page component', () => {
     const source = fs.readFileSync(
       path.join(__dirname, '..', 'pages', 'adminLanding', 'VenuePlansPage.jsx'),
