@@ -587,7 +587,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "ANZEIGETAFEL-VISION / KI",
         "title": "TRAINING\nIN BEARBEITUNG"
       }
     }
@@ -2366,7 +2366,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "VISIONE DEL TABELLONE / IA",
         "title": "FORMAZIONE\nIN CORSO"
       }
     }
@@ -2524,7 +2524,7 @@
           "badges": {
             "sponsor": "Sponsori · disponibili",
             "ads": "Publicitate · disponibile",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · proiect-pilot"
           }
         }
       }
@@ -4738,7 +4738,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "بینایی تابلوی امتیازات / هوش مصنوعی",
         "title": "آموزش\nدر حال پیشرفت"
       }
     }
@@ -4896,7 +4896,7 @@
           "badges": {
             "sponsor": "Sponsors · beschikbaar",
             "ads": "Advertenties · beschikbaar",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · proefproject"
           }
         }
       }
@@ -6000,7 +6000,7 @@
       "ctaExplore": "חקור את הפלטפורמה",
       "ctaPlay": "אני רוצה לשחק",
       "ctaVenue": "אני רוצה להביא את Padbol Match",
-      "videoAria": "Padbol match on court",
+      "videoAria": "משחק Padbol על המגרש",
       "globe": {
         "aria": "Padbol Match רשת גלובלית המחברת בין שחקנים, מקומות, משחקים, קהילה, טורנירים, לוח תוצאות חכם וספורט.",
         "labels": {
@@ -6082,7 +6082,7 @@
           "badges": {
             "sponsor": "נותני חסות · זמינים",
             "ads": "פרסום · זמין",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · פיילוט"
           }
         }
       }
@@ -6194,7 +6194,7 @@
         "eyebrow": "השלב הבא",
         "title": "הבא את המקום שלך ל-Padbol Match",
         "text": "חקור את הכלים וכיצד להביא את המקום שלך ל-Padbol Match. כשתהיה מוכן, תוכל להפעיל את האפליקציה.",
-        "apply": "Bring my venue"
+        "apply": "אני רוצה לצרף את המועדון שלי"
       },
       "items": {
         "setup": {
@@ -6347,7 +6347,7 @@
       "visualAlt": "Gustavo Miguens, היוצר של Padbol ומייסד Padbol Match"
     },
     "meta": {
-      "title": "Padbol Match — Platform",
+      "title": "Padbol Match — פלטפורמה",
       "description": "Padbol Match מחבר שחקנים, מקומות וארגונים לניהול Padbol, Padel, Pickleball וטניס בפלטפורמה אחת."
     },
     "contact": {
@@ -6517,7 +6517,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "ראיית לוח התוצאות / בינה מלאכותית",
         "title": "אימון\nבתהליך"
       }
     }
@@ -6557,7 +6557,7 @@
       "preview": {
         "club": "Padbol Club North",
         "booking": "Bokning",
-        "court": "Court 2 · 60 min",
+        "court": "Padbol Court 2 · 60 min",
         "playersConfirmed": "2/4 spelare bekräftade",
         "confirm": "Bekräfta",
         "ranking": "Ranking"
@@ -6675,7 +6675,7 @@
           "badges": {
             "sponsor": "Sponsorer · tillgängliga",
             "ads": "Reklam · tillgänglig",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · pilotprojekt"
           }
         }
       }
@@ -6787,7 +6787,7 @@
         "eyebrow": "Nästa steg",
         "title": "Ta med din plats till Padbol Match",
         "text": "Utforska verktygen och hur du tar med din plats till Padbol Match. När du är redo kan du starta applikationen.",
-        "apply": "Bring my venue"
+        "apply": "Anslut min anläggning"
       },
       "items": {
         "setup": {
@@ -6931,7 +6931,7 @@
         "name": "Gustavo Miguens",
         "padbolRole": "Skapare av Padbol",
         "federationRole": "Presidenten för International Padbol Federation",
-        "matchRole": "Founder of Padbol Match",
+        "matchRole": "Grundare av Padbol Match",
         "quote": "Erfarenheten och verktygen som skapats för Padbol är nu grunden för att öppna plattformen för andra bansporter — som tennis, padel och pickleball — och lägga till nya sporter enligt varje gemenskaps behov utan att förlora den anda som Padbol Match föddes med."
       },
       "sportsLabel": "Sporter på plattformen",
@@ -8171,7 +8171,7 @@
       "mockTitle": "Nyílt mérkőzés",
       "mockMeta": "Helyszín · Ma 19:30",
       "mockLevel": "Középszintű",
-      "mockSlots": "Középszintű",
+      "mockSlots": "{{filled}} hely megerősítve a 4-ből",
       "mockAction": "Hely kérése",
       "mockMetricsAria": "Foglaltság és megerősítés szimuláció",
       "mockOccupancy": "Foglaltság",
@@ -8296,7 +8296,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "EREDMÉNYJELZŐ-VÍZIÓ / MI",
         "title": "EDZÉS\nFOLYAMATBAN"
       }
     }
@@ -9640,7 +9640,7 @@
           "badges": {
             "sponsor": "Borge · beskikbaar",
             "ads": "Advertensie · beskikbaar",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · loodsprojek"
           }
         }
       }

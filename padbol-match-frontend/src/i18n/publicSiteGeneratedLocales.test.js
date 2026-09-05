@@ -22,7 +22,8 @@ const mergeCatalog = (base, override) => {
 };
 
 describe('public site translated catalogs', () => {
-  const englishKeys = Object.keys(flatten(en.publicSite)).sort();
+  const englishCatalog = flatten(en.publicSite);
+  const englishKeys = Object.keys(englishCatalog).sort();
   const generatedCodes = PADBOL_LANGUAGE_CODES.filter((code) => !['es', 'en', 'cs'].includes(code));
 
   it.each(generatedCodes)('%s covers every public-site key without raw i18n keys', (code) => {
@@ -33,6 +34,11 @@ describe('public site translated catalogs', () => {
     const copy = Object.values(catalog).join(' ');
     expect(copy).not.toMatch(/publicSite\.[A-Za-z]/);
     expect(copy).not.toMatch(/<[^>]*>|data-i=|data-var=|span=/i);
+    const placeholders = (value) => [...String(value).matchAll(/{{\s*([^}\s]+)\s*}}/g)]
+      .map((match) => match[1]).sort();
+    Object.entries(catalog).forEach(([key, value]) => {
+      expect(placeholders(value)).toEqual(placeholders(englishCatalog[key]));
+    });
   });
 
   it('keeps the reported Hebrew experience section fully translated', () => {
