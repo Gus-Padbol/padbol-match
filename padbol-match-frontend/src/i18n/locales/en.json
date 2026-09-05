@@ -258,6 +258,8 @@
     "extrasSubtitleArmar": "Optional: add club products or services. Total updates below.",
     "goToPay": "Go to pay",
     "preparingPayment": "Preparing payment…",
+    "dynamicPrice": "⚡ Dynamic pricing",
+    "paymentDescription": "Court {{num}} — {{venue}}",
     "minutos": "min",
     "canchasLibres": "free",
     "calendarPrevMonth": "Previous month",

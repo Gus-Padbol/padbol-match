@@ -258,6 +258,8 @@
     "extrasSubtitleArmar": "Opcional: suma productos o servicios del club. El total se actualiza abajo.",
     "goToPay": "Ir a pagar",
     "preparingPayment": "Preparando pago…",
+    "dynamicPrice": "⚡ Precio dinámico",
+    "paymentDescription": "Cancha {{num}} — {{venue}}",
     "minutos": "min",
     "canchasLibres": "libre",
     "calendarPrevMonth": "Mes anterior",

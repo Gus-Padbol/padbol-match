@@ -1636,7 +1636,8 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         durationOnly: "Délka: {{min}} minut", durationWithPrice: "Délka: {{min}} minut · základní cena {{price}}",
         loadingExtras: "Načítání možností…",
         extrasSubtitleArmar: "Volitelné: přidejte produkty nebo služby klubu. Celková částka se aktualizuje níže.",
-        goToPay: "Přejít k platbě", preparingPayment: "Příprava platby…", minutos: "min",
+        goToPay: "Přejít k platbě", preparingPayment: "Příprava platby…",
+        dynamicPrice: "⚡ Dynamická cena", paymentDescription: "Kurt {{num}} — {{venue}}", minutos: "min",
         canchasLibres: "volné", calendarPrevMonth: "Předchozí měsíc", calendarNextMonth: "Následující měsíc",
       },
       sedes: {

@@ -96,13 +96,14 @@ function formatDuracionCardPrecio({
   preciosDeporteRows,
   surgeQuotesByDuracion,
   surgeQuotesLoading,
+  dynamicPriceLabel,
 }) {
   const surgeActivo = sede?.surge_activo === true;
   const hasSlot = Boolean(String(fecha || '').trim() && String(hora || '').trim());
   const fmt = (n) => `$${Number(n).toLocaleString('es-AR')}`;
 
   if (!hasSlot) {
-    if (surgeActivo) return '⚡ Precio dinámico';
+    if (surgeActivo) return dynamicPriceLabel;
     return fmt(getPrecio(sede, '', fecha, duracion, deporte, preciosDeporteRows));
   }
 
@@ -631,16 +632,16 @@ function deportesActivosSedeKeys(sede) {
 }
 
 /** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
-function slotsReservaCantidadFallback(sedeData) {
+function slotsReservaCantidadFallback(sedeData, t) {
   const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
   const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
   return Array.from({ length: n }, (_, i) => ({
     numero: i + 1,
-    nombre: `Cancha ${i + 1}`,
+    nombre: `${t('reservas.court')} ${i + 1}`,
   }));
 }
 
-function slotsReservaDesdeSede(sedeData, deporteCanon) {
+function slotsReservaDesdeSede(sedeData, deporteCanon, t) {
   const active = sedeData?.canchas_activas;
   if (Array.isArray(active) && active.length > 0) {
     let sorted = [...active].sort((a, b) => Number(a.numero) - Number(b.numero));
@@ -653,11 +654,11 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
     if (sorted.length > 0) {
       return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
         numero: Number(x.numero),
-        nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
+        nombre: String(x.nombre || '').trim() || `${t('reservas.court')} ${x.numero}`,
       }));
     }
   }
-  return slotsReservaCantidadFallback(sedeData);
+  return slotsReservaCantidadFallback(sedeData, t);
 }
 
 export default function ReservaForm() {
@@ -2008,7 +2009,7 @@ export default function ReservaForm() {
         sede: sedeData,
       });
       const duracion = duracionSeleccionadaMin;
-      const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl);
+      const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl, t);
       const numsSlots = slotsOferta.map((s) => s.numero);
       const hoyCalendarioNegocio = ymdHoyParaReservaSede(sedeData);
       const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
@@ -2061,7 +2062,7 @@ export default function ReservaForm() {
     } finally {
       setLoading(false);
     }
-  }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
+  }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl, t]);
 
   // Auto-load time slots when date is selected (pantalla 2)
   useEffect(() => {
@@ -2121,7 +2122,7 @@ export default function ReservaForm() {
           ))
           .map((r) => parseInt(String(r.cancha), 10))
         : [];
-      const slots = slotsReservaDesdeSede(sedeSeleccionada, reservaDeporteUrl);
+      const slots = slotsReservaDesdeSede(sedeSeleccionada, reservaDeporteUrl, t);
 
       setCanchasDisponibles(
         slots.map((s) => ({
@@ -2235,7 +2236,7 @@ export default function ReservaForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          titulo: `Cancha ${formData.cancha} — ${sedeSeleccionada.nombre}`,
+          titulo: t('reservas.paymentDescription', { num: formData.cancha, venue: sedeSeleccionada.nombre }),
           precio: precioFinal,
           moneda: sedeSeleccionada.moneda || 'ARS',
           sedeNombre: sedeSeleccionada.nombre,
@@ -2631,6 +2632,7 @@ export default function ReservaForm() {
                         preciosDeporteRows,
                         surgeQuotesByDuracion,
                         surgeQuotesLoading,
+                        dynamicPriceLabel: t('reservas.dynamicPrice'),
                       });
                       return (
                         <button
@@ -3089,7 +3091,7 @@ export default function ReservaForm() {
               sedeId={sedeSeleccionada.id}
               moneda={moneda}
               montoBaseMinor={montoBaseMinor}
-              descripcion={`Reserva cancha ${formData.cancha} — ${sedeSeleccionada.nombre}`}
+              descripcion={t('reservas.paymentDescription', { num: formData.cancha, venue: sedeSeleccionada.nombre })}
               onRequireAuthForPay={gateReservaPago}
               payload={{
                 sede: sedeSeleccionada.nombre,
