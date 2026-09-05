@@ -73,10 +73,16 @@ vm.runInContext(`globalThis.__runtimeSupplements = ${supplementsExpression}`, co
 });
 
 const webEnglish = flatten(readJson(path.join(webRoot, 'src/i18n/locales/en.json')));
+const webSpanish = flatten(readJson(path.join(webRoot, 'src/i18n/locales/es.json')));
 const nativeEnglish = flatten(readJson(nativeEnglishPath));
+const nativeSpanish = flatten(readJson(path.join(nativeRoot, 'src/i18n/locales/es.json')));
 const nativeKeysBySource = {};
 Object.entries(nativeEnglish).forEach(([key, source]) => {
   (nativeKeysBySource[source] ||= []).push(key);
+});
+const nativeKeysBySpanishSource = {};
+Object.entries(nativeSpanish).forEach(([key, source]) => {
+  (nativeKeysBySpanishSource[source] ||= []).push(key);
 });
 
 const webToNativeCodes = {
@@ -110,9 +116,19 @@ for (const [webCode, nativeCode] of Object.entries(webToNativeCodes)) {
   const shared = {};
 
   Object.entries(webEnglish).forEach(([webKey, englishSource]) => {
-    let nativeKey = null;
-    if (nativeEnglish[webKey] === englishSource) nativeKey = webKey;
-    else if (nativeKeysBySource[englishSource]?.length === 1) [nativeKey] = nativeKeysBySource[englishSource];
+    const spanishSource = webSpanish[webKey];
+    let spanishNativeKey = null;
+    let englishNativeKey = null;
+    if (spanishSource && nativeSpanish[webKey] === spanishSource) spanishNativeKey = webKey;
+    else if (spanishSource && nativeKeysBySpanishSource[spanishSource]?.length === 1) {
+      [spanishNativeKey] = nativeKeysBySpanishSource[spanishSource];
+    }
+    if (nativeEnglish[webKey] === englishSource) englishNativeKey = webKey;
+    else if (nativeKeysBySource[englishSource]?.length === 1) [englishNativeKey] = nativeKeysBySource[englishSource];
+
+    // Spanish is the editorial source of truth for the ecosystem. English is
+    // a safe secondary bridge when the Spanish phrase has no unique match.
+    const nativeKey = spanishNativeKey || englishNativeKey;
     if (!nativeKey || !Object.hasOwn(nativeResolved, nativeKey)) return;
 
     const translation = nativeResolved[nativeKey];
