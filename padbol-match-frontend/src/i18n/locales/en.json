@@ -34,6 +34,26 @@
     "seeMore": "See more",
     "seeAll": "See all"
   },
+  "support": {
+    "title": "Support", "eyebrow": "SUPPORT", "adminTitle": "Support inbox", "userTitle": "Human support",
+    "adminIntro": "Handle each case, reply with context and keep follow-up organized.",
+    "userIntro": "Open a case and continue the conversation with our team until it is resolved.",
+    "signInRequired": "Sign in to open and follow a case.", "restrictedTitle": "Restricted access",
+    "restrictedBody": "The support inbox is available only to Super Admins.", "statusLabel": "Status",
+    "priorityLabel": "Priority", "allStatuses": "All statuses", "openCase": "Open a case",
+    "subject": "Subject", "tellUs": "Tell us what you need", "sending": "Sending…", "openTicket": "Open ticket",
+    "loadingCases": "Loading cases…", "noTickets": "No tickets to display.", "venue": "Venue", "player": "Player",
+    "noEmail": "No email", "venueQuery": "Venue inquiry", "playerQuery": "Player inquiry",
+    "internalSupportNote": "Internal support note", "padbolSupport": "Padbol Match Support",
+    "adminReplyPlaceholder": "Write a clear reply for the user", "userReplyPlaceholder": "Add information to the case",
+    "internalNote": "Internal note: not shown to the user", "sendReply": "Send reply", "sendMessage": "Send message",
+    "closedCase": "This case is closed.", "selectTicket": "Select a ticket",
+    "historyHint": "You will see the full history and available actions.",
+    "errors": { "load": "Could not load cases", "open": "Could not open the case", "send": "Could not send the message", "update": "Could not update the ticket" },
+    "category": { "reservas": "Bookings", "pagos": "Payments", "torneos": "Tournaments", "cuenta": "Account", "configuracion": "Settings", "tecnico": "Technical issue", "otro": "Other" },
+    "status": { "abierto": "Open", "en_revision": "Under review", "esperando_usuario": "Waiting for reply", "resuelto": "Resolved", "cerrado": "Closed" },
+    "priority": { "baja": "Low", "normal": "Normal", "alta": "High", "urgente": "Urgent" }
+  },
   "auth": {
     "access": "Sign in",
     "login": "Sign in",

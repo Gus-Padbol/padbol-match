@@ -34,6 +34,26 @@
     "seeMore": "Ver más",
     "seeAll": "Ver todas"
   },
+  "support": {
+    "title": "Soporte", "eyebrow": "SOPORTE", "adminTitle": "Bandeja de soporte", "userTitle": "Soporte humano",
+    "adminIntro": "Tomá cada caso, respondé con contexto y dejá el seguimiento ordenado.",
+    "userIntro": "Abrí un caso y seguí la conversación con el equipo hasta resolverlo.",
+    "signInRequired": "Ingresá a tu cuenta para abrir y seguir un caso.", "restrictedTitle": "Acceso restringido",
+    "restrictedBody": "La bandeja de soporte es solo para Super Admin.", "statusLabel": "Estado",
+    "priorityLabel": "Prioridad", "allStatuses": "Todos los estados", "openCase": "Abrir un caso",
+    "subject": "Asunto", "tellUs": "Contanos qué necesitás", "sending": "Enviando…", "openTicket": "Abrir ticket",
+    "loadingCases": "Cargando casos…", "noTickets": "No hay tickets para mostrar.", "venue": "Sede", "player": "Jugador",
+    "noEmail": "Sin correo", "venueQuery": "Consulta de sede", "playerQuery": "Consulta de jugador",
+    "internalSupportNote": "Nota interna de soporte", "padbolSupport": "Soporte Padbol Match",
+    "adminReplyPlaceholder": "Escribí una respuesta clara para el usuario", "userReplyPlaceholder": "Agregá información al caso",
+    "internalNote": "Nota interna: no se muestra al usuario", "sendReply": "Enviar respuesta", "sendMessage": "Enviar mensaje",
+    "closedCase": "Este caso está cerrado.", "selectTicket": "Seleccioná un ticket",
+    "historyHint": "Vas a ver todo el historial y las acciones disponibles.",
+    "errors": { "load": "No se pudieron cargar los casos", "open": "No se pudo abrir el caso", "send": "No se pudo enviar el mensaje", "update": "No se pudo actualizar el ticket" },
+    "category": { "reservas": "Reservas", "pagos": "Pagos", "torneos": "Torneos", "cuenta": "Cuenta", "configuracion": "Configuración", "tecnico": "Problema técnico", "otro": "Otro" },
+    "status": { "abierto": "Abierto", "en_revision": "En revisión", "esperando_usuario": "Esperando respuesta", "resuelto": "Resuelto", "cerrado": "Cerrado" },
+    "priority": { "baja": "Baja", "normal": "Normal", "alta": "Alta", "urgente": "Urgente" }
+  },
   "auth": {
     "access": "Acceso",
     "login": "Iniciar sesión",

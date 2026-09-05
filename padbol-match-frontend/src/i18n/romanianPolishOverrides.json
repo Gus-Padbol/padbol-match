@@ -73,6 +73,26 @@
     "handednessLeft": "Stângaci",
     "handednessAmbi": "Ambidextru"
   },
+  "support": {
+    "title": "Asistență", "eyebrow": "ASISTENȚĂ", "adminTitle": "Centrul de asistență", "userTitle": "Asistență umană",
+    "adminIntro": "Preia fiecare solicitare, răspunde ținând cont de context și urmărește rezolvarea în mod organizat.",
+    "userIntro": "Deschide o solicitare și continuă conversația cu echipa noastră până la rezolvare.",
+    "signInRequired": "Autentifică-te pentru a deschide și urmări o solicitare.", "restrictedTitle": "Acces restricționat",
+    "restrictedBody": "Centrul de asistență este disponibil doar pentru administratorii principali.", "statusLabel": "Stare",
+    "priorityLabel": "Prioritate", "allStatuses": "Toate stările", "openCase": "Deschide o solicitare",
+    "subject": "Subiect", "tellUs": "Spune-ne de ce ai nevoie", "sending": "Se trimite…", "openTicket": "Deschide solicitarea",
+    "loadingCases": "Se încarcă solicitările…", "noTickets": "Nu există solicitări de afișat.", "venue": "Club", "player": "Jucător",
+    "noEmail": "Fără e-mail", "venueQuery": "Solicitare de la club", "playerQuery": "Solicitare de la jucător",
+    "internalSupportNote": "Notă internă de asistență", "padbolSupport": "Asistență Padbol Match",
+    "adminReplyPlaceholder": "Scrie un răspuns clar pentru utilizator", "userReplyPlaceholder": "Adaugă informații la solicitare",
+    "internalNote": "Notă internă: nu este afișată utilizatorului", "sendReply": "Trimite răspunsul", "sendMessage": "Trimite mesajul",
+    "closedCase": "Această solicitare este închisă.", "selectTicket": "Selectează o solicitare",
+    "historyHint": "Vei vedea întregul istoric și acțiunile disponibile.",
+    "errors": { "load": "Solicitările nu au putut fi încărcate", "open": "Solicitarea nu a putut fi deschisă", "send": "Mesajul nu a putut fi trimis", "update": "Solicitarea nu a putut fi actualizată" },
+    "category": { "reservas": "Rezervări", "pagos": "Plăți", "torneos": "Turnee", "cuenta": "Cont", "configuracion": "Setări", "tecnico": "Problemă tehnică", "otro": "Altceva" },
+    "status": { "abierto": "Deschisă", "en_revision": "În curs de verificare", "esperando_usuario": "Se așteaptă răspunsul", "resuelto": "Rezolvată", "cerrado": "Închisă" },
+    "priority": { "baja": "Scăzută", "normal": "Normală", "alta": "Ridicată", "urgente": "Urgentă" }
+  },
   "paises": {
     "estados_unidos": "Statele Unite",
     "francia": "Franța",
