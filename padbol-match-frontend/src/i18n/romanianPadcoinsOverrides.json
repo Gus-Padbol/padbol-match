@@ -1,6 +1,12 @@
 {
   "admin": {
     "padcoins": {
+      "all": "Toate",
+      "smartRuleHelp": {
+        "bookingCredit": "Procentul din valoarea rezervării acordat jucătorului în PadCoins. Valoare recomandată la lansare: 5%.",
+        "internalConversion": "Conversie internă de referință folosită pentru calculul PadCoins. Nu este afișată jucătorului ca valoare monetară.",
+        "calculationMode": "Calculează PadCoins ca procent din suma plătită."
+      },
       "from": "De la",
       "until": "Până la",
       "validation": {

@@ -57,7 +57,7 @@
       "chooseCourtAndDate": "Alege terenul și data"
     },
     "metricas": { "courtCol": "Teren" },
-    "scoreboard": { "venuesLoadFailed": "Bazele sportive nu au putut fi încărcate.", "matchesLoadFailed": "Meciurile nu au putut fi încărcate.", "matchLoadFailed": "Meciul nu a putut fi încărcat." },
+    "scoreboard": { "venuesLoadFailed": "Bazele sportive nu au putut fi încărcate.", "matchesLoadFailed": "Meciurile nu au putut fi încărcate.", "matchLoadFailed": "Meciul nu a putut fi încărcat.", "copyLinkPrompt": "Copiază acest link:" },
     "notif": {
       "tournamentSoonBody": "{{count}} echipe fără înscriere confirmată în „{{name}}”.",
       "startsSoonBody": "„{{name}}” ({{date}}) nu are meciurile generate și începe în mai puțin de 48 de ore.",

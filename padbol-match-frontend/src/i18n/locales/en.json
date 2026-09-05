@@ -2058,8 +2058,10 @@
       "copied": "✓ Copied",
       "copy": "Copy",
       "arbiterLink": "Referee panel"
+      ,"copyLinkPrompt": "Copy this link:"
     },
     "padcoins": {
+      "all": "All",
       "from": "From",
       "until": "Until",
       "validation": {
@@ -2092,6 +2094,11 @@
         "porcentaje_devolucion_reserva": "Promotional credit per booking",
         "padcoins_por_usd_equivalente": "Internal reference conversion",
         "modo_calculo_reserva": "Booking calculation mode"
+      },
+      "smartRuleHelp": {
+        "bookingCredit": "Percentage of the booking value credited to the player in PadCoins. Recommended launch value: 5%.",
+        "internalConversion": "Internal reference conversion used to calculate PadCoins. It is not shown to the player as a monetary value.",
+        "calculationMode": "Calculates PadCoins as a percentage of the amount paid."
       },
       "campaignType": {
         "multiplier": "Multiplier",

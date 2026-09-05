@@ -17,6 +17,7 @@ const ACTION_KEYS = [
   'redemptionDelivered', 'redemptionCancelConfirm', 'redemptionCancelFailed', 'redemptionCancelled',
   'movementsPermissionDenied', 'movementsLoadFailed', 'alertsPermissionDenied', 'alertsLoadFailed',
   'campaignsPermissionDenied', 'campaignsLoadFailed',
+  'all', 'smartRuleHelp.bookingCredit', 'smartRuleHelp.internalConversion', 'smartRuleHelp.calculationMode',
 ].map((key) => `admin.padcoins.${key}`);
 
 describe('PadCoins campaign action internationalization', () => {

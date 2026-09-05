@@ -14,6 +14,7 @@ const KEYS = [
   'admin.sedes.photoMustBeInGallery', 'admin.sedes.heroPhotoUpdated',
   'admin.scoreboard.venuesLoadFailed', 'admin.scoreboard.matchesLoadFailed',
   'admin.scoreboard.matchLoadFailed',
+  'admin.scoreboard.copyLinkPrompt',
 ];
 
 describe('venue operation internationalization', () => {

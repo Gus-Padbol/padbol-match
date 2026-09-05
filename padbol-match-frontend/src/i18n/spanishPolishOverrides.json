@@ -19,7 +19,7 @@
       ,"heroPhotoUpdated": "Foto de portada actualizada"
     },
     "franjas": { "slotSaved": "✅ Franja guardada", "surgeSaved": "✅ Surge guardado", "surgeSaveFailed": "⚠️ No se pudo guardar Surge" },
-    "scoreboard": { "venuesLoadFailed": "No se pudieron cargar las sedes.", "matchesLoadFailed": "No se pudieron cargar los partidos.", "matchLoadFailed": "No se pudo cargar el partido." }
+    "scoreboard": { "venuesLoadFailed": "No se pudieron cargar las sedes.", "matchesLoadFailed": "No se pudieron cargar los partidos.", "matchLoadFailed": "No se pudo cargar el partido.", "copyLinkPrompt": "Copiá este enlace:" }
   },
   "armarPartido": { "singlesPickle": "Individual (2)" }
 }

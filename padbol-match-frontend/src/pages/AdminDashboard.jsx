@@ -458,7 +458,7 @@ function AdminScoreboardPartidoListItem({
   const verPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/display/${partido.sede_id}/scoreboard/${partido.id}`;
   const obsCopyTitle = t(
     'admin.scoreboard.obsCopyHint',
-    'Usá Browser Source en OBS con fondo transparente',
+    'Use Browser Source in OBS with a transparent background',
   );
   const torneo = String(partido.torneo_nombre || '').trim();
   const isPreviewOpen = previewPartidoId === partido.id;
@@ -469,7 +469,7 @@ function AdminScoreboardPartidoListItem({
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(''), 2000);
     } catch {
-      window.prompt('Copiá este link:', url);
+      window.prompt(t('admin.scoreboard.copyLinkPrompt'), url);
     }
   };
 
@@ -1215,26 +1215,24 @@ const PADCOINS_CONFIG_FIJAS_KEYS = [
 ];
 
 const PADCOINS_CONFIG_KEY_LABELS = {
-  partido_jugado: 'Partido jugado',
-  partido_ganado: 'Partido ganado',
-  logro_desbloqueado: 'Logro desbloqueado',
-  inscripcion_torneo: 'Inscripción a torneo',
-  reserva_confirmada: 'Reserva confirmada',
-  cancelacion_tarde: 'Cancelación tardía',
+  partido_jugado: 'Match played',
+  partido_ganado: 'Match won',
+  logro_desbloqueado: 'Achievement unlocked',
+  inscripcion_torneo: 'Tournament registration',
+  reserva_confirmada: 'Booking confirmed',
+  cancelacion_tarde: 'Late cancellation',
   no_show: 'No show',
-  limite_diario_jugador: 'Límite diario por jugador',
-  limite_mensual_jugador: 'Límite mensual por jugador',
-  porcentaje_devolucion_reserva: 'Acreditación promocional por reserva',
-  padcoins_por_usd_equivalente: 'Conversión interna de referencia',
-  modo_calculo_reserva: 'Modo de cálculo de reservas',
+  limite_diario_jugador: 'Daily limit per player',
+  limite_mensual_jugador: 'Monthly limit per player',
+  porcentaje_devolucion_reserva: 'Promotional credit per booking',
+  padcoins_por_usd_equivalente: 'Internal reference conversion',
+  modo_calculo_reserva: 'Booking calculation mode',
 };
 
 const PADCOINS_CONFIG_KEY_HELP = {
-  porcentaje_devolucion_reserva:
-    'Porcentaje del valor de la reserva que se acredita al jugador en PadCoins. Lanzamiento recomendado: 5%.',
-  padcoins_por_usd_equivalente:
-    'Conversión interna de referencia para calcular PadCoins. No se muestra como valor monetario al jugador.',
-  modo_calculo_reserva: 'Calcula PadCoins como porcentaje del valor pagado.',
+  porcentaje_devolucion_reserva: 'admin.padcoins.smartRuleHelp.bookingCredit',
+  padcoins_por_usd_equivalente: 'admin.padcoins.smartRuleHelp.internalConversion',
+  modo_calculo_reserva: 'admin.padcoins.smartRuleHelp.calculationMode',
 };
 
 const PC_SEDE_SMART_RULE_KEYS = [
@@ -1247,17 +1245,6 @@ const PC_SEDE_SMART_RULE_KEYS = [
   'modo_calculo_reserva',
   'logro_desbloqueado',
 ];
-
-const PC_SEDE_SMART_RULE_LABELS = {
-  limite_diario_jugador: 'Límite diario por jugador',
-  limite_mensual_jugador: 'Límite mensual por jugador',
-  cancelacion_tarde: 'Penalización por cancelación tardía',
-  no_show: 'Penalización por no-show',
-  porcentaje_devolucion_reserva: 'Porcentaje de devolución por reserva',
-  padcoins_por_usd_equivalente: 'PadCoins por USD equivalente',
-  modo_calculo_reserva: 'Modo de cálculo de reserva',
-  logro_desbloqueado: 'PadCoins por logro desbloqueado',
-};
 
 const PC_SEDE_SMART_RULE_EN_LABELS = {
   limite_diario_jugador: 'Daily limit per player',
@@ -1562,13 +1549,13 @@ function buildPadcoinsCampaignPayload(form, sedeId) {
   return payload;
 }
 
-function padcoinsCampaignSedeNombre(campaign, sedesMapRef, pcSedesOptions) {
+function padcoinsCampaignSedeNombre(campaign, sedesMapRef, pcSedesOptions, t) {
   const sid = campaign?.sede_id;
   if (sid == null || sid === '') return '—';
   return sedesMapRef[sid]?.nombre
     || sedesMapRef[String(sid)]?.nombre
     || pcSedesOptions.find((s) => String(s.id) === String(sid))?.nombre
-    || `Sede #${sid}`;
+    || t('admin.sponsors.venueRef', { id: sid });
 }
 
 function formatPadcoinsCampaignDateRange(campaign) {
@@ -1741,20 +1728,20 @@ function buildPcSedesOptions(sedesMapRef, participacionList) {
 const PC_MOV_PAGE_SIZE = 25;
 
 const PC_MOV_TIPO_FILTRO = [
-  { id: '', label: 'Todos los tipos' },
-  { id: 'earn', label: 'Acreditación' },
-  { id: 'spend', label: 'Canje / descuento' },
-  { id: 'adjust', label: 'Ajuste admin' },
-  { id: 'reverse', label: 'Reversa' },
+  { id: '', key: 'all' },
+  { id: 'earn', key: 'movementType.earn' },
+  { id: 'spend', key: 'movementType.spend' },
+  { id: 'adjust', key: 'movementType.adjust' },
+  { id: 'reverse', key: 'movementType.reverse' },
 ];
 
 const PC_MOV_REF_TIPO_FILTRO = [
-  { id: '', label: 'Toda referencia' },
-  { id: 'reserva', label: 'Reserva' },
-  { id: 'penalizacion', label: 'Penalización' },
-  { id: 'canje', label: 'Canje' },
-  { id: 'logro', label: 'Logro' },
-  { id: 'ajuste', label: 'Ajuste' },
+  { id: '', key: 'all' },
+  { id: 'reserva', key: 'movementReference.reserva' },
+  { id: 'penalizacion', key: 'movementReference.penalizacion' },
+  { id: 'canje', key: 'movementReference.canje' },
+  { id: 'logro', key: 'movementReference.logro' },
+  { id: 'ajuste', key: 'movementReference.ajuste' },
 ];
 
 function parsePadcoinsMovimientosResponse(data) {
@@ -1769,12 +1756,12 @@ function parsePadcoinsMovimientosResponse(data) {
 function padcoinsMovRefTipoLabel(rt, t) {
   const key = String(rt || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const map = {
-    canje_premio: 'Canje',
-    canje: 'Canje',
-    penalizacion: 'Penalización',
-    reserva: 'Reserva',
-    logro: 'Logro',
-    ajuste: 'Ajuste',
+    canje_premio: 'Redemption',
+    canje: 'Redemption',
+    penalizacion: 'Penalty',
+    reserva: 'Booking',
+    logro: 'Achievement',
+    ajuste: 'Adjustment',
   };
   const fallback = map[key] || (rt ? String(rt) : '');
   return t ? t(`admin.padcoins.movementReference.${key}`, { defaultValue: fallback }) : fallback;
@@ -1812,17 +1799,17 @@ function padcoinsMovTipoBadge(row, t) {
   const tipo = String(row?.tipo || '').trim().toLowerCase();
   const refTipo = String(row?.referencia_tipo || '').trim().toLowerCase();
   if (refTipo === 'penalizacion' || refTipo === 'penalización') {
-    return { label: t ? t('admin.padcoins.movementType.penalty', 'Penalización') : 'Penalización', bg: '#fee2e2', color: '#991b1b' };
+    return { label: t ? t('admin.padcoins.movementType.penalty', 'Penalty') : 'Penalty', bg: '#fee2e2', color: '#991b1b' };
   }
   if (refTipo === 'reserva') {
-    return { label: t ? t('admin.padcoins.movementType.booking', 'Reserva') : 'Reserva', bg: '#dbeafe', color: '#1e40af' };
+    return { label: t ? t('admin.padcoins.movementType.booking', 'Booking') : 'Booking', bg: '#dbeafe', color: '#1e40af' };
   }
-  if (tipo === 'earn') return { label: t ? t('admin.padcoins.movementType.earn', 'Acreditación') : 'Acreditación', bg: '#dcfce7', color: '#166534' };
-  if (tipo === 'spend') return { label: t ? t('admin.padcoins.movementType.spend', 'Canje / descuento') : 'Canje / descuento', bg: '#fef3c7', color: '#92400e' };
-  if (tipo === 'adjust') return { label: t ? t('admin.padcoins.movementType.adjust', 'Ajuste admin') : 'Ajuste admin', bg: '#e0e7ff', color: '#3730a3' };
-  if (tipo === 'reverse') return { label: t ? t('admin.padcoins.movementType.reverse', 'Reversa') : 'Reversa', bg: '#f3e8ff', color: '#6b21a8' };
+  if (tipo === 'earn') return { label: t ? t('admin.padcoins.movementType.earn', 'Credit') : 'Credit', bg: '#dcfce7', color: '#166534' };
+  if (tipo === 'spend') return { label: t ? t('admin.padcoins.movementType.spend', 'Redemption / discount') : 'Redemption / discount', bg: '#fef3c7', color: '#92400e' };
+  if (tipo === 'adjust') return { label: t ? t('admin.padcoins.movementType.adjust', 'Admin adjustment') : 'Admin adjustment', bg: '#e0e7ff', color: '#3730a3' };
+  if (tipo === 'reverse') return { label: t ? t('admin.padcoins.movementType.reverse', 'Reversal') : 'Reversal', bg: '#f3e8ff', color: '#6b21a8' };
   if (tipo) return { label: tipo, bg: 'var(--bg-page)', color: 'var(--text-muted)' };
-  return { label: t ? t('admin.padcoins.movementType.default', 'Movimiento') : 'Movimiento', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
+  return { label: t ? t('admin.padcoins.movementType.default', 'Movement') : 'Movement', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
 }
 
 function padcoinsMovMontoDisplay(monto) {
@@ -1843,21 +1830,21 @@ function padcoinsMovMontoColor(monto) {
 const PC_ALERT_PAGE_SIZE = 20;
 
 const PC_ALERT_SEVERIDAD_FILTRO = [
-  { id: '', label: 'Todas las severidades' },
-  { id: 'alta', label: 'Alta (crítica / revisar)' },
-  { id: 'media', label: 'Media (atención)' },
-  { id: 'baja', label: 'Baja (informativa)' },
+  { id: '', key: 'all' },
+  { id: 'alta', key: 'alertSeverity.high' },
+  { id: 'media', key: 'alertSeverity.medium' },
+  { id: 'baja', key: 'alertSeverity.low' },
 ];
 
 const PC_ALERT_TIPO_FILTRO = [
-  { id: '', label: 'Todos los tipos' },
-  { id: 'campania_identificada', label: 'Campaña detectada' },
-  { id: 'volumen_anormal', label: 'Actividad poco habitual' },
-  { id: 'acreditacion_masiva', label: 'Acreditaciones inusuales' },
-  { id: 'uso_concentrado', label: 'Uso concentrado' },
-  { id: 'canje_masivo', label: 'Canjes inusuales' },
-  { id: 'ajuste_frecuente', label: 'Ajustes frecuentes' },
-  { id: 'posible_abuso', label: 'Posible abuso' },
+  { id: '', key: 'all' },
+  { id: 'campania_identificada', key: 'alertType.campania_identificada' },
+  { id: 'volumen_anormal', key: 'alertType.volumen_anormal' },
+  { id: 'acreditacion_masiva', key: 'alertType.acreditacion_masiva' },
+  { id: 'uso_concentrado', key: 'alertType.uso_concentrado' },
+  { id: 'canje_masivo', key: 'alertType.canje_masivo' },
+  { id: 'ajuste_frecuente', key: 'alertType.ajuste_frecuente' },
+  { id: 'posible_abuso', key: 'alertType.posible_abuso' },
 ];
 
 function parsePadcoinsAlertasResponse(data) {
@@ -14824,7 +14811,7 @@ export default function AdminDashboard({
               </div>
               {help ? (
                 <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
-                  {help}
+                  {t(help)}
                 </p>
               ) : null}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
@@ -15421,7 +15408,7 @@ export default function AdminDashboard({
                                 <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, verticalAlign: 'top' }}>
                                   {t(
                                     `admin.padcoins.smartRules.${key}`,
-                                    PC_SEDE_SMART_RULE_EN_LABELS[key] || PC_SEDE_SMART_RULE_LABELS[key] || padcoinsConfigKeyLabel(key, t),
+                                    PC_SEDE_SMART_RULE_EN_LABELS[key] || padcoinsConfigKeyLabel(key, t),
                                   )}
                                 </td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
@@ -16117,7 +16104,7 @@ export default function AdminDashboard({
                                 ) : null}
                               </td>
                               <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
-                                {padcoinsCampaignSedeNombre(campaign, sedesMap, pcSedesOptions)}
+                                {padcoinsCampaignSedeNombre(campaign, sedesMap, pcSedesOptions, t)}
                               </td>
                               <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
                                 {padcoinsCampaignTypeLabel(campaign.campaign_type, t)}
@@ -16863,7 +16850,7 @@ export default function AdminDashboard({
                       </span>
                       <select value={pcAlertFiltroSeveridad} onChange={(e) => setPcAlertFiltroSeveridad(e.target.value)} style={pcInp}>
                         {PC_ALERT_SEVERIDAD_FILTRO.map((opt) => (
-                          <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                          <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                         ))}
                       </select>
                     </label>
@@ -16873,7 +16860,7 @@ export default function AdminDashboard({
                       </span>
                       <select value={pcAlertFiltroTipo} onChange={(e) => setPcAlertFiltroTipo(e.target.value)} style={pcInp}>
                         {PC_ALERT_TIPO_FILTRO.map((opt) => (
-                          <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                          <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                         ))}
                       </select>
                     </label>
@@ -17220,7 +17207,7 @@ export default function AdminDashboard({
                     </span>
                     <select value={pcMovFiltroTipo} onChange={(e) => setPcMovFiltroTipo(e.target.value)} style={pcInp}>
                       {PC_MOV_TIPO_FILTRO.map((opt) => (
-                        <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                        <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                       ))}
                     </select>
                   </label>
@@ -17230,7 +17217,7 @@ export default function AdminDashboard({
                     </span>
                     <select value={pcMovFiltroRefTipo} onChange={(e) => setPcMovFiltroRefTipo(e.target.value)} style={pcInp}>
                       {PC_MOV_REF_TIPO_FILTRO.map((opt) => (
-                        <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                        <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                       ))}
                     </select>
                   </label>

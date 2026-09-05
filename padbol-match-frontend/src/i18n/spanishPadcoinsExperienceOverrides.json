@@ -1,6 +1,12 @@
 {
   "admin": {
     "padcoins": {
+      "all": "Todos",
+      "smartRuleHelp": {
+        "bookingCredit": "Porcentaje del valor de la reserva que se acredita al jugador en PadCoins. Valor recomendado para el lanzamiento: 5%.",
+        "internalConversion": "Conversión interna de referencia utilizada para calcular PadCoins. No se muestra al jugador como valor monetario.",
+        "calculationMode": "Calcula los PadCoins como porcentaje del importe pagado."
+      },
       "campaignsTitle": "Campañas automáticas",
       "campaignsNew": "Nueva campaña",
       "campaignsVenueFilter": "Filtrar por sede",
