@@ -186,11 +186,11 @@ export function WhatIsSection() {
               key={sport.id}
               className={activeSport === sport.id ? 'is-active' : ''}
               src={`${ASSET_ROOT}/${sport.image}`}
-              alt={`${sport.label}: una experiencia disponible en Padbol Match`}
+              alt={`${text(`publicSite.sports.${sport.id}`)} · Padbol Match`}
               loading="eager"
             />
           ))}
-          <div className="ps-what__sports-tabs" role="tablist" aria-label="Deportes disponibles en Padbol Match">
+          <div className="ps-what__sports-tabs" role="tablist" aria-label={text('publicSite.whatIs.title')}>
             {WHAT_IS_SPORTS.map((sport) => (
               <button
                 key={sport.id}
@@ -200,7 +200,7 @@ export function WhatIsSection() {
                 className={activeSport === sport.id ? 'is-active' : ''}
                 onClick={() => setActiveSport(sport.id)}
               >
-                {sport.label}
+                {text(`publicSite.sports.${sport.id}`)}
               </button>
             ))}
           </div>
@@ -255,7 +255,7 @@ export function PlayerPathSection() {
           </li>
         ))}
       </ul>
-      <div className="ps-player-deck" aria-label="Recorrido para jugadores">
+      <div className="ps-player-deck" aria-label={text('publicSite.playerPath.title')}>
         {config.items.map(({ key }, index) => (
           <button key={key} type="button" className="ps-player-deck__card">
             <span className="ps-player-deck__number">{String(index + 1).padStart(2, '0')}</span>
@@ -674,12 +674,12 @@ function ScoreboardVideo({ text }) {
   );
 }
 
-function ScoreboardSnapshot() {
+function ScoreboardSnapshot({ text }) {
   return (
     <figure className="ps-scoreboard__snapshot" data-ps-reveal data-ps-reveal-order="1">
       <img
         src={`${ASSET_ROOT}/marcador-inteligente-captura.jpg`}
-        alt="Marcador Padbol Match durante un partido"
+        alt={text('publicSite.smartScoreboard.title')}
         loading="eager"
       />
     </figure>
@@ -705,7 +705,7 @@ export function SmartScoreboardSection() {
           <p className="ps-lead">{text('publicSite.smartScoreboard.text')}</p>
         </div>
         <div className="ps-scoreboard__visual">
-          <ScoreboardSnapshot />
+          <ScoreboardSnapshot text={text} />
           <ScoreboardVideo text={text} />
           <div className="ps-scoreboard__sponsor-slots" aria-label={text('publicSite.smartScoreboard.sponsorSlots.aria')}>
             <article className="ps-scoreboard__sponsor-slot">
@@ -721,13 +721,15 @@ export function SmartScoreboardSection() {
               <strong>{text('publicSite.smartScoreboard.sponsorSlots.closing.title')}</strong>
               <p>{text('publicSite.smartScoreboard.sponsorSlots.closing.text')}</p>
               <div className="ps-scoreboard__closing-ad" aria-hidden="true">
-                <i>✓</i><b>RESULTADO REGISTRADO</b><em>ESPACIO PARA MARCA</em>
+                <i>✓</i>
+                <b>{text('publicSite.continuity.items.results.title')}</b>
+                <em>{text('publicSite.smartScoreboard.sponsorSlots.closing.title')}</em>
               </div>
             </article>
           </div>
         </div>
         <div className="ps-scoreboard__steps">
-          <ol className="ps-flow-steps ps-flow-steps--scoreboard" aria-label="Pasos del marcador inteligente">
+          <ol className="ps-flow-steps ps-flow-steps--scoreboard" aria-label={text('publicSite.smartScoreboard.title')}>
             {config.steps.map(({ key }, index) => (
               <li key={key}>
                 <span className="ps-flow-steps__num" aria-hidden="true">
@@ -741,7 +743,7 @@ export function SmartScoreboardSection() {
             ))}
           </ol>
           <p className="ps-scoreboard__swipe-hint" aria-hidden="true">
-            <span>Desliza para recorrer los 5 pasos</span>
+            <span>{text('publicSite.playerPath.tapNext')}</span>
             <b>→</b>
           </p>
         </div>
