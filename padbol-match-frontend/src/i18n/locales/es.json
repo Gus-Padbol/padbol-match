@@ -855,7 +855,12 @@
       "replyRequired": "La respuesta no puede estar vacía",
       "saveReply": "Publicar respuesta",
       "savingReply": "Guardando…",
-      "replyError": "No se pudo guardar la respuesta"
+      "replyError": "No se pudo guardar la respuesta",
+      "playerFallback": "Jugador",
+      "ratingAria": "{{count}} de 5 estrellas",
+      "showingRecent": "Mostrando las {{shown}} más recientes de {{total}} reseñas.",
+      "showLess": "Ver menos reseñas",
+      "showAll": "Ver todas las reseñas ({{count}})"
     },
     "tabs": {
       "resumen": "Resumen",

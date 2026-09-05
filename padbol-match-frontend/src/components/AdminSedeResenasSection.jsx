@@ -6,9 +6,9 @@ import './ResenasSede.css';
 const REPLY_MAX_CHARS = 1000;
 const PREVIEW_COUNT = 3;
 
-function resenaDisplayName(r) {
+function resenaDisplayName(r, t) {
   const nombrePartes = [r?.autor?.nombre, r?.autor?.apellido].filter(Boolean).join(' ').trim();
-  return String(r?.display_name || nombrePartes || r?.nombre || '').trim() || 'Jugador';
+  return String(r?.display_name || nombrePartes || r?.nombre || '').trim() || t('admin.resenas.playerFallback');
 }
 
 function formatFecha(iso, locale) {
@@ -18,10 +18,10 @@ function formatFecha(iso, locale) {
   return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function EstrellasLectura({ value }) {
+function EstrellasLectura({ value, t }) {
   const v = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
   return (
-    <span className="reseñas-sede__stars" aria-label={`${v} de 5 estrellas`}>
+    <span className="reseñas-sede__stars" aria-label={t('admin.resenas.ratingAria', { count: v })}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
@@ -48,7 +48,7 @@ function ResenaItem({
   t,
   dateLocale,
 }) {
-  const displayName = resenaDisplayName(row);
+  const displayName = resenaDisplayName(row, t);
   const hasReply = Boolean(String(row.respuesta_admin || '').trim());
   const isOpen = replyOpenId === row.id;
 
@@ -57,7 +57,7 @@ function ResenaItem({
       <div className="reseñas-sede__body" style={{ width: '100%' }}>
         <div className="reseñas-sede__head">
           <span className="reseñas-sede__name">{displayName}</span>
-          <EstrellasLectura value={row.estrellas} />
+          <EstrellasLectura value={row.estrellas} t={t} />
           <span className="reseñas-sede__date">{formatFecha(row.created_at, dateLocale)}</span>
         </div>
         {String(row.comentario || '').trim() ? (
@@ -236,7 +236,7 @@ export default function AdminSedeResenasSection({ apiBaseUrl, accessToken, sedeI
         <>
           {!showAll && hasMore ? (
             <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--text-secondary)' }}>
-              Mostrando las {Math.min(PREVIEW_COUNT, rows.length)} más recientes de {rows.length} reseñas.
+              {t('admin.resenas.showingRecent', { shown: Math.min(PREVIEW_COUNT, rows.length), total: rows.length })}
             </p>
           ) : null}
           <div className="reseñas-sede__list">
@@ -253,7 +253,7 @@ export default function AdminSedeResenasSection({ apiBaseUrl, accessToken, sedeI
                 cancelReply();
               }}
             >
-              {showAll ? 'Ver menos reseñas' : `Ver todas las reseñas (${rows.length})`}
+              {showAll ? t('admin.resenas.showLess') : t('admin.resenas.showAll', { count: rows.length })}
             </button>
           ) : null}
         </>

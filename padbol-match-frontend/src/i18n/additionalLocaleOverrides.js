@@ -327,6 +327,36 @@ const czechPublicSite = {
 };
 
 export const ADDITIONAL_LOCALE_OVERRIDES = {
+  de: { admin: { resenas: {
+    playerFallback: "Spieler", ratingAria: "{{count}} von 5 Sternen",
+    showingRecent: "Die {{shown}} neuesten von {{total}} Bewertungen werden angezeigt.",
+    showLess: "Weniger Bewertungen anzeigen", showAll: "Alle Bewertungen anzeigen ({{count}})",
+  } } },
+  ar: { admin: { resenas: {
+    playerFallback: "لاعب", ratingAria: "{{count}} من 5 نجوم",
+    showingRecent: "يتم عرض أحدث {{shown}} من أصل {{total}} مراجعة.",
+    showLess: "عرض مراجعات أقل", showAll: "عرض جميع المراجعات ({{count}})",
+  } } },
+  fr: { admin: { resenas: {
+    playerFallback: "Joueur", ratingAria: "{{count}} étoiles sur 5",
+    showingRecent: "Affichage des {{shown}} avis les plus récents sur {{total}}.",
+    showLess: "Afficher moins d’avis", showAll: "Afficher tous les avis ({{count}})",
+  } } },
+  it: { admin: { resenas: {
+    playerFallback: "Giocatore", ratingAria: "{{count}} stelle su 5",
+    showingRecent: "Sono visualizzate le {{shown}} recensioni più recenti su {{total}}.",
+    showLess: "Mostra meno recensioni", showAll: "Mostra tutte le recensioni ({{count}})",
+  } } },
+  ro: { admin: { resenas: {
+    playerFallback: "Jucător", ratingAria: "{{count}} din 5 stele",
+    showingRecent: "Se afișează cele mai recente {{shown}} din {{total}} recenzii.",
+    showLess: "Afișează mai puține recenzii", showAll: "Afișează toate recenziile ({{count}})",
+  } } },
+  "pt-BR": { admin: { resenas: {
+    playerFallback: "Jogador", ratingAria: "{{count}} de 5 estrelas",
+    showingRecent: "Mostrando as {{shown}} avaliações mais recentes de {{total}}.",
+    showLess: "Mostrar menos avaliações", showAll: "Mostrar todas as avaliações ({{count}})",
+  } } },
   'fa-IR': locale(
     { language: 'زبان', loading: 'در حال بارگذاری…', confirm: 'تأیید', cancel: 'لغو', close: 'بستن', save: 'ذخیره', edit: 'ویرایش', delete: 'حذف', search: 'جستجو', back: 'بازگشت', continue: 'ادامه', accept: 'پذیرفتن', optional: 'اختیاری' },
     { mainAria: 'ناوبری اصلی', perfil: 'نمایه', jugar: 'بازی', competir: 'رقابت', notificaciones: 'اعلان‌ها', search: 'جستجو', logout: 'خروج', backToHub: 'بازگشت', myProfile: 'نمایه من', adminPanel: 'پنل مدیریت' },
@@ -1247,6 +1277,9 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
           respond: "Odpovědět", editReply: "Upravit odpověď", replyPlaceholder: "Napište odpověď klubu…",
           replyRequired: "Odpověď nesmí být prázdná", saveReply: "Zveřejnit odpověď",
           savingReply: "Ukládání…", replyError: "Odpověď se nepodařilo uložit",
+          playerFallback: "Hráč", ratingAria: "{{count}} z 5 hvězdiček",
+          showingRecent: "Zobrazeny {{shown}} nejnovější z {{total}} recenzí.",
+          showLess: "Zobrazit méně recenzí", showAll: "Zobrazit všechny recenze ({{count}})",
         },
       },
       paises: {

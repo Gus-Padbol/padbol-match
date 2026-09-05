@@ -831,7 +831,12 @@
       "replyRequired": "Reply cannot be empty",
       "saveReply": "Publish reply",
       "savingReply": "Saving…",
-      "replyError": "Could not save reply"
+      "replyError": "Could not save reply",
+      "playerFallback": "Player",
+      "ratingAria": "{{count}} out of 5 stars",
+      "showingRecent": "Showing the {{shown}} most recent of {{total}} reviews.",
+      "showLess": "Show fewer reviews",
+      "showAll": "Show all reviews ({{count}})"
     },
     "tabs": {
       "resumen": "Overview",

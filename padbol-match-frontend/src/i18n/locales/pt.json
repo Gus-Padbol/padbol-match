@@ -612,6 +612,13 @@
       "padcoinsUnavailable": "PadCoins is not available for your role.",
       "sponsorsInConfig": "Sponsors is available inside Settings."
     },
+    "resenas": {
+      "playerFallback": "Jogador",
+      "ratingAria": "{{count}} de 5 estrelas",
+      "showingRecent": "Mostrando as {{shown}} avaliações mais recentes de {{total}}.",
+      "showLess": "Mostrar menos avaliações",
+      "showAll": "Mostrar todas as avaliações ({{count}})"
+    },
     "tabs": {
       "resumen": "Resumo",
       "sedes": "Sede",
