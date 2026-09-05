@@ -169,6 +169,29 @@
     "paises_bajos": "Țările de Jos",
     "suiza": "Elveția"
   },
+  "partidosAbiertos": {
+    "emptyTitle": "Nu există meciuri deschise. Creează primul meci!",
+    "emptyFilterHint": "Încearcă un alt sport din selectorul de mai sus.",
+    "emptyNoFilterHint": "Publică primul meci și completează locurile în câteva minute.",
+    "armarPartido": "Creează un meci",
+    "loadError": "Meciurile nu au putut fi încărcate.",
+    "networkError": "Eroare de rețea",
+    "sendRequestError": "Solicitarea nu a putut fi trimisă.",
+    "updateRequestError": "Solicitarea nu a putut fi actualizată.",
+    "requestAccepted": "Jucător acceptat. Meciul a fost actualizat.",
+    "requestRejected": "Solicitare respinsă.",
+    "manageRequestError": "Solicitarea nu a putut fi gestionată.",
+    "joinSuccessTitle": "Te-ai înscris cu succes!",
+    "joinSuccessBody": "Căpitanul va vedea solicitarea ta. Te vom anunța când îți confirmă locul.",
+    "myMatches": "Mergi la meciurile mele",
+    "requestsTitle": "Solicitări pentru meciurile tale",
+    "wantsToPlayAt": "Vrea să joace la {{venue}}",
+    "yourMatch": "meciul tău",
+    "accept": "Acceptă",
+    "reject": "Respinge",
+    "loadingMatches": "Se încarcă meciurile…",
+    "seeMoreMatches": "Vezi mai multe meciuri"
+  },
   "sedes": {
     "listado": {
       "header": "Cluburi",

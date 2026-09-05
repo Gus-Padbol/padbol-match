@@ -92,15 +92,15 @@ export default function PartidosAbiertos() {
     fetch(`${API_BASE}/api/partidos-abiertos`)
       .then(async (r) => {
         const { ok, data, isJson } = await parseFetchJsonSafe(r);
-        if (!ok || !isJson) throw new Error('No se pudieron cargar los partidos');
+        if (!ok || !isJson) throw new Error(t('partidosAbiertos.loadError'));
         return data;
       })
       .then((data) => {
         setPartidos(Array.isArray(data) ? data : []);
       })
-      .catch((err) => setMsg(err.message || 'Error de red'))
+      .catch((err) => setMsg(err.message || t('partidosAbiertos.networkError')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     cargar();
@@ -171,12 +171,12 @@ export default function PartidosAbiertos() {
         body: JSON.stringify({}),
       });
       const { ok, data, isJson } = await parseFetchJsonSafe(res);
-      if (!ok || !isJson) throw new Error((data && data.error) || 'No se pudo enviar la solicitud');
+      if (!ok || !isJson) throw new Error((data && data.error) || t('partidosAbiertos.sendRequestError'));
       if (data?.error) throw new Error(data.error);
       setJoinSuccess(true);
       setMsg('');
     } catch (err) {
-      setMsg(err.message || 'Error al enviar solicitud');
+      setMsg(err.message || t('partidosAbiertos.sendRequestError'));
     } finally {
       setJoiningId(null);
     }
@@ -194,13 +194,17 @@ export default function PartidosAbiertos() {
         body: JSON.stringify({ estado }),
       });
       const { ok, data, isJson } = await parseFetchJsonSafe(res);
-      if (!ok || !isJson) throw new Error('No se pudo actualizar la solicitud');
+      if (!ok || !isJson) throw new Error(t('partidosAbiertos.updateRequestError'));
       if (data?.error) throw new Error(data.error);
-      setMsg(estado === 'aceptada' ? 'Jugador aceptado. El partido fue actualizado.' : 'Solicitud rechazada.');
+      setMsg(
+        estado === 'aceptada'
+          ? t('partidosAbiertos.requestAccepted')
+          : t('partidosAbiertos.requestRejected')
+      );
       cargar();
       await cargarSolicitudes();
     } catch (err) {
-      setMsg(err.message || 'Error al gestionar solicitud');
+      setMsg(err.message || t('partidosAbiertos.manageRequestError'));
     } finally {
       setUpdatingSolicitudId(null);
     }
@@ -272,9 +276,9 @@ export default function PartidosAbiertos() {
             >
               <IconGeroCheck size={30} style={{ color: '#fff' }} />
             </div>
-            <h2 style={{ margin: '0 0 8px', color: 'var(--text-primary)', fontSize: 20, fontWeight: 700 }}>¡Te has unido con éxito!</h2>
+            <h2 style={{ margin: '0 0 8px', color: 'var(--text-primary)', fontSize: 20, fontWeight: 700 }}>{t('partidosAbiertos.joinSuccessTitle')}</h2>
             <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 400 }}>
-              El capitán verá tu solicitud. Te avisaremos cuando confirme tu cupo.
+              {t('partidosAbiertos.joinSuccessBody')}
             </p>
             <button
               type="button"
@@ -292,7 +296,7 @@ export default function PartidosAbiertos() {
                 cursor: 'pointer',
               }}
             >
-              Ir a mis partidos
+              {t('partidosAbiertos.myMatches')}
             </button>
           </section>
         ) : null}
@@ -326,13 +330,15 @@ export default function PartidosAbiertos() {
               border: '1px solid var(--border)',
             }}
           >
-            <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 17, fontWeight: 700 }}>Solicitudes para tus partidos</h2>
+            <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 17, fontWeight: 700 }}>{t('partidosAbiertos.requestsTitle')}</h2>
             <div style={{ display: 'grid', gap: 10 }}>
               {solicitudes.map((s) => (
                 <div key={s.id} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
                   <strong style={{ display: 'block', color: 'var(--text-primary)', fontSize: 14, fontWeight: 700 }}>{s.jugador_nombre}</strong>
                   <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, fontWeight: 400 }}>
-                    Quiere jugar en {s.partido?.sede_nombre || 'tu partido'} · {String(s.partido?.hora || '').slice(0, 5)}
+                    {t('partidosAbiertos.wantsToPlayAt', {
+                      venue: s.partido?.sede_nombre || t('partidosAbiertos.yourMatch'),
+                    })} · {String(s.partido?.hora || '').slice(0, 5)}
                   </span>
                   <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                     <button
@@ -350,7 +356,7 @@ export default function PartidosAbiertos() {
                         cursor: 'pointer',
                       }}
                     >
-                      Aceptar
+                      {t('partidosAbiertos.accept')}
                     </button>
                     <button
                       type="button"
@@ -367,7 +373,7 @@ export default function PartidosAbiertos() {
                         cursor: 'pointer',
                       }}
                     >
-                      Rechazar
+                      {t('partidosAbiertos.reject')}
                     </button>
                   </div>
                 </div>
@@ -377,7 +383,7 @@ export default function PartidosAbiertos() {
         ) : null}
 
         {loading ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 30, fontWeight: 400 }}>Cargando partidos...</p>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 30, fontWeight: 400 }}>{t('partidosAbiertos.loadingMatches')}</p>
         ) : partidosFiltradosOrdenados.length === 0 ? (
           <section
             style={{
@@ -424,7 +430,7 @@ export default function PartidosAbiertos() {
                 className="partidos-abiertos-ver-mas"
                 onClick={() => setPartidosVerTodos(true)}
               >
-                Ver más partidos →
+                {t('partidosAbiertos.seeMoreMatches')} →
               </button>
             ) : null}
           </div>
