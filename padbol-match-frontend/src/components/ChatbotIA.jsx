@@ -402,6 +402,13 @@ function chatUiStringsFromI18n(tr, loc) {
     confirmarTurnoAviso: tr('chatbot.confirmarTurnoAviso', { defaultValue: l === 'en' ? 'We will recheck availability before payment.' : l === 'pt' ? 'Vamos verificar a disponibilidade novamente antes do pagamento.' : 'Vamos a validar la disponibilidad otra vez antes del pago.' }),
     confirmarTurnoCta: tr('chatbot.confirmarTurnoCta', { defaultValue: l === 'en' ? 'Yes, continue' : l === 'pt' ? 'Sim, continuar' : 'Sí, continuar' }),
     cancelarTurnoCta: tr('chatbot.cancelarTurnoCta', { defaultValue: l === 'en' ? 'Choose another time' : l === 'pt' ? 'Escolher outro horário' : 'Elegir otro horario' }),
+    bookingConfirmSuccess: tr('chatbot.bookingConfirmSuccess', {
+      defaultValue: 'Perfect. I will open the booking summary so you can review it and complete payment.',
+    }),
+    bookingCancelSuccess: tr('chatbot.bookingCancelSuccess', {
+      defaultValue: 'No problem. Choose another available time when you are ready.',
+    }),
+    noReply: tr('chatbot.noReply', { defaultValue: 'No response.' }),
     deportesElegirTitulo: tr('chatbot.deportesElegirTitulo'),
     deporteElegirLabel: (slug) =>
       tr(`torneos.deporte.${slug}`, { defaultValue: deporteSlugDisplayLabel(slug, l) }),
@@ -1307,18 +1314,9 @@ export default function ChatbotIA() {
           { role: 'user', content: text },
           {
             role: 'assistant',
-            content:
-              bookingAnswer === 'confirm'
-                ? padbolLang === 'en'
-                  ? 'Perfect. I will open the booking summary so you can review it and complete payment.'
-                  : padbolLang === 'pt'
-                    ? 'Perfeito. Vou abrir o resumo da reserva para você revisar e concluir o pagamento.'
-                    : 'Perfecto. Voy a abrir el resumen de la reserva para que lo revises y completes el pago.'
-                : padbolLang === 'en'
-                  ? 'No problem. Choose another available time when you are ready.'
-                  : padbolLang === 'pt'
-                    ? 'Sem problema. Escolha outro horário disponível quando quiser.'
-                    : 'No hay problema. Elegí otro horario disponible cuando quieras.',
+            content: bookingAnswer === 'confirm'
+              ? ui.bookingConfirmSuccess
+              : ui.bookingCancelSuccess,
           },
         ]);
         const selectedHref = voiceBookingSelection.href;
@@ -1395,7 +1393,7 @@ export default function ChatbotIA() {
           }
           return;
         }
-        const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
+        const reply = String(data.respuesta || '').trim() || ui.noReply;
         const dispRaw = data.disponibilidad;
         let disp = null;
         if (dispRaw && dispRaw.sede_id != null && dispRaw.fecha) {
@@ -1461,6 +1459,7 @@ export default function ChatbotIA() {
       refreshSession,
       voiceBookingSelection,
       padbolLang,
+      ui,
       navigate,
       isPublicLanding,
     ]
@@ -1507,11 +1506,11 @@ export default function ChatbotIA() {
       const u = uiRef.current;
       setVoicePhase('idle');
       if (microphoneAccess.reason === 'denied') {
-        setError(u?.errMicDenied || 'Permiso de micrófono denegado.');
+        setError(u?.errMicDenied || 'Microphone permission denied.');
       } else if (microphoneAccess.reason === 'missing') {
-        setVoiceNotice(u?.sinVoz || 'No se detectó un micrófono.');
+        setVoiceNotice(u?.sinVoz || 'No microphone was detected.');
       } else {
-        setError(u?.errVoiceStart || 'No se pudo iniciar el micrófono.');
+        setError(u?.errVoiceStart || 'Could not start the microphone.');
       }
       return;
     }
@@ -1568,7 +1567,7 @@ export default function ChatbotIA() {
       }
       const u = uiRef.current;
       if (code === 'no-speech' || code === 'audio-capture') {
-        setVoiceNotice(u?.sinVoz || 'No se detectó voz. Intenta de nuevo.');
+        setVoiceNotice(u?.sinVoz || 'No voice was detected. Try again.');
       } else {
         setVoiceNotice(u?.noReconocer || 'No se pudo reconocer. Intenta de nuevo.');
       }
@@ -1631,7 +1630,7 @@ export default function ChatbotIA() {
       clearVoiceSilenceTimer();
       setVoicePhase('idle');
       const u = uiRef.current;
-      setError(u?.errVoiceStart || 'Error de voz.');
+      setError(u?.errVoiceStart || 'Voice error.');
     }
   }, [
     voicePhase,

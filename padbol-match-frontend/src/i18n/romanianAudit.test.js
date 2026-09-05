@@ -68,6 +68,11 @@ describe('Romanian audit', () => {
     expect(resolved['admin.guardar']).toBe('Salvează');
     expect(resolved['equipos.titulo']).toBe('Echipă');
     expect(resolved['chatbot.cerrar']).toBe('Închide');
+    expect(resolved['chatbot.franjaManana']).toBe('Dimineață');
+    expect(resolved['chatbot.slotsDisponiblesTitulo']).toMatch(/Intervale disponibile/iu);
+    expect(resolved['chatbot.confirmarTurnoTitulo']).toBe('Confirmă terenul');
+    expect(resolved['chatbot.bookingConfirmSuccess']).toMatch(/rezumatul rezervării/iu);
+    expect(resolved['chatbot.bookingCancelSuccess']).toMatch(/alt interval disponibil/iu);
     expect(resolved['pwa.close']).toBe('Închide');
   });
 });
