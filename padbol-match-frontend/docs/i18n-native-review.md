@@ -30,10 +30,10 @@ Este documento prepara la validación humana de Padbol Match web. Español e ing
 ## Situación técnica verificada
 
 - El selector ya contempla las 20 ediciones y conserva portugués y neerlandés por región.
-- Checo ya dispone de navegación, acciones generales y portada inicial traducidas.
+- Checo ya dispone de un borrador directo para toda la web pública y la aplicación interna, sin respaldo inglés.
 - Las claves todavía no traducidas muestran inglés en lugar de una clave técnica o una mezcla silenciosa con español.
-- Los catálogos públicos anteriores tienen 363 textos directos y ocho incorporaciones recientes pendientes por idioma.
-- La portada pública contiene 371 textos traducibles. Checo tiene la primera capa; el resto debe prepararse y luego revisarse de forma nativa.
+- Los 17 catálogos públicos generados ya incluyen los 371 textos directos, incluidas las ocho incorporaciones más recientes.
+- La portada pública contiene 371 textos traducibles y las 20 ediciones ya los cubren directamente; todas las versiones no editoriales deben revisarse de forma nativa.
 - Árabe, persa y hebreo requieren revisión visual completa de dirección RTL.
 
 ## Términos protegidos

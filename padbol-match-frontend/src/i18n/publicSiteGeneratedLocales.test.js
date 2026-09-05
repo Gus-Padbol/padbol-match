@@ -23,14 +23,16 @@ const mergeCatalog = (base, override) => {
 
 describe('public site translated catalogs', () => {
   const englishKeys = Object.keys(flatten(en.publicSite)).sort();
-  const generatedCodes = PADBOL_LANGUAGE_CODES.filter((code) => !['es', 'en'].includes(code));
+  const generatedCodes = PADBOL_LANGUAGE_CODES.filter((code) => !['es', 'en', 'cs'].includes(code));
 
   it.each(generatedCodes)('%s covers every public-site key without raw i18n keys', (code) => {
     // Producción construye cada idioma sobre el catálogo inglés completo y
     // luego aplica su traducción. El control debe validar ese catálogo efectivo.
     const catalog = flatten(mergeCatalog(en.publicSite, generated[code]));
     expect(Object.keys(catalog).sort()).toEqual(englishKeys);
-    expect(Object.values(catalog).join(' ')).not.toMatch(/publicSite\.[A-Za-z]/);
+    const copy = Object.values(catalog).join(' ');
+    expect(copy).not.toMatch(/publicSite\.[A-Za-z]/);
+    expect(copy).not.toMatch(/<[^>]*>|data-i=|data-var=|span=/i);
   });
 
   it('keeps the reported Hebrew experience section fully translated', () => {
