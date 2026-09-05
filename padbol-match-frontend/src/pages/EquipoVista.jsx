@@ -24,10 +24,8 @@ import {
 import { clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEquipoLocal';
 import {
   getEquipoInscripcionEstado,
-  etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
   precioInscripcionTorneo,
-  textoFechaLimiteConfirmacionInscripcion,
   torneoPermiteNuevasInscripciones,
 } from '../utils/torneoInscripcionPago';
 import useUserRole from '../hooks/useUserRole';
@@ -192,7 +190,7 @@ function aliasVisibleFilaEquipo(p, perfilByUserId) {
 /**
  * Avatar + nombre (click → preview) + @alias + 🎖️ capitán; `childrenDebajo` no dispara la navegación.
  */
-function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, childrenDebajo, onVerJugador }) {
+function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, childrenDebajo, onVerJugador, captainLabel }) {
   const label = jugadorNombreTorneoEtiqueta(p, ctx);
   const aliasRaw = aliasVisibleFilaEquipo(p, perfilByUserId);
   const clickable = Boolean(onVerJugador);
@@ -232,8 +230,8 @@ function JugadorFilaIzquierdaNavegable({ p, equipo, ctx, perfilByUserId, childre
           <span style={{ color: '#0f172a', textDecoration: 'none' }}>{label}</span>
           {esCapitanJugadorEnFila(p, equipo) ? (
             <span
-              title="Capitán"
-              aria-label="Capitán"
+              title={captainLabel}
+              aria-label={captainLabel}
               style={{ marginLeft: 4, fontSize: '1em', lineHeight: 1 }}
             >
               {ICONO_CAPITAN}
@@ -372,7 +370,7 @@ export default function EquipoVista() {
     [authEmailLower, torneo, sedeTorneoRow, rol, userSedeId, userPaisRol, fromAdminStrict, enRutaAdminEquipo]
   );
 
-  const tituloHeaderEquipo = esAdminGestionTorneoEq ? 'Equipo' : 'Mi Equipo';
+  const tituloHeaderEquipo = esAdminGestionTorneoEq ? t('equipos.titulo') : t('teamDetail.myTeam');
   const handleBackEquipoVista = () => {
     if (esAdminGestionTorneoEq && fromAdminStrict) {
       navigate('/admin');
@@ -767,11 +765,11 @@ export default function EquipoVista() {
       ? `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos?equipo=${encodeURIComponent(eid)}`
       : `https://padbol-match-9abn.vercel.app/torneo/${tid}/equipos`;
     const nombreTorneo = String(torneo?.nombre || '').trim() || 'Padbol';
-    const nombreSede = String(nombreSedeTorneo || '').trim() || 'la sede del torneo';
-    const nombreEquipo = String(equipo?.nombre || '').trim() || 'nuestro equipo';
-    const mensaje = `¡Hola! Te invito a jugar juntos el torneo de Padbol ${nombreTorneo} en ${nombreSede}. Somos el equipo ${nombreEquipo}. ¡Confirma tu lugar y nos vemos en la cancha! 🎯 ${link}`;
+    const nombreSede = String(nombreSedeTorneo || '').trim() || t('teamDetail.tournamentVenue');
+    const nombreEquipo = String(equipo?.nombre || '').trim() || t('teamDetail.ourTeam');
+    const mensaje = t('teamDetail.whatsappTournamentInvite', { tournament: nombreTorneo, venue: nombreSede, team: nombreEquipo, link });
     return `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  }, [id, equipoIdParam, torneo?.nombre, nombreSedeTorneo, equipo?.nombre]);
+  }, [id, equipoIdParam, torneo?.nombre, nombreSedeTorneo, equipo?.nombre, t]);
 
   const abrirCompartirLugarEquipoWa = () => {
     if (!urlCompartirLugarEquipoWa) return;
@@ -782,7 +780,7 @@ export default function EquipoVista() {
     const file = ev.target.files?.[0];
     if (!file || !equipoIdParam || !soyCreador) return;
     if (!String(file.type || '').startsWith('image/')) {
-      alert('Selecciona un archivo de imagen.');
+      alert(t('teamDetail.selectImage'));
       ev.target.value = '';
       return;
     }
@@ -797,7 +795,7 @@ export default function EquipoVista() {
           cacheControl: '3600',
         });
       if (upErr) {
-        alert(`No se pudo subir la foto: ${upErr.message}`);
+        alert(t('teamDetail.photoUploadFailed'));
         return;
       }
       const {
@@ -809,7 +807,7 @@ export default function EquipoVista() {
         .update({ foto_url: fotoUrl })
         .eq('id', Number(equipoIdParam));
       if (dbErr) {
-        alert(`No se pudo guardar la foto del equipo: ${dbErr.message}`);
+        alert(t('teamDetail.photoSaveFailed'));
         return;
       }
       setEquipo((prev) => (prev ? { ...prev, foto_url: fotoUrl } : prev));
@@ -826,7 +824,7 @@ export default function EquipoVista() {
       await invitarJugadorEquipo(Number(equipoIdParam), emailNorm);
     } catch (err) {
       console.error(err);
-      alert(err?.message || 'Error al reenviar');
+      alert(t('teamDetail.resendFailed'));
     } finally {
       setReenviandoEmail(null);
     }
@@ -847,7 +845,7 @@ export default function EquipoVista() {
   const renderPendienteDeConfirmar = (p, { conAccionesCreador }) => {
     const etiqueta = (
       <span style={{ fontSize: '13px', color: T.colorWarningSoft, fontWeight: 600 }}>
-        Pendiente de confirmar
+        {t('teamDetail.pendingConfirmation')}
       </span>
     );
     if (!conAccionesCreador) {
@@ -882,7 +880,7 @@ export default function EquipoVista() {
               cursor: urlCompartirLugarEquipoWa ? 'pointer' : 'default',
             }}
           >
-            Compartir link
+            {t('teamDetail.shareLink')}
           </button>
         ) : (
           <button
@@ -895,7 +893,7 @@ export default function EquipoVista() {
               cursor: reenviandoEmail === em ? 'default' : 'pointer',
             }}
           >
-            {reenviandoEmail === em ? 'Enviando…' : 'Reenviar invitación'}
+            {reenviandoEmail === em ? t('teamDetail.sending') : t('teamDetail.resendInvitation')}
           </button>
         )}
       </div>
@@ -988,30 +986,30 @@ export default function EquipoVista() {
       navigate(
         `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
         {
-          state: { avisoPerfilTorneo: 'Completa tu perfil para crear o unirte a un equipo' },
+          state: { avisoPerfilTorneo: t('teamDetail.completeProfileToJoin') },
         }
       );
       return;
     }
     if (equipo.equipo_abierto === false) {
-      alert('Este equipo es cerrado: solo el capitán puede sumar jugadores.');
+      alert(t('teamDetail.closedCaptainOnly'));
       return;
     }
     if (miEquipoEnTorneo) {
-      alert('Ya estás en un equipo');
+      alert(t('teamDetail.alreadyInTeam'));
       return;
     }
     if (miSolicitudEquipo && miSolicitudEquipo.id !== equipo.id) {
-      alert('Ya tienes una solicitud pendiente');
+      alert(t('teamDetail.pendingRequestExists'));
       return;
     }
     const cupo = Number(equipo.cupo_maximo || 2);
     if (players.length >= cupo) {
-      alert('Equipo completo');
+      alert(t('teamDetail.teamFull'));
       return;
     }
     if (requests.some((r) => samePerson(r, yo))) {
-      alert('Ya pediste unirte a este equipo');
+      alert(t('teamDetail.alreadyRequestedHere'));
       return;
     }
     const yoInscripcion = {
@@ -1027,7 +1025,7 @@ export default function EquipoVista() {
     setSavingSolicitud(false);
     if (error) {
       console.error(error);
-      alert('Error al pedir unirte');
+      alert(t('teamDetail.joinRequestFailed'));
       return;
     }
     cargarEquipo();
@@ -1043,7 +1041,7 @@ export default function EquipoVista() {
       setSavingSalirEquipo(false);
       if (error) {
         console.error(error);
-        alert('No se pudo eliminar el equipo');
+        alert(t('teamDetail.dissolveFailed'));
         return;
       }
       const hint = readEquipoActualForTorneo(tid);
@@ -1056,7 +1054,7 @@ export default function EquipoVista() {
       setSavingSalirEquipo(false);
       if (error) {
         console.error(error);
-        alert('No se pudo salir del equipo');
+        alert(t('teamDetail.leaveFailed'));
         return;
       }
       const hint = readEquipoActualForTorneo(tid);
@@ -1080,7 +1078,7 @@ export default function EquipoVista() {
       torneo.estado !== 'finalizado' &&
       insEq !== 'confirmado';
     if (!puedeEditarPlantel) {
-      alert('No puedes quitar jugadores: la inscripción del equipo ya está confirmada.');
+      alert(t('teamDetail.rosterLocked'));
       return;
     }
 
@@ -1092,7 +1090,7 @@ export default function EquipoVista() {
     setSavingEliminarJugador(false);
     if (error) {
       console.error(error);
-      alert('No se pudo eliminar al jugador del equipo');
+      alert(t('teamDetail.removePlayerFailed'));
       return;
     }
     setDialogoEliminarJugador(null);
@@ -1105,7 +1103,7 @@ export default function EquipoVista() {
 
     const cupo = Number(equipo.cupo_maximo || 2);
     if (players.length >= cupo) {
-      alert('Equipo completo');
+      alert(t('teamDetail.teamFull'));
       return;
     }
 
@@ -1115,7 +1113,7 @@ export default function EquipoVista() {
         await invitarJugadorEquipo(Number(equipoIdParam), inviteEmail);
       } catch (err) {
         console.error(err);
-        alert(err?.message || 'Error al aceptar');
+        alert(t('teamDetail.acceptFailed'));
         return;
       }
       cargarEquipo();
@@ -1142,7 +1140,7 @@ export default function EquipoVista() {
 
     if (error) {
       console.error(error);
-      alert('Error al aceptar');
+      alert(t('teamDetail.acceptFailed'));
       return;
     }
 
@@ -1162,7 +1160,7 @@ export default function EquipoVista() {
 
     if (error) {
       console.error(error);
-      alert('Error al rechazar');
+      alert(t('teamDetail.rejectFailed'));
       return;
     }
 
@@ -1179,17 +1177,17 @@ export default function EquipoVista() {
       torneo.estado !== 'finalizado' &&
       insEq !== 'confirmado';
     if (equipo.equipo_abierto === false && !puedeEditarPlantel) {
-      alert('Equipo cerrado: solo puedes invitar con el link; no se suman jugadores desde la búsqueda.');
+      alert(t('teamDetail.closedInviteOnly'));
       return;
     }
     if (row?.disponibilidad === 'tiene_equipo') {
-      alert('Ese jugador ya tiene equipo en este torneo.');
+      alert(t('teamDetail.playerAlreadyHasTeam'));
       return;
     }
     const uid = row?.user_id != null && row.user_id !== '' ? String(row.user_id) : '';
     const email = String(row.email || '').trim().toLowerCase();
     if (!email || !uid) {
-      alert('Ese perfil no tiene email vinculado. Usa «Invitar por WhatsApp».');
+      alert(t('teamDetail.profileWithoutEmail'));
       return;
     }
     let fullRow = row;
@@ -1203,13 +1201,13 @@ export default function EquipoVista() {
     }
     if (!perfilTorneoCompletoDesdeFilaJp(fullRow)) {
       alert(
-        'Este jugador no tiene la ficha completa para torneos (WhatsApp, género, categoría, lateralidad). Invitalo con «Invitar por WhatsApp».'
+        t('teamDetail.playerProfileIncomplete')
       );
       return;
     }
     const cupo = Number(equipo.cupo_maximo || 2);
     if (players.length >= cupo) {
-      alert('Equipo completo');
+      alert(t('teamDetail.teamFull'));
       return;
     }
     if (
@@ -1222,19 +1220,19 @@ export default function EquipoVista() {
           normalizeJugadorEmail(r) === email || (uid && String(r.id || '') === uid)
       )
     ) {
-      alert('Ese jugador ya está en el equipo o en solicitudes.');
+      alert(t('teamDetail.playerAlreadyListed'));
       return;
     }
     for (const e of torneoEquipos) {
       if (equipo && Number(e.id) === Number(equipo.id)) continue;
       const ps = getPlayers(e);
       if (ps.some((p) => normalizeJugadorEmail(p) === email || (uid && String(p.id || '') === uid))) {
-        alert('Ese jugador ya está en otro equipo de este torneo.');
+        alert(t('teamDetail.playerInOtherTeam'));
         return;
       }
       const rs = getRequests(e);
       if (rs.some((r) => normalizeJugadorEmail(r) === email || (uid && String(r.id || '') === uid))) {
-        alert('Ese jugador tiene una solicitud pendiente en otro equipo.');
+        alert(t('teamDetail.playerRequestOtherTeam'));
         return;
       }
     }
@@ -1264,7 +1262,7 @@ export default function EquipoVista() {
       await cargarEquipo();
     } catch (e) {
       console.error(e);
-      alert(e?.message || 'No se pudo agregar al jugador');
+      alert(t('teamDetail.addPlayerFailed'));
     } finally {
       setInvitarAgregandoUserId(null);
     }
@@ -1274,19 +1272,19 @@ export default function EquipoVista() {
     const eid = equipoIdParam;
     if (!eid) return '';
     const link = `https://padbol-match-9abn.vercel.app/equipo/${encodeURIComponent(eid)}`;
-    const txt = `¡Hola! Te invito a unirte a mi equipo en PADBOL Match. Entra con este link: ${link}`;
+    const txt = t('teamDetail.whatsappTeamInvite', { link });
     return `https://wa.me/?text=${encodeURIComponent(txt)}`;
-  }, [equipoIdParam]);
+  }, [equipoIdParam, t]);
 
   const cupoEquipo = Number(equipo?.cupo_maximo || 2);
   const plazasLlenasEquipo = players.length >= cupoEquipo;
   const marcaAbierto = equipo?.equipo_abierto === true;
   const estadoEquipoLinea = (() => {
     if (!equipo) return { texto: '', color: '#64748b' };
-    if (plazasLlenasEquipo) return { texto: 'Equipo completo', color: '#64748b' };
-    if (equipo.equipo_abierto === false) return { texto: 'Equipo cerrado', color: '#b91c1c' };
-    if (marcaAbierto) return { texto: 'Equipo abierto – faltan jugadores', color: '#15803d' };
-    return { texto: 'Cupos libres', color: '#64748b' };
+    if (plazasLlenasEquipo) return { texto: t('teamDetail.teamFull'), color: '#64748b' };
+    if (equipo.equipo_abierto === false) return { texto: t('teamDetail.teamClosed'), color: '#b91c1c' };
+    if (marcaAbierto) return { texto: t('teamDetail.teamOpenMissing'), color: '#15803d' };
+    return { texto: t('teamDetail.spotsAvailable'), color: '#64748b' };
   })();
   const torneoCancelado = torneo?.estado === 'cancelado';
   const torneoInscripcionAbierta = torneo && torneoPermiteNuevasInscripciones(torneo);
@@ -1331,10 +1329,14 @@ export default function EquipoVista() {
     inscripcionEstadoEquipo === 'pendiente' &&
     costoInscripcionTorneoEq > 0;
 
-  const textoLimiteConfirmacion = useMemo(
-    () => (torneo ? textoFechaLimiteConfirmacionInscripcion(torneo) : null),
-    [torneo]
-  );
+  const textoLimiteConfirmacion = useMemo(() => {
+    const match = String(torneo?.fecha_inicio || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const start = new Date(`${match[1]}-${match[2]}-${match[3]}T00:00:00-03:00`);
+    if (Number.isNaN(start.getTime())) return null;
+    return new Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'short' })
+      .format(new Date(start.getTime() - 24 * 60 * 60 * 1000));
+  }, [torneo?.fecha_inicio]);
 
   const equipoPageShellStyle = useMemo(
     () => ({
@@ -1364,12 +1366,12 @@ export default function EquipoVista() {
 
   const equipoShareMeta = useMemo(() => {
     const url = equipoShareUrl;
-    const nombreEq = String(equipo?.nombre || '').trim() || 'Mi equipo';
+    const nombreEq = String(equipo?.nombre || '').trim() || t('teamDetail.myTeam');
     const nombreTor = String(torneo?.nombre || '').trim();
     const title = `${nombreEq} — Padbol Match`;
-    const text = [nombreTor ? `${nombreEq} — Torneo: ${nombreTor}` : nombreEq, url].filter(Boolean).join('\n\n');
+    const text = [nombreTor ? t('teamDetail.shareTournament', { team: nombreEq, tournament: nombreTor }) : nombreEq, url].filter(Boolean).join('\n\n');
     return { title, text, url };
-  }, [equipo, torneo, equipoShareUrl]);
+  }, [equipo, torneo, equipoShareUrl, t]);
 
   const confirmarInscripcionDesdeVista = async () => {
     if (!equipo || !torneo) return;
@@ -1382,7 +1384,7 @@ export default function EquipoVista() {
     }
     const em = String(authEmail || session?.user?.email || '').trim();
     if (!em) {
-      alert('Necesitas un email en tu perfil para pagar la inscripción.');
+      alert(t('teamDetail.emailRequiredForPayment'));
       return;
     }
     setMpInscripcionLoading(true);
@@ -1397,7 +1399,7 @@ export default function EquipoVista() {
     });
     setMpInscripcionLoading(false);
     if (!r.ok) {
-      alert(r.error);
+      alert(t('teamDetail.paymentFailed'));
       return;
     }
     if (r.gratis) await cargarEquipo();
@@ -1411,11 +1413,11 @@ export default function EquipoVista() {
           showBack
           onBack={handleBackEquipoVista}
           backLabel={
-            esAdminGestionTorneoEq && fromAdminStrict ? '← Admin' : '← Volver'
+            esAdminGestionTorneoEq && fromAdminStrict ? t('teamDetail.backAdmin') : t('teamDetail.back')
           }
         />
         <div style={equipoColumnWrapStyle}>
-          <div style={{ ...cardStyle, margin: '0 auto' }}>Cargando equipo...</div>
+          <div style={{ ...cardStyle, margin: '0 auto' }}>{t('teamDetail.loadingTeam')}</div>
         </div>
         <BottomNav />
       </div>
@@ -1430,12 +1432,12 @@ export default function EquipoVista() {
           showBack
           onBack={handleBackEquipoVista}
           backLabel={
-            esAdminGestionTorneoEq && fromAdminStrict ? '← Admin' : '← Volver'
+            esAdminGestionTorneoEq && fromAdminStrict ? t('teamDetail.backAdmin') : t('teamDetail.back')
           }
         />
         <div style={equipoColumnWrapStyle}>
           <div style={{ ...cardStyle, margin: '0 auto' }}>
-            <p>No se encontró el equipo.</p>
+            <p>{t('teamDetail.teamNotFound')}</p>
           </div>
         </div>
         <BottomNav />
@@ -1450,7 +1452,7 @@ export default function EquipoVista() {
         showBack
         onBack={handleBackEquipoVista}
         backLabel={
-          esAdminGestionTorneoEq && fromAdminStrict ? '← Admin' : '← Volver'
+          esAdminGestionTorneoEq && fromAdminStrict ? t('teamDetail.backAdmin') : t('teamDetail.back')
         }
       />
 
@@ -1473,7 +1475,7 @@ export default function EquipoVista() {
                 marginBottom: '8px',
               }}
             >
-              {soyCreador ? `${ICONO_CAPITAN} Capitán` : 'Tu equipo'}
+              {soyCreador ? `${ICONO_CAPITAN} ${t('teamDetail.captain')}` : t('teamDetail.yourTeam')}
             </div>
           ) : null}
 
@@ -1543,7 +1545,7 @@ export default function EquipoVista() {
                   opacity: subiendoFotoEquipo ? 0.65 : 1,
                 }}
               >
-                {subiendoFotoEquipo ? 'Subiendo foto…' : 'Subir foto de equipo'}
+                {subiendoFotoEquipo ? t('teamDetail.uploadingPhoto') : t('teamDetail.uploadTeamPhoto')}
                 <input
                   type="file"
                   accept="image/*"
@@ -1587,7 +1589,7 @@ export default function EquipoVista() {
                       border: '1px solid #86efac',
                     }}
                   >
-                    Inscripción confirmada
+                    {t('teamDetail.registrationConfirmed')}
                   </span>
                   {equipoShareUrl ? (
                     <div style={{ marginTop: '12px', maxWidth: '340px' }}>
@@ -1597,7 +1599,7 @@ export default function EquipoVista() {
                         url={equipoShareMeta.url}
                         style={{ width: '100%' }}
                       >
-                        Compartir equipo
+                        {t('teamDetail.shareTeam')}
                       </ShareLinkButton>
                     </div>
                   ) : null}
@@ -1620,12 +1622,12 @@ export default function EquipoVista() {
                         marginBottom: '10px',
                       }}
                     >
-                      Pendiente de pago
+                      {t('teamDetail.paymentPending')}
                     </span>
                   ) : null}
                   {badgePendientePagoEquipoVista ? (
                     <p style={{ margin: '0 0 12px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-                      Para confirmar el cupo, cualquier integrante puede pagar la inscripción completa.
+                      {t('teamDetail.anyMemberCanPay')}
                     </p>
                   ) : null}
                   {badgePendientePagoEquipoVista && textoLimiteConfirmacion ? (
@@ -1642,9 +1644,9 @@ export default function EquipoVista() {
                         lineHeight: 1.55,
                       }}
                     >
-                      Confirma tu lugar. Tienes tiempo hasta{' '}
-                      <strong style={{ fontWeight: 800 }}>{textoLimiteConfirmacion}</strong>. Los cupos se asignan
-                      por orden de confirmación. Si no confirmas, el cupo se libera.
+                      {t('teamDetail.confirmByPrefix')}{' '}
+                      <strong style={{ fontWeight: 800 }}>{textoLimiteConfirmacion}</strong>.{' '}
+                      {t('teamDetail.confirmBySuffix')}
                     </div>
                   ) : null}
                   {inscripcionEstadoEquipo === 'pendiente' && esMiEquipo && equipoListoJugar ? (
@@ -1672,10 +1674,10 @@ export default function EquipoVista() {
                       }}
                     >
                       {mpInscripcionLoading
-                        ? 'Redirigiendo…'
+                        ? t('teamDetail.redirecting')
                         : costoInscripcionTorneoEq > 0
-                          ? '💳 Pagar inscripción'
-                          : 'Confirmar inscripción (sin costo)'}
+                          ? t('teamDetail.payRegistration')
+                          : t('teamDetail.confirmFreeRegistration')}
                     </button>
                   ) : inscripcionEstadoEquipo === 'pendiente' && !badgePendientePagoEquipoVista ? (
                     <span
@@ -1692,7 +1694,9 @@ export default function EquipoVista() {
                         border: '1px solid #fcd34d',
                       }}
                     >
-                      {etiquetaInscripcionEstado(inscripcionEstadoEquipo)}
+                      {inscripcionEstadoEquipo === 'confirmado'
+                        ? t('teamDetail.registrationConfirmed')
+                        : t('teamDetail.registrationPending')}
                     </span>
                   ) : null}
                 </>
@@ -1714,7 +1718,7 @@ export default function EquipoVista() {
                 textAlign: 'center',
               }}
             >
-              Este torneo fue cancelado
+              {t('teamDetail.tournamentCancelled')}
             </div>
           ) : null}
 
@@ -1732,7 +1736,7 @@ export default function EquipoVista() {
                 lineHeight: 1.45,
               }}
             >
-              <div style={{ marginBottom: '10px' }}>Pendiente de completar perfil</div>
+              <div style={{ marginBottom: '10px' }}>{t('teamDetail.profilePending')}</div>
               <button
                 type="button"
                 onClick={() => {
@@ -1740,7 +1744,7 @@ export default function EquipoVista() {
                   navigate(
                     `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
                     {
-                      state: { avisoPerfilTorneo: 'Completa tu perfil para participar en torneos' },
+                      state: { avisoPerfilTorneo: t('teamDetail.completeProfileForTournaments') },
                     }
                   );
                 }}
@@ -1755,7 +1759,7 @@ export default function EquipoVista() {
                   fontSize: '13px',
                 }}
               >
-                Ir a Mi perfil
+                {t('teamDetail.goToProfile')}
               </button>
             </div>
           ) : null}
@@ -1770,7 +1774,7 @@ export default function EquipoVista() {
               marginBottom: '10px',
             }}
           >
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Jugadores</h3>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{t('teamDetail.players')}</h3>
             <span style={{ fontSize: '13px', fontWeight: 700, color: T.colorTextMuted }}>
               {players.length}/{cupoEquipo}
             </span>
@@ -1778,7 +1782,7 @@ export default function EquipoVista() {
 
           {torneoCancelado ? (
             players.length === 0 ? (
-              <div style={{ color: '#666' }}>Todavía no hay jugadores</div>
+              <div style={{ color: '#666' }}>{t('teamDetail.noPlayersYet')}</div>
             ) : (
               <div style={{ display: 'grid', gap: '10px' }}>
                 {players.map((p, idx) => (
@@ -1796,6 +1800,7 @@ export default function EquipoVista() {
                       ctx={nombreTorneoCtx}
                       perfilByUserId={perfilByUserId}
                       onVerJugador={abrirPreviewJugadorEq}
+                      captainLabel={t('teamDetail.captain')}
                       childrenDebajo={null}
                     />
                   </div>
@@ -1803,7 +1808,7 @@ export default function EquipoVista() {
               </div>
             )
           ) : players.length === 0 ? (
-            <div style={{ color: '#666' }}>Todavía no hay jugadores</div>
+            <div style={{ color: '#666' }}>{t('teamDetail.noPlayersYet')}</div>
           ) : soyCreador ? (
             <div style={{ display: 'grid', gap: '10px' }}>
                 {players.map((p, idx) => (
@@ -1829,12 +1834,13 @@ export default function EquipoVista() {
                       ctx={nombreTorneoCtx}
                       perfilByUserId={perfilByUserId}
                       onVerJugador={abrirPreviewJugadorEq}
+                      captainLabel={t('teamDetail.captain')}
                       childrenDebajo={
                         samePerson(p, yo) && !perfilTorneoCompleto ? (
                           <div
                             style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
                           >
-                            Perfil incompleto
+                            {t('teamDetail.incompleteProfile')}
                           </div>
                         ) : esJugadorPendiente(p) ? (
                           renderPendienteDeConfirmar(p, { conAccionesCreador: true })
@@ -1847,7 +1853,7 @@ export default function EquipoVista() {
                     !esCapitanJugadorEnFila(p, equipo) ? (
                       <button
                         type="button"
-                        aria-label={`Quitar a ${jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx)} del equipo`}
+                        aria-label={t('teamDetail.removePlayerAria', { player: jugadorNombreTorneoEtiqueta(p, nombreTorneoCtx) })}
                         onClick={() =>
                           setDialogoEliminarJugador({
                             jugador: p,
@@ -1893,12 +1899,13 @@ export default function EquipoVista() {
                     ctx={nombreTorneoCtx}
                     perfilByUserId={perfilByUserId}
                     onVerJugador={abrirPreviewJugadorEq}
+                    captainLabel={t('teamDetail.captain')}
                     childrenDebajo={
                       samePerson(p, yo) && !perfilTorneoCompleto ? (
                         <div
                           style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
                         >
-                          Perfil incompleto
+                          {t('teamDetail.incompleteProfile')}
                         </div>
                       ) : esJugadorPendiente(p) ? (
                         renderPendienteDeConfirmar(p, { conAccionesCreador: false })
@@ -1925,12 +1932,13 @@ export default function EquipoVista() {
                     ctx={nombreTorneoCtx}
                     perfilByUserId={perfilByUserId}
                     onVerJugador={abrirPreviewJugadorEq}
+                    captainLabel={t('teamDetail.captain')}
                     childrenDebajo={
                       samePerson(p, yo) && !perfilTorneoCompleto ? (
                         <div
                           style={{ fontSize: '12px', color: T.colorWarningSoft, fontWeight: 800, marginTop: '4px' }}
                         >
-                          Perfil incompleto
+                          {t('teamDetail.incompleteProfile')}
                         </div>
                       ) : null
                     }
@@ -1942,7 +1950,7 @@ export default function EquipoVista() {
 
           {esMiEquipo && !soyCreador && !torneoCancelado ? (
             <p style={{ marginTop: '16px', marginBottom: 0, fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.5 }}>
-              Solo el capitán del equipo puede modificar este equipo.
+              {t('teamDetail.onlyCaptainCanEdit')}
             </p>
           ) : null}
 
@@ -1950,15 +1958,15 @@ export default function EquipoVista() {
             <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
               {equipo.equipo_abierto === false ? (
                 <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.5 }}>
-                  Equipo cerrado: el capitán suma jugadores; no se aceptan solicitudes para unirse.
+                  {t('teamDetail.closedNoRequests')}
                 </p>
               ) : solicitudPendienteAqui ? (
                 <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted, fontWeight: 600 }}>
-                  Tu solicitud para unirte está pendiente de aprobación del capitán.
+                  {t('teamDetail.requestAwaitingCaptain')}
                 </p>
               ) : solicitudPendienteOtroEquipo ? (
                 <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted }}>
-                  Ya tienes una solicitud pendiente en otro equipo de este torneo.
+                  {t('teamDetail.requestInOtherTeam')}
                 </p>
               ) : puedePedirUnirse ? (
                 <button
@@ -1973,14 +1981,14 @@ export default function EquipoVista() {
                     cursor: savingSolicitud ? 'default' : 'pointer',
                   }}
                 >
-                  {savingSolicitud ? 'Enviando…' : 'Solicitar unirme'}
+                  {savingSolicitud ? t('teamDetail.sending') : t('teamDetail.requestToJoin')}
                 </button>
               ) : miEquipoEnTorneo ? (
                 <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted }}>
-                  Ya participas en otro equipo de este torneo.
+                  {t('teamDetail.alreadyInOtherTeam')}
                 </p>
               ) : plazasLlenasEquipo ? (
-                <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted }}>Equipo completo.</p>
+                <p style={{ margin: 0, fontSize: '13px', color: T.colorTextMuted }}>{t('teamDetail.teamFull')}.</p>
               ) : null}
             </div>
           ) : null}
@@ -1989,16 +1997,16 @@ export default function EquipoVista() {
             <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
               {equipoListoJugar ? (
                 <p style={{ margin: '0 0 14px', fontSize: '14px', color: T.colorSuccessStrong, fontWeight: 700 }}>
-                  Equipo completo
+                  {t('teamDetail.teamFull')}
                 </p>
               ) : (
                 <p style={{ margin: '0 0 14px', fontSize: '14px', color: T.colorWarningSoft, fontWeight: 700 }}>
-                  Faltan confirmar jugadores
+                  {t('teamDetail.playersNeedConfirmation')}
                 </p>
               )}
               {equipoListoJugar && inscripcionEstadoEquipo === 'pendiente' && !soyCreador ? (
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-                  Para confirmar el cupo, cualquier integrante puede pagar la inscripción completa.
+                  {t('teamDetail.anyMemberCanPay')}
                 </p>
               ) : null}
             </div>
@@ -2020,7 +2028,7 @@ export default function EquipoVista() {
                   cursor: 'pointer',
                 }}
               >
-                {soyCreador ? 'Disolver equipo' : 'Salir del equipo'}
+                {soyCreador ? t('teamDetail.dissolveTeam') : t('teamDetail.leaveTeam')}
               </button>
             </div>
           ) : null}
@@ -2039,7 +2047,7 @@ export default function EquipoVista() {
               marginBottom: 18,
             }}
           >
-            <h3 style={{ marginTop: 0 }}>Invitar jugadores</h3>
+            <h3 style={{ marginTop: 0 }}>{t('teamDetail.invitePlayers')}</h3>
             {plazasLlenasEquipo && puedeCapitanEditarPlantelInscripcionNoConfirmada ? (
               <p
                 style={{
@@ -2054,12 +2062,11 @@ export default function EquipoVista() {
                   borderRadius: '10px',
                 }}
               >
-                Equipo completo: puedes quitar a un jugador (excepto el capitán) y sumar otro con la búsqueda, mientras la
-                inscripción no esté confirmada.
+                {t('teamDetail.fullTeamEditableHint')}
               </p>
             ) : null}
             <p style={{ margin: '0 0 12px', fontSize: '13px', color: T.colorTextMuted, lineHeight: 1.45 }}>
-              Busca por nombre, apellido o alias (mínimo 2 caracteres). Misma búsqueda que en la inscripción al torneo.
+              {t('teamDetail.searchPlayersHelp')}
             </p>
             <input
               type="search"
@@ -2067,7 +2074,7 @@ export default function EquipoVista() {
               autoComplete="off"
               value={invitarJugadorInput}
               onChange={(e) => setInvitarJugadorInput(e.target.value)}
-              placeholder="Nombre, apellido o alias…"
+              placeholder={t('teamDetail.searchPlayersPlaceholder')}
               style={{
                 width: '100%',
                 maxWidth: '100%',
@@ -2080,11 +2087,11 @@ export default function EquipoVista() {
               }}
             />
             {invitarBuscando ? (
-              <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted }}>Buscando…</p>
+              <p style={{ margin: '0 0 10px', fontSize: '13px', color: T.colorTextMuted }}>{t('teamDetail.searching')}</p>
             ) : null}
             {!invitarBuscando && invitarJugadorDebounced.length >= 2 && invitarOpciones.length === 0 ? (
               <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b' }}>
-                No hay coincidencias. Puedes invitar por WhatsApp.
+                {t('teamDetail.noMatchesInviteWhatsapp')}
               </p>
             ) : null}
             {invitarOpciones.length > 0 ? (
@@ -2100,11 +2107,11 @@ export default function EquipoVista() {
               >
                 {invitarOpciones.map((row) => {
                   const uid = row?.user_id != null ? String(row.user_id) : '';
-                  const nom = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || 'Jugador';
+                  const nom = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || t('teamDetail.player');
                   const al = String(row.alias || '').trim();
                   const foto = String(row.foto_url || '').trim();
                   const tieneEquipoTorneo = row.disponibilidad === 'tiene_equipo';
-                  const badgeLabel = tieneEquipoTorneo ? 'Tiene equipo' : 'Buscando compañero';
+                  const badgeLabel = tieneEquipoTorneo ? t('teamDetail.hasTeam') : t('teamDetail.lookingForPartner');
                   const badgeBg = tieneEquipoTorneo ? '#fee2e2' : '#dbeafe';
                   const badgeColor = tieneEquipoTorneo ? '#991b1b' : '#1e40af';
                   const busy = invitarAgregandoUserId === uid;
@@ -2186,7 +2193,7 @@ export default function EquipoVista() {
                               </div>
                             ) : null}
                             <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>
-                              {tieneEquipoTorneo ? 'No disponible para este equipo' : 'Toca el nombre para ver la ficha'}
+                              {tieneEquipoTorneo ? t('teamDetail.notAvailableForTeam') : t('teamDetail.tapForProfile')}
                             </div>
                           </div>
                         </button>
@@ -2212,7 +2219,7 @@ export default function EquipoVista() {
                         <button
                           type="button"
                           disabled={busy || tieneEquipoTorneo}
-                          title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : 'Sumar al equipo'}
+                          title={tieneEquipoTorneo ? t('teamDetail.alreadyInTournamentTeam') : t('teamDetail.addToTeam')}
                           onClick={() => void agregarJugadorInvitadoDesdePerfil(row)}
                           style={{
                             flexShrink: 0,
@@ -2227,7 +2234,7 @@ export default function EquipoVista() {
                             fontFamily: 'inherit',
                           }}
                         >
-                          Sumar
+                          {t('teamDetail.add')}
                         </button>
                       </div>
                     </li>
@@ -2243,7 +2250,7 @@ export default function EquipoVista() {
               }}
             >
               <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: T.colorTextMuted }}>
-                También puedes
+                {t('teamDetail.youCanAlso')}
               </p>
               <a
                 href={invitarPadbolMatchWhatsappHref}
@@ -2259,7 +2266,7 @@ export default function EquipoVista() {
                   textDecoration: 'none',
                 }}
               >
-                📲 Invitar por WhatsApp
+                {t('teamDetail.inviteByWhatsapp')}
               </a>
             </div>
           </div>
@@ -2272,10 +2279,10 @@ export default function EquipoVista() {
               marginBottom: 18,
             }}
           >
-            <h3 style={{ marginTop: 0 }}>Solicitudes pendientes</h3>
+            <h3 style={{ marginTop: 0 }}>{t('teamDetail.pendingRequests')}</h3>
 
             {requests.length === 0 ? (
-              <div style={{ color: '#666' }}>No hay solicitudes pendientes.</div>
+              <div style={{ color: '#666' }}>{t('teamDetail.noPendingRequests')}</div>
             ) : (
               <div style={{ display: 'grid', gap: '10px' }}>
                 {requests.map((sol, idx) => (
@@ -2318,7 +2325,7 @@ export default function EquipoVista() {
                           cursor: 'pointer'
                         }}
                       >
-                        Aceptar
+                        {t('teamDetail.accept')}
                       </button>
 
                       <button
@@ -2332,7 +2339,7 @@ export default function EquipoVista() {
                           cursor: 'pointer'
                         }}
                       >
-                        Rechazar
+                        {t('teamDetail.reject')}
                       </button>
                     </div>
                   </div>
@@ -2376,8 +2383,8 @@ export default function EquipoVista() {
                 style={{ margin: '0 0 18px', fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}
               >
                 {soyCreador
-                  ? '¿Disolver el equipo? Se eliminará por completo.'
-                  : '¿Quieres salir del equipo?'}
+                  ? t('teamDetail.confirmDissolve')
+                  : t('teamDetail.confirmLeave')}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button
@@ -2395,7 +2402,7 @@ export default function EquipoVista() {
                     cursor: savingSalirEquipo ? 'default' : 'pointer',
                   }}
                 >
-                  Cancelar
+                  {t('teamDetail.cancel')}
                 </button>
                 <button
                   type="button"
@@ -2413,7 +2420,7 @@ export default function EquipoVista() {
                     opacity: savingSalirEquipo ? 0.7 : 1,
                   }}
                 >
-                  {savingSalirEquipo ? 'Saliendo…' : soyCreador ? 'Disolver' : 'Salir'}
+                  {savingSalirEquipo ? t('teamDetail.leaving') : soyCreador ? t('teamDetail.dissolve') : t('teamDetail.leave')}
                 </button>
               </div>
             </div>
@@ -2453,7 +2460,7 @@ export default function EquipoVista() {
                 id="eliminar-jugador-titulo"
                 style={{ margin: '0 0 18px', fontSize: '16px', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}
               >
-                ¿Eliminar a {dialogoEliminarJugador.etiqueta || 'este jugador'} del equipo?
+                {t('teamDetail.confirmRemovePlayer', { player: dialogoEliminarJugador.etiqueta || t('teamDetail.thisPlayer') })}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button
@@ -2471,7 +2478,7 @@ export default function EquipoVista() {
                     cursor: savingEliminarJugador ? 'default' : 'pointer',
                   }}
                 >
-                  Cancelar
+                  {t('teamDetail.cancel')}
                 </button>
                 <button
                   type="button"
@@ -2489,7 +2496,7 @@ export default function EquipoVista() {
                     opacity: savingEliminarJugador ? 0.7 : 1,
                   }}
                 >
-                  {savingEliminarJugador ? 'Eliminando…' : t('general.confirm')}
+                  {savingEliminarJugador ? t('teamDetail.removing') : t('general.confirm')}
                 </button>
               </div>
             </div>
