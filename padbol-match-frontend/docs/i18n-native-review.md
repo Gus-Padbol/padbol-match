@@ -6,26 +6,26 @@ Este documento prepara la validación humana de Padbol Match web. Español e ing
 
 | Código | Edición | Dirección | Estado actual | Revisor |
 |---|---|---|---|---|
-| de | Deutsch | LTR | Borrador con respaldo inglés | A confirmar |
+| de | Deutsch | LTR | 2.007/3.010 campos directos · 1.003 respaldos en inglés | A confirmar |
 | es | Español | LTR | Fuente editorial | Equipo Padbol |
 | en | English | LTR | Fuente editorial | Nicolás / a confirmar |
-| ar | العربية | RTL | Borrador con respaldo inglés | Abdulaziz / a confirmar |
-| fa-IR | فارسی | RTL | Borrador con respaldo inglés | A confirmar |
-| nl-BE | Nederlands (België) | LTR | Borrador con respaldo inglés | A confirmar |
-| fr | Français | LTR | Borrador con respaldo inglés | A confirmar |
-| it | Italiano | LTR | Borrador con respaldo inglés | A confirmar |
+| ar | العربية | RTL | 2.012/3.010 campos directos · 998 respaldos en inglés | Abdulaziz / a confirmar |
+| fa-IR | فارسی | RTL | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| nl-BE | Nederlands (België) | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| fr | Français | LTR | 2.007/3.010 campos directos · 1.003 respaldos en inglés | A confirmar |
+| it | Italiano | LTR | 2.007/3.010 campos directos · 1.003 respaldos en inglés | A confirmar |
 | ro | Română | LTR | Borrador directo completo · 3.010/3.010 campos · revisión nativa pendiente | Elisabeta / a confirmar |
-| nl-NL | Nederlands (Nederland) | LTR | Borrador con respaldo inglés | A confirmar |
-| sv | Svenska | LTR | Borrador con respaldo inglés | A confirmar |
-| pt-BR | Português (Brasil) | LTR | Borrador con respaldo inglés | A confirmar |
-| pt-PT | Português (Portugal) | LTR | Borrador con respaldo inglés | A confirmar |
-| el | Ελληνικά | LTR | Borrador con respaldo inglés | A confirmar |
-| hu | Magyar | LTR | Borrador con respaldo inglés | A confirmar |
-| he | עברית | RTL | Borrador con respaldo inglés | A confirmar |
-| pl | Polski | LTR | Borrador con respaldo inglés | A confirmar |
-| uk | Українська | LTR | Borrador con respaldo inglés | A confirmar |
-| af | Afrikaans | LTR | Borrador con respaldo inglés | A confirmar |
-| cs | Čeština | LTR | Web pública y aplicación: borrador completo sin respaldo inglés; revisión nativa pendiente | A confirmar |
+| nl-NL | Nederlands (Nederland) | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| sv | Svenska | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| pt-BR | Português (Brasil) | LTR | 2.007/3.010 campos directos · 1.003 respaldos en inglés | A confirmar |
+| pt-PT | Português (Portugal) | LTR | 2.007/3.010 campos directos · 1.003 respaldos en inglés | A confirmar |
+| el | Ελληνικά | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| hu | Magyar | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| he | עברית | RTL | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| pl | Polski | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| uk | Українська | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| af | Afrikaans | LTR | 394/3.010 campos directos · 2.616 respaldos en inglés | A confirmar |
+| cs | Čeština | LTR | Borrador directo completo · 3.010/3.010 campos · revisión nativa pendiente | A confirmar |
 
 ## Situación técnica verificada
 
