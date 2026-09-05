@@ -47,6 +47,18 @@ describe('public site translated catalogs', () => {
     expect(generated.he.experiences.items.signature.text).not.toMatch(/[A-Za-z]{4,}/);
   });
 
+  it('keeps critical Persian and Hebrew copy in the correct script', () => {
+    [
+      generated['fa-IR'].status.items.rollingOut.text,
+      generated['fa-IR'].matchIntelligence.features.referee.text,
+    ].forEach((value) => expect(value).toMatch(/[؀-ۿ]/));
+    [
+      generated.he.paths.aria, generated.he.communityMatches.mockTitle,
+      generated.he.communityMatches.mockConfirmed, generated.he.padCoins.wallet.activeMembership,
+      generated.he.matchIntelligence.features.referee.text,
+    ].forEach((value) => expect(value).toMatch(/[֐-׿]/));
+  });
+
   it.each(generatedCodes)('%s does not end public titles with a period', (code) => {
     const titles = Object.entries(flatten(generated[code]))
       .filter(([key]) => /\.(title|claim|kicker)$/.test(`.${key}`))

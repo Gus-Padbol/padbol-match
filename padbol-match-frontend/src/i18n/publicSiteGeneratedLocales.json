@@ -4294,7 +4294,7 @@
         "rollingOut": {
           "eyebrow": "امروز در دسترس است",
           "title": "ورزش‌های جدید، همان سفر",
-          "text": "Padel، و Tennis در حال پیشرفت هستند. بازی، مدیریت و سفر جامعه."
+          "text": "پدل، پیکل‌بال و تنیس به‌تدریج به مسیر بازی، مدیریت و جامعه Padbol Match می‌پیوندند."
         },
         "next": {
           "eyebrow": "امروز در دسترس است",
@@ -4730,7 +4730,7 @@
         },
         "referee": {
           "title": "نمره‌گذاری مستقل",
-          "text": "Vision نمایش‌ها را تفسیر می‌کند و عملکردها را از آنچه مشاهده می‌کند در زمان واقعی امتیاز می‌دهد."
+          "text": "سامانه بینایی، بازی را تفسیر می‌کند و در زمان واقعی بر اساس آنچه می‌بیند به عملکردها امتیاز می‌دهد."
         },
         "traceability": {
           "title": "آموزش تحت نظارت",
@@ -6381,7 +6381,7 @@
       "legalOwner": "מופעל על ידי Entertainment and Sports Services LLC."
     },
     "paths": {
-      "aria": "Pathways"
+      "aria": "מסלולי שימוש"
     },
     "communityMatches": {
       "title": "המשחק מתחיל לפני שאתה הולך על המגרש",
@@ -6389,7 +6389,7 @@
       "ctaPlay": "אני רוצה לשחק",
       "mockAria": "דוגמה חזותית של התאמה פתוחה עם משבצות זמינות",
       "mockBadge": "הדגמה",
-      "mockTitle": "Open match",
+      "mockTitle": "משחק פתוח",
       "mockMeta": "מקום · היום 19:30",
       "mockLevel": "רמת ביניים",
       "mockSlots": "{{filled}} מתוך 4 מקומות אושרו",
@@ -6398,7 +6398,7 @@
       "mockOccupancy": "תפוסה",
       "mockOccupancyValue": "{{percentage}}% תפוסה",
       "mockReservation": "הזמנה",
-      "mockConfirmed": "Confirmed",
+      "mockConfirmed": "מאושר",
       "mockCompleteWhenFull": "כאשר משבצות מתמלאות",
       "mockSlotsComplete": "כל המשבצות מתמלאות: ההזמנה מאושרת.",
       "mockReleaseNote": "אם היא לא הושלמה, ההזמנה תשוחרר 8 שעות לפני.",
@@ -6484,7 +6484,7 @@
         "completedMatch": "המשחק הושלם",
         "confirmedBooking": "ההזמנה אושרה",
         "redeemedBenefit": "הטבה מומשה",
-        "activeMembership": "Active membership"
+        "activeMembership": "חברות פעילה"
       }
     },
     "tournaments": {
@@ -6509,7 +6509,7 @@
         },
         "referee": {
           "title": "ניקוד עצמאי",
-          "text": "Vision מפרש הצגות ומבקיע פעולות ממה שהיא צופה בזמן אמת."
+          "text": "מערכת הראייה מפרשת את המשחק ומעריכה פעולות בזמן אמת על סמך מה שהיא רואה."
         },
         "traceability": {
           "title": "אימון בפיקוח",
