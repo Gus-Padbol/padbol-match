@@ -3737,11 +3737,11 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(t('admin.padcoins.campaignBenefitsLoadFailed'));
+      if (!res.ok) throw new Error(t('admin.padcoins.benefitsLoadFailed'));
       const list = Array.isArray(data) ? data : (data.premios || data.data || []);
       setPremios(list);
     } catch (err) {
-      setPremiosError(err.message || 'Error al cargar beneficios');
+      setPremiosError(err.message || t('admin.padcoins.benefitsLoadFailed'));
       setPremios([]);
     } finally {
       setPremiosLoading(false);
@@ -3763,11 +3763,11 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar canjes');
+      if (!res.ok) throw new Error(t('admin.padcoins.redemptionsLoadFailed'));
       const list = parseCanjesList(data).filter((row) => canjePerteneceASede(row, sid));
       setCanjes(list);
     } catch (err) {
-      setCanjesError(err.message || 'Error al cargar canjes');
+      setCanjesError(err.message || t('admin.padcoins.redemptionsLoadFailed'));
       setCanjes([]);
     } finally {
       setCanjesLoading(false);
@@ -3782,13 +3782,13 @@ export default function AdminDashboard({
       const headers = await getAuthHeaders();
       const res = await fetch(`${apiBaseUrl}/api/admin/padcoins-config`, { headers });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar configuración global');
+      if (!res.ok) throw new Error(t('admin.padcoins.globalConfigLoadFailed'));
       const list = sortPadcoinsConfigRows(
         parsePadcoinsConfigList(data).map(padcoinsConfigRowToForm).filter((r) => r.key),
       );
       setPcGlobalConfigRows(list);
     } catch (err) {
-      setPcGlobalConfigError(err.message || 'Error al cargar configuración global');
+      setPcGlobalConfigError(err.message || t('admin.padcoins.globalConfigLoadFailed'));
       setPcGlobalConfigRows([]);
     } finally {
       setPcGlobalConfigLoading(false);
@@ -3825,10 +3825,10 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar participación PadCoins');
+      if (!res.ok) throw new Error(t('admin.padcoins.participationLoadFailed'));
       setPcSedeParticipacion(padcoinsSedeConfigToForm(data));
     } catch (err) {
-      setPcSedeParticipacionError(err.message || 'Error al cargar participación PadCoins');
+      setPcSedeParticipacionError(err.message || t('admin.padcoins.participationLoadFailed'));
       setPcSedeParticipacion(emptyPadcoinsSedeConfigForm());
     } finally {
       setPcSedeParticipacionLoading(false);
@@ -3845,12 +3845,12 @@ export default function AdminDashboard({
     if (!isSuperAdmin && !esAdminClub) return;
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPcSedeParticipacionSaveError('Seleccioná una sede para guardar la participación en Beneficios Padbol');
+      setPcSedeParticipacionSaveError(t('admin.padcoins.participationSelectVenue'));
       return;
     }
     if (pcSedeParticipacion.fecha_inicio && pcSedeParticipacion.fecha_fin
       && pcSedeParticipacion.fecha_inicio > pcSedeParticipacion.fecha_fin) {
-      setPcSedeParticipacionSaveError('La fecha de inicio no puede ser posterior a la fecha de fin');
+      setPcSedeParticipacionSaveError(t('admin.padcoins.dateOrderInvalid'));
       return;
     }
     setPcSedeParticipacionSaving(true);
@@ -3871,19 +3871,17 @@ export default function AdminDashboard({
           body: JSON.stringify(body),
         },
       );
-      await res.json().catch(() => ({}));
+      const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error(
-          data.error || data.message || 'No tenés permisos para modificar la participación de esta sede.',
-        );
+        throw new Error(t('admin.padcoins.participationPermissionDenied'));
       }
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar participación en Beneficios Padbol');
-      setMensajeExito('✅ Participación en Beneficios Padbol actualizada');
+      if (!res.ok) throw new Error(t('admin.padcoins.participationSaveFailed'));
+      setMensajeExito(t('admin.padcoins.participationUpdated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsSedeParticipacion(sid);
       if (isSuperAdmin) void fetchPadcoinsSedesParticipacionList();
     } catch (err) {
-      setPcSedeParticipacionSaveError(err.message || 'Error al guardar participación en Beneficios Padbol');
+      setPcSedeParticipacionSaveError(err.message || t('admin.padcoins.participationSaveFailed'));
     } finally {
       setPcSedeParticipacionSaving(false);
     }
@@ -3935,10 +3933,10 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para ver la configuración inteligente de esta sede.');
+        throw new Error(t('admin.padcoins.smartViewPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al cargar configuración inteligente PadCoins');
+        throw new Error(t('admin.padcoins.smartLoadFailed'));
       }
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
@@ -3951,7 +3949,7 @@ export default function AdminDashboard({
       setPcSedeSimPct('');
       setPcSedeSimConversion('');
       setPcSedeSimBeneficio('');
-      setPcSedeSmartError(err.message || 'Error al cargar configuración inteligente PadCoins');
+      setPcSedeSmartError(err.message || t('admin.padcoins.smartLoadFailed'));
     } finally {
       setPcSedeSmartLoading(false);
     }
@@ -3962,7 +3960,7 @@ export default function AdminDashboard({
     if (!isSuperAdmin && !esAdminClub) return;
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPcSedeSmartSaveError('Seleccione una sede para guardar la configuración inteligente');
+      setPcSedeSmartSaveError(t('admin.padcoins.smartSelectVenueSave'));
       return;
     }
     const validationError = validatePcSedeSmartOverrideForm(pcSedeSmartForm, t);
@@ -3985,22 +3983,22 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para modificar la configuración inteligente de esta sede.');
+        throw new Error(t('admin.padcoins.smartEditPermissionDenied'));
       }
       if (res.status === 400) {
-        throw new Error(data.error || data.message || 'Datos de configuración inválidos');
+        throw new Error(t('admin.padcoins.smartInvalid'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al guardar configuración inteligente PadCoins');
+        throw new Error(t('admin.padcoins.smartSaveFailed'));
       }
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
       setPcSedeSmartForm(padcoinsSedeSmartOverridesToForm(parsed.sede_overrides));
       resetPcSedeSimDefaults(parsed.effective);
-      setMensajeExito('✅ Configuración inteligente de la sede actualizada');
+      setMensajeExito(t('admin.padcoins.smartUpdated'));
       setTimeout(() => setMensajeExito(''), 3000);
     } catch (err) {
-      setPcSedeSmartSaveError(err.message || 'Error al guardar configuración inteligente PadCoins');
+      setPcSedeSmartSaveError(err.message || t('admin.padcoins.smartSaveFailed'));
     } finally {
       setPcSedeSmartSaving(false);
     }
@@ -4010,7 +4008,7 @@ export default function AdminDashboard({
     if (!isSuperAdmin && !esAdminClub) return;
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPcSedeSmartSaveError('Seleccione una sede para restaurar la herencia global');
+      setPcSedeSmartSaveError(t('admin.padcoins.smartSelectVenueRestore'));
       return;
     }
     setPcSedeSmartSaving(true);
@@ -4027,19 +4025,19 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para modificar la configuración inteligente de esta sede.');
+        throw new Error(t('admin.padcoins.smartEditPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al restaurar herencia global');
+        throw new Error(t('admin.padcoins.smartRestoreFailed'));
       }
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
       setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
       resetPcSedeSimDefaults(parsed.effective);
-      setMensajeExito('✅ Configuración restaurada: la sede hereda las reglas globales');
+      setMensajeExito(t('admin.padcoins.smartRestored'));
       setTimeout(() => setMensajeExito(''), 3000);
     } catch (err) {
-      setPcSedeSmartSaveError(err.message || 'Error al restaurar herencia global');
+      setPcSedeSmartSaveError(err.message || t('admin.padcoins.smartRestoreFailed'));
     } finally {
       setPcSedeSmartSaving(false);
     }
@@ -4070,13 +4068,13 @@ export default function AdminDashboard({
         headers,
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar configuración global');
-      setMensajeExito('✅ Configuración global PadCoins guardada');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.globalConfigSaveFailed'));
+      setMensajeExito(t('admin.padcoins.globalConfigSaved'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsGlobalConfig();
     } catch (err) {
-      setPcGlobalConfigSaveError(err.message || 'Error al guardar configuración global');
+      setPcGlobalConfigSaveError(err.message || t('admin.padcoins.globalConfigSaveFailed'));
     } finally {
       setPcGlobalConfigSaving(false);
     }
@@ -4117,7 +4115,7 @@ export default function AdminDashboard({
     e.preventDefault();
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPremioFormError('Seleccioná una sede para gestionar beneficios PadCoins');
+      setPremioFormError(t('admin.padcoins.benefitSelectVenue'));
       return;
     }
     const validationError = validatePremioForm(premioForm, t);
@@ -4139,41 +4137,41 @@ export default function AdminDashboard({
         headers,
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar beneficio');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.benefitSaveFailed'));
       cerrarPremioForm();
-      setMensajeExito(isEdit ? '✅ Beneficio actualizado' : '✅ Beneficio creado');
+      setMensajeExito(isEdit ? t('admin.padcoins.benefitUpdated') : t('admin.padcoins.benefitCreated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPremios();
     } catch (err) {
-      setPremioFormError(err.message || 'Error al guardar beneficio');
+      setPremioFormError(err.message || t('admin.padcoins.benefitSaveFailed'));
     } finally {
       setPremioSaving(false);
     }
   }
 
   async function desactivarPremio(premio) {
-    if (!window.confirm(`¿Desactivar el beneficio "${premio.nombre}"? Ya no será visible para los jugadores.`)) return;
+    if (!window.confirm(t('admin.padcoins.benefitDeactivateConfirm', { name: premio.nombre }))) return;
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${apiBaseUrl}/api/admin/premios-canjeables/${premio.id}`, {
         method: 'DELETE',
         headers,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al desactivar beneficio');
-      setMensajeExito('✅ Beneficio desactivado');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.benefitDeactivateFailed'));
+      setMensajeExito(t('admin.padcoins.benefitDeactivated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPremios();
     } catch (err) {
-      alert(err.message || 'Error al desactivar beneficio');
+      alert(err.message || t('admin.padcoins.benefitDeactivateFailed'));
     }
   }
 
   async function entregarCanje(canje) {
     if (!canje?.id) return;
     const codigo = canjeCodigoDisplay(canje);
-    if (!window.confirm(`¿Marcar como entregado el canje ${codigo}?`)) return;
+    if (!window.confirm(t('admin.padcoins.redemptionDeliverConfirm', { code: codigo }))) return;
     setCanjeActionId(canje.id);
     try {
       const headers = await getAuthHeaders();
@@ -4181,14 +4179,14 @@ export default function AdminDashboard({
         method: 'POST',
         headers,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al marcar canje como entregado');
-      setMensajeExito('✅ Canje marcado como entregado');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.redemptionDeliverFailed'));
+      setMensajeExito(t('admin.padcoins.redemptionDelivered'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchCanjes();
       await fetchPremios();
     } catch (err) {
-      alert(err.message || 'Error al entregar canje');
+      alert(err.message || t('admin.padcoins.redemptionDeliverFailed'));
     } finally {
       setCanjeActionId(null);
     }
@@ -4199,7 +4197,7 @@ export default function AdminDashboard({
     const codigo = canjeCodigoDisplay(canje);
     if (
       !window.confirm(
-        `¿Cancelar el canje ${codigo}?\n\nSi el backend lo permite, se devolverá el saldo de PadCoins al jugador.`,
+        t('admin.padcoins.redemptionCancelConfirm', { code: codigo }),
       )
     ) {
       return;
@@ -4211,14 +4209,14 @@ export default function AdminDashboard({
         method: 'POST',
         headers,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cancelar canje');
-      setMensajeExito('✅ Canje cancelado');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.redemptionCancelFailed'));
+      setMensajeExito(t('admin.padcoins.redemptionCancelled'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchCanjes();
       await fetchPremios();
     } catch (err) {
-      alert(err.message || 'Error al cancelar canje');
+      alert(err.message || t('admin.padcoins.redemptionCancelFailed'));
     } finally {
       setCanjeActionId(null);
     }
@@ -4264,15 +4262,15 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tenés permisos para ver estos movimientos.');
+        throw new Error(t('admin.padcoins.movementsPermissionDenied'));
       }
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar movimientos PadCoins');
+      if (!res.ok) throw new Error(t('admin.padcoins.movementsLoadFailed'));
       const parsed = parsePadcoinsMovimientosResponse(data);
       setPcMovimientos(parsed.movimientos);
       setPcMovTotal(parsed.total);
       if (pageOverride != null) setPcMovPage(Math.max(0, page));
     } catch (err) {
-      setPcMovError(err.message || 'Error al cargar movimientos PadCoins');
+      setPcMovError(err.message || t('admin.padcoins.movementsLoadFailed'));
       setPcMovimientos([]);
       setPcMovTotal(0);
     } finally {
@@ -4328,15 +4326,15 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tenés permisos para ver alertas de supervisión.');
+        throw new Error(t('admin.padcoins.alertsPermissionDenied'));
       }
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar alertas PadCoins');
+      if (!res.ok) throw new Error(t('admin.padcoins.alertsLoadFailed'));
       const parsed = parsePadcoinsAlertasResponse(data);
       setPcAlertas(parsed.alertas);
       setPcAlertTotal(parsed.total);
       if (pageOverride != null) setPcAlertPage(Math.max(0, page));
     } catch (err) {
-      setPcAlertError(err.message || 'Error al cargar alertas PadCoins');
+      setPcAlertError(err.message || t('admin.padcoins.alertsLoadFailed'));
       setPcAlertas([]);
       setPcAlertTotal(0);
     } finally {
@@ -4388,15 +4386,15 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para ver campañas PadCoins.');
+        throw new Error(t('admin.padcoins.campaignsPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al cargar campañas PadCoins');
+        throw new Error(t('admin.padcoins.campaignsLoadFailed'));
       }
       setPcCampaigns(parsePadcoinsCampaignsList(data));
     } catch (err) {
       setPcCampaigns([]);
-      setPcCampaignsError(err.message || 'Error al cargar campañas PadCoins');
+      setPcCampaignsError(err.message || t('admin.padcoins.campaignsLoadFailed'));
     } finally {
       setPcCampaignsLoading(false);
     }
