@@ -51,6 +51,16 @@ describe('venue plans localization', () => {
     expect(it.plans.business.features).toHaveLength(7);
   });
 
+  it('provides a complete direct French commercial page', () => {
+    const fr = venuePlansCopy('fr');
+    expect(fr.title).toBe('Tout votre club.');
+    expect(fr.start).toBe('COMMENCER SANS ABONNEMENT');
+    expect(fr.padbolOwnerTitle).toContain('Padbol Courts');
+    expect(fr.plans.starter.features).toHaveLength(10);
+    expect(fr.plans.pro.features).toHaveLength(9);
+    expect(fr.plans.business.features).toHaveLength(7);
+  });
+
   it('keeps visible copy out of the page component', () => {
     const source = fs.readFileSync(
       path.join(__dirname, '..', 'pages', 'adminLanding', 'VenuePlansPage.jsx'),
