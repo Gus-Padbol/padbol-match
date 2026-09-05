@@ -23,6 +23,7 @@ import { useSedeTickerSponsors } from '../hooks/useSedeTickerSponsors';
 import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from '../components/common/SportIcon';
 import {
@@ -127,7 +128,7 @@ function formatFechaDiaMesPublica(iso, lang) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
   const [y, m, d] = s.split('-').map((n) => parseInt(n, 10));
   if (![y, m, d].every((n) => Number.isFinite(n))) return '';
-  const locale = String(lang || 'es').toLowerCase().startsWith('en') ? 'en-US' : 'es-AR';
+  const locale = padbolLangToIntlLocale(lang);
   return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
 }
 

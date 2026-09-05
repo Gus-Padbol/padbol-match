@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { fetchJugadorReputacion, formatFechaReputacion } from '../utils/jugadorReputacionApi';
 import './ReputacionJugadorPanel.css';
 
@@ -14,7 +15,7 @@ export default function ReputacionJugadorPanel({
   className = '',
 }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+  const locale = padbolLangToIntlLocale(i18n.language);
   const [rep, setRep] = useState(null);
   const [loading, setLoading] = useState(Boolean(accessToken));
 
@@ -104,7 +105,7 @@ export function ReputacionReservaAdvertencia({ apiBaseUrl, accessToken }) {
 /** Hook ligero para bloquear pago si está suspendido. */
 export function useJugadorReputacionReserva({ apiBaseUrl, accessToken, enabled = true }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+  const locale = padbolLangToIntlLocale(i18n.language);
   const [rep, setRep] = useState(null);
   const [loading, setLoading] = useState(Boolean(enabled && accessToken));
 

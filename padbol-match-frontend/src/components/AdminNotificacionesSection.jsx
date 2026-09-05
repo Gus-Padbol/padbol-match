@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   fetchAdminPushHistory,
@@ -59,7 +60,7 @@ export default function AdminNotificacionesSection({
   paisesOptions = [],
 }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+  const locale = padbolLangToIntlLocale(i18n.language);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');

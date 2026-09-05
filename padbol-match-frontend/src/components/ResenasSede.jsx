@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { getPublicApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import './ResenasSede.css';
 
@@ -128,7 +129,7 @@ function ResenaItem({ resena, dateLocale, t }) {
 export default function ResenasSede({ sedeId, accessToken, navigate, className = '' }) {
   const { t, i18n } = useTranslation();
   const idNum = useMemo(() => parseInt(String(sedeId), 10), [sedeId]);
-  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+  const dateLocale = padbolLangToIntlLocale(i18n.language);
 
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);

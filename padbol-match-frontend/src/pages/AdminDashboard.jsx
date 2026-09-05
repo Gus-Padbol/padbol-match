@@ -214,6 +214,7 @@ import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import i18n from '../i18n';
 import {
   createPartido,
@@ -5969,7 +5970,7 @@ export default function AdminDashboard({
 
     return {
       hoyISO,
-      fechaLabelHoy: formatFechaDia(hoyISO, i18n.language?.startsWith('en') ? 'en-US' : 'es-AR'),
+      fechaLabelHoy: formatFechaDia(hoyISO, padbolLangToIntlLocale(i18n.language)),
       reservasHoy,
       reservasHoyOrdenadas,
       ingresosHoyTexto,
@@ -6170,7 +6171,7 @@ export default function AdminDashboard({
     });
 
     return {
-      fechaLabel: formatFechaDia(hoyISO, i18n.language?.startsWith('en') ? 'en-US' : 'es-AR'),
+      fechaLabel: formatFechaDia(hoyISO, padbolLangToIntlLocale(i18n.language)),
       nombreSede: String(sedeRow.nombre || '').trim() || t('admin.tabs.miSede'),
       sinCanchasActivas: filasCancha.length === 0,
       rows,
@@ -10073,7 +10074,7 @@ export default function AdminDashboard({
   }
 
   const fechaActualLarga = (() => {
-    const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+    const dateLocale = padbolLangToIntlLocale(i18n.language);
     const s = new Date().toLocaleDateString(dateLocale, {
       weekday: 'long',
       day: 'numeric',
@@ -17378,7 +17379,7 @@ export default function AdminDashboard({
                           return (
                             <tr key={mov.id ?? `${mov.fecha}-${mov.user_id}-${mov.monto}`} style={{ borderBottom: '1px solid var(--border)' }}>
                               <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', color: 'var(--text-primary)', verticalAlign: 'top' }}>
-                                {formatPadcoinsMovFechaCorta(mov, i18n?.language === 'en' ? 'en-US' : 'es-AR')}
+                                {formatPadcoinsMovFechaCorta(mov, padbolLangToIntlLocale(i18n?.language))}
                               </td>
                               <td style={{ padding: '8px 10px', color: 'var(--text-primary)', verticalAlign: 'top' }}>
                                 {jugadorNombre || jugadorEmail ? (

@@ -2,6 +2,7 @@ import { PADBOL_LANGUAGE_CODES, canonicalPadbolLanguageCode } from '../constants
 import { ADDITIONAL_LOCALE_OVERRIDES } from './additionalLocaleOverrides';
 import { PADBOL_COURT_TERM, PROTECTED_PADBOL_TERMS } from './terminology';
 import en from './locales/en.json';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 
 const leafPaths = (value, prefix = '') => Object.entries(value).flatMap(([key, child]) => {
   const path = prefix ? `${prefix}.${key}` : key;
@@ -18,6 +19,14 @@ const CANONICAL_ECOSYSTEM_EDITIONS = [
 describe('canonical Padbol ecosystem locales', () => {
   it('offers the same 20 editions, including Czech', () => {
     expect(PADBOL_LANGUAGE_CODES).toEqual(CANONICAL_ECOSYSTEM_EDITIONS);
+  });
+
+  it('maps representative editions to their own date locale', () => {
+    expect(padbolLangToIntlLocale('de')).toBe('de-DE');
+    expect(padbolLangToIntlLocale('pt-PT')).toBe('pt-PT');
+    expect(padbolLangToIntlLocale('fa-IR')).toBe('fa-IR');
+    expect(padbolLangToIntlLocale('he')).toBe('he-IL');
+    expect(padbolLangToIntlLocale('cs')).toBe('cs-CZ');
   });
 
   it('accepts Czech language aliases', () => {
