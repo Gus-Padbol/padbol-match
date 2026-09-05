@@ -14,14 +14,14 @@ const API_BASE =
 
 const PRECIO_MENSUAL_USD =
   typeof process !== 'undefined' && process.env.REACT_APP_PRECIO_MENSUAL_USD != null
-    ? String(process.env.REACT_APP_PRECIO_MENSUAL_USD).trim()
-    : '$29 USD/mes';
+    ? String(process.env.REACT_APP_PRECIO_MENSUAL_USD).trim().replace(/\/\s*mes\b/i, '').trim()
+    : 'USD 29';
 
 const SERVICE_PLAN_DEFINITIONS = [
   { id: 'explorar', number: '01', accent: '#22c55e' },
   { id: 'base', number: '02', price: PRECIO_MENSUAL_USD, accent: '#38bdf8' },
-  { id: 'pro', number: '03', price: '$59 USD/mes', accent: '#E11B22', featured: true },
-  { id: '360', number: '04', price: '$99 USD/mes', accent: '#f59e0b' },
+  { id: 'pro', number: '03', price: 'USD 59', accent: '#E11B22', featured: true },
+  { id: '360', number: '04', price: 'USD 99', accent: '#f59e0b' },
 ];
 
 function normalizeWs(s) {

@@ -628,6 +628,77 @@
       "wallet": { "activeMembership": "Abonament activ" }
     }
   },
+  "clubOnboarding": {
+    "header": "Adaugă un club",
+    "hero": {
+      "title": "Adaugă-ți clubul în Padbol Match",
+      "lead": "Alege nivelul de servicii potrivit clubului tău. Poți începe astăzi, poți completa datele mai târziu și poți primi ajutor din partea echipei noastre ori de câte ori ai nevoie.",
+      "badge": "Configurare simplă, fără foi de calcul",
+      "guide": "Alege planul, începe înscrierea și configurează activitatea clubului prin pași ghidați."
+    },
+    "plansEyebrow": "Planuri care cresc împreună cu clubul tău",
+    "plansTitle": "Tot ce ai nevoie, la scara potrivită",
+    "plansLead": "Alege un plan pentru a începe. Prețurile sunt orientative și pot fi adaptate țării, monedei și nevoilor fiecărui club.",
+    "selected": "Plan selectat",
+    "choose": "Alege {{plan}}",
+    "plans": {
+      "explorar": {
+        "name": "Explorează",
+        "price": "Gratuit",
+        "period": "Pentru a descoperi serviciul",
+        "description": "O primă imagine a modului în care Padbol Match îți poate sprijini clubul.",
+        "include1": "Prezentarea produsului",
+        "include2": "Asistentul Chivi",
+        "include3": "Discuție cu echipa noastră"
+      },
+      "base": {
+        "name": "Club Base",
+        "period": "per club / lună",
+        "description": "Elementele esențiale pentru a administra activitatea sportivă dintr-un singur panou.",
+        "include1": "Padbol Courts, programe și prețuri",
+        "include2": "Rezervări și jucători",
+        "include3": "Panou de administrare"
+      },
+      "pro": {
+        "name": "Club Pro",
+        "period": "per club / lună",
+        "description": "Pentru cluburile care vor să își dezvolte comunitatea și competițiile.",
+        "include1": "Turnee și clasamente",
+        "include2": "Tabelă de scor conectată",
+        "include3": "PadCoins și abonamente"
+      },
+      "360": {
+        "name": "Club 360",
+        "period": "per club / lună",
+        "description": "Soluția completă pentru administrarea, comunicarea și prezentarea clubului într-o experiență extinsă.",
+        "include1": "Ecrane și publicitate",
+        "include2": "Sponsori și magazin",
+        "include3": "Automatizări etapizate"
+      }
+    },
+    "contact": {
+      "before": "Vrei să discutăm înainte de a alege? Scrie-ne pe",
+      "subject": "Întrebare despre planurile Padbol Match",
+      "after": "Chivi și echipa noastră de asistență te vor ajuta și pe parcursul configurării."
+    },
+    "request": { "planLabel": "Plan selectat" },
+    "validation": { "required": "Completează numele clubului, persoana de contact, adresa de e-mail și numărul de WhatsApp pentru a începe." },
+    "success": "Gata. Am primit solicitarea ta pentru {{plan}}. Te vom ajuta să activezi contul, să confirmi planul și să configurezi clubul prin pași ghidați.",
+    "error": { "submit": "Solicitarea nu a putut fi trimisă. Încearcă din nou." },
+    "form": {
+      "startInquiry": "Începe solicitarea",
+      "startPlan": "Începe cu {{plan}}",
+      "subtitle": "Plan selectat: {{plan}} · {{price}}. Pentru a începe avem nevoie doar de câteva date despre club și de o persoană de contact.",
+      "clubName": "Numele clubului",
+      "fullName": "Nume complet",
+      "email": "E-mail de contact",
+      "whatsapp": "WhatsApp (inclusiv prefixul țării)",
+      "message": "Mai dorești să ne spui ceva? (opțional)",
+      "disclaimer": "Această solicitare începe procesul de configurare. Vom confirma împreună activarea planului și metoda de plată înainte de orice debitare.",
+      "sending": "Se trimite…",
+      "sendInquiry": "Trimite solicitarea"
+    }
+  },
   "chatbot": {
     "fabCollapsed": "Întrebări?",
     "fabLine1": "Ai întrebări?",

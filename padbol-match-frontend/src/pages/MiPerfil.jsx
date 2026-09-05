@@ -2408,13 +2408,13 @@ export default function MiPerfil() {
                   style={{ marginTop: '3px', width: 18, height: 18, flexShrink: 0 }}
                 />
                 <span>
-                  Acepto los{' '}
+                  {t('auth.acceptTermsPrefix')}{' '}
                   <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6bc0', fontWeight: 700 }}>
-                    Términos y Condiciones
+                    {t('legal.terminos')}
                   </Link>{' '}
-                  y la{' '}
+                  {t('auth.andThe')}{' '}
                   <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6bc0', fontWeight: 700 }}>
-                    Política de Privacidad
+                    {t('legal.privacidad')}
                   </Link>{' '}
                   {reqAst}
                 </span>

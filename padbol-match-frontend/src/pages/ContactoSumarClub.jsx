@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import './LandingPage.css';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const ACCENT = '#E11B22';
 
@@ -201,6 +202,7 @@ function BusinessContactForm() {
 export default function ContactoSumarClub() {
   const location = useLocation();
   const isBusiness = new URLSearchParams(location.search).get('tema') === 'business';
+  const { t } = useTranslation();
   useEffect(() => {
     const root = document.documentElement;
     root.classList.add('landing-page-active');
@@ -243,7 +245,7 @@ export default function ContactoSumarClub() {
             textDecoration: 'none',
           }}
         >
-          ← Inicio
+          ← {t('aboutPage.home')}
         </Link>
         <h1
           style={{
@@ -254,7 +256,7 @@ export default function ContactoSumarClub() {
             color: 'var(--text-primary)',
           }}
         >
-          Sumar mi club
+          {t('publicSite.contact.venue')}
         </h1>
         <p
           style={{
@@ -265,10 +267,10 @@ export default function ContactoSumarClub() {
             fontWeight: 500,
           }}
         >
-          Completa el formulario y nos ponemos en contacto para darte de alta en la plataforma.
+          {t('clubOnboarding.hero.lead')}
         </p>
         <Link to="/unirse" style={{ ...btnPrimary, marginBottom: 14 }}>
-          Completar formulario de alta
+          {t('clubOnboarding.form.startInquiry')}
         </Link>
         <p
           style={{
@@ -280,14 +282,14 @@ export default function ContactoSumarClub() {
             fontWeight: 500,
           }}
         >
-          ¿Tienes dudas?{' '}
+          {t('clubOnboarding.contact.before')}{' '}
           <a
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: ACCENT, fontWeight: 700, textDecoration: 'none' }}
           >
-            Escribinos por WhatsApp
+            WhatsApp
           </a>
         </p>
         <div
@@ -299,11 +301,11 @@ export default function ContactoSumarClub() {
           }}
         >
           <Link to="/terminos" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
-            Términos
+            {t('legal.terminos')}
           </Link>
           <span style={{ color: 'var(--border)', margin: '0 8px' }}>|</span>
           <Link to="/privacidad" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
-            Privacidad
+            {t('legal.privacidad')}
           </Link>
         </div>
       </div>
