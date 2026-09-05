@@ -1271,6 +1271,8 @@
       "sessionRequiredUpload": "Session required to upload files.",
       "wrongSportCardSaved": "Server saved photo to another sport/card. Check UNIQUE migration (deporte, card_key).",
       "imageUploaded": "✅ Image uploaded",
+      "imageUploadFailed": "Could not upload the image",
+      "defaultValue": "(default: {{value}})",
       "promoSaved": "✅ Promo saved",
       "promoJugarIntro": "Promotional card below the three actions (Book / Find / Create match) on the Play screen. Only shown to players at your venue when active with minimum data.",
       "promoJugarTitle": "Promo on «Play» (hub)",

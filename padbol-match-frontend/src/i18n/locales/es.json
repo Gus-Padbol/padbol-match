@@ -1295,6 +1295,8 @@
       "sessionRequiredUpload": "Sesión requerida para subir archivos.",
       "wrongSportCardSaved": "El servidor guardó la foto en otro deporte/card. Revisa la migración UNIQUE (deporte, card_key).",
       "imageUploaded": "✅ Imagen subida",
+      "imageUploadFailed": "No se pudo subir la imagen",
+      "defaultValue": "(por defecto: {{value}})",
       "promoSaved": "✅ Promo guardada",
       "promoJugarIntro": "Card promocional bajo las tres acciones (Reservar / Buscar / Armar) en la pantalla Jugar. Solo se muestra a jugadores de tu sede si está activa y con datos mínimos.",
       "promoJugarTitle": "Promo en «Jugar» (hub)",
