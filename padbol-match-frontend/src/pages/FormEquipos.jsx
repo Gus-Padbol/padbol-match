@@ -21,7 +21,6 @@ import { clearEquipoActual, readEquipoActualForTorneo } from '../utils/torneoEqu
 import { tieneContextoAdminGestionEquiposTorneo } from '../utils/adminNavContext';
 import {
   getEquipoInscripcionEstado,
-  etiquetaInscripcionEstado,
   iniciarPagoInscripcionTorneo,
   precioInscripcionTorneo,
   torneoPermiteNuevasInscripciones,
@@ -35,7 +34,6 @@ import {
   pathnameIsAdminRoute,
   puedeExportarJugadoresTorneoExcel,
 } from '../utils/torneoAdminAccess';
-import { mensajeConfirmacionCupoTrasEquipoCompleto } from '../utils/torneoRevelacionEquipos';
 import {
   jugadorNombreTorneoEtiqueta,
   fetchJugadoresPerfilPorJugadores,
@@ -55,6 +53,7 @@ import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import { esTorneoSingles, jugadoresMinimosEquipoTorneo } from '../utils/torneoDeporteFormato';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import '../styles/TorneoVista.css';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 /** Backup del destino post-login (la URL ya lleva `?redirect=` con el mismo path). */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -198,6 +197,16 @@ function esCreadorEquipoOMiAuth(eq, authEmailTrim, usuarioBasico, authUserId) {
 }
 
 export default function FormEquipos() {
+  const { t } = useTranslation();
+  const mensajeCupoCompleto = useCallback((torneoActual) => {
+    const raw = String(torneoActual?.fecha_inicio || '').trim();
+    const start = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T12:00:00`) : new Date(raw);
+    const deadline = !raw || Number.isNaN(start.getTime())
+      ? t('teamRegistration.dayBeforeTournament')
+      : new Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'short' })
+        .format(new Date(start.getTime() - 24 * 60 * 60 * 1000));
+    return t('teamRegistration.confirmDeadline', { deadline });
+  }, [t]);
   const { id } = useParams();
   const { session, loading: authLoading, userProfile, refreshSession } = useAuth();
   const torneoId = parseInt(id, 10);
@@ -488,12 +497,12 @@ export default function FormEquipos() {
       setInviteEquipoLoading(false);
       if (error) {
         console.error(error);
-        setInviteEquipoError('No se pudo cargar el equipo.');
+        setInviteEquipoError(t('teamRegistration.inviteLoadFailed'));
         setInviteEquipoRow(null);
         return;
       }
       if (!data || Number(data.torneo_id) !== Number(torneoId)) {
-        setInviteEquipoError('Este equipo no pertenece a este torneo.');
+        setInviteEquipoError(t('teamRegistration.wrongTournament'));
         setInviteEquipoRow(null);
         return;
       }
@@ -907,7 +916,7 @@ export default function FormEquipos() {
     const sess = data.session;
 
     if (!sess || !sess.user) {
-      alert('Tienes que iniciar sesión');
+      alert(t('teamRegistration.signInRequired'));
       navigate(authUrlWithRedirect(`/torneo/${torneoId}/equipos`));
       return;
     }
@@ -917,7 +926,7 @@ export default function FormEquipos() {
       navigate(
         `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
         {
-          state: { avisoPerfilTorneo: 'Completa tu perfil para crear un equipo' },
+          state: { avisoPerfilTorneo: t('teamRegistration.completeProfileToCreate') },
         }
       );
       return;
@@ -928,17 +937,17 @@ export default function FormEquipos() {
     const tipoEquipo = equipoAbierto ? 'abierto' : 'cerrado';
     const minJug = jugadoresMinimosEquipoTorneo(torneo);
     if (Number(cupoMaximo) < minJug) {
-      alert(`En este torneo cada equipo debe tener al menos ${minJug} jugador(es).`);
+      alert(t('teamRegistration.minimumPlayers', { count: minJug }));
       return;
     }
 
     const creadorJugador = buildCreadorJugadorParaEquipo(sess, userProfile, yo);
     if (!creadorJugador) {
-      alert('Tienes que iniciar sesión');
+      alert(t('teamRegistration.signInRequired'));
       return;
     }
     if (!String(creadorJugador.email || '').trim()) {
-      alert('Tu sesión no tiene email. Necesitamos el email en el equipo para identificar jugadores.');
+      alert(t('teamRegistration.emailRequired'));
       return;
     }
 
@@ -986,12 +995,12 @@ export default function FormEquipos() {
 
   const pedirUnirme = async (equipo, opts = {}) => {
     if (miEquipo) {
-      alert('Ya estás en un equipo');
+      alert(t('teamDetail.alreadyInTeam'));
       return;
     }
 
     if (miSolicitudPendiente) {
-      alert('Ya tienes una solicitud pendiente');
+      alert(t('teamDetail.pendingRequestExists'));
       return;
     }
 
@@ -1005,7 +1014,7 @@ export default function FormEquipos() {
       navigate(
         `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
         {
-          state: { avisoPerfilTorneo: 'Completa tu perfil para crear o unirte a un equipo' },
+          state: { avisoPerfilTorneo: t('teamDetail.completeProfileToJoin') },
         }
       );
       return;
@@ -1016,17 +1025,17 @@ export default function FormEquipos() {
     const cupo = Number(equipo.cupo_maximo || 2);
 
     if (equipo.equipo_abierto === false) {
-      alert('Este equipo es cerrado: solo el capitán puede sumar jugadores.');
+      alert(t('teamDetail.closedCaptainOnly'));
       return;
     }
 
     if (players.length >= cupo) {
-      alert('Equipo completo');
+      alert(t('teamDetail.teamFull'));
       return;
     }
 
     if (requests.some((r) => samePerson(r, yo))) {
-      alert('Ya pediste unirte a este equipo');
+      alert(t('teamDetail.alreadyRequestedHere'));
       return;
     }
 
@@ -1043,7 +1052,7 @@ export default function FormEquipos() {
 
     if (error) {
       console.error(error);
-      alert('Error al pedir unirte');
+      alert(t('teamDetail.joinRequestFailed'));
       return;
     }
 
@@ -1095,7 +1104,7 @@ export default function FormEquipos() {
       setSavingSalirEquipo(false);
       if (error) {
         console.error(error);
-        alert('No se pudo eliminar el equipo');
+        alert(t('teamDetail.dissolveFailed'));
         return;
       }
       setSalirEquipoIdConfirm(null);
@@ -1112,7 +1121,7 @@ export default function FormEquipos() {
       setSavingSalirEquipo(false);
       if (error) {
         console.error(error);
-        alert('No se pudo salir del equipo');
+        alert(t('teamDetail.leaveFailed'));
         return;
       }
       setSalirEquipoIdConfirm(null);
@@ -1167,7 +1176,7 @@ export default function FormEquipos() {
     const prevLen = players.length;
 
     if (players.length >= cupo) {
-      alert('Equipo completo');
+      alert(t('teamDetail.teamFull'));
       return;
     }
 
@@ -1181,12 +1190,12 @@ export default function FormEquipos() {
           const nextLen = getPlayers(upd).length;
           void notificarCapitanEquipoCompletoSiAplica(equipo.id, prevLen, nextLen, cupo);
           if (nextLen >= cupo && prevLen < cupo && torneo) {
-            setBannerCupoTrasEquipoCompleto(mensajeConfirmacionCupoTrasEquipoCompleto(torneo));
+            setBannerCupoTrasEquipoCompleto(mensajeCupoCompleto(torneo));
           }
         }
       } catch (err) {
         console.error(err);
-        alert(err?.message || 'Error al aceptar');
+        alert(t('teamDetail.acceptFailed'));
       }
       return;
     }
@@ -1211,7 +1220,7 @@ export default function FormEquipos() {
 
     if (error) {
       console.error(error);
-      alert('Error al aceptar');
+      alert(t('teamDetail.acceptFailed'));
       return;
     }
 
@@ -1224,7 +1233,7 @@ export default function FormEquipos() {
     );
     void notificarCapitanEquipoCompletoSiAplica(equipo.id, basePlayers.length, nuevosJugadores.length, cupo);
     if (nuevosJugadores.length >= cupo && basePlayers.length < cupo && torneo) {
-      setBannerCupoTrasEquipoCompleto(mensajeConfirmacionCupoTrasEquipoCompleto(torneo));
+      setBannerCupoTrasEquipoCompleto(mensajeCupoCompleto(torneo));
     }
   };
 
@@ -1242,7 +1251,7 @@ export default function FormEquipos() {
 
     if (error) {
       console.error(error);
-      alert('Error al rechazar');
+      alert(t('teamDetail.rejectFailed'));
       return;
     }
 
@@ -1257,7 +1266,7 @@ export default function FormEquipos() {
     const u = getOrCreateUsuarioBasico();
     if (!miEquipo || !esCreadorEquipoOMiAuth(miEquipo, authEmail, u, authUserId) || !row) return;
     if (row.disponibilidad === 'tiene_equipo') {
-      alert('Ese jugador ya tiene equipo en este torneo.');
+      alert(t('teamDetail.playerAlreadyHasTeam'));
       return;
     }
 
@@ -1268,7 +1277,7 @@ export default function FormEquipos() {
 
     const cupo = Number(miEquipo.cupo_maximo || miEquipo.cupo || 2);
     if (players.length >= cupo) {
-      alert('Equipo completo');
+      alert(t('teamDetail.teamFull'));
       return;
     }
 
@@ -1286,11 +1295,11 @@ export default function FormEquipos() {
       foto_url: row.foto_url != null && String(row.foto_url).trim() ? String(row.foto_url).trim() : '',
     };
     if (jugadorCoincideConYo(nuevo, yo, authUserId)) {
-      alert('No puedes agregarte como compañero');
+      alert(t('teamRegistration.cannotAddYourself'));
       return;
     }
     if (players.some((p) => samePerson(p, nuevo))) {
-      alert('Ese jugador ya está en el equipo');
+      alert(t('teamRegistration.playerAlreadyInTeam'));
       return;
     }
 
@@ -1305,7 +1314,7 @@ export default function FormEquipos() {
 
     if (error) {
       console.error(error);
-      alert('Error al agregar compañero');
+      alert(t('teamRegistration.addPartnerFailed'));
       return;
     }
 
@@ -1316,7 +1325,7 @@ export default function FormEquipos() {
     setCompaneroOpciones([]);
     void notificarCapitanEquipoCompletoSiAplica(miEquipo.id, prevLen, nuevosJugadores.length, cupo);
     if (nuevosJugadores.length >= cupo && prevLen < cupo && torneo) {
-      setBannerCupoTrasEquipoCompleto(mensajeConfirmacionCupoTrasEquipoCompleto(torneo));
+      setBannerCupoTrasEquipoCompleto(mensajeCupoCompleto(torneo));
     }
   };
 
@@ -1378,9 +1387,9 @@ export default function FormEquipos() {
     const teamQ =
       miEquipo?.id != null && miEquipo.id !== '' ? `?equipo=${encodeURIComponent(String(miEquipo.id))}` : '';
     const url = `${base}/torneo/${id}/equipos${teamQ}`;
-    const txt = `Te invito a registrarte en el torneo "${torneo?.nombre || 'Padbol'}" y confirmar tu lugar en el equipo: ${url}`;
+    const txt = t('teamRegistration.whatsappConfirmPlace', { tournament: torneo?.nombre || 'Padbol', url });
     return `https://wa.me/?text=${encodeURIComponent(txt)}`;
-  }, [id, torneo?.nombre, miEquipo?.id]);
+  }, [id, torneo?.nombre, miEquipo?.id, t]);
 
   const confirmarInscripcionTorneo = async () => {
     if (!miEquipo || !torneo) return;
@@ -1393,7 +1402,7 @@ export default function FormEquipos() {
     }
     const em = String(session.user.email || '').trim();
     if (!em) {
-      alert('Necesitas un email en tu perfil para pagar la inscripción.');
+      alert(t('teamDetail.emailRequiredForPayment'));
       return;
     }
     setMpInscripcionLoading(true);
@@ -1408,13 +1417,13 @@ export default function FormEquipos() {
     });
     setMpInscripcionLoading(false);
     if (!r.ok) {
-      alert(r.error);
+      alert(t('teamDetail.paymentFailed'));
       return;
     }
     if (r.gratis) await refrescarEquiposDesdeSupabase();
   };
 
-  const renderEquipoCard = (eq, esTuEquipo, textoUnir = '+ Pedir unirme') => {
+  const renderEquipoCard = (eq, esTuEquipo, textoUnir = t('teamRegistration.askToJoin')) => {
     const cupo = Number(eq.cupo_maximo || eq.cupo || 2);
     const numJug = eq.players.length;
     const plazasLlenas = numJug >= cupo;
@@ -1422,13 +1431,13 @@ export default function FormEquipos() {
     const marcaAbierto = eq.equipo_abierto === true;
     let estadoLinea = { texto: '', color: '#64748b' };
     if (plazasLlenas) {
-      estadoLinea = { texto: 'Equipo completo', color: '#64748b' };
+      estadoLinea = { texto: t('teamDetail.teamFull'), color: '#64748b' };
     } else if (eq.equipo_abierto === false) {
-      estadoLinea = { texto: 'Equipo cerrado', color: '#b91c1c' };
+      estadoLinea = { texto: t('teamDetail.teamClosed'), color: '#b91c1c' };
     } else if (marcaAbierto) {
-      estadoLinea = { texto: 'Equipo abierto – faltan jugadores', color: '#15803d' };
+      estadoLinea = { texto: t('teamDetail.teamOpenMissing'), color: '#15803d' };
     } else {
-      estadoLinea = { texto: 'Cupos libres', color: '#64748b' };
+      estadoLinea = { texto: t('teamDetail.spotsAvailable'), color: '#64748b' };
     }
     const mostrarBotonUnirse = marcaAbierto && !plazasLlenas;
     const insEst = getEquipoInscripcionEstado(eq);
@@ -1463,7 +1472,7 @@ export default function FormEquipos() {
               marginBottom: '8px',
             }}
           >
-            TU EQUIPO
+            {t('teamDetail.yourTeam').toLocaleUpperCase()}
           </div>
         ) : null}
 
@@ -1496,7 +1505,7 @@ export default function FormEquipos() {
                 : { background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' }),
             }}
           >
-            {etiquetaInscripcionEstado(insEst)}
+            {insEst === 'confirmado' ? t('teamDetail.registrationConfirmed') : t('teamDetail.registrationPending')}
           </span>
         </div>
 
@@ -1512,13 +1521,13 @@ export default function FormEquipos() {
                   <LinkVerPerfilJugadorPublico jugador={p} style={{ marginLeft: '4px' }} />
                 </React.Fragment>
               ))
-            : 'Sin jugadores'}
+            : t('teamRegistration.noPlayers')}
         </div>
 
         {eq.players.length > 0 ? (
           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px', display: 'grid', gap: '4px' }}>
             {eq.players.map((p, idx) => {
-              const rolTuEquipo = esTuEquipo && esJugadorPendiente(p) ? ' (pendiente)' : '';
+              const rolTuEquipo = esTuEquipo && esJugadorPendiente(p) ? ` (${t('teamRegistration.pending')})` : '';
               const ocultarEstadoRepetido = esTuEquipo && rolTuEquipo;
               return (
               <div
@@ -1540,10 +1549,10 @@ export default function FormEquipos() {
                   ) : null}
                 </span>
                 {samePerson(p, yo) && !perfilTorneoCompleto ? (
-                  <span style={{ color: '#b45309', fontWeight: 800, fontSize: '11px' }}>Perfil incompleto</span>
+                  <span style={{ color: '#b45309', fontWeight: 800, fontSize: '11px' }}>{t('teamDetail.incompleteProfile')}</span>
                 ) : !(esTuEquipo && !soyCreador) ? (
                   ocultarEstadoRepetido ? null : esJugadorPendiente(p) ? (
-                    <span style={{ color: '#b45309', fontWeight: 600 }}>Pendiente de confirmación</span>
+                    <span style={{ color: '#b45309', fontWeight: 600 }}>{t('teamDetail.pendingConfirmation')}</span>
                   ) : (
                     <span
                       style={{
@@ -1551,7 +1560,7 @@ export default function FormEquipos() {
                         fontWeight: 600,
                       }}
                     >
-                      {esTuEquipo ? 'Confirmado' : 'Jugador confirmado'}
+                      {esTuEquipo ? t('teamRegistration.confirmed') : t('teamRegistration.playerConfirmed')}
                     </span>
                   )
                 ) : null}
@@ -1562,7 +1571,7 @@ export default function FormEquipos() {
         ) : null}
 
         <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-          {numJug}/{cupo} jugadores
+          {t('teamRegistration.playerCount', { filled: numJug, total: cupo })}
         </div>
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
@@ -1577,7 +1586,7 @@ export default function FormEquipos() {
               cursor: 'pointer',
             }}
           >
-            {eq.id === miEquipo?.id ? 'Ver mi equipo' : 'Ver equipo'}
+            {eq.id === miEquipo?.id ? t('teamRegistration.viewMyTeam') : t('teamRegistration.viewTeam')}
           </button>
 
           {mostrarBotonUnirse &&
@@ -1617,7 +1626,7 @@ export default function FormEquipos() {
                 fontWeight: 700,
               }}
             >
-              {soyCreador ? 'Disolver equipo' : 'Salir del equipo'}
+              {soyCreador ? t('teamDetail.dissolveTeam') : t('teamDetail.leaveTeam')}
             </button>
           ) : null}
         </div>
@@ -1625,7 +1634,7 @@ export default function FormEquipos() {
         {soyCreador && eq.requests.length > 0 && (
           <div style={{ marginTop: '12px' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>
-              Solicitudes pendientes
+              {t('teamDetail.pendingRequests')}
             </div>
 
             {eq.requests.map((sol, idx) => (
@@ -1657,7 +1666,7 @@ export default function FormEquipos() {
                       cursor: 'pointer',
                     }}
                   >
-                    Aceptar
+                    {t('teamDetail.accept')}
                   </button>
 
                   <button
@@ -1671,7 +1680,7 @@ export default function FormEquipos() {
                       cursor: 'pointer',
                     }}
                   >
-                    Rechazar
+                    {t('teamDetail.reject')}
                   </button>
                 </div>
               </div>
@@ -1701,7 +1710,7 @@ export default function FormEquipos() {
 
   const crearEquipoFormulario = (
     <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
-      <h3>👥 Crear equipo</h3>
+      <h3>{t('teamRegistration.createTeamTitle')}</h3>
 
       <div
         style={{
@@ -1712,11 +1721,11 @@ export default function FormEquipos() {
           fontWeight: 600,
         }}
       >
-        {ICONO_CAPITAN} Capitán: {nombreCreador}
+        {ICONO_CAPITAN} {t('teamDetail.captain')}: {nombreCreador}
       </div>
 
       <input
-        placeholder="Nombre del equipo"
+        placeholder={t('teamRegistration.teamName')}
         value={nombreEquipo}
         onChange={(e) => setNombreEquipo(e.target.value)}
         style={{
@@ -1742,7 +1751,7 @@ export default function FormEquipos() {
             lineHeight: 1.45,
           }}
         >
-          Torneo en formato <strong>singles</strong>: eres el único jugador de tu equipo (1 jugador).
+          {t('teamRegistration.singlesTeamHint')}
         </div>
       ) : torneo && minJugadoresTorneoCrearUi >= 5 ? (
         <div
@@ -1758,11 +1767,11 @@ export default function FormEquipos() {
             lineHeight: 1.45,
           }}
         >
-          Este torneo requiere equipos de <strong>{minJugadoresTorneoCrearUi} jugadores</strong> por plantilla.
+          {t('teamRegistration.fixedRosterHint', { count: minJugadoresTorneoCrearUi })}
         </div>
       ) : (
         <div style={{ marginTop: '14px' }}>
-          <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>Tamaño del equipo</div>
+          <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>{t('teamRegistration.teamSize')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {[2, 3, 4].map((n) => {
               const active = cupoMaximo === n;
@@ -1787,7 +1796,7 @@ export default function FormEquipos() {
                     boxShadow: active ? '0 2px 10px rgba(225, 27, 34, 0.25)' : 'none',
                   }}
                 >
-                  Equipo de {n}
+                  {t('teamRegistration.teamOf', { count: n })}
                 </button>
               );
             })}
@@ -1796,7 +1805,7 @@ export default function FormEquipos() {
       )}
 
       <div style={{ marginTop: '14px' }}>
-        <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>Tipo de equipo</div>
+        <div style={{ fontWeight: 700, fontSize: '13px', color: '#374151', marginBottom: '8px' }}>{t('teamRegistration.teamType')}</div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             type="button"
@@ -1813,7 +1822,7 @@ export default function FormEquipos() {
               fontSize: '13px',
             }}
           >
-            Cerrado
+            {t('teamRegistration.closed')}
           </button>
           <button
             type="button"
@@ -1832,15 +1841,15 @@ export default function FormEquipos() {
               opacity: torneo && (esTorneoSingles(torneo) || minJugadoresTorneoCrearUi >= 5) ? 0.55 : 1,
             }}
           >
-            Abierto
+            {t('teamRegistration.open')}
           </button>
         </div>
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#6b7280', lineHeight: 1.45 }}>
           {torneo && esTorneoSingles(torneo)
-            ? 'En singles no aplica equipo abierto (no hay plaza para un compañero).'
+            ? t('teamRegistration.singlesNoOpenTeam')
             : torneo && minJugadoresTorneoCrearUi >= 5
-              ? 'En torneos con plantilla fija grande el equipo cerrado no usa modalidad abierta.'
-              : 'Abierto: otros jugadores pueden solicitar unirse; el capitán sigue aprobando cada ingreso.'}
+              ? t('teamRegistration.largeRosterClosed')
+              : t('teamRegistration.openTeamHint')}
         </p>
       </div>
 
@@ -1859,7 +1868,7 @@ export default function FormEquipos() {
           opacity: saving || !nombreEquipo.trim() ? 0.6 : 1,
         }}
       >
-        + Crear equipo
+        {t('teamRegistration.createTeam')}
       </button>
     </div>
   );
@@ -1890,7 +1899,7 @@ export default function FormEquipos() {
           ))}
         </div>
       ) : (
-        <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '6px' }}>Sin jugadores</div>
+        <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '6px' }}>{t('teamRegistration.noPlayers')}</div>
       )}
     </div>
   );
@@ -1909,7 +1918,7 @@ export default function FormEquipos() {
             fontWeight: 600,
           }}
         >
-          Este torneo está {torneo?.estado}. Solo se muestran los equipos participantes.
+          {t('teamRegistration.tournamentStateReadOnly', { status: torneo?.estado })}
         </div>
       )}
 
@@ -1933,7 +1942,7 @@ export default function FormEquipos() {
               letterSpacing: '-0.02em',
             }}
           >
-            Tu equipo
+            {t('teamDetail.yourTeam')}
           </h3>
           {renderEquipoCard(miEquipoEnListado, true, textoUnir)}
         </div>
@@ -1951,7 +1960,7 @@ export default function FormEquipos() {
               lineHeight: 1.45,
             }}
           >
-            No hay equipos buscando jugadores en este momento
+            {t('teamRegistration.noTeamsLooking')}
           </p>
           {puedeOfrecerCrearDesdeLista && typeof onCrearEquipoClick === 'function' ? (
             <button
@@ -1971,7 +1980,7 @@ export default function FormEquipos() {
                 boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
               }}
             >
-              Crear mi equipo
+              {t('teamRegistration.createMyTeam')}
             </button>
           ) : null}
         </div>
@@ -1979,7 +1988,7 @@ export default function FormEquipos() {
         <>
           {equiposUnirseListado.length > 0 && (
             <h3 style={{ marginTop: miEquipoEnListado ? '20px' : 0, marginBottom: '12px' }}>
-              🏆 Formar equipos ({equiposUnirseListado.length})
+              {t('teamRegistration.formTeams', { count: equiposUnirseListado.length })}
             </h3>
           )}
 
@@ -1994,7 +2003,7 @@ export default function FormEquipos() {
                 letterSpacing: '0.02em',
               }}
             >
-              Otros equipos disponibles
+              {t('teamRegistration.otherTeams')}
             </div>
           ) : null}
 
@@ -2011,7 +2020,7 @@ export default function FormEquipos() {
                 lineHeight: 1.45,
               }}
             >
-              No hay otros equipos abiertos a los que unirte en este momento.
+              {t('teamRegistration.noOtherOpenTeams')}
             </div>
           ) : null}
 
@@ -2138,17 +2147,17 @@ export default function FormEquipos() {
           }}
         >
           {inviteEquipoLoading && !inviteEquipoRow ? (
-            <div style={{ fontWeight: 700, color: '#312e81' }}>Cargando invitación…</div>
+            <div style={{ fontWeight: 700, color: '#312e81' }}>{t('teamRegistration.loadingInvitation')}</div>
           ) : inviteEquipoError ? (
             <div style={{ fontWeight: 700, color: '#991b1b' }}>{inviteEquipoError}</div>
           ) : yaOtroEquipoMismoTorneo ? (
             <div style={{ fontWeight: 700, color: '#92400e', lineHeight: 1.5 }}>
-              Ya estás inscripto en otro equipo en este torneo.
+              {t('teamRegistration.registeredInOtherTeam')}
             </div>
           ) : yaEnPlantelInvitado || yaEsteEquipo ? (
             <>
               <div style={{ fontWeight: 800, fontSize: '16px', color: '#14532d', marginBottom: '8px' }}>
-                Ya formas parte de {inviteEquipoRow?.nombre ? `«${inviteEquipoRow.nombre}»` : 'este equipo'}.
+                {t('teamRegistration.alreadyPartOf', { team: inviteEquipoRow?.nombre || t('teamRegistration.thisTeam') })}
               </div>
               <button
                 type="button"
@@ -2165,13 +2174,12 @@ export default function FormEquipos() {
                   color: 'white',
                 }}
               >
-                Ver equipo
+                {t('teamRegistration.viewTeam')}
               </button>
             </>
           ) : solicitudPendienteEnInvitado ? (
             <div style={{ fontWeight: 700, color: '#92400e', lineHeight: 1.5 }}>
-              Tu solicitud para unirte a {inviteEquipoRow?.nombre ? `«${inviteEquipoRow.nombre}»` : 'este equipo'}{' '}
-              está pendiente de aprobación del capitán.
+              {t('teamRegistration.requestPendingFor', { team: inviteEquipoRow?.nombre || t('teamRegistration.thisTeam') })}
             </div>
           ) : inviteEquipoRow ? (
             <>
@@ -2184,7 +2192,7 @@ export default function FormEquipos() {
                   marginBottom: '8px',
                 }}
               >
-                INVITACIÓN
+                {t('teamRegistration.invitation').toLocaleUpperCase()}
               </div>
               <h2
                 style={{
@@ -2194,10 +2202,10 @@ export default function FormEquipos() {
                   color: '#0f172a',
                 }}
               >
-                {inviteEquipoRow.nombre || 'Equipo'}
+                {inviteEquipoRow.nombre || t('equipos.titulo')}
               </h2>
               <p style={{ margin: '0 0 14px', fontSize: '15px', fontWeight: 700, color: '#334155', lineHeight: 1.45 }}>
-                Fuiste invitado a unirte a este equipo
+                {t('teamRegistration.invitedToJoin')}
               </p>
               <div
                 style={{
@@ -2208,7 +2216,7 @@ export default function FormEquipos() {
                   textTransform: 'uppercase',
                 }}
               >
-                Jugadores confirmados
+                {t('teamRegistration.confirmedPlayers')}
               </div>
               <ul style={{ margin: '0 0 16px', paddingLeft: '20px', color: '#1e293b', fontWeight: 600, lineHeight: 1.5 }}>
                 {jugadoresConfirmadosInv.length ? (
@@ -2223,21 +2231,21 @@ export default function FormEquipos() {
                   ))
                 ) : (
                   <li style={{ listStyle: 'none', marginLeft: '-20px', color: '#64748b' }}>
-                    Todavía no hay jugadores confirmados
+                    {t('teamRegistration.noConfirmedPlayers')}
                   </li>
                 )}
               </ul>
               {!session?.user ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#475569' }}>
-                  Inicia sesión para confirmar tu lugar.
+                  {t('teamRegistration.signInToConfirm')}
                 </p>
               ) : equipoCerradoNoSolicitudes ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#b45309', lineHeight: 1.45 }}>
-                  Este equipo es cerrado: no acepta solicitudes. Contacta al capitán para que te sume.
+                  {t('teamRegistration.closedContactCaptain')}
                 </p>
               ) : llenoInv ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#64748b' }}>
-                  Este equipo ya está completo.
+                  {t('teamRegistration.teamAlreadyFull')}
                 </p>
               ) : (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -2258,7 +2266,7 @@ export default function FormEquipos() {
                       opacity: inviteAccionPending ? 0.65 : 1,
                     }}
                   >
-                    {inviteAccionPending ? 'Enviando…' : 'Confirmar mi lugar'}
+                    {inviteAccionPending ? t('teamDetail.sending') : t('teamRegistration.confirmMyPlace')}
                   </button>
                   <button
                     type="button"
@@ -2275,7 +2283,7 @@ export default function FormEquipos() {
                       color: '#475569',
                     }}
                   >
-                    Rechazar
+                    {t('teamDetail.reject')}
                   </button>
                 </div>
               )}
@@ -2312,7 +2320,7 @@ export default function FormEquipos() {
           lineHeight: 1.45,
         }}
       >
-        <div style={{ marginBottom: '10px' }}>Para crear un equipo necesitas iniciar sesión.</div>
+        <div style={{ marginBottom: '10px' }}>{t('teamRegistration.signInToCreate')}</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
           <button
             type="button"
@@ -2329,7 +2337,7 @@ export default function FormEquipos() {
               boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
             }}
           >
-            Iniciar sesión
+            {t('auth.signIn')}
           </button>
           <button
             type="button"
@@ -2345,7 +2353,7 @@ export default function FormEquipos() {
               border: '1px solid rgba(113,63,18,0.35)',
             }}
           >
-            Cerrar
+            {t('teamRegistration.close')}
           </button>
         </div>
       </div>
@@ -2367,7 +2375,7 @@ export default function FormEquipos() {
         }}
       >
         <div style={{ marginBottom: '10px' }}>
-          Tu equipo: <strong>{miEquipo.nombre}</strong>
+          {t('teamRegistration.yourTeamNamed', { team: miEquipo.nombre })}
         </div>
         <button
           type="button"
@@ -2383,7 +2391,7 @@ export default function FormEquipos() {
             color: '#15803d',
           }}
         >
-          Ver mi equipo
+          {t('teamRegistration.viewMyTeam')}
         </button>
       </div>
     ) : null;
@@ -2447,7 +2455,7 @@ export default function FormEquipos() {
                 color: '#92400e',
               }}
             >
-              Pendiente de pago
+              {t('teamDetail.paymentPending')}
             </span>
           ) : null}
         </div>
@@ -2460,7 +2468,7 @@ export default function FormEquipos() {
               marginBottom: soyMiembroMiEquipo ? '12px' : 0,
             }}
           >
-            Para confirmar el cupo, cualquier integrante puede pagar la inscripción completa.
+            {t('teamDetail.anyMemberCanPay')}
           </div>
         ) : null}
         {estadoInscripcionMiEquipo === 'pendiente' && soyMiembroMiEquipo ? (
@@ -2483,10 +2491,10 @@ export default function FormEquipos() {
             }}
           >
             {mpInscripcionLoading
-              ? 'Redirigiendo…'
+              ? t('teamDetail.redirecting')
               : costoInscripcionTorneoUi > 0
-                ? '💳 Pagar inscripción'
-                : 'Confirmar inscripción (sin costo)'}
+                ? t('teamDetail.payRegistration')
+                : t('teamDetail.confirmFreeRegistration')}
           </button>
         ) : null}
       </div>
@@ -2514,9 +2522,9 @@ export default function FormEquipos() {
             gap: '12px',
           }}
         >
-          <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>Tengo equipo completo</div>
+          <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>{t('teamRegistration.haveFullTeam')}</div>
           <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-            Ya tenemos todos los integrantes
+            {t('teamRegistration.haveAllMembers')}
           </div>
           <button
             type="button"
@@ -2534,7 +2542,7 @@ export default function FormEquipos() {
               boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
             }}
           >
-            Crear equipo
+            {t('teamRegistration.createTeamButton')}
           </button>
         </div>
         <div
@@ -2549,9 +2557,9 @@ export default function FormEquipos() {
             gap: '12px',
           }}
         >
-          <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>Busco compañero/s</div>
+          <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>{t('teamRegistration.lookingForPartners')}</div>
           <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-            Me anoto solo y busco con quién jugar
+            {t('teamRegistration.joinAlone')}
           </div>
           <button
             type="button"
@@ -2568,7 +2576,7 @@ export default function FormEquipos() {
               color: '#b91c1c',
             }}
           >
-            Ver equipos disponibles
+            {t('teamRegistration.viewAvailableTeams')}
           </button>
         </div>
       </div>
@@ -2580,15 +2588,15 @@ export default function FormEquipos() {
         title={
           mostrarUiAdminFormEquipos
             ? torneoFinalizado
-              ? 'Resultados'
-              : 'Gestión del torneo'
+              ? t('teamRegistration.results')
+              : t('equipos.gestion')
             : torneoFinalizado
-              ? 'Resultados'
-              : 'Equipos'
+              ? t('teamRegistration.results')
+              : t('teamRegistration.teams')
         }
         onBack={handleInscripcionHeaderBack}
         backLabel={
-          mostrarUiAdminFormEquipos && contextoGestionEquiposTorneo ? '← Admin' : undefined
+          mostrarUiAdminFormEquipos && contextoGestionEquiposTorneo ? t('teamDetail.backAdmin') : undefined
         }
       />
       <div
@@ -2625,13 +2633,13 @@ export default function FormEquipos() {
         >
           {mostrarUiAdminFormEquipos
             ? torneoFinalizado
-              ? 'Resultados del torneo'
-              : 'Gestión de equipos y torneo'
+              ? t('teamRegistration.tournamentResults')
+              : t('teamRegistration.teamTournamentManagement')
             : torneoFinalizado
-              ? 'Resultados del torneo'
+              ? t('teamRegistration.tournamentResults')
               : location.state?.fromAdmin === false
-                ? 'Equipos del torneo'
-                : 'Inscripción al torneo'}
+                ? t('teamRegistration.tournamentTeams')
+                : t('teamRegistration.tournamentRegistration')}
         </h1>
       </div>
     </div>
@@ -2645,7 +2653,7 @@ export default function FormEquipos() {
         <div style={{ maxWidth: '1100px', margin: '4px auto 0', padding: '0 12px', boxSizing: 'border-box' }}>
           {!mostrarUiAdminFormEquipos ? bloqueInvitacionEquipoDeepLink : null}
         </div>
-        <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: '#64748b' }}>Cargando...</div>
+        <div style={{ maxWidth: '1100px', margin: '4px auto 0', color: '#64748b' }}>{t('teamRegistration.loading')}</div>
         <BottomNav />
       </div>
     );
@@ -2684,14 +2692,14 @@ export default function FormEquipos() {
                 lineHeight: 1.4,
               }}
             >
-              Este torneo fue cancelado
+              {t('teamDetail.tournamentCancelled')}
             </div>
             <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
               <h3 style={{ marginTop: 0, marginBottom: '14px', color: '#334155', fontWeight: 800 }}>
-                Equipos ({equiposVisibles.length})
+                {t('teamRegistration.teamsCount', { count: equiposVisibles.length })}
               </h3>
               {equiposVisibles.length === 0 ? (
-                <p style={{ color: '#64748b', margin: 0 }}>No hay equipos registrados.</p>
+                <p style={{ color: '#64748b', margin: 0 }}>{t('teamRegistration.noRegisteredTeams')}</p>
               ) : (
                 equiposVisibles.map((eq) => renderEquipoLecturaCancelado(eq))
               )}
@@ -2730,7 +2738,7 @@ export default function FormEquipos() {
               mostrarBotonInscribirseEnTabEquipos && location.state?.fromAdmin !== false ? (
                 <div style={{ marginBottom: '14px', textAlign: 'center' }}>
                   <button type="button" onClick={abrirFlujoInscripcionDesdeTab} style={btnInscribirseTorneoTabStyle}>
-                    Inscribirse
+                    {t('torneos.inscribirse')}
                   </button>
                 </div>
               ) : null
@@ -2770,7 +2778,7 @@ export default function FormEquipos() {
                           color: 'white',
                         }}
                       >
-                        Entendido
+                        {t('teamRegistration.understood')}
                       </button>
                     </div>
                   ) : null}
@@ -2789,7 +2797,7 @@ export default function FormEquipos() {
               lineHeight: 1.45,
             }}
           >
-            <div style={{ marginBottom: '12px' }}>Ya tienes un equipo en este torneo</div>
+            <div style={{ marginBottom: '12px' }}>{t('teamRegistration.alreadyHaveTeam')}</div>
             <button
               type="button"
               onClick={() => navigate(`/torneo/${id}/equipos/${equipoDuplicadoBloqueoId}`)}
@@ -2807,7 +2815,7 @@ export default function FormEquipos() {
                 boxShadow: '0 4px 14px rgba(180,83,9,0.35)',
               }}
             >
-              Ver mi equipo
+              {t('teamRegistration.viewMyTeam')}
             </button>
           </div>
         ) : null}
@@ -2825,7 +2833,7 @@ export default function FormEquipos() {
               lineHeight: 1.45,
             }}
           >
-            <div style={{ marginBottom: '10px' }}>Ficha de jugador pendiente</div>
+            <div style={{ marginBottom: '10px' }}>{t('teamRegistration.playerProfilePending')}</div>
             <button
               type="button"
               onClick={() => {
@@ -2833,7 +2841,7 @@ export default function FormEquipos() {
                 navigate(
                   `/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(back)}`,
                   {
-                    state: { avisoPerfilTorneo: 'Completa tu perfil para participar en torneos' },
+                    state: { avisoPerfilTorneo: t('teamDetail.completeProfileForTournaments') },
                   }
                 );
               }}
@@ -2848,7 +2856,7 @@ export default function FormEquipos() {
                 fontSize: '13px',
               }}
             >
-              Ir a Mi perfil
+              {t('teamDetail.goToProfile')}
             </button>
           </div>
         ) : null}
@@ -2864,7 +2872,7 @@ export default function FormEquipos() {
               fontWeight: 700
             }}
           >
-            Inscripción exitosa. Ahora puedes crear tu equipo o pedir unirte a uno existente.
+            {t('teamRegistration.registrationSuccess')}
           </div>
         )}
 
@@ -2881,14 +2889,14 @@ export default function FormEquipos() {
             }}
           >
             <div style={{ marginBottom: '12px', lineHeight: 1.45 }}>
-              Ya eres parte del equipo <strong>{miEquipo.nombre}</strong>
+              {t('teamRegistration.youArePartOf', { team: miEquipo.nombre })}
               {soyCreadorMiEquipo ? (
                 <span style={{ display: 'block', marginTop: '6px', fontSize: '13px', fontWeight: 600, opacity: 0.92 }}>
-                  {ICONO_CAPITAN} Eres capitán del equipo
+                  {ICONO_CAPITAN} {t('teamRegistration.youAreCaptain')}
                 </span>
               ) : (
                 <span style={{ display: 'block', marginTop: '6px', fontSize: '13px', fontWeight: 600, opacity: 0.92 }}>
-                  Eres miembro del equipo
+                  {t('teamRegistration.youAreMember')}
                 </span>
               )}
             </div>
@@ -2909,7 +2917,7 @@ export default function FormEquipos() {
                 boxShadow: '0 4px 14px rgba(22,101,52,0.35)',
               }}
             >
-              Ver mi equipo
+              {t('teamRegistration.viewMyTeam')}
             </button>
           </div>
         )}
@@ -2962,7 +2970,7 @@ export default function FormEquipos() {
                             .eq('user_id', authUserId);
                           if (error) {
                             setBuscaCompaneroLocal(!next);
-                            alert(error.message || 'No se pudo guardar');
+                            alert(t('teamRegistration.saveFailed'));
                           } else {
                             await refreshSession();
                             try {
@@ -2976,18 +2984,18 @@ export default function FormEquipos() {
                         style={{ width: '18px', height: '18px', flexShrink: 0, marginTop: '2px' }}
                       />
                       <span style={{ fontSize: '14px', lineHeight: 1.45, color: '#0f172a' }}>
-                        <span style={{ fontWeight: 800 }}>Busco compañero</span>
+                        <span style={{ fontWeight: 800 }}>{t('teamRegistration.lookingForPartner')}</span>
                         <span style={{ display: 'block', fontWeight: 500, color: '#64748b', fontSize: '13px', marginTop: '4px' }}>
-                          Visible en el inicio para jugadores de tu misma sede (se guarda en tu perfil).
+                          {t('teamRegistration.lookingForPartnerHint')}
                         </span>
                       </span>
                     </label>
                   </div>
                 ) : null}
-                <div style={{ fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>Agregar compañero</div>
+                <div style={{ fontWeight: 700, marginBottom: '10px', color: 'var(--text-primary)' }}>{t('teamRegistration.addPartner')}</div>
                 <input
                   type="search"
-                  placeholder="Buscar por nombre, apellido o alias…"
+                  placeholder={t('teamRegistration.searchPartnerPlaceholder')}
                   value={companeroBusqueda}
                   onChange={(e) => setCompaneroBusqueda(e.target.value)}
                   autoComplete="off"
@@ -3001,7 +3009,7 @@ export default function FormEquipos() {
                   }}
                 />
                 {companeroBusquedaCargando ? (
-                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>Buscando…</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px' }}>{t('teamDetail.searching')}</div>
                 ) : null}
                 {companeroOpciones.length > 0 ? (
                   <div
@@ -3016,11 +3024,11 @@ export default function FormEquipos() {
                   >
                     {companeroOpciones.map((row) => {
                       const uid = row?.user_id != null ? String(row.user_id) : '';
-                      const nom = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || 'Jugador';
+                      const nom = nombreCompletoJugadorPerfil(row) || String(row.alias || '').trim() || t('teamDetail.player');
                       const al = String(row.alias || '').trim();
                       const foto = String(row.foto_url || '').trim();
                       const tieneEquipoTorneo = row.disponibilidad === 'tiene_equipo';
-                      const badgeLabel = tieneEquipoTorneo ? 'Tiene equipo' : 'Buscando compañero';
+                      const badgeLabel = tieneEquipoTorneo ? t('teamDetail.hasTeam') : t('teamDetail.lookingForPartner');
                       const badgeBg = tieneEquipoTorneo ? '#fee2e2' : '#dbeafe';
                       const badgeColor = tieneEquipoTorneo ? '#991b1b' : '#1e40af';
                       return (
@@ -3123,7 +3131,7 @@ export default function FormEquipos() {
                           <button
                             type="button"
                             disabled={saving || tieneEquipoTorneo}
-                            title={tieneEquipoTorneo ? 'Ya está en un equipo de este torneo' : 'Sumar al equipo'}
+                            title={tieneEquipoTorneo ? t('teamDetail.alreadyInTournamentTeam') : t('teamDetail.addToTeam')}
                             onClick={() => void agregarCompaneroDesdePerfil(row)}
                             style={{
                               flexShrink: 0,
@@ -3138,7 +3146,7 @@ export default function FormEquipos() {
                               fontFamily: 'inherit',
                             }}
                           >
-                            Sumar
+                            {t('teamDetail.add')}
                           </button>
                         </div>
                       );
@@ -3146,15 +3154,15 @@ export default function FormEquipos() {
                   </div>
                 ) : companeroBusqueda.trim().length >= 2 ? (
                   <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#64748b' }}>
-                    No hay coincidencias en el buscador. Puedes invitar por WhatsApp.
+                    {t('teamDetail.noMatchesInviteWhatsapp')}
                   </p>
                 ) : null}
               </>
             ) : miEquipoListoParaJugar ? (
-              <div style={{ fontSize: '14px', color: '#166534', fontWeight: 700 }}>Equipo completo</div>
+              <div style={{ fontSize: '14px', color: '#166534', fontWeight: 700 }}>{t('teamDetail.teamFull')}</div>
             ) : (
               <div style={{ fontSize: '14px', color: '#b45309', fontWeight: 700 }}>
-                Faltan confirmar jugadores
+                {t('teamDetail.playersNeedConfirmation')}
               </div>
             )}
             <a
@@ -3173,7 +3181,7 @@ export default function FormEquipos() {
                 textAlign: 'center',
               }}
             >
-              Invitar por WhatsApp
+              {t('teamDetail.inviteByWhatsapp')}
             </a>
           </div>
         ) : null}
@@ -3189,14 +3197,14 @@ export default function FormEquipos() {
               fontWeight: 700
             }}
           >
-            Tienes una solicitud pendiente para unirte al equipo: {miSolicitudPendiente.nombre}
+            {t('teamRegistration.pendingRequestForTeam', { team: miSolicitudPendiente.nombre })}
           </div>
         )}
 
         {!isMobile && mostrarEleccionDesktop && desktopFlujo === 'crear' && (
           <div>
             <button type="button" onClick={() => setDesktopFlujo(null)} style={btnVolverEleccionStyle}>
-              ← Elegir otra opción
+              {t('teamRegistration.chooseAnother')}
             </button>
             {crearEquipoFormulario}
           </div>
@@ -3205,7 +3213,7 @@ export default function FormEquipos() {
         {!isMobile && mostrarEleccionDesktop && desktopFlujo === 'lista' && (
           <div>
             <button type="button" onClick={() => setDesktopFlujo(null)} style={btnVolverEleccionStyle}>
-              ← Elegir otra opción
+              {t('teamRegistration.chooseAnother')}
             </button>
             {flujoInscripcionTorneoActivo && !miSolicitudPendiente && equiposUnirseListado.length > 0 ? (
               <div
@@ -3219,7 +3227,7 @@ export default function FormEquipos() {
                 }}
               >
                 <p style={{ margin: '0 0 10px', color: '#334155', fontSize: '15px', fontWeight: 600 }}>
-                  ¿No encuentras equipo?
+                  {t('teamRegistration.cannotFindTeam')}
                 </p>
                 <button
                   type="button"
@@ -3238,19 +3246,19 @@ export default function FormEquipos() {
                     boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
                   }}
                 >
-                  Crear mi equipo
+                  {t('teamRegistration.createMyTeam')}
                 </button>
               </div>
             ) : null}
             <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
-              {listaEquiposContenido('+ Pedir unirme', irACrearEquipo)}
+              {listaEquiposContenido(t('teamRegistration.askToJoin'), irACrearEquipo)}
             </div>
           </div>
         )}
 
         {!isMobile && !mostrarEleccionDesktop && !miEquipo && !miSolicitudPendiente && (
           <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
-            {listaEquiposContenido('+ Pedir unirme', irACrearEquipo)}
+            {listaEquiposContenido(t('teamRegistration.askToJoin'), irACrearEquipo)}
           </div>
         )}
 
@@ -3274,9 +3282,9 @@ export default function FormEquipos() {
                 gap: '12px',
               }}
             >
-              <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>Tengo equipo completo</div>
+              <div style={{ fontSize: '17px', fontWeight: 900, color: '#14532d' }}>{t('teamRegistration.haveFullTeam')}</div>
               <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-                Ya tenemos todos los integrantes
+                {t('teamRegistration.haveAllMembers')}
               </div>
               <button
                 type="button"
@@ -3294,7 +3302,7 @@ export default function FormEquipos() {
                   boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
                 }}
               >
-                Crear equipo
+                {t('teamRegistration.createTeamButton')}
               </button>
             </div>
             <div
@@ -3308,9 +3316,9 @@ export default function FormEquipos() {
                 gap: '12px',
               }}
             >
-              <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>Busco compañero/s</div>
+              <div style={{ fontSize: '17px', fontWeight: 900, color: '#312e81' }}>{t('teamRegistration.lookingForPartners')}</div>
               <div style={{ fontSize: '14px', color: '#475569', lineHeight: 1.45 }}>
-                Me anoto solo y busco con quién jugar
+                {t('teamRegistration.joinAlone')}
               </div>
               <button
                 type="button"
@@ -3327,7 +3335,7 @@ export default function FormEquipos() {
                   border: '2px solid #E11B22',
                 }}
               >
-                Ver equipos disponibles
+                {t('teamRegistration.viewAvailableTeams')}
               </button>
             </div>
           </div>
@@ -3343,7 +3351,7 @@ export default function FormEquipos() {
             }}
           >
             <button type="button" onClick={() => setMobileVista('inicio')} style={btnVolverEleccionStyle}>
-              ← Elegir otra opción
+              {t('teamRegistration.chooseAnother')}
             </button>
             {crearEquipoFormulario}
           </div>
@@ -3360,7 +3368,7 @@ export default function FormEquipos() {
           >
             {!mobileListaTorneoCerrado && !miSolicitudPendiente ? (
               <button type="button" onClick={() => setMobileVista('inicio')} style={btnVolverEleccionStyle}>
-                ← Elegir otra opción
+                {t('teamRegistration.chooseAnother')}
               </button>
             ) : null}
             {flujoInscripcionTorneoActivo && !miSolicitudPendiente && equiposUnirseListado.length > 0 ? (
@@ -3374,7 +3382,7 @@ export default function FormEquipos() {
                 }}
               >
                 <p style={{ margin: '0 0 10px', color: '#334155', fontSize: '15px', fontWeight: 600 }}>
-                  ¿No encuentras equipo?
+                  {t('teamRegistration.cannotFindTeam')}
                 </p>
                 <button
                   type="button"
@@ -3393,13 +3401,13 @@ export default function FormEquipos() {
                     boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
                   }}
                 >
-                  Crear mi equipo
+                  {t('teamRegistration.createMyTeam')}
                 </button>
               </div>
             ) : null}
             <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
               {listaEquiposContenido(
-                mobileListaTorneoCerrado ? '+ Pedir unirme' : 'Unirme',
+                mobileListaTorneoCerrado ? t('teamRegistration.askToJoin') : t('teamRegistration.join'),
                 irACrearEquipo
               )}
             </div>
@@ -3434,9 +3442,9 @@ export default function FormEquipos() {
                     letterSpacing: '-0.02em',
                   }}
                 >
-                  Tu equipo
+                  {t('teamDetail.yourTeam')}
                 </h3>
-                {renderEquipoCard(miEquipoEnListado, true, '+ Pedir unirme')}
+                {renderEquipoCard(miEquipoEnListado, true, t('teamRegistration.askToJoin'))}
               </div>
             ) : null}
             {miEquipo && !torneoCancelado ? bloqueInscripcionTorneo : null}
@@ -3457,7 +3465,7 @@ export default function FormEquipos() {
                 opacity: otrosEquiposVisibles.length === 0 ? 0.6 : 1,
               }}
             >
-              Ver otros equipos
+              {t('teamRegistration.viewOtherTeams')}
             </button>
           </div>
         )}
@@ -3472,10 +3480,10 @@ export default function FormEquipos() {
             }}
           >
             <button type="button" onClick={() => setMobileVista('mi_equipo')} style={btnVolverEleccionStyle}>
-              ← Mi equipo
+              {t('teamRegistration.backMyTeam')}
             </button>
             <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '12px' }}>
-              <h3 style={{ marginTop: 0, color: '#334155', fontWeight: 800 }}>Otros equipos disponibles</h3>
+              <h3 style={{ marginTop: 0, color: '#334155', fontWeight: 800 }}>{t('teamRegistration.otherTeams')}</h3>
               {otrosEquiposDisponiblesParaUnirse.length === 0 ? (
                 <div>
                   <p
@@ -3487,7 +3495,7 @@ export default function FormEquipos() {
                       lineHeight: 1.45,
                     }}
                   >
-                    No hay otros equipos abiertos a los que unirte en este momento.
+                    {t('teamRegistration.noOtherOpenTeams')}
                   </p>
                   {puedeOfrecerCrearDesdeLista ? (
                     <div
@@ -3500,7 +3508,7 @@ export default function FormEquipos() {
                       }}
                     >
                       <p style={{ margin: '0 0 10px', color: '#b91c1c', fontSize: '15px', fontWeight: 600 }}>
-                        ¿No encuentras equipo?
+                        {t('teamRegistration.cannotFindTeam')}
                       </p>
                       <button
                         type="button"
@@ -3519,7 +3527,7 @@ export default function FormEquipos() {
                           boxShadow: '0 4px 14px rgba(22,163,74,0.35)',
                         }}
                       >
-                        Crear mi equipo
+                        {t('teamRegistration.createMyTeam')}
                       </button>
                       <p
                         style={{
@@ -3530,13 +3538,13 @@ export default function FormEquipos() {
                           fontWeight: 500,
                         }}
                       >
-                        Puedes crear tu propio equipo y buscar compañeros
+                        {t('teamRegistration.createAndFindPartners')}
                       </p>
                     </div>
                   ) : null}
                 </div>
               ) : (
-                otrosEquiposDisponiblesParaUnirse.map((eq) => renderEquipoCard(eq, false, 'Unirme'))
+                otrosEquiposDisponiblesParaUnirse.map((eq) => renderEquipoCard(eq, false, t('teamRegistration.join')))
               )}
             </div>
           </div>
@@ -3544,7 +3552,7 @@ export default function FormEquipos() {
                 {mostrarBotonInscribirseEnTabEquipos && location.state?.fromAdmin !== false ? (
                   <div style={{ marginTop: '20px', marginBottom: '8px', textAlign: 'center' }}>
                     <button type="button" onClick={abrirFlujoInscripcionDesdeTab} style={btnInscribirseTorneoTabStyle}>
-                      Inscribirse
+                      {t('torneos.inscribirse')}
                     </button>
                   </div>
                 ) : null}
@@ -3593,8 +3601,8 @@ export default function FormEquipos() {
                   const esCreadorDlg =
                     !!eqSalir && esCreadorEquipoOMiAuth(eqSalir, authEmail, uDlg, authUserId);
                   return esCreadorDlg
-                    ? '¿Disolver el equipo? Se eliminará por completo.'
-                    : '¿Quieres salir del equipo?';
+                    ? t('teamDetail.confirmDissolve')
+                    : t('teamDetail.confirmLeave');
                 })()}
               </p>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -3613,7 +3621,7 @@ export default function FormEquipos() {
                     cursor: savingSalirEquipo ? 'default' : 'pointer',
                   }}
                 >
-                  Cancelar
+                  {t('teamDetail.cancel')}
                 </button>
                 <button
                   type="button"
@@ -3636,8 +3644,8 @@ export default function FormEquipos() {
                     const uDlg = getOrCreateUsuarioBasico();
                     const esCreadorDlg =
                       !!eqSalir && esCreadorEquipoOMiAuth(eqSalir, authEmail, uDlg, authUserId);
-                    if (savingSalirEquipo) return 'Saliendo…';
-                    return esCreadorDlg ? 'Disolver' : 'Salir';
+                    if (savingSalirEquipo) return t('teamDetail.leaving');
+                    return esCreadorDlg ? t('teamDetail.dissolve') : t('teamDetail.leave');
                   })()}
                 </button>
               </div>
