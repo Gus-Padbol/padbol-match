@@ -56,6 +56,12 @@ import {
   mapCanchaPublicDto,
   validateCanchaNombreVisible,
 } from './lib/canchaDeporteCustom.js';
+import {
+  chatIaClaudeLanguageName,
+  chatIaInferWritingLocaleFromConversation,
+  chatIaLuxonLocaleForUi,
+  normalizeChatIaLocale,
+} from './lib/chatIaLocale.js';
 
 globalThis.WebSocket = ws;
 
@@ -16869,70 +16875,6 @@ function chatIaConsumeRateSlot(key) {
   return true;
 }
 
-function normalizeChatIaLocale(raw) {
-  const s = String(raw || '')
-    .trim()
-    .toLowerCase()
-    .slice(0, 24);
-  if (!s) return 'es';
-  if (s.startsWith('es')) return 'es';
-  if (s.startsWith('pt')) return 'pt';
-  if (s.startsWith('en')) return 'en';
-  if (s.startsWith('fr')) return 'fr';
-  if (s.startsWith('de')) return 'de';
-  if (s.startsWith('it')) return 'it';
-  return 'es';
-}
-
-/** es|en|pt según el texto del usuario en el turno (no navigator). Heurística alineada con el frontend. */
-function chatIaInferWritingLocaleFromConversation(mensaje, historial) {
-  const parts = [];
-  if (Array.isArray(historial)) {
-    for (const row of historial) {
-      if (row && row.role === 'user' && String(row.content || '').trim()) parts.push(String(row.content).trim());
-    }
-  }
-  if (String(mensaje || '').trim()) parts.push(String(mensaje).trim());
-  const text = parts.join('\n');
-  if (!text.trim()) return 'es';
-
-  const fold = chatIaFoldText(text).toLowerCase();
-  const pad = ` ${fold.replace(/\s+/g, ' ')} `;
-
-  let pt = 0;
-  let es = 0;
-  let en = 0;
-
-  if (/[ãõ]|\b(nao|nao)\b/i.test(text) || /não/i.test(text)) pt += 4;
-  if (/ñ|¿|¡/.test(text)) es += 4;
-  if (/\b(nao|nao|voce|voces|torneio|obrigado|obrigada|quadras|disponivel|tambem|amanha)\b/.test(pad)) pt += 3;
-  if (/\b(manana|hoy|cuando|donde|cancha|turno|disponibilidad|quiero|gracias|sedes?|horarios)\b/.test(pad)) es += 3;
-  if (/\b(tomorrow|today|when|where|booking|available|slot|courts|tournament|thanks|please|what\s+time|how\s+do)\b/.test(pad)) en += 3;
-  if (/\b(voce|voces)\b/.test(pad)) pt += 2;
-  if (/\b(the|and|with|for)\b/.test(pad)) en += 1;
-  if (/\b(el|la|los|las|una|por|para)\b/.test(pad)) es += 1;
-
-  if (pt > es && pt > en) return 'pt';
-  if (en > es && en > pt) return 'en';
-  return 'es';
-}
-
-function chatIaLuxonLocaleForUi(lang) {
-  const l = normalizeChatIaLocale(lang);
-  if (l === 'pt') return 'pt-BR';
-  if (l === 'en') return 'en';
-  if (l === 'fr') return 'fr';
-  if (l === 'de') return 'de';
-  if (l === 'it') return 'it';
-  return 'es';
-}
-
-function chatIaClaudeLanguageName(lang) {
-  const l = normalizeChatIaLocale(lang);
-  const m = { es: 'Spanish', en: 'English', pt: 'Portuguese', fr: 'French', de: 'German', it: 'Italian' };
-  return m[l] || 'Spanish';
-}
-
 function chatIaTelefonoToWaMeDigits(telefono) {
   const digits = String(telefono || '').replace(/\D/g, '');
   if (!digits) return '';
@@ -17516,7 +17458,7 @@ app.post('/api/chat-ia', async (req, res) => {
 
     const priorUser = historial.filter((h) => h.role === 'user').length;
     if (priorUser >= CHAT_IA_MAX_USER_MSG) {
-      const localeEarly = chatIaInferWritingLocaleFromConversation(mensaje, historial);
+      const localeEarly = chatIaInferWritingLocaleFromConversation(mensaje, historial, b.locale);
       const ctxEarly = await buildChatIAContextPayload(supabase, user, localeEarly);
       const rid = chatIaSedeIdDesdeHistorialReserva(historial);
       let sede_contexto = null;
@@ -17543,7 +17485,7 @@ app.post('/api/chat-ia', async (req, res) => {
       return res.status(429).json({ error: 'Demasiadas consultas. Intenta de nuevo en una hora.' });
     }
 
-    const locale = chatIaInferWritingLocaleFromConversation(mensaje, historial);
+    const locale = chatIaInferWritingLocaleFromConversation(mensaje, historial, b.locale);
     const ctxBase = await buildChatIAContextPayload(supabase, user, locale);
     const geoParsed = chatIaParseClientGeolocalizacion(b.client_geolocalizacion);
     console.error(
