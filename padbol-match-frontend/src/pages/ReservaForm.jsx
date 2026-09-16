@@ -1456,7 +1456,8 @@ export default function ReservaForm() {
         hora: snap.hora,
         cancha: snap.cancha,
       });
-      navigate('/completar-perfil', { replace: true, state: { from: '/reservar' } });
+      const returnPath = `${location.pathname}${location.search || ''}${location.hash || ''}`;
+      navigate('/completar-perfil', { replace: true, state: { from: returnPath } });
       return false;
     }
     return true;
@@ -1466,6 +1467,9 @@ export default function ReservaForm() {
     whatsapp,
     userProfile,
     filtros,
+    location.pathname,
+    location.search,
+    location.hash,
     navigate,
     reservaExtrasCantidad,
     reservaDeporteUrl,

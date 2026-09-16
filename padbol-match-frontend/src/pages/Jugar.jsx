@@ -25,13 +25,9 @@ import { useHubPromoSedeActiva } from '../hooks/useHubPromoSedeActiva';
 import './Jugar.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { intentarNavegarConPerfilJugadorMinimo } from '../utils/perfilJugadorMinimo';
+import { hubSportActionPath } from '../utils/hubSportNavigation';
 
 const CARD_OVERLAY = 'rgba(180, 20, 20, 0.35)';
-
-function deporteQuery(deporteElegido) {
-  const dep = String(deporteElegido || '').trim().toLowerCase();
-  return dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep) ? `?deporte=${encodeURIComponent(dep)}` : '';
-}
 
 export default function Jugar() {
   const { t } = useTranslation();
@@ -193,8 +189,6 @@ export default function Jugar() {
     navigate(raw.startsWith('/') ? raw : `/${raw}`);
   }, [hubPromoRow?.url_destino, navigate]);
 
-  const q = deporteQuery(deporteElegido);
-
   const dockBottom = navDock === 'bottom';
   const mainBottomPad = dockBottom
     ? `calc(20px + ${HUB_NAV_HEIGHT_PX}px + ${HUB_BOTTOM_NAV_CONTENT_GAP_PX}px + env(safe-area-inset-bottom, 0px))`
@@ -246,7 +240,11 @@ export default function Jugar() {
             <button
               key={op.hubKey}
               type="button"
-              onClick={() => intentarNavegarConPerfilJugadorMinimo(navigate, userProfile, `${op.path}${q}`)}
+              onClick={() => intentarNavegarConPerfilJugadorMinimo(
+                navigate,
+                userProfile,
+                hubSportActionPath(op.path, deporteElegido),
+              )}
               style={{
                 textAlign: 'left',
                 border: '1px solid var(--border)',

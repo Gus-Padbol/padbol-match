@@ -4,6 +4,23 @@ import { IconGeroJugarNav, IconGeroNotificacionesNav, IconGeroUserNav } from './
 const active = 'var(--accent)';
 const idle = 'var(--text-secondary)';
 
+export function HubIconInicio({ active: isActive }) {
+  const c = isActive ? active : idle;
+  const stroke = {
+    stroke: c,
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  };
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="m3 10 9-7 9 7" {...stroke} />
+      <path d="M5 9.5V21h14V9.5" {...stroke} />
+      <path d="M9 21v-7h6v7" {...stroke} />
+    </svg>
+  );
+}
+
 export function HubIconPerfil({ active: isActive }) {
   const c = isActive ? active : idle;
   return (

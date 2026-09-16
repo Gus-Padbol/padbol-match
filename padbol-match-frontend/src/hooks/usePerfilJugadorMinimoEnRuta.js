@@ -18,6 +18,7 @@ export function usePerfilJugadorMinimoEnRuta() {
     const pathOnly = String(location.pathname || '').split('?')[0].split('#')[0];
     if (!rutaExigePerfilJugadorMinimo(pathOnly)) return;
     if (perfilJugadorDatosMinimosCompletos(userProfile)) return;
-    navigate('/completar-perfil', { replace: true, state: { from: pathOnly } });
-  }, [loading, profileLoading, session?.user, userProfile, location.pathname, navigate]);
+    const returnPath = `${location.pathname}${location.search || ''}${location.hash || ''}`;
+    navigate('/completar-perfil', { replace: true, state: { from: returnPath } });
+  }, [loading, profileLoading, session?.user, userProfile, location.pathname, location.search, location.hash, navigate]);
 }

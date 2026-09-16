@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
-import { HubIconCampana, HubIconCorrer, HubIconPerfil, HubIconTrofeo } from './HubNavIcons';
+import { HubIconCampana, HubIconCorrer, HubIconInicio, HubIconPerfil, HubIconTrofeo } from './HubNavIcons';
 import {
   HUB_NAV_HEIGHT_PX,
   hubBottomNavFixedTopCss,
@@ -14,6 +14,7 @@ import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntr
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const ADMIN_PANEL_ROLES = ['super_admin', 'admin_nacional', 'admin_cadena', 'admin_club', 'empleado'];
+export const JUGADOR_HUB_NAV_ORDER = ['inicio', 'jugar', 'competir', 'notificaciones', 'perfil'];
 
 function readCachedRol() {
   try {
@@ -225,17 +226,17 @@ const BottomNav = () => {
     },
   ];
 
-  const jugadorHubTabs = [
-    {
-      label: t('nav.perfil'),
-      iconKind: 'perfil',
-      path: '/mi-perfil',
+  const jugadorHubTabsByKey = {
+    inicio: {
+      label: t('general.home'),
+      iconKind: 'inicio',
+      path: '/hub',
       match: (p) => {
         const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-        return x === '/mi-perfil' || x.startsWith('/mi-perfil/');
+        return isUserHomeHubPath(x);
       },
     },
-    {
+    jugar: {
       label: t('nav.jugar'),
       iconKind: 'jugar',
       path: '/jugar',
@@ -249,7 +250,7 @@ const BottomNav = () => {
         return false;
       },
     },
-    {
+    competir: {
       label: t('nav.competir'),
       iconKind: 'competir',
       path: '/competir',
@@ -262,7 +263,7 @@ const BottomNav = () => {
         return false;
       },
     },
-    {
+    notificaciones: {
       label: t('nav.notificaciones'),
       iconKind: 'campana',
       path: '/notificaciones',
@@ -271,7 +272,17 @@ const BottomNav = () => {
         return x === '/notificaciones';
       },
     },
-  ];
+    perfil: {
+      label: t('nav.perfil'),
+      iconKind: 'perfil',
+      path: '/mi-perfil',
+      match: (p) => {
+        const x = p.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+        return x === '/mi-perfil' || x.startsWith('/mi-perfil/');
+      },
+    },
+  };
+  const jugadorHubTabs = JUGADOR_HUB_NAV_ORDER.map((key) => jugadorHubTabsByKey[key]);
 
   const items = adminDashboardBottomNav
     ? adminDashboardItems
@@ -365,7 +376,9 @@ const BottomNav = () => {
             };
 
         const iconEl =
-          item.iconKind === 'perfil' ? (
+          item.iconKind === 'inicio' ? (
+            <HubIconInicio active={isActive} />
+          ) : item.iconKind === 'perfil' ? (
             <HubIconPerfil active={isActive} />
           ) : item.iconKind === 'jugar' ? (
             <HubIconCorrer active={isActive} />

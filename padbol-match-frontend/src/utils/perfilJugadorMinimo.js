@@ -76,7 +76,7 @@ export function intentarNavegarConPerfilJugadorMinimo(navigate, userProfile, tar
     navigate(dest);
     return true;
   }
-  navigate('/completar-perfil', { state: { from: pathOnly } });
+  navigate('/completar-perfil', { state: { from: dest } });
   return false;
 }
 
@@ -95,6 +95,6 @@ export function intentarNavegarHubConPerfilJugadorMinimo(navigate, userProfile, 
     navigate(dest);
     return true;
   }
-  navigate('/completar-perfil', { state: { from: pathOnly } });
+  navigate('/completar-perfil', { state: { from: dest } });
   return false;
 }

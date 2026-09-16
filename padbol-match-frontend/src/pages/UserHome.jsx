@@ -33,6 +33,7 @@ import './UserHome.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { intentarNavegarHubConPerfilJugadorMinimo } from '../utils/perfilJugadorMinimo';
+import { hubSportActionPath } from '../utils/hubSportNavigation';
 
 /**
  * Hub principal (cards + deporte + PWA…).
@@ -49,11 +50,6 @@ const HUB_CARD_FALLBACK_BG = '#2d2d2d';
 const HUB_CARD_GAP_PX = 8;
 /** Aire bajo el chrome fijo antes del contenido (máx. compacto para acercar «Elegir deporte» arriba). */
 const USER_HOME_SCROLL_INNER_PAD_TOP_PX = 0;
-
-function deporteQuery(deporteElegido) {
-  const dep = String(deporteElegido || '').trim().toLowerCase();
-  return dep && DEPORTES_CANCHA_SEDE_KEYS.includes(dep) ? `?deporte=${encodeURIComponent(dep)}` : '';
-}
 
 function etiquetaDeporteHub(key) {
   const k = String(key || '').trim().toLowerCase();
@@ -381,7 +377,6 @@ export default function UserHome() {
   );
 
   const bigCards = useMemo(() => {
-    const q = deporteQuery(deporteElegido);
     const rows = hubCmsStatus === 'ok' && Array.isArray(hubCmsRows) ? hubCmsRows : [];
     const depRows = Array.isArray(hubDeporteRows) ? hubDeporteRows : [];
     const hubDeporteOk = hubDeporteStatus === 'ok';
@@ -402,7 +397,12 @@ export default function UserHome() {
         subtitulo,
         imageUrl,
         onClick: () =>
-          intentarNavegarHubConPerfilJugadorMinimo(navigate, userProfile, slot.key, `${slot.to}${q}`),
+          intentarNavegarHubConPerfilJugadorMinimo(
+            navigate,
+            userProfile,
+            slot.key,
+            hubSportActionPath(slot.to, deporteElegido),
+          ),
       };
     });
   }, [hubCmsStatus, hubCmsRows, hubDeporteStatus, hubDeporteRows, navigate, deporteElegido, hubFixedActions, userProfile]);
