@@ -282,7 +282,8 @@ export default function AdminSponsorsSection({
     setUploading(true);
     setMsg('');
     const safe = String(file.name || 'logo').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `${Date.now()}_${safe}`;
+    const objectPrefix = venueScopeId ? `sedes/${venueScopeId}` : 'global';
+    const path = `${objectPrefix}/${Date.now()}_${safe}`;
     try {
       const { data: uploadData, error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
         upsert: true,
@@ -327,7 +328,8 @@ export default function AdminSponsorsSection({
     setUploading(true);
     setMsg('');
     const safe = String(file.name || 'banner').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `banners/${Date.now()}_${safe}`;
+    const objectPrefix = venueScopeId ? `sedes/${venueScopeId}/banners` : 'global/banners';
+    const path = `${objectPrefix}/${Date.now()}_${safe}`;
     try {
       const { data: uploadData, error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
         upsert: true,

@@ -35,6 +35,7 @@ import {
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
+import { isPasswordRecoveryLocation } from '../utils/passwordRecoveryLocation';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -165,6 +166,9 @@ export default function AccesoCuenta() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegPassword2, setShowRegPassword2] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(() =>
+    isPasswordRecoveryLocation(window.location)
+  );
   const [regNombre, setRegNombre] = useState('');
   const [regApellido, setRegApellido] = useState('');
   const [regGenero, setRegGenero] = useState('');
@@ -179,6 +183,13 @@ export default function AccesoCuenta() {
   const [regNivelTorneo, setRegNivelTorneo] = useState('');
   const [regPaisTorneoExtra, setRegPaisTorneoExtra] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!regParticiparTorneos) {
@@ -278,11 +289,11 @@ export default function AccesoCuenta() {
   }, [location.search]);
 
   useEffect(() => {
-    if (loading || !session?.user || sesionYaRedirigidaRef.current) return;
+    if (loading || passwordRecovery || !session?.user || sesionYaRedirigidaRef.current) return;
     const p = location.pathname;
     if (p !== '/login' && p !== '/auth' && p !== '/acceso') return;
     void afterLogin(session);
-  }, [loading, session, afterLogin, location.pathname]);
+  }, [loading, passwordRecovery, session, afterLogin, location.pathname]);
 
   useEffect(() => {
     setErrorMsg('');
@@ -331,6 +342,42 @@ export default function AccesoCuenta() {
         return;
       }
       await afterLogin(data?.session ?? null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleActualizarPassword = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setInfoMsg('');
+    if (busy) return;
+    if (!session?.user) {
+      setErrorMsg('El enlace venció o no es válido. Solicitá uno nuevo.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setErrorMsg(t('auth.passwordMinLength'));
+      return;
+    }
+    if (password !== password2) {
+      setErrorMsg(t('auth.passwordMismatch'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await handleAuthOnce({ kind: 'updateUser', updates: { password } });
+      if (error) {
+        setErrorMsg(mensajeErrorAuthSupabase(error.message));
+        return;
+      }
+      window.history.replaceState({}, '', '/login');
+      setPassword('');
+      setPassword2('');
+      setPasswordRecovery(false);
+      setInfoMsg('Contraseña actualizada. Ya podés continuar.');
+      await refreshSession();
+      navigate('/', { replace: true });
     } finally {
       setBusy(false);
     }
@@ -542,10 +589,14 @@ export default function AccesoCuenta() {
             textAlign: 'center',
           }}
         >
-          {modo === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
+          {passwordRecovery
+            ? 'Crear nueva contraseña'
+            : modo === 'login'
+              ? t('auth.loginTitle')
+              : t('auth.registerTitle')}
         </h2>
 
-        <div style={{ marginBottom: '18px' }}>
+        {!passwordRecovery && <div style={{ marginBottom: '18px' }}>
           <button
             type="button"
             onClick={() => void handleGoogleLogin()}
@@ -617,9 +668,55 @@ export default function AccesoCuenta() {
             </span>
             <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
           </div>
-        </div>
+        </div>}
 
-        {modo === 'login' ? (
+        {passwordRecovery ? (
+          <form onSubmit={handleActualizarPassword}>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 0, marginBottom: '18px', textAlign: 'center' }}>
+              Elegí una contraseña nueva para tu cuenta.
+            </p>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+              {t('auth.password')}
+            </label>
+            <input
+              className="acceso-cuenta-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              style={accesoRegFieldStyle()}
+            />
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+              Confirmar contraseña
+            </label>
+            <input
+              className="acceso-cuenta-input"
+              type="password"
+              value={password2}
+              onChange={(e) => setPassword2(e.target.value)}
+              autoComplete="new-password"
+              style={accesoRegFieldStyle('18px')}
+            />
+            <button
+              type="submit"
+              disabled={busy || !session?.user}
+              style={{
+                width: '100%',
+                padding: '16px 12px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'var(--accent)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '18px',
+                cursor: busy || !session?.user ? 'default' : 'pointer',
+                opacity: busy || !session?.user ? 0.7 : 1,
+              }}
+            >
+              {busy ? 'Guardando…' : 'Guardar nueva contraseña'}
+            </button>
+          </form>
+        ) : modo === 'login' ? (
           <form onSubmit={handleIngresar}>
             <label
               style={{
