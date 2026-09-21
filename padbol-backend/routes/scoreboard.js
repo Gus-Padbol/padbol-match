@@ -471,9 +471,36 @@ export function mountScoreboardRoutes(app, {
       const fotoUrl = body.foto_url != null && String(body.foto_url).trim() !== ''
         ? String(body.foto_url).trim().slice(0, 2048)
         : null;
-      const userId = body.user_id != null && String(body.user_id).trim() !== ''
-        ? String(body.user_id).trim()
-        : null;
+      const hasBearer = /^Bearer\s+\S+/i.test(String(req.headers.authorization || ''));
+      const auth = hasBearer ? await getAuthenticatedUser(req) : { user: null };
+      if (hasBearer && !auth.user) {
+        return res.status(auth.status || 401).json({ error: auth.error || 'Sesión inválida' });
+      }
+      const userId = auth.user?.id || null;
+
+      const { data: occupied, error: occupiedError } = await supabaseAdmin
+        .from('scoreboard_jugadores_temp')
+        .select(JUGADOR_TEMP_SELECT)
+        .eq('partido_id', partidoId)
+        .eq('equipo', equipo)
+        .eq('slot', slot)
+        .maybeSingle();
+      if (occupiedError) throw occupiedError;
+
+      let canReplace = !occupied;
+      if (occupied && userId && occupied.user_id === userId) canReplace = true;
+      if (occupied && auth.user && !canReplace) {
+        const role = await resolveAuthRole(auth.user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
+        try {
+          await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
+          canReplace = true;
+        } catch (permissionError) {
+          if (permissionError.status !== 403) throw permissionError;
+        }
+      }
+      if (!canReplace) {
+        return res.status(409).json({ error: 'Ese lugar ya está ocupado' });
+      }
 
       const row = {
         partido_id: partidoId,
@@ -486,12 +513,16 @@ export function mountScoreboardRoutes(app, {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabaseAdmin
-        .from('scoreboard_jugadores_temp')
-        .upsert(row, { onConflict: 'partido_id,equipo,slot' })
+      const operation = occupied
+        ? supabaseAdmin.from('scoreboard_jugadores_temp').update(row).eq('id', occupied.id)
+        : supabaseAdmin.from('scoreboard_jugadores_temp').insert(row);
+      const { data, error } = await operation
         .select(JUGADOR_TEMP_SELECT)
         .limit(1);
 
+      if (error?.code === '23505') {
+        return res.status(409).json({ error: 'Ese lugar acaba de ser ocupado' });
+      }
       if (error) throw error;
       const saved = Array.isArray(data) ? data[0] : data;
       return res.status(201).json({ jugador: saved ?? row });

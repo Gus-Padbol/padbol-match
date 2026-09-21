@@ -160,7 +160,7 @@ export default function ScoreboardJoin() {
         numero: numero.trim() ? Number(numero) : Number(slot),
         foto_url: finalFoto,
         user_id: session?.user?.id || null,
-      });
+      }, session?.access_token);
       setDone(true);
     } catch (err) {
       setError(err?.message || t('scoreboard.join.saveError', 'No se pudo guardar'));
