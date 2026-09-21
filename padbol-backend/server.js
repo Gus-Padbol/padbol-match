@@ -2984,7 +2984,7 @@ app.post('/api/sedes/:id/contrato', uploadContrato.single('archivo'), async (req
       archivo_url: null,
       storage_path: archivoUrl,
     };
-    const { data, error } = await supabase.from('contratos_sedes').insert(payload).select('*').single();
+    const { data, error } = await supabaseAdmin.from('contratos_sedes').insert(payload).select('*').single();
     if (error) throw error;
     res.status(201).json(data);
   } catch (err) {
@@ -3001,7 +3001,7 @@ app.get('/api/contratos-sedes', async (req, res) => {
       .split(',')
       .map((s) => parseInt(s.trim(), 10))
       .filter((n) => Number.isFinite(n));
-    let q = supabase.from('contratos_sedes').select('*').order('created_at', { ascending: false });
+    let q = supabaseAdmin.from('contratos_sedes').select('*').order('created_at', { ascending: false });
     if (rawIds.length) q = q.in('sede_id', rawIds);
     const { data, error } = await q;
     if (error) throw error;
