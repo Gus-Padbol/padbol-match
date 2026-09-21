@@ -1,3 +1,6 @@
+import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
+import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
@@ -42,7 +45,6 @@ import {
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { etiquetaDeporteTorneo } from '../utils/torneoDeporteFormato';
 import { fetchMisClases } from '../utils/clasesApi';
-import { requestAccountDeletion } from '../utils/accountDeletionApi';
 import InstructorFipaSection from '../components/InstructorFipaSection';
 import JugadorFichaTorneosSection from '../components/JugadorFichaTorneosSection';
 import { normalizeHoraClase } from '../utils/clasesFechas';
@@ -80,8 +82,10 @@ import ReputacionJugadorPanel from '../components/ReputacionJugadorPanel';
 import { pathPerfilPublicoPorUserId } from '../utils/jugadorPerfilPublicoUrl';
 import { getPaisDisplay } from '../utils/paisDisplay';
 import './MiPerfilVerPublicoBtn.css';
+import { getSignUpLegalMetadata } from '../utils/legalDocuments';
+import { CREDITS_REQUEST_ERROR, fetchAccountCredits } from '../utils/creditsApi';
 
-const API_BASE_URL = 'https://padbol-backend.onrender.com';
+const API_BASE_URL = getApiBaseUrl();
 
 const MSG_CUENTA_Y_FICHA_OK = 'Cuenta creada y ficha guardada correctamente';
 
@@ -157,13 +161,6 @@ function etiquetaLateralidadPerfil(t, raw) {
   if (v === 'Zurdo') return t('perfil.zurdo');
   if (v === 'Ambidiestro') return t('perfil.ambidiestro');
   return v || '—';
-}
-
-function escapeIlikeLiteral(value) {
-  return String(value || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/%/g, '\\%')
-    .replace(/_/g, '\\_');
 }
 
 /** Primeros YYYY-MM-DD del valor (DATE o ISO legacy) sin interpretar como UTC. */
@@ -348,9 +345,8 @@ export default function MiPerfil() {
   const [jugadorPreviewMiCompanero, setJugadorPreviewMiCompanero] = useState(null);
   const [creditTotal, setCreditTotal] = useState(0);
   const [creditItems, setCreditItems] = useState([]);
+  const [creditLoadError, setCreditLoadError] = useState(null);
   const [modalConfirmarCerrarSesion, setModalConfirmarCerrarSesion] = useState(false);
-  const [modalConfirmarEliminarCuenta, setModalConfirmarEliminarCuenta] = useState(false);
-  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
 
   const sessionOwnerEmail = useMemo(() => session?.user?.email?.trim() || null, [session?.user?.email]);
 
@@ -448,9 +444,9 @@ export default function MiPerfil() {
   const avisoPerfilTorneoMsg = useMemo(
     () =>
       (location.state && location.state.avisoPerfilTorneo) ||
-      (torneoIdValido ? 'Completa tu perfil para participar en torneos' : '') ||
-      (redirectAfterAuth ? 'Completa tu perfil (incluido WhatsApp) para continuar.' : ''),
-    [location.state, torneoIdValido, redirectAfterAuth]
+      (torneoIdValido ? t('perfil.flow.completeForTournament') : '') ||
+      (redirectAfterAuth ? t('perfil.flow.completeToContinue') : ''),
+    [location.state, torneoIdValido, redirectAfterAuth, t]
   );
 
   /** Sin fila o faltan datos obligatorios (foto no obligatoria). */
@@ -584,21 +580,8 @@ export default function MiPerfil() {
     }
     let cancelled = false;
     (async () => {
-      if (cid) {
-        const { data } = await supabase
-          .from('jugadores_perfil')
-          .select('user_id, alias, foto_url, nombre')
-          .eq('user_id', cid)
-          .maybeSingle();
-        if (!cancelled) setPerfilCompaneroDisplay({ kind: 'habitual', row: data || null });
-        return;
-      }
-      const { data } = await supabase
-        .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre')
-        .eq('user_id', uid)
-        .maybeSingle();
-      if (!cancelled) setPerfilCompaneroDisplay({ kind: 'ultimo', row: data || null });
+      const data = await fetchPublicPlayerSummary(cid || uid).catch(() => null);
+      if (!cancelled) setPerfilCompaneroDisplay({ kind: cid ? 'habitual' : 'ultimo', row: data });
     })();
     return () => {
       cancelled = true;
@@ -618,11 +601,7 @@ export default function MiPerfil() {
     }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre')
-        .eq('user_id', id)
-        .maybeSingle();
+      const data = await fetchPublicPlayerSummary(id).catch(() => null);
       if (!cancelled) setCompaneroSeleccionado(data || null);
     })();
     return () => {
@@ -646,54 +625,18 @@ export default function MiPerfil() {
     const seq = ++companeroSearchSeqRef.current;
     const handle = setTimeout(async () => {
       setCompaneroCargando(true);
-      const term = raw.replace(/[%_\\]/g, '');
-      const pattern = `%${term}%`;
-      const myUid = session?.user?.id;
-      let qAlias = supabase
-        .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre')
-        .ilike('alias', pattern)
-        .limit(12);
-      let qNombre = supabase
-        .from('jugadores_perfil')
-        .select('user_id, alias, foto_url, nombre')
-        .ilike('nombre', pattern)
-        .limit(12);
-      if (myUid) {
-        qAlias = qAlias.neq('user_id', myUid);
-        qNombre = qNombre.neq('user_id', myUid);
+      try {
+        const rows = await searchPublicPlayerSummaries(raw, { accessToken: session?.access_token, limit: 12 });
+        if (seq !== companeroSearchSeqRef.current) return;
+        setCompaneroOpciones(rows.filter((row) => String(row.user_id) !== String(session?.user?.id)));
+      } catch {
+        if (seq === companeroSearchSeqRef.current) setCompaneroOpciones([]);
+      } finally {
+        if (seq === companeroSearchSeqRef.current) setCompaneroCargando(false);
       }
-      const [{ data: rowsAlias, error: errAlias }, { data: rowsNombre, error: errNombre }] = await Promise.all([
-        qAlias,
-        qNombre,
-      ]);
-      if (seq !== companeroSearchSeqRef.current) return;
-      const byUserId = new Map();
-      for (const row of [...(rowsAlias || []), ...(rowsNombre || [])]) {
-        const uid = row?.user_id;
-        if (uid == null || uid === '') continue;
-        if (!byUserId.has(uid)) byUserId.set(uid, row);
-      }
-      const merged = Array.from(byUserId.values()).slice(0, 12);
-      console.log(
-        '[Compañero] buscando:',
-        term,
-        'resultados:',
-        merged,
-        'length:',
-        merged.length,
-        'errors:',
-        { alias: errAlias, nombre: errNombre }
-      );
-      setCompaneroCargando(false);
-      if (errAlias && errNombre) {
-        setCompaneroOpciones([]);
-        return;
-      }
-      setCompaneroOpciones(merged);
     }, 280);
     return () => clearTimeout(handle);
-  }, [editando, companeroBusqueda, session?.user?.id]);
+  }, [editando, companeroBusqueda, session?.user?.id, session?.access_token]);
 
   /** Comprueba que el alias no esté tomado (debounce 500 ms). Con sesión: excluye el propio `user_id`. */
   useEffect(() => {
@@ -720,26 +663,25 @@ export default function MiPerfil() {
     setAliasVerificando(true);
     setAliasDisponible(false);
     const handle = setTimeout(async () => {
-      const uid = session?.user?.id;
-      const literal = escapeIlikeLiteral(raw);
-      let q = supabase.from('jugadores_perfil').select('user_id').ilike('alias', literal).limit(1);
-      if (uid) q = q.neq('user_id', String(uid));
-      const { data, error } = await q;
-      if (seq !== aliasCheckSeqRef.current) return;
-      setAliasVerificando(false);
-      if (error) {
+      let available;
+      try {
+        available = await checkRegistrationAliasAvailability(raw, { accessToken: session?.access_token });
+      } catch {
+        if (seq !== aliasCheckSeqRef.current) return;
+        setAliasVerificando(false);
         setAliasDuplicado(false);
         setAliasDisponible(false);
         return;
       }
-      const dup = Array.isArray(data) && data.length > 0;
-      setAliasDuplicado(dup);
-      setAliasDisponible(!dup);
+      if (seq !== aliasCheckSeqRef.current) return;
+      setAliasVerificando(false);
+      setAliasDuplicado(!available);
+      setAliasDisponible(available);
     }, 500);
     return () => clearTimeout(handle);
-  }, [editando, esRegistroSinSesion, perfil?.alias, formData.alias, session?.user?.id]);
+  }, [editando, esRegistroSinSesion, perfil?.alias, formData.alias, session?.user?.id, session?.access_token]);
 
-  /** Sugerencias de alias desde «¿Cómo quieres que te llamemos?» (disponibilidad en jugadores_perfil). */
+  /** Sugerencias de alias desde «¿Cómo quieres que te llamemos?» (disponibilidad pública sin exponer perfiles). */
   useEffect(() => {
     if (!editando && !esRegistroSinSesion) {
       setAliasSuggestions([]);
@@ -769,13 +711,8 @@ export default function MiPerfil() {
     setAliasSugerenciasCargando(true);
     const t = setTimeout(async () => {
       const checkFree = async (aliasVal) => {
-        const lit = escapeIlikeLiteral(String(aliasVal || '').trim());
-        if (!lit) return false;
-        let q = supabase.from('jugadores_perfil').select('user_id').ilike('alias', lit).limit(1);
-        if (uid) q = q.neq('user_id', String(uid));
-        const { data, error } = await q;
-        if (error) return false;
-        return !(Array.isArray(data) && data.length > 0);
+        try { return await checkRegistrationAliasAvailability(aliasVal, { accessToken: session?.access_token }); }
+        catch { return false; }
       };
       const rows = await Promise.all(
         candidates.map(async (texto) => ({
@@ -788,7 +725,7 @@ export default function MiPerfil() {
       setAliasSuggestions(rows);
     }, 500);
     return () => clearTimeout(t);
-  }, [editando, esRegistroSinSesion, perfil?.alias, formData.apodo, session?.user?.id]);
+  }, [editando, esRegistroSinSesion, perfil?.alias, formData.apodo, session?.user?.id, session?.access_token]);
 
   useEffect(() => {
     if (sessionOwnerEmail) return;
@@ -797,6 +734,7 @@ export default function MiPerfil() {
 
   useEffect(() => {
     if (!sessionOwnerEmail) {
+      setCreditLoadError(null);
       if (!authLoading) setLoading(false);
       return;
     }
@@ -804,7 +742,7 @@ export default function MiPerfil() {
     fetchReservas();
     void fetchMisClasesPerfil();
     fetchCreditos();
-  }, [sessionOwnerEmail, session?.user?.id, location.search, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionOwnerEmail, session?.user?.id, session?.access_token, location.search, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (loading || !sessionOwnerEmail) return;
@@ -1053,15 +991,30 @@ export default function MiPerfil() {
   }, [perfil?.alias]);
 
   const fetchCreditos = async () => {
-    if (!sessionOwnerEmail) return;
+    if (!sessionOwnerEmail) {
+      setCreditLoadError(null);
+      return;
+    }
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      if (!authLoading) setCreditLoadError(CREDITS_REQUEST_ERROR.UNAUTHORIZED);
+      return;
+    }
+    setCreditLoadError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/creditos/${encodeURIComponent(sessionOwnerEmail)}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setCreditTotal(data.total || 0);
-      setCreditItems(data.creditos || []);
-    } catch {
-      // fail silently — credits are informational
+      const data = await fetchAccountCredits({
+        apiBaseUrl: API_BASE_URL,
+        email: sessionOwnerEmail,
+        accessToken,
+      });
+      setCreditTotal(data.total);
+      setCreditItems(data.creditos);
+    } catch (error) {
+      setCreditLoadError(
+        error?.code === CREDITS_REQUEST_ERROR.UNAUTHORIZED
+          ? CREDITS_REQUEST_ERROR.UNAUTHORIZED
+          : CREDITS_REQUEST_ERROR.UNAVAILABLE,
+      );
     }
   };
 
@@ -1100,9 +1053,9 @@ export default function MiPerfil() {
       });
     } catch (err) {
       console.error(err);
-      setErrorMsg(String(err?.message || 'No se pudo recortar la imagen.'));
+      setErrorMsg(String(err?.message || t('perfil.flow.cropFailed')));
     }
-  }, [cropImageSrc, cerrarModalRecorte]);
+  }, [cropImageSrc, cerrarModalRecorte, t]);
 
   const handlePhotoSelected = (e) => {
     setFotoAccionModalOpen(false);
@@ -1110,7 +1063,7 @@ export default function MiPerfil() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!String(file.type || '').startsWith('image/')) {
-      setErrorMsg('Elige un archivo de imagen.');
+      setErrorMsg(t('perfil.flow.chooseImageFile'));
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -1140,7 +1093,7 @@ export default function MiPerfil() {
 
     try {
       if (pendingFoto.size > 2 * 1024 * 1024) {
-        setErrorMsg('La imagen supera los 2MB.');
+        setErrorMsg(t('perfil.flow.imageOver2mb'));
         return;
       }
       const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
@@ -1150,7 +1103,7 @@ export default function MiPerfil() {
         .from(AVATAR_STORAGE_BUCKET)
         .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
       if (upErr) {
-        setErrorMsg(`No se pudo subir la foto: ${upErr.message}`);
+        setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
         return;
       }
       const {
@@ -1253,7 +1206,7 @@ export default function MiPerfil() {
         return;
       }
       if (!perfil) {
-        setErrorMsg('No encontramos tu ficha de jugador.');
+        setErrorMsg(t('perfil.flow.playerRecordNotFound'));
         return;
       }
 
@@ -1334,7 +1287,7 @@ export default function MiPerfil() {
         fe.genero = t('perfil.selectGender');
       }
       if (!String(formData.lateralidad || '').trim()) {
-        fe.lateralidad = 'Selecciona lateralidad.';
+        fe.lateralidad = t('perfil.flow.selectLaterality');
       }
 
       const emRaw = emailRegistro.trim();
@@ -1406,14 +1359,13 @@ export default function MiPerfil() {
         return;
       }
       if (aliasReg) {
-        const lit = escapeIlikeLiteral(aliasReg);
-        const { data: dupReg, error: dupRegErr } = await supabase
-          .from('jugadores_perfil')
-          .select('user_id')
-          .ilike('alias', lit)
-          .limit(1);
-        if (!dupRegErr && Array.isArray(dupReg) && dupReg.length > 0) {
-          setErrorMsg(t('perfil.aliasTaken'));
+        try {
+          if (!(await checkRegistrationAliasAvailability(aliasReg))) {
+            setErrorMsg(t('perfil.aliasTaken'));
+            return;
+          }
+        } catch {
+          setErrorMsg(t('general.somethingWentWrong'));
           return;
         }
       }
@@ -1444,6 +1396,7 @@ export default function MiPerfil() {
             apellido: apellReg,
             genero: genReg,
             whatsapp: wa,
+            ...getSignUpLegalMetadata('web_email'),
           },
         },
       });
@@ -1545,7 +1498,7 @@ export default function MiPerfil() {
       setErrorMsg(
         mensajeErrorJugadoresPerfilDuplicado(err) ||
           mensajeErrorDbSupabase(err) ||
-          'Error al registrar la cuenta.'
+          t('perfil.flow.registrationFailed')
       );
     } finally {
       perfilSubmitLockRef.current = false;
@@ -1582,7 +1535,7 @@ export default function MiPerfil() {
         fe.genero = t('perfil.selectGender');
       }
       if (!String(formData.nivel || '').trim()) fe.nivel = t('perfil.selectCategory');
-      if (!String(formData.lateralidad || '').trim()) fe.lateralidad = 'Selecciona lateralidad.';
+      if (!String(formData.lateralidad || '').trim()) fe.lateralidad = t('perfil.flow.selectLaterality');
       if (Object.keys(fe).length) {
         setFichaFieldErrors(fe);
         return;
@@ -1649,15 +1602,13 @@ export default function MiPerfil() {
       }
 
       if (!aliasPerfilExistente && aliasTrim) {
-        const lit = escapeIlikeLiteral(aliasTrim);
-        const { data: dupRows, error: dupErr } = await supabase
-          .from('jugadores_perfil')
-          .select('user_id')
-          .ilike('alias', lit)
-          .neq('user_id', String(userId))
-          .limit(1);
-        if (!dupErr && Array.isArray(dupRows) && dupRows.length > 0) {
-          setErrorMsg(t('perfil.aliasTaken'));
+        try {
+          if (!(await checkRegistrationAliasAvailability(aliasTrim, { accessToken: session?.access_token }))) {
+            setErrorMsg(t('perfil.aliasTaken'));
+            return;
+          }
+        } catch {
+          setErrorMsg(t('general.somethingWentWrong'));
           return;
         }
       }
@@ -1676,7 +1627,7 @@ export default function MiPerfil() {
       const pendingFoto = pendingFotoFileRef.current;
       if (pendingFoto) {
         if (pendingFoto.size > 2 * 1024 * 1024) {
-          setErrorMsg('La imagen supera los 2MB.');
+          setErrorMsg(t('perfil.flow.imageOver2mb'));
           return;
         }
         const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
@@ -1686,7 +1637,7 @@ export default function MiPerfil() {
           .from(AVATAR_STORAGE_BUCKET)
           .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
         if (upErr) {
-          setErrorMsg(`No se pudo subir la foto: ${upErr.message}`);
+          setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
           return;
         }
         const {
@@ -1767,7 +1718,7 @@ export default function MiPerfil() {
         body: JSON.stringify({ reservaId: r.id, email: owner }),
       });
       const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Error al cancelar');
+      if (!resp.ok) throw new Error(data.error || t('perfil.flow.cancelFailed'));
       if (data.credito) {
         alert(t('perfil.cancelCreditAlert', { amount: Number(data.credito.monto).toLocaleString('es-AR') }));
       } else {
@@ -1796,7 +1747,7 @@ export default function MiPerfil() {
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
         <AppHeader title={t('perfil.titulo')} />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-          Verificando sesión...
+          {t('perfil.verifyingSession')}
         </div>
         <BottomNav />
       </div>
@@ -1837,7 +1788,7 @@ export default function MiPerfil() {
             >
               <h3 style={{ marginTop: 0, marginBottom: '12px', color: 'var(--text-primary)' }}>{t('perfil.guestTitle')}</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
-                Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión.
+                {t('perfil.guestExploreHint')}
               </p>
               <button
                 type="button"
@@ -1855,7 +1806,7 @@ export default function MiPerfil() {
                   marginBottom: '10px',
                 }}
               >
-                Iniciar sesión o registrarte
+                {t('perfil.guestLoginCta')}
               </button>
               <button
                 type="button"
@@ -1872,7 +1823,7 @@ export default function MiPerfil() {
                   fontSize: '14px',
                 }}
               >
-                Volver al inicio
+                {t('hub.backToStart')}
               </button>
             </div>
           </div>
@@ -1995,7 +1946,7 @@ export default function MiPerfil() {
               </select>
               {regErrP('genero')}
 
-              <label style={guestLabelStyle}>¿Cómo quieres que te llamemos?</label>
+              <label style={guestLabelStyle}>{t('perfil.displayName')}</label>
               <input
                 type="text"
                 name="apodo"
@@ -2308,7 +2259,7 @@ export default function MiPerfil() {
               <input
                 type="text"
                 name="localidad"
-                placeholder="Ej: La Plata, Buenos Aires, Madrid..."
+                placeholder={t('perfil.flow.cityPlaceholder')}
                 value={formData.localidad}
                 onChange={handleChange}
                 style={{ ...guestInputStyle, marginBottom: '14px' }}
@@ -2328,7 +2279,7 @@ export default function MiPerfil() {
                   debounceMs={320}
                   minChars={2}
                   inputStyle={guestInputStyle}
-                  aria-label="Buscar club habitual"
+                  aria-label={t('perfil.flow.searchUsualClub')}
                 />
               </div>
 
@@ -2411,13 +2362,13 @@ export default function MiPerfil() {
                   style={{ marginTop: '3px', width: 18, height: 18, flexShrink: 0 }}
                 />
                 <span>
-                  Acepto los{' '}
+                  {t('auth.acceptTermsPrefix')}{' '}
                   <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6bc0', fontWeight: 700 }}>
-                    Términos y Condiciones
+                    {t('legal.terminos')}
                   </Link>{' '}
-                  y la{' '}
+                  {t('auth.andThe')}{' '}
                   <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#5c6bc0', fontWeight: 700 }}>
-                    Política de Privacidad
+                    {t('legal.privacidad')}
                   </Link>{' '}
                   {reqAst}
                 </span>
@@ -2475,7 +2426,7 @@ export default function MiPerfil() {
                   opacity: isSubmitting ? 0.65 : 1,
                 }}
               >
-                {isSubmitting ? 'Guardando...' : registroPasoDeportes === 0 ? 'Continuar' : torneoIdValido ? 'Guardar y volver al torneo' : t('auth.registerTitle')}
+                {isSubmitting ? 'Guardando...' : registroPasoDeportes === 0 ? 'Continuar' : torneoIdValido ? t('perfil.flow.saveReturnTournament') : t('auth.registerTitle')}
               </button>
             </form>
           </div>
@@ -2532,29 +2483,6 @@ export default function MiPerfil() {
     headerNombreVisible(filaParaCabeceraPerfil, session) ||
     getDisplayName(filaParaCabeceraPerfil, session) ||
     'Jugador';
-
-  const handleSolicitarEliminacionCuenta = async () => {
-    if (eliminandoCuenta) return;
-    setEliminandoCuenta(true);
-    setErrorMsg('');
-    try {
-      await requestAccountDeletion({
-        accessToken: session?.access_token,
-        source: 'web',
-      });
-      setModalConfirmarEliminarCuenta(false);
-      signOutAndClear();
-      navigate('/', {
-        replace: true,
-        state: { accountDeletionRequested: true },
-      });
-    } catch (error) {
-      setErrorMsg(error?.message || 'No pudimos registrar la solicitud de eliminación.');
-      setModalConfirmarEliminarCuenta(false);
-    } finally {
-      setEliminandoCuenta(false);
-    }
-  };
 
   return (
     <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
@@ -2637,16 +2565,16 @@ export default function MiPerfil() {
           <div style={{ color: '#e11b22', fontSize: 11, fontWeight: 900, letterSpacing: '.11em', textTransform: 'uppercase' }}>
             Tu juego no empieza de cero
           </div>
-          <h3 style={{ margin: '8px 0', color: 'var(--text-primary)', fontSize: 21 }}>Traé tu recorrido. Lo reconocemos.</h3>
+          <h3 style={{ margin: '8px 0', color: 'var(--text-primary)', fontSize: 21 }}>{t('perfil.flow.bringHistoryTitle')}</h3>
           <p style={{ margin: '0 0 14px', color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: 14 }}>
-            Subí capturas de tu ranking, categoría, partidos, torneos o logros. Las revisamos y te avisamos dentro de las próximas 24 horas. Tus datos son tuyos y podrás llevártelos cuando quieras.
+            ¿Vienes de Playtomic, una liga, un club u otra plataforma? Carga tu nivel con dos o tres capturas. No tienes que abandonar nada: lo reconocemos como tu punto de partida para jugar mejor desde el comienzo.
           </p>
           <button
             type="button"
             onClick={() => navigate('/mi-perfil/recorrido')}
             style={{ padding: '11px 16px', border: 0, borderRadius: 10, background: '#e11b22', color: '#fff', fontWeight: 900, cursor: 'pointer' }}
           >
-            Traer mi recorrido →
+            Traer mi nivel →
           </button>
         </section>
       ) : null}
@@ -2681,7 +2609,7 @@ export default function MiPerfil() {
         />
         <button
           type="button"
-          aria-label="Cambiar foto de perfil"
+          aria-label={t('perfil.flow.changeProfilePhoto')}
           onClick={() => {
             if (!sessionOwnerEmail) {
               fileInputRef.current?.click();
@@ -2787,7 +2715,7 @@ export default function MiPerfil() {
               boxShadow: guardandoFoto ? 'none' : '0 4px 12px rgba(21,128,61,0.35)',
             }}
           >
-            {guardandoFoto ? 'Guardando…' : 'Guardar foto'}
+            {guardandoFoto ? t('perfil.flow.saving') : t('perfil.flow.savePhoto')}
           </button>
         ) : null}
 
@@ -3094,7 +3022,7 @@ export default function MiPerfil() {
             </select>
             {fichErrP('genero')}
 
-            <label style={labelStyle}>¿Cómo quieres que te llamemos?</label>
+            <label style={labelStyle}>{t('perfil.displayName')}</label>
             <input
               type="text"
               name="apodo"
@@ -3318,7 +3246,7 @@ export default function MiPerfil() {
             </select>
             {fichErrP('lateralidad')}
 
-            <label style={labelStyle}>Categoría {reqAst}</label>
+            <label style={labelStyle}>{t('perfil.categoryLabel')} {reqAst}</label>
             <select
               name="nivel"
               value={formData.nivel}
@@ -3373,7 +3301,7 @@ export default function MiPerfil() {
             <input
               type="text"
               name="localidad"
-              placeholder="Ej: La Plata, Buenos Aires, Madrid..."
+              placeholder={t('perfil.flow.cityPlaceholder')}
               value={formData.localidad}
               onChange={handleChange}
               style={{ ...inputStyle, marginBottom: '14px' }}
@@ -3393,7 +3321,7 @@ export default function MiPerfil() {
                 debounceMs={320}
                 minChars={2}
                 inputStyle={inputStyle}
-                aria-label="Buscar club habitual"
+                aria-label={t('perfil.flow.searchUsualClub')}
               />
             </div>
 
@@ -3478,7 +3406,7 @@ export default function MiPerfil() {
                   onBlur={() => {
                     window.setTimeout(() => setCompaneroMenuAbierto(false), 180);
                   }}
-                  placeholder="Buscar por nombre o alias..."
+                  placeholder={t('perfil.flow.searchPlayer')}
                   autoComplete="off"
                   spellCheck={false}
                   style={{ ...inputStyle, marginBottom: 0 }}
@@ -3589,7 +3517,7 @@ export default function MiPerfil() {
             <label style={labelStyle}>{t('perfil.birthDate')}</label>
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
-            <label style={labelStyle}>N° FIPA (número de federación)</label>
+            <label style={labelStyle}>{t('perfil.fipaNumberLong')}</label>
             <input type="text" name="numero_fipa" placeholder="Ej: 12345" value={formData.numero_fipa} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
             <label style={{ ...labelStyle, marginBottom: '8px' }}>{t('perfil.federatedQuestion')}</label>
@@ -3631,7 +3559,7 @@ export default function MiPerfil() {
                 {isSubmitting
                   ? 'Guardando...'
                   : torneoIdValido
-                    ? 'Guardar y volver al torneo'
+                    ? t('perfil.flow.saveReturnTournament')
                     : '✅ Guardar'}
               </button>
               <button
@@ -3751,7 +3679,7 @@ export default function MiPerfil() {
                   {isSubmitting
                     ? 'Guardando...'
                     : torneoIdValido
-                      ? 'Guardar y volver al torneo'
+                      ? t('perfil.flow.saveReturnTournament')
                       : '✅ Guardar'}
                 </button>
               </div>
@@ -4046,6 +3974,25 @@ export default function MiPerfil() {
       })() : null}
 
       {/* Credit balance */}
+      {creditLoadError && (
+        <div
+          role="alert"
+          style={{
+            background: '#fff7ed',
+            border: '1.5px solid #fdba74',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            color: '#9a3412',
+            fontSize: '14px',
+            fontWeight: 700,
+            marginBottom: '16px',
+          }}
+        >
+          {creditLoadError === CREDITS_REQUEST_ERROR.UNAUTHORIZED
+            ? t('profileCompletion.sessionExpired')
+            : 'No pudimos consultar tus créditos. Intenta nuevamente.'}
+        </div>
+      )}
       {creditTotal > 0 && (
         <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
           <h4 style={{ margin: '0 0 14px', color: '#15803d', borderBottom: '1px solid #bbf7d0', paddingBottom: '8px' }}>{t('perfil.creditsTitle')}</h4>
@@ -4141,7 +4088,7 @@ export default function MiPerfil() {
                   cursor: 'pointer',
                 }}
               >
-                {mostrarTodosTorneosMiPerfil ? 'Ver menos' : 'Ver todos'}
+                {mostrarTodosTorneosMiPerfil ? t('perfil.flow.showLess') : t('perfil.flow.showAll')}
               </button>
             </div>
           ) : null}
@@ -4348,14 +4295,14 @@ export default function MiPerfil() {
         ) : null}
         {!misClasesColapsado && !misClasesLoading && misClases.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)', margin: '12px 0 0', fontSize: '14px', fontWeight: 600 }}>
-            No tenés clases inscriptas.
+            No tienes clases inscriptas.
           </p>
         ) : null}
         {!misClasesColapsado && !misClasesLoading && misClases.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {misClases.map((c) => {
               const asistioLabel =
-                c.asistio === true ? '✅ Asistió' : c.asistio === false ? '❌ No asistió' : '— Pendiente';
+                c.asistio === true ? t('perfil.flow.attended') : c.asistio === false ? t('perfil.flow.notAttended') : t('perfil.flow.attendancePending');
               const hora = normalizeHoraClase(c.hora_inicio) || c.hora_inicio || '—';
               return (
                 <div
@@ -4392,7 +4339,7 @@ export default function MiPerfil() {
         title={t("perfil.cancelBookingTitle")}
         message={t("perfil.cancelBookingBody")}
         confirmLabel={t("perfil.cancelBookingConfirm")}
-        dismissLabel="No, mantener la reserva"
+        dismissLabel={t('perfil.flow.keepBooking')}
         onDismiss={() => setReservaCancelModal(null)}
         onConfirm={() => {
           const r = reservaCancelModal;
@@ -4768,27 +4715,6 @@ export default function MiPerfil() {
           >
             {t('auth.cerrar_sesion')}
           </button>
-          <button
-            type="button"
-            disabled={eliminandoCuenta}
-            onClick={() => setModalConfirmarEliminarCuenta(true)}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '10px 8px',
-              border: 'none',
-              background: 'transparent',
-              color: '#dc2626',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: eliminandoCuenta ? 'wait' : 'pointer',
-              fontFamily: 'inherit',
-              textAlign: 'center',
-              opacity: eliminandoCuenta ? 0.65 : 1,
-            }}
-          >
-            Eliminar mi cuenta
-          </button>
         </div>
       ) : null}
 
@@ -4804,19 +4730,6 @@ export default function MiPerfil() {
           navigate('/');
         }}
         titleId="cerrar-sesion-titulo"
-      />
-
-      <ConfirmModal
-        open={modalConfirmarEliminarCuenta}
-        title="¿Solicitar la eliminación de tu cuenta?"
-        message="Esta acción cierra tu sesión e inicia la eliminación o anonimización permanente de tus datos. Algunos registros pueden conservarse cuando exista una obligación legal."
-        confirmLabel={eliminandoCuenta ? 'Enviando solicitud…' : 'Sí, eliminar mi cuenta'}
-        dismissLabel="Cancelar"
-        busy={eliminandoCuenta}
-        confirmDanger
-        onDismiss={() => setModalConfirmarEliminarCuenta(false)}
-        onConfirm={() => void handleSolicitarEliminacionCuenta()}
-        titleId="eliminar-cuenta-titulo"
       />
 
       <BottomNav />

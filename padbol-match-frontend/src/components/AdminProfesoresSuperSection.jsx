@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from './common/SportIcon';
@@ -8,12 +9,10 @@ import {
   rechazarProfesorAdmin,
 } from '../utils/clasesAdminApi';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import './AdminProfesoresSuperSection.css';
 
-const API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const API_BASE = getApiBaseUrl();
 
 const BIO_MAX = 500;
 
@@ -119,7 +118,7 @@ function rowToEditDraft(row) {
   };
 }
 
-function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, onRowUpdate, t }) {
+function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, onRowUpdate, t, locale }) {
   const [row, setRow] = useState(rowProp);
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState(() => rowToEditDraft(rowProp));
@@ -145,7 +144,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
         if (cancelled) return;
         const list = (Array.isArray(data) ? data : [])
           .filter((s) => s && s.activo !== false)
-          .sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
+          .sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), locale));
         setSedes(list);
       })
       .catch(() => {
@@ -157,7 +156,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
     return () => {
       cancelled = true;
     };
-  }, [editMode, isSuperAdmin]);
+  }, [editMode, isSuperAdmin, locale]);
 
   if (!row) return null;
 
@@ -254,7 +253,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
               <option value="">{sedesLoading ? t('general.loading') : t('instructor.eligeSede')}</option>
               {sedes.map((s) => (
                 <option key={s.id} value={String(s.id)}>
-                  {s.nombre || `Sede ${s.id}`}
+                  {s.nombre || `${t('admin.profesores.colSede')} ${s.id}`}
                 </option>
               ))}
             </select>
@@ -433,7 +432,8 @@ export default function AdminProfesoresSuperSection({
   tabActive = false,
   onPendientesCountChange,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = padbolLangToIntlLocale(i18n.language);
   const [pendientes, setPendientes] = useState([]);
   const [aprobados, setAprobados] = useState([]);
   const [loadingPend, setLoadingPend] = useState(true);
@@ -512,13 +512,13 @@ export default function AdminProfesoresSuperSection({
     for (const row of aprobados) {
       const id = Number(row.sede_id);
       if (!Number.isFinite(id)) continue;
-      const nombre = String(row.sede_nombre || '').trim() || `Sede #${id}`;
+      const nombre = String(row.sede_nombre || '').trim() || `${t('admin.profesores.colSede')} #${id}`;
       if (!map.has(id)) map.set(id, nombre);
     }
     return [...map.entries()]
       .map(([id, nombre]) => ({ id, nombre }))
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-  }, [aprobados]);
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, locale));
+  }, [aprobados, locale, t]);
 
   const aprobadosFiltrados = useMemo(() => {
     const sid = filtroSede ? Number(filtroSede) : null;
@@ -860,6 +860,7 @@ export default function AdminProfesoresSuperSection({
           onClose={() => setFichaRow(null)}
           onRowUpdate={handleFichaRowUpdate}
           t={t}
+          locale={locale}
         />
       ) : null}
     </div>

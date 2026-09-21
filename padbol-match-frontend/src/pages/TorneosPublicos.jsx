@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -31,6 +32,7 @@ import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioA
 import { getDistanceKm } from '../utils/sedeCardUi';
 import { IconGeroFiltros, IconGeroUbicacion } from '../components/icons/GeroIcons';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 import SportIcon from '../components/common/SportIcon';
 import TorneoFinalizadoCard, { TorneosVistaTabs } from '../components/TorneoFinalizadoCard';
@@ -42,10 +44,7 @@ import {
   etiquetaFormatoEquipoResuelto,
 } from '../utils/torneoDeporteFormato';
 
-const API_BASE_TORNEOS =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const API_BASE_TORNEOS = getApiBaseUrl();
 
 function formatoEquipoLineaTorneoPublico(t) {
   return etiquetaFormatoEquipoResuelto(t);
@@ -70,7 +69,7 @@ function formatFecha(str, lang) {
   const [y, m, d] = str.split('-');
   const date = new Date(Number(y), Number(m) - 1, Number(d));
   if (Number.isNaN(date.getTime())) return str;
-  const locale = String(lang || 'es').toLowerCase().startsWith('en') ? 'en-US' : 'es-AR';
+  const locale = padbolLangToIntlLocale(lang);
   return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 

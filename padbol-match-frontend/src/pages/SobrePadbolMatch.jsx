@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const BG = '#FFFFFF';
 const TEXT = '#0F172A';
@@ -8,6 +9,7 @@ const ACCENT = '#E11B22';
 const BORDER = '#E2E8F0';
 
 export default function SobrePadbolMatch() {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -39,16 +41,14 @@ export default function SobrePadbolMatch() {
             textDecoration: 'none',
           }}
         >
-          ← Inicio
+          ← {t('aboutPage.home')}
         </Link>
-        <h1 style={{ margin: '0 0 16px', fontSize: 24, fontWeight: 900, lineHeight: 1.2 }}>¿Qué es Padbol Match?</h1>
+        <h1 style={{ margin: '0 0 16px', fontSize: 24, fontWeight: 900, lineHeight: 1.2 }}>{t('aboutPage.title')}</h1>
         <p style={{ margin: '0 0 14px', fontSize: 15, lineHeight: 1.55, color: MUTED, fontWeight: 500 }}>
-          Padbol Match es la plataforma oficial para descubrir sedes, reservar canchas y vivir la red de clubes Padbol en
-          todo el mundo. Nació con el deporte Padbol y hoy también conecta jugadores y clubes de Pádel, Pickleball y Tenis.
+          {t('aboutPage.intro')}
         </p>
         <p style={{ margin: '0 0 14px', fontSize: 15, lineHeight: 1.55, color: MUTED, fontWeight: 500 }}>
-          Desde un mismo lugar puedes explorar clubes, ver disponibilidad, reservar turno y gestionar tu experiencia con
-          el club.
+          {t('aboutPage.experience')}
         </p>
         <div
           style={{
@@ -59,7 +59,7 @@ export default function SobrePadbolMatch() {
             background: BG,
           }}
         >
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT }}>¿Listo para jugar?</p>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT }}>{t('aboutPage.ready')}</p>
           <Link
             to="/sedes"
             style={{
@@ -71,16 +71,16 @@ export default function SobrePadbolMatch() {
               textDecoration: 'none',
             }}
           >
-            Explorar sedes →
+            {t('aboutPage.explore')} →
           </Link>
         </div>
         <div style={{ marginTop: 40, paddingTop: 16, borderTop: `1px solid ${BORDER}`, fontSize: 13 }}>
           <Link to="/terminos" style={{ color: MUTED, fontWeight: 600, textDecoration: 'none' }}>
-            Términos
+            {t('aboutPage.terms')}
           </Link>
           <span style={{ color: BORDER, margin: '0 8px' }}>|</span>
           <Link to="/privacidad" style={{ color: MUTED, fontWeight: 600, textDecoration: 'none' }}>
-            Privacidad
+            {t('aboutPage.privacy')}
           </Link>
         </div>
       </div>

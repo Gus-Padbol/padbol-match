@@ -336,7 +336,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             ) : null}
             {fotoUploadError && !fotoUploading ? (
               <p style={{ margin: 0, fontSize: 13, color: COLOR_ERROR, fontWeight: 600 }}>
-                Error al subir, intentá de nuevo
+                Error al subir, intenta de nuevo
               </p>
             ) : null}
             {form.foto_url && !fotoUploading && !fotoUploadError ? (
@@ -424,7 +424,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             </p>
           ) : (
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-              Como super admin podés aprobarlo desde la lista cuando quieras.
+              Como super admin puedes aprobarlo desde la lista cuando quieras.
             </p>
           )}
         </div>

@@ -13,6 +13,7 @@ import { fetchSedeFavoritaId } from '../utils/sedeFavorita';
 import { getDistanceKm } from '../utils/sedeCardUi';
 import { DEPORTES_CANCHA_SEDE_KEYS, DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 function sedeTieneDeporteOfrecido(sede, deporteKey) {
   const rows = sede.canchas_por_deporte;
@@ -25,10 +26,10 @@ function sedeTieneDeporteOfrecido(sede, deporteKey) {
   );
 }
 
-function formatHorario(apertura, cierre) {
+function formatHorario(apertura, cierre, t) {
   if (apertura && cierre) return `${apertura} – ${cierre}`;
-  if (apertura) return `Desde ${apertura}`;
-  if (cierre)   return `Hasta ${cierre}`;
+  if (apertura) return t('sedes.listado.fromTime', { time: apertura });
+  if (cierre)   return t('sedes.listado.untilTime', { time: cierre });
   return null;
 }
 
@@ -38,6 +39,7 @@ function formatKm(km) {
 }
 
 export default function SedesPublicas() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -169,10 +171,10 @@ export default function SedesPublicas() {
 
   const pageTitle =
     from === 'reserva'
-      ? '⚡ Reserva tu cancha'
+      ? `⚡ ${t('sedes.listado.reserveTitle')}`
       : from === 'explorar'
-        ? '🗺️ Explorar sedes'
-        : '🏟️ Clubes cerca de ti';
+        ? `🗺️ ${t('sedes.listado.exploreTitle')}`
+        : `🏟️ ${t('sedes.listado.nearbyTitle')}`;
 
   const filtered = sorted.filter((s) => {
     if (deporteFiltroSedes && !sedeTieneDeporteOfrecido(s, deporteFiltroSedes)) return false;
@@ -188,7 +190,7 @@ export default function SedesPublicas() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-primary)', paddingTop: hubContentPaddingTopCss(location.pathname, navDock), paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock) }}>
 
-      <AppHeader title="Sedes" onBack={volverFlujoReserva ? handleSedesAppBack : undefined} />
+      <AppHeader title={t('sedes.listado.header')} onBack={volverFlujoReserva ? handleSedesAppBack : undefined} />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px 0' }}>
 
@@ -211,10 +213,10 @@ export default function SedesPublicas() {
                 {geoStatus === 'granted' ? (
                   <>
                     <IconGeroUbicacion size={14} style={{ color: 'inherit' }} />
-                    Ordenado por distancia
+                    {t('sedes.listado.sortedByDistance')}
                   </>
                 ) : (
-                  '🌍 Mostrando todas las canchas'
+                  `🌍 ${t('sedes.listado.showingAllCourts')}`
                 )}
               </span>
             </div>
@@ -228,7 +230,7 @@ export default function SedesPublicas() {
                 color: '#475569',
                 border: '1px solid #e2e8f0',
               }}>
-                📚 Catálogo completo (orden alfabético)
+                📚 {t('sedes.listado.fullCatalog')}
               </span>
             </div>
           )}
@@ -248,8 +250,9 @@ export default function SedesPublicas() {
                   border: '1px solid #fed7aa',
                 }}
               >
-                🎯 Deporte:{' '}
-                {DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === deporteFiltroSedes)?.label || deporteFiltroSedes}
+                🎯 {t('sedes.listado.sportFilter', {
+                  sport: DEPORTES_CANCHA_SEDE_OPTIONS.find((o) => o.key === deporteFiltroSedes)?.label || deporteFiltroSedes,
+                })}
               </span>
             </div>
           ) : null}
@@ -259,7 +262,7 @@ export default function SedesPublicas() {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, ciudad o país..."
+              placeholder={t('sedes.listado.searchPlaceholder')}
               style={{ flex: 1, minWidth: '200px', maxWidth: '340px', padding: '9px 14px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
             />
           </div>
@@ -267,15 +270,15 @@ export default function SedesPublicas() {
 
         {/* Grid */}
         {loading ? (
-          <p style={{ color: '#64748b', textAlign: 'center', paddingTop: '60px', fontSize: '16px' }}>Cargando canchas...</p>
+          <p style={{ color: '#64748b', textAlign: 'center', paddingTop: '60px', fontSize: '16px' }}>{t('sedes.listado.loading')}</p>
         ) : filtered.length === 0 ? (
           <p style={{ color: '#64748b', textAlign: 'center', paddingTop: '60px', fontSize: '15px' }}>
-            {search ? 'No hay resultados para esa búsqueda.' : 'No hay sedes habilitadas por el momento.'}
+            {search ? t('sedes.listado.noSearchResults') : t('sedes.listado.noVenues')}
           </p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
             {filtered.map(sede => {
-              const horario = formatHorario(sede.horario_apertura, sede.horario_cierre);
+              const horario = formatHorario(sede.horario_apertura, sede.horario_cierre, t);
               return (
                 <div
                   key={sede.id}
@@ -301,7 +304,7 @@ export default function SedesPublicas() {
                   {/* Card header */}
                   <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', padding: '20px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
                     {sede.logo_url ? (
-                      <img src={sede.logo_url} alt={`Logo ${sede.nombre}`}
+                      <img src={sede.logo_url} alt={t('sedes.listado.logoAlt', { name: sede.nombre })}
                         style={{ width: '56px', height: '56px', borderRadius: '12px', objectFit: 'contain', background: 'var(--bg-card)', padding: '6px', flexShrink: 0 }} />
                     ) : (
                       <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>🏟️</div>
@@ -354,7 +357,7 @@ export default function SedesPublicas() {
                     textAlign: 'center',
                   }}
                 >
-                  Toca la tarjeta para ver la sede
+                  {t('sedes.listado.openVenue')}
                   </div>
                 </div>
               );
@@ -375,7 +378,7 @@ export default function SedesPublicas() {
               cursor: 'pointer',
             }}
           >
-            ¿Quieres sumar tu club?
+            {t('sedes.listado.joinClub')}
           </button>
         </div>
       </div>

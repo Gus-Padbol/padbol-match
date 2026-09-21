@@ -1,7 +1,5 @@
-const API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+import { getApiBaseUrl } from './apiPublicBaseUrl';
+const API_BASE = getApiBaseUrl();
 
 function authHeaders(accessToken, json = true) {
   const h = {};

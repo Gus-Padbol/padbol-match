@@ -11,7 +11,7 @@ export default function ImageCropModal({
   aspect = 1,
   cropShape = 'round',
   title = 'Recortar foto',
-  description = 'Mové la imagen y usá el zoom para encuadrar. Confirmá cuando quede bien.',
+  description = 'Mueve la imagen y usa el zoom para encuadrar. Confirma cuando quede bien.',
   confirmLabel = 'Confirmar recorte',
   confirmColor = '#15803d',
   busy = false,

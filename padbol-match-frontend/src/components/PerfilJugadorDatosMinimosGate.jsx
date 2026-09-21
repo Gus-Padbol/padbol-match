@@ -13,7 +13,7 @@ function pathBase(pathname) {
   return String(pathname || '/').split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
 }
 
-function gateSkipsPerfilMinimo(pathOnly) {
+export function gateSkipsPerfilMinimo(pathOnly) {
   if (pathOnly === '/completar-perfil') return true;
   if (pathOnly === '/torneo/crear') return true;
   if (pathOnly === '/login' || pathOnly === '/auth' || pathOnly.startsWith('/auth/')) return true;
@@ -25,6 +25,7 @@ function gateSkipsPerfilMinimo(pathOnly) {
   if (pathOnly === '/terminos' || pathOnly.startsWith('/terminos/')) return true;
   if (pathOnly === '/privacidad' || pathOnly.startsWith('/privacidad/')) return true;
   if (pathOnly === '/eliminar-cuenta' || pathOnly.startsWith('/eliminar-cuenta/')) return true;
+  if (pathOnly === '/fipa/documentos' || pathOnly.startsWith('/fipa/documentos/')) return true;
   return false;
 }
 

@@ -1,0 +1,3553 @@
+{
+  "de": {
+    "commercialFlow": {
+      "business": {
+        "back": "Zurück zu den Plänen",
+        "chooseSport": "Wählen Sie eine Sportart",
+        "country": "Hauptland",
+        "courts": "Ungefähre Gesamtzahl von Courts",
+        "disclaimer": "Die Anfrage aktiviert keinen Plan, kein Abonnement oder keine Gebühr.",
+        "email": "Kontakt-E-Mail",
+        "error": "Die Anfrage konnte nicht gesendet werden.",
+        "eyebrow": "GESCHÄFTSUNTERNEHMEN UND MULTISIERTE BETREIBER",
+        "formTitle": "Einzelheiten zur Vorbereitung des Vorschlags",
+        "header": "Prüfung des Geschäftsplans",
+        "invalidCourts": "Geben Sie die ungefähre Gesamtzahl der Courts.",
+        "invalidVenues": "Geben Sie ein, wie viele Clubs die Organisation hat. Wählen Sie für einen Club Starter oder Pro.",
+        "lead": "Wir bereiten die zentrale Verwaltung, die Berechtigungen für jeden Club und einen Vorschlag vor, der Ihrer Größe entspricht.",
+        "location": "Stadt oder zentrale Lage",
+        "manager": "Vollständiger Name des Betriebsleiters",
+        "organization": "Name der Organisation oder Kette",
+        "otherSports": "Bietet es andere Sportarten an?",
+        "sending": "Senden...",
+        "sport": "Hauptsportarten",
+        "submit": "Geschäftsanfrage senden",
+        "success": "Wir haben Ihre Geschäftsanfrage erhalten. Unser Team wird Sie kontaktieren, um die Multisite-Struktur und einen Volumenvorschlag zu definieren.",
+        "title": "Sagen Sie uns, wie Ihre Organisation strukturiert ist",
+        "venues": "Wie viele Clubs hat die Organisation?",
+        "whatsapp": "WhatsApp mit Ländercode"
+      },
+      "chooseCountry": "Wählen Sie ein Land",
+      "chooseOption": "Wählen Sie eine Option",
+      "no": "Nein",
+      "promo": {
+        "venueServiceLabel": "Clubservice für Padbol-Plätze",
+        "basePriceLabel": "Pro-Preis",
+        "basePriceDetail": "Der monatliche Tarif vor Anwendung der Padbol-Vorteile.",
+        "benefits": [
+          [
+            "01",
+            "3 Monate kostenlos",
+            "Alle Pro-Werkzeuge sind in den ersten 3 Monaten kostenlos nutzbar."
+          ],
+          [
+            "02",
+            "Padbol-Vorteil: 50% Rabatt",
+            "Ausgehend vom Pro-Preis von 68 USD pro Monat erhält Ihr Padbol-Club einen Tarif von 34 USD pro Monat."
+          ],
+          [
+            "03",
+            "Weitere 50% bei Erfüllung der Ziele",
+            "Wenn Sie alle Ziele des Monats erfüllen, erhalten Sie weitere 50% Rabatt auf 34 USD: Sie zahlen 17 USD pro Monat."
+          ]
+        ],
+        "clubName": "Vereinsname",
+        "country": "Land",
+        "courtCount": "Wie viele Padbol Courts Hat sie das?",
+        "email": "Kontakt-E-Mail",
+        "eyebrow": "AUSSCHLIESSLICHER BEGÜNSTIGTER FÜR PADBOL-CLUBS",
+        "formSubtitle": "Teilen Sie uns die wesentlichen Angaben zu Ihrem Club mit. Wir prüfen Ihre Anfrage und kontaktieren Sie für die nächsten Schritte. Das Absenden des Formulars löst keine Gebühren aus.",
+        "formTitle": "Beginnen wir mit Ihrem Club",
+        "goals": [
+          "Mindestens ein Turnier pro Monat organisieren und abschließen, vollständig in Padbol Match verwaltet, mit mindestens 8 Paaren und über die App angemeldeten Spielern.",
+          "Alle Ergebnisse in Padbol Match erfassen. Der letzte Punkt des Finales auf der digitalen Spielstandsanzeige muss den Sieger bestimmen und das Turnier abschließen; andere Matches können live erfasst oder nach ihrem Ende manuell eingegeben werden.",
+          "12 tatsächliche Buchungen pro Monat abschließen, die verifizierte Nutzer über die App vorgenommen haben. Stornierte Buchungen zählen nicht.",
+          "Mindestens 10 verschiedene mit dem Club verknüpfte Spieler mit tatsächlicher Aktivität im jeweiligen Monat haben. Jede Person zählt nur einmal; auch Spieler, die tatsächlich an Turnieren mitspielen, zählen. Es dürfen dieselben Spieler wie in den Vormonaten sein."
+        ],
+        "goalsEyebrow": "Padbol-Vorteil",
+        "goalsLead": "Die zusätzlichen 50% gelten, wenn alle Ziele des Monats erfüllt sind.",
+        "goalsSummary": "Monatliche Ziele ansehen",
+        "goalsTitle": "Ziele, die Ihren Club wachsen lassen",
+        "header": "Padbol Club Pro Anfrage",
+        "howAria": "Wie der Pro Benefit funktioniert",
+        "invalidCourts": "Geben Sie an, wie viele Padbol Courts Der Club hat.",
+        "lead": "Die ersten 3 Monate sind kostenlos. Ab dem vierten Monat zahlen berechtigte Padbol Courts Clubs 34 USD monatlich, also 50 % des Basistarifs von 68 USD.",
+        "location": "Club-Standort",
+        "locationPlaceholder": "Stadt, Provinz oder Staat",
+        "otherSports": "Bietet der Verein andere Sportarten an?",
+        "outreachText": "Aktive soziale Medien, die Kommunikation Ihrer Angebote und geplante Werbekampagnen helfen dabei, Ihren Club bekannt zu machen und Spieler zu gewinnen.",
+        "outreachTitle": "Lassen Sie Ihren Club wachsen",
+        "ownerName": "Vollständiger Name des Eigentümers",
+        "required": "Füllen Sie alle angeforderten Angaben aus, um den Antrag einzureichen.",
+        "submit": "Padbol Courts Vorteil anfragen",
+        "success": "Ihre Anfrage zum Padbol Courts Vorteil ist eingegangen. Unser Team wird sich bei Ihnen melden.",
+        "supportEyebrow": "LEITLINIE WÄHREND DES ERSTEN MONATS",
+        "supportNote": "Dies ist eine erste Anleitung, um Ihnen den Einstieg zu erleichtern. Laufendes Social Media Management, spätere Kampagnen und Werbeausgaben sind zusätzliche Dienste.",
+        "supportText": "Wir begleiten Sie mit einer persönlichen Einführung in Padbol Match und helfen neuen Clubs, ihren Start vorzubereiten und Spieler zu gewinnen.",
+        "supportTitle": "Wir helfen Ihnen, Ihren Club zum Laufen zu bringen",
+        "title": "Nutzen Sie den Padbol Courts Vorteil und entwickeln Sie Ihren Club weiter",
+        "whatsapp": "WhatsApp mit Ländercode"
+      },
+      "yes": "Ja"
+    }
+  },
+  "fr": {
+    "commercialFlow": {
+      "business": {
+        "back": "Retour aux plans",
+        "chooseSport": "Sélectionner un sport",
+        "country": "Pays principal",
+        "courts": "Nombre total approximatif Courts",
+        "disclaimer": "L'enquête n'active aucun plan, abonnement ou frais.",
+        "email": "Courriel de contact",
+        "error": "L'enquête n'a pas pu être envoyée.",
+        "eyebrow": "ENTREPRISES · CHAINS ET OPÉRATEURS MULTISITAIRES",
+        "formTitle": "Détails nécessaires pour préparer la proposition",
+        "header": "Demande de plan d'affaires",
+        "invalidCourts": "Inscrivez le nombre total approximatif de Courts.",
+        "invalidVenues": "Entrez combien de clubs l'organisation a. Pour un club, choisissez Starter ou Pro.",
+        "lead": "Nous préparons l'administration centrale, les autorisations pour chaque club et une proposition adaptée à votre échelle.",
+        "location": "Ville ou emplacement central",
+        "manager": "Nom complet du gestionnaire",
+        "organization": "Nom de l'organisation ou de la chaîne",
+        "otherSports": "Il offre d'autres sports ?",
+        "sending": "Envoyer...",
+        "sport": "Sport principal",
+        "submit": "Envoyer une demande d'affaires",
+        "success": "Nous avons reçu votre demande de renseignements. Notre équipe vous contactera pour définir la structure multisite et une proposition de volume.",
+        "title": "Dites-nous comment votre organisation est structurée",
+        "venues": "Combien de clubs l'organisation a-t-elle ?",
+        "whatsapp": "WhatsApp avec code pays"
+      },
+      "chooseCountry": "Sélectionner un pays",
+      "chooseOption": "Sélectionnez une option",
+      "no": "Numéro",
+      "promo": {
+        "venueServiceLabel": "Service au club pour les terrains Padbol",
+        "basePriceLabel": "Tarif Pro",
+        "basePriceDetail": "Le tarif mensuel avant application des avantages Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 mois gratuits",
+            "Tous les outils Pro sont activés sans frais pendant les 3 premiers mois."
+          ],
+          [
+            "02",
+            "Avantage Padbol : 50% de réduction",
+            "À partir du tarif Pro de 68 USD par mois, votre club Padbol bénéficie d’un tarif de 34 USD par mois."
+          ],
+          [
+            "03",
+            "Encore 50% en atteignant les objectifs",
+            "En atteignant tous les objectifs du mois, vous obtenez encore 50% de réduction sur 34 USD : vous payez 17 USD par mois."
+          ]
+        ],
+        "clubName": "Nom du club",
+        "country": "Pays",
+        "courtCount": "Combien Padbol Courts Vraiment ?",
+        "email": "Courriel de contact",
+        "eyebrow": "BENEFIT EXCLUSIF POUR LES CLUBS DE PADBOL",
+        "formSubtitle": "Communiquez-nous les informations essentielles sur votre club. Nous examinerons votre demande et vous contacterons pour la suite. L’envoi du formulaire ne déclenche aucun paiement.",
+        "formTitle": "Commençons par votre club",
+        "goals": [
+          "Organiser et terminer au moins un tournoi par mois, entièrement géré dans Padbol Match, avec un minimum de 8 paires et des joueurs inscrits depuis l’application.",
+          "Enregistrer tous les résultats dans Padbol Match. Le dernier point de la finale sur le tableau de score numérique doit désigner le champion et clôturer le tournoi ; les autres matchs peuvent être enregistrés en direct ou saisis manuellement à leur issue.",
+          "Réaliser 12 réservations effectives par mois, effectuées depuis l’application par des utilisateurs vérifiés. Les réservations annulées ne comptent pas.",
+          "Compter au moins 10 joueurs distincts rattachés au club et réellement actifs pendant le mois. Chaque personne ne compte qu’une fois ; les joueurs qui participent effectivement aux matchs des tournois comptent aussi. Il peut s’agir des mêmes joueurs que les mois précédents."
+        ],
+        "goalsEyebrow": "Avantage Padbol",
+        "goalsLead": "La réduction supplémentaire de 50% s’applique lorsque tous les objectifs du mois sont atteints.",
+        "goalsSummary": "Voir les objectifs mensuels",
+        "goalsTitle": "Des objectifs qui développent votre club",
+        "header": "Padbol club Demande Pro",
+        "howAria": "Comment fonctionne l'avantage Pro",
+        "invalidCourts": "Entrez combien Padbol Courts Le club l'a fait.",
+        "lead": "Les 3 premiers mois sont gratuits. À partir du quatrième mois, le tarif des clubs Padbol Courts éligibles est de 34 USD par mois, soit 50 % du tarif de base de 68 USD.",
+        "location": "Emplacement du club",
+        "locationPlaceholder": "Ville, province ou État",
+        "otherSports": "Le club offre-t-il d'autres sports ?",
+        "outreachText": "Garder vos réseaux sociaux actifs, communiquer vos promotions et planifier des campagnes publicitaires aide à faire connaître votre club et à attirer des joueurs.",
+        "outreachTitle": "Développez votre club",
+        "ownerName": "Nom complet du propriétaire",
+        "required": "Remplissez tous les détails demandés pour soumettre la demande.",
+        "submit": "Demander l’avantage Padbol Courts",
+        "success": "Nous avons reçu votre demande pour l’avantage Padbol Courts. Notre équipe vous contactera pour la suite.",
+        "supportEyebrow": "ORIENTATION AU COURS DE VOTRE PREMIER MOIS",
+        "supportNote": "Il s'agit de conseils initiaux pour vous aider à commencer. La gestion continue des médias sociaux, les campagnes ultérieures et les dépenses publicitaires sont des services supplémentaires.",
+        "supportText": "Nous vous accompagnons avec une prise en main personnalisée de Padbol Match et, si votre club est nouveau, nous vous aidons à préparer son lancement et à attirer des joueurs.",
+        "supportTitle": "Nous vous aidons à faire fonctionner votre club",
+        "title": "Profitez de l’avantage Padbol Courts et développez votre club",
+        "whatsapp": "WhatsApp avec code pays"
+      },
+      "yes": "Oui"
+    }
+  },
+  "it": {
+    "commercialFlow": {
+      "business": {
+        "back": "Torna ai piani",
+        "chooseSport": "Seleziona uno sport",
+        "country": "Paese principale",
+        "courts": "Numero totale approssimativo Courts",
+        "disclaimer": "L'inchiesta non attiva alcun piano, abbonamento o addebito.",
+        "email": "Contatto email",
+        "error": "L'inchiesta non poteva essere inviata.",
+        "eyebrow": "BUSINESS · CARATTERISTICHE E OPERATIVI MULTISITI",
+        "formTitle": "Dettagli necessari per preparare la proposta",
+        "header": "Richiesta di piano aziendale",
+        "invalidCourts": "Inserisci il numero totale approssimativo di Courts.",
+        "invalidVenues": "Inserisci quanti club ha l'organizzazione. Per un club, scegli Starter o Pro.",
+        "lead": "Prepariamo l'amministrazione centrale, le autorizzazioni per ogni club e una proposta adatta alla vostra scala.",
+        "location": "Città o posizione centrale",
+        "manager": "Nome completo del Manager",
+        "organization": "Nome organizzazione o catena",
+        "otherSports": "Offre altri sport?",
+        "sending": "Invio...",
+        "sport": "Lo sport principale",
+        "submit": "Inviare la richiesta di business",
+        "success": "Abbiamo ricevuto la tua richiesta d'affari. Il nostro team vi contatterà per definire la struttura multisito e una proposta di volume.",
+        "title": "Dicci come la tua organizzazione è strutturata",
+        "venues": "Quanti club ha l'organizzazione?",
+        "whatsapp": "WhatsApp con codice paese"
+      },
+      "chooseCountry": "Seleziona un paese",
+      "chooseOption": "Selezionare un'opzione",
+      "no": "No.",
+      "promo": {
+        "venueServiceLabel": "Servizio al club per i campi Padbol",
+        "basePriceLabel": "Prezzo Pro",
+        "basePriceDetail": "La tariffa mensile prima dell’applicazione dei vantaggi Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 mesi gratuiti",
+            "Attiviamo tutti gli strumenti Pro senza costi per i primi 3 mesi."
+          ],
+          [
+            "02",
+            "Vantaggio Padbol: 50% di sconto",
+            "Dal prezzo Pro di 68 USD al mese, il tuo club Padbol accede a una tariffa di 34 USD al mese."
+          ],
+          [
+            "03",
+            "Un altro 50% raggiungendo gli obiettivi",
+            "Raggiungendo tutti gli obiettivi del mese, ottieni un altro 50% di sconto su 34 USD: paghi 17 USD al mese."
+          ]
+        ],
+        "clubName": "Nome del club",
+        "country": "Paese",
+        "courtCount": "Quanti Padbol Courts Ha?",
+        "email": "Contatto email",
+        "eyebrow": "ESCLUSIVE BENEFIT per PADBOL CLUBS",
+        "formSubtitle": "Raccontaci i dati essenziali del tuo club. Esamineremo la tua richiesta e ti contatteremo per proseguire. L’invio del modulo non attiva alcun addebito.",
+        "formTitle": "Iniziamo con il tuo club",
+        "goals": [
+          "Organizzare e completare almeno un torneo al mese, gestito interamente in Padbol Match, con un minimo di 8 coppie e giocatori iscritti tramite l’app.",
+          "Registrare tutti i risultati in Padbol Match. L’ultimo punto della finale sul segnapunti digitale deve determinare il campione e concludere il torneo; le altre partite possono essere registrate in diretta o inserite manualmente al termine.",
+          "Completare 12 prenotazioni effettive al mese, effettuate tramite l’app da utenti verificati. Le prenotazioni annullate non contano.",
+          "Avere almeno 10 giocatori distinti collegati al club e realmente attivi durante il mese. Ogni persona conta una sola volta; contano anche coloro che giocano effettivamente nei tornei. Possono essere gli stessi giocatori dei mesi precedenti."
+        ],
+        "goalsEyebrow": "Vantaggio Padbol",
+        "goalsLead": "L’ulteriore 50% si applica al raggiungimento di tutti gli obiettivi del mese.",
+        "goalsSummary": "Visualizza gli obiettivi mensili",
+        "goalsTitle": "Obiettivi che fanno crescere il tuo club",
+        "header": "Padbol Club Pro richiesta",
+        "howAria": "Come funziona il beneficio Pro",
+        "invalidCourts": "Inserire quanti Padbol Courts Il club ce l'ha.",
+        "lead": "I primi 3 mesi sono gratuiti. Dal quarto mese, la tariffa per i club Padbol Courts idonei è di 34 USD al mese, pari al 50% della tariffa base di 68 USD.",
+        "location": "Posizione del club",
+        "locationPlaceholder": "Città, provincia o stato",
+        "otherSports": "Il club offre altri sport?",
+        "outreachText": "Mantenere attivi i tuoi social, comunicare le promozioni e pianificare campagne pubblicitarie aiuta a far conoscere il tuo club e ad attirare giocatori.",
+        "outreachTitle": "Fai crescere il tuo club",
+        "ownerName": "Nome completo del proprietario",
+        "required": "Completa tutti i dettagli richiesti per inviare la richiesta.",
+        "submit": "Richiedi il vantaggio Padbol Courts",
+        "success": "Abbiamo ricevuto la tua richiesta per il vantaggio Padbol Courts. Il nostro team ti contatterà per proseguire.",
+        "supportEyebrow": "GUIDANCE DURANTE IL PRIMO MESE",
+        "supportNote": "Questa è la guida iniziale per aiutarti a iniziare. Gestione dei social media in corso, campagne successive e spese pubblicitarie sono servizi aggiuntivi.",
+        "supportText": "Ti guidiamo con un onboarding personalizzato di Padbol Match e, se il tuo club è nuovo, ti aiutiamo a prepararne il lancio e ad attirare giocatori.",
+        "supportTitle": "Ti aiutiamo a salire il tuo club e a correre",
+        "title": "Accedi al vantaggio Padbol Courts e fai crescere il tuo club",
+        "whatsapp": "WhatsApp con codice paese"
+      },
+      "yes": "Sì."
+    }
+  },
+  "ar": {
+    "commercialFlow": {
+      "business": {
+        "back": "العودة إلى الخطط",
+        "chooseSport": "اختيار الرياضة",
+        "country": "البلد الرئيسي",
+        "courts": "العدد الإجمالي التقريبي Courts",
+        "disclaimer": "The inquiry does not activate any plan, subscription or charge.",
+        "email": "البريد الإلكتروني",
+        "error": "The inquiry could not be sent.",
+        "eyebrow": "المساعـدة العلميـة - المـواد والمؤشـرات المتعددة الأطراف",
+        "formTitle": "التفاصيل اللازمة لإعداد المقترح",
+        "header": "التحقيق في خطة الأعمال",
+        "invalidCourts": "أدخل العدد الإجمالي التقريبي Courts.",
+        "invalidVenues": "أدخلوا كم عدد نوادي المنظمة لنادي واحد، إختر (مبدئي) أو (برو)",
+        "lead": "نُعدّ الإدارة المركزية، والإذن لكل نادي، ومقترح يناسب مقياسك.",
+        "location": "المدينة أو الموقع المركزي",
+        "manager": "اسم المدير الكامل",
+        "organization": "اسم المنظمة أو السلاسل",
+        "otherSports": "هل تقدم رياضة أخرى؟",
+        "sending": "إرسال...",
+        "sport": "الرياضة الرئيسية",
+        "submit": "إرسال تحقيقات الأعمال",
+        "success": "لقد تلقينا تحقيقك في الأعمال سيتصل بك فريقنا لتحديد الهيكل المتعدد المواقع واقتراح الحجم.",
+        "title": "أخبرنا كيف أن منظمتك منظمة",
+        "venues": "كم عدد النوادي التي تملكها المنظمة؟",
+        "whatsapp": "WhatsApp with country code"
+      },
+      "chooseCountry": "اختيار بلد",
+      "chooseOption": "اختيار خيار",
+      "no": "لا",
+      "promo": {
+        "venueServiceLabel": "خدمة النادي لملاعب Padbol",
+        "basePriceLabel": "سعر Pro",
+        "basePriceDetail": "السعر الشهري قبل تطبيق مزايا Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 أشهر مجانية",
+            "نفعّل جميع أدوات Pro دون رسوم خلال الأشهر الـ3 الأولى."
+          ],
+          [
+            "02",
+            "ميزة Padbol: خصم 50%",
+            "انطلاقًا من سعر Pro البالغ 68 USD شهريًا، يحصل نادي Padbol الخاص بك على سعر 34 USD شهريًا."
+          ],
+          [
+            "03",
+            "خصم إضافي 50% عند تحقيق الأهداف",
+            "عند تحقيق جميع أهداف الشهر، تحصل على خصم إضافي 50% من 34 USD: تدفع 17 USD شهريًا."
+          ]
+        ],
+        "clubName": "اسم نادي",
+        "country": "البلد",
+        "courtCount": "كم عددهم Padbol Courts أليس كذلك؟",
+        "email": "البريد الإلكتروني",
+        "eyebrow": "توفير فرص عمل إضافية للدعاوى",
+        "formSubtitle": "أخبرنا بالمعلومات الأساسية عن ناديك. سنراجع طلبك ونتواصل معك للمتابعة. إرسال النموذج لا يفعّل أي رسوم.",
+        "formTitle": "فلنبدأ بناديك",
+        "goals": [
+          "تنظيم وإتمام بطولة واحدة على الأقل كل شهر، تُدار بالكامل في Padbol Match، بمشاركة 8 أزواج على الأقل ولاعبين مسجّلين عبر التطبيق.",
+          "تسجيل جميع النتائج في Padbol Match. يجب أن تحدد النقطة الأخيرة من المباراة النهائية على لوحة النتائج الرقمية البطل وتُنهي البطولة؛ ويمكن تسجيل المباريات الأخرى مباشرة أو إدخال نتائجها يدويًا عند انتهائها.",
+          "إتمام 12 حجزًا فعليًا كل شهر، أجراها مستخدمون موثّقون عبر التطبيق. لا تُحتسب الحجوزات الملغاة.",
+          "وجود 10 لاعبين مختلفين على الأقل مرتبطين بالنادي، مع نشاط حقيقي خلال الشهر. يُحتسب كل شخص مرة واحدة فقط؛ ويُحتسب أيضًا من يلعبون فعليًا في البطولات. يمكن أن يكونوا اللاعبين أنفسهم من الأشهر السابقة."
+        ],
+        "goalsEyebrow": "ميزة Padbol",
+        "goalsLead": "يُطبّق الخصم الإضافي البالغ 50% عند تحقيق جميع أهداف الشهر.",
+        "goalsSummary": "الأهداف الشهرية",
+        "goalsTitle": "أهداف تساعد ناديك على النمو",
+        "header": "Padbol طلب النادي",
+        "howAria": "How the Pro benefit works",
+        "invalidCourts": "كم عدد Padbol Courts النادي لديه",
+        "lead": "الأشهر الـ3 الأولى مجانية. ابتداءً من الشهر الرابع، يبلغ السعر للأندية المؤهلة ضمن Padbol Courts مبلغ 34 USD شهريًا، أي 50% من السعر الأساسي البالغ 68 USD.",
+        "location": "موقع النادي",
+        "locationPlaceholder": "المدينة أو المقاطعة أو الولاية",
+        "otherSports": "هل يقدم النادي الرياضات الأخرى؟",
+        "outreachText": "الحفاظ على نشاط حساباتك في وسائل التواصل الاجتماعي، والإعلان عن عروضك، والتخطيط للحملات الإعلانية يساعد على التعريف بناديك وجذب اللاعبين.",
+        "outreachTitle": "نمِّ ناديك",
+        "ownerName": "اسم المالك الكامل",
+        "required": "استكمال جميع التفاصيل المطلوبة لتقديم الطلب.",
+        "submit": "طلب ميزة Padbol Courts",
+        "success": "تلقينا طلبك للاستفادة من ميزة Padbol Courts. سيتواصل معك فريقنا لمتابعة الخطوات.",
+        "supportEyebrow": "الرعايه في الشهر الأول",
+        "supportNote": "هذا هو التوجيه الأولي لمساعدتك على البدء. وتشكل إدارة وسائط الإعلام الاجتماعية الجارية، والحملات اللاحقة، والإعلانات المنفقة، خدمات إضافية.",
+        "supportText": "نرشدك من خلال برنامج تهيئة مخصص في Padbol Match، وإذا كان ناديك جديدًا، نساعدك على تجهيز إطلاقه وجذب اللاعبين.",
+        "supportTitle": "نحن نساعدك في الحصول على النادي الخاص بك تشغيل",
+        "title": "استفد من ميزة Padbol Courts وطوّر ناديك",
+        "whatsapp": "WhatsApp with country code"
+      },
+      "yes": "نعم"
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "البطولات الآلية",
+          "?\"?"
+        ],
+        [
+          "إيجاد إيرادات جديدة",
+          "العضوية والترقيات والتنسيب"
+        ],
+        [
+          "متعهد البناء الولاء",
+          "PadCoinsالحملات والفوائد التي جمعها النادي"
+        ],
+        [
+          "تخفيض تكاليف المنبر",
+          "مبتدئ: 1 في المائة · Pro: 0.65%. ويمكن إدارة القيم حسب المنطقة."
+        ]
+      ],
+      "automationAccent": "عدد أقل من المهام المتكررة.",
+      "automationEyebrow": "(ستارتر مانغز)، (الموت)",
+      "automationTitle": "المزيد من النشاط لناديك",
+      "back": "* للمديرين *",
+      "bookings": "الحجز والتوافر",
+      "commissionNote": "المعاملات المجهزة Padbol Match",
+      "connected": "عملية متصلة واحدة قبل اللعب وأثناءه وبعده",
+      "devices": "هاتف محمول؛ حاسوب؛ تلفزيون",
+      "draft": "مشروع الإنتربول: لا يوجد",
+      "experiencesEyebrow": "خمس تجارب، واحدة",
+      "experiencesText": "هذه Padbol Match واجهات بصرية وهي ليست خططا تجارية ولا تحدد ما إذا كان الملهى يستخدم مبدئيا أو برو أو الأعمال التجارية.",
+      "eyebrow": "PADBOL MATCH FOR CLUBS",
+      "faqAccent": "لا تهم خفية",
+      "faqEyebrow": "أسئلة أطباء محترمين",
+      "faqHelpCta": "ASK CHIVI",
+      "faqHelpText": "شيفي يمكن أن يفسر الخطط ويساعدك على إيجاد الخيار الصحيح لناديك",
+      "faqHelpTitle": "ما زال لديك سؤال؟",
+      "faqTitle": "لا مفاجئات",
+      "faqs": [
+        [
+          "هل هناك تهم مخفية؟",
+          "لا قبل تفعيل الخطة، يعرف النادي ويقبل اشتراكه وارتكابه. تكاليف تجهيز المدفوعات منفصلة ولا تفرضها Padbol Match."
+        ],
+        [
+          "هل هناك تهمة لتقديم طلب؟",
+          "لا إرسال النموذج فقط يبدأ المحادثة. إنه لا ينشط تهمة أو اشتراك"
+        ],
+        [
+          "هل يدفع اللاعب لجنة؟",
+          "لا يدفع اللاعبون نسبة مئوية من العمولة Padbol Match."
+        ],
+        [
+          "هل أحتاج لمعدات لوحات قياس خاصة؟",
+          "لا اللوحة تعمل من هاتف أو قرص أو كمبيوتر ويمكن عرضها على التلفاز"
+        ],
+        [
+          "هل يمكنني جلب بيانات من نظام آخر؟",
+          "نعم، عندما يكون الشكل متوافقاً نستعرض نطاق الهجرة مع النادي قبل البدء"
+        ],
+        [
+          "ماذا لو تدبرت عدة نوادي؟",
+          "وتصمم الأعمال التجارية للسلاسل والمشغلين المتعددي المواقع. ويتم الاتفاق مع كل منظمة قبل بدء النشاط على الإدارة المركزية، وتصاريح النوادي، والتقارير الموحدة، والتسعير الحجمي."
+        ]
+      ],
+      "featured": "العدد الأكبر من السكان",
+      "finalAccent": "العملية تبقى لك",
+      "finalTitle": "ابدأ بدون رسوم ثابتة",
+      "finePrint": "وتتوقف القيود والأسعار والترقيات واللجان على المنطقة والتشكيل الحالي. وتحدد شروط الأعمال التجارية عن طريق الاتصال التجاري والتحقق التقني.",
+      "fourSports": "4 رياضات",
+      "growthAria": "أدوات النمو",
+      "lead": "الحجز، اللاعبين، الألعاب، البطولات، الترتيب، لوحة النتائج الحية، العضوية والإدارة في مكان واحد.",
+      "limits": "حدود الخطة",
+      "liveClub": "CLUB حي",
+      "liveMatch": "لعبة حية و لوحة نتائج",
+      "membershipText": "تحديد السعر، والمدة، والاستحقاقات، والخصوم، والجداول، والأولوية، تشمل الحجز PadCoinsهذه هي عضوية النادي، منفصلة عن أي عضوية عالمية في المستقبل.",
+      "membershipTitle": "اكره عضوك",
+      "metaDescription": "Padbol Match تجمع المراهنات، اللاعبين، الألعاب، البطولات، الترتيب، لوحة الأرقام الرقمية، إدارة نوادي متعددة الموانئ معا.",
+      "metaTitle": "Padbol Match النوادي - الخطط",
+      "migration": [
+        [
+          "مبدئي",
+          "Compatible file import, subject to validation."
+        ],
+        [
+          "Pro",
+          "مساعدة الهجرة."
+        ],
+        [
+          "الأعمال التجارية",
+          "الهجرة العرفية"
+        ]
+      ],
+      "migrationEyebrow": "حقاً تستخدم نظاماً آخر؟",
+      "migrationText": "يمكننا أن نستورد معلومات تعود بشكل شرعي إلى النادي ونستخدم استمارة متوافقة ويصدق على النطاق قبل بدء العمل.",
+      "migrationTitle": "لا تبدأ من الصفر.",
+      "multisportEyebrow": "واحد سبورت",
+      "multisportText": "إدارة كل Padbol Court واللعب الآخر Court من نفس المنصة حتى عندما يقدم ناديك رياضات مختلفة",
+      "multisportTitle": "Padbol :: Padel · pickleball · Tennis",
+      "notDefined": "يحدد",
+      "operationAria": "عملية نادي متصل",
+      "or": "أو",
+      "padbolBenefit": "توفير فرص عمل إضافية للدعاوى",
+      "padbolOwnerCta": "اطلب مزاياك",
+      "padbolOwnerHint": "تعرّف على كيف يمكننا مساعدتك في جذب اللاعبين وتنشيط النادي وتنمية مجتمعك.",
+      "padbolOwnerText": "اكتشف مزايا Padbol Match الحصرية لناديك.",
+      "padbolOwnerTitle": "هل تملك واحدة أو أكثر Padbol Courts?",
+      "perMonth": "الشهر",
+      "perYear": "السنة",
+      "plans": {
+        "business": {
+          "adminsLabel": "المصطلحات العرفية",
+          "commissionPrefix": "من",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "LET &apos; s TALK",
+          "features": [
+            "كل شيء في برو",
+            "تحديد النطاق المتعدد المواقع لكل منظمة",
+            "التصاريح المركزية والإدارة القائمة على المشروع",
+            "التقارير الموحدة والحملات الشبكية حسب النطاق",
+            "الهجرة العرفية",
+            "الإدماجات والتطبيقات المسبقة عن علم رهناً بالمصادقة التقنية",
+            "الدعم المخصص"
+          ],
+          "pricePrefix": "من",
+          "summary": ":: إيجاد حلول متعددة المواقع والأعراف للسلاسل والمشغلين والمرخصين."
+        },
+        "pro": {
+          "adminsLabel": "ما يصل إلى 5 مدراء",
+          "courtsLabel": "حتى 12 Courts",
+          "ctaLabel": "CHOOSE PRO",
+          "features": [
+            "كل شيء في البداية",
+            "البطولات الآلية: السحب، المجموعات، التركيبات، الوقوف، الأقواس، والأقسام والأوعية",
+            "التقارير والصادرات لأغراض الحجز والإيرادات والصادرات PadCoins",
+            "قوائم الانتظار وتنبيهات الافتتاح",
+            "الحملات والترقيات والمكافآت PadCoins الاستثناءات",
+            "أعضاء النادي",
+            "رعاة الخاص بك على اللوحات، البطولات وشاشات النوادي",
+            "الإخطارات المجزأة للاعبي النوادي",
+            "المساعدة في الهجرة والدعم ذي الأولوية"
+          ],
+          "summary": "للنوادي التي تريد القيام بعمليات آلية ونمو مجتمعها المحلي"
+        },
+        "starter": {
+          "adminsLabel": "مدير واحد",
+          "courtsLabel": "حتى 4 Courts",
+          "ctaLabel": "ستبدأ بلا جريمة",
+          "features": [
+            "Padbolبادل , بيكل بول وتنس",
+            "اللاعبون والزبائن غير المحدودين",
+            "ملامح النادي العام Courtsالجداول والمعدلات والتوافر",
+            "الحجز على الإنترنت ودخول الحجز اليدوي",
+            "الألعاب ودخول النتائج وترتيب النادي",
+            "الدورات التي يديرها النادي: التسجيلات والأفرقة والألعاب والنتائج",
+            "لوحة بيانات رقمية مع التحكم المباشر والشاشة أو نواتج التلفزيون",
+            "لوحة عمل للحجز والشغل والإيرادات",
+            "نادي PadCoins الأرصدة والمعاملات والخلاصات",
+            "استيراد ملفات قابلة للمقارنة، رهناً بالتصديق عليها مسبقاً"
+          ],
+          "summary": "للنوادي حتى الرابعة Courts الذي يريد إدارة العمليات بدون اشتراك شهري"
+        }
+      },
+      "plansAccent": "انتقل إلى برو إلى السيارات.",
+      "plansEyebrow": "تلك التي تكبر معك",
+      "plansTitle": "ابدأ من خلال الإدارة",
+      "playerFeeAria": "رسوم اللعب",
+      "playerFeeText": "وتناظر لجان الخطة الخدمات المقدمة إلى النادي. وتفصل تكاليف شركة ميركادو باغو أو ستري أو غيرها من تكاليف مجهزي المدفوعات.",
+      "playerFeeTitle": "لاعبون يلعبون 0% لجنة مكافحة المخدرات",
+      "results": "النتائج وزيارات الترتيب والعودة",
+      "scoreboardAccent": "لا معدات خاصة",
+      "scoreboardAria": "Padbol Match لوحة رقمية خلال لعبة",
+      "scoreboardCaption": "الشاشة المتاحة حاليا Padbol Match.",
+      "scoreboardEyebrow": "جهازك الديموقراطي مأخوذ من",
+      "scoreboardItems": [
+        "التكرير الحي والتحديثات",
+        "عرض على الشاشة أو التلفزيون.",
+        "التحكم اللاسلكي من أجهزة النوادي"
+      ],
+      "scoreboardNote": "\"برو\" يضيف راعيك الخاص، بطولات آلية، تقارير قابلة للتصدير، PadCoins الحملات والإخطارات المجزأة",
+      "scoreboardTitle": "اللعبة تعيش",
+      "screensText": "إدارة رعاة الخاص بك على اللوحة، والتلفزيون، والجولات، والتنسيب المحلي المتاح. لا يزال جرد النادي منفصلا عن النطاق العالمي Padbol Match وجرد القوات المسلحة.",
+      "screensTitle": "تَرْكبُ صرخاتَكَ في أيّ مكان",
+      "seePlans": "VIEW PLANS",
+      "sports": "Padbol :: Padel · pickleball · Tennis",
+      "start": "ستبدأ بلا جريمة",
+      "talk": "عن الأعمال الوحشية",
+      "title": "ناديك بأكمله",
+      "titleAccent": "منصة واحدة",
+      "venueService": "خدمة النادي"
+    }
+  },
+  "fa-IR": {
+    "commercialFlow": {
+      "business": {
+        "back": "بازگشت به برنامه",
+        "chooseSport": "انتخاب یک ورزش",
+        "country": "کشور اصلی",
+        "courts": "مجموع تعداد کاربران Courts",
+        "disclaimer": "این تحقیق هیچ برنامه، اشتراک یا هزینه ای را فعال نمی کند.",
+        "email": "تماس با ایمیل",
+        "error": "این تحقیق نمی تواند ارسال شود.",
+        "eyebrow": "ویژگی های بازی CHAINS & MULTISITE",
+        "formTitle": "جزئیات مورد نیاز برای آماده سازی پیشنهاد",
+        "header": "طرح کسب و کار تحقیق",
+        "invalidCourts": "ورود به عدد تقریبی Courts.",
+        "invalidVenues": "وارد شوید که چه تعداد باشگاه دارد. برای یک باشگاه، شروع یا پرو را انتخاب کنید.",
+        "lead": "ما دولت مرکزی، مجوز برای هر باشگاه و یک پیشنهاد مناسب برای مقیاس خود را آماده می کنیم.",
+        "location": "شهر یا مکان مرکزی",
+        "manager": "نام کامل مدیر",
+        "organization": "نام سازمان یا زنجیره ای",
+        "otherSports": "آیا ورزش دیگری ارائه می دهد؟",
+        "sending": "ارسال ...",
+        "sport": "ورزش اصلی",
+        "submit": "ارسال تحقیقات تجاری",
+        "success": "ما تحقیقات کسب و کار شما را دریافت کردیم. تیم ما با شما تماس خواهد گرفت تا ساختار چند سایت و پیشنهاد حجم را تعریف کنید.",
+        "title": "به ما بگویید که چگونه سازمان شما ساختار یافته است",
+        "venues": "چند باشگاه وجود دارد؟",
+        "whatsapp": "WhatsApp با کد کشور"
+      },
+      "chooseCountry": "انتخاب یک کشور",
+      "chooseOption": "انتخاب یک گزینه",
+      "no": "هیچ",
+      "promo": {
+        "venueServiceLabel": "خدمات باشگاه برای زمین‌های Padbol",
+        "basePriceLabel": "قیمت Pro",
+        "basePriceDetail": "تعرفه ماهانه پیش از اعمال مزایای Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 ماه رایگان",
+            "همه ابزارهای Pro را برای 3 ماه نخست بدون هزینه فعال می‌کنیم."
+          ],
+          [
+            "02",
+            "مزیت Padbol: 50% تخفیف",
+            "از قیمت Pro معادل 68 USD در ماه، باشگاه Padbol شما به تعرفه 34 USD در ماه دسترسی پیدا می‌کند."
+          ],
+          [
+            "03",
+            "50% دیگر با تحقق اهداف",
+            "با تحقق همه اهداف ماه، 50% تخفیف دیگر روی 34 USD دریافت می‌کنید: ماهانه 17 USD می‌پردازید."
+          ]
+        ],
+        "clubName": "نام باشگاه",
+        "country": "کشور کشور",
+        "courtCount": "چقدر Padbol Courts آیا دارد؟",
+        "email": "تماس با ایمیل",
+        "eyebrow": "برای PADBOL CLUBS",
+        "formSubtitle": "اطلاعات ضروری باشگاه خود را با ما در میان بگذارید. درخواست شما را بررسی می‌کنیم و برای ادامه با شما تماس می‌گیریم. ارسال فرم هیچ هزینه‌ای را فعال نمی‌کند.",
+        "formTitle": "بیایید با باشگاه خود شروع کنیم",
+        "goals": [
+          "هر ماه دست‌کم یک تورنمنت با حداقل 8 زوج و بازیکنانی که از طریق اپلیکیشن ثبت‌نام کرده‌اند برگزار و تکمیل کنید؛ مدیریت تمام تورنمنت باید در Padbol Match انجام شود.",
+          "همه نتایج را در Padbol Match ثبت کنید. آخرین امتیاز فینال در تابلوی امتیاز دیجیتال باید قهرمان را مشخص کند و تورنمنت را پایان دهد؛ سایر بازی‌ها را می‌توان به‌صورت زنده ثبت کرد یا پس از پایان، نتایجشان را دستی وارد کرد.",
+          "هر ماه 12 رزرو واقعی را که کاربران تأییدشده از طریق اپلیکیشن انجام داده‌اند تکمیل کنید. رزروهای لغوشده محاسبه نمی‌شوند.",
+          "دست‌کم 10 بازیکن متفاوت مرتبط با باشگاه داشته باشید که در طول ماه فعالیت واقعی دارند. هر نفر فقط یک بار شمرده می‌شود؛ کسانی که واقعاً در تورنمنت‌ها بازی می‌کنند نیز محاسبه می‌شوند. بازیکنان می‌توانند همان بازیکنان ماه‌های قبل باشند."
+        ],
+        "goalsEyebrow": "مزیت Padbol",
+        "goalsLead": "تخفیف اضافی 50% با تحقق همه اهداف ماه اعمال می‌شود.",
+        "goalsSummary": "اهداف ماهانه",
+        "goalsTitle": "اهدافی که به رشد باشگاه شما کمک می‌کنند",
+        "header": "Padbol درخواست باشگاه",
+        "howAria": "چگونه مزایای Pro کار می کند",
+        "invalidCourts": "وارد شوید چند تا Padbol Courts باشگاه دارد.",
+        "lead": "3 ماه نخست رایگان است. از ماه چهارم، تعرفه باشگاه‌های واجد شرایط Padbol Courts ماهانه 34 USD است؛ یعنی 50٪ تعرفه پایه 68 USD.",
+        "location": "مکان باشگاه",
+        "locationPlaceholder": "شهر، استان یا ایالت",
+        "otherSports": "آیا باشگاه ورزش های دیگری ارائه می دهد؟",
+        "outreachText": "فعال نگه داشتن شبکه‌های اجتماعی، اطلاع‌رسانی پیشنهادهای ویژه و برنامه‌ریزی کارزارهای تبلیغاتی به معرفی باشگاه و جذب بازیکنان کمک می‌کند.",
+        "outreachTitle": "باشگاه خود را گسترش دهید",
+        "ownerName": "نام کامل مالک",
+        "required": "تمام جزئیات درخواست شده برای ارسال درخواست",
+        "submit": "درخواست مزیت Padbol Courts",
+        "success": "درخواست شما برای مزیت Padbol Courts دریافت شد. تیم ما برای ادامه مراحل با شما تماس می‌گیرد.",
+        "supportEyebrow": "تسلط بر اولین سرمایه خود",
+        "supportNote": "این راهنمایی اولیه برای کمک به شروع کار است. مدیریت رسانه های اجتماعی، کمپین های بعدی و هزینه های تبلیغاتی خدمات اضافی هستند.",
+        "supportText": "با راه‌اندازی اختصاصی Padbol Match همراه شما هستیم و اگر باشگاهتان جدید است، به آماده‌سازی افتتاح آن و جذب بازیکنان کمک می‌کنیم.",
+        "supportTitle": "ما به شما کمک می کنیم تا باشگاه خود را بالا ببرید و اجرا کنید.",
+        "title": "از مزیت Padbol Courts استفاده کنید و باشگاه خود را توسعه دهید",
+        "whatsapp": "WhatsApp با کد کشور"
+      },
+      "yes": "بله بله بله"
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "مسابقات خودکار",
+          "گروه ها – بازی ها – نتایج – ایستاده ها – براکت ها – فینال"
+        ],
+        [
+          "ایجاد درآمد جدید",
+          "عضویت، ارتقاء و قرار دادن اسپانسر خود را."
+        ],
+        [
+          "وفاداری بازیکن را بسازید",
+          "PadCoinsکمپین ها و مزایای پیکربندی شده توسط باشگاه"
+        ],
+        [
+          "کاهش هزینه های پلتفرم",
+          "شروع: 1٪ · Pro: 0.9٪ ارزش ها را می توان توسط منطقه مدیریت کرد."
+        ]
+      ],
+      "automationAccent": "کارهای تکراری کمتر",
+      "automationEyebrow": "استارت آپ",
+      "automationTitle": "فعالیت بیشتر برای باشگاه",
+      "back": "برای مدیران",
+      "bookings": "رزرو و در دسترس بودن",
+      "commissionNote": "معاملات پردازش شده از طریق Padbol Match",
+      "connected": "یک عملیات متصل قبل، در طول و بعد از بازی.",
+      "devices": "تلفن · تبلت · کامپیوتر",
+      "draft": "INTERNAL DRAFT",
+      "experiencesEyebrow": "FIVE EXPERIENCES یک محصول",
+      "experiencesText": "اینها هستند Padbol Match رابط های بصری آنها برنامه های تجاری نیستند و تعیین نمی کنند که آیا یک باشگاه از استارت آپ، Pro یا Business استفاده می کند.",
+      "eyebrow": "PADBOL برای CLUBS",
+      "faqAccent": "هیچ اتهام پنهان",
+      "faqEyebrow": "سوال CLEARS DIRECT ANSWERS",
+      "faqHelpCta": "ASK CHIVI",
+      "faqHelpText": "Chivi می تواند برنامه ها را توضیح دهد و به شما کمک کند تا گزینه مناسبی برای باشگاه خود پیدا کنید.",
+      "faqHelpTitle": "هنوز سوال دارید؟",
+      "faqTitle": "تعجبی ندارد.",
+      "faqs": [
+        [
+          "آیا اتهامات پنهان وجود دارد؟",
+          "نه. قبل از فعال کردن یک برنامه، باشگاه می داند و اشتراک و کمیسیون خود را می پذیرد. هزینه های پردازش پرداخت جداگانه هستند و توسط آنها شارژ نمی شوند. Padbol Match."
+        ],
+        [
+          "آیا هزینه ارسال یک درخواست وجود دارد؟",
+          "نه. ارسال فرم فقط شروع به گفتگو می کند. این کار هزینه یا اشتراک را فعال نمی کند."
+        ],
+        [
+          "آیا بازیکن کمیسیون پرداخت می کند؟",
+          "نه. بازیکنان 0٪ کمیسیون پرداخت می کنند Padbol Match."
+        ],
+        [
+          "آیا نیاز به تجهیزات ویژه دارید؟",
+          "نه. کارت امتیاز از تلفن، تبلت یا کامپیوتر کار می کند و می تواند در تلویزیون نمایش داده شود."
+        ],
+        [
+          "آیا می توانم داده ها را از سیستم دیگری استخراج کنم؟",
+          "بله، هنگامی که فرمت سازگار است. ما قبل از شروع دوره مهاجرت با باشگاه را بررسی می کنیم."
+        ],
+        [
+          "اگر چند باشگاه را مدیریت کنم چه؟",
+          "کسب و کار برای زنجیره ها و اپراتورهای چند سایت طراحی شده است. دولت مرکزی، مجوز باشگاه، گزارش های یکپارچه و قیمت گذاری حجم با هر سازمان قبل از فعال سازی توافق شده است."
+        ]
+      ],
+      "featured": "بیشتر POPULAR",
+      "finalAccent": "این عملیات مال شماست.",
+      "finalTitle": "با هیچ هزینه ثابت شروع کنید.",
+      "finePrint": "محدودیت ها، قیمت ها، ارتقاء ها و کمیسیون ها به منطقه و تنظیمات فعلی بستگی دارد. شرایط کسب و کار از طریق تماس تجاری و اعتبار فنی تعریف شده است.",
+      "fourSports": "۴ ورزش",
+      "growthAria": "ابزارهای رشد",
+      "lead": "رزروها، بازیکنان، بازی ها، مسابقات، رتبه بندی، امتیاز زنده، عضویت و مدیریت در یک مکان.",
+      "limits": "محدودیت های برنامه",
+      "liveClub": "CLUB Live",
+      "liveMatch": "بازی زنده و برد",
+      "membershipText": "تعریف قیمت، مدت، مزایا، تخفیف، برنامه ها، اولویت، شامل رزرو و رزرو و PadCoinsاین عضویت خود باشگاه است، جدا از هر بازیکن آینده جهانی.",
+      "membershipTitle": "OWN MEMBER",
+      "metaDescription": "Padbol Match رزرو، بازیکنان، بازی ها، مسابقات، رتبه بندی، امتیاز دیجیتال و مدیریت باشگاه چند پورت را با هم به ارمغان می آورد.",
+      "metaTitle": "Padbol Match برای باشگاه ها – Plans",
+      "migration": [
+        [
+          "شروع کار",
+          "پردازش فایل سازگار، موضوع اعتبار"
+        ],
+        [
+          "Pro Pro Pro",
+          "کمک به مهاجرت"
+        ],
+        [
+          "کسب و کار",
+          "مهاجرت سفارشی"
+        ]
+      ],
+      "migrationEyebrow": "آیا سیستم ANOTHER آمریکا؟",
+      "migrationText": "ما می توانیم اطلاعاتی را وارد کنیم که به طور قانونی به باشگاه تعلق دارد و از یک فرمت سازگار استفاده می کند. محدوده قبل از شروع کار معتبر است.",
+      "migrationTitle": "از صفر شروع نمی کنید.",
+      "multisportEyebrow": "1 CLUB FOORTS",
+      "multisportText": "مدیریت همه Padbol Court بازی های دیگر Court از همان پلت فرم، حتی زمانی که باشگاه شما ورزش های مختلف ارائه می دهد.",
+      "multisportTitle": "Padbol · Padel · Pickleball · تنیس",
+      "notDefined": "برای تعریف",
+      "operationAria": "عملیات باشگاه متصل",
+      "or": "یا",
+      "padbolBenefit": "برای PADBOL CLUBS",
+      "padbolOwnerCta": "مزایای خود را درخواست کنید",
+      "padbolOwnerHint": "ببینید چگونه می‌توانیم به شما در جذب بازیکنان، افزایش فعالیت باشگاه و گسترش جامعه ورزشی‌تان کمک کنیم.",
+      "padbolOwnerText": "مزایای ویژه Padbol Match برای باشگاه خود را کشف کنید.",
+      "padbolOwnerTitle": "شما یک یا چند Padbol Courts?",
+      "perMonth": "ماه",
+      "perYear": "سال",
+      "plans": {
+        "business": {
+          "adminsLabel": "اصطلاحات سفارشی",
+          "commissionPrefix": "از",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "TALK",
+          "features": [
+            "همه چیز در Pro",
+            "محدوده چند منظوره تعریف شده با هر سازمان",
+            "مجوزهای مرکزی و دولت بر اساس پروژه",
+            "گزارش های تثبیت شده و کمپین های شبکه با توجه به دامنه",
+            "مهاجرت سفارشی",
+            "ادغام و موضوع API به اعتبار فنی",
+            "پشتیبانی اختصاصی"
+          ],
+          "pricePrefix": "از",
+          "summary": "راه حل های چند منظوره و سفارشی برای زنجیره ها، اپراتورهای و مجوز ها."
+        },
+        "pro": {
+          "adminsLabel": "تا 5 مدیر",
+          "courtsLabel": "تا 12 Courts",
+          "ctaLabel": "REOOSE PRO",
+          "features": [
+            "همه چیز در آغاز",
+            "مسابقات خودکار: قرعه کشی، گروه ها، وسایل، ایستادن، براکت ها و podiums",
+            "گزارش ها و صادرات برای رزرو، درآمد و PadCoins",
+            "لیست های انتظار و هشدارهای باز",
+            "کمپین ها، تبلیغات، پاداش ها و PadCoins رستگاری",
+            "عضویت باشگاه",
+            "اسپانسرهای خود را بر روی تخته ها، مسابقات و صفحه نمایش های باشگاه",
+            "اعلان های تقسیم شده به بازیکنان باشگاه",
+            "حمایت از مهاجرت و اولویت"
+          ],
+          "summary": "برای باشگاه هایی که می خواهند عملیات را خودکار کنند و جامعه خود را رشد دهند."
+        },
+        "starter": {
+          "adminsLabel": "1 مدیر",
+          "courtsLabel": "تا 4 Courts",
+          "ctaLabel": "شروع بدون موفقیت",
+          "features": [
+            "PadbolPadel، Pickleball و تنیس",
+            "بازیکنان نامحدود و مشتریان",
+            "پروفایل باشگاه عمومی، Courtsبرنامه ها، نرخ ها و در دسترس بودن",
+            "رزرو آنلاین و رزرو دستی",
+            "بازی ها، ورود و رتبه بندی باشگاه",
+            "مسابقات باشگاهی: ثبت نام، تیم ها، بازی ها و نتایج",
+            "صفحه اصلی دیجیتال با کنترل زنده و صفحه نمایش یا خروجی تلویزیون",
+            "داشبورد عملیاتی برای رزرو، اشغال و درآمد",
+            "باشگاه Club Club PadCoins تعادل، معاملات و رستگاری",
+            "پردازش فایل سازگار، در مورد اعتبار قبلی"
+          ],
+          "summary": "برای باشگاه ها تا ۴ Courts این می خواهد بدون اشتراک ماهانه عملیات را مدیریت کند."
+        }
+      },
+      "plansAccent": "حرکت به Pro برای خودکار سازی",
+      "plansEyebrow": "دانلود زیرنویس فارسی فیلم The GROW With You",
+      "plansTitle": "با مدیریت شروع کنید.",
+      "playerFeeAria": "هزینه های بازیکن",
+      "playerFeeText": "کمیسیون های برنامه با خدمات ارائه شده به باشگاه مطابقت دارند. Mercado Pago، Stripe یا سایر هزینه های پرداخت جداگانه هستند.",
+      "playerFeeTitle": "بازی های PAY 0٪ COMMION TO PADBOL MATCH.",
+      "results": "نتایج، رتبه بندی و بازگشت بازدید",
+      "scoreboardAccent": "هیچ تجهیزات ویژه ای نیست.",
+      "scoreboardAria": "Padbol Match امتیاز دیجیتال در طول یک بازی",
+      "scoreboardCaption": "Scoreboard در حال حاضر در دسترس است Padbol Match.",
+      "scoreboardEyebrow": "دانلود زیرنویس فارسی فیلم Your DIGITAL SCOREBOARD، INCLUDED",
+      "scoreboardItems": [
+        "امتیاز و به روز رسانی زنده",
+        "نمایش روی صفحه نمایش یا تلویزیون",
+        "کنترل بی سیم از دستگاه های باشگاه"
+      ],
+      "scoreboardNote": "پرو، حامیان خود، مسابقات خودکار، گزارش های صادراتی، PadCoins کمپین ها و اعلان های تقسیم شده",
+      "scoreboardTitle": "بازی زنده است.",
+      "screensText": "اسپانسرهای خود را بر روی تخته امتیاز، تلویزیون، مسابقات و قرار دادن های محلی موجود مدیریت کنید. موجودی باشگاه جدا از جهانی است Padbol Match موجودی FIPA",
+      "screensTitle": "دانلود زیرنویس فارسی فیلم TURN Your SCREENSY",
+      "seePlans": "بررسی اجمالی PLANS",
+      "sports": "Padbol · Padel · Pickleball · تنیس",
+      "start": "شروع بدون موفقیت",
+      "talk": "دانلود زیرنویس فارسی فیلم INCE",
+      "title": "کل باشگاه شما",
+      "titleAccent": "یک پلتفرم",
+      "venueService": "خدمات برای باشگاه"
+    }
+  },
+  "nl-NL": {
+    "commercialFlow": {
+      "business": {
+        "back": "Terug naar de plannen",
+        "chooseSport": "Een sport selecteren",
+        "country": "Voornaamste land",
+        "courts": "Totaal Courts",
+        "disclaimer": "Het onderzoek activeert geen plannen, abonnement of kosten.",
+        "email": "Contact e-mail",
+        "error": "Het onderzoek kon niet worden verzonden.",
+        "eyebrow": "BUSINESS · CHAINS EN MULTISITE BEROEPEN",
+        "formTitle": "Details die nodig zijn om het voorstel voor te bereiden",
+        "header": "Zakenplanonderzoek",
+        "invalidCourts": "Voer het geschatte totale aantal in Courts.",
+        "invalidVenues": "Voer in hoeveel clubs de organisatie heeft. Voor één club, kies Starter of Pro.",
+        "lead": "Wij bereiden centrale administratie, machtigingen voor elke club en een voorstel geschikt voor uw schaal.",
+        "location": "Stad of centrale locatie",
+        "manager": "Volledige naam van de beheerder",
+        "organization": "Naam organisatie of keten",
+        "otherSports": "Biedt het andere sporten aan?",
+        "sending": "Verzenden...",
+        "sport": "Belangrijkste sport",
+        "submit": "Bedrijfsonderzoek versturen",
+        "success": "We hebben uw zakelijke onderzoek ontvangen. Ons team zal contact met u opnemen om de multisite structuur en een volume voorstel te definiëren.",
+        "title": "Vertel ons hoe uw organisatie gestructureerd is",
+        "venues": "Hoeveel clubs heeft de organisatie?",
+        "whatsapp": "WhatsApp met landcode"
+      },
+      "chooseCountry": "Selecteer een land",
+      "chooseOption": "Selecteer een optie",
+      "no": "Nee",
+      "promo": {
+        "venueServiceLabel": "Clubservice voor Padbol-banen",
+        "basePriceLabel": "Pro-tarief",
+        "basePriceDetail": "Het maandtarief voordat de Padbol-voordelen worden toegepast.",
+        "benefits": [
+          [
+            "01",
+            "3 maanden gratis",
+            "We activeren alle Pro-tools zonder kosten gedurende de eerste 3 maanden."
+          ],
+          [
+            "02",
+            "Padbol-voordeel: 50% korting",
+            "Vanuit het Pro-tarief van 68 USD per maand krijgt jouw Padbol-club een tarief van 34 USD per maand."
+          ],
+          [
+            "03",
+            "Nog eens 50% bij het behalen van de doelen",
+            "Als je alle doelen van de maand behaalt, krijg je nog eens 50% korting op 34 USD: je betaalt 17 USD per maand."
+          ]
+        ],
+        "clubName": "Clubnaam",
+        "country": "Land",
+        "courtCount": "Hoeveel Padbol Courts Is dat zo?",
+        "email": "Contact e-mail",
+        "eyebrow": "EXCLUSIEVE BENEFIT VOOR PADBOLCLUBS",
+        "formSubtitle": "Vertel ons de belangrijkste gegevens van je club. We beoordelen je aanvraag en nemen contact met je op voor de volgende stappen. Het versturen van het formulier brengt geen kosten in rekening.",
+        "formTitle": "Laten we beginnen met uw club",
+        "goals": [
+          "Organiseer en voltooi minstens één toernooi per maand, volledig beheerd in Padbol Match, met minimaal 8 paren en spelers die via de app zijn ingeschreven.",
+          "Registreer alle uitslagen in Padbol Match. Het laatste punt van de finale op het digitale scorebord moet de kampioen bepalen en het toernooi afsluiten; andere wedstrijden kunnen live worden geregistreerd of na afloop handmatig worden ingevoerd.",
+          "Voltooi per maand 12 echte boekingen die geverifieerde gebruikers via de app hebben gemaakt. Geannuleerde boekingen tellen niet mee.",
+          "Zorg voor minstens 10 verschillende aan de club gekoppelde spelers met echte activiteit gedurende de maand. Elke persoon telt maar één keer mee; spelers die daadwerkelijk aan toernooiwedstrijden meedoen, tellen ook mee. Het mogen dezelfde spelers zijn als in eerdere maanden."
+        ],
+        "goalsEyebrow": "Padbol-voordeel",
+        "goalsLead": "De extra 50% geldt wanneer alle doelen van de maand zijn behaald.",
+        "goalsSummary": "Maanddoelen bekijken",
+        "goalsTitle": "Doelen die je club laten groeien",
+        "header": "Padbol club Pro verzoek",
+        "howAria": "Hoe werkt de Pro-uitkering?",
+        "invalidCourts": "Voer hoeveel in Padbol Courts De club wel.",
+        "lead": "De eerste 3 maanden zijn gratis. Vanaf de vierde maand betalen clubs die voor het Padbol Courts voordeel in aanmerking komen 34 USD per maand, 50% van het basistarief van 68 USD.",
+        "location": "Clublocatie",
+        "locationPlaceholder": "Stad, provincie of staat",
+        "otherSports": "Biedt de club andere sporten?",
+        "outreachText": "Je sociale media actief houden, je aanbiedingen delen en reclamecampagnes plannen helpt je club bekend te maken en spelers aan te trekken.",
+        "outreachTitle": "Laat je club groeien",
+        "ownerName": "Volledige naam van eigenaar",
+        "required": "Vul alle gevraagde gegevens in om het verzoek in te dienen.",
+        "submit": "Padbol Courts voordeel aanvragen",
+        "success": "We hebben je aanvraag voor het Padbol Courts voordeel ontvangen. Ons team neemt contact met je op voor het vervolg.",
+        "supportEyebrow": "ORIËNTATIE TIJDENS UW EERSTE MAAND",
+        "supportNote": "Dit is de eerste begeleiding om u te helpen aan de slag. Doorlopend beheer van sociale media, latere campagnes en reclame-uitgaven zijn extra diensten.",
+        "supportText": "We begeleiden je met een persoonlijke introductie in Padbol Match en helpen je, als je club nieuw is, de lancering voor te bereiden en spelers aan te trekken.",
+        "supportTitle": "Wij helpen u uw club draaiende te krijgen",
+        "title": "Benut het Padbol Courts voordeel en laat je club groeien",
+        "whatsapp": "WhatsApp met landcode"
+      },
+      "yes": "Ja."
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Automatische toernooien",
+          "Teken → groepen → spellen → resultaten → standen → beugels → finales."
+        ],
+        [
+          "Nieuwe inkomsten aanmaken",
+          "Lidmaatschappen, promoties en uw eigen sponsor plaatsingen."
+        ],
+        [
+          "Bouwen van speler loyaliteit",
+          "PadCoins, campagnes en voordelen geconfigureerd door de club."
+        ],
+        [
+          "Perronkosten verlagen",
+          "Starter: 1% · Pro: 0,65%. Waarden kunnen per regio worden beheerd."
+        ]
+      ],
+      "automationAccent": "Minder repetitieve taken.",
+      "automationEyebrow": "Startmanagement.",
+      "automationTitle": "Meer activiteit voor je club.",
+      "back": "← Voor beheerders",
+      "bookings": "Boekingen en beschikbaarheid",
+      "commissionNote": "op transacties die via Padbol Match",
+      "connected": "Eén verbonden operatie voor, tijdens en na het spelen.",
+      "devices": "Telefoon · Tablet · Computer · TV",
+      "draft": "INTERNE ONTWERP · NIET GEPUBLICEERD",
+      "experiencesEyebrow": "Vijf ervaringen, één product.",
+      "experiencesText": "Dit zijn Padbol Match visuele interfaces. Het zijn geen commerciële plannen en niet bepalen of een club gebruik maakt van Starter, Pro of Business.",
+      "eyebrow": "PADBOLMATCH VOOR CLUBS",
+      "faqAccent": "Geen verborgen beschuldigingen.",
+      "faqEyebrow": "Duidelijke vragen. DIRECT ANTWOORDEN.",
+      "faqHelpCta": "ASK CHIVI",
+      "faqHelpText": "Chivi kan de plannen uitleggen en u helpen bij het vinden van de juiste optie voor uw club.",
+      "faqHelpTitle": "Heb je nog steeds een vraag?",
+      "faqTitle": "Geen verrassingen.",
+      "faqs": [
+        [
+          "Zijn er verborgen aanklachten?",
+          "Nee. Voordat de club een plan activeert, kent en aanvaardt ze haar abonnement en commissie. Betalingsverwerkers zijn gescheiden en worden niet in rekening gebracht door Padbol Match."
+        ],
+        [
+          "Is er een vergoeding voor het indienen van een verzoek?",
+          "Nee. Het versturen van het formulier begint alleen met het gesprek. Het activeert geen kosten of abonnement."
+        ],
+        [
+          "Betaalt de speler commissie?",
+          "Nee. Spelers betalen 0% commissie aan Padbol Match."
+        ],
+        [
+          "Heb ik speciale scorebord apparatuur nodig?",
+          "Nee. Het scorebord werkt vanaf een telefoon, tablet of computer en kan worden weergegeven op een tv."
+        ],
+        [
+          "Kan ik gegevens van een ander systeem meenemen?",
+          "Ja, als het formaat compatibel is. We bekijken de migratieomvang met de club voordat we beginnen."
+        ],
+        [
+          "Wat als ik meerdere clubs beheer?",
+          "Het bedrijf is ontworpen voor ketens en multisite operators. Centrale administratie, clubmachtigingen, geconsolideerde rapporten en volumeprijzen worden overeengekomen met elke organisatie vóór activering."
+        ]
+      ],
+      "featured": "Meest populair",
+      "finalAccent": "De operatie blijft van jou.",
+      "finalTitle": "Begin met geen vaste vergoeding.",
+      "finePrint": "Grenzen, prijzen, promoties en commissies zijn afhankelijk van de regio en de huidige configuratie. Bedrijfsvoorwaarden worden gedefinieerd door commercieel contact en technische validatie.",
+      "fourSports": "4 sporten",
+      "growthAria": "Groeiinstrumenten",
+      "lead": "Boekingen, spelers, spellen, toernooien, rankings, live scorebord, lidmaatschappen en management op één plaats.",
+      "limits": "Planlimieten",
+      "liveClub": "LEVENDE CLUB",
+      "liveMatch": "Live spel en scorebord",
+      "membershipText": "Definieer prijs, duur, voordelen, kortingen, schema's, prioriteit, inclusief boekingen en PadCoins. Dit is de club een eigen lidmaatschap, gescheiden van elke toekomstige wereldwijde speler lidmaatschap.",
+      "membershipTitle": "Creëer uw eigen lidschap",
+      "metaDescription": "Padbol Match brengt boekingen, spelers, games, toernooien, rankings, digitale scorebord en multisport club management samen.",
+      "metaTitle": "Padbol Match voor klavertjes",
+      "migration": [
+        [
+          "Starter",
+          "Compatibele bestand import, afhankelijk van validatie."
+        ],
+        [
+          "Pro",
+          "Geassisteerde migratie."
+        ],
+        [
+          "Zaken",
+          "Aangepaste migratie."
+        ]
+      ],
+      "migrationEyebrow": "Gebruik je al een ander systeem?",
+      "migrationText": "We kunnen informatie importeren die rechtmatig tot de club behoort en gebruiken een compatibel formaat. Het toepassingsgebied wordt gevalideerd voordat het werk begint.",
+      "migrationTitle": "Je begint niet vanaf nul.",
+      "multisportEyebrow": "Eén club. Vier sporten.",
+      "multisportText": "Beheer elke Padbol Court en andere spelen Court vanaf hetzelfde platform, zelfs wanneer uw club verschillende sporten aanbiedt.",
+      "multisportTitle": "Padbol · Padel · Pickleball · Tennis",
+      "notDefined": "Te definiëren",
+      "operationAria": "Aangesloten clubbewerking",
+      "or": "of",
+      "padbolBenefit": "EXCLUSIEVE BENEFIT VOOR PADBOLCLUBS",
+      "padbolOwnerCta": "VRAAG JE VOORDELEN AAN",
+      "padbolOwnerHint": "Ontdek hoe we je kunnen helpen spelers aan te trekken, de activiteit te stimuleren en je community te laten groeien.",
+      "padbolOwnerText": "Ontdek de exclusieve voordelen van Padbol Match voor jouw club.",
+      "padbolOwnerTitle": "Heeft u één of meer Padbol Courts?",
+      "perMonth": "/ maand",
+      "perYear": "/ jaar",
+      "plans": {
+        "business": {
+          "adminsLabel": "Aangepaste termen",
+          "commissionPrefix": "Van",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "LAAT JE Praten",
+          "features": [
+            "Alles in Pro",
+            "Multiscope gedefinieerd met elke organisatie",
+            "Gecentraliseerde machtigingen en administratie op basis van het project",
+            "Geconsolideerde verslagen en netwerkcampagnes naar toepassingsgebied",
+            "Aangepaste migratie",
+            "Integraties en API's die onderworpen zijn aan technische validatie",
+            "Specifieke steun"
+          ],
+          "pricePrefix": "Van",
+          "summary": "Multisite en aangepaste oplossingen voor ketens, exploitanten en licentienemers."
+        },
+        "pro": {
+          "adminsLabel": "Tot 5 beheerders",
+          "courtsLabel": "Tot 12 Courts",
+          "ctaLabel": "KEUZE PRO",
+          "features": [
+            "Alles in Starter",
+            "Geautomatiseerde toernooien: trekt, groepen, armaturen, standen, beugels en podiums",
+            "Verslagen en uitvoer voor boekingen, ontvangsten en PadCoins",
+            "Toernooiwachtlijsten en het openen van waarschuwingen",
+            "Campagnes, promoties, beloningen en PadCoins aflossingen",
+            "Clubleden",
+            "Je eigen sponsors op scoreborden, toernooien en clubschermen",
+            "Gesegmenteerde meldingen aan clubspelers",
+            "Geassisteerde migratie en prioritaire steun"
+          ],
+          "summary": "Voor clubs die operaties willen automatiseren en hun gemeenschap willen vergroten."
+        },
+        "starter": {
+          "adminsLabel": "1 beheerder",
+          "courtsLabel": "Tot 4 Courts",
+          "ctaLabel": "Begin zonder een subscriptie",
+          "features": [
+            "Padbol, Padel, Pickleball en Tennis",
+            "Onbeperkte spelers en klanten",
+            "Publieke club profiel, Courts, schema's, tarieven en beschikbaarheid",
+            "Online boekingen en handmatige boekingen",
+            "Spelletjes, resultaat en club rangschikking",
+            "Clubtoernooien: registraties, teams, spellen en resultaten",
+            "Digitaal scorebord met live controle en scherm of TV uitgang",
+            "Operationeel dashboard voor boekingen, bezetting en inkomsten",
+            "Club PadCoins tegoeden, transacties en aflossingen",
+            "Compatibele bestand import, onder voorbehoud van voorafgaande validatie"
+          ],
+          "summary": "Voor clubs met maximaal 4 Courts die operaties willen beheren zonder een maandelijks abonnement."
+        }
+      },
+      "plansAccent": "Ga naar Pro om te automatiseren.",
+      "plansEyebrow": "Plannen die met jou groeien",
+      "plansTitle": "Begin met beheren.",
+      "playerFeeAria": "Spelerkosten",
+      "playerFeeText": "Plancommissies komen overeen met de aan de club verleende dienst. Mercado Pago, Stripe of andere betaling processor kosten zijn gescheiden.",
+      "playerFeeTitle": "PLAYERS PADBOL MATCH BETALING VAN 0% VAN DE COMMISSIE.",
+      "results": "Resultaten, rangschikking en terugreis",
+      "scoreboardAccent": "Geen speciale apparatuur.",
+      "scoreboardAria": "Padbol Match digitaal scorebord tijdens een spel",
+      "scoreboardCaption": "Scorebord momenteel beschikbaar in Padbol Match.",
+      "scoreboardEyebrow": "UW DIGITALE SCOREBOARD, VANAF HET STARTER",
+      "scoreboardItems": [
+        "Live scoren en updates.",
+        "Weergave op een scherm of TV.",
+        "Draadloze bediening van club apparaten."
+      ],
+      "scoreboardNote": "Pro voegt uw eigen sponsors, geautomatiseerde toernooien, exporteerbare rapporten, PadCoins campagnes en gesegmenteerde meldingen.",
+      "scoreboardTitle": "Het spel leeft.",
+      "screensText": "Beheer uw eigen sponsors op het scorebord, TV, toernooien en beschikbare lokale plaatsingen. Club inventaris blijft gescheiden van Global Padbol Match en FIPA-inventaris.",
+      "screensTitle": "Zet je schreeuwen in een asset",
+      "seePlans": "OVERZICHTSPLANNEN",
+      "sports": "Padbol · Padel · Pickleball · Tennis",
+      "start": "Begin zonder een subscriptie",
+      "talk": "VRAAG OVER HET BEDRIJFSLEVEN",
+      "title": "Je hele club.",
+      "titleAccent": "Eén platform.",
+      "venueService": "Dienst voor de club"
+    }
+  },
+  "nl-BE": {
+    "commercialFlow": {
+      "business": {
+        "back": "Terug naar de plannen",
+        "chooseSport": "Een sport selecteren",
+        "country": "Voornaamste land",
+        "courts": "Totaal Courts",
+        "disclaimer": "Het onderzoek activeert geen plannen, abonnement of kosten.",
+        "email": "Contact e-mail",
+        "error": "Het onderzoek kon niet worden verzonden.",
+        "eyebrow": "BUSINESS · CHAINS EN MULTISITE BEROEPEN",
+        "formTitle": "Details die nodig zijn om het voorstel voor te bereiden",
+        "header": "Zakenplanonderzoek",
+        "invalidCourts": "Voer het geschatte totale aantal in Courts.",
+        "invalidVenues": "Voer in hoeveel clubs de organisatie heeft. Voor één club, kies Starter of Pro.",
+        "lead": "Wij bereiden centrale administratie, machtigingen voor elke club en een voorstel geschikt voor uw schaal.",
+        "location": "Stad of centrale locatie",
+        "manager": "Volledige naam van de beheerder",
+        "organization": "Naam organisatie of keten",
+        "otherSports": "Biedt het andere sporten aan?",
+        "sending": "Verzenden...",
+        "sport": "Belangrijkste sport",
+        "submit": "Bedrijfsonderzoek versturen",
+        "success": "We hebben uw zakelijke onderzoek ontvangen. Ons team zal contact met u opnemen om de multisite structuur en een volume voorstel te definiëren.",
+        "title": "Vertel ons hoe uw organisatie gestructureerd is",
+        "venues": "Hoeveel clubs heeft de organisatie?",
+        "whatsapp": "WhatsApp met landcode"
+      },
+      "chooseCountry": "Selecteer een land",
+      "chooseOption": "Selecteer een optie",
+      "no": "Nee",
+      "promo": {
+        "venueServiceLabel": "Clubservice voor Padbol-terreinen",
+        "basePriceLabel": "Pro-tarief",
+        "basePriceDetail": "Het maandtarief voordat de Padbol-voordelen worden toegepast.",
+        "benefits": [
+          [
+            "01",
+            "3 maanden gratis",
+            "We activeren alle Pro-tools zonder kosten gedurende de eerste 3 maanden."
+          ],
+          [
+            "02",
+            "Padbol-voordeel: 50% korting",
+            "Vanuit het Pro-tarief van 68 USD per maand krijgt jouw Padbol-club een tarief van 34 USD per maand."
+          ],
+          [
+            "03",
+            "Nog eens 50% bij het behalen van de doelen",
+            "Als je alle doelen van de maand behaalt, krijg je nog eens 50% korting op 34 USD: je betaalt 17 USD per maand."
+          ]
+        ],
+        "clubName": "Clubnaam",
+        "country": "Land",
+        "courtCount": "Hoeveel Padbol Courts Is dat zo?",
+        "email": "Contact e-mail",
+        "eyebrow": "EXCLUSIEVE BENEFIT VOOR PADBOLCLUBS",
+        "formSubtitle": "Bezorg ons de belangrijkste gegevens van je club. We bekijken je aanvraag en nemen contact op voor de volgende stappen. Het versturen van het formulier brengt geen kosten in rekening.",
+        "formTitle": "Laten we beginnen met uw club",
+        "goals": [
+          "Organiseer en voltooi minstens één tornooi per maand, volledig beheerd in Padbol Match, met minimaal 8 duo’s en spelers die via de app zijn ingeschreven.",
+          "Registreer alle uitslagen in Padbol Match. Het laatste punt van de finale op het digitale scorebord moet de kampioen bepalen en het tornooi afsluiten; andere wedstrijden kunnen live worden geregistreerd of na afloop manueel worden ingevoerd.",
+          "Voltooi per maand 12 echte reservaties die geverifieerde gebruikers via de app hebben gemaakt. Geannuleerde reservaties tellen niet mee.",
+          "Zorg voor minstens 10 verschillende aan de club gekoppelde spelers met echte activiteit tijdens de maand. Elke persoon telt maar één keer mee; spelers die daadwerkelijk aan tornooiwedstrijden meedoen, tellen ook mee. Het mogen dezelfde spelers zijn als in vorige maanden."
+        ],
+        "goalsEyebrow": "Padbol-voordeel",
+        "goalsLead": "De extra 50% geldt wanneer alle doelen van de maand zijn behaald.",
+        "goalsSummary": "Maanddoelen bekijken",
+        "goalsTitle": "Doelen die je club laten groeien",
+        "header": "Padbol club Pro verzoek",
+        "howAria": "Hoe werkt de Pro-uitkering?",
+        "invalidCourts": "Voer hoeveel in Padbol Courts De club wel.",
+        "lead": "De eerste 3 maanden zijn gratis. Vanaf de vierde maand betalen clubs die voor het Padbol Courts voordeel in aanmerking komen 34 USD per maand, 50% van het basistarief van 68 USD.",
+        "location": "Clublocatie",
+        "locationPlaceholder": "Stad, provincie of staat",
+        "otherSports": "Biedt de club andere sporten?",
+        "outreachText": "Je sociale media actief houden, je promoties delen en reclamecampagnes plannen helpt je club bekend te maken en spelers aan te trekken.",
+        "outreachTitle": "Laat je club groeien",
+        "ownerName": "Volledige naam van eigenaar",
+        "required": "Vul alle gevraagde gegevens in om het verzoek in te dienen.",
+        "submit": "Padbol Courts voordeel aanvragen",
+        "success": "We hebben uw aanvraag voor het Padbol Courts voordeel ontvangen. Ons team neemt contact met u op voor het vervolg.",
+        "supportEyebrow": "ORIËNTATIE TIJDENS UW EERSTE MAAND",
+        "supportNote": "Dit is de eerste begeleiding om u te helpen aan de slag. Doorlopend beheer van sociale media, latere campagnes en reclame-uitgaven zijn extra diensten.",
+        "supportText": "We begeleiden je met een persoonlijke introductie in Padbol Match en helpen je, als je club nieuw is, de opstart voor te bereiden en spelers aan te trekken.",
+        "supportTitle": "Wij helpen u uw club draaiende te krijgen",
+        "title": "Benut het Padbol Courts voordeel en laat uw club groeien",
+        "whatsapp": "WhatsApp met landcode"
+      },
+      "yes": "Ja."
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Automatische toernooien",
+          "Teken → groepen → spellen → resultaten → standen → beugels → finales."
+        ],
+        [
+          "Nieuwe inkomsten aanmaken",
+          "Lidmaatschappen, promoties en uw eigen sponsor plaatsingen."
+        ],
+        [
+          "Bouwen van speler loyaliteit",
+          "PadCoins, campagnes en voordelen geconfigureerd door de club."
+        ],
+        [
+          "Perronkosten verlagen",
+          "Starter: 1% · Pro: 0,65%. Waarden kunnen per regio worden beheerd."
+        ]
+      ],
+      "automationAccent": "Minder repetitieve taken.",
+      "automationEyebrow": "Startmanagement.",
+      "automationTitle": "Meer activiteit voor je club.",
+      "back": "← Voor beheerders",
+      "bookings": "Boekingen en beschikbaarheid",
+      "commissionNote": "op transacties die via Padbol Match",
+      "connected": "Eén verbonden operatie voor, tijdens en na het spelen.",
+      "devices": "Telefoon · Tablet · Computer · TV",
+      "draft": "INTERNE ONTWERP · NIET GEPUBLICEERD",
+      "experiencesEyebrow": "Vijf ervaringen, één product.",
+      "experiencesText": "Dit zijn Padbol Match visuele interfaces. Het zijn geen commerciële plannen en niet bepalen of een club gebruik maakt van Starter, Pro of Business.",
+      "eyebrow": "PADBOLMATCH VOOR CLUBS",
+      "faqAccent": "Geen verborgen beschuldigingen.",
+      "faqEyebrow": "Duidelijke vragen. DIRECT ANTWOORDEN.",
+      "faqHelpCta": "ASK CHIVI",
+      "faqHelpText": "Chivi kan de plannen uitleggen en u helpen bij het vinden van de juiste optie voor uw club.",
+      "faqHelpTitle": "Heb je nog steeds een vraag?",
+      "faqTitle": "Geen verrassingen.",
+      "faqs": [
+        [
+          "Zijn er verborgen aanklachten?",
+          "Nee. Voordat de club een plan activeert, kent en aanvaardt ze haar abonnement en commissie. Betalingsverwerkers zijn gescheiden en worden niet in rekening gebracht door Padbol Match."
+        ],
+        [
+          "Is er een vergoeding voor het indienen van een verzoek?",
+          "Nee. Het versturen van het formulier begint alleen met het gesprek. Het activeert geen kosten of abonnement."
+        ],
+        [
+          "Betaalt de speler commissie?",
+          "Nee. Spelers betalen 0% commissie aan Padbol Match."
+        ],
+        [
+          "Heb ik speciale scorebord apparatuur nodig?",
+          "Nee. Het scorebord werkt vanaf een telefoon, tablet of computer en kan worden weergegeven op een tv."
+        ],
+        [
+          "Kan ik gegevens van een ander systeem meenemen?",
+          "Ja, als het formaat compatibel is. We bekijken de migratieomvang met de club voordat we beginnen."
+        ],
+        [
+          "Wat als ik meerdere clubs beheer?",
+          "Het bedrijf is ontworpen voor ketens en multisite operators. Centrale administratie, clubmachtigingen, geconsolideerde rapporten en volumeprijzen worden overeengekomen met elke organisatie vóór activering."
+        ]
+      ],
+      "featured": "Meest populair",
+      "finalAccent": "De operatie blijft van jou.",
+      "finalTitle": "Begin met geen vaste vergoeding.",
+      "finePrint": "Grenzen, prijzen, promoties en commissies zijn afhankelijk van de regio en de huidige configuratie. Bedrijfsvoorwaarden worden gedefinieerd door commercieel contact en technische validatie.",
+      "fourSports": "4 sporten",
+      "growthAria": "Groeiinstrumenten",
+      "lead": "Boekingen, spelers, spellen, toernooien, rankings, live scorebord, lidmaatschappen en management op één plaats.",
+      "limits": "Planlimieten",
+      "liveClub": "LEVENDE CLUB",
+      "liveMatch": "Live spel en scorebord",
+      "membershipText": "Definieer prijs, duur, voordelen, kortingen, schema's, prioriteit, inclusief boekingen en PadCoins. Dit is de club een eigen lidmaatschap, gescheiden van elke toekomstige wereldwijde speler lidmaatschap.",
+      "membershipTitle": "Creëer uw eigen lidschap",
+      "metaDescription": "Padbol Match brengt boekingen, spelers, games, toernooien, rankings, digitale scorebord en multisport club management samen.",
+      "metaTitle": "Padbol Match voor klavertjes",
+      "migration": [
+        [
+          "Starter",
+          "Compatibele bestand import, afhankelijk van validatie."
+        ],
+        [
+          "Pro",
+          "Geassisteerde migratie."
+        ],
+        [
+          "Zaken",
+          "Aangepaste migratie."
+        ]
+      ],
+      "migrationEyebrow": "Gebruik je al een ander systeem?",
+      "migrationText": "We kunnen informatie importeren die rechtmatig tot de club behoort en gebruiken een compatibel formaat. Het toepassingsgebied wordt gevalideerd voordat het werk begint.",
+      "migrationTitle": "Je begint niet vanaf nul.",
+      "multisportEyebrow": "Eén club. Vier sporten.",
+      "multisportText": "Beheer elke Padbol Court en andere spelen Court vanaf hetzelfde platform, zelfs wanneer uw club verschillende sporten aanbiedt.",
+      "multisportTitle": "Padbol · Padel · Pickleball · Tennis",
+      "notDefined": "Te definiëren",
+      "operationAria": "Aangesloten clubbewerking",
+      "or": "of",
+      "padbolBenefit": "EXCLUSIEVE BENEFIT VOOR PADBOLCLUBS",
+      "padbolOwnerCta": "VRAAG JE VOORDELEN AAN",
+      "padbolOwnerHint": "Ontdek hoe we je kunnen helpen om spelers aan te trekken, de clubwerking te versterken en je gemeenschap te laten groeien.",
+      "padbolOwnerText": "Ontdek de exclusieve voordelen van Padbol Match voor jouw club.",
+      "padbolOwnerTitle": "Heeft u één of meer Padbol Courts?",
+      "perMonth": "/ maand",
+      "perYear": "/ jaar",
+      "plans": {
+        "business": {
+          "adminsLabel": "Aangepaste termen",
+          "commissionPrefix": "Van",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "LAAT JE Praten",
+          "features": [
+            "Alles in Pro",
+            "Multiscope gedefinieerd met elke organisatie",
+            "Gecentraliseerde machtigingen en administratie op basis van het project",
+            "Geconsolideerde verslagen en netwerkcampagnes naar toepassingsgebied",
+            "Aangepaste migratie",
+            "Integraties en API's die onderworpen zijn aan technische validatie",
+            "Specifieke steun"
+          ],
+          "pricePrefix": "Van",
+          "summary": "Multisite en aangepaste oplossingen voor ketens, exploitanten en licentienemers."
+        },
+        "pro": {
+          "adminsLabel": "Tot 5 beheerders",
+          "courtsLabel": "Tot 12 Courts",
+          "ctaLabel": "KEUZE PRO",
+          "features": [
+            "Alles in Starter",
+            "Geautomatiseerde toernooien: trekt, groepen, armaturen, standen, beugels en podiums",
+            "Verslagen en uitvoer voor boekingen, ontvangsten en PadCoins",
+            "Toernooiwachtlijsten en het openen van waarschuwingen",
+            "Campagnes, promoties, beloningen en PadCoins aflossingen",
+            "Clubleden",
+            "Je eigen sponsors op scoreborden, toernooien en clubschermen",
+            "Gesegmenteerde meldingen aan clubspelers",
+            "Geassisteerde migratie en prioritaire steun"
+          ],
+          "summary": "Voor clubs die operaties willen automatiseren en hun gemeenschap willen vergroten."
+        },
+        "starter": {
+          "adminsLabel": "1 beheerder",
+          "courtsLabel": "Tot 4 Courts",
+          "ctaLabel": "Begin zonder een subscriptie",
+          "features": [
+            "Padbol, Padel, Pickleball en Tennis",
+            "Onbeperkte spelers en klanten",
+            "Publieke club profiel, Courts, schema's, tarieven en beschikbaarheid",
+            "Online boekingen en handmatige boekingen",
+            "Spelletjes, resultaat en club rangschikking",
+            "Clubtoernooien: registraties, teams, spellen en resultaten",
+            "Digitaal scorebord met live controle en scherm of TV uitgang",
+            "Operationeel dashboard voor boekingen, bezetting en inkomsten",
+            "Club PadCoins tegoeden, transacties en aflossingen",
+            "Compatibele bestand import, onder voorbehoud van voorafgaande validatie"
+          ],
+          "summary": "Voor clubs met maximaal 4 Courts die operaties willen beheren zonder een maandelijks abonnement."
+        }
+      },
+      "plansAccent": "Ga naar Pro om te automatiseren.",
+      "plansEyebrow": "Plannen die met jou groeien",
+      "plansTitle": "Begin met beheren.",
+      "playerFeeAria": "Spelerkosten",
+      "playerFeeText": "Plancommissies komen overeen met de aan de club verleende dienst. Mercado Pago, Stripe of andere betaling processor kosten zijn gescheiden.",
+      "playerFeeTitle": "PLAYERS PADBOL MATCH BETALING VAN 0% VAN DE COMMISSIE.",
+      "results": "Resultaten, rangschikking en terugreis",
+      "scoreboardAccent": "Geen speciale apparatuur.",
+      "scoreboardAria": "Padbol Match digitaal scorebord tijdens een spel",
+      "scoreboardCaption": "Scorebord momenteel beschikbaar in Padbol Match.",
+      "scoreboardEyebrow": "UW DIGITALE SCOREBOARD, VANAF HET STARTER",
+      "scoreboardItems": [
+        "Live scoren en updates.",
+        "Weergave op een scherm of TV.",
+        "Draadloze bediening van club apparaten."
+      ],
+      "scoreboardNote": "Pro voegt uw eigen sponsors, geautomatiseerde toernooien, exporteerbare rapporten, PadCoins campagnes en gesegmenteerde meldingen.",
+      "scoreboardTitle": "Het spel leeft.",
+      "screensText": "Beheer uw eigen sponsors op het scorebord, TV, toernooien en beschikbare lokale plaatsingen. Club inventaris blijft gescheiden van Global Padbol Match en FIPA-inventaris.",
+      "screensTitle": "Zet je schreeuwen in een asset",
+      "seePlans": "OVERZICHTSPLANNEN",
+      "sports": "Padbol · Padel · Pickleball · Tennis",
+      "start": "Begin zonder een subscriptie",
+      "talk": "VRAAG OVER HET BEDRIJFSLEVEN",
+      "title": "Je hele club.",
+      "titleAccent": "Eén platform.",
+      "venueService": "Dienst voor de club"
+    }
+  },
+  "sv": {
+    "commercialFlow": {
+      "business": {
+        "back": "Tillbaka till planer",
+        "chooseSport": "Välj en sport",
+        "country": "Main country",
+        "courts": "Ungefär totalt antal Courts",
+        "disclaimer": "Förfrågan aktiverar inte någon plan, prenumeration eller laddning.",
+        "email": "Kontakta e-post",
+        "error": "Förfrågan kunde inte skickas.",
+        "eyebrow": "BUSINESS CHAINS OCH MULTISITE OPERATORS",
+        "formTitle": "Detaljer som behövs för att förbereda förslaget",
+        "header": "Business Plan Inquiry",
+        "invalidCourts": "Ange det ungefärliga totala antalet Courts.",
+        "invalidVenues": "Ange hur många klubbar organisationen har. För en klubb, välj Starter eller Pro.",
+        "lead": "Vi förbereder central administration, behörigheter för varje klubb och ett förslag som passar din skala.",
+        "location": "Stad eller centralt läge",
+        "manager": "Managers fullständiga namn",
+        "organization": "Organisation eller kedjenamn",
+        "otherSports": "Erbjuder det andra sporter?",
+        "sending": "Skicka...",
+        "sport": "Huvudsport",
+        "submit": "Skicka Business Inquiry",
+        "success": "Vi fick din Business Inquiry. Vårt team kommer att kontakta dig för att definiera multisitstrukturen och ett volymförslag.",
+        "title": "Berätta hur din organisation är strukturerad",
+        "venues": "Hur många klubbar har organisationen?",
+        "whatsapp": "WhatsApp med landskod"
+      },
+      "chooseCountry": "Välj ett land",
+      "chooseOption": "Välj ett alternativ",
+      "no": "Ingen",
+      "promo": {
+        "venueServiceLabel": "Klubbtjänst för Padbol-banor",
+        "basePriceLabel": "Pro-pris",
+        "basePriceDetail": "Månadspriset innan Padbol-förmånerna tillämpas.",
+        "benefits": [
+          [
+            "01",
+            "3 månader gratis",
+            "Vi aktiverar alla Pro-verktyg utan kostnad under de första 3 månaderna."
+          ],
+          [
+            "02",
+            "Padbol-förmån: 50% rabatt",
+            "Från Pro-priset på 68 USD per månad får din Padbol-klubb ett pris på 34 USD per månad."
+          ],
+          [
+            "03",
+            "Ytterligare 50% när målen nås",
+            "När du når alla mål för månaden får du ytterligare 50% rabatt på 34 USD: du betalar 17 USD per månad."
+          ]
+        ],
+        "clubName": "Klubbnamn",
+        "country": "Landet",
+        "courtCount": "Hur många Padbol Courts Har det?",
+        "email": "Kontakta e-post",
+        "eyebrow": "EXCLUSIVE BENEFIT FOR PADBOL CLUBS",
+        "formSubtitle": "Berätta det viktigaste om din klubb. Vi granskar din ansökan och kontaktar dig för nästa steg. Att skicka formuläret aktiverar inga avgifter.",
+        "formTitle": "Låt oss börja med din klubb",
+        "goals": [
+          "Anordna och slutför minst en turnering per månad, helt hanterad i Padbol Match, med minst 8 par och spelare anmälda via appen.",
+          "Registrera alla resultat i Padbol Match. Finalens sista poäng på den digitala resultattavlan måste avgöra mästaren och avsluta turneringen; övriga matcher kan registreras live eller matas in manuellt när de är slut.",
+          "Slutför 12 verkliga bokningar per månad, gjorda via appen av verifierade användare. Avbokade bokningar räknas inte.",
+          "Ha minst 10 olika spelare knutna till klubben med verklig aktivitet under månaden. Varje person räknas bara en gång; även de som faktiskt spelar i turneringarna räknas. Det får vara samma spelare som under tidigare månader."
+        ],
+        "goalsEyebrow": "Padbol-förmån",
+        "goalsLead": "Ytterligare 50% gäller när alla månadens mål har uppnåtts.",
+        "goalsSummary": "Visa månatliga mål",
+        "goalsTitle": "Mål som får din klubb att växa",
+        "header": "Padbol Förfrågan på Club Pro",
+        "howAria": "Hur Pro-förmånen fungerar",
+        "invalidCourts": "Ange hur många Padbol Courts Klubben har.",
+        "lead": "De första 3 månaderna är gratis. Från den fjärde månaden betalar berättigade Padbol Courts-klubbar 34 USD per månad, vilket är 50 % av grundpriset på 68 USD.",
+        "location": "Klubbplats",
+        "locationPlaceholder": "Stad, provins eller stat",
+        "otherSports": "Erbjuder klubben andra sporter?",
+        "outreachText": "Att hålla dina sociala medier aktiva, berätta om dina erbjudanden och planera reklamkampanjer hjälper fler att upptäcka din klubb och lockar spelare.",
+        "outreachTitle": "Få din klubb att växa",
+        "ownerName": "Ägarens fullständiga namn",
+        "required": "Slutföra alla begärda uppgifter för att lämna in begäran.",
+        "submit": "Ansök om Padbol Courts-förmånen",
+        "success": "Vi har tagit emot din ansökan om Padbol Courts-förmånen. Vårt team kontaktar dig om nästa steg.",
+        "supportEyebrow": "GUIDANCE DURING YOUR FIRST MONTH",
+        "supportNote": "Detta är en första vägledning som hjälper dig att komma igång. Pågående social media management, senare kampanjer och reklamutgifter är ytterligare tjänster.",
+        "supportText": "Vi ger dig en personlig introduktion till Padbol Match och hjälper dig, om din klubb är ny, att förbereda lanseringen och locka spelare.",
+        "supportTitle": "Vi hjälper dig att få din klubb upp och springa",
+        "title": "Ta del av Padbol Courts-förmånen och utveckla din klubb",
+        "whatsapp": "WhatsApp med landskod"
+      },
+      "yes": "Ja ja ja ja ja"
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Automatiserade turneringar",
+          "Rita → grupper → spel → resultat → står → fästen → finaler."
+        ],
+        [
+          "Skapa nya intäkter",
+          "Medlemskap, kampanjer och dina egna sponsorplaceringar."
+        ],
+        [
+          "Bygg spelare lojalitet",
+          "PadCoinsKampanjer och fördelar konfigurerade av klubben."
+        ],
+        [
+          "Minska plattformskostnaden",
+          "Starter: 1% · Pro: 0,65%. Värden kan hanteras av regionen."
+        ]
+      ],
+      "automationAccent": "Färre repetitiva uppgifter.",
+      "automationEyebrow": "STARTER MANAGES. PRO AUTOMATES.",
+      "automationTitle": "Mer aktivitet för din klubb.",
+      "back": "← För administratörer",
+      "bookings": "Bokningar och tillgänglighet",
+      "commissionNote": "transaktioner som behandlas genom Padbol Match",
+      "connected": "En ansluten operation före, under och efter spel.",
+      "devices": "Telefon · Tablet · Dator · TV",
+      "draft": "INTERNAL DRAFT · INTE PUBLISHED",
+      "experiencesEyebrow": "FEM EXPERIENCES. ONE PRODUCT.",
+      "experiencesText": "Dessa är Padbol Match Visuella gränssnitt. De är inte kommersiella planer och avgör inte om en klubb använder Starter, Pro eller Business.",
+      "eyebrow": "PADBOL MATCH för CLUBS",
+      "faqAccent": "Inga dolda avgifter.",
+      "faqEyebrow": "Tydliga frågor. Direkt svar.",
+      "faqHelpCta": "SK CHIVI",
+      "faqHelpText": "Chivi kan förklara planerna och hjälpa dig att hitta rätt alternativ för din klubb.",
+      "faqHelpTitle": "Har du fortfarande en fråga?",
+      "faqTitle": "Inga överraskningar.",
+      "faqs": [
+        [
+          "Finns det dolda anklagelser?",
+          "Nej. Innan du aktiverar en plan, vet klubben och accepterar sin prenumeration och provision. Betalningsprocessorkostnaderna är separata och debiteras inte av Padbol Match."
+        ],
+        [
+          "Finns det en avgift för att lämna in en begäran?",
+          "Nej. Skicka formuläret börjar bara konversationen. Det aktiverar inte en avgift eller prenumeration."
+        ],
+        [
+          "Betalar spelaren provision?",
+          "Nej. Spelare betalar 0% provision till Padbol Match."
+        ],
+        [
+          "Behöver jag special scoreboardutrustning?",
+          "Nej. Resultattavlan fungerar från en telefon, surfplatta eller dator och kan visas på en TV."
+        ],
+        [
+          "Kan jag ta med data från ett annat system?",
+          "När formatet är kompatibelt. Vi granskar migrationsområdet med klubben innan vi börjar."
+        ],
+        [
+          "Tänk om jag hanterar flera klubbar?",
+          "Företaget är utformat för kedjor och multisitoperatörer. Central administration, klubbbehörigheter, konsoliderade rapporter och volympriser är överens med varje organisation innan aktivering."
+        ]
+      ],
+      "featured": "Mest POPULAR",
+      "finalAccent": "Operationen förblir din.",
+      "finalTitle": "Börja utan fast avgift.",
+      "finePrint": "Gränser, priser, kampanjer och provisioner beror på regionen och nuvarande konfiguration. Affärsvillkor definieras genom kommersiell kontakt och teknisk validering.",
+      "fourSports": "4 sporter",
+      "growthAria": "Pro tillväxtverktyg",
+      "lead": "Bokningar, spelare, spel, turneringar, ranking, live scoreboard, medlemskap och management på ett ställe.",
+      "limits": "Plangränser",
+      "liveClub": "CLUB Live",
+      "liveMatch": "Live game och scoreboard",
+      "membershipText": "Definiera pris, varaktighet, förmåner, rabatter, scheman, prioritet, inkluderade bokningar och PadCoinsDetta är klubbens eget medlemskap, separat från alla framtida globala spelarmedlemskap.",
+      "membershipTitle": "KREATE YOUR OWN MEMBERSHIP",
+      "metaDescription": "Padbol Match för med sig bokningar, spelare, spel, turneringar, rankningar, digital scoreboard och multisport club management tillsammans.",
+      "metaTitle": "Padbol Match För klubbar - Planer",
+      "migration": [
+        [
+          "Starter",
+          "Kompatibel filimport, med förbehåll för validering."
+        ],
+        [
+          "Pro",
+          "assisterad migration."
+        ],
+        [
+          "Företag",
+          "Anpassad migration."
+        ]
+      ],
+      "migrationEyebrow": "ALREADY USING ANOTHER SYSTEM?",
+      "migrationText": "Vi kan importera information som legitimt tillhör klubben och använder ett kompatibelt format. Skop valideras innan arbetet börjar.",
+      "migrationTitle": "Du börjar inte från noll.",
+      "multisportEyebrow": "En klub. Våra sporter.",
+      "multisportText": "Hantera varje Padbol Court och andra spel Court från samma plattform, även när din klubb erbjuder olika sporter.",
+      "multisportTitle": "Padbol Padel · Pickleball · Tennis",
+      "notDefined": "För att definieras",
+      "operationAria": "Connected club operation",
+      "or": "eller",
+      "padbolBenefit": "EXCLUSIVE BENEFIT FOR PADBOL CLUBS",
+      "padbolOwnerCta": "ANSÖK OM DINA FÖRDELAR",
+      "padbolOwnerHint": "Se hur vi kan hjälpa dig att locka spelare, öka aktiviteten och få din gemenskap att växa.",
+      "padbolOwnerText": "Upptäck de exklusiva fördelarna med Padbol Match för din klubb.",
+      "padbolOwnerTitle": "Äger du en eller flera Padbol Courts?",
+      "perMonth": "/ månad",
+      "perYear": "/ år",
+      "plans": {
+        "business": {
+          "adminsLabel": "Anpassade villkor",
+          "commissionPrefix": "Från",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "Låt oss tala",
+          "features": [
+            "Allt i Pro",
+            "Multisite-omfattning definierad med varje organisation",
+            "Centraliserade behörigheter och administration baserat på projektet",
+            "Konsoliderade rapporter och nätverkskampanjer enligt omfattning",
+            "Anpassad migration",
+            "Integrationer och API som omfattas av teknisk validering",
+            "Dedikerat stöd"
+          ],
+          "pricePrefix": "Från",
+          "summary": "Multisite och anpassade lösningar för kedjor, operatörer och licenstagare."
+        },
+        "pro": {
+          "adminsLabel": "Upp till 5 administratörer",
+          "courtsLabel": "Upp till 12 Courts",
+          "ctaLabel": "Hotell nära Choose Pro",
+          "features": [
+            "Allt i Starter",
+            "Automatiserade turneringar: ritningar, grupper, fixturer, ställningar, fästen och podier",
+            "Rapporter och export för bokningar, intäkter och PadCoins",
+            "Turnering väntar listor och öppna varningar",
+            "Kampanjer, kampanjer, belöningar och PadCoins Inlösen",
+            "Club medlemskap",
+            "Dina egna sponsorer på resultattavlor, turneringar och klubbskärmar",
+            "Segmenterade meddelanden till klubbspelare",
+            "Hjälp migration och prioriterat stöd"
+          ],
+          "summary": "För klubbar som vill automatisera verksamheten och växa sitt samhälle."
+        },
+        "starter": {
+          "adminsLabel": "1 administratör",
+          "courtsLabel": "Upp till 4 Courts",
+          "ctaLabel": "START OM SUBSCRIPTION",
+          "features": [
+            "PadbolPadel, Pickleball och Tennis",
+            "Obegränsade spelare och kunder",
+            "Offentlig klubbprofil, Courts, scheman, priser och tillgänglighet",
+            "Online bokningar och manuell bokningsinmatning",
+            "Spel, resultatinträde och klubbrankning",
+            "Klubbstyrda turneringar: registreringar, lag, spel och resultat",
+            "Digital resultattavla med live-kontroll och skärm eller TV-utgång",
+            "Operativ instrumentpanel för bokningar, beläggning och intäkter",
+            "Klubbklubb PadCoins Balanser, transaktioner och inlösen",
+            "Kompatibel filimport, med förbehåll för tidigare validering"
+          ],
+          "summary": "För klubbar med upp till 4 Courts som vill hantera verksamheten utan månadsabonnemang."
+        }
+      },
+      "plansAccent": "Gå till Pro för att automatisera.",
+      "plansEyebrow": "PLANS THAT GROW WITH YOU",
+      "plansTitle": "Börja med att hantera.",
+      "playerFeeAria": "Spelaravgifter",
+      "playerFeeText": "Plankommissioner motsvarar den tjänst som tillhandahålls klubben. Mercado Pago, Stripe eller andra betalningsprocessorkostnader är separata.",
+      "playerFeeTitle": "PLAYERS PAY 0% COMMISSION TO PADBOL MATCH.",
+      "results": "Resultat, ranking och returbesök",
+      "scoreboardAccent": "Ingen speciell utrustning.",
+      "scoreboardAria": "Padbol Match Digital scoreboard under ett spel",
+      "scoreboardCaption": "Scoreboard för närvarande tillgängligt i Padbol Match.",
+      "scoreboardEyebrow": "Din DIGITAL SCOREBOARD, Inkluderad från Starter",
+      "scoreboardItems": [
+        "Live scoring och uppdateringar.",
+        "Visa på en skärm eller TV.",
+        "Trådlös kontroll från klubbenheter."
+      ],
+      "scoreboardNote": "Pro lägger till egna sponsorer, automatiserade turneringar, exporterbara rapporter, PadCoins kampanjer och segmenterade meddelanden.",
+      "scoreboardTitle": "Spelet live.",
+      "screensText": "Hantera dina egna sponsorer på resultattavlan, TV, turneringar och tillgängliga lokala placeringar. Klubbinventeringen förblir separat från Global Padbol Match och FIPA inventering.",
+      "screensTitle": "TURN YOUR SCREENS INT AN ASSET",
+      "seePlans": "VIEW PLANS",
+      "sports": "Padbol Padel · Pickleball · Tennis",
+      "start": "START OM SUBSCRIPTION",
+      "talk": "ASK OM BUSINESS",
+      "title": "Hela din klubb.",
+      "titleAccent": "En plattform.",
+      "venueService": "Service för klubben"
+    }
+  },
+  "pt-BR": {
+    "commercialFlow": {
+      "business": {
+        "back": "Voltar aos planos",
+        "chooseSport": "Selecione um esporte",
+        "country": "País de origem",
+        "courts": "Número total aproximado de Courts",
+        "disclaimer": "O inquérito não ativa nenhum plano, assinatura ou cobrança.",
+        "email": "E- mail de contacto",
+        "error": "O inquérito não pôde ser enviado.",
+        "eyebrow": "EMPRESAS · CARACTERÍSTICAS E OPERADORES MULTISITOS",
+        "formTitle": "Detalhes necessários para preparar a proposta",
+        "header": "Inquérito sobre planos de negócios",
+        "invalidCourts": "Digite o número total aproximado de Courts.",
+        "invalidVenues": "Digite quantos clubes a organização tem. Para um clube, escolha Starter ou Pro.",
+        "lead": "Preparamos a administração central, permissões para cada clube e uma proposta adequada à sua escala.",
+        "location": "Cidade ou localização central",
+        "manager": "Nome completo do gestor",
+        "organization": "Organização ou nome da cadeia",
+        "otherSports": "Oferece outros desportos?",
+        "sending": "Enviando...",
+        "sport": "Desporto principal",
+        "submit": "Enviar inquérito de negócios",
+        "success": "Recebemos o seu inquérito de negócios. Nossa equipe entrará em contato com você para definir a estrutura multisite e uma proposta de volume.",
+        "title": "Conte-nos como sua organização está estruturada",
+        "venues": "Quantos clubes tem a organização?",
+        "whatsapp": "WhatsApp com código de país"
+      },
+      "chooseCountry": "Selecionar um país",
+      "chooseOption": "Selecione uma opção",
+      "no": "Não",
+      "promo": {
+        "venueServiceLabel": "Serviço ao clube nas quadras de Padbol",
+        "basePriceLabel": "Valor Pro",
+        "basePriceDetail": "A tarifa mensal antes da aplicação dos benefícios Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 meses gratuitos",
+            "Ativamos todas as ferramentas Pro sem custo nos primeiros 3 meses."
+          ],
+          [
+            "02",
+            "Benefício Padbol: 50% de desconto",
+            "Sobre o valor Pro de USD 68 por mês, seu clube Padbol tem acesso a uma tarifa de USD 34 por mês."
+          ],
+          [
+            "03",
+            "Mais 50% ao cumprir as metas",
+            "Ao cumprir todas as metas do mês, você recebe mais 50% de desconto sobre USD 34: paga USD 17 por mês."
+          ]
+        ],
+        "clubName": "Nome do clube",
+        "country": "País",
+        "courtCount": "Quantos? Padbol Courts Tem?",
+        "email": "E- mail de contacto",
+        "eyebrow": "BENEFÍCIO EXCLUSIVO PARA CLUBES DE PADBOL",
+        "formSubtitle": "Conte os dados essenciais do seu clube. Analisaremos sua solicitação e entraremos em contato para continuar. O envio do formulário não ativa cobranças.",
+        "formTitle": "Vamos começar com o seu clube",
+        "goals": [
+          "Organizar e finalizar pelo menos um torneio por mês, gerenciado inteiramente no Padbol Match, com no mínimo 8 duplas e jogadores inscritos pelo app.",
+          "Registrar todos os resultados no Padbol Match. O último ponto da final no placar digital deve definir o campeão e finalizar o torneio; as demais partidas podem ser registradas ao vivo ou lançadas manualmente ao terminar.",
+          "Concluir 12 reservas reais por mês, feitas pelo app por usuários verificados. Reservas canceladas não contam.",
+          "Ter pelo menos 10 jogadores distintos vinculados à sede e com atividade real durante o mês. Cada pessoa conta uma única vez; quem joga efetivamente nos torneios também conta. Podem ser os mesmos jogadores dos meses anteriores."
+        ],
+        "goalsEyebrow": "Benefício Padbol",
+        "goalsLead": "Os 50% adicionais se aplicam ao cumprir todas as metas do mês.",
+        "goalsSummary": "Ver metas mensais",
+        "goalsTitle": "Metas que fazem seu clube crescer",
+        "header": "Padbol club Pro request",
+        "howAria": "Como funciona o benefício Pro",
+        "invalidCourts": "Indique quantos Padbol Courts O clube sim.",
+        "lead": "Os primeiros 3 meses são gratuitos. A partir do quarto mês, a tarifa para clubes Padbol Courts elegíveis é de USD 34 por mês, 50% da tarifa base de USD 68.",
+        "location": "Localização do clube",
+        "locationPlaceholder": "Cidade, província ou estado",
+        "otherSports": "O clube oferece outros desportos?",
+        "outreachText": "Manter suas redes sociais ativas, divulgar suas promoções e planejar campanhas publicitárias ajuda a tornar seu clube conhecido e atrair jogadores.",
+        "outreachTitle": "Faça seu clube crescer",
+        "ownerName": "Nome completo do proprietário",
+        "required": "Complete todos os detalhes solicitados para apresentar o pedido.",
+        "submit": "Solicitar o benefício Padbol Courts",
+        "success": "Recebemos sua solicitação do benefício Padbol Courts. Nossa equipe entrará em contato para continuar.",
+        "supportEyebrow": "ORIENTAÇÃO DURANTE O PRIMEIRO MÊS",
+        "supportNote": "Esta é uma orientação inicial para ajudá-lo a começar. Gestão contínua das redes sociais, campanhas posteriores e gastos publicitários são serviços adicionais.",
+        "supportText": "Orientamos você com um onboarding personalizado do Padbol Match e, se o seu clube é novo, ajudamos a preparar o lançamento e atrair jogadores.",
+        "supportTitle": "Ajudamos-te a pôr o teu clube a funcionar.",
+        "title": "Acesse o benefício Padbol Courts e faça seu clube crescer",
+        "whatsapp": "WhatsApp com código de país"
+      },
+      "yes": "Sim."
+    }
+  },
+  "pt-PT": {
+    "commercialFlow": {
+      "business": {
+        "back": "Voltar aos planos",
+        "chooseSport": "Selecione um esporte",
+        "country": "País de origem",
+        "courts": "Número total aproximado de Courts",
+        "disclaimer": "O inquérito não ativa nenhum plano, assinatura ou cobrança.",
+        "email": "E- mail de contacto",
+        "error": "O inquérito não pôde ser enviado.",
+        "eyebrow": "EMPRESAS · CARACTERÍSTICAS E OPERADORES MULTISITOS",
+        "formTitle": "Detalhes necessários para preparar a proposta",
+        "header": "Inquérito sobre planos de negócios",
+        "invalidCourts": "Digite o número total aproximado de Courts.",
+        "invalidVenues": "Digite quantos clubes a organização tem. Para um clube, escolha Starter ou Pro.",
+        "lead": "Preparamos a administração central, permissões para cada clube e uma proposta adequada à sua escala.",
+        "location": "Cidade ou localização central",
+        "manager": "Nome completo do gestor",
+        "organization": "Organização ou nome da cadeia",
+        "otherSports": "Oferece outros desportos?",
+        "sending": "Enviando...",
+        "sport": "Desporto principal",
+        "submit": "Enviar inquérito de negócios",
+        "success": "Recebemos o seu inquérito de negócios. Nossa equipe entrará em contato com você para definir a estrutura multisite e uma proposta de volume.",
+        "title": "Conte-nos como sua organização está estruturada",
+        "venues": "Quantos clubes tem a organização?",
+        "whatsapp": "WhatsApp com código de país"
+      },
+      "chooseCountry": "Selecionar um país",
+      "chooseOption": "Selecione uma opção",
+      "no": "Não",
+      "promo": {
+        "venueServiceLabel": "Serviço ao clube nos campos de Padbol",
+        "basePriceLabel": "Valor Pro",
+        "basePriceDetail": "A tarifa mensal antes da aplicação dos benefícios Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 meses gratuitos",
+            "Ativamos todas as ferramentas Pro sem custos nos primeiros 3 meses."
+          ],
+          [
+            "02",
+            "Benefício Padbol: 50% de desconto",
+            "Sobre o valor Pro de 68 USD por mês, o seu clube Padbol tem acesso a uma tarifa de 34 USD por mês."
+          ],
+          [
+            "03",
+            "Mais 50% ao cumprir os objetivos",
+            "Ao cumprir todos os objetivos do mês, recebe mais 50% de desconto sobre 34 USD: paga 17 USD por mês."
+          ]
+        ],
+        "clubName": "Nome do clube",
+        "country": "País",
+        "courtCount": "Quantos? Padbol Courts Tem?",
+        "email": "E- mail de contacto",
+        "eyebrow": "BENEFÍCIO EXCLUSIVO PARA CLUBES DE PADBOL",
+        "formSubtitle": "Indique os dados essenciais do seu clube. Analisaremos o seu pedido e entraremos em contacto para continuar. O envio do formulário não ativa cobranças.",
+        "formTitle": "Vamos começar com o seu clube",
+        "goals": [
+          "Organizar e concluir pelo menos um torneio por mês, gerido inteiramente no Padbol Match, com um mínimo de 8 duplas e jogadores inscritos através da aplicação.",
+          "Registar todos os resultados no Padbol Match. O último ponto da final no marcador digital deve definir o campeão e concluir o torneio; os restantes jogos podem ser registados em direto ou introduzidos manualmente no final.",
+          "Concluir 12 reservas reais por mês, feitas através da aplicação por utilizadores verificados. As reservas canceladas não contam.",
+          "Ter pelo menos 10 jogadores distintos associados ao clube e com atividade real durante o mês. Cada pessoa conta uma única vez; quem joga efetivamente nos torneios também conta. Podem ser os mesmos jogadores dos meses anteriores."
+        ],
+        "goalsEyebrow": "Benefício Padbol",
+        "goalsLead": "Os 50% adicionais aplicam-se ao cumprir todos os objetivos do mês.",
+        "goalsSummary": "Ver metas mensais",
+        "goalsTitle": "Objetivos que fazem crescer o seu clube",
+        "header": "Padbol club Pro request",
+        "howAria": "Como funciona o benefício Pro",
+        "invalidCourts": "Indique quantos Padbol Courts O clube sim.",
+        "lead": "Os primeiros 3 meses são gratuitos. A partir do quarto mês, a tarifa para clubes Padbol Courts elegíveis é de 34 USD por mês, 50% da tarifa base de 68 USD.",
+        "location": "Localização do clube",
+        "locationPlaceholder": "Cidade, província ou estado",
+        "otherSports": "O clube oferece outros desportos?",
+        "outreachText": "Manter as suas redes sociais ativas, divulgar as suas promoções e planear campanhas publicitárias ajuda a dar a conhecer o seu clube e a atrair jogadores.",
+        "outreachTitle": "Faça crescer o seu clube",
+        "ownerName": "Nome completo do proprietário",
+        "required": "Complete todos os detalhes solicitados para apresentar o pedido.",
+        "submit": "Solicitar o benefício Padbol Courts",
+        "success": "Recebemos o seu pedido do benefício Padbol Courts. A nossa equipa entrará em contacto para continuar.",
+        "supportEyebrow": "ORIENTAÇÃO DURANTE O PRIMEIRO MÊS",
+        "supportNote": "Esta é uma orientação inicial para ajudá-lo a começar. Gestão contínua das redes sociais, campanhas posteriores e gastos publicitários são serviços adicionais.",
+        "supportText": "Orientamos com um onboarding personalizado do Padbol Match e, se o seu clube é novo, ajudamos a preparar o lançamento e a atrair jogadores.",
+        "supportTitle": "Ajudamos-te a pôr o teu clube a funcionar.",
+        "title": "Aceda ao benefício Padbol Courts e faça crescer o seu clube",
+        "whatsapp": "WhatsApp com código de país"
+      },
+      "yes": "Sim."
+    }
+  },
+  "el": {
+    "commercialFlow": {
+      "business": {
+        "back": "Επιστροφή στα σχέδια",
+        "chooseSport": "Επιλέξτε ένα άθλημα",
+        "country": "Κύρια χώρα",
+        "courts": "Κατά προσέγγιση συνολικός αριθμός Courts",
+        "disclaimer": "Η έρευνα δεν ενεργοποιεί κανένα σχέδιο, συνδρομή ή χρέωση.",
+        "email": "Επικοινωνία με email",
+        "error": "Η έρευνα δεν μπορούσε να σταλεί.",
+        "eyebrow": "ΕΠΙΧΕΙΡΗΣΕΙΣ · ΑΡΧΕΣ ΚΑΙ ΠΟΛΥΤΙΜΟΙ ΦΟΡΕΙΣ",
+        "formTitle": "Λεπτομέρειες που απαιτούνται για την προετοιμασία της πρότασης",
+        "header": "Έρευνα επιχειρηματικού σχεδίου",
+        "invalidCourts": "Εισάγετε τον κατά προσέγγιση συνολικό αριθμό του Courts.",
+        "invalidVenues": "Εισάγετε πόσα σωματεία έχει ο οργανισμός. Για ένα club, επιλέξτε Starter ή Pro.",
+        "lead": "Προετοιμάζουμε την κεντρική διοίκηση, τις άδειες για κάθε κλαμπ και μια πρόταση κατάλληλη για την κλίμακα σας.",
+        "location": "Πόλη ή κεντρική τοποθεσία",
+        "manager": "Πλήρες όνομα διαχειριστή",
+        "organization": "Όνομα οργανισμού ή αλυσίδας",
+        "otherSports": "Προσφέρει άλλα αθλήματα;",
+        "sending": "Αποστολή...",
+        "sport": "Κύριος αθλητισμός",
+        "submit": "Αποστολή επιχειρηματικής έρευνας",
+        "success": "Λάβαμε την επαγγελματική σας έρευνα. Η ομάδα μας θα επικοινωνήσει μαζί σας για να καθορίσει τη δομή πολλαπλών χώρων και μια πρόταση όγκου.",
+        "title": "Πες μας πώς είναι δομημένος ο οργανισμός σου.",
+        "venues": "Πόσα κλαμπ έχει η οργάνωση;",
+        "whatsapp": "WhatsApp με κωδικό χώρας"
+      },
+      "chooseCountry": "Επιλέξτε μια χώρα",
+      "chooseOption": "Επιλογή μιας επιλογής",
+      "no": "Όχι.",
+      "promo": {
+        "venueServiceLabel": "Υπηρεσία συλλόγου για γήπεδα Padbol",
+        "basePriceLabel": "Τιμή Pro",
+        "basePriceDetail": "Η μηνιαία τιμή πριν από την εφαρμογή των προνομίων Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 μήνες δωρεάν",
+            "Ενεργοποιούμε όλα τα εργαλεία Pro χωρίς χρέωση για τους πρώτους 3 μήνες."
+          ],
+          [
+            "02",
+            "Προνόμιο Padbol: έκπτωση 50%",
+            "Από την τιμή Pro των 68 USD τον μήνα, ο σύλλογός σας Padbol αποκτά τιμή 34 USD τον μήνα."
+          ],
+          [
+            "03",
+            "Άλλη μία έκπτωση 50% με την επίτευξη των στόχων",
+            "Όταν πετύχετε όλους τους στόχους του μήνα, λαμβάνετε επιπλέον έκπτωση 50% στα 34 USD: πληρώνετε 17 USD τον μήνα."
+          ]
+        ],
+        "clubName": "Όνομα λέσχης",
+        "country": "Χώρες",
+        "courtCount": "Πόσα; Padbol Courts Αλήθεια;",
+        "email": "Επικοινωνία με email",
+        "eyebrow": "ΑΠΟΚΛΕΙΣΤΙΚΑ ΟΦΕΛΗ ΓΙΑ CLUBS PADBOL",
+        "formSubtitle": "Πείτε μας τα βασικά στοιχεία του συλλόγου σας. Θα εξετάσουμε το αίτημά σας και θα επικοινωνήσουμε μαζί σας για τη συνέχεια. Η αποστολή της φόρμας δεν ενεργοποιεί χρεώσεις.",
+        "formTitle": "Ας αρχίσουμε με το club σας",
+        "goals": [
+          "Οργανώστε και ολοκληρώστε τουλάχιστον ένα τουρνουά τον μήνα, με πλήρη διαχείριση στο Padbol Match, με τουλάχιστον 8 ζευγάρια και παίκτες εγγεγραμμένους μέσω της εφαρμογής.",
+          "Καταγράψτε όλα τα αποτελέσματα στο Padbol Match. Ο τελευταίος πόντος του τελικού στον ψηφιακό πίνακα σκορ πρέπει να αναδείξει τον πρωταθλητή και να ολοκληρώσει το τουρνουά· οι υπόλοιποι αγώνες μπορούν να καταγράφονται ζωντανά ή να εισάγονται χειροκίνητα μετά το τέλος τους.",
+          "Ολοκληρώστε 12 πραγματικές κρατήσεις τον μήνα, οι οποίες έγιναν μέσω της εφαρμογής από επαληθευμένους χρήστες. Οι ακυρωμένες κρατήσεις δεν μετρούν.",
+          "Έχετε τουλάχιστον 10 διαφορετικούς παίκτες συνδεδεμένους με τον σύλλογο, με πραγματική δραστηριότητα μέσα στον μήνα. Κάθε άτομο μετρά μόνο μία φορά· μετρούν επίσης όσοι παίζουν πραγματικά στα τουρνουά. Μπορούν να είναι οι ίδιοι παίκτες με τους προηγούμενους μήνες."
+        ],
+        "goalsEyebrow": "Προνόμιο Padbol",
+        "goalsLead": "Η πρόσθετη έκπτωση 50% εφαρμόζεται όταν επιτευχθούν όλοι οι στόχοι του μήνα.",
+        "goalsSummary": "Προβολή μηνιαίων στόχων",
+        "goalsTitle": "Στόχοι που αναπτύσσουν τον σύλλογό σας",
+        "header": "Padbol club Pro αίτημα",
+        "howAria": "Πώς λειτουργεί το Pro οφέλους",
+        "invalidCourts": "Εισάγετε πόσες Padbol Courts Το κλαμπ έχει.",
+        "lead": "Οι πρώτοι 3 μήνες είναι δωρεάν. Από τον τέταρτο μήνα, η τιμή για επιλέξιμους συλλόγους Padbol Courts είναι 34 USD τον μήνα, δηλαδή το 50% της βασικής τιμής των 68 USD.",
+        "location": "Τοποθεσία λέσχης",
+        "locationPlaceholder": "Πόλη, επαρχία ή πολιτεία",
+        "otherSports": "Το κλαμπ προσφέρει άλλα αθλήματα;",
+        "outreachText": "Η ενεργή παρουσία στα κοινωνικά δίκτυα, η κοινοποίηση των προσφορών σας και ο σχεδιασμός διαφημιστικών εκστρατειών βοηθούν να γίνει γνωστός ο σύλλογός σας και να προσελκύσετε παίκτες.",
+        "outreachTitle": "Αναπτύξτε τον σύλλογό σας",
+        "ownerName": "Πλήρες όνομα ιδιοκτήτη",
+        "required": "Συμπληρώστε όλες τις ζητούμενες λεπτομέρειες για την υποβολή του αιτήματος.",
+        "submit": "Ζητήστε το προνόμιο Padbol Courts",
+        "success": "Λάβαμε το αίτημά σας για το προνόμιο Padbol Courts. Η ομάδα μας θα επικοινωνήσει μαζί σας για τη συνέχεια.",
+        "supportEyebrow": "ΟΔΗΓΟΣ ΚΑΤΑ ΤΗ ΔΙΑRINGΚΕΙΑ ΤΟΥ ΠΡΩΤΟΥ ΜΗΝΑ ΣΟΥ",
+        "supportNote": "Αυτή είναι η αρχική καθοδήγηση για να σας βοηθήσει να ξεκινήσετε. Η συνεχιζόμενη διαχείριση των μέσων κοινωνικής δικτύωσης, οι μεταγενέστερες εκστρατείες και οι διαφημιστικές δαπάνες αποτελούν πρόσθετες υπηρεσίες.",
+        "supportText": "Σας καθοδηγούμε με εξατομικευμένη εισαγωγή στο Padbol Match και, αν ο σύλλογός σας είναι νέος, σας βοηθάμε να προετοιμάσετε την έναρξή του και να προσελκύσετε παίκτες.",
+        "supportTitle": "Θα σε βοηθήσουμε να φτιάξεις το κλαμπ σου.",
+        "title": "Αξιοποιήστε το προνόμιο Padbol Courts και αναπτύξτε τον σύλλογό σας",
+        "whatsapp": "WhatsApp με κωδικό χώρας"
+      },
+      "yes": "Ναι."
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Αυτοματοποιημένα τουρνουά",
+          "Ισοπαλία → ομάδες → παιχνίδια → αποτελέσματα → θέσεις → παρενθέσεις → τελικούς."
+        ],
+        [
+          "Δημιουργία νέων εσόδων",
+          "Μέλη, προαγωγές και δικές σας θέσεις χορηγών."
+        ],
+        [
+          "Οικοδόμηση αφοσίωσης παίκτη",
+          "PadCoins, εκστρατείες και οφέλη που διαμορφώνονται από το σύλλογο."
+        ],
+        [
+          "Μείωση του κόστους πλατφόρμας",
+          "Εκκινητής: 1% · Υπέρ: 0,65%. Οι τιμές μπορούν να διαχειριστούν ανά περιοχή."
+        ]
+      ],
+      "automationAccent": "Λιγότερες επαναλαμβανόμενες εργασίες.",
+      "automationEyebrow": "Εκκίνηση.",
+      "automationTitle": "Περισσότερη δραστηριότητα για το κλαμπ σου.",
+      "back": "← Για διαχειριστές",
+      "bookings": "Κρατήσεις και διαθεσιμότητα",
+      "commissionNote": "σχετικά με τις συναλλαγές που διεκπεραιώνονται μέσω Padbol Match",
+      "connected": "Μία συνδεδεμένη λειτουργία πριν, κατά τη διάρκεια και μετά το παιχνίδι.",
+      "devices": "Τηλέφωνο · Tablet · Υπολογιστής · Τηλεόραση",
+      "draft": "ΕΣΩΤΕΡΙΚΟ ΣΧΕΔΙΟ · ΔΕΝ ΔΗΜΟΣΙΕΥΕΤΑΙ",
+      "experiencesEyebrow": "Πέντε εμπειρίες, ένα προϊόν.",
+      "experiencesText": "Αυτά είναι Padbol Match οπτική διεπαφή. Δεν είναι εμπορικά σχέδια και δεν καθορίζουν αν μια λέσχη χρησιμοποιεί Starter, Pro ή Business.",
+      "eyebrow": "ΠΑΔΒΟΛ ΜΗΧΑΝΗ ΓΙΑ CLUBS",
+      "faqAccent": "Χωρίς κρυφές κατηγορίες.",
+      "faqEyebrow": "Καθαρές ερωτήσεις. ΑΠΑΝΤΗΣΕΙΣ ΑΜΕΣΑ.",
+      "faqHelpCta": "ΡΩΤΗΣΕ ΤΟΝ ΤΣΙΒΙ",
+      "faqHelpText": "Chivi μπορεί να εξηγήσει τα σχέδια και να σας βοηθήσει να βρείτε τη σωστή επιλογή για το κλαμπ σας.",
+      "faqHelpTitle": "Έχεις ακόμα μια ερώτηση;",
+      "faqTitle": "Χωρίς εκπλήξεις.",
+      "faqs": [
+        [
+          "Υπάρχουν κρυφές κατηγορίες;",
+          "Όχι. Πριν ενεργοποιήσει ένα σχέδιο, ο σύλλογος γνωρίζει και δέχεται τη συνδρομή και την προμήθεια του. Τα έξοδα του επεξεργαστή πληρωμών είναι ξεχωριστά και δεν χρεώνονται από Padbol Match."
+        ],
+        [
+          "Υπάρχει κατηγορία για υποβολή αιτήματος;",
+          "Όχι. Η αποστολή του εντύπου ξεκινά μόνο τη συζήτηση. Δεν ενεργοποιεί χρέωση ή συνδρομή."
+        ],
+        [
+          "Ο παίκτης πληρώνει προμήθεια;",
+          "Όχι. Οι παίκτες πληρώνουν 0% προμήθεια να Padbol Match."
+        ],
+        [
+          "Χρειάζομαι ειδικό εξοπλισμό;",
+          "Όχι. Ο πίνακας αποτελεσμάτων λειτουργεί από ένα τηλέφωνο, tablet ή υπολογιστή και μπορεί να εμφανιστεί σε μια τηλεόραση."
+        ],
+        [
+          "Μπορώ να φέρω δεδομένα από άλλο σύστημα;",
+          "Ναι, όταν η μορφή είναι συμβατή. Εξετάζουμε το πεδίο μετανάστευσης με το κλαμπ πριν ξεκινήσουμε."
+        ],
+        [
+          "Κι αν κάνω πολλά κλαμπ;",
+          "Οι επιχειρήσεις είναι σχεδιασμένες για αλυσίδες και πολυχώρους. Η κεντρική διοίκηση, οι άδειες συλλόγου, οι ενοποιημένες αναφορές και η τιμολόγηση όγκου συμφωνούνται με κάθε οργανισμό πριν την ενεργοποίηση."
+        ]
+      ],
+      "featured": "ΠΙΟ ΠΛΗΘΥΣΜΟΣ",
+      "finalAccent": "Η επιχείρηση παραμένει δική σου.",
+      "finalTitle": "Ξεκινήστε χωρίς σταθερή αμοιβή.",
+      "finePrint": "Τα όρια, οι τιμές, οι προαγωγές και οι προμήθειες εξαρτώνται από την περιοχή και την τρέχουσα διαμόρφωση. Οι επιχειρησιακοί όροι καθορίζονται μέσω εμπορικής επαφής και τεχνικής επικύρωσης.",
+      "fourSports": "4 αθλήματα",
+      "growthAria": "Εργαλεία υπέρ της ανάπτυξης",
+      "lead": "Κρατήσεις, παίκτες, παιχνίδια, τουρνουά, κατατάξεις, ζωντανά βαθμολογικά, μέλη και διαχείριση σε ένα μέρος.",
+      "limits": "Όρια σχεδίου",
+      "liveClub": "CLUB ΖΩΗ",
+      "liveMatch": "Ζωντανό παιχνίδι και πίνακας αποτελεσμάτων",
+      "membershipText": "Προσδιορίστε την τιμή, τη διάρκεια, τα οφέλη, εκπτώσεις, χρονοδιαγράμματα, προτεραιότητα, συμπεριλαμβανομένων των κρατήσεων και PadCoins. Αυτή είναι η συμμετοχή του συλλόγου, ξεχωριστή από οποιαδήποτε μελλοντική ένταξη σε παγκόσμιο παίκτη.",
+      "membershipTitle": "ΝΑ ΧATEΕΙΑΖΕΤΕ ΤΗΝ ΙΔΙΑ ΣΑΣ ΜΕΛΗ",
+      "metaDescription": "Padbol Match φέρνει κρατήσεις, παίκτες, παιχνίδια, τουρνουά, κατατάξεις, ψηφιακό βαθμολογικό πίνακα και multisport club διαχείριση μαζί.",
+      "metaTitle": "Padbol Match για λέσχες — Σχέδια",
+      "migration": [
+        [
+          "Εκκινητής",
+          "Συμβατό αρχείο εισαγωγής, υπό τον όρο της επικύρωσης."
+        ],
+        [
+          "Προς",
+          "Υποβοηθούμενη μετανάστευση."
+        ],
+        [
+          "Επιχειρήσεις",
+          "Προσαρμοσμένη μετανάστευση."
+        ]
+      ],
+      "migrationEyebrow": "Χρησιμοποιείς ήδη άλλο σύστημα;",
+      "migrationText": "Μπορούμε να εισάγουμε πληροφορίες που νόμιμα ανήκουν στο σύλλογο και χρησιμοποιούν μια συμβατή μορφή. Το πεδίο εφαρμογής επικυρώνεται πριν αρχίσει η εργασία.",
+      "migrationTitle": "Δεν ξεκινάς από το μηδέν.",
+      "multisportEyebrow": "Ένα κλάμπ. Τέσσερις αθόρυβες.",
+      "multisportText": "Διαχείριση κάθε Padbol Court και άλλα παιχνίδια Court από την ίδια πλατφόρμα, ακόμη και όταν το club σας προσφέρει διαφορετικά αθλήματα.",
+      "multisportTitle": "Padbol · Πάντελ · Πίκλεμπολ · Τένις",
+      "notDefined": "Καθορίζεται",
+      "operationAria": "Λειτουργία συνδεδεμένου συλλόγου",
+      "or": "ή",
+      "padbolBenefit": "ΑΠΟΚΛΕΙΣΤΙΚΑ ΟΦΕΛΗ ΓΙΑ CLUBS PADBOL",
+      "padbolOwnerCta": "ΖΗΤΗΣΤΕ ΤΑ ΟΦΕΛΗ ΣΑΣ",
+      "padbolOwnerHint": "Δείτε πώς μπορούμε να σας βοηθήσουμε να προσελκύσετε παίκτες, να ενισχύσετε τη δραστηριότητα και να μεγαλώσετε την κοινότητά σας.",
+      "padbolOwnerText": "Ανακαλύψτε τα αποκλειστικά οφέλη του Padbol Match για τον σύλλογό σας.",
+      "padbolOwnerTitle": "Σου ανήκει ένα ή περισσότερα Padbol Courts?",
+      "perMonth": "/ μήνας",
+      "perYear": "/ έτος",
+      "plans": {
+        "business": {
+          "adminsLabel": "Προσαρμοσμένοι όροι",
+          "commissionPrefix": "Από",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "Ας μιλήσουμε",
+          "features": [
+            "Όλα σε pro",
+            "Πολυχώρος που ορίζεται με κάθε οργανισμό",
+            "Κεντρικές άδειες και διοίκηση βάσει του έργου",
+            "Ενοποιημένες εκθέσεις και εκστρατείες δικτύου σύμφωνα με το πεδίο εφαρμογής",
+            "Προσαρμοσμένη μετανάστευση",
+            "Ενσωματώσεις και API που υπόκεινται σε τεχνική επικύρωση",
+            "Ειδική στήριξη"
+          ],
+          "pricePrefix": "Από",
+          "summary": "Πολυχώρες και προσαρμοσμένες λύσεις για αλυσίδες, χειριστές και δικαιοδόχους."
+        },
+        "pro": {
+          "adminsLabel": "Έως 5 διαχειριστές",
+          "courtsLabel": "Έως 12 Courts",
+          "ctaLabel": "ΕΠΙΛΕΓΕΤΕ ΠΡΟ",
+          "features": [
+            "Τα πάντα στο Starter",
+            "Αυτοματοποιημένα τουρνουά: κληρώσεις, ομάδες, εξαρτήματα, βάσεις, παρένθεση και βάθροι",
+            "Εκθέσεις και εξαγωγές για κρατήσεις, έσοδα και PadCoins",
+            "Κατάλογος αναμονής τουρνουά και το άνοιγμα ειδοποιήσεων",
+            "Εκστρατείες, προαγωγές, αμοιβές και PadCoins εξοφλήσεις",
+            "Μέλη της λέσχης",
+            "Οι χορηγοί σας σε βαθμολογικούς πίνακες, τουρνουά και club οθόνες",
+            "Διαχωρισμένες ειδοποιήσεις σε παίκτες κλαμπ",
+            "Υποβοηθούμενη μετανάστευση και υποστήριξη προτεραιότητας"
+          ],
+          "summary": "Για κλαμπ που θέλουν να αυτοματοποιήσουν τις επιχειρήσεις και να μεγαλώσουν την κοινότητά τους."
+        },
+        "starter": {
+          "adminsLabel": "1 διαχειριστής",
+          "courtsLabel": "Έως 4 Courts",
+          "ctaLabel": "ΕΝΑ STARTΞΗ ΧΩΡΙΣ ΥΠΟΣΤΗΡΙΞΗ",
+          "features": [
+            "Padbol, Padel, Pickleball και τένις",
+            "Απεριόριστα παίκτες και πελάτες",
+            "προφίλ της δημόσιας λέσχης, Courts, προγράμματα, τιμές και διαθεσιμότητα",
+            "Online κρατήσεις και χειροκίνητη κράτηση εισόδου",
+            "Παιχνίδια, αποτέλεσμα και κατάταξη κλαμπ",
+            "Διεύθυνα τουρνουά Club: εγγραφές, ομάδες, παιχνίδια και αποτελέσματα",
+            "Ψηφιακός πίνακας αποτελεσμάτων με ζωντανό έλεγχο και οθόνη ή έξοδο τηλεόρασης",
+            "Λειτουργικό ταμπλό για κρατήσεις, διαμονή και έσοδα",
+            "Κλαμπ PadCoins υπόλοιπα, συναλλαγές και εξοφλήσεις",
+            "Συμβατό αρχείο εισαγωγής, με την επιφύλαξη προηγούμενης επικύρωσης"
+          ],
+          "summary": "Για κλαμπ με έως 4 Courts που επιθυμούν να διαχειρίζονται τις πράξεις χωρίς μηνιαία συνδρομή."
+        }
+      },
+      "plansAccent": "Μετακίνηση στο Pro για αυτοματοποίηση.",
+      "plansEyebrow": "Σχέδια που μεγαλώνουν μαζί σου",
+      "plansTitle": "Ξεκίνα με τη διαχείριση.",
+      "playerFeeAria": "Τέλη παίκτη",
+      "playerFeeText": "Οι προμήθειες σχεδίων αντιστοιχούν στην υπηρεσία που παρέχεται στον σύλλογο. Το κόστος του Mercado Pago, του Stripe ή άλλων επεξεργαστών πληρωμών είναι ξεχωριστό.",
+      "playerFeeTitle": "Οι παίκτες πληρώνουν 0% ΕΠΙΤΡΟΠΗ ΣΤΟ PADBOL MATCH.",
+      "results": "Αποτελέσματα, κατάταξη και επανεπισκέψεις",
+      "scoreboardAccent": "Χωρίς ειδικό εξοπλισμό.",
+      "scoreboardAria": "Padbol Match ψηφιακός πίνακας αποτελεσμάτων κατά τη διάρκεια ενός παιχνιδιού",
+      "scoreboardCaption": "Ο πίνακας αποτελεσμάτων είναι διαθέσιμος στο Padbol Match.",
+      "scoreboardEyebrow": "Η ΨΗΦΙΑΚΗ ΣΚΟΡΕΑ ΣΑΣ, ΣΥΜΠΕΡΙΛΑΜΒΑΝΟΜΕΝΩΝ ΑΠΟ ΤΗΝ ΕΝΑ STARTΞΗ",
+      "scoreboardItems": [
+        "Ζωντανή βαθμολόγηση και ενημερώσεις.",
+        "Εμφάνιση σε οθόνη ή τηλεόραση.",
+        "Ασύρματος έλεγχος από συσκευές club."
+      ],
+      "scoreboardNote": "Pro προσθέτει τους δικούς σας χορηγούς, αυτοματοποιημένα τουρνουά, εξαχθείσες αναφορές, PadCoins εκστρατείες και ανακοινώσεις κατά τμήματα.",
+      "scoreboardTitle": "Το παιχνίδι είναι ζωντανό.",
+      "screensText": "Διαχειριστείτε τους δικούς σας χορηγούς στο βαθμολογικό πίνακα, τηλεόραση, τουρνουά και διαθέσιμες τοπικές τοποθετήσεις. Η απογραφή της λέσχης παραμένει ξεχωριστή από την παγκόσμια Padbol Match και απογραφή FIPA.",
+      "screensTitle": "Φωνάξτε τα ουρλιαχτά σας σε έναν κώλο",
+      "seePlans": "ΣΧΕΔΙΑ ΑΠΟΨΗΣ",
+      "sports": "Padbol · Πάντελ · Πίκλεμπολ · Τένις",
+      "start": "ΕΝΑ STARTΞΗ ΧΩΡΙΣ ΥΠΟΣΤΗΡΙΞΗ",
+      "talk": "ΡΩΤΗΣΤΕ ΓΙΑ ΤΙΣ ΕΠΙΧΕΙΡΗΣΕΙΣ",
+      "title": "Όλο το κλαμπ σου.",
+      "titleAccent": "Μια πλατφόρμα.",
+      "venueService": "Υπηρεσία για το κλαμπ"
+    }
+  },
+  "hu": {
+    "commercialFlow": {
+      "business": {
+        "back": "Vissza a tervekhez",
+        "chooseSport": "Válassza ki a sport",
+        "country": "Fő ország",
+        "courts": "A Courts",
+        "disclaimer": "A vizsgálat nem aktivál semmilyen tervet, előfizetést vagy díjat.",
+        "email": "Kapcsolattartó e-mail",
+        "error": "A vizsgálatot nem lehetett elküldeni.",
+        "eyebrow": "ÜZEMELTETŐ ÜZEMEK",
+        "formTitle": "A javaslat elkészítéséhez szükséges részletek",
+        "header": "Üzleti terv vizsgálata",
+        "invalidCourts": "Adja meg a Courts.",
+        "invalidVenues": "Adja meg, hány klubja van a szervezetnek. Egy klub, válasszon Starter vagy Pro.",
+        "lead": "Felkészítjük a központi adminisztrációt, a klubok engedélyeit, és a te méretednek megfelelő ajánlatot.",
+        "location": "Város vagy központi elhelyezkedés",
+        "manager": "A vezető teljes neve",
+        "organization": "Szervezet vagy lánc neve",
+        "otherSports": "Más sportot is kínál?",
+        "sending": "Küldés...",
+        "sport": "Fő sport",
+        "submit": "Üzleti vizsgálat küldése",
+        "success": "Megkaptuk az üzleti vizsgálatot. Csapatunk kapcsolatba lép Önnel, hogy meghatározza a többoldalas struktúrát és a kötet javaslatot.",
+        "title": "Mondd el, hogyan épül fel a szervezeted.",
+        "venues": "Hány klubja van a szervezetnek?",
+        "whatsapp": "WhatsApp országkóddal"
+      },
+      "chooseCountry": "Válasszon ki egy országot",
+      "chooseOption": "Válassza ki az opciót",
+      "no": "Nem.",
+      "promo": {
+        "venueServiceLabel": "Klubszolgáltatás a Padbol pályákhoz",
+        "basePriceLabel": "Pro ár",
+        "basePriceDetail": "A havi díj a Padbol-kedvezmények alkalmazása előtt.",
+        "benefits": [
+          [
+            "01",
+            "3 hónap ingyen",
+            "Az első 3 hónapban minden Pro-eszközt díjmentesen aktiválunk."
+          ],
+          [
+            "02",
+            "Padbol-előny: 50% kedvezmény",
+            "A havi 68 USD Pro árból Padbol klubja havi 34 USD díjat kap."
+          ],
+          [
+            "03",
+            "További 50% a célok teljesítéséért",
+            "Ha a hónap minden célját teljesíti, további 50% kedvezményt kap a 34 USD díjból: havonta 17 USD-t fizet."
+          ]
+        ],
+        "clubName": "A klub neve",
+        "country": "Ország",
+        "courtCount": "Hány? Padbol Courts Tényleg?",
+        "email": "Kapcsolattartó e-mail",
+        "eyebrow": "KIZÁRÓLAG A PADBOL CLUBS RÉSZÉRE",
+        "formSubtitle": "Adja meg klubja legfontosabb adatait. Átnézzük kérését, és felvesszük Önnel a kapcsolatot a folytatáshoz. Az űrlap elküldése nem indít díjfizetést.",
+        "formTitle": "Kezdjük a kluboddal.",
+        "goals": [
+          "Szervezzen meg és zárjon le havonta legalább egy tornát, teljes egészében a Padbol Match rendszerében kezelve, legalább 8 párossal és az alkalmazáson keresztül nevezett játékosokkal.",
+          "Rögzítse az összes eredményt a Padbol Match rendszerében. A döntő utolsó pontjának a digitális eredményjelzőn kell meghatároznia a bajnokot és lezárnia a tornát; a többi mérkőzés élőben rögzíthető vagy a végén kézzel bevihető.",
+          "Teljesítsen havonta 12 valós foglalást, amelyeket ellenőrzött felhasználók az alkalmazáson keresztül végeztek. A lemondott foglalások nem számítanak.",
+          "Legyen legalább 10 különböző, a klubhoz kapcsolódó játékos, aki ténylegesen aktív az adott hónapban. Minden személy csak egyszer számít; azok is beleszámítanak, akik ténylegesen játszanak a tornákon. Lehetnek ugyanazok a játékosok, mint az előző hónapokban."
+        ],
+        "goalsEyebrow": "Padbol-előny",
+        "goalsLead": "A további 50% a hónap összes céljának teljesítésekor érvényes.",
+        "goalsSummary": "Havi célok megtekintése",
+        "goalsTitle": "Célok, amelyek segítik klubja növekedését",
+        "header": "Padbol Club Pro kérés",
+        "howAria": "Hogyan működik a Pro haszon",
+        "invalidCourts": "Adja meg, hány Padbol Courts A klub.",
+        "lead": "Az első 3 hónap ingyenes. A negyedik hónaptól a jogosult Padbol Courts klubok díja havi 34 USD, a 68 USD alapdíj 50%-a.",
+        "location": "A klub helye",
+        "locationPlaceholder": "Város, tartomány vagy állam",
+        "otherSports": "A klub más sportokat is kínál?",
+        "outreachText": "A közösségi oldalak aktívan tartása, az ajánlatok kommunikálása és a reklámkampányok megtervezése segít megismertetni klubját és játékosokat vonzani.",
+        "outreachTitle": "Fejlessze klubját",
+        "ownerName": "A tulajdonos teljes neve",
+        "required": "A kérelem benyújtásához töltse ki az összes kért adatot.",
+        "submit": "Padbol Courts kedvezmény igénylése",
+        "success": "Megkaptuk a Padbol Courts kedvezményre vonatkozó kérelmét. Csapatunk felveszi Önnel a kapcsolatot a folytatáshoz.",
+        "supportEyebrow": "IRÁNYMUTATÁS AZ ELSŐ HÓNAPBAN",
+        "supportNote": "Ez a kezdeti útmutatás, ami segít elkezdeni. A közösségi médiagazdálkodás, a későbbi kampányok és a reklámkiadások további szolgáltatások.",
+        "supportText": "Személyre szabott bevezetéssel segítjük a Padbol Match használatát, és ha klubja új, segítünk felkészülni az indulásra és játékosokat vonzani.",
+        "supportTitle": "Segítünk beindítani a klubot.",
+        "title": "Használja ki a Padbol Courts kedvezményt, és fejlessze klubját",
+        "whatsapp": "WhatsApp országkóddal"
+      },
+      "yes": "Igen."
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Automatizált versenyek",
+          "Draw → csoportok → játékok → eredmények → standings → záróvizsgák."
+        ],
+        [
+          "Új bevételek létrehozása",
+          "Memberships, promóciók, és a saját szponzor elhelyezések."
+        ],
+        [
+          "A játékos hűségének építése",
+          "PadCoinsa klub által konfigurált kampányok és előnyök."
+        ],
+        [
+          "A platform költségeinek csökkentése",
+          "Kezdő: 1% · Pro: 0,65%. Az értékeket régiónként lehet kezelni."
+        ]
+      ],
+      "automationAccent": "Kevesebb ismétlődő feladat.",
+      "automationEyebrow": "Csillagvezetők.",
+      "automationTitle": "Több aktivitás a klubjának.",
+      "back": "ð Igazgatók esetében",
+      "bookings": "Foglalás és rendelkezésre állás",
+      "commissionNote": "az Padbol Match",
+      "connected": "Egy kapcsolat a játék előtt, alatt és után.",
+      "devices": "Telefon · Tabletta · Számítógép · TV",
+      "draft": "BELSŐ TERVEZET",
+      "experiencesEyebrow": "Egy termék.",
+      "experiencesText": "Ezek Padbol Match vizuális interfészek. Ezek nem kereskedelmi tervek, és nem határozzák meg, hogy egy klub használ Starter, Pro vagy Business.",
+      "eyebrow": "PADBOL FEGYVEREK",
+      "faqAccent": "Nincs rejtett vád.",
+      "faqEyebrow": "Tisztázza a kérdéseket. Közvetlen válaszok.",
+      "faqHelpCta": "ASK CHIVI",
+      "faqHelpText": "Chivi elmagyarázhatja a terveket, és segíthet megtalálni a megfelelő lehetőséget a klubhoz.",
+      "faqHelpTitle": "Van még kérdésed?",
+      "faqTitle": "Semmi meglepetés.",
+      "faqs": [
+        [
+          "Vannak rejtett vádak?",
+          "Nem. Mielőtt aktiválna egy tervet, a klub ismeri és elfogadja az előfizetést és a jutalékot. A fizetési processzorok költségei elkülönülnek, és nem számíthatók fel Padbol Match."
+        ],
+        [
+          "Van díj a kérelem benyújtásáért?",
+          "Nem. A nyomtatvány elküldése csak a beszélgetés kezdete. Nem aktiválja a töltést vagy az előfizetést."
+        ],
+        [
+          "A játékos fizet jutalékot?",
+          "Nem. A játékosok 0% jutalékot fizetnek Padbol Match."
+        ],
+        [
+          "Szükségem van speciális eredményjelző felszerelésre?",
+          "Nem. Az eredménytábla telefonról, táblagépről vagy számítógépről működik, és TV-n is megjeleníthető."
+        ],
+        [
+          "Hozhatok adatokat egy másik rendszerből?",
+          "Igen, ha a formátum kompatibilis. Mielőtt elkezdenénk, megvizsgáljuk a migrációs területet a klubbal."
+        ],
+        [
+          "Mi van, ha több klubot vezetek?",
+          "Az üzlet célja a láncok és több helyszínen üzemeltetők. A központi adminisztráció, a klubengedélyek, a konszolidált jelentések és a mennyiségi árképzés az aktiválás előtt minden szervezettel megállapodik."
+        ]
+      ],
+      "featured": "Legnagyobb POPULÁRIS",
+      "finalAccent": "Az akció a tiéd marad.",
+      "finalTitle": "Kezdjük fix díj nélkül.",
+      "finePrint": "A korlátok, árak, promóciók és jutalékok a régiótól és a jelenlegi konfigurációtól függenek. Az üzleti kifejezések meghatározása kereskedelmi kapcsolaton és technikai validáláson keresztül történik.",
+      "fourSports": "4 sport",
+      "growthAria": "Pro növekedési eszközök",
+      "lead": "Könyvek, játékosok, játékok, versenyek, rangsorok, élő eredménytábla, tagság és menedzsment egy helyen.",
+      "limits": "Tervkorlátozások",
+      "liveClub": "KLUB ÉLŐ",
+      "liveMatch": "Élő játék és eredménytábla",
+      "membershipText": "Határozza meg az ár, időtartam, ellátások, kedvezmények, menetrend, prioritás, beleértve a foglalás és PadCoinsEz a klub saját tagsága, függetlenül minden jövőbeli globális játékostagságtól.",
+      "membershipTitle": "GYERE MEG A SAJÁT TAGJAIT",
+      "metaDescription": "Padbol Match hozza a foglalásokat, a játékosokat, a játékokat, a versenyeket, a rangsort, a digitális eredménytáblát és a multisport klub irányítását.",
+      "metaTitle": "Padbol Match treff esetében - Tervek",
+      "migration": [
+        [
+          "Kezdő",
+          "Kompatibilis fájl import, érvényesítés mellett."
+        ],
+        [
+          "Pro",
+          "Segített migráció."
+        ],
+        [
+          "Üzleti",
+          "Egyéni migráció."
+        ]
+      ],
+      "migrationEyebrow": "Már használsz egy másik rendszert?",
+      "migrationText": "Importálhatunk olyan információkat, amelyek jogszerűen a klubhoz tartoznak, és kompatibilis formátumot használnak. Az alkalmazási kört a munka megkezdése előtt érvényesítik.",
+      "migrationTitle": "Nem lehet nulláról kezdeni.",
+      "multisportEyebrow": "Egy klub. Négy sport.",
+      "multisportText": "Kezelése minden Padbol Court és egyéb játékok Court ugyanabban a platformban, akkor is, ha a klub kínál különböző sportok.",
+      "multisportTitle": "Padbol # Padel # Pickleball # Tenisz",
+      "notDefined": "Meghatározandó",
+      "operationAria": "Csatlakozott klub üzemeltetése",
+      "or": "vagy",
+      "padbolBenefit": "KIZÁRÓLAG A PADBOL CLUBS RÉSZÉRE",
+      "padbolOwnerCta": "IGÉNYELJE ELŐNYEIT",
+      "padbolOwnerHint": "Ismerje meg, hogyan segíthetünk új játékosokat vonzani, élénkíteni a klubéletet és bővíteni közösségét.",
+      "padbolOwnerText": "Fedezze fel a Padbol Match exkluzív előnyeit klubja számára.",
+      "padbolOwnerTitle": "Van egy vagy több Padbol Courts?",
+      "perMonth": "/ hónap",
+      "perYear": "/ év",
+      "plans": {
+        "business": {
+          "adminsLabel": "Egyedi feltételek",
+          "commissionPrefix": "A",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "Beszélgessünk.",
+          "features": [
+            "Mindent Pro",
+            "Az egyes szervezetekkel közösen meghatározott alkalmazási kör",
+            "A projekten alapuló központosított engedélyek és adminisztráció",
+            "Konszolidált jelentések és hálózati kampányok az alkalmazási kör szerint",
+            "Egyéni migráció",
+            "Műszaki érvényesítés hatálya alá tartozó integrálások és API",
+            "Célzott támogatás"
+          ],
+          "pricePrefix": "A",
+          "summary": "Több és egyedi megoldások láncok, üzemeltetők és engedélyesek számára."
+        },
+        "pro": {
+          "adminsLabel": "Legfeljebb 5 adminisztrátor",
+          "courtsLabel": "Legfeljebb 12 Courts",
+          "ctaLabel": "CHOOSE PRO",
+          "features": [
+            "Minden starter",
+            "Automatizált versenyek: rajzok, csoportok, rögzítések, állványok, zárójelek és pódiumok",
+            "Jelentések és kivitelek foglalásokra, bevételekre és PadCoins",
+            "Versenyvárólisták és figyelmeztető jelzések megnyitása",
+            "Kampányok, promóciók, jutalmak és PadCoins visszaváltások",
+            "Klubtagság",
+            "Saját szponzorai eredménytáblákon, versenyeken és klubképernyőkön",
+            "A klubjátékosoknak szóló értesítések szegmentálása",
+            "Támogatott migráció és kiemelt támogatás"
+          ],
+          "summary": "A kluboknak, akik automatizálni akarják a műveleteket és növelni a közösségüket."
+        },
+        "starter": {
+          "adminsLabel": "1 adminisztrátor",
+          "courtsLabel": "Legfeljebb 4 Courts",
+          "ctaLabel": "TÁMOGATÁS NÉLKÜLI KEZDEMÉNYEZÉS",
+          "features": [
+            "PadbolPadel, Pickleball és Tennis",
+            "Korlátlan játékosok és ügyfelek",
+            "Nyilvános klub profil, Courtsa menetrend, az árak és a rendelkezésre állás",
+            "Online foglalás és kézi foglalás",
+            "Játékok, eredmény bejegyzés és klub rangsor",
+            "Klubmenedzsment versenyek: regisztráció, csapatok, játékok és eredmények",
+            "Digitális eredménytábla élő vezérléssel és képernyővel vagy TV kimenettel",
+            "Operatív műszerfal foglaláshoz, foglaláshoz és bevételhez",
+            "Club PadCoins egyenlegek, tranzakciók és visszaváltások",
+            "Kompatibilis fájlbehozatal, előzetes érvényesítés mellett"
+          ],
+          "summary": "4-ig terjedő treff esetén Courts akik havi előfizetés nélkül akarják irányítani a műveleteket."
+        }
+      },
+      "plansAccent": "A Pro automatizálásra.",
+      "plansEyebrow": "Tervek, melyek veled nőnek",
+      "plansTitle": "Kezdéssel kezdjük.",
+      "playerFeeAria": "Játékosdíjak",
+      "playerFeeText": "A tervjutalékok megfelelnek a klubnak nyújtott szolgáltatásnak. A Mercado Pago, Stripe vagy más fizetési processzorok költségei elkülönülnek.",
+      "playerFeeTitle": "PAYERS PAY 0% BIZOTTSÁG PADBOL Match.",
+      "results": "Eredmények, rangsor és visszatérési látogatások",
+      "scoreboardAccent": "Nincs különleges felszerelés.",
+      "scoreboardAria": "Padbol Match digitális eredménytábla játék közben",
+      "scoreboardCaption": "Az eredménytábla jelenleg Padbol Match.",
+      "scoreboardEyebrow": "A DIGITÁLIS SZARVAD, BELEÉRTVE A STARTER-BŐL",
+      "scoreboardItems": [
+        "Élő pontozás és frissítések.",
+        "Képernyőn vagy TV-n látható.",
+        "Vezeték nélküli irányítás klubeszközökből."
+      ],
+      "scoreboardNote": "Pro hozzáadja a saját szponzorok, automatizált versenyek, exportálható jelentések, PadCoins kampányok és elkülönített értesítések.",
+      "scoreboardTitle": "A játék élő.",
+      "screensText": "Kezelje saját szponzorait az eredménytáblán, TV-n, versenyeken és a rendelkezésre álló helyi helyeken. A klub készletei elkülönülnek a Globaltól. Padbol Match és FIPA leltár.",
+      "screensTitle": "Fordítsd el a siklóidat egy asset",
+      "seePlans": "KÍSÉRŐ TERVEK",
+      "sports": "Padbol # Padel # Pickleball # Tenisz",
+      "start": "TÁMOGATÁS NÉLKÜLI KEZDEMÉNYEZÉS",
+      "talk": "KÉRDÉS AZ ÜZLETESSÉGRŐL",
+      "title": "Az egész klubod.",
+      "titleAccent": "Egy platform.",
+      "venueService": "A klub kiszolgálása"
+    }
+  },
+  "he": {
+    "commercialFlow": {
+      "business": {
+        "back": "חזרה לתוכניות",
+        "chooseSport": "בחר ספורט",
+        "country": "המדינה העיקרית",
+        "courts": "מספר הכולל של Courts",
+        "disclaimer": "החקירה אינה מפעילה כל תוכנית, מנוי או תשלום.",
+        "email": "צור קשר דואר אלקטרוני",
+        "error": "לא ניתן לשלוח את החקירה.",
+        "eyebrow": "תגית: CHAINS & MULTISITE",
+        "formTitle": "פרטים צריכים להכין את ההצעה",
+        "header": "תוכנית עסקית",
+        "invalidCourts": "הזן את המספר הכולל המשוער Courts.",
+        "invalidVenues": "הזן כמה מועדונים יש לארגון. עבור מועדון אחד, בחר Starter או Pro.",
+        "lead": "אנו מכינים ניהול מרכזי, הרשאות לכל מועדון והצעה שמתאימה לגודלכם.",
+        "location": "העיר או המיקום המרכזי",
+        "manager": "שמו המלא של המנהל",
+        "organization": "שם הארגון או השרשרת",
+        "otherSports": "האם הוא מציע ספורט אחר?",
+        "sending": "שולח...",
+        "sport": "הספורט העיקרי",
+        "submit": "שלח חקירה עסקית",
+        "success": "קיבלנו את החקירה העסקית שלך. הצוות שלנו יפנה אליך כדי להגדיר את המבנה הרב-אתרי והצעת נפח.",
+        "title": "ספר לנו איך הארגון שלך בנוי",
+        "venues": "כמה מועדונים יש לארגון?",
+        "whatsapp": "WhatsApp עם קוד המדינה"
+      },
+      "chooseCountry": "בחר מדינה",
+      "chooseOption": "בחר אפשרות",
+      "no": "לא לא",
+      "promo": {
+        "venueServiceLabel": "שירות למועדון עבור מגרשי Padbol",
+        "basePriceLabel": "מחיר Pro",
+        "basePriceDetail": "התעריף החודשי לפני החלת הטבות Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 חודשים ללא תשלום",
+            "כל כלי Pro מופעלים ללא חיוב במהלך 3 החודשים הראשונים."
+          ],
+          [
+            "02",
+            "הטבת Padbol: הנחה של 50%",
+            "ממחיר Pro של 68 USD לחודש, מועדון Padbol שלכם מקבל תעריף של 34 USD לחודש."
+          ],
+          [
+            "03",
+            "עוד 50% על עמידה ביעדים",
+            "כשעומדים בכל יעדי החודש, מקבלים עוד 50% הנחה על 34 USD: משלמים 17 USD לחודש."
+          ]
+        ],
+        "clubName": "שם מועדון",
+        "country": "מדינה",
+        "courtCount": "כמה Padbol Courts יש לזה?",
+        "email": "צור קשר דואר אלקטרוני",
+        "eyebrow": "מועדון PADBOL",
+        "formSubtitle": "ספרו לנו את הפרטים החיוניים על המועדון שלכם. נבחן את הבקשה וניצור עמכם קשר להמשך. שליחת הטופס אינה מפעילה חיובים.",
+        "formTitle": "נתחיל עם המועדון שלך",
+        "goals": [
+          "לארגן ולהשלים לפחות טורניר אחד בחודש, המנוהל כולו ב-Padbol Match, עם לפחות 8 זוגות ושחקנים שנרשמו דרך האפליקציה.",
+          "לתעד את כל התוצאות ב-Padbol Match. הנקודה האחרונה בגמר בלוח התוצאות הדיגיטלי חייבת לקבוע את האלוף ולסיים את הטורניר; את שאר המשחקים אפשר לתעד בזמן אמת או להזין ידנית בסיומם.",
+          "להשלים 12 הזמנות אמיתיות בחודש, שבוצעו דרך האפליקציה על ידי משתמשים מאומתים. הזמנות שבוטלו אינן נחשבות.",
+          "להחזיק לפחות 10 שחקנים שונים המקושרים למועדון ופעילים בפועל במהלך החודש. כל אדם נספר פעם אחת בלבד; גם מי שמשחקים בפועל בטורנירים נספרים. אלה יכולים להיות אותם שחקנים מהחודשים הקודמים."
+        ],
+        "goalsEyebrow": "הטבת Padbol",
+        "goalsLead": "ההנחה הנוספת של 50% חלה כאשר כל יעדי החודש הושגו.",
+        "goalsSummary": "הצג מטרות חודשיות",
+        "goalsTitle": "יעדים שמצמיחים את המועדון שלכם",
+        "header": "Padbol הצעת מועדון",
+        "howAria": "איך היתרונות Pro עובד",
+        "invalidCourts": "היכנסו כמה Padbol Courts למועדון יש.",
+        "lead": "3 החודשים הראשונים ללא תשלום. החל מהחודש הרביעי, התעריף למועדוני Padbol Courts זכאים הוא 34 USD לחודש, כלומר 50% מתעריף הבסיס של 68 USD.",
+        "location": "מיקום Club",
+        "locationPlaceholder": "עיר, מחוז או מדינה",
+        "otherSports": "האם המועדון מציע ספורט אחר?",
+        "outreachText": "שמירה על פעילות ברשתות החברתיות, פרסום המבצעים שלכם ותכנון קמפיינים פרסומיים עוזרים להכיר את המועדון שלכם ולמשוך שחקנים.",
+        "outreachTitle": "הצמיחו את המועדון שלכם",
+        "ownerName": "שמו המלא של הבעלים",
+        "required": "השלם את כל הפרטים המבוקשים כדי להגיש את הבקשה.",
+        "submit": "בקשת הטבת Padbol Courts",
+        "success": "קיבלנו את בקשתכם להטבת Padbol Courts. הצוות שלנו ייצור איתכם קשר להמשך התהליך.",
+        "supportEyebrow": "אפשרויות לThe FIRST MONTH",
+        "supportNote": "זוהי הדרכה ראשונית כדי לעזור לך להתחיל. ניהול מדיה חברתית מתמשכת, קמפיינים מאוחר יותר והוצאות פרסום הם שירותים נוספים.",
+        "supportText": "נלווה אתכם בהיכרות מותאמת אישית עם Padbol Match, ואם המועדון שלכם חדש, נעזור לכם להכין את השקתו ולמשוך שחקנים.",
+        "supportTitle": "אנחנו עוזרים לך להגיע למועדון ולרוץ",
+        "title": "נצלו את הטבת Padbol Courts וקדמו את המועדון שלכם",
+        "whatsapp": "WhatsApp עם קוד המדינה"
+      },
+      "yes": "כן כן כן"
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "טורנירים אוטומטיים",
+          "ציירו קבוצות - משחקים - תוצאות עומדות - סופיות"
+        ],
+        [
+          "יצירת הכנסות חדשות",
+          "חברות, מבצעים ומקומות חסות משלך."
+        ],
+        [
+          "בניית נאמנות שחקן",
+          "PadCoinsקמפיינים והטבות שנקבעו על ידי המועדון."
+        ],
+        [
+          "הקטנת עלויות הפלטפורמה",
+          "התחל: 1% - Pro: 0.65%. ניתן לנהל ערכים על ידי האזור."
+        ]
+      ],
+      "automationAccent": "פחות משימות חוזרות",
+      "automationEyebrow": "STARTER MANAGES",
+      "automationTitle": "עוד פעילות למועדון שלך",
+      "back": "← למנהלים",
+      "bookings": "הזמנות וזמינות",
+      "commissionNote": "על עסקאות מעובדות באמצעות Padbol Match",
+      "connected": "פעולה מחוברת לפני, במהלך ואחרי משחק.",
+      "devices": "טלפון - מחשב",
+      "draft": "INTERNAL DRAFT - Not PUBLISH",
+      "experiencesEyebrow": "FIVE EXPERIENCES",
+      "experiencesText": "אלה Padbol Match ממשקים חזותיים הם אינם תוכניות מסחריות ואינם קובעים אם מועדון משתמש בסטארטר, Pro או עסקים.",
+      "eyebrow": "PADBOL MATCH FOR CLUBS",
+      "faqAccent": "לא האשמות נסתרות.",
+      "faqEyebrow": "שאלות ברורות חידושים.",
+      "faqHelpCta": "ASK HIVI",
+      "faqHelpText": "צ'יאבי יכול להסביר את התוכניות ולעזור לך למצוא את האפשרות הנכונה עבור המועדון שלך.",
+      "faqHelpTitle": "יש עדיין שאלה?",
+      "faqTitle": "אין הפתעות.",
+      "faqs": [
+        [
+          "האם יש האשמות נסתרות?",
+          "לא. לפני הפעלת תוכנית, המועדון יודע ומקבל את המנוי והמינוי שלו. עלויות המעבד של תשלומים הן נפרדות והן אינן מואשמים על ידי Padbol Match."
+        ],
+        [
+          "האם יש תשלום להגשת בקשה?",
+          "לא. שליחת הטופס רק מתחילה את השיחה. זה לא מפעיל תשלום או מנוי."
+        ],
+        [
+          "האם השחקן משלם עמלה?",
+          "לא. שחקנים משלמים 0% עמלה Padbol Match."
+        ],
+        [
+          "האם אני צריך ציוד מיוחד?",
+          "לא. לוח הסימון עובד מטלפון, טאבלט או מחשב ויכול להיות מוצג בטלוויזיה."
+        ],
+        [
+          "האם ניתן להביא נתונים ממערכת אחרת?",
+          "כן, כאשר התבנית תואמת. אנו בודקים את היקף ההגירה עם המועדון לפני שמתחיל."
+        ],
+        [
+          "מה אם אני מנהל כמה מועדונים?",
+          "העסק מיועד לשרשראות ומפעילים רב-אתריים. ניהול מרכזי, הרשאות מועדון, דוחות מאוחדים ותמחור נפח מסכימים עם כל ארגון לפני ההפעלה."
+        ]
+      ],
+      "featured": "הקודם POPULAR",
+      "finalAccent": "המבצע נשאר שלכם.",
+      "finalTitle": "התחל ללא תשלום קבוע.",
+      "finePrint": "מגבלות, מחירים, מבצעים וועדות תלויים באזור ובתצורה הנוכחית. תנאים עסקיים מוגדרים באמצעות מגע מסחרי ואימות טכני.",
+      "fourSports": "4 ספורט",
+      "growthAria": "כלי צמיחה",
+      "lead": "הזמנות, שחקנים, משחקים, טורנירים, דירוגים, לוח חיים, חברות וניהול במקום אחד.",
+      "limits": "גבולות התוכנית",
+      "liveClub": "מועדון חי",
+      "liveMatch": "משחק Live Game and Performanceboard",
+      "membershipText": "מחיר Define, משך, הטבות, הנחות, לוחות זמנים, עדיפות, כללו הזמנות והזמנות PadCoinsזוהי החברות של המועדון, בנפרד מכל חברות שחקן עתידיות.",
+      "membershipTitle": "להציל את עצמך",
+      "metaDescription": "Padbol Match מביא הזמנות, שחקנים, משחקים, טורנירים, דירוגים, לוח ציון דיגיטלי וניהול מועדון רב ספורט יחד.",
+      "metaTitle": "Padbol Match מועדונים - תוכניות",
+      "migration": [
+        [
+          "התחל",
+          "ייבוא קבצים תואם, בכפוף לאימות."
+        ],
+        [
+          "Pro",
+          "סיוע הגירה"
+        ],
+        [
+          "עסקים",
+          "הגירה אישית"
+        ]
+      ],
+      "migrationEyebrow": "רוצים עוד SYSTEM?",
+      "migrationText": "אנו יכולים לייבא מידע השייך באופן לגיטימי למועדון ולהשתמש בפורמט תואם. סקופ מאומת לפני תחילת העבודה.",
+      "migrationTitle": "אתה לא מתחיל מאפס.",
+      "multisportEyebrow": "מועדון אחד מקור:",
+      "multisportText": "ניהול כל Padbol Court משחק אחר Court מאותה פלטפורמה, גם כאשר המועדון מציע ספורט שונה.",
+      "multisportTitle": "Padbol משחק: Pickleball",
+      "notDefined": "להיות מוגדר",
+      "operationAria": "שיתוף פעולה מועדון",
+      "or": "או או",
+      "padbolBenefit": "מועדון PADBOL",
+      "padbolOwnerCta": "בקשו את ההטבות שלכם",
+      "padbolOwnerHint": "גלו איך נוכל לעזור לכם למשוך שחקנים, לעודד פעילות ולהגדיל את הקהילה שלכם.",
+      "padbolOwnerText": "גלו את ההטבות הבלעדיות של Padbol Match למועדון שלכם.",
+      "padbolOwnerTitle": "יש לך אחד או יותר Padbol Courts?",
+      "perMonth": "חודש / חודש",
+      "perYear": "השנה",
+      "plans": {
+        "business": {
+          "adminsLabel": "המונחים",
+          "commissionPrefix": "מתוך From",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "תגית: TALK",
+          "features": [
+            "הכל ב Pro",
+            "היקף רב-אתרי מוגדר עם כל ארגון",
+            "הרשאות וממשל מבוססות על הפרויקט",
+            "דוחות וקמפיינים ברשת לפי היקף",
+            "הגירה אישית",
+            "אינטגרציה ו- API בכפוף לאימות טכני",
+            "תמיכה ייעודית"
+          ],
+          "pricePrefix": "מתוך From",
+          "summary": "פתרונות רב-אתריים ומותאמים אישית לשרשראות, מפעילי ורישיונות."
+        },
+        "pro": {
+          "adminsLabel": "עד 5 מנהלים",
+          "courtsLabel": "עד 12 Courts",
+          "ctaLabel": "עקבו",
+          "features": [
+            "הכל מתחיל",
+            "טורנירים אוטומטיים: שואב, קבוצות, תיקונים, עמידה, חזיונות ופודיום",
+            "דוחות ויצוא עבור הזמנות, הכנסות ו PadCoins",
+            "רשימות המתנה ואזהרות פתיחה",
+            "קמפיינים, מבצעים, פרסים PadCoins גאולה",
+            "חברות מועדון",
+            "הספונסרים שלך על לוחות, טורנירים ומסכים במועדון",
+            "הודעה משותפת לשחקנים במועדון",
+            "סיוע הגירה ותמיכה בעדיפות"
+          ],
+          "summary": "עבור מועדונים שרוצים להיות שותפים לפעילות ולגדול את הקהילה שלהם."
+        },
+        "starter": {
+          "adminsLabel": "1 מנהל",
+          "courtsLabel": "עד 4 Courts",
+          "ctaLabel": "עקבו אחרי ASUBSCRIPTION",
+          "features": [
+            "Padbolפאדל, Pickel, Pickleball and Tennis",
+            "שחקנים ללא הגבלה ולקוחות",
+            "פרופיל מועדון ציבורי, Courtsלוחות זמנים, מחירים וזמינות",
+            "הזמנות באינטרנט והזמנות ידניות",
+            "משחקים, תוצאות כניסה ודירוג מועדון",
+            "טורנירים מנוסים: רישומים, צוותים, משחקים ותוצאות",
+            "ציון דיגיטלי עם שליטה חיה ומסך או פלט טלוויזיה",
+            "לוח התארגנות עבור הזמנות, דיקור וכנסות",
+            "מועדון Club PadCoins איזון, עסקאות וגאולה",
+            "ייבוא קבצים תואם, בכפוף לאישור הקודם"
+          ],
+          "summary": "מועדונים עם עד 4 Courts זה רוצה לנהל פעולות ללא מנוי חודשי."
+        }
+      },
+      "plansAccent": "פנו ל-Pro to Automate.",
+      "plansEyebrow": "שים את זה איתך",
+      "plansTitle": "התחל על ידי ניהול.",
+      "playerFeeAria": "כרטיס שחקן",
+      "playerFeeText": "ועדות התוכנית תואמות את השירות הניתן למועדון. Mercado Pago, Stripe או עלויות מעבד תשלום אחרות הם נפרדים.",
+      "playerFeeTitle": "0% נאמנות ל-PADBOL MATCH.",
+      "results": "תוצאות, דירוג והחזרת ביקורים",
+      "scoreboardAccent": "אין ציוד מיוחד.",
+      "scoreboardAria": "Padbol Match ציון דיגיטלי במהלך משחק",
+      "scoreboardCaption": "הסימון זמין כעת Padbol Match.",
+      "scoreboardEyebrow": "ה-DIGITAL SCOREBOARD, INCLUDED FROM STARTER",
+      "scoreboardItems": [
+        "חי ניקוד ועדכונים.",
+        "הצג על מסך או טלוויזיה",
+        "בקרה אלחוטית של מכשירי מועדון"
+      ],
+      "scoreboardNote": "Pro מוסיף את החסות שלך, טורנירים אוטומטיים, דוחות לייצוא, PadCoins קמפיינים והודעות מפורטות.",
+      "scoreboardTitle": "המשחק חי.",
+      "screensText": "לנהל את החסות שלך על לוח הציון, הטלוויזיה, הטורנירים והמיקומים המקומיים הזמינים. המלאי של המועדון נשאר נפרד מהגלובל Padbol Match מלאי FIPA",
+      "screensTitle": "תסבירו את הידיעות שלכם ב-ASSET",
+      "seePlans": "ביקורת PLANS",
+      "sports": "Padbol משחק: Pickleball",
+      "start": "עקבו אחרי ASUBSCRIPTION",
+      "talk": "ASK ON BUSINESS",
+      "title": "כל המועדון שלך",
+      "titleAccent": "פלטפורמה אחת.",
+      "venueService": "שירות למועדון"
+    }
+  },
+  "pl": {
+    "commercialFlow": {
+      "business": {
+        "back": "Powrót do planów",
+        "chooseSport": "Wybierz sport",
+        "country": "Kraj główny",
+        "courts": "Przybliżona całkowita liczba Courts",
+        "disclaimer": "Zapytanie nie aktywuje żadnego planu, subskrypcji ani opłat.",
+        "email": "Adres e-mail",
+        "error": "Dochodzenie nie mogło zostać przesłane.",
+        "eyebrow": "PRZEDSIĘBIORSTWA · KOŃCOWE I WIELOSYTNE OPERATORY",
+        "formTitle": "Szczegóły niezbędne do przygotowania wniosku",
+        "header": "Badanie planu biznesowego",
+        "invalidCourts": "Wpisać przybliżoną całkowitą liczbę Courts.",
+        "invalidVenues": "Podaj ile klubów posiada organizacja. Dla jednego klubu wybierz Starter lub Pro.",
+        "lead": "Przygotowujemy administrację centralną, zezwolenia dla każdego klubu oraz propozycję dopasowaną do Państwa skali.",
+        "location": "Miasto lub centralna lokalizacja",
+        "manager": "Pełna nazwa menedżera",
+        "organization": "Nazwa organizacji lub łańcucha",
+        "otherSports": "Oferuje inne sporty?",
+        "sending": "Wysyłam...",
+        "sport": "Główny sport",
+        "submit": "Wyślij zapytanie biznesowe",
+        "success": "Otrzymaliśmy twoje dochodzenie. Nasz zespół skontaktuje się z Tobą, aby zdefiniować strukturę multisite i propozycję głośności.",
+        "title": "Powiedz nam jak twoja organizacja jest zorganizowana",
+        "venues": "Ile klubów ma organizacja?",
+        "whatsapp": "WhatsApp z kodem kraju"
+      },
+      "chooseCountry": "Wybierz kraj",
+      "chooseOption": "Wybierz opcję",
+      "no": "Nie.",
+      "promo": {
+        "venueServiceLabel": "Usługa dla klubu na kortach Padbol",
+        "basePriceLabel": "Cena Pro",
+        "basePriceDetail": "Miesięczna stawka przed zastosowaniem korzyści Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 miesiące bezpłatnie",
+            "Włączamy wszystkie narzędzia Pro bez opłat przez pierwsze 3 miesiące."
+          ],
+          [
+            "02",
+            "Korzyść Padbol: 50% zniżki",
+            "Z ceny Pro wynoszącej 68 USD miesięcznie Twój klub Padbol otrzymuje stawkę 34 USD miesięcznie."
+          ],
+          [
+            "03",
+            "Kolejne 50% za realizację celów",
+            "Po osiągnięciu wszystkich celów miesiąca otrzymujesz kolejne 50% zniżki od 34 USD: płacisz 17 USD miesięcznie."
+          ]
+        ],
+        "clubName": "Nazwa klubu",
+        "country": "Kraj",
+        "courtCount": "Ile Padbol Courts Naprawdę?",
+        "email": "Adres e-mail",
+        "eyebrow": "WYŁĄCZNIE ŚWIADCZENIE DLA KLUBÓW PADBOLU",
+        "formSubtitle": "Podaj podstawowe informacje o swoim klubie. Rozpatrzymy zgłoszenie i skontaktujemy się w sprawie dalszych kroków. Wysłanie formularza nie uruchamia żadnych opłat.",
+        "formTitle": "Zacznijmy od twojego klubu.",
+        "goals": [
+          "Zorganizuj i zakończ co najmniej jeden turniej miesięcznie, w całości zarządzany w Padbol Match, z minimum 8 parami i graczami zapisanymi przez aplikację.",
+          "Zapisz wszystkie wyniki w Padbol Match. Ostatni punkt finału na cyfrowej tablicy wyników musi wyłonić mistrza i zakończyć turniej; pozostałe mecze można rejestrować na żywo lub wprowadzić ręcznie po ich zakończeniu.",
+          "Zrealizuj 12 rzeczywistych rezerwacji miesięcznie, dokonanych w aplikacji przez zweryfikowanych użytkowników. Anulowane rezerwacje nie liczą się.",
+          "Miej co najmniej 10 różnych graczy powiązanych z klubem i rzeczywiście aktywnych w danym miesiącu. Każda osoba liczy się tylko raz; wliczają się również osoby, które faktycznie grają w turniejach. Mogą to być ci sami gracze co w poprzednich miesiącach."
+        ],
+        "goalsEyebrow": "Korzyść Padbol",
+        "goalsLead": "Dodatkowe 50% przysługuje po osiągnięciu wszystkich celów miesiąca.",
+        "goalsSummary": "Pokaż cele miesięczne",
+        "goalsTitle": "Cele, które rozwijają Twój klub",
+        "header": "Padbol zapytanie klubu Pro",
+        "howAria": "Jak działa Pro benefit",
+        "invalidCourts": "Podaj ile Padbol Courts Klub tak.",
+        "lead": "Pierwsze 3 miesiące są bezpłatne. Od czwartego miesiąca stawka dla uprawnionych klubów Padbol Courts wynosi 34 USD miesięcznie, czyli 50% stawki podstawowej 68 USD.",
+        "location": "Lokalizacja klubu",
+        "locationPlaceholder": "Miasto, prowincja lub państwo",
+        "otherSports": "Czy klub oferuje inne sporty?",
+        "outreachText": "Aktywność w mediach społecznościowych, informowanie o promocjach i planowanie kampanii reklamowych pomaga promować klub i przyciągać graczy.",
+        "outreachTitle": "Rozwijaj swój klub",
+        "ownerName": "Imię i nazwisko właściciela",
+        "required": "Należy wypełnić wszystkie wymagane szczegóły, aby złożyć wniosek.",
+        "submit": "Zgłoś chęć skorzystania z korzyści Padbol Courts",
+        "success": "Otrzymaliśmy zgłoszenie dotyczące korzyści Padbol Courts. Nasz zespół skontaktuje się w sprawie dalszych kroków.",
+        "supportEyebrow": "WYTYCZNE W TWOIM PIERWSZYM MIESIĘCY",
+        "supportNote": "To wstępne wskazówki, które pomogą ci zacząć. Bieżące zarządzanie mediami społecznościowymi, późniejsze kampanie i wydatki reklamowe to usługi dodatkowe.",
+        "supportText": "Zapewniamy indywidualne wdrożenie do Padbol Match, a jeśli Twój klub jest nowy, pomagamy przygotować jego otwarcie i przyciągnąć graczy.",
+        "supportTitle": "Pomagamy ci uruchomić klub.",
+        "title": "Skorzystaj z korzyści Padbol Courts i rozwijaj swój klub",
+        "whatsapp": "WhatsApp z kodem kraju"
+      },
+      "yes": "Tak."
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Turnieje automatyczne",
+          "Draw → grupy → gry → wyniki → standings → nawiasy → finały."
+        ],
+        [
+          "Tworzenie nowych dochodów",
+          "Memberships, promocje i własne staże sponsorów."
+        ],
+        [
+          "Zbuduj lojalność gracza",
+          "PadCoins, kampanie i korzyści skonfigurowane przez klub."
+        ],
+        [
+          "Zmniejszenie kosztów platformy",
+          "Start: 1% · Pro: 0,65%. Wartości można zarządzać według regionów."
+        ]
+      ],
+      "automationAccent": "Mniej powtarzających się zadań.",
+      "automationEyebrow": "Zarządca startowy.",
+      "automationTitle": "Więcej aktywności dla twojego klubu.",
+      "back": "← Dla administratorów",
+      "bookings": "Rezerwacje i dostępność",
+      "commissionNote": "w sprawie transakcji przetwarzanych za pośrednictwem Padbol Match",
+      "connected": "Jedna połączona operacja przed, w trakcie i po grze.",
+      "devices": "Telefon · Tablet · Komputer · TV",
+      "draft": "WEWNĘTRZNY PROJEKT - NIE PUBLIKOWANY",
+      "experiencesEyebrow": "Pięć experiencji.",
+      "experiencesText": "Są to: Padbol Match interfejsy wizualne. Nie są to plany handlowe i nie określają, czy klub wykorzystuje Starter, Pro czy Business.",
+      "eyebrow": "PADBOL MATCH DLA CLUBÓW",
+      "faqAccent": "Żadnych ukrytych zarzutów.",
+      "faqEyebrow": "Jasne pytania. Bezpośrednie odpowiedzi.",
+      "faqHelpCta": "ASK CHIVI",
+      "faqHelpText": "Chivi może wyjaśnić plany i pomóc znaleźć właściwą opcję dla klubu.",
+      "faqHelpTitle": "Nadal masz pytanie?",
+      "faqTitle": "Żadnych niespodzianek.",
+      "faqs": [
+        [
+          "Są jakieś ukryte zarzuty?",
+          "Nie. Przed uruchomieniem planu klub zna i akceptuje swoją subskrypcję i prowizję. Koszty przetwórcy płatności są oddzielne i nie są pobierane przez Padbol Match."
+        ],
+        [
+          "Czy istnieje opłata za złożenie wniosku?",
+          "Nie. Wysłanie formularza tylko rozpoczyna rozmowę. Nie aktywuje opłat ani subskrypcji."
+        ],
+        [
+          "Czy gracz płaci prowizję?",
+          "Nie. Gracze płacą 0% prowizji do Padbol Match."
+        ],
+        [
+          "Potrzebuję specjalnego sprzętu do tablicy wyników?",
+          "Nie. Tablica wyników działa z telefonu, tabletu lub komputera i może być wyświetlana w telewizorze."
+        ],
+        [
+          "Czy mogę przynieść dane z innego systemu?",
+          "Tak, gdy format jest kompatybilny. Przeglądamy zakres migracji z klubem przed rozpoczęciem."
+        ],
+        [
+          "A co jeśli zarządzam kilkoma klubami?",
+          "Biznes jest przeznaczony dla łańcuchów i operatorów multisitów. Administracja centralna, uprawnienia klubowe, skonsolidowane raporty i ceny wolumenu są uzgadniane z każdą organizacją przed aktywacją."
+        ]
+      ],
+      "featured": "NAJWIĘKSZY POPULAR",
+      "finalAccent": "Operacja pozostaje twoja.",
+      "finalTitle": "Zacznij bez stałej opłaty.",
+      "finePrint": "Limity, ceny, promocje i prowizje zależą od regionu i obecnej konfiguracji. Terminy biznesowe są definiowane poprzez kontakt handlowy i walidację techniczną.",
+      "fourSports": "4 sporty",
+      "growthAria": "Narzędzia prorozwojowe",
+      "lead": "Rezerwacje, gracze, gry, turnieje, rankingi, tablica wyników na żywo, członkostwo i zarządzanie w jednym miejscu.",
+      "limits": "Limity planu",
+      "liveClub": "CZUJ ŻYĆ",
+      "liveMatch": "Gra na żywo i tablica wyników",
+      "membershipText": "Zdefiniuj cenę, czas trwania, korzyści, rabaty, harmonogramy, priorytet, w tym rezerwacji i PadCoinsTo jest własne członkostwo klubu, oddzielone od przyszłego globalnego członkostwa gracza.",
+      "membershipTitle": "Stworzyć własny członek",
+      "metaDescription": "Padbol Match przynosi rezerwacje, gracze, gry, turnieje, rankingi, cyfrowa tablica wyników i zarządzanie klubem multisport razem.",
+      "metaTitle": "Padbol Match dla klubów - plany",
+      "migration": [
+        [
+          "Starter",
+          "Kompatybilny import plików, pod warunkiem zatwierdzenia."
+        ],
+        [
+          "Pro",
+          "Pomagana migracja."
+        ],
+        [
+          "Biznes",
+          "Niestandardowa migracja."
+        ]
+      ],
+      "migrationEyebrow": "Już używasz innego systemu?",
+      "migrationText": "Możemy importować informacje, że legalnie należy do klubu i używa kompatybilnego formatu. Zakres jest zatwierdzony przed rozpoczęciem pracy.",
+      "migrationTitle": "Nie zaczynasz od zera.",
+      "multisportEyebrow": "Jeden klub. Czterech.",
+      "multisportText": "Zarządzaj każdym Padbol Court i inne gry Court z tej samej platformy, nawet jeśli klub oferuje różne sporty.",
+      "multisportTitle": "Padbol · Padel · Pickleball · Tennis",
+      "notDefined": "Do zdefiniowania",
+      "operationAria": "Operacja połączonego klubu",
+      "or": "lub",
+      "padbolBenefit": "WYŁĄCZNIE ŚWIADCZENIE DLA KLUBÓW PADBOLU",
+      "padbolOwnerCta": "ZAWNIOSKUJ O KORZYŚCI",
+      "padbolOwnerHint": "Dowiedz się, jak możemy pomóc Ci przyciągnąć graczy, zwiększyć aktywność i rozwijać Twoją społeczność.",
+      "padbolOwnerText": "Odkryj wyjątkowe korzyści Padbol Match dla swojego klubu.",
+      "padbolOwnerTitle": "Czy posiadasz jedną lub więcej Padbol Courts?",
+      "perMonth": "/ miesiąc",
+      "perYear": "/ rok",
+      "plans": {
+        "business": {
+          "adminsLabel": "Warunki własne",
+          "commissionPrefix": "Od",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "Porozmawiajmy.",
+          "features": [
+            "Wszystko w Pro",
+            "Zakres wielowymiarowy zdefiniowany dla każdej organizacji",
+            "Scentralizowane uprawnienia i administracja w oparciu o projekt",
+            "Skonsolidowane sprawozdania i kampanie sieciowe w zależności od zakresu",
+            "Niestandardowa migracja",
+            "Integracje i API podlegające zatwierdzeniu technicznemu",
+            "Specjalne wsparcie"
+          ],
+          "pricePrefix": "Od",
+          "summary": "Wielofunkcyjne i niestandardowe rozwiązania dla łańcuchów, operatorów i licencjobiorców."
+        },
+        "pro": {
+          "adminsLabel": "Do 5 administratorów",
+          "courtsLabel": "Do 12 Courts",
+          "ctaLabel": "CHOOSE PRO",
+          "features": [
+            "Wszystko w Starter",
+            "Automatyczne turnieje: remis, grupy, osprzęt, stojaki, nawiasy i podium",
+            "Raporty i eksport dla rezerwacji, przychodów i PadCoins",
+            "Listy oczekujących na turniej i otwierające alarmy",
+            "Kampanie, promocje, nagrody i PadCoins umorzenia",
+            "Członkowie klubu",
+            "Twoi sponsorzy na tablicach wyników, turniejach i ekranach klubowych",
+            "Segmentowane powiadomienia dla graczy klubowych",
+            "Wsparcie migracji i wsparcie priorytetowe"
+          ],
+          "summary": "Dla klubów, które chcą zautomatyzować działania i rozwijać swoją społeczność."
+        },
+        "starter": {
+          "adminsLabel": "1 administrator",
+          "courtsLabel": "Do 4 Courts",
+          "ctaLabel": "START BEZ SUBSCRIPTION",
+          "features": [
+            "Padbol, Padel, Pickleball i Tenis",
+            "Nieograniczeni gracze i klienci",
+            "Profil klubu publicznego, Courts, harmonogramy, ceny i dostępność",
+            "Rezerwacje online i manualny wpis rezerwacji",
+            "Gry, wyniki i ranking klubów",
+            "Turnieje zarządzane klubem: rejestracje, zespoły, gry i wyniki",
+            "Cyfrowa tablica wyników z sterowaniem na żywo oraz wyjściem ekranu lub telewizora",
+            "Operacyjna deska rozdzielcza do rezerwacji, zajmowania miejsc i dochodów",
+            "Klub PadCoins salda, transakcje i umorzenia",
+            "Kompatybilny import plików, podlegający uprzedniemu zatwierdzeniu"
+          ],
+          "summary": "Dla klubów do 4 Courts które chcą zarządzać operacjami bez miesięcznej subskrypcji."
+        }
+      },
+      "plansAccent": "Przejdź do Pro, aby zautomatyzować.",
+      "plansEyebrow": "PLANS, że rośnie z tobą",
+      "plansTitle": "Zacznij od zarządzania.",
+      "playerFeeAria": "Opłaty gracza",
+      "playerFeeText": "Komisja ds. Planu odpowiada usługom świadczonym na rzecz klubu. Mercado Pago, Stripe lub inne koszty procesora płatności są oddzielne.",
+      "playerFeeTitle": "PLAYERS PAY 0% KOMISJA DO PADBOL MATCH.",
+      "results": "Wyniki, ranking i wizyty powrotne",
+      "scoreboardAccent": "Brak specjalnego sprzętu.",
+      "scoreboardAria": "Padbol Match cyfrowa tablica wyników podczas gry",
+      "scoreboardCaption": "Tabela wyników dostępna obecnie w Padbol Match.",
+      "scoreboardEyebrow": "Twój digital Scoreboard, w tym ze Starter",
+      "scoreboardItems": [
+        "Punktacja na żywo i aktualizacje.",
+        "Wyświetlanie na ekranie lub telewizorze.",
+        "Bezprzewodowa kontrola urządzeń klubowych."
+      ],
+      "scoreboardNote": "Pro dodaje własnych sponsorów, automatycznych turniejów, zdalnych raportów, PadCoins kampanie i powiadomienia podzielone.",
+      "scoreboardTitle": "Gra na żywo.",
+      "screensText": "Zarządzaj własnymi sponsorami na tablicy wyników, TV, turniejach i dostępnych lokalach. Lista klubowa pozostaje oddzielona od Global Padbol Match i inwentaryzację FIPA.",
+      "screensTitle": "Wrzuć swoje krzyżyki do asety",
+      "seePlans": "PLANY WIDOWE",
+      "sports": "Padbol · Padel · Pickleball · Tennis",
+      "start": "START BEZ SUBSCRIPTION",
+      "talk": "Pytaj o biznes",
+      "title": "Cały klub.",
+      "titleAccent": "Jedna platforma.",
+      "venueService": "Serwis dla klubu"
+    }
+  },
+  "uk": {
+    "commercialFlow": {
+      "business": {
+        "back": "Повернутися до тарифів",
+        "chooseSport": "Виберіть спорт",
+        "country": "Головна",
+        "courts": "Приблизно загальна кількість Courts",
+        "disclaimer": "Запит не активувати будь-який план, підписка або платіж.",
+        "email": "Контакти",
+        "error": "Запит не може бути відправлений.",
+        "eyebrow": "БІЗНЕС · ХЕННІ ТА МУЛІТИТНІ ОПЕРАТОРИ",
+        "formTitle": "Деталі, необхідні для підготовки пропозицій",
+        "header": "Запит бізнес плану",
+        "invalidCourts": "Введіть приблизну загальну кількість Courts.",
+        "invalidVenues": "Вкажіть, скільки клубів організації має. Для одного клубу виберіть Starter або Pro.",
+        "lead": "Ми готуємо центральне управління, дозволи на кожен клуб і пропозицію, що підходить для Вашого масштабу.",
+        "location": "Місто або центральне розташування",
+        "manager": "Повне найменування менеджера",
+        "organization": "Організація або назва мережі",
+        "otherSports": "Чи є на увазі інші види спорту?",
+        "sending": "Відправити",
+        "sport": "Головна Спорт",
+        "submit": "Надіслати запит на бізнес",
+        "success": "Ми отримали бізнес-запит. Наша команда зв'яжеться з вами, щоб визначити багатовимірну структуру та пропозицію об'єму.",
+        "title": "Розкажіть, як ваша організація структурована",
+        "venues": "Скільки клубів є організація?",
+        "whatsapp": "WhatsApp з кодом країни"
+      },
+      "chooseCountry": "Виберіть країну",
+      "chooseOption": "Виберіть варіант",
+      "no": "Немає",
+      "promo": {
+        "venueServiceLabel": "Послуга для клубу на кортах Padbol",
+        "basePriceLabel": "Вартість Pro",
+        "basePriceDetail": "Місячний тариф до застосування переваг Padbol.",
+        "benefits": [
+          [
+            "01",
+            "3 місяці безкоштовно",
+            "Активуємо всі інструменти Pro без оплати протягом перших 3 місяців."
+          ],
+          [
+            "02",
+            "Перевага Padbol: знижка 50%",
+            "Від вартості Pro у 68 USD на місяць ваш клуб Padbol отримує тариф 34 USD на місяць."
+          ],
+          [
+            "03",
+            "Ще 50% за виконання цілей",
+            "Коли ви виконуєте всі цілі місяця, отримуєте ще 50% знижки від 34 USD: сплачуєте 17 USD на місяць."
+          ]
+        ],
+        "clubName": "Назва клубу",
+        "country": "Країна",
+        "courtCount": "Як багато Padbol Courts Чи є це?",
+        "email": "Контакти",
+        "eyebrow": "ЕКСКЛЮЗИВНИЙ БЕНЕФІТ ДЛЯ ПАДБОЛЬНИХ КЛУБІВ",
+        "formSubtitle": "Розкажіть основні відомості про свій клуб. Ми розглянемо заявку та зв’яжемося з вами для продовження. Надсилання форми не активує жодних платежів.",
+        "formTitle": "Почнемо з вашим клубом",
+        "goals": [
+          "Організувати та завершити щонайменше один турнір на місяць, повністю керований у Padbol Match, із мінімум 8 парами та гравцями, зареєстрованими через застосунок.",
+          "Записати всі результати в Padbol Match. Останнє очко фіналу на цифровому табло має визначити чемпіона й завершити турнір; інші матчі можна записувати наживо або вводити вручну після їх завершення.",
+          "Завершити 12 реальних бронювань на місяць, здійснених через застосунок підтвердженими користувачами. Скасовані бронювання не враховуються.",
+          "Мати щонайменше 10 різних гравців, пов’язаних із клубом і реально активних протягом місяця. Кожна людина враховується лише один раз; також враховуються ті, хто фактично грає в турнірах. Це можуть бути ті самі гравці, що й у попередні місяці."
+        ],
+        "goalsEyebrow": "Перевага Padbol",
+        "goalsLead": "Додаткові 50% застосовуються за умови виконання всіх цілей місяця.",
+        "goalsSummary": "Перегляд щомісячних цілей",
+        "goalsTitle": "Цілі, які допомагають вашому клубу зростати",
+        "header": "Padbol клуб Про запит",
+        "howAria": "Як працює користь Pro",
+        "invalidCourts": "Вкажіть скільки Padbol Courts клуб має.",
+        "lead": "Перші 3 місяці безкоштовні. Із четвертого місяця тариф для клубів Padbol Courts, які відповідають умовам, становить 34 USD на місяць, тобто 50% базового тарифу 68 USD.",
+        "location": "Розташування готелю",
+        "locationPlaceholder": "Місто, провінція або держава",
+        "otherSports": "Чи пропонує клуб інші види спорту?",
+        "outreachText": "Активність у соціальних мережах, повідомлення про ваші акції та планування рекламних кампаній допомагають розповісти про клуб і залучити гравців.",
+        "outreachTitle": "Розвивайте свій клуб",
+        "ownerName": "Повне найменування власника",
+        "required": "Заповніть всі необхідні деталі для подання запиту.",
+        "submit": "Подати заявку на перевагу Padbol Courts",
+        "success": "Ми отримали вашу заявку на перевагу Padbol Courts. Наша команда зв’яжеться з вами для подальших кроків.",
+        "supportEyebrow": "ЗДОРОВ'Я ПЕРШОГО ЗДОРОВ'Я",
+        "supportNote": "Це початкове керівництво, щоб допомогти вам розпочати. Оголошено управління соціальними мережами, пізніші кампанії та рекламні витрати – додаткові послуги.",
+        "supportText": "Ми надаємо індивідуальний супровід із початку роботи з Padbol Match і, якщо ваш клуб новий, допомагаємо підготувати його відкриття та залучити гравців.",
+        "supportTitle": "Ми допоможемо вам зробити свій клуб",
+        "title": "Скористайтеся перевагою Padbol Courts і розвивайте свій клуб",
+        "whatsapp": "WhatsApp з кодом країни"
+      },
+      "yes": "Я"
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Автоматизовані турніри",
+          "Малюнок → групи → ігри → результати → Столи → дужки → фінали."
+        ],
+        [
+          "Створити новий дохід",
+          "Просування та розміщення власних спонсорів."
+        ],
+        [
+          "Створення лояльності гравця",
+          "PadCoins, походи та переваги, налаштовані клубом."
+        ],
+        [
+          "Знижена вартість платформи",
+          "Стартер: 1% · Pro: 0.65%. Цінності можуть бути керовані регіоном."
+        ]
+      ],
+      "automationAccent": "Репетивні завдання.",
+      "automationEyebrow": "ПРО АВТОМАТИ.",
+      "automationTitle": "Більше активності для вашого клубу.",
+      "back": "← Для адміністраторів",
+      "bookings": "Бронювання та наявність",
+      "commissionNote": "по операціях, що обробляються через Padbol Match",
+      "connected": "Одна підключена операція перед, під час і після гри.",
+      "devices": "Телефон · Таблетка · Комп'ютер · ТВ",
+      "draft": "ІНТЕРНАЛЬНА ДРАФА · НЕ ПУБЛІЧНА",
+      "experiencesEyebrow": "ВИРОБНИЦТВО.",
+      "experiencesText": "Ці Padbol Match візуальні інтерфейси. Вони не є комерційними планами і не визначають, чи використовує клуб Starter, Pro або Business.",
+      "eyebrow": "PADBOL MATCH ДЛЯ КЛЮБІВ",
+      "faqAccent": "Немає прихованих зарядів.",
+      "faqEyebrow": "ПИТАННЯ КЛІЄНТІВ. ЗАХИСТ ОБСЛУГОВУВАННЯ.",
+      "faqHelpCta": "АСК ХІВІ",
+      "faqHelpText": "Чиві можна пояснити плани та допомогти вам знайти правильний варіант для вашого клубу.",
+      "faqHelpTitle": "Наскільки є питання?",
+      "faqTitle": "Немає сюрпризів.",
+      "faqs": [
+        [
+          "Чи існують приховані заряди?",
+          "Ні. Перед тим як активувати план, клуб знає і приймає підписку і комісію. Вартість платіжного процесора - окрема і не стягується Padbol Match."
+        ],
+        [
+          "Чи існує плата за подання запиту?",
+          "Ні. Відправлення форми тільки починається розмова. Не активувати плату або підписку."
+        ],
+        [
+          "Чи платить гравець?",
+          "Ні. Гравці оплачують 0% комісії Padbol Match."
+        ],
+        [
+          "Чи потрібне спеціальне обладнання?",
+          "Ні. На блоці працює телефон, планшет або комп'ютер і може відображатися на телевізорі."
+        ],
+        [
+          "Чи можу я принести дані з іншої системи?",
+          "Так, коли формат сумісний. Перегляньте обсяг міграції з клубом до початку."
+        ],
+        [
+          "Що робити, якщо я можу керувати декількома клубами?",
+          "Бізнес призначений для операторів ланцюгів та мультисайтів. Центральне управління, клубні дозволи, консолідовані звіти та обсяги ціноутворення погоджено з кожною організацією до активації."
+        ]
+      ],
+      "featured": "ОПУЛЬАР",
+      "finalAccent": "Операція залишається вашим.",
+      "finalTitle": "Почати без фіксованої плати.",
+      "finePrint": "Обмеження, ціни, акції та комісії залежать від регіону та поточної конфігурації. Визначені умови ведення бізнесу за допомогою комерційного контакту та технічної перевірки.",
+      "fourSports": "4 види спорту",
+      "growthAria": "Інструменти для росту Pro",
+      "lead": "Bookings, гравці, ігри, турніри, рейтинги, вітальня, членства та управління в одному місці.",
+      "limits": "Обмеження плану",
+      "liveClub": "КЛУБ ЖИТИ",
+      "liveMatch": "Жива гра і букборд",
+      "membershipText": "Ціна, тривалість, переваги, знижки, графіки, пріоритет, включені бронювання та PadCoins. Це власний член клубу, відокремлений від будь-якого майбутнього світового членства.",
+      "membershipTitle": "СТВОРИТИ ВАШУ ЗЕМБЕРСТАННЯ",
+      "metaDescription": "Padbol Match приносить бронювання, гравці, ігри, турніри, рейтинги, цифровий щит і багатоспортний клуб управління разом.",
+      "metaTitle": "Padbol Match для клубів — Плани",
+      "migration": [
+        [
+          "Почати",
+          "Сумісний імпорт файлів, за умови перевірки."
+        ],
+        [
+          "Про нас",
+          "Здійснено міграцію."
+        ],
+        [
+          "Бізнес",
+          "Користувальницькі міграції."
+        ]
+      ],
+      "migrationEyebrow": "ЗАСТОСУВАННЯ ІНШИХ СИСТЕМ?",
+      "migrationText": "Ми можемо імпортувати інформацію, яка законно належить до клубу і використовує сумісний формат. Сфера діє до початку роботи.",
+      "migrationTitle": "Ви не починаєте з нуля.",
+      "multisportEyebrow": "ONE CLUB. СПОРТИВНІ КОМПАНІЇ.",
+      "multisportText": "Кожен Padbol Court та інші ігри Court з тієї ж платформи, навіть коли ваш клуб пропонує різні види спорту.",
+      "multisportTitle": "Padbol · Павел · Плейбол · Теніс",
+      "notDefined": "Для визначення",
+      "operationAria": "Експлуатація клубу",
+      "or": "або",
+      "padbolBenefit": "ЕКСКЛЮЗИВНИЙ БЕНЕФІТ ДЛЯ ПАДБОЛЬНИХ КЛУБІВ",
+      "padbolOwnerCta": "ЗАПРОСІТЬ СВОЇ ПЕРЕВАГИ",
+      "padbolOwnerHint": "Дізнайтеся, як ми можемо допомогти вам залучити гравців, пожвавити активність і розширити вашу спільноту.",
+      "padbolOwnerText": "Відкрийте для себе ексклюзивні переваги Padbol Match для вашого клубу.",
+      "padbolOwnerTitle": "Ви самостійно Padbol Courts?",
+      "perMonth": "/ місяць",
+      "perYear": "/ рік",
+      "plans": {
+        "business": {
+          "adminsLabel": "Умови використання",
+          "commissionPrefix": "З",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "ТЕЛЕВІЗИТ",
+          "features": [
+            "Про нас",
+            "Об'єм сайту, визначений кожною організацією",
+            "Централізовані дозволи та адміністрування на основі проекту",
+            "Консолідовані звіти та мережеві кампанії за обсягом",
+            "Користувальницькі міграції",
+            "Інтеграція та API, що підлягають технічному валідації",
+            "Супутникове забезпечення"
+          ],
+          "pricePrefix": "З",
+          "summary": "Мультисайтні та нестандартні рішення для ланцюгів, операторів та ліцензій."
+        },
+        "pro": {
+          "adminsLabel": "До 5 адміністраторів",
+          "courtsLabel": "до 12 Courts",
+          "ctaLabel": "КОЗЕ ПРО",
+          "features": [
+            "Все в Стартер",
+            "Автоматизовані турніри: розіграші, групи, світильники, стійки, кронштейни та подіуми",
+            "Звіти та експорт для бронювання, надходження та PadCoins",
+            "Списки очікування турніру та оповіщення про відкриття",
+            "Акції, акції, нагороди та нагороди PadCoins руді",
+            "Члени клубу",
+            "Ваші власні спонсори на щитах, турнірах та клубних екранах",
+            "Вирішені повідомлення для гравців клубу",
+            "Підтримувані міграції та пріоритетне забезпечення"
+          ],
+          "summary": "Для клубів, які хочуть автоматизувати операції і виростити їх громаду."
+        },
+        "starter": {
+          "adminsLabel": "1 адміністратор",
+          "courtsLabel": "до 4 Courts",
+          "ctaLabel": "СТАРТ З ПРОМИСЛОВОСТІ",
+          "features": [
+            "Padbol, Павел, Пальто і теніс",
+            "Необмежені гравці та клієнти",
+            "Профіль громадського клубу, Courts, графіки, тарифи та наявність",
+            "Онлайн бронювання та запис ручного бронювання",
+            "Ігри, результат вступу та рейтинг клубу",
+            "Клубні турніри: реєстрація, команди, ігри та результати",
+            "Цифровий щит з живим управлінням та екраном або вихідним телевізором",
+            "Оперативна панель для бронювання, розміщення та надходжень",
+            "Клуби PadCoins баланси, операції та переробка",
+            "Сумісний імпорт файлів, за умови попередньої перевірки"
+          ],
+          "summary": "Для клубів до 4 Courts які хочуть керувати операціями без щомісячної підписки."
+        }
+      },
+      "plansAccent": "Перемістити в Pro для автоматизації.",
+      "plansEyebrow": "ПЛАНИ, ЩО ЗДОРОВ'Я З вами",
+      "plansTitle": "Старт управління.",
+      "playerFeeAria": "Плата за гравця",
+      "playerFeeText": "Планові комісії відповідають послугам, що надаються клубу. Милосердо Паго, Роздягання або інші витрати на платіжний процесор",
+      "playerFeeTitle": "ПЛАТЕРИ ПАЙ 0% COMMISSION до PADBOL MATCH.",
+      "results": "Результати та рейтинги",
+      "scoreboardAccent": "Не спеціальне обладнання.",
+      "scoreboardAria": "Padbol Match цифровий щиток під час гри",
+      "scoreboardCaption": "В даний час можна знайти в Padbol Match.",
+      "scoreboardEyebrow": "ВАШЕ ДИГАЛ ШКОРУД, ВЗАЄМО З STARTER",
+      "scoreboardItems": [
+        "Живий рахунок і оновлення.",
+        "Показувати екран або телевізор.",
+        "Бездротовий контроль від приладів клубу."
+      ],
+      "scoreboardNote": "Про додає свої власні спонсори, автоматизовані турніри, експортні звіти, PadCoins рекламні кампанії та відрізані повідомлення.",
+      "scoreboardTitle": "Гра в прямому ефірі.",
+      "screensText": "Керуйте власними спонсорами на задньому щиті, телевізорах, турнірах та наявних локальних місцях. Композиторій від Global Padbol Match і FIPA інвентаризація.",
+      "screensTitle": "ТУРНБО ВАШІ СКЛАДИ",
+      "seePlans": "ПЕРЕГЛЯД ПЛАН",
+      "sports": "Padbol · Павел · Плейбол · Теніс",
+      "start": "СТАРТ З ПРОМИСЛОВОСТІ",
+      "talk": "ПРО БІЗНЕС",
+      "title": "Весь клуб.",
+      "titleAccent": "Один майданчик.",
+      "venueService": "Послуги для клубу"
+    }
+  },
+  "af": {
+    "commercialFlow": {
+      "business": {
+        "back": "Terug na plan",
+        "chooseSport": "Kies 'n sport",
+        "country": "Hoofland",
+        "courts": "Geskatte totale aantal Courts",
+        "disclaimer": "Die ondersoek aktiveer nie enige plan, intekening of lading nie.",
+        "email": "Kontak e-pos",
+        "error": "Die vraag kon nie gestuur word nie.",
+        "eyebrow": "BUSITIGHEID · Constellation name (optional)",
+        "formTitle": "Detail nodig om die voorstel voor te berei",
+        "header": "Besigheidsplan navraag",
+        "invalidCourts": "Invoer die benaderde totaal nommer van Courts.",
+        "invalidVenues": "Gee hoeveel klubs die organisasie het. Vir een klub, kies Beginler of Pro.",
+        "lead": "Ons berei sentrale administrasie voor, regte vir elke klub en 'n voorstel wat geskik is vir jou skaal.",
+        "location": "Stad of sentrale ligging",
+        "manager": "Bestuurder Managers volgrote naam",
+        "organization": "Organisasie of kettingnaam",
+        "otherSports": "Bied dit ander sportsoorte aan?",
+        "sending": "Stygend…",
+        "sport": "Hoofsport",
+        "submit": "Stuur Besigheid navraag",
+        "success": "Ons het jou sakeondersoek ontvang, ons span sal jou kontak om die multiste struktuur en 'n volume-aanbod te definieer.",
+        "title": "Vertel ons hoe julle organisasie saamgestel is",
+        "venues": "Hoeveel klubs die organisasie het?",
+        "whatsapp": "Whatsamp met landkode"
+      },
+      "chooseCountry": "Kies 'n land",
+      "chooseOption": "Kies 'n keuse",
+      "no": "Nee",
+      "promo": {
+        "venueServiceLabel": "Klubdiens vir Padbol-bane",
+        "basePriceLabel": "Pro-prys",
+        "basePriceDetail": "Die maandelikse tarief voordat Padbol-voordele toegepas word.",
+        "benefits": [
+          [
+            "01",
+            "3 maande gratis",
+            "Ons aktiveer alle Pro-gereedskap sonder koste vir die eerste 3 maande."
+          ],
+          [
+            "02",
+            "Padbol-voordeel: 50% afslag",
+            "Vanaf die Pro-prys van 68 USD per maand kry jou Padbol-klub ’n tarief van 34 USD per maand."
+          ],
+          [
+            "03",
+            "Nog 50% wanneer die doelwitte bereik is",
+            "Wanneer jy al die maand se doelwitte bereik, kry jy nog 50% afslag op 34 USD: jy betaal 17 USD per maand."
+          ]
+        ],
+        "clubName": "Sklubnaam",
+        "country": "Land",
+        "courtCount": "Hoeveel Padbol Courts het dit wel?",
+        "email": "Kontak e-pos",
+        "eyebrow": "UITGLOSIEWE BAAT GEVIND VIR PADBOL CLUBS",
+        "formSubtitle": "Vertel ons die noodsaaklike besonderhede van jou klub. Ons sal jou aansoek hersien en jou kontak om voort te gaan. Die indiening van die vorm aktiveer geen heffings nie.",
+        "formTitle": "Laat Kodas by jou klub begin",
+        "goals": [
+          "Reël en voltooi minstens een toernooi per maand, geheel en al in Padbol Match bestuur, met minstens 8 pare en spelers wat deur die toepassing ingeskryf het.",
+          "Teken alle uitslae in Padbol Match aan. Die laaste punt van die finaal op die digitale telbord moet die kampioen bepaal en die toernooi afsluit; ander wedstryde kan regstreeks aangeteken of ná afloop handmatig ingevoer word.",
+          "Voltooi 12 werklike besprekings per maand wat geverifieerde gebruikers deur die toepassing gemaak het. Gekanselleerde besprekings tel nie.",
+          "Hê minstens 10 verskillende spelers wat aan die klub gekoppel is en gedurende die maand werklik aktief is. Elke persoon tel net een keer; spelers wat werklik in toernooie speel, tel ook. Dit mag dieselfde spelers as in vorige maande wees."
+        ],
+        "goalsEyebrow": "Padbol-voordeel",
+        "goalsLead": "Die bykomende 50% geld wanneer al die maand se doelwitte bereik is.",
+        "goalsSummary": "Bekyk maandelikse doelwitte",
+        "goalsTitle": "Doelwitte wat jou klub laat groei",
+        "header": "Padbol Navraag vt-versoek",
+        "howAria": "Hoe die Pro tot voordeel strek",
+        "invalidCourts": "Voer in hoeveel Padbol Courts het die klub.",
+        "lead": "Die eerste 3 maande is gratis. Vanaf die vierde maand is die tarief vir kwalifiserende Padbol Courts-klubs 34 USD per maand, oftewel 50% van die basistarief van 68 USD.",
+        "location": "Open ligging",
+        "locationPlaceholder": "Stad, provinsie of staat",
+        "otherSports": "Bied die klub ander sportsoorte aan?",
+        "outreachText": "Deur jou sosiale media aktief te hou, jou promosies te deel en advertensieveldtogte te beplan, help jy mense om jou klub te ontdek en lok jy spelers.",
+        "outreachTitle": "Laat jou klub groei",
+        "ownerName": "Eienaar Nalbandians vol naam",
+        "required": "Volledige alle versoekte details na stuur die versoek.",
+        "submit": "Versoek die Padbol Courts-voordeel",
+        "success": "Ons het jou versoek vir die Padbol Courts-voordeel ontvang. Ons span sal jou kontak om voort te gaan.",
+        "supportEyebrow": "GEVREDE GEDURENDE JOU eerste Maand",
+        "supportNote": "Dit is aanvanklike leiding om jou te help om te begin. ' n Verdere sosiale mediabestuur, latere veldtogte en reklamebesteding is bykomende dienste.",
+        "supportText": "Ons begelei jou met ’n persoonlike bekendstelling aan Padbol Match en help jou, as jou klub nuut is, om die bekendstelling voor te berei en spelers te lok.",
+        "supportTitle": "Ons help jou om jou klub op te staan en te hardloop",
+        "title": "Benut die Padbol Courts-voordeel en laat jou klub groei",
+        "whatsapp": "Whatsamp met landkode"
+      },
+      "yes": "Ja"
+    },
+    "venuePlans": {
+      "automation": [
+        [
+          "Outobekeerde toernooie",
+          "Trek → groepe → speletjies → resultate → staane → hakies → finale."
+        ],
+        [
+          "Skep nuwe inkomste",
+          "Lidskepe, bevorderings en jou eie borgplekke."
+        ],
+        [
+          "Bou speler lojaliteit",
+          "PadCoins, veldtogte en voordele wat deur die klub opgestel is."
+        ],
+        [
+          "Verminder platformkoste",
+          "Beginer: 1% · Pro: 0,65%. Waardes kan deur streek beheer word."
+        ]
+      ],
+      "automationAccent": "Minder herhalende take.",
+      "automationEyebrow": "Constellation name (optional).",
+      "automationTitle": "Meer oefening vir jou klub.",
+      "back": "← Vir administrateurs",
+      "bookings": "Boeke en beskikbaarheid",
+      "commissionNote": "transaksies wat verwerk word Padbol Match",
+      "connected": "Een gekoppelde operasie voor, gedurende en na speel.",
+      "devices": "Telefoon · Tablet · Rekenaar · TV",
+      "draft": "INTERLIKE DRAFT · NIE VERHEERD NIE",
+      "experiencesEyebrow": "Constellation name (optional).",
+      "experiencesText": "Hulle is Padbol Match visuele koppelvlake. Hulle is nie kommersiële planne nie en bepaal nie of 'n klub se Beginler, Pro of Business gebruik nie.",
+      "eyebrow": "Constellation name (optional)",
+      "faqAccent": "Geen versteekte aanklagte nie.",
+      "faqEyebrow": "KLEAR VRAE. WAARDEER ANTWOORDE.",
+      "faqHelpCta": "VRA CIVI",
+      "faqHelpText": "Chivi kan die planne verduidelik en jou help om die regte opsie vir jou klub te vind.",
+      "faqHelpTitle": "Nog steeds ' n vraag?",
+      "faqTitle": "Geen verrassings nie.",
+      "faqs": [
+        [
+          "Is daar verskuilde aanklagte?",
+          "Nee. Voordat 'n plan aktivering word, weet die klub en aanvaar sy intekening en kommissie. betalingsverwerkerskoste is apart en word nie deur Padbol Match."
+        ],
+        [
+          "Is daar 'n aanklag vir die indien van â n versoek?",
+          "Nee. Deur die vorm te stuur begin net die gesprek. Dit aktiveer nie 'n lading of intekening nie."
+        ],
+        [
+          "Doen die speler betaal opdrag?",
+          "Nee. Spelers betaal 0% opdrag na Padbol Match."
+        ],
+        [
+          "Doen ek het spesiale tellingbordtoerusting nodig?",
+          "Nee. Die tellingbord werk van 'n telefoon, tablet of rekenaar en kan op 'n TV vertoon word."
+        ],
+        [
+          "Kan ek data van 'n ander stelsel bring?",
+          "Ja, wanneer die formaat versoenbaar is. Ons hersien die migrasie omvang van die klub voor begin."
+        ],
+        [
+          "Sê nou ek bestuur verskeie klubs?",
+          "Sakeondernemings is ontwerp vir kettings en multiste operateurs. ' n Sentrale administrasie, klubregte, gestolde verslae en volumeverprakking word met elke organisasie ooreengekom voor aktivering van die organisasie."
+        ]
+      ],
+      "featured": "Constellation name (optional)",
+      "finalAccent": "Die operasie bly joune.",
+      "finalTitle": "Begin met geen vaste fooi nie.",
+      "finePrint": "Beperkings, pryse, bevorderings en kommissies hang af van die streek en huidige opstelling. Sakesvoorwaardes word gedefinieer deur kommersiële kontak en tegniese bevestiging.",
+      "fourSports": "4 sport",
+      "growthAria": "Progroeigereedskap",
+      "lead": "Boekopnames, spelers, speletjies, toernooie, hooggeplaastes, woonborde, lidmaatskaps en bestuur op een plek.",
+      "limits": "Planbeperkings",
+      "liveClub": "Constellation name (optional)",
+      "liveMatch": "Lewende speletjie en puntebord",
+      "membershipText": "Definieer prys, duur, voordele, afslag, skedules, prioriteit, ingesluit boekte en PadCoins. Hierdie is die knuppels eie ledetal, apart van enige toekomstige globale speler ledetal.",
+      "membershipTitle": "SKEP JOU BOODSKAP",
+      "metaDescription": "Padbol Match bring boekings, spelers, speletjies, toernooie, hooggeplaastes, digitale tellingbord en multiportklubbestuur saam.",
+      "metaTitle": "Padbol Match Vir klubs illa Plans",
+      "migration": [
+        [
+          "Beginer",
+          "Aanpasbare lêer invoer, onderwerp aan bevestiging."
+        ],
+        [
+          "Pro",
+          "Gehelpde migrasie."
+        ],
+        [
+          "Besigheid",
+          "Pasmaak 4:."
+        ]
+      ],
+      "migrationEyebrow": "ALREADY ONS VERDERE SINSM?",
+      "migrationText": "Ons kan inligting invoer wat tereg aan die klub behoort en 'n aanpasbaar formaat gebruik. Skoop word bekragtig voordat werk begin.",
+      "migrationTitle": "Jy begin nie van nul nie.",
+      "multisportEyebrow": "EEN KLUB. VIER SPORT.",
+      "multisportText": "Bestuur elke Padbol Court en ander speel Court van dieselfde platform gebruik word, selfs wanneer jou klub verskillende sportsoorte aanbied.",
+      "multisportTitle": "Padbol · Padel · kiesleb · Tennis",
+      "notDefined": "Na wees gedefinieer",
+      "operationAria": "Verbind Sklubbewerking",
+      "or": "of",
+      "padbolBenefit": "UITGLOSIEWE BAAT GEVIND VIR PADBOL CLUBS",
+      "padbolOwnerCta": "VRA JOU VOORDELE AAN",
+      "padbolOwnerHint": "Vind uit hoe ons jou kan help om spelers te lok, aktiwiteit te bevorder en jou gemeenskap te laat groei.",
+      "padbolOwnerText": "Ontdek die eksklusiewe voordele van Padbol Match vir jou klub.",
+      "padbolOwnerTitle": "Het jy een of meer besit Padbol Courts?",
+      "perMonth": "/ maand",
+      "perYear": "/ jaar",
+      "plans": {
+        "business": {
+          "adminsLabel": "Pasmaaksvoorwaardes",
+          "commissionPrefix": "Van",
+          "courtsLabel": "13+ Courts",
+          "ctaLabel": "Constellation name (optional)",
+          "features": [
+            "Alles in Procrect",
+            "Multiste omvang gedefinieer met elke organisasie",
+            "Gespiriseerde regte en administrasie gebaseer op die projek",
+            "Gevaste verslae en netwerkveldtogte volgens omvang",
+            "Pasmaak 4:",
+            "Integrasies en API-onderwerp aan tegniese bekragtiging",
+            "Toegewyde ondersteuning"
+          ],
+          "pricePrefix": "Van",
+          "summary": "Multiste en pasmaak oplossings vir kettings, operateurs en lisensiehouers."
+        },
+        "pro": {
+          "adminsLabel": "Tot 5 administrateurs",
+          "courtsLabel": "Begin na 12 Courts",
+          "ctaLabel": "Constellation name (optional)",
+          "features": [
+            "Alles in Beginler",
+            "Outobekeerde toernooie: trek, groepe, toebehore, stande, hakies en podiums",
+            "Verslae en uitvoere vir boekwerk, inkomste en PadCoins",
+            "Toernamentwaglyste en openingswaarskuwings",
+            "Veldveldtogte, bevorderings, belonings en PadCoins Herstel",
+            "Sklublidmaatskaps",
+            "Jou eie borge op tellingborde, toernooie en klubskerms",
+            "Gesogte kennisgewings vir klubspelers",
+            "Gehelpde migrasie en voorkeur ondersteuning"
+          ],
+          "summary": "Vir klubs wat outomate-operasies wil doen en hulle gemeenskap wil vergroot."
+        },
+        "starter": {
+          "adminsLabel": "1 administrateur",
+          "courtsLabel": "Begin na 4 Courts",
+          "ctaLabel": "START MET ' N SUBSKRIPSIE",
+          "features": [
+            "Padbol, Padel, plukbal en Tennis",
+            "Onbeperkte spelers en klante",
+            "Publieke klubprofiel, Courts, skedules, syfers en beskikbaarheid",
+            "Aanlyn adresboeke en handleidinginskrywing",
+            "Speletjies, gevolg inskrywing en klub",
+            "Motorbestuurstoernooie: registrasies, spanne, speletjies en resultate",
+            "Digitale tellingbord met lewende beheer en skerm of TV-afvoer",
+            "Operasieale paneelbord vir boekwerk, bewooning en inkomste",
+            "Name PadCoins Voorbalance, transaksies en losstellings",
+            "Aanpasbare lêer invoer, onderwerp aan voor geldigmaking"
+          ],
+          "summary": "Vir klubs met tot by 4 Courts wat operasies sonder 'n maandelikse intekening wil bestuur."
+        }
+      },
+      "plansAccent": "Beweeg na outomate.",
+      "plansEyebrow": "PLANS WAT MET JOU WROON",
+      "plansTitle": "Begin deur bestuur.",
+      "playerFeeAria": "Spelers",
+      "playerFeeText": "Plankommissies kom ooreen met die diens wat aan die klub verskaf word. Mercado Pago, Lange of ander betalingsverwerkerskoste is apart.",
+      "playerFeeTitle": "PLAYERS - PAY 0% KOMMISSIE TOT PADBOL MATCH.",
+      "results": "Resultate, hooggeplaaste en herbesoeke",
+      "scoreboardAccent": "Geen spesiale toerusting nie.",
+      "scoreboardAria": "Padbol Match Digitale puntebord tydens 'n speletjie",
+      "scoreboardCaption": "Laat XScreenSaver loop by aanmelding Padbol Match.",
+      "scoreboardEyebrow": "JOU DELFTE SKOREBOARD, INSLOEDING VAN STARTER",
+      "scoreboardItems": [
+        "Maak skoon Geskiedenis.",
+        "Vertoon op 'n skerm of TV.",
+        "Draadlose beheer van klubtoestelle."
+      ],
+      "scoreboardNote": "Pro voeg jou eie borge, outomatiese toernooie, uitvoerbare verslae by, PadCoins veldtogte en segmentenotifications.",
+      "scoreboardTitle": "Die speletjie lewe.",
+      "screensText": "Bestuur jou eie borge op die tellingbord, TV, toernooie en beskikbare plaaslike plasings. Slub - lys bly apart van die wêreld Padbol Match en FIPA - lys.",
+      "screensTitle": "VERNIETIG JOU SCREENS INTO ' N ASSET",
+      "seePlans": "SIEN PLAANS",
+      "sports": "Padbol · Padel · kiesleb · Tennis",
+      "start": "START MET ' N SUBSKRIPSIE",
+      "talk": "VRA OMTRENT BUISTER",
+      "title": "Jou hele klub.",
+      "titleAccent": "Een platform.",
+      "venueService": "Diens vir die klub"
+    }
+  }
+}

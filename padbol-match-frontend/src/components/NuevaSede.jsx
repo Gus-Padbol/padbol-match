@@ -1,3 +1,5 @@
+import { validateSedeRequiredConfiguration } from '../utils/sedeRequiredConfiguration';
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from './AppHeader';
@@ -8,7 +10,7 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 
-const API_DEFAULT = 'https://padbol-backend.onrender.com';
+const API_DEFAULT = getApiBaseUrl();
 
 const LEGACY_SUPER = [
   'padbolinternacional@gmail.com',
@@ -35,6 +37,7 @@ const LICENCIA_TIPO_OPTIONS = [
 
 const emptyForm = () => ({
   nombre: '',
+  cantidad_canchas: '1',
   direccion: '',
   ciudad: '',
   provincia: '',
@@ -100,7 +103,8 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
   const emailLower = String(session?.user?.email || '').trim().toLowerCase();
   const isSuper = rol === 'super_admin' || LEGACY_SUPER.includes(emailLower);
   const isNacional = rol === 'admin_nacional';
-  const puede = isSuper || isNacional;
+  const isAdminCadena = rol === 'admin_cadena';
+  const puede = isSuper || isNacional || isAdminCadena;
 
   const [form, setForm] = useState(emptyForm);
   const [sending, setSending] = useState(false);
@@ -147,6 +151,10 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
       setErr('El nombre del club es obligatorio.');
       return;
     }
+    if (!Number.isFinite(Number(form.cantidad_canchas)) || Number(form.cantidad_canchas) <= 0) {
+      setErr('La cantidad de canchas debe ser mayor a cero.');
+      return;
+    }
     if (!form.licenciatario_email.trim()) {
       setErr('El email del licenciatario es obligatorio.');
       return;
@@ -167,19 +175,30 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
       setErr('Para Master País debes indicar el país que representa.');
       return;
     }
+    const configuration = validateSedeRequiredConfiguration({ ...form, precio_turno: form.precio_base });
+    if (!configuration.ok) {
+      setErr(configuration.error === 'price' ? 'Indica un precio entero válido, igual o mayor que cero.' : 'Completa los horarios de apertura y cierre (HH:mm).');
+      return;
+    }
+    if (!String(form.whatsapp || '').trim()) {
+      setErr('El WhatsApp de contacto es obligatorio.');
+      return;
+    }
     setSending(true);
     try {
       const body = {
         nombre: form.nombre.trim(),
+        cantidad_canchas: Number(form.cantidad_canchas),
         direccion: form.direccion.trim() || null,
         ciudad: form.ciudad.trim() || null,
         provincia: form.provincia.trim() || null,
         pais: form.pais.trim() || null,
         latitud: form.latitud,
         longitud: form.longitud,
-        horario_apertura: form.horario_apertura.trim() || null,
-        horario_cierre: form.horario_cierre.trim() || null,
-        precio_base: form.precio_base,
+        horario_apertura: configuration.fields.horario_apertura,
+        horario_cierre: configuration.fields.horario_cierre,
+        precio_base: configuration.fields.precio_turno,
+        precio_turno: configuration.fields.precio_turno,
         moneda: form.moneda,
         whatsapp: form.whatsapp.trim() || null,
         email_contacto: form.email_contacto.trim() || null,
@@ -223,7 +242,9 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
           method: 'POST',
           body: JSON.stringify(body),
         });
-        setMsg('Solicitud enviada. Gus revisará y aprobará en breve.');
+        setMsg(isAdminCadena
+          ? 'Solicitud enviada. Al aprobarse, la sede quedará vinculada a tu cadena.'
+          : 'Solicitud enviada. Gus revisará y aprobará en breve.');
       }
       setTimeout(() => navigate('/admin?tab=resumen'), 2200);
     } catch (ex) {
@@ -326,6 +347,16 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               value={form.nombre}
               onChange={(e) => setField('nombre', e.target.value)}
             />
+            <label style={{ ...labelStyle, marginTop: 12 }}>Cantidad de canchas *</label>
+            <input
+              required
+              type="number"
+              min="1"
+              step="1"
+              style={inputStyle}
+              value={form.cantidad_canchas}
+              onChange={(e) => setField('cantidad_canchas', e.target.value)}
+            />
             <label style={{ ...labelStyle, marginTop: 12 }}>Dirección</label>
             <input style={inputStyle} value={form.direccion} onChange={(e) => setField('direccion', e.target.value)} />
             <label style={{ ...labelStyle, marginTop: 12 }}>Ciudad</label>
@@ -357,34 +388,34 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
               <div style={{ flex: '1 1 160px' }}>
-                <label style={labelStyle}>Horario apertura</label>
+                <label style={labelStyle}>Horario apertura *</label>
                 <input
                   style={{ ...inputStyle, maxWidth: '100%' }}
-                  placeholder="ej. 09:00"
+                  type="time" required
                   value={form.horario_apertura}
                   onChange={(e) => setField('horario_apertura', e.target.value)}
                 />
               </div>
               <div style={{ flex: '1 1 160px' }}>
-                <label style={labelStyle}>Horario cierre</label>
+                <label style={labelStyle}>Horario cierre *</label>
                 <input
                   style={{ ...inputStyle, maxWidth: '100%' }}
-                  placeholder="ej. 23:00"
+                  type="time" required
                   value={form.horario_cierre}
                   onChange={(e) => setField('horario_cierre', e.target.value)}
                 />
               </div>
             </div>
-            <label style={{ ...labelStyle, marginTop: 12 }}>Precio base por turno</label>
-            <input style={inputStyle} type="number" min="0" step="1" value={form.precio_base} onChange={(e) => setField('precio_base', e.target.value)} />
+            <label style={{ ...labelStyle, marginTop: 12 }}>Precio base por turno *</label>
+            <input style={inputStyle} type="number" min="0" max="2147483647" step="1" required value={form.precio_base} onChange={(e) => setField('precio_base', e.target.value)} />
             <label style={{ ...labelStyle, marginTop: 12 }}>Moneda</label>
             <select style={inputStyle} value={form.moneda} onChange={(e) => setField('moneda', e.target.value)}>
               <option value="ARS">ARS</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
             </select>
-            <label style={{ ...labelStyle, marginTop: 12 }}>WhatsApp de contacto</label>
-            <input style={inputStyle} value={form.whatsapp} onChange={(e) => setField('whatsapp', e.target.value)} />
+            <label style={{ ...labelStyle, marginTop: 12 }}>WhatsApp de contacto *</label>
+            <input style={inputStyle} required value={form.whatsapp} onChange={(e) => setField('whatsapp', e.target.value)} />
             <label style={{ ...labelStyle, marginTop: 12 }}>Email de contacto</label>
             <input style={inputStyle} type="email" value={form.email_contacto} onChange={(e) => setField('email_contacto', e.target.value)} />
           </div>
@@ -482,7 +513,7 @@ export default function NuevaSede({ apiBaseUrl = API_DEFAULT }) {
               <option value="mercadopago">Mercado Pago</option>
               <option value="stripe">Stripe</option>
               <option value="manual">Manual (transferencia u otras instrucciones)</option>
-              <option value="efectivo">Efectivo en sede (sin pasarela ni fee 3%)</option>
+              <option value="efectivo">Efectivo en sede (sin procesador de pago online)</option>
             </select>
             {form.metodo_pago === 'mercadopago' ? (
               <>

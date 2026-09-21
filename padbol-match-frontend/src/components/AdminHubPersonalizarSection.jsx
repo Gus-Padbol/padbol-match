@@ -58,7 +58,7 @@ function normalizeHubDeporteRowPayload(data, deporte, cardKey) {
 /** Mensajes de éxito vs error legibles en claro y oscuro. */
 function hubEditorNoticeStyle(text) {
   const t = String(text || '');
-  if (/Guardado correctamente|Foto actualizada/i.test(t)) {
+  if (/^✅|Guardado correctamente|Foto actualizada/i.test(t)) {
     return { color: 'var(--pm-color-success, #16a34a)', fontWeight: 600 };
   }
   return { color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 };
@@ -313,7 +313,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         }
         return [...prev, data];
       });
-      setMsg('Foto actualizada.');
+      setMsg(t('admin.hub.imageUploaded'));
       window.setTimeout(() => setMsg(''), 2500);
     } catch (e) {
       setMsg(e?.message || String(e));
@@ -410,14 +410,14 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         body: fd,
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
+      if (!res.ok) throw new Error(data?.error || t('admin.hub.imageUploadFailed'));
       setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
-      setMsg('Foto actualizada.');
+      setMsg(t('admin.hub.imageUploaded'));
       window.setTimeout(() => setMsg(''), 2500);
     } finally {
       setUploadingId(null);
     }
-  }, [accessToken, apiBaseUrl]);
+  }, [accessToken, apiBaseUrl, t]);
 
   const subirFotoHubDeporte = useCallback(async (dep, ck, file) => {
     const dk = draftKeyDeporte(dep, ck);
@@ -433,7 +433,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         body: fd,
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
+      if (!res.ok) throw new Error(data?.error || t('admin.hub.imageUploadFailed'));
       const normalized = normalizeHubDeporteRowPayload(data, dep, ck);
       if (
         String(data?.deporte || '').trim().toLowerCase() !== dep ||
@@ -443,7 +443,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       }
       setDeporteRows((prev) => mergeHubDeporteRowIntoList(prev, normalized));
       await refreshDeporteRowsSilently();
-      setDeporteMsg('Foto actualizada.');
+      setDeporteMsg(t('admin.hub.imageUploaded'));
       window.setTimeout(() => setDeporteMsg(''), 2500);
     } finally {
       setUploadingDeporteKey(null);
@@ -462,14 +462,14 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         body: fd,
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Error al subir la imagen');
+      if (!res.ok) throw new Error(data?.error || t('admin.hub.imageUploadFailed'));
       setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
-      setInicioMsg('Foto actualizada.');
+      setInicioMsg(t('admin.hub.imageUploaded'));
       window.setTimeout(() => setInicioMsg(''), 2500);
     } finally {
       setUploadingInicioId(null);
     }
-  }, [accessToken, apiBaseUrl]);
+  }, [accessToken, apiBaseUrl, t]);
 
   const handleCropConfirm = useCallback(
     async (file) => {
@@ -1044,7 +1044,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
                     cursor: uploadingId === id || !accessToken ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {uploadingId === id ? 'Subiendo…' : 'Cambiar foto'}
+                  {uploadingId === id ? t('admin.hub.uploading') : t('admin.hub.changePhoto')}
                 </button>
                 {!accessToken ? (
                   <p style={{ fontSize: '12px', color: '#b91c1c', marginTop: '8px' }}>{t('admin.hub.sessionRequiredUpload')}</p>
@@ -1053,7 +1053,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
             </div>
 
             <label style={labelStyle}>
-              Título {(!draft.titulo?.trim() && fb.titulo) ? `(por defecto: ${fb.titulo})` : null}
+              {t('admin.hub.title')} {(!draft.titulo?.trim() && fb.titulo) ? t('admin.hub.defaultValue', { value: fb.titulo }) : null}
             </label>
             <input
               type="text"

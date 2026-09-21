@@ -96,7 +96,7 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
       const headers = await getAuthHeaders();
       if (!headers.Authorization) {
         setAuthMissing(true);
-        setErrorMsg('Volvé a iniciar sesión para guardar la ficha.');
+        setErrorMsg('Vuelve a iniciar sesión para guardar la ficha.');
         return;
       }
       const payload = buildIdentidadPutPayload(form, {
@@ -161,7 +161,7 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
       </div>
 
       <p className="jugador-ficha-torneos__intro">
-        Estos datos ayudan a validar identidad y categorías en torneos. Solo vos podés verlos desde tu perfil.
+        Estos datos ayudan a validar identidad y categorías en torneos. Solo tú puedes verlos desde tu perfil.
       </p>
 
       {loading ? (
@@ -170,13 +170,13 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
 
       {authMissing ? (
         <p className="jugador-ficha-torneos__warn">
-          Tu sesión no está lista para sincronizar con el servidor. Podés completar la ficha abajo; si no podés guardar, volvé a iniciar sesión.
+          Tu sesión no está lista para sincronizar con el servidor. Puedes completar la ficha abajo; si no puedes guardar, vuelve a iniciar sesión.
         </p>
       ) : null}
 
       {loadError ? (
         <p className="jugador-ficha-torneos__error">
-          No se pudieron cargar datos guardados ({loadError}). Completá la ficha y guardala.
+          No se pudieron cargar datos guardados ({loadError}). Completa la ficha y guárdala.
         </p>
       ) : null}
 
@@ -192,7 +192,7 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
             <span className="jugador-ficha-torneos__perfil-ref-value">{whatsappDisplay}</span>
           </div>
           <p className="jugador-ficha-torneos__perfil-ref-hint">
-            Para modificar estos datos, editá la sección Datos del jugador.
+            Para modificar estos datos, edita la sección Datos del jugador.
           </p>
           {perfilDatosIncompletos ? (
             <p className="jugador-ficha-torneos__perfil-ref-missing" role="alert">
@@ -249,7 +249,7 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
                   name="numero_documento"
                   value={form.numero_documento}
                   onChange={handleChange}
-                  placeholder="Ingresá tu número de documento"
+                  placeholder="Ingresa tu número de documento"
                   autoComplete="off"
                   disabled={formDisabled}
                   className="jugador-ficha-torneos__input jugador-ficha-torneos__input--document"

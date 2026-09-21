@@ -1,9 +1,7 @@
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 import { stripClasePublic, stripProfesorPublic } from './profesorPublic';
 
-const API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const API_BASE = getApiBaseUrl();
 
 function authHeaders(accessToken) {
   const h = { 'Content-Type': 'application/json' };

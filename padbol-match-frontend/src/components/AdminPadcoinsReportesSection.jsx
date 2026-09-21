@@ -364,7 +364,7 @@ export default function AdminPadcoinsReportesSection({
               {tr('reportsClubSedeFixed', 'Sede')}:{' '}
               <strong style={{ color: 'var(--text-primary)' }}>
                 {sedesOptions.find((s) => String(s.id) === String(fixedSedeId))?.nombre
-                  || (fixedSedeId ? `Sede ${fixedSedeId}` : '—')}
+                  || (fixedSedeId ? `${tr('reportsClubSedeFixed', 'Venue')} ${fixedSedeId}` : '—')}
               </strong>
             </div>
           )}
@@ -577,10 +577,7 @@ export default function AdminPadcoinsReportesSection({
       ) : null}
       {localSearchNote ? (
         <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '0 0 12px' }}>
-          {tr(
-            'reportsSearchLocalHint',
-            'La búsqueda por texto filtra la página actual. Usá UUID para filtrar en el servidor.',
-          )}
+          {tr('reportsSearchLocalHint')}
         </p>
       ) : null}
 

@@ -234,7 +234,7 @@ export default function ScoreboardControl() {
         const p = await fetchPartido(partidoId);
         if (!cancelled) {
           if (!canAdminScoreboard(rol, p.sede_id, userSedeId)) {
-            setError(t('scoreboard.noPermission', 'No tenés permiso para controlar este scoreboard'));
+            setError(t('scoreboard.noPermission', 'No tienes permiso para controlar este scoreboard'));
             setLoading(false);
             return;
           }
@@ -285,12 +285,12 @@ export default function ScoreboardControl() {
         partidoId: partido?.id ?? partidoId,
         message: err?.message || err,
       });
-      setError(err?.message || 'Error en la acción');
+      setError(err?.message || t('general.somethingWentWrong'));
       return false;
     } finally {
       setActionLoading(false);
     }
-  }, [partido?.id, partidoId, refreshPartido]);
+  }, [partido?.id, partidoId, refreshPartido, t]);
 
   runActionRef.current = runAction;
 

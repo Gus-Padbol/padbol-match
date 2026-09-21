@@ -1,21 +1,29 @@
 /**
- * Notificaciones push enviadas por admins (Expo Push API + log en notificaciones_admin_log).
+ * Panel de push para administradores.
+ *
+ * La resolución de alcance y el envío viven del lado servidor. Nunca se acepta
+ * un user_id como autorización suficiente ni se exponen tokens Expo al panel.
  */
 
-const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-const EXPO_PUSH_BATCH = 100;
+import { randomUUID } from 'node:crypto';
+import { hasCompleteTerritorialScope } from './adminTerritorialScope.js';
 
-const ADMIN_PUSH_ROLES = new Set(['super_admin', 'admin_nacional', 'admin_club']);
-const ADMIN_PUSH_LANGUAGE_CODES = new Set([
-  'de', 'es', 'en', 'ar', 'fa-IR', 'nl-BE', 'fr', 'it', 'ro', 'nl-NL',
-  'sv', 'pt-BR', 'pt-PT', 'el', 'hu', 'he', 'pl', 'uk', 'af',
-]);
+const ADMIN_PUSH_ROLES = new Set(['super_admin', 'admin_nacional', 'admin_cadena', 'admin_club']);
+const ADMIN_IDEMPOTENCY_RE = /^[A-Za-z0-9._:-]{16,120}$/;
 
 const WEEKLY_LIMITS = {
   admin_club: 3,
   admin_nacional: 2,
+  admin_cadena: 3,
   super_admin: 1,
 };
+
+function httpError(message, status = 500, code = 'ADMIN_PUSH_ERROR') {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  return error;
+}
 
 function normalizeGeo(raw) {
   return String(raw || '')
@@ -30,16 +38,39 @@ function geoMatches(adminRaw, targetRaw) {
   const a = normalizeGeo(adminRaw);
   const b = normalizeGeo(targetRaw);
   if (!a || !b) return false;
-  return b.includes(a) || a.includes(b);
+  return a === b;
 }
 
 export function isAdminPushTargetedSegment(segment) {
   return String(segment?.type || '').trim().toLowerCase() === 'jugador';
 }
 
+export function adminPushCategoryForSegment() {
+  // El panel permite texto libre; no puede convertirlo en aviso operativo.
+  return 'marketing';
+}
+
 function effectiveAdminRole(scope) {
   if (scope?.superA) return 'super_admin';
   return String(scope?.rol || '').trim().toLowerCase();
+}
+
+function nationalTerritory(scope) {
+  // Match the legacy admin_nacional default resolved by server.js.
+  return { ...scope, alcance: scope?.alcance || 'pais' };
+}
+
+function hasCountrywideScope(scope) {
+  const territory = nationalTerritory(scope);
+  return territory.alcance === 'pais' && hasCompleteTerritorialScope(territory);
+}
+
+function assertNationalTerritory(scope) {
+  if (effectiveAdminRole(scope) !== 'admin_nacional') return;
+  const territory = nationalTerritory(scope);
+  if (hasCompleteTerritorialScope(territory)) return;
+  if (territory.alcance === 'sede' && Number.isInteger(scope.sedeId) && scope.sedeId > 0) return;
+  throw httpError('El alcance territorial está incompleto', 403, 'ADMIN_PUSH_SCOPE_DENIED');
 }
 
 function weekAgoIso() {
@@ -57,10 +88,10 @@ export async function countAdminPushSendsThisWeek(supabase, adminUserId, { onlyB
   if (error) throw error;
   const rows = Array.isArray(data) ? data : [];
   if (!onlyBroadcast) return rows.length;
-  return rows.filter((r) => {
+  return rows.filter((row) => {
     try {
-      const seg = typeof r.segmento === 'string' ? JSON.parse(r.segmento) : r.segmento;
-      return !isAdminPushTargetedSegment(seg);
+      const segment = typeof row.segmento === 'string' ? JSON.parse(row.segmento) : row.segmento;
+      return !isAdminPushTargetedSegment(segment);
     } catch {
       return true;
     }
@@ -70,16 +101,14 @@ export async function countAdminPushSendsThisWeek(supabase, adminUserId, { onlyB
 export async function getAdminPushQuota(supabase, scope) {
   const role = effectiveAdminRole(scope);
   const limit = WEEKLY_LIMITS[role] ?? 0;
-  const adminUserId = scope?.authUserId;
-  const usedBroadcast = await countAdminPushSendsThisWeek(supabase, adminUserId, { onlyBroadcast: role === 'super_admin' });
-  const usedAll = role === 'super_admin' ? usedBroadcast : await countAdminPushSendsThisWeek(supabase, adminUserId);
-  const used = role === 'super_admin' ? usedBroadcast : usedAll;
-  const remaining = Math.max(0, limit - used);
+  const used = await countAdminPushSendsThisWeek(supabase, scope?.authUserId, {
+    onlyBroadcast: role === 'super_admin',
+  });
   return {
     role,
     limit,
     used,
-    remaining,
+    remaining: Math.max(0, limit - used),
     unlimitedTargeted: role === 'super_admin',
     weekStartsAt: weekAgoIso(),
   };
@@ -97,368 +126,356 @@ export function parseAdminPushSegment(raw) {
   return {};
 }
 
-export async function validateAdminPushSegment(scope, segment, { supabase, sedesPermitidasPorScopeFn }) {
-  const role = effectiveAdminRole(scope);
-  if (!ADMIN_PUSH_ROLES.has(role)) {
-    const e = new Error('No tienes permiso para enviar notificaciones push');
-    e.status = 403;
-    throw e;
+async function fetchAllRows(buildQuery, pageSize = 1000) {
+  const rows = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await buildQuery().range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    const page = Array.isArray(data) ? data : [];
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
   }
-  const type = String(segment?.type || '').trim().toLowerCase();
-  if (!type) {
-    const e = new Error('Segmento inválido');
-    e.status = 400;
-    throw e;
-  }
-
-  if (type === 'jugador') {
-    const userId = String(segment.userId || segment.user_id || '').trim();
-    const email = String(segment.email || '').trim().toLowerCase();
-    if (!userId && !email) {
-      const e = new Error('Indica el jugador destinatario');
-      e.status = 400;
-      throw e;
-    }
-    return { type: 'jugador', userId: userId || null, email: email || null };
-  }
-
-  if (role === 'super_admin') {
-    if (type === 'todos_usuarios') return { type: 'todos_usuarios' };
-    if (type === 'pais') {
-      const pais = String(segment.pais || '').trim();
-      if (!pais) {
-        const e = new Error('Selecciona un país');
-        e.status = 400;
-        throw e;
-      }
-      return { type: 'pais', pais };
-    }
-    if (type === 'sede') {
-      const sedeId = parseInt(String(segment.sedeId ?? segment.sede_id ?? ''), 10);
-      if (!Number.isFinite(sedeId) || sedeId <= 0) {
-        const e = new Error('Selecciona una sede');
-        e.status = 400;
-        throw e;
-      }
-      return { type: 'sede', sedeId };
-    }
-    if (type === 'deporte') {
-      const deporte = String(segment.deporte || '').trim().toLowerCase();
-      if (!deporte) {
-        const e = new Error('Selecciona un deporte');
-        e.status = 400;
-        throw e;
-      }
-      return { type: 'deporte', deporte };
-    }
-    if (type === 'idioma') {
-      const idioma = String(segment.idioma || '').trim();
-      if (!ADMIN_PUSH_LANGUAGE_CODES.has(idioma)) {
-        const e = new Error('Selecciona un idioma válido');
-        e.status = 400;
-        throw e;
-      }
-      return { type: 'idioma', idioma };
-    }
-  }
-
-  if (role === 'admin_nacional') {
-    if (type === 'todos_pais') return { type: 'todos_pais', pais: scope.pais || scope.paisNorm };
-    if (type === 'sede') {
-      const sedeId = parseInt(String(segment.sedeId ?? segment.sede_id ?? ''), 10);
-      if (!Number.isFinite(sedeId) || sedeId <= 0) {
-        const e = new Error('Selecciona una sede');
-        e.status = 400;
-        throw e;
-      }
-      const allowed = await sedesPermitidasPorScopeFn(scope);
-      const ok = (allowed.sedes || []).some((s) => Number(s.id) === sedeId);
-      if (!ok) {
-        const e = new Error('La sede no pertenece a tu país');
-        e.status = 403;
-        throw e;
-      }
-      return { type: 'sede', sedeId };
-    }
-  }
-
-  if (role === 'admin_club') {
-    if (type === 'sede_mia') {
-      const sedeId = scope.sedeId;
-      if (sedeId == null) {
-        const e = new Error('Sin sede asignada');
-        e.status = 403;
-        throw e;
-      }
-      return { type: 'sede', sedeId: Number(sedeId) };
-    }
-  }
-
-  const e = new Error('Segmento no permitido para tu rol');
-  e.status = 403;
-  throw e;
-}
-
-async function distinctUserIdsFromProfilesQuery(rows) {
-  const set = new Set();
-  for (const r of rows || []) {
-    const uid = String(r?.user_id || '').trim();
-    if (uid) set.add(uid);
-  }
-  return [...set];
 }
 
 async function userIdsFromSedeActivity(supabase, sedeId) {
   const sid = Number(sedeId);
-  const set = new Set();
-  const { data: reservas } = await supabase
-    .from('reservas')
-    .select('user_id')
-    .eq('sede_id', sid)
-    .not('user_id', 'is', null);
-  for (const r of reservas || []) {
-    const uid = String(r.user_id || '').trim();
-    if (uid) set.add(uid);
+  if (!Number.isFinite(sid)) return [];
+  const [reservas, perfiles] = await Promise.all([
+    fetchAllRows(() => supabase.from('reservas').select('user_id').eq('sede_id', sid).not('user_id', 'is', null)),
+    fetchAllRows(() => supabase.from('jugadores_perfil').select('user_id').eq('sede_id', sid).not('user_id', 'is', null)),
+  ]);
+  const ids = new Set();
+  for (const row of [...(reservas || []), ...(perfiles || [])]) {
+    const userId = String(row?.user_id || '').trim();
+    if (userId) ids.add(userId);
   }
-  const { data: perfiles } = await supabase
+  return [...ids];
+}
+
+async function allowedSedeIds(scope, sedesPermitidasPorScopeFn) {
+  const allowed = await sedesPermitidasPorScopeFn(scope);
+  return (allowed?.sedes || []).map((sede) => Number(sede.id)).filter(Number.isFinite);
+}
+
+async function assertChainNotificationsEnabled(scope, supabase) {
+  if (effectiveAdminRole(scope) !== 'admin_cadena') return;
+  if (!scope?.organizacionId) {
+    throw httpError('Tu usuario no tiene una organización multisede asignada', 403, 'ADMIN_PUSH_SCOPE_DENIED');
+  }
+  const { data, error } = await supabase
+    .from('organizaciones')
+    .select('estado, funciones_habilitadas')
+    .eq('id', scope.organizacionId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data || data.estado !== 'activa' || !(data.funciones_habilitadas || []).includes('notificaciones')) {
+    throw httpError('Las notificaciones no están habilitadas para esta cadena', 403, 'ADMIN_PUSH_SCOPE_DENIED');
+  }
+}
+
+async function exactPlayerProfile(supabase, segment) {
+  const requestedUserId = String(segment?.userId || segment?.user_id || '').trim();
+  const requestedEmail = String(segment?.email || '').trim().toLowerCase();
+  if (!requestedUserId && !requestedEmail) {
+    throw httpError('Indica el jugador destinatario', 400, 'ADMIN_PUSH_PLAYER_REQUIRED');
+  }
+  let query = supabase
     .from('jugadores_perfil')
-    .select('user_id')
-    .eq('sede_id', sid)
+    .select('user_id, email, pais, nombre, apellido, apodo, alias')
     .not('user_id', 'is', null);
-  for (const r of perfiles || []) {
-    const uid = String(r.user_id || '').trim();
-    if (uid) set.add(uid);
+  query = requestedUserId ? query.eq('user_id', requestedUserId) : query.ilike('email', requestedEmail);
+  const { data, error } = await query.limit(2);
+  if (error) throw error;
+  const rows = Array.isArray(data) ? data : [];
+  if (rows.length !== 1) {
+    throw httpError(
+      rows.length > 1 ? 'El destinatario no es unívoco' : 'Jugador no encontrado',
+      rows.length > 1 ? 409 : 404,
+      rows.length > 1 ? 'ADMIN_PUSH_PLAYER_AMBIGUOUS' : 'ADMIN_PUSH_PLAYER_NOT_FOUND',
+    );
   }
-  return [...set];
+  const player = rows[0];
+  if (requestedEmail && String(player.email || '').trim().toLowerCase() !== requestedEmail) {
+    throw httpError('Los datos del destinatario no coinciden', 400, 'ADMIN_PUSH_PLAYER_MISMATCH');
+  }
+  return player;
+}
+
+async function assertPlayerInsideScope({ supabase, scope, player, sedesPermitidasPorScopeFn }) {
+  const role = effectiveAdminRole(scope);
+  if (role === 'super_admin') return;
+  if (role === 'admin_nacional' && hasCountrywideScope(scope)) {
+    if (!geoMatches(scope?.pais || scope?.paisNorm, player?.pais)) {
+      throw httpError('El jugador no pertenece a tu país', 403, 'ADMIN_PUSH_TARGET_OUT_OF_SCOPE');
+    }
+    return;
+  }
+  if (role === 'admin_club' || role === 'admin_cadena' || role === 'admin_nacional') {
+    const sedeIds = await allowedSedeIds(scope, sedesPermitidasPorScopeFn);
+    const scopedUsers = new Set();
+    for (const sedeId of sedeIds) {
+      const userIds = await userIdsFromSedeActivity(supabase, sedeId);
+      userIds.forEach((userId) => scopedUsers.add(String(userId)));
+    }
+    if (!scopedUsers.has(String(player?.user_id))) {
+      throw httpError('El jugador no pertenece a tu ámbito', 403, 'ADMIN_PUSH_TARGET_OUT_OF_SCOPE');
+    }
+    return;
+  }
+  throw httpError('No tienes permiso para ese destinatario', 403, 'ADMIN_PUSH_TARGET_OUT_OF_SCOPE');
+}
+
+export async function validateAdminPushSegment(scope, rawSegment, { supabase, sedesPermitidasPorScopeFn }) {
+  const role = effectiveAdminRole(scope);
+  if (!ADMIN_PUSH_ROLES.has(role)) {
+    throw httpError('No tienes permiso para enviar notificaciones push', 403, 'ADMIN_PUSH_FORBIDDEN');
+  }
+  assertNationalTerritory(scope);
+  await assertChainNotificationsEnabled(scope, supabase);
+
+  const segment = parseAdminPushSegment(rawSegment);
+  const type = String(segment?.type || '').trim().toLowerCase();
+  if (!type) throw httpError('Segmento inválido', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+
+  if (type === 'jugador') {
+    const player = await exactPlayerProfile(supabase, segment);
+    await assertPlayerInsideScope({ supabase, scope, player, sedesPermitidasPorScopeFn });
+    return {
+      type: 'jugador',
+      userId: String(player.user_id),
+      email: String(player.email || '').trim().toLowerCase() || null,
+    };
+  }
+
+  if (role === 'super_admin') {
+    if (type === 'todos_usuarios') return { type };
+    if (type === 'pais') {
+      const pais = String(segment.pais || '').trim();
+      if (!pais) throw httpError('Selecciona un país', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+      return { type, pais };
+    }
+    if (type === 'ciudad') {
+      const ciudad = String(segment.ciudad || '').trim();
+      const pais = String(segment.pais || '').trim();
+      if (!ciudad) throw httpError('Selecciona una ciudad', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+      return { type, ciudad, pais: pais || null };
+    }
+    if (type === 'sede') {
+      const sedeId = Number(segment.sedeId ?? segment.sede_id);
+      if (!Number.isInteger(sedeId) || sedeId <= 0) {
+        throw httpError('Selecciona una sede', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+      }
+      return { type, sedeId };
+    }
+    if (type === 'deporte') {
+      const deporte = String(segment.deporte || '').trim().toLowerCase();
+      if (!deporte) throw httpError('Selecciona un deporte', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+      return { type, deporte };
+    }
+  }
+
+  if (role === 'admin_nacional') {
+    if (type === 'todos_pais') {
+      if (!hasCountrywideScope(scope)) {
+        throw httpError('El país completo excede tu ámbito', 403, 'ADMIN_PUSH_TARGET_OUT_OF_SCOPE');
+      }
+      return { type, pais: scope.pais || scope.paisNorm };
+    }
+    if (type === 'sede') {
+      const sedeId = Number(segment.sedeId ?? segment.sede_id);
+      if (!Number.isInteger(sedeId) || sedeId <= 0) {
+        throw httpError('Selecciona una sede', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+      }
+      const allowed = await allowedSedeIds(scope, sedesPermitidasPorScopeFn);
+      if (!allowed.includes(sedeId)) {
+        throw httpError('La sede no pertenece a tu país', 403, 'ADMIN_PUSH_TARGET_OUT_OF_SCOPE');
+      }
+      return { type, sedeId };
+    }
+    if (type === 'ciudad') {
+      const ciudad = String(segment.ciudad || '').trim();
+      if (!ciudad) throw httpError('Selecciona una ciudad', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+      const allowed = await sedesPermitidasPorScopeFn(scope);
+      const citySedes = (allowed?.sedes || []).filter((sede) => normalizeGeo(sede?.ciudad) === normalizeGeo(ciudad));
+      if (!citySedes.length) {
+        throw httpError('La ciudad no pertenece a tu país', 403, 'ADMIN_PUSH_TARGET_OUT_OF_SCOPE');
+      }
+      if (!hasCountrywideScope(scope)) {
+        // Only server-resolved venue IDs may define a regional audience. Player
+        // profiles do not provide an authoritative province/city assignment.
+        const sedeIds = citySedes.map((sede) => Number(sede.id)).filter(Number.isFinite);
+        return { type, ciudad, pais: scope.pais || scope.paisNorm, sedeIds };
+      }
+      return { type, ciudad, pais: scope.pais || scope.paisNorm };
+    }
+  }
+
+  if (role === 'admin_cadena') {
+    const sedeIds = await allowedSedeIds(scope, sedesPermitidasPorScopeFn);
+    if (type === 'toda_cadena') return { type, sedeIds };
+    if (type === 'sede') {
+      const sedeId = Number(segment.sedeId ?? segment.sede_id);
+      if (!Number.isInteger(sedeId) || sedeId <= 0) {
+        throw httpError('Selecciona una sede', 400, 'ADMIN_PUSH_SEGMENT_INVALID');
+      }
+      if (!sedeIds.includes(sedeId)) {
+        throw httpError('La sede no pertenece a tu organización', 403, 'ADMIN_PUSH_TARGET_OUT_OF_SCOPE');
+      }
+      return { type, sedeId };
+    }
+  }
+
+  if (role === 'admin_club' && type === 'sede_mia') {
+    if (scope.sedeId == null) throw httpError('Sin sede asignada', 403, 'ADMIN_PUSH_SCOPE_DENIED');
+    return { type: 'sede', sedeId: Number(scope.sedeId) };
+  }
+
+  throw httpError('Segmento no permitido para tu rol', 403, 'ADMIN_PUSH_SEGMENT_FORBIDDEN');
+}
+
+function distinctUserIds(rows) {
+  return [...new Set((rows || []).map((row) => String(row?.user_id || '').trim()).filter(Boolean))];
 }
 
 function profileMatchesDeporte(row, deporte) {
-  const dep = String(deporte || '').trim().toLowerCase();
-  if (!dep) return false;
+  const expected = String(deporte || '').trim().toLowerCase();
   let raw = row?.deportes_preferidos;
   if (typeof raw === 'string') {
-    try {
-      raw = JSON.parse(raw);
-    } catch {
-      raw = [];
-    }
+    try { raw = JSON.parse(raw); } catch { raw = []; }
   }
-  const arr = Array.isArray(raw) ? raw : [];
-  return arr.some((d) => String(d || '').trim().toLowerCase() === dep);
+  return Array.isArray(raw) && raw.some((item) => String(item || '').trim().toLowerCase() === expected);
 }
 
 export async function resolveAdminPushRecipientUserIds(supabase, scope, segment) {
-  const type = segment.type;
-
-  if (type === 'jugador') {
-    if (segment.userId) return [String(segment.userId).trim()];
-    const email = String(segment.email || '').trim().toLowerCase();
-    const { data } = await supabase
-      .from('jugadores_perfil')
-      .select('user_id')
-      .ilike('email', email)
-      .limit(5);
-    const ids = await distinctUserIdsFromProfilesQuery(data);
-    if (ids.length) return ids.slice(0, 1);
-    return [];
+  if (segment.type === 'jugador') return [String(segment.userId)];
+  if (segment.type === 'todos_usuarios') {
+    const rows = await fetchAllRows(() => (
+      supabase.from('jugadores_perfil').select('user_id').not('user_id', 'is', null)
+    ));
+    return distinctUserIds(rows);
   }
-
-  if (type === 'todos_usuarios') {
-    const { data: tokens } = await supabase.from('push_tokens').select('user_id');
-    const fromTokens = await distinctUserIdsFromProfilesQuery(tokens);
-    if (fromTokens.length) return fromTokens;
-    const { data: perfiles } = await supabase.from('jugadores_perfil').select('user_id').not('user_id', 'is', null);
-    return distinctUserIdsFromProfilesQuery(perfiles);
+  if (segment.type === 'todos_pais' || segment.type === 'pais') {
+    const targetCountry = segment.pais || scope.pais;
+    const rows = await fetchAllRows(() => (
+      supabase.from('jugadores_perfil').select('user_id, pais').not('user_id', 'is', null)
+    ));
+    return distinctUserIds(rows.filter((row) => geoMatches(targetCountry, row.pais)));
   }
-
-  if (type === 'todos_pais') {
-    const paisTarget = segment.pais || scope.pais;
-    const { data: perfiles } = await supabase.from('jugadores_perfil').select('user_id, pais').not('user_id', 'is', null);
-    return (perfiles || [])
-      .filter((p) => geoMatches(paisTarget, p.pais))
-      .map((p) => String(p.user_id).trim())
-      .filter(Boolean);
+  if (segment.type === 'ciudad') {
+    if (Array.isArray(segment.sedeIds)) {
+      const ids = new Set();
+      for (const sedeId of segment.sedeIds) {
+        const users = await userIdsFromSedeActivity(supabase, sedeId);
+        users.forEach((id) => ids.add(id));
+      }
+      return [...ids];
+    }
+    const rows = await fetchAllRows(() => (
+      supabase.from('jugadores_perfil').select('user_id, ciudad, pais').not('user_id', 'is', null)
+    ));
+    return distinctUserIds(rows.filter((row) => (
+      normalizeGeo(row.ciudad) === normalizeGeo(segment.ciudad) &&
+      (!segment.pais || geoMatches(segment.pais, row.pais))
+    )));
   }
-
-  if (type === 'pais') {
-    const { data: perfiles } = await supabase.from('jugadores_perfil').select('user_id, pais').not('user_id', 'is', null);
-    return (perfiles || [])
-      .filter((p) => geoMatches(segment.pais, p.pais))
-      .map((p) => String(p.user_id).trim())
-      .filter(Boolean);
+  if (segment.type === 'sede') return userIdsFromSedeActivity(supabase, segment.sedeId);
+  if (segment.type === 'toda_cadena') {
+    const ids = new Set();
+    for (const sedeId of segment.sedeIds || []) {
+      const users = await userIdsFromSedeActivity(supabase, sedeId);
+      users.forEach((id) => ids.add(id));
+    }
+    return [...ids];
   }
-
-  if (type === 'sede') {
-    return userIdsFromSedeActivity(supabase, segment.sedeId);
+  if (segment.type === 'deporte') {
+    const rows = await fetchAllRows(() => (
+      supabase.from('jugadores_perfil').select('user_id, deportes_preferidos').not('user_id', 'is', null)
+    ));
+    return distinctUserIds(rows.filter((row) => profileMatchesDeporte(row, segment.deporte)));
   }
-
-  if (type === 'deporte') {
-    const { data: perfiles } = await supabase
-      .from('jugadores_perfil')
-      .select('user_id, deportes_preferidos')
-      .not('user_id', 'is', null);
-    return (perfiles || [])
-      .filter((p) => profileMatchesDeporte(p, segment.deporte))
-      .map((p) => String(p.user_id).trim())
-      .filter(Boolean);
-  }
-
-  if (type === 'idioma') {
-    const { data: perfiles } = await supabase
-      .from('jugadores_perfil')
-      .select('user_id, idioma_preferido')
-      .eq('idioma_preferido', segment.idioma)
-      .not('user_id', 'is', null);
-    return distinctUserIdsFromProfilesQuery(perfiles);
-  }
-
   return [];
-}
-
-export async function fetchPushTokensForUserIds(supabase, userIds) {
-  const ids = [...new Set((userIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
-  if (!ids.length) return [];
-  try {
-    const { data, error } = await supabase
-      .from('push_tokens')
-      .select('user_id, expo_push_token')
-      .in('user_id', ids);
-    if (error) throw error;
-    const tokens = [];
-    const seen = new Set();
-    for (const row of data || []) {
-      const tok = String(row.expo_push_token || '').trim();
-      if (!tok || seen.has(tok)) continue;
-      seen.add(tok);
-      tokens.push({ userId: row.user_id, token: tok });
-    }
-    return tokens;
-  } catch (err) {
-    if (/push_tokens|relation|does not exist/i.test(String(err?.message || ''))) return [];
-    throw err;
-  }
-}
-
-export async function sendExpoPushNotifications({ title, body, tokens }) {
-  const titulo = String(title || '').trim().slice(0, 50);
-  const mensaje = String(body || '').trim().slice(0, 150);
-  if (!titulo || !mensaje) {
-    const e = new Error('Título y mensaje son obligatorios');
-    e.status = 400;
-    throw e;
-  }
-  const list = (tokens || []).map((t) => String(t.token || t).trim()).filter(Boolean);
-  if (!list.length) return { sent: 0, tickets: [] };
-
-  let sent = 0;
-  const tickets = [];
-  for (let i = 0; i < list.length; i += EXPO_PUSH_BATCH) {
-    const chunk = list.slice(i, i + EXPO_PUSH_BATCH);
-    const messages = chunk.map((to) => ({
-      to,
-      title: titulo,
-      body: mensaje,
-      sound: 'default',
-    }));
-    const res = await fetch(EXPO_PUSH_URL, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-Encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(messages),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      console.error('❌ Expo push error:', json);
-      const e = new Error(json?.errors?.[0]?.message || json?.message || 'Error al enviar push');
-      e.status = 502;
-      throw e;
-    }
-    const data = Array.isArray(json?.data) ? json.data : [];
-    tickets.push(...data);
-    sent += chunk.length;
-  }
-  return { sent, tickets };
 }
 
 export async function assertAdminPushRateLimit(supabase, scope, segment) {
   const role = effectiveAdminRole(scope);
-  const targeted = isAdminPushTargetedSegment(segment);
-  if (role === 'super_admin' && targeted) return;
+  if (role === 'super_admin' && isAdminPushTargetedSegment(segment)) return;
   const limit = WEEKLY_LIMITS[role] ?? 0;
-  const onlyBroadcast = role === 'super_admin';
-  const used = await countAdminPushSendsThisWeek(supabase, scope.authUserId, { onlyBroadcast });
+  const used = await countAdminPushSendsThisWeek(supabase, scope.authUserId, {
+    onlyBroadcast: role === 'super_admin',
+  });
   if (used >= limit) {
-    const e = new Error('Alcanzaste el límite de envíos esta semana');
-    e.status = 429;
-    e.quota = { limit, used, remaining: 0 };
-    throw e;
+    const error = httpError('Alcanzaste el límite de envíos esta semana', 429, 'ADMIN_PUSH_QUOTA_EXCEEDED');
+    error.quota = { limit, used, remaining: 0 };
+    throw error;
   }
 }
 
-export async function searchAdminPushPlayers(supabase, scope, query) {
+export async function searchAdminPushPlayers(supabase, scope, query, sedesPermitidasPorScopeFn) {
   const q = String(query || '').trim().toLowerCase();
   if (q.length < 2) return [];
-  const { data: all, error } = await supabase
-    .from('jugadores_perfil')
-    .select('user_id, nombre, apellido, apodo, alias, email, pais')
-    .not('user_id', 'is', null)
-    .limit(800);
-  if (error) throw error;
-  let rows = all || [];
+  assertNationalTerritory(scope);
+  await assertChainNotificationsEnabled(scope, supabase);
+  let rows = await fetchAllRows(() => (
+    supabase
+      .from('jugadores_perfil')
+      .select('user_id, nombre, apellido, apodo, alias, email, pais')
+      .not('user_id', 'is', null)
+  ));
   const role = effectiveAdminRole(scope);
-  if (role === 'admin_nacional') {
-    rows = rows.filter((p) => geoMatches(scope.pais, p.pais));
-  } else if (role === 'admin_club' && scope.sedeId != null) {
-    const ids = new Set(await userIdsFromSedeActivity(supabase, scope.sedeId));
-    rows = rows.filter((p) => ids.has(String(p.user_id)));
+  if (role === 'admin_nacional' && hasCountrywideScope(scope)) {
+    rows = rows.filter((row) => geoMatches(scope.pais || scope.paisNorm, row.pais));
+  } else if (role === 'admin_club' || role === 'admin_cadena' || role === 'admin_nacional') {
+    const venueIds = await allowedSedeIds(scope, sedesPermitidasPorScopeFn);
+    const scopedIds = new Set();
+    for (const venueId of venueIds) {
+      const userIds = await userIdsFromSedeActivity(supabase, venueId);
+      userIds.forEach((id) => scopedIds.add(String(id)));
+    }
+    rows = rows.filter((row) => scopedIds.has(String(row.user_id)));
   }
   return rows
-    .filter((p) => {
-      const blob = [p.nombre, p.apellido, p.apodo, p.alias, p.email].join(' ').toLowerCase();
-      return blob.includes(q);
-    })
+    .filter((row) => [row.nombre, row.apellido, row.apodo, row.alias, row.email].join(' ').toLowerCase().includes(q))
     .slice(0, 20);
 }
 
+export function buildAdminPushIdempotencyKey(adminUserId, suppliedKey) {
+  const raw = String(suppliedKey || '').trim();
+  const requestKey = ADMIN_IDEMPOTENCY_RE.test(raw) ? raw : randomUUID();
+  return `admin:${String(adminUserId || '').trim()}:${requestKey}`.slice(0, 180);
+}
+
 export function registerAdminPushRoutes(app, deps) {
-  const {
-    supabase,
-    authUserFromBearer,
-    adminListScopeFromRequest,
-    sedesPermitidasPorScope,
-  } = deps;
+  const { supabase, pushService, authUserFromBearer, adminListScopeFromRequest, sedesPermitidasPorScope } = deps;
 
   async function pushScope(req) {
     const scope = await adminListScopeFromRequest(req);
-    if (!scope?.authUserId) {
+    if (!scope) throw httpError('No autorizado', 401, 'AUTH_REQUIRED');
+    if (!scope.authUserId) {
       const user = await authUserFromBearer(req);
-      if (!user?.id) {
-        const e = new Error('No autorizado');
-        e.status = 401;
-        throw e;
-      }
+      if (!user?.id) throw httpError('No autorizado', 401, 'AUTH_REQUIRED');
       scope.authUserId = user.id;
     }
-    const role = effectiveAdminRole(scope);
-    if (!ADMIN_PUSH_ROLES.has(role)) {
-      const e = new Error('No tienes permiso');
-      e.status = 403;
-      throw e;
+    if (!ADMIN_PUSH_ROLES.has(effectiveAdminRole(scope))) {
+      throw httpError('No tienes permiso', 403, 'ADMIN_PUSH_FORBIDDEN');
     }
     return scope;
+  }
+
+  function sendError(res, error, route) {
+    console.error(`❌ ${route}:`, error?.message || error);
+    return res.status(error?.status || 500).json({
+      error: error?.message || 'Error de notificaciones push',
+      code: error?.code || 'ADMIN_PUSH_ERROR',
+      quota: error?.quota || undefined,
+    });
   }
 
   app.get('/api/push/admin-quota', async (req, res) => {
     try {
       const scope = await pushScope(req);
-      const quota = await getAdminPushQuota(supabase, scope);
-      res.json(quota);
-    } catch (err) {
-      console.error('❌ GET /api/push/admin-quota:', err.message);
-      res.status(err.status || 500).json({ error: err.message });
+      return res.json(await getAdminPushQuota(supabase, scope));
+    } catch (error) {
+      return sendError(res, error, 'GET /api/push/admin-quota');
     }
   });
 
@@ -472,48 +489,42 @@ export function registerAdminPushRoutes(app, deps) {
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;
-      res.json(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('❌ GET /api/push/admin-history:', err.message);
-      res.status(err.status || 500).json({ error: err.message });
+      return res.json(Array.isArray(data) ? data : []);
+    } catch (error) {
+      return sendError(res, error, 'GET /api/push/admin-history');
     }
   });
 
   app.post('/api/push/admin-segment-preview', async (req, res) => {
     try {
       const scope = await pushScope(req);
-      const segment = await validateAdminPushSegment(scope, req.body?.segment || {}, {
+      const segment = await validateAdminPushSegment(scope, req.body?.segment, {
         supabase,
         sedesPermitidasPorScopeFn: sedesPermitidasPorScope,
       });
       const userIds = await resolveAdminPushRecipientUserIds(supabase, scope, segment);
-      const pushRows = await fetchPushTokensForUserIds(supabase, userIds);
-      res.json({
-        recipients: userIds.length,
-        withPushToken: pushRows.length,
-        segment,
-      });
-    } catch (err) {
-      console.error('❌ POST /api/push/admin-segment-preview:', err.message);
-      res.status(err.status || 500).json({ error: err.message });
+      // El panel acepta texto libre: incluso un envío individual requiere opt-in
+      // promocional. Los avisos operativos se generan sólo desde eventos tipados.
+      const category = adminPushCategoryForSegment(segment);
+      const tokenRows = await pushService.fetchEligibleTokens(userIds, category);
+      return res.json({ recipients: userIds.length, withPushToken: tokenRows.length, category, segment });
+    } catch (error) {
+      return sendError(res, error, 'POST /api/push/admin-segment-preview');
     }
   });
 
   app.get('/api/push/admin-search-players', async (req, res) => {
     try {
       const scope = await pushScope(req);
-      const rows = await searchAdminPushPlayers(supabase, scope, req.query?.q || '');
-      res.json(
-        rows.map((p) => ({
-          userId: p.user_id,
-          nombre: [p.nombre, p.apellido].filter(Boolean).join(' ').trim() || p.apodo || p.alias || 'Jugador',
-          email: p.email || '',
-          apodo: p.apodo || '',
-        })),
-      );
-    } catch (err) {
-      console.error('❌ GET /api/push/admin-search-players:', err.message);
-      res.status(err.status || 500).json({ error: err.message });
+      const rows = await searchAdminPushPlayers(supabase, scope, req.query?.q, sedesPermitidasPorScope);
+      return res.json(rows.map((row) => ({
+        userId: row.user_id,
+        nombre: [row.nombre, row.apellido].filter(Boolean).join(' ').trim() || row.apodo || row.alias || 'Jugador',
+        email: row.email || '',
+        apodo: row.apodo || '',
+      })));
+    } catch (error) {
+      return sendError(res, error, 'GET /api/push/admin-search-players');
     }
   });
 
@@ -522,65 +533,68 @@ export function registerAdminPushRoutes(app, deps) {
       const scope = await pushScope(req);
       const title = String(req.body?.title || req.body?.titulo || '').trim().slice(0, 50);
       const body = String(req.body?.body || req.body?.mensaje || '').trim().slice(0, 150);
-      if (!title || !body) {
-        return res.status(400).json({ error: 'Título y mensaje son obligatorios' });
-      }
-
-      const segment = await validateAdminPushSegment(scope, req.body?.segment || {}, {
+      if (!title || !body) throw httpError('Título y mensaje son obligatorios', 400, 'ADMIN_PUSH_CONTENT_INVALID');
+      const segment = await validateAdminPushSegment(scope, req.body?.segment, {
         supabase,
         sedesPermitidasPorScopeFn: sedesPermitidasPorScope,
       });
       await assertAdminPushRateLimit(supabase, scope, segment);
-
       const userIds = await resolveAdminPushRecipientUserIds(supabase, scope, segment);
-      if (!userIds.length) {
-        return res.status(400).json({ error: 'No hay destinatarios para este segmento' });
-      }
+      if (!userIds.length) throw httpError('No hay destinatarios para este segmento', 400, 'ADMIN_PUSH_NO_RECIPIENTS');
 
-      const pushRows = await fetchPushTokensForUserIds(supabase, userIds);
-      let cantidadEnviadas = 0;
-      let estado = 'sin_tokens';
-      if (pushRows.length) {
-        const result = await sendExpoPushNotifications({
-          title,
-          body,
-          tokens: pushRows,
-        });
-        cantidadEnviadas = result.sent;
-        estado = 'enviado';
-      }
+      const category = adminPushCategoryForSegment(segment);
+      const idempotencyKey = buildAdminPushIdempotencyKey(scope.authUserId, req.body?.idempotencyKey);
+      const delivery = await pushService.dispatch({
+        idempotencyKey,
+        userIds,
+        title,
+        body,
+        category,
+        data: { type: 'admin_message', route: 'Notificaciones', params: {} },
+        source: 'admin_panel',
+        actorUserId: scope.authUserId,
+      });
 
-      const { data: logRow, error: logErr } = await supabase
+      const logPayload = {
+        admin_user_id: scope.authUserId,
+        titulo: title,
+        mensaje: body,
+        segmento: segment,
+        cantidad_enviadas: delivery.accepted,
+        estado: delivery.status,
+        idempotency_key: idempotencyKey,
+        push_job_id: delivery.jobId,
+      };
+      const { data: inserted, error: logError } = await supabase
         .from('notificaciones_admin_log')
-        .insert([
-          {
-            admin_user_id: scope.authUserId,
-            titulo: title,
-            mensaje: body,
-            segmento: segment,
-            cantidad_enviadas: cantidadEnviadas,
-            estado,
-          },
-        ])
+        .upsert(logPayload, { onConflict: 'idempotency_key', ignoreDuplicates: true })
         .select('*')
-        .single();
-      if (logErr) throw logErr;
+        .maybeSingle();
+      if (logError) throw logError;
+      let logRow = inserted;
+      if (!logRow) {
+        const { data: existing, error: existingError } = await supabase
+          .from('notificaciones_admin_log')
+          .select('*')
+          .eq('idempotency_key', idempotencyKey)
+          .maybeSingle();
+        if (existingError) throw existingError;
+        logRow = existing;
+      }
 
       const quota = await getAdminPushQuota(supabase, scope);
-      res.json({
+      return res.json({
         ok: true,
+        duplicate: delivery.duplicate,
         log: logRow,
         recipients: userIds.length,
-        cantidad_enviadas: cantidadEnviadas,
-        estado,
+        cantidad_enviadas: delivery.accepted,
+        estado: delivery.status,
+        category,
         quota,
       });
-    } catch (err) {
-      console.error('❌ POST /api/push/send-admin:', err.message);
-      res.status(err.status || 500).json({
-        error: err.message,
-        quota: err.quota || undefined,
-      });
+    } catch (error) {
+      return sendError(res, error, 'POST /api/push/send-admin');
     }
   });
 }

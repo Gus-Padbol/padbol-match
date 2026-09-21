@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import CookieConsentBanner from '../../components/CookieConsentBanner';
@@ -10,6 +10,7 @@ import {
   PUBLIC_SITE_CTA,
   PUBLIC_SITE_PATH,
 } from '../../constants/publicSiteLinks';
+import { resolvePublicAccountAccessHref } from '../../utils/publicAccountAccess';
 
 function scrollToHash(hash) {
   const id = String(hash || '').replace(/^#/, '');
@@ -78,29 +79,60 @@ export default function PublicSiteLayout({ children }) {
   const firstMenuLinkRef = useRef(null);
   const scrolled = useHeaderScrolled();
   const activeSectionId = useActiveSection();
+  const loginHref = resolvePublicAccountAccessHref(
+    typeof window !== 'undefined' ? window.location : null,
+    PUBLIC_SITE_CTA.login,
+  );
+
+  const closeMenu = useCallback((restoreFocus = false) => {
+    setMenuOpen(false);
+    if (restoreFocus) menuButtonRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeAtDesktop = (event) => {
+      if (event.matches) closeMenu(false);
+    };
+    desktop.addEventListener?.('change', closeAtDesktop);
+    return () => desktop.removeEventListener?.('change', closeAtDesktop);
+  }, [closeMenu]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     firstMenuLinkRef.current?.focus();
-    const closeOnEscape = (event) => {
-      if (event.key !== 'Escape') return;
-      setMenuOpen(false);
-      menuButtonRef.current?.focus();
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [menuOpen]);
-
-  useEffect(() => {
-    if (location.pathname !== PUBLIC_SITE_PATH) return undefined;
-    const raf = window.requestAnimationFrame(() => {
-      // La ruta pública de Plataforma siempre empieza por su presentación.
-      // Una ancla antigua #descargar no puede desviar la entrada al final.
-      if (location.hash === '#descargar') {
-        window.history.replaceState(null, '', PUBLIC_SITE_PATH);
-        window.scrollTo({ top: 0, behavior: 'auto' });
+    const handleMenuKeys = (event) => {
+      if (event.key === 'Escape') {
+        closeMenu(true);
         return;
       }
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(document.querySelectorAll(
+        '#public-site-mobile-menu a[href], #public-site-mobile-menu button:not([disabled])',
+      ));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleMenuKeys);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleMenuKeys);
+    };
+  }, [closeMenu, menuOpen]);
+
+  useEffect(() => {
+    if (location.pathname !== PUBLIC_SITE_PATH && location.pathname !== '/planes') return undefined;
+    const raf = window.requestAnimationFrame(() => {
       if (location.hash) scrollToHash(location.hash);
       else window.scrollTo({ top: 0, behavior: 'auto' });
     });
@@ -159,9 +191,9 @@ export default function PublicSiteLayout({ children }) {
             <div className="public-site__lang">
               <LanguageSwitcher variant="landing" />
             </div>
-            <a href={PUBLIC_SITE_CTA.login} className="public-site__login">
+            <Link to={loginHref} className="public-site__login">
               {text('publicSite.nav.login')}
-            </a>
+            </Link>
             <button
               ref={menuButtonRef}
               type="button"
@@ -179,26 +211,47 @@ export default function PublicSiteLayout({ children }) {
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          className={`public-site__mobile-backdrop${menuOpen ? ' is-open' : ''}`}
+          aria-label={text('publicSite.nav.close')}
+          tabIndex={-1}
+          hidden={!menuOpen}
+          onClick={() => closeMenu(true)}
+        />
         <nav
           id="public-site-mobile-menu"
           className={`public-site__mobile-nav${menuOpen ? ' is-open' : ''}`}
           aria-label={text('publicSite.nav.aria')}
+          aria-modal="true"
+          role="dialog"
           hidden={!menuOpen}
         >
+          <button
+            type="button"
+            className="public-site__mobile-close"
+            aria-label={text('publicSite.nav.close')}
+            onClick={() => closeMenu(true)}
+          >
+            <span aria-hidden>×</span>
+          </button>
           <div className="public-site__shell">
             {PUBLIC_SITE_NAV_ITEMS.map((item, index) => (
               <a
                 ref={index === 0 ? firstMenuLinkRef : undefined}
                 href={publicNavHref(item.href)}
                 key={item.key}
-                onClick={(event) => chooseAnchor(event, item.href)}
+                onClick={(event) => {
+                  chooseAnchor(event, item.href);
+                  closeMenu(false);
+                }}
               >
                 {text(`publicSite.nav.${item.key}`)}
               </a>
             ))}
-            <a href={PUBLIC_SITE_CTA.login} onClick={() => setMenuOpen(false)}>
+            <Link to={loginHref} className="public-site__mobile-login" onClick={() => closeMenu(false)}>
               {text('publicSite.nav.login')}
-            </a>
+            </Link>
           </div>
         </nav>
       </header>

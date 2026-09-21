@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import {
   fetchAdminSuspensiones,
   formatFechaReputacion,
@@ -9,7 +10,7 @@ import './ReputacionJugadorPanel.css';
 
 export default function AdminSuspensionesSection({ apiBaseUrl, accessToken }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+  const locale = padbolLangToIntlLocale(i18n.language);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

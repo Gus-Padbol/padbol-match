@@ -1,12 +1,10 @@
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 /**
  * Cliente FE para GET /api/admin/padcoins-reportes/*
  * Descarga CSV con Authorization (nunca URL pública sin token).
  */
 
-const DEFAULT_API =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const DEFAULT_API = getApiBaseUrl();
 
 export const PADCOINS_REPORTES_PAGE_SIZE = 50;
 

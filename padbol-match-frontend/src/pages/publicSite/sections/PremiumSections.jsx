@@ -68,11 +68,11 @@ const OPEN_MATCH_AVATAR_ROOT = '/media/public-site/players';
 
 const CONTINUITY_DETAILS = {
   openMatches: {
-    lead: 'Convertí una intención de jugar en un encuentro concreto, sin depender de grupos externos ni cadenas de mensajes.',
-    points: ['Publicás sede, horario, nivel y cupos.', 'Los jugadores cercanos piden lugar desde la app.', 'La sede ve actividad real antes de que empiece el partido.'],
+    lead: 'Convierte una intención de jugar en un encuentro concreto, sin depender de grupos externos ni cadenas de mensajes.',
+    points: ['Publicas sede, horario, nivel y cupos.', 'Los jugadores cercanos piden lugar desde la app.', 'La sede ve actividad real antes de que empiece el partido.'],
   },
   tournaments: {
-    lead: 'Organizá competencias con un calendario claro y una experiencia que acompaña al jugador desde la inscripción hasta el cierre.',
+    lead: 'Organiza competencias con un calendario claro y una experiencia que acompaña al jugador desde la inscripción hasta el cierre.',
     points: ['Inscripciones, cupos y categorías en un solo lugar.', 'Llaves, zonas o formatos según la disciplina y el torneo.', 'Cada fecha sostiene participación y movimiento en la sede.'],
   },
   results: {
@@ -81,7 +81,7 @@ const CONTINUITY_DETAILS = {
   },
   ranking: {
     lead: 'Una evolución entendible, ligada a los partidos que realmente se juegan y a la categoría o alcance de cada competencia.',
-    points: ['Posiciones por club, categoría o alcance de cada circuito.', 'Subís o bajás a partir de resultados validados.', 'Podés reconocer una clasificación externa como punto de partida.'],
+    points: ['Posiciones por club, categoría o alcance de cada circuito.', 'Subes o bajas a partir de resultados validados.', 'Puedes reconocer una clasificación externa como punto de partida.'],
   },
   padcoins: {
     lead: 'La participación activa puede transformarse en reconocimiento dentro del ecosistema, con reglas visibles para todos.',
@@ -93,7 +93,7 @@ const CONTINUITY_DETAILS = {
   },
   community: {
     lead: 'Un espacio propio para que el juego siga conversándose: publicaciones, comentarios, videos y conexiones entre jugadores.',
-    points: ['Compartí jugadas, fotos y novedades de la comunidad.', 'Seguís jugadores, sedes y conversaciones relevantes.', 'El contenido ayuda a que cada experiencia tenga continuidad.'],
+    points: ['Comparte jugadas, fotos y novedades de la comunidad.', 'Sigues jugadores, sedes y conversaciones relevantes.', 'El contenido ayuda a que cada experiencia tenga continuidad.'],
   },
 };
 
@@ -146,7 +146,7 @@ export function WhatIsSection() {
   const id = PUBLIC_SITE_SECTIONS.whatIs.id;
   const visualRef = useRef(null);
   const [isVisualInView, setIsVisualInView] = useState(false);
-  const [activeSport, setActiveSport] = useState('padel');
+  const [activeSport, setActiveSport] = useState('padbol');
 
   useEffect(() => {
     const visual = visualRef.current;
@@ -186,11 +186,11 @@ export function WhatIsSection() {
               key={sport.id}
               className={activeSport === sport.id ? 'is-active' : ''}
               src={`${ASSET_ROOT}/${sport.image}`}
-              alt={`${sport.label}: una experiencia disponible en Padbol Match`}
+              alt={`${text(`publicSite.sports.${sport.id}`)} · Padbol Match`}
               loading="eager"
             />
           ))}
-          <div className="ps-what__sports-tabs" role="tablist" aria-label="Deportes disponibles en Padbol Match">
+          <div className="ps-what__sports-tabs" role="tablist" aria-label={text('publicSite.whatIs.title')}>
             {WHAT_IS_SPORTS.map((sport) => (
               <button
                 key={sport.id}
@@ -200,7 +200,7 @@ export function WhatIsSection() {
                 className={activeSport === sport.id ? 'is-active' : ''}
                 onClick={() => setActiveSport(sport.id)}
               >
-                {sport.label}
+                {text(`publicSite.sports.${sport.id}`)}
               </button>
             ))}
           </div>
@@ -255,7 +255,7 @@ export function PlayerPathSection() {
           </li>
         ))}
       </ul>
-      <div className="ps-player-deck" aria-label="Recorrido para jugadores">
+      <div className="ps-player-deck" aria-label={text('publicSite.playerPath.title')}>
         {config.items.map(({ key }, index) => (
           <button key={key} type="button" className="ps-player-deck__card">
             <span className="ps-player-deck__number">{String(index + 1).padStart(2, '0')}</span>
@@ -288,13 +288,14 @@ export function PlayerRecordSection() {
           <figcaption>{text('publicSite.playerRecord.visualTagline')}</figcaption>
         </figure>
         <div>
-          <h2 id="ps-player-record-title">{text('publicSite.playerRecord.title')}</h2>
+          <h2 id="ps-player-record-title"><AccentWords value={text('publicSite.playerRecord.title')} terms={['Lo reconocemos']} /></h2>
           <p className="ps-player-record__lead">{text('publicSite.playerRecord.lead')}</p>
           <p className="ps-player-record__copy">{text('publicSite.playerRecord.copy')}</p>
           <p className="ps-player-record__copy"><strong>{text('publicSite.playerRecord.ownershipStrong')}</strong> {text('publicSite.playerRecord.ownership')}</p>
           <div className="ps-player-record__items" aria-label={text('publicSite.playerRecord.itemsAria')}>
             {itemKeys.map((key) => <span key={key}>{text(`publicSite.playerRecord.items.${key}`)}</span>)}
           </div>
+          <Link to="/mi-perfil/recorrido" className="ps-player-record__cta">Trae tu nivel →</Link>
         </div>
       </div>
     </SectionShell>
@@ -674,17 +675,28 @@ function ScoreboardVideo({ text }) {
   );
 }
 
-function ScoreboardSnapshot() {
+function ScoreboardSnapshot({ text }) {
   return (
     <figure className="ps-scoreboard__snapshot" data-ps-reveal data-ps-reveal-order="1">
       <img
         src={`${ASSET_ROOT}/marcador-inteligente-captura.jpg`}
-        alt="Marcador Padbol Match durante un partido"
+        alt={text('publicSite.smartScoreboard.title')}
         loading="eager"
       />
     </figure>
   );
 }
+
+const SCOREBOARD_SPONSOR_SEQUENCE = [
+  { name: 'AURORA', kind: 'aurora' },
+  { name: 'PADBOL MATCH', kind: 'padbol-match' },
+  { name: 'NEXORA', kind: 'nexora' },
+  { name: 'PADBOL MATCH', kind: 'padbol-match' },
+  { name: 'VOLTA', kind: 'volta' },
+  { name: 'PADBOL MATCH', kind: 'padbol-match' },
+  { name: 'ÓRBITA', kind: 'orbita' },
+  { name: 'PADBOL MATCH', kind: 'padbol-match' },
+];
 
 /** Marcador inteligente */
 export function SmartScoreboardSection() {
@@ -705,7 +717,7 @@ export function SmartScoreboardSection() {
           <p className="ps-lead">{text('publicSite.smartScoreboard.text')}</p>
         </div>
         <div className="ps-scoreboard__visual">
-          <ScoreboardSnapshot />
+          <ScoreboardSnapshot text={text} />
           <ScoreboardVideo text={text} />
           <div className="ps-scoreboard__sponsor-slots" aria-label={text('publicSite.smartScoreboard.sponsorSlots.aria')}>
             <article className="ps-scoreboard__sponsor-slot">
@@ -713,7 +725,22 @@ export function SmartScoreboardSection() {
               <strong>{text('publicSite.smartScoreboard.sponsorSlots.live.title')}</strong>
               <p>{text('publicSite.smartScoreboard.sponsorSlots.live.text')}</p>
               <div className="ps-scoreboard__sponsor-ticker" aria-hidden="true">
-                <b>CHIVI CUP</b><b>NEXORA</b><b>VOLTA</b><b>ORBITA</b>
+                <div className="ps-scoreboard__sponsor-track">
+                  {[0, 1].map((copyIndex) => (
+                    <div className="ps-scoreboard__sponsor-group" key={copyIndex}>
+                      {SCOREBOARD_SPONSOR_SEQUENCE.map(({ name, kind }, index) => (
+                        <b className={`is-${kind}`} key={`${copyIndex}-${name}-${index}`}>
+                          {kind === 'padbol-match' ? (
+                            <>
+                              <img src={`${ASSET_ROOT}/padbol-match-logo-white.svg`} alt="" />
+                              <span className="ps-visually-hidden">{name}</span>
+                            </>
+                          ) : name}
+                        </b>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             </article>
             <article className="ps-scoreboard__sponsor-slot ps-scoreboard__sponsor-slot--closing">
@@ -721,13 +748,15 @@ export function SmartScoreboardSection() {
               <strong>{text('publicSite.smartScoreboard.sponsorSlots.closing.title')}</strong>
               <p>{text('publicSite.smartScoreboard.sponsorSlots.closing.text')}</p>
               <div className="ps-scoreboard__closing-ad" aria-hidden="true">
-                <i>✓</i><b>RESULTADO REGISTRADO</b><em>ESPACIO PARA MARCA</em>
+                <i>✓</i>
+                <b>{text('publicSite.continuity.items.results.title')}</b>
+                <em>{text('publicSite.smartScoreboard.sponsorSlots.closing.title')}</em>
               </div>
             </article>
           </div>
         </div>
         <div className="ps-scoreboard__steps">
-          <ol className="ps-flow-steps ps-flow-steps--scoreboard" aria-label="Pasos del marcador inteligente">
+          <ol className="ps-flow-steps ps-flow-steps--scoreboard" aria-label={text('publicSite.smartScoreboard.title')}>
             {config.steps.map(({ key }, index) => (
               <li key={key}>
                 <span className="ps-flow-steps__num" aria-hidden="true">
@@ -741,7 +770,7 @@ export function SmartScoreboardSection() {
             ))}
           </ol>
           <p className="ps-scoreboard__swipe-hint" aria-hidden="true">
-            <span>Desliza para recorrer los 5 pasos</span>
+            <span>{text('publicSite.playerPath.tapNext')}</span>
             <b>→</b>
           </p>
         </div>
@@ -939,9 +968,6 @@ export function DownloadSection() {
           ),
         )}
       </div>
-      <Link to={config.login} className="ps-btn ps-btn--ghost">
-        {text('publicSite.download.login')}
-      </Link>
     </SectionShell>
   );
 }

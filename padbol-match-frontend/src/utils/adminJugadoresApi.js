@@ -100,14 +100,14 @@ export function formatJugadorVinculacionLabel(vinculacion, t) {
   return t('admin.jugadores.vinculacionSinHistorial');
 }
 
-export function formatJugadorActivity(iso) {
+export function formatJugadorActivity(iso, locale = 'en-US') {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) {
     const s = String(iso).slice(0, 10);
     return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
   }
-  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 /** Ordenamiento cliente sobre items ya cargados. */

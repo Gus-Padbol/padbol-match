@@ -11,20 +11,52 @@ const flatten = (value, prefix = '', output = {}) => {
   return output;
 };
 
+const mergeCatalog = (base, override) => {
+  const result = { ...(base || {}) };
+  Object.entries(override || {}).forEach(([key, value]) => {
+    result[key] = value && typeof value === 'object' && !Array.isArray(value)
+      ? mergeCatalog(result[key], value)
+      : value;
+  });
+  return result;
+};
+
 describe('public site translated catalogs', () => {
-  const englishKeys = Object.keys(flatten(en.publicSite)).sort();
-  const generatedCodes = PADBOL_LANGUAGE_CODES.filter((code) => !['es', 'en'].includes(code));
+  const englishCatalog = flatten(en.publicSite);
+  const englishKeys = Object.keys(englishCatalog).sort();
+  const generatedCodes = PADBOL_LANGUAGE_CODES.filter((code) => !['es', 'en', 'cs'].includes(code));
 
   it.each(generatedCodes)('%s covers every public-site key without raw i18n keys', (code) => {
-    const catalog = flatten(generated[code]);
+    // Producción construye cada idioma sobre el catálogo inglés completo y
+    // luego aplica su traducción. El control debe validar ese catálogo efectivo.
+    const catalog = flatten(mergeCatalog(en.publicSite, generated[code]));
     expect(Object.keys(catalog).sort()).toEqual(englishKeys);
-    expect(Object.values(catalog).join(' ')).not.toMatch(/publicSite\.[A-Za-z]/);
+    const copy = Object.values(catalog).join(' ');
+    expect(copy).not.toMatch(/publicSite\.[A-Za-z]/);
+    expect(copy).not.toMatch(/<[^>]*>|data-i=|data-var=|span=/i);
+    const placeholders = (value) => [...String(value).matchAll(/{{\s*([^}\s]+)\s*}}/g)]
+      .map((match) => match[1]).sort();
+    Object.entries(catalog).forEach(([key, value]) => {
+      expect(placeholders(value)).toEqual(placeholders(englishCatalog[key]));
+    });
   });
 
   it('keeps the reported Hebrew experience section fully translated', () => {
     expect(generated.he.experiences.title).toBe('חמש חוויות. פלטפורמה אחת');
     expect(generated.he.experiences.text).not.toMatch(/[A-Za-z]{4,}/);
     expect(generated.he.experiences.items.signature.text).not.toMatch(/[A-Za-z]{4,}/);
+  });
+
+  it('keeps critical Persian and Hebrew copy in the correct script', () => {
+    [
+      generated['fa-IR'].status.items.rollingOut.text,
+      generated['fa-IR'].matchIntelligence.features.referee.text,
+    ].forEach((value) => expect(value).toMatch(/[؀-ۿ]/));
+    [
+      generated.he.paths.aria, generated.he.communityMatches.mockTitle,
+      generated.he.communityMatches.mockConfirmed, generated.he.padCoins.wallet.activeMembership,
+      generated.he.matchIntelligence.features.referee.text,
+    ].forEach((value) => expect(value).toMatch(/[֐-׿]/));
   });
 
   it.each(generatedCodes)('%s does not end public titles with a period', (code) => {

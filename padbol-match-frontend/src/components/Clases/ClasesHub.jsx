@@ -122,7 +122,7 @@ export default function ClasesHub({ sedeId }) {
   if (!Number.isFinite(sid)) {
     return (
       <p style={{ margin: '24px auto', maxWidth: COL_MAX, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 15 }}>
-        Elegí una sede en tu perfil para ver clases y profesores.
+        Elige una sede en tu perfil para ver clases y profesores.
       </p>
     );
   }

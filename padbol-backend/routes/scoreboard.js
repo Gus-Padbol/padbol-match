@@ -21,16 +21,36 @@ async function resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperA
   return {
     rol: String(row?.role || '').trim().toLowerCase() || null,
     sede_id: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
+    organizacion_id: row?.organizacion_id ? String(row.organizacion_id).trim().toLowerCase() : null,
   };
 }
 
-function assertCanControlScoreboard(role, sedeId) {
+async function assertCanControlScoreboard(role, sedeId, supabaseAdmin) {
   if (role.rol === 'super_admin') return;
   if (role.rol === 'admin_club' && role.sede_id != null && Number(role.sede_id) === Number(sedeId)) {
     return;
   }
   if (role.rol === 'admin_sede' && role.sede_id != null && Number(role.sede_id) === Number(sedeId)) {
     return;
+  }
+  if (role.rol === 'admin_cadena' && role.organizacion_id) {
+    const [{ data, error }, organizationResult] = await Promise.all([
+      supabaseAdmin
+      .from('organizacion_sedes')
+      .select('sede_id')
+      .eq('organizacion_id', role.organizacion_id)
+      .eq('sede_id', Number(sedeId))
+      .maybeSingle(),
+      supabaseAdmin
+        .from('organizaciones')
+        .select('estado, funciones_habilitadas')
+        .eq('id', role.organizacion_id)
+        .maybeSingle(),
+    ]);
+    if (error) throw error;
+    if (organizationResult.error) throw organizationResult.error;
+    const organization = organizationResult.data;
+    if (data?.sede_id != null && organization?.estado === 'activa' && (organization.funciones_habilitadas || []).includes('scoreboard')) return;
   }
   const err = new Error('No tenés permiso para controlar este scoreboard');
   err.status = 403;
@@ -249,7 +269,7 @@ export function mountScoreboardRoutes(app, {
       }
 
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, sid);
+      await assertCanControlScoreboard(role, sid, supabaseAdmin);
 
       const jugadoresA = Array.isArray(equipo_a_jugadores) ? equipo_a_jugadores : [];
       const jugadoresB = Array.isArray(equipo_b_jugadores) ? equipo_b_jugadores : [];
@@ -346,7 +366,7 @@ export function mountScoreboardRoutes(app, {
 
       const partido = await fetchPartido(supabaseAdmin, req.params.id);
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, partido.sede_id);
+      await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
 
       const body = req.body ?? {};
       const patch = { ...pickColorUniformes(body) };
@@ -537,7 +557,7 @@ export function mountScoreboardRoutes(app, {
 
       let partido = await fetchPartido(supabaseAdmin, req.params.id);
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, partido.sede_id);
+      await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
 
       registrarPunto(partido, equipo);
       partido = await savePartido(supabaseAdmin, partido);
@@ -559,7 +579,7 @@ export function mountScoreboardRoutes(app, {
 
       let partido = await fetchPartido(supabaseAdmin, req.params.id);
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, partido.sede_id);
+      await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
 
       deshacerPunto(partido);
       partido = await savePartido(supabaseAdmin, partido);
@@ -581,7 +601,7 @@ export function mountScoreboardRoutes(app, {
 
       const partido = await fetchPartido(supabaseAdmin, req.params.id);
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, partido.sede_id);
+      await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
 
       const historial = Array.isArray(partido.historial_puntos) ? partido.historial_puntos : [];
       return res.json({ historial, count: historial.length });
@@ -602,7 +622,7 @@ export function mountScoreboardRoutes(app, {
 
       let partido = await fetchPartido(supabaseAdmin, req.params.id);
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, partido.sede_id);
+      await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
 
       cambiarSaque(partido);
       partido = await savePartido(supabaseAdmin, partido);
@@ -624,7 +644,7 @@ export function mountScoreboardRoutes(app, {
 
       let partido = await fetchPartido(supabaseAdmin, req.params.id);
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, partido.sede_id);
+      await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
 
       iniciarTiebreak(partido);
       partido = await savePartido(supabaseAdmin, partido);
@@ -651,7 +671,7 @@ export function mountScoreboardRoutes(app, {
 
       let partido = await fetchPartido(supabaseAdmin, req.params.id);
       const role = await resolveAuthRole(user, { fetchUserRoleRowForAuthUser, legacySuperAdminEmails });
-      assertCanControlScoreboard(role, partido.sede_id);
+      await assertCanControlScoreboard(role, partido.sede_id, supabaseAdmin);
 
       if (accion === 'start') {
         startCronometro(partido);

@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "es": {
+    "faqs": [
+      ["¿Hay cargos ocultos?", "No. Antes de activar un plan, la sede conoce y acepta el abono y la comisión correspondientes. Los costos del procesador de pago son independientes y no los cobra Padbol Match."],
+      ["¿Me cobran por enviar una solicitud?", "No. Enviar el formulario solamente inicia el contacto. No activa ningún cobro ni suscripción."],
+      ["¿El jugador paga comisión?", "No. El jugador paga 0% de comisión a Padbol Match."],
+      ["¿Necesito equipamiento especial para el marcador?", "No. El marcador puede utilizarse desde un teléfono, una tablet o una computadora y visualizarse en una TV."],
+      ["¿Puedo traer información de otro sistema?", "Sí, cuando el formato sea compatible. El alcance de la migración se revisa con la sede antes de comenzar."],
+      ["¿Qué pasa si tengo varias sedes?", "Business está pensado para cadenas y operadores multisede. La administración central, los permisos de cada sede, los reportes consolidados y el precio por volumen se definen con cada organización antes de activar el servicio."]
+    ],
+    "planLimits": {
+      "starter": "Hasta 4 canchas y 1 administrador.",
+      "pro": "Hasta 12 canchas y 5 administradores.",
+      "business": "Desde 13 canchas, con condiciones personalizadas."
+    },
+    "guardrails": [
+      "Los precios, promociones y comisiones dependen de la región y de la configuración vigente; ante un valor concreto, derivar al equipo comercial.",
+      "No brindar asesoramiento contable, fiscal ni legal.",
+      "Si la consulta excede esta información, reconocerlo y ofrecer contacto humano; nunca inventar una condición."
+    ]
+  },
+  "en": {
+    "faqs": [
+      ["Are there hidden charges?", "No. Before activating a plan, the club knows and accepts its subscription and commission. Payment processor costs are separate and are not charged by Padbol Match."],
+      ["Is there a charge for submitting a request?", "No. Sending the form only starts the conversation. It does not activate a charge or subscription."],
+      ["Does the player pay commission?", "No. Players pay 0% commission to Padbol Match."],
+      ["Do I need special scoreboard equipment?", "No. The scoreboard works from a phone, tablet or computer and can be displayed on a TV."],
+      ["Can I bring data from another system?", "Yes, when the format is compatible. We review the migration scope with the club before starting."],
+      ["What if I manage several clubs?", "Business is designed for chains and multisite operators. Central administration, club permissions, consolidated reports and volume pricing are agreed with each organization before activation."]
+    ],
+    "planLimits": {
+      "starter": "Up to 4 courts and 1 administrator.",
+      "pro": "Up to 12 courts and 5 administrators.",
+      "business": "From 13 courts, with custom terms."
+    },
+    "guardrails": [
+      "Prices, promotions and commissions depend on the region and current configuration; for a specific amount, refer the visitor to the commercial team.",
+      "Do not provide accounting, tax or legal advice.",
+      "If the question exceeds this information, say so and offer human contact; never invent a condition."
+    ]
+  }
+}

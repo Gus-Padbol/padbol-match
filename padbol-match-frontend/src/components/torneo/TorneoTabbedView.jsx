@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../../utils/apiPublicBaseUrl';
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { badgeTorneoEstadoPublico } from '../../utils/torneoEstadoPublico';
@@ -47,13 +48,11 @@ import {
   buildTablaPosiciones,
   formatMarcadorPartidoDetalle,
   parseResultadoPartido,
-  parseSetGames,
   partidosDelGrupo,
-  resultadoConGanador,
   validarMarcadorSetsPartido,
   equipoIdKey,
 } from '../../utils/torneoPartidoResultado';
-import { validarMejorDeTres } from '../../utils/speechResultadoPartido';
+import { guardarResultadoManualTorneo } from '../../utils/torneoResultadoManualApi';
 
 export { buildTablaPosiciones } from '../../utils/torneoPartidoResultado';
 
@@ -246,7 +245,7 @@ export default function TorneoTabbedView({
   showTorneoLogo = false,
   /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
   jugadorNombreTorneoCtx = null,
-  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  apiBaseUrl = getApiBaseUrl(),
   /** super_admin / admin_club (panel): exportar jugadores del torneo a Excel. */
   puedeExportarJugadoresExcel = false,
   /** Panel admin / gestión: mostrar sorteo manual en pestaña Grupos. */
@@ -828,57 +827,32 @@ export default function TorneoTabbedView({
             set2: normalizeSetInput(resultado.set2),
             set3: normalizeSetInput(resultado.set3),
           };
-      const sets = [norm.set1, norm.set2, norm.set3].filter((s) => s.trim());
-      if (sets.length < 2) {
-        alert('Mínimo 2 sets requeridos');
-        return;
-      }
-      const setsParsed = sets.map((s) => parseSetGames(s));
-      if (setsParsed.some((p) => !p)) {
-        alert('Formato de set inválido (ej.: 6-4). No puede haber empate en un set.');
-        return;
-      }
-      const validacionSets = validarMejorDeTres(setsParsed);
-      if (!validacionSets.ok) {
-        alert(validacionSets.error);
-        return;
-      }
-      const resultadoPayload = resultadoConGanador(selectedPartido, norm);
-      const resultadoJson = JSON.stringify(resultadoPayload);
       try {
-        const base = String(apiBaseUrl || '').replace(/\/+$/, '');
-        const res = await fetch(`${base}/api/partidos/${selectedPartido.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            estado: 'finalizado',
-            resultado: resultadoJson,
-          }),
+        const data = await guardarResultadoManualTorneo({
+          apiBaseUrl,
+          torneoId: torneo?.id ?? torneoId,
+          partidoId: selectedPartido.id,
+          resultado: norm,
         });
-        if (res.ok) {
-          setPartidos((prev) =>
-            prev.map((p) =>
-              p.id === selectedPartido.id
-                ? { ...p, estado: 'finalizado', resultado: resultadoPayload }
-                : p
-            )
-          );
-          setResultado(resultadoPayload);
-          setShowModalResultado(false);
-          setSelectedPartido(null);
-          setVoicePending(null);
-          setVoicePhase('idle');
-          setVoiceInterimText('');
-          setVoiceError(null);
-        } else {
-          const data = await res.json().catch(() => ({}));
-          alert(data.error || res.statusText || 'No se pudo guardar');
-        }
+        setPartidos((prev) =>
+          prev.map((p) =>
+            p.id === selectedPartido.id
+              ? { ...p, estado: 'finalizado', resultado: data.resultado, ganador_equipo_id: data.ganador_equipo_id }
+              : p
+          )
+        );
+        setResultado(norm);
+        setShowModalResultado(false);
+        setSelectedPartido(null);
+        setVoicePending(null);
+        setVoicePhase('idle');
+        setVoiceInterimText('');
+        setVoiceError(null);
       } catch (err) {
         alert('Error al guardar: ' + err.message);
       }
     },
-    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, setPartidos, t]
+    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, torneo?.id, torneoId, setPartidos, t]
   );
 
   const confirmarVozYGuardar = useCallback(async () => {
@@ -2202,7 +2176,6 @@ export default function TorneoTabbedView({
         open={showModalDetallePartido && Boolean(selectedPartido)}
         onClose={() => {
           setShowModalDetallePartido(false);
-          setSelectedPartido(null);
         }}
         partido={selectedPartido}
         equipos={equipos}

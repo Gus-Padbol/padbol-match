@@ -1,36 +1,36 @@
 import { useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import './AdminSedeConfiguracionGuiada.css';
 
-const STEPS = [
-  { id: 'sede', label: 'Tu sede' },
-  { id: 'cancha', label: 'Primera cancha' },
-  { id: 'operacion', label: 'Horarios y precios' },
-  { id: 'confirmar', label: 'Confirmar' },
-];
-
-const SPORTS = [
-  { id: 'padbol', label: 'Padbol' },
-  { id: 'padel', label: 'Pádel' },
-  { id: 'pickleball', label: 'Pickleball' },
-  { id: 'tenis', label: 'Tenis' },
-];
+const STEPS = ['sede', 'cancha', 'operacion', 'confirmar'];
+const SPORTS = ['padbol', 'padel', 'pickleball', 'tenis'];
+const CURRENCIES = ['ARS', 'USD', 'EUR', 'BRL', 'CLP', 'UYU'];
 
 function digits(value) {
   return String(value ?? '').replace(/\D/g, '');
 }
 
-function money(value, currency) {
+function money(value, currency, locale, undefinedLabel) {
   const amount = Number(String(value || '').replace(/\D/g, ''));
-  if (!amount) return 'Sin definir';
+  if (!amount) return undefinedLabel;
   try {
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currency || 'ARS',
       maximumFractionDigits: 0,
     }).format(amount);
   } catch {
-    return `${currency || 'ARS'} ${amount.toLocaleString('es-AR')}`;
+    return `${currency || 'ARS'} ${amount.toLocaleString(locale)}`;
+  }
+}
+
+function currencyLabel(code, locale) {
+  try {
+    const name = new Intl.DisplayNames([locale], { type: 'currency' }).of(code);
+    return `${code} · ${name}`;
+  } catch {
+    return code;
   }
 }
 
@@ -51,7 +51,8 @@ function initialDraft(venue) {
 }
 
 export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [], onSave, busy = false }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = padbolLangToIntlLocale(i18n.language);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState(() => initialDraft(venue));
@@ -59,15 +60,17 @@ export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [
 
   const hasCourt = existingCourts.length > 0;
   const current = STEPS[step];
+  const stepLabel = (id) => t(`admin.sedes.guidedSetup.step.${id}`);
+  const sportLabel = (id) => t(`torneos.deporte.${id}`);
   const progress = ((step + 1) / STEPS.length) * 100;
   const canContinue = useMemo(() => {
-    if (current.id === 'sede') return Boolean(draft.nombre.trim() && draft.ciudad.trim() && draft.pais.trim());
-    if (current.id === 'cancha') return hasCourt || Boolean(draft.canchaNombre.trim());
-    if (current.id === 'operacion') {
+    if (current === 'sede') return Boolean(draft.nombre.trim() && draft.ciudad.trim() && draft.pais.trim());
+    if (current === 'cancha') return hasCourt || Boolean(draft.canchaNombre.trim());
+    if (current === 'operacion') {
       return Boolean(draft.horario_apertura && draft.horario_cierre && draft.precio_60min);
     }
     return true;
-  }, [current.id, draft, hasCourt]);
+  }, [current, draft, hasCourt]);
 
   const start = () => {
     setDraft(initialDraft(venue));
@@ -84,7 +87,7 @@ export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [
 
   const next = () => {
     if (!canContinue) {
-      setMessage('Completá los datos marcados para que Chivi pueda continuar.');
+      setMessage(t('admin.sedes.guidedSetup.missingRequired'));
       return;
     }
     setMessage('');
@@ -110,10 +113,10 @@ export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [
         : { nombre: draft.canchaNombre.trim(), deporte: draft.canchaDeporte },
     });
     if (!result?.ok) {
-      setMessage(result?.message || 'No se pudo guardar. Revisá la conexión e intentá de nuevo.');
+      setMessage(result?.message || t('admin.sedes.guidedSetup.saveFailed'));
       return;
     }
-    setMessage('✅ Configuración guardada. Chivi dejó lista la base operativa de tu sede.');
+    setMessage(t('admin.sedes.guidedSetup.saveSuccess'));
     window.setTimeout(() => setOpen(false), 1300);
   };
 
@@ -142,75 +145,77 @@ export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [
           >
             <header className="guided-setup__dialog-header">
               <div>
-                <p>CHIVI · CONFIGURACIÓN GUIADA</p>
-                <h2 id="guided-setup-dialog-title">{current.label}</h2>
+                <p>{t('admin.sedes.guidedSetup.dialogEyebrow')}</p>
+                <h2 id="guided-setup-dialog-title">{stepLabel(current)}</h2>
               </div>
-              <button type="button" className="guided-setup__close" aria-label="Cerrar" onClick={close} disabled={busy}>×</button>
+              <button type="button" className="guided-setup__close" aria-label={t('admin.sedes.guidedSetup.close')} onClick={close} disabled={busy}>×</button>
             </header>
 
-            <div className="guided-setup__progress" aria-label={`Paso ${step + 1} de ${STEPS.length}`}>
+            <div className="guided-setup__progress" aria-label={t('admin.sedes.guidedSetup.progress', { current: step + 1, total: STEPS.length })}>
               <span style={{ width: `${progress}%` }} />
             </div>
             <ol className="guided-setup__steps">
               {STEPS.map((item, index) => (
-                <li key={item.id} className={index === step ? 'is-current' : index < step ? 'is-done' : ''}>
-                  <span>{index + 1}</span>{item.label}
+                <li key={item} className={index === step ? 'is-current' : index < step ? 'is-done' : ''}>
+                  <span>{index + 1}</span>{stepLabel(item)}
                 </li>
               ))}
             </ol>
 
             <main className="guided-setup__body">
-              {current.id === 'sede' ? (
+              {current === 'sede' ? (
                 <>
-                  <p className="guided-setup__lead">Empecemos por lo esencial. Estos datos identifican a tu sede y determinan la moneda que verá cada jugador.</p>
+                  <p className="guided-setup__lead">{t('admin.sedes.guidedSetup.venueLead')}</p>
                   <div className="guided-setup__fields">
-                    <label>Nombre de la sede<input value={draft.nombre} onChange={(e) => update('nombre', e.target.value)} placeholder="Ej. La Meca Padbol Club" autoFocus /></label>
-                    <label>Ciudad<input value={draft.ciudad} onChange={(e) => update('ciudad', e.target.value)} placeholder="Ej. La Plata" /></label>
-                    <label>País<input value={draft.pais} onChange={(e) => update('pais', e.target.value)} placeholder="Ej. Argentina" /></label>
-                    <label>Moneda<select value={draft.moneda} onChange={(e) => update('moneda', e.target.value)}><option value="ARS">ARS · Peso argentino</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="BRL">BRL · Real brasileño</option><option value="CLP">CLP · Peso chileno</option><option value="UYU">UY · Peso uruguayo</option></select></label>
+                    <label>{t('admin.sedes.guidedSetup.venueName')}<input value={draft.nombre} onChange={(e) => update('nombre', e.target.value)} placeholder={t('admin.sedes.guidedSetup.venueNamePlaceholder')} autoFocus /></label>
+                    <label>{t('admin.sedes.guidedSetup.city')}<input value={draft.ciudad} onChange={(e) => update('ciudad', e.target.value)} placeholder={t('admin.sedes.guidedSetup.cityPlaceholder')} /></label>
+                    <label>{t('admin.sedes.guidedSetup.country')}<input value={draft.pais} onChange={(e) => update('pais', e.target.value)} placeholder={t('admin.sedes.guidedSetup.countryPlaceholder')} /></label>
+                    <label>{t('admin.sedes.guidedSetup.currency')}<select value={draft.moneda} onChange={(e) => update('moneda', e.target.value)}>{CURRENCIES.map((code) => <option key={code} value={code}>{currencyLabel(code, locale)}</option>)}</select></label>
                   </div>
                 </>
               ) : null}
 
-              {current.id === 'cancha' ? (
+              {current === 'cancha' ? (
                 <>
                   <p className="guided-setup__lead">
-                    {hasCourt ? `Ya tenés ${existingCourts.length} cancha${existingCourts.length === 1 ? '' : 's'} cargada${existingCourts.length === 1 ? '' : 's'}. Chivi conservará esa información.` : 'Cargá tu primera cancha. Después podés sumar o editar todas las que necesites desde “Canchas”.'}
+                    {hasCourt
+                      ? t('admin.sedes.guidedSetup.existingCourts', { count: existingCourts.length })
+                      : t('admin.sedes.guidedSetup.firstCourtLead')}
                   </p>
                   {!hasCourt ? (
                     <div className="guided-setup__fields">
-                      <label>Nombre de la cancha<input value={draft.canchaNombre} onChange={(e) => update('canchaNombre', e.target.value)} placeholder="Ej. Cancha 1" autoFocus /></label>
-                      <fieldset><legend>Deporte de esta cancha</legend><div className="guided-setup__choices">{SPORTS.map((sport) => <label key={sport.id} className={draft.canchaDeporte === sport.id ? 'is-selected' : ''}><input type="radio" name="guided-court-sport" value={sport.id} checked={draft.canchaDeporte === sport.id} onChange={() => update('canchaDeporte', sport.id)} />{sport.label}</label>)}</div></fieldset>
+                      <label>{t('admin.sedes.guidedSetup.courtName')}<input value={draft.canchaNombre} onChange={(e) => update('canchaNombre', e.target.value)} placeholder={t('admin.sedes.guidedSetup.courtNamePlaceholder')} autoFocus /></label>
+                      <fieldset><legend>{t('admin.sedes.guidedSetup.courtSport')}</legend><div className="guided-setup__choices">{SPORTS.map((sport) => <label key={sport} className={draft.canchaDeporte === sport ? 'is-selected' : ''}><input type="radio" name="guided-court-sport" value={sport} checked={draft.canchaDeporte === sport} onChange={() => update('canchaDeporte', sport)} />{sportLabel(sport)}</label>)}</div></fieldset>
                     </div>
                   ) : null}
                 </>
               ) : null}
 
-              {current.id === 'operacion' ? (
+              {current === 'operacion' ? (
                 <>
-                  <p className="guided-setup__lead">Definí el horario general y un precio base. Podés agregar franjas especiales, medios de pago y reglas avanzadas en los módulos de la sede cuando termines.</p>
+                  <p className="guided-setup__lead">{t('admin.sedes.guidedSetup.operationLead')}</p>
                   <div className="guided-setup__fields guided-setup__fields--operation">
-                    <label>Apertura<input type="time" value={draft.horario_apertura} onChange={(e) => update('horario_apertura', e.target.value)} /></label>
-                    <label>Cierre<input type="time" value={draft.horario_cierre} onChange={(e) => update('horario_cierre', e.target.value)} /></label>
-                    <label>Precio base · 60 min<input inputMode="numeric" value={draft.precio_60min} onChange={(e) => update('precio_60min', digits(e.target.value))} placeholder="0" /></label>
-                    <label>Precio base · 90 min <small>Opcional</small><input inputMode="numeric" value={draft.precio_90min} onChange={(e) => update('precio_90min', digits(e.target.value))} placeholder="0" /></label>
-                    <label>Precio base · 120 min <small>Opcional</small><input inputMode="numeric" value={draft.precio_120min} onChange={(e) => update('precio_120min', digits(e.target.value))} placeholder="0" /></label>
+                    <label>{t('admin.sedes.guidedSetup.opening')}<input type="time" value={draft.horario_apertura} onChange={(e) => update('horario_apertura', e.target.value)} /></label>
+                    <label>{t('admin.sedes.guidedSetup.closing')}<input type="time" value={draft.horario_cierre} onChange={(e) => update('horario_cierre', e.target.value)} /></label>
+                    <label>{t('admin.sedes.guidedSetup.basePrice', { min: 60 })}<input inputMode="numeric" value={draft.precio_60min} onChange={(e) => update('precio_60min', digits(e.target.value))} placeholder="0" /></label>
+                    <label>{t('admin.sedes.guidedSetup.basePrice', { min: 90 })} <small>{t('admin.sedes.guidedSetup.optional')}</small><input inputMode="numeric" value={draft.precio_90min} onChange={(e) => update('precio_90min', digits(e.target.value))} placeholder="0" /></label>
+                    <label>{t('admin.sedes.guidedSetup.basePrice', { min: 120 })} <small>{t('admin.sedes.guidedSetup.optional')}</small><input inputMode="numeric" value={draft.precio_120min} onChange={(e) => update('precio_120min', digits(e.target.value))} placeholder="0" /></label>
                   </div>
-                  <aside className="guided-setup__notice"><strong>Regla operativa vigente</strong><br />Los partidos abiertos que no completan el grupo liberan la reserva 8 horas antes. Chivi la muestra como regla común: la política configurable por sede se agregará al módulo de reservas cuando la API la exponga.</aside>
+                  <aside className="guided-setup__notice"><strong>{t('admin.sedes.guidedSetup.currentRuleTitle')}</strong><br />{t('admin.sedes.guidedSetup.currentRuleBody')}</aside>
                 </>
               ) : null}
 
-              {current.id === 'confirmar' ? (
+              {current === 'confirmar' ? (
                 <>
-                  <p className="guided-setup__lead">Revisá el resumen. Nada se guarda hasta que confirmes.</p>
+                  <p className="guided-setup__lead">{t('admin.sedes.guidedSetup.reviewLead')}</p>
                   <dl className="guided-setup__summary">
-                    <div><dt>Sede</dt><dd>{draft.nombre || '—'}</dd></div>
-                    <div><dt>Ubicación</dt><dd>{[draft.ciudad, draft.pais].filter(Boolean).join(', ') || '—'}</dd></div>
-                    <div><dt>Cancha</dt><dd>{hasCourt ? `${existingCourts.length} existente${existingCourts.length === 1 ? '' : 's'}` : `${draft.canchaNombre || '—'} · ${SPORTS.find((sport) => sport.id === draft.canchaDeporte)?.label}`}</dd></div>
-                    <div><dt>Horario</dt><dd>{draft.horario_apertura} a {draft.horario_cierre}</dd></div>
-                    <div><dt>Precio 60 min</dt><dd>{money(draft.precio_60min, draft.moneda)}</dd></div>
-                    {draft.precio_90min ? <div><dt>Precio 90 min</dt><dd>{money(draft.precio_90min, draft.moneda)}</dd></div> : null}
-                    {draft.precio_120min ? <div><dt>Precio 120 min</dt><dd>{money(draft.precio_120min, draft.moneda)}</dd></div> : null}
+                    <div><dt>{t('admin.sedes.guidedSetup.summaryVenue')}</dt><dd>{draft.nombre || '—'}</dd></div>
+                    <div><dt>{t('admin.sedes.guidedSetup.summaryLocation')}</dt><dd>{[draft.ciudad, draft.pais].filter(Boolean).join(', ') || '—'}</dd></div>
+                    <div><dt>{t('admin.sedes.guidedSetup.summaryCourt')}</dt><dd>{hasCourt ? t('admin.sedes.guidedSetup.existingCourtsShort', { count: existingCourts.length }) : `${draft.canchaNombre || '—'} · ${sportLabel(draft.canchaDeporte)}`}</dd></div>
+                    <div><dt>{t('admin.sedes.guidedSetup.summaryHours')}</dt><dd>{t('admin.sedes.guidedSetup.hoursRange', { open: draft.horario_apertura, close: draft.horario_cierre })}</dd></div>
+                    <div><dt>{t('admin.sedes.guidedSetup.summaryPrice', { min: 60 })}</dt><dd>{money(draft.precio_60min, draft.moneda, locale, t('admin.sedes.guidedSetup.undefinedMoney'))}</dd></div>
+                    {draft.precio_90min ? <div><dt>{t('admin.sedes.guidedSetup.summaryPrice', { min: 90 })}</dt><dd>{money(draft.precio_90min, draft.moneda, locale, t('admin.sedes.guidedSetup.undefinedMoney'))}</dd></div> : null}
+                    {draft.precio_120min ? <div><dt>{t('admin.sedes.guidedSetup.summaryPrice', { min: 120 })}</dt><dd>{money(draft.precio_120min, draft.moneda, locale, t('admin.sedes.guidedSetup.undefinedMoney'))}</dd></div> : null}
                   </dl>
                 </>
               ) : null}
@@ -218,8 +223,8 @@ export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [
             </main>
 
             <footer className="guided-setup__actions">
-              <button type="button" className="guided-setup__secondary" onClick={() => step === 0 ? close() : setStep((value) => value - 1)} disabled={busy}>{step === 0 ? 'Cancelar' : 'Volver'}</button>
-              {current.id === 'confirmar' ? <button type="button" className="guided-setup__primary" onClick={() => void save()} disabled={busy}>{busy ? 'Guardando…' : 'Confirmar y guardar'}</button> : <button type="button" className="guided-setup__primary" onClick={next}>Continuar</button>}
+              <button type="button" className="guided-setup__secondary" onClick={() => step === 0 ? close() : setStep((value) => value - 1)} disabled={busy}>{step === 0 ? t('admin.sedes.guidedSetup.cancel') : t('admin.sedes.guidedSetup.back')}</button>
+              {current === 'confirmar' ? <button type="button" className="guided-setup__primary" onClick={() => void save()} disabled={busy}>{busy ? t('admin.sedes.guidedSetup.saving') : t('admin.sedes.guidedSetup.confirmSave')}</button> : <button type="button" className="guided-setup__primary" onClick={next}>{t('admin.sedes.guidedSetup.continue')}</button>}
             </footer>
           </div>
         </div>

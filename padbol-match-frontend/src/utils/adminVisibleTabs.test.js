@@ -1,5 +1,6 @@
 import {
   ADMIN_NACIONAL_VISIBLE_TABS,
+  ADMIN_CADENA_VISIBLE_TABS,
   ADMIN_CLUB_VISIBLE_TABS,
   SUPER_ADMIN_VISIBLE_TABS,
   EDITOR_CONTENIDO_VISIBLE_TABS,
@@ -89,11 +90,19 @@ describe('adminVisibleTabs — guard y fallback', () => {
   });
 
   it('11. todo tab visible tiene superficie de render conocida', () => {
-    for (const rol of ['super_admin', 'admin_club', 'admin_nacional', 'editor_contenido', 'empleado']) {
+    for (const rol of ['super_admin', 'admin_club', 'admin_nacional', 'admin_cadena', 'editor_contenido', 'empleado']) {
       for (const tab of getAllowedAdminTabsForRole(rol)) {
         expect(tabHasKnownRenderSurface(tab, rol)).toBe(true);
       }
     }
+  });
+
+  it('admin_cadena usa las vistas consolidadas sin acceso global', () => {
+    expect(getAllowedAdminTabsForRole('admin_cadena')).toEqual(ADMIN_CADENA_VISIBLE_TABS);
+    expect(ADMIN_CADENA_VISIBLE_TABS).toEqual(expect.arrayContaining(['reservas', 'torneos', 'jugadores', 'scoreboard']));
+    expect(resolveAdminVisibleTab('sedes', 'admin_cadena').tab).toBe('sedes');
+    expect(resolveAdminVisibleTab('config', 'admin_cadena').tab).toBe('resumen');
+    expect(canRoleSeePadCoins('admin_cadena')).toBe(false);
   });
 
   it('12. aliases legacy se normalizan', () => {

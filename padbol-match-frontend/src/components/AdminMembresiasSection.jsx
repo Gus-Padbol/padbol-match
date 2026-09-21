@@ -449,17 +449,17 @@ export default function AdminMembresiasSection({
   const planErrorMessage = (key) => {
     const map = {
       nameRequired: tr('errNameRequired', 'El nombre es obligatorio.'),
-      sedeRequired: tr('errSedeRequired', 'Seleccioná una sede.'),
+      sedeRequired: tr('errSedeRequired', 'Selecciona una sede.'),
       precioInvalid: tr('errPrecio', 'El precio debe ser un número ≥ 0.'),
       duracionInvalid: tr('errDuracion', 'Duración inválida.'),
-      duracionDiasInvalid: tr('errDuracionDias', 'Indicá días válidos (≥ 1) para duración personalizada.'),
+      duracionDiasInvalid: tr('errDuracionDias', 'Indica días válidos (≥ 1) para duración personalizada.'),
       descuentoInvalid: tr('errDescuento', 'El descuento debe estar entre 0 y 100.'),
       reservasInvalid: tr('errReservas', 'Reservas incluidas: entero ≥ 0.'),
       prioridadInvalid: tr('errPrioridad', 'Prioridad (horas) inválida.'),
       cancelacionInvalid: tr('errCancelacion', 'Flexibilidad de cancelación inválida.'),
       cupoInvalid: tr('errCupo', 'Cupo debe ser un entero ≥ 1 o vacío.'),
     };
-    return map[key] || tr('errGeneric', 'Revisá el formulario.');
+    return map[key] || tr('errGeneric', 'Revisa el formulario.');
   };
 
   const savePlan = async () => {
@@ -533,15 +533,15 @@ export default function AdminMembresiasSection({
   const requestAssign = () => {
     setAssignError('');
     if (!assignPlayer?.id && !assignPlayer?.user_id) {
-      setAssignError(tr('errPlayerRequired', 'Seleccioná un jugador registrado.'));
+      setAssignError(tr('errPlayerRequired', 'Selecciona un jugador registrado.'));
       return;
     }
     if (!assignPlanId) {
-      setAssignError(tr('errPlanRequired', 'Seleccioná un plan.'));
+      setAssignError(tr('errPlanRequired', 'Selecciona un plan.'));
       return;
     }
     if (!assignInicio) {
-      setAssignError(tr('errInicioRequired', 'Indicá fecha de inicio.'));
+      setAssignError(tr('errInicioRequired', 'Indica fecha de inicio.'));
       return;
     }
     setAssignConfirmOpen(true);
@@ -627,12 +627,9 @@ export default function AdminMembresiasSection({
       cancelar: tr('confirmCancelTitle', 'Cancelar membresía'),
     };
     const msgs = {
-      renovar: tr(
-        'confirmRenewMsg',
-        'Se cancelará la membresía actual y se creará una nueva activa con el mismo plan. ¿Continuar?',
-      ),
+      renovar: tr('confirmRenewMsg'),
       suspender: tr('confirmSuspendMsg', 'El jugador dejará de recibir beneficios hasta una nueva asignación. ¿Suspender?'),
-      cancelar: tr('confirmCancelMsg', 'La membresía quedará cancelada (estado final). Para reactivar, asigná una nueva. ¿Cancelar?'),
+      cancelar: tr('confirmCancelMsg', 'La membresía quedará cancelada (estado final). Para reactivar, asigna una nueva. ¿Cancelar?'),
     };
     setConfirmAction({ type, row, title: titles[type], message: msgs[type] });
   };
@@ -640,7 +637,7 @@ export default function AdminMembresiasSection({
   if (!canUse) {
     return (
       <div className="section">
-        <p style={{ color: 'var(--text-secondary)' }}>{tr('forbiddenRole', 'No tenés permiso para gestionar membresías.')}</p>
+        <p style={{ color: 'var(--text-secondary)' }}>{tr('forbiddenRole', 'No tienes permiso para gestionar membresías.')}</p>
       </div>
     );
   }
@@ -660,10 +657,7 @@ export default function AdminMembresiasSection({
         <div style={{ minWidth: 0, flex: '1 1 240px' }}>
           <h2 style={{ margin: '0 0 6px', fontSize: 22 }}>{tr('title', 'Membresías')}</h2>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.45, maxWidth: 640 }}>
-            {tr(
-              'subtitle',
-              'Planes y membresías de jugadores por sede. No confundir con el plan comercial de la sede ni con PadCoins.',
-            )}
+            {tr('subtitle')}
           </p>
         </div>
         <button
@@ -688,10 +682,7 @@ export default function AdminMembresiasSection({
           marginBottom: 16,
         }}
       >
-        {tr(
-          'billingNote',
-          'El cobro recurrente / renovación automática con pago todavía no está activo. Las reservas incluidas y el descuento sí se aplican automáticamente en reservas.',
-        )}
+        {tr('billingNote')}
       </div>
 
       <div
@@ -710,7 +701,7 @@ export default function AdminMembresiasSection({
               onChange={(e) => setSedeId(e.target.value)}
               style={inp}
             >
-              <option value="">{tr('sedeSelect', 'Seleccioná una sede')}</option>
+              <option value="">{tr('sedeSelect', 'Selecciona una sede')}</option>
               {(sedesOptions || []).map((s) => (
                 <option key={s.id} value={String(s.id)}>
                   {sedeFlag(s) ? `${sedeFlag(s)} ` : ''}
@@ -729,7 +720,7 @@ export default function AdminMembresiasSection({
 
       {!effectiveSedeId ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-          {tr('needSede', 'Seleccioná una sede para ver planes y membresías.')}
+          {tr('needSede', 'Selecciona una sede para ver planes y membresías.')}
         </p>
       ) : (
         <>
@@ -1014,7 +1005,7 @@ export default function AdminMembresiasSection({
                                 ) : null}
                                 {actions.length === 0 ? (
                                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                    {tr('noActions', 'Sin acciones — asigná una nueva')}
+                                    {tr('noActions', 'Sin acciones — asigna una nueva')}
                                   </span>
                                 ) : null}
                               </div>
@@ -1228,10 +1219,7 @@ export default function AdminMembresiasSection({
                 <span>
                   <strong>{tr('fieldRenovAuto', 'Renovación automática')}</strong>
                   <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: 12 }}>
-                    {tr(
-                      'fieldRenovAutoHint',
-                      'Dato informativo: el cobro recurrente todavía no está activo.',
-                    )}
+                    {tr('fieldRenovAutoHint')}
                   </span>
                 </span>
               </label>
@@ -1359,7 +1347,7 @@ export default function AdminMembresiasSection({
                   value={assignPlanId}
                   onChange={(e) => setAssignPlanId(e.target.value)}
                 >
-                  <option value="">{tr('selectPlan', 'Seleccioná un plan')}</option>
+                  <option value="">{tr('selectPlan', 'Selecciona un plan')}</option>
                   {planesActivos.map((p) => (
                     <option key={p.id} value={String(p.id)}>
                       {p.nombre} — {formatMembresiaPrecio(p.precio, p.moneda)}
@@ -1406,10 +1394,7 @@ export default function AdminMembresiasSection({
               </label>
               {hasActivaSameUser ? (
                 <p style={{ margin: 0, fontSize: 12, color: '#9a3412', lineHeight: 1.45 }}>
-                  {tr(
-                    'replaceWarning',
-                    'Este jugador ya tiene una membresía activa en la sede. Al asignar, la anterior se cancelará y será reemplazada (contrato Backend).',
-                  )}
+                  {tr('replaceWarning')}
                 </p>
               ) : null}
               {assignError ? (
@@ -1499,10 +1484,7 @@ export default function AdminMembresiasSection({
               </li>
             </ul>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.45 }}>
-              {tr(
-                'billingNoteShort',
-                'La renovación automática con cobro todavía no está disponible. Para reactivar una cancelada, asigná una nueva membresía.',
-              )}
+              {tr('billingNoteShort')}
             </p>
             <button type="button" style={{ ...btnGhost, marginTop: 12 }} onClick={() => setDetailRow(null)}>
               {tr('close', 'Cerrar')}
@@ -1526,10 +1508,7 @@ export default function AdminMembresiasSection({
         title={tr('confirmAssignTitle', 'Confirmar asignación')}
         message={
           hasActivaSameUser
-            ? tr(
-              'confirmAssignReplace',
-              'Se cancelará la membresía activa existente en esta sede y se asignará el nuevo plan. ¿Continuar?',
-            )
+            ? tr('confirmAssignReplace')
             : tr('confirmAssignMsg', '¿Asignar esta membresía al jugador seleccionado?')
         }
         busy={assignBusy}

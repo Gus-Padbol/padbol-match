@@ -1,5 +1,7 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import AppHeader from '../components/AppHeader';
 import {
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
@@ -23,17 +25,37 @@ import { PERFIL_CHANGE_EVENT } from '../utils/jugadorPerfil';
 import { perfilJugadorDatosMinimosCompletos } from '../utils/perfilJugadorMinimo';
 import DeportesPreferidosChips from '../components/DeportesPreferidosChips';
 import { normalizeDeportesPreferidosArray } from '../constants/deportesPreferidos';
-import { mensajeErrorDbSupabase, mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
+import { mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
+import { supabase } from '../supabaseClient';
+import { assessAgeEligibility } from '../utils/ageEligibility';
+import { registerCurrentAccountEligibility } from '../utils/legalDocuments';
+import { resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 const OPCIONES_TELEFONO = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
+const OPCIONES_PAIS = OPCIONES_TELEFONO.filter(
+  (pais, index, items) => items.findIndex((item) => item.nombre === pais.nombre) === index,
+);
+
+function paisLabelKey(nombre) {
+  return `paises.${String(nombre || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')}`;
+}
+
+function paisGuardadoNormalizado(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const encontrado = OPCIONES_PAIS.find((pais) => raw.includes(pais.nombre));
+  return encontrado ? `${encontrado.bandera} ${encontrado.nombre}` : raw;
+}
 
 const btnPrimarioStyle = {
   width: '100%',
@@ -82,10 +104,15 @@ function capitalizar(s) {
 }
 
 export default function CompletarPerfilOAuth() {
+  const { t } = useTranslation();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const navigate = useNavigate();
   const { session, userProfile, profileLoading, loading, refreshSession } = useAuth();
+  const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
+  const [pais, setPais] = useState('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [genero, setGenero] = useState('');
   const [waCodigo, setWaCodigo] = useState('+54');
   const [waLocal, setWaLocal] = useState('');
@@ -98,6 +125,14 @@ export default function CompletarPerfilOAuth() {
   const [deportesPreferidos, setDeportesPreferidos] = useState([]);
 
   useEffect(() => {
+    const meta = session?.user?.user_metadata || {};
+    const full = String(meta.full_name || meta.name || '').trim();
+    const parts = full.split(/\s+/).filter(Boolean);
+    const nombrePerfil = String(userProfile?.nombre || '').trim();
+    setNombre(nombrePerfil && nombrePerfil !== 'Jugador' ? nombrePerfil : String(meta.nombre || parts[0] || '').trim());
+    setApellido(String(userProfile?.apellido || meta.apellido || parts.slice(1).join(' ') || '').trim());
+    setPais(paisGuardadoNormalizado(userProfile?.pais || meta.pais));
+    setFechaNacimiento(String(userProfile?.fecha_nacimiento || '').slice(0, 10));
     if (!userProfile) return;
     if (String(userProfile.genero || '').trim()) {
       setGenero(String(userProfile.genero).trim());
@@ -114,39 +149,65 @@ export default function CompletarPerfilOAuth() {
     } else {
       setDeportesPreferidos([]);
     }
-  }, [userProfile]);
+  }, [session?.user?.user_metadata, userProfile]);
+
+  const destinoFinal = useMemo(() => {
+    const queryDestination = resolvePostLoginNavigatePath(location.search);
+    const stateDestination = location.state?.from;
+    let dest = queryDestination && queryDestination !== '/'
+      ? queryDestination
+      : typeof stateDestination === 'string' && stateDestination.startsWith('/') && !stateDestination.startsWith('//')
+        ? stateDestination
+        : '/hub';
+    if (dest.split('?')[0] === '/completar-perfil') dest = '/hub';
+    return dest;
+  }, [location.search, location.state]);
 
   const validarPasoDatos = useCallback(() => {
     setErrorMsg('');
+    if (!String(nombre || '').trim()) {
+      setErrorMsg(t('auth.completeFirstName'));
+      return false;
+    }
+    if (!String(apellido || '').trim()) {
+      setErrorMsg(t('auth.completeLastName'));
+      return false;
+    }
+    if (!String(pais || '').trim()) {
+      setErrorMsg(t('profileCompletion.selectCountry'));
+      return false;
+    }
+    const eligibility = assessAgeEligibility(fechaNacimiento);
+    if (!eligibility.allowed) {
+      setErrorMsg(eligibility.band === 'requires_verified_parent' ? t('auth.ageEligibilityParental') : t('auth.ageEligibilityInvalid'));
+      return false;
+    }
     const gen = String(genero || '').trim().toLowerCase();
     if (gen !== 'masculino' && gen !== 'femenino') {
-      setErrorMsg('Selecciona género (Masculino o Femenino).');
+      setErrorMsg(t('auth.selectGender'));
       return false;
     }
     const waLoc = digitsOnly(waLocal);
     const waLoc2 = digitsOnly(waLocalConfirm);
     if (waLoc !== waLoc2) {
-      setErrorMsg('Los números no coinciden.');
+      setErrorMsg(t('auth.phoneMismatch'));
       return false;
     }
     if (!whatsappNacionalValido(waLoc)) {
-      setErrorMsg('Número de WhatsApp inválido.');
+      setErrorMsg(t('auth.invalidWhatsapp'));
       return false;
     }
     const waDigitsFull = buildFullWhatsDigits(waCodigo, waLoc);
     if (!whatsappDigitsValido(waDigitsFull)) {
-      setErrorMsg('Número de WhatsApp inválido.');
+      setErrorMsg(t('auth.invalidWhatsapp'));
       return false;
     }
     return true;
-  }, [genero, waLocal, waLocalConfirm, waCodigo]);
+  }, [apellido, fechaNacimiento, genero, nombre, pais, waLocal, waLocalConfirm, waCodigo, t]);
 
   const irAlHubPrincipal = useCallback(() => {
-    const from = location.state?.from;
-    let dest = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : '/hub';
-    if (dest === '/completar-perfil') dest = '/hub';
-    navigate(dest, { replace: true });
-  }, [location.state, navigate]);
+    navigate(destinoFinal, { replace: true });
+  }, [destinoFinal, navigate]);
 
   const guardarPerfilYContinuar = useCallback(
     async (deportesSel) => {
@@ -157,17 +218,17 @@ export default function CompletarPerfilOAuth() {
       const waE164 = formatWhatsAppE164(waCodigo, waLoc);
       const token = session?.access_token;
       if (!token) {
-        setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
+        setErrorMsg(t('profileCompletion.sessionExpired'));
         return;
       }
       try {
         const { disponible } = await fetchWhatsappDisponibleRegistro(waE164, token);
         if (!disponible) {
-          setErrorMsg('Este número de teléfono ya está registrado en otra cuenta');
+          setErrorMsg(t('auth.phoneAlreadyRegistered'));
           return;
         }
-      } catch (e) {
-        setErrorMsg(e.message || 'No se pudo validar el teléfono');
+      } catch {
+        setErrorMsg(t('auth.phoneValidationFailed'));
         return;
       }
 
@@ -197,8 +258,10 @@ export default function CompletarPerfilOAuth() {
           userId: session.user.id,
           email,
           row: {
-            nombre: nombreGuardar,
-            apellido: apellidoIns,
+            nombre: String(nombre || nombreGuardar).trim(),
+            apellido: String(apellido || apellidoIns || '').trim() || null,
+            pais: String(pais || '').trim(),
+            fecha_nacimiento: String(fechaNacimiento || '').trim(),
             genero: gen,
             whatsapp: waE164,
             alias: userProfile?.alias ?? null,
@@ -207,6 +270,12 @@ export default function CompletarPerfilOAuth() {
           },
         });
         if (error) throw error;
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: { profile_completion_required: false },
+        });
+        if (metadataError) {
+          console.warn('[PM Auth] el perfil se guardó, pero no se pudo cerrar la marca de incorporación', metadataError);
+        }
         try {
           window.dispatchEvent(new CustomEvent(PERFIL_CHANGE_EVENT));
         } catch {
@@ -215,10 +284,11 @@ export default function CompletarPerfilOAuth() {
         await refreshSession();
         irAlHubPrincipal();
       } catch (err) {
+        const duplicateMessage = mensajeErrorJugadoresPerfilDuplicado(err);
         setErrorMsg(
-          mensajeErrorJugadoresPerfilDuplicado(err) ||
-            mensajeErrorDbSupabase(err) ||
-            'No se pudo guardar el perfil.'
+          duplicateMessage
+            ? t('profileCompletion.duplicateData')
+            : t('profileCompletion.saveFailed')
         );
       } finally {
         setBusy(false);
@@ -227,12 +297,17 @@ export default function CompletarPerfilOAuth() {
     [
       session,
       userProfile,
+      nombre,
+      apellido,
+      pais,
+      fechaNacimiento,
       genero,
       waCodigo,
       waLocal,
       validarPasoDatos,
       refreshSession,
       irAlHubPrincipal,
+      t,
     ]
   );
 
@@ -246,27 +321,37 @@ export default function CompletarPerfilOAuth() {
         if (!validarPasoDatos()) return;
         const token = session?.access_token;
         if (!token) {
-          setErrorMsg('Tu sesión expiró. Vuelve a iniciar sesión.');
+          setErrorMsg(t('profileCompletion.sessionExpired'));
           return;
         }
         setBusy(true);
         try {
+          try {
+            await registerCurrentAccountEligibility(fechaNacimiento, 'web_profile_completion');
+          } catch (error) {
+            setErrorMsg(
+              String(error?.message || '').includes('parental')
+                ? t('auth.ageEligibilityParental')
+                : t('auth.ageEligibilityInvalid'),
+            );
+            return;
+          }
           const res = await fetch(`${API_BASE}/api/registro/email-perfil-libre`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const j = await res.json().catch(() => ({}));
           if (!res.ok) {
-            setErrorMsg(String(j?.error || 'No se pudo verificar el email.'));
+            setErrorMsg(t('profileCompletion.emailCheckFailed'));
             return;
           }
           if (!j?.disponible) {
             setEmailConflicto(true);
-            setErrorMsg('Este email ya tiene una cuenta. ¿Quieres iniciar sesión?');
+            setErrorMsg(t('profileCompletion.emailInUse'));
             return;
           }
           setPaso(1);
         } catch {
-          setErrorMsg('No se pudo verificar el email. Intenta de nuevo.');
+          setErrorMsg(t('profileCompletion.emailCheckRetry'));
         } finally {
           setBusy(false);
         }
@@ -274,7 +359,7 @@ export default function CompletarPerfilOAuth() {
       }
       await guardarPerfilYContinuar(deportesPreferidos);
     },
-    [session, paso, deportesPreferidos, validarPasoDatos, guardarPerfilYContinuar]
+    [session, paso, deportesPreferidos, fechaNacimiento, validarPasoDatos, guardarPerfilYContinuar, t]
   );
 
   const handleOmitirDeportes = useCallback(
@@ -289,7 +374,7 @@ export default function CompletarPerfilOAuth() {
   );
 
   if (!loading && !profileLoading && session?.user && perfilJugadorDatosMinimosCompletos(userProfile)) {
-    return <Navigate to="/hub" replace />;
+    return <Navigate to={destinoFinal} replace />;
   }
 
   return (
@@ -310,11 +395,11 @@ export default function CompletarPerfilOAuth() {
         alignItems: 'center',
       }}
     >
-      <AppHeader title="Completar perfil" showBack={false} contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+      <AppHeader title={t('auth.completeProfile')} showBack={false} contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
       <div
         style={{
           width: '100%',
-          maxWidth: '100%',
+          maxWidth: '520px',
           minWidth: 0,
           marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
           boxSizing: 'border-box',
@@ -336,12 +421,12 @@ export default function CompletarPerfilOAuth() {
             margin: '0 0 8px',
           }}
         >
-          {paso === 0 ? 'Completa tu perfil' : '¿Qué deportes practicas?'}
+          {paso === 0 ? t('profileCompletion.title') : t('profileCompletion.sportsTitle')}
         </h1>
-        <p style={{ color: '#374151', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.45, textAlign: 'center', margin: '0 0 18px' }}>
           {paso === 0
-            ? 'Completa tu perfil para reservar canchas, jugar torneos y encontrar compañeros de juego.'
-            : 'Elige uno o más (opcional pero recomendado). Puedes cambiarlos después en Mi perfil.'}
+            ? t('profileCompletion.intro')
+            : t('profileCompletion.sportsIntro')}
         </p>
         <form
           onSubmit={(ev) => void handleGuardar(ev)}
@@ -360,16 +445,71 @@ export default function CompletarPerfilOAuth() {
         >
           {paso === 0 ? (
             <>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5, margin: '0 0 16px' }}>
+            {t('profileCompletion.personalDataHelp')}
+          </p>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+            {t('auth.firstName')} <span style={{ color: '#dc2626' }}>*</span>
+          </label>
+          <input
+            type="text"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            autoComplete="given-name"
+            placeholder={t('auth.placeholderFirstName')}
+            style={{ width: '100%', padding: '12px', marginBottom: '14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-page)', color: 'var(--text-primary)', fontSize: '16px', boxSizing: 'border-box' }}
+          />
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+            {t('auth.lastName')} <span style={{ color: '#dc2626' }}>*</span>
+          </label>
+          <input
+            type="text"
+            value={apellido}
+            onChange={(e) => setApellido(e.target.value)}
+            autoComplete="family-name"
+            placeholder={t('auth.placeholderLastName')}
+            style={{ width: '100%', padding: '12px', marginBottom: '14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-page)', color: 'var(--text-primary)', fontSize: '16px', boxSizing: 'border-box' }}
+          />
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+            {t('general.country')} <span style={{ color: '#dc2626' }}>*</span>
+          </label>
+          <select
+            value={pais}
+            onChange={(e) => setPais(e.target.value)}
+            autoComplete="country-name"
+            style={{ width: '100%', padding: '12px', marginBottom: '14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-page)', color: 'var(--text-primary)', fontSize: '16px', boxSizing: 'border-box' }}
+          >
+            <option value="">{t('auth.chooseCountry')}</option>
+            {pais && !OPCIONES_PAIS.some((item) => `${item.bandera} ${item.nombre}` === pais) ? <option value={pais}>{pais}</option> : null}
+            {OPCIONES_PAIS.map((item) => (
+              <option key={item.nombre} value={`${item.bandera} ${item.nombre}`}>
+                {item.bandera} {t(paisLabelKey(item.nombre))}
+              </option>
+            ))}
+          </select>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+            {t('auth.birthDate')} <span style={{ color: '#dc2626' }}>*</span>
+          </label>
+          <input
+            type="date"
+            value={fechaNacimiento}
+            onChange={(e) => setFechaNacimiento(e.target.value)}
+            autoComplete="bday"
+            style={{ width: '100%', padding: '12px', marginBottom: '6px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-page)', color: 'var(--text-primary)', fontSize: '16px', boxSizing: 'border-box' }}
+          />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: 1.45, margin: '0 0 14px' }}>
+            {t('auth.ageEligibilityHelp')}
+          </p>
           <label
             style={{
               display: 'block',
               fontSize: '13px',
               fontWeight: 600,
-              color: '#334155',
+              color: 'var(--text-primary)',
               marginBottom: '6px',
             }}
           >
-            Género <span style={{ color: '#dc2626' }}>*</span>
+            {t('auth.gender')} <span style={{ color: '#dc2626' }}>*</span>
           </label>
           <select
             value={genero}
@@ -384,9 +524,9 @@ export default function CompletarPerfilOAuth() {
               boxSizing: 'border-box',
             }}
           >
-            <option value="">— Elegir —</option>
-            <option value="masculino">Masculino</option>
-            <option value="femenino">Femenino</option>
+            <option value="">{t('auth.choose')}</option>
+            <option value="masculino">{t('auth.male')}</option>
+            <option value="femenino">{t('auth.female')}</option>
           </select>
           <div
             style={{
@@ -398,7 +538,7 @@ export default function CompletarPerfilOAuth() {
               display: 'block',
             }}
           >
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
               WhatsApp <span style={{ color: '#dc2626' }}>*</span>
             </div>
             <div
@@ -412,14 +552,14 @@ export default function CompletarPerfilOAuth() {
               }}
             >
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                País
+                {t('profileCompletion.country')}
               </label>
               <select
                 value={waCodigo}
                 onChange={(e) => setWaCodigo(e.target.value)}
                 disabled={busy}
-                title="País / código"
-                aria-label="País y código de área"
+                title={t('profileCompletion.countryCodeTitle')}
+                aria-label={t('profileCompletion.countryCodeAria')}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -450,7 +590,7 @@ export default function CompletarPerfilOAuth() {
               }}
             >
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                Número
+                {t('profileCompletion.number')}
               </label>
               <input
                 type="tel"
@@ -458,8 +598,8 @@ export default function CompletarPerfilOAuth() {
                 value={waLocal}
                 onChange={(e) => setWaLocal(digitsOnly(e.target.value))}
                 disabled={busy}
-                placeholder="Ej: 2213032019"
-                aria-label="Número de celular sin código de país"
+                placeholder={t('profileCompletion.numberPlaceholder')}
+                aria-label={t('profileCompletion.numberAria')}
                 autoComplete="tel-national"
                 style={{
                   width: '100%',
@@ -484,7 +624,7 @@ export default function CompletarPerfilOAuth() {
               }}
             >
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                Confirmar número <span style={{ color: '#dc2626' }}>*</span>
+                {t('profileCompletion.confirmNumber')} <span style={{ color: '#dc2626' }}>*</span>
               </label>
               <input
                 type="tel"
@@ -492,8 +632,8 @@ export default function CompletarPerfilOAuth() {
                 value={waLocalConfirm}
                 onChange={(e) => setWaLocalConfirm(digitsOnly(e.target.value))}
                 disabled={busy}
-                placeholder="Repite el número"
-                aria-label="Confirmar número local"
+                placeholder={t('profileCompletion.confirmNumberPlaceholder')}
+                aria-label={t('profileCompletion.confirmNumberAria')}
                 autoComplete="off"
                 style={{
                   width: '100%',
@@ -513,7 +653,7 @@ export default function CompletarPerfilOAuth() {
           ) : (
             <>
               <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 12px', lineHeight: 1.45 }}>
-                Elige los que apliquen. Si prefieres no decirlo ahora, deja todo sin marcar y pulsa «Guardar y continuar».
+                {t('profileCompletion.sportsHelp')}
               </p>
               <DeportesPreferidosChips
                 value={deportesPreferidos}
@@ -535,7 +675,7 @@ export default function CompletarPerfilOAuth() {
                 cursor: 'pointer',
               }}
             >
-              Ir a iniciar sesión
+              {t('auth.goToLogin')}
             </button>
           ) : null}
           {paso === 1 ? (
@@ -554,7 +694,7 @@ export default function CompletarPerfilOAuth() {
                 opacity: busy || loading || profileLoading ? 0.7 : 1,
               }}
             >
-              Atrás
+              {t('profileCompletion.back')}
             </button>
           ) : null}
           <button
@@ -566,7 +706,7 @@ export default function CompletarPerfilOAuth() {
               opacity: busy || loading || profileLoading ? 0.85 : 1,
             }}
           >
-            {busy ? 'Guardando…' : paso === 0 ? 'Continuar' : 'Guardar y continuar'}
+            {busy ? t('profileCompletion.saving') : paso === 0 ? t('profileCompletion.continue') : t('profileCompletion.saveContinue')}
           </button>
           {paso === 1 ? (
             <button
@@ -579,7 +719,7 @@ export default function CompletarPerfilOAuth() {
                 opacity: busy || loading || profileLoading ? 0.5 : 1,
               }}
             >
-              Omitir
+              {t('profileCompletion.skip')}
             </button>
           ) : null}
         </form>

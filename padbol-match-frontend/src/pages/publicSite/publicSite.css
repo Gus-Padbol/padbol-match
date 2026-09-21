@@ -283,10 +283,20 @@ html.public-site-active #root {
 .public-site__menu-icon.is-open i:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 .public-site__mobile-nav {
+  position: fixed;
+  top: var(--ps-header-offset, 68px);
+  right: 0;
+  z-index: 62;
+  width: min(82vw, 380px);
+  height: calc(100dvh - var(--ps-header-offset, 68px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-top: 1px solid var(--ps-border);
-  background: rgba(5, 7, 13, 0.96);
+  border-left: 1px solid var(--ps-border);
+  background: rgba(5, 9, 18, 0.96);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  box-shadow: -20px 0 48px rgba(0, 0, 0, 0.42);
 }
 
 .public-site__mobile-nav.is-open {
@@ -294,8 +304,29 @@ html.public-site-active #root {
 }
 
 @keyframes ps-menu-in {
-  from { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 0; transform: translateX(100%); }
   to { opacity: 1; transform: none; }
+}
+
+.public-site__mobile-backdrop {
+  position: fixed;
+  inset: var(--ps-header-offset, 68px) 0 0;
+  z-index: 61;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.56);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  cursor: default;
+  animation: ps-backdrop-in 0.2s ease both;
+}
+
+@keyframes ps-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .public-site__mobile-nav .public-site__shell {
@@ -303,6 +334,23 @@ html.public-site-active #root {
   gap: 4px;
   padding-top: 10px;
   padding-bottom: 16px;
+}
+
+.public-site__mobile-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 12px 14px 2px auto;
+  padding: 0;
+  border: 1px solid var(--ps-border);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.06);
+  color: var(--ps-text);
+  font: inherit;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .public-site__mobile-nav a {
@@ -318,6 +366,13 @@ html.public-site-active #root {
 
 .public-site__mobile-nav a:hover {
   background: rgba(248, 250, 252, 0.06);
+}
+
+.public-site__mobile-nav .public-site__mobile-login {
+  justify-content: center;
+  margin-top: 8px;
+  background: var(--ps-accent);
+  color: #fff;
 }
 
 /* Buttons */
@@ -1528,6 +1583,8 @@ html.public-site-active #root {
 }
 
 .ps-player-record__items { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
+.ps-player-record__cta { display: inline-flex; margin-top: 20px; padding: 12px 17px; border-radius: 10px; background: #e11b22; color: #fff; font-weight: 900; text-decoration: none; }
+.ps-player-record__cta:hover { background: #bd1218; color: #fff; }
 
 .ps-player-record__items span {
   padding: 9px 12px;
@@ -4023,6 +4080,8 @@ html.public-site-active #root {
 
   .public-site__desktop-nav { display: block; }
   .public-site__menu-button { display: none; }
+  .public-site__mobile-nav,
+  .public-site__mobile-backdrop { display: none !important; }
 
   .ps-exp-layout {
     grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.7fr);
@@ -4651,20 +4710,133 @@ html.public-site-active #root {
 }
 
 .ps-scoreboard__sponsor-ticker {
-  display: flex;
-  gap: 8px;
+  display: block;
   min-width: 0;
   overflow: hidden;
-  padding: 7px 8px;
+  padding: 14px 0 5px;
   border-top: 1px solid rgba(225, 27, 34, 0.65);
   background: #05070c;
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
 }
 
-.ps-scoreboard__sponsor-ticker b {
+.ps-scoreboard__sponsor-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: ps-scoreboard-sponsors-live 18s linear infinite;
+}
+
+.ps-scoreboard__sponsor-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 22px;
+  padding-right: 22px;
+}
+
+.ps-scoreboard__sponsor-group b {
+  position: relative;
   flex: 0 0 auto;
   color: #f8fafc;
-  font-size: 0.58rem;
-  letter-spacing: 0.07em;
+  font-size: 0.62rem;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  white-space: nowrap;
+}
+
+.ps-scoreboard__sponsor-group b.is-aurora {
+  padding-left: 12px;
+  color: #ffba63;
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 10px rgba(255, 130, 64, 0.4);
+}
+
+.ps-scoreboard__sponsor-group b.is-aurora::before {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border: 1px solid #ffba63;
+  border-radius: 50%;
+  box-shadow: 0 0 7px #ff6b35;
+  content: '';
+  transform: translateY(-50%);
+}
+
+.ps-scoreboard__sponsor-group b.is-nexora {
+  padding-bottom: 2px;
+  letter-spacing: 0.04em;
+  transform: skewX(-9deg);
+}
+
+.ps-scoreboard__sponsor-group b.is-nexora::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 72%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #22d3ee);
+  content: '';
+}
+
+.ps-scoreboard__sponsor-group b.is-volta {
+  color: #ffd76a;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 9px rgba(255, 187, 0, 0.3);
+}
+
+.ps-scoreboard__sponsor-group b.is-volta::first-letter {
+  color: #fff4bf;
+}
+
+.ps-scoreboard__sponsor-group b.is-orbita {
+  padding-left: 5px;
+  color: #e9d5ff;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.55);
+}
+
+.ps-scoreboard__sponsor-group b.is-orbita::after {
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  width: 32px;
+  height: 8px;
+  border: 1px solid rgba(192, 132, 252, 0.85);
+  border-radius: 50%;
+  content: '';
+  transform: translateY(-50%) rotate(-12deg);
+}
+
+.ps-scoreboard__sponsor-group b.is-padbol-match {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ps-scoreboard__sponsor-group b.is-padbol-match img {
+  display: block;
+  width: 74px;
+  height: auto;
+  object-fit: contain;
+}
+
+.ps-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes ps-scoreboard-sponsors-live {
+  to { transform: translateX(-50%); }
 }
 
 .ps-scoreboard__sponsor-slot--closing { border-color: rgba(225, 27, 34, 0.48); }
@@ -5119,26 +5291,79 @@ html.public-site-active #root {
   .ps-scoreboard__grid {
     grid-template-columns: minmax(0, .78fr) minmax(520px, 1.22fr);
     gap: 52px;
+    align-items: start;
   }
 
-  /* El bloque visual acompaña los pasos operativos: termina junto al paso 05. */
+  /* Captura y video se comparan en paralelo; los pasos recorren el ancho.
+     Así se evita una columna derecha larguísima y el espacio vacío final. */
   .ps-scoreboard__visual {
-    --ps-scoreboard-media-width: min(680px, 100%);
+    --ps-scoreboard-media-width: 100%;
     width: 100%;
-    align-self: end;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1;
   }
 
-  .ps-scoreboard__copy,
-  .ps-scoreboard__steps {
-    grid-column: 1;
+  .ps-scoreboard__snapshot,
+  .ps-scoreboard__video { width: 100%; }
+
+  .ps-scoreboard__snapshot,
+  .ps-scoreboard__video,
+  .ps-scoreboard__snapshot img,
+  .ps-scoreboard__video video { aspect-ratio: 16 / 9; }
+
+  .ps-scoreboard__snapshot img,
+  .ps-scoreboard__video video { height: 100%; object-fit: contain; }
+
+  .ps-scoreboard__snapshot img {
+    height: 100%;
+    object-fit: contain;
+    transform: scale(.965);
   }
+
+  .ps-scoreboard__video video {
+    transform: scale(.93);
+  }
+
+  .ps-scoreboard__sponsor-slots {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    margin: 0;
+  }
+
+  .ps-scoreboard__sponsor-slot { min-height: 0; }
+
+  .ps-scoreboard__copy { grid-column: 1; grid-row: 1; }
+  .ps-scoreboard__steps { grid-column: 1 / -1; grid-row: 2; }
+
+  .ps-flow-steps--scoreboard {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+  }
+
+  .ps-flow-steps--scoreboard li { min-height: 138px; }
 
   .ps-match-intelligence__layout {
     grid-template-columns: minmax(0, 1.06fr) minmax(280px, 0.72fr);
     gap: 48px;
   }
+}
+
+/* Seis módulos: composición regular de tres por dos en escritorio. */
+@media (min-width: 900px) {
+  .ps-section--venue-admin .ps-venue-admin__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 250px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-scoreboard__sponsor-track { animation: none; }
+  .ps-scoreboard__sponsor-group + .ps-scoreboard__sponsor-group { display: none; }
 }
 
 /* Esta promesa debe leerse de corrido en móvil. La definición base de dos columnas

@@ -103,7 +103,7 @@ export function registerModuloClasesRoutes(app, deps) {
       throw e;
     }
     const rol = String(scope.rol || '').trim().toLowerCase();
-    if (scope.superA || ['admin_club', 'admin_nacional', 'empleado'].includes(rol)) return scope;
+    if (scope.superA || ['admin_club', 'admin_cadena', 'admin_nacional', 'empleado'].includes(rol)) return scope;
     const e = new Error('No tienes permiso de administración de club');
     e.status = 403;
     throw e;

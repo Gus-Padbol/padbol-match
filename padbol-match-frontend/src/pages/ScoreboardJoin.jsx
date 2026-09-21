@@ -211,14 +211,14 @@ export default function ScoreboardJoin() {
       setLinkCopied(true);
       window.setTimeout(() => setLinkCopied(false), 2200);
     } catch {
-      window.prompt(t('scoreboard.join.copyPrompt', 'Copiá este link:'), displayPublicUrl);
+      window.prompt(t('scoreboard.join.copyPrompt', 'Copia este link:'), displayPublicUrl);
     }
   };
 
   const onShareDisplay = async () => {
     if (!displayPublicUrl) return;
-    const title = t('scoreboard.join.shareTitle', 'Seguí el partido en vivo');
-    const text = t('scoreboard.join.shareText', 'Mirá el marcador en tiempo real');
+    const title = t('scoreboard.join.shareTitle', 'Sigue el partido en vivo');
+    const text = t('scoreboard.join.shareText', 'Mira el marcador en tiempo real');
     try {
       await navigator.share({ title, text, url: displayPublicUrl });
     } catch (e) {
@@ -233,7 +233,7 @@ export default function ScoreboardJoin() {
       <div className="sb-join__card">
         <p className="sb-join__brand">Padbol Match</p>
         <h1 className="sb-join__title">
-          {t('scoreboard.join.title', 'Sumate al marcador')}
+          {t('scoreboard.join.title', 'Únete al marcador')}
         </h1>
         <p className="sb-join__meta">
           {canchaDisplay}
@@ -251,22 +251,19 @@ export default function ScoreboardJoin() {
 
         {!loading && !activo?.partido_id ? (
           <p className="sb-join__empty">
-            {t(
-              'scoreboard.join.noMatch',
-              'No hay partido activo ahora. Volvé cuando sea tu turno.',
-            )}
+            {t('scoreboard.join.noMatch')}
           </p>
         ) : null}
 
         {!loading && activo?.partido_id && done ? (
           <div className="sb-join__success">
             <p className="sb-join__success-msg">
-              {t('scoreboard.join.success', '¡Listo! Ya aparecés en el marcador 🎉')}
+              {t('scoreboard.join.success', '¡Listo! Ya apareces en el marcador 🎉')}
             </p>
 
             <div className="sb-join__live">
               <p className="sb-join__live-title">
-                {t('scoreboard.join.liveTitle', 'Seguí el partido en vivo')}
+                {t('scoreboard.join.liveTitle', 'Sigue el partido en vivo')}
               </p>
               <a
                 className="sb-join__live-btn sb-join__live-btn--primary"
@@ -306,7 +303,7 @@ export default function ScoreboardJoin() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {t('scoreboard.join.downloadCta', 'Descargá Padbol Match')}
+              {t('scoreboard.join.downloadCta', 'Descarga Padbol Match')}
             </a>
           </div>
         ) : null}
@@ -321,7 +318,7 @@ export default function ScoreboardJoin() {
               {activo.nombre_b}
             </p>
             <p className="sb-join__pick-label">
-              {t('scoreboard.join.pickSide', '¿De qué lado jugás?')}
+              {t('scoreboard.join.pickSide', '¿De qué lado juegas?')}
             </p>
             <div className="sb-join__side-pick">
               <button
@@ -352,7 +349,7 @@ export default function ScoreboardJoin() {
               {activo.nombre_b}
             </p>
             <p className="sb-join__team-label">
-              {t('scoreboard.join.playingFor', 'Jugás en')}
+              {t('scoreboard.join.playingFor', 'Juegas en')}
               {' '}
               <strong>{equipoNombre}</strong>
             </p>

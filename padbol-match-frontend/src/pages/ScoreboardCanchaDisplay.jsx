@@ -1,29 +1,29 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import ScoreboardBoard from '../components/scoreboard/ScoreboardBoard';
-import ScoreboardAdBreak from '../components/scoreboard/ScoreboardAdBreak';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchPartidoByCancha, fetchSponsors } from '../utils/scoreboardApi';
 import { PADBOL_LOGO_ON_DARK } from '../constants/padbolBrandLogo';
 import { resolveScoreboardCanchaLabel } from '../utils/scoreboardVenueLabels';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import '../styles/ScoreboardDisplay.css';
 
 const CANCHA_POLL_MS = 10000;
 
-function ScoreboardWaitingScreen({ canchaLabel, sponsors }) {
+function ScoreboardWaitingScreen({ canchaLabel }) {
+  const { t } = useTranslation();
   return (
-    <div className="sb-waiting sb-waiting--advertising">
-      <ScoreboardAdBreak sponsors={sponsors} moment="waiting" />
-      <div className="sb-waiting__court-label">
-        <img src={PADBOL_LOGO_ON_DARK} alt="Padbol Match" className="sb-waiting__logo" />
-        <p className="sb-waiting__cancha">{canchaLabel}</p>
-      </div>
+    <div className="sb-waiting">
+      <img src={PADBOL_LOGO_ON_DARK} alt="Padbol Match" className="sb-waiting__logo" />
+      <p className="sb-waiting__text">{t('scoreboardDisplay.waiting')}</p>
+      <p className="sb-waiting__cancha">{canchaLabel}</p>
     </div>
   );
 }
 
 export default function ScoreboardCanchaDisplay() {
+  const { t } = useTranslation();
   const { sedeId, cancha } = useParams();
   const canchaFromRoute = useMemo(
     () => decodeURIComponent(String(cancha || '').trim()),
@@ -87,11 +87,11 @@ export default function ScoreboardCanchaDisplay() {
         await loadPartidoById(nextPartidoId);
       }
     } catch (err) {
-      setError(err.message || 'Error loading court match');
+      setError(err.message || t('scoreboardDisplay.courtMatchLoadError'));
     } finally {
       setPolling(false);
     }
-  }, [sedeId, canchaFromRoute, loadPartidoById]);
+  }, [sedeId, canchaFromRoute, loadPartidoById, t]);
 
   useEffect(() => {
     setPolling(true);
@@ -155,11 +155,11 @@ export default function ScoreboardCanchaDisplay() {
   }
 
   if (polling && !partido) {
-    return <div className="sb-loading">Loading scoreboard...</div>;
+    return <div className="sb-loading">{t('scoreboardDisplay.loading')}</div>;
   }
 
   if (!partido) {
-    return <ScoreboardWaitingScreen canchaLabel={canchaLabel} sponsors={sponsors} />;
+    return <ScoreboardWaitingScreen canchaLabel={canchaLabel} />;
   }
 
   return (

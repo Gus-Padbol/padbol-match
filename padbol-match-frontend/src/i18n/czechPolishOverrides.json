@@ -1,0 +1,399 @@
+{
+  "auth": {
+    "birthDate": "Datum narození",
+    "ageEligibilityHelp": "Samostatné účty jsou dostupné od 16 let. Registrace osob ve věku 13 až 15 let zůstává vypnutá, dokud nebude k dispozici ověřitelný souhlas rodiče.",
+    "ageEligibilityInvalid": "Zadejte platné datum narození. Samostatné účty jsou dostupné od 16 let.",
+    "ageEligibilityParental": "Účty osob ve věku 13 až 15 let vyžadují ověřitelný souhlas rodiče a zatím nejsou dostupné.",
+    "legalTermsAcceptance": "Souhlasím s dokumentem",
+    "legalPrivacyAcknowledgement": "Potvrzuji, že jsem si přečetl(a)"
+  },
+  "profileCompletion": {
+    "personalDataHelp": "Tyto údaje doplní váš sportovní profil, ověří minimální věk a bezpečně propojí vaši aktivitu. Způsob zpracování a svá práva najdete v zásadách ochrany soukromí.",
+    "selectCountry": "Vyberte svou zemi."
+  },
+  "publicSite": {
+    "experiences": {
+      "preview": {
+        "club": "Padbol Club Sever"
+      }
+    }
+  },
+  "clubOnboarding": {
+    "header": "Přidat sportovní centrum",
+    "hero": {
+      "title": "Přidejte své sportovní centrum do Padbol Match",
+      "lead": "Vyberte úroveň služeb, která vašemu centru vyhovuje nejlépe. Začít můžete ještě dnes, údaje doplnit později a kdykoli využít osobní podporu.",
+      "badge": "Jednoduché nastavení bez tabulek",
+      "guide": "Vyberte si plán, zahajte registraci a nastavte provoz centra pomocí průvodce."
+    },
+    "plansEyebrow": "Plány pro růst s Padbol Match",
+    "plansTitle": "Vše, co potřebujete, v rozsahu pro vás",
+    "plansLead": "Začněte výběrem plánu. Ceny jsou orientační a lze je upravit podle země, měny a potřeb každého sportovního centra.",
+    "selected": "Vybraný plán",
+    "choose": "Vybrat {{plan}}",
+    "plans": {
+      "explorar": {
+        "name": "Vyzkoušet",
+        "price": "Zdarma",
+        "period": "Pro seznámení se službou",
+        "description": "První pohled na to, jak může Padbol Match podpořit vaše sportovní centrum.",
+        "include1": "Prohlídka produktu",
+        "include2": "Asistent Chivi",
+        "include3": "Konzultace s naším týmem"
+      },
+      "base": {
+        "name": "Centrum Base",
+        "period": "za centrum / měsíc",
+        "description": "Základní nástroje pro spuštění sportovního provozu z jednoho panelu.",
+        "include1": "Padbol Courts, rozvrhy a ceny",
+        "include2": "Rezervace a hráči",
+        "include3": "Administrační panel"
+      },
+      "pro": {
+        "name": "Centrum Pro",
+        "period": "za centrum / měsíc",
+        "description": "Pro centra, která chtějí rozvíjet komunitu i soutěže.",
+        "include1": "Turnaje a žebříčky",
+        "include2": "Propojená výsledková tabule",
+        "include3": "PadCoins a členství"
+      },
+      "360": {
+        "name": "Centrum 360",
+        "period": "za centrum / měsíc",
+        "description": "Kompletní řešení pro provoz, komunikaci a prezentaci centra v rozšířeném prostředí.",
+        "include1": "Obrazovky a reklama",
+        "include2": "Sponzoři a obchod",
+        "include3": "Postupné automatizace"
+      }
+    },
+    "contact": {
+      "before": "Chcete se před výběrem poradit? Napište nám na",
+      "subject": "Dotaz k plánům Padbol Match",
+      "after": "S nastavením vám pomůže také Chivi a náš tým podpory."
+    },
+    "request": {
+      "planLabel": "Vybraný plán"
+    },
+    "validation": {
+      "required": "Pro zahájení vyplňte název centra, kontaktní osobu, e-mail a WhatsApp."
+    },
+    "success": "Hotovo. Obdrželi jsme vaši žádost o {{plan}}. Pomůžeme vám aktivovat účet, potvrdit plán a dokončit nastavení centra pomocí průvodce.",
+    "error": {
+      "submit": "Žádost se nepodařilo odeslat. Zkuste to znovu."
+    },
+    "form": {
+      "startInquiry": "Zahájit konzultaci",
+      "startPlan": "Začít s {{plan}}",
+      "subtitle": "Vybraný plán: {{plan}} · {{price}}. Pro zahájení potřebujeme jen základní údaje o centru a kontaktní osobu.",
+      "clubName": "Název sportovního centra nebo klubu",
+      "fullName": "Celé jméno",
+      "email": "Kontaktní e-mail",
+      "whatsapp": "WhatsApp (včetně předvolby země)",
+      "message": "Chcete nám ještě něco sdělit? (nepovinné)",
+      "disclaimer": "Tato žádost zahájí proces nastavení. Aktivaci plánu a platební metodu s vámi potvrdíme před jakýmkoli účtováním.",
+      "sending": "Odesílání…",
+      "sendInquiry": "Odeslat konzultaci"
+    }
+  },
+  "admin": {
+    "metrics": {
+      "scopeLabel": "Rozsah",
+      "cityLabel": "Město",
+      "provinceLabel": "Kraj / stát",
+      "countryLabel": "Země"
+    },
+    "padcoins": {
+      "all": "Vše",
+      "smartRuleHelp": {
+        "bookingCredit": "Procento z hodnoty rezervace připsané hráči v PadCoins. Doporučená hodnota při spuštění: 5 %.",
+        "internalConversion": "Interní referenční převod používaný k výpočtu PadCoins. Hráči se nezobrazuje jako peněžní hodnota.",
+        "calculationMode": "Vypočítá PadCoins jako procento ze zaplacené částky."
+      },
+      "campaignBenefitsLoadFailed": "Výhody kampaně se nepodařilo načíst.",
+      "campaignLoadFailed": "Kampaň se nepodařilo načíst.",
+      "campaignPermissionDenied": "K uložení této kampaně nemáte oprávnění.",
+      "campaignSaveFailed": "Kampaň se nepodařilo uložit.",
+      "campaignUpdated": "✅ Kampaň aktualizována",
+      "campaignCreated": "✅ Kampaň vytvořena",
+      "campaignActivateHighImpactConfirm": "Kampaň „{{name}}“ je označena jako vysoce dopadová. Nebude zablokována, ale bude zaznamenána pro audit.\n\nPřesto ji aktivovat?",
+      "campaignActivateConfirm": "Aktivovat kampaň „{{name}}“?",
+      "campaignActivateFailed": "Kampaň se nepodařilo aktivovat.",
+      "campaignActivated": "✅ Kampaň aktivována",
+      "campaignPauseConfirm": "Pozastavit kampaň „{{name}}“?",
+      "campaignPauseFailed": "Kampaň se nepodařilo pozastavit.",
+      "campaignPaused": "✅ Kampaň pozastavena",
+      "campaignSummaryLoadFailed": "Souhrn kampaně se nepodařilo načíst.",
+      "benefitsLoadFailed": "Výhody se nepodařilo načíst.",
+      "redemptionsLoadFailed": "Uplatnění se nepodařilo načíst.",
+      "globalConfigLoadFailed": "Globální nastavení se nepodařilo načíst.",
+      "participationLoadFailed": "Nastavení účasti v PadCoins se nepodařilo načíst.",
+      "participationSelectVenue": "Před uložením účasti v Padbol Benefits vyberte sportovní centrum.",
+      "dateOrderInvalid": "Datum zahájení nesmí být pozdější než datum ukončení.",
+      "participationPermissionDenied": "Nemáte oprávnění měnit účast tohoto sportovního centra.",
+      "participationSaveFailed": "Účast v Padbol Benefits se nepodařilo uložit.",
+      "participationUpdated": "✅ Účast v Padbol Benefits aktualizována",
+      "smartViewPermissionDenied": "Nemáte oprávnění zobrazit chytré nastavení tohoto sportovního centra.",
+      "smartLoadFailed": "Chytré nastavení PadCoins se nepodařilo načíst.",
+      "smartSelectVenueSave": "Před uložením chytrého nastavení vyberte sportovní centrum.",
+      "smartEditPermissionDenied": "Nemáte oprávnění měnit chytré nastavení tohoto sportovního centra.",
+      "smartInvalid": "Nastavení není platné.",
+      "smartSaveFailed": "Chytré nastavení PadCoins se nepodařilo uložit.",
+      "smartUpdated": "✅ Chytré nastavení centra aktualizováno",
+      "smartSelectVenueRestore": "Před obnovením globální dědičnosti vyberte sportovní centrum.",
+      "smartRestoreFailed": "Globální dědičnost se nepodařilo obnovit.",
+      "smartRestored": "✅ Nastavení obnoveno: centrum nyní dědí globální pravidla",
+      "globalConfigSaveFailed": "Globální nastavení se nepodařilo uložit.",
+      "globalConfigSaved": "✅ Globální nastavení PadCoins uloženo",
+      "benefitSelectVenue": "Vyberte sportovní centrum pro správu výhod PadCoins.",
+      "benefitSaveFailed": "Výhodu se nepodařilo uložit.",
+      "benefitUpdated": "✅ Výhoda aktualizována",
+      "benefitCreated": "✅ Výhoda vytvořena",
+      "benefitDeactivateConfirm": "Deaktivovat výhodu „{{name}}“? Hráči ji již neuvidí.",
+      "benefitDeactivateFailed": "Výhodu se nepodařilo deaktivovat.",
+      "benefitDeactivated": "✅ Výhoda deaktivována",
+      "redemptionDeliverConfirm": "Označit uplatnění {{code}} jako vydané?",
+      "redemptionDeliverFailed": "Uplatnění se nepodařilo označit jako vydané.",
+      "redemptionDelivered": "✅ Uplatnění označeno jako vydané",
+      "redemptionCancelConfirm": "Zrušit uplatnění {{code}}?\n\nPokud to služba umožňuje, zůstatek PadCoins bude hráči vrácen.",
+      "redemptionCancelFailed": "Uplatnění se nepodařilo zrušit.",
+      "redemptionCancelled": "✅ Uplatnění zrušeno",
+      "movementsPermissionDenied": "Nemáte oprávnění zobrazit tyto transakce.",
+      "movementsLoadFailed": "Transakce PadCoins se nepodařilo načíst.",
+      "alertsPermissionDenied": "Nemáte oprávnění zobrazit upozornění dohledu.",
+      "alertsLoadFailed": "Upozornění PadCoins se nepodařilo načíst.",
+      "campaignsPermissionDenied": "Nemáte oprávnění zobrazit kampaně PadCoins.",
+      "campaignsLoadFailed": "Kampaně PadCoins se nepodařilo načíst."
+    },
+    "hub": {
+      "unsavedPromoConfirm": "Propagace vašeho sportovního centra obsahuje neuložené změny. Opustit stránku a zahodit je?"
+    },
+    "sedes": {
+      "lastDurationDeactivateConfirm": "Toto je poslední aktivní délka. Pokud ji deaktivujete, rezervace mohou zůstat bez základní ceny. Pokračovat?",
+      "standardDurationsOnly": "Povoleny jsou pouze délky 60, 90 nebo 120 minut.",
+      "durationAlreadyConfigured": "Délka {{minutes}} minut je již pro tento sport nastavena.",
+      "durationAlreadyExistsSport": "Pro {{sport}} již existuje délka {{minutes}} minut.",
+      "lastDurationRemoveConfirm": "Toto je poslední aktivní délka. Pokud ji odeberete, rezervace mohou zůstat bez základní ceny. Pokračovat?",
+      "removeDurationConfirm": "Odebrat délku {{minutes}} minut ({{sport}})?",
+      "guidedCourtCreateFailed": "Sportovní centrum bylo uloženo, ale Padbol Court se nepodařilo vytvořit. Můžete ho přidat v části Kurty.",
+      "logoUploadFailed": "Logo se nepodařilo nahrát.",
+      "logoPublicUrlMissing": "Pro logo nebyla přijata veřejná adresa.",
+      "logoSaveFailed": "Logo se nepodařilo uložit.",
+      "photoMustBeInGallery": "Fotografie musí být v galerii.",
+      "heroPhotoUpdated": "Titulní fotografie aktualizována",
+      "taglineHint": "Krátký slogan pod názvem na",
+      "customAmenityPlaceholder": "Další vybavení (např. kavárna)",
+      "addAmenity": "Přidat",
+      "courtPhotoAlt": "Padbol Court č. {{number}}",
+      "heroPhotoTitle": "Titulní obrázek na veřejné stránce",
+      "heroPhotoCurrent": "Titulní fotografie",
+      "useAsHeroPhotoTitle": "Použít jako titulní obrázek veřejné stránky",
+      "useAsHeroPhoto": "Použít jako titulní fotografii"
+    },
+    "franjas": {
+      "slotSaved": "✅ Časové pásmo uloženo",
+      "surgeSaved": "✅ Surge uloženo",
+      "surgeSaveFailed": "⚠️ Surge se nepodařilo uložit"
+    },
+    "scoreboard": {
+      "venuesLoadFailed": "Sportovní centra se nepodařilo načíst.",
+      "matchesLoadFailed": "Zápasy se nepodařilo načíst.",
+      "matchLoadFailed": "Zápas se nepodařilo načíst.",
+      "copyLinkPrompt": "Zkopírujte tento odkaz:"
+    }
+  },
+  "fipaAdminLibrary": {
+    "back": "← Zpět do administračního panelu",
+    "eyebrow": "SPRÁVA FIPA",
+    "title": "Přístup do knihovny FIPA",
+    "intro": "Před zpřístupněním členských dokumentů ověřte uvedený areál. Pravidla a Kodex chování jsou dostupné s účtem a vyplněným profilem zájmu.",
+    "filterLabel": "Stav žádosti",
+    "refresh": "Obnovit",
+    "loading": "Načítání údajů o přístupu…",
+    "accountRegistered": "Registrovaný účet",
+    "unknown": "Neuvedeno",
+    "statuses": {
+      "pending": "Čekající",
+      "approved": "Schválená",
+      "rejected": "Zamítnutá",
+      "cancelled": "Zrušená",
+      "active": "Aktivní"
+    },
+    "requests": {
+      "eyebrow": "POSOUZENÍ",
+      "title": "Žádosti",
+      "approvalEffect": "Schválení zpřístupní sedm členských dokumentů do vypršení nebo odebrání přístupu."
+    },
+    "grants": {
+      "eyebrow": "ŘÍZENÍ PŘÍSTUPU",
+      "title": "Aktivní oprávnění k přístupu",
+      "noExpiration": "Bez automatického vypršení"
+    },
+    "empty": {
+      "requestsTitle": "Žádné žádosti k posouzení",
+      "requestsBody": "Nebyly nalezeny žádosti se stavem {{status}}.",
+      "grantsTitle": "Žádná aktivní oprávnění k přístupu",
+      "grantsBody": "Zde se zobrazí platná schválení."
+    },
+    "fields": {
+      "account": "Účet",
+      "location": "Uvedená poloha",
+      "venue": "Areál",
+      "requestedAt": "Přijetí žádosti",
+      "reviewedAt": "Posouzení",
+      "reviewNote": "Poznámka k posouzení",
+      "grantedAt": "Udělení přístupu",
+      "expiration": "Vypršení",
+      "decisionNote": "Důvod schválení nebo zamítnutí",
+      "revokeNote": "Důvod odebrání přístupu"
+    },
+    "venue": {
+      "declared": "Uvedený areál",
+      "notListed": "Hřiště není aktuálně vedeno jako oficiální areál a vyžaduje ověření.",
+      "identified": "Určený areál: {{id}}",
+      "pending": "Čeká na ověření"
+    },
+    "actions": {
+      "approve": "Schválit přístup",
+      "reject": "Zamítnout žádost",
+      "revoke": "Odebrat přístup",
+      "working": "Ukládání…"
+    },
+    "validation": {
+      "decisionNote": "Uveďte důvod schválení nebo zamítnutí žádosti.",
+      "revokeNote": "Uveďte důvod odebrání přístupu."
+    },
+    "success": {
+      "approve": "Přístup schválen.",
+      "reject": "Žádost zamítnuta.",
+      "revoke": "Přístup odebrán."
+    },
+    "errors": {
+      "session": "Pro správu přístupu se přihlaste.",
+      "generic": "Operaci se nepodařilo dokončit."
+    }
+  },
+  "fipaLibrary": {
+    "header": "Knihovna FIPA",
+    "eyebrow": "OFICIÁLNÍ DOKUMENTACE",
+    "title": "Knihovna FIPA",
+    "intro": "Přistupujte k oficiální dokumentaci Padbol prostřednictvím svého účtu Padbol Match.",
+    "accountNote": "Přístup spojený s vaším účtem",
+    "servicePending": "Zabezpečená služba knihovny není momentálně dostupná. Katalog si můžete prohlédnout, ale stahování a žádosti zůstávají uzavřené.",
+    "interestEyebrow": "PŘED PRVNÍM STAŽENÍM",
+    "interestTitle": "Řekněte nám, co hledáte",
+    "interestHelp": "Jde o krátký profil, který vyplníte jednou. Nyní nemusíte instalovat aplikaci, procházet průvodce ani vyplňovat sportovní profil.",
+    "profileReadyTitle": "Profil zájmu uložen",
+    "profileReadyBody": "Pravidla a Kodex chování jsou nyní dostupné pro váš účet.",
+    "profileSaved": "Profil uložen. Nyní si můžete stáhnout Pravidla a Kodex chování.",
+    "profileRequired": "Vyplnit profil zájmu",
+    "editProfile": "Upravit profil",
+    "catalogEyebrow": "KATALOG DOKUMENTŮ",
+    "catalogTitle": "Oficiální dokumenty",
+    "catalogHelp": "Po uložení profilu budou dostupná Pravidla a Kodex chování. Zbývajících sedm dokumentů vyžaduje schválené členství.",
+    "accountAccess": "Zahrnuto ve vašem účtu",
+    "memberAccess": "Členství schváleno",
+    "memberRequired": "Vyžaduje členství",
+    "download": "Stáhnout PDF",
+    "downloading": "Příprava…",
+    "locked": "Omezený přístup",
+    "notPublished": "Dokument zatím není dostupný",
+    "notAvailable": "Nedostupné",
+    "membershipEyebrow": "PŘÍSTUP PRO ČLENY",
+    "membershipTitle": "Institucionální dokumenty",
+    "membershipHelp": "Sedm interních dokumentů je dostupných pouze ověřeným členům nebo uživatelům s výslovným schválením.",
+    "memberRequestReady": "K posouzení žádosti použijeme údaje o areálu, které již máte uložené v profilu.",
+    "memberRequestNeedsVenue": "Chcete-li požádat o tyto dokumenty, upravte profil, uveďte svůj vztah k areálu a vyberte jej nebo zadejte areál, který zatím není v seznamu.",
+    "requestMemberAccess": "Požádat o členský přístup",
+    "requestSent": "Vaši žádost jsme přijali. O dokončení posouzení vás budeme informovat.",
+    "securityNote": "Institucionální přístup je osobní, časově omezený a lze jej odebrat. Nesdílejte odkazy ani dokumenty s omezeným přístupem s neoprávněnými třetími stranami.",
+    "answer": {
+      "yes": "Ano",
+      "no": "Ne",
+      "preferNot": "Nechci uvést"
+    },
+    "purpose": {
+      "learn": "Naučit se pravidla a jak hrát",
+      "player": "Hrát nebo soutěžit",
+      "coachReferee": "Trénovat nebo rozhodovat zápasy",
+      "clubVenue": "Spravovat klub nebo areál",
+      "organize": "Uspořádat soutěž",
+      "researchPress": "Výzkum nebo média",
+      "evaluateProject": "Posoudit projekt související s Padbolem",
+      "other": "Jiný důvod"
+    },
+    "documents": {
+      "officialRules": "Oficiální pravidla Padbol",
+      "codeOfConduct": "Kodex chování pro oficiální soutěže",
+      "internationalCompetitions": "Pravidla mezinárodních soutěží FIPA 2026",
+      "refereeManual": "Pravidla a příručka rozhodčích FIPA 2026",
+      "contingencyProtocol": "Protokol pro mimořádné situace FIPA 2026 a oficiální zápis o utkání Padbol Match",
+      "rankingCriteria": "Kritéria žebříčku a rozhodování při shodě FIPA 2026",
+      "organizerManual": "Příručka pořadatele FIPA 2026",
+      "brandBroadcast": "Specifikace sponzoringu, značky a vysílání FIPA 2026",
+      "registrationForms": "Přihlašovací formuláře a souhlasy s použitím podobizny FIPA 2026"
+    },
+    "form": {
+      "purpose": "Proč chcete získat přístup do knihovny?",
+      "choosePurpose": "Vyberte kategorii",
+      "purposeOther": "Důvod přístupu",
+      "playsPadbol": "Hrajete Padbol?",
+      "clubLink": "Máte vztah ke klubu nebo areálu?",
+      "chooseAnswer": "Vyberte možnost",
+      "officialVenue": "Ke kterému areálu nebo hřišti máte vztah?",
+      "chooseVenue": "Vyberte oficiální areál",
+      "venueNotFound": "Nemohu najít své hřiště",
+      "officialVenueConfirmed": "Tento areál je aktuálně veden v oficiálním registru.",
+      "notOfficialNotice": "Uvedené hřiště není aktuálně vedeno jako oficiální areál. Údaje uložíme a náš tým je prověří.",
+      "country": "Země",
+      "city": "Město",
+      "venueName": "Název hřiště nebo klubu",
+      "location": "Adresa nebo odkaz na polohu",
+      "purposeNotice": "Padbol International použije tento profil k pochopení zájmu o dokumenty, správě přístupu a v případě žádosti o členský přístup k ověření uvedeného vztahu k areálu. E-mail vašeho účtu identifikuje profil i žádost.",
+      "purposeAcknowledgement": "Přečetl/a jsem si uvedený účel a rozumím mu.",
+      "whatsappConsent": "Dobrovolně souhlasím s kontaktováním přes WhatsApp v souvislosti s tímto profilem nebo žádostí. Souhlas mohu odvolat úpravou profilu.",
+      "whatsapp": "WhatsApp včetně předvolby země",
+      "saveProfile": "Uložit a pokračovat"
+    },
+    "validation": {
+      "purposeCategoryRequired": "Vyberte důvod přístupu do knihovny.",
+      "purposeOtherRequired": "Stručně nám sdělte důvod přístupu.",
+      "playsPadbolRequired": "Uveďte, zda hrajete Padbol, nebo vyberte „Nechci uvést“.",
+      "clubLinkRequired": "Uveďte, zda máte vztah k areálu, nebo vyberte „Nechci uvést“.",
+      "venueRequired": "Vyberte oficiální areál nebo „Nemohu najít své hřiště“.",
+      "countryRequired": "Uveďte zemi hřiště.",
+      "cityRequired": "Uveďte město hřiště.",
+      "venueNameRequired": "Uveďte název hřiště nebo klubu.",
+      "locationRequired": "Uveďte adresu nebo odkaz na polohu.",
+      "purposeRequired": "Potvrďte, že jste si přečetli, jak budou údaje použity.",
+      "whatsappInvalid": "Zkontrolujte číslo WhatsApp."
+    },
+    "status": {
+      "approvedTitle": "Přístup povolen",
+      "approvedBody": "Vaše členství bylo schváleno a můžete stáhnout celý katalog.",
+      "pendingTitle": "Žádost se posuzuje",
+      "pendingBody": "Přijali jsme údaje uložené ve vašem profilu. O rozhodnutí vás budeme informovat.",
+      "notActiveTitle": "Přístup momentálně není povolen",
+      "notActiveBody": "Můžete upravit profil a podat novou žádost. Váš účet Padbol Match tím není ovlivněn."
+    },
+    "age": {
+      "eyebrow": "ZÁKLADNÍ OVĚŘENÍ",
+      "title": "Před otevřením knihovny",
+      "body": "Potřebujeme pouze ověřit věk držitele účtu. Nyní nemusíte vyplňovat sportovní profil ani volit zážitek.",
+      "continue": "Ověřit a pokračovat",
+      "unavailableTitle": "Tento účet zatím nemá přístup do knihovny",
+      "unavailableBody": "Účty uživatelů ve věku 13 až 15 let vyžadují ověřitelný souhlas rodiče. Tato možnost zatím není dostupná.",
+      "errorTitle": "Účet se nepodařilo ověřit",
+      "errorBody": "Z bezpečnostních důvodů zůstane knihovna uzavřená, dokud nebude potvrzena způsobilost."
+    },
+    "errors": {
+      "session": "Vaše relace vypršela. Přihlaste se znovu.",
+      "interestRequired": "Před prvním stažením vyplňte profil zájmu.",
+      "forbidden": "Tento dokument vyžaduje schválené členství.",
+      "pending": "Již máte žádost, která se posuzuje.",
+      "rateLimit": "Před dalším pokusem několik minut počkejte.",
+      "profile": "Profil se nepodařilo uložit.",
+      "request": "Žádost se nepodařilo odeslat.",
+      "download": "Stažení se nepodařilo připravit."
+    }
+  }
+}

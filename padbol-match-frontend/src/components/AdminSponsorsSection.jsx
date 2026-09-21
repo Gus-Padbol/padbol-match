@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -14,20 +15,12 @@ import {
   etiquetaFormatoSponsorRow,
   normalizeSponsorFormato,
 } from '../utils/sponsorDisplayFormato';
-import {
-  SCOREBOARD_AD_DEFAULT_PLACEMENTS,
-  SCOREBOARD_AD_PLACEMENTS,
-  normalizeScoreboardPlacements,
-} from '../utils/scoreboardAdvertising';
 
 const PADBOL_RED = '#E11B22';
 const ERROR_TEXT = '#E11B22';
 const ERROR_BG = 'rgba(225, 27, 34, 0.08)';
 
-const API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const API_BASE = getApiBaseUrl();
 
 const errorBannerStyle = {
   margin: '0 0 12px',
@@ -126,8 +119,6 @@ export default function AdminSponsorsSection({
       fecha_desde: '',
       fecha_hasta: '',
       deportes_keys: [],
-      scoreboard_placements: SCOREBOARD_AD_DEFAULT_PLACEMENTS,
-      scoreboard_order: 0,
     }),
     [t, venueScopeId],
   );
@@ -204,7 +195,7 @@ export default function AdminSponsorsSection({
       setRows(Array.isArray(data) ? data : []);
     }
     setLoading(false);
-  }, []);
+  }, [venueScopeId]);
 
   const loadSponsorCupos = useCallback(async () => {
     setCuposMsg('');
@@ -260,8 +251,6 @@ export default function AdminSponsorsSection({
         const allowed = new Set(DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => o.key));
         return [...new Set(arr.map((x) => String(x || '').trim().toLowerCase()).filter((k) => allowed.has(k)))];
       })(),
-      scoreboard_placements: normalizeScoreboardPlacements(r.scoreboard_placements),
-      scoreboard_order: Number(r.scoreboard_order) || 0,
     });
     setMsg('');
     setFieldErrors({});
@@ -283,8 +272,8 @@ export default function AdminSponsorsSection({
       scrollToEl(formCardRef);
       return;
     }
-    if (file.size > 3 * 1024 * 1024) {
-      setMsg('La pieza para el marcador admite hasta 3 MB.');
+    if (file.size > 4 * 1024 * 1024) {
+      setMsg(t('admin.formularios.logoMax4mb'));
       scrollToEl(formCardRef);
       return;
     }
@@ -433,8 +422,6 @@ export default function AdminSponsorsSection({
       fecha_desde: form.fecha_desde ? String(form.fecha_desde).slice(0, 10) : null,
       fecha_hasta: form.fecha_hasta ? String(form.fecha_hasta).slice(0, 10) : null,
       deportes: depKeys.length ? depKeys : null,
-      scoreboard_placements: normalizeScoreboardPlacements(form.scoreboard_placements),
-      scoreboard_order: Math.max(0, Math.floor(Number(form.scoreboard_order) || 0)),
     };
 
     const isNew = form.id == null || form.id === '';
@@ -485,7 +472,7 @@ export default function AdminSponsorsSection({
           body: JSON.stringify(payload),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || 'No se pudo actualizar el sponsor');
+        if (!res.ok) throw new Error(data?.error || t('admin.sponsors.updateFailed'));
         setFieldErrors({});
         setMsg(t('admin.sponsors.sponsorUpdated'));
       } else {
@@ -579,7 +566,7 @@ export default function AdminSponsorsSection({
 
   const torneoLabel = useCallback(
     (torneoRow) => {
-      const sid = torneoRow.sede_id != null ? ` · sede ${torneoRow.sede_id}` : '';
+      const sid = torneoRow.sede_id != null ? ` · ${t('admin.sponsors.venueRef', { id: torneoRow.sede_id })}` : '';
       return `${String(torneoRow.nombre || t('admin.formularios.tournament')).slice(0, 80)} (id ${torneoRow.id})${sid}`;
     },
     [t],
@@ -643,9 +630,9 @@ export default function AdminSponsorsSection({
         >
           {[
             { key: 'max_global', label: t('admin.sponsors.maxGlobal') },
-            { key: 'max_por_sede_starter', label: 'Sponsors por sede — Starter' },
-            { key: 'max_por_sede_pro', label: 'Sponsors por sede — Pro' },
-            { key: 'max_por_sede_elite', label: 'Sponsors por sede — Elite' },
+            { key: 'max_por_sede_starter', label: t('admin.sponsors.maxPerVenueStarter') },
+            { key: 'max_por_sede_pro', label: t('admin.sponsors.maxPerVenuePro') },
+            { key: 'max_por_sede_elite', label: t('admin.sponsors.maxPerVenueElite') },
             { key: 'max_por_nacion', label: t('admin.sponsors.maxPerNation') },
           ].map(({ key, label }) => (
             <div key={key}>
@@ -826,7 +813,7 @@ export default function AdminSponsorsSection({
           placeholder={t('admin.sponsors.seeOffer')}
         />
 
-        <label style={labelStyle}>Descripción corta (opcional, p. ej. hub 3er tiempo)</label>
+        <label style={labelStyle}>{t('admin.sponsors.shortDescriptionOptional')}</label>
         <textarea
           style={{
             ...inputStyle,
@@ -882,7 +869,7 @@ export default function AdminSponsorsSection({
           <div style={{ marginBottom: 12 }}>
             <label style={labelStyle}>{t('admin.sponsors.scopeVenue')}</label>
             <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: 14, fontWeight: 700 }}>
-              {sedesOpts.find((s) => Number(s.id) === venueScopeId)?.nombre || 'Tu sede'}
+              {sedesOpts.find((s) => Number(s.id) === venueScopeId)?.nombre || t('admin.sponsors.myVenue')}
             </p>
           </div>
         ) : (
@@ -912,7 +899,7 @@ export default function AdminSponsorsSection({
           </>
         )}
 
-        <label style={labelStyle}>Formato de visualización</label>
+        <label style={labelStyle}>{t('admin.sponsors.displayFormat')}</label>
         <select
           style={{ ...inputStyle, marginBottom: 12, cursor: 'pointer' }}
           value={form.formato}
@@ -924,38 +911,6 @@ export default function AdminSponsorsSection({
             </option>
           ))}
         </select>
-
-        <div style={{ margin: '4px 0 16px', padding: 14, border: '1px solid rgba(225,27,34,.28)', borderRadius: 10, background: 'rgba(225,27,34,.04)' }}>
-          <strong style={{ display: 'block', color: 'var(--text-primary)', marginBottom: 5 }}>Publicidad en el marcador</strong>
-          <p style={{ margin: '0 0 10px', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45 }}>
-            Subís una sola pieza y definís en qué momentos aparece. Para pantalla completa: 1920 × 1080 px, 16:9, JPG/PNG/WebP o MP4, máximo 3 MB.
-          </p>
-          <div style={{ display: 'grid', gap: 8 }}>
-            {SCOREBOARD_AD_PLACEMENTS.map((placement) => (
-              <label key={placement.value} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={normalizeScoreboardPlacements(form.scoreboard_placements).includes(placement.value)}
-                  onChange={() => setForm((current) => {
-                    const next = new Set(normalizeScoreboardPlacements(current.scoreboard_placements));
-                    if (next.has(placement.value)) next.delete(placement.value);
-                    else next.add(placement.value);
-                    return { ...current, scoreboard_placements: [...next] };
-                  })}
-                />
-                {placement.label}
-              </label>
-            ))}
-          </div>
-          <label style={{ ...labelStyle, marginTop: 12 }}>Orden de rotación</label>
-          <input
-            type="number"
-            min="0"
-            style={{ ...inputStyle, maxWidth: 160 }}
-            value={form.scoreboard_order}
-            onChange={(e) => setForm((current) => ({ ...current, scoreboard_order: e.target.value }))}
-          />
-        </div>
 
         {!venueScopeId && form.scope === 'sede' ? (
           <div ref={sedeRef} style={{ marginBottom: 12 }}>
@@ -1172,7 +1127,7 @@ export default function AdminSponsorsSection({
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>
-                  No hay sponsors. Creá uno con el formulario de arriba.
+                  No hay sponsors. Crea uno con el formulario de arriba.
                 </td>
               </tr>
             ) : (
@@ -1193,8 +1148,8 @@ export default function AdminSponsorsSection({
                   </td>
                   <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>
                     {String(r.scope || '')}
-                    {r.sede_id != null ? ` · sede ${r.sede_id}` : ''}
-                    {r.torneo_id != null ? ` · torneo ${r.torneo_id}` : ''}
+                    {r.sede_id != null ? ` · ${t('admin.sponsors.venueRef', { id: r.sede_id })}` : ''}
+                    {r.torneo_id != null ? ` · ${t('admin.sponsors.tournamentRef', { id: r.torneo_id })}` : ''}
                     {r.pais ? ` · ${r.pais}` : ''}
                   </td>
                   <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--text-secondary)' }}>

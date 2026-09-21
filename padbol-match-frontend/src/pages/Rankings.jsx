@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
@@ -24,7 +25,6 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import {
   TORNEO_DEPORTE_PADBOL,
   TORNEO_DEPORTE_OPTIONS,
-  etiquetaDeporteTorneo,
   normalizeTorneoDeporte,
 } from '../utils/torneoDeporteFormato';
 
@@ -42,6 +42,24 @@ const SCOPE_NIVELES_RANKING = {
 };
 
 const PERFIL_EMAIL_CHUNK = 120;
+const RANKINGS_API_BASE = getApiBaseUrl();
+const CONTINENTES_FIPA = ['america', 'europa', 'oriente_medio', 'africa', 'asia', 'oceania'];
+const CONTINENTE_LABEL = {
+  america: 'América', europa: 'Europa', oriente_medio: 'Oriente Medio',
+  africa: 'África', asia: 'Asia', oceania: 'Oceanía',
+};
+
+async function fetchRankingsApi({ scope, continente, pais, provincia, ciudad, categoria, tipoCompetencia, deporte }) {
+  const params = new URLSearchParams({ scope: CONTINENTES_FIPA.includes(scope) ? 'internacional' : scope, deporte });
+  if (CONTINENTES_FIPA.includes(scope)) params.set('continente', scope);
+  if (continente) params.set('continente', continente);
+  for (const [key, value] of Object.entries({ pais, provincia, ciudad, categoria, tipo_competencia: tipoCompetencia })) {
+    if (String(value || '').trim()) params.set(key, String(value).trim());
+  }
+  const response = await fetch(`${RANKINGS_API_BASE}/api/rankings?${params.toString()}`);
+  if (!response.ok) throw new Error(`Ranking ${response.status}`);
+  return response.json();
+}
 
 function normPaisRanking(s) {
   return String(s || '')
@@ -262,28 +280,29 @@ function normalizeNombrePaisRanking(s) {
  * Etiqueta del filtro subnacional según país (español).
  * Argentina → Provincia · EE. UU. → Estado · España → Región · resto → Estado / Región
  */
-function rankingEtiquetaProvinciaSegunPais(paisRaw) {
+function rankingEtiquetaProvinciaSegunPais(paisRaw, t) {
   const raw = String(paisRaw || '').trim();
-  if (!raw) return 'Provincia';
+  if (!raw) return t('ranking.province');
   const n = normalizeNombrePaisRanking(raw);
-  if (!n) return 'Provincia';
-  if (n === 'argentina' || n.startsWith('argentina')) return 'Provincia';
+  if (!n) return t('ranking.province');
+  if (n === 'argentina' || n.startsWith('argentina')) return t('ranking.province');
   if (
     n.includes('estados unidos') ||
     n === 'usa' ||
     n.replace(/\s+/g, '') === 'eeuu' ||
     n.startsWith('ee. uu')
   ) {
-    return 'Estado';
+    return t('ranking.state');
   }
-  if (n === 'espana' || n === 'españa' || n.startsWith('espana') || n.startsWith('españa')) return 'Región';
-  return 'Estado / Región';
+  if (n === 'espana' || n === 'españa' || n.startsWith('espana') || n.startsWith('españa')) return t('ranking.region');
+  return t('ranking.stateRegion');
 }
 
 const TABS = [
-  { id: 'local',         label: '🏟️ Local'              },
-  { id: 'nacional',      label: '🌍 Nacional'            },
-  { id: 'internacional', label: '🌐 Internacional FIPA'  },
+  { id: 'local', icon: '🏟️', labelKey: 'tabLocal' },
+  { id: 'nacional', icon: '🌍', labelKey: 'tabNational' },
+  { id: 'internacional', icon: '🌐', labelKey: 'tabInternational' },
+  ...CONTINENTES_FIPA.map((id) => ({ id, icon: '🏆', label: CONTINENTE_LABEL[id] })),
 ];
 
 /** Categorías mostradas solo en el tab Internacional FIPA (sin Principiante ni 5ta–3ra). */
@@ -333,6 +352,7 @@ const RANKING_SHEET_SELECT_STYLE = {
 };
 
 function RankingFilterDropdown({ label, value, onChange, options, disabled, ariaLabel, renderOptionLabel, variant = 'hub' }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const labelId = useId();
@@ -351,7 +371,7 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
 
   const selectedText = value
     ? (renderOptionLabel ? renderOptionLabel(value) : value)
-    : 'Todos';
+    : t('ranking.all');
 
   const labelColor = 'var(--text-secondary)';
   const btnBorder = '1px solid var(--border)';
@@ -447,7 +467,7 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
               fontSize: '15px',
             }}
           >
-            Todos
+            {t('ranking.all')}
           </button>
           {options.map((o) => {
             const active = value === o;
@@ -483,7 +503,8 @@ function RankingFilterDropdown({ label, value, onChange, options, disabled, aria
 }
 
 export default function Rankings() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const sortLocale = i18n.resolvedLanguage || i18n.language || 'en';
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const { session } = useAuth();
@@ -541,9 +562,9 @@ export default function Rankings() {
   const paisesDesdeSedes = useMemo(
     () =>
       [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b, 'es')
+        a.localeCompare(b, sortLocale)
       ),
-    [sedes]
+    [sedes, sortLocale]
   );
 
   const rankingActiveFilterCount = useMemo(() => {
@@ -591,8 +612,8 @@ export default function Rankings() {
       const pr = s.provincia != null ? String(s.provincia).trim() : '';
       if (pr) set.add(pr);
     }
-    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
-  }, [sedes, rankingFilterSheetDraft]);
+    return [...set].sort((a, b) => a.localeCompare(b, sortLocale));
+  }, [sedes, rankingFilterSheetDraft, sortLocale]);
 
   const ciudadesSheetOpciones = useMemo(() => {
     const d = rankingFilterSheetDraft;
@@ -607,12 +628,12 @@ export default function Rankings() {
       const c = String(s.ciudad || '').trim();
       if (c) set.add(c);
     }
-    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
-  }, [sedes, rankingFilterSheetDraft]);
+    return [...set].sort((a, b) => a.localeCompare(b, sortLocale));
+  }, [sedes, rankingFilterSheetDraft, sortLocale]);
 
   const etiquetaProvinciaSheet = useMemo(
-    () => rankingEtiquetaProvinciaSegunPais(rankingFilterSheetDraft?.localPais),
-    [rankingFilterSheetDraft?.localPais]
+    () => rankingEtiquetaProvinciaSegunPais(rankingFilterSheetDraft?.localPais, t),
+    [rankingFilterSheetDraft?.localPais, t]
   );
 
   const openRankingFilterSheet = () => {
@@ -650,7 +671,7 @@ export default function Rankings() {
   const applyRankingFilterSheet = () => {
     if (!rankingFilterSheetDraft) return;
     let cat = rankingFilterSheetDraft.selectedCategoria;
-    if (activeTab === 'internacional' && cat && !CATEGORIAS_INTERNACIONAL_FIPA.includes(cat)) {
+    if ((activeTab === 'internacional' || CONTINENTES_FIPA.includes(activeTab)) && cat && !CATEGORIAS_INTERNACIONAL_FIPA.includes(cat)) {
       cat = '';
     }
     setLocalPais(rankingFilterSheetDraft.localPais);
@@ -695,7 +716,7 @@ export default function Rankings() {
       if (error) {
         console.error('[Rankings] sedes', error);
         setSedes([]);
-        setSedesLoadError('No se pudieron cargar las sedes.');
+        setSedesLoadError(t('ranking.loadVenuesError'));
         return;
       }
       setSedes(Array.isArray(data) ? data : []);
@@ -703,7 +724,7 @@ export default function Rankings() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -713,7 +734,7 @@ export default function Rankings() {
 
     (async () => {
       try {
-        const data = await fetchRankingsSupabase({
+        const data = await fetchRankingsApi({
           scope: activeTab,
           pais: activeTab === 'local' ? localPais : activeTab === 'nacional' ? nacionalPais : '',
           provincia: activeTab === 'local' ? localProvincia : '',
@@ -727,7 +748,7 @@ export default function Rankings() {
         setRankings(Array.isArray(data) ? data : []);
       } catch (e) {
         if (cancelled) return;
-        console.error('[Rankings] fetchRankingsSupabase', e);
+        console.error('[Rankings] fetchRankingsApi', e);
         setRankingSinDatosDisponibles(true);
         setRankings([]);
       } finally {
@@ -801,7 +822,8 @@ export default function Rankings() {
 
   const tdStyle = { padding: narrow ? '8px 6px' : '11px 14px', verticalAlign: 'middle' };
 
-  const showPaisCol = activeTab === 'internacional';
+  const showPaisCol = activeTab === 'internacional' || CONTINENTES_FIPA.includes(activeTab);
+  const rankingSportLabel = t(`torneo.deporte.${rankingDeporte}`, { defaultValue: rankingDeporte });
   /** En mobile el encabezado {t('torneos.titulo')} se cortaba; el conteo es secundario frente a puntos. */
   const showTorneosCol = !narrow;
 
@@ -831,7 +853,7 @@ export default function Rankings() {
               letterSpacing: '0.02em',
             }}
           >
-            Deporte
+            {t('ranking.sport')}
           </label>
           <select
             id="ranking-deporte-select"
@@ -865,20 +887,19 @@ export default function Rankings() {
           >
             {TORNEO_DEPORTE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value} style={{ color: 'var(--text-primary)' }}>
-                {o.label}
+                {t(`torneo.deporte.${o.value}`, { defaultValue: o.label })}
               </option>
             ))}
           </select>
           {rankingDeporte !== TORNEO_DEPORTE_PADBOL ? (
             <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45, textAlign: 'center' }}>
-              Nacional e Internacional FIPA aplican solo a torneos de Padbol; aquí ves el ranking local de{' '}
-              {etiquetaDeporteTorneo(rankingDeporte)}.
+              {t('ranking.otherSportsLocalOnly', { sport: rankingSportLabel })}
             </p>
           ) : null}
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '4px', background: 'var(--pm-color-muted-bg)', borderRadius: '12px', padding: '4px', marginBottom: '12px', border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', background: 'var(--pm-color-muted-bg)', borderRadius: '12px', padding: '4px', marginBottom: '12px', border: '1px solid var(--border)' }}>
           {tabsForDeporte.map((tab) => (
             <button
               key={tab.id}
@@ -894,7 +915,7 @@ export default function Rankings() {
                 setSelectedGeneroTorneo('');
               }}
               style={{
-                flex: 1,
+                flex: '0 0 auto',
                 padding: '9px 10px',
                 border: 'none',
                 borderRadius: '9px',
@@ -907,7 +928,7 @@ export default function Rankings() {
                 whiteSpace: 'nowrap',
               }}
             >
-              {tab.label}
+              {tab.icon} {tab.label || t(`ranking.${tab.labelKey}`)}
             </button>
           ))}
         </div>
@@ -916,7 +937,7 @@ export default function Rankings() {
           <button
             type="button"
             onClick={openRankingFilterSheet}
-            aria-label="Abrir filtros del ranking"
+            aria-label={t('ranking.openFiltersAria')}
             style={{
               alignSelf: 'flex-start',
               padding: '10px 16px',
@@ -937,7 +958,7 @@ export default function Rankings() {
             }}
           >
             <IconGeroFiltros size={18} style={{ color: 'inherit' }} />
-            Filtrar{rankingActiveFilterCount > 0 ? ` (${rankingActiveFilterCount})` : ''}
+            {t('ranking.filter')}{rankingActiveFilterCount > 0 ? ` (${rankingActiveFilterCount})` : ''}
           </button>
           {activeTab === 'local' && sedesLoadError ? (
             <span style={{ fontSize: '12px', color: 'var(--accent)' }}>{sedesLoadError}</span>
@@ -948,18 +969,24 @@ export default function Rankings() {
         <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
           {activeTab === 'local' &&
             (localPais || localProvincia || localCiudad
-              ? `Ranking local · ${etiquetaDeporteTorneo(rankingDeporte)} · ${[localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · ')}`
-              : `Ranking local · ${etiquetaDeporteTorneo(rankingDeporte)} · torneos de club finalizados (filtra por ubicación o deja Todos)`)}
+              ? t('ranking.localWithLocation', {
+                  sport: rankingSportLabel,
+                  location: [localPais || null, localProvincia || null, localCiudad || null].filter(Boolean).join(' · '),
+                })
+              : t('ranking.localDefault', { sport: rankingSportLabel }))}
           {activeTab === 'nacional' &&
             (nacionalPais
-              ? `Ranking nacional · ${etiquetaDeporteTorneo(rankingDeporte)} · ${countryLabelWithFlag(nacionalPais)}${selectedCategoria ? ` · ${selectedCategoria}` : ''}`
-              : `Ranking nacional · ${etiquetaDeporteTorneo(rankingDeporte)} · todos los países o elige uno para filtrar jugadores por país del perfil`)}
-          {activeTab === 'internacional' && (
-            <>
-              Ranking FIPA · {etiquetaDeporteTorneo(rankingDeporte)} · torneos internacionales y mundiales finalizados
-              {selectedCategoria ? ` · Categoría: ${selectedCategoria}` : ''}
-            </>
-          )}
+              ? t('ranking.nationalCountry', {
+                  sport: rankingSportLabel,
+                  country: countryLabelWithFlag(nacionalPais),
+                  category: selectedCategoria ? ` · ${selectedCategoria}` : '',
+                })
+              : t('ranking.nationalDefault', { sport: rankingSportLabel }))}
+          {(activeTab === 'internacional' || CONTINENTES_FIPA.includes(activeTab)) &&
+            t('ranking.internationalDefault', {
+              sport: rankingSportLabel,
+              category: selectedCategoria ? t('ranking.categorySuffix', { category: selectedCategoria }) : '',
+            })}
         </div>
 
         {tickerSponsors?.length > 0 ? (
@@ -972,21 +999,21 @@ export default function Rankings() {
         <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)', border: '1px solid var(--border)' }}>
           {loading ? (
             <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '15px' }}>
-              Cargando rankings...
+              {t('ranking.loading')}
             </div>
           ) : rankings.length === 0 ? (
             <div style={{ padding: '60px', textAlign: 'center' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏆</div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600' }}>
-                {rankingSinDatosDisponibles ? 'Sin datos disponibles' : 'Sin datos de ranking todavía'}
+                {rankingSinDatosDisponibles ? t('ranking.noData') : t('ranking.noRankingYet')}
               </div>
               {!rankingSinDatosDisponibles ? (
                 <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '6px', opacity: 0.9 }}>
-                  No hay jugadores con puntos para esta combinación de filtros, o los puntos aún no se asignaron.
+                  {t('ranking.noPointsForFilters')}
                 </div>
               ) : (
                 <div style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '6px', lineHeight: 1.5 }}>
-                  Aún no hay torneos finalizados en esta categoría. ¡Jugá un torneo y aparecé en el ranking!
+                  {t('ranking.noFinishedTournaments')}
                 </div>
               )}
             </div>
@@ -1003,26 +1030,26 @@ export default function Rankings() {
               <thead>
                 <tr>
                   <th style={{ ...thStyle, textAlign: 'center' }}>#</th>
-                  <th style={{ ...thStyle, textAlign: 'left' }}>Jugador</th>
+                  <th style={{ ...thStyle, textAlign: 'left' }}>{t('ranking.player')}</th>
                   {showPaisCol ? (
-                    <th style={{ ...thStyle, textAlign: 'center' }}>País</th>
+                    <th style={{ ...thStyle, textAlign: 'center' }}>{t('ranking.country')}</th>
                   ) : null}
-                  <th style={{ ...thStyle, textAlign: 'left' }}>Equipo</th>
+                  <th style={{ ...thStyle, textAlign: 'left' }}>{t('ranking.team')}</th>
                   {showTorneosCol ? (
                     <th style={{ ...thStyle, textAlign: 'center', whiteSpace: 'normal', lineHeight: 1.2 }}>
-                      Torneos
+                      {t('ranking.tournaments')}
                     </th>
                   ) : null}
-                  <th style={{ ...thStyle, textAlign: 'center', color: 'var(--accent)' }}>Puntos</th>
+                  <th style={{ ...thStyle, textAlign: 'center', color: 'var(--accent)' }}>{t('ranking.points')}</th>
                 </tr>
               </thead>
               <tbody>
                 {rankings.map((player, idx) => {
-                  const pos  = idx + 1;
+                  const pos  = Number(player.posicion) > 0 ? Number(player.posicion) : idx + 1;
                   const flag = getFlag(player.pais);
                   const avatarPx = narrow ? 32 : 38;
                   return (
-                    <tr key={player.email || idx} style={trStyle(idx)}>
+                    <tr key={player.user_id || player.fipa_jugador_id || player.fipa_source_key || `${player.display_name || player.nombre}-${pos}`} style={trStyle(idx)}>
 
                       {/* Position */}
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
@@ -1080,6 +1107,11 @@ export default function Rankings() {
                                 {formatAliasConArroba(String(player.alias).trim())}
                               </div>
                             ) : null}
+                            {player.ranking_oficial ? (
+                              <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--accent)', marginTop: '2px' }}>
+                                FIPA · {player.user_id ? 'perfil vinculado' : 'perfil oficial por vincular'}
+                              </div>
+                            ) : null}
                           </div>
                         </button>
                       </td>
@@ -1091,12 +1123,12 @@ export default function Rankings() {
                       ) : null}
 
                       <td style={{ ...tdStyle, fontSize: narrow ? '11px' : '12px', color: 'var(--text-secondary)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {player.equipo_nombre || <span style={{ color: 'var(--text-secondary)' }}>—</span>}
+                        {player.equipo_nombre || CONTINENTE_LABEL[player.continente] || (player.ranking_oficial ? 'FIPA' : <span style={{ color: 'var(--text-secondary)' }}>—</span>)}
                       </td>
 
                       {showTorneosCol ? (
                         <td style={{ ...tdStyle, textAlign: 'center', fontSize: narrow ? '11px' : '13px', color: 'var(--text-secondary)' }}>
-                          {player.torneos_count}
+                          {player.ranking_oficial ? 'FIPA' : player.torneos_count}
                         </td>
                       ) : null}
 
@@ -1125,8 +1157,8 @@ export default function Rankings() {
         {/* Footer note */}
         {rankings.length > 0 && (
           <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-            {rankings.length} jugador{rankings.length !== 1 ? 'es' : ''} mostrado{rankings.length !== 1 ? 's' : ''}
-            {selectedCategoria && ` · Categoría: ${selectedCategoria}`}
+            {t('ranking.playersShown', { count: rankings.length })}
+            {selectedCategoria && t('ranking.categorySuffix', { category: selectedCategoria })}
           </div>
         )}
       </div>
@@ -1179,7 +1211,7 @@ export default function Rankings() {
               id="ranking-filters-sheet-title"
               style={{ margin: '0 0 18px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}
             >
-              Filtros
+              {t('ranking.filters')}
             </h2>
 
             {activeTab === 'local' ? (
@@ -1187,12 +1219,12 @@ export default function Rankings() {
                 <div style={RANKING_SHEET_FILTER_ROW}>
                   <RankingFilterDropdown
                     variant="sheet"
-                    label="País"
+                    label={t('ranking.country')}
                     value={rankingFilterSheetDraft.localPais}
                     onChange={(v) => patchRankingFilterSheetDraft({ localPais: v })}
                     options={paisesDesdeSedes}
                     disabled={paisesDesdeSedes.length === 0}
-                    ariaLabel="País para ranking local"
+                    ariaLabel={t('ranking.localCountryAria')}
                     renderOptionLabel={countryLabelWithFlag}
                   />
                 </div>
@@ -1205,7 +1237,7 @@ export default function Rankings() {
                       onChange={(v) => patchRankingFilterSheetDraft({ localProvincia: v })}
                       options={provinciasSheetOpciones}
                       disabled={!String(rankingFilterSheetDraft.localPais || '').trim()}
-                      ariaLabel={`${etiquetaProvinciaSheet} para ranking local`}
+                      ariaLabel={t('ranking.localSubdivisionAria', { subdivision: etiquetaProvinciaSheet })}
                     />
                   </div>
                 ) : null}
@@ -1215,16 +1247,16 @@ export default function Rankings() {
                       htmlFor="ranking-sheet-local-ciudad"
                       style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}
                     >
-                      Ciudad
+                      {t('ranking.city')}
                     </label>
                     <select
                       id="ranking-sheet-local-ciudad"
                       value={rankingFilterSheetDraft.localCiudad}
                       onChange={(e) => patchRankingFilterSheetDraft({ localCiudad: e.target.value })}
-                      aria-label="Ciudad para ranking local"
+                      aria-label={t('ranking.localCityAria')}
                       style={RANKING_SHEET_SELECT_STYLE}
                     >
-                      <option value="">Todos</option>
+                      <option value="">{t('ranking.all')}</option>
                       {ciudadesSheetOpciones.map((c) => (
                         <option key={c} value={c}>
                           {c}
@@ -1240,12 +1272,12 @@ export default function Rankings() {
               <div style={RANKING_SHEET_FILTER_ROW}>
                 <RankingFilterDropdown
                   variant="sheet"
-                  label="País"
+                  label={t('ranking.country')}
                   value={rankingFilterSheetDraft.nacionalPais}
                   onChange={(v) => patchRankingFilterSheetDraft({ nacionalPais: v })}
                   options={paisesDesdeSedes}
                   disabled={paisesDesdeSedes.length === 0}
-                  ariaLabel="País para ranking nacional"
+                  ariaLabel={t('ranking.nationalCountryAria')}
                   renderOptionLabel={countryLabelWithFlag}
                 />
               </div>
@@ -1256,7 +1288,7 @@ export default function Rankings() {
                 htmlFor="ranking-sheet-categoria"
                 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}
               >
-                Categoría
+                {t('ranking.category')}
               </label>
               <select
                 id="ranking-sheet-categoria"
@@ -1264,10 +1296,10 @@ export default function Rankings() {
                 onChange={(e) =>
                   patchRankingFilterSheetDraft({ selectedCategoria: e.target.value })
                 }
-                aria-label="Filtrar ranking por categoría"
+                aria-label={t('ranking.categoryFilterAria')}
                 style={RANKING_SHEET_SELECT_STYLE}
               >
-                <option value="">Todos</option>
+                <option value="">{t('ranking.all')}</option>
                 {(activeTab === 'internacional' ? CATEGORIAS_INTERNACIONAL_FIPA : CATEGORIAS_NIVEL_TODAS).map(
                   (c) => (
                     <option key={c} value={c}>
@@ -1283,7 +1315,7 @@ export default function Rankings() {
                 htmlFor="ranking-sheet-tipo-torneo"
                 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}
               >
-                Tipo de torneo
+                {t('ranking.tournamentType')}
               </label>
               <select
                 id="ranking-sheet-tipo-torneo"
@@ -1291,13 +1323,13 @@ export default function Rankings() {
                 onChange={(e) =>
                   patchRankingFilterSheetDraft({ selectedGeneroTorneo: e.target.value })
                 }
-                aria-label="Filtrar ranking por tipo de torneo (Masculino, Femenino o Mixto)"
+                aria-label={t('ranking.tournamentTypeFilterAria')}
                 style={RANKING_SHEET_SELECT_STYLE}
               >
-                <option value="">Todos</option>
+                <option value="">{t('ranking.all')}</option>
                 {TORNEO_GENERO_COMPETENCIA_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {t(`torneos.detalle.genero.${o.value}`, { defaultValue: o.label })}
                   </option>
                 ))}
               </select>
@@ -1327,7 +1359,7 @@ export default function Rankings() {
                   cursor: 'pointer',
                 }}
               >
-                Aplicar
+                {t('ranking.apply')}
               </button>
               <button
                 type="button"
@@ -1343,7 +1375,7 @@ export default function Rankings() {
                   cursor: 'pointer',
                 }}
               >
-                Limpiar todo
+                {t('ranking.clearAll')}
               </button>
             </div>
           </div>

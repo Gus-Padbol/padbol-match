@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import Cropper from 'react-easy-crop';
@@ -5,7 +6,7 @@ import 'react-easy-crop/react-easy-crop.css';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import AdminScoreboardPartidoPreview from '../components/admin/AdminScoreboardPartidoPreview';
-import { AdminChartIcon, AdminCheckIcon, AdminDeleteIcon, AdminEditIcon, AdminGridIcon, AdminLicenseIcon, AdminPadcoinsIcon, AdminSaveIcon, AdminTrophyIcon } from '../components/admin/AdminUiIcons';
+import { AdminEditIcon, AdminGridIcon, AdminLicenseIcon, AdminPadcoinsIcon, AdminSaveIcon, AdminTrophyIcon } from '../components/admin/AdminUiIcons';
 import ScoreboardCanchaQrModal from '../components/admin/ScoreboardCanchaQrModal';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 import SedeSearchInput from '../components/SedeSearchInput';
@@ -92,9 +93,13 @@ import AdminSedeResenasSection from '../components/AdminSedeResenasSection';
 import AdminSedeListaEsperaTorneosSection from '../components/AdminSedeListaEsperaTorneosSection';
 import AdminSedeConfiguracionGuiada from '../components/AdminSedeConfiguracionGuiada';
 import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
+import AdminWhatsappSection from '../components/AdminWhatsappSection';
+import { whatsappAdminApi } from '../utils/whatsappAdminApi';
 import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
+import AdminOrganizacionesSection from '../components/AdminOrganizacionesSection';
+import AdminIncentivosSection from '../components/AdminIncentivosSection';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
@@ -212,6 +217,7 @@ import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import i18n from '../i18n';
 import {
   createPartido,
@@ -455,7 +461,7 @@ function AdminScoreboardPartidoListItem({
   const verPublicUrl = `${SCOREBOARD_PUBLIC_BASE}/display/${partido.sede_id}/scoreboard/${partido.id}`;
   const obsCopyTitle = t(
     'admin.scoreboard.obsCopyHint',
-    'Usá Browser Source en OBS con fondo transparente',
+    'Use Browser Source in OBS with a transparent background',
   );
   const torneo = String(partido.torneo_nombre || '').trim();
   const isPreviewOpen = previewPartidoId === partido.id;
@@ -466,7 +472,7 @@ function AdminScoreboardPartidoListItem({
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(''), 2000);
     } catch {
-      window.prompt('Copiá este link:', url);
+      window.prompt(t('admin.scoreboard.copyLinkPrompt'), url);
     }
   };
 
@@ -1066,11 +1072,11 @@ const EMPTY_PREMIO_FORM = () => ({
   activo: true,
 });
 
-function validatePremioForm(form) {
-  if (!(form.nombre || '').trim()) return 'El nombre es obligatorio';
+function validatePremioForm(form, t) {
+  if (!(form.nombre || '').trim()) return t('admin.padcoins.validation.nameRequired');
 
   const costo = parseInt(form.costo_padcoins, 10);
-  if (!Number.isFinite(costo) || costo <= 0) return 'El costo en PadCoins debe ser mayor a 0';
+  if (!Number.isFinite(costo) || costo <= 0) return t('admin.padcoins.validation.costPositive');
 
   const hasStockTotal = form.stock_total !== '' && form.stock_total != null;
   const hasStockDisp = form.stock_disponible !== '' && form.stock_disponible != null;
@@ -1078,18 +1084,18 @@ function validatePremioForm(form) {
   const stockDisp = hasStockDisp ? parseInt(form.stock_disponible, 10) : null;
 
   if (stockTotal !== null && (!Number.isFinite(stockTotal) || stockTotal < 0)) {
-    return 'El stock total no puede ser negativo';
+    return t('admin.padcoins.validation.totalStockNonNegative');
   }
   if (stockDisp !== null && (!Number.isFinite(stockDisp) || stockDisp < 0)) {
-    return 'El stock disponible no puede ser negativo';
+    return t('admin.padcoins.validation.availableStockNonNegative');
   }
   if (stockTotal !== null && stockDisp !== null && stockDisp > stockTotal) {
-    return 'El stock disponible no puede superar el stock total';
+    return t('admin.padcoins.validation.availableStockOverTotal');
   }
 
   const fi = String(form.fecha_inicio || '').trim();
   const ff = String(form.fecha_fin || '').trim();
-  if (fi && ff && fi > ff) return 'La fecha de inicio no puede ser posterior a la fecha de fin';
+  if (fi && ff && fi > ff) return t('admin.padcoins.validation.invalidDateRange');
 
   return null;
 }
@@ -1212,26 +1218,24 @@ const PADCOINS_CONFIG_FIJAS_KEYS = [
 ];
 
 const PADCOINS_CONFIG_KEY_LABELS = {
-  partido_jugado: 'Partido jugado',
-  partido_ganado: 'Partido ganado',
-  logro_desbloqueado: 'Logro desbloqueado',
-  inscripcion_torneo: 'Inscripción a torneo',
-  reserva_confirmada: 'Reserva confirmada',
-  cancelacion_tarde: 'Cancelación tardía',
+  partido_jugado: 'Match played',
+  partido_ganado: 'Match won',
+  logro_desbloqueado: 'Achievement unlocked',
+  inscripcion_torneo: 'Tournament registration',
+  reserva_confirmada: 'Booking confirmed',
+  cancelacion_tarde: 'Late cancellation',
   no_show: 'No show',
-  limite_diario_jugador: 'Límite diario por jugador',
-  limite_mensual_jugador: 'Límite mensual por jugador',
-  porcentaje_devolucion_reserva: 'Acreditación promocional por reserva',
-  padcoins_por_usd_equivalente: 'Conversión interna de referencia',
-  modo_calculo_reserva: 'Modo de cálculo de reservas',
+  limite_diario_jugador: 'Daily limit per player',
+  limite_mensual_jugador: 'Monthly limit per player',
+  porcentaje_devolucion_reserva: 'Promotional credit per booking',
+  padcoins_por_usd_equivalente: 'Internal reference conversion',
+  modo_calculo_reserva: 'Booking calculation mode',
 };
 
 const PADCOINS_CONFIG_KEY_HELP = {
-  porcentaje_devolucion_reserva:
-    'Porcentaje del valor de la reserva que se acredita al jugador en PadCoins. Lanzamiento recomendado: 5%.',
-  padcoins_por_usd_equivalente:
-    'Conversión interna de referencia para calcular PadCoins. No se muestra como valor monetario al jugador.',
-  modo_calculo_reserva: 'Calcula PadCoins como porcentaje del valor pagado.',
+  porcentaje_devolucion_reserva: 'admin.padcoins.smartRuleHelp.bookingCredit',
+  padcoins_por_usd_equivalente: 'admin.padcoins.smartRuleHelp.internalConversion',
+  modo_calculo_reserva: 'admin.padcoins.smartRuleHelp.calculationMode',
 };
 
 const PC_SEDE_SMART_RULE_KEYS = [
@@ -1244,17 +1248,6 @@ const PC_SEDE_SMART_RULE_KEYS = [
   'modo_calculo_reserva',
   'logro_desbloqueado',
 ];
-
-const PC_SEDE_SMART_RULE_LABELS = {
-  limite_diario_jugador: 'Límite diario por jugador',
-  limite_mensual_jugador: 'Límite mensual por jugador',
-  cancelacion_tarde: 'Penalización por cancelación tardía',
-  no_show: 'Penalización por no-show',
-  porcentaje_devolucion_reserva: 'Porcentaje de devolución por reserva',
-  padcoins_por_usd_equivalente: 'PadCoins por USD equivalente',
-  modo_calculo_reserva: 'Modo de cálculo de reserva',
-  logro_desbloqueado: 'PadCoins por logro desbloqueado',
-};
 
 const PC_SEDE_SMART_RULE_EN_LABELS = {
   limite_diario_jugador: 'Daily limit per player',
@@ -1298,14 +1291,14 @@ function formatPadcoinsSmartConfigValue(value) {
   return String(value);
 }
 
-function validatePcSedeSmartOverrideForm(form) {
+function validatePcSedeSmartOverrideForm(form, t) {
   for (const key of PC_SEDE_SMART_RULE_KEYS) {
     const raw = String(form?.[key] ?? '').trim();
     if (!raw) continue;
     if (isPcSedeSmartRuleText(key)) continue;
     const n = Number(raw);
     if (!Number.isFinite(n) || !Number.isInteger(n)) {
-      return `«${PC_SEDE_SMART_RULE_LABELS[key]}» debe ser un número entero`;
+      return t('admin.padcoins.validation.smartInteger', { label: padcoinsConfigKeyLabel(key, t) });
     }
   }
   return null;
@@ -1474,14 +1467,14 @@ function padcoinsCampaignNumericOptional(value) {
   return Number.isFinite(n) ? n : undefined;
 }
 
-function validatePadcoinsCampaignForm(form, { requireSedeId = false } = {}) {
-  if (!(form?.name || '').trim()) return 'El nombre es obligatorio';
-  if (!(form?.campaign_type || '').trim()) return 'El tipo de campaña es obligatorio';
-  if (requireSedeId && !String(form?.sede_id || '').trim()) return 'Seleccione una sede';
+function validatePadcoinsCampaignForm(form, { requireSedeId = false, t } = {}) {
+  if (!(form?.name || '').trim()) return t('admin.padcoins.validation.nameRequired');
+  if (!(form?.campaign_type || '').trim()) return t('admin.padcoins.validation.campaignTypeRequired');
+  if (requireSedeId && !String(form?.sede_id || '').trim()) return t('admin.padcoins.validation.selectVenue');
 
   const start = String(form?.start_at || '').trim();
   const end = String(form?.end_at || '').trim();
-  if (start && end && start >= end) return 'La fecha de fin debe ser posterior a la fecha de inicio';
+  if (start && end && start >= end) return t('admin.padcoins.validation.campaignDateOrder');
 
   const numericFields = [
     form?.multiplier,
@@ -1494,25 +1487,25 @@ function validatePadcoinsCampaignForm(form, { requireSedeId = false } = {}) {
   for (const val of numericFields) {
     if (val === '' || val == null) continue;
     const n = Number(val);
-    if (!Number.isFinite(n) || n < 0) return 'Los valores numéricos no pueden ser negativos';
+    if (!Number.isFinite(n) || n < 0) return t('admin.padcoins.validation.numericNonNegative');
   }
 
   const type = String(form?.campaign_type || '').trim();
   if (type === 'multiplier') {
     const m = Number(form?.multiplier);
-    if (!Number.isFinite(m) || m <= 0) return 'Indique un multiplicador mayor a 0';
+    if (!Number.isFinite(m) || m <= 0) return t('admin.padcoins.validation.multiplierPositive');
   }
   if (type === 'percentage_override') {
     const p = Number(form?.loyalty_percentage_override);
-    if (!Number.isFinite(p) || p < 0) return 'Indique el porcentaje de fidelización';
+    if (!Number.isFinite(p) || p < 0) return t('admin.padcoins.validation.loyaltyPctRequired');
   }
   if (type === 'fixed_padcoins') {
     const f = Number(form?.fixed_padcoins);
-    if (!Number.isFinite(f) || f <= 0) return 'Indique una cantidad de PadCoins fijos mayor a 0';
+    if (!Number.isFinite(f) || f <= 0) return t('admin.padcoins.validation.fixedPadcoinsPositive');
   }
   if (type === 'benefit_equivalent') {
     const bid = String(form?.benefit_id || '').trim();
-    if (!bid) return 'Seleccione un beneficio asociado';
+    if (!bid) return t('admin.padcoins.validation.benefitRequired');
   }
   return null;
 }
@@ -1559,13 +1552,13 @@ function buildPadcoinsCampaignPayload(form, sedeId) {
   return payload;
 }
 
-function padcoinsCampaignSedeNombre(campaign, sedesMapRef, pcSedesOptions) {
+function padcoinsCampaignSedeNombre(campaign, sedesMapRef, pcSedesOptions, t) {
   const sid = campaign?.sede_id;
   if (sid == null || sid === '') return '—';
   return sedesMapRef[sid]?.nombre
     || sedesMapRef[String(sid)]?.nombre
     || pcSedesOptions.find((s) => String(s.id) === String(sid))?.nombre
-    || `Sede #${sid}`;
+    || t('admin.sponsors.venueRef', { id: sid });
 }
 
 function formatPadcoinsCampaignDateRange(campaign) {
@@ -1578,11 +1571,11 @@ function isPadcoinsConfigTextRule(key) {
   return String(key || '').trim() === 'modo_calculo_reserva';
 }
 
-function padcoinsConfigKeyLabel(key) {
+function padcoinsConfigKeyLabel(key, t) {
   const k = String(key || '').trim();
   if (!k) return '—';
-  if (PADCOINS_CONFIG_KEY_LABELS[k]) return PADCOINS_CONFIG_KEY_LABELS[k];
-  return k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const fallback = PADCOINS_CONFIG_KEY_LABELS[k] || k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return t ? t(`admin.padcoins.smartRules.${k}`, { defaultValue: fallback }) : fallback;
 }
 
 function parsePadcoinsConfigList(data) {
@@ -1619,21 +1612,21 @@ function sortPadcoinsConfigRows(rows) {
   return sorted;
 }
 
-function validatePadcoinsConfigFormRows(rows) {
+function validatePadcoinsConfigFormRows(rows, t) {
   for (const row of rows) {
     const key = String(row?.key || '').trim();
-    if (!key) return 'Hay una regla sin clave (key) válida';
+    if (!key) return t('admin.padcoins.validation.invalidRuleKey');
     if (isPadcoinsConfigTextRule(key)) {
       if (!String(row?.value_text ?? '').trim()) {
-        return `El valor de «${padcoinsConfigKeyLabel(key)}» es obligatorio`;
+        return t('admin.padcoins.validation.valueRequired', { label: padcoinsConfigKeyLabel(key, t) });
       }
       continue;
     }
     const raw = String(row?.value_integer ?? '').trim();
-    if (raw === '') return `El valor de «${padcoinsConfigKeyLabel(key)}» es obligatorio`;
+    if (raw === '') return t('admin.padcoins.validation.valueRequired', { label: padcoinsConfigKeyLabel(key, t) });
     const n = Number(raw);
     if (!Number.isFinite(n) || !Number.isInteger(n)) {
-      return `El valor de «${padcoinsConfigKeyLabel(key)}» debe ser un número entero`;
+      return t('admin.padcoins.validation.valueInteger', { label: padcoinsConfigKeyLabel(key, t) });
     }
   }
   return null;
@@ -1738,20 +1731,20 @@ function buildPcSedesOptions(sedesMapRef, participacionList) {
 const PC_MOV_PAGE_SIZE = 25;
 
 const PC_MOV_TIPO_FILTRO = [
-  { id: '', label: 'Todos los tipos' },
-  { id: 'earn', label: 'Acreditación' },
-  { id: 'spend', label: 'Canje / descuento' },
-  { id: 'adjust', label: 'Ajuste admin' },
-  { id: 'reverse', label: 'Reversa' },
+  { id: '', key: 'all' },
+  { id: 'earn', key: 'movementType.earn' },
+  { id: 'spend', key: 'movementType.spend' },
+  { id: 'adjust', key: 'movementType.adjust' },
+  { id: 'reverse', key: 'movementType.reverse' },
 ];
 
 const PC_MOV_REF_TIPO_FILTRO = [
-  { id: '', label: 'Toda referencia' },
-  { id: 'reserva', label: 'Reserva' },
-  { id: 'penalizacion', label: 'Penalización' },
-  { id: 'canje', label: 'Canje' },
-  { id: 'logro', label: 'Logro' },
-  { id: 'ajuste', label: 'Ajuste' },
+  { id: '', key: 'all' },
+  { id: 'reserva', key: 'movementReference.reserva' },
+  { id: 'penalizacion', key: 'movementReference.penalizacion' },
+  { id: 'canje', key: 'movementReference.canje' },
+  { id: 'logro', key: 'movementReference.logro' },
+  { id: 'ajuste', key: 'movementReference.ajuste' },
 ];
 
 function parsePadcoinsMovimientosResponse(data) {
@@ -1766,12 +1759,12 @@ function parsePadcoinsMovimientosResponse(data) {
 function padcoinsMovRefTipoLabel(rt, t) {
   const key = String(rt || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const map = {
-    canje_premio: 'Canje',
-    canje: 'Canje',
-    penalizacion: 'Penalización',
-    reserva: 'Reserva',
-    logro: 'Logro',
-    ajuste: 'Ajuste',
+    canje_premio: 'Redemption',
+    canje: 'Redemption',
+    penalizacion: 'Penalty',
+    reserva: 'Booking',
+    logro: 'Achievement',
+    ajuste: 'Adjustment',
   };
   const fallback = map[key] || (rt ? String(rt) : '');
   return t ? t(`admin.padcoins.movementReference.${key}`, { defaultValue: fallback }) : fallback;
@@ -1809,17 +1802,17 @@ function padcoinsMovTipoBadge(row, t) {
   const tipo = String(row?.tipo || '').trim().toLowerCase();
   const refTipo = String(row?.referencia_tipo || '').trim().toLowerCase();
   if (refTipo === 'penalizacion' || refTipo === 'penalización') {
-    return { label: t ? t('admin.padcoins.movementType.penalty', 'Penalización') : 'Penalización', bg: '#fee2e2', color: '#991b1b' };
+    return { label: t ? t('admin.padcoins.movementType.penalty', 'Penalty') : 'Penalty', bg: '#fee2e2', color: '#991b1b' };
   }
   if (refTipo === 'reserva') {
-    return { label: t ? t('admin.padcoins.movementType.booking', 'Reserva') : 'Reserva', bg: '#dbeafe', color: '#1e40af' };
+    return { label: t ? t('admin.padcoins.movementType.booking', 'Booking') : 'Booking', bg: '#dbeafe', color: '#1e40af' };
   }
-  if (tipo === 'earn') return { label: t ? t('admin.padcoins.movementType.earn', 'Acreditación') : 'Acreditación', bg: '#dcfce7', color: '#166534' };
-  if (tipo === 'spend') return { label: t ? t('admin.padcoins.movementType.spend', 'Canje / descuento') : 'Canje / descuento', bg: '#fef3c7', color: '#92400e' };
-  if (tipo === 'adjust') return { label: t ? t('admin.padcoins.movementType.adjust', 'Ajuste admin') : 'Ajuste admin', bg: '#e0e7ff', color: '#3730a3' };
-  if (tipo === 'reverse') return { label: t ? t('admin.padcoins.movementType.reverse', 'Reversa') : 'Reversa', bg: '#f3e8ff', color: '#6b21a8' };
+  if (tipo === 'earn') return { label: t ? t('admin.padcoins.movementType.earn', 'Credit') : 'Credit', bg: '#dcfce7', color: '#166534' };
+  if (tipo === 'spend') return { label: t ? t('admin.padcoins.movementType.spend', 'Redemption / discount') : 'Redemption / discount', bg: '#fef3c7', color: '#92400e' };
+  if (tipo === 'adjust') return { label: t ? t('admin.padcoins.movementType.adjust', 'Admin adjustment') : 'Admin adjustment', bg: '#e0e7ff', color: '#3730a3' };
+  if (tipo === 'reverse') return { label: t ? t('admin.padcoins.movementType.reverse', 'Reversal') : 'Reversal', bg: '#f3e8ff', color: '#6b21a8' };
   if (tipo) return { label: tipo, bg: 'var(--bg-page)', color: 'var(--text-muted)' };
-  return { label: t ? t('admin.padcoins.movementType.default', 'Movimiento') : 'Movimiento', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
+  return { label: t ? t('admin.padcoins.movementType.default', 'Movement') : 'Movement', bg: 'var(--bg-page)', color: 'var(--text-muted)' };
 }
 
 function padcoinsMovMontoDisplay(monto) {
@@ -1840,21 +1833,21 @@ function padcoinsMovMontoColor(monto) {
 const PC_ALERT_PAGE_SIZE = 20;
 
 const PC_ALERT_SEVERIDAD_FILTRO = [
-  { id: '', label: 'Todas las severidades' },
-  { id: 'alta', label: 'Alta (crítica / revisar)' },
-  { id: 'media', label: 'Media (atención)' },
-  { id: 'baja', label: 'Baja (informativa)' },
+  { id: '', key: 'all' },
+  { id: 'alta', key: 'alertSeverity.high' },
+  { id: 'media', key: 'alertSeverity.medium' },
+  { id: 'baja', key: 'alertSeverity.low' },
 ];
 
 const PC_ALERT_TIPO_FILTRO = [
-  { id: '', label: 'Todos los tipos' },
-  { id: 'campania_identificada', label: 'Campaña detectada' },
-  { id: 'volumen_anormal', label: 'Actividad poco habitual' },
-  { id: 'acreditacion_masiva', label: 'Acreditaciones inusuales' },
-  { id: 'uso_concentrado', label: 'Uso concentrado' },
-  { id: 'canje_masivo', label: 'Canjes inusuales' },
-  { id: 'ajuste_frecuente', label: 'Ajustes frecuentes' },
-  { id: 'posible_abuso', label: 'Posible abuso' },
+  { id: '', key: 'all' },
+  { id: 'campania_identificada', key: 'alertType.campania_identificada' },
+  { id: 'volumen_anormal', key: 'alertType.volumen_anormal' },
+  { id: 'acreditacion_masiva', key: 'alertType.acreditacion_masiva' },
+  { id: 'uso_concentrado', key: 'alertType.uso_concentrado' },
+  { id: 'canje_masivo', key: 'alertType.canje_masivo' },
+  { id: 'ajuste_frecuente', key: 'alertType.ajuste_frecuente' },
+  { id: 'posible_abuso', key: 'alertType.posible_abuso' },
 ];
 
 function parsePadcoinsAlertasResponse(data) {
@@ -1879,14 +1872,14 @@ function padcoinsAlertSeveridadBadge(severidad, t) {
 function padcoinsAlertTipoLabel(tipo, t) {
   const key = String(tipo || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const map = {
-    campania_identificada: 'Campaña detectada',
-    volumen_anormal: 'Actividad poco habitual',
-    acreditacion_masiva: 'Acreditaciones inusuales',
-    uso_concentrado: 'Uso concentrado',
-    canje_masivo: 'Canjes inusuales',
-    ajuste_frecuente: 'Ajustes frecuentes',
-    posible_abuso: 'Posible abuso',
-    uso_anormal: 'Uso anormal',
+    campania_identificada: 'Campaign detected',
+    volumen_anormal: 'Unusual activity',
+    acreditacion_masiva: 'Unusual credits',
+    uso_concentrado: 'Concentrated usage',
+    canje_masivo: 'Unusual redemptions',
+    ajuste_frecuente: 'Frequent adjustments',
+    posible_abuso: 'Possible abuse',
+    uso_anormal: 'Unusual use',
   };
   const fallback = map[key] || (tipo ? String(tipo).replace(/_/g, ' ') : '—');
   return t ? t(`admin.padcoins.alertType.${key}`, { defaultValue: fallback }) : fallback;
@@ -1895,7 +1888,7 @@ function padcoinsAlertTipoLabel(tipo, t) {
 function padcoinsAlertTipoBadge(tipo, t) {
   const key = String(tipo || '').trim().toLowerCase();
   if (key === 'campania_identificada') {
-    return { label: t ? t('admin.padcoins.alertType.campania_identificada', 'Campaña detectada') : 'Campaña detectada', bg: '#f3e8ff', color: '#6b21a8' };
+    return { label: t ? t('admin.padcoins.alertType.campania_identificada', 'Campaign detected') : 'Campaign detected', bg: '#f3e8ff', color: '#6b21a8' };
   }
   return { label: padcoinsAlertTipoLabel(tipo, t), bg: '#f1f5f9', color: '#334155' };
 }
@@ -2610,13 +2603,13 @@ function mismoPaisFiltroAdmin(paisRow, paisFiltroValor) {
   return p.toLowerCase() === want.toLowerCase();
 }
 
-function comisionPadbolTresPorcientoPorMoneda(ingresosPorMoneda) {
-  const out = {};
-  ['ARS', 'USD', 'EUR'].forEach((m) => {
-    const n = Number(ingresosPorMoneda?.[m]) || 0;
-    if (n > 0) out[m] = Math.round(n * 0.03 * 100) / 100;
-  });
-  return out;
+function porcentajeComisionComercialSede(sede) {
+  const custom = Number(sede?.comision_plataforma_porcentaje);
+  if (sede?.comision_plataforma_porcentaje != null && Number.isFinite(custom) && custom >= 0) return custom;
+  const plan = String(sede?.plan_comercial || 'starter').trim().toLowerCase();
+  if (plan === 'pro') return 0.65;
+  if (plan === 'business') return 0.35;
+  return 1;
 }
 
 function monetarioObjTodoCero(obj) {
@@ -2793,7 +2786,7 @@ function torneoProximoSinEmpezar(t) {
   return true;
 }
 
-function formatoIngresosHoyMultimoneda(porMoneda, emptyLabel = 'sin ingresos registrados') {
+function formatoIngresosHoyMultimoneda(porMoneda, emptyLabel = 'no revenue recorded') {
   const MON = ['ARS', 'USD', 'EUR'];
   const parts = MON.filter((m) => (Number(porMoneda[m]) || 0) > 0).map((m) => {
     const n = Number(porMoneda[m]) || 0;
@@ -3416,7 +3409,7 @@ function SemanaCompareDelta({ pct }) {
 }
 
 export default function AdminDashboard({
-  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  apiBaseUrl = getApiBaseUrl(),
   rol = null,
   sedeId = null,
   handleLogout = () => {},
@@ -3436,16 +3429,18 @@ export default function AdminDashboard({
   const esEmpleado = rolPanel === 'empleado';
   const esEditorContenido = rolPanel === 'editor_contenido';
   const isAdmin =
-    isSuperAdmin || rolPanel === 'admin_nacional' || rolPanel === 'admin_club' || esEmpleado;
+    isSuperAdmin || rolPanel === 'admin_nacional' || rolPanel === 'admin_cadena' || rolPanel === 'admin_club' || esEmpleado;
 
   // Role-based access flags
   const esAdminNacional = rolPanel === 'admin_nacional';
+  const esAdminCadena   = rolPanel === 'admin_cadena';
+  const esAdminMultiplesSedes = esAdminNacional || esAdminCadena;
   const esAdminClub     = rolPanel === 'admin_club';
   /** Clave estable para sedesMap / canchasDetallePorSede (prop puede llegar tarde). */
   const sedeIdKey =
     sedeId != null && sedeId !== '' && String(sedeId).trim() !== '' ? String(sedeId) : '';
   const puedeVerConfig  = isSuperAdmin;
-  const puedeVerScoreboard = isSuperAdmin || esAdminClub;
+  const puedeVerScoreboard = isSuperAdmin || esAdminClub || esAdminCadena;
   const puedeVerPadCoins = canRoleSeePadCoins(rolPanel);
   const puedeVerMembresias = isSuperAdmin || esAdminClub;
   const puedeVerFinanzas = !esEmpleado;
@@ -3467,10 +3462,11 @@ export default function AdminDashboard({
   const [totalJugadoresPais, setTotalJugadoresPais] = useState(0);
   const [nacionalJugadoresLoading, setNacionalJugadoresLoading] = useState(false);
   const puedeVerSedesPendientes = isSuperAdmin;
-  const puedeEnviarNotificacionesPush = isSuperAdmin || esAdminNacional || esAdminClub;
+  const puedeEnviarNotificacionesPush = isSuperAdmin || esAdminNacional || esAdminCadena || esAdminClub;
   const ROLE_BADGE = useMemo(() => ({
     super_admin:    `👑 ${t('admin.role.super')}`,
     admin_nacional: `🌎 ${t('admin.role.national')}`,
+    admin_cadena:   '🏢 Admin Multisede',
     admin_club:     `🏠 ${t('admin.role.club')}`,
     empleado:       `👤 ${t('admin.role.employee')}`,
     editor_contenido: `📝 ${t('admin.role.editor')}`,
@@ -3478,6 +3474,25 @@ export default function AdminDashboard({
   const roleBadgeLabel = ROLE_BADGE[rolPanel] || ROLE_BADGE[rol] || 'Admin';
 
   const [reservas, setReservas] = useState([]);
+  const [organizacionActual, setOrganizacionActual] = useState(null);
+  useEffect(() => {
+    if (!esAdminCadena || !session?.access_token) {
+      setOrganizacionActual(null);
+      return undefined;
+    }
+    let cancelled = false;
+    fetch(`${apiBaseUrl}/api/admin/organizaciones`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+      .then(async (response) => {
+        const json = await response.json().catch(() => ([]));
+        if (!response.ok) throw new Error(json?.error || 'No se pudo cargar la organización');
+        return Array.isArray(json) ? json[0] || null : null;
+      })
+      .then((row) => { if (!cancelled) setOrganizacionActual(row); })
+      .catch(() => { if (!cancelled) setOrganizacionActual(null); });
+    return () => { cancelled = true; };
+  }, [apiBaseUrl, esAdminCadena, session?.access_token]);
   const [torneos, setTorneos] = useState([]);
   const [crearTorneoEmbedOpen, setCrearTorneoEmbedOpen] = useState(false);
   const torneoCrearRef = useRef(null);
@@ -3563,6 +3578,19 @@ export default function AdminDashboard({
     }
   });
   const [activeTab, setActiveTab] = useState(() => sanitizeAdminActiveTab(searchParams.get('tab'), rolPanel));
+  const [whatsappPerms, setWhatsappPerms] = useState(null);
+  useEffect(() => {
+    if (!session?.access_token) {
+      setWhatsappPerms(null);
+      return undefined;
+    }
+    let active = true;
+    whatsappAdminApi.permissions(session.access_token)
+      .then((p) => { if (active) setWhatsappPerms(p); })
+      .catch(() => { if (active) setWhatsappPerms({ role: 'none', canOperate: false, canAudit: false }); });
+    return () => { active = false; };
+  }, [session?.access_token]);
+  const puedeVerWhatsapp = Boolean(whatsappPerms?.canOperate || whatsappPerms?.canAudit);
   const [adminTabAccessNotice, setAdminTabAccessNotice] = useState('');
   const [nuevaSedeModalOpen, setNuevaSedeModalOpen] = useState(false);
   const [editorContenidoEmail, setEditorContenidoEmail] = useState('');
@@ -3712,11 +3740,11 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar beneficios');
+      if (!res.ok) throw new Error(t('admin.padcoins.benefitsLoadFailed'));
       const list = Array.isArray(data) ? data : (data.premios || data.data || []);
       setPremios(list);
     } catch (err) {
-      setPremiosError(err.message || 'Error al cargar beneficios');
+      setPremiosError(err.message || t('admin.padcoins.benefitsLoadFailed'));
       setPremios([]);
     } finally {
       setPremiosLoading(false);
@@ -3738,11 +3766,11 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar canjes');
+      if (!res.ok) throw new Error(t('admin.padcoins.redemptionsLoadFailed'));
       const list = parseCanjesList(data).filter((row) => canjePerteneceASede(row, sid));
       setCanjes(list);
     } catch (err) {
-      setCanjesError(err.message || 'Error al cargar canjes');
+      setCanjesError(err.message || t('admin.padcoins.redemptionsLoadFailed'));
       setCanjes([]);
     } finally {
       setCanjesLoading(false);
@@ -3757,13 +3785,13 @@ export default function AdminDashboard({
       const headers = await getAuthHeaders();
       const res = await fetch(`${apiBaseUrl}/api/admin/padcoins-config`, { headers });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar configuración global');
+      if (!res.ok) throw new Error(t('admin.padcoins.globalConfigLoadFailed'));
       const list = sortPadcoinsConfigRows(
         parsePadcoinsConfigList(data).map(padcoinsConfigRowToForm).filter((r) => r.key),
       );
       setPcGlobalConfigRows(list);
     } catch (err) {
-      setPcGlobalConfigError(err.message || 'Error al cargar configuración global');
+      setPcGlobalConfigError(err.message || t('admin.padcoins.globalConfigLoadFailed'));
       setPcGlobalConfigRows([]);
     } finally {
       setPcGlobalConfigLoading(false);
@@ -3800,10 +3828,10 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar participación PadCoins');
+      if (!res.ok) throw new Error(t('admin.padcoins.participationLoadFailed'));
       setPcSedeParticipacion(padcoinsSedeConfigToForm(data));
     } catch (err) {
-      setPcSedeParticipacionError(err.message || 'Error al cargar participación PadCoins');
+      setPcSedeParticipacionError(err.message || t('admin.padcoins.participationLoadFailed'));
       setPcSedeParticipacion(emptyPadcoinsSedeConfigForm());
     } finally {
       setPcSedeParticipacionLoading(false);
@@ -3820,12 +3848,12 @@ export default function AdminDashboard({
     if (!isSuperAdmin && !esAdminClub) return;
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPcSedeParticipacionSaveError('Seleccioná una sede para guardar la participación en Beneficios Padbol');
+      setPcSedeParticipacionSaveError(t('admin.padcoins.participationSelectVenue'));
       return;
     }
     if (pcSedeParticipacion.fecha_inicio && pcSedeParticipacion.fecha_fin
       && pcSedeParticipacion.fecha_inicio > pcSedeParticipacion.fecha_fin) {
-      setPcSedeParticipacionSaveError('La fecha de inicio no puede ser posterior a la fecha de fin');
+      setPcSedeParticipacionSaveError(t('admin.padcoins.dateOrderInvalid'));
       return;
     }
     setPcSedeParticipacionSaving(true);
@@ -3846,19 +3874,17 @@ export default function AdminDashboard({
           body: JSON.stringify(body),
         },
       );
-      const data = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error(
-          data.error || data.message || 'No tenés permisos para modificar la participación de esta sede.',
-        );
+        throw new Error(t('admin.padcoins.participationPermissionDenied'));
       }
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar participación en Beneficios Padbol');
-      setMensajeExito('✅ Participación en Beneficios Padbol actualizada');
+      if (!res.ok) throw new Error(t('admin.padcoins.participationSaveFailed'));
+      setMensajeExito(t('admin.padcoins.participationUpdated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsSedeParticipacion(sid);
       if (isSuperAdmin) void fetchPadcoinsSedesParticipacionList();
     } catch (err) {
-      setPcSedeParticipacionSaveError(err.message || 'Error al guardar participación en Beneficios Padbol');
+      setPcSedeParticipacionSaveError(err.message || t('admin.padcoins.participationSaveFailed'));
     } finally {
       setPcSedeParticipacionSaving(false);
     }
@@ -3910,10 +3936,10 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para ver la configuración inteligente de esta sede.');
+        throw new Error(t('admin.padcoins.smartViewPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al cargar configuración inteligente PadCoins');
+        throw new Error(t('admin.padcoins.smartLoadFailed'));
       }
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
@@ -3926,7 +3952,7 @@ export default function AdminDashboard({
       setPcSedeSimPct('');
       setPcSedeSimConversion('');
       setPcSedeSimBeneficio('');
-      setPcSedeSmartError(err.message || 'Error al cargar configuración inteligente PadCoins');
+      setPcSedeSmartError(err.message || t('admin.padcoins.smartLoadFailed'));
     } finally {
       setPcSedeSmartLoading(false);
     }
@@ -3937,10 +3963,10 @@ export default function AdminDashboard({
     if (!isSuperAdmin && !esAdminClub) return;
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPcSedeSmartSaveError('Seleccione una sede para guardar la configuración inteligente');
+      setPcSedeSmartSaveError(t('admin.padcoins.smartSelectVenueSave'));
       return;
     }
-    const validationError = validatePcSedeSmartOverrideForm(pcSedeSmartForm);
+    const validationError = validatePcSedeSmartOverrideForm(pcSedeSmartForm, t);
     if (validationError) {
       setPcSedeSmartSaveError(validationError);
       return;
@@ -3960,22 +3986,22 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para modificar la configuración inteligente de esta sede.');
+        throw new Error(t('admin.padcoins.smartEditPermissionDenied'));
       }
       if (res.status === 400) {
-        throw new Error(data.error || data.message || 'Datos de configuración inválidos');
+        throw new Error(t('admin.padcoins.smartInvalid'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al guardar configuración inteligente PadCoins');
+        throw new Error(t('admin.padcoins.smartSaveFailed'));
       }
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
       setPcSedeSmartForm(padcoinsSedeSmartOverridesToForm(parsed.sede_overrides));
       resetPcSedeSimDefaults(parsed.effective);
-      setMensajeExito('✅ Configuración inteligente de la sede actualizada');
+      setMensajeExito(t('admin.padcoins.smartUpdated'));
       setTimeout(() => setMensajeExito(''), 3000);
     } catch (err) {
-      setPcSedeSmartSaveError(err.message || 'Error al guardar configuración inteligente PadCoins');
+      setPcSedeSmartSaveError(err.message || t('admin.padcoins.smartSaveFailed'));
     } finally {
       setPcSedeSmartSaving(false);
     }
@@ -3985,7 +4011,7 @@ export default function AdminDashboard({
     if (!isSuperAdmin && !esAdminClub) return;
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPcSedeSmartSaveError('Seleccione una sede para restaurar la herencia global');
+      setPcSedeSmartSaveError(t('admin.padcoins.smartSelectVenueRestore'));
       return;
     }
     setPcSedeSmartSaving(true);
@@ -4002,19 +4028,19 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para modificar la configuración inteligente de esta sede.');
+        throw new Error(t('admin.padcoins.smartEditPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al restaurar herencia global');
+        throw new Error(t('admin.padcoins.smartRestoreFailed'));
       }
       const parsed = parsePadcoinsSedeEffectiveConfig(data);
       setPcSedeSmartConfig(parsed);
       setPcSedeSmartForm(emptyPcSedeSmartOverrideForm());
       resetPcSedeSimDefaults(parsed.effective);
-      setMensajeExito('✅ Configuración restaurada: la sede hereda las reglas globales');
+      setMensajeExito(t('admin.padcoins.smartRestored'));
       setTimeout(() => setMensajeExito(''), 3000);
     } catch (err) {
-      setPcSedeSmartSaveError(err.message || 'Error al restaurar herencia global');
+      setPcSedeSmartSaveError(err.message || t('admin.padcoins.smartRestoreFailed'));
     } finally {
       setPcSedeSmartSaving(false);
     }
@@ -4030,7 +4056,7 @@ export default function AdminDashboard({
   async function guardarPadcoinsGlobalConfig(e) {
     e.preventDefault();
     if (!isSuperAdmin) return;
-    const validationError = validatePadcoinsConfigFormRows(pcGlobalConfigRows);
+    const validationError = validatePadcoinsConfigFormRows(pcGlobalConfigRows, t);
     if (validationError) {
       setPcGlobalConfigSaveError(validationError);
       return;
@@ -4045,13 +4071,13 @@ export default function AdminDashboard({
         headers,
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar configuración global');
-      setMensajeExito('✅ Configuración global PadCoins guardada');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.globalConfigSaveFailed'));
+      setMensajeExito(t('admin.padcoins.globalConfigSaved'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsGlobalConfig();
     } catch (err) {
-      setPcGlobalConfigSaveError(err.message || 'Error al guardar configuración global');
+      setPcGlobalConfigSaveError(err.message || t('admin.padcoins.globalConfigSaveFailed'));
     } finally {
       setPcGlobalConfigSaving(false);
     }
@@ -4092,10 +4118,10 @@ export default function AdminDashboard({
     e.preventDefault();
     const sid = resolvePcSedeId();
     if (!sid) {
-      setPremioFormError('Seleccioná una sede para gestionar beneficios PadCoins');
+      setPremioFormError(t('admin.padcoins.benefitSelectVenue'));
       return;
     }
-    const validationError = validatePremioForm(premioForm);
+    const validationError = validatePremioForm(premioForm, t);
     if (validationError) {
       setPremioFormError(validationError);
       return;
@@ -4114,41 +4140,41 @@ export default function AdminDashboard({
         headers,
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al guardar beneficio');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.benefitSaveFailed'));
       cerrarPremioForm();
-      setMensajeExito(isEdit ? '✅ Beneficio actualizado' : '✅ Beneficio creado');
+      setMensajeExito(isEdit ? t('admin.padcoins.benefitUpdated') : t('admin.padcoins.benefitCreated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPremios();
     } catch (err) {
-      setPremioFormError(err.message || 'Error al guardar beneficio');
+      setPremioFormError(err.message || t('admin.padcoins.benefitSaveFailed'));
     } finally {
       setPremioSaving(false);
     }
   }
 
   async function desactivarPremio(premio) {
-    if (!window.confirm(`¿Desactivar el beneficio "${premio.nombre}"? Ya no será visible para los jugadores.`)) return;
+    if (!window.confirm(t('admin.padcoins.benefitDeactivateConfirm', { name: premio.nombre }))) return;
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${apiBaseUrl}/api/admin/premios-canjeables/${premio.id}`, {
         method: 'DELETE',
         headers,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al desactivar beneficio');
-      setMensajeExito('✅ Beneficio desactivado');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.benefitDeactivateFailed'));
+      setMensajeExito(t('admin.padcoins.benefitDeactivated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPremios();
     } catch (err) {
-      alert(err.message || 'Error al desactivar beneficio');
+      alert(err.message || t('admin.padcoins.benefitDeactivateFailed'));
     }
   }
 
   async function entregarCanje(canje) {
     if (!canje?.id) return;
     const codigo = canjeCodigoDisplay(canje);
-    if (!window.confirm(`¿Marcar como entregado el canje ${codigo}?`)) return;
+    if (!window.confirm(t('admin.padcoins.redemptionDeliverConfirm', { code: codigo }))) return;
     setCanjeActionId(canje.id);
     try {
       const headers = await getAuthHeaders();
@@ -4156,14 +4182,14 @@ export default function AdminDashboard({
         method: 'POST',
         headers,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al marcar canje como entregado');
-      setMensajeExito('✅ Canje marcado como entregado');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.redemptionDeliverFailed'));
+      setMensajeExito(t('admin.padcoins.redemptionDelivered'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchCanjes();
       await fetchPremios();
     } catch (err) {
-      alert(err.message || 'Error al entregar canje');
+      alert(err.message || t('admin.padcoins.redemptionDeliverFailed'));
     } finally {
       setCanjeActionId(null);
     }
@@ -4174,7 +4200,7 @@ export default function AdminDashboard({
     const codigo = canjeCodigoDisplay(canje);
     if (
       !window.confirm(
-        `¿Cancelar el canje ${codigo}?\n\nSi el backend lo permite, se devolverá el saldo de PadCoins al jugador.`,
+        t('admin.padcoins.redemptionCancelConfirm', { code: codigo }),
       )
     ) {
       return;
@@ -4186,14 +4212,14 @@ export default function AdminDashboard({
         method: 'POST',
         headers,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cancelar canje');
-      setMensajeExito('✅ Canje cancelado');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.redemptionCancelFailed'));
+      setMensajeExito(t('admin.padcoins.redemptionCancelled'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchCanjes();
       await fetchPremios();
     } catch (err) {
-      alert(err.message || 'Error al cancelar canje');
+      alert(err.message || t('admin.padcoins.redemptionCancelFailed'));
     } finally {
       setCanjeActionId(null);
     }
@@ -4239,15 +4265,15 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tenés permisos para ver estos movimientos.');
+        throw new Error(t('admin.padcoins.movementsPermissionDenied'));
       }
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar movimientos PadCoins');
+      if (!res.ok) throw new Error(t('admin.padcoins.movementsLoadFailed'));
       const parsed = parsePadcoinsMovimientosResponse(data);
       setPcMovimientos(parsed.movimientos);
       setPcMovTotal(parsed.total);
       if (pageOverride != null) setPcMovPage(Math.max(0, page));
     } catch (err) {
-      setPcMovError(err.message || 'Error al cargar movimientos PadCoins');
+      setPcMovError(err.message || t('admin.padcoins.movementsLoadFailed'));
       setPcMovimientos([]);
       setPcMovTotal(0);
     } finally {
@@ -4303,15 +4329,15 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tenés permisos para ver alertas de supervisión.');
+        throw new Error(t('admin.padcoins.alertsPermissionDenied'));
       }
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar alertas PadCoins');
+      if (!res.ok) throw new Error(t('admin.padcoins.alertsLoadFailed'));
       const parsed = parsePadcoinsAlertasResponse(data);
       setPcAlertas(parsed.alertas);
       setPcAlertTotal(parsed.total);
       if (pageOverride != null) setPcAlertPage(Math.max(0, page));
     } catch (err) {
-      setPcAlertError(err.message || 'Error al cargar alertas PadCoins');
+      setPcAlertError(err.message || t('admin.padcoins.alertsLoadFailed'));
       setPcAlertas([]);
       setPcAlertTotal(0);
     } finally {
@@ -4363,15 +4389,15 @@ export default function AdminDashboard({
       );
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para ver campañas PadCoins.');
+        throw new Error(t('admin.padcoins.campaignsPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al cargar campañas PadCoins');
+        throw new Error(t('admin.padcoins.campaignsLoadFailed'));
       }
       setPcCampaigns(parsePadcoinsCampaignsList(data));
     } catch (err) {
       setPcCampaigns([]);
-      setPcCampaignsError(err.message || 'Error al cargar campañas PadCoins');
+      setPcCampaignsError(err.message || t('admin.padcoins.campaignsLoadFailed'));
     } finally {
       setPcCampaignsLoading(false);
     }
@@ -4391,7 +4417,7 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar beneficios');
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignBenefitsLoadFailed'));
       const list = Array.isArray(data) ? data : (data.premios || data.data || []);
       setPcCampaignBenefits(list);
     } catch {
@@ -4432,7 +4458,7 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar campaña');
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignLoadFailed'));
       const entity = parsePadcoinsCampaignEntity(data) || campaign;
       const form = padcoinsCampaignToForm(entity);
       if (esAdminClub) {
@@ -4444,7 +4470,7 @@ export default function AdminDashboard({
       setPcCampaignEditId(entity.id);
       if (form.sede_id) void fetchPadcoinsCampaignBenefits(form.sede_id);
     } catch (err) {
-      alert(err.message || 'Error al cargar campaña');
+      alert(err.message || t('admin.padcoins.campaignLoadFailed'));
     } finally {
       setPcCampaignActionId(null);
     }
@@ -4481,13 +4507,14 @@ export default function AdminDashboard({
     const formSedeId = clubSid || pcCampaignForm.sede_id;
     const validationError = validatePadcoinsCampaignForm(pcCampaignForm, {
       requireSedeId: isSuperAdmin && !clubSid,
+      t,
     });
     if (validationError) {
       setPcCampaignFormError(validationError);
       return;
     }
     if (!formSedeId) {
-      setPcCampaignFormError('Seleccione una sede para la campaña');
+      setPcCampaignFormError(t('admin.padcoins.validation.selectVenueCampaign'));
       return;
     }
     setPcCampaignSaving(true);
@@ -4504,19 +4531,19 @@ export default function AdminDashboard({
         headers,
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
+      await res.json().catch(() => ({}));
       if (res.status === 403) {
-        throw new Error('No tienes permisos para guardar esta campaña.');
+        throw new Error(t('admin.padcoins.campaignPermissionDenied'));
       }
       if (!res.ok) {
-        throw new Error(data.error || data.message || 'Error al guardar campaña');
+        throw new Error(t('admin.padcoins.campaignSaveFailed'));
       }
-      setMensajeExito(isEdit ? '✅ Campaña actualizada' : '✅ Campaña creada');
+      setMensajeExito(isEdit ? t('admin.padcoins.campaignUpdated') : t('admin.padcoins.campaignCreated'));
       setTimeout(() => setMensajeExito(''), 3000);
       cerrarCampanaForm();
       await fetchPadcoinsCampaigns();
     } catch (err) {
-      setPcCampaignFormError(err.message || 'Error al guardar campaña');
+      setPcCampaignFormError(err.message || t('admin.padcoins.campaignSaveFailed'));
     } finally {
       setPcCampaignSaving(false);
     }
@@ -4526,8 +4553,8 @@ export default function AdminDashboard({
     if (!campaign?.id) return;
     const highImpact = isPadcoinsCampaignHighImpact(campaign);
     const msg = highImpact
-      ? `La campaña "${campaign.name}" está marcada como alto impacto. No se bloqueará, pero quedará registrada para auditoría.\n\n¿Activar de todos modos?`
-      : `¿Activar la campaña "${campaign.name}"?`;
+      ? t('admin.padcoins.campaignActivateHighImpactConfirm', { name: campaign.name })
+      : t('admin.padcoins.campaignActivateConfirm', { name: campaign.name });
     if (!window.confirm(msg)) return;
     setPcCampaignActionId(campaign.id);
     try {
@@ -4536,13 +4563,13 @@ export default function AdminDashboard({
         `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}/activate`,
         { method: 'POST', headers },
       );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al activar campaña');
-      setMensajeExito('✅ Campaña activada');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignActivateFailed'));
+      setMensajeExito(t('admin.padcoins.campaignActivated'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsCampaigns();
     } catch (err) {
-      alert(err.message || 'Error al activar campaña');
+      alert(err.message || t('admin.padcoins.campaignActivateFailed'));
     } finally {
       setPcCampaignActionId(null);
     }
@@ -4550,7 +4577,7 @@ export default function AdminDashboard({
 
   async function pausarCampana(campaign) {
     if (!campaign?.id) return;
-    if (!window.confirm(`¿Pausar la campaña "${campaign.name}"?`)) return;
+    if (!window.confirm(t('admin.padcoins.campaignPauseConfirm', { name: campaign.name }))) return;
     setPcCampaignActionId(campaign.id);
     try {
       const headers = await getAuthHeaders();
@@ -4558,13 +4585,13 @@ export default function AdminDashboard({
         `${apiBaseUrl}/api/admin/padcoins/campaigns/${encodeURIComponent(campaign.id)}/pause`,
         { method: 'POST', headers },
       );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al pausar campaña');
-      setMensajeExito('✅ Campaña pausada');
+      await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignPauseFailed'));
+      setMensajeExito(t('admin.padcoins.campaignPaused'));
       setTimeout(() => setMensajeExito(''), 3000);
       await fetchPadcoinsCampaigns();
     } catch (err) {
-      alert(err.message || 'Error al pausar campaña');
+      alert(err.message || t('admin.padcoins.campaignPauseFailed'));
     } finally {
       setPcCampaignActionId(null);
     }
@@ -4590,13 +4617,13 @@ export default function AdminDashboard({
         { headers },
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || 'Error al cargar resumen de campaña');
+      if (!res.ok) throw new Error(t('admin.padcoins.campaignSummaryLoadFailed'));
       setPcCampaignSummary({
         campaign,
         summary: parsePadcoinsCampaignSummary(data),
       });
     } catch (err) {
-      setPcCampaignSummaryError(err.message || 'Error al cargar resumen de campaña');
+      setPcCampaignSummaryError(err.message || t('admin.padcoins.campaignSummaryLoadFailed'));
     } finally {
       setPcCampaignSummaryLoading(false);
     }
@@ -4695,8 +4722,6 @@ export default function AdminDashboard({
   const [adminScopeMeta, setAdminScopeMeta] = useState(null);
   const [adminRolesRows, setAdminRolesRows] = useState([]);
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
-  const [adminRoleEdit, setAdminRoleEdit] = useState(null);
-  const [adminRoleEditSaving, setAdminRoleEditSaving] = useState(false);
   const [adminInvitacionesRows, setAdminInvitacionesRows] = useState([]);
   const [adminInvitacionesLoading, setAdminInvitacionesLoading] = useState(false);
   /** GET /api/admin/analytics-globales (solo super_admin, mismo ciclo que fetchData). */
@@ -5214,50 +5239,6 @@ export default function AdminDashboard({
     }
   }, [apiBaseUrl, isSuperAdmin, cargarRolesAdmin, t]);
 
-  const abrirEdicionRolAdmin = useCallback((row) => {
-    if (!row || row.role === 'super_admin' || row.role === 'editor_contenido') return;
-    setAdminRoleEdit({
-      email: String(row.email || '').trim().toLowerCase(),
-      nombre: row.nombre || '',
-      role: row.role || 'admin_club',
-      alcance: row.alcance || 'sede',
-      sede_id: row.sede_id ? String(row.sede_id) : '',
-      ciudad: row.ciudad || '',
-      provincia: row.provincia || '',
-      pais: row.pais || '',
-    });
-  }, []);
-
-  const guardarEdicionRolAdmin = useCallback(async (event) => {
-    event.preventDefault();
-    if (!isSuperAdmin || !adminRoleEdit?.email) return;
-    setAdminRoleEditSaving(true);
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token;
-      if (!token) throw new Error(t('admin.formularios.noSession'));
-      const res = await fetch(`${apiBaseUrl}/api/admin/roles`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...adminRoleEdit,
-          sede_id: adminRoleEdit.alcance === 'sede' ? Number(adminRoleEdit.sede_id) : undefined,
-        }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || res.statusText);
-      setAdminRoleEdit(null);
-      setMensajeExito('Administrador actualizado');
-      setTimeout(() => setMensajeExito(''), 3500);
-      void cargarRolesAdmin();
-      void fetchDataRef.current?.();
-    } catch (e) {
-      alert(e?.message || 'No se pudo actualizar el administrador');
-    } finally {
-      setAdminRoleEditSaving(false);
-    }
-  }, [adminRoleEdit, apiBaseUrl, cargarRolesAdmin, isSuperAdmin, t]);
-
   const aprobarSedePendiente = useCallback(
     async (id) => {
       if (!window.confirm(t('admin.notif.approveVenueConfirm'))) return;
@@ -5414,8 +5395,12 @@ export default function AdminDashboard({
     if (String(row?.role || '').trim().toLowerCase() === 'editor_contenido') return t('admin.roles.editorScopeLabel');
     const ac = String(row?.alcance || '').trim().toLowerCase();
     if (ac === 'sede') return row.sede_nombre || `Sede ${row.sede_id || '—'}`;
-    if (ac === 'ciudad') return row.ciudad || '—';
-    if (ac === 'provincia') return row.provincia || '—';
+    if (ac === 'ciudad' || ac === 'provincia') {
+      const territorio = ac === 'ciudad' ? [row.ciudad, row.provincia] : [row.provincia];
+      return [...territorio, etiquetaPaisFiltroMobile(row.pais)]
+        .map((value) => String(value || '').trim() || '—')
+        .join(' · ');
+    }
     if (ac === 'pais') {
       const p = String(row.pais || '').trim();
       if (!p) return '—';
@@ -5716,18 +5701,18 @@ export default function AdminDashboard({
     });
     const reservasIngresoDetalle = reservasDetalle.filter((r) => r.cuenta_ingreso);
     const torneosDetalle = inscripcionesPeriodo.map((eq) => {
-      const t = torneoById[eq?.torneo_id] || null;
-      const mon = bucketMonedaAdmin(t?.moneda || 'ARS');
-      const ingreso = precioInscripcionTorneo(t);
+      const torneoRow = torneoById[eq?.torneo_id] || null;
+      const mon = bucketMonedaAdmin(torneoRow?.moneda || 'ARS');
+      const ingreso = precioInscripcionTorneo(torneoRow);
       addDay(fechaInscripcionEquipo(eq), mon, ingreso);
       return {
         torneo_id: eq?.torneo_id,
-        nombre: t?.nombre || `Torneo #${eq?.torneo_id ?? ''}`,
-        fecha: t?.fecha_inicio || '',
-        equipos: getTorneoResumenStat(torneoStats, t?.id)?.equipos_count ?? 0,
+        nombre: torneoRow?.nombre || t('admin.sponsors.tournamentRef', { id: eq?.torneo_id ?? '' }),
+        fecha: torneoRow?.fecha_inicio || '',
+        equipos: getTorneoResumenStat(torneoStats, torneoRow?.id)?.equipos_count ?? 0,
         ingreso,
         moneda: mon,
-        estado: t?.estado || '',
+        estado: torneoRow?.estado || '',
       };
     });
     const totalTx = reservasIngresoDetalle.length + torneosDetalle.length;
@@ -5765,6 +5750,7 @@ export default function AdminDashboard({
     torneoStats,
     isSuperAdmin,
     cifrasFinanzasResumen,
+    t,
   ]);
 
   const exportarFinanzasExcel = useCallback(() => {
@@ -5991,7 +5977,7 @@ export default function AdminDashboard({
 
     return {
       hoyISO,
-      fechaLabelHoy: formatFechaDia(hoyISO, i18n.language?.startsWith('en') ? 'en-US' : 'es-AR'),
+      fechaLabelHoy: formatFechaDia(hoyISO, padbolLangToIntlLocale(i18n.language)),
       reservasHoy,
       reservasHoyOrdenadas,
       ingresosHoyTexto,
@@ -6053,7 +6039,7 @@ export default function AdminDashboard({
       const sedeNombreRow =
         (sidRes && String(sedesMap?.[sidRes]?.nombre || '').trim()) ||
         String(r?.sede || '').trim() ||
-        'Sin sede';
+        t('admin.reservas.noVenue');
       const dk =
         resolveDeporteKeyReservaAdmin(r, sidRes, canchasDetallePorSede) || `sede:${sedeNombreRow}`;
       depMap[dk] = (depMap[dk] || 0) + 1;
@@ -6064,7 +6050,7 @@ export default function AdminDashboard({
       .slice(0, 3)
       .map(([key, count]) => {
         const label = key.startsWith('sede:')
-          ? (key.slice(5).trim() || 'Sin sede')
+          ? (key.slice(5).trim() || t('admin.reservas.noVenue'))
           : deporteLabelAdminDash(key, t);
         const pct = depTotal > 0 ? Math.round((count / depTotal) * 100) : 0;
         return { key, label, count, pct };
@@ -6143,14 +6129,14 @@ export default function AdminDashboard({
       .map((c) => ({
         id: c.id,
         numero: Number(c.numero_reserva),
-        nombre: String(c.nombre || '').trim() || `Cancha ${c.numero_reserva}`,
+        nombre: String(c.nombre || '').trim() || `${t('admin.reservas.courtNumberPrefix')}${c.numero_reserva}`,
       }))
       .sort((a, b) => a.numero - b.numero);
     if (!filasCancha.length && stats.activas > 0) {
       filasCancha = Array.from({ length: stats.activas }, (_, i) => ({
         id: null,
         numero: i + 1,
-        nombre: `Cancha ${i + 1}`,
+        nombre: `${t('admin.reservas.courtNumberPrefix')}${i + 1}`,
       }));
     }
 
@@ -6192,7 +6178,7 @@ export default function AdminDashboard({
     });
 
     return {
-      fechaLabel: formatFechaDia(hoyISO, i18n.language?.startsWith('en') ? 'en-US' : 'es-AR'),
+      fechaLabel: formatFechaDia(hoyISO, padbolLangToIntlLocale(i18n.language)),
       nombreSede: String(sedeRow.nombre || '').trim() || t('admin.tabs.miSede'),
       sinCanchasActivas: filasCancha.length === 0,
       rows,
@@ -6214,7 +6200,7 @@ export default function AdminDashboard({
             const sede = sedesMap[String(c.sede_id)] || {};
             return {
               sedeId: c.sede_id,
-              sedeNombre: String(sede?.nombre || `Sede ${c.sede_id}`),
+              sedeNombre: String(sede?.nombre || t('admin.sponsors.venueRef', { id: c.sede_id })),
               fecha_vencimiento: fv,
               days,
             };
@@ -6234,7 +6220,7 @@ export default function AdminDashboard({
             return [
               {
                 tipo: 'vencida',
-                sedeNombre: String(sedeRow?.nombre || `Sede ${sedeRow?.id}`).trim(),
+                sedeNombre: String(sedeRow?.nombre || t('admin.sponsors.venueRef', { id: sedeRow?.id })).trim(),
                 sedeId: sedeRow?.id,
               },
             ];
@@ -6245,7 +6231,7 @@ export default function AdminDashboard({
               return [
                 {
                   tipo: 'proxima',
-                  sedeNombre: String(sedeRow?.nombre || `Sede ${sedeRow?.id}`).trim(),
+                  sedeNombre: String(sedeRow?.nombre || t('admin.sponsors.venueRef', { id: sedeRow?.id })).trim(),
                   sedeId: sedeRow?.id,
                   fecha: sedeRow.suscripcion_proximo_cobro,
                 },
@@ -6744,11 +6730,11 @@ export default function AdminDashboard({
   );
 
   const sedesNacionalLista = useMemo(() => {
-    if (!esAdminNacional) return [];
+    if (!esAdminMultiplesSedes) return [];
     return Object.values(sedesMap || {}).sort((a, b) =>
       String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' })
     );
-  }, [esAdminNacional, sedesMap]);
+  }, [esAdminMultiplesSedes, sedesMap]);
 
   const sedesSuperAdminLista = useMemo(() => {
     if (!isSuperAdmin) return [];
@@ -7567,7 +7553,7 @@ export default function AdminDashboard({
       });
       const j = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setReservaQrModal({ reserva: r, qr_token: null, error: j?.error || 'No se pudo generar el QR' });
+        setReservaQrModal({ reserva: r, qr_token: null, error: t('pago.qrGenerationFailed') });
         return;
       }
       setReservaQrModal({
@@ -7575,8 +7561,8 @@ export default function AdminDashboard({
         qr_token: String(j?.qr_token || '').trim() || null,
         error: null,
       });
-    } catch (err) {
-      setReservaQrModal({ reserva: r, qr_token: null, error: err.message || 'Error de red' });
+    } catch {
+      setReservaQrModal({ reserva: r, qr_token: null, error: t('pago.networkError') });
     } finally {
       setReservaQrModalLoading(false);
     }
@@ -7889,7 +7875,7 @@ export default function AdminDashboard({
       const id = sanitizeAdminActiveTab(tabId, rolPanel);
       if (miSedePromoDirty && activeTab === 'mi_sede' && id !== 'mi_sede') {
         const confirmed = window.confirm(
-          'Tenés cambios sin guardar en la promoción de tu sede. ¿Querés salir y descartarlos?',
+          t('admin.hub.unsavedPromoConfirm'),
         );
         if (!confirmed) return;
         setMiSedePromoDirty(false);
@@ -7909,7 +7895,7 @@ export default function AdminDashboard({
       }
       selectAdminTabInner(id);
     },
-    [activeTab, miSedePromoDirty, rolPanel, selectAdminTabInner],
+    [activeTab, miSedePromoDirty, rolPanel, selectAdminTabInner, t],
   );
 
   const selectMiSedeSection = useCallback(
@@ -7922,7 +7908,7 @@ export default function AdminDashboard({
       }
       if (miSedePromoDirty && validId !== 'info') {
         const confirmed = window.confirm(
-          'Tenés cambios sin guardar en la promoción de tu sede. ¿Querés salir y descartarlos?',
+          t('admin.hub.unsavedPromoConfirm'),
         );
         if (!confirmed) return;
         setMiSedePromoDirty(false);
@@ -7930,7 +7916,7 @@ export default function AdminDashboard({
       setActiveMiSedeSection(validId);
       resetAdminPanelScroll();
     },
-    [activeTab, miSedeNavItems, miSedePromoDirty, resetAdminPanelScroll, selectAdminTab],
+    [activeTab, miSedeNavItems, miSedePromoDirty, resetAdminPanelScroll, selectAdminTab, t],
   );
   selectMiSedeSectionRef.current = selectMiSedeSection;
   const [fotosUrls,      setFotosUrls]      = useState([]);
@@ -8100,11 +8086,11 @@ export default function AdminDashboard({
           deporte: miSedePreciosDeporte,
         });
         if (!cancelled) setMiSedeDuraciones(duraciones);
-      } catch (e) {
+      } catch {
         if (!cancelled) {
           setMiSedeDuraciones([]);
           setMiSedeDuracionesLoadError(
-            e?.message || 'No pudimos cargar las duraciones. Reintentá o revisá la conexión.',
+            t('admin.sedes.durationsLoadFailed'),
           );
         }
       } finally {
@@ -8114,7 +8100,7 @@ export default function AdminDashboard({
     return () => {
       cancelled = true;
     };
-  }, [activeTab, activeMiSedeSection, apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token]);
+  }, [activeTab, activeMiSedeSection, apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token, t]);
 
   useEffect(() => {
     if (!sedeId || !session?.access_token) {
@@ -8423,7 +8409,7 @@ export default function AdminDashboard({
         if (!courtRes.ok) {
           return {
             ok: false,
-            message: courtData.error || courtRes.statusText || 'La sede se guardó, pero no se pudo crear la cancha. Podés agregarla desde Canchas.',
+            message: t('admin.sedes.guidedCourtCreateFailed'),
           };
         }
         if (courtData.cancha) {
@@ -8431,8 +8417,8 @@ export default function AdminDashboard({
         }
       }
       return { ok: true };
-    } catch (error) {
-      return { ok: false, message: error?.message || String(error) };
+    } catch {
+      return { ok: false, message: t('admin.metricas.saveError') };
     } finally {
       setMiSedeSaving(false);
     }
@@ -8441,7 +8427,7 @@ export default function AdminDashboard({
 
   const guardarInstalacionesMiSede = async (amenitiesOverride) => {
     if (!sedeId || !session?.access_token) {
-      setMiSedeInstalacionesMsg('⚠️ Inicia sesión de nuevo');
+      setMiSedeInstalacionesMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setMiSedeInstalacionesMsg(''), 4000);
       return;
     }
@@ -8527,10 +8513,10 @@ export default function AdminDashboard({
         ),
       );
       if (results.every(Boolean)) {
-        setSurgeSaveMsg('✅ Surge guardado');
+        setSurgeSaveMsg(t('admin.franjas.surgeSaved'));
         setTimeout(() => setSurgeSaveMsg(''), 3000);
       } else {
-        setSurgeSaveMsg('⚠️ No se pudo guardar Surge');
+        setSurgeSaveMsg(t('admin.franjas.surgeSaveFailed'));
         setTimeout(() => setSurgeSaveMsg(''), 5000);
       }
     } finally {
@@ -8589,12 +8575,12 @@ export default function AdminDashboard({
       };
       const { error } = await supabase.from('franjas_precio').insert(row);
       if (error) throw error;
-      setFranjaPreciosMsg('✅ Franja guardada.');
+      setFranjaPreciosMsg(t('admin.franjas.slotSaved'));
       setFranjasPrecioOverlapMsg('');
       setFranjaDraft({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
       await loadFranjasPrecios(miSedeForm.id);
-    } catch (e) {
-      setFranjaPreciosMsg(`❌ ${e.message}`);
+    } catch {
+      setFranjaPreciosMsg(`❌ ${t('admin.metricas.saveError')}`);
     } finally {
       setFranjaSaving(false);
     }
@@ -8621,15 +8607,15 @@ export default function AdminDashboard({
         deporte: miSedePreciosDeporte,
       });
       setMiSedeDuraciones(duraciones);
-    } catch (e) {
+    } catch {
       setMiSedeDuraciones([]);
       setMiSedeDuracionesLoadError(
-        e?.message || 'No pudimos cargar las duraciones. Reintentá o revisá la conexión.',
+        t('admin.sedes.durationsLoadFailed'),
       );
     } finally {
       setMiSedeDuracionesLoading(false);
     }
-  }, [apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token]);
+  }, [apiBaseUrl, miSedePreciosDeporte, sedeId, session?.access_token, t]);
 
   const guardarMiSedeFilaDuracion = async (rowId) => {
     if (!sedeId || !session?.access_token) {
@@ -8649,7 +8635,7 @@ export default function AdminDashboard({
     const activas = countDuracionesActivas(miSedeDuraciones);
     if (row?.activo && !draft.activo && activas <= 1) {
       const ok = window.confirm(
-        'Esta es la última duración activa. Si la desactivás, las reservas pueden quedar sin precio base. ¿Continuar?',
+        t('admin.sedes.lastDurationDeactivateConfirm'),
       );
       if (!ok) return;
     }
@@ -8667,8 +8653,8 @@ export default function AdminDashboard({
       }
       setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
-    } catch (e) {
-      setMiSedeDuracionesMsg(e?.message || String(e));
+    } catch {
+      setMiSedeDuracionesMsg(t('admin.metricas.saveError'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
     } finally {
       setMiSedeDuracionGuardandoId(null);
@@ -8684,12 +8670,12 @@ export default function AdminDashboard({
     const dm = parseInt(String(miSedeNuevaDuracion.modo || ''), 10);
     const pr = parseInt(String(miSedeNuevaDuracion.precio || '').replace(/\D/g, ''), 10);
     if (!esDuracionPrecioAdminEstandar(dm)) {
-      setMiSedeDuracionesMsg('Solo se permiten duraciones de 60, 90 o 120 minutos.');
+      setMiSedeDuracionesMsg(t('admin.sedes.standardDurationsOnly'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 4000);
       return;
     }
     if (!miSedeDuracionesAgregarOpciones.includes(dm)) {
-      setMiSedeDuracionesMsg(`La duración de ${dm} min ya está configurada para esta disciplina.`);
+      setMiSedeDuracionesMsg(t('admin.sedes.durationAlreadyConfigured', { minutes: dm }));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
       return;
     }
@@ -8700,7 +8686,10 @@ export default function AdminDashboard({
     }
     if (tieneDuracionDuplicada(miSedeDuraciones, dm, miSedePreciosDeporte)) {
       setMiSedeDuracionesMsg(
-        `Ya existe una duración de ${dm} min para ${deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte))}.`,
+        t('admin.sedes.durationAlreadyExistsSport', {
+          minutes: dm,
+          sport: deporteLabelMiSedePrecios(deporteQueryParam(miSedePreciosDeporte)),
+        }),
       );
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
       return;
@@ -8720,8 +8709,8 @@ export default function AdminDashboard({
       await cargarMiSedeDuraciones();
       setMiSedeDuracionesMsg(t('admin.metricas.savedOk'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 2500);
-    } catch (e) {
-      setMiSedeDuracionesMsg(e?.message || String(e));
+    } catch {
+      setMiSedeDuracionesMsg(t('admin.metricas.saveError'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
     } finally {
       setMiSedeDuracionAgregando(false);
@@ -8733,12 +8722,15 @@ export default function AdminDashboard({
     const activas = countDuracionesActivas(miSedeDuraciones);
     if (row.activo && activas <= 1) {
       const ok = window.confirm(
-        'Esta es la última duración activa. Si la quitás, las reservas pueden quedar sin precio base. ¿Continuar?',
+        t('admin.sedes.lastDurationRemoveConfirm'),
       );
       if (!ok) return;
     } else if (
       !window.confirm(
-        `¿Quitar la duración de ${row.duracion_minutos} min (${deporteLabelMiSedePrecios(row.deporte)})?`,
+        t('admin.sedes.removeDurationConfirm', {
+          minutes: row.duracion_minutos,
+          sport: deporteLabelMiSedePrecios(row.deporte),
+        }),
       )
     ) {
       return;
@@ -8758,7 +8750,7 @@ export default function AdminDashboard({
         await guardarMiSedeFilaDuracion(row.id);
         return;
       }
-      setMiSedeDuracionesMsg(msg);
+      setMiSedeDuracionesMsg(t('admin.metricas.saveError'));
       setTimeout(() => setMiSedeDuracionesMsg(''), 5000);
     } finally {
       setMiSedeDuracionEliminandoId(null);
@@ -9023,11 +9015,28 @@ export default function AdminDashboard({
   const guardarLicencia = async () => {
     setLicenciaSaving(true); setLicenciaMsg('');
     const prev = miSede;
-    const { error } = await supabase.from(ADMIN_SEDES_TABLE).update({
-      numero_licencia: licenciaForm.numero_licencia || null,
-      fecha_licencia:  licenciaForm.fecha_licencia  || null,
-      licencia_activa: licenciaForm.licencia_activa,
-    }).eq('id', sedeId);
+    let error = null;
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/admin/sedes/${encodeURIComponent(sedeId)}/licencia-oficial`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token || ''}`,
+        },
+        body: JSON.stringify({
+          numero_licencia: licenciaForm.numero_licencia || null,
+          fecha_licencia: licenciaForm.fecha_licencia || null,
+          licencia_activa: licenciaForm.licencia_activa,
+          tipo_licencia: prev?.tipo_licencia || null,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.ok !== true) {
+        throw new Error(result.error || t('admin.formularios.statusUpdateFailed'));
+      }
+    } catch (caught) {
+      error = caught;
+    }
     setLicenciaSaving(false);
     setLicenciaMsg(error ? `⚠️ ${error.message}` : t('admin.sedes.licenseUpdated'));
     setTimeout(() => setLicenciaMsg(''), 3000);
@@ -9136,7 +9145,7 @@ export default function AdminDashboard({
       .from('avatars')
       .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
     if (uploadError) {
-      setLogoMsg(`⚠️ ${uploadError.message}`);
+      setLogoMsg(`⚠️ ${t('admin.sedes.logoUploadFailed')}`);
       setLogoUploading(false);
       return;
     }
@@ -9145,14 +9154,14 @@ export default function AdminDashboard({
     } = supabase.storage.from('avatars').getPublicUrl(path);
     const urlGuardar = String(publicUrl || '').trim();
     if (!urlGuardar) {
-      setLogoMsg('⚠️ No se obtuvo URL pública del logo');
+      setLogoMsg(`⚠️ ${t('admin.sedes.logoPublicUrlMissing')}`);
       setLogoUploading(false);
       return;
     }
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
-      if (!token) throw new Error('No autorizado');
+      if (!token) throw new Error(t('admin.formularios.loginAgainAlt'));
       const res = await fetch(`${apiBaseUrl}/api/admin/sedes/${encodeURIComponent(String(sedeId))}`, {
         method: 'PATCH',
         headers: {
@@ -9162,13 +9171,13 @@ export default function AdminDashboard({
         body: JSON.stringify({ logo_url: urlGuardar }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || 'No se pudo guardar el logo');
+      if (!res.ok) throw new Error(t('admin.sedes.logoSaveFailed'));
       const savedUrl = String(j?.sede?.logo_url || urlGuardar).trim();
       aplicarLogoUrlEnPanel(savedUrl);
       setLogoMsg(t('admin.sedes.logoGuardado'));
       window.setTimeout(() => setLogoMsg(''), 3000);
     } catch (e) {
-      setLogoMsg(`⚠️ ${e?.message || 'Error al guardar'}`);
+      setLogoMsg(`⚠️ ${e?.message || t('admin.sedes.logoSaveFailed')}`);
     } finally {
       setLogoUploading(false);
     }
@@ -9310,7 +9319,7 @@ export default function AdminDashboard({
     const { error } = await supabase.from(ADMIN_SEDES_TABLE).update({ franjas_horarias: validation.payload }).eq('id', sedeId);
     setFranjasSaving(false);
     if (error) {
-      setFranjasMsg(`⚠️ ${error.message}`);
+      setFranjasMsg(`⚠️ ${t('admin.metricas.saveError')}`);
     } else {
       setFranjasOverlapMsg('');
       setFranjasMsg(t('admin.franjas.slotsSaved'));
@@ -9338,7 +9347,7 @@ export default function AdminDashboard({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setFotosMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
+        setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
         setTimeout(() => setFotosMsg(''), 5000);
         return false;
       }
@@ -9348,8 +9357,8 @@ export default function AdminDashboard({
       setFotosUrls(saved);
       setMiSede((prev) => (prev ? { ...prev, fotos_urls: saved } : prev));
       return true;
-    } catch (e) {
-      setFotosMsg(`⚠️ ${e?.message || String(e)}`);
+    } catch {
+      setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
       setTimeout(() => setFotosMsg(''), 5000);
       return false;
     }
@@ -9363,7 +9372,7 @@ export default function AdminDashboard({
     }
     const heroUrl = url != null && String(url).trim() !== '' ? String(url).trim() : null;
     if (heroUrl && !fotosUrls.includes(heroUrl)) {
-      setFotosMsg('⚠️ La foto debe estar en la galería');
+      setFotosMsg(`⚠️ ${t('admin.sedes.photoMustBeInGallery')}`);
       setTimeout(() => setFotosMsg(''), 4000);
       return false;
     }
@@ -9379,7 +9388,7 @@ export default function AdminDashboard({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setFotosMsg(`⚠️ ${data.error || res.statusText || t('admin.metricas.saveError')}`);
+        setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
         setTimeout(() => setFotosMsg(''), 5000);
         return false;
       }
@@ -9398,8 +9407,8 @@ export default function AdminDashboard({
           : prev,
       );
       return true;
-    } catch (e) {
-      setFotosMsg(`⚠️ ${e?.message || String(e)}`);
+    } catch {
+      setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
       setTimeout(() => setFotosMsg(''), 5000);
       return false;
     } finally {
@@ -9412,7 +9421,7 @@ export default function AdminDashboard({
     if (!heroKey || heroKey === fotoPortada) return;
     const ok = await persistFotoPortada(heroKey);
     if (ok) {
-      setHeroToast('Foto del hero actualizada');
+      setHeroToast(t('admin.sedes.heroPhotoUpdated'));
       window.setTimeout(() => setHeroToast(''), 2600);
     }
   };
@@ -9553,7 +9562,7 @@ export default function AdminDashboard({
 
   const fetchScoreboardSedes = useCallback(async () => {
     if (!session?.access_token) {
-      const msg = 'Sin token de sesión para cargar sedes';
+      const msg = t('admin.formularios.loginAgainAlt');
       console.warn('[Scoreboard] fetch sedes:', msg);
       setScoreboardSedesError(msg);
       setScoreboardSedes([]);
@@ -9576,12 +9585,12 @@ export default function AdminDashboard({
       }
     } catch (err) {
       console.error('[Scoreboard] GET /api/sedes error:', err);
-      setScoreboardSedesError(err?.message || String(err));
+      setScoreboardSedesError(t('admin.scoreboard.venuesLoadFailed'));
       setScoreboardSedes([]);
     } finally {
       setScoreboardSedesLoading(false);
     }
-  }, [session?.access_token, esAdminClub, sedeIdKey, sbSedeId]);
+  }, [session?.access_token, esAdminClub, sedeIdKey, sbSedeId, t]);
 
   useEffect(() => {
     if (!puedeVerScoreboard || activeTab !== 'scoreboard') return;
@@ -9614,7 +9623,7 @@ export default function AdminDashboard({
   useEffect(() => {
     setSbPartidosExpanded(false);
     setSbPartidosSearch('');
-  }, [sbSedeId]);
+  }, [sbSedeId, t]);
 
   useEffect(() => {
     if (!puedeVerScoreboard || activeTab !== 'scoreboard') return undefined;
@@ -9635,14 +9644,14 @@ export default function AdminDashboard({
       .catch((err) => {
         if (!cancelled) {
           setSbPartidosList([]);
-          setSbPartidosError(err?.message || 'Error al cargar partidos');
+          setSbPartidosError(t('admin.scoreboard.matchesLoadFailed'));
         }
       })
       .finally(() => {
         if (!cancelled) setSbPartidosLoading(false);
       });
     return () => { cancelled = true; };
-  }, [activeTab, puedeVerScoreboard, sbSedeId, sbPartidosRefreshKey]);
+  }, [activeTab, puedeVerScoreboard, sbSedeId, sbPartidosRefreshKey, t]);
 
   const resetScoreboardForm = useCallback(() => {
     setSbEditingId(null);
@@ -9711,15 +9720,15 @@ export default function AdminDashboard({
         document.getElementById('admin-scoreboard-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } catch (err) {
-      setSbError(err?.message || 'No se pudo cargar el partido');
+      setSbError(t('admin.scoreboard.matchLoadFailed'));
     }
-  }, [sbSedeId]);
+  }, [sbSedeId, t]);
 
   const resolveSbJugadorNombre = (jugador) => String(jugador?.nombre || '').trim();
 
   const saveSbJugadorFotoViaApi = async (equipo, index, fotoUrl) => {
     if (!sbEditingId) {
-      setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores'));
+      setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guarda el partido antes de subir fotos de jugadores'));
       return;
     }
     const equipoApi = equipo === 'A' ? 'a' : 'b';
@@ -9728,7 +9737,7 @@ export default function AdminDashboard({
     const jugador = jugadores[index];
     const nombre = resolveSbJugadorNombre(jugador);
     if (!nombre) {
-      setSbError(t('admin.scoreboard.playerNameRequiredForPhoto', 'Ingresá el nombre del jugador antes de subir una foto'));
+      setSbError(t('admin.scoreboard.playerNameRequiredForPhoto', 'Ingresa el nombre del jugador antes de subir una foto'));
       return;
     }
     await postJugadorTemp({
@@ -9748,7 +9757,7 @@ export default function AdminDashboard({
   const handleSbJugadorFotoUpload = async (equipo, index, file) => {
     if (!file || !sbEditingId) {
       if (!sbEditingId) {
-        setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores'));
+        setSbError(t('admin.scoreboard.playerPhotoNeedsSave', 'Guarda el partido antes de subir fotos de jugadores'));
       }
       return;
     }
@@ -9818,7 +9827,7 @@ export default function AdminDashboard({
       setSbCopied(key);
       setTimeout(() => setSbCopied(''), 2000);
     } catch {
-      window.prompt('Copiá este link:', url);
+      window.prompt('Copia este link:', url);
     }
   };
 
@@ -9829,15 +9838,15 @@ export default function AdminDashboard({
 
     const sede_id = parseInt(sbSedeId, 10);
     if (!Number.isFinite(sede_id) || sede_id <= 0) {
-      setSbError(t('admin.scoreboard.sedeRequired', 'Seleccioná una sede'));
+      setSbError(t('admin.scoreboard.sedeRequired', 'Selecciona una sede'));
       return;
     }
     if (!sbEquipoA.trim() || !sbEquipoB.trim()) {
-      setSbError(t('admin.scoreboard.teamsRequired', 'Completá los nombres de ambos equipos'));
+      setSbError(t('admin.scoreboard.teamsRequired', 'Completa los nombres de ambos equipos'));
       return;
     }
     if (!session?.access_token) {
-      setSbError(t('admin.scoreboard.authRequired', 'Sesión no válida. Volvé a iniciar sesión.'));
+      setSbError(t('admin.scoreboard.authRequired', 'Sesión no válida. Vuelve a iniciar sesión.'));
       return;
     }
 
@@ -10095,7 +10104,7 @@ export default function AdminDashboard({
   }
 
   const fechaActualLarga = (() => {
-    const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+    const dateLocale = padbolLangToIntlLocale(i18n.language);
     const s = new Date().toLocaleDateString(dateLocale, {
       weekday: 'long',
       day: 'numeric',
@@ -10105,7 +10114,7 @@ export default function AdminDashboard({
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
   })();
 
-  const TABS = esEmpleado
+  const TABS_BASE = esEmpleado
     ? [
         { id: 'reservas', label: t('admin.tabs.reservas') },
         { id: 'torneos', label: t('admin.tabs.torneos') },
@@ -10115,6 +10124,7 @@ export default function AdminDashboard({
         { id: 'mi_sede', label: t('admin.tabs.miSede') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
+        { id: 'incentivos', label: 'Beneficio Pro' },
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'validaciones', label: t('admin.tabs.validaciones'), badge: pendientes.length },
         ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: 'Scoreboard' }] : []),
@@ -10123,23 +10133,29 @@ export default function AdminDashboard({
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         { id: 'resumen', label: t('nav.admin.resumen') },
       ]
-    : esAdminNacional
+    : esAdminMultiplesSedes
     ? [
         { id: 'resumen', label: t('nav.admin.resumen') },
+        ...(esAdminCadena ? [{ id: 'reservas', label: t('admin.tabs.reservas') }] : []),
         { id: 'torneos', label: t('torneos.titulo') },
         { id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') },
         { id: 'jugadores', label: t('admin.tabs.jugadores') },
+        ...(esAdminCadena ? [{ id: 'incentivos', label: 'Beneficio Pro' }] : []),
+        ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: 'Scoreboard' }] : []),
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
       ]
     : [
         { id: 'resumen', label: t('admin.tabs.resumen') },
         ...(isSuperAdmin ? [{ id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') }] : []),
+        ...(isSuperAdmin ? [{ id: 'organizaciones', label: 'Multisede' }] : []),
+        ...(isSuperAdmin ? [{ id: 'incentivos', label: 'Incentivos' }] : []),
         ...(isSuperAdmin ? [{ id: 'solicitudes', label: t('admin.tabs.solicitudes') }] : []),
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
+        ...(puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'WhatsApp' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
@@ -10158,6 +10174,19 @@ export default function AdminDashboard({
             ]
           : []),
       ];
+  const funcionesCadena = new Set(organizacionActual?.funciones_habilitadas || []);
+  const funcionPorTabCadena = {
+    reservas: 'reservas',
+    torneos: 'torneos',
+    jugadores: 'jugadores',
+    notificaciones: 'notificaciones',
+    scoreboard: 'scoreboard',
+    membresias: 'membresias',
+    padcoins: 'padcoins',
+  };
+  const TABS = esAdminCadena
+    ? TABS_BASE.filter((tab) => !funcionPorTabCadena[tab.id] || funcionesCadena.has(funcionPorTabCadena[tab.id]))
+    : TABS_BASE;
 
   const sedeClubHeader =
     sedeId != null && sedeId !== ''
@@ -10172,6 +10201,9 @@ export default function AdminDashboard({
     }
     if (esAdminNacional) {
       return t('admin.panel.nationalTitle');
+    }
+    if (esAdminCadena) {
+      return organizacionActual?.nombre ? `Panel central · ${organizacionActual.nombre}` : 'Panel central multisede';
     }
     return t('admin.panel.genericTitle', {
       role: roleBadgeLabel.replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+\s*/, '').trim(),
@@ -10514,6 +10546,25 @@ export default function AdminDashboard({
           {adminTabAccessNotice}
         </div>
       ) : null}
+{isSuperAdmin && activeTab === 'organizaciones' && session?.access_token ? (
+  <AdminOrganizacionesSection
+    apiBaseUrl={apiBaseUrl}
+    accessToken={session.access_token}
+    sedes={sedesSuperAdminLista}
+  />
+) : null}
+
+{activeTab === 'incentivos' && session?.access_token && (isSuperAdmin || esAdminClub || esAdminCadena) ? (
+  <AdminIncentivosSection
+    apiBaseUrl={apiBaseUrl}
+    accessToken={session.access_token}
+    sedes={isSuperAdmin ? sedesSuperAdminLista : esAdminCadena ? sedesNacionalLista : Object.values(sedesMap || {})}
+    sedeId={esAdminClub ? sedeId : null}
+    isSuperAdmin={isSuperAdmin}
+    canSelectSede={isSuperAdmin || esAdminCadena}
+  />
+) : null}
+
 {isSuperAdmin && activeTab === ADMIN_SEDES_TAB_ID && (
         <div
           style={{
@@ -10546,6 +10597,19 @@ export default function AdminDashboard({
           </button>
         </div>
       )}
+
+      {esAdminMultiplesSedes && activeTab === ADMIN_SEDES_TAB_ID ? (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+          <button
+            type="button"
+            className="admin-primary-action"
+            onClick={() => navigate('/admin/nueva-sede')}
+            style={{ padding: '10px 16px', borderRadius: 10, border: 0, background: '#E11B22', color: '#fff', fontWeight: 800, cursor: 'pointer' }}
+          >
+            ➕ Solicitar nueva sede
+          </button>
+        </div>
+      ) : null}
 
       {mensajeExito && (
         <div style={{ background: '#4caf50', color: 'white', padding: '15px', borderRadius: '5px', marginBottom: '20px', textAlign: 'center' }}>
@@ -10664,7 +10728,7 @@ export default function AdminDashboard({
           })()
         : null}
 
-      {activeTab === 'resumen' && (esAdminNacional ? (
+      {activeTab === 'resumen' && (esAdminMultiplesSedes ? (
         <>
           <div
             style={{
@@ -10675,11 +10739,13 @@ export default function AdminDashboard({
               fontWeight: 600,
             }}
           >
-            {`Alcance: ${String(adminScopeMeta?.alcance || 'pais')}${
-              adminScopeMeta?.ciudad ? ` · Ciudad: ${adminScopeMeta.ciudad}` : ''
-            }${adminScopeMeta?.provincia ? ` · Provincia: ${adminScopeMeta.provincia}` : ''}${
-              adminScopeMeta?.pais ? ` · País: ${adminScopeMeta.pais}` : ''
-            }`}
+            {esAdminCadena
+              ? `${t('publicSite.hero.globe.labels.organizations')}: ${organizacionActual?.nombre || '—'} · ${sedesNacionalLista.length} ${t('admin.metrics.totalVenues')}`
+              : `${t('admin.metrics.scopeLabel')}: ${String(adminScopeMeta?.alcance || 'pais')}${
+                adminScopeMeta?.ciudad ? ` · ${t('admin.metrics.cityLabel')}: ${adminScopeMeta.ciudad}` : ''
+              }${adminScopeMeta?.provincia ? ` · ${t('admin.metrics.provinceLabel')}: ${adminScopeMeta.provincia}` : ''}${
+                adminScopeMeta?.pais ? ` · ${t('admin.metrics.countryLabel')}: ${adminScopeMeta.pais}` : ''
+              }`}
           </div>
           <>
             <div className="dashboard-grid">
@@ -10690,8 +10756,14 @@ export default function AdminDashboard({
               </div>
               <div className="card torneos">
                 <h2>{t('admin.metrics.totalPlayers')}</h2>
-                <p className="count">{nacionalJugadoresLoading ? '…' : totalJugadoresPais}</p>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>{t('admin.metrics.playersScope')}</p>
+                <p className="count">
+                  {esAdminCadena
+                    ? Number(organizacionActual?.resumen?.jugadores_vinculados_total) || 0
+                    : nacionalJugadoresLoading ? '…' : totalJugadoresPais}
+                </p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '0.9rem' }}>
+                  {esAdminCadena ? 'Jugadores vinculados a las sedes de la cadena' : t('admin.metrics.playersScope')}
+                </p>
               </div>
               <div className="card torneos">
                 <h2>{t('admin.metrics.activeTournaments')}</h2>
@@ -11119,7 +11191,7 @@ export default function AdminDashboard({
               cursor: 'pointer',
             }}
           >
-            {`Exportar: ${labelPeriodoFinanciero(superAdminPeriodo)}`}
+            Exportar
           </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '10px', marginTop: '12px' }}>
@@ -11898,6 +11970,13 @@ export default function AdminDashboard({
         </div>
       ) : null}
 
+      {activeTab === 'whatsapp' && session?.access_token ? (
+        <div className="section">
+          <h2>WhatsApp</h2>
+          <AdminWhatsappSection accessToken={session.access_token} />
+        </div>
+      ) : null}
+
       {activeTab === 'notificaciones' && puedeEnviarNotificacionesPush && session?.access_token ? (
         <div className="section">
           <h2>{t('admin.tabs.notificacionesPush')}</h2>
@@ -11906,6 +11985,7 @@ export default function AdminDashboard({
             accessToken={session.access_token}
             isSuperAdmin={isSuperAdmin}
             esAdminNacional={esAdminNacional}
+            esAdminCadena={esAdminCadena}
             esAdminClub={esAdminClub}
             sedeId={sedeId}
             sedesOptions={
@@ -11913,6 +11993,8 @@ export default function AdminDashboard({
                 ? sedesSuperAdminLista
                 : esAdminNacional
                   ? sedesNacionalLista
+                  : esAdminCadena
+                    ? sedesNacionalLista
                   : esAdminClub && sedeId
                     ? [
                         {
@@ -11930,9 +12012,9 @@ export default function AdminDashboard({
         </div>
       ) : null}
 
-      {activeTab === ADMIN_SEDES_TAB_ID && (esAdminNacional || isSuperAdmin) && (
+      {activeTab === ADMIN_SEDES_TAB_ID && (esAdminMultiplesSedes || isSuperAdmin) && (
         <div className="section">
-          <h2>{isSuperAdmin ? t('admin.sedes.registeredVenues') : t('admin.sedes.venuesInCountry')}</h2>
+          <h2>{isSuperAdmin ? t('admin.sedes.registeredVenues') : esAdminCadena ? 'Sedes de la cadena' : t('admin.sedes.venuesInCountry')}</h2>
           {isSuperAdmin && session?.access_token ? (
             <AdminSedeExtrasPendientesSuper apiBaseUrl={apiBaseUrl} accessToken={session.access_token} />
           ) : null}
@@ -11940,7 +12022,7 @@ export default function AdminDashboard({
             <p style={{ color: 'var(--text-secondary)' }}>
               {isSuperAdmin
                 ? t('admin.sedes.noVenuesYet')
-                : t('admin.sedes.noVenuesNationalScope')}
+                : esAdminCadena ? 'La cadena todavía no tiene sedes vinculadas.' : t('admin.sedes.noVenuesNationalScope')}
             </p>
           ) : (
             <>
@@ -12342,13 +12424,14 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {activeTab === 'jugadores' && (esAdminClub || isSuperAdmin) && !esAdminNacional ? (
+      {activeTab === 'jugadores' && (esAdminClub || esAdminCadena || isSuperAdmin) && !esAdminNacional ? (
         <AdminJugadoresSection
           apiBaseUrl={apiBaseUrl}
           accessToken={session?.access_token}
           sedeId={esAdminClub ? sedeId : undefined}
           sedesMap={sedesMap}
           isSuperAdmin={isSuperAdmin}
+          canSelectSede={esAdminCadena}
           esAdminClub={esAdminClub}
         />
       ) : null}
@@ -12444,18 +12527,16 @@ export default function AdminDashboard({
                       disabled={vs.saving}
                       onClick={() => aprobarJugador(jugador.email)}
                       className="admin-validacion-action admin-validacion-action--approve"
-                      style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
-                      <AdminCheckIcon size={15} />
                       {t('admin.formularios.validationApprove')}
                     </button>
                     <button
                       disabled={vs.saving}
                       onClick={() => toggleCambiarCategoria(jugador.email, jugador.nivel)}
                       className="admin-validacion-action admin-validacion-action--category"
-                      style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
-                      <AdminEditIcon size={15} />
                       {t('admin.formularios.validationChangeCategory')}
                     </button>
 
@@ -12562,7 +12643,7 @@ export default function AdminDashboard({
                 .sort((a, b) => a.numero - b.numero)
             : Array.from(
                 { length: Math.max(0, Number(sedeManualRow?.cantidad_canchas) || Number(canchasResumenPorSede[sedeManualId]?.activas) || 0) },
-                (_, idx) => ({ numero: idx + 1, nombre: `Cancha ${idx + 1}`, deporte: null, duracion_sugerida_min: null })
+                (_, idx) => ({ numero: idx + 1, nombre: `${t('admin.reservas.courtNumberPrefix')}${idx + 1}`, deporte: null, duracion_sugerida_min: null })
               );
           const reservaManualSlots = slotsReservaManualDisponibles({
             sedeRow: sedeManualRow,
@@ -12870,13 +12951,15 @@ export default function AdminDashboard({
               return mismoPaisFiltroAdmin(sedeInfo?.pais, superReservasFiltroPais);
             });
             const ingresosResumenPais = {};
+            const comisionPmResumen = {};
             reservasResumenPais.forEach((r) => {
               const sedeInfo = resolveSedeDesdeReserva(r) || {};
               const moneda = getMonedaCanonica({ moneda: sedeInfo?.moneda || r?.moneda });
               const precio = Number(r?.precio) || 0;
               ingresosResumenPais[moneda] = (ingresosResumenPais[moneda] || 0) + precio;
+              const comision = precio * porcentajeComisionComercialSede(sedeInfo) / 100;
+              comisionPmResumen[moneda] = Math.round(((comisionPmResumen[moneda] || 0) + comision) * 100) / 100;
             });
-            const comisionPmResumen = comisionPadbolTresPorcientoPorMoneda(ingresosResumenPais);
 
             const paisesOpts = [
               ...new Set(
@@ -13340,7 +13423,7 @@ export default function AdminDashboard({
                     }}
                   >
                     <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                      Padbol Match (3% comisión)
+                      Padbol Match (comisión según plan)
                     </div>
                     <div
                       style={{
@@ -13373,13 +13456,9 @@ export default function AdminDashboard({
                     fontSize: '16px',
                     cursor: 'pointer',
                     boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
                   }}
                 >
-                  <AdminChartIcon size={17} />
-                  Ver ranking de clubes
+                  📊 Ver ranking de clubes
                 </button>
 
                 {reservasResumenPais.length === 0 ? (
@@ -13515,8 +13594,13 @@ export default function AdminDashboard({
               (sedeId != null && sedeId !== '' ? sedesMap[String(sedeId)]?.moneda : null) ||
               'ARS'
           );
+          const sedeComisionClubId = sedeIdDesdeNombreReserva(sortedRows[0]?.sede, sedesMap);
+          const sedeComisionClub =
+            (sedeId != null && sedeId !== '' ? sedesMap[String(sedeId)] : null)
+            || (sedeComisionClubId != null ? sedesMap[String(sedeComisionClubId)] : null)
+            || {};
           const comisClubPm = isSuperAdmin
-            ? Math.round(totalFactResClub * 0.03 * 100) / 100
+            ? Math.round(totalFactResClub * porcentajeComisionComercialSede(sedeComisionClub) / 100 * 100) / 100
             : 0;
           const usarTarjetasReservasClub = vistaReservasAdminTarjetas && editandoId == null;
 
@@ -13574,7 +13658,7 @@ export default function AdminDashboard({
                   }}
                 >
                   <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
-                    Padbol Match (3% comisión)
+                    Padbol Match ({porcentajeComisionComercialSede(sedeComisionClub)}% según plan)
                   </div>
                   <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 800, marginTop: '8px' }}>
                     {monResClub}{' '}
@@ -13933,7 +14017,7 @@ export default function AdminDashboard({
         <div className="section">
           <h2 style={{ marginTop: 0 }}>📺 {t('admin.scoreboard.title', 'Scoreboard en vivo')}</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
-            {t('admin.scoreboard.description', 'Creá un partido y compartí los links de la pantalla TV y el panel del árbitro.')}
+            {t('admin.scoreboard.description', 'Crea un partido y comparte los links de la pantalla TV y el panel del árbitro.')}
           </p>
 
           <form
@@ -14293,7 +14377,7 @@ export default function AdminDashboard({
                               title={
                                 sbEditingId
                                   ? t('admin.scoreboard.playerPhotoUpload', 'Subir o cambiar foto del jugador')
-                                  : t('admin.scoreboard.playerPhotoNeedsSave', 'Guardá el partido antes de subir fotos de jugadores')
+                                  : t('admin.scoreboard.playerPhotoNeedsSave', 'Guarda el partido antes de subir fotos de jugadores')
                               }
                             >
                               {fotoUrl ? (
@@ -14373,7 +14457,7 @@ export default function AdminDashboard({
             </h3>
             {!sbSedeId ? (
               <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
-                {t('admin.scoreboard.selectSedeForList', 'Seleccioná una sede para ver los partidos creados.')}
+                {t('admin.scoreboard.selectSedeForList', 'Selecciona una sede para ver los partidos creados.')}
               </p>
             ) : sbPartidosLoading ? (
               <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
@@ -14427,7 +14511,7 @@ export default function AdminDashboard({
                         onChange={(e) => setSbPartidosSearch(e.target.value)}
                         placeholder={t(
                           'admin.scoreboard.searchPartidosPlaceholder',
-                          'Torneo, equipo o fecha...',
+                          'Tournament, team or date...',
                         )}
                         autoComplete="off"
                       />
@@ -14664,7 +14748,7 @@ export default function AdminDashboard({
                 <span style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
                   {t(
                     'admin.padcoins.sedeParticipationClubToggleHelp',
-                    'Al activar esta opción, tu sede podrá ofrecer beneficios y recibir canjes con PadCoins.',
+                    'Enable or pause Padbol Benefits for this venue.',
                   )}
                 </span>
               ) : null}
@@ -14680,7 +14764,7 @@ export default function AdminDashboard({
                 rows={3}
                 placeholder={t(
                   'admin.padcoins.sedeParticipationDescPlaceholder',
-                  'Notas internas sobre la participación de esta sede (opcional)',
+                  'Explain the benefits available at this venue.',
                 )}
                 style={{ ...pcInp, resize: 'vertical' }}
               />
@@ -14758,7 +14842,7 @@ export default function AdminDashboard({
             >
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
                 <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
-                  {padcoinsConfigKeyLabel(rule.key)}
+                  {padcoinsConfigKeyLabel(rule.key, t)}
                 </strong>
                 <span style={{
                   fontSize: '11px',
@@ -14773,7 +14857,7 @@ export default function AdminDashboard({
               </div>
               {help ? (
                 <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
-                  {help}
+                  {t(help)}
                 </p>
               ) : null}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
@@ -14839,7 +14923,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '640px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.globalConfigDescription',
-                    'Padbol define cómo se ganan o pierden PadCoins. Los beneficios y canjes siguen siendo por sede.',
+                'Set the global rules that apply when a venue has no local override.',
                   )}
                 </p>
                 <p style={{
@@ -14855,12 +14939,12 @@ export default function AdminDashboard({
                 }}>
                   {t(
                     'admin.padcoins.globalConfigExample',
-                    'Ejemplo: con 5% de acreditación promocional y conversión interna 100, una reserva de referencia equivalente a 50 unidades genera 250 PadCoins.',
+                'Example: award a percentage of each completed booking as PadCoins.',
                   )}
                   {' '}
                   {t(
                     'admin.padcoins.globalConfigNoMonetaryHint',
-                    'La equivalencia monetaria no se muestra al jugador.',
+                'PadCoins are loyalty points, not money or a payment method.',
                   )}
                 </p>
 
@@ -14966,13 +15050,13 @@ export default function AdminDashboard({
                   <p style={{ color: 'var(--text-muted)', margin: '0 0 10px', maxWidth: '720px', fontSize: '14px' }}>
                     {t(
                       'admin.padcoins.sedeParticipationSuperIntro',
-                      'Supervisá la participación de las sedes en Beneficios Padbol.',
+                    'Control which venues participate in Padbol Benefits.',
                     )}
                   </p>
                   <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                     {t(
                       'admin.padcoins.sedeParticipationSuperHelp',
-                      'El Admin Club puede activar o desactivar su sede. Como Super Admin podés intervenir ante abuso, reclamos o cuestiones comerciales.',
+                    'A venue can be enabled or paused without changing its local operation.',
                     )}
                   </p>
                 </>
@@ -14980,14 +15064,14 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeParticipationClubIntro',
-                    'Administrá si tu sede participa en Beneficios Padbol y cuándo ofrece beneficios o recibe canjes.',
+                    "Manage your venue's participation in Padbol Benefits.",
                   )}
                 </p>
               ) : (
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeParticipationReadIntro',
-                    'Consultá el estado de participación de la sede en Beneficios Padbol.',
+                    "This venue's participation is configured by its administrators.",
                   )}
                 </p>
               )}
@@ -15003,7 +15087,7 @@ export default function AdminDashboard({
               }}>
                 {t(
                   'admin.padcoins.sedeParticipationNote',
-                  'Si una sede desactiva Beneficios Padbol, no se generan nuevos PadCoins por esa sede ni se permiten nuevos canjes. Los canjes pendientes deben respetarse.',
+                    'Changes affect future activity and are recorded for audit purposes.',
                 )}
               </p>
 
@@ -15055,7 +15139,7 @@ export default function AdminDashboard({
                   <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-muted)' }}>
                     {t(
                       'admin.padcoins.sedeParticipationListCount',
-                      '{{shown}} de {{total}} sedes',
+                        '{{shown}} of {{total}} venues',
                     )
                       .replace('{{shown}}', String(pcSedesParticipacionFiltradas.length))
                       .replace('{{total}}', String(pcSedesParticipacionList.length))}
@@ -15161,7 +15245,7 @@ export default function AdminDashboard({
                   maxWidth: '520px',
                   margin: 0,
                 }}>
-                  {t('admin.padcoins.sedeParticipationSelectVenue', 'Seleccioná una sede para ver o editar su participación en PadCoins.')}
+                  {t('admin.padcoins.sedeParticipationSelectVenue', 'Selecciona una sede para ver o editar su participación en PadCoins.')}
                 </p>
               ) : null}
 
@@ -15223,7 +15307,7 @@ export default function AdminDashboard({
                     }}>
                       {t(
                         'admin.padcoins.sedeParticipationClubInactive',
-                        'Beneficios Padbol están desactivados en tu sede. Activá la opción de arriba para ofrecer beneficios y recibir canjes.',
+                      'Padbol Benefits are currently inactive for this venue.',
                       )}
                     </p>
                   ) : null}
@@ -15251,7 +15335,7 @@ export default function AdminDashboard({
                       <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
                         {t(
                           'admin.padcoins.sedeParticipationNacionalReadOnly',
-                          'La participación de cada sede la gestiona su Admin Club. Como Admin Nacional podés consultar el estado.',
+                        'National administrators can view this setting but cannot change it here.',
                         )}
                       </p>
                     </div>
@@ -15272,13 +15356,13 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeSmartConfigIntro',
-                    'Define reglas propias para esta sede o deja los campos vacíos para heredar la configuración global.',
+                'Define a venue override only when its local rule should differ from the global rule.',
                   )}
                 </p>
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeSmartConfigGovernance',
-                    'El Super Admin define la regla global. Cada sede puede heredarla o ajustar sus propios valores si tiene autorización.',
+                'Global governance remains available to the Super Admin.',
                   )}
                 </p>
 
@@ -15312,7 +15396,7 @@ export default function AdminDashboard({
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
                     {t(
                       'admin.padcoins.sedeSmartConfigSelectVenue',
-                      'Seleccione una sede para ver o editar su configuración inteligente.',
+                    'Select a venue to configure its smart rules.',
                     )}
                   </p>
                 ) : null}
@@ -15370,7 +15454,7 @@ export default function AdminDashboard({
                                 <td style={{ padding: '10px 12px', color: 'var(--text-primary)', fontWeight: 600, verticalAlign: 'top' }}>
                                   {t(
                                     `admin.padcoins.smartRules.${key}`,
-                                    PC_SEDE_SMART_RULE_EN_LABELS[key] || PC_SEDE_SMART_RULE_LABELS[key] || padcoinsConfigKeyLabel(key),
+                                    PC_SEDE_SMART_RULE_EN_LABELS[key] || padcoinsConfigKeyLabel(key, t),
                                   )}
                                 </td>
                                 <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
@@ -15485,7 +15569,7 @@ export default function AdminDashboard({
                       <p style={{ margin: '0 0 16px', color: 'var(--text-muted)', fontSize: '14px', maxWidth: '720px' }}>
                         {t(
                           'admin.padcoins.loyaltySimIntro',
-                          'Calcula cuántos PadCoins genera una reserva y cuántas reservas necesita un jugador para canjear un beneficio.',
+                'Estimate the loyalty impact before activating a campaign.',
                         )}
                       </p>
                       <div style={{
@@ -15538,7 +15622,7 @@ export default function AdminDashboard({
                           <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                             {t(
                               'admin.padcoins.loyaltySimConversionHint',
-                              'Referencia de cálculo interno (equivalente interno).',
+                  'Use a reference conversion; it does not represent money or a guaranteed discount.',
                             )}
                           </span>
                         </label>
@@ -15570,7 +15654,7 @@ export default function AdminDashboard({
                           <p style={{ margin: '0 0 8px' }}>
                             {t(
                               'admin.padcoins.loyaltySimResultReserva',
-                              'Con un turno de {{turno}} y una fidelización del {{pct}}%, cada reserva genera {{padcoins}} PadCoins.',
+                    'Estimated PadCoins per booking: {{padcoins}} (booking {{turno}}, loyalty {{pct}}%).',
                               {
                                 turno: formatPcSimDisplay(pcSedeSimTurno),
                                 pct: formatPcSimDisplay(pcSedeSimPct),
@@ -15582,7 +15666,7 @@ export default function AdminDashboard({
                             <p style={{ margin: 0 }}>
                               {t(
                                 'admin.padcoins.loyaltySimResultBeneficio',
-                                'Si el beneficio estimado cuesta {{beneficio}}, el jugador necesita aproximadamente {{reservas}} reservas para canjearlo.',
+                    'An estimated benefit of {{beneficio}} requires approximately {{reservas}} bookings.',
                                 {
                                   beneficio: formatPcSimDisplay(pcSedeSimBeneficio),
                                   reservas: pcLoyaltySim.reservasNecesarias,
@@ -15593,7 +15677,7 @@ export default function AdminDashboard({
                             <p style={{ margin: 0, color: 'var(--text-muted)' }}>
                               {t(
                                 'admin.padcoins.loyaltySimZeroReserva',
-                                'Con estos valores la reserva no genera PadCoins; ajuste el valor del turno o el porcentaje de fidelización.',
+                    'Enter a booking value greater than zero to simulate a result.',
                               )}
                             </p>
                           )}
@@ -15602,7 +15686,7 @@ export default function AdminDashboard({
                         <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
                           {t(
                             'admin.padcoins.loyaltySimIncomplete',
-                            'Completa los valores para ver la estimación.',
+                  'Complete the fields to see the estimate.',
                           )}
                         </p>
                       )}
@@ -15636,25 +15720,25 @@ export default function AdminDashboard({
                     <p style={{ color: 'var(--text-muted)', margin: '0 0 8px', maxWidth: '720px', fontSize: '14px' }}>
                       {t(
                         'admin.padcoins.campaignsIntro',
-                        'Crea campañas temporales para impulsar reservas y fidelización con PadCoins.',
+                'Create automatic rules for rewards, bonuses and venue-specific benefits.',
                       )}
                     </p>
                     <p style={{ color: 'var(--text-muted)', margin: '0 0 4px', maxWidth: '720px', fontSize: '13px' }}>
                       {t(
                         'admin.padcoins.campaignsDisclaimerCost',
-                        'La sede asume el costo y cumplimiento de esta campaña.',
+                  'Estimated impact is informational and does not create a financial charge.',
                       )}
                     </p>
                     <p style={{ color: 'var(--text-muted)', margin: '0 0 4px', maxWidth: '720px', fontSize: '13px' }}>
                       {t(
                         'admin.padcoins.campaignsDisclaimerTrace',
-                        'Padbol Match registra la trazabilidad y el impacto.',
+                  'Every change is tracked with its venue, author and date.',
                       )}
                     </p>
                     <p style={{ color: 'var(--text-muted)', margin: 0, maxWidth: '720px', fontSize: '13px' }}>
                       {t(
                         'admin.padcoins.campaignsDisclaimerHighImpact',
-                        'Las campañas de alto impacto no se bloquean, pero quedan marcadas para auditoría.',
+                  'High-impact campaigns require special review before activation.',
                       )}
                     </p>
                   </div>
@@ -15949,7 +16033,7 @@ export default function AdminDashboard({
                       }}>
                         {t(
                           'admin.padcoins.campaignsLikelyHighImpact',
-                          'Esta configuración parece de alto impacto. Al activarla quedará marcada para auditoría.',
+                    'This campaign may have a high impact.',
                         )}
                       </p>
                     ) : null}
@@ -16066,7 +16150,7 @@ export default function AdminDashboard({
                                 ) : null}
                               </td>
                               <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
-                                {padcoinsCampaignSedeNombre(campaign, sedesMap, pcSedesOptions)}
+                                {padcoinsCampaignSedeNombre(campaign, sedesMap, pcSedesOptions, t)}
                               </td>
                               <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', verticalAlign: 'top' }}>
                                 {padcoinsCampaignTypeLabel(campaign.campaign_type, t)}
@@ -16276,7 +16360,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: 0, maxWidth: '560px' }}>
                   {t(
                     'admin.padcoins.description',
-                    'Administrá los beneficios canjeables visibles para los jugadores.',
+                'Manage the benefits available for players to redeem.',
                   )}
                 </p>
               </div>
@@ -16316,7 +16400,7 @@ export default function AdminDashboard({
               }}>
                 {t(
                   'admin.padcoins.sedeNotParticipating',
-                  'Esta sede no participa actualmente en Beneficios Padbol.',
+                  'This venue is not participating in Padbol Benefits.',
                 )}
               </p>
             ) : null}
@@ -16330,7 +16414,7 @@ export default function AdminDashboard({
                 borderRadius: '10px',
                 maxWidth: '520px',
               }}>
-                {t('admin.padcoins.selectVenueHint', 'Seleccioná una sede para gestionar beneficios PadCoins.')}
+                {t('admin.padcoins.selectVenueHint', 'Selecciona una sede para gestionar beneficios PadCoins.')}
               </p>
             ) : null}
 
@@ -16606,7 +16690,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '640px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.redemptionsDescription',
-                    'Canjes de beneficios de esta sede. Cada sede entrega solo sus propios beneficios; no se mezclan canjes de otras sedes.',
+                  'Review and manage benefits redeemed by players.',
                   )}
                 </p>
 
@@ -16762,7 +16846,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 18px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.alertsDescription',
-                    'Supervisión de posibles abusos, usos poco creíbles o acciones promocionales no justificadas en Beneficios Padbol.',
+                'Monitor unusual PadCoins activity and follow the recommended action.',
                   )}
                 </p>
 
@@ -16812,7 +16896,7 @@ export default function AdminDashboard({
                       </span>
                       <select value={pcAlertFiltroSeveridad} onChange={(e) => setPcAlertFiltroSeveridad(e.target.value)} style={pcInp}>
                         {PC_ALERT_SEVERIDAD_FILTRO.map((opt) => (
-                          <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                          <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                         ))}
                       </select>
                     </label>
@@ -16822,7 +16906,7 @@ export default function AdminDashboard({
                       </span>
                       <select value={pcAlertFiltroTipo} onChange={(e) => setPcAlertFiltroTipo(e.target.value)} style={pcInp}>
                         {PC_ALERT_TIPO_FILTRO.map((opt) => (
-                          <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                          <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                         ))}
                       </select>
                     </label>
@@ -16920,7 +17004,7 @@ export default function AdminDashboard({
                       {pcAlertTotal > 0
                         ? t(
                           'admin.padcoins.alertsCount',
-                          'Mostrando {{from}}–{{to}} de {{total}} alertas',
+                        'Showing {{from}}–{{to}} of {{total}} alerts',
                         )
                           .replace('{{from}}', String(pcAlertPaginaInicio))
                           .replace('{{to}}', String(pcAlertPaginaFin))
@@ -16934,7 +17018,7 @@ export default function AdminDashboard({
                         const tipoBadge = padcoinsAlertTipoBadge(alerta.tipo_alerta, t);
                         const sedeAlerta = alerta.sede_nombre
                           || sedesMap[String(alerta.sede_id)]?.nombre
-                          || (alerta.sede_id != null ? `Sede ${alerta.sede_id}` : '—');
+                                  || (alerta.sede_id != null ? t('admin.sponsors.venueRef', { id: alerta.sede_id }) : '—');
                         const movs = Array.isArray(alerta.movimientos_relacionados)
                           ? alerta.movimientos_relacionados
                           : [];
@@ -17104,11 +17188,11 @@ export default function AdminDashboard({
                 {esAdminClub
                   ? t(
                     'admin.padcoins.movementsClubDescription',
-                    'Consulta de movimientos PadCoins de tu sede para resolver consultas de jugadores.',
+                    'Review the transactions generated at your venue.',
                   )
                   : t(
                     'admin.padcoins.movementsDescription',
-                    'Auditoría de acreditaciones, canjes, penalizaciones y ajustes de PadCoins en Beneficios Padbol.',
+                    'Review PadCoins transactions across the selected venues.',
                   )}
               </p>
 
@@ -17144,7 +17228,7 @@ export default function AdminDashboard({
                   <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
                     {t('admin.padcoins.movementsClubVenue', 'Movimientos de tu sede')}:{' '}
                     <strong style={{ color: 'var(--text-primary)' }}>
-                      {sedeNombre || pcMovSedeFiltroNombre || `Sede ${pcMovClubSedeId}`}
+                      {sedeNombre || pcMovSedeFiltroNombre || t('admin.sponsors.venueRef', { id: pcMovClubSedeId })}
                     </strong>
                   </p>
                 ) : null}
@@ -17169,7 +17253,7 @@ export default function AdminDashboard({
                     </span>
                     <select value={pcMovFiltroTipo} onChange={(e) => setPcMovFiltroTipo(e.target.value)} style={pcInp}>
                       {PC_MOV_TIPO_FILTRO.map((opt) => (
-                        <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                        <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                       ))}
                     </select>
                   </label>
@@ -17179,7 +17263,7 @@ export default function AdminDashboard({
                     </span>
                     <select value={pcMovFiltroRefTipo} onChange={(e) => setPcMovFiltroRefTipo(e.target.value)} style={pcInp}>
                       {PC_MOV_REF_TIPO_FILTRO.map((opt) => (
-                        <option key={opt.id || 'all'} value={opt.id}>{opt.label}</option>
+                        <option key={opt.id || 'all'} value={opt.id}>{t(`admin.padcoins.${opt.key}`)}</option>
                       ))}
                     </select>
                   </label>
@@ -17290,7 +17374,7 @@ export default function AdminDashboard({
                     {pcMovTotal > 0
                       ? t(
                         'admin.padcoins.movementsCount',
-                        'Mostrando {{from}}–{{to}} de {{total}} movimientos',
+                        'Showing {{from}}–{{to}} of {{total}} transactions',
                       )
                         .replace('{{from}}', String(pcMovPaginaInicio))
                         .replace('{{to}}', String(pcMovPaginaFin))
@@ -17324,7 +17408,7 @@ export default function AdminDashboard({
                           const badge = padcoinsMovTipoBadge(mov, t);
                           const sedeMov = mov.sede_nombre
                             || sedesMap[String(mov.sede_id)]?.nombre
-                            || (mov.sede_id != null ? `Sede ${mov.sede_id}` : '—');
+                            || (mov.sede_id != null ? t('admin.sponsors.venueRef', { id: mov.sede_id }) : '—');
                           const j = mov?.jugador;
                           const jugadorNombre = [j?.nombre, j?.apellido].filter(Boolean).join(' ').trim()
                             || String(j?.nombre || mov?.jugador_nombre || '').trim();
@@ -17333,7 +17417,7 @@ export default function AdminDashboard({
                           return (
                             <tr key={mov.id ?? `${mov.fecha}-${mov.user_id}-${mov.monto}`} style={{ borderBottom: '1px solid var(--border)' }}>
                               <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', color: 'var(--text-primary)', verticalAlign: 'top' }}>
-                                {formatPadcoinsMovFechaCorta(mov, i18n?.language === 'en' ? 'en-US' : 'es-AR')}
+                                {formatPadcoinsMovFechaCorta(mov, padbolLangToIntlLocale(i18n?.language))}
                               </td>
                               <td style={{ padding: '8px 10px', color: 'var(--text-primary)', verticalAlign: 'top' }}>
                                 {jugadorNombre || jugadorEmail ? (
@@ -17509,7 +17593,7 @@ export default function AdminDashboard({
                           setConfigNivelesLabels(prev => ({ ...prev, [key]: editandoTipoData.nombre }));
                           setConfigNiveles(prev => ({ ...prev, [key]: editandoTipoData.puntos }));
                           setEditandoTipoId(null);
-                        }} aria-label="Guardar cambios" title="Guardar cambios" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminCheckIcon size={14} /></button>
+                        }} style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✅</button>
                         <button onClick={() => setEditandoTipoId(null)}
                           style={{ padding: '3px 8px', background: '#999', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
                       </td>
@@ -17525,9 +17609,9 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
-                          aria-label="Editar nivel" title="Editar nivel" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminEditIcon size={14} /></button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
                         <button onClick={() => { if (window.confirm(t('admin.confirmaciones.deleteLevel', { name: configNivelesLabels[key] }))) setConfigNivelesHidden(prev => new Set([...prev, key])); }}
-                          aria-label="Eliminar nivel" title="Eliminar nivel" style={{ padding: '5px 7px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'inline-flex' }}><AdminDeleteIcon size={14} /></button>
+                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
                       </td>
                     </>
                   )}
@@ -17558,7 +17642,7 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
                         <button onClick={() => { setConfigTiposCustom(prev => prev.map(t => t.id === tipo.id ? { ...t, ...editandoTipoData } : t)); setEditandoTipoId(null); }}
-                          aria-label="Guardar cambios" title="Guardar cambios" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminCheckIcon size={14} /></button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✅</button>
                         <button onClick={() => setEditandoTipoId(null)}
                           style={{ padding: '3px 8px', background: '#999', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
                       </td>
@@ -17572,9 +17656,9 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
-                          aria-label="Editar nivel" title="Editar nivel" style={{ padding: '5px 7px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px', display: 'inline-flex' }}><AdminEditIcon size={14} /></button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
                         <button onClick={() => setConfigTiposCustom(prev => prev.filter(t => t.id !== tipo.id))}
-                          aria-label="Eliminar nivel" title="Eliminar nivel" style={{ padding: '5px 7px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'inline-flex' }}><AdminDeleteIcon size={14} /></button>
+                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
                       </td>
                     </>
                   )}
@@ -18051,109 +18135,6 @@ export default function AdminDashboard({
                 />
               </div>
             </div>
-            {adminRoleEdit ? (
-              <form
-                onSubmit={guardarEdicionRolAdmin}
-                style={{
-                  marginBottom: '16px',
-                  padding: '16px',
-                  border: '1px solid var(--accent)',
-                  borderRadius: '10px',
-                  background: 'var(--bg-page)',
-                  display: 'grid',
-                  gap: '12px',
-                }}
-              >
-                <div>
-                  <strong style={{ color: 'var(--text-primary)' }}>Editar administrador</strong>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '3px' }}>
-                    {adminRoleEdit.email}
-                  </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Nombre
-                    <input
-                      value={adminRoleEdit.nombre}
-                      onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, nombre: e.target.value }))}
-                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
-                    />
-                  </label>
-                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Rol
-                    <select
-                      value={adminRoleEdit.role}
-                      onChange={(e) => setAdminRoleEdit((prev) => ({
-                        ...prev,
-                        role: e.target.value,
-                        alcance: e.target.value === 'empleado' ? 'sede' : prev.alcance,
-                      }))}
-                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
-                    >
-                      <option value="admin_club">Administrador de sede</option>
-                      <option value="admin_nacional">Administrador nacional</option>
-                      <option value="empleado">Empleado de sede</option>
-                    </select>
-                  </label>
-                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Alcance
-                    <select
-                      value={adminRoleEdit.alcance}
-                      disabled={adminRoleEdit.role === 'empleado'}
-                      onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, alcance: e.target.value }))}
-                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
-                    >
-                      <option value="sede">Sede</option>
-                      <option value="ciudad">Ciudad</option>
-                      <option value="provincia">Provincia</option>
-                      <option value="pais">País</option>
-                    </select>
-                  </label>
-                </div>
-                {adminRoleEdit.alcance === 'sede' ? (
-                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
-                    Sede asignada
-                    <select
-                      required
-                      value={adminRoleEdit.sede_id}
-                      onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, sede_id: e.target.value }))}
-                      style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
-                    >
-                      <option value="">Elegir sede</option>
-                      {Object.values(sedesMap).sort((a, b) => String(a.nombre || '').localeCompare(String(b.nombre || ''))).map((sede) => (
-                        <option key={sede.id} value={String(sede.id)}>{sede.nombre || `Sede ${sede.id}`}</option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
-                {adminRoleEdit.alcance === 'ciudad' ? (
-                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
-                    Ciudad
-                    <input required value={adminRoleEdit.ciudad} onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, ciudad: e.target.value }))} style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
-                  </label>
-                ) : null}
-                {adminRoleEdit.alcance === 'provincia' ? (
-                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
-                    Provincia
-                    <input required value={adminRoleEdit.provincia} onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, provincia: e.target.value }))} style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
-                  </label>
-                ) : null}
-                {adminRoleEdit.alcance === 'pais' ? (
-                  <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '440px' }}>
-                    País
-                    <input required value={adminRoleEdit.pais} onChange={(e) => setAdminRoleEdit((prev) => ({ ...prev, pais: e.target.value }))} style={{ padding: '8px 10px', borderRadius: '7px', border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)' }} />
-                  </label>
-                ) : null}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  <button type="submit" disabled={adminRoleEditSaving} style={{ padding: '8px 12px', border: 'none', borderRadius: '7px', background: 'var(--accent)', color: '#fff', cursor: adminRoleEditSaving ? 'not-allowed' : 'pointer', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <AdminSaveIcon size={15} /> {adminRoleEditSaving ? 'Guardando...' : 'Guardar cambios'}
-                  </button>
-                  <button type="button" onClick={() => setAdminRoleEdit(null)} disabled={adminRoleEditSaving} style={{ padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '7px', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}>
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            ) : null}
             <div style={{ overflowX: rolesTabViewportNarrow ? 'visible' : 'auto' }}>
               <table
                 style={{
@@ -18260,16 +18241,25 @@ export default function AdminDashboard({
                             {row.role === 'super_admin' ? (
                               <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
                             ) : (
-                              <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch', gap: '6px', maxWidth: '100%' }}>
-                                {row.role !== 'editor_contenido' ? (
-                                  <button type="button" onClick={() => abrirEdicionRolAdmin(row)} style={{ padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                                    <AdminEditIcon size={13} /> Editar
-                                  </button>
-                                ) : null}
-                                <button type="button" onClick={() => void revocarRolAdmin(row.email)} style={{ padding: '6px 10px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: 700, whiteSpace: 'normal', maxWidth: '100%', lineHeight: 1.2, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                                  <AdminDeleteIcon size={13} /> Revocar rol
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => void revocarRolAdmin(row.email)}
+                                style={{
+                                  padding: '6px 10px',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  background: '#dc2626',
+                                  color: '#fff',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  whiteSpace: 'normal',
+                                  maxWidth: '100%',
+                                  lineHeight: 1.2,
+                                }}
+                              >
+                                Revocar rol
+                              </button>
                             )}
                           </td>
                         </tr>
@@ -18284,10 +18274,11 @@ export default function AdminDashboard({
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>
                             {row.role === 'editor_contenido' ? t('admin.roles.editorScopeLabel') : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'sede'
-                              ? row.sede_nombre || `Sede ${row.sede_id || '—'}`
+                              ? row.sede_nombre || t('admin.sponsors.venueRef', { id: row.sede_id || '—' })
                               : null}
-                            {row.role !== 'editor_contenido' && row.alcance === 'ciudad' ? row.ciudad || '—' : null}
-                            {row.role !== 'editor_contenido' && row.alcance === 'provincia' ? row.provincia || '—' : null}
+                            {row.role !== 'editor_contenido' && ['ciudad', 'provincia'].includes(row.alcance)
+                              ? asignacionGestionAdminTexto(row)
+                              : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'pais'
                               ? (() => {
                                   const p = String(row.pais || '').trim();
@@ -18303,16 +18294,20 @@ export default function AdminDashboard({
                             {row.role === 'super_admin' ? (
                               <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
                             ) : (
-                              <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '6px' }}>
-                                {row.role !== 'editor_contenido' ? (
-                                  <button type="button" onClick={() => abrirEdicionRolAdmin(row)} style={{ padding: '5px 9px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                                    <AdminEditIcon size={13} /> Editar
-                                  </button>
-                                ) : null}
-                                <button type="button" onClick={() => void revocarRolAdmin(row.email)} style={{ padding: '5px 9px', border: 'none', borderRadius: '6px', background: '#dc2626', color: '#fff', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                                  <AdminDeleteIcon size={13} /> Revocar rol
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => void revocarRolAdmin(row.email)}
+                                style={{
+                                  padding: '4px 9px',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  background: '#dc2626',
+                                  color: '#fff',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Revocar rol
+                              </button>
                             )}
                           </td>
                         </tr>
@@ -18333,7 +18328,7 @@ export default function AdminDashboard({
                 Editor de contenido del hub
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.45, marginBottom: '14px', maxWidth: 520 }}>
-                Asigná acceso solo a la sección «Personalizar Hub» (fotos, títulos y subtítulos de las cards del inicio del jugador).
+                Asigna acceso solo a la sección «Personalizar Hub» (fotos, títulos y subtítulos de las cards del inicio del jugador).
               </p>
               {editorContenidoAsignado ? (
                 <div
@@ -18497,9 +18492,17 @@ export default function AdminDashboard({
             visibles.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-            <button type="button" className="btn-primary" onClick={() => navigate('/admin/recorridos-externos')}>
-              Revisar recorridos de jugadores
-            </button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button type="button" className="btn-primary" onClick={() => navigate('/admin/recorridos-externos')}>
+                Revisar recorridos de jugadores
+              </button>
+              <button type="button" className="btn-primary" onClick={() => navigate('/admin/fipa-jugadores')}>
+                Gestionar 209 jugadores FIPA
+              </button>
+              <button type="button" className="btn-primary" onClick={() => navigate('/admin/fipa-biblioteca')}>
+                Revisar accesos a documentos FIPA
+              </button>
+            </div>
           </div>
           <div
             style={{
@@ -19050,7 +19053,7 @@ export default function AdminDashboard({
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'efectivo' ? (
                   <p className="admin-editar-sede-hint" style={{ margin: '0 0 12px' }}>
-                    Reservas sin Mercado Pago ni Stripe; el jugador paga al llegar. Sin fee del 3% en el flujo de reserva.
+                    Reservas sin procesador online; el jugador paga al llegar a la sede.
                   </p>
                 ) : null}
                 {String(editarSedeDraft.metodo_pago || '') === 'manual' ? (
@@ -19669,7 +19672,7 @@ export default function AdminDashboard({
                     type="text"
                     maxLength={80}
                     value={miSedeForm.slogan || ''}
-                    placeholder="Ej: El mejor padbol de la zona"
+                    placeholder={t('admin.sedes.taglinePlaceholder')}
                     onChange={(e) => setMiSedeForm((p) => ({ ...p, slogan: e.target.value.slice(0, 80) }))}
                     className="admin-mi-sede-theme-input"
                     style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
@@ -19678,7 +19681,7 @@ export default function AdminDashboard({
                     {(miSedeForm.slogan || '').length}/80
                   </div>
                   <p className="admin-mi-sede-theme-muted" style={{ margin: '4px 0 0', fontSize: '11px', lineHeight: 1.45 }}>
-                    Tagline corta debajo del nombre en <strong>/sede/…</strong>.
+                    {t('admin.sedes.taglineHint')} <strong>/sede/…</strong>.
                   </p>
                 </div>
               </div>
@@ -19691,7 +19694,7 @@ export default function AdminDashboard({
                     rows={4}
                     maxLength={300}
                     value={miSedeForm.descripcion || ''}
-                    placeholder="Contá en pocas líneas qué ofrece tu club…"
+                    placeholder={t('admin.sedes.aboutPlaceholder')}
                     onChange={e => setMiSedeForm(p => ({ ...p, descripcion: e.target.value }))}
                     className="admin-mi-sede-theme-input"
                     style={{ width: '100%', maxWidth: '100%', padding: '7px 10px', borderRadius: '6px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
@@ -19759,7 +19762,7 @@ export default function AdminDashboard({
                     <input
                       type="text"
                       value={miSedeCustomAmenity}
-                      placeholder="Otra instalación (ej. Cafetería)"
+                      placeholder={t('admin.sedes.customAmenityPlaceholder')}
                       maxLength={50}
                       onChange={(e) => setMiSedeCustomAmenity(e.target.value)}
                       className="admin-mi-sede-theme-input"
@@ -19777,7 +19780,7 @@ export default function AdminDashboard({
                       }}
                       style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }}
                     >
-                      Agregar
+                      {t('admin.sedes.addAmenity')}
                     </button>
                   </div>
                   {[...amenitiesArrayToSelectionSet(miSedeForm.amenities)].filter((key) => key.startsWith('custom:')).map((key) => (
@@ -20829,7 +20832,7 @@ export default function AdminDashboard({
                     fontSize: '13px',
                   }}
                 >
-                  + Agregar franja
+                  + {t('admin.franjas.addSlot')}
                 </button>
                 <button
                   type="button"
@@ -21170,7 +21173,7 @@ export default function AdminDashboard({
                       value={miSedeForm.stripe_account_id || ''}
                       placeholder={
                         miSedePagos.stripe_configurado === true
-                          ? t('admin.sedes.stripeAccountReplacePh', { defaultValue: 'Ingresá una nueva credencial para reemplazar la actual' })
+                          ? t('admin.sedes.stripeAccountReplacePh', { defaultValue: 'Ingresa una nueva credencial para reemplazar la actual' })
                           : t('admin.sedes.stripeAccountPh')
                       }
                       onChange={(e) => setMiSedeForm((p) => ({ ...p, stripe_account_id: e.target.value }))}
@@ -21341,7 +21344,7 @@ export default function AdminDashboard({
                   {miSedeForm.surge_activo ? (
                       surgeCanchasReady && surgeDeportesOptions.length === 0 ? (
                         <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                          Configurá el deporte de tus canchas para activar Surge por deporte.
+                          Configura el deporte de tus canchas para activar Surge por deporte.
                         </p>
                       ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
@@ -21379,7 +21382,7 @@ export default function AdminDashboard({
                                       persistSurgeConfigDeporte(key, next);
                                     }}
                                   />
-                                  Activo
+                                  {t('admin.franjas.surgeActive')}
                                   {saving ? (
                                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>
                                       {t('admin.metricas.savingEllipsis')}
@@ -21390,16 +21393,16 @@ export default function AdminDashboard({
                               {[
                                 {
                                   field: 'descuento_max_pct',
-                                  label: 'Descuento máximo (%)',
-                                  helper: 'precio mínimo posible',
+                                  label: t('admin.franjas.surgeMaxDiscount'),
+                                  helper: t('admin.franjas.surgeMinPrice'),
                                   min: 0,
                                   max: 50,
                                   fallback: 20,
                                 },
                                 {
                                   field: 'aumento_max_pct',
-                                  label: 'Aumento máximo (%)',
-                                  helper: 'precio máximo posible',
+                                  label: t('admin.franjas.surgeMaxIncrease'),
+                                  helper: t('admin.franjas.surgeMaxPrice'),
                                   min: 0,
                                   max: 100,
                                   fallback: 40,
@@ -21437,7 +21440,7 @@ export default function AdminDashboard({
                                 </div>
                               ))}
                               <p style={{ margin: '6px 0 0', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
-                                {previewLine ?? '90 min: configurá el precio base de 90 min en Precios por duración para ver la vista previa'}
+                                {previewLine ?? t('admin.franjas.surgePreviewMissing')}
                               </p>
                             </div>
                           );
@@ -21459,7 +21462,7 @@ export default function AdminDashboard({
                                 fontSize: '13px',
                               }}
                             >
-                              {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : 'Guardar Surge'}
+                              {surgeSaveAllBusy ? t('admin.metricas.savingEllipsis') : t('admin.franjas.surgeSave')}
                             </button>
                             {surgeSaveMsg ? (
                               <span
@@ -21478,19 +21481,19 @@ export default function AdminDashboard({
                       )
                   ) : null}
                   <p style={{ margin: '12px 0 6px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    El precio se ajusta solo según ocupación, velocidad de reservas y horario. Siempre dentro de tu banda mínimo–máximo (% sobre el precio base).
+                    {t('admin.franjas.surgeExplanation')}
                   </p>
                   <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.45, opacity: 0.9 }}>
-                    0–30% ocupación → mínimo · 30–60% → intermedio · 60–85% → alto · 85–100% → máximo · Última hora libre → descuento automático
+                    {t('admin.franjas.surgeBands')}
                   </p>
                 </div>
 
                 <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                   <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                    🕐 Precios por Franja Horaria
+                    🕐 {t('admin.franjas.pricingTitle')}
                   </h4>
                   <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    Define precios distintos según día y horario. Cuando hay una franja activa que coincide con el turno, el precio de franja reemplaza al precio base y Surge no aplica.
+                    {t('admin.franjas.pricingHelp')}
                   </p>
                   {franjasPrecioOverlapMsg ? (
                     <div
@@ -21513,22 +21516,23 @@ export default function AdminDashboard({
 
                   {/* Tabla de franjas existentes */}
                   {franjasLoading ? (
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Cargando franjas…</p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('admin.franjas.loading')}</p>
                   ) : franjasPrecios.length === 0 ? (
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Sin franjas configuradas.</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>{t('admin.franjas.empty')}</p>
                   ) : (
                     <div style={{ overflowX: 'auto', marginBottom: '16px' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                         <thead>
                           <tr style={{ background: 'var(--accent)' }}>
-                            {['Deporte', 'Día', 'Desde', 'Hasta', '60 min', '90 min', '120 min', ''].map(h => (
+                            {[t('admin.franjas.sport'), t('admin.franjas.day'), t('admin.franjas.start'), t('admin.franjas.end'), '60 min', '90 min', '120 min', ''].map(h => (
                               <th key={h} style={{ padding: '7px 10px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--bg-card)' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {franjasPrecios.map(f => {
-                            const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                            const dias = ['sunShort', 'monShort', 'tueShort', 'wedShort', 'thuShort', 'friShort', 'satShort']
+                              .map((day) => t(`admin.franjas.${day}`));
                             return (
                               <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={{ padding: '8px 10px', textTransform: 'capitalize' }}>
@@ -21536,7 +21540,7 @@ export default function AdminDashboard({
                                     ? t('admin.sedes.customSportOption')
                                     : f.deporte}
                                 </td>
-                                <td style={{ padding: '8px 10px' }}>{f.dia_semana !== null ? dias[f.dia_semana] : 'Todos'}</td>
+                                <td style={{ padding: '8px 10px' }}>{f.dia_semana !== null ? dias[f.dia_semana] : t('admin.franjas.all')}</td>
                                 <td style={{ padding: '8px 10px' }}>{f.hora_inicio?.slice(0,5)}</td>
                                 <td style={{ padding: '8px 10px' }}>{f.hora_fin?.slice(0,5)}</td>
                                 <td style={{ padding: '8px 10px', fontWeight: 700 }}>{f.precio_60min ? precioDuracionInputDisplay(f.precio_60min) : '—'}</td>
@@ -21545,7 +21549,7 @@ export default function AdminDashboard({
                                 <td style={{ padding: '8px 6px' }}>
                                   <button type="button" onClick={() => deleteFranja(f.id)}
                                     style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #fca5a5', background: 'transparent', color: '#fca5a5', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                                    Eliminar
+                                    {t('admin.franjas.deleteSlot')}
                                   </button>
                                 </td>
                               </tr>
@@ -21558,10 +21562,10 @@ export default function AdminDashboard({
 
                   {/* Formulario nueva franja */}
                   <div style={{ padding: '14px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--bg-card)', display: 'grid', gap: '10px' }}>
-                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Nueva franja</p>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{t('admin.franjas.newSlot')}</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Deporte</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.sport')}</label>
                         <select value={franjaDraft.deporte} onChange={e => setFranjaDraft(p => ({ ...p, deporte: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
                           {DEPORTES_CANCHA_SEDE_OPTIONS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
@@ -21569,26 +21573,26 @@ export default function AdminDashboard({
                         </select>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Día</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.day')}</label>
                         <select value={franjaDraft.dia_semana} onChange={e => setFranjaDraft(p => ({ ...p, dia_semana: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
-                          <option value=''>Todos los días</option>
-                          {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map((d,i) => <option key={i} value={i}>{d}</option>)}
+                          <option value=''>{t('admin.franjas.allDays')}</option>
+                          {['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].map((day,i) => <option key={day} value={i}>{t(`admin.franjas.${day}`)}</option>)}
                         </select>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Desde</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.start')}</label>
                         <input type="time" value={franjaDraft.hora_inicio} onChange={e => setFranjaDraft(p => ({ ...p, hora_inicio: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Hasta</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.end')}</label>
                         <input type="time" value={franjaDraft.hora_fin} onChange={e => setFranjaDraft(p => ({ ...p, hora_fin: e.target.value }))}
                           style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
                       </div>
                       {['60', '90', '120'].map(min => (
                         <div key={min} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Precio {min} min</label>
+                          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{t('admin.franjas.priceMinutes', { min })}</label>
                           <input type="text" inputMode="numeric" placeholder="0"
                             value={precioDuracionInputDisplay(franjaDraft[`precio_${min}min`])}
                             onChange={e => { const digits = e.target.value.replace(/\./g, '').replace(/[^\d]/g, ''); setFranjaDraft(p => ({ ...p, [`precio_${min}min`]: digits })); }}
@@ -21615,7 +21619,7 @@ export default function AdminDashboard({
                       ) : null}
                       <button type="button" onClick={saveFranja} disabled={franjaSaving || !!franjasPrecioOverlapMsg}
                         style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: franjaSaving || franjasPrecioOverlapMsg ? '#94a3b8' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: franjaSaving || franjasPrecioOverlapMsg ? 'not-allowed' : 'pointer', alignSelf: 'flex-end' }}>
-                        {franjaSaving ? 'Guardando…' : 'Agregar franja'}
+                        {franjaSaving ? t('admin.metricas.savingEllipsis') : t('admin.franjas.addSlot')}
                       </button>
                     </div>
                     {franjaPreciosMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjaPreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{franjaPreciosMsg}</p> : null}
@@ -21797,7 +21801,7 @@ export default function AdminDashboard({
             ) : null}
             <div style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
               <p style={{ margin: 0 }}>
-                Elegí una foto del hero con el botón en cada imagen. El resto aparece en el carrusel público en el orden de subida.
+                Elige una foto del hero con el botón en cada imagen. El resto aparece en el carrusel público en el orden de subida.
               </p>
             </div>
             {heroToast ? (
@@ -21815,12 +21819,12 @@ export default function AdminDashboard({
                     <div key={url} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', background: '#f1f5f9' }}>
                       <img
                         src={url}
-                        alt={`Cancha ${i + 1}`}
+                        alt={t('admin.sedes.courtPhotoAlt', { number: i + 1 })}
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       />
                       {isHeroFoto ? (
-                        <span className="admin-mi-sede-photo-hero-current" title="Fondo del hero en la página pública">
-                          ✓ Foto del hero
+                        <span className="admin-mi-sede-photo-hero-current" title={t('admin.sedes.heroPhotoTitle')}>
+                          ✓ {t('admin.sedes.heroPhotoCurrent')}
                         </span>
                       ) : (
                         <button
@@ -21828,9 +21832,9 @@ export default function AdminDashboard({
                           className="admin-mi-sede-photo-hero-btn"
                           onClick={() => void usarComoHero(url)}
                           disabled={fotoPortadaSaving}
-                          title="Usar como foto del hero en la página pública"
+                          title={t('admin.sedes.useAsHeroPhotoTitle')}
                         >
-                          Usar como foto del hero
+                          {t('admin.sedes.useAsHeroPhoto')}
                         </button>
                       )}
                       <button
@@ -22577,7 +22581,7 @@ export default function AdminDashboard({
           >
             <h3 style={{ margin: '0 0 8px', fontSize: '18px' }}>🔗 Magic link de acceso</h3>
             <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.45, fontWeight: 500 }}>
-              Enlace de inicio de sesión para <strong>{inviteMagicLinkModal.email}</strong>. Compartilo por un canal
+              Enlace de inicio de sesión para <strong>{inviteMagicLinkModal.email}</strong>. Compártelo por un canal
               seguro si Make no envió el email automáticamente. Válido un solo uso (Supabase Auth).
             </p>
             {inviteMagicLinkModal.invite_url ? (

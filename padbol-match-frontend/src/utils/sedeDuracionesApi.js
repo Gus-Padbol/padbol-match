@@ -1,7 +1,5 @@
-const DEFAULT_API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+import { getApiBaseUrl } from './apiPublicBaseUrl';
+const DEFAULT_API_BASE = getApiBaseUrl();
 
 export const MI_SEDE_PRECIOS_DEPORTE_OPTIONS = [
   { value: '__base__', label: 'Base / Todas las disciplinas' },

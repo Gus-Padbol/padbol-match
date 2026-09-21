@@ -1,11 +1,7 @@
-import { getPublicApiBaseUrl } from './apiPublicBaseUrl';
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 import { normalizeUserRole } from './adminPanelRoles';
 
-const API_BASE =
-  getPublicApiBaseUrl() ||
-  (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com');
+const API_BASE = getApiBaseUrl();
 
 const MI_ROL_PATHS = ['/api/auth/mi-rol', '/api/usuarios/mi-rol'];
 
@@ -16,6 +12,7 @@ function parseMiRolResponse(data) {
   const sedeIdRaw = data.sedeId ?? data.sede_id;
   const sedeIdNum = sedeIdRaw != null && sedeIdRaw !== '' ? Number(sedeIdRaw) : null;
   const rolRaw = data.rol ?? data.role;
+  const organizacionId = data.organizacionId ?? data.organizacion_id ?? null;
 
   return {
     email,
@@ -23,6 +20,7 @@ function parseMiRolResponse(data) {
     nombre: data.nombre ?? null,
     pais: data.pais ?? null,
     sedeId: Number.isFinite(sedeIdNum) ? sedeIdNum : null,
+    organizacionId: organizacionId ? String(organizacionId) : null,
     torneosOficialesHabilitados: Boolean(data.torneosOficialesHabilitados),
   };
 }

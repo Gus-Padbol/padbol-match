@@ -5,8 +5,10 @@ import BottomNav from '../components/BottomNav';
 import ClaseDetalle from '../components/Clases/ClaseDetalle';
 import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/hubLayout';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 export default function ClaseDetallePage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -22,7 +24,7 @@ export default function ClaseDetallePage() {
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="Detalle de clase" />
+      <AppHeader title={t('clases.detalle')} />
       <main style={{ width: '100%', maxWidth: 460, margin: '0 auto', padding: '16px 14px 24px', boxSizing: 'border-box' }}>
         <ClaseDetalle claseId={claseId} />
       </main>

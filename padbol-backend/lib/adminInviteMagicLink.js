@@ -1,6 +1,7 @@
 /** Roles admitidos en POST /api/admin/invite-magic-link */
 export const MAGIC_INVITE_ROLES = new Set([
   'editor_contenido',
+  'admin_cadena',
   'admin_club',
   'admin_nacional',
   'empleado',

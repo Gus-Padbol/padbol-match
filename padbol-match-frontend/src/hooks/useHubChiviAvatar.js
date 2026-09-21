@@ -1,10 +1,9 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import { useEffect, useState } from 'react';
 import { CHIVI_AVATAR_DEFAULT_SRC, HUB_CHIVI_CONFIG_ID } from '../constants/hubChiviConfig';
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 /**

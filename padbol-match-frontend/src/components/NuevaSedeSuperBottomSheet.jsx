@@ -3,6 +3,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { codigoTelefonicoDesdePaisLabel } from '../utils/sedeWhatsappPais';
+import { validateSedeRequiredConfiguration } from '../utils/sedeRequiredConfiguration';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim(), codigo: p.codigo }))
@@ -117,6 +118,10 @@ const initialState = () => ({
   email_contacto: '',
   telefonoCodigo: '+54',
   telefonoLocal: '',
+  precio_turno: '',
+  moneda: 'ARS',
+  horario_apertura: '',
+  horario_cierre: '',
 });
 
 export default function NuevaSedeSuperBottomSheet({
@@ -135,6 +140,7 @@ export default function NuevaSedeSuperBottomSheet({
   const [planPricing, setPlanPricing] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [configurationError, setConfigurationError] = useState('');
   const [placesInputValue, setPlacesInputValue] = useState('');
   /** Input DOM al que se adjunta `google.maps.places.Autocomplete`. */
   const direccionInputRef = useRef(null);
@@ -147,6 +153,7 @@ export default function NuevaSedeSuperBottomSheet({
 
   useEffect(() => {
     if (!open) return;
+    setConfigurationError('');
     const base = initialState();
     if (inviteToken && invitePrefill) {
       const paisPrefill = String(invitePrefill.pais || '').trim() || base.pais;
@@ -175,6 +182,7 @@ export default function NuevaSedeSuperBottomSheet({
   }, [st.direccion]);
 
   const setField = useCallback((key, val) => {
+    setConfigurationError('');
     setSt((prev) => {
       if (key !== 'pais') return { ...prev, [key]: val };
       const nextCodigo = codigoTelefonicoDesdePaisLabel(val);
@@ -246,6 +254,15 @@ export default function NuevaSedeSuperBottomSheet({
   }, []);
 
   const crearSede = useCallback(async () => {
+    if (saving) return;
+    const configuration = validateSedeRequiredConfiguration(st);
+    if (!configuration.ok) {
+      setConfigurationError(configuration.error === 'price'
+        ? t('admin.formularios.validPriceRequired')
+        : `${t('torneos.create.requiredFieldsError')} ${t('admin.sedes.openingTime')} / ${t('admin.sedes.closingTime')} (HH:mm)`);
+      return;
+    }
+    setConfigurationError('');
     if (!String(st.email_contacto || '').trim()) {
       alert('El email de contacto es obligatorio.');
       return;
@@ -270,13 +287,13 @@ export default function NuevaSedeSuperBottomSheet({
         email_contacto: String(st.email_contacto || '').trim().toLowerCase(),
         telefono: telefonoFull,
         metodo_pago: 'mercadopago',
-        precio_turno: null,
-        moneda: 'ARS',
+        precio_turno: configuration.fields.precio_turno,
+        moneda: st.moneda,
         google_maps_url: null,
         latitud: st.latitud != null ? Number(st.latitud) : null,
         longitud: st.longitud != null ? Number(st.longitud) : null,
-        horario_apertura: null,
-        horario_cierre: null,
+        horario_apertura: configuration.fields.horario_apertura,
+        horario_cierre: configuration.fields.horario_cierre,
         cantidad_canchas: totalCanchas,
         skip_autogen_canchas: true,
       };
@@ -325,7 +342,7 @@ export default function NuevaSedeSuperBottomSheet({
     } finally {
       setSaving(false);
     }
-  }, [apiBaseUrl, accessToken, inviteToken, onClose, onSuccess, st, totalCanchas]);
+  }, [apiBaseUrl, accessToken, inviteToken, onClose, onSuccess, saving, st, t, totalCanchas]);
 
   const applyPlaceFromGoogle = useCallback((place) => {
     try {
@@ -670,8 +687,27 @@ export default function NuevaSedeSuperBottomSheet({
             <p style={{ margin: 0, fontSize: 14, color: '#64748b', lineHeight: 1.45 }}>
               {inviteToken
                 ? 'El email debe ser el mismo que recibió la invitación. Después del alta podrás ingresar al panel como admin del club (revisa tu correo para definir la contraseña).'
-                : 'Precio, mapa, método de pago y el resto los configura el admin del club desde su panel después del alta.'}
+                : 'Completa el precio y los horarios de la sede. El admin del club podrá actualizarlos desde su panel.'}
             </p>
+            {configurationError ? <p role="alert" style={{ margin: 0, color: '#b91c1c', fontWeight: 700 }}>{configurationError}</p> : null}
+            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+              {t('admin.formularios.price')} *
+              <input type="number" inputMode="numeric" min="0" max="2147483647" step="1" required value={st.precio_turno} onChange={(e) => setField('precio_turno', e.target.value)} style={{ ...inputBase, marginTop: 8 }} />
+            </label>
+            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+              {t('admin.sedes.currency')}
+              <select value={st.moneda} onChange={(e) => setField('moneda', e.target.value)} style={{ ...inputBase, marginTop: 8 }}>
+                {['ARS', 'USD', 'EUR'].map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+              </select>
+            </label>
+            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+              {t('admin.sedes.openingTime')} *
+              <input type="time" required value={st.horario_apertura} onChange={(e) => setField('horario_apertura', e.target.value)} style={{ ...inputBase, marginTop: 8 }} />
+            </label>
+            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+              {t('admin.sedes.closingTime')} *
+              <input type="time" required value={st.horario_cierre} onChange={(e) => setField('horario_cierre', e.target.value)} style={{ ...inputBase, marginTop: 8 }} />
+            </label>
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
               Email de contacto *
               <input

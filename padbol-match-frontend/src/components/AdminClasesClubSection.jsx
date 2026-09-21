@@ -265,7 +265,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
           <select className="admin-mi-sede-theme-input" value={form.cancha_id} onChange={(e) => setForm((f) => ({ ...f, cancha_id: e.target.value }))} style={inputStyle}>
             <option value="">Sin cancha</option>
             {canchas.map((c) => (
-              <option key={c.id} value={c.id}>{c.nombre || `Cancha ${c.id}`}</option>
+              <option key={c.id} value={c.id}>{c.nombre || `${t('admin.reservas.courtNumberPrefix')}${c.id}`}</option>
             ))}
           </select>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.metricas.sportLabel')}</label>

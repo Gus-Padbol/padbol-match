@@ -13,12 +13,32 @@ function err(msg) {
   return { message: msg };
 }
 
+function safeInternalEmailRedirectPath(raw) {
+  const path = String(raw || '').trim();
+  if (!path.startsWith('/') || path.startsWith('//')) return null;
+  return path.split('#')[0];
+}
+
+/** Construye el callback de confirmación sin aceptar dominios aportados por el cliente. */
+export function buildSignUpEmailRedirectUrl(
+  origin,
+  { emailRedirectPath = null, hasReservaFormRestore = false } = {},
+) {
+  const base = String(origin || '').replace(/\/$/, '');
+  if (!base) return undefined;
+  const requestedPath = safeInternalEmailRedirectPath(emailRedirectPath);
+  if (requestedPath) {
+    return `${base}/login?redirect=${encodeURIComponent(requestedPath)}`;
+  }
+  return `${base}${hasReservaFormRestore ? '/reservar' : '/login'}`;
+}
+
 /**
  * Única vía para mutaciones de auth con contraseña (signIn, signUp, updateUser).
  * No reintenta. No usar dentro de useEffect — solo en handlers (click / submit).
  *
  * @param {{ kind: 'signIn'; email: string; password: string }
- *   | { kind: 'signUp'; email: string; password: string; options?: object }
+ *   | { kind: 'signUp'; email: string; password: string; emailRedirectPath?: string|null; options?: object }
  *   | { kind: 'updateUser'; updates: { password?: string } }} payload
  * @returns {Promise<{ data: object; error: object | null }>}
  */
@@ -74,10 +94,11 @@ export async function handleAuthOnce(payload) {
     }
     if (kind === 'signUp') {
       const emailTrim = String(payload.email).trim();
-      const localPart = emailTrim.split('@')[0] || '';
       const prevData =
         payload.options?.data && typeof payload.options.data === 'object' ? payload.options.data : {};
-      const nombreMeta = String(prevData.nombre || '').trim() || localPart;
+      // La identidad visible se completa dentro de la cuenta. No convertir la
+      // parte local del correo en un nombre de jugador provisional.
+      const nombreMeta = String(prevData.nombre || '').trim() || 'Jugador';
       const origin =
         typeof window !== 'undefined' && window.location?.origin ? String(window.location.origin) : '';
       const reservaRestoreRaw =
@@ -87,9 +108,10 @@ export async function handleAuthOnce(payload) {
           : null;
       const hasReservaFormRestore =
         reservaRestoreRaw != null && String(reservaRestoreRaw).trim() !== '';
-      const emailRedirectTo = origin
-        ? `${origin}${hasReservaFormRestore ? '/reservar' : '/login'}`
-        : undefined;
+      const emailRedirectTo = buildSignUpEmailRedirectUrl(origin, {
+        emailRedirectPath: payload.emailRedirectPath,
+        hasReservaFormRestore,
+      });
       return await supabase.auth.signUp({
         email: emailTrim,
         password: String(payload.password),

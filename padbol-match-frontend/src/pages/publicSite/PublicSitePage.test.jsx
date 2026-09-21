@@ -5,6 +5,7 @@ import PublicSitePage from './PublicSitePage';
 jest.mock('react-router-dom', () => ({
   Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a>,
   useLocation: () => ({ pathname: '/plataforma' }),
+  useNavigate: () => jest.fn(),
 }), { virtual: true });
 
 jest.mock('../../i18n/tSafe', () => {
@@ -21,7 +22,16 @@ jest.mock('../../i18n/tSafe', () => {
   return {
     ES_FALLBACKS: catalog,
     useSafeTranslation: () => ({
-      t: (key, fallback) => catalog[key] || fallback || key,
+      t: (key, fallbackOrOptions) => {
+        const options = fallbackOrOptions && typeof fallbackOrOptions === 'object'
+          ? fallbackOrOptions
+          : {};
+        const fallback = typeof fallbackOrOptions === 'string' ? fallbackOrOptions : '';
+        return String(catalog[key] || fallback || key).replace(
+          /{{\s*([^}\s]+)\s*}}/g,
+          (token, name) => (options[name] == null ? '' : String(options[name])),
+        );
+      },
     }),
   };
 });
@@ -36,6 +46,9 @@ jest.mock('../../components/LanguageSwitcher', () => function Language() {
   return <button type="button">Idioma</button>;
 });
 jest.mock('../../components/CookieConsentBanner', () => function Cookies() {
+  return null;
+});
+jest.mock('../../components/ChatbotIASafe', () => function Chatbot() {
   return null;
 });
 
@@ -133,7 +146,7 @@ describe('/plataforma public site', () => {
     const ctas = hero.querySelector('.ps-hero__ctas');
     const globe = hero.querySelector('.ps-globe');
     expect(logo).toBeTruthy();
-    expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo.');
+    expect(claim).toHaveTextContent('La aplicación deportiva que conecta todo');
     expect(lead).toHaveTextContent(
       'Juego, operación y comunidad. Nace con Padbol y está lista para otros deportes de cancha.',
     );
@@ -170,12 +183,35 @@ describe('/plataforma public site', () => {
     expect(css).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
   });
 
-  it('mantiene el header intacto con logo pequeño e Ingresar', () => {
+  it('mantiene el header con acceso visible al formulario', () => {
     const { container } = renderPage();
     expect(container.querySelector('.public-site__nav')).toBeTruthy();
     expect(container.querySelector('.public-site__brand-logo')).toBeTruthy();
-    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', 'https://www.padbolmatch.com/acceso?login=1');
+    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
+    expect(container.querySelectorAll('a[href="/acceso"]')).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeTruthy();
+  });
+
+  it('abre el menú móvil como diálogo superpuesto y lo cierra sin dejar bloqueado el scroll', () => {
+    const { container } = renderPage();
+    const trigger = screen.getByRole('button', { name: 'Abrir menú' });
+
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('dialog', { name: 'Navegación principal' })).toBeVisible();
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(container.querySelector('.public-site__mobile-nav')).toHaveClass('is-open');
+    expect(container.querySelector('.public-site__mobile-backdrop')).toBeVisible();
+    expect(container.querySelector('.public-site__mobile-close')).toBeVisible();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(document.body.style.overflow).toBe('');
+
+    fireEvent.click(trigger);
+    fireEvent.click(container.querySelector('.public-site__mobile-backdrop'));
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(document.body.style.overflow).toBe('');
   });
 
   it('expone navegación, CTAs prioritarios y stores no activos', () => {
@@ -188,9 +224,10 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Descargar la app' })[0]).toHaveAttribute('href', '#descargar');
     expect(screen.queryByRole('link', { name: 'Conocer la plataforma' })).toBeNull();
     expect(screen.getAllByRole('link', { name: /Quiero jugar/i })[0]).toHaveAttribute('href', '#descargar');
-    expect(screen.getAllByRole('link', { name: 'Quiero incorporar Padbol Match' })[0])
+    expect(screen.getByRole('link', { name: 'Trae tu nivel →' })).toHaveAttribute('href', '/mi-perfil/recorrido');
+    expect(screen.getAllByRole('link', { name: 'Quiero sumar mi sede' })[0])
       .toHaveAttribute('href', '/administradores');
-    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', 'https://www.padbolmatch.com/acceso?login=1');
+    expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
     expect(document.querySelector('#nosotros')).toBeTruthy();
     expect(document.querySelector('#descargar')).toBeTruthy();
     expect(screen.getByText('App Store').closest('a')).toBeNull();
@@ -203,7 +240,8 @@ describe('/plataforma public site', () => {
     const { container } = renderPage();
     expect(container.querySelector('#tu-recorrido')).toBeTruthy();
     expect(container.querySelector('#marcador-inteligente')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: /Traé tu recorrido/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Trae tu recorrido/i })).toBeTruthy();
+    expect(container.querySelector('#tu-recorrido .ps-title-accent')).toHaveTextContent('Lo reconocemos');
     expect(screen.getByRole('heading', { name: /Marcador inteligente/i })).toBeTruthy();
     expect(container.textContent).toMatch(/mientras se juega/i);
     expect(container.textContent).toMatch(/sets y parciales/i);
@@ -211,7 +249,12 @@ describe('/plataforma public site', () => {
     expect(container.textContent).toMatch(/Cerrar el resultado/i);
     expect(container.textContent).toMatch(/historial, estadísticas, ranking y torneos/i);
     expect(container.querySelector('.ps-scoreboard__video')).toBeTruthy();
-    expect(container.textContent).toMatch(/No tenés que dejar atrás tu camino/i);
+    const sponsorGroups = container.querySelectorAll('.ps-scoreboard__sponsor-group');
+    expect(sponsorGroups).toHaveLength(2);
+    sponsorGroups.forEach((group) => {
+      expect(group.textContent).toMatch(/AURORA.*PADBOL MATCH.*NEXORA.*PADBOL MATCH.*VOLTA.*PADBOL MATCH.*ÓRBITA.*PADBOL MATCH/i);
+    });
+    expect(container.textContent).toMatch(/No te pedimos que abandones nada/i);
   });
 
   it('muestra las cinco experiencias y diferencia expansión futura', () => {

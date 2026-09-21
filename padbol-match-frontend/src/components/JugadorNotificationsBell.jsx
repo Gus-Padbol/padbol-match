@@ -1,3 +1,6 @@
+import { normalizePlayerNotifications, markPlayerNotificationsRead } from '../utils/playerNotificationsApi';
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -5,9 +8,7 @@ import { supabase } from '../supabaseClient';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 function tipoEtiquetaNotif(t, tipo) {
@@ -26,14 +27,15 @@ function tipoEtiquetaNotif(t, tipo) {
   return map[tipo] || t('notificaciones.tipo.aviso');
 }
 
-function fechaNotifLabel(value) {
+function fechaNotifLabel(value, locale) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+  return d.toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' });
 }
 
 export default function JugadorNotificationsBell({ compact = false, headerLight = false }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = padbolLangToIntlLocale(i18n.resolvedLanguage || i18n.language);
   const navigate = useNavigate();
   const { session } = useAuth();
   const [open, setOpen] = useState(false);
@@ -62,7 +64,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
       const res = await fetch(`${API_BASE}/api/notificaciones`, { headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'No se pudieron cargar notificaciones');
-      const rows = Array.isArray(data) ? data : [];
+      const rows = normalizePlayerNotifications(data);
       setItems(rows);
       return rows;
     } catch (err) {
@@ -73,22 +75,17 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
     }
   }, [authHeaders, session?.user]);
 
-  const markRead = useCallback(async (ids = []) => {
+  const markRead = useCallback(async (ids = [], { all = false } = {}) => {
     if (!session?.user) return;
-    const normalized = ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
-    if (!normalized.length) return;
-    setItems((prev) => prev.map((n) => (normalized.includes(Number(n.id)) ? { ...n, leida: true } : n)));
+    setMsg('');
     try {
       const headers = await authHeaders();
-      await fetch(`${API_BASE}/api/notificaciones/leer`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        body: JSON.stringify({ ids: normalized }),
-      });
-    } catch {
-      /* el polling corrige estado si falla */
+      const confirmed = await markPlayerNotificationsRead(ids, { headers, all, apiBaseUrl: API_BASE });
+      setItems((prev) => prev.map((item) => (confirmed.includes(String(item.id)) ? { ...item, leida: true } : item)));
+    } catch (error) {
+      setMsg(error?.message && error.message !== 'notification_read_failed' ? error.message : t('general.somethingWentWrong'));
     }
-  }, [authHeaders, session?.user]);
+  }, [authHeaders, session?.user, t]);
 
   useEffect(() => {
     fetchItems({ silent: true });
@@ -220,7 +217,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
             <strong style={{ fontSize: 14 }}>Notificaciones</strong>
             <button
               type="button"
-              onClick={() => markRead(items.filter((n) => !n.leida).map((n) => n.id))}
+              onClick={() => markRead(items.filter((n) => !n.leida).map((n) => n.id), { all: true })}
               style={{ border: 'none', background: 'transparent', color: '#b91c1c', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
             >
               Marcar leídas
@@ -268,7 +265,7 @@ export default function JugadorNotificationsBell({ compact = false, headerLight 
                     {n.mensaje}
                   </span>
                   <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 11, marginTop: 6 }}>
-                    {fechaNotifLabel(n.created_at)}
+                    {fechaNotifLabel(n.created_at, dateLocale)}
                   </span>
                 </button>
               ))}

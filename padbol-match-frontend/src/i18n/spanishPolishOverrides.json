@@ -1,0 +1,34 @@
+{
+  "perfil": { "winRate": "Porcentaje de victorias" },
+  "admin": {
+    "metrics": { "scopeLabel": "Alcance", "cityLabel": "Ciudad", "provinceLabel": "Provincia / Estado", "countryLabel": "País" },
+    "profesores": { "fichaBio": "Biografía" },
+    "metricas": { "formatKnockout": "Eliminación directa" },
+    "hub": { "unsavedPromoConfirm": "Tienes cambios sin guardar en la promoción de tu sede. ¿Quieres salir y descartarlos?" },
+    "sedes": {
+      "lastDurationDeactivateConfirm": "Esta es la última duración activa. Si la desactivas, las reservas pueden quedar sin precio base. ¿Continuar?",
+      "standardDurationsOnly": "Solo se permiten duraciones de 60, 90 o 120 minutos.",
+      "durationAlreadyConfigured": "La duración de {{minutes}} minutos ya está configurada para esta disciplina.",
+      "durationAlreadyExistsSport": "Ya existe una duración de {{minutes}} minutos para {{sport}}.",
+      "lastDurationRemoveConfirm": "Esta es la última duración activa. Si la quitas, las reservas pueden quedar sin precio base. ¿Continuar?",
+      "removeDurationConfirm": "¿Quitar la duración de {{minutes}} minutos ({{sport}})?"
+      ,"guidedCourtCreateFailed": "La sede se guardó, pero no se pudo crear el Padbol Court. Puedes agregarlo desde Canchas."
+      ,"logoUploadFailed": "No se pudo subir el logo."
+      ,"logoPublicUrlMissing": "No se recibió la URL pública del logo."
+      ,"logoSaveFailed": "No se pudo guardar el logo."
+      ,"photoMustBeInGallery": "La foto debe estar en la galería."
+      ,"heroPhotoUpdated": "Foto de portada actualizada"
+      ,"taglineHint": "Frase corta debajo del nombre en"
+      ,"customAmenityPlaceholder": "Otra instalación (por ejemplo, cafetería)"
+      ,"addAmenity": "Agregar"
+      ,"courtPhotoAlt": "Padbol Court {{number}}"
+      ,"heroPhotoTitle": "Imagen de portada en la página pública"
+      ,"heroPhotoCurrent": "Foto de portada"
+      ,"useAsHeroPhotoTitle": "Usar como imagen de portada de la página pública"
+      ,"useAsHeroPhoto": "Usar como portada"
+    },
+    "franjas": { "slotSaved": "✅ Franja guardada", "surgeSaved": "✅ Surge guardado", "surgeSaveFailed": "⚠️ No se pudo guardar Surge" },
+    "scoreboard": { "venuesLoadFailed": "No se pudieron cargar las sedes.", "matchesLoadFailed": "No se pudieron cargar los partidos.", "matchLoadFailed": "No se pudo cargar el partido.", "copyLinkPrompt": "Copia este enlace:" }
+  },
+  "armarPartido": { "singlesPickle": "Individual (2)" }
+}

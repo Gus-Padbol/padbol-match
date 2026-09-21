@@ -20,21 +20,24 @@ import {
   resolvePostLoginNavigatePath,
   peekReservaLoginGateMessage,
   safeAdminPathFromLoginRedirect,
+  safeFipaDocumentsPathFromLoginRedirect,
+  safeRecorridoExternoPathFromLoginRedirect,
 } from '../utils/reservaReturnUrl';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import TelefonoPaisCodigoRow from '../components/TelefonoPaisCodigoRow';
 import { PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
-import {
-  digitsOnly,
-  formatWhatsAppE164,
-  whatsappNacionalValido,
-  whatsappDigitsValido,
-  buildFullWhatsDigits,
-} from '../utils/authIdentidad';
-import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
+import { digitsOnly } from '../utils/authIdentidad';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
+import { assessAgeEligibility } from '../utils/ageEligibility';
+import { resolveRoleAwarePostLoginPath } from '../utils/postLoginDestination';
+import {
+  clearPendingOAuthLegalAcceptance,
+  getSignUpLegalMetadata,
+  markPendingOAuthLegalAcceptance,
+  registerCurrentAccountEligibility,
+} from '../utils/legalDocuments';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -124,6 +127,14 @@ const LATERALIDAD_TORNEO_LABEL_KEY = {
   Ambidiestro: 'auth.handednessAmbi',
 };
 
+function paisLabelKey(nombre) {
+  return `paises.${String(nombre || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, '_')}`;
+}
+
 /** `select` / inputs del formulario de registro (tema). */
 function accesoRegFieldStyle(mb = '14px') {
   return {
@@ -165,12 +176,19 @@ export default function AccesoCuenta() {
   const [regWaLocal, setRegWaLocal] = useState('');
   const [regWaLocalConfirm, setRegWaLocalConfirm] = useState('');
   const [aceptoTerminosPrivacidad, setAceptoTerminosPrivacidad] = useState(false);
+  const [confirmoLecturaPrivacidad, setConfirmoLecturaPrivacidad] = useState(false);
+  const [regFechaNacimiento, setRegFechaNacimiento] = useState('');
   const [regPaisJugador, setRegPaisJugador] = useState('');
   const [regParticiparTorneos, setRegParticiparTorneos] = useState(false);
   const [regLateralidadTorneo, setRegLateralidadTorneo] = useState('');
   const [regNivelTorneo, setRegNivelTorneo] = useState('');
   const [regPaisTorneoExtra, setRegPaisTorneoExtra] = useState('');
   const sesionYaRedirigidaRef = useRef(false);
+  const collectProfileDuringSignUp = false;
+  const fipaReturnPath = useMemo(
+    () => safeFipaDocumentsPathFromLoginRedirect(location.search),
+    [location.search],
+  );
 
   useEffect(() => {
     if (!regParticiparTorneos) {
@@ -194,6 +212,20 @@ export default function AccesoCuenta() {
     }
   }, [categoriasTorneoRegistro, regNivelTorneo]);
 
+  const validateFipaRegistrationAge = useCallback(() => {
+    if (!fipaReturnPath) return null;
+    const assessment = assessAgeEligibility(regFechaNacimiento);
+    if (!assessment.allowed) {
+      setErrorMsg(
+        assessment.band === 'requires_verified_parent'
+          ? t('auth.ageEligibilityParental')
+          : t('auth.ageEligibilityInvalid'),
+      );
+      return false;
+    }
+    return assessment;
+  }, [fipaReturnPath, regFechaNacimiento, t]);
+
   /**
    * OAuth (Google / Facebook): `redirectTo` tras el proveedor. Agregar en Supabase → Authentication → URL Configuration → Redirect URLs:
    * `https://TU_DOMINIO/auth/callback`
@@ -205,8 +237,22 @@ export default function AccesoCuenta() {
    */
   const handleGoogleLogin = useCallback(async () => {
     setErrorMsg('');
-    const adminRedirect = safeAdminPathFromLoginRedirect(location.search);
-    const callbackQuery = adminRedirect ? `?redirect=${encodeURIComponent(adminRedirect)}` : '';
+    if (modo === 'register' && (!aceptoTerminosPrivacidad || !confirmoLecturaPrivacidad)) {
+      setErrorMsg(t('auth.acceptTerms'));
+      return;
+    }
+    const fipaAge = modo === 'register' ? validateFipaRegistrationAge() : null;
+    if (modo === 'register' && fipaReturnPath && !fipaAge) return;
+    if (modo === 'register') {
+      markPendingOAuthLegalAcceptance(
+        fipaAge ? { birthDate: fipaAge.birthDate, ageBand: fipaAge.band } : undefined,
+      );
+    }
+    else clearPendingOAuthLegalAcceptance();
+    const returnPath = safeAdminPathFromLoginRedirect(location.search)
+      || safeRecorridoExternoPathFromLoginRedirect(location.search)
+      || safeFipaDocumentsPathFromLoginRedirect(location.search);
+    const callbackQuery = returnPath ? `?redirect=${encodeURIComponent(returnPath)}` : '';
     const redirectTo = `${window.location.origin}/auth/callback${callbackQuery}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -215,15 +261,30 @@ export default function AccesoCuenta() {
       },
     });
     if (error) {
+      if (modo === 'register') clearPendingOAuthLegalAcceptance();
       console.error('Error Google OAuth:', error.message);
       setErrorMsg(t('auth.googleLoginFailed'));
     }
-  }, [t, location.search]);
+  }, [aceptoTerminosPrivacidad, confirmoLecturaPrivacidad, fipaReturnPath, location.search, modo, t, validateFipaRegistrationAge]);
 
   const handleFacebookLogin = useCallback(async () => {
     setErrorMsg('');
-    const adminRedirect = safeAdminPathFromLoginRedirect(location.search);
-    const callbackQuery = adminRedirect ? `?redirect=${encodeURIComponent(adminRedirect)}` : '';
+    if (modo === 'register' && (!aceptoTerminosPrivacidad || !confirmoLecturaPrivacidad)) {
+      setErrorMsg(t('auth.acceptTerms'));
+      return;
+    }
+    const fipaAge = modo === 'register' ? validateFipaRegistrationAge() : null;
+    if (modo === 'register' && fipaReturnPath && !fipaAge) return;
+    if (modo === 'register') {
+      markPendingOAuthLegalAcceptance(
+        fipaAge ? { birthDate: fipaAge.birthDate, ageBand: fipaAge.band } : undefined,
+      );
+    }
+    else clearPendingOAuthLegalAcceptance();
+    const returnPath = safeAdminPathFromLoginRedirect(location.search)
+      || safeRecorridoExternoPathFromLoginRedirect(location.search)
+      || safeFipaDocumentsPathFromLoginRedirect(location.search);
+    const callbackQuery = returnPath ? `?redirect=${encodeURIComponent(returnPath)}` : '';
     const redirectTo = `${window.location.origin}/auth/callback${callbackQuery}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
@@ -232,10 +293,11 @@ export default function AccesoCuenta() {
       },
     });
     if (error) {
+      if (modo === 'register') clearPendingOAuthLegalAcceptance();
       console.error('Error Facebook OAuth:', error.message);
       setErrorMsg(t('auth.facebookLoginFailed'));
     }
-  }, [t, location.search]);
+  }, [aceptoTerminosPrivacidad, confirmoLecturaPrivacidad, fipaReturnPath, location.search, modo, t, validateFipaRegistrationAge]);
 
   const afterLogin = useCallback(
     async (sessionArg) => {
@@ -246,7 +308,27 @@ export default function AccesoCuenta() {
       const ue = s.user.email?.trim();
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
-      const destinoTrasLogin = resolvePostLoginNavigatePath(location.search);
+      const destinoSolicitado = resolvePostLoginNavigatePath(location.search);
+      const destinoTrasLogin = await resolveRoleAwarePostLoginPath(destinoSolicitado, s);
+      const destinoEsBibliotecaFipa = destinoTrasLogin.split('?')[0] === '/fipa/documentos';
+      const fechaElegibilidadPendiente = String(s.user.user_metadata?.legal_birth_date || '').trim();
+      if (destinoEsBibliotecaFipa && fechaElegibilidadPendiente) {
+        try {
+          await registerCurrentAccountEligibility(fechaElegibilidadPendiente, 'web_fipa_registration');
+        } catch (error) {
+          sesionYaRedirigidaRef.current = false;
+          setErrorMsg(
+            String(error?.message || '').includes('parental')
+              ? t('auth.ageEligibilityParental')
+              : t('auth.ageEligibilityInvalid'),
+          );
+          return;
+        }
+      }
+      const necesitaCompletarPerfil = Boolean(s.user.user_metadata?.profile_completion_required);
+      const destinoNavegacion = necesitaCompletarPerfil && !destinoEsBibliotecaFipa
+        ? `/completar-perfil?redirect=${encodeURIComponent(destinoTrasLogin)}`
+        : destinoTrasLogin;
       try {
         localStorage.removeItem(RESERVA_RETURN_STORAGE_KEY);
       } catch {
@@ -257,12 +339,12 @@ export default function AccesoCuenta() {
       } catch {
         /* ignore */
       }
-      navigate(destinoTrasLogin, { replace: true });
-      if (isUserHomeHubPath(destinoTrasLogin)) {
+      navigate(destinoNavegacion, { replace: true });
+      if (isUserHomeHubPath(destinoNavegacion)) {
         scheduleHubEntryScrollReset();
       }
     },
-    [navigate, refreshSession, location.search]
+    [navigate, refreshSession, location.search, t]
   );
 
   useEffect(() => {
@@ -290,6 +372,8 @@ export default function AccesoCuenta() {
     setRegWaLocal('');
     setRegWaLocalConfirm('');
     setAceptoTerminosPrivacidad(false);
+    setConfirmoLecturaPrivacidad(false);
+    setRegFechaNacimiento('');
   }, [modo, t]);
 
   const handleIngresar = async (e) => {
@@ -375,70 +459,19 @@ export default function AccesoCuenta() {
       setErrorMsg(t('auth.passwordMismatch'));
       return;
     }
-    const nom = String(regNombre || '').trim();
-    const ap = String(regApellido || '').trim();
-    const gen = String(regGenero || '').trim();
-    if (!nom) {
-      setErrorMsg(t('auth.completeFirstName'));
-      return;
-    }
-    if (!ap) {
-      setErrorMsg(t('auth.completeLastName'));
-      return;
-    }
-    if (gen !== 'masculino' && gen !== 'femenino') {
-      setErrorMsg(t('auth.selectGender'));
-      return;
-    }
-    const waLoc = digitsOnly(regWaLocal);
-    const waLoc2 = digitsOnly(regWaLocalConfirm);
-    if (waLoc !== waLoc2) {
-      setErrorMsg(t('auth.phoneMismatch'));
-      return;
-    }
-    if (!whatsappNacionalValido(waLoc)) {
-      setErrorMsg(t('auth.invalidWhatsapp'));
-      return;
-    }
-    const waDigitsFull = buildFullWhatsDigits(regWaCodigoPais, waLoc);
-    if (!whatsappDigitsValido(waDigitsFull)) {
-      setErrorMsg(t('auth.invalidWhatsapp'));
-      return;
-    }
-    if (!aceptoTerminosPrivacidad) {
+    if (!aceptoTerminosPrivacidad || !confirmoLecturaPrivacidad) {
       setErrorMsg(t('auth.acceptTerms'));
       return;
     }
-    const waE164 = formatWhatsAppE164(regWaCodigoPais, waLoc);
-    try {
-      const { disponible } = await fetchWhatsappDisponibleRegistro(waE164);
-      if (!disponible) {
-        setErrorMsg(t('auth.phoneAlreadyRegistered'));
-        return;
-      }
-    } catch (e) {
-      setErrorMsg(e.message || t('auth.phoneValidationFailed'));
-      return;
-    }
-    const paisPrincipal = String(regPaisJugador || '').trim();
-    const paisTorneoExtra = String(regPaisTorneoExtra || '').trim();
-    const paisGuardadoRegistro = paisPrincipal || paisTorneoExtra;
-
+    const fipaAge = validateFipaRegistrationAge();
+    if (fipaReturnPath && !fipaAge) return;
     const signUpMeta = {
-      nombre: nom,
-      apellido: ap,
-      genero: gen,
-      notificaciones_whatsapp: regNotificacionesWhatsapp,
-      whatsapp: waE164,
-      es_jugador_torneos: regParticiparTorneos,
+      profile_completion_required: true,
+      ...getSignUpLegalMetadata(
+        'web_email',
+        fipaAge ? { birthDate: fipaAge.birthDate, ageBand: fipaAge.band } : undefined,
+      ),
     };
-    if (paisGuardadoRegistro) signUpMeta.pais = paisGuardadoRegistro;
-    if (regParticiparTorneos) {
-      const lat = String(regLateralidadTorneo || '').trim();
-      const niv = String(regNivelTorneo || '').trim();
-      if (lat) signUpMeta.lateralidad = lat;
-      if (niv) signUpMeta.nivel = niv;
-    }
 
     setBusy(true);
     try {
@@ -446,6 +479,7 @@ export default function AccesoCuenta() {
         kind: 'signUp',
         email: em,
         password,
+        emailRedirectPath: safeFipaDocumentsPathFromLoginRedirect(location.search),
         options: {
           data: signUpMeta,
         },
@@ -754,6 +788,8 @@ export default function AccesoCuenta() {
             onSubmit={handleRegistrar}
             style={{ minWidth: 0, maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box' }}
           >
+            {collectProfileDuringSignUp ? (
+              <>
             <label
               style={{
                 display: 'block',
@@ -858,13 +894,13 @@ export default function AccesoCuenta() {
               className="acceso-cuenta-input"
               value={regPaisJugador}
               onChange={(e) => setRegPaisJugador(e.target.value)}
-              aria-label="País del jugador"
+              aria-label={t('general.country')}
               style={accesoRegFieldStyle('14px')}
             >
               <option value="">{t('auth.chooseCountry')}</option>
               {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                 <option key={p.nombre} value={`${p.bandera} ${p.nombre}`}>
-                  {p.bandera} {p.nombre}
+                  {p.bandera} {t(paisLabelKey(p.nombre))}
                 </option>
               ))}
             </select>
@@ -922,6 +958,23 @@ export default function AccesoCuenta() {
                 background: 'var(--bg-card)',
               }}
             />
+            <label
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}
+            >
+              {t('auth.birthDate')} <span style={{ color: '#fecaca' }}>*</span>
+            </label>
+            <input
+              className="acceso-cuenta-input"
+              value={regFechaNacimiento}
+              onChange={(e) => setRegFechaNacimiento(e.target.value)}
+              type="date"
+              autoComplete="bday"
+              required
+              style={accesoRegFieldStyle('6px')}
+            />
+            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: 1.45, marginTop: 0, marginBottom: '14px' }}>
+              {t('auth.ageEligibilityHelp')}
+            </p>
             <div style={{ marginBottom: '14px', width: '100%', minWidth: 0, maxWidth: '100%' }}>
               <TelefonoPaisCodigoRow
                 sectionHeading={
@@ -999,7 +1052,7 @@ export default function AccesoCuenta() {
                   value={regLateralidadTorneo}
                   onChange={(e) => setRegLateralidadTorneo(e.target.value)}
                   style={accesoRegFieldStyle('10px')}
-                  aria-label="Lateralidad para torneos"
+                  aria-label={t('auth.handedness')}
                 >
                   <option value="">{t('auth.choose')}</option>
                   {LATERALIDAD_TORNEO_OPCIONES.map((lat) => (
@@ -1025,7 +1078,7 @@ export default function AccesoCuenta() {
                   value={regNivelTorneo}
                   onChange={(e) => setRegNivelTorneo(e.target.value)}
                   style={accesoRegFieldStyle('10px')}
-                  aria-label="Nivel o categoría para torneos"
+                  aria-label={t('auth.levelCategory')}
                 >
                   <option value="">{t('auth.choose')}</option>
                   {categoriasTorneoRegistro.map((c) => (
@@ -1045,20 +1098,20 @@ export default function AccesoCuenta() {
                         marginBottom: '6px',
                       }}
                     >
-                      País{' '}
-                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>(opcional)</span>
+                      {t('general.country')}{' '}
+                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '12px' }}>({t('auth.optional')})</span>
                     </label>
                     <select
                       className="acceso-cuenta-input"
                       value={regPaisTorneoExtra}
                       onChange={(e) => setRegPaisTorneoExtra(e.target.value)}
-                      aria-label="País para torneos"
+                      aria-label={t('general.country')}
                       style={accesoRegFieldStyle('14px')}
                     >
                       <option value="">{t('auth.chooseCountry')}</option>
                       {PAISES_TELEFONO_PRINCIPALES.map((p) => (
                         <option key={`torneo-${p.nombre}`} value={`${p.bandera} ${p.nombre}`}>
-                          {p.bandera} {p.nombre}
+                          {p.bandera} {t(paisLabelKey(p.nombre))}
                         </option>
                       ))}
                     </select>
@@ -1066,6 +1119,43 @@ export default function AccesoCuenta() {
                 ) : null}
               </div>
             </div>
+              </>
+            ) : null}
+            <label
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}
+            >
+              {t('general.email')}
+            </label>
+            <input
+              className="acceso-cuenta-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              style={accesoRegFieldStyle('14px')}
+            />
+            {fipaReturnPath ? (
+              <>
+                <label
+                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}
+                >
+                  {t('auth.birthDate')} <span style={{ color: '#fecaca' }}>*</span>
+                </label>
+                <input
+                  className="acceso-cuenta-input"
+                  value={regFechaNacimiento}
+                  onChange={(event) => setRegFechaNacimiento(event.target.value)}
+                  type="date"
+                  autoComplete="bday"
+                  required
+                  style={accesoRegFieldStyle('6px')}
+                />
+                <p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: 1.45, marginTop: 0, marginBottom: '14px' }}>
+                  {t('auth.ageEligibilityHelp')}
+                </p>
+              </>
+            ) : null}
             <label
               style={{
                 display: 'block',
@@ -1184,11 +1274,34 @@ export default function AccesoCuenta() {
                 style={{ marginTop: '4px', width: 18, height: 18, flexShrink: 0 }}
               />
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
-                {t('auth.acceptTermsPrefix')}{' '}
+                {t('auth.legalTermsAcceptance')}{' '}
                 <Link to="/terminos" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontWeight: 800 }}>
                   {t('legal.terminos')}
                 </Link>{' '}
-                {t('auth.andThe')}{' '}
+                <span style={{ color: '#fecaca' }}>*</span>
+              </span>
+            </label>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                marginBottom: '16px',
+                cursor: busy ? 'default' : 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={confirmoLecturaPrivacidad}
+                onChange={(e) => {
+                  setConfirmoLecturaPrivacidad(e.target.checked);
+                  if (e.target.checked) setErrorMsg('');
+                }}
+                disabled={busy}
+                style={{ marginTop: '4px', width: 18, height: 18, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45 }}>
+                {t('auth.legalPrivacyAcknowledgement')}{' '}
                 <Link to="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', fontWeight: 800 }}>
                   {t('legal.privacidad')}
                 </Link>{' '}

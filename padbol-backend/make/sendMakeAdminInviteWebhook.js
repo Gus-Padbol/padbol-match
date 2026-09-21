@@ -1,3 +1,4 @@
+import { backendRuntime } from '../lib/backendRuntime.js';
 /**
  * Webhook Make para invitaciones admin (magic link / email vía escenario).
  * Se llama desde Node (Render) para evitar CORS del browser.
@@ -9,6 +10,7 @@ export const MAKE_ADMIN_INVITE_WEBHOOK_URL_DEFAULT =
  * @param {{ email: string, nombre?: string|null, rol: string, sede_id?: number|null }} payload
  */
 export async function notifyMakeAdminInviteWebhook(payload) {
+  if (!backendRuntime().outboundDeliveryEnabled) return { disabled: true };
   const url = String(
     process.env.MAKE_ADMIN_INVITE_WEBHOOK_URL || MAKE_ADMIN_INVITE_WEBHOOK_URL_DEFAULT,
   ).trim();
@@ -38,29 +40,18 @@ export async function notifyMakeAdminInviteWebhook(payload) {
     sede_id,
   };
 
-  console.log('[Make admin invite] antes fetch webhook', {
-    ...body,
-    webhookHost: (() => {
-      try {
-        return new URL(url).host;
-      } catch {
-        return '(url inválida)';
-      }
-    })(),
-  });
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const text = await res.text().catch(() => '');
+    await res.arrayBuffer().catch(() => {});
     console.log('[Make admin invite] después fetch webhook', {
       status: res.status,
-      preview: text.slice(0, 160),
     });
     if (!res.ok) {
-      console.warn('[Make admin invite] webhook respondió error', res.status, text);
+      console.warn('[Make admin invite] webhook respondió error', res.status);
     }
   } catch (err) {
     console.warn('[Make admin invite] error en fetch webhook:', err?.message || err);

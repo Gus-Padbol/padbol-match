@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useSafeTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
   fetchAdminJugadoresList,
@@ -81,7 +82,7 @@ export function AdminJugadorSearchInput({
       if (!accessToken) {
         setItems([]);
         setLoading(false);
-        setError(t('admin.jugadores.searchAuthRequired', 'Sesión expirada. Volvé a iniciar sesión para buscar jugadores.'));
+        setError(t('admin.jugadores.searchAuthRequired', 'Sesión expirada. Vuelve a iniciar sesión para buscar jugadores.'));
         setOpen(true);
         return;
       }
@@ -254,16 +255,18 @@ export default function AdminJugadoresSection({
   sedeId: sedeIdProp,
   sedesMap = {},
   isSuperAdmin = false,
+  canSelectSede = false,
   esAdminClub = false,
 }) {
-  const { t } = useSafeTranslation();
+  const { t, i18n } = useSafeTranslation();
+  const locale = padbolLangToIntlLocale(i18n.language);
   const sedesList = Object.values(sedesMap || {}).sort((a, b) =>
-    String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es', { sensitivity: 'base' }),
+    String(a?.nombre || '').localeCompare(String(b?.nombre || ''), locale, { sensitivity: 'base' }),
   );
 
   const [sedeId, setSedeId] = useState(() => {
     if (sedeIdProp != null && sedeIdProp !== '') return String(sedeIdProp);
-    if (isSuperAdmin && sedesList[0]?.id != null) return String(sedesList[0].id);
+    if ((isSuperAdmin || canSelectSede) && sedesList[0]?.id != null) return String(sedesList[0].id);
     return '';
   });
   const [q, setQ] = useState('');
@@ -284,6 +287,12 @@ export default function AdminJugadoresSection({
   }, [sedeIdProp, esAdminClub]);
 
   useEffect(() => {
+    if ((isSuperAdmin || canSelectSede) && !sedeId && sedesList[0]?.id != null) {
+      setSedeId(String(sedesList[0].id));
+    }
+  }, [canSelectSede, isSuperAdmin, sedeId, sedesList]);
+
+  useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
       setQDebounced(q);
@@ -299,7 +308,7 @@ export default function AdminJugadoresSection({
     }
     if (!sedeId) {
       setData({ items: [], total: 0, total_pages: 1 });
-      setError(isSuperAdmin ? t('admin.jugadores.selectSede') : '');
+      setError(isSuperAdmin || canSelectSede ? t('admin.jugadores.selectSede') : '');
       return;
     }
     setLoading(true);
@@ -325,7 +334,7 @@ export default function AdminJugadoresSection({
     } finally {
       setLoading(false);
     }
-  }, [accessToken, apiBaseUrl, isSuperAdmin, page, qDebounced, sedeId, t]);
+  }, [accessToken, apiBaseUrl, canSelectSede, isSuperAdmin, page, qDebounced, sedeId, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -369,7 +378,7 @@ export default function AdminJugadoresSection({
           marginBottom: 14,
         }}
       >
-        {isSuperAdmin ? (
+        {isSuperAdmin || canSelectSede ? (
           <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
             {t('admin.jugadores.sedeLabel')}
             <select
@@ -498,7 +507,7 @@ export default function AdminJugadoresSection({
                     <td className="admin-jugadores-table__contact admin-jugadores-table__email" style={{ fontSize: 13 }}>{j.email || '—'}</td>
                     <td className="admin-jugadores-table__contact admin-jugadores-table__phone" style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
                     <td style={{ fontSize: 12 }}>{formatJugadorVinculacionLabel(j.vinculacion, t)}</td>
-                    <td className="admin-jugadores-table__activity" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at) || '—'}</td>
+                    <td className="admin-jugadores-table__activity" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at, locale) || '—'}</td>
                     <td className="admin-jugadores-table__profile" style={{ fontSize: 13 }}>
                       {perfilPath ? (
                         <a className="admin-jugadores-table__profile-link" href={perfilPath} target="_blank" rel="noopener noreferrer">
@@ -577,14 +586,11 @@ export default function AdminJugadoresSection({
               </div>
               <div>
                 <dt style={{ fontWeight: 800 }}>{t('admin.jugadores.activityCol')}</dt>
-                <dd style={{ margin: 0 }}>{formatJugadorActivity(ficha.last_activity_at) || '—'}</dd>
+                <dd style={{ margin: 0 }}>{formatJugadorActivity(ficha.last_activity_at, locale) || '—'}</dd>
               </div>
             </dl>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, margin: '0 0 14px' }}>
-              {t(
-                'admin.jugadores.fichaLinkBlocked',
-                'Vincular / desvincular formalmente a la sede aún no está disponible en Backend. La relación actual se infiere del historial de reservas.',
-              )}
+              {t('admin.jugadores.fichaLinkBlocked')}
             </p>
             <button
               type="button"

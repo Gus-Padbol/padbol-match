@@ -1,8 +1,10 @@
+import { backendRuntime } from '../lib/backendRuntime.js';
 /**
  * Webhook secundario para automatizaciones en Make.
  * Nunca interrumpe el flujo principal ante error o ausencia de configuración.
  */
 export async function sendMakeEvent(eventType, data = {}) {
+  if (!backendRuntime().outboundDeliveryEnabled) return { disabled: true };
   const webhookUrl = String(process.env.MAKE_WEBHOOK_URL || '').trim();
   if (!webhookUrl) {
     console.warn('⚠️ MAKE_WEBHOOK_URL no configurada; evento omitido:', eventType);

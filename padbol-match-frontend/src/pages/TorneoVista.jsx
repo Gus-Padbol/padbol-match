@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -22,12 +23,6 @@ import { estadoTorneoNormalizado } from '../utils/torneoEstadoFiltroPills';
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
 import { normalizeTorneoDeporte } from '../utils/torneoDeporteFormato';
 import {
-  TORNEO_RESERVA_LUGAR_BTN,
-  TORNEO_RESERVA_LUGAR_CONFIRM_POST,
-  TORNEO_RESERVA_LUGAR_SUB_BANNER,
-  TORNEO_RESERVA_LUGAR_YA_INSCRITO,
-} from '../utils/torneoReservaLugarCopy';
-import {
   computeIsAdminEnTorneo,
   computePuedeGestionarEquiposTorneo,
   pathnameIsAdminRoute,
@@ -44,17 +39,13 @@ import { torneoPermiteNuevasInscripciones } from '../utils/torneoInscripcionPago
 import {
   ordenarBuscaDuplaPorCompatibilidad,
   tierCompatibilidadNivelBuscaDupla,
-  etiquetaCompatibilidadBuscaDupla,
-  etiquetaLateralidadBuscaDupla,
   indiceCategoriaNivelBuscaDupla,
 } from '../utils/buscaDuplaMatchmaking';
 import '../styles/TorneoVista.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const apiBaseUrlTorneo = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 function whatsappWebHref(raw) {
@@ -346,7 +337,7 @@ export default function TorneoVista() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const MSG_FALLA = 'No pudimos cargar el torneo';
+      const MSG_FALLA = t('torneos.vista.loadTournamentError');
       try {
         setLoading(true);
         setError(null);
@@ -442,7 +433,7 @@ export default function TorneoVista() {
     };
 
     fetchData();
-  }, [torneoId, loadBuscaDupla]);
+  }, [torneoId, loadBuscaDupla, t]);
 
   useEffect(() => {
     setListaEsperaChecked(false);
@@ -479,7 +470,7 @@ export default function TorneoVista() {
   }, [torneoId, torneo?.estado, session?.access_token]);
 
   const abrirInscripcionDesdeAdmin = async () => {
-    if (!window.confirm('¿Confirmar apertura de inscripción?')) return;
+    if (!window.confirm(t('torneos.vista.confirmOpenRegistration'))) return;
     setAbrirInscripcionLoading(true);
     try {
       const headers = { 'Content-Type': 'application/json' };
@@ -495,10 +486,10 @@ export default function TorneoVista() {
         setTorneo((prev) => ({ ...prev, estado: row?.estado ?? 'abierto' }));
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err?.error || 'No se pudo abrir la inscripción');
+        alert(err?.error || t('torneos.vista.openRegistrationError'));
       }
     } catch (e) {
-      alert(e?.message || 'Error de red');
+      alert(e?.message || t('torneos.vista.networkError'));
     } finally {
       setAbrirInscripcionLoading(false);
     }
@@ -546,18 +537,18 @@ export default function TorneoVista() {
           puntos: row.puntos,
           fotoEquipoUrl: String(eq?.foto_url || '').trim(),
           jugadores: players,
-          equipoNombre: eq ? nombreEquipoMostrado(eq) : `Equipo #${row.equipo_id}`,
+          equipoNombre: eq ? nombreEquipoMostrado(eq) : t('torneos.vista.teamNumber', { id: row.equipo_id }),
           jugadorLineas: players.slice(0, 4).map((p) => jugadorEtiquetaConArroba(p)),
         };
       })
       .sort((a, b) => (a.posicion || 999) - (b.posicion || 999));
-  }, [tablaPuntosRows, equipos]);
+  }, [tablaPuntosRows, equipos, t]);
 
   const iniciarTorneo = async () => {
     if (!puedeIniciarTorneoEnCurso) return;
     if (
       !window.confirm(
-        '¿Iniciar el torneo? Se cerrará la inscripción y el estado pasará a «en curso».'
+        t('torneos.vista.confirmStartTournament')
       )
     ) {
       return;
@@ -576,21 +567,25 @@ export default function TorneoVista() {
       } else {
         const err = await res.json().catch(() => ({}));
         const det = err?.iniciar_torneo;
-        let msg = err?.error || 'Error al iniciar el torneo';
+        let msg = err?.error || t('torneos.vista.startTournamentError');
         if (det && typeof det.equipos_confirmados === 'number') {
-          msg += `\n\nEquipos confirmados: ${det.equipos_confirmados} (mín. ${det.min_equipos_confirmados ?? 2}). Partidos generados: ${det.partidos_generados ?? 0}.`;
+          msg += `\n\n${t('torneos.vista.startTournamentDetails', {
+            confirmed: det.equipos_confirmados,
+            minimum: det.min_equipos_confirmados ?? 2,
+            matches: det.partidos_generados ?? 0,
+          })}`;
         }
         alert(msg);
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(t('torneos.vista.errorWithDetail', { error: err.message }));
     } finally {
       setIniciando(false);
     }
   };
 
   const finalizarTorneo = async () => {
-    if (!window.confirm('¿Finalizar el torneo? Se calcularán las posiciones finales y se asignarán los puntos de ranking.'))
+    if (!window.confirm(t('torneos.vista.confirmFinishTournament')))
       return;
     setFinalizando(true);
     try {
@@ -610,10 +605,10 @@ export default function TorneoVista() {
         );
         setTorneo((prev) => ({ ...prev, estado: 'finalizado' }));
       } else {
-        alert(data.error || 'Error al finalizar el torneo');
+        alert(data.error || t('torneos.vista.finishTournamentError'));
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert(t('torneos.vista.errorWithDetail', { error: err.message }));
     } finally {
       setFinalizando(false);
     }
@@ -720,14 +715,14 @@ export default function TorneoVista() {
       const j = await res.json().catch(() => ({}));
       if (res.ok) {
         setListaEsperaEnrolled(true);
-        setListaEsperaMsg(j?.already ? '' : TORNEO_RESERVA_LUGAR_CONFIRM_POST);
+        setListaEsperaMsg(j?.already ? '' : t('torneos.vista.waitlistJoined'));
       } else {
-        alert(j?.error || 'No se pudo reservar tu lugar');
+        alert(j?.error || t('torneos.vista.waitlistJoinError'));
       }
     } catch (e) {
-      alert(e?.message || 'Error de red');
+      alert(e?.message || t('torneos.vista.networkError'));
     }
-  }, [session?.user, session?.access_token, torneoId, navigate, userProfile?.whatsapp]);
+  }, [session?.user, session?.access_token, torneoId, navigate, userProfile?.whatsapp, t]);
 
   const bannerInscripcionJugador = useMemo(() => {
     if (!torneo) return null;
@@ -740,7 +735,7 @@ export default function TorneoVista() {
       return (
         <div className="torneo-inscripcion-jugador-banner">
           <p className="torneo-inscripcion-jugador-banner__texto">
-            ✓ Ya eres parte del equipo {nombreEquipoMostrado(miEquipoEnTorneo)}
+            {t('torneos.vista.alreadyInTeam', { team: nombreEquipoMostrado(miEquipoEnTorneo) })}
           </p>
         </div>
       );
@@ -749,14 +744,14 @@ export default function TorneoVista() {
     if (esListaEsperaTorneo) {
       return (
         <div className="torneo-inscripcion-jugador-banner">
-          <p className="torneo-inscripcion-jugador-banner__sub">{TORNEO_RESERVA_LUGAR_SUB_BANNER}</p>
+          <p className="torneo-inscripcion-jugador-banner__sub">{t('torneos.vista.waitlistIntro')}</p>
           {listaEsperaMsg ? (
             <p className="torneo-inscripcion-jugador-banner__texto" style={{ marginTop: '10px' }}>
               {listaEsperaMsg}
             </p>
           ) : listaEsperaEnrolled ? (
             <p className="torneo-inscripcion-jugador-banner__texto" style={{ marginTop: '12px' }}>
-              {TORNEO_RESERVA_LUGAR_YA_INSCRITO}
+              {t('torneos.vista.waitlistAlreadyJoined')}
             </p>
           ) : null}
           {!listaEsperaEnrolled ? (
@@ -766,7 +761,7 @@ export default function TorneoVista() {
               onClick={() => void reservarMiLugarTorneo()}
               disabled={session?.user && !listaEsperaChecked}
             >
-              {TORNEO_RESERVA_LUGAR_BTN}
+              {t('torneos.vista.reservePlace')}
             </button>
           ) : null}
         </div>
@@ -812,6 +807,7 @@ export default function TorneoVista() {
     torneoId,
     navigate,
     reservarMiLugarTorneo,
+    t,
   ]);
 
   /** Solo admin que entró desde el panel (`fromAdmin`): no jugadores ni admin en ruta pública. */
@@ -826,7 +822,7 @@ export default function TorneoVista() {
             onClick={() => void abrirInscripcionDesdeAdmin()}
             disabled={abrirInscripcionLoading}
           >
-            {abrirInscripcionLoading ? 'Abriendo…' : '📣 Abrir inscripción'}
+            {abrirInscripcionLoading ? t('torneos.vista.openingRegistration') : t('torneos.vista.openRegistration')}
           </button>
         ) : null}
         <button
@@ -834,7 +830,7 @@ export default function TorneoVista() {
           className="btn-agregar-jugadores"
           onClick={() => navigate(`/torneo/${torneoId}/equipos`, torneoNavState ? { state: torneoNavState } : undefined)}
         >
-          Equipos e inscripción
+          {t('torneos.vista.teamsAndRegistration')}
         </button>
       </div>
     ) : null;
@@ -856,14 +852,12 @@ export default function TorneoVista() {
         <>
           {equiposConfirmadosInscripcion < 2 ? (
             <p className="torneo-iniciar-aviso" role="status">
-              Faltan equipos confirmados: necesitas al menos 2 equipos con inscripción confirmada (ahora hay{' '}
-              {equiposConfirmadosInscripcion}).
+              {t('torneos.vista.missingConfirmedTeams', { count: equiposConfirmadosInscripcion })}
             </p>
           ) : null}
           {!tieneFixturePartidos ? (
             <p className="torneo-iniciar-aviso" role="status">
-              Falta el sorteo o el fixture: genera los partidos del torneo (por ejemplo sorteo de grupos en el panel
-              admin, o la generación de fixture) antes de pasar a «en curso».
+              {t('torneos.vista.fixtureRequiredBeforeStart')}
             </p>
           ) : null}
         </>
@@ -874,7 +868,7 @@ export default function TorneoVista() {
         onClick={() => void iniciarTorneo()}
         disabled={iniciando || !puedeIniciarTorneoEnCurso}
       >
-        {iniciando ? 'Iniciando...' : '🚀 Iniciar torneo'}
+        {iniciando ? t('torneos.vista.startingTournament') : t('torneos.vista.startTournament')}
       </button>
     </div>
   ) : null;
@@ -885,7 +879,7 @@ export default function TorneoVista() {
     partidos.every((p) => p.estado === 'finalizado') ? (
       <div className="torneo-acciones">
         <button type="button" className="btn-finalizar-torneo" onClick={() => void finalizarTorneo()} disabled={finalizando}>
-          {finalizando ? 'Finalizando...' : '🏆 Finalizar torneo'}
+          {finalizando ? t('torneos.vista.finishingTournament') : t('torneos.vista.finishTournament')}
         </button>
       </div>
     ) : null;
@@ -917,13 +911,13 @@ export default function TorneoVista() {
   }, [torneoId]);
 
   const torneoShareMeta = useMemo(() => {
-    const nombreTor = String(torneo?.nombre || 'Torneo').trim() || 'Torneo';
-    const sedeNombre = sedeTorneo ? String(sedeTorneo.nombre || '').trim() : 'la sede';
+    const nombreTor = String(torneo?.nombre || t('torneos.detalle')).trim() || t('torneos.detalle');
+    const sedeNombre = sedeTorneo ? String(sedeTorneo.nombre || '').trim() : t('torneos.vista.venueFallback');
     const title = nombreTor;
     const url = torneoShareUrl;
-    const text = `¡Participa en ${nombreTor} en ${sedeNombre}! 🏆⚽ Inscríbete aquí:`;
+    const text = t('torneos.vista.shareText', { tournament: nombreTor, venue: sedeNombre });
     return { title, text, url };
-  }, [torneo, sedeTorneo, torneoShareUrl]);
+  }, [torneo, sedeTorneo, torneoShareUrl, t]);
 
   const cerrarModalInscribirse = useCallback(() => setModalInscribirseOpen(false), []);
   const irACrearEquipoDesdeTorneoVista = useCallback(() => {
@@ -948,14 +942,14 @@ export default function TorneoVista() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(j?.error || 'No se pudo anotarte en busca dupla');
+        alert(j?.error || t('torneos.vista.partnerSearchJoinError'));
         return;
       }
       await recargarDatosTorneo();
     } finally {
       setBuscaDuplaBusy(false);
     }
-  }, [session?.access_token, torneoId, navigate, recargarDatosTorneo]);
+  }, [session?.access_token, torneoId, navigate, recargarDatosTorneo, t]);
 
   const salirBuscaDupla = useCallback(async () => {
     if (!session?.access_token) return;
@@ -967,14 +961,14 @@ export default function TorneoVista() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(j?.error || 'No se pudo quitar el anuncio');
+        alert(j?.error || t('torneos.vista.partnerSearchLeaveError'));
         return;
       }
       await loadBuscaDupla();
     } finally {
       setBuscaDuplaBusy(false);
     }
-  }, [session?.access_token, torneoId, loadBuscaDupla]);
+  }, [session?.access_token, torneoId, loadBuscaDupla, t]);
 
   const invitarBuscaDupla = useCallback(
     async (toUserId) => {
@@ -991,7 +985,7 @@ export default function TorneoVista() {
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) {
-          alert(j?.error || 'No se pudo enviar la invitación');
+          alert(j?.error || t('torneos.vista.partnerInviteError'));
           return;
         }
         await loadBuscaDupla();
@@ -999,7 +993,7 @@ export default function TorneoVista() {
         setBuscaDuplaBusy(false);
       }
     },
-    [session?.access_token, torneoId, loadBuscaDupla]
+    [session?.access_token, torneoId, loadBuscaDupla, t]
   );
 
   const aceptarInvitacionBuscaDupla = useCallback(
@@ -1016,7 +1010,7 @@ export default function TorneoVista() {
         );
         const j = await res.json().catch(() => ({}));
         if (!res.ok) {
-          alert(j?.error || 'No se pudo formar el equipo');
+          alert(j?.error || t('torneos.vista.partnerAcceptError'));
           return;
         }
         await recargarDatosTorneo();
@@ -1024,7 +1018,7 @@ export default function TorneoVista() {
         setBuscaDuplaBusy(false);
       }
     },
-    [session?.access_token, torneoId, recargarDatosTorneo]
+    [session?.access_token, torneoId, recargarDatosTorneo, t]
   );
 
   const rechazarInvitacionBuscaDupla = useCallback(
@@ -1041,7 +1035,7 @@ export default function TorneoVista() {
         );
         const j = await res.json().catch(() => ({}));
         if (!res.ok) {
-          alert(j?.error || 'No se pudo rechazar');
+          alert(j?.error || t('torneos.vista.partnerRejectError'));
           return;
         }
         await loadBuscaDupla();
@@ -1049,7 +1043,7 @@ export default function TorneoVista() {
         setBuscaDuplaBusy(false);
       }
     },
-    [session?.access_token, torneoId, loadBuscaDupla]
+    [session?.access_token, torneoId, loadBuscaDupla, t]
   );
 
   const buscaDuplaListOrdenada = useMemo(
@@ -1069,7 +1063,7 @@ export default function TorneoVista() {
       >
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="loading">
-          Cargando...
+          {t('common.loading')}
         </div>
         <BottomNav />
       </div>
@@ -1087,8 +1081,8 @@ export default function TorneoVista() {
       >
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="error">
-          <p style={{ margin: 0, fontWeight: 700, fontSize: '16px', color: '#b91c1c' }}>No pudimos cargar el torneo</p>
-          {error && error !== 'No pudimos cargar el torneo' ? (
+          <p style={{ margin: 0, fontWeight: 700, fontSize: '16px', color: '#b91c1c' }}>{t('torneos.vista.loadTournamentError')}</p>
+          {error && error !== t('torneos.vista.loadTournamentError') ? (
             <p style={{ margin: '10px 0 0', fontSize: '13px', color: '#64748b', lineHeight: 1.45 }}>{error}</p>
           ) : null}
         </div>
@@ -1108,7 +1102,7 @@ export default function TorneoVista() {
       >
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="error">
-          Torneo no encontrado
+          {t('torneos.vista.tournamentNotFound')}
         </div>
         <BottomNav />
       </div>
@@ -1121,10 +1115,10 @@ export default function TorneoVista() {
   const buscaDuplaSeccion =
     puedePanelBuscaDupla ? (
       <div className="torneo-busca-dupla">
-        <h3 className="torneo-busca-dupla__titulo">Jugadores buscando dupla</h3>
+        <h3 className="torneo-busca-dupla__titulo">{t('torneos.vista.playersSeekingPartner')}</h3>
         {session?.user && indiceCategoriaNivelBuscaDupla(userProfile?.nivel) >= 0 ? (
           <p className="torneo-busca-dupla__orden-hint">
-            Ordenados por compatibilidad con tu categoría ({String(userProfile?.nivel || '').trim() || '—'}).
+            {t('torneos.vista.sortedByCompatibility', { category: String(userProfile?.nivel || '').trim() || '—' })}
           </p>
         ) : null}
         {buscaDuplaInvRecibidas.length > 0 ? (
@@ -1132,8 +1126,9 @@ export default function TorneoVista() {
             {buscaDuplaInvRecibidas.map((inv) => (
               <div key={inv.id} className="torneo-busca-dupla__invite-card">
                 <p className="torneo-busca-dupla__invite-text">
-                  <strong>{inv.otro_alias || inv.otro_nombre || 'Un jugador'}</strong> te invitó a formar dupla
-                  para este torneo.
+                  {t('torneos.vista.partnerInvitationText', {
+                    player: inv.otro_alias || inv.otro_nombre || t('torneos.vista.aPlayer'),
+                  })}
                 </p>
                 <div className="torneo-busca-dupla__invite-actions">
                   <button
@@ -1142,7 +1137,7 @@ export default function TorneoVista() {
                     disabled={buscaDuplaBusy}
                     onClick={() => void aceptarInvitacionBuscaDupla(inv.id)}
                   >
-                    Aceptar y formar equipo
+                    {t('torneos.vista.acceptAndFormTeam')}
                   </button>
                   <button
                     type="button"
@@ -1150,7 +1145,7 @@ export default function TorneoVista() {
                     disabled={buscaDuplaBusy}
                     onClick={() => void rechazarInvitacionBuscaDupla(inv.id)}
                   >
-                    Rechazar
+                    {t('torneos.vista.reject')}
                   </button>
                 </div>
               </div>
@@ -1166,33 +1161,33 @@ export default function TorneoVista() {
                 disabled={buscaDuplaBusy}
                 onClick={() => void registrarBuscaDupla()}
               >
-                Busco dupla para este torneo
+                {t('torneos.vista.seekPartner')}
               </button>
             ) : (
               <div className="torneo-busca-dupla__yo-anunciado">
-                <span>Figuras como buscando dupla.</span>
+                <span>{t('torneos.vista.listedAsSeekingPartner')}</span>
                 <button
                   type="button"
                   className="torneo-busca-dupla__btn-link"
                   disabled={buscaDuplaBusy}
                   onClick={() => void salirBuscaDupla()}
                 >
-                  Quitar mi anuncio
+                  {t('torneos.vista.removeMyListing')}
                 </button>
               </div>
             )}
           </div>
         ) : null}
-        {buscaDuplaLoading ? <p className="torneo-busca-dupla__hint">Cargando lista…</p> : null}
+        {buscaDuplaLoading ? <p className="torneo-busca-dupla__hint">{t('torneos.vista.loadingPartnerList')}</p> : null}
         {!buscaDuplaLoading && buscaDuplaListOrdenada.length === 0 ? (
-          <p className="torneo-busca-dupla__hint">Todavía no hay jugadores anunciados. Sé el primero.</p>
+          <p className="torneo-busca-dupla__hint">{t('torneos.vista.noPlayersSeekingPartner')}</p>
         ) : null}
         {buscaDuplaListOrdenada.length > 0 ? (
           <ul className="torneo-busca-dupla__lista">
             {buscaDuplaListOrdenada.map((row) => {
               const wa = whatsappWebHref(row.whatsapp);
               const esYo = authUserId && row.user_id === authUserId;
-              const nombreMostrar = String(row.nombre || row.alias || 'Jugador').trim() || 'Jugador';
+              const nombreMostrar = String(row.nombre || row.alias || t('torneos.vista.playerFallback')).trim() || t('torneos.vista.playerFallback');
               const tier =
                 session?.user && authUserId && !esYo
                   ? tierCompatibilidadNivelBuscaDupla(userProfile?.nivel, row.categoria)
@@ -1205,7 +1200,12 @@ export default function TorneoVista() {
                     : typeof tier === 'number'
                       ? 'torneo-busca-dupla__badge-compat torneo-busca-dupla__badge-compat--diferente'
                       : '';
-              const latTxt = etiquetaLateralidadBuscaDupla(row.lateralidad);
+              const latRaw = String(row.lateralidad || '').trim().toLowerCase();
+              const latTxt = ['diestro', 'derecho', 'right'].includes(latRaw)
+                ? t('torneos.vista.rightHanded')
+                : ['zurdo', 'izquierdo', 'left'].includes(latRaw)
+                  ? t('torneos.vista.leftHanded')
+                  : String(row.lateralidad || '').trim();
               const invEnviada = buscaDuplaInvEnviadas.some((i) => String(i.to_user_id) === String(row.user_id));
               const invRecibida = buscaDuplaInvRecibidas.some((i) => String(i.from_user_id) === String(row.user_id));
               return (
@@ -1221,26 +1221,26 @@ export default function TorneoVista() {
                     <div className="torneo-busca-dupla__linea-nombre">
                       <strong>{nombreMostrar}</strong>
                       {row.alias ? <span className="torneo-busca-dupla__alias"> @{row.alias}</span> : null}
-                      {esYo ? <span className="torneo-busca-dupla__vos"> (tú)</span> : null}
+                      {esYo ? <span className="torneo-busca-dupla__vos"> {t('torneos.vista.youSuffix')}</span> : null}
                     </div>
                     <div className="torneo-busca-dupla__meta-row">
                       {typeof tier === 'number' && compatClass ? (
-                        <span className={compatClass}>{etiquetaCompatibilidadBuscaDupla(tier)}</span>
+                        <span className={compatClass}>{t(`torneos.vista.compatibilityTier${Math.min(tier, 2)}`)}</span>
                       ) : null}
                       {latTxt ? <span className="torneo-busca-dupla__badge-lat">{latTxt}</span> : null}
                       {invEnviada ? (
                         <span className="torneo-busca-dupla__badge-inv torneo-busca-dupla__badge-inv--enviada">
-                          Invitación enviada
+                          {t('torneos.vista.invitationSent')}
                         </span>
                       ) : null}
                       {invRecibida ? (
                         <span className="torneo-busca-dupla__badge-inv torneo-busca-dupla__badge-inv--recibida">
-                          Te invitó (pendiente)
+                          {t('torneos.vista.invitedYouPending')}
                         </span>
                       ) : null}
                     </div>
                     {row.categoria ? (
-                      <div className="torneo-busca-dupla__cat">Categoría: {row.categoria}</div>
+                      <div className="torneo-busca-dupla__cat">{t('torneos.vista.categoryLabel', { category: row.categoria })}</div>
                     ) : null}
                   </div>
                   <div className="torneo-busca-dupla__acciones">
@@ -1251,10 +1251,10 @@ export default function TorneoVista() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Conectar por WhatsApp
+                        {t('torneos.vista.connectWhatsapp')}
                       </a>
                     ) : (
-                      <span className="torneo-busca-dupla__sin-wa">Sin WhatsApp en perfil</span>
+                      <span className="torneo-busca-dupla__sin-wa">{t('torneos.vista.noWhatsapp')}</span>
                     )}
                     {session?.user && authUserId && !esYo && !miEquipoEnTorneo && buscaDuplaEnrolled ? (
                       <button
@@ -1263,7 +1263,7 @@ export default function TorneoVista() {
                         disabled={buscaDuplaBusy || invEnviada}
                         onClick={() => void invitarBuscaDupla(row.user_id)}
                       >
-                        Invitar a formar equipo
+                        {t('torneos.vista.inviteToTeam')}
                       </button>
                     ) : null}
                   </div>
@@ -1274,8 +1274,9 @@ export default function TorneoVista() {
         ) : null}
         {buscaDuplaInvEnviadas.length > 0 ? (
           <p className="torneo-busca-dupla__hint">
-            Invitaciones enviadas pendientes:{' '}
-            {buscaDuplaInvEnviadas.map((i) => i.otro_alias || i.otro_nombre || 'jugador').join(', ')}
+            {t('torneos.vista.pendingInvitations', {
+              players: buscaDuplaInvEnviadas.map((i) => i.otro_alias || i.otro_nombre || t('torneos.vista.playerFallback')).join(', '),
+            })}
           </p>
         ) : null}
       </div>
@@ -1327,7 +1328,7 @@ export default function TorneoVista() {
           showTorneoLogo={false}
           estadoLineaArribaTabs={
             !modoAdminExplicitoEnVista && (torneoPasadoCalendario || estadoTorneoLower === 'finalizado')
-              ? '✅ Torneo finalizado'
+              ? t('torneos.vista.tournamentFinishedBanner')
               : null
           }
           abrirTabResultadosInicial={torneoPasadoCalendario || estadoTorneoLower === 'finalizado'}

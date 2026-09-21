@@ -63,6 +63,12 @@ function unwrapResultadoJson(val, depth = 0) {
 function setsDesdeResultadoObj(res) {
   if (!res || typeof res !== 'object' || Array.isArray(res)) return [];
 
+  // Canonical tournament results persist individual games separately from
+  // goles_a/goles_b, which represent sets won rather than game scores.
+  if (Array.isArray(res.historial_sets) && res.historial_sets.length > 0) {
+    return res.historial_sets.map((s) => normalizeSetMarcadorEntry(s)).filter((s) => s && parseSetGames(s));
+  }
+
   if (Array.isArray(res.sets)) {
     return res.sets.map((s) => normalizeSetMarcadorEntry(s)).filter((s) => s && parseSetGames(s));
   }

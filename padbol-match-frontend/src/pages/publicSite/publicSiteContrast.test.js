@@ -96,12 +96,21 @@ describe('contraste de títulos de la web pública', () => {
 
   it('ningún título de la web pública usa colores oscuros hardcodeados', () => {
     /* Reglas de heading dentro de publicSite.css con color casi negro
-       (se descartan los comentarios: pueden citar colores prohibidos). */
+       (se descartan los comentarios y la sección clara "Quiénes somos"). */
     const cssSinComentarios = css.replace(/\/\*[\s\S]*?\*\//g, '');
     const headingRules = cssSinComentarios.match(/[^{}]*h[1-6][^{}]*\{[^}]*\}/g) || [];
     headingRules.forEach((rule) => {
+      if (rule.includes('.ps-section--about')) return;
       expect(rule).not.toMatch(/color:\s*#(0[0-9a-f]{2}|1[0-9a-f]{2}|2[0-9a-f]{2})[0-9a-f]{3}\b/i);
       expect(rule).not.toMatch(/color:\s*(black|#000)/i);
     });
+  });
+
+  it('el título oscuro de Quiénes somos contrasta con su fondo claro', () => {
+    const background = css.match(/\.ps-section--about\s*\{[^}]*background:\s*#([0-9a-f]{6})/i);
+    const heading = css.match(/\.ps-section--about h2,[^{}]*\{[^}]*color:\s*#([0-9a-f]{6})/i);
+    expect(background).not.toBeNull();
+    expect(heading).not.toBeNull();
+    expect(contrast(background[1], heading[1])).toBeGreaterThanOrEqual(4.5);
   });
 });

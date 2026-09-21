@@ -1,12 +1,10 @@
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 /**
  * Cliente Admin para Membresías por sede (/api/admin/membresias/*).
  * Distinto del plan comercial (plan-pricing) y de PadCoins.
  */
 
-const DEFAULT_API =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const DEFAULT_API = getApiBaseUrl();
 
 export const MEMBRESIA_DURACION_TIPOS = [
   { id: 'mensual', label: 'Mensual', dias: 30 },

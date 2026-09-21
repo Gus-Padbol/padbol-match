@@ -88,7 +88,6 @@ export const PUBLIC_SITE_SECTIONS = {
     ctas: [
       { key: 'venue', to: PUBLIC_SITE_CTA.venue },
       { key: 'play', to: PUBLIC_SITE_CTA.play },
-      { key: 'login', to: PUBLIC_SITE_CTA.login },
     ],
   },
 };
@@ -108,10 +107,9 @@ export const PUBLIC_SITE_SECTION_ORDER = [
   PUBLIC_SITE_SECTIONS.playerRecord.id,
   PUBLIC_SITE_SECTIONS.communityMatches.id,
   PUBLIC_SITE_SECTIONS.smartScoreboard.id,
+  PUBLIC_SITE_SECTIONS.continuity.id,
   PUBLIC_SITE_SECTIONS.venuePath.id,
   PUBLIC_SITE_SECTIONS.venueAdmin.id,
-  PUBLIC_SITE_SECTIONS.continuity.id,
-  PUBLIC_SITE_SECTIONS.expansion.id,
   PUBLIC_SITE_SECTIONS.matchIntelligence.id,
   PUBLIC_SITE_SECTIONS.about.id,
   PUBLIC_SITE_SECTIONS.download.id,

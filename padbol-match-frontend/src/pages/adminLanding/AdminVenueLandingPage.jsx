@@ -7,10 +7,6 @@ import '../publicSite/publicSite.css';
 import './adminVenueLanding.css';
 import './adminVenueLandingOverrides.css';
 
-// El Hub queda como área interna de la app. La captación de sedes entra al
-// acceso autenticado y, tras validar la sesión, abre directamente el panel.
-const ADMIN_PANEL_ACCESS_PATH = '/acceso?redirect=%2Fadmin';
-
 function useDocumentMeta(title) {
   useLayoutEffect(() => {
     const previousTitle = document.title;
@@ -68,7 +64,7 @@ function useDocumentMeta(title) {
 }
 
 export default function AdminVenueLandingPage() {
-  const { t } = useSafeTranslation();
+  const { t, language } = useSafeTranslation();
   const text = (key) => t(`adminLanding.${key}`);
   const modules = ['one', 'two', 'three', 'four', 'five', 'six'].map((key, index) => ({
     number: String(index + 1).padStart(2, '0'), title: text(`modules.${key}.title`), description: text(`modules.${key}.text`),
@@ -85,7 +81,7 @@ export default function AdminVenueLandingPage() {
               <h1>{text('title')}<span>{text('titleAccent')}</span></h1>
               <p className="admin-landing__lead">{text('lead')}</p>
               <div className="admin-landing__hero-actions">
-                <Link to="/unirse" className="admin-landing__primary">{text('primaryCta')} <span>→</span></Link>
+                <Link to="/planes" className="admin-landing__primary">{text('primaryCta')} <span>→</span></Link>
               </div>
             </div>
             <div className="admin-landing__hero-panel admin-landing__pulse" aria-label={text('pulseAria')}>
@@ -102,7 +98,16 @@ export default function AdminVenueLandingPage() {
           <div className="admin-landing__shell">
             <p className="admin-landing__eyebrow">{text('reportsEyebrow')}</p>
             <div className="admin-landing__reports-heading">
-              <h2 id="reportes-title">{text('reportsTitle')}<span>{text('reportsTitleAccent')}</span></h2>
+              <h2 id="reportes-title">
+                {language === 'es' ? (
+                  <>
+                    {text('reportsTitlePrefix')}<span>{text('reportsTitlePrimaryAccent')}</span><br />
+                    {text('reportsTitleContinuation')}<span>{text('reportsTitleAccent')}</span>
+                  </>
+                ) : (
+                  <>{text('reportsTitle')}<span>{text('reportsTitleAccent')}</span></>
+                )}
+              </h2>
               <p>{text('reportsLead')}</p>
             </div>
             <div className="admin-landing__reports-grid">
@@ -112,8 +117,8 @@ export default function AdminVenueLandingPage() {
               </article>
               <article className="admin-landing__report-card admin-landing__report-card--detail">
                 <div className="admin-landing__report-card-visual" aria-hidden="true">
-                  <div><b>14</b><span>18:30 · CANCHA 2</span><em>$ 42K</em></div>
-                  <div><b>15</b><span>TORNEO · INSCRIPCIÓN</span><em>✓</em></div>
+                  <div><b>14</b><span>18:30 · {text('court').replace(/\d+/, '2')}</span><em>$ 42K</em></div>
+                  <div><b>15</b><span>{t('admin.tabs.torneos')} · {t('equipos.inscripcion')}</span><em>✓</em></div>
                 </div>
                 <h3>{text('reportDetail')}</h3><p>{text('reportDetailText')}</p>
               </article>
@@ -141,7 +146,7 @@ export default function AdminVenueLandingPage() {
               ))}
             </div>
             <div className="admin-landing__modules-cta">
-              <Link to="/unirse" className="admin-landing__primary">
+              <Link to="/planes" className="admin-landing__primary">
                 {text('modulesCta')} <span>→</span>
               </Link>
             </div>
@@ -196,7 +201,7 @@ export default function AdminVenueLandingPage() {
             <p className="admin-landing__eyebrow">{text('closingEyebrow')}</p>
             <h2>{text('closingTitle')}<span>{text('closingTitleAccent')}</span></h2>
             <p>{text('closingText')}</p>
-            <div className="admin-landing__hero-actions"><Link to="/unirse" className="admin-landing__primary">{text('plansCta')} <span>→</span></Link></div>
+            <div className="admin-landing__hero-actions"><Link to="/planes" className="admin-landing__primary">{text('plansCta')} <span>→</span></Link></div>
           </div>
         </section>
       </main>

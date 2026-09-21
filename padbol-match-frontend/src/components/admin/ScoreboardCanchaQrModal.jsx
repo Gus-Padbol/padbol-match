@@ -56,13 +56,13 @@ export default function ScoreboardCanchaQrModal({ partido, onClose }) {
         <p className="sb-cancha-qr-modal__hint">
           {t(
             'admin.scoreboard.qrScanHint',
-            'Escaneá este QR al llegar a la cancha',
+            'Escanea este QR al llegar a la cancha',
           )}
         </p>
         <p className="sb-cancha-qr-modal__hint">
           {t(
             'admin.scoreboard.qrHint',
-            'Imprimí este QR y pegalo en la cancha. Es permanente.',
+            'Imprime este QR y pegalo en la cancha. Es permanente.',
           )}
         </p>
       </div>

@@ -16,7 +16,7 @@ export const HUB_CARD_FALLBACK_COPY = {
   torneos: { titulo: 'Torneos', subtitulo: 'Torneos y rankings.' },
   perfil: { titulo: 'Mi perfil', subtitulo: 'Perfil, estadísticas e historial.' },
   sedes: { titulo: 'Explorar sedes', subtitulo: '' },
-  reservar: { titulo: 'Reservar', subtitulo: 'Reservá cancha en tu club.' },
+  reservar: { titulo: 'Reservar', subtitulo: 'Reserva cancha en tu club.' },
   rankings: { titulo: 'Rankings', subtitulo: 'Posiciones y puntos.' },
   jugar: { titulo: 'Jugar', subtitulo: 'Reservar, buscar o armar partido.' },
   torneos_lista: { titulo: 'Torneos abiertos', subtitulo: 'Inscripciones y sedes.' },

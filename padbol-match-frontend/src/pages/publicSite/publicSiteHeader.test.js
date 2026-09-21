@@ -30,11 +30,24 @@ describe('header fijo y anchors de la web pública', () => {
     expect(layout).toMatch(/useHeaderScrolled|window\.scrollY/);
   });
 
-  it('conserva logo, navegación, idioma e Ingresar en el layout', () => {
+  it('conserva logo, navegación, idioma e ingreso a la cuenta', () => {
     expect(layout).toMatch(/padbol-match-logo-white\.svg/);
     expect(layout).toMatch(/LanguageSwitcher/);
     expect(layout).toMatch(/PUBLIC_SITE_NAV_ITEMS|public-site__desktop-nav/);
-    expect(layout).toMatch(/Ingresar|ctaLogin|PUBLIC_SITE_CTA/);
+    expect(layout).toMatch(/resolvePublicAccountAccessHref/);
+    expect(layout.match(/to=\{loginHref\}/g)).toHaveLength(2);
+  });
+
+  it('presenta el menú móvil como drawer fijo sin ocupar espacio del hero', () => {
+    const drawer = css.match(/\.public-site__mobile-nav\s*\{[^}]*\}/);
+    expect(drawer).not.toBeNull();
+    expect(drawer[0]).toMatch(/position:\s*fixed/);
+    expect(drawer[0]).toMatch(/right:\s*0/);
+    expect(drawer[0]).toMatch(/width:\s*min\(82vw,\s*380px\)/);
+    expect(drawer[0]).toMatch(/overflow-y:\s*auto/);
+    expect(css).toMatch(/\.public-site__mobile-backdrop\s*\{[\s\S]*?position:\s*fixed/);
+    expect(css).toMatch(/@media \(min-width:\s*1024px\)[\s\S]*?\.public-site__menu-button\s*\{\s*display:\s*none/);
+    expect(css).toMatch(/\.public-site__mobile-nav,[\s\S]*?\.public-site__mobile-backdrop\s*\{\s*display:\s*none !important/);
   });
 
   it('lleva los anchors a plataforma cuando el header se usa en otra ruta pública', () => {

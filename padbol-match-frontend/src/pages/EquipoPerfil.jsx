@@ -1,3 +1,4 @@
+import { fetchPublicPlayerSummary } from '../utils/perfilPublicoApi';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -196,30 +197,10 @@ export default function EquipoPerfil() {
       const uids = userIdsDesdeJugadoresEquipo(rawJugadores);
       console.log('[EquipoPerfil] userIds extraídos para join jugadores_perfil', uids);
       if (uids.length > 0) {
-        const { data: perfiles, error: perfilErr } = await supabase
-          .from('jugadores_perfil')
-          .select('user_id, pais, foto_url, alias, nombre, apellido, nivel, ciudad')
-          .in('user_id', uids);
+        const profiles = await Promise.all(uids.map((uid) => fetchPublicPlayerSummary(uid).catch(() => null)));
         if (cancelled) return;
-        console.log('[EquipoPerfil] jugadores_perfil join resultado', {
-          error: perfilErr,
-          rows: perfiles,
-          rowCount: Array.isArray(perfiles) ? perfiles.length : 0,
-        });
-        if (perfilErr) {
-          console.error('[EquipoPerfil] jugadores_perfil', perfilErr);
-          setPerfilPorUserId({});
-        } else {
-          const map = Object.fromEntries(
-            (perfiles || []).map((row) => [String(row.user_id), row])
-          );
-          const mergedPreview = rawJugadores.map((p) => mergeJugadorConPerfil(p, map));
-          console.log('[EquipoPerfil] mapa user_id → perfil', map);
-          console.log('[EquipoPerfil] jugadores tras merge (preview)', mergedPreview);
-          setPerfilPorUserId(map);
-        }
+        setPerfilPorUserId(Object.fromEntries(profiles.filter(Boolean).map((profile) => [String(profile.user_id), profile])));
       } else if (!cancelled) {
-        console.log('[EquipoPerfil] sin userIds UUID; no se consulta jugadores_perfil');
         setPerfilPorUserId({});
       }
 

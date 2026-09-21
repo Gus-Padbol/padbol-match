@@ -24,7 +24,6 @@ describe('publicSite links + shell isolation', () => {
     expect(PUBLIC_SITE_ANCHORS.platform).toBe('#que-es');
     expect(PUBLIC_SITE_ANCHORS.players).toBe('#jugadores');
     expect(PUBLIC_SITE_ANCHORS.community).toBe('#comunidad-partidos');
-    expect(PUBLIC_SITE_ANCHORS.scoreboard).toBe('#marcador-inteligente');
     expect(PUBLIC_SITE_ANCHORS.venues).toBe('#sedes');
     expect(PUBLIC_SITE_ANCHORS.download).toBe('#descargar');
     expect(PUBLIC_SITE_STORE_LINKS.appStore).toBeNull();

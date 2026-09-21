@@ -101,6 +101,27 @@ describe('partidoEstaFinalizado', () => {
 });
 
 describe('parseResultadoPartido', () => {
+  it('reconstruye el resultado manual persistido y las posiciones al recargar', () => {
+    const partido = {
+      id: 45, estado: 'finalizado', equipo_a_id: 71, equipo_b_id: 72, ganador_equipo_id: 71,
+      resultado: {
+        goles_a: 2, goles_b: 1, fuente_resultado: 'manual_admin',
+        historial_sets: [{ set: 1, a: 6, b: 4 }, { set: 2, a: 3, b: 6 }, { set: 3, a: 7, b: 5 }],
+      },
+    };
+    const reloaded = JSON.parse(JSON.stringify(partido));
+    expect(parseResultadoPartido(reloaded)).toEqual(['6-4', '3-6', '7-5']);
+    expect(formatSetsLineaNeutral(reloaded)).toBe('6-4 / 3-6 / 7-5');
+    expect(resolveGanadorEquipoId(reloaded)).toBe('71');
+    const table = buildTablaPosiciones([{ id: 71 }, { id: 72 }], [reloaded]);
+    expect(table.find(row => row.id === 71)).toMatchObject({ g: 1, pts: 3, sg: 2, sp: 1, gg: 16, gp: 15 });
+  });
+
+  it('no inventa games a partir de goles_a/b (sets ganados) si no hay historial', () => {
+    expect(parseResultadoPartido({ resultado: { goles_a: 2, goles_b: 0 } })).toEqual([]);
+    expect(parseResultadoPartido({ resultado: { historial_sets: [], set1: '6-4', set2: '6-3' } })).toEqual(['6-4', '6-3']);
+  });
+
   it('parsea sets como strings set1/set2', () => {
     const sets = parseResultadoPartido({
       resultado: { set1: '6-4', set2: '6-3' },

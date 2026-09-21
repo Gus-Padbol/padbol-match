@@ -10,6 +10,15 @@ describe('passwordlessAccess', () => {
     );
   });
 
+  it('conserva el documento FIPA exacto en el enlace mágico', () => {
+    expect(buildPasswordlessRedirectUrl(
+      'https://www.padbolmatch.com',
+      '/fipa/documentos?document=codigo-conducta',
+    )).toBe(
+      'https://www.padbolmatch.com/auth/callback?redirect=%2Ffipa%2Fdocumentos%3Fdocument%3Dcodigo-conducta',
+    );
+  });
+
   it('impide destinos externos', () => {
     expect(buildPasswordlessRedirectUrl('https://www.padbolmatch.com', '//otro-sitio.com')).toBe(
       'https://www.padbolmatch.com/auth/callback?redirect=%2Fhub',

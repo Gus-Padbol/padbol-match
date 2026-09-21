@@ -59,7 +59,7 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
     const { data, error } = await supabase.from('hub_promo_sede').select('*').eq('sede_id', sid).maybeSingle();
     setLoading(false);
     if (error) {
-      setMsg(`⚠️ ${error.message}`);
+      setMsg(`⚠️ ${t('admin.hub.hubLoadFailed')}`);
       setRowId(null);
       const next = emptyForm();
       savedSnapshotRef.current = JSON.stringify(next);
@@ -150,8 +150,8 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
       patch({ imagen_url: url });
       setMsg(t('admin.hub.imageUploaded', { defaultValue: '✅ Imagen subida' }));
       window.setTimeout(() => setMsg(''), 3000);
-    } catch (err) {
-      setMsg(`⚠️ ${err?.message || String(err)}`);
+    } catch {
+      setMsg(`⚠️ ${t('admin.hub.imageUploadFailed')}`);
     } finally {
       setImagenUploading(false);
     }
@@ -187,8 +187,8 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
       onDirtyChange?.(false);
       setMsg(t('admin.hub.promoSaved', { defaultValue: '✅ Promo guardada' }));
       window.setTimeout(() => setMsg(''), 3500);
-    } catch (err) {
-      setMsg(`⚠️ ${err?.message || String(err)}`);
+    } catch {
+      setMsg(`⚠️ ${t('general.error')}`);
     } finally {
       setSaving(false);
     }

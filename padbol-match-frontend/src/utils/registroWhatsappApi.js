@@ -1,7 +1,6 @@
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 /** GET /api/registro/whatsapp-disponible — true si el WhatsApp (E.164) no está en otro jugadores_perfil. */

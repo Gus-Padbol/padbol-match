@@ -76,6 +76,7 @@ const FALLBACKS_BY_LANG = {
   pl: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.pl, 'pl'),
   uk: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.uk, 'uk'),
   af: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.af, 'af'),
+  cs: completeLocale({}, ADDITIONAL_LOCALE_OVERRIDES.cs, 'cs'),
 };
 
 export function getLocaleFallbacks(lang) {

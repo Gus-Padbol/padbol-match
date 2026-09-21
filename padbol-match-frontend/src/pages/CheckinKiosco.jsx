@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
@@ -5,9 +6,7 @@ import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import './CheckinKiosco.css';
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 const SCANNER_DIV_ID = 'checkin-qr-reader';

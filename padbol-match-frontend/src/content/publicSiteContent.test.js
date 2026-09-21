@@ -8,16 +8,17 @@ const es = require('../i18n/locales/es.json');
 
 describe('publicSite content structure', () => {
   const expectedAnchors = [
-    'nosotros',
     'que-es',
     'experiencias',
     'jugadores',
+    'tu-recorrido',
     'comunidad-partidos',
     'marcador-inteligente',
-    'sedes',
     'continuidad',
-    'expansion',
+    'sedes',
+    'administra-tu-sede',
     'arbitro-virtual',
+    'nosotros',
     'descargar',
     'contacto',
   ];
@@ -31,7 +32,7 @@ describe('publicSite content structure', () => {
     const anchors = new Set(PUBLIC_SITE_SECTION_ORDER.map((id) => `#${id}`));
     PUBLIC_SITE_NAV_ITEMS.forEach(({ href }) => expect(anchors.has(href)).toBe(true));
     expect(PUBLIC_SITE_NAV_ITEMS.map(({ key }) => key)).toEqual(
-      expect.arrayContaining(['community', 'scoreboard']),
+      expect.arrayContaining(['community']),
     );
     expect(PUBLIC_SITE_NAV_ITEMS[0].key).toBe('platform');
     expect(PUBLIC_SITE_NAV_ITEMS.at(-2).key).toBe('about');
@@ -46,7 +47,6 @@ describe('publicSite content structure', () => {
     expect(PUBLIC_SITE_SECTIONS.contact.ctas.map(({ to }) => to)).toEqual([
       '/administradores',
       '#descargar',
-      '/acceso',
     ]);
     expect(PUBLIC_SITE_INTERNAL_ROUTES).toEqual(
       expect.arrayContaining([
@@ -65,7 +65,7 @@ describe('publicSite content structure', () => {
   it('tiene contenido español para todos los títulos, textos e items configurados', () => {
     Object.entries(PUBLIC_SITE_SECTIONS).forEach(([sectionKey, section]) => {
       expect(es.publicSite[sectionKey]?.title).toEqual(expect.any(String));
-      expect(es.publicSite[sectionKey]?.text).toEqual(expect.any(String));
+      expect(es.publicSite[sectionKey]?.text || es.publicSite[sectionKey]?.lead).toEqual(expect.any(String));
       (section.items || []).forEach(({ key }) => {
         expect(es.publicSite[sectionKey]?.items?.[key]?.title).toEqual(expect.any(String));
         expect(es.publicSite[sectionKey]?.items?.[key]?.text).toEqual(expect.any(String));
@@ -86,11 +86,9 @@ describe('publicSite content structure', () => {
     });
   });
 
-  it('explica comunidad/partidos y marcador inteligente con peso suficiente', () => {
+  it('explica comunidad/partidos y continuidad sin duplicar el marcador', () => {
     expect(es.publicSite.communityMatches.title).toMatch(/antes de entrar/i);
     expect(es.publicSite.communityMatches.text).toMatch(/crear un encuentro|partidos abiertos/i);
-    expect(es.publicSite.smartScoreboard.title).toMatch(/Marcador inteligente/i);
-    expect(es.publicSite.smartScoreboard.text).toMatch(/en vivo|mientras se juega/i);
     expect(es.publicSite.continuity.text).toMatch(/recorrido|encuentro|actividad/i);
   });
 });

@@ -41,13 +41,13 @@ export function searchAdminPushPlayers({ apiBaseUrl, accessToken, q }) {
   return adminPushFetch({ apiBaseUrl, accessToken, path: `/api/push/admin-search-players?q=${qs}` });
 }
 
-export function sendAdminPushNotification({ apiBaseUrl, accessToken, title, body, segment }) {
+export function sendAdminPushNotification({ apiBaseUrl, accessToken, title, body, segment, idempotencyKey }) {
   return adminPushFetch({
     apiBaseUrl,
     accessToken,
     path: '/api/push/send-admin',
     method: 'POST',
-    body: { title, body, segment },
+    body: { title, body, segment, idempotencyKey },
   });
 }
 
@@ -61,13 +61,13 @@ export function formatAdminPushSegmentLabel(segment, t) {
       return t('admin.pushNotif.segments.allCountry');
     case 'pais':
       return t('admin.pushNotif.segments.country', { country: seg.pais || '—' });
+    case 'ciudad':
+      return t('admin.pushNotif.segments.city', { city: seg.ciudad || '—' });
     case 'sede':
     case 'sede_mia':
       return t('admin.pushNotif.segments.venue', { id: seg.sedeId ?? seg.sede_id ?? '—' });
     case 'deporte':
       return t('admin.pushNotif.segments.sport', { sport: seg.deporte || '—' });
-    case 'idioma':
-      return t('admin.pushNotif.segments.language', { language: seg.idioma || '—' });
     case 'jugador':
       return seg.email
         ? t('admin.pushNotif.segments.playerEmail', { email: seg.email })

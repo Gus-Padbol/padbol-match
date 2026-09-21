@@ -1,10 +1,8 @@
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 import { handleCrearPreferenciaResponse } from './mercadopagoCheckout';
 
 function defaultApiBackendBase() {
-  if (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL) {
-    return String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '');
-  }
-  return 'https://padbol-backend.onrender.com';
+  return getApiBaseUrl();
 }
 
 /** Estado de pago de inscripción del equipo en torneo. */

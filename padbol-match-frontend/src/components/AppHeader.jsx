@@ -1,3 +1,4 @@
+import { searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -264,6 +265,7 @@ export default function AppHeader({
     }
     if (r === 'super_admin') return 'Super Admin';
     if (r === 'admin_nacional') return 'Admin Nacional';
+    if (r === 'admin_cadena') return 'Admin Multisede';
     if (r === 'admin_club') return adminSedeNombre ? `Admin · ${adminSedeNombre}` : 'Admin';
     return hubNombreCorto;
   }, [
@@ -354,6 +356,12 @@ export default function AppHeader({
       if (isUserHomeHubPath(dest)) scheduleHubEntryScrollReset();
       return;
     }
+    if (pathOnly === '/fipa/documentos' || pathOnly.startsWith('/fipa/documentos/')) {
+      const dest = resolveSedePublicaBackToPath(location.state);
+      navigate(dest);
+      if (isUserHomeHubPath(dest)) scheduleHubEntryScrollReset();
+      return;
+    }
     if (typeof window !== 'undefined') window.history.back();
   };
 
@@ -422,7 +430,8 @@ export default function AppHeader({
 
   useEffect(() => {
     const q = String(searchTerm || '').trim();
-    if (!searchOpen || q.length < 3) {
+    if (!searchOpen || q.length < 3 || !session?.user) {
+      if (!session?.user) setSearchOpen(false);
       setSearchResults({ jugadores: [], torneos: [], sedes: [] });
       setSearchLoading(false);
       return undefined;
@@ -432,11 +441,10 @@ export default function AppHeader({
     const t = setTimeout(async () => {
       try {
         const qLike = `%${q}%`;
-        const jugadoresP = supabase
-          .from('jugadores_perfil')
-          .select('alias, nombre, apellido, foto_url, nivel, nombre_completo')
-          .or(`nombre.ilike.${qLike},apellido.ilike.${qLike},alias.ilike.${qLike},nombre_completo.ilike.${qLike}`)
-          .limit(3);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token || session?.access_token || '';
+        const jugadoresP = searchPublicPlayerSummaries(q, { accessToken, limit: 3 })
+          .then((data) => ({ data }));
         const torneosP = supabase
           .from('torneos')
           .select('id, nombre, fecha_inicio, estado, sede_id')
@@ -476,7 +484,7 @@ export default function AppHeader({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [searchTerm, searchOpen]);
+  }, [searchTerm, searchOpen, session?.user, session?.access_token]);
 
   /** Solo desktop: max-width vía CSS (`.app-header-inner--max-body`), alineado al cuerpo (~900px). */
   const headerInnerCssVarStyle = useMemo(() => {
@@ -559,7 +567,7 @@ export default function AppHeader({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Buscar en Padbol Match"
+                aria-label={`${t('general.search')} Padbol Match`}
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
@@ -607,7 +615,7 @@ export default function AppHeader({
               <button
                 type="button"
                 onClick={closeSearchPanel}
-                aria-label="Cerrar búsqueda"
+                aria-label={t('general.close')}
                 style={{
                   flexShrink: 0,
                   width: 40,
@@ -1136,8 +1144,8 @@ export default function AppHeader({
                 width: '100%',
                 maxWidth: '100%',
               }}
-              title={`${headerTitleDisplay} — Ir al inicio`}
-              aria-label={`${headerTitleDisplay}, ir al inicio`}
+              title={`${headerTitleDisplay} — ${t('general.goHome')}`}
+              aria-label={`${headerTitleDisplay}, ${t('general.goHome')}`}
             >
               {headerTitleDisplay}
             </button>

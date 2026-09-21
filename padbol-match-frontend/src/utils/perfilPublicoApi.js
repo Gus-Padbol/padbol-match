@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from './apiPublicBaseUrl';
+
 /** UUID Auth (relajado). */
 export function esUuidPerfilPublico(s) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || '').trim());
@@ -97,4 +99,43 @@ export function normalizePerfilPublicoApiResponse(data) {
     },
     perfil: perfilSynth,
   };
+}
+
+/** Identidad pública mínima; nunca consulta la tabla ni devuelve contacto o nacimiento. */
+export async function fetchPublicPlayerSummary(identifier, { signal } = {}) {
+  const value = String(identifier || '').trim();
+  if (!value || value.includes('@')) return null;
+  const url = buildPerfilPublicoFetchUrl(value, getApiBaseUrl());
+  if (!url) return null;
+  const response = await fetch(url, signal ? { signal } : {});
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error('public_profile_unavailable');
+  const normalized = normalizePerfilPublicoApiResponse(await response.json());
+  if (!normalized?.perfil) return null;
+  const row = normalized.perfil;
+  return Object.fromEntries(['user_id', 'alias', 'foto_url', 'nombre', 'apellido', 'nivel', 'pais', 'ciudad']
+    .map((key) => [key, row[key] ?? null]));
+}
+
+/** La búsqueda de personas requiere sesión y usa el DTO de identidad sin contacto. */
+export async function searchPublicPlayerSummaries(query, { accessToken = '', limit = 12 } = {}) {
+  const value = String(query || '').trim();
+  if (!accessToken || value.length < 2) return [];
+  const size = Math.max(1, Math.min(50, Number(limit) || 12));
+  const response = await fetch(`${getApiBaseUrl()}/api/jugadores/buscar?q=${encodeURIComponent(value)}&limit=${size}&contexto=perfil`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) throw new Error('public_player_search_unavailable');
+  const payload = await response.json();
+  const rows = Array.isArray(payload.jugadores) ? payload.jugadores : [];
+  return rows.filter((row) => row?.user_id).map((row) => ({
+    user_id: row.user_id,
+    alias: String(row.alias || '').replace(/^@+/, ''),
+    nombre: row.nombre || row.display_name || '',
+    apellido: row.apellido || '',
+    foto_url: row.foto_url || null,
+    nivel: row.nivel || null,
+    pais: row.pais || null,
+    ciudad: row.ciudad || null,
+  }));
 }

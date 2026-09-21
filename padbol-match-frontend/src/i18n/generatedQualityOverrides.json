@@ -1,0 +1,103 @@
+{
+  "de": {
+    "admin": {
+      "jugadores": { "pageOf": "Seite {{page}} von {{total}} ({{count}})" },
+      "membresias": { "pageOf": "Seite {{page}} / {{total}} ({{count}})" }
+    }
+  },
+  "ar": {
+    "admin": {
+      "metrics": {
+        "bookingsByHourEmpty": "لا توجد حجوزات نشطة في هذه الفترة.",
+        "compareCustomPrevious": "النطاق المحدد مقارنة بالنطاق السابق ذي المدة نفسها"
+      },
+      "sedes": {
+        "customDisciplinePlaceholder": "مثال: تنس الشاطئ، الاسكواش الداخلي…",
+        "logoPublicUrlMissing": "لم يتم استلام رابط عام للشعار."
+      },
+      "jugadores": { "pageOf": "الصفحة {{page}} من {{total}} ({{count}})" },
+      "membresias": {
+        "pageOf": "الصفحة {{page}} / {{total}} ({{count}})",
+        "fieldRenovAutoHint": "للتوضيح: الفوترة المتكررة غير مفعلة بعد."
+      },
+      "overview": { "todayRevenueHint": "مجموع أسعار حجوزات اليوم غير الملغاة." },
+      "padcoins": { "conditionsPlaceholder": "مثال: صالح من الاثنين إلى الجمعة" },
+      "profesores": { "mostrando": "{{shown}} من أصل {{total}} مدربًا" }
+    },
+    "legal": {
+      "privacyPage": {
+        "useCommunity": "توفير ميزات المجتمع والعثور على شركاء رياضيين عند تفعيلها في التطبيق"
+      }
+    },
+    "sedes": { "publica": { "resenas": "★ {{rating}} ({{count}} مراجعة)" } },
+    "teamDetail": { "shareTournament": "{{team}} — البطولة: {{tournament}}" }
+  },
+  "fr": {
+    "admin": {
+      "jugadores": { "pageOf": "Page {{page}} sur {{total}} ({{count}})" },
+      "membresias": { "pageOf": "Page {{page}} / {{total}} ({{count}})" },
+      "franjas": {
+        "surgeBands": "0–30 % d’occupation → minimum · 30–60 % → moyen · 60–85 % → élevé · 85–100 % → maximum · Dernière heure disponible → remise automatique"
+      }
+    }
+  },
+  "it": {
+    "admin": {
+      "jugadores": { "pageOf": "Pagina {{page}} di {{total}} ({{count}})" },
+      "membresias": {
+        "pageOf": "Pagina {{page}} / {{total}} ({{count}})",
+        "fieldRenovAutoHint": "Informazione: la fatturazione ricorrente non è ancora attiva."
+      }
+    }
+  },
+  "sv": {
+    "admin": { "franjas": { "slotNamePh": "T.ex. morgon, eftermiddag, kväll" } },
+    "adminLanding": { "modules": { "one": { "title": "TURNERINGAR SOM HÅLLS ORGANISERADE" } } }
+  },
+  "pt-BR": {
+    "admin": {
+      "jugadores": { "pageOf": "Página {{page}} de {{total}} ({{count}})" },
+      "membresias": { "pageOf": "Página {{page}} / {{total}} ({{count}})" }
+    },
+    "sedes": { "publica": { "resenas": "★ {{rating}} ({{count}} avaliações)" } }
+  },
+  "pt-PT": {
+    "admin": {
+      "jugadores": { "pageOf": "Página {{page}} de {{total}} ({{count}})" },
+      "membresias": { "pageOf": "Página {{page}} / {{total}} ({{count}})" }
+    },
+    "sedes": { "publica": { "resenas": "★ {{rating}} ({{count}} avaliações)" } }
+  },
+  "af": {
+    "perfil": { "flow": { "cityPlaceholder": "Bv. La Plata, Buenos Aires, Madrid…" } },
+    "accountDeletion": {
+      "confirmTitle": "Versoek om jou rekening uit te vee?",
+      "lead": "Jy kan versoek dat jou Padbol Match-rekening en die gepaardgaande persoonlike data uitgevee word.",
+      "signInSuffix": " om uitvee vanaf hierdie bladsy te versoek. As jy nie kan aanmeld nie, gebruik die e-posopsie hieronder."
+    },
+    "admin": {
+      "franjas": {
+        "loading": "Laai tydbande…",
+        "surgeBands": "0–30% besetting → minimum · 30–60% → gemiddeld · 60–85% → hoog · 85–100% → maksimum · Laaste beskikbare uur → outomatiese afslag"
+      },
+      "hub": {
+        "loadingHubConfig": "Laai sentrale opstelling…",
+        "loadingSportConfig": "Laai opstelling volgens sport…"
+      },
+      "overview": {
+        "noCourtsConfigured": "Geen Courts is opgestel nie. Voeg hulle onder “My sportklub” by om besette en beskikbare Courts te vergelyk."
+      },
+      "onboarding": { "pagosBody": "Koppel jou Mercado Pago- of Stripe-rekening om betalings te ontvang." },
+      "scoreboard": { "copy": "Kopieer", "copyTvLink": "Kopieer Court TV-skakel" },
+      "sponsors": { "loadingSponsorQuotas": "Laai borgkwotas…" },
+      "sedes": {
+        "venueDataConfigHint": "Sportklubdata: as jy die “My sportklub”-oortjie het, gebruik “Wysig sportklub” vir naam, ligging, kontak, pryse en betaalmetode. Veranderinge word via die API gestoor en verskyn op die openbare profiel. In dieselfde oortjie laat “My Courts” jou toe om Courts by te voeg en hulle te aktiveer of deaktiveer; onaktiewe Courts word nie vir openbare besprekings aangebied nie.",
+        "yearFoundedHint": "Opsioneel. Word in die “In syfers”-afdeling van die klub se openbare profiel gewys."
+      }
+    },
+    "paises": { "chile": "Chili", "ucrania": "Oekraïne" },
+    "ranking": { "loading": "Laai ranglyste…" },
+    "clases": { "loading": "Laai klas…" },
+    "support": { "loadingCases": "Laai gevalle…" }
+  }
+}

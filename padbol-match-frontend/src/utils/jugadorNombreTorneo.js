@@ -1,4 +1,5 @@
-import { supabase } from '../supabaseClient';
+import { fetchPublicPlayerSummary } from './perfilPublicoApi';
+import { slugPerfilPublicoJugador } from './jugadorPerfilPublicoUrl';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from './jugadorPerfil';
 import { nombreDesdeSesionSinEmail } from './displayName';
 
@@ -166,35 +167,17 @@ export function buildJugadorPerfilLookupMaps(perfiles) {
   return { perfilByEmailLower: byEmailLower };
 }
 
-/**
- * Carga jugadores_perfil por cada email (ILIKE exacto, insensible a mayúsculas).
- * Evita `.in('email', …)` cuando en BD el email no coincide en casing con el JSON.
- */
+/** Enriquece identidad por alias/UUID público. El email ya recibido sólo vincula el resultado en memoria. */
 export async function fetchJugadoresPerfilPorJugadores(players) {
   const list = Array.isArray(players) ? players : [];
-  const emailsNorm = [...new Set(list.map((p) => normalizeJugadorEmail(p)).filter(Boolean))];
-  if (!emailsNorm.length) return [];
-
-  const merged = new Map();
-
-  await Promise.all(
-    emailsNorm.map(async (em) => {
-      const { data, error } = await supabase
-        .from('jugadores_perfil')
-        .select('user_id, nombre, apellido, alias, email, whatsapp, foto_url, nivel, ciudad')
-        .ilike('email', em)
-        .limit(3);
-
-      if (error) {
-        console.error('fetchJugadoresPerfilPorJugadores', em, error);
-        return;
-      }
-      for (const row of data || []) {
-        const k = normalizeEmailStr(row.email);
-        if (k && !merged.has(k)) merged.set(k, row);
-      }
-    })
-  );
-
-  return Array.from(merged.values());
+  const pending = new Map();
+  const results = await Promise.all(list.map(async (player) => {
+    const slug = slugPerfilPublicoJugador(player);
+    const email = normalizeJugadorEmail(player);
+    if (!slug || !email) return null;
+    if (!pending.has(slug)) pending.set(slug, fetchPublicPlayerSummary(slug).catch(() => null));
+    const profile = await pending.get(slug);
+    return profile ? { ...profile, email } : null;
+  }));
+  return [...new Map(results.filter(Boolean).map((row) => [row.email, row])).values()];
 }

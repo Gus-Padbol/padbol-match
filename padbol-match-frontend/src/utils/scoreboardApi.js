@@ -1,6 +1,7 @@
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 import { supabase } from '../supabaseClient';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://padbol-backend.onrender.com';
+const API_BASE = getApiBaseUrl({ preferLegacy: true });
 const SCOREBOARD_FOTOS_BUCKET = 'scoreboard-fotos';
 
 export async function getAuthHeaders() {

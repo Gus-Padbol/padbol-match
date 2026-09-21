@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { PUBLIC_SITE_NAV_ITEMS } from '../../content/publicSiteContent';
-import { PUBLIC_SITE_CTA } from '../../constants/publicSiteLinks';
+import { PUBLIC_SITE_CTA, PUBLIC_SITE_PATH } from '../../constants/publicSiteLinks';
 import { ES_FALLBACKS, useSafeTranslation } from '../../i18n/tSafe';
 
 export default function PublicSiteFooter() {
@@ -11,7 +11,7 @@ export default function PublicSiteFooter() {
   const links = [
     ...PUBLIC_SITE_NAV_ITEMS.map(({ key, href, to }) => ({
       key,
-      href: key === 'venues' ? undefined : href,
+      href: key === 'venues' ? undefined : (href?.startsWith('#') ? `${PUBLIC_SITE_PATH}${href}` : href),
       to: key === 'venues' ? PUBLIC_SITE_CTA.venue : to,
       label: text(`publicSite.footer.${key}`),
     })),

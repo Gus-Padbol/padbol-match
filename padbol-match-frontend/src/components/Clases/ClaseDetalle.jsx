@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { calculatePlayerPricing } from '../../utils/playerPricing';
+import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../../constants/deportesCanchaSede';
 import SportIcon from '../common/SportIcon';
 import { cancelarInscripcionClase, fetchClaseDetalle, inscribirClase } from '../../utils/clasesApi';
@@ -29,6 +31,7 @@ function labelTipo(tipo) {
 
 export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { session } = useAuth();
   const [clase, setClase] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -108,8 +111,7 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
   }, [clase]);
 
   const precioBase = Math.round(Number(clase?.precio) || 0);
-  const cargoPlataforma = Math.round(precioBase * 0.03);
-  const precioTotal = precioBase + cargoPlataforma;
+  const { fee: cargoPlataforma, total: precioTotal } = calculatePlayerPricing(precioBase);
   const mon = String(moneda || 'ARS').trim() || 'ARS';
 
   const horaSelNorm = normalizeHoraClase(horaSel);
@@ -121,7 +123,7 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
       return;
     }
     if (!horaSelNorm) {
-      setErr('Elegí un horario.');
+      setErr('Elige un horario.');
       return;
     }
     setSubmitting(true);
@@ -340,7 +342,7 @@ export default function ClaseDetalle({ claseId, moneda = 'ARS' }) {
               <strong>Subtotal:</strong> {mon} {precioBase.toLocaleString('es-AR')}
             </div>
             <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 6 }}>
-              <strong>Cargo de servicio (3%):</strong> {mon} {cargoPlataforma.toLocaleString('es-AR')}
+              <strong>{t('reservas.cargoServicio')}</strong> {mon} {cargoPlataforma.toLocaleString('es-AR')}
             </div>
             <div style={{ marginTop: 10, fontWeight: 900, fontSize: 18 }}>
               Total a pagar: {mon} {precioTotal.toLocaleString('es-AR')}

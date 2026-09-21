@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -46,10 +47,7 @@ export default function Jugar() {
   const [hubDeporteRows, setHubDeporteRows] = useState([]);
   const [hubDeporteStatus, setHubDeporteStatus] = useState('idle');
 
-  const HUB_API_BASE =
-    typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-      ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-      : 'https://padbol-backend.onrender.com';
+  const HUB_API_BASE = getApiBaseUrl();
 
   useEffect(() => {
     let cancelled = false;
@@ -345,7 +343,7 @@ export default function Jugar() {
                   border: '1px solid rgba(255,255,255,0.25)',
                 }}
               >
-                Del club
+                {t('jugar.fromClub')}
               </span>
               <div className="jugar-card-copy">
                 <strong className="jugar-card-title">{String(hubPromoRow.titulo).trim()}</strong>
@@ -353,7 +351,7 @@ export default function Jugar() {
                   <span className="jugar-card-body">{String(hubPromoRow.subtitulo).trim()}</span>
                 ) : null}
                 <span className="jugar-card-body" style={{ marginTop: 6, display: 'block', fontWeight: 800 }}>
-                  {String(hubPromoRow.texto_boton || 'Ver más').trim()}
+                  {String(hubPromoRow.texto_boton || t('general.seeMore')).trim()}
                 </span>
               </div>
             </div>

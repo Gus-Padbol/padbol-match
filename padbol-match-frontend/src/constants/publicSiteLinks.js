@@ -4,6 +4,7 @@
  */
 
 export const PUBLIC_SITE_PATH = '/plataforma';
+export const PUBLIC_SITE_ADMIN_PATH = '/administradores';
 
 /** CTAs del Hero — flujos productivos existentes. */
 export const PUBLIC_SITE_CTA = {
@@ -12,14 +13,11 @@ export const PUBLIC_SITE_CTA = {
   /** Descarga de la app. Mientras no haya stores, baja al bloque "Próximamente". */
   play: '#descargar',
   /** Incorporar sede: primero presenta la landing comercial específica para sedes. */
-  venue: '/administradores',
+  venue: PUBLIC_SITE_ADMIN_PATH,
   /** Solicitud de alta: solo después de conocer la propuesta comercial. */
   venueApplication: '/unirse',
-  /**
-   * Acceso a cuenta. URL absoluta + parámetro de intención para que una PWA
-   * con un shell anterior no reinterprete el clic como navegación al hero.
-   */
-  login: 'https://www.padbolmatch.com/acceso?login=1',
+  /** Acceso a cuenta. */
+  login: '/acceso',
 };
 
 /** Anchors principales de navegación pública. */

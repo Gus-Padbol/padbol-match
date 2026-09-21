@@ -1,45 +1,71 @@
 import fs from 'fs';
 import path from 'path';
 import { isChatbotIAVisiblePathname } from '../constants/hubLayout';
-import { publicLandingKnowledgeAnswer } from './ChatbotIA';
+import {
+  bcp47LangForAssistantTts,
+  commercialPlansKnowledgeAnswer,
+  inferWritingLocaleCodeFromText,
+  publicLandingKnowledgeAnswer,
+} from './ChatbotIA';
+import { CHIVI_AI_SPARK_PATH } from './ChiviAiSparkIcon';
 
 describe('Chivi on the public Padbol Match landing', () => {
   it('is visible on the public landing without expanding to player routes', () => {
     expect(isChatbotIAVisiblePathname('/plataforma')).toBe(true);
     expect(isChatbotIAVisiblePathname('/plataforma/')).toBe(true);
-    expect(isChatbotIAVisiblePathname('/administradores')).toBe(true);
+    expect(isChatbotIAVisiblePathname('/planes')).toBe(true);
     expect(isChatbotIAVisiblePathname('/jugar')).toBe(false);
     expect(isChatbotIAVisiblePathname('/acceso')).toBe(false);
   });
 
-  it('preserves the approved attention cycle and scoreboard media fallback', () => {
-    const source = fs.readFileSync(path.join(__dirname, 'ChatbotIA.jsx'), 'utf8');
-    const styles = fs.readFileSync(path.join(__dirname, 'ChatbotIA.css'), 'utf8');
-    const premiumSections = fs.readFileSync(path.join(__dirname, '..', 'pages', 'publicSite', 'sections', 'PremiumSections.jsx'), 'utf8');
-    const publicStyles = fs.readFileSync(path.join(__dirname, '..', 'pages', 'publicSite', 'publicSite.css'), 'utf8');
-
-    expect(source).toContain("p === '/administradores'");
-    expect(source).toContain('window.innerHeight * 3');
-    expect(styles).toContain('chatbot-public-float 0.7s ease-in-out 3');
-    expect(styles).toContain('chatbot-public-avatar-collapse 0.35s ease 2.1s forwards');
-    expect(styles).toContain('chatbot-public-label-collapse 0.3s ease 2.02s forwards');
-    expect(premiumSections).toContain('<ScoreboardSnapshot />');
-    expect(premiumSections).toContain('<ScoreboardVideo text={text} />');
-    expect(publicStyles).toContain('.ps-section--scoreboard .ps-scoreboard__snapshot {\n    display: block;');
+  it('sends Romanian questions to the Romanian assistant path', () => {
+    expect(inferWritingLocaleCodeFromText('Vreau să rezerv un teren mâine')).toBe('ro');
+    expect(inferWritingLocaleCodeFromText('Ce turneu este disponibil astăzi?')).toBe('ro');
+    expect(inferWritingLocaleCodeFromText('OK', 'de')).toBe('de');
   });
 
   it('sends explicit public context and renders the AI spark', () => {
     const source = fs.readFileSync(path.join(__dirname, 'ChatbotIA.jsx'), 'utf8');
+    const iconSource = fs.readFileSync(path.join(__dirname, 'ChiviAiSparkIcon.jsx'), 'utf8');
+    const styleSource = fs.readFileSync(path.join(__dirname, 'ChatbotIA.css'), 'utf8');
     const layoutSource = fs.readFileSync(path.join(__dirname, '..', 'pages', 'publicSite', 'PublicSiteLayout.jsx'), 'utf8');
+    const appSource = fs.readFileSync(path.join(__dirname, '..', 'App.js'), 'utf8');
     expect(source).toContain("client_surface: 'public_landing'");
     expect(source).toContain('chatbot-public-ai-spark');
+    expect(source).toContain('<ChiviAiSparkIcon className="chatbot-public-ai-spark__icon" />');
+    expect(iconSource).toContain(CHIVI_AI_SPARK_PATH);
+    expect(styleSource).toContain('.chatbot-public-ai-spark__icon');
+    expect(styleSource).not.toContain('.chatbot-public-ai-spark::before');
     expect(source).toContain('¿Qué ofrece a las sedes?');
     expect(layoutSource).toContain('<ChatbotIASafe />');
+    expect(appSource).toContain('!publicLayoutOwnsChatbot ? <ChatbotIASafe /> : null');
   });
 
   it('keeps useful public answers available when the remote AI is unavailable', () => {
     expect(publicLandingKnowledgeAnswer('¿Qué ofrece a las sedes?', 'es')).toMatch(/canchas.*reservas.*torneos/i);
     expect(publicLandingKnowledgeAnswer('¿Tienen reportes contables?', 'es')).toMatch(/no es asesoramiento contable/i);
     expect(publicLandingKnowledgeAnswer('What is available today?', 'en')).toMatch(/available today/i);
+    expect(publicLandingKnowledgeAnswer('O que está disponível hoje?', 'pt-BR')).toMatch(/disponíveis hoje/i);
+    expect(publicLandingKnowledgeAnswer('Was ist heute verfügbar?', 'de')).toMatch(/Padbol Match connects/i);
+    expect(publicLandingKnowledgeAnswer('Ce oferă cluburilor?', 'ro')).toMatch(/terenuri.*rezervări.*turnee/iu);
+    expect(publicLandingKnowledgeAnswer('Aveți rapoarte contabile?', 'ro')).toMatch(/nu reprezintă consultanță contabilă/iu);
+    expect(publicLandingKnowledgeAnswer('Co nabízíte klubům?', 'cs')).toMatch(/kurtů.*rezervací.*turnajů/iu);
+    expect(publicLandingKnowledgeAnswer('Máte účetní přehledy?', 'cs')).toMatch(/Nejde o účetní.*poradenství/iu);
+  });
+
+  it('keeps the commercial Planes answers available in the fallback', () => {
+    expect(publicLandingKnowledgeAnswer('¿Hay cargos ocultos?', 'es')).toMatch(/Antes de activar un plan/i);
+    expect(publicLandingKnowledgeAnswer('¿Puedo traer información de otro sistema?', 'es')).toMatch(/formato sea compatible/i);
+    expect(publicLandingKnowledgeAnswer('¿Qué pasa si tengo varias sedes?', 'es')).toMatch(/operadores multisede/i);
+    expect(publicLandingKnowledgeAnswer('What if I manage several venues?', 'en')).toMatch(/multisite operators/i);
+    expect(commercialPlansKnowledgeAnswer('¿Cuánto cuesta enviar la solicitud?', 'es')).toMatch(/inicia el contacto/i);
+    expect(commercialPlansKnowledgeAnswer('¿Cómo funciona la migración?', 'es')).toMatch(/formato sea compatible/i);
+    expect(commercialPlansKnowledgeAnswer('¿Qué ofrece Padbol Match?', 'es')).toBeNull();
+  });
+
+  it('uses the selected language for read-aloud replies', () => {
+    expect(bcp47LangForAssistantTts('Vyberte dostupný čas.', 'cs')).toBe('cs-CZ');
+    expect(bcp47LangForAssistantTts('Short neutral reply.', 'de')).toBe('de-DE');
+    expect(bcp47LangForAssistantTts('Mulțumesc pentru rezervare.', 'en')).toBe('ro-RO');
   });
 });

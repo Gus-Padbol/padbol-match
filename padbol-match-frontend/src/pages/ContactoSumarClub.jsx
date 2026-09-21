@@ -1,6 +1,11 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import AppHeader from '../components/AppHeader';
+import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES, paisTelefonoTranslationKey } from '../constants/paisesTelefono';
 import './LandingPage.css';
+import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { commercialFlowCopy } from './commercialFlowCopy';
 
 const ACCENT = '#E11B22';
 
@@ -25,7 +30,180 @@ const btnPrimary = {
 
 const WHATSAPP_URL = 'https://wa.me/17864588533';
 
+const API_BASE = getApiBaseUrl();
+
+const BUSINESS_SPORTS = [
+  ['padbol', 'padbol'],
+  ['padel', 'padel'],
+  ['pickleball', 'pickleball'],
+  ['tenis', 'tennis'],
+];
+
+const BUSINESS_FORM_INITIAL = {
+  organizacion: '',
+  responsable: '',
+  pais: '',
+  ubicacion: '',
+  sedes: '',
+  canchas: '',
+  deporte: '',
+  otros_deportes: '',
+  email: '',
+  whatsapp: '',
+};
+
+function BusinessContactForm() {
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const flowCopy = commercialFlowCopy(i18n.resolvedLanguage || i18n.language);
+  const copy = flowCopy.business;
+  const [form, setForm] = useState(BUSINESS_FORM_INITIAL);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const countries = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
+  const field = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const inputStyle = {
+    width: '100%',
+    padding: '12px 13px',
+    border: '1px solid #d8d2c5',
+    borderRadius: 10,
+    boxSizing: 'border-box',
+    background: '#fff',
+    color: '#172033',
+    fontSize: 16,
+  };
+  const labelStyle = { display: 'block', margin: '15px 0 6px', color: '#172033', fontSize: 13, fontWeight: 800 };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setSuccess('');
+    const venueCount = Number.parseInt(form.sedes, 10);
+    const courtCount = Number.parseInt(form.canchas, 10);
+    if (!Number.isInteger(venueCount) || venueCount < 2) {
+      setError(copy.invalidVenues);
+      return;
+    }
+    if (!Number.isInteger(courtCount) || courtCount < 1) {
+      setError(copy.invalidCourts);
+      return;
+    }
+    const email = form.email.trim().toLowerCase();
+    const whatsapp = form.whatsapp.trim();
+    const body = {
+      club_nombre: form.organizacion.trim(),
+      club_direccion: form.ubicacion.trim(),
+      pais: form.pais.trim(),
+      ciudad: form.ubicacion.trim(),
+      provincia_estado: form.ubicacion.trim(),
+      club_telefono: whatsapp,
+      club_email: email,
+      responsable_nombre: form.responsable.trim(),
+      responsable_cargo: 'manager',
+      email,
+      whatsapp,
+      cantidad_canchas: courtCount,
+      deportes_canchas: {
+        deportes: [form.deporte],
+        canchas: { [form.deporte]: courtCount },
+      },
+      mensaje: `[Plan consultado: Business]\n[Cantidad de sedes: ${venueCount}]\n[Deporte principal: ${BUSINESS_SPORTS.find(([key]) => key === form.deporte)?.[1] || form.deporte}]\n[Otros deportes: ${form.otros_deportes === 'si' ? 'Sí' : 'No'}]`,
+      solicitud_inicial: true,
+    };
+    setSaving(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/solicitudes-licencia`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || response.statusText);
+      setForm(BUSINESS_FORM_INITIAL);
+      setSuccess(copy.success);
+    } catch (submitError) {
+      setError(submitError?.message || copy.error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="landing-page" style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-primary)' }}>
+      <AppHeader title={copy.header} onBack={() => navigate('/planes')} backLabel={`← ${copy.back}`} />
+      <main style={{ width: 'min(760px, calc(100% - 32px))', margin: '0 auto', padding: '112px 0 48px' }}>
+        <img
+          src="/media/public-site/jero/padbol-match-logo-white.svg"
+          alt="Padbol Match"
+          style={{ width: 180, height: 'auto', display: 'block', margin: '0 auto 22px' }}
+        />
+        <section style={{ padding: '25px 22px', border: '1px solid rgba(242,201,76,.35)', borderRadius: 16, background: 'linear-gradient(145deg,#1e2635,#171d28)', textAlign: 'center' }}>
+          <p style={{ margin: '0 0 8px', color: '#f2c94c', fontSize: 12, fontWeight: 900, letterSpacing: '.12em' }}>{copy.eyebrow}</p>
+          <h1 style={{ margin: '0 0 10px', color: '#fff', fontSize: 'clamp(1.55rem, 4vw, 2.1rem)', lineHeight: 1.15 }}>{copy.title}</h1>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,.68)', lineHeight: 1.55 }}>{copy.lead}</p>
+        </section>
+
+        {error ? <p role="alert" style={{ padding: 13, borderRadius: 10, background: '#fee2e2', color: '#991b1b', fontWeight: 700 }}>{error}</p> : null}
+        {success ? <p role="status" style={{ padding: 13, borderRadius: 10, background: '#dcfce7', color: '#166534', fontWeight: 700 }}>{success}</p> : null}
+
+        <form onSubmit={submit} style={{ marginTop: 18, padding: '24px 22px', border: '1px solid rgba(242,201,76,.28)', borderRadius: 16, background: '#f4f1e9', colorScheme: 'light', boxShadow: '0 16px 42px rgba(0,0,0,.2)' }}>
+          <h2 style={{ margin: '0 0 4px', color: '#172033', fontSize: 20 }}>{copy.formTitle}</h2>
+          <p style={{ margin: '0 0 14px', color: '#626b78', fontSize: 13, lineHeight: 1.5 }}>{copy.disclaimer}</p>
+
+          <label htmlFor="business-organizacion" style={labelStyle}>{copy.organization} *</label>
+          <input id="business-organizacion" style={inputStyle} value={form.organizacion} onChange={(e) => field('organizacion', e.target.value)} required autoComplete="organization" />
+
+          <label htmlFor="business-responsable" style={labelStyle}>{copy.manager} *</label>
+          <input id="business-responsable" style={inputStyle} value={form.responsable} onChange={(e) => field('responsable', e.target.value)} required autoComplete="name" />
+
+          <label htmlFor="business-pais" style={labelStyle}>{copy.country} *</label>
+          <select id="business-pais" style={inputStyle} value={form.pais} onChange={(e) => field('pais', e.target.value)} required>
+            <option value="">{flowCopy.chooseCountry}</option>
+            {countries.map((country) => <option key={`${country.nombre}-${country.codigo}`} value={country.nombre}>{country.bandera} {t(`paises.${paisTelefonoTranslationKey(country.nombre)}`, { defaultValue: country.nombre })}</option>)}
+          </select>
+
+          <label htmlFor="business-ubicacion" style={labelStyle}>{copy.location} *</label>
+          <input id="business-ubicacion" style={inputStyle} value={form.ubicacion} onChange={(e) => field('ubicacion', e.target.value)} required autoComplete="address-level2" />
+
+          <label htmlFor="business-sedes" style={labelStyle}>{copy.venues} *</label>
+          <input id="business-sedes" type="number" min="2" step="1" inputMode="numeric" style={inputStyle} value={form.sedes} onChange={(e) => field('sedes', e.target.value)} required />
+
+          <label htmlFor="business-canchas" style={labelStyle}>{copy.courts} *</label>
+          <input id="business-canchas" type="number" min="1" step="1" inputMode="numeric" style={inputStyle} value={form.canchas} onChange={(e) => field('canchas', e.target.value)} required />
+
+          <label htmlFor="business-deporte" style={labelStyle}>{copy.sport} *</label>
+          <select id="business-deporte" style={inputStyle} value={form.deporte} onChange={(e) => field('deporte', e.target.value)} required>
+            <option value="">{copy.chooseSport}</option>
+            {BUSINESS_SPORTS.map(([key, translationKey]) => <option key={key} value={key}>{t(`publicSite.sports.${translationKey}`)}</option>)}
+          </select>
+
+          <label htmlFor="business-otros" style={labelStyle}>{copy.otherSports} *</label>
+          <select id="business-otros" style={inputStyle} value={form.otros_deportes} onChange={(e) => field('otros_deportes', e.target.value)} required>
+            <option value="">{flowCopy.chooseOption}</option>
+            <option value="si">{flowCopy.yes}</option>
+            <option value="no">{flowCopy.no}</option>
+          </select>
+
+          <label htmlFor="business-email" style={labelStyle}>{copy.email} *</label>
+          <input id="business-email" type="email" style={inputStyle} value={form.email} onChange={(e) => field('email', e.target.value)} required autoComplete="email" />
+
+          <label htmlFor="business-whatsapp" style={labelStyle}>{copy.whatsapp} *</label>
+          <input id="business-whatsapp" type="tel" style={inputStyle} value={form.whatsapp} onChange={(e) => field('whatsapp', e.target.value)} placeholder="+34…" required autoComplete="tel" />
+
+          <button type="submit" disabled={saving} style={{ ...btnPrimary, marginTop: 22, opacity: saving ? .75 : 1 }}>
+            {saving ? copy.sending : copy.submit}
+          </button>
+        </form>
+      </main>
+    </div>
+  );
+}
+
 export default function ContactoSumarClub() {
+  const location = useLocation();
+  const isBusiness = new URLSearchParams(location.search).get('tema') === 'business';
+  const { t } = useTranslation();
   useEffect(() => {
     const root = document.documentElement;
     root.classList.add('landing-page-active');
@@ -37,6 +215,8 @@ export default function ContactoSumarClub() {
       if (meta && prevThemeColor != null) meta.setAttribute('content', prevThemeColor);
     };
   }, []);
+
+  if (isBusiness) return <BusinessContactForm />;
 
   return (
     <div
@@ -66,7 +246,7 @@ export default function ContactoSumarClub() {
             textDecoration: 'none',
           }}
         >
-          ← Inicio
+          ← {t('aboutPage.home')}
         </Link>
         <h1
           style={{
@@ -77,7 +257,7 @@ export default function ContactoSumarClub() {
             color: 'var(--text-primary)',
           }}
         >
-          Sumar mi club
+          {t('publicSite.contact.venue')}
         </h1>
         <p
           style={{
@@ -88,10 +268,10 @@ export default function ContactoSumarClub() {
             fontWeight: 500,
           }}
         >
-          Completa el formulario y nos ponemos en contacto para darte de alta en la plataforma.
+          {t('clubOnboarding.hero.lead')}
         </p>
         <Link to="/unirse" style={{ ...btnPrimary, marginBottom: 14 }}>
-          Completar formulario de alta
+          {t('clubOnboarding.form.startInquiry')}
         </Link>
         <p
           style={{
@@ -103,14 +283,14 @@ export default function ContactoSumarClub() {
             fontWeight: 500,
           }}
         >
-          ¿Tienes dudas?{' '}
+          {t('clubOnboarding.contact.before')}{' '}
           <a
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: ACCENT, fontWeight: 700, textDecoration: 'none' }}
           >
-            Escribinos por WhatsApp
+            WhatsApp
           </a>
         </p>
         <div
@@ -122,11 +302,11 @@ export default function ContactoSumarClub() {
           }}
         >
           <Link to="/terminos" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
-            Términos
+            {t('legal.terminos')}
           </Link>
           <span style={{ color: 'var(--border)', margin: '0 8px' }}>|</span>
           <Link to="/privacidad" style={{ color: 'var(--text-secondary)', fontWeight: 600, textDecoration: 'none' }}>
-            Privacidad
+            {t('legal.privacidad')}
           </Link>
         </div>
       </div>

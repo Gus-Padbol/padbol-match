@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useCallback } from 'react';
 import { useNavigate, useLocation, createSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -22,9 +23,7 @@ import { scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 function reservarUrlFromPending(pending) {
@@ -119,10 +118,10 @@ export default function PagoFallido() {
             ❌
           </div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: T.colorErrorDark, marginBottom: '12px' }}>
-            El pago no se completó
+            {t('pago.fallido')}
           </h1>
           <p style={{ color: T.colorTextMuted, fontSize: '15px', lineHeight: 1.65, marginBottom: '20px' }}>
-            El pago no se completó. Puedes intentarlo de nuevo o cancelar la reserva.
+            {t('reservas.paymentIncomplete')}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -135,7 +134,7 @@ export default function PagoFallido() {
                 boxShadow: '0 4px 14px rgba(185, 28, 28, 0.35)',
               }}
             >
-              Intentar de nuevo
+              {t('pago.reintentar')}
             </AppButton>
             <AppButton
               variant="secondary"
@@ -148,17 +147,17 @@ export default function PagoFallido() {
                 border: '1px solid var(--border)',
               }}
             >
-              Cancelar reserva
+              {t('reservas.cancelar')}
             </AppButton>
           </div>
         </div>
       </div>
       <ConfirmCancelReservaModal
         open={cancelReservaModalOpen}
-        title="¿Cancelar la reserva?"
-        message="Se liberará el turno pendiente y vas a salir del flujo de pago."
-        confirmLabel="Sí, cancelar reserva"
-        dismissLabel="Seguir en esta pantalla"
+        title={t('reservas.cancelModalTitle')}
+        message={t('reservas.cancelModalMessage')}
+        confirmLabel={t('reservas.cancelModalConfirm')}
+        dismissLabel={t('reservas.cancelModalDismiss')}
         busy={busy}
         onDismiss={() => setCancelReservaModalOpen(false)}
         onConfirm={() => {

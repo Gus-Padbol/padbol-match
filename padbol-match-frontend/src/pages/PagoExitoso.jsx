@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -26,9 +27,7 @@ import { usePadcoinsActiveCampaign } from '../hooks/usePadcoinsActiveCampaign';
 import { PadcoinsCampaignPlayerHint } from '../components/PadcoinsCampaignPlayerSurfaces';
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 function PagoExitosoHeroCheck() {
@@ -165,14 +164,14 @@ export default function PagoExitoso() {
         const j = await res.json().catch(() => ({}));
         if (cancelled) return;
         if (!res.ok) {
-          setQrError(j?.error || 'No se pudo generar el QR');
+          setQrError(j?.error || t('pago.qrGenerationFailed'));
           setQrToken(null);
           return;
         }
         setQrToken(String(j?.qr_token || '').trim() || null);
       } catch (e) {
         if (!cancelled) {
-          setQrError(e?.message || 'Error de red');
+          setQrError(e?.message || t('pago.networkError'));
           setQrToken(null);
         }
       } finally {
@@ -182,7 +181,7 @@ export default function PagoExitoso() {
     return () => {
       cancelled = true;
     };
-  }, [reserva?.id, pagoKind, saving, confirmError]);
+  }, [reserva?.id, pagoKind, saving, confirmError, t]);
 
   const descargarQrPago = () => {
     const canvas = qrCanvasWrapRef.current?.querySelector('canvas');
@@ -237,7 +236,7 @@ export default function PagoExitoso() {
             </div>
             <a
               className="pago-exitoso__btn--whatsapp"
-              href={`https://wa.me/?text=${encodeURIComponent(`Sumate a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`)}`}
+              href={`https://wa.me/?text=${encodeURIComponent(`Únete a mi partido en Padbol Match: ${window.location.origin}/partidos-abiertos`)}`}
               target="_blank"
               rel="noreferrer"
             >

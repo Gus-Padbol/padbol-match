@@ -750,8 +750,8 @@ html.admin-landing-active body {
 .admin-landing__data-ownership {
   position: relative;
   overflow: hidden;
-  min-height: 790px;
-  padding: 126px 0 108px;
+  min-height: 650px;
+  padding: 88px 0 78px;
   border-top: 1px solid rgba(237, 28, 46, .48);
   border-bottom: 1px solid rgba(237, 28, 46, .48);
   background: linear-gradient(115deg, #12101a 0%, #080d17 52%, #170e15 100%);
@@ -774,20 +774,18 @@ html.admin-landing-active body {
 .admin-landing__data-ownership-grid::before {
   position: absolute;
   z-index: -1;
-  left: -7%;
-  width: min(76%, 1040px);
-  /* La transmisión ocupa toda la base negra disponible, sin invadir el
-   * contenido editorial de la derecha. */
-  bottom: calc(-12% - 74px);
-  height: min(44vw, 590px);
-  background: url('../../assets/data-ownership-visual.png') left bottom / 100% auto no-repeat;
+  top: 50%;
+  left: -8%;
+  width: min(70%, 900px);
+  height: min(48vw, 590px);
+  min-height: 480px;
+  background: url('../../assets/data-ownership-visual.png') center / cover no-repeat;
   content: '';
-  /* El negro propio del archivo se funde con la sección: queda la visual,
-   * no un rectángulo pegado sobre el fondo. */
+  transform: translateY(-50%);
   mix-blend-mode: screen;
-  opacity: .86;
-  -webkit-mask-image: radial-gradient(ellipse 100% 100% at 24% 34%, #000 56%, rgba(0, 0, 0, .78) 72%, transparent 100%);
-  mask-image: radial-gradient(ellipse 100% 100% at 24% 34%, #000 56%, rgba(0, 0, 0, .78) 72%, transparent 100%);
+  opacity: .92;
+  -webkit-mask-image: radial-gradient(ellipse 82% 78% at 42% 50%, #000 54%, rgba(0, 0, 0, .76) 70%, transparent 100%);
+  mask-image: radial-gradient(ellipse 82% 78% at 42% 50%, #000 54%, rgba(0, 0, 0, .76) 70%, transparent 100%);
   pointer-events: none;
 }
 
@@ -801,7 +799,7 @@ html.admin-landing-active body {
 
 .admin-landing__data-ownership-kicker {
   position: absolute;
-  bottom: -22px;
+  bottom: -2px;
   left: 0;
   z-index: 1;
   width: min(100%, 390px);
@@ -848,13 +846,39 @@ html.admin-landing-active body {
 }
 
 .admin-landing__data-ownership-points span {
-  padding: 9px 12px;
-  border: 1px solid rgba(245, 154, 162, .48);
+  position: relative;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 86, 100, .62);
   border-radius: 999px;
-  background: rgba(6, 10, 18, .38);
+  background: linear-gradient(135deg, rgba(57, 12, 22, .72), rgba(7, 12, 22, .88));
   color: #fff;
   font-size: 13px;
   font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 rgba(237, 28, 46, 0);
+  animation: admin-data-point-sequence 3.9s ease-in-out infinite;
+  will-change: transform, border-color, box-shadow, background-color;
+}
+
+.admin-landing__data-ownership-points span:nth-child(2) { animation-delay: 1.3s; }
+.admin-landing__data-ownership-points span:nth-child(3) { animation-delay: 2.6s; }
+
+@keyframes admin-data-point-sequence {
+  0%, 28%, 100% {
+    transform: translateY(0) scale(1);
+    border-color: rgba(255, 86, 100, .62);
+    background: linear-gradient(135deg, rgba(57, 12, 22, .72), rgba(7, 12, 22, .88));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 rgba(237, 28, 46, 0);
+  }
+  10%, 20% {
+    transform: translateY(-3px) scale(1.045);
+    border-color: #ff4152;
+    background: linear-gradient(135deg, rgba(142, 18, 36, .96), rgba(31, 10, 20, .96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 0 20px rgba(237, 28, 46, .55), 0 8px 22px rgba(0, 0, 0, .28);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-landing__data-ownership-points span { animation: none; }
 }
 
 @media (max-width: 600px) {

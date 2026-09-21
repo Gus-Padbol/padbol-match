@@ -52,7 +52,7 @@ export default class ErrorBoundary extends React.Component {
             Algo salió mal
           </h2>
           <p style={{ margin: '0 0 1rem', color: '#94a3b8', lineHeight: 1.5 }}>
-            Hubo un problema al cargar {label}. Podés reintentar o volver al inicio.
+            Hubo un problema al cargar {label}. Puedes reintentar o volver al inicio.
           </p>
 
           {error && (

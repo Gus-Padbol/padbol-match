@@ -1,9 +1,13 @@
-import i18n, { STORAGE_KEY } from '../i18n';
 import { canonicalPadbolLanguageCode, isPadbolLanguageCode } from '../constants/padbolLanguages';
 
-export { STORAGE_KEY };
+export const PADBOL_LANGUAGE_STORAGE_KEY = 'padbol_lang';
+export const STORAGE_KEY = PADBOL_LANGUAGE_STORAGE_KEY;
 
-export function normalizePadbolLang(code) {
+function getI18n() {
+  return require('../i18n').default;
+}
+
+function normalizeSupportedPadbolLang(code) {
   const s = String(code || '').trim().replace(/_/g, '-').toLowerCase();
   const exact = canonicalPadbolLanguageCode(s);
   if (exact) return exact;
@@ -26,7 +30,41 @@ export function normalizePadbolLang(code) {
   if (s.startsWith('pl')) return 'pl';
   if (s.startsWith('uk') || s.startsWith('ua')) return 'uk';
   if (s.startsWith('af')) return 'af';
+  if (s.startsWith('cs') || s.startsWith('cz')) return 'cs';
+  return null;
+}
+
+export function normalizePadbolLang(code) {
+  return normalizeSupportedPadbolLang(code) || 'en';
+}
+
+export function getNavigatorLanguageCandidates(navigatorLike = typeof navigator === 'undefined' ? null : navigator) {
+  const preferred = Array.isArray(navigatorLike?.languages) ? navigatorLike.languages : [];
+  const legacy = navigatorLike?.language;
+  return [...preferred, legacy]
+    .map((language) => String(language || '').trim())
+    .filter((language, index, values) => language && values.indexOf(language) === index);
+}
+
+export function detectPadbolBrowserLanguage(navigatorLike = typeof navigator === 'undefined' ? null : navigator) {
+  for (const language of getNavigatorLanguageCandidates(navigatorLike)) {
+    const supported = normalizeSupportedPadbolLang(language);
+    if (supported) return supported;
+  }
   return 'en';
+}
+
+export function resolveInitialPadbolLanguage({
+  storage = typeof localStorage === 'undefined' ? null : localStorage,
+  navigatorLike = typeof navigator === 'undefined' ? null : navigator,
+} = {}) {
+  try {
+    const stored = canonicalPadbolLanguageCode(storage?.getItem(STORAGE_KEY));
+    if (stored) return stored;
+  } catch {
+    // Browser storage can be unavailable (privacy mode or security policy).
+  }
+  return detectPadbolBrowserLanguage(navigatorLike);
 }
 
 /** Locale BCP 47 para `Intl` / `toLocaleDateString` según idioma Padbol. */
@@ -52,6 +90,7 @@ export function padbolLangToIntlLocale(lang) {
     pl: 'pl-PL',
     uk: 'uk-UA',
     af: 'af-ZA',
+    cs: 'cs-CZ',
   };
   return map[code] || code;
 }
@@ -84,18 +123,18 @@ export function applyPadbolDocumentDirection(lang) {
 }
 
 /** true si el usuario ya eligió idioma (guardado en localStorage). */
-export function hasPadbolLangChosen() {
+export function hasPadbolLangChosen(storage = typeof localStorage === 'undefined' ? null : localStorage) {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
+    const v = storage?.getItem(STORAGE_KEY);
     return isPadbolLanguageCode(v);
   } catch {
     return false;
   }
 }
 
-export function getPadbolLangStored() {
+export function getPadbolLangStored(storage = typeof localStorage === 'undefined' ? null : localStorage) {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
+    const v = storage?.getItem(STORAGE_KEY);
     if (isPadbolLanguageCode(v)) return normalizePadbolLang(v);
   } catch {
     /* ignore */
@@ -106,7 +145,7 @@ export function getPadbolLangStored() {
 /** Aplica idioma en memoria sin persistir (visitante internacional en landing). */
 export function applyPadbolLanguageInMemory(code) {
   const lang = normalizePadbolLang(code);
-  void i18n.changeLanguage(lang);
+  void getI18n().changeLanguage(lang);
   return lang;
 }
 
@@ -118,20 +157,15 @@ export async function setPadbolLanguage(code) {
   } catch {
     /* ignore */
   }
-  await i18n.changeLanguage(lang);
+  await getI18n().changeLanguage(lang);
   applyPadbolDocumentDirection(lang);
   return lang;
 }
 
-/** Sin `padbol_lang`: inglés por defecto; si existe, restaurar elección. */
-export function bootstrapPadbolLanguage() {
-  const stored = getPadbolLangStored();
-  if (stored) {
-    void i18n.changeLanguage(stored);
-    applyPadbolDocumentDirection(stored);
-    return stored;
-  }
-  void i18n.changeLanguage('en');
-  applyPadbolDocumentDirection('en');
-  return 'en';
+/** Elección manual, primer idioma compatible del navegador o inglés. */
+export function bootstrapPadbolLanguage(options) {
+  const language = resolveInitialPadbolLanguage(options);
+  void getI18n().changeLanguage(language);
+  applyPadbolDocumentDirection(language);
+  return language;
 }

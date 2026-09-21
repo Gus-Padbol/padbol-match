@@ -1,10 +1,11 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../context/AuthContext';
 import './RecorridoExterno.css';
 
-const API_BASE = (process.env.REACT_APP_API_BASE_URL || 'https://padbol-backend.onrender.com').replace(/\/$/, '');
+const API_BASE = getApiBaseUrl();
 
 export default function AdminRecorridosExternos() {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export default function AdminRecorridosExternos() {
 
   return <main className="external-history-page"><AppHeader title="Recorridos externos" /><div className="external-history-wrap" style={{width:'min(1100px,calc(100% - 28px))'}}>
     <button className="external-history-back" type="button" onClick={() => navigate('/admin')}>← Volver al panel</button>
-    <section className="external-history-hero"><span>Revisión en hasta 24 horas</span><h1>Recorridos pendientes</h1><p>Revisá las evidencias, reconocé únicamente datos verificables y explicá cualquier pedido o rechazo.</p></section>
+    <section className="external-history-hero"><span>Revisión en hasta 24 horas</span><h1>Recorridos pendientes</h1><p>Revisa las evidencias, reconoce únicamente datos verificables y explica cualquier pedido o rechazo.</p></section>
     {error && <div className="external-history-message" style={{borderColor:'#fecaca',background:'#fef2f2',color:'#991b1b'}}>{error}</div>}
     <section className="external-history-status">
       {loading ? <p>Cargando…</p> : rows.length === 0 ? <p>No hay solicitudes.</p> : rows.map((row) => <article key={row.id}>
@@ -75,7 +76,7 @@ export default function AdminRecorridosExternos() {
         </button>
         {analyses[row.id] && <div className="external-history-ai-result">
           <div><strong>Propuesta de Chivi</strong><span>Confianza {analyses[row.id].confianza}</span></div>
-          <p>{analyses[row.id].resumen || 'Revisá los datos propuestos contra las capturas.'}</p>
+          <p>{analyses[row.id].resumen || 'Revisa los datos propuestos contra las capturas.'}</p>
           {analyses[row.id].dudas?.length > 0 && <ul>{analyses[row.id].dudas.map((duda)=><li key={duda}>{duda}</li>)}</ul>}
           <small>La propuesta no modifica la ficha hasta que una persona la revise y pulse Aprobar.</small>
         </div>}

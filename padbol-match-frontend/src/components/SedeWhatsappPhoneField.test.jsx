@@ -108,7 +108,7 @@ describe('MEJ-04 SedeWhatsappPhoneField', () => {
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('id', 'wa-test');
     expect(input).toHaveAttribute('aria-describedby', 'wa-test-help');
-    expect(screen.getByText('Ingresá el número sin el código de país.')).toHaveAttribute('id', 'wa-test-help');
+    expect(screen.getByText('Ingresa el número sin el código de país.')).toHaveAttribute('id', 'wa-test-help');
     expect(screen.getByText(/código de país/i, { selector: '.sede-wa-phone-sr-only' })).toBeInTheDocument();
   });
 });

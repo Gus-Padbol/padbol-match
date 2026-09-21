@@ -193,7 +193,8 @@
           "title": "Verfolgen Sie Ihren Fortschritt",
           "text": "Verlauf, Ranking und Wachstum in Ihrem Profil."
         }
-      }
+      },
+      "tapNext": "Wischen Sie, um jede Funktion zu entdecken"
     },
     "playerRecord": {
       "kicker": "DEIN SPIEL BEGINNT NICHT BEI NULL",
@@ -447,7 +448,7 @@
       "visitPadbol": "Besuchen Sie Padbol",
       "contactHelp": "Benötigen Sie Hilfe? Kontaktieren Sie uns",
       "brandAria": "Gehe zu Padbol Match",
-      "legalOwner": "Wird von Entertainment and Sports Services LLC betrieben."
+      "legalOwner": "Wird von ENTERTAINMENT SPORT SERVICE LLC betrieben."
     },
     "paths": {
       "aria": "Pfade"
@@ -533,6 +534,19 @@
           "title": "Verbinden Sie das Ergebnis",
           "text": "Der Spiel-Feeds-Verlauf, Statistiken, Rangliste und Turniere, sofern zutreffend."
         }
+      },
+      "sponsorSlots": {
+        "aria": "Sponsoren- und Werbeflächen auf der Anzeigetafel",
+        "live": {
+          "eyebrow": "WÄHREND DES SPIELS",
+          "title": "Live-Sponsorenleiste",
+          "text": "Marken bleiben mit einer sichtbaren Leiste auf der Anzeigetafel Teil des Spiels."
+        },
+        "closing": {
+          "eyebrow": "BEIM ABSCHLUSS DES ERGEBNISSES",
+          "title": "Abschlusswerbung",
+          "text": "Das Endergebnis öffnet im Moment der höchsten Aufmerksamkeit eine Fläche für die Marke."
+        }
       }
     },
     "padCoins": {
@@ -573,7 +587,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "ANZEIGETAFEL-VISION / KI",
         "title": "TRAINING\nIN BEARBEITUNG"
       }
     }
@@ -772,7 +786,8 @@
           "title": "تتبع تقدمك",
           "text": "التاريخ والتصنيف والنمو في ملفك الشخصي."
         }
-      }
+      },
+      "tapNext": "اسحب لاستكشاف كل ميزة"
     },
     "playerRecord": {
       "kicker": "لعبتك لا تبدأ من الصفر",
@@ -1026,7 +1041,7 @@
       "visitPadbol": "تفضل بزيارة Padbol",
       "contactHelp": "هل تحتاج إلى مساعدة؟ اتصل بنا",
       "brandAria": "انتقل إلى Padbol Match",
-      "legalOwner": "التي تديرها شركة Entertainment and Sports Services LLC."
+      "legalOwner": "التي تديرها شركة ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "الممرات"
@@ -1111,6 +1126,19 @@
         "connect": {
           "title": "إرسال النتيجة",
           "text": "سجل موجزات المباريات والإحصائيات والتصنيف والبطولات عند الاقتضاء."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "مساحات الرعاية والإعلان على لوحة النتائج",
+        "live": {
+          "eyebrow": "أثناء المباراة",
+          "title": "شريط الراعي المباشر",
+          "text": "تبقى العلامات التجارية جزءًا من المباراة عبر شريط ظاهر على لوحة النتائج."
+        },
+        "closing": {
+          "eyebrow": "عند إغلاق النتيجة",
+          "title": "إعلان ختامي",
+          "text": "تفتح النتيجة النهائية مساحة للعلامة التجارية في لحظة ذروة الاهتمام."
         }
       }
     },
@@ -1351,7 +1379,8 @@
           "title": "Suivez vos progrès",
           "text": "Historique, classement et croissance dans votre profil."
         }
-      }
+      },
+      "tapNext": "Balayez pour découvrir chaque fonctionnalité"
     },
     "playerRecord": {
       "kicker": "VOTRE JEU NE COMMENCE PAS À PARTIR DE ZÉRO",
@@ -1605,7 +1634,7 @@
       "visitPadbol": "Visitez Padbol",
       "contactHelp": "Besoin d'aide ? Contactez-nous",
       "brandAria": "Accédez à Padbol Match",
-      "legalOwner": "Exploité par Entertainment and Sports Services LLC."
+      "legalOwner": "Exploité par ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Parcours"
@@ -1690,6 +1719,19 @@
         "connect": {
           "title": "Connectez le résultat",
           "text": "Le match alimente l'historique, les statistiques, le classement et les tournois le cas échéant."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Emplacements de sponsoring et de publicité sur le tableau de score",
+        "live": {
+          "eyebrow": "PENDANT LE MATCH",
+          "title": "Bandeau sponsor en direct",
+          "text": "Les marques restent présentes dans le match grâce à un bandeau visible sur le tableau de score."
+        },
+        "closing": {
+          "eyebrow": "À LA VALIDATION DU RÉSULTAT",
+          "title": "Publicité de clôture",
+          "text": "Le résultat final ouvre un espace de marque au moment où l’attention est maximale."
         }
       }
     },
@@ -1930,7 +1972,8 @@
           "title": "Monitora i tuoi progressi",
           "text": "Cronologia, classifica e crescita nel tuo profilo."
         }
-      }
+      },
+      "tapNext": "Scorri per scoprire ogni funzione"
     },
     "playerRecord": {
       "kicker": "IL TUO GIOCO NON INIZIA DA ZERO",
@@ -2184,7 +2227,7 @@
       "visitPadbol": "Visita Padbol",
       "contactHelp": "Hai bisogno di aiuto? Contattaci",
       "brandAria": "Vai a Padbol Match",
-      "legalOwner": "Gestito da Entertainment and Sports Services LLC."
+      "legalOwner": "Gestito da ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Percorsi"
@@ -2270,6 +2313,19 @@
           "title": "Collega il risultato",
           "text": "La partita alimenta cronologia, statistiche, classifica e tornei, quando applicabile."
         }
+      },
+      "sponsorSlots": {
+        "aria": "Spazi per sponsor e pubblicità sul tabellone",
+        "live": {
+          "eyebrow": "DURANTE LA PARTITA",
+          "title": "Fascia sponsor in diretta",
+          "text": "I marchi restano parte della partita con una fascia visibile sul tabellone."
+        },
+        "closing": {
+          "eyebrow": "ALLA CHIUSURA DEL RISULTATO",
+          "title": "Pubblicità finale",
+          "text": "Il risultato finale apre uno spazio per il marchio nel momento di massima attenzione."
+        }
       }
     },
     "padCoins": {
@@ -2310,7 +2366,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "VISIONE DEL TABELLONE / IA",
         "title": "FORMAZIONE\nIN CORSO"
       }
     }
@@ -2392,8 +2448,8 @@
         "labels": {
           "players": "Jucători",
           "venues": "Locuri",
-          "matches": "<\">Comunități",
-          "community": "<\">Comunități",
+          "matches": "Meciuri",
+          "community": "Comunitate",
           "tournaments": "Turnee",
           "scoreboard": "Tablou de scor inteligent",
           "ranking": "Clasament",
@@ -2413,7 +2469,7 @@
           "events": "Evenimente",
           "loyalty": "Fidelitate",
           "experiences": "Experience",
-          "associations": "Experience data-i=\"7\">Asociații",
+          "associations": "Asociații",
           "federations": "Federații",
           "academies": "Academii",
           "coaches": "Antrenori",
@@ -2468,7 +2524,7 @@
           "badges": {
             "sponsor": "Sponsori · disponibili",
             "ads": "Publicitate · disponibile",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · proiect-pilot"
           }
         }
       }
@@ -2509,7 +2565,8 @@
           "title": "Urmăriți-vă progresul",
           "text": "Istoricul, clasarea și creșterea în profilul dvs."
         }
-      }
+      },
+      "tapNext": "Glisați pentru a descoperi fiecare funcție"
     },
     "playerRecord": {
       "kicker": "JOCUL TĂU NU ÎNREGISTREAZĂ ZERO. O recunoaștem",
@@ -2756,14 +2813,14 @@
       "privacy": "Confidențialitate",
       "terms": "Termeni",
       "language": "Limba",
-      "copyright": "Pad-i=\"6\"> Toate drepturile rezervate.",
+      "copyright": "Padbol Match. Toate drepturile rezervate.",
       "community": "Comunitate",
       "scoreboard": "Tablou de bord inteligent",
       "productOf": "Un produs Padbol",
       "visitPadbol": "Vizitați Padbol",
       "contactHelp": "Aveți nevoie de ajutor? Contactați-ne",
       "brandAria": "Accesați Padbol Match",
-      "legalOwner": "Operat de Entertainment and Sports Services LLC."
+      "legalOwner": "Operat de ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Pathways"
@@ -2776,7 +2833,7 @@
       "mockBadge": "Demo",
       "mockTitle": "Meci deschis",
       "mockMeta": "Loc de azi",
-      "mockLevel": "Loc de azi:30 PM</7:30 PM data-i=\"10\">Nivel intermediar",
+      "mockLevel": "Nivel intermediar",
       "mockSlots": "{{filled}} din 4 locuri confirmate",
       "mockAction": "Solicitați un loc",
       "mockMetricsAria": "Simulare de ocupare și confirmare",
@@ -2831,7 +2888,7 @@
       "steps": {
         "start": {
           "title": "Selectați jucătorul",
-          "text": "<span>data-i=\"4\"><span>team-i"
+          "text": "Selectați jucătorii sau echipele și deschideți tabela de scor."
         },
         "live": {
           "title": "Urmăriți în direct",
@@ -2848,6 +2905,19 @@
         "connect": {
           "title": "Conectează rezultatul",
           "text": "Meciul furnizează istoric, statistici, clasament și turnee, atunci când este cazul."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Spații pentru sponsori și publicitate pe tabela de scor",
+        "live": {
+          "eyebrow": "ÎN TIMPUL MECIULUI",
+          "title": "Bandă de sponsor în direct",
+          "text": "Brandurile rămân parte din meci printr-o bandă vizibilă pe tabela de scor."
+        },
+        "closing": {
+          "eyebrow": "LA ÎNCHEIEREA REZULTATULUI",
+          "title": "Reclamă de încheiere",
+          "text": "Rezultatul final deschide un spațiu pentru brand în momentul de maximă atenție."
         }
       }
     },
@@ -2890,7 +2960,7 @@
       },
       "signal": {
         "eyebrow": "AISCORE",
-        "title": " data-i=\"5\">INSTRUIRE\nÎN CARE"
+        "title": "ANTRENAMENT\nÎN DESFĂȘURARE"
       }
     }
   },
@@ -3088,7 +3158,8 @@
           "title": "Acompanhe seu progresso",
           "text": "Histórico, classificação e crescimento em seu perfil."
         }
-      }
+      },
+      "tapNext": "Deslize para conhecer cada recurso"
     },
     "playerRecord": {
       "kicker": "SEU JOGO NÃO COMEÇA DO ZERO",
@@ -3342,7 +3413,7 @@
       "visitPadbol": "Visite Padbol",
       "contactHelp": "Precisa de ajuda? Entre em contato conosco",
       "brandAria": "Vá para Padbol Match",
-      "legalOwner": "Operado pela Entertainment and Sports Services LLC."
+      "legalOwner": "Operado pela ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Caminhos"
@@ -3427,6 +3498,19 @@
         "connect": {
           "title": "Conecte o resultado",
           "text": "A partida alimenta histórico, estatísticas, classificação e torneios quando aplicável."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Espaços de patrocínio e publicidade no placar",
+        "live": {
+          "eyebrow": "DURANTE A PARTIDA",
+          "title": "Faixa de patrocinador ao vivo",
+          "text": "As marcas continuam fazendo parte da partida com uma faixa visível no placar."
+        },
+        "closing": {
+          "eyebrow": "AO ENCERRAR O RESULTADO",
+          "title": "Anúncio de encerramento",
+          "text": "O resultado final abre um espaço para a marca no momento de maior atenção."
         }
       }
     },
@@ -3667,7 +3751,8 @@
           "title": "Acompanhe seu progresso",
           "text": "Histórico, classificação e crescimento em seu perfil."
         }
-      }
+      },
+      "tapNext": "Deslize para conhecer cada funcionalidade"
     },
     "playerRecord": {
       "kicker": "SEU JOGO NÃO COMEÇA DO ZERO",
@@ -3921,7 +4006,7 @@
       "visitPadbol": "Visite Padbol",
       "contactHelp": "Precisa de ajuda? Entre em contato conosco",
       "brandAria": "Vá para Padbol Match",
-      "legalOwner": "Operado pela Entertainment and Sports Services LLC."
+      "legalOwner": "Operado pela ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Caminhos"
@@ -4006,6 +4091,19 @@
         "connect": {
           "title": "Conecte o resultado",
           "text": "A partida alimenta histórico, estatísticas, classificação e torneios quando aplicável."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Espaços de patrocínio e publicidade no marcador",
+        "live": {
+          "eyebrow": "DURANTE O JOGO",
+          "title": "Faixa de patrocinador em direto",
+          "text": "As marcas continuam a fazer parte do jogo com uma faixa visível no marcador."
+        },
+        "closing": {
+          "eyebrow": "AO FECHAR O RESULTADO",
+          "title": "Anúncio de encerramento",
+          "text": "O resultado final abre um espaço para a marca no momento de maior atenção."
         }
       }
     },
@@ -4196,7 +4294,7 @@
         "rollingOut": {
           "eyebrow": "امروز در دسترس است",
           "title": "ورزش‌های جدید، همان سفر",
-          "text": "Padel، و Tennis در حال پیشرفت هستند. بازی، مدیریت و سفر جامعه."
+          "text": "پدل، پیکل‌بال و تنیس به‌تدریج به مسیر بازی، مدیریت و جامعه Padbol Match می‌پیوندند."
         },
         "next": {
           "eyebrow": "امروز در دسترس است",
@@ -4223,7 +4321,7 @@
           "text": "زمان محکمه را در محل برگزاری خود امن کنید."
         },
         "compete": {
-          "title": "<span data-i=\"4\">Compete data-i=\"4\">Compete data-i=\"4\">Compete data-i=\"4\">Compete",
+          "title": "رقابت",
           "text": " این تعداد است."
         },
         "community": {
@@ -4246,7 +4344,8 @@
           "title": "پیشرفت خود را پیگیری کنید",
           "text": "تاریخچه، رتبه بندی و رشد در نمایه خود."
         }
-      }
+      },
+      "tapNext": "برای مشاهده هر قابلیت، ورق بزنید"
     },
     "playerRecord": {
       "kicker": "بازی شما از صفر شروع نمی شود",
@@ -4430,7 +4529,7 @@
       }
     },
     "expansion": {
-      "title": "فرصت‌های بیشتر برای اتصال داده‌های مکان برگزاری، <span-spantives> کمپین‌های شما",
+      "title": "فرصت‌های بیشتر برای باشگاه شما",
       "text": " و انجمن های ورزشی-دادگاهی.",
       "items": {
         "sponsor": {
@@ -4500,7 +4599,7 @@
       "visitPadbol": "از Padbol دیدن کنید",
       "contactHelp": "به کمک نیاز دارید؟ با ما تماس بگیرید",
       "brandAria": "رفتن به Padbol Match",
-      "legalOwner": "که توسط Entertainment and Sports Services LLC اداره می شود."
+      "legalOwner": "که توسط ENTERTAINMENT SPORT SERVICE LLC اداره می شود."
     },
     "paths": {
       "aria": "مسیرها"
@@ -4540,7 +4639,7 @@
           "text": "بازیکنان را پیدا کنید و درخواست کنید"
         },
         "join": {
-          "title": "بازیکنان را کشف کنید.</spanpan. data-i=\"5\">تیم ها را کامل کنید",
+          "title": "تکمیل تیم‌ها",
           "text": "درخواست‌ها را بپذیرید، شکاف‌ها را پر کنید و با گروه ارتباط برقرار کنید."
         },
         "confirm": {
@@ -4586,6 +4685,19 @@
           "title": "نتیجه را وصل کنید",
           "text": "در صورت لزوم، تاریخچه، آمار، رتبه‌بندی و مسابقات مسابقه را فید می‌کند."
         }
+      },
+      "sponsorSlots": {
+        "aria": "جایگاه‌های حامیان و تبلیغات روی تابلوی امتیازات",
+        "live": {
+          "eyebrow": "در طول مسابقه",
+          "title": "نوار زنده حامی",
+          "text": "برندها با یک نوار قابل مشاهده روی تابلوی امتیازات، بخشی از مسابقه باقی می‌مانند."
+        },
+        "closing": {
+          "eyebrow": "هنگام نهایی شدن نتیجه",
+          "title": "تبلیغ پایانی",
+          "text": "نتیجه نهایی در لحظه اوج توجه، فضایی برای برند ایجاد می‌کند."
+        }
       }
     },
     "padCoins": {
@@ -4618,7 +4730,7 @@
         },
         "referee": {
           "title": "نمره‌گذاری مستقل",
-          "text": "Vision نمایش‌ها را تفسیر می‌کند و عملکردها را از آنچه مشاهده می‌کند در زمان واقعی امتیاز می‌دهد."
+          "text": "سامانه بینایی، بازی را تفسیر می‌کند و در زمان واقعی بر اساس آنچه می‌بیند به عملکردها امتیاز می‌دهد."
         },
         "traceability": {
           "title": "آموزش تحت نظارت",
@@ -4626,7 +4738,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "بینایی تابلوی امتیازات / هوش مصنوعی",
         "title": "آموزش\nدر حال پیشرفت"
       }
     }
@@ -4784,7 +4896,7 @@
           "badges": {
             "sponsor": "Sponsors · beschikbaar",
             "ads": "Advertenties · beschikbaar",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · proefproject"
           }
         }
       }
@@ -4825,7 +4937,8 @@
           "title": "Volg je voortgang",
           "text": "Geschiedenis, ranking en groei in je profiel."
         }
-      }
+      },
+      "tapNext": "Veeg om elke functie te ontdekken"
     },
     "playerRecord": {
       "kicker": "JE SPEL BEGINT NIET VAN NUL",
@@ -5079,7 +5192,7 @@
       "visitPadbol": "Bezoek Padbol",
       "contactHelp": "Hulp nodig? Neem contact met ons op",
       "brandAria": "Ga naar Padbol Match",
-      "legalOwner": "Beheerd door Entertainment and Sports Services LLC."
+      "legalOwner": "Beheerd door ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Pathways"
@@ -5164,6 +5277,19 @@
         "connect": {
           "title": "Verbind het resultaat",
           "text": "De wedstrijd feeds geschiedenis, statistieken, ranking en toernooien indien van toepassing."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Sponsor- en advertentieruimtes op het scorebord",
+        "live": {
+          "eyebrow": "TIJDENS DE WEDSTRIJD",
+          "title": "Live sponsorbalk",
+          "text": "Merken blijven deel van de wedstrijd met een zichtbare balk op het scorebord."
+        },
+        "closing": {
+          "eyebrow": "BIJ HET AFSLUITEN VAN DE UITSLAG",
+          "title": "Afsluitende advertentie",
+          "text": "De einduitslag biedt een merkruimte op het moment van de hoogste aandacht."
         }
       }
     },
@@ -5404,7 +5530,8 @@
           "title": "Volg je voortgang",
           "text": "Geschiedenis, ranking en groei in je profiel."
         }
-      }
+      },
+      "tapNext": "Veeg om elke functie te ontdekken"
     },
     "playerRecord": {
       "kicker": "JE SPEL BEGINT NIET VAN NUL",
@@ -5658,7 +5785,7 @@
       "visitPadbol": "Bezoek Padbol",
       "contactHelp": "Hulp nodig? Neem contact met ons op",
       "brandAria": "Ga naar Padbol Match",
-      "legalOwner": "Beheerd door Entertainment and Sports Services LLC."
+      "legalOwner": "Beheerd door ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Pathways"
@@ -5743,6 +5870,19 @@
         "connect": {
           "title": "Verbind het resultaat",
           "text": "De wedstrijd feeds geschiedenis, statistieken, ranking en toernooien indien van toepassing."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Sponsor- en advertentieruimtes op het scorebord",
+        "live": {
+          "eyebrow": "TIJDENS DE WEDSTRIJD",
+          "title": "Live sponsorbalk",
+          "text": "Merken blijven deel van de wedstrijd met een zichtbare balk op het scorebord."
+        },
+        "closing": {
+          "eyebrow": "BIJ HET AFSLUITEN VAN DE UITSLAG",
+          "title": "Afsluitende advertentie",
+          "text": "De einduitslag biedt een merkruimte op het moment van de hoogste aandacht."
         }
       }
     },
@@ -5860,7 +6000,7 @@
       "ctaExplore": "חקור את הפלטפורמה",
       "ctaPlay": "אני רוצה לשחק",
       "ctaVenue": "אני רוצה להביא את Padbol Match",
-      "videoAria": "Padbol match on court",
+      "videoAria": "משחק Padbol על המגרש",
       "globe": {
         "aria": "Padbol Match רשת גלובלית המחברת בין שחקנים, מקומות, משחקים, קהילה, טורנירים, לוח תוצאות חכם וספורט.",
         "labels": {
@@ -5942,7 +6082,7 @@
           "badges": {
             "sponsor": "נותני חסות · זמינים",
             "ads": "פרסום · זמין",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · פיילוט"
           }
         }
       }
@@ -5983,7 +6123,8 @@
           "title": "עקוב אחר ההתקדמות שלך",
           "text": "היסטוריה, דירוג וצמיחה בפרופיל שלך."
         }
-      }
+      },
+      "tapNext": "החליקו כדי להכיר כל תכונה"
     },
     "playerRecord": {
       "kicker": "המשחק שלך לא מתחיל מאפס",
@@ -6053,7 +6194,7 @@
         "eyebrow": "השלב הבא",
         "title": "הבא את המקום שלך ל-Padbol Match",
         "text": "חקור את הכלים וכיצד להביא את המקום שלך ל-Padbol Match. כשתהיה מוכן, תוכל להפעיל את האפליקציה.",
-        "apply": "Bring my venue"
+        "apply": "אני רוצה לצרף את המועדון שלי"
       },
       "items": {
         "setup": {
@@ -6107,7 +6248,7 @@
           "steps": {
             "1": "התחל את המשחק עם השחקנים או הקבוצות שלו.",
             "2": "שוחקו בנקודות ו",
-            "3": "תקנות. data-i=\"5\">אשר את הסגירה וחבר את התוצאה."
+            "3": "במהלך הפסקות, חילופי צדדים, החלפת מערכות או סיום, המסך מציג קמפיינים וחוזר למשחק באופן אוטומטי."
           },
           "result": "תוצאה: נתונים שימושיים להיסטוריה, דירוג, טורנירים וניהול."
         },
@@ -6206,7 +6347,7 @@
       "visualAlt": "Gustavo Miguens, היוצר של Padbol ומייסד Padbol Match"
     },
     "meta": {
-      "title": "Padbol Match — Platform",
+      "title": "Padbol Match — פלטפורמה",
       "description": "Padbol Match מחבר שחקנים, מקומות וארגונים לניהול Padbol, Padel, Pickleball וטניס בפלטפורמה אחת."
     },
     "contact": {
@@ -6237,10 +6378,10 @@
       "visitPadbol": "בקר ב-Padbol",
       "contactHelp": "צריך עזרה? צור איתנו קשר",
       "brandAria": "עבור אל Padbol Match",
-      "legalOwner": "מופעל על ידי Entertainment and Sports Services LLC."
+      "legalOwner": "מופעל על ידי ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
-      "aria": "Pathways"
+      "aria": "מסלולי שימוש"
     },
     "communityMatches": {
       "title": "המשחק מתחיל לפני שאתה הולך על המגרש",
@@ -6248,16 +6389,16 @@
       "ctaPlay": "אני רוצה לשחק",
       "mockAria": "דוגמה חזותית של התאמה פתוחה עם משבצות זמינות",
       "mockBadge": "הדגמה",
-      "mockTitle": "Open match",
+      "mockTitle": "משחק פתוח",
       "mockMeta": "מקום · היום 19:30",
       "mockLevel": "רמת ביניים",
-      "mockSlots": "</code> של VAR_fill=\"filledscode\">מאשר",
+      "mockSlots": "{{filled}} מתוך 4 מקומות אושרו",
       "mockAction": "בקש מקום",
       "mockMetricsAria": "סימולציית תפוסה ואישור",
       "mockOccupancy": "תפוסה",
       "mockOccupancyValue": "{{percentage}}% תפוסה",
       "mockReservation": "הזמנה",
-      "mockConfirmed": "Confirmed",
+      "mockConfirmed": "מאושר",
       "mockCompleteWhenFull": "כאשר משבצות מתמלאות",
       "mockSlotsComplete": "כל המשבצות מתמלאות: ההזמנה מאושרת.",
       "mockReleaseNote": "אם היא לא הושלמה, ההזמנה תשוחרר 8 שעות לפני.",
@@ -6289,7 +6430,7 @@
     "smartScoreboard": {
       "title": "לוח תוצאות חכם: המשחק חי",
       "comingSoon": "נתוני התוצאות החכם כבר זמינים היום",
-      "text": "</5>Live span המשחק בשידור חי ושומר על התוצאה מחוברת לשחקנים, לתחרות ולפעילות המתחם.",
+      "text": "לוח התוצאות החכם כבר מתעד את המשחק בשידור חי ומחבר את התוצאה לשחקנים, לתחרות ולפעילות המועדון.",
       "demoAria": "הדגמה חזותית של לוח התוצאות החכם",
       "demoBadge": "חי",
       "demoTeamA": "צוות A",
@@ -6323,6 +6464,19 @@
           "title": "חבר את התוצאה",
           "text": "היסטוריית הזנות של המשחק, נתונים סטטיסטיים, דירוג וטורנירים כאשר רלוונטי."
         }
+      },
+      "sponsorSlots": {
+        "aria": "שטחי חסות ופרסום בלוח התוצאות",
+        "live": {
+          "eyebrow": "במהלך המשחק",
+          "title": "רצועת נותן חסות בשידור חי",
+          "text": "המותגים נשארים חלק מהמשחק באמצעות רצועה גלויה בלוח התוצאות."
+        },
+        "closing": {
+          "eyebrow": "בעת סגירת התוצאה",
+          "title": "מודעת סיום",
+          "text": "התוצאה הסופית פותחת שטח למותג ברגע של שיא תשומת הלב."
+        }
       }
     },
     "padCoins": {
@@ -6330,7 +6484,7 @@
         "completedMatch": "המשחק הושלם",
         "confirmedBooking": "ההזמנה אושרה",
         "redeemedBenefit": "הטבה מומשה",
-        "activeMembership": "Active membership"
+        "activeMembership": "חברות פעילה"
       }
     },
     "tournaments": {
@@ -6355,7 +6509,7 @@
         },
         "referee": {
           "title": "ניקוד עצמאי",
-          "text": "Vision מפרש הצגות ומבקיע פעולות ממה שהיא צופה בזמן אמת."
+          "text": "מערכת הראייה מפרשת את המשחק ומעריכה פעולות בזמן אמת על סמך מה שהיא רואה."
         },
         "traceability": {
           "title": "אימון בפיקוח",
@@ -6363,7 +6517,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "ראיית לוח התוצאות / בינה מלאכותית",
         "title": "אימון\nבתהליך"
       }
     }
@@ -6403,7 +6557,7 @@
       "preview": {
         "club": "Padbol Club North",
         "booking": "Bokning",
-        "court": "Court 2 · 60 min",
+        "court": "Padbol Court 2 · 60 min",
         "playersConfirmed": "2/4 spelare bekräftade",
         "confirm": "Bekräfta",
         "ranking": "Ranking"
@@ -6521,7 +6675,7 @@
           "badges": {
             "sponsor": "Sponsorer · tillgängliga",
             "ads": "Reklam · tillgänglig",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · pilotprojekt"
           }
         }
       }
@@ -6562,7 +6716,8 @@
           "title": "Spåra dina framsteg",
           "text": "Historik, rankning och tillväxt i din profil."
         }
-      }
+      },
+      "tapNext": "Svep för att utforska varje funktion"
     },
     "playerRecord": {
       "kicker": "DITT SPEL STARTAR INTE FRÅN NOLL",
@@ -6632,7 +6787,7 @@
         "eyebrow": "Nästa steg",
         "title": "Ta med din plats till Padbol Match",
         "text": "Utforska verktygen och hur du tar med din plats till Padbol Match. När du är redo kan du starta applikationen.",
-        "apply": "Bring my venue"
+        "apply": "Anslut min anläggning"
       },
       "items": {
         "setup": {
@@ -6686,7 +6841,7 @@
           "steps": {
             "1": "Starta matchen med sina spelare eller lag.",
             "2": "spelas,",
-            "3": "poäng och korrigeringar. data-i=\"5\">Bekräfta stängning och anslut resultatet."
+            "3": "Under pauser, sidbyten, setbyten eller avslutning visar skärmen kampanjer och återgår automatiskt till spelet."
           },
           "result": "Resultat: användbar data för historik, rankning, turneringar och hantering."
         },
@@ -6776,7 +6931,7 @@
         "name": "Gustavo Miguens",
         "padbolRole": "Skapare av Padbol",
         "federationRole": "Presidenten för International Padbol Federation",
-        "matchRole": "Founder of Padbol Match",
+        "matchRole": "Grundare av Padbol Match",
         "quote": "Erfarenheten och verktygen som skapats för Padbol är nu grunden för att öppna plattformen för andra bansporter — som tennis, padel och pickleball — och lägga till nya sporter enligt varje gemenskaps behov utan att förlora den anda som Padbol Match föddes med."
       },
       "sportsLabel": "Sporter på plattformen",
@@ -6816,7 +6971,7 @@
       "visitPadbol": "Besök Padbol",
       "contactHelp": "Behöver du hjälp? Kontakta oss",
       "brandAria": "Gå till Padbol Match",
-      "legalOwner": "Drift av Entertainment and Sports Services LLC."
+      "legalOwner": "Drift av ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Pathways"
@@ -6901,6 +7056,19 @@
         "connect": {
           "title": "Anslut resultatet",
           "text": "Matchflödets historik, statistik, ranking och turneringar när det är tillämpligt."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Sponsor- och annonsplatser på resultattavlan",
+        "live": {
+          "eyebrow": "UNDER MATCHEN",
+          "title": "Sponsorband i direktsändning",
+          "text": "Varumärken förblir en del av matchen genom ett synligt band på resultattavlan."
+        },
+        "closing": {
+          "eyebrow": "NÄR RESULTATET FASTSTÄLLS",
+          "title": "Avslutande annons",
+          "text": "Slutresultatet öppnar en varumärkesyta när uppmärksamheten är som störst."
         }
       }
     },
@@ -7141,7 +7309,8 @@
           "title": "Παρακολουθήστε την πρόοδό σας",
           "text": "Ιστορικό, κατάταξη και ανάπτυξη στο προφίλ σας."
         }
-      }
+      },
+      "tapNext": "Σύρετε για να εξερευνήσετε κάθε λειτουργία"
     },
     "playerRecord": {
       "kicker": "ΤΟ ΠΑΙΧΝΙΔΙ ΣΑΣ ΔΕΝ ΞΕΚΙΝΑΕΙ ΑΠΟ ΜΗΔΕΝ",
@@ -7388,14 +7557,14 @@
       "privacy": "Απόρρητο",
       "terms": "Όροι",
       "language": "Language",
-      "copyright": "Pan><span data-i=\"5\">Language. Με την επιφύλαξη παντός δικαιώματος.",
+      "copyright": "Padbol Match. Με την επιφύλαξη παντός δικαιώματος.",
       "community": "Κοινότητα",
       "scoreboard": "Έξυπνος πίνακας αποτελεσμάτων",
       "productOf": "Ένα προϊόν Padbol",
       "visitPadbol": "Επισκεφτείτε το Padbol",
       "contactHelp": "Χρειάζεστε βοήθεια; Επικοινωνήστε μαζί μας",
       "brandAria": "Μετάβαση στο Padbol Match",
-      "legalOwner": "Διαχειρίζεται η Entertainment and Sports Services LLC."
+      "legalOwner": "Διαχειρίζεται η ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Διαδρομές"
@@ -7421,7 +7590,7 @@
       "mockReleaseNote": "Εάν δεν ολοκληρωθεί, η κράτηση αποδεσμεύεται 8 ώρες νωρίτερα.",
       "mockFull": "Όλες οι υποδοχές έχουν συμπληρωθεί",
       "mockStatuses": {
-        "looking": "Εάν δεν ολοκληρωθεί. data-var=\"count\">VAR_count</code> παίκτες",
+        "looking": "Αναζητούνται {{count}} παίκτες",
         "playerConfirmed": "Ένας παίκτης επιβεβαιώθηκε",
         "matchConfirmed": "Ο αγώνας επιβεβαιώθηκε"
       },
@@ -7457,13 +7626,13 @@
       "futureAccess": {
         "label": "Ομάδα Β",
         "title": "Σετ 2",
-        "text": " data-i=\"6\">Σύντομα προσεχώς",
+        "text": "Είσοδος με αναγνώριση προσώπου και πίστωση PadCoins από τη στιγμή που φτάνετε στον αθλητικό χώρο.",
         "imageAlt": "Έξυπνη πρόσβαση"
       },
       "steps": {
         "start": {
           "title": "Είσοδος αναγνώρισης προσώπου και πίστωση PadCoins από τη στιγμή που θα φτάσετε στον χώρο",
-          "text": "Είσοδος στο χώρο με χρήση αναγνώρισης προσώπου αντιστοιχία</spantar=\"span=\"st1\" data-i=\"11\">Επιλέξτε παίκτες ή ομάδες και ανοίξτε τον πίνακα αποτελεσμάτων."
+          "text": "Επιλέξτε παίκτες ή ομάδες και ανοίξτε τον πίνακα αποτελεσμάτων."
         },
         "live": {
           "title": "Ακολουθήστε ζωντανά",
@@ -7480,6 +7649,19 @@
         "connect": {
           "title": "Συνδέστε το αποτέλεσμα",
           "text": "Το ιστορικό ροών αγώνα, τα στατιστικά, η κατάταξη και τα τουρνουά, κατά περίπτωση."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Θέσεις χορηγών και διαφημίσεων στον πίνακα αποτελεσμάτων",
+        "live": {
+          "eyebrow": "ΚΑΤΑ ΤΗ ΔΙΑΡΚΕΙΑ ΤΟΥ ΑΓΩΝΑ",
+          "title": "Ζωντανή ζώνη χορηγού",
+          "text": "Οι μάρκες παραμένουν μέρος του αγώνα με μια ορατή ζώνη στον πίνακα αποτελεσμάτων."
+        },
+        "closing": {
+          "eyebrow": "ΚΑΤΑ ΤΗΝ ΟΡΙΣΤΙΚΟΠΟΙΗΣΗ ΤΟΥ ΑΠΟΤΕΛΕΣΜΑΤΟΣ",
+          "title": "Διαφήμιση λήξης",
+          "text": "Το τελικό αποτέλεσμα ανοίγει έναν χώρο για τη μάρκα τη στιγμή της μέγιστης προσοχής."
         }
       }
     },
@@ -7503,7 +7685,7 @@
       "kicker": "Σύντομα προσεχώς · Το όραμα του πίνακα αποτελεσμάτων",
       "accent": "Ομάδα Γ",
       "title": "Ομάδα Δ",
-      "text": "Σύντομα κοντά σας data-i=\"6\">Έξυπνος διαιτητής όρασης: ανεξάρτητο μάτι για το παιχνίδι",
+      "text": "Εκπαιδεύουμε έναν ανεξάρτητο ευφυή διαιτητή όρασης. Με τρεις ή τέσσερις κάμερες μαθαίνει να διαβάζει το παιχνίδι και να αξιολογεί τις φάσεις με βάση όσα βλέπει, όπως ένας ανθρώπινος διαιτητής. Καθώς εξελίσσεται, οι παίκτες και οι διαιτητές μπορούν να επιβλέπουν τις αποφάσεις του.",
       "videoAria": "Εκπαιδεύουμε έναν ανεξάρτητο έξυπνο διαιτητή όρασης. Με τρεις ή τέσσερις κάμερες, μαθαίνει να διαβάζει παιχνίδι και να σκοράρει ενέργειες με βάση αυτό που βλέπει, όπως θα έκανε ένας ανθρώπινος διαιτητής. Καθώς εξελίσσεται, οι παίκτες και οι διαιτητές μπορούν να επιβλέπουν τις αποφάσεις του.",
       "caption": "Πίνακας αποτελεσμάτων αγώνα Padbol σε δράση",
       "features": {
@@ -7637,7 +7819,7 @@
           "invitations": "Meghívók",
           "profiles": "Profilok",
           "history": "Profilok",
-          "awards": "H-adatok data-i=\"8\">Díjak",
+          "awards": "Díjak",
           "benefits": "Előnyök"
         }
       }
@@ -7670,7 +7852,7 @@
         "rollingOut": {
           "eyebrow": "Már elérhető",
           "title": "Új sportok, ugyanaz az út",
-          "text": "Padel, Pickleball és Tennis Pad, <span> közösségek folyamatosan csatlakoznak a mérkőzésekhez és a meccsekhez. data-i=\"4\">Ma elérhető"
+          "text": "A Padel, a Pickleball és a Tenisz fokozatosan csatlakozik a Padbol Match játék-, kezelési és közösségi rendszeréhez."
         },
         "next": {
           "eyebrow": "A szponzorok és a hirdetések aktívak",
@@ -7720,7 +7902,8 @@
           "title": "Kövesse nyomon a fejlődést",
           "text": "Előzmények, rangsorolás és növekedés a profilodban."
         }
-      }
+      },
+      "tapNext": "Lapozzon az egyes funkciók megismeréséhez"
     },
     "playerRecord": {
       "kicker": "A JÁTÉK NEM NULLÁRÓL KEZDŐDIK",
@@ -7878,7 +8061,7 @@
           "text": "Ran-i progress."
         },
         "scoreboard": {
-          "title": "Ran-i. data-i=\"10\">Eredménytábla",
+          "title": "Eredményjelző",
           "text": "Élő eredmény"
         },
         "community": {
@@ -7974,7 +8157,7 @@
       "visitPadbol": "A Padbol felkeresése",
       "contactHelp": "Segítségre van szüksége? Vegye fel velünk a kapcsolatot",
       "brandAria": "Ugrás a Padbol Match oldalra.",
-      "legalOwner": "Az Entertainment and Sports Services LLC üzemelteti."
+      "legalOwner": "Az ENTERTAINMENT SPORT SERVICE LLC üzemelteti."
     },
     "paths": {
       "aria": "Pathways"
@@ -7988,7 +8171,7 @@
       "mockTitle": "Nyílt mérkőzés",
       "mockMeta": "Helyszín · Ma 19:30",
       "mockLevel": "Középszintű",
-      "mockSlots": "Középszintű",
+      "mockSlots": "{{filled}} hely megerősítve a 4-ből",
       "mockAction": "Hely kérése",
       "mockMetricsAria": "Foglaltság és megerősítés szimuláció",
       "mockOccupancy": "Foglaltság",
@@ -8060,6 +8243,19 @@
           "title": "Kapcsold össze az eredményt",
           "text": "A mérkőzés előzményeit, statisztikáit, rangsorolását és adott esetben a versenyeket tartalmazza."
         }
+      },
+      "sponsorSlots": {
+        "aria": "Szponzori és hirdetési felületek az eredményjelzőn",
+        "live": {
+          "eyebrow": "A MÉRKŐZÉS ALATT",
+          "title": "Élő szponzorsáv",
+          "text": "A márkák az eredményjelzőn látható sávval a mérkőzés részei maradnak."
+        },
+        "closing": {
+          "eyebrow": "AZ EREDMÉNY LEZÁRÁSAKOR",
+          "title": "Záróhirdetés",
+          "text": "A végeredmény a legnagyobb figyelem pillanatában nyit teret a márkának."
+        }
       }
     },
     "padCoins": {
@@ -8080,9 +8276,9 @@
     },
     "matchIntelligence": {
       "kicker": "Hamarosan · Az eredményjelző vízió",
-      "accent": "Intelligens látásbíró><",
+      "accent": "Intelligens vizuális játékvezető",
       "title": "független játékvezető:",
-      "text": "a játékban data-i=\"7\">Független intelligens látásbírót képezünk ki. Három vagy négy kamerával megtanulja a játékot olvasni és a látottak alapján pontozni az akciókat, ahogyan azt egy emberi játékvezető tenné. Ahogy fejlődik, a játékosok és a játékvezetők felügyelhetik a döntéseit.",
+      "text": "Egy független, intelligens vizuális játékvezetőt tanítunk. Három vagy négy kamera segítségével megtanulja olvasni a játékot és a látottak alapján értékelni az akciókat, ahogyan egy emberi játékvezető tenné. Fejlődése során a játékosok és a játékvezetők felügyelhetik a döntéseit.",
       "videoAria": "Padbol mérkőzés eredményjelzője működés közben",
       "caption": "Kapcsolt eredményjelző tábla bemutató",
       "features": {
@@ -8100,7 +8296,7 @@
         }
       },
       "signal": {
-        "eyebrow": "SCOREBOARD VISION / AI",
+        "eyebrow": "EREDMÉNYJELZŐ-VÍZIÓ / MI",
         "title": "EDZÉS\nFOLYAMATBAN"
       }
     }
@@ -8299,7 +8495,8 @@
           "title": "Śledź swoje postępy",
           "text": "Historia, ranking i rozwój w Twoim profilu."
         }
-      }
+      },
+      "tapNext": "Przesuń, aby poznać każdą funkcję"
     },
     "playerRecord": {
       "kicker": "TWOJA GRA NIE ZACZYNA SIĘ OD ZERA",
@@ -8553,7 +8750,7 @@
       "visitPadbol": "Odwiedź Padbol",
       "contactHelp": "Potrzebujesz pomocy? Skontaktuj się z nami",
       "brandAria": "Przejdź do Padbol Match",
-      "legalOwner": "Obsługiwany przez Entertainment and Sports Services LLC."
+      "legalOwner": "Obsługiwany przez ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Ścieżki"
@@ -8638,6 +8835,19 @@
         "connect": {
           "title": "Połącz wynik",
           "text": "Mecz zawiera historię, statystyki, ranking i turnieje, jeśli ma to zastosowanie."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Miejsca sponsorskie i reklamowe na tablicy wyników",
+        "live": {
+          "eyebrow": "PODCZAS MECZU",
+          "title": "Pasek sponsora na żywo",
+          "text": "Marki pozostają częścią meczu dzięki widocznemu paskowi na tablicy wyników."
+        },
+        "closing": {
+          "eyebrow": "PRZY ZATWIERDZANIU WYNIKU",
+          "title": "Reklama końcowa",
+          "text": "Wynik końcowy otwiera przestrzeń dla marki w momencie największej uwagi."
         }
       }
     },
@@ -8878,7 +9088,8 @@
           "title": "Відстежуйте свій прогрес",
           "text": "Історію, рейтинг і зростання у своєму профілі."
         }
-      }
+      },
+      "tapNext": "Гортайте, щоб ознайомитися з кожною функцією"
     },
     "playerRecord": {
       "kicker": "ВАША ГРА НЕ ПОЧИНАЄТЬСЯ З НУЛЯ",
@@ -9132,7 +9343,7 @@
       "visitPadbol": "Відвідайте Padbol",
       "contactHelp": "Потрібна допомога? Зв'яжіться з нами",
       "brandAria": "Перейти до Padbol Match",
-      "legalOwner": "Управляється Entertainment and Sports Services LLC."
+      "legalOwner": "Управляється ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Шляхи"
@@ -9217,6 +9428,19 @@
         "connect": {
           "title": "Під’єднайте результат",
           "text": "Історія матчів, статистика, рейтинг і турніри, якщо це можливо."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Місця для спонсорів і реклами на табло",
+        "live": {
+          "eyebrow": "ПІД ЧАС МАТЧУ",
+          "title": "Спонсорська смуга наживо",
+          "text": "Бренди залишаються частиною матчу завдяки помітній смузі на табло."
+        },
+        "closing": {
+          "eyebrow": "ПІД ЧАС ЗАТВЕРДЖЕННЯ РЕЗУЛЬТАТУ",
+          "title": "Завершальна реклама",
+          "text": "Фінальний результат відкриває простір для бренду в момент найбільшої уваги."
         }
       }
     },
@@ -9416,7 +9640,7 @@
           "badges": {
             "sponsor": "Borge · beskikbaar",
             "ads": "Advertensie · beskikbaar",
-            "shop": "Padbol Match Shop · pilot"
+            "shop": "Padbol Match Shop · loodsprojek"
           }
         }
       }
@@ -9457,7 +9681,8 @@
           "title": "Spoor jou vordering na",
           "text": "Geskiedenis, rangorde en groei in jou profiel."
         }
-      }
+      },
+      "tapNext": "Swiep om elke funksie te verken"
     },
     "playerRecord": {
       "kicker": "JOU SPEL BEGIN NIE VAN NUL af nie",
@@ -9711,7 +9936,7 @@
       "visitPadbol": "Besoek Padbol",
       "contactHelp": "Het jy hulp nodig? Kontak ons",
       "brandAria": "Gaan na Padbol Match",
-      "legalOwner": "Bedryf deur Entertainment and Sports Services LLC."
+      "legalOwner": "Bedryf deur ENTERTAINMENT SPORT SERVICE LLC."
     },
     "paths": {
       "aria": "Pathways"
@@ -9725,7 +9950,7 @@
       "mockTitle": "Oop wedstryd",
       "mockMeta": "Plek · Vandag 19:30",
       "mockLevel": "Intermediêre vlak",
-      "mockSlots": "</code> van",
+      "mockSlots": "{{filled}} van 4 plekke bevestig",
       "mockAction": "Versoek 'n plek",
       "mockMetricsAria": "Besetting en bevestigingsimulasie",
       "mockOccupancy": "Besetting",
@@ -9796,6 +10021,19 @@
         "connect": {
           "title": "Koppel die resultaat",
           "text": "Die wedstryd voer geskiedenis, statistieke, rangorde en toernooie waar van toepassing."
+        }
+      },
+      "sponsorSlots": {
+        "aria": "Borg- en advertensieplasings op die telbord",
+        "live": {
+          "eyebrow": "TYDENS DIE WEDSTRYD",
+          "title": "Regstreekse borgstrook",
+          "text": "Handelsmerke bly deel van die wedstryd met ’n sigbare strook op die telbord."
+        },
+        "closing": {
+          "eyebrow": "WANNEER DIE UITSLAG AFGEHANDEL WORD",
+          "title": "Afsluitingsadvertensie",
+          "text": "Die finale uitslag skep handelsmerkruimte op die oomblik van die hoogste aandag."
         }
       }
     },

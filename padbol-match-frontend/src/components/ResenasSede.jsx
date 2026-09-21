@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { getPublicApiBaseUrl } from '../utils/apiPublicBaseUrl';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import './ResenasSede.css';
 
 const toHttps = (url) => (url ? String(url).replace(/^http:\/\//, 'https://') : url);
@@ -8,11 +9,7 @@ const toHttps = (url) => (url ? String(url).replace(/^http:\/\//, 'https://') : 
 const RESENA_MAX_CHARS = 500;
 const LIST_LIMIT = 50;
 
-const API_BASE =
-  getPublicApiBaseUrl() ||
-  (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com');
+const API_BASE = getApiBaseUrl();
 
 function apiUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`;
@@ -128,7 +125,7 @@ function ResenaItem({ resena, dateLocale, t }) {
 export default function ResenasSede({ sedeId, accessToken, navigate, className = '' }) {
   const { t, i18n } = useTranslation();
   const idNum = useMemo(() => parseInt(String(sedeId), 10), [sedeId]);
-  const dateLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+  const dateLocale = padbolLangToIntlLocale(i18n.language);
 
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);

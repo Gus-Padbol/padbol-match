@@ -1,7 +1,5 @@
-const API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+import { getApiBaseUrl } from './apiPublicBaseUrl';
+const API_BASE = getApiBaseUrl();
 
 /** GET /api/admin/alertas-campanita — super_admin (global) o admin_club (su sede) */
 export async function fetchAdminCampanitaAlertas({ accessToken, signal } = {}) {

@@ -74,7 +74,7 @@ describe('Hero con globo premium', () => {
     const hero = container.querySelector('.ps-hero');
     expect(hero.querySelector('.ps-hero__logo')).toBeTruthy();
     expect(hero.querySelector('.ps-hero__claim')).toHaveTextContent(
-      'La aplicación deportiva que conecta todo.',
+      'La aplicación deportiva que conecta todo',
     );
     expect(hero.querySelector('.ps-hero__lead')).toHaveTextContent(
       'Juego, operación y comunidad. Nace con Padbol y está lista para otros deportes de cancha.',

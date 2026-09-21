@@ -1,7 +1,7 @@
-const DEFAULT_API_BASE = 'https://padbol-backend.onrender.com';
+import { getApiBaseUrl } from './apiPublicBaseUrl';
 
 function apiBaseUrl() {
-  return (process.env.REACT_APP_API_BASE_URL || DEFAULT_API_BASE).replace(/\/$/, '');
+  return getApiBaseUrl();
 }
 
 /** ISO local para query `slot_inicio` (fecha YYYY-MM-DD + hora HH:mm). */

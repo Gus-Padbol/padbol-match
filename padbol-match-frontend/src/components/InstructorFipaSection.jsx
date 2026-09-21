@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from './common/SportIcon';
@@ -18,10 +19,7 @@ import MiPerfilProfesorSection from './MiPerfilProfesorSection';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import './InstructorFipa.css';
 
-const API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const API_BASE = getApiBaseUrl();
 
 const MAX_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;

@@ -6,7 +6,7 @@ import {
 /** Mensaje mostrado en /acceso cuando la reserva exige cuenta al confirmar el pago. */
 const RESERVA_LOGIN_GATE_MSG_KEY = 'padbol_reserva_login_gate_msg';
 const RESERVA_LOGIN_GATE_TEXT =
-  'Para continuar con tu reserva, ingresá o creá una cuenta. Es rápido.';
+  'Para continuar con tu reserva, ingresa o crea una cuenta. Es rápido.';
 
 export function armReservaLoginGateMessage() {
   try {
@@ -224,6 +224,20 @@ export function safePartidosBuscarPathFromLoginRedirect(loginSearch) {
   return path;
 }
 
+/** `?redirect=` seguro hacia la carga del recorrido externo. */
+export function safeRecorridoExternoPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  const pathOnly = String(path || '').split('?')[0].split('#')[0];
+  return pathOnly === '/mi-perfil/recorrido' ? path : null;
+}
+
+/** `?redirect=` seguro hacia la Biblioteca FIPA autenticada. */
+export function safeFipaDocumentsPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  const pathOnly = String(path || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
+  return pathOnly === '/fipa/documentos' ? path : null;
+}
+
 export function savePartidosBuscarReturnUrl(pathnameAndSearch) {
   try {
     if (typeof window === 'undefined') return;
@@ -257,10 +271,12 @@ export function clearPartidosBuscarReturnUrl() {
 }
 
 /**
- * Destino tras login: prioriza operaciones pendientes y permite retornos internos
- * explícitos para reservas, partidos, creación de partido y el panel administrativo.
+ * El destino FIPA explícito y validado prevalece sin consumir operaciones guardadas.
+ * Los demás destinos conservan la prioridad de las operaciones deportivas pendientes.
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
+  const fromFipaDocuments = safeFipaDocumentsPathFromLoginRedirect(loginSearch);
+  if (fromFipaDocuments) return fromFipaDocuments;
   if (peekReservaPendienteArmar()) {
     console.log('[PM ArmarPartido restore] post-login → /armar-partido (reserva_pendiente)');
     return '/armar-partido';
@@ -286,6 +302,8 @@ export function resolvePostLoginNavigatePath(loginSearch) {
   }
   const fromAdmin = safeAdminPathFromLoginRedirect(loginSearch);
   if (fromAdmin) return fromAdmin;
+  const fromRecorrido = safeRecorridoExternoPathFromLoginRedirect(loginSearch);
+  if (fromRecorrido) return fromRecorrido;
   return fromStored;
 }
 
@@ -324,9 +342,7 @@ export function getPostLoginReservaPath() {
   }
 
   if (!parsed || typeof parsed !== 'object') {
-    // Un ingreso normal no debe volver a la landing pública: lleva al inicio
-    // autenticado. Las reservas pendientes ya fueron resueltas arriba.
-    return '/hub';
+    return '/';
   }
 
   try {
@@ -351,7 +367,7 @@ export function getPostLoginReservaPath() {
     /* ignore */
   }
 
-  return '/hub';
+  return '/';
 }
 
 /**

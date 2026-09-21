@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { PADBOL_LANGUAGES } from '../constants/padbolLanguages';
 import {
   fetchAdminPushHistory,
   fetchAdminPushQuota,
@@ -15,6 +15,11 @@ import './AdminNotificacionesSection.css';
 const TITLE_MAX = 50;
 const BODY_MAX = 150;
 
+function createAdminPushIdempotencyKey() {
+  if (typeof window !== 'undefined' && typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
+  return `web-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
 function translatedPushError(error, t, fallbackKey) {
   if (error?.code === 'ADMIN_PUSH_NOT_CONFIGURED' || error?.status === 503) {
     return t('admin.pushNotif.notConfigured');
@@ -26,19 +31,24 @@ function translatedPushError(error, t, fallbackKey) {
   return t(fallbackKey);
 }
 
-function buildSegmentPayload({ segmentKind, pais, sedeId, deporte, idioma, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub }) {
+function buildSegmentPayload({ segmentKind, pais, ciudad, paisCiudad, sedeId, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminCadena, esAdminClub }) {
   if (segmentKind === 'jugador' && selectedPlayer?.userId) {
     return { type: 'jugador', userId: selectedPlayer.userId, email: selectedPlayer.email || undefined };
   }
   if (isSuperAdmin) {
     if (segmentKind === 'todos_usuarios') return { type: 'todos_usuarios' };
     if (segmentKind === 'pais') return { type: 'pais', pais };
+    if (segmentKind === 'ciudad') return { type: 'ciudad', ciudad, pais: paisCiudad || undefined };
     if (segmentKind === 'sede') return { type: 'sede', sedeId: Number(sedeId) };
     if (segmentKind === 'deporte') return { type: 'deporte', deporte };
-    if (segmentKind === 'idioma') return { type: 'idioma', idioma };
   }
   if (esAdminNacional) {
     if (segmentKind === 'todos_pais') return { type: 'todos_pais' };
+    if (segmentKind === 'ciudad') return { type: 'ciudad', ciudad };
+    if (segmentKind === 'sede') return { type: 'sede', sedeId: Number(sedeId) };
+  }
+  if (esAdminCadena) {
+    if (segmentKind === 'toda_cadena') return { type: 'toda_cadena' };
     if (segmentKind === 'sede') return { type: 'sede', sedeId: Number(sedeId) };
   }
   if (esAdminClub && segmentKind === 'sede_mia') return { type: 'sede_mia' };
@@ -50,30 +60,33 @@ export default function AdminNotificacionesSection({
   accessToken,
   isSuperAdmin = false,
   esAdminNacional = false,
+  esAdminCadena = false,
   esAdminClub = false,
   sedeId = null,
   sedesOptions = [],
   paisesOptions = [],
 }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language?.startsWith('en') ? 'en-US' : 'es-AR';
+  const locale = padbolLangToIntlLocale(i18n.language);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [segmentKind, setSegmentKind] = useState(() => {
     if (isSuperAdmin) return 'todos_usuarios';
     if (esAdminNacional) return 'todos_pais';
+    if (esAdminCadena) return 'toda_cadena';
     if (esAdminClub) return 'sede_mia';
     return 'jugador';
   });
   const [pais, setPais] = useState('');
   const [sedeSel, setSedeSel] = useState('');
+  const [ciudadSel, setCiudadSel] = useState('');
   const [deporte, setDeporte] = useState('');
-  const [idioma, setIdioma] = useState('');
   const [playerQuery, setPlayerQuery] = useState('');
   const [playerResults, setPlayerResults] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [previewCount, setPreviewCount] = useState(null);
+  const [previewCategory, setPreviewCategory] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [quota, setQuota] = useState(null);
   const [history, setHistory] = useState([]);
@@ -81,21 +94,44 @@ export default function AdminNotificacionesSection({
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [error, setError] = useState('');
+  const [idempotencyKey, setIdempotencyKey] = useState(null);
+
+  const cityOptions = useMemo(() => {
+    const options = new Map();
+    for (const sede of sedesOptions || []) {
+      const ciudad = String(sede?.ciudad || '').trim();
+      const country = String(sede?.pais || '').trim();
+      if (!ciudad) continue;
+      const key = `${country.toLowerCase()}::${ciudad.toLowerCase()}`;
+      if (!options.has(key)) {
+        options.set(key, {
+          key,
+          ciudad,
+          pais: country,
+          label: country ? `${ciudad} · ${country}` : ciudad,
+        });
+      }
+    }
+    return [...options.values()].sort((a, b) => a.label.localeCompare(b.label, locale));
+  }, [locale, sedesOptions]);
+  const selectedCity = cityOptions.find((option) => option.key === ciudadSel) || null;
 
   const segmentPayload = useMemo(
     () =>
       buildSegmentPayload({
         segmentKind,
         pais,
+        ciudad: selectedCity?.ciudad || '',
+        paisCiudad: selectedCity?.pais || '',
         sedeId: sedeSel,
         deporte,
-        idioma,
         selectedPlayer,
         isSuperAdmin,
         esAdminNacional,
+        esAdminCadena,
         esAdminClub,
       }),
-    [segmentKind, pais, sedeSel, deporte, idioma, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminClub],
+    [segmentKind, pais, selectedCity, sedeSel, deporte, selectedPlayer, isSuperAdmin, esAdminNacional, esAdminCadena, esAdminClub],
   );
 
   const segmentOptions = useMemo(() => {
@@ -103,18 +139,22 @@ export default function AdminNotificacionesSection({
     if (isSuperAdmin) {
       opts.push({ value: 'todos_usuarios', label: t('admin.pushNotif.segments.allUsers') });
       opts.push({ value: 'pais', label: t('admin.pushNotif.segments.byCountry') });
+      opts.push({ value: 'ciudad', label: t('admin.pushNotif.segments.byCity') });
       opts.push({ value: 'sede', label: t('admin.pushNotif.segments.byVenue') });
       opts.push({ value: 'deporte', label: t('admin.pushNotif.segments.bySport') });
-      opts.push({ value: 'idioma', label: t('admin.pushNotif.segments.byLanguage') });
     } else if (esAdminNacional) {
       opts.push({ value: 'todos_pais', label: t('admin.pushNotif.segments.allCountry') });
+      opts.push({ value: 'ciudad', label: t('admin.pushNotif.segments.byCityCountry') });
       opts.push({ value: 'sede', label: t('admin.pushNotif.segments.byVenueCountry') });
+    } else if (esAdminCadena) {
+      opts.push({ value: 'toda_cadena', label: 'Todas las sedes de la cadena' });
+      opts.push({ value: 'sede', label: 'Una sede de la cadena' });
     } else if (esAdminClub) {
       opts.push({ value: 'sede_mia', label: t('admin.pushNotif.segments.allVenue') });
     }
     opts.push({ value: 'jugador', label: t('admin.pushNotif.segments.onePlayer') });
     return opts;
-  }, [isSuperAdmin, esAdminNacional, esAdminClub, t]);
+  }, [isSuperAdmin, esAdminNacional, esAdminCadena, esAdminClub, t]);
 
   const loadMeta = useCallback(async () => {
     if (!accessToken) {
@@ -142,8 +182,13 @@ export default function AdminNotificacionesSection({
   }, [loadMeta]);
 
   useEffect(() => {
+    setIdempotencyKey(null);
+  }, [title, body, segmentPayload]);
+
+  useEffect(() => {
     if (!accessToken || !segmentPayload) {
       setPreviewCount(null);
+      setPreviewCategory(null);
       return undefined;
     }
     let cancelled = false;
@@ -151,9 +196,15 @@ export default function AdminNotificacionesSection({
       setPreviewLoading(true);
       try {
         const prev = await previewAdminPushSegment({ apiBaseUrl, accessToken, segment: segmentPayload });
-        if (!cancelled) setPreviewCount(prev?.withPushToken ?? prev?.recipients ?? 0);
+        if (!cancelled) {
+          setPreviewCount(prev?.withPushToken ?? prev?.recipients ?? 0);
+          setPreviewCategory(prev?.category || null);
+        }
       } catch {
-        if (!cancelled) setPreviewCount(null);
+        if (!cancelled) {
+          setPreviewCount(null);
+          setPreviewCategory(null);
+        }
       } finally {
         if (!cancelled) setPreviewLoading(false);
       }
@@ -190,18 +241,22 @@ export default function AdminNotificacionesSection({
     setFeedback(null);
     setError('');
     try {
+      const requestIdempotencyKey = idempotencyKey || createAdminPushIdempotencyKey();
+      if (!idempotencyKey) setIdempotencyKey(requestIdempotencyKey);
       const res = await sendAdminPushNotification({
         apiBaseUrl,
         accessToken,
         title: title.trim(),
         body: body.trim(),
         segment: segmentPayload,
+        idempotencyKey: requestIdempotencyKey,
       });
       setFeedback(t('admin.pushNotif.sentOk', { count: res.cantidad_enviadas ?? 0 }));
       setTitle('');
       setBody('');
       setSelectedPlayer(null);
       setPlayerQuery('');
+      setIdempotencyKey(null);
       if (res.quota) setQuota(res.quota);
       const h = await fetchAdminPushHistory({ apiBaseUrl, accessToken });
       setHistory(Array.isArray(h) ? h : []);
@@ -219,9 +274,9 @@ export default function AdminNotificacionesSection({
     segmentPayload &&
     (segmentKind !== 'jugador' || selectedPlayer?.userId) &&
     (segmentKind !== 'pais' || pais) &&
+    (segmentKind !== 'ciudad' || selectedCity?.ciudad) &&
     (segmentKind !== 'sede' || sedeSel) &&
     (segmentKind !== 'deporte' || deporte) &&
-    (segmentKind !== 'idioma' || idioma) &&
     !sending;
 
   const formatDate = (iso) => {
@@ -333,6 +388,18 @@ export default function AdminNotificacionesSection({
           </div>
         ) : null}
 
+        {segmentKind === 'ciudad' ? (
+          <div className="admin-push-notif__field">
+            <label htmlFor="admin-push-ciudad">{t('admin.pushNotif.cityLabel')}</label>
+            <select id="admin-push-ciudad" value={ciudadSel} onChange={(e) => setCiudadSel(e.target.value)}>
+              <option value="">{t('admin.pushNotif.selectCity')}</option>
+              {cityOptions.map((option) => (
+                <option key={option.key} value={option.key}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
         {segmentKind === 'deporte' ? (
           <div className="admin-push-notif__field">
             <label htmlFor="admin-push-deporte">{t('admin.pushNotif.sportLabel')}</label>
@@ -341,20 +408,6 @@ export default function AdminNotificacionesSection({
               {DEPORTES_CANCHA_SEDE_OPTIONS.map((d) => (
                 <option key={d.key} value={d.key}>
                   {t(`torneos.deporte.${d.key}`, { defaultValue: d.label })}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
-
-        {segmentKind === 'idioma' ? (
-          <div className="admin-push-notif__field">
-            <label htmlFor="admin-push-idioma">{t('admin.pushNotif.languageLabel')}</label>
-            <select id="admin-push-idioma" value={idioma} onChange={(e) => setIdioma(e.target.value)}>
-              <option value="">{t('admin.pushNotif.selectLanguage')}</option>
-              {PADBOL_LANGUAGES.map((language) => (
-                <option key={language.code} value={language.code}>
-                  {language.label}
                 </option>
               ))}
             </select>
@@ -407,6 +460,13 @@ export default function AdminNotificacionesSection({
             ? t('admin.pushNotif.previewLoading')
             : t('admin.pushNotif.preview', { count: previewCount ?? '—' })}
         </p>
+        {previewCategory ? (
+          <p className="admin-push-notif__preview">
+            {previewCategory === 'marketing'
+              ? t('admin.pushNotif.marketingConsentNotice')
+              : t('admin.pushNotif.transactionalNotice')}
+          </p>
+        ) : null}
 
         <button type="button" className="admin-push-notif__send" disabled={!canSend} onClick={() => void handleSend()}>
           {sending ? t('admin.pushNotif.sending') : t('admin.pushNotif.send')}
@@ -439,6 +499,10 @@ export default function AdminNotificacionesSection({
                     <td>
                       {row.estado === 'sent'
                         ? t('admin.pushNotif.statusSent')
+                        : row.estado === 'partial'
+                          ? t('admin.pushNotif.statusPartial')
+                          : row.estado === 'no_tokens'
+                            ? t('admin.pushNotif.statusNoTokens')
                         : row.estado === 'failed'
                           ? t('admin.pushNotif.statusFailed')
                           : row.estado || '—'}

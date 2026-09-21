@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'react-router-dom';
 import '../styles/ReservaForm.css';
@@ -96,13 +97,14 @@ function formatDuracionCardPrecio({
   preciosDeporteRows,
   surgeQuotesByDuracion,
   surgeQuotesLoading,
+  dynamicPriceLabel,
 }) {
   const surgeActivo = sede?.surge_activo === true;
   const hasSlot = Boolean(String(fecha || '').trim() && String(hora || '').trim());
   const fmt = (n) => `$${Number(n).toLocaleString('es-AR')}`;
 
   if (!hasSlot) {
-    if (surgeActivo) return '⚡ Precio dinámico';
+    if (surgeActivo) return dynamicPriceLabel;
     return fmt(getPrecio(sede, '', fecha, duracion, deporte, preciosDeporteRows));
   }
 
@@ -316,9 +318,7 @@ function readPrimedSedeReserva() {
 
 /** Una sola base para todas las llamadas API (local: mismo origen que Rankings; override con REACT_APP_API_BASE_URL). */
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 function apiUrl(path) {
@@ -358,15 +358,6 @@ function formatMoneyMain(amountMain, currencyCode) {
   } catch {
     return `${Number(amountMain).toLocaleString('es-AR')} ${c}`;
   }
-}
-
-/** Tasa de fee de plataforma solo para desglose en resumen (3% club; 6% Padbol Point). */
-function reservaPlatformFeeRateForSede(sede) {
-  const raw = String(sede?.tipo || sede?.tipo_licencia || sede?.tipo_interes || '')
-    .trim()
-    .toLowerCase();
-  if (raw === 'padbol_point') return 0.06;
-  return 0.03;
 }
 
 const STRIPE_PUBLISHABLE_KEY =
@@ -640,16 +631,16 @@ function deportesActivosSedeKeys(sede) {
 }
 
 /** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
-function slotsReservaCantidadFallback(sedeData) {
+function slotsReservaCantidadFallback(sedeData, t) {
   const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
   const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
   return Array.from({ length: n }, (_, i) => ({
     numero: i + 1,
-    nombre: `Cancha ${i + 1}`,
+    nombre: `${t('reservas.court')} ${i + 1}`,
   }));
 }
 
-function slotsReservaDesdeSede(sedeData, deporteCanon) {
+function slotsReservaDesdeSede(sedeData, deporteCanon, t) {
   const active = sedeData?.canchas_activas;
   if (Array.isArray(active) && active.length > 0) {
     let sorted = [...active].sort((a, b) => Number(a.numero) - Number(b.numero));
@@ -662,11 +653,11 @@ function slotsReservaDesdeSede(sedeData, deporteCanon) {
     if (sorted.length > 0) {
       return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
         numero: Number(x.numero),
-        nombre: String(x.nombre || '').trim() || `Cancha ${x.numero}`,
+        nombre: String(x.nombre || '').trim() || `${t('reservas.court')} ${x.numero}`,
       }));
     }
   }
-  return slotsReservaCantidadFallback(sedeData);
+  return slotsReservaCantidadFallback(sedeData, t);
 }
 
 export default function ReservaForm() {
@@ -1295,25 +1286,11 @@ export default function ReservaForm() {
     return precioFijoTurno;
   }, [surgeQuote, precioFijoTurno]);
 
-  const reservaFeeRateDisplay = useMemo(
-    () => reservaPlatformFeeRateForSede(sedeSeleccionada),
-    [sedeSeleccionada],
-  );
-  const reservaFeePctDisplay = Math.round(reservaFeeRateDisplay * 100);
   const reservaSubtotalTurnoExtras = useMemo(
     () => precioReservaTurnoBase + reservaExtrasSubtotal,
     [precioReservaTurnoBase, reservaExtrasSubtotal],
   );
-  const reservaCargoPlataforma = useMemo(
-    () => Math.round(reservaSubtotalTurnoExtras * reservaFeeRateDisplay),
-    [reservaSubtotalTurnoExtras, reservaFeeRateDisplay],
-  );
-  const reservaTotalPagarConCargoYExtras = useMemo(
-    () => reservaSubtotalTurnoExtras + reservaCargoPlataforma,
-    [reservaSubtotalTurnoExtras, reservaCargoPlataforma],
-  );
-  const reservaCargoPlataformaDisplay = reservaCargoPlataforma;
-  const reservaTotalDisplay = reservaTotalPagarConCargoYExtras;
+  const reservaTotalDisplay = reservaSubtotalTurnoExtras;
 
   const reservaExtrasPayload = useMemo(
     () => buildReservaExtrasPayload(reservaExtrasDisponibles, reservaExtrasCantidad),
@@ -2031,7 +2008,7 @@ export default function ReservaForm() {
         sede: sedeData,
       });
       const duracion = duracionSeleccionadaMin;
-      const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl);
+      const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl, t);
       const numsSlots = slotsOferta.map((s) => s.numero);
       const hoyCalendarioNegocio = ymdHoyParaReservaSede(sedeData);
       const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
@@ -2084,7 +2061,7 @@ export default function ReservaForm() {
     } finally {
       setLoading(false);
     }
-  }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl]);
+  }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl, t]);
 
   // Auto-load time slots when date is selected (pantalla 2)
   useEffect(() => {
@@ -2144,7 +2121,7 @@ export default function ReservaForm() {
           ))
           .map((r) => parseInt(String(r.cancha), 10))
         : [];
-      const slots = slotsReservaDesdeSede(sedeSeleccionada, reservaDeporteUrl);
+      const slots = slotsReservaDesdeSede(sedeSeleccionada, reservaDeporteUrl, t);
 
       setCanchasDisponibles(
         slots.map((s) => ({
@@ -2233,7 +2210,7 @@ export default function ReservaForm() {
 
     const creditoAplicado = 0;
     const extrasPayload = reservaExtrasPayload;
-    const precioFinal = Math.max(0, reservaTotalPagarConCargoYExtras - creditoAplicado);
+    const precioFinal = Math.max(0, reservaSubtotalTurnoExtras - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
       sede_id: sedeSeleccionada.id,
@@ -2258,7 +2235,7 @@ export default function ReservaForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          titulo: `Cancha ${formData.cancha} — ${sedeSeleccionada.nombre}`,
+          titulo: t('reservas.paymentDescription', { num: formData.cancha, venue: sedeSeleccionada.nombre }),
           precio: precioFinal,
           moneda: sedeSeleccionada.moneda || 'ARS',
           sedeNombre: sedeSeleccionada.nombre,
@@ -2654,6 +2631,7 @@ export default function ReservaForm() {
                         preciosDeporteRows,
                         surgeQuotesByDuracion,
                         surgeQuotesLoading,
+                        dynamicPriceLabel: t('reservas.dynamicPrice'),
                       });
                       return (
                         <button
@@ -2835,9 +2813,7 @@ export default function ReservaForm() {
     const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
     const stripeCuentaOk = String(sedeSeleccionada?.stripe_account_id || '').trim().startsWith('acct_');
     const montoBaseMinor = amountMainToStripeMinor(stripeMontoMainConExtras, moneda);
-    const cargoServicioMinor = Math.round(montoBaseMinor * reservaFeeRateDisplay);
-    const totalMinor = montoBaseMinor + cargoServicioMinor;
-    const precioPayloadStripe = Number(stripeMinorToMain(totalMinor, moneda));
+    const precioPayloadStripe = Number(stripeMinorToMain(montoBaseMinor, moneda));
     const waPerfilResumen = String(userProfile?.whatsapp || '').trim();
     const muestraInputWhatsappResumen =
       Boolean(session?.user) &&
@@ -2969,22 +2945,8 @@ export default function ReservaForm() {
                       <strong>{t('reservas.labelExtras')}</strong> {formatMoneyMain(reservaExtrasSubtotal, moneda)}
                     </p>
                   ) : null}
-                  <p
-                    style={{
-                      margin: '0 0 4px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    <strong>
-                      {t('reservas.platformFee', {
-                        pct: reservaFeePctDisplay,
-                        defaultValue: `Fee de plataforma (${reservaFeePctDisplay}%):`,
-                      })}
-                    </strong>{' '}
-                    {formatMoneyMain(reservaCargoPlataformaDisplay, moneda)}
+                  <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    {t('reservas.playerCommissionZero', 'Comisión de Padbol Match al jugador: 0%')}
                   </p>
                   <p style={{ margin: '8px 0 0', fontWeight: 800, fontSize: 16, lineHeight: 1.3 }}>
                     <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalDisplay, moneda)}
@@ -3128,7 +3090,7 @@ export default function ReservaForm() {
               sedeId={sedeSeleccionada.id}
               moneda={moneda}
               montoBaseMinor={montoBaseMinor}
-              descripcion={`Reserva cancha ${formData.cancha} — ${sedeSeleccionada.nombre}`}
+              descripcion={t('reservas.paymentDescription', { num: formData.cancha, venue: sedeSeleccionada.nombre })}
               onRequireAuthForPay={gateReservaPago}
               payload={{
                 sede: sedeSeleccionada.nombre,

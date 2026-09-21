@@ -11,6 +11,7 @@ export default function ConfirmModal({
   onDismiss,
   busy = false,
   confirmDanger = false,
+  hideDismiss = false,
   titleId = 'confirm-modal-title',
 }) {
   const { t } = useTranslation();
@@ -81,24 +82,26 @@ export default function ConfirmModal({
           </p>
         ) : null}
         <Wrapper style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onDismiss}
-            style={{
-              padding: '10px 16px',
-              borderRadius: 10,
-              border: '1px solid var(--border)',
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: busy ? 'wait' : 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            {dismissText}
-          </button>
+          {!hideDismiss ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onDismiss}
+              style={{
+                padding: '10px 16px',
+                borderRadius: 10,
+                border: '1px solid var(--border)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: busy ? 'wait' : 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              {dismissText}
+            </button>
+          ) : null}
           <button
             type="button"
             disabled={busy}

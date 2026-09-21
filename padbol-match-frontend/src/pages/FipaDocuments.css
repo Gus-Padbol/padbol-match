@@ -1,0 +1,500 @@
+.fipa-documents-page {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 8% 4%, rgba(225, 27, 34, 0.16), transparent 30rem),
+    radial-gradient(circle at 96% 18%, rgba(225, 27, 34, 0.1), transparent 26rem),
+    var(--bg-page);
+  color: var(--text-primary);
+}
+
+.fipa-documents-shell {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 34px 0 76px;
+}
+
+.fipa-documents-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(30px, 6vw, 66px);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 22px;
+  background:
+    linear-gradient(125deg, rgba(10, 14, 23, 0.96), rgba(27, 31, 43, 0.9)),
+    var(--bg-card);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+}
+
+.fipa-documents-hero::after {
+  content: "FIPA";
+  position: absolute;
+  right: -0.05em;
+  bottom: -0.25em;
+  color: rgba(255, 255, 255, 0.035);
+  font-size: clamp(7rem, 20vw, 14rem);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  pointer-events: none;
+}
+
+.fipa-documents-brand {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 34px;
+  width: auto;
+  margin-bottom: 18px;
+}
+
+.fipa-documents-hero > span,
+.fipa-documents-section-heading span {
+  color: #e11b22;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.fipa-documents-hero h1 {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 12px 0;
+  font-size: clamp(2.3rem, 7vw, 5.3rem);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.fipa-documents-hero > p {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.65;
+}
+
+.fipa-documents-account {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 100%;
+  margin-top: 26px;
+  padding: 11px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.fipa-documents-account strong {
+  overflow-wrap: anywhere;
+  color: #fff;
+  font-size: 0.86rem;
+}
+
+.fipa-documents-account small {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.72rem;
+}
+
+.fipa-documents-section {
+  margin-top: 26px;
+  padding: clamp(22px, 4vw, 38px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg-card);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.11);
+}
+
+.fipa-documents-section-heading {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.9fr) minmax(300px, 1.1fr);
+  gap: 28px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+
+.fipa-documents-section-heading h2 {
+  margin: 6px 0 0;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  letter-spacing: -0.035em;
+}
+
+.fipa-documents-section-heading > p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.fipa-documents-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fipa-document-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--bg-page);
+}
+
+.fipa-document-card.is-available {
+  border-color: rgba(225, 27, 34, 0.3);
+}
+
+.fipa-document-card.is-requested {
+  border-color: #e11b22;
+  box-shadow: 0 0 0 3px rgba(225, 27, 34, 0.14);
+}
+
+.fipa-document-card.is-locked {
+  opacity: 0.78;
+}
+
+.fipa-document-card__number {
+  color: rgba(225, 27, 34, 0.76);
+  font-size: 0.73rem;
+  font-weight: 900;
+}
+
+.fipa-document-card__body {
+  min-width: 0;
+}
+
+.fipa-document-card__access {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-secondary);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fipa-document-card h3 {
+  margin: 0;
+  font-size: 0.97rem;
+  line-height: 1.35;
+}
+
+.fipa-document-card small {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-secondary);
+}
+
+.fipa-document-card button,
+.fipa-access-submit {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: #e11b22;
+  color: #fff;
+  font: inherit;
+  font-size: 0.79rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fipa-document-card button:disabled {
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.fipa-documents-notice,
+.fipa-access-status {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(225, 27, 34, 0.35);
+  border-radius: 10px;
+  background: rgba(225, 27, 34, 0.08);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.fipa-documents-notice--warning {
+  margin: 18px 0 0;
+}
+
+.fipa-documents-notice--error {
+  border-color: rgba(225, 27, 34, 0.38);
+  background: rgba(225, 27, 34, 0.08);
+}
+
+.fipa-documents-notice--success,
+.fipa-access-status--approved {
+  border-color: rgba(32, 153, 97, 0.36);
+  background: rgba(32, 153, 97, 0.09);
+}
+
+.fipa-documents-notice--neutral,
+.fipa-access-status--neutral {
+  border-color: var(--border);
+  background: var(--bg-page);
+}
+
+.fipa-access-status strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.fipa-access-status p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.fipa-access-link-button {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #e11b22;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fipa-access-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.fipa-access-form > label,
+.fipa-access-form__whatsapp > label:not(.fipa-access-checkbox) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--text-primary);
+  font-size: 0.83rem;
+  font-weight: 750;
+}
+
+.fipa-access-form__wide {
+  grid-column: 1 / -1;
+}
+
+.fipa-access-form input,
+.fipa-access-form select,
+.fipa-access-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 45px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  background: var(--bg-input, var(--bg-page));
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.fipa-access-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.fipa-access-form input:focus,
+.fipa-access-form select:focus,
+.fipa-access-form textarea:focus {
+  border-color: #e11b22;
+  box-shadow: 0 0 0 3px rgba(225, 27, 34, 0.1);
+}
+
+.fipa-access-form__venue,
+.fipa-access-form__privacy,
+.fipa-access-form__whatsapp {
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-page);
+}
+
+.fipa-access-form__venue {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fipa-access-form__venue span,
+.fipa-access-form__venue small,
+.fipa-access-form__privacy p {
+  color: var(--text-secondary);
+}
+
+.fipa-access-form__privacy p {
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.fipa-access-checkbox {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.fipa-access-checkbox input {
+  flex: 0 0 auto;
+  width: 18px;
+  min-height: 18px;
+  margin-top: 1px;
+}
+
+.fipa-access-form__whatsapp > label:not(.fipa-access-checkbox) {
+  margin-top: 13px;
+}
+
+.fipa-age-section {
+  max-width: 660px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.fipa-age-section form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fipa-age-section form > span {
+  color: #e11b22;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.fipa-age-section h2,
+.fipa-age-section p {
+  margin: 0;
+}
+
+.fipa-age-section p,
+.fipa-age-section small {
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.fipa-age-section label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.fipa-age-section input {
+  min-height: 45px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-input, var(--bg-page));
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.fipa-access-submit {
+  justify-self: start;
+  min-width: 230px;
+}
+
+.fipa-access-submit:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.fipa-access-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.fipa-access-form__actions .fipa-access-link-button {
+  margin-top: 0;
+}
+
+.fipa-member-request > p {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.fipa-documents-footer-note {
+  max-width: 760px;
+  margin: 24px auto 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .fipa-documents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fipa-documents-section-heading {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .fipa-documents-shell {
+    width: min(100% - 20px, 1120px);
+    padding-top: 16px;
+  }
+
+  .fipa-documents-hero,
+  .fipa-documents-section {
+    border-radius: 14px;
+  }
+
+  .fipa-document-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .fipa-document-card button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .fipa-access-form {
+    grid-template-columns: 1fr;
+  }
+
+  .fipa-access-form__wide {
+    grid-column: auto;
+  }
+
+  .fipa-access-submit {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fipa-documents-page *,
+  .fipa-documents-page *::before,
+  .fipa-documents-page *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

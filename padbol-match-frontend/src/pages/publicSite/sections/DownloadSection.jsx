@@ -31,9 +31,6 @@ export default function DownloadSection() {
             )
           ))}
         </div>
-        <Link className="ps-button ps-button--primary" to={config.login}>
-          {text('publicSite.download.login')}
-        </Link>
       </div>
     </section>
   );

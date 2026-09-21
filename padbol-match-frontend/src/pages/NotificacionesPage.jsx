@@ -1,3 +1,5 @@
+import { normalizePlayerNotifications, markPlayerNotificationsRead } from '../utils/playerNotificationsApi';
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -9,9 +11,7 @@ import { supabase } from '../supabaseClient';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
 function tipoEtiqueta(t, tipo) {
@@ -30,14 +30,15 @@ function tipoEtiqueta(t, tipo) {
   return map[tipo] || t('notificaciones.tipo.aviso');
 }
 
-function fechaNotifLabel(value) {
+function fechaNotifLabel(value, locale) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+  return d.toLocaleString(locale || 'en', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 export default function NotificacionesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.resolvedLanguage || i18n.language || 'en';
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -63,34 +64,26 @@ export default function NotificacionesPage() {
       const headers = await authHeaders();
       const res = await fetch(`${API_BASE}/api/notificaciones`, { headers });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'No se pudieron cargar notificaciones');
-      setItems(Array.isArray(data) ? data : []);
+      if (!res.ok) throw new Error(data?.error || t('general.somethingWentWrong'));
+      setItems(normalizePlayerNotifications(data));
     } catch (err) {
-      setMsg(err.message || 'Error de red');
+      setMsg(err.message || t('general.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, session?.user]);
+  }, [authHeaders, session?.user, t]);
 
-  const markRead = useCallback(
-    async (ids = []) => {
-      if (!session?.user) return;
-      const normalized = ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
-      if (!normalized.length) return;
-      setItems((prev) => prev.map((n) => (normalized.includes(Number(n.id)) ? { ...n, leida: true } : n)));
-      try {
-        const headers = await authHeaders();
-        await fetch(`${API_BASE}/api/notificaciones/leer`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...headers },
-          body: JSON.stringify({ ids: normalized }),
-        });
-      } catch {
-        /* ignore */
-      }
-    },
-    [authHeaders, session?.user],
-  );
+  const markRead = useCallback(async (ids = [], { all = false } = {}) => {
+    if (!session?.user) return;
+    setMsg('');
+    try {
+      const headers = await authHeaders();
+      const confirmed = await markPlayerNotificationsRead(ids, { headers, all, apiBaseUrl: API_BASE });
+      setItems((prev) => prev.map((item) => (confirmed.includes(String(item.id)) ? { ...item, leida: true } : item)));
+    } catch (error) {
+      setMsg(error?.message && error.message !== 'notification_read_failed' ? error.message : t('general.somethingWentWrong'));
+    }
+  }, [authHeaders, session?.user, t]);
 
   useEffect(() => {
     void fetchItems();
@@ -146,7 +139,7 @@ export default function NotificacionesPage() {
             }}
           >
             <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: 15, fontWeight: 400 }}>
-              Iniciá sesión para ver tus avisos.
+              Inicia sesión para ver tus avisos.
             </p>
             <button
               type="button"
@@ -172,7 +165,7 @@ export default function NotificacionesPage() {
               {unreadIds.length ? (
                 <button
                   type="button"
-                  onClick={() => markRead(unreadIds)}
+                  onClick={() => markRead(unreadIds, { all: true })}
                   style={{
                     border: '2px solid #E11B22',
                     background: 'transparent',
@@ -254,7 +247,7 @@ export default function NotificacionesPage() {
                       {n.mensaje}
                     </span>
                     <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12, marginTop: 8 }}>
-                      {fechaNotifLabel(n.created_at)}
+                      {fechaNotifLabel(n.created_at, dateLocale)}
                     </span>
                   </button>
                 ))}

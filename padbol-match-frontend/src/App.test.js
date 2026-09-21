@@ -21,6 +21,10 @@ jest.mock('./pages/LandingPage', () => function LandingPageMock() {
   return <main>Padbol Match</main>;
 });
 
+jest.mock('./pages/publicSite/PublicSitePage', () => function PublicSitePageMock() {
+  return <main>Padbol Match</main>;
+});
+
 test('monta la aplicación', async () => {
   let container;
   await act(async () => {

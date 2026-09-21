@@ -20,6 +20,7 @@ import ChatbotIASafe from './components/ChatbotIASafe';
 import LegalFooterBar from './components/LegalFooterBar';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import PwaUpdateBanner from './components/PwaUpdateBanner';
+import WebLegalConsentGate from './components/WebLegalConsentGate';
 import {
   isLegalFooterGlobalBarVisiblePathname,
   LEGAL_FOOTER_GLOBAL_SPACER_PX,
@@ -43,6 +44,10 @@ const FormEquipos = lazy(() => import('./pages/FormEquipos'));
 const MiPerfil = lazy(() => import('./pages/MiPerfil'));
 const RecorridoExterno = lazy(() => import('./pages/RecorridoExterno'));
 const AdminRecorridosExternos = lazy(() => import('./pages/AdminRecorridosExternos'));
+const AdminFipaPlayers = lazy(() => import('./pages/AdminFipaPlayers'));
+const AdminFipaLibrary = lazy(() => import('./pages/AdminFipaLibrary'));
+const FipaClaimInvitation = lazy(() => import('./pages/FipaClaimInvitation'));
+const FipaDocuments = lazy(() => import('./pages/FipaDocuments'));
 const PerfilPublico = lazy(() => import('./PerfilPublico'));
 const TorneoVista = lazy(() => import('./pages/TorneoVista'));
 const Rankings = lazy(() => import('./pages/Rankings'));
@@ -81,6 +86,7 @@ const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
 const AdminVenueLandingPage = lazy(() => import('./pages/adminLanding/AdminVenueLandingPage'));
+const VenuePlansPage = lazy(() => import('./pages/adminLanding/VenuePlansPage'));
 const SupportTicketsPage = lazy(() => import('./pages/SupportTicketsPage'));
 
 function RouteLoadingScreen() {
@@ -299,7 +305,7 @@ function AdminDashboardGate() {
       >
         <strong style={{ fontSize: '20px' }}>No pudimos cargar el panel</strong>
         <p style={{ maxWidth: 420, margin: 0, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>
-          La sesión está activa, pero la verificación de permisos no respondió a tiempo. Probá nuevamente.
+          La sesión está activa, pero la verificación de permisos no respondió a tiempo. Prueba nuevamente.
         </p>
         <button type="button" onClick={() => window.location.reload()} style={{ padding: '12px 18px', border: 0, borderRadius: 10, background: '#e11b22', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
           Reintentar
@@ -355,6 +361,7 @@ function AdminDashboardGate() {
 
 function AppRoutes() {
   return (
+    <WebLegalConsentGate>
     <PerfilJugadorDatosMinimosGate>
     <Routes>
         <Route path="/" element={<RootHomeRoute />} />
@@ -395,13 +402,15 @@ function AppRoutes() {
         <Route path="/checkin" element={<CheckinKiosco />} />
         <Route path="/torneo/:torneoId" element={<TorneoVista />} />
         <Route path="/rankings" element={<Rankings />} />
+        <Route path="/fipa/reclamar" element={<FipaClaimInvitation />} />
+        <Route path="/fipa/documentos" element={<ProtectedRoute><FipaDocuments /></ProtectedRoute>} />
         <Route path="/sedes" element={<SedesPublicas />} />
         <Route path="/unirse" element={<UnirsePage />} />
         <Route path="/invitar-admin-club/:token" element={<InvitarAdminClubPage />} />
         <Route path="/join" element={<Navigate to="/unirse" replace />} />
         <Route path="/sede/:sedeId" element={<SedePublica />} />
         <Route path="/mi-perfil" element={<MiPerfil />} />
-        <Route path="/mi-perfil/recorrido" element={<ProtectedRoute><RecorridoExterno /></ProtectedRoute>} />
+        <Route path="/mi-perfil/recorrido" element={<RecorridoExterno />} />
         <Route path="/perfil/:userId" element={<PerfilPublico />} />
         <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
@@ -435,6 +444,8 @@ function AppRoutes() {
           element={<Navigate to="/admin?tab=padcoins&section=alertas" replace />}
         />
         <Route path="/admin/recorridos-externos" element={<ProtectedRoute><AdminRecorridosExternos /></ProtectedRoute>} />
+        <Route path="/admin/fipa-jugadores" element={<ProtectedRoute><AdminFipaPlayers /></ProtectedRoute>} />
+        <Route path="/admin/fipa-biblioteca" element={<ProtectedRoute><AdminFipaLibrary /></ProtectedRoute>} />
         <Route
           path="/admin"
           element={
@@ -459,11 +470,14 @@ function AppRoutes() {
         <Route path="*" element={<WildcardFallback />} />
     </Routes>
     </PerfilJugadorDatosMinimosGate>
+    </WebLegalConsentGate>
   );
 }
 
 function AppShell() {
   const location = useLocation();
+  const normalizedPath = String(location.pathname || '/').replace(/\/+$/, '') || '/';
+  const publicLayoutOwnsChatbot = normalizedPath === '/plataforma' || normalizedPath === '/planes';
   const legalFooterPad = isLegalFooterGlobalBarVisiblePathname(location.pathname)
     ? LEGAL_FOOTER_GLOBAL_SPACER_PX
     : 0;
@@ -483,7 +497,7 @@ function AppShell() {
         <AppRoutes />
       </div>
       <LegalFooterBar />
-      <ChatbotIASafe />
+      {!publicLayoutOwnsChatbot ? <ChatbotIASafe /> : null}
       <CookieConsentBanner />
       <PwaUpdateBanner />
     </>
@@ -550,9 +564,11 @@ function App() {
                 path="/admin/scoreboard/:partidoId"
                 element={(
                   <ProtectedRoute>
-                    <ErrorBoundary label="el panel del árbitro">
-                      <ScoreboardControl />
-                    </ErrorBoundary>
+                    <WebLegalConsentGate>
+                      <ErrorBoundary label="el panel del árbitro">
+                        <ScoreboardControl />
+                      </ErrorBoundary>
+                    </WebLegalConsentGate>
                   </ProtectedRoute>
                 )}
               />
@@ -573,6 +589,14 @@ function App() {
                 element={(
                   <ErrorBoundary label="la landing para sedes">
                     <AdminVenueLandingPage />
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
+                path="/planes"
+                element={(
+                  <ErrorBoundary label="los planes para sedes">
+                    <VenuePlansPage />
                   </ErrorBoundary>
                 )}
               />

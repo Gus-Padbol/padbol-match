@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -20,6 +21,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { usePadbolLang, usePadbolLangVersion } from '../hooks/usePadbolLang';
 import { useHubChiviAvatar } from '../hooks/useHubChiviAvatar';
 import { CHIVI_AVATAR_DEFAULT_SRC } from '../constants/hubChiviConfig';
+import { canonicalPadbolLanguageCode } from '../constants/padbolLanguages';
 import { capitalizeName } from '../utils/displayName';
 import { buildVoiceBookingCheckoutHref, resolveVoiceBookingConfirmation } from '../utils/chibiVoiceBooking';
 import {
@@ -27,7 +29,9 @@ import {
   requestChiviMicrophoneAccess,
 } from '../utils/chiviMicrophone';
 import { chiviVoiceTargetLanguage, chooseChiviVoice } from '../utils/chiviVoice';
+import ChiviAiSparkIcon from './ChiviAiSparkIcon';
 import './ChatbotIA.css';
+import commercialPlansKnowledge from '../config/commercialPlansKnowledge.json';
 
 /** Ícono estilo Tabler `ti-microphone` (outline), `currentColor` para heredar color del botón. */
 function TablerMicrophoneIcon({ size = 22 }) {
@@ -70,14 +74,39 @@ function readChatbotFabInitiallyCollapsed() {
 }
 
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com'
+  getApiBaseUrl()
 );
 
-export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
+export function commercialPlansKnowledgeAnswer(rawQuestion, locale = 'es') {
   const q = String(rawQuestion || '').trim().toLowerCase();
-  const l = locale === 'en' || locale === 'pt' ? locale : 'es';
+  const requestedLocale = normalizeUiLocale(locale);
+  const l = ['es', 'en', 'pt', 'ro', 'cs'].includes(requestedLocale) ? requestedLocale : 'en';
+  const commercialKnowledge = commercialPlansKnowledge[l === 'en' ? 'en' : 'es'];
+  if (l === 'es') {
+    if (/cargos? ocult/.test(q)) return commercialKnowledge.faqs[0][1];
+    if (/cuesta enviar|cobran por enviar|enviar.*solicitud/.test(q)) return commercialKnowledge.faqs[1][1];
+    if (/jugador.*comisi|comisi.*jugador/.test(q)) return commercialKnowledge.faqs[2][1];
+    if (/equipamiento.*marcador|marcador.*equipamiento/.test(q)) return commercialKnowledge.faqs[3][1];
+    if (/traer.*informaci|migraci|otro sistema|importar.*dato/.test(q)) return commercialKnowledge.faqs[4][1];
+    if (/varias sedes|multisede|cadena.*sede/.test(q)) return commercialKnowledge.faqs[5][1];
+  }
+  if (l === 'en') {
+    if (/hidden charge/.test(q)) return commercialKnowledge.faqs[0][1];
+    if (/charge.*request|submit.*request/.test(q)) return commercialKnowledge.faqs[1][1];
+    if (/player.*commission|commission.*player/.test(q)) return commercialKnowledge.faqs[2][1];
+    if (/special.*scoreboard|scoreboard.*equipment/.test(q)) return commercialKnowledge.faqs[3][1];
+    if (/migrat|another system|import.*data/.test(q)) return commercialKnowledge.faqs[4][1];
+    if (/several (clubs|venues)|multisite|multiple venues/.test(q)) return commercialKnowledge.faqs[5][1];
+  }
+  return null;
+}
+
+export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
+  const commercialAnswer = commercialPlansKnowledgeAnswer(rawQuestion, locale);
+  if (commercialAnswer) return commercialAnswer;
+  const q = String(rawQuestion || '').trim().toLowerCase();
+  const requestedLocale = normalizeUiLocale(locale);
+  const l = ['es', 'en', 'pt', 'ro', 'cs'].includes(requestedLocale) ? requestedLocale : 'en';
   const copy = {
     es: {
       venue: 'Para las sedes, Padbol Match integra canchas, horarios, precios, cobros, reservas, jugadores, torneos, resultados y comunicación. También ofrece información operativa y módulos como marcador inteligente, PadCoins y membresías cuando están habilitados.',
@@ -88,8 +117,8 @@ export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
       loyalty: 'PadCoins y membresías permiten reconocer participación y sostener el vínculo con la sede cuando esos módulos están habilitados. La sede define sus beneficios y condiciones.',
       commerce: 'Las sedes pueden gestionar oportunidades de sponsors y publicidad. Padbol Match Shop todavía funciona como piloto y no debe presentarse como una tienda plenamente disponible.',
       about: 'Padbol Match nace de 18 años desarrollando Padbol. Gustavo Miguens es creador de Padbol, presidente de la Federación Internacional de Padbol y fundador de Padbol Match.',
-      price: 'Los precios y condiciones dependen de la propuesta para cada sede. Para una respuesta comercial concreta, podés usar el canal de contacto de Padbol Match en /contacto.',
-      join: 'Podés conocer la propuesta para sedes en /administradores e iniciar la solicitud en /unirse. Para una conversación comercial, el canal general está en /contacto.',
+      price: 'Los precios y condiciones dependen de la propuesta para cada sede. Para una respuesta comercial concreta, puedes usar el canal de contacto de Padbol Match en /contacto.',
+      join: 'Puedes conocer la propuesta para sedes en /administradores e iniciar la solicitud en /unirse. Para una conversación comercial, el canal general está en /contacto.',
       general: 'Padbol Match conecta juego, operación y comunidad para Padbol, pádel, pickleball y tenis. Reúne jugadores, sedes, reservas, partidos, competencia, resultados y gestión en una misma plataforma.',
     },
     en: {
@@ -118,18 +147,44 @@ export function publicLandingKnowledgeAnswer(rawQuestion, locale = 'es') {
       join: 'Conheça a proposta para sedes em /administradores e inicie a solicitação em /unirse. O canal comercial geral é /contacto.',
       general: 'Padbol Match conecta jogo, operação e comunidade para Padbol, padel, pickleball e tênis. Reúne jogadores, sedes, reservas, partidas, competição, resultados e gestão em uma plataforma.',
     },
+    ro: {
+      venue: 'Pentru cluburi, Padbol Match reunește terenuri, programe, prețuri, plăți, rezervări, jucători, turnee, rezultate și comunicare. Oferă și informații operaționale și module precum tabela inteligentă, PadCoins și abonamente, atunci când sunt activate.',
+      player: 'Jucătorii pot găsi sau crea meciuri, pot ocupa locuri libere, pot rezerva, concura și urmări rezultatele, istoricul, clasamentul și activitatea comunității într-un singur parcurs.',
+      today: 'Administrarea cluburilor, rezervările, meciurile, turneele, clasamentele, comunitatea și tabela inteligentă sunt disponibile astăzi. Arbitrul prin viziune este în etapa de pregătire, iar magazinul rămâne un proiect-pilot.',
+      scoreboard: 'Tabela inteligentă înregistrează meciul în direct și conectează rezultatul la istoric, statistici, clasamente și turnee, atunci când este cazul. Arbitrul bazat pe camere este încă în etapa de pregătire.',
+      reports: 'Padbol Match oferă rezumate și exporturi ale activității clubului. Acestea nu reprezintă consultanță contabilă, fiscală sau juridică; fiecare club folosește informațiile împreună cu specialiștii săi, conform legislației locale.',
+      loyalty: 'PadCoins și abonamentele pot recompensa participarea și pot consolida relația cu clubul atunci când aceste module sunt activate. Clubul își definește beneficiile și condițiile.',
+      commerce: 'Cluburile pot administra oportunitățile de sponsorizare și publicitate. Padbol Match Shop rămâne un proiect-pilot și nu trebuie prezentat ca fiind disponibil integral.',
+      about: 'Padbol Match se bazează pe 18 ani de dezvoltare a Padbolului. Gustavo Miguens a creat Padbol, conduce Federația Internațională de Padbol și a fondat Padbol Match.',
+      price: 'Prețurile și condițiile depind de propunerea pentru fiecare club. Pentru un răspuns comercial concret, folosește canalul de contact Padbol Match de la /contacto.',
+      join: 'Poți vedea propunerea pentru cluburi la /administradores și poți începe solicitarea la /unirse. Canalul comercial general este /contacto.',
+      general: 'Padbol Match conectează jocul, administrarea și comunitatea pentru Padbol, Padel, Pickleball și Tenis. Reunește jucători, cluburi, rezervări, meciuri, competiții, rezultate și administrare într-o singură platformă.',
+    },
+    cs: {
+      venue: 'Padbol Match propojuje správu klubů, kurtů, rozvrhů, cen, plateb, rezervací, hráčů, turnajů, výsledků a komunikace. Podle aktivovaných modulů nabízí také provozní přehledy, inteligentní výsledkovou tabuli, PadCoins a členství.',
+      player: 'Hráči mohou na jednom místě hledat nebo vytvářet zápasy, přidávat se na volná místa, rezervovat, soutěžit a sledovat výsledky, historii, žebříček i dění v komunitě.',
+      today: 'Nyní je k dispozici správa klubů, rezervací, zápasů, turnajů, žebříčků, komunity a inteligentní výsledkové tabule. Kamerový rozhodčí se stále učí a obchod je zatím v pilotním provozu.',
+      scoreboard: 'Inteligentní výsledková tabule zaznamenává zápas živě a propojuje výsledek s historií, statistikami, žebříčky a turnaji. Kamerový rozhodčí je stále ve fázi vývoje.',
+      reports: 'Padbol Match nabízí provozní přehledy a exporty pro klub. Nejde o účetní, daňové ani právní poradenství; každý klub údaje používá se svými odborníky podle místních předpisů.',
+      loyalty: 'PadCoins a členství mohou odměňovat aktivitu hráčů a posilovat jejich vztah s klubem, pokud jsou tyto moduly zapnuté. Výhody a podmínky určuje klub.',
+      commerce: 'Kluby mohou spravovat nabídky pro sponzory a reklamu. Padbol Match Shop je zatím pilotní projekt a nemá být prezentován jako plně dostupný obchod.',
+      about: 'Padbol Match vychází z 18 let rozvoje Padbolu. Gustavo Miguens vytvořil Padbol, je prezidentem Mezinárodní federace Padbolu a založil Padbol Match.',
+      price: 'Ceny a podmínky se odvíjejí od nabídky pro konkrétní klub. Pro obchodní informace použijte kontaktní stránku Padbol Match na /contacto.',
+      join: 'Nabídku pro kluby najdete na /administradores a žádost můžete zahájit na /unirse. Obecný obchodní kontakt je na /contacto.',
+      general: 'Padbol Match propojuje sport, provoz a komunitu pro Padbol, padel, pickleball a tenis. Spojuje hráče, kluby, rezervace, zápasy, soutěže, výsledky a správu v jedné platformě.',
+    },
   }[l];
 
-  if (/sede|club|venue|court|quadra|administr/.test(q)) return copy.venue;
-  if (/jugador|player|jogador|partido|match|jugar|play|jogar/.test(q)) return copy.player;
-  if (/disponible|available|disponível|hoy|today|hoje|actual/.test(q)) return copy.today;
-  if (/marcador|scoreboard|placar|visión|vision|árbitro|referee/.test(q)) return copy.scoreboard;
-  if (/reporte|report|informe|excel|contab|fiscal|tax|export/.test(q)) return copy.reports;
-  if (/padcoin|membres|beneficio|benefit|fidel/.test(q)) return copy.loyalty;
-  if (/sponsor|publicidad|advert|shop|tienda|loja/.test(q)) return copy.commerce;
-  if (/quién|quien|who|quem|historia|fundador|gustavo/.test(q)) return copy.about;
-  if (/precio|price|preço|costo|cost|plan/.test(q)) return copy.price;
-  if (/sumar|incorpor|join|contact|contacto|hablar|talk|falar/.test(q)) return copy.join;
+  if (/sede|club|venue|court|quadra|teren|administr|klub|kurt|správ/.test(q)) return copy.venue;
+  if (/jugador|player|jogador|jucător|partido|match|meci|jugar|play|jogar|joac|hráč|zápas|hrát/.test(q)) return copy.player;
+  if (/disponible|available|disponível|disponibil|hoy|today|hoje|astăzi|actual|acum|dostup|nyní|dnes/.test(q)) return copy.today;
+  if (/marcador|scoreboard|placar|tabel|scor|visión|vision|viziune|árbitro|referee|arbitru|výsledkov|rozhodčí/.test(q)) return copy.scoreboard;
+  if (/reporte|report|raport|informe|excel|contab|fiscal|tax|export|přehled|účetn|daň/.test(q)) return copy.reports;
+  if (/padcoin|membres|abonament|beneficio|benefit|benefici|fidel|členstv|výhod/.test(q)) return copy.loyalty;
+  if (/sponsor|publicidad|publicitat|advert|shop|tienda|loja|magazin|reklam|obchod/.test(q)) return copy.commerce;
+  if (/quién|quien|who|quem|cine|historia|istor|fundador|fondator|gustavo|kdo|historie|založ/.test(q)) return copy.about;
+  if (/precio|price|preço|preț|costo|cost|plan|cena|cen[yi]|podmínk/.test(q)) return copy.price;
+  if (/sumar|incorpor|join|alătur|înscri|contact|contacto|hablar|talk|falar|vorb|přidat|žádost|kontakt/.test(q)) return copy.join;
   return copy.general;
 }
 
@@ -217,7 +272,13 @@ function normalizeUiLocale(raw) {
   if (s.startsWith('es')) return 'es';
   if (s.startsWith('pt')) return 'pt';
   if (s.startsWith('en')) return 'en';
-  return 'es';
+  if (s.startsWith('ro')) return 'ro';
+  const canonical = canonicalPadbolLanguageCode(s);
+  if (!canonical) return 'es';
+  if (canonical.startsWith('pt-')) return 'pt';
+  if (canonical.startsWith('nl-')) return 'nl';
+  if (canonical === 'fa-IR') return 'fa';
+  return canonical;
 }
 
 /** Etiqueta corta para chips de elección de deporte (slug canónico del backend). */
@@ -243,15 +304,21 @@ function deporteSlugDisplayLabel(slug, loc) {
       tenis: 'Tênis',
       pickleball: 'Pickleball',
     },
+    ro: {
+      padbol: 'Padbol',
+      padel: 'Padel',
+      tenis: 'Tenis',
+      pickleball: 'Pickleball',
+    },
   };
-  const m = maps[l] || maps.es;
+  const m = maps[l] || maps.en;
   return m[s] || s.replace(/_/g, ' ');
 }
 
 /** es|en|pt según el texto escrito por el usuario (heurística alineada con el backend). */
-function inferWritingLocaleCodeFromText(textRaw) {
+export function inferWritingLocaleCodeFromText(textRaw, fallbackLocaleRaw = 'es') {
   const text = String(textRaw || '').trim();
-  if (!text) return 'es';
+  if (!text) return normalizeUiLocale(fallbackLocaleRaw);
   const fold = text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -261,25 +328,29 @@ function inferWritingLocaleCodeFromText(textRaw) {
   let pt = 0;
   let es = 0;
   let en = 0;
+  let ro = 0;
 
   if (/[ãõ]|\b(nao|nao)\b/i.test(text) || /não/i.test(text)) pt += 4;
   if (/ñ|¿|¡/.test(text)) es += 4;
+  if (/[ăâîșțĂÂÎȘȚ]/.test(text)) ro += 4;
   if (/\b(nao|nao|voce|voces|torneio|obrigado|obrigada|quadras|disponivel|tambem|amanha)\b/.test(pad)) pt += 3;
   if (/\b(manana|hoy|cuando|donde|cancha|turno|disponibilidad|quiero|gracias|sedes?|horarios)\b/.test(pad)) es += 3;
   if (/\b(tomorrow|today|when|where|booking|available|slot|courts|tournament|thanks|please|what\s+time|how\s+do)\b/.test(pad)) en += 3;
+  if (/\b(vreau|joc|juca|maine|astăzi|unde|teren|rezervare|multumesc|turneu|disponibil)\b/.test(pad)) ro += 3;
   if (/\b(voce|voces)\b/.test(pad)) pt += 2;
   if (/\b(the|and|with|for)\b/.test(pad)) en += 1;
   if (/\b(el|la|los|las|una|por|para)\b/.test(pad)) es += 1;
 
-  if (pt > es && pt > en) return 'pt';
-  if (en > es && en > pt) return 'en';
-  return 'es';
+  if (pt > es && pt > en && pt > ro) return 'pt';
+  if (en > es && en > pt && en > ro) return 'en';
+  if (ro > es && ro > pt && ro > en) return 'ro';
+  return normalizeUiLocale(fallbackLocaleRaw);
 }
 
 /**
  * BCP-47 para SpeechSynthesis según el texto de la respuesta del asistente (no dispositivo ni mensaje del usuario).
  */
-function bcp47LangForAssistantTts(textRaw) {
+export function bcp47LangForAssistantTts(textRaw, fallbackLocaleRaw = 'es') {
   const text = String(textRaw || '').trim();
   if (!text) return 'es-AR';
 
@@ -298,6 +369,8 @@ function bcp47LangForAssistantTts(textRaw) {
   if (/[\u0103\u0102\u00E2\u00C2\u00EE\u00CE\u0219\u0218\u021b\u021B]/.test(text)) return 'ro-RO';
   if (/\b(multumesc|mulțumesc|bun[ăa]\s+ziua|pe\s+m[aâ]ine|ast[ăa]zi|v[aă]\s+rog|sigur)\b/i.test(text)) return 'ro-RO';
 
+  if (/[ěščřžýáíéťďňůúĚŠČŘŽÝÁÍÉŤĎŇŮÚ]/.test(text)) return 'cs-CZ';
+
   // Turco / alemán / francés (latinos con señales fuertes)
   if (/[ğüşöçıİĞÜŞÖÇ]/.test(text)) return 'tr-TR';
   if (/[äöüÄÖÜß]/.test(text)) return 'de-DE';
@@ -309,17 +382,12 @@ function bcp47LangForAssistantTts(textRaw) {
     return 'fr-FR';
   }
 
-  const code = inferWritingLocaleCodeFromText(text);
-  if (code === 'pt') return 'pt-BR';
-  if (code === 'en') return 'en-US';
-  return 'es-AR';
+  const code = inferWritingLocaleCodeFromText(text, fallbackLocaleRaw);
+  return chiviSpeechRecognitionLanguage(code);
 }
 
 function navigatorLanguageToChatCode(nav) {
-  const n = String(nav || 'es').toLowerCase();
-  if (n.startsWith('pt')) return 'pt';
-  if (n.startsWith('en')) return 'en';
-  return 'es';
+  return normalizeUiLocale(nav);
 }
 
 function chatUiStringsFromI18n(tr, loc) {
@@ -364,7 +432,7 @@ function chatUiStringsFromI18n(tr, loc) {
     errMicDenied: tr('chatbot.errMicDenied'),
     errVoiceStart: tr('chatbot.errVoiceStart'),
     slotsDisponiblesTitulo: tr('chatbot.slotsDisponiblesTitulo'),
-    confirmarTurnoTitulo: tr('chatbot.confirmarTurnoTitulo', { defaultValue: l === 'en' ? 'Confirm your court' : l === 'pt' ? 'Confirme sua quadra' : 'Confirmá tu cancha' }),
+    confirmarTurnoTitulo: tr('chatbot.confirmarTurnoTitulo', { defaultValue: l === 'en' ? 'Confirm your court' : l === 'pt' ? 'Confirme sua quadra' : 'Confirma tu cancha' }),
     confirmarTurnoDetalle: (sede, cancha, fecha, hora) =>
       l === 'en'
         ? `${sede} · ${cancha} · ${fecha} · ${hora}`
@@ -374,6 +442,13 @@ function chatUiStringsFromI18n(tr, loc) {
     confirmarTurnoAviso: tr('chatbot.confirmarTurnoAviso', { defaultValue: l === 'en' ? 'We will recheck availability before payment.' : l === 'pt' ? 'Vamos verificar a disponibilidade novamente antes do pagamento.' : 'Vamos a validar la disponibilidad otra vez antes del pago.' }),
     confirmarTurnoCta: tr('chatbot.confirmarTurnoCta', { defaultValue: l === 'en' ? 'Yes, continue' : l === 'pt' ? 'Sim, continuar' : 'Sí, continuar' }),
     cancelarTurnoCta: tr('chatbot.cancelarTurnoCta', { defaultValue: l === 'en' ? 'Choose another time' : l === 'pt' ? 'Escolher outro horário' : 'Elegir otro horario' }),
+    bookingConfirmSuccess: tr('chatbot.bookingConfirmSuccess', {
+      defaultValue: 'Perfect. I will open the booking summary so you can review it and complete payment.',
+    }),
+    bookingCancelSuccess: tr('chatbot.bookingCancelSuccess', {
+      defaultValue: 'No problem. Choose another available time when you are ready.',
+    }),
+    noReply: tr('chatbot.noReply', { defaultValue: 'No response.' }),
     deportesElegirTitulo: tr('chatbot.deportesElegirTitulo'),
     deporteElegirLabel: (slug) =>
       tr(`torneos.deporte.${slug}`, { defaultValue: deporteSlugDisplayLabel(slug, l) }),
@@ -525,8 +600,8 @@ function chatUiStrings(loc, tr) {
     waClub: 'Escribir al club habitual',
     fabOpen: 'Abrir asistente Chivi',
     fabCollapsed: '¿Consultas?',
-    fabLine1: '¿Tenés dudas?',
-    fabLine2: 'Hablá con Chivi',
+    fabLine1: '¿Tienes dudas?',
+    fabLine2: 'Habla con Chivi',
     titulo: 'Chivi',
     cargando: 'Cargando…',
     escuchando: 'Escuchando…',
@@ -550,7 +625,7 @@ function chatUiStrings(loc, tr) {
     errMicDenied: 'Permiso de micrófono denegado. Activa el permiso en el navegador e intenta de nuevo.',
     errVoiceStart: 'No se pudo iniciar el reconocimiento de voz.',
     slotsDisponiblesTitulo: 'Turnos libres (toca para reservar):',
-    confirmarTurnoTitulo: 'Confirmá tu cancha',
+    confirmarTurnoTitulo: 'Confirma tu cancha',
     confirmarTurnoDetalle: (sede, cancha, fecha, hora) => `${sede} · ${cancha} · ${fecha} · ${hora}`,
     confirmarTurnoAviso: 'Vamos a validar la disponibilidad otra vez antes del pago.',
     confirmarTurnoCta: 'Sí, continuar',
@@ -827,12 +902,12 @@ export default function ChatbotIA() {
   usePadbolLangVersion();
   const isPublicLanding = useMemo(() => {
     const p = String(location.pathname || '/').replace(/\/+$/, '') || '/';
-    return p === '/plataforma' || p === '/administradores';
+    return p === '/plataforma' || p === '/planes';
   }, [location.pathname]);
   const ui = useMemo(() => {
     const base = chatUiStrings(padbolLang, t);
     if (!isPublicLanding) return base;
-    if (padbolLang === 'en') {
+    if (normalizeUiLocale(padbolLang) === 'en') {
       return {
         ...base,
         fabOpen: 'Talk to Chivi, Padbol Match AI assistant',
@@ -849,7 +924,7 @@ export default function ChatbotIA() {
         ],
       };
     }
-    if (padbolLang === 'pt') {
+    if (normalizeUiLocale(padbolLang) === 'pt') {
       return {
         ...base,
         fabOpen: 'Falar com Chivi, assistente de IA do Padbol Match',
@@ -866,21 +941,41 @@ export default function ChatbotIA() {
         ],
       };
     }
-    return {
-      ...base,
-      fabOpen: 'Hablar con Chivi, asistente de inteligencia artificial de Padbol Match',
-      fabCollapsed: 'Chivi IA',
-      fabLine1: '¿Tenés dudas?',
-      fabLine2: 'Hablá con Chivi IA',
-      placeholder: 'Preguntá sobre Padbol Match',
-      welcomeAssistant: () => 'Hola. Soy Chivi, la asistente de inteligencia artificial de Padbol Match. Preguntame cómo funciona la plataforma para jugadores, sedes y organizaciones.',
-      quickSuggestions: [
-        { label: '¿Qué es Padbol Match?' },
-        { label: '¿Qué ofrece a las sedes?' },
-        { label: '¿Cómo funciona para jugadores?' },
-        { label: '¿Qué está disponible hoy?' },
-      ],
-    };
+    if (normalizeUiLocale(padbolLang) === 'ro') {
+      return {
+        ...base,
+        fabOpen: 'Vorbește cu Chivi, asistenta AI Padbol Match',
+        fabCollapsed: 'Chivi AI',
+        fabLine1: 'Ai întrebări?',
+        fabLine2: 'Vorbește cu Chivi AI',
+        placeholder: 'Întreabă despre Padbol Match',
+        welcomeAssistant: () => 'Bună. Sunt Chivi, asistenta AI Padbol Match. Întreabă-mă cum funcționează platforma pentru jucători, cluburi și organizații.',
+        quickSuggestions: [
+          { label: 'Ce este Padbol Match?' },
+          { label: 'Ce oferă cluburilor?' },
+          { label: 'Cum funcționează pentru jucători?' },
+          { label: 'Ce este disponibil astăzi?' },
+        ],
+      };
+    }
+    if (normalizeUiLocale(padbolLang) === 'es') {
+      return {
+        ...base,
+        fabOpen: 'Hablar con Chivi, asistente de inteligencia artificial de Padbol Match',
+        fabCollapsed: 'Chivi IA',
+        fabLine1: '¿Tienes dudas?',
+        fabLine2: 'Habla con Chivi IA',
+        placeholder: 'Pregunta sobre Padbol Match',
+        welcomeAssistant: () => 'Hola. Soy Chivi, la asistente de inteligencia artificial de Padbol Match. Preguntame cómo funciona la plataforma para jugadores, sedes y organizaciones.',
+        quickSuggestions: [
+          { label: '¿Qué es Padbol Match?' },
+          { label: '¿Qué ofrece a las sedes?' },
+          { label: '¿Cómo funciona para jugadores?' },
+          { label: '¿Qué está disponible hoy?' },
+        ],
+      };
+    }
+    return base;
   }, [isPublicLanding, padbolLang, t]);
   const { avatarUrl: chiviAvatarUrl } = useHubChiviAvatar();
 
@@ -984,10 +1079,8 @@ export default function ChatbotIA() {
     const remind = () => {
       const now = Date.now();
       const travelled = Math.abs(window.scrollY - attention.lastY);
-      // Chivi vuelve a llamar la atención recién al atravesar tres pantallas;
-      // así acompaña el recorrido sin aparecer en cada pequeño desplazamiento.
-      const minTravel = Math.max(window.innerHeight * 3, 1200);
-      if (travelled < minTravel || now - attention.lastAt < 1800) return;
+      const minTravel = Math.max(window.innerHeight * 1.35, 720);
+      if (travelled < minTravel || now - attention.lastAt < 18000) return;
       attention.lastY = window.scrollY;
       attention.lastAt = now;
       setPublicAttentionCycle((cycle) => cycle + 1);
@@ -1025,6 +1118,12 @@ export default function ChatbotIA() {
     setError('');
     setVoiceNotice('');
   }, []);
+
+  useEffect(() => {
+    const openFromPage = () => openChatFromFab();
+    window.addEventListener('padbol:open-chivi', openFromPage);
+    return () => window.removeEventListener('padbol:open-chivi', openFromPage);
+  }, [openChatFromFab]);
 
   useEffect(() => {
     if (!open) return;
@@ -1076,7 +1175,7 @@ export default function ChatbotIA() {
         const loc = (() => {
           for (let i = messages.length - 1; i >= 0; i -= 1) {
             if (messages[i]?.role === 'user' && String(messages[i].content || '').trim()) {
-              return inferWritingLocaleCodeFromText(messages[i].content);
+              return inferWritingLocaleCodeFromText(messages[i].content, padbolLang);
             }
           }
           return navigatorLanguageToChatCode(typeof navigator !== 'undefined' ? navigator.language : 'es');
@@ -1093,7 +1192,7 @@ export default function ChatbotIA() {
     return () => {
       canceled = true;
     };
-  }, [open, session?.user?.id, messages]);
+  }, [open, session?.user?.id, messages, padbolLang]);
 
   const userMessageCount = useMemo(() => messages.filter((m) => m.role === 'user').length, [messages]);
 
@@ -1194,7 +1293,7 @@ export default function ChatbotIA() {
       const utter = new SpeechSynthesisUtterance(t);
       utter.onend = () => setTtsPlaying(false);
       utter.onerror = () => setTtsPlaying(false);
-      utter.lang = chiviVoiceTargetLanguage(bcp47LangForAssistantTts(t));
+      utter.lang = chiviVoiceTargetLanguage(bcp47LangForAssistantTts(t, padbolLang));
       const preferredVoice = chooseChiviVoice(window.speechSynthesis.getVoices?.(), utter.lang);
       if (preferredVoice) utter.voice = preferredVoice;
       utter.rate = 1.04;
@@ -1204,7 +1303,7 @@ export default function ChatbotIA() {
     } catch {
       setTtsPlaying(false);
     }
-  }, [ttsSupported]);
+  }, [ttsSupported, padbolLang]);
 
   /** Llamar desde handlers de gesto del usuario (enviar, dictado, activar checkbox). */
   const primeSpeechSynthesisFromUserGesture = useCallback(() => {
@@ -1255,18 +1354,9 @@ export default function ChatbotIA() {
           { role: 'user', content: text },
           {
             role: 'assistant',
-            content:
-              bookingAnswer === 'confirm'
-                ? padbolLang === 'en'
-                  ? 'Perfect. I will open the booking summary so you can review it and complete payment.'
-                  : padbolLang === 'pt'
-                    ? 'Perfeito. Vou abrir o resumo da reserva para você revisar e concluir o pagamento.'
-                    : 'Perfecto. Voy a abrir el resumen de la reserva para que lo revises y completes el pago.'
-                : padbolLang === 'en'
-                  ? 'No problem. Choose another available time when you are ready.'
-                  : padbolLang === 'pt'
-                    ? 'Sem problema. Escolha outro horário disponível quando quiser.'
-                    : 'No hay problema. Elegí otro horario disponible cuando quieras.',
+            content: bookingAnswer === 'confirm'
+              ? ui.bookingConfirmSuccess
+              : ui.bookingCancelSuccess,
           },
         ]);
         const selectedHref = voiceBookingSelection.href;
@@ -1279,6 +1369,27 @@ export default function ChatbotIA() {
       }
       if (userMessageCount >= MAX_USER_MESSAGES) {
         setSessionEnded(true);
+        return;
+      }
+
+      const isPlansPage = String(location.pathname || '').replace(/\/+$/, '') === '/planes';
+      const localCommercialAnswer = isPlansPage
+        ? commercialPlansKnowledgeAnswer(text, inferWritingLocaleCodeFromText(text, padbolLang))
+        : null;
+      if (localCommercialAnswer) {
+        primeSpeechSynthesisFromUserGesture();
+        setError('');
+        setMessages((prev) => [
+          ...prev,
+          { role: 'user', content: text },
+          { role: 'assistant', content: localCommercialAnswer },
+        ]);
+        setInput('');
+        setVoicePhase('idle');
+        setVoiceFinal('');
+        setVoiceInterim('');
+        setVoiceNotice('');
+        scheduleAssistantSpeak(localCommercialAnswer);
         return;
       }
 
@@ -1309,7 +1420,7 @@ export default function ChatbotIA() {
             mensaje: text,
             historial,
             user_id: session?.user?.id || null,
-            locale: inferWritingLocaleCodeFromText(text),
+            locale: inferWritingLocaleCodeFromText(text, padbolLang),
             ...(isPublicLanding ? { client_surface: 'public_landing' } : {}),
             client_calendario_art: ymdBuenosAires(),
             ...(clientPaginaSedeId != null ? { client_pagina_sede_id: clientPaginaSedeId } : {}),
@@ -1343,7 +1454,7 @@ export default function ChatbotIA() {
           }
           return;
         }
-        const reply = String(data.respuesta || '').trim() || 'Sin respuesta.';
+        const reply = String(data.respuesta || '').trim() || ui.noReply;
         const dispRaw = data.disponibilidad;
         let disp = null;
         if (dispRaw && dispRaw.sede_id != null && dispRaw.fecha) {
@@ -1409,8 +1520,10 @@ export default function ChatbotIA() {
       refreshSession,
       voiceBookingSelection,
       padbolLang,
+      ui,
       navigate,
       isPublicLanding,
+      location.pathname,
     ]
   );
 
@@ -1455,11 +1568,11 @@ export default function ChatbotIA() {
       const u = uiRef.current;
       setVoicePhase('idle');
       if (microphoneAccess.reason === 'denied') {
-        setError(u?.errMicDenied || 'Permiso de micrófono denegado.');
+        setError(u?.errMicDenied || 'Microphone permission denied.');
       } else if (microphoneAccess.reason === 'missing') {
-        setVoiceNotice(u?.sinVoz || 'No se detectó un micrófono.');
+        setVoiceNotice(u?.sinVoz || 'No microphone was detected.');
       } else {
-        setError(u?.errVoiceStart || 'No se pudo iniciar el micrófono.');
+        setError(u?.errVoiceStart || 'Could not start the microphone.');
       }
       return;
     }
@@ -1516,7 +1629,7 @@ export default function ChatbotIA() {
       }
       const u = uiRef.current;
       if (code === 'no-speech' || code === 'audio-capture') {
-        setVoiceNotice(u?.sinVoz || 'No se detectó voz. Intenta de nuevo.');
+        setVoiceNotice(u?.sinVoz || 'No voice was detected. Try again.');
       } else {
         setVoiceNotice(u?.noReconocer || 'No se pudo reconocer. Intenta de nuevo.');
       }
@@ -1579,7 +1692,7 @@ export default function ChatbotIA() {
       clearVoiceSilenceTimer();
       setVoicePhase('idle');
       const u = uiRef.current;
-      setError(u?.errVoiceStart || 'Error de voz.');
+      setError(u?.errVoiceStart || 'Voice error.');
     }
   }, [
     voicePhase,
@@ -1620,7 +1733,7 @@ export default function ChatbotIA() {
   return (
     <>
       <div
-        key={isPublicLanding ? `public-attention-${location.pathname}-${publicAttentionCycle}` : 'chatbot-fab'}
+        key={isPublicLanding ? `public-attention-${publicAttentionCycle}` : 'chatbot-fab'}
         className={`chatbot-fab-anchor${isPublicLanding ? ' chatbot-fab-anchor--public' : ''}`}
         style={{
           bottom: fabBottom,
@@ -1673,7 +1786,11 @@ export default function ChatbotIA() {
             <>
               <span className="chatbot-fab-circle-btn">
                 <ChiviFabAvatar fill src={chiviAvatarUrl} />
-                {isPublicLanding ? <span className="chatbot-public-ai-spark" aria-hidden="true">✦</span> : null}
+                {isPublicLanding ? (
+                  <span className="chatbot-public-ai-spark" aria-hidden="true">
+                    <ChiviAiSparkIcon className="chatbot-public-ai-spark__icon" />
+                  </span>
+                ) : null}
               </span>
               <span
                 className={isPublicLanding ? 'chatbot-public-ai-label' : undefined}

@@ -1,6 +1,6 @@
+import { getApiBaseUrl } from './utils/apiPublicBaseUrl';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from './supabaseClient';
 import {
   nombreCompletoJugadorPerfil,
   formatAliasConArroba,
@@ -15,12 +15,9 @@ import { IconGeroUbicacion } from './components/icons/GeroIcons';
 import HubSponsorsTicker from './components/HubSponsorsTicker';
 import { useHubSponsors } from './hooks/useHubSponsors';
 import { useSafeTranslation as useTranslation } from './i18n/tSafe';
-import { buildPerfilPublicoFetchUrl, normalizePerfilPublicoApiResponse } from './utils/perfilPublicoApi';
+import { buildPerfilPublicoFetchUrl, normalizePerfilPublicoApiResponse, fetchPublicPlayerSummary } from './utils/perfilPublicoApi';
 
-const API_BASE_PERFIL =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
-    ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
-    : 'https://padbol-backend.onrender.com';
+const API_BASE_PERFIL = getApiBaseUrl();
 
 function instagramHandleFromStored(raw) {
   const s = String(raw ?? '').trim();
@@ -214,20 +211,10 @@ export default function PerfilPublico() {
 
       const cid = match.companero_id != null ? String(match.companero_id).trim() : '';
       const uid = match.ultimo_companero_id != null ? String(match.ultimo_companero_id).trim() : '';
-      if (cid) {
-        const { data: comp } = await supabase
-          .from('jugadores_perfil')
-          .select('user_id, alias, foto_url, nombre, apellido, nivel, ciudad')
-          .eq('user_id', cid)
-          .maybeSingle();
-        setCompaneroDisplay({ kind: 'habitual', row: comp || null });
-      } else if (uid) {
-        const { data: comp } = await supabase
-          .from('jugadores_perfil')
-          .select('user_id, alias, foto_url, nombre, apellido, nivel, ciudad')
-          .eq('user_id', uid)
-          .maybeSingle();
-        setCompaneroDisplay({ kind: 'ultimo', row: comp || null });
+      const companionId = cid || uid;
+      if (companionId) {
+        const companion = await fetchPublicPlayerSummary(companionId).catch(() => null);
+        setCompaneroDisplay({ kind: cid ? 'habitual' : 'ultimo', row: companion });
       } else {
         setCompaneroDisplay(null);
       }

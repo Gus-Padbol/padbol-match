@@ -19,6 +19,7 @@ export const PADBOL_LANGUAGES = [
   { code: 'pl', flags: '🇵🇱', label: 'Polski' },
   { code: 'uk', flags: '🇺🇦', label: 'Українська' },
   { code: 'af', flags: '🇿🇦', label: 'Afrikaans' },
+  { code: 'cs', flags: '🇨🇿', label: 'Čeština' },
 ];
 
 export const PADBOL_LANGUAGE_CODES = PADBOL_LANGUAGES.map((language) => language.code);
@@ -27,7 +28,7 @@ const CODE_BY_NORMALIZED_VALUE = Object.fromEntries(
   PADBOL_LANGUAGE_CODES.map((code) => [code.toLowerCase(), code]),
 );
 
-const LEGACY_LANGUAGE_ALIASES = { pt: 'pt-BR', nl: 'nl-NL', iw: 'he', fa: 'fa-IR' };
+const LEGACY_LANGUAGE_ALIASES = { pt: 'pt-BR', nl: 'nl-NL', iw: 'he', fa: 'fa-IR', cz: 'cs', 'cs-cz': 'cs' };
 
 export function canonicalPadbolLanguageCode(code) {
   const normalized = String(code || '').trim().replace(/_/g, '-').toLowerCase();
