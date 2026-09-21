@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.contratos_sedes (
   fecha_vencimiento date NULL,
   referencia text NULL,
   archivo_url text NULL,
+  storage_path text NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -17,7 +18,7 @@ CREATE INDEX IF NOT EXISTS contratos_sedes_created_at_idx
 
 -- Bucket Storage para archivos de contratos
 INSERT INTO storage.buckets (id, name, public)
-SELECT 'contratos', 'contratos', true
+SELECT 'contratos', 'contratos', false
 WHERE NOT EXISTS (
   SELECT 1 FROM storage.buckets WHERE id = 'contratos'
 );

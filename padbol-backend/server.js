@@ -2968,13 +2968,12 @@ app.post('/api/sedes/:id/contrato', uploadContrato.single('archivo'), async (req
     if (req.file?.buffer && req.file.originalname) {
       const safeName = String(req.file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
       const path = `contratos/${sedeId}/${Date.now()}_${safeName}`;
-      const up = await supabase.storage.from('contratos').upload(path, req.file.buffer, {
+      const up = await supabaseAdmin.storage.from('contratos').upload(path, req.file.buffer, {
         contentType: req.file.mimetype || 'application/octet-stream',
         upsert: false,
       });
       if (up.error) throw up.error;
-      const pub = supabase.storage.from('contratos').getPublicUrl(path);
-      archivoUrl = pub?.data?.publicUrl || null;
+      archivoUrl = path;
     }
 
     const payload = {
@@ -2982,7 +2981,8 @@ app.post('/api/sedes/:id/contrato', uploadContrato.single('archivo'), async (req
       fecha_inicio: fechaInicio,
       fecha_vencimiento: /^\d{4}-\d{2}-\d{2}$/.test(fechaVenc) ? fechaVenc : null,
       referencia,
-      archivo_url: archivoUrl,
+      archivo_url: null,
+      storage_path: archivoUrl,
     };
     const { data, error } = await supabase.from('contratos_sedes').insert(payload).select('*').single();
     if (error) throw error;
@@ -3005,7 +3005,20 @@ app.get('/api/contratos-sedes', async (req, res) => {
     if (rawIds.length) q = q.in('sede_id', rawIds);
     const { data, error } = await q;
     if (error) throw error;
-    res.json(data || []);
+    const rows = await Promise.all((data || []).map(async (row) => {
+      const legacyPath = String(row?.archivo_url || '').match(/\/storage\/v1\/object\/public\/contratos\/(.+)$/)?.[1];
+      const storagePath = String(row?.storage_path || legacyPath || '').trim();
+      if (!storagePath) return { ...row, archivo_url: null };
+      const { data: signed, error: signedError } = await supabaseAdmin.storage
+        .from('contratos')
+        .createSignedUrl(storagePath, 300, { download: true });
+      if (signedError || !signed?.signedUrl) {
+        console.warn('⚠️ No se pudo firmar contrato', { contratoId: row.id });
+        return { ...row, archivo_url: null };
+      }
+      return { ...row, archivo_url: signed.signedUrl };
+    }));
+    res.json(rows);
   } catch (err) {
     console.error('❌ GET /api/contratos-sedes:', err.message);
     res.status(err.status || 500).json({ error: err.message });
