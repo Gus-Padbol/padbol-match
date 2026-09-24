@@ -500,6 +500,10 @@
       "competitionTypeHint": "Define quién puede inscribirse. Es distinto del formato del fixture, como Round Robin.",
       "ageCategoryLabel": "Categoría de edad",
       "ageCategoryAria": "Categoría de edad del torneo",
+      "ageCutoffLabel": "Fecha de corte de edad (opcional)",
+      "ageCutoffHint": "Se usa para calcular la edad de los inscriptos. Si la dejás vacía, se toma la fecha de inicio del torneo y, si no hay, la fecha actual.",
+      "programaNextGenerationHint": "Categoría juvenil: la competencia pertenece al programa FIPA Next Generation (U13/U15/U17).",
+      "programaPadbolHint": "Categoría de adultos: la competencia pertenece a Padbol. El nivel deportivo (Principiante a Elite) es independiente de la edad.",
       "categoryLabel": "Categoría",
       "fixtureFormatLabel": "Formato del fixture",
       "initialStatusLabel": "Estado inicial del torneo",
@@ -664,10 +668,32 @@
         "mixto": "Mixto"
       },
       "categoriaEdad": {
-        "sub_18": "Sub 18",
-        "open": "Open",
-        "master_40": "Master 40",
-        "master_50": "Master 50"
+        "u13": "U13",
+        "u15": "U15",
+        "u17": "U17",
+        "open": "Adultos / Open",
+        "master_50": "+50 (división especial)",
+        "sub_18": "Sub 18 (legado)",
+        "master_40": "Máster +40 (legado)"
+      },
+      "categoriaEdadGrupo": {
+        "nextGeneration": "Next Generation (juvenil)",
+        "padbol": "Padbol (adultos)",
+        "divisionEspecial": "División especial",
+        "legado": "Legado"
+      },
+      "programa": {
+        "next_generation": "FIPA Next Generation",
+        "padbol": "Padbol"
+      },
+      "filtros": {
+        "programa": "Programa",
+        "todos": "Todos",
+        "categoriaEdad": "Categoría de edad",
+        "nivel": "Nivel deportivo"
+      },
+      "nextGeneration": {
+        "padboleros": "Padboleros"
       },
       "categoriaNivel": {
         "Libre": "Libre (todas las categorías)",

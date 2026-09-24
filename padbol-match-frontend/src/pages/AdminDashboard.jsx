@@ -7125,6 +7125,7 @@ export default function AdminDashboard({
       categoria:    torneo.categoria    || CATEGORIA_TORNEO_DEFAULT,
       tipo_competencia: torneoTipoCompetenciaDb(torneo) || TORNEO_GENERO_COMPETENCIA_DEFAULT,
       categoria_edad: torneo.categoria_edad || TORNEO_CATEGORIA_EDAD_DEFAULT,
+      fecha_corte_edad: torneo.fecha_corte_edad || '',
       tipo_torneo:  torneo.tipo_torneo  || '',
       estado:       mapEstadoTorneoDesdeApiParaForm(torneo.estado),
       fecha_inicio: torneo.fecha_inicio || '',
@@ -7180,6 +7181,8 @@ export default function AdminDashboard({
         deporte: dep,
         formato_equipo: formatoEquipoPayloadParaApi(dep, editTorneoForm.formato_equipo),
       };
+      // No enviar la fecha de corte vacía: evita referenciar la columna antes de aplicar la migración.
+      if (!String(body.fecha_corte_edad ?? '').trim()) delete body.fecha_corte_edad;
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, {
@@ -11586,6 +11589,16 @@ export default function AdminDashboard({
                               <option key={o.value} value={o.value}>{o.label}</option>
                             ))}
                           </select>
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('torneos.create.ageCutoffLabel')}</label>
+                          <input
+                            style={inp}
+                            type="date"
+                            value={editTorneoForm.fecha_corte_edad || ''}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, fecha_corte_edad: e.target.value }))}
+                          />
+                          <small style={{ color: 'var(--text-secondary)', fontSize: '11px', display: 'block', marginTop: '3px' }}>{t('torneos.create.ageCutoffHint')}</small>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.categoryRequiredLabel')}</label>

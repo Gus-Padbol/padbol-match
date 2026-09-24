@@ -21,6 +21,7 @@ import {
   formatCategoriaEdadTorneo,
   torneoTipoCompetenciaDb,
 } from '../utils/torneoFormatters';
+import { torneoEsNextGenerationUI } from '../utils/torneoProgramaUI';
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
@@ -729,6 +730,12 @@ export default function TorneosPublicos() {
                     }),
                   })}
                 />
+                {torneoEsNextGenerationUI(torneo) && (
+                  <Row
+                    icon="🌍"
+                    label={t('torneos.vista.programa.next_generation', { defaultValue: 'FIPA Next Generation' })}
+                  />
+                )}
                 {(() => {
                   const max =
                     torneo.cupos_maximos != null && String(torneo.cupos_maximos).trim() !== ''
