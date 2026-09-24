@@ -11,6 +11,7 @@ import {
   torneoTipoCompetenciaDb,
 } from '../../utils/torneoFormatters';
 import { resumenDeporteFormatoTorneo } from '../../utils/torneoDeporteFormato';
+import { PROGRAMA_NEXT_GENERATION, programaDeTorneo } from '../../utils/torneoProgramaUI';
 import SportIcon from '../common/SportIcon';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
@@ -1973,6 +1974,9 @@ export default function TorneoTabbedView({
         <p className="torneo-header-meta torneo-header-meta--detalle">
           {formatNivelTorneo(torneo?.nivel_torneo)} • {labelCategoriaTorneo(torneo?.categoria)} •{' '}
           {labelGeneroTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}
+          {programaDeTorneo(torneo) === PROGRAMA_NEXT_GENERATION
+            ? `${t('torneos.vista.programa.next_generation', { defaultValue: 'FIPA Next Generation' })} • `
+            : ''}
           {labelCategoriaEdadTorneo(torneo?.categoria_edad)} • {formatTipoTorneo(torneo?.tipo_torneo)} •{' '}
           {formatFecha(torneo?.fecha_inicio)} a {formatFecha(torneo?.fecha_fin)}
         </p>
