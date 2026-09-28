@@ -441,7 +441,10 @@
     "armar": "Organiser une correspondance",
     "armarBody": "Je veux créer un jeu et ajouter des joueurs.",
     "publicidad": "Votre marque ici",
-    "publicidadShort": "Votre marque"
+    "publicidadShort": "Votre marque",
+    "nextGenerationTitle": "Votre parcours Next Generation",
+    "nextGenerationBody": "Découvrez le programme jeunesse U13, U15 et U17, trouvez un site et la formation officielle avec Fide.",
+    "nextGenerationAction": "Accéder à Next Generation"
   },
   "clases": {
     "titulo": "Cours",
