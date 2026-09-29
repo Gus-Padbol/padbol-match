@@ -281,20 +281,6 @@ export default function Jugar() {
           ))}
         </div>
 
-        {(!deporteElegido || deporteElegido === 'padbol') ? (
-          <button
-            type="button"
-            className="jugar-next-generation"
-            onClick={() => window.open('https://dev.padbol.com/#next-generation', '_blank', 'noopener,noreferrer')}
-            aria-label={t('jugar.nextGenerationAction')}
-          >
-            <span className="jugar-next-generation__eyebrow">PADBOL · NEXT GENERATION</span>
-            <strong>{t('jugar.nextGenerationTitle')}</strong>
-            <span>{t('jugar.nextGenerationBody')}</span>
-            <b>{t('jugar.nextGenerationAction')} <i aria-hidden="true">↗</i></b>
-          </button>
-        ) : null}
-
         <div style={{ width: '100%', marginTop: 10 }}>
           <HubJugarFinalSponsorCard
             slot={getSlot(HUB_JUGAR_SLOT.CARD_AD)}

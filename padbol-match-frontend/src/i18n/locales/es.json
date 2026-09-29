@@ -785,10 +785,7 @@
     "armarBody": "Quiero crear un partido y sumar jugadores.",
     "publicidad": "Tu marca aquí",
     "publicidadShort": "Tu marca",
-    "fromClub": "Del club",
-    "nextGenerationTitle": "Tu camino en Next Generation",
-    "nextGenerationBody": "Conoce el programa juvenil U13, U15 y U17, encuentra una sede y descubre la formación oficial con Fide.",
-    "nextGenerationAction": "Entrar a Next Generation"
+    "fromClub": "Del club"
   },
   "clases": {
     "titulo": "Clases",

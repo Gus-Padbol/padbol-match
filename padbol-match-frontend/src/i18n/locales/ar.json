@@ -470,10 +470,7 @@
     "armar": "إعداد المباراة",
     "armarBody": "أريد إنشاء لعبة وإضافة لاعبين.",
     "publicidad": "علامتك التجارية هنا",
-    "publicidadShort": "علامتك التجارية",
-    "nextGenerationTitle": "مسارك في Next Generation",
-    "nextGenerationBody": "اكتشف برنامج الناشئين U13 وU15 وU17، وابحث عن مقر وتعرّف إلى التدريب الرسمي مع Fide.",
-    "nextGenerationAction": "الدخول إلى Next Generation"
+    "publicidadShort": "علامتك التجارية"
   },
   "clases": {
     "titulo": "فصول",

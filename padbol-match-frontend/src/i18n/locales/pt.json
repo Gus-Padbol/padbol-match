@@ -441,10 +441,7 @@
     "armar": "Configurar partida",
     "armarBody": "Quero criar um jogo e adicionar jogadores.",
     "publicidad": "Sua marca aqui",
-    "publicidadShort": "Sua marca",
-    "nextGenerationTitle": "Seu caminho na Next Generation",
-    "nextGenerationBody": "Conheça o programa juvenil U13, U15 e U17, encontre uma sede e descubra a formação oficial com Fide.",
-    "nextGenerationAction": "Entrar na Next Generation"
+    "publicidadShort": "Sua marca"
   },
   "clases": {
     "titulo": "Aulas",

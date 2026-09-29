@@ -442,10 +442,7 @@
     "armar": "Configurați potrivirea",
     "armarBody": "Vreau să creez un joc și să adaug jucători.",
     "publicidad": "Marca ta aici",
-    "publicidadShort": "Marca ta",
-    "nextGenerationTitle": "Parcursul tău Next Generation",
-    "nextGenerationBody": "Descoperă programul pentru juniori U13, U15 și U17, găsește o locație și formarea oficială cu Fide.",
-    "nextGenerationAction": "Intră în Next Generation"
+    "publicidadShort": "Marca ta"
   },
   "clases": {
     "titulo": "Clasele",

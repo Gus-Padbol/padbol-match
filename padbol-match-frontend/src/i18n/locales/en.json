@@ -639,10 +639,7 @@
     "armarBody": "I want to create a match and find players.",
     "publicidad": "Your brand here",
     "publicidadShort": "Your brand",
-    "fromClub": "From the club",
-    "nextGenerationTitle": "Your Next Generation pathway",
-    "nextGenerationBody": "Discover the U13, U15 and U17 youth program, find a venue and explore official training with Fide.",
-    "nextGenerationAction": "Open Next Generation"
+    "fromClub": "From the club"
   },
   "clases": {
     "titulo": "Classes",

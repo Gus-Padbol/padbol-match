@@ -441,10 +441,7 @@
     "armar": "Imposta la partita",
     "armarBody": "Voglio creare un gioco e aggiungere giocatori.",
     "publicidad": "Il tuo brand qui",
-    "publicidadShort": "Il tuo brand",
-    "nextGenerationTitle": "Il tuo percorso Next Generation",
-    "nextGenerationBody": "Scopri il programma giovanile U13, U15 e U17, trova una sede e la formazione ufficiale con Fide.",
-    "nextGenerationAction": "Entra in Next Generation"
+    "publicidadShort": "Il tuo brand"
   },
   "clases": {
     "titulo": "Classi",
