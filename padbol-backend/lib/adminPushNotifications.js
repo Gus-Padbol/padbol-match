@@ -18,9 +18,11 @@ const WEEKLY_LIMITS = {
 };
 
 const ADMIN_PUSH_DESTINATIONS = Object.freeze({
-  torneo: { table: 'torneos', idKey: 'torneoId', deepLinkPrefix: '/torneo/' },
-  partido: { table: 'partidos', idKey: 'partidoId', deepLinkPrefix: '/partido/' },
-  reserva: { table: 'reservas', idKey: 'reservaId', deepLinkPrefix: '/reserva/' },
+  torneo: { table: 'torneos', idColumn: 'id', idKey: 'torneoId', deepLinkPrefix: '/torneo/' },
+  partido: { table: 'partidos', idColumn: 'id', idKey: 'partidoId', deepLinkPrefix: '/partido/' },
+  reserva: { table: 'reservas', idColumn: 'id', idKey: 'reservaId', deepLinkPrefix: '/reserva/' },
+  inscripcion: { table: 'ng_inscripciones', idColumn: 'id', idKey: 'registrationId', deepLinkPrefix: '/next-generation/jornada?registration_id=' },
+  formulario: { table: 'ng_crm_eventos', idColumn: 'event_id', idKey: 'eventId', deepLinkPrefix: '/next-generation/jornada?crm_event_id=' },
 });
 
 function httpError(message, status = 500, code = 'ADMIN_PUSH_ERROR') {
@@ -31,14 +33,15 @@ function httpError(message, status = 500, code = 'ADMIN_PUSH_ERROR') {
 }
 
 export function parseAdminPushDestination(raw) {
-  const type = String(raw?.type || 'none').trim().toLowerCase();
-  if (type === 'none') {
-    return { type: 'none', label: 'Notificaciones', deepLink: '/notificaciones' };
-  }
+  const type = String(raw?.type || '').trim().toLowerCase();
+  if (!type || type === 'none') throw httpError('Selecciona un destino concreto', 400, 'ADMIN_PUSH_DESTINATION_REQUIRED');
   const config = ADMIN_PUSH_DESTINATIONS[type];
   if (!config) throw httpError('Destino de notificación no permitido', 400, 'ADMIN_PUSH_DESTINATION_INVALID');
   const entityId = String(raw?.[config.idKey] ?? raw?.entityId ?? '').trim();
-  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(entityId)) {
+  // Los event_id canónicos de CRM usan namespaces (por ejemplo,
+  // nextgen:registration:created:<uuid>). Permitimos dos puntos, pero no
+  // separadores de ruta, querystrings ni esquemas URL.
+  if (!/^[a-zA-Z0-9_:-]{1,160}$/.test(entityId)) {
     throw httpError(`Selecciona un ${type} válido`, 400, 'ADMIN_PUSH_DESTINATION_INVALID');
   }
   return {
@@ -52,22 +55,38 @@ export function parseAdminPushDestination(raw) {
 
 export async function validateAdminPushDestination(supabase, raw) {
   const destination = parseAdminPushDestination(raw);
-  if (destination.type === 'none') return destination;
   const config = ADMIN_PUSH_DESTINATIONS[destination.type];
   const { data, error } = await supabase
     .from(config.table)
-    .select('id')
-    .eq('id', destination.entityId)
+    .select(destination.type === 'inscripcion' ? 'id, sesion_id' : destination.type === 'formulario' ? 'event_id, session_id, registration_id' : 'id')
+    .eq(config.idColumn, destination.entityId)
     .maybeSingle();
   if (error) throw error;
   if (!data) throw httpError('El destino seleccionado ya no existe', 400, 'ADMIN_PUSH_DESTINATION_NOT_FOUND');
+  if (destination.type === 'inscripcion') {
+    if (!data.sesion_id) throw httpError('La inscripción no tiene jornada navegable', 400, 'ADMIN_PUSH_DESTINATION_NOT_FOUND');
+    return {
+      ...destination,
+      sessionId: String(data.sesion_id),
+      deepLink: `/next-generation/jornada?session_id=${encodeURIComponent(data.sesion_id)}&registration_id=${encodeURIComponent(destination.entityId)}`,
+    };
+  }
+  if (destination.type === 'formulario') {
+    if (!data.session_id || !data.registration_id) {
+      throw httpError('El formulario no tiene inscripción navegable', 400, 'ADMIN_PUSH_DESTINATION_NOT_FOUND');
+    }
+    return {
+      ...destination,
+      sessionId: String(data.session_id),
+      registrationId: String(data.registration_id),
+      deepLink: `/next-generation/jornada?session_id=${encodeURIComponent(data.session_id)}&registration_id=${encodeURIComponent(data.registration_id)}&crm_event_id=${encodeURIComponent(destination.entityId)}`,
+    };
+  }
   return destination;
 }
 
 export function buildAdminPushDestinationData(destination) {
-  if (!destination || destination.type === 'none') {
-    return { type: 'admin_message', route: 'Notificaciones', deepLink: '/notificaciones', destination: { type: 'none' } };
-  }
+  if (!destination || destination.type === 'none') throw httpError('Destino concreto requerido', 400, 'ADMIN_PUSH_DESTINATION_REQUIRED');
   return {
     type: destination.type,
     [ADMIN_PUSH_DESTINATIONS[destination.type].idKey]: destination.entityId,

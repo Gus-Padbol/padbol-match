@@ -30,7 +30,7 @@ test('superadmin configura torneo real, no ve cupo y el historial muestra destin
     />,
   );
 
-  await screen.findByText('Torneo Apertura');
+  expect(await screen.findAllByText('Torneo Apertura')).not.toHaveLength(0);
   expect(screen.queryByText(/restantes/i)).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText(/title|título/i), { target: { value: 'Inscripción abierta' } });
   fireEvent.change(screen.getByLabelText(/message|mensaje/i), { target: { value: 'Sumate hoy' } });

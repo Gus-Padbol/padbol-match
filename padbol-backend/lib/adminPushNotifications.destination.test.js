@@ -15,6 +15,7 @@ test('destino torneo genera solamente un deep link interno seguro', () => {
   });
   assert.throws(() => parseAdminPushDestination({ type: 'url', entityId: 'https://evil.test' }), /no permitido/);
   assert.throws(() => parseAdminPushDestination({ type: 'torneo', torneoId: '../admin' }), /válido/);
+  assert.throws(() => parseAdminPushDestination(), (error) => error?.code === 'ADMIN_PUSH_DESTINATION_REQUIRED');
 });
 
 test('super_admin no consulta ni aplica cuota semanal', async () => {
@@ -43,7 +44,14 @@ test('valida existencia y genera datos nativos sólo para destinos permitidos', 
       return {
         select() { return this; },
         eq(_column, id) { this.id = id; return this; },
-        maybeSingle() { return Promise.resolve({ data: table === 'partidos' && this.id === '9' ? { id: 9 } : null, error: null }); },
+        maybeSingle() {
+          const rows = {
+            partidos: this.id === '9' ? { id: 9 } : null,
+            ng_inscripciones: this.id === 'reg-1' ? { id: 'reg-1', sesion_id: 'session-1' } : null,
+            ng_crm_eventos: this.id === 'nextgen:event-1' ? { event_id: 'nextgen:event-1', session_id: 'session-1', registration_id: 'reg-1' } : null,
+          };
+          return Promise.resolve({ data: rows[table] || null, error: null });
+        },
       };
     },
   };
@@ -55,7 +63,9 @@ test('valida existencia y genera datos nativos sólo para destinos permitidos', 
     validateAdminPushDestination(supabase, { type: 'reserva', entityId: 404 }),
     (error) => error?.code === 'ADMIN_PUSH_DESTINATION_NOT_FOUND',
   );
-  assert.deepEqual(buildAdminPushDestinationData(parseAdminPushDestination()), {
-    type: 'admin_message', route: 'Notificaciones', deepLink: '/notificaciones', destination: { type: 'none' },
-  });
+  const registration = await validateAdminPushDestination(supabase, { type: 'inscripcion', entityId: 'reg-1' });
+  assert.equal(registration.deepLink, '/next-generation/jornada?session_id=session-1&registration_id=reg-1');
+  const form = await validateAdminPushDestination(supabase, { type: 'formulario', entityId: 'nextgen:event-1' });
+  assert.equal(form.deepLink, '/next-generation/jornada?session_id=session-1&registration_id=reg-1&crm_event_id=nextgen%3Aevent-1');
+  assert.throws(() => buildAdminPushDestinationData(), (error) => error?.code === 'ADMIN_PUSH_DESTINATION_REQUIRED');
 });

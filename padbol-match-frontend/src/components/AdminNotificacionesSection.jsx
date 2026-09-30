@@ -72,7 +72,7 @@ export default function AdminNotificacionesSection({
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [destinationType, setDestinationType] = useState('none');
+  const [destinationType, setDestinationType] = useState('torneo');
   const [destinationEntityId, setDestinationEntityId] = useState('');
   const [segmentKind, setSegmentKind] = useState(() => {
     if (isSuperAdmin) return 'todos_usuarios';
@@ -252,9 +252,7 @@ export default function AdminNotificacionesSection({
         title: title.trim(),
         body: body.trim(),
         segment: segmentPayload,
-        destination: destinationType === 'none'
-          ? { type: 'none' }
-          : { type: destinationType, entityId: destinationEntityId },
+        destination: { type: destinationType, entityId: destinationEntityId },
         idempotencyKey: requestIdempotencyKey,
       });
       setFeedback(t('admin.pushNotif.sentOk', { count: res.cantidad_enviadas ?? 0 }));
@@ -285,12 +283,12 @@ export default function AdminNotificacionesSection({
     (segmentKind !== 'ciudad' || selectedCity?.ciudad) &&
     (segmentKind !== 'sede' || sedeSel) &&
     (segmentKind !== 'deporte' || deporte) &&
-    (destinationType === 'none' || destinationEntityId.trim()) &&
+    destinationEntityId.trim() &&
     !sending;
 
   const destinationLabel = (row) => {
     const destination = row?.segmento?.destination;
-    if (!destination || destination.type === 'none') return 'Notificaciones';
+    if (!destination || destination.type === 'none') return 'Destino no registrado';
     return destination.label || `${destination.type} #${destination.entityId || '—'}`;
   };
 
@@ -353,10 +351,11 @@ export default function AdminNotificacionesSection({
               setDestinationEntityId('');
             }}
           >
-            <option value="none">Notificaciones</option>
             <option value="torneo">Torneo</option>
             <option value="partido">Partido</option>
             <option value="reserva">Reserva</option>
+            <option value="inscripcion">Inscripción Next Generation</option>
+            <option value="formulario">Formulario / evento CRM</option>
           </select>
         </div>
         {destinationType === 'torneo' ? (
@@ -370,22 +369,20 @@ export default function AdminNotificacionesSection({
             </select>
           </div>
         ) : null}
-        {destinationType === 'partido' || destinationType === 'reserva' ? (
+        {['partido', 'reserva', 'inscripcion', 'formulario'].includes(destinationType) ? (
           <div className="admin-push-notif__field">
             <label htmlFor="admin-push-destination-id">ID de {destinationType}</label>
             <input
               id="admin-push-destination-id"
               value={destinationEntityId}
               onChange={(event) => setDestinationEntityId(event.target.value)}
-              placeholder="ID real"
+              placeholder={destinationType === 'formulario' ? 'event_id real' : 'ID real'}
               pattern="[A-Za-z0-9_-]+"
             />
           </div>
         ) : null}
         <p className="admin-push-notif__preview" role="status">
-          {destinationType === 'none'
-            ? 'Al tocar abrirá Notificaciones.'
-            : `Al tocar abrirá ${destinationType} #${destinationEntityId || '…'}.`}
+          {`Al tocar abrirá ${destinationType} #${destinationEntityId || '…'}.`}
         </p>
 
         <div className="admin-push-notif__field">
