@@ -167,13 +167,13 @@ input.acceso-cuenta-input:-webkit-autofill {
 
   .acceso-cuenta-brand-panel {
     min-height: auto;
-    padding: 28px max(22px, env(safe-area-inset-left, 0px));
+    padding: 16px max(22px, env(safe-area-inset-left, 0px));
     background: linear-gradient(135deg, #0b0d12 0%, #151820 72%, #9d0009 100%);
   }
 
   .acceso-cuenta-brand-icon {
-    width: 62px;
-    height: 62px;
+    width: 48px;
+    height: 48px;
   }
 
   .acceso-cuenta-lockup {
@@ -190,15 +190,15 @@ input.acceso-cuenta-input:-webkit-autofill {
   }
 
   .acceso-cuenta-brand-name {
-    font-size: clamp(2rem, 10vw, 3.1rem);
+    font-size: clamp(1.55rem, 7vw, 2.35rem);
   }
 
   .acceso-cuenta-brand-kicker {
-    margin-top: 16px;
+    margin-top: 8px;
   }
 
   .acceso-cuenta-brand-line {
-    margin-top: 14px;
+    margin-top: 8px;
   }
 
   .acceso-cuenta-card {
@@ -208,12 +208,12 @@ input.acceso-cuenta-input:-webkit-autofill {
 
 @media (max-width: 390px) {
   .acceso-cuenta-brand-panel {
-    padding-top: 22px;
-    padding-bottom: 22px;
+    padding-top: 14px;
+    padding-bottom: 14px;
   }
 
   .acceso-cuenta-brand-name {
-    font-size: 1.9rem;
+    font-size: 1.5rem;
   }
 
   .acceso-cuenta-brand-kicker {
