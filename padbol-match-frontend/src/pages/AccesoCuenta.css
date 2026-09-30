@@ -25,7 +25,7 @@ input.acceso-cuenta-input:-webkit-autofill {
 
 .acceso-cuenta-shell {
   width: min(1120px, calc(100% - 40px));
-  margin: clamp(32px, 7vh, 88px) auto 0;
+  margin: max(108px, 7vh) auto 0;
   display: grid;
   grid-template-columns: minmax(340px, 1fr) minmax(400px, 510px);
   align-items: stretch;
@@ -157,7 +157,7 @@ input.acceso-cuenta-input:-webkit-autofill {
 
   .acceso-cuenta-shell {
     width: 100%;
-    margin-top: 0;
+    margin-top: 87px;
     grid-template-columns: 1fr;
     border: 0;
     border-radius: 0;
