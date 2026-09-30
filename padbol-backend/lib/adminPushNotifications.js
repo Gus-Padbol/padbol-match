@@ -15,14 +15,65 @@ const WEEKLY_LIMITS = {
   admin_club: 3,
   admin_nacional: 2,
   admin_cadena: 3,
-  super_admin: 1,
 };
+
+const ADMIN_PUSH_DESTINATIONS = Object.freeze({
+  torneo: { table: 'torneos', idKey: 'torneoId', deepLinkPrefix: '/torneo/' },
+  partido: { table: 'partidos', idKey: 'partidoId', deepLinkPrefix: '/partido/' },
+  reserva: { table: 'reservas', idKey: 'reservaId', deepLinkPrefix: '/reserva/' },
+});
 
 function httpError(message, status = 500, code = 'ADMIN_PUSH_ERROR') {
   const error = new Error(message);
   error.status = status;
   error.code = code;
   return error;
+}
+
+export function parseAdminPushDestination(raw) {
+  const type = String(raw?.type || 'none').trim().toLowerCase();
+  if (type === 'none') {
+    return { type: 'none', label: 'Notificaciones', deepLink: '/notificaciones' };
+  }
+  const config = ADMIN_PUSH_DESTINATIONS[type];
+  if (!config) throw httpError('Destino de notificación no permitido', 400, 'ADMIN_PUSH_DESTINATION_INVALID');
+  const entityId = String(raw?.[config.idKey] ?? raw?.entityId ?? '').trim();
+  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(entityId)) {
+    throw httpError(`Selecciona un ${type} válido`, 400, 'ADMIN_PUSH_DESTINATION_INVALID');
+  }
+  return {
+    type,
+    entityId,
+    [config.idKey]: entityId,
+    label: `${type[0].toUpperCase()}${type.slice(1)} #${entityId}`,
+    deepLink: `${config.deepLinkPrefix}${encodeURIComponent(entityId)}`,
+  };
+}
+
+export async function validateAdminPushDestination(supabase, raw) {
+  const destination = parseAdminPushDestination(raw);
+  if (destination.type === 'none') return destination;
+  const config = ADMIN_PUSH_DESTINATIONS[destination.type];
+  const { data, error } = await supabase
+    .from(config.table)
+    .select('id')
+    .eq('id', destination.entityId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw httpError('El destino seleccionado ya no existe', 400, 'ADMIN_PUSH_DESTINATION_NOT_FOUND');
+  return destination;
+}
+
+export function buildAdminPushDestinationData(destination) {
+  if (!destination || destination.type === 'none') {
+    return { type: 'admin_message', route: 'Notificaciones', deepLink: '/notificaciones', destination: { type: 'none' } };
+  }
+  return {
+    type: destination.type,
+    [ADMIN_PUSH_DESTINATIONS[destination.type].idKey]: destination.entityId,
+    deepLink: destination.deepLink,
+    destination,
+  };
 }
 
 function normalizeGeo(raw) {
@@ -100,6 +151,9 @@ export async function countAdminPushSendsThisWeek(supabase, adminUserId, { onlyB
 
 export async function getAdminPushQuota(supabase, scope) {
   const role = effectiveAdminRole(scope);
+  if (role === 'super_admin') {
+    return { role, limit: null, used: 0, remaining: null, unlimited: true, unlimitedTargeted: true, weekStartsAt: weekAgoIso() };
+  }
   const limit = WEEKLY_LIMITS[role] ?? 0;
   const used = await countAdminPushSendsThisWeek(supabase, scope?.authUserId, {
     onlyBroadcast: role === 'super_admin',
@@ -398,7 +452,7 @@ export async function resolveAdminPushRecipientUserIds(supabase, scope, segment)
 
 export async function assertAdminPushRateLimit(supabase, scope, segment) {
   const role = effectiveAdminRole(scope);
-  if (role === 'super_admin' && isAdminPushTargetedSegment(segment)) return;
+  if (role === 'super_admin') return;
   const limit = WEEKLY_LIMITS[role] ?? 0;
   const used = await countAdminPushSendsThisWeek(supabase, scope.authUserId, {
     onlyBroadcast: role === 'super_admin',
@@ -539,6 +593,7 @@ export function registerAdminPushRoutes(app, deps) {
         sedesPermitidasPorScopeFn: sedesPermitidasPorScope,
       });
       await assertAdminPushRateLimit(supabase, scope, segment);
+      const destination = await validateAdminPushDestination(supabase, req.body?.destination);
       const userIds = await resolveAdminPushRecipientUserIds(supabase, scope, segment);
       if (!userIds.length) throw httpError('No hay destinatarios para este segmento', 400, 'ADMIN_PUSH_NO_RECIPIENTS');
 
@@ -550,7 +605,7 @@ export function registerAdminPushRoutes(app, deps) {
         title,
         body,
         category,
-        data: { type: 'admin_message', route: 'Notificaciones', params: {} },
+        data: buildAdminPushDestinationData(destination),
         source: 'admin_panel',
         actorUserId: scope.authUserId,
       });
@@ -559,7 +614,7 @@ export function registerAdminPushRoutes(app, deps) {
         admin_user_id: scope.authUserId,
         titulo: title,
         mensaje: body,
-        segmento: segment,
+        segmento: { ...segment, destination },
         cantidad_enviadas: delivery.accepted,
         estado: delivery.status,
         idempotency_key: idempotencyKey,
@@ -591,6 +646,7 @@ export function registerAdminPushRoutes(app, deps) {
         cantidad_enviadas: delivery.accepted,
         estado: delivery.status,
         category,
+        destination,
         quota,
       });
     } catch (error) {

@@ -10155,7 +10155,7 @@ export default function AdminDashboard({
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
-        ...(puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'WhatsApp' }] : []),
+        ...(isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'Atención / CRM' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
@@ -11970,9 +11970,9 @@ export default function AdminDashboard({
         </div>
       ) : null}
 
-      {activeTab === 'whatsapp' && session?.access_token ? (
+      {activeTab === 'whatsapp' && (isSuperAdmin || puedeVerWhatsapp) && session?.access_token ? (
         <div className="section">
-          <h2>WhatsApp</h2>
+          <h2>Atención / CRM</h2>
           <AdminWhatsappSection accessToken={session.access_token} />
         </div>
       ) : null}
@@ -12008,6 +12008,7 @@ export default function AdminDashboard({
                     : []
             }
             paisesOptions={sedesSuperAdminPaisesUnicos}
+            torneosOptions={torneos}
           />
         </div>
       ) : null}
