@@ -28,7 +28,10 @@ function InboxView({ accessToken }) {
 
   useEffect(() => { void load(); }, [load]);
 
-  const selected = items.find((item) => item.id === selectedId) || null;
+  const itemId = (item) => item.id || item.event_id;
+  const itemTitle = (item) => item.from_wa_id || item.contact_ref || 'Contacto protegido';
+  const itemBody = (item) => item.text_body || item.event_type || 'Evento CRM';
+  const selected = items.find((item) => itemId(item) === selectedId) || null;
 
   async function submitReply() {
     if (!selected || busy || !replyText.trim()) return;
@@ -69,13 +72,13 @@ function InboxView({ accessToken }) {
     <div>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {items.map((item) => (
-          <li key={item.id}>
+          <li key={itemId(item)}>
             <button
               type="button"
-              onClick={() => setSelectedId(item.id)}
+              onClick={() => setSelectedId(itemId(item))}
               style={{ textAlign: 'left', width: '100%', marginBottom: 4 }}
             >
-              <strong>{item.from_wa_id}</strong> · {String(item.text_body || '').slice(0, 80)}
+              <strong>{itemTitle(item)}</strong> · {String(itemBody(item)).slice(0, 80)}
             </button>
           </li>
         ))}
@@ -83,9 +86,11 @@ function InboxView({ accessToken }) {
 
       {selected && (
         <div style={{ marginTop: 12, borderTop: '1px solid #ccc', paddingTop: 12 }}>
-          <p><strong>De:</strong> {selected.from_wa_id}</p>
-          <p>{selected.text_body}</p>
-          <textarea
+          <p><strong>Contacto:</strong> {itemTitle(selected)}</p>
+          <p>{itemBody(selected)}</p>
+          {selected.registration_id ? <p><strong>Inscripción:</strong> {selected.registration_id}</p> : null}
+          {selected.session_id ? <p><strong>Jornada:</strong> {selected.session_id}</p> : null}
+          {selected.from_wa_id ? <><textarea
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             placeholder="Escribe la respuesta…"
@@ -101,48 +106,9 @@ function InboxView({ accessToken }) {
             </button>
           </div>
           {notice ? <p>{notice}</p> : null}
+          </> : null}
         </div>
       )}
-    </div>
-  );
-}
-
-function AuditView({ accessToken }) {
-  const [audit, setAudit] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const data = await whatsappAdminApi.audit(accessToken);
-        if (active) setAudit(data);
-      } catch (e) {
-        if (active) setError(e?.message || 'No se pudo cargar la auditoría');
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
-  }, [accessToken]);
-
-  if (loading) return <p>{"Cargando auditoría…"}</p>;
-  if (error) return <p style={{ color: '#e33030' }}>{error}</p>;
-
-  const count = (arr) => (Array.isArray(arr) ? arr.length : 0);
-  return (
-    <div>
-      <p><strong>Entrantes:</strong> {count(audit?.inbound)}</p>
-      <p><strong>Salientes:</strong> {count(audit?.outbox)}</p>
-      <p><strong>Clasificaciones:</strong> {count(audit?.classifications)}</p>
-      <p><strong>Operadores:</strong> {count(audit?.operators)}</p>
-      <p><strong>Configuración:</strong> {count(audit?.config)}</p>
-      {audit?.outbox?.map((o) => (
-        <p key={o.id} style={{ fontSize: 13 }}>
-          {o.status}{o.last_error ? ` · ${o.last_error}` : ''} · {o.to_wa_id} · {String(o.text_body || '').slice(0, 60)}
-        </p>
-      ))}
     </div>
   );
 }
@@ -185,8 +151,7 @@ export default function AdminWhatsappSection({ accessToken, onBack }) {
       );
     }
     if (!perms) return <section className="admin-crm-state"><p>{"Cargando bandeja…"}</p></section>;
-    if (perms.canOperate) return <InboxView accessToken={accessToken} />;
-    if (perms.canAudit) return <AuditView accessToken={accessToken} />;
+    if (perms.canOperate || perms.canAudit) return <InboxView accessToken={accessToken} />;
     return <section className="admin-crm-state"><p>No tienes acceso a esta sección.</p></section>;
   })();
 

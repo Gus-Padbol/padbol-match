@@ -21,8 +21,8 @@ async function request(path, token, options = {}) {
 }
 
 export const whatsappAdminApi = {
-  permissions: (token) => request('/api/admin/whatsapp/permissions', token),
-  inbox: (token, limit = 50) => request(`/api/admin/whatsapp/inbox?limit=${encodeURIComponent(limit)}`, token),
+  permissions: (token) => request('/api/admin/crm/permissions', token),
+  inbox: (token, limit = 100) => request(`/api/admin/crm/inbox?limit=${encodeURIComponent(limit)}`, token),
   reply: (token, id, body) => request(
     `/api/admin/whatsapp/inbox/${encodeURIComponent(id)}/reply`,
     token,
