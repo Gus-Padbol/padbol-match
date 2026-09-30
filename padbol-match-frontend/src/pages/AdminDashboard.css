@@ -549,6 +549,25 @@
   color: var(--text-primary);
 }
 
+@media (min-width: 768px) {
+  .admin-dashboard--crm .admin-dashboard-brand-shell,
+  .admin-dashboard--crm .admin-dashboard-nav {
+    display: none;
+  }
+
+  .admin-dashboard--crm .admin-dashboard-shell {
+    display: block;
+    padding: 0 20px 24px;
+  }
+
+  .admin-dashboard--crm .admin-dashboard-panel,
+  .admin-dashboard--crm .admin-dashboard-body-surface {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+  }
+}
+
 .admin-dashboard h1 {
   text-align: center;
   color: white;

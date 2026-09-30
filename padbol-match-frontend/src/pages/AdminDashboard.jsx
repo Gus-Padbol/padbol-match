@@ -10294,9 +10294,9 @@ export default function AdminDashboard({
   return (
     <div
       className={
-        isSuperAdmin
+        `${isSuperAdmin
           ? 'admin-dashboard admin-dashboard--super admin-dashboard--with-sidebar'
-          : 'admin-dashboard admin-dashboard--with-sidebar'
+          : 'admin-dashboard admin-dashboard--with-sidebar'}${activeTab === 'whatsapp' ? ' admin-dashboard--crm' : ''}`
       }
       style={{
         display: 'flex',
@@ -11971,10 +11971,10 @@ export default function AdminDashboard({
       ) : null}
 
       {activeTab === 'whatsapp' && (isSuperAdmin || puedeVerWhatsapp) && session?.access_token ? (
-        <div className="section">
-          <h2>Atención / CRM</h2>
-          <AdminWhatsappSection accessToken={session.access_token} />
-        </div>
+        <AdminWhatsappSection
+          accessToken={session.access_token}
+          onBack={() => selectAdminTab('resumen')}
+        />
       ) : null}
 
       {activeTab === 'notificaciones' && puedeEnviarNotificacionesPush && session?.access_token ? (

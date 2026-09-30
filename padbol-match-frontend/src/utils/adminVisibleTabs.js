@@ -28,7 +28,6 @@ export const SUPER_ADMIN_VISIBLE_TABS = Object.freeze([
   'whatsapp',
   'scoreboard',
   'padcoins',
-  'whatsapp',
 ]);
 
 export const EDITOR_CONTENIDO_VISIBLE_TABS = Object.freeze(['personalizar_hub', 'sponsors']);
