@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { whatsappAdminApi } from '../utils/whatsappAdminApi';
+import './AdminWhatsappSection.css';
 
 const SEND_DISABLED_NOTE = 'Respuesta registrada — envío desactivado';
 
@@ -146,7 +147,7 @@ function AuditView({ accessToken }) {
   );
 }
 
-export default function AdminWhatsappSection({ accessToken }) {
+export default function AdminWhatsappSection({ accessToken, onBack }) {
   const [perms, setPerms] = useState(null);
   const [error, setError] = useState(null);
 
@@ -157,16 +158,68 @@ export default function AdminWhatsappSection({ accessToken }) {
         const p = await whatsappAdminApi.permissions(accessToken);
         if (active) setPerms(p);
       } catch (e) {
-        if (active) setError(e?.status === 403 ? 'No tienes acceso a WhatsApp.' : (e?.message || 'Error de permisos'));
+        if (!active) return;
+        if (e?.status === 403) setError({ kind: 'forbidden', message: 'No tienes acceso a Atención / CRM.' });
+        else if (e?.status === 404) setError({ kind: 'backend-route', message: 'La bandeja todavía no está conectada en esta preview.' });
+        else setError({ kind: 'network', message: e?.message || 'No se pudo conectar con Atención / CRM.' });
       }
     })();
     return () => { active = false; };
   }, [accessToken]);
 
-  if (error) return <p style={{ color: '#e33030' }}>{error}</p>;
-  if (!perms) return <p>{"Cargando…"}</p>;
+  const workspaceBody = (() => {
+    if (error) {
+      return (
+        <section className="admin-crm-state" role="status">
+          <span className="admin-crm-state__icon" aria-hidden>!</span>
+          <div>
+            <h2>{error.kind === 'backend-route' ? 'Bandeja no conectada' : 'No pudimos abrir la bandeja'}</h2>
+            <p>{error.message}</p>
+            {error.kind === 'backend-route' ? (
+              <p className="admin-crm-state__detail">
+                El panel está listo, pero el backend de esta preview aún no publica las rutas de CRM.
+              </p>
+            ) : null}
+          </div>
+        </section>
+      );
+    }
+    if (!perms) return <section className="admin-crm-state"><p>{"Cargando bandeja…"}</p></section>;
+    if (perms.canOperate) return <InboxView accessToken={accessToken} />;
+    if (perms.canAudit) return <AuditView accessToken={accessToken} />;
+    return <section className="admin-crm-state"><p>No tienes acceso a esta sección.</p></section>;
+  })();
 
-  if (perms.canOperate) return <InboxView accessToken={accessToken} />;
-  if (perms.canAudit) return <AuditView accessToken={accessToken} />;
-  return <p>{"No tienes acceso a esta sección."}</p>;
+  return (
+    <section className="admin-crm-workspace" aria-label="Atención y CRM">
+      <header className="admin-crm-header">
+        <div>
+          <button type="button" className="admin-crm-back" onClick={onBack}>← Volver al panel</button>
+          <p className="admin-crm-eyebrow">SUPER ADMIN · OPERACIONES</p>
+          <h1>Atención / CRM</h1>
+          <p>Consultas, contactos, historial y seguimiento en un único espacio de trabajo.</p>
+        </div>
+        <span className={`admin-crm-connection${error ? ' admin-crm-connection--offline' : ''}`}>
+          {error ? 'Conexión pendiente' : 'Conectado'}
+        </span>
+      </header>
+
+      <div className="admin-crm-summary" aria-label="Resumen de atención">
+        <article><span>Pendientes</span><strong>—</strong><small>Consultas por revisar</small></article>
+        <article><span>En seguimiento</span><strong>—</strong><small>Contactos activos</small></article>
+        <article><span>Resueltas</span><strong>—</strong><small>Últimos 30 días</small></article>
+        <article><span>Notificaciones</span><strong>—</strong><small>Programadas y enviadas</small></article>
+      </div>
+
+      <div className="admin-crm-layout">
+        <nav className="admin-crm-sections" aria-label="Secciones de Atención y CRM">
+          <button type="button" className="is-active">Bandeja</button>
+          <button type="button" disabled>Ficha del contacto</button>
+          <button type="button" disabled>Historial y reportes</button>
+          <button type="button" disabled>Notificaciones</button>
+        </nav>
+        <main className="admin-crm-main">{workspaceBody}</main>
+      </div>
+    </section>
+  );
 }
