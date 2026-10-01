@@ -106,6 +106,7 @@ export function canRoleSeeSponsorsTab(rolUsuario) {
 export function normalizeAdminTabAlias(raw) {
   const t0 = String(raw || '').trim();
   if (!t0) return '';
+  if (t0 === 'crm' || t0 === 'atencion') return 'whatsapp';
   if (t0 === 'sedes_pendientes') return 'solicitudes';
   if (coerceAdminSedesTabId(t0) === ADMIN_SEDES_TAB_ID) return ADMIN_SEDES_TAB_ID;
   return t0;

@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://padbol-backend.onrender.com/api/:path*"
+      "destination": "https://padbol-backend-qa.onrender.com/api/:path*"
     }
   ],
   "headers": [
