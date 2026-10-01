@@ -81,7 +81,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   );
 
   const hubOtrasDeporteCards = useMemo(
-    () => [{ key: 'torneos', label: t('torneos.titulo') }],
+    () => [
+      { key: 'torneos', label: t('torneos.titulo') },
+      { key: 'next_generation', label: 'Next Generation' },
+    ],
     [t],
   );
   const [rows, setRows] = useState([]);
