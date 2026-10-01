@@ -15,6 +15,14 @@ import './AdminNotificacionesSection.css';
 const TITLE_MAX = 50;
 const BODY_MAX = 150;
 
+const DESTINATION_TYPE_LABELS = Object.freeze({
+  torneo: 'Torneo',
+  partido: 'Partido',
+  reserva: 'Reserva',
+  inscripcion: 'Inscripción Next Generation',
+  formulario: 'Formulario / evento CRM',
+});
+
 function createAdminPushIdempotencyKey() {
   if (typeof window !== 'undefined' && typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
   return `web-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
@@ -118,6 +126,14 @@ export default function AdminNotificacionesSection({
     return [...options.values()].sort((a, b) => a.label.localeCompare(b.label, locale));
   }, [locale, sedesOptions]);
   const selectedCity = cityOptions.find((option) => option.key === ciudadSel) || null;
+  const selectedTournament = torneosOptions.find(
+    (torneo) => String(torneo?.id) === String(destinationEntityId),
+  );
+  const currentDestinationLabel = destinationType === 'torneo' && selectedTournament
+    ? selectedTournament.nombre || `Torneo #${selectedTournament.id}`
+    : destinationEntityId.trim()
+      ? `${DESTINATION_TYPE_LABELS[destinationType] || destinationType} #${destinationEntityId.trim()}`
+      : 'Elegí un destino para continuar';
 
   const segmentPayload = useMemo(
     () =>
@@ -258,7 +274,7 @@ export default function AdminNotificacionesSection({
       setFeedback(t('admin.pushNotif.sentOk', { count: res.cantidad_enviadas ?? 0 }));
       setTitle('');
       setBody('');
-      setDestinationType('none');
+      setDestinationType('torneo');
       setDestinationEntityId('');
       setSelectedPlayer(null);
       setPlayerQuery('');
@@ -289,7 +305,8 @@ export default function AdminNotificacionesSection({
   const destinationLabel = (row) => {
     const destination = row?.segmento?.destination;
     if (!destination || destination.type === 'none') return 'Destino no registrado';
-    return destination.label || `${destination.type} #${destination.entityId || '—'}`;
+    return destination.label
+      || `${DESTINATION_TYPE_LABELS[destination.type] || destination.type} #${destination.entityId || '—'}`;
   };
 
   const formatDate = (iso) => {
@@ -371,18 +388,22 @@ export default function AdminNotificacionesSection({
         ) : null}
         {['partido', 'reserva', 'inscripcion', 'formulario'].includes(destinationType) ? (
           <div className="admin-push-notif__field">
-            <label htmlFor="admin-push-destination-id">ID de {destinationType}</label>
+            <label htmlFor="admin-push-destination-id">
+              ID de {DESTINATION_TYPE_LABELS[destinationType] || destinationType}
+            </label>
             <input
               id="admin-push-destination-id"
               value={destinationEntityId}
               onChange={(event) => setDestinationEntityId(event.target.value)}
               placeholder={destinationType === 'formulario' ? 'event_id real' : 'ID real'}
-              pattern="[A-Za-z0-9_-]+"
+              pattern="[A-Za-z0-9_:-]+"
+              maxLength={160}
+              required
             />
           </div>
         ) : null}
         <p className="admin-push-notif__preview" role="status">
-          {`Al tocar abrirá ${destinationType} #${destinationEntityId || '…'}.`}
+          <strong>Vista previa del destino:</strong> {` al tocar abrirá ${currentDestinationLabel}.`}
         </p>
 
         <div className="admin-push-notif__field">
