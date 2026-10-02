@@ -10265,7 +10265,7 @@ export default function AdminDashboard({
     <div
       className={
         isSuperAdmin
-          ? 'admin-dashboard admin-dashboard--super admin-dashboard--with-sidebar'
+          ? `admin-dashboard admin-dashboard--super admin-dashboard--with-sidebar${activeTab === 'crm' ? ' admin-dashboard--crm-workspace' : ''}`
           : 'admin-dashboard admin-dashboard--with-sidebar'
       }
       style={{
@@ -10506,7 +10506,9 @@ export default function AdminDashboard({
       <div
         className="admin-dashboard-body-surface"
         style={{
-          ...hubInstagramColumnWrapStyle,
+          ...(activeTab === 'crm'
+            ? { width: '100%', maxWidth: 'none', marginLeft: 0, marginRight: 0 }
+            : hubInstagramColumnWrapStyle),
           paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
           paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
         }}

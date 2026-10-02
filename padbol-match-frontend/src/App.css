@@ -403,6 +403,14 @@ h3 {
   align-self: stretch;
 }
 
+/* El CRM es un workspace operativo: en desktop necesita bandeja + ficha en
+ * paralelo y no debe quedar encerrado en la columna editorial de 900 px. */
+@media (min-width: 1025px) {
+  .pm-app-shell-column:has(.admin-dashboard--super) {
+    max-width: 100vw;
+  }
+}
+
 @media (max-width: 767px) {
   .pm-app-shell-column {
     max-width: none;

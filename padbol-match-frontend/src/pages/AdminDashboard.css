@@ -343,9 +343,9 @@
    *   the left strip without dragging with the document.
    */
   .admin-dashboard--with-sidebar {
-    --pm-admin-sidebar-width: 232px;
-    --pm-admin-sidebar-gap: 16px;
-    --pm-admin-sidebar-shell-pad-x: 12px;
+    --pm-admin-sidebar-width: 300px;
+    --pm-admin-sidebar-gap: 40px;
+    --pm-admin-sidebar-shell-pad-x: 28px;
     --pm-admin-sidebar-top: calc(var(--pm-app-header-stack-height, 86px) + 8px);
     --pm-admin-sidebar-bottom-gap: 16px;
     --pm-admin-sidebar-z: 40;
@@ -408,13 +408,7 @@
     position: fixed;
     top: var(--pm-admin-sidebar-top);
     /* Align to centered app column (same idea as chatbot-fab-anchor). */
-    left: max(
-      var(--pm-admin-sidebar-shell-pad-x),
-      calc(
-        (100vw - min(100vw, var(--pm-app-body-max-width, 900px))) / 2 +
-          var(--pm-admin-sidebar-shell-pad-x)
-      )
-    );
+    left: var(--pm-admin-sidebar-shell-pad-x);
     width: var(--pm-admin-sidebar-width);
     max-height: calc(100dvh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
     max-height: calc(100svh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
@@ -436,6 +430,25 @@
 
   .admin-dashboard--with-sidebar .admin-dashboard-body-surface {
     min-height: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .admin-dashboard--super .admin-dashboard-sidebar-btn {
+    min-height: 54px;
+    padding: 13px 16px 13px 18px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+
+  .admin-dashboard--super .admin-dashboard-sidebar-nav {
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .admin-dashboard--super .admin-dashboard-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--accent) 55%, transparent) transparent;
   }
 }
 
