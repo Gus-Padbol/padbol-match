@@ -93,9 +93,9 @@ import AdminSedeResenasSection from '../components/AdminSedeResenasSection';
 import AdminSedeListaEsperaTorneosSection from '../components/AdminSedeListaEsperaTorneosSection';
 import AdminSedeConfiguracionGuiada from '../components/AdminSedeConfiguracionGuiada';
 import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
-import AdminWhatsappSection from '../components/AdminWhatsappSection';
 import { whatsappAdminApi } from '../utils/whatsappAdminApi';
 import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
+import WhatsappCrmDemo from './WhatsappCrmDemo';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminOrganizacionesSection from '../components/AdminOrganizacionesSection';
@@ -11971,10 +11971,7 @@ export default function AdminDashboard({
       ) : null}
 
       {activeTab === 'whatsapp' && (isSuperAdmin || puedeVerWhatsapp) && session?.access_token ? (
-        <AdminWhatsappSection
-          accessToken={session.access_token}
-          onBack={() => selectAdminTab('resumen')}
-        />
+        <WhatsappCrmDemo />
       ) : null}
 
       {activeTab === 'notificaciones' && puedeEnviarNotificacionesPush && session?.access_token ? (
