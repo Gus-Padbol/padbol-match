@@ -84,6 +84,8 @@ function torneoPasaFiltroTipoCompetenciaRanking(t, filtro) {
 /**
  * Misma lógica que GET /api/rankings en el backend; consulta directa a Supabase desde el cliente.
  */
+// Conservado como fallback documentado mientras el cliente usa la API de rankings.
+// eslint-disable-next-line no-unused-vars
 async function fetchRankingsSupabase({ scope, pais, provincia, ciudad, categoria, tipoCompetencia, deporte }) {
   const nivelesPermitidos = SCOPE_NIVELES_RANKING[scope] || SCOPE_NIVELES_RANKING.internacional;
   const dep = normalizeTorneoDeporte(deporte);
