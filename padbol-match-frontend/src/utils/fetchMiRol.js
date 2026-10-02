@@ -7,12 +7,17 @@ const CONFIGURED_API_BASE =
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com');
 
+const USE_SAME_ORIGIN_QA = String(
+  typeof process !== 'undefined' ? process.env.REACT_APP_SUPABASE_URL || '' : '',
+).includes('vxikhdulhuvghfqeutnp');
+
 // En la consola QA las rutas /api/* están proxyadas por Vercel. Usar una URL
 // relativa evita que navegadores móviles y webviews traten el chequeo de rol
 // como una petición CORS aunque el host configurado sea el mismo.
 const API_BASE =
   typeof window !== 'undefined' &&
-  CONFIGURED_API_BASE === String(window.location.origin || '').replace(/\/$/, '')
+  (USE_SAME_ORIGIN_QA ||
+    CONFIGURED_API_BASE === String(window.location.origin || '').replace(/\/$/, ''))
     ? ''
     : CONFIGURED_API_BASE;
 
