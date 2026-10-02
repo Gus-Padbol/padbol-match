@@ -87,6 +87,47 @@ async function handleGetMiRol(req, res) {
 app.get('/api/auth/mi-rol', handleGetMiRol);
 app.get('/api/usuarios/mi-rol', handleGetMiRol);
 
+async function requireSuperAdmin(req, res) {
+  const user = await authUserFromBearer(req);
+  if (!user?.id) {
+    res.status(401).json({ error: 'No autorizado' });
+    return null;
+  }
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (error || String(data?.role || '').toLowerCase() !== 'super_admin') {
+    res.status(403).json({ error: 'Sin permiso' });
+    return null;
+  }
+  return user;
+}
+
+// Contrato de lectura para QA. Super Admin no tiene cupo; el envío real queda
+// explícitamente deshabilitado en este backend de validación.
+app.get('/api/push/admin-quota', async (req, res) => {
+  if (!await requireSuperAdmin(req, res)) return;
+  res.json({ unlimited: true, limit: null, used: 0, remaining: null });
+});
+app.get('/api/push/admin-history', async (req, res) => {
+  if (!await requireSuperAdmin(req, res)) return;
+  res.json([]);
+});
+app.post('/api/push/admin-segment-preview', async (req, res) => {
+  if (!await requireSuperAdmin(req, res)) return;
+  res.json({ recipients: 0, withPushToken: 0, category: 'transactional' });
+});
+app.get('/api/push/admin-search-players', async (req, res) => {
+  if (!await requireSuperAdmin(req, res)) return;
+  res.json([]);
+});
+app.post('/api/push/send-admin', async (req, res) => {
+  if (!await requireSuperAdmin(req, res)) return;
+  res.status(503).json({ code: 'QA_DISPATCH_DISABLED', error: 'El envío real está deshabilitado en QA.' });
+});
+
 registerWhatsappCrmRoutes(app, { pgPool, authUserFromBearer });
 
 export default app;
