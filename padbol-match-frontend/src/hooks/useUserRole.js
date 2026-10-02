@@ -98,7 +98,34 @@ export default function useUserRole(currentCliente) {
           );
         } catch (apiErr) {
           console.warn('useUserRole: /api/auth/mi-rol error:', apiErr?.message || apiErr);
-          if (!cancelled) setError(apiErr?.message || 'No se pudo verificar el permiso administrativo.');
+          // QA y algunos webviews pueden bloquear el salto al backend aun cuando
+          // la sesión Supabase es válida. Como segunda fuente consultamos la fila
+          // propia protegida por RLS; nunca aceptamos un rol del cliente ni de
+          // localStorage como autoridad.
+          const userId = sessWrap?.session?.user?.id;
+          if (userId) {
+            const { data: roleRow, error: roleFallbackError } = await withTimeout(
+              supabase
+                .from('user_roles')
+                .select('role, sede_id, nombre, pais, email, torneos_oficiales_habilitados')
+                .eq('user_id', userId)
+                .maybeSingle(),
+              'La verificación alternativa de permisos tardó demasiado en responder.',
+            );
+            if (!roleFallbackError && roleRow?.role) {
+              apiResult = {
+                email: roleRow.email || emailKey,
+                rol: roleRow.role,
+                nombre: roleRow.nombre ?? null,
+                pais: roleRow.pais ?? null,
+                sedeId: roleRow.sede_id ?? null,
+                torneosOficialesHabilitados: Boolean(roleRow.torneos_oficiales_habilitados),
+              };
+            }
+          }
+          if (!apiResult && !cancelled) {
+            setError(apiErr?.message || 'No se pudo verificar el permiso administrativo.');
+          }
         }
 
         if (cancelled) return;
