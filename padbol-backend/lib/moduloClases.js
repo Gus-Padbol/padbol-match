@@ -906,9 +906,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const user = await requireAuthUser(req);
       const { data, error } = await supabaseAdmin
         .from('profesores')
-        .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)',
-        )
+        .select(PROFESOR_ADMIN_DETAIL_SELECT)
         .eq('user_id', user.id)
         .maybeSingle();
       if (error) throw error;
@@ -962,8 +960,10 @@ export function registerModuloClasesRoutes(app, deps) {
       if (!whatsapp) return res.status(400).json({ error: 'whatsapp requerido' });
 
       const certificadoFipa = Boolean(b.certificado_fipa);
-      if (deportes.includes('padbol') && !certificadoFipa) {
-        return res.status(400).json({ error: 'Certificado FIPA requerido para enseñar Padbol' });
+      const certificadoNumero = String(b.certificado_numero || '').trim() || null;
+      const certificadoUrl = String(b.certificado_url || '').trim() || null;
+      if (deportes.includes('padbol') && (!certificadoFipa || !certificadoNumero || !certificadoUrl)) {
+        return res.status(400).json({ error: 'Número y documento del certificado requeridos para enseñar Padbol' });
       }
 
       const fotoUrl = b.foto_url != null ? String(b.foto_url).trim() || null : null;
@@ -979,7 +979,12 @@ export function registerModuloClasesRoutes(app, deps) {
             foto_url: fotoUrl,
             bio,
             deportes,
+            especialidad: String(b.especialidad || '').trim() || null,
+            nivel: String(b.nivel || '').trim() || null,
             certificado_fipa: certificadoFipa,
+            certificado_numero: certificadoNumero,
+            certificado_url: certificadoUrl,
+            certificado_estado: certificadoUrl ? 'pendiente' : 'sin_documento',
             whatsapp,
             fecha_nacimiento: fechaNac,
             genero,
@@ -987,9 +992,7 @@ export function registerModuloClasesRoutes(app, deps) {
             activo: true,
           },
         ])
-        .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)',
-        )
+        .select(PROFESOR_ADMIN_DETAIL_SELECT)
         .single();
       if (error) throw error;
       res.status(201).json(mapProfesorAdminRow(data));
@@ -1007,9 +1010,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const user = await requireAuthUser(req);
       const { data, error } = await supabaseAdmin
         .from('profesores')
-        .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
-        )
+        .select(PROFESOR_ADMIN_DETAIL_SELECT)
         .eq('user_id', user.id)
         .maybeSingle();
       if (error) throw error;
@@ -1042,6 +1043,22 @@ export function registerModuloClasesRoutes(app, deps) {
         if (bio && bio.length > 500) return res.status(400).json({ error: 'bio máximo 500 caracteres' });
         patch.bio = bio;
       }
+      if (b.especialidad !== undefined) patch.especialidad = String(b.especialidad || '').trim() || null;
+      if (b.nivel !== undefined) patch.nivel = String(b.nivel || '').trim() || null;
+      if (b.certificado_numero !== undefined) {
+        patch.certificado_numero = String(b.certificado_numero || '').trim() || null;
+        patch.certificado_estado = 'pendiente';
+        patch.certificado_nota = null;
+        patch.certificado_verificado_at = null;
+        patch.certificado_verificado_por = null;
+      }
+      if (b.certificado_url !== undefined) {
+        patch.certificado_url = String(b.certificado_url || '').trim() || null;
+        patch.certificado_estado = patch.certificado_url ? 'pendiente' : 'sin_documento';
+        patch.certificado_nota = null;
+        patch.certificado_verificado_at = null;
+        patch.certificado_verificado_por = null;
+      }
       if (b.fecha_nacimiento !== undefined) {
         const fechaNac = b.fecha_nacimiento ? normalizeFechaYmd(b.fecha_nacimiento) : null;
         if (b.fecha_nacimiento && !fechaNac) return res.status(400).json({ error: 'fecha_nacimiento inválida' });
@@ -1060,9 +1077,7 @@ export function registerModuloClasesRoutes(app, deps) {
         .from('profesores')
         .update(patch)
         .eq('user_id', user.id)
-        .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, activo, created_at, updated_at, sedes(id, nombre)',
-        )
+        .select(PROFESOR_ADMIN_DETAIL_SELECT)
         .maybeSingle();
       if (error) throw error;
       if (!data) return res.status(404).json({ error: 'No tenés ficha de profesor vinculada' });
