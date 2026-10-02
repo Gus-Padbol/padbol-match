@@ -100,7 +100,10 @@ export function buildDelegationScope(roleRow, { delegationEnabled = false, polic
   const role = String(roleRow.role || roleRow.rol || '').trim().toLowerCase();
   // El superadministrador global NO depende de la delegación: es el estado inicial del
   // contrato y sigue funcionando con el flag apagado.
-  if (role === 'super_admin' && (!roleRow.alcance || roleRow.alcance === 'global')) {
+  // El rol super_admin es global por definición. `alcance` nació para roles
+  // delegados y algunas filas históricas heredaron el default `sede`; no debe
+  // degradar ni bloquear al superadministrador.
+  if (role === 'super_admin') {
     return { allowed: true, global: true, role, sedeId: null, ownerUserId: null, region: null,
       writeAllowed: true, reason: null };
   }
