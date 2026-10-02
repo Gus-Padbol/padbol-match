@@ -72,6 +72,18 @@ input.acceso-cuenta-input:-webkit-autofill {
   filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.25));
 }
 
+.acceso-cuenta-recovery {
+  min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
+  padding: 72px 18px; box-sizing: border-box; background: #070a12;
+}
+.acceso-cuenta-recovery__logo { width: min(300px, 76vw); height: auto; margin-bottom: 24px; }
+.acceso-cuenta-recovery__panel { width: min(420px, 100%); padding: 28px; border-radius: 20px; background: #fff; color: #111827; }
+.acceso-cuenta-recovery__panel h1 { margin: 0 0 10px; font-size: 26px; }
+.acceso-cuenta-recovery__panel > p { color: #475569; line-height: 1.5; }
+.acceso-cuenta-recovery__panel label { display: block; margin: 16px 0 7px; font-weight: 700; }
+.acceso-cuenta-recovery__panel input { width: 100%; box-sizing: border-box; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; }
+.acceso-cuenta-recovery__panel button[type='submit'] { width: 100%; min-height: 52px; margin-top: 18px; border: 0; border-radius: 10px; background: #ef1b24; color: #fff; font-weight: 800; font-size: 16px; }
+
 .acceso-cuenta-brand-name {
   color: #fff;
   font-size: clamp(2.25rem, 4vw, 4.25rem);
