@@ -7,6 +7,7 @@ import {
   fetchAdminClases,
   fetchAdminProfesores,
   patchAdminClaseAsistencia,
+  patchClaseAdmin,
   patchClaseActivoAdmin,
 } from '../utils/clasesAdminApi';
 import { todayISO } from '../utils/clasesFechas';
@@ -42,6 +43,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
   const [asistenciaModal, setAsistenciaModal] = useState(null);
@@ -116,9 +118,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
     setSaving(true);
     setMsg('');
     try {
-      await crearClaseAdmin({
-        accessToken,
-        body: {
+      const body = {
           sede_id: sedeId,
           profesor_id: profesorId,
           cancha_id: form.cancha_id ? Number(form.cancha_id) : null,
@@ -135,8 +135,9 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
             hora_inicio: h.hora_inicio,
             hora_fin: h.hora_fin,
           })),
-        },
-      });
+        };
+      if (editingId) await patchClaseAdmin({ claseId: editingId, accessToken, body });
+      else await crearClaseAdmin({ accessToken, body });
       setForm({
         titulo: '',
         descripcion: '',
@@ -151,6 +152,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
         horarios: [emptyHorario()],
       });
       setShowForm(false);
+      setEditingId(null);
       await load();
     } catch (e) {
       setMsg(e?.message || 'Error');
@@ -222,6 +224,25 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
   };
 
   const inputStyle = { width: '100%', marginBottom: 10, boxSizing: 'border-box' };
+
+  const editarClase = (c) => {
+    setEditingId(c.id);
+    setForm({
+      titulo: c.titulo || '',
+      descripcion: c.descripcion || '',
+      profesor_id: String(c.profesor_id || ''),
+      cancha_id: String(c.cancha_id || ''),
+      deporte: c.deporte || '',
+      tipo: c.tipo || 'grupal',
+      cupo_maximo: String(c.cupo_maximo || 4),
+      duracion_minutos: String(c.duracion_minutos || 60),
+      precio: String(c.precio ?? ''),
+      activo: c.activo !== false,
+      horarios: Array.isArray(c.horarios) && c.horarios.length ? c.horarios.map((h) => ({ dia_semana: Number(h.dia_semana), hora_inicio: String(h.hora_inicio || '').slice(0, 5), hora_fin: String(h.hora_fin || '').slice(0, 5) })) : [emptyHorario()],
+    });
+    setShowForm(true);
+    setMsg('');
+  };
 
   return (
         <div>
@@ -311,7 +332,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
             Clase activa
           </label>
           <button type="button" disabled={saving || profsAprobados.length === 0} onClick={() => void guardar()} style={{ border: 'none', borderRadius: 10, padding: '10px 16px', background: ACCENT, color: '#fff', fontWeight: 800, cursor: saving ? 'wait' : 'pointer' }}>
-            {saving ? t('admin.metricas.saving') : t('admin.formularios.saveClass')}
+            {saving ? t('admin.metricas.saving') : editingId ? 'Guardar cambios' : t('admin.formularios.saveClass')}
           </button>
         </div>
       ) : null}
@@ -336,6 +357,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                   <button type="button" disabled={togglingId === c.id} onClick={() => void toggleActivo(c)} style={{ fontSize: 12, fontWeight: 700, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                     {togglingId === c.id ? '…' : c.activo ? t('admin.sponsors.deactivateBtn') : 'Activar'}
                   </button>
+                  <button type="button" onClick={() => editarClase(c)} style={{ fontSize: 12, fontWeight: 700, color: ACCENT, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Editar</button>
                   <button
                     type="button"
                     onClick={() => abrirAsistencia(c)}

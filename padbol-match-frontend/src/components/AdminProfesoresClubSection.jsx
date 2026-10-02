@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { supabase } from '../supabaseClient';
-import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores } from '../utils/clasesAdminApi';
+import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores, uploadProfesorCertificado } from '../utils/clasesAdminApi';
 import { compressImageFile } from '../utils/compressImage';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
@@ -9,6 +9,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 const MAX_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024;
 /** Tamaño máximo del blob ya comprimido que se sube a storage. */
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_CERT_BYTES = 10 * 1024 * 1024;
 const ACCENT = 'var(--accent)';
 const COLOR_SUCCESS = 'var(--pm-color-success, #22c55e)';
 const COLOR_ERROR = 'var(--pm-color-error, #dc2626)';
@@ -94,6 +95,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
   const [fotoUploading, setFotoUploading] = useState(false);
   const [fotoUploadError, setFotoUploadError] = useState(false);
   const fileRef = useRef(null);
+  const certRef = useRef(null);
   const [form, setForm] = useState({
     nombre: '',
     apellido: '',
@@ -102,6 +104,9 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
     bio: '',
     deportes: [],
     certificado_fipa_numero: '',
+    certificado_url: '',
+    especialidad: '',
+    nivel: '',
   });
 
   const load = useCallback(async () => {
@@ -171,6 +176,24 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
     }
   };
 
+  const subirCertificado = async (file) => {
+    if (!file || !['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(String(file.type || '')) || file.size > MAX_CERT_BYTES) {
+      setMsg('El certificado debe ser PDF o imagen y pesar hasta 10 MB.');
+      return;
+    }
+    setSaving(true);
+    setMsg('');
+    try {
+      const data = await uploadProfesorCertificado({ sedeId, file, accessToken });
+      if (!data?.path) throw new Error('No se pudo guardar el certificado');
+      setForm((f) => ({ ...f, certificado_url: data.path }));
+    } catch (error) {
+      setMsg(error?.message || 'No se pudo subir el certificado');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const aprobar = async (profId) => {
     setApprovingId(profId);
     setMsg('');
@@ -199,6 +222,10 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       setMsg(t('admin.formularios.fipaRequiredPadbol'));
       return;
     }
+    if (ensenaPadbol && !String(form.certificado_url || '').trim()) {
+      setMsg('Sube el diploma o certificado para que Super Admin pueda verificarlo.');
+      return;
+    }
     setSaving(true);
     setMsg('');
     try {
@@ -213,6 +240,10 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
           bio: String(form.bio || '').trim() || null,
           deportes: form.deportes,
           certificado_fipa: ensenaPadbol,
+          certificado_numero: certNum || null,
+          certificado_url: String(form.certificado_url || '').trim() || null,
+          especialidad: String(form.especialidad || '').trim() || null,
+          nivel: String(form.nivel || '').trim() || null,
         },
       });
       setForm({
@@ -223,6 +254,9 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
         bio: '',
         deportes: [],
         certificado_fipa_numero: '',
+        certificado_url: '',
+        especialidad: '',
+        nivel: '',
       });
       setFotoUploadError(false);
       setShowForm(false);
@@ -353,6 +387,10 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
             onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
             style={TEXTAREA_STYLE}
           />
+          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>Especialidad</label>
+          <input className="admin-mi-sede-theme-input" value={form.especialidad} onChange={(e) => setForm((f) => ({ ...f, especialidad: e.target.value }))} placeholder="Ej.: iniciación, técnica, competencia" style={FIELD_STYLE} />
+          <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>Nivel que enseña</label>
+          <input className="admin-mi-sede-theme-input" value={form.nivel} onChange={(e) => setForm((f) => ({ ...f, nivel: e.target.value }))} placeholder="Ej.: inicial, intermedio, avanzado" style={FIELD_STYLE} />
           <p className="admin-mi-sede-field-label" style={{ ...LABEL_STYLE, marginBottom: 10 }}>
             Deportes que enseña
           </p>
@@ -397,6 +435,10 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                 required
                 aria-required="true"
               />
+              <input ref={certRef} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" hidden onChange={(e) => { void subirCertificado(e.target.files?.[0]); e.target.value = ''; }} />
+              <button type="button" onClick={() => certRef.current?.click()} disabled={saving} style={{ ...FIELD_STYLE, cursor: 'pointer', fontWeight: 700 }}>
+                {form.certificado_url ? 'Certificado cargado ✓' : 'Subir diploma o certificado *'}
+              </button>
             </>
           ) : null}
           <button
