@@ -4,6 +4,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from './common/SportIcon';
 import {
   aprobarProfesorAdmin,
+  fetchProfesorCertificadoUrl,
   fetchAdminProfesoresTodos,
   patchProfesorAdmin,
   rechazarProfesorAdmin,
@@ -130,6 +131,17 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
   const [sedesLoading, setSedesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  const abrirCertificado = async () => {
+    setSaveError('');
+    try {
+      const data = await fetchProfesorCertificadoUrl({ profesorId: row.id, accessToken });
+      if (!data?.url) throw new Error('No se pudo generar el acceso al certificado');
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      setSaveError(error?.message || 'No se pudo abrir el certificado');
+    }
+  };
 
   useEffect(() => {
     setRow(rowProp);
@@ -384,7 +396,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
             <FichaRow label="Estado del certificado" value={String(row.certificado_estado || 'sin_documento')} />
             <FichaRow label="Número de certificado" value={String(row.certificado_numero || '').trim() || '—'} />
             <FichaRow label="Documento">
-              {row.certificado_url ? <a href={row.certificado_url} target="_blank" rel="noopener noreferrer">Abrir certificado</a> : '—'}
+              {row.certificado_url ? <button type="button" onClick={() => void abrirCertificado()} className="admin-profesores-super__btn admin-profesores-super__btn--ghost">Abrir certificado</button> : '—'}
             </FichaRow>
             <FichaRow label={t('admin.profesores.fichaBio')} value={String(row.bio || '').trim() || '—'} />
             {isSuperAdmin ? (

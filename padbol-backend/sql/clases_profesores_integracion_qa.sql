@@ -44,3 +44,17 @@ CREATE INDEX IF NOT EXISTS clases_eventos_internos_sede_created_idx
 
 ALTER TABLE public.clases_eventos_internos ENABLE ROW LEVEL SECURITY;
 -- El backend usa service-role; no se concede lectura pública directa.
+
+-- Documentos privados: sólo el backend service-role crea URLs firmadas de corta duración.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'profesor-certificados',
+  'profesor-certificados',
+  false,
+  10485760,
+  ARRAY['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = false,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;

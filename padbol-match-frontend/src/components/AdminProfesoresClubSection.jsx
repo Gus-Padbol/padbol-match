@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { supabase } from '../supabaseClient';
-import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores } from '../utils/clasesAdminApi';
+import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores, uploadProfesorCertificado } from '../utils/clasesAdminApi';
 import { compressImageFile } from '../utils/compressImage';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
@@ -183,18 +183,10 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
     }
     setSaving(true);
     setMsg('');
-    const ext = String(file.name || '').split('.').pop()?.toLowerCase() || 'pdf';
-    const path = `profesores/${sedeId}/certificados/${Date.now()}.${ext}`;
     try {
-      const { error: uploadError } = await supabase.storage.from('sedes').upload(path, file, {
-        upsert: false,
-        contentType: file.type,
-        cacheControl: '3600',
-      });
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from('sedes').getPublicUrl(path);
-      if (!data?.publicUrl) throw new Error('No se pudo obtener la URL del certificado');
-      setForm((f) => ({ ...f, certificado_url: data.publicUrl }));
+      const data = await uploadProfesorCertificado({ sedeId, file, accessToken });
+      if (!data?.path) throw new Error('No se pudo guardar el certificado');
+      setForm((f) => ({ ...f, certificado_url: data.path }));
     } catch (error) {
       setMsg(error?.message || 'No se pudo subir el certificado');
     } finally {

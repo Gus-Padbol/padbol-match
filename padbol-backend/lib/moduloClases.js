@@ -614,7 +614,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const deporte = String(req.query.deporte || '').trim().toLowerCase();
       if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id requerido' });
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('profesores')
         .select(`${PROFESOR_PUBLIC_SELECT}, aprobado, activo`)
         .eq('sede_id', sedeId)
@@ -641,7 +641,7 @@ export function registerModuloClasesRoutes(app, deps) {
       if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id requerido' });
       await assertUsuarioPuedeAdministrarSede(req, sedeId);
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('profesores')
         .select(
           'id, sede_id, nombre, apellido, foto_url, bio, whatsapp, deportes, especialidad, nivel, certificado_fipa, certificado_numero, certificado_url, certificado_estado, certificado_nota, aprobado, activo, created_at, updated_at',
@@ -662,7 +662,7 @@ export function registerModuloClasesRoutes(app, deps) {
   app.get('/api/admin/profesores-pendientes', async (req, res) => {
     try {
       await assertSuperAdminReq(req);
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('profesores')
         .select(PROFESOR_ADMIN_DETAIL_SELECT)
         .eq('aprobado', false)
@@ -703,6 +703,63 @@ export function registerModuloClasesRoutes(app, deps) {
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
       console.error('❌ GET /api/admin/profesores-todos:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** POST /api/admin/profesores/certificado-upload — documento privado, máximo 10 MB. */
+  app.post('/api/admin/profesores/certificado-upload', async (req, res) => {
+    try {
+      await assertAdminClubOrSuper(req);
+      const b = req.body || {};
+      const sedeId = Number(b.sede_id);
+      if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id requerido' });
+      await assertUsuarioPuedeAdministrarSede(req, sedeId);
+      const mime = String(b.mime_type || '').trim().toLowerCase();
+      const allowed = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);
+      if (!allowed.has(mime)) return res.status(400).json({ error: 'Formato de certificado inválido' });
+      const base64 = String(b.data_base64 || '').replace(/^data:[^;]+;base64,/, '');
+      let buffer;
+      try { buffer = Buffer.from(base64, 'base64'); } catch { buffer = null; }
+      if (!buffer?.length || buffer.length > 10 * 1024 * 1024) {
+        return res.status(400).json({ error: 'El certificado debe pesar hasta 10 MB' });
+      }
+      const extByMime = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+      const path = `sede-${sedeId}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extByMime[mime]}`;
+      const { error } = await supabaseAdmin.storage.from('profesor-certificados').upload(path, buffer, {
+        contentType: mime,
+        upsert: false,
+      });
+      if (error) throw error;
+      res.status(201).json({ path });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ POST certificado profesor:', err?.message || err);
+      res.status(500).json({ error: 'No se pudo guardar el certificado' });
+    }
+  });
+
+  /** GET /api/admin/profesores/:id/certificado-url — URL privada firmada por 2 minutos. */
+  app.get('/api/admin/profesores/:id/certificado-url', async (req, res) => {
+    try {
+      const scope = await assertAdminClubOrSuper(req);
+      const profId = Number(req.params.id);
+      if (!Number.isFinite(profId)) return res.status(400).json({ error: 'ID inválido' });
+      const { data: prof, error: profErr } = await supabaseAdmin
+        .from('profesores').select('id, sede_id, certificado_url').eq('id', profId).maybeSingle();
+      if (profErr) throw profErr;
+      if (!prof) return res.status(404).json({ error: 'Profesor no encontrado' });
+      if (!scope.superA) await assertUsuarioPuedeAdministrarSede(req, prof.sede_id);
+      const path = String(prof.certificado_url || '').trim();
+      if (!path) return res.status(404).json({ error: 'Sin certificado cargado' });
+      const { data, error } = await supabaseAdmin.storage.from('profesor-certificados').createSignedUrl(path, 120);
+      if (error) throw error;
+      res.json({ url: data?.signedUrl || null, expires_in: 120 });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ GET certificado profesor:', err?.message || err);
+      res.status(500).json({ error: 'No se pudo abrir el certificado' });
     }
   });
 
