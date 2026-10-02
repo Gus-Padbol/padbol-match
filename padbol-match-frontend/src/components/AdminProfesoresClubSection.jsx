@@ -223,7 +223,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       return;
     }
     if (ensenaPadbol && !String(form.certificado_url || '').trim()) {
-      setMsg('Subí el diploma o certificado para que Super Admin pueda verificarlo.');
+      setMsg('Sube el diploma o certificado para que Super Admin pueda verificarlo.');
       return;
     }
     setSaving(true);

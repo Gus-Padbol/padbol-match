@@ -2593,7 +2593,7 @@ export default function ReservaForm() {
           <AppHeader title={t('reservas.header')} onBack={handleReservaBack} />
           <main style={{ ...hubInstagramColumnWrapStyle, padding: '20px max(16px, env(safe-area-inset-right, 0px))' }}>
             <section className="reserva-card" aria-labelledby="reserva-modalidad-title">
-              <h1 id="reserva-modalidad-title" style={{ margin: '0 0 8px', fontSize: 24 }}>¿Qué querés reservar?</h1>
+              <h1 id="reserva-modalidad-title" style={{ margin: '0 0 8px', fontSize: 24 }}>¿Qué quieres reservar?</h1>
               <p style={{ margin: '0 0 20px', color: 'var(--text-secondary)' }}>{sedeSeleccionada?.nombre || t('reservas.loadingVenue')}</p>
               <div style={{ display: 'grid', gap: 12 }}>
                 <button type="button" style={opcionStyle} onClick={() => setReservaModalidad('cancha')}>🏟️ Cancha libre</button>
