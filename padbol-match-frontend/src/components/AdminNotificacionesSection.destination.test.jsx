@@ -43,10 +43,10 @@ test('superadmin configura torneo real, no ve cupo y el historial muestra destin
     const call = fetchMock.mock.calls.find(([url]) => String(url).includes('/send-admin'));
     expect(JSON.parse(call[1].body).destination).toEqual({ type: 'torneo', entityId: '42' });
   });
-  expect(screen.getByLabelText('Destino al tocar')).toHaveValue('torneo');
+  await waitFor(() => expect(screen.getByLabelText('Destino al tocar')).toHaveValue('pantalla'));
 });
 
-test('acepta el event_id namespaced de un formulario CRM como destino obligatorio', async () => {
+test('ofrece únicamente pantallas internas de catálogo y exige una selección válida', async () => {
   jest.spyOn(global, 'fetch').mockImplementation(async (url) => {
     const path = String(url);
     if (path.includes('/admin-quota')) return response({ unlimited: true, remaining: null });
@@ -64,10 +64,12 @@ test('acepta el event_id namespaced de un formulario CRM como destino obligatori
   );
 
   await screen.findByText(/destino para continuar/i);
-  fireEvent.change(screen.getByLabelText('Destino al tocar'), { target: { value: 'formulario' } });
-  const destinationInput = screen.getByLabelText('ID de Formulario / evento CRM');
-  expect(destinationInput).toHaveAttribute('pattern', '[A-Za-z0-9_:-]+');
-  expect(destinationInput).toBeRequired();
-  fireEvent.change(destinationInput, { target: { value: 'nextgen:registration:created:1234' } });
-  expect(screen.getByText(/Formulario \/ evento CRM #nextgen:registration:created:1234/i)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Destino al tocar'), { target: { value: 'pantalla' } });
+  const destinationSelect = screen.getByLabelText('Pantalla');
+  expect([...destinationSelect.options].map((option) => option.value)).toEqual([
+    '', 'inicio', 'notificaciones', 'torneos', 'rankings', 'jugar', 'perfil', 'clases',
+  ]);
+  fireEvent.change(destinationSelect, { target: { value: 'notificaciones' } });
+  expect(screen.getByText(/al tocar abrirá Notificaciones/i)).toBeInTheDocument();
+  expect(screen.queryByRole('option', { name: /reserva/i })).not.toBeInTheDocument();
 });

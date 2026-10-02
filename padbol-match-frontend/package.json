@@ -39,7 +39,8 @@
     "i18n:seed-native": "node scripts/seed-i18n-from-native.cjs",
     "eject": "react-scripts eject",
     "check:environment": "node scripts/check-build-environment.cjs",
-    "test:qa-routing": "node scripts/test-qa-api-routing.cjs"
+    "test:qa-routing": "node scripts/test-qa-api-routing.cjs",
+    "preview:admin-crm": "node scripts/preview-admin-crm.mjs"
   },
   "eslintConfig": {
     "extends": [
