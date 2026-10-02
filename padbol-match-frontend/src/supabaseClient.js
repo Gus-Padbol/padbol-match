@@ -6,6 +6,7 @@ const supabaseUrl = String(
 const supabaseAnonKey =
   process.env.REACT_APP_SUPABASE_ANON_KEY ||
   'sb_publishable_dY0TIrAnqgzg5yJ_XoZx-g_4aNMfHKY';
+const isCrmQaAuth = supabaseUrl.includes('vxikhdulhuvghfqeutnp');
 
 /**
  * Auth: PKCE + sesión en URL para callbacks; sin redirect global en la app.
@@ -17,6 +18,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    // QA usa enlaces de activación que pueden abrirse desde otro dispositivo
+    // (por ejemplo, solicitar en Mac y abrir el correo en iPhone). El flujo
+    // implícito evita depender del code-verifier guardado en el navegador que
+    // originó la solicitud. Producción conserva PKCE.
+    flowType: isCrmQaAuth ? 'implicit' : 'pkce',
   },
 });
