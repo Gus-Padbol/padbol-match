@@ -3417,7 +3417,7 @@ function SemanaCompareDelta({ pct }) {
 }
 
 export default function AdminDashboard({
-  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'https://padbol-backend.onrender.com',
   rol = null,
   sedeId = null,
   handleLogout = () => {},
