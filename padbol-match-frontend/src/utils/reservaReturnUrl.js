@@ -217,6 +217,13 @@ export function safeAdminPathFromLoginRedirect(loginSearch) {
   return pathOnly === '/admin' ? path : null;
 }
 
+/** Callback exclusivo para completar el restablecimiento de contraseña en QA. */
+export function safePasswordRecoveryPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  const pathOnly = String(path || '').split('?')[0].split('#')[0];
+  return pathOnly === '/auth/recovery' ? path : null;
+}
+
 /** `?redirect=` seguro hacia buscar partido (evita open redirect). */
 export function safePartidosBuscarPathFromLoginRedirect(loginSearch) {
   const path = decodeLoginRedirectParam(loginSearch);
@@ -261,6 +268,8 @@ export function clearPartidosBuscarReturnUrl() {
  * explícitos para reservas, partidos, creación de partido y el panel administrativo.
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
+  const fromPasswordRecovery = safePasswordRecoveryPathFromLoginRedirect(loginSearch);
+  if (fromPasswordRecovery) return fromPasswordRecovery;
   if (peekReservaPendienteArmar()) {
     console.log('[PM ArmarPartido restore] post-login → /armar-partido (reserva_pendiente)');
     return '/armar-partido';
