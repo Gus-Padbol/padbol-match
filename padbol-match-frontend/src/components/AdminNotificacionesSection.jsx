@@ -16,12 +16,23 @@ const TITLE_MAX = 50;
 const BODY_MAX = 150;
 
 const DESTINATION_TYPE_LABELS = Object.freeze({
+  noticia: 'Noticia',
   torneo: 'Torneo',
   partido: 'Partido',
-  reserva: 'Reserva',
-  inscripcion: 'Inscripción Next Generation',
-  formulario: 'Formulario / evento CRM',
+  academy: 'Padbol Academy',
+  next_generation: 'Next Generation',
+  pantalla: 'Pantalla interna',
 });
+
+const INTERNAL_SCREEN_OPTIONS = Object.freeze([
+  ['inicio', 'Inicio'],
+  ['notificaciones', 'Notificaciones'],
+  ['torneos', 'Torneos'],
+  ['rankings', 'Rankings'],
+  ['jugar', 'Jugar'],
+  ['perfil', 'Mi perfil'],
+  ['clases', 'Clases'],
+]);
 
 function createAdminPushIdempotencyKey() {
   if (typeof window !== 'undefined' && typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
@@ -80,7 +91,7 @@ export default function AdminNotificacionesSection({
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [destinationType, setDestinationType] = useState('torneo');
+  const [destinationType, setDestinationType] = useState('pantalla');
   const [destinationEntityId, setDestinationEntityId] = useState('');
   const [segmentKind, setSegmentKind] = useState(() => {
     if (isSuperAdmin) return 'todos_usuarios';
@@ -129,7 +140,12 @@ export default function AdminNotificacionesSection({
   const selectedTournament = torneosOptions.find(
     (torneo) => String(torneo?.id) === String(destinationEntityId),
   );
-  const currentDestinationLabel = destinationType === 'torneo' && selectedTournament
+  const selectedInternalScreen = INTERNAL_SCREEN_OPTIONS.find(([value]) => value === destinationEntityId);
+  const currentDestinationLabel = destinationType === 'academy'
+    ? 'Padbol Academy'
+    : destinationType === 'pantalla' && selectedInternalScreen
+      ? selectedInternalScreen[1]
+    : destinationType === 'torneo' && selectedTournament
     ? selectedTournament.nombre || `Torneo #${selectedTournament.id}`
     : destinationEntityId.trim()
       ? `${DESTINATION_TYPE_LABELS[destinationType] || destinationType} #${destinationEntityId.trim()}`
@@ -274,7 +290,7 @@ export default function AdminNotificacionesSection({
       setFeedback(t('admin.pushNotif.sentOk', { count: res.cantidad_enviadas ?? 0 }));
       setTitle('');
       setBody('');
-      setDestinationType('torneo');
+      setDestinationType('pantalla');
       setDestinationEntityId('');
       setSelectedPlayer(null);
       setPlayerQuery('');
@@ -299,7 +315,7 @@ export default function AdminNotificacionesSection({
     (segmentKind !== 'ciudad' || selectedCity?.ciudad) &&
     (segmentKind !== 'sede' || sedeSel) &&
     (segmentKind !== 'deporte' || deporte) &&
-    destinationEntityId.trim() &&
+    (destinationType === 'academy' || destinationEntityId.trim()) &&
     !sending;
 
   const destinationLabel = (row) => {
@@ -324,7 +340,7 @@ export default function AdminNotificacionesSection({
 
   return (
     <div className="admin-push-notif">
-      {quota && !isSuperAdmin ? (
+      {quota && !quota.unlimited ? (
         <p className="admin-push-notif__quota" role="status">
           {t('admin.pushNotif.quotaRemaining', { count: quota.remaining ?? 0 })}
           {quota.unlimitedTargeted ? ` · ${t('admin.pushNotif.quotaTargetedHint')}` : null}
@@ -368,11 +384,12 @@ export default function AdminNotificacionesSection({
               setDestinationEntityId('');
             }}
           >
+            <option value="noticia">Noticia publicada</option>
             <option value="torneo">Torneo</option>
             <option value="partido">Partido</option>
-            <option value="reserva">Reserva</option>
-            <option value="inscripcion">Inscripción Next Generation</option>
-            <option value="formulario">Formulario / evento CRM</option>
+            <option value="academy">Padbol Academy</option>
+            <option value="next_generation">Next Generation</option>
+            <option value="pantalla">Pantalla interna</option>
           </select>
         </div>
         {destinationType === 'torneo' ? (
@@ -386,20 +403,35 @@ export default function AdminNotificacionesSection({
             </select>
           </div>
         ) : null}
-        {['partido', 'reserva', 'inscripcion', 'formulario'].includes(destinationType) ? (
+        {['noticia', 'partido', 'next_generation'].includes(destinationType) ? (
           <div className="admin-push-notif__field">
             <label htmlFor="admin-push-destination-id">
-              ID de {DESTINATION_TYPE_LABELS[destinationType] || destinationType}
+              {destinationType === 'noticia'
+                ? 'ID de la noticia publicada'
+                : destinationType === 'next_generation'
+                  ? 'ID de la jornada Next Generation'
+                  : 'ID del partido'}
             </label>
             <input
               id="admin-push-destination-id"
               value={destinationEntityId}
               onChange={(event) => setDestinationEntityId(event.target.value)}
-              placeholder={destinationType === 'formulario' ? 'event_id real' : 'ID real'}
+              placeholder="ID real"
               pattern="[A-Za-z0-9_:-]+"
               maxLength={160}
               required
             />
+          </div>
+        ) : null}
+        {destinationType === 'pantalla' ? (
+          <div className="admin-push-notif__field">
+            <label htmlFor="admin-push-destination-id">Pantalla</label>
+            <select id="admin-push-destination-id" value={destinationEntityId} onChange={(event) => setDestinationEntityId(event.target.value)}>
+              <option value="">Selecciona una pantalla</option>
+              {INTERNAL_SCREEN_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
           </div>
         ) : null}
         <p className="admin-push-notif__preview" role="status">

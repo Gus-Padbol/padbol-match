@@ -18,6 +18,15 @@ test('destino torneo genera solamente un deep link interno seguro', () => {
   assert.throws(() => parseAdminPushDestination(), (error) => error?.code === 'ADMIN_PUSH_DESTINATION_REQUIRED');
 });
 
+test('pantallas internas y Academy usan únicamente rutas de catálogo', () => {
+  assert.equal(parseAdminPushDestination({ type: 'academy' }).deepLink, '/academy');
+  assert.equal(parseAdminPushDestination({ type: 'pantalla', screen: 'notificaciones' }).deepLink, '/notificaciones');
+  assert.throws(
+    () => parseAdminPushDestination({ type: 'pantalla', screen: '../admin' }),
+    (error) => error?.code === 'ADMIN_PUSH_DESTINATION_INVALID',
+  );
+});
+
 test('super_admin no consulta ni aplica cuota semanal', async () => {
   const supabase = { from() { throw new Error('no debe consultar la base'); } };
   const scope = { superA: true, rol: 'super_admin', authUserId: 'sa-1' };
@@ -38,17 +47,30 @@ test('admin_club conserva límite semanal', async () => {
   );
 });
 
+test('el envío individual no consume ni queda bloqueado por el cupo de campañas', async () => {
+  const chain = {
+    select() { return this; }, eq() { return this; }, gte() { return Promise.resolve({ data: [{ id: 1 }, { id: 2 }, { id: 3 }], error: null }); },
+  };
+  const supabase = { from() { return chain; } };
+  await assert.doesNotReject(
+    assertAdminPushRateLimit(supabase, { rol: 'admin_club', authUserId: 'club-1' }, { type: 'jugador' }),
+  );
+  const quota = await getAdminPushQuota(supabase, { rol: 'admin_club', authUserId: 'club-1' });
+  assert.equal(quota.unlimitedTargeted, true);
+});
+
 test('valida existencia y genera datos nativos sólo para destinos permitidos', async () => {
   const supabase = {
     from(table) {
       return {
         select() { return this; },
         eq(_column, id) { this.id = id; return this; },
+        limit() { return this; },
         maybeSingle() {
           const rows = {
             partidos: this.id === '9' ? { id: 9 } : null,
-            ng_inscripciones: this.id === 'reg-1' ? { id: 'reg-1', sesion_id: 'session-1' } : null,
-            ng_crm_eventos: this.id === 'nextgen:event-1' ? { event_id: 'nextgen:event-1', session_id: 'session-1', registration_id: 'reg-1' } : null,
+            news_articles: this.id === 'news-1' ? { id: 'news-1', slug: 'gran-final', status: 'published' } : null,
+            ng_crm_eventos: this.id === 'session-1' ? { session_id: 'session-1' } : null,
           };
           return Promise.resolve({ data: rows[table] || null, error: null });
         },
@@ -59,13 +81,9 @@ test('valida existencia y genera datos nativos sólo para destinos permitidos', 
   assert.deepEqual(buildAdminPushDestinationData(destination), {
     type: 'partido', partidoId: '9', deepLink: '/partido/9', destination,
   });
-  await assert.rejects(
-    validateAdminPushDestination(supabase, { type: 'reserva', entityId: 404 }),
-    (error) => error?.code === 'ADMIN_PUSH_DESTINATION_NOT_FOUND',
-  );
-  const registration = await validateAdminPushDestination(supabase, { type: 'inscripcion', entityId: 'reg-1' });
-  assert.equal(registration.deepLink, '/next-generation/jornada?session_id=session-1&registration_id=reg-1');
-  const form = await validateAdminPushDestination(supabase, { type: 'formulario', entityId: 'nextgen:event-1' });
-  assert.equal(form.deepLink, '/next-generation/jornada?session_id=session-1&registration_id=reg-1&crm_event_id=nextgen%3Aevent-1');
+  const news = await validateAdminPushDestination(supabase, { type: 'noticia', entityId: 'news-1' });
+  assert.equal(news.deepLink, '/noticias/gran-final');
+  const nextGeneration = await validateAdminPushDestination(supabase, { type: 'next_generation', entityId: 'session-1' });
+  assert.equal(nextGeneration.deepLink, '/next-generation/jornada?session_id=session-1');
   assert.throws(() => buildAdminPushDestinationData(), (error) => error?.code === 'ADMIN_PUSH_DESTINATION_REQUIRED');
 });
