@@ -30,6 +30,7 @@ import { registerModuloSponsorsRoutes } from './lib/moduloSponsors.js';
 import { mountScoreboardRoutes } from './routes/scoreboard.js';
 import { registerAdminPushRoutes } from './lib/adminPushNotifications.js';
 import { registerModuloComunidadMediaRoutes } from './lib/moduloComunidadMedia.js';
+import { registerWhatsappCrmRoutes } from './lib/whatsappCrm.js';
 import {
   isMercadoPagoTestAccessToken,
   mercadoPagoGlobalAccessToken,
@@ -17397,6 +17398,13 @@ registerModuloComunidadMediaRoutes(app, {
   supabaseAdmin,
   authUserFromBearer,
   multer,
+});
+
+// CRM de WhatsApp: lectura y acciones administrativas auditadas. El módulo no expone
+// ninguna ruta de envío; dispatchAllowed permanece siempre en false.
+registerWhatsappCrmRoutes(app, {
+  pgPool,
+  authUserFromBearer,
 });
 
 cron.schedule('*/10 * * * *', async () => {
