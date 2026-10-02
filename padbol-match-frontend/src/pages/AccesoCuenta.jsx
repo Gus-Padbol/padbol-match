@@ -38,6 +38,16 @@ import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
+const CRM_QA_SUPABASE_PROJECT_REF = 'vxikhdulhuvghfqeutnp';
+const IS_CRM_QA_AUTH = String(process.env.REACT_APP_SUPABASE_URL || '').includes(
+  CRM_QA_SUPABASE_PROJECT_REF
+);
+const GOOGLE_OAUTH_ENABLED =
+  process.env.REACT_APP_AUTH_GOOGLE_ENABLED === 'true' ||
+  (!IS_CRM_QA_AUTH && process.env.REACT_APP_AUTH_GOOGLE_ENABLED !== 'false');
+const FACEBOOK_OAUTH_ENABLED =
+  process.env.REACT_APP_AUTH_FACEBOOK_ENABLED === 'true' ||
+  (!IS_CRM_QA_AUTH && process.env.REACT_APP_AUTH_FACEBOOK_ENABLED !== 'false');
 
 /** Logo Google multicolor (inline; marca registrada de Google LLC). */
 function GoogleMarkIcon() {
@@ -314,7 +324,11 @@ export default function AccesoCuenta() {
         password,
       });
       if (error) {
-        setErrorMsg(mensajeErrorAuthSupabase(error.message));
+        setErrorMsg(
+          mensajeErrorAuthSupabase(error.message, {
+            invalidCredentials: t('auth.invalidCredentials'),
+          })
+        );
         return;
       }
       const ue = data?.user?.email?.trim();
@@ -500,6 +514,7 @@ export default function AccesoCuenta() {
         contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}
       />
       <div
+        className="acceso-cuenta-brand"
         style={{
           marginBottom: '20px',
           display: 'flex',
@@ -509,13 +524,17 @@ export default function AccesoCuenta() {
         }}
       >
         <PadbolBrandLogo
+          variant="on-dark-tight"
           style={{
             marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '4px',
+            width: 'min(300px, 76vw)',
+            height: 'auto',
           }}
         />
       </div>
       <div
+        className="acceso-cuenta-panel"
         style={{
           width: '100%',
           maxWidth: '400px',
@@ -538,7 +557,9 @@ export default function AccesoCuenta() {
         </h2>
 
         <div style={{ marginBottom: '18px' }}>
+          {GOOGLE_OAUTH_ENABLED ? (
           <button
+            className="acceso-cuenta-oauth acceso-cuenta-oauth--google"
             type="button"
             onClick={() => void handleGoogleLogin()}
             disabled={busy}
@@ -564,7 +585,10 @@ export default function AccesoCuenta() {
             <GoogleMarkIcon />
             {t('auth.google')}
           </button>
+          ) : null}
+          {FACEBOOK_OAUTH_ENABLED ? (
           <button
+            className="acceso-cuenta-oauth acceso-cuenta-oauth--facebook"
             type="button"
             onClick={() => void handleFacebookLogin()}
             disabled={busy}
@@ -593,6 +617,8 @@ export default function AccesoCuenta() {
             </span>
             {t('auth.facebook')}
           </button>
+          ) : null}
+          {GOOGLE_OAUTH_ENABLED || FACEBOOK_OAUTH_ENABLED ? (
           <div
             style={{
               display: 'flex',
@@ -609,6 +635,7 @@ export default function AccesoCuenta() {
             </span>
             <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
           </div>
+          ) : null}
         </div>
 
         {modo === 'login' ? (
@@ -631,6 +658,8 @@ export default function AccesoCuenta() {
               type="email"
               autoComplete="username"
               inputMode="email"
+              aria-invalid={Boolean(errorMsg)}
+              aria-describedby={errorMsg ? 'acceso-cuenta-error' : undefined}
               style={{
                 width: '100%',
                 padding: '14px',
@@ -660,6 +689,8 @@ export default function AccesoCuenta() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
+                aria-invalid={Boolean(errorMsg)}
+                aria-describedby={errorMsg ? 'acceso-cuenta-error' : undefined}
                 style={{
                   width: '100%',
                   padding: '14px 48px 14px 14px',
@@ -1217,10 +1248,10 @@ export default function AccesoCuenta() {
         )}
 
         {errorMsg ? (
-          <p style={{ color: '#b91c1c', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{errorMsg}</p>
+          <p id="acceso-cuenta-error" role="alert" className="acceso-cuenta-message acceso-cuenta-message--error">{errorMsg}</p>
         ) : null}
         {infoMsg ? (
-          <p style={{ color: '#15803d', fontSize: '14px', marginTop: '12px', marginBottom: 0 }}>{infoMsg}</p>
+          <p role="status" className="acceso-cuenta-message acceso-cuenta-message--success">{infoMsg}</p>
         ) : null}
 
         {modo !== 'login' ? (

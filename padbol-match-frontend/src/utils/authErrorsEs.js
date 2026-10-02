@@ -25,13 +25,13 @@ export function mensajeErrorJugadoresPerfilDuplicado(err) {
 }
 
 /** Mensajes en español para errores de Supabase Auth / PostgREST (evitar inglés crudo al usuario). */
-export function mensajeErrorAuthSupabase(raw) {
+export function mensajeErrorAuthSupabase(raw, messages = {}) {
   const s = String(raw || '').trim();
   const m = s.toLowerCase();
 
   if (!s) return 'Ocurrió un error. Prueba de nuevo.';
   if (m.includes('invalid login credentials') || m.includes('invalid_grant')) {
-    return 'WhatsApp, email o contraseña incorrectos. Verifica los datos e intenta de nuevo.';
+    return messages.invalidCredentials || 'Correo electrónico o contraseña incorrectos. Verifica los datos o solicita un enlace de acceso.';
   }
   if (m.includes('email not confirmed')) {
     return 'Tienes que confirmar tu correo antes de ingresar. Revisa tu bandeja de entrada.';

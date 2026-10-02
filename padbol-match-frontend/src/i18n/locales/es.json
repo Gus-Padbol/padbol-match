@@ -65,6 +65,7 @@
     "googleLoginFailed": "No se pudo iniciar sesión con Google. Intenta de nuevo.",
     "facebookLoginFailed": "No se pudo iniciar sesión con Facebook. Intenta de nuevo.",
     "loginFailed": "No se pudo iniciar sesión.",
+    "invalidCredentials": "Correo electrónico o contraseña incorrectos. Verificá los datos o solicitá un enlace de acceso.",
     "signupFailed": "No se pudo crear la cuenta. Intenta de nuevo.",
     "completeFirstName": "Completa tu nombre.",
     "completeLastName": "Completa tu apellido.",

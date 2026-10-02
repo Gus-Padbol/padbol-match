@@ -17,6 +17,107 @@ input.acceso-cuenta-input:-webkit-autofill {
 /* Evita scroll suave del documento al enfocar el email (p. ej. sugerencias de autocompletado). */
 .acceso-cuenta-page {
   scroll-behavior: auto;
+  --bg-page: #070a12;
+  --bg-card: #121826;
+  --text-primary: #f7f8fb;
+  --text-secondary: #aeb8cb;
+  --border: #2b3446;
+  --accent: #ef1b24;
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(225, 27, 34, 0.13), transparent 34rem),
+    linear-gradient(180deg, #101728 0%, #080b13 42%, #05070c 100%) !important;
+}
+
+.acceso-cuenta-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image:
+    linear-gradient(30deg, transparent 49%, rgba(255, 255, 255, 0.08) 50%, transparent 51%),
+    linear-gradient(150deg, transparent 49%, rgba(255, 255, 255, 0.05) 50%, transparent 51%);
+  background-size: 72px 42px;
+}
+
+.acceso-cuenta-brand,
+.acceso-cuenta-panel {
+  position: relative;
+  z-index: 1;
+}
+
+.acceso-cuenta-brand {
+  margin-bottom: 10px !important;
+}
+
+.acceso-cuenta-panel {
+  padding: 28px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  background: rgba(12, 17, 28, 0.92);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(14px);
+}
+
+.acceso-cuenta-page .acceso-cuenta-input {
+  min-height: 52px;
+  color: #f7f8fb;
+  caret-color: #ef1b24;
+  background: #111827 !important;
+}
+
+.acceso-cuenta-page .acceso-cuenta-input:-webkit-autofill {
+  -webkit-text-fill-color: #f7f8fb;
+  -webkit-box-shadow: 0 0 0 1000px #111827 inset;
+}
+
+.acceso-cuenta-oauth {
+  min-height: 50px;
+  transition: transform 160ms ease, filter 160ms ease, border-color 160ms ease;
+}
+
+.acceso-cuenta-oauth:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.acceso-cuenta-oauth--google {
+  background: #f8fafc !important;
+  color: #111827 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.acceso-cuenta-message {
+  margin: 12px 0 0;
+  padding: 11px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.acceso-cuenta-message--error {
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.42);
+  border: 1px solid rgba(248, 113, 113, 0.42);
+}
+
+.acceso-cuenta-message--success {
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.42);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+@media (max-width: 520px) {
+  .acceso-cuenta-page {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .acceso-cuenta-panel {
+    padding: 22px 18px !important;
+    border-radius: 16px;
+  }
 }
 
 /* DS Gero: borde gris, foco rojo Padbol */
