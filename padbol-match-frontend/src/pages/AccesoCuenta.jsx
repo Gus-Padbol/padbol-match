@@ -11,7 +11,6 @@ import {
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubAccesoContentPaddingTopCss,
 } from '../constants/hubLayout';
-import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { supabase } from '../supabaseClient';
@@ -39,6 +38,7 @@ import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
 const CRM_QA_SUPABASE_PROJECT_REF = 'vxikhdulhuvghfqeutnp';
+const CRM_QA_ADMIN_EMAIL = 'padbolinternacional@gmail.com';
 const IS_CRM_QA_AUTH = String(process.env.REACT_APP_SUPABASE_URL || '').includes(
   CRM_QA_SUPABASE_PROJECT_REF
 );
@@ -324,6 +324,23 @@ export default function AccesoCuenta() {
         password,
       });
       if (error) {
+        // La cuenta histórica de Super Admin fue reconciliada en el proyecto
+        // aislado de QA sin copiar ni reemplazar su contraseña de producción.
+        // Ante credenciales rechazadas, entregamos el acceso seguro soportado
+        // por ese entorno en vez de dejar al usuario en un callejón sin salida.
+        if (IS_CRM_QA_AUTH && em === CRM_QA_ADMIN_EMAIL) {
+          const destination = resolvePostLoginNavigatePath(location.search);
+          const { error: linkError } = await requestPasswordlessAccess({
+            auth: supabase.auth,
+            email: em,
+            origin: window.location.origin,
+            destination,
+          });
+          if (!linkError) {
+            setInfoMsg(t('auth.accessLinkSent'));
+            return;
+          }
+        }
         setErrorMsg(
           mensajeErrorAuthSupabase(error.message, {
             invalidCredentials: t('auth.invalidCredentials'),
@@ -523,8 +540,9 @@ export default function AccesoCuenta() {
           maxWidth: '400px',
         }}
       >
-        <PadbolBrandLogo
-          variant="on-dark-tight"
+        <img
+          src="/media/public-site/jero/padbol-match-logo-white.svg"
+          alt="Padbol Match"
           style={{
             marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
             marginBottom: '4px',
