@@ -11,6 +11,84 @@ const ADMIN_PUSH_LANGUAGE_CODES = new Set([
   'sv', 'pt-BR', 'pt-PT', 'el', 'hu', 'he', 'pl', 'uk', 'af',
 ]);
 
+const INTERNAL_SCREEN_PATHS = Object.freeze({
+  inicio: 'HomeMain',
+  notificaciones: 'Notificaciones',
+  torneos: 'TorneosMain',
+  rankings: 'Rankings',
+  jugar: 'JugarMain',
+  perfil: 'PerfilMain',
+  clases: 'Clases',
+});
+
+const ADMIN_PUSH_DESTINATIONS = Object.freeze({
+  noticia: { table: 'news_articles', idColumn: 'id', idKey: 'newsId' },
+  torneo: { table: 'torneos', idColumn: 'id', idKey: 'torneoId' },
+  partido: { table: 'partidos', idColumn: 'id', idKey: 'partidoId' },
+  academy: { nativeScreen: 'Clases' },
+  next_generation: { table: 'ng_crm_eventos', idColumn: 'session_id', idKey: 'sessionId' },
+  pantalla: { idKey: 'screen', allowedValues: INTERNAL_SCREEN_PATHS },
+});
+
+function adminPushHttpError(message, status = 400, code = 'ADMIN_PUSH_DESTINATION_INVALID') {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  return error;
+}
+
+export function parseAdminPushDestination(raw) {
+  const type = String(raw?.type || '').trim().toLowerCase();
+  if (!type || type === 'none') {
+    throw adminPushHttpError('Selecciona un destino concreto', 400, 'ADMIN_PUSH_DESTINATION_REQUIRED');
+  }
+  const config = ADMIN_PUSH_DESTINATIONS[type];
+  if (!config) throw adminPushHttpError('Destino de notificación no permitido');
+  if (!config.idKey) return { type, label: 'Padbol Academy', nativeScreen: config.nativeScreen };
+  const entityId = String(raw?.[config.idKey] ?? raw?.entityId ?? '').trim();
+  if (!/^[a-zA-Z0-9_:-]{1,160}$/.test(entityId)) {
+    throw adminPushHttpError(`Selecciona un ${type} válido`);
+  }
+  if (config.allowedValues) {
+    const nativeScreen = config.allowedValues[entityId];
+    if (!nativeScreen) throw adminPushHttpError('Selecciona una pantalla interna válida');
+    return { type, entityId, screen: entityId, label: `Pantalla · ${entityId}`, nativeScreen };
+  }
+  return { type, entityId, [config.idKey]: entityId, label: `${type} #${entityId}` };
+}
+
+export async function validateAdminPushDestination(supabase, raw) {
+  const destination = parseAdminPushDestination(raw);
+  const config = ADMIN_PUSH_DESTINATIONS[destination.type];
+  if (!config.table) return destination;
+  const select = destination.type === 'noticia'
+    ? 'id, slug, status'
+    : destination.type === 'next_generation' ? 'session_id' : 'id';
+  const { data, error } = await supabase.from(config.table).select(select)
+    .eq(config.idColumn, destination.entityId).limit(1).maybeSingle();
+  if (error) throw error;
+  if (!data) throw adminPushHttpError('El destino seleccionado ya no existe', 400, 'ADMIN_PUSH_DESTINATION_NOT_FOUND');
+  if (destination.type === 'noticia' && (data.status !== 'published' || !data.slug)) {
+    throw adminPushHttpError('La noticia seleccionada no está publicada', 400, 'ADMIN_PUSH_DESTINATION_NOT_FOUND');
+  }
+  return destination.type === 'noticia'
+    ? { ...destination, slug: String(data.slug), label: `Noticia · ${data.slug}`, nativeScreen: 'Notificaciones' }
+    : destination.type === 'next_generation'
+      ? { ...destination, sessionId: String(data.session_id), label: `Next Generation · ${data.session_id}`, nativeScreen: 'NextGenerationRegistration' }
+      : destination;
+}
+
+export function buildAdminPushDestinationData(destination) {
+  if (!destination) throw adminPushHttpError('Destino concreto requerido', 400, 'ADMIN_PUSH_DESTINATION_REQUIRED');
+  return {
+    type: 'admin_message',
+    route: destination.nativeScreen || (destination.type === 'torneo' ? 'TorneoDetalle' : destination.type === 'partido' ? 'PartidoDetalle' : 'Notificaciones'),
+    params: destination.type === 'torneo' ? { torneoId: destination.entityId }
+      : destination.type === 'partido' ? { partidoId: destination.entityId } : {},
+    destination,
+  };
+}
+
 const WEEKLY_LIMITS = {
   admin_club: 3,
   admin_nacional: 2,
@@ -69,6 +147,20 @@ export async function countAdminPushSendsThisWeek(supabase, adminUserId, { onlyB
 
 export async function getAdminPushQuota(supabase, scope) {
   const role = effectiveAdminRole(scope);
+  // Super Admin no tiene cupo semanal: el control existe para delegaciones
+  // territoriales y sedes, pero nunca debe bloquear ni mostrar un contador al
+  // responsable global.
+  if (role === 'super_admin') {
+    return {
+      role,
+      limit: null,
+      used: 0,
+      remaining: null,
+      unlimited: true,
+      unlimitedTargeted: true,
+      weekStartsAt: weekAgoIso(),
+    };
+  }
   const limit = WEEKLY_LIMITS[role] ?? 0;
   const adminUserId = scope?.authUserId;
   const usedBroadcast = await countAdminPushSendsThisWeek(supabase, adminUserId, { onlyBroadcast: role === 'super_admin' });
@@ -339,7 +431,7 @@ export async function fetchPushTokensForUserIds(supabase, userIds) {
   }
 }
 
-export async function sendExpoPushNotifications({ title, body, tokens }) {
+export async function sendExpoPushNotifications({ title, body, tokens, data = undefined }) {
   const titulo = String(title || '').trim().slice(0, 50);
   const mensaje = String(body || '').trim().slice(0, 150);
   if (!titulo || !mensaje) {
@@ -359,6 +451,7 @@ export async function sendExpoPushNotifications({ title, body, tokens }) {
       title: titulo,
       body: mensaje,
       sound: 'default',
+      ...(data ? { data } : {}),
     }));
     const res = await fetch(EXPO_PUSH_URL, {
       method: 'POST',
@@ -385,8 +478,8 @@ export async function sendExpoPushNotifications({ title, body, tokens }) {
 
 export async function assertAdminPushRateLimit(supabase, scope, segment) {
   const role = effectiveAdminRole(scope);
+  if (role === 'super_admin') return;
   const targeted = isAdminPushTargetedSegment(segment);
-  if (role === 'super_admin' && targeted) return;
   const limit = WEEKLY_LIMITS[role] ?? 0;
   const onlyBroadcast = role === 'super_admin';
   const used = await countAdminPushSendsThisWeek(supabase, scope.authUserId, { onlyBroadcast });
@@ -531,6 +624,7 @@ export function registerAdminPushRoutes(app, deps) {
         sedesPermitidasPorScopeFn: sedesPermitidasPorScope,
       });
       await assertAdminPushRateLimit(supabase, scope, segment);
+      const destination = await validateAdminPushDestination(supabase, req.body?.destination);
 
       const userIds = await resolveAdminPushRecipientUserIds(supabase, scope, segment);
       if (!userIds.length) {
@@ -545,6 +639,7 @@ export function registerAdminPushRoutes(app, deps) {
           title,
           body,
           tokens: pushRows,
+          data: buildAdminPushDestinationData(destination),
         });
         cantidadEnviadas = result.sent;
         estado = 'enviado';
@@ -557,7 +652,7 @@ export function registerAdminPushRoutes(app, deps) {
             admin_user_id: scope.authUserId,
             titulo: title,
             mensaje: body,
-            segmento: segment,
+            segmento: { ...segment, destination },
             cantidad_enviadas: cantidadEnviadas,
             estado,
           },
@@ -573,6 +668,7 @@ export function registerAdminPushRoutes(app, deps) {
         recipients: userIds.length,
         cantidad_enviadas: cantidadEnviadas,
         estado,
+        destination,
         quota,
       });
     } catch (err) {

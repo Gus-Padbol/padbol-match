@@ -10135,6 +10135,8 @@ export default function AdminDashboard({
       ]
     : [
         { id: 'resumen', label: t('admin.tabs.resumen') },
+        ...(isSuperAdmin ? [{ id: 'crm', label: 'Atención CRM' }] : []),
+        ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
         ...(isSuperAdmin ? [{ id: ADMIN_SEDES_TAB_ID, label: t('admin.tabs.sedes') }] : []),
         ...(isSuperAdmin ? [{ id: 'solicitudes', label: t('admin.tabs.solicitudes') }] : []),
         ...(isSuperAdmin
@@ -10149,8 +10151,6 @@ export default function AdminDashboard({
         ...(puedeVerScoreboard ? [{ id: 'scoreboard', label: 'Scoreboard' }] : []),
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
         ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', 'Membresías') }] : []),
-        ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
-        ...(isSuperAdmin ? [{ id: 'crm', label: 'Atención CRM' }] : []),
         ...(puedeVerMiSede ? [{ id: 'mi_sede', label: t('admin.tabs.miSede') }] : []),
         ...(puedeVerConfig
           ? [
@@ -11928,6 +11928,7 @@ export default function AdminDashboard({
                     : []
             }
             paisesOptions={sedesSuperAdminPaisesUnicos}
+            torneosOptions={torneos}
           />
         </div>
       ) : null}
