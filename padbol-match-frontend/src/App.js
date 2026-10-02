@@ -71,6 +71,7 @@ const PoliticaPrivacidad = lazy(() => import('./pages/PoliticaPrivacidad'));
 const EliminarCuenta = lazy(() => import('./pages/EliminarCuenta'));
 const CompletarPerfilOAuth = lazy(() => import('./pages/CompletarPerfilOAuth'));
 const AuthOAuthCallback = lazy(() => import('./pages/AuthOAuthCallback'));
+const PasswordRecovery = lazy(() => import('./pages/PasswordRecovery'));
 const NuevaSede = lazy(() => import('./components/NuevaSede'));
 const InvitarAdminClubPage = lazy(() => import('./pages/InvitarAdminClubPage'));
 const ScoreboardDisplay = lazy(() => import('./pages/ScoreboardDisplay'));
@@ -364,6 +365,7 @@ function AppRoutes() {
 
         <Route path="/auth" element={<AuthEntryRoute />} />
         <Route path="/auth/callback" element={<AuthOAuthCallback />} />
+        <Route path="/auth/recovery" element={<PasswordRecovery />} />
         <Route path="/acceso" element={<AccesoRoute />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
 

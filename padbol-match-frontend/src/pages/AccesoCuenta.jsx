@@ -34,6 +34,7 @@ import {
 import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
+import { requestPasswordRecovery } from '../utils/passwordRecovery';
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
@@ -164,6 +165,7 @@ export default function AccesoCuenta() {
   const [infoMsg, setInfoMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [accessLinkBusy, setAccessLinkBusy] = useState(false);
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegPassword2, setShowRegPassword2] = useState(false);
@@ -329,17 +331,8 @@ export default function AccesoCuenta() {
         // Ante credenciales rechazadas, entregamos el acceso seguro soportado
         // por ese entorno en vez de dejar al usuario en un callejón sin salida.
         if (IS_CRM_QA_AUTH && em === CRM_QA_ADMIN_EMAIL) {
-          const destination = resolvePostLoginNavigatePath(location.search);
-          const { error: linkError } = await requestPasswordlessAccess({
-            auth: supabase.auth,
-            email: em,
-            origin: window.location.origin,
-            destination,
-          });
-          if (!linkError) {
-            setInfoMsg(t('auth.accessLinkSent'));
-            return;
-          }
+          setErrorMsg(t('auth.qaPasswordRequired'));
+          return;
         }
         setErrorMsg(
           mensajeErrorAuthSupabase(error.message, {
@@ -357,6 +350,20 @@ export default function AccesoCuenta() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleRecuperarPassword = async () => {
+    setErrorMsg(''); setInfoMsg('');
+    if (busy || accessLinkBusy || recoveryBusy) return;
+    const em = email.trim().toLowerCase();
+    if (!em) return setErrorMsg(t('auth.enterEmail'));
+    setRecoveryBusy(true);
+    try {
+      const destination = resolvePostLoginNavigatePath(location.search);
+      const { error } = await requestPasswordRecovery({ auth: supabase.auth, email: em, origin: window.location.origin, destination });
+      if (error) return setErrorMsg(t('auth.passwordRecoveryFailed'));
+      setInfoMsg(t('auth.passwordRecoverySent'));
+    } finally { setRecoveryBusy(false); }
   };
 
   const handleEnviarEnlaceAcceso = async () => {
@@ -758,6 +765,16 @@ export default function AccesoCuenta() {
             >
               {busy ? t('auth.signingIn') : t('auth.signIn')}
             </button>
+            {IS_CRM_QA_AUTH ? (
+              <button
+                type="button"
+                onClick={() => void handleRecuperarPassword()}
+                disabled={busy || accessLinkBusy || recoveryBusy}
+                className="acceso-cuenta-recovery-button"
+              >
+                {recoveryBusy ? t('auth.sending') : t('auth.createOrRecoverPassword')}
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => void handleEnviarEnlaceAcceso()}
