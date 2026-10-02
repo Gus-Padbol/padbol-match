@@ -6,12 +6,13 @@
 const ESTADOS_INSCRIPCION_CUENTAN_CUPO = new Set(['pendiente', 'confirmada', 'pagada']);
 
 /** Columnas de profesor en respuestas públicas (nunca whatsapp). */
-const PROFESOR_PUBLIC_SELECT = 'id, nombre, apellido, foto_url, bio, deportes, certificado_fipa';
+const PROFESOR_PUBLIC_SELECT =
+  'id, nombre, apellido, foto_url, bio, deportes, especialidad, nivel, certificado_fipa, certificado_estado';
 /** Join en clases: aprobado/activo solo para filtros en query, no se exponen al cliente. */
 const PROFESOR_JOIN_PUBLIC_SELECT = `${PROFESOR_PUBLIC_SELECT}, aprobado, activo`;
 
 const PROFESOR_ADMIN_DETAIL_SELECT =
-  'id, sede_id, nombre, apellido, foto_url, bio, deportes, certificado_fipa, whatsapp, fecha_nacimiento, genero, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)';
+  'id, sede_id, nombre, apellido, foto_url, bio, deportes, especialidad, nivel, certificado_fipa, certificado_numero, certificado_url, certificado_estado, certificado_nota, certificado_verificado_at, certificado_verificado_por, whatsapp, fecha_nacimiento, genero, aprobado, aprobado_por, activo, created_at, updated_at, user_id, sedes(id, nombre)';
 
 const GENERO_INSTRUCTOR_VALIDOS = new Set(['masculino', 'femenino', 'no_decir']);
 
@@ -58,7 +59,10 @@ export function registerModuloClasesRoutes(app, deps) {
       foto_url: row.foto_url ?? null,
       bio: row.bio ?? null,
       deportes: Array.isArray(row.deportes) ? row.deportes : [],
-      certificado_fipa: Boolean(row.certificado_fipa),
+      certificado_fipa:
+        Boolean(row.certificado_fipa) && String(row.certificado_estado || 'sin_documento') === 'aprobado',
+      especialidad: row.especialidad ?? null,
+      nivel: row.nivel ?? null,
     };
   }
 
@@ -160,6 +164,22 @@ export function registerModuloClasesRoutes(app, deps) {
       profesor: prof,
       horarios: horarios || [],
     };
+  }
+
+  async function registrarEventoInternoClase({ sedeId, claseId = null, inscripcionId = null, userId = null, tipo, payload = {} }) {
+    try {
+      const { error } = await supabaseAdmin.from('clases_eventos_internos').insert([{
+        sede_id: sedeId,
+        clase_id: claseId,
+        inscripcion_id: inscripcionId,
+        user_id: userId,
+        tipo,
+        payload,
+      }]);
+      if (error) console.warn('Clases: no se pudo registrar evento interno:', error.message);
+    } catch (error) {
+      console.warn('Clases: evento interno omitido:', error?.message || error);
+    }
   }
 
   function msHastaInicioClase(fechaYmd, horaInicio) {
@@ -427,6 +447,14 @@ export function registerModuloClasesRoutes(app, deps) {
           .eq('id', ins.reserva_id);
       }
 
+      await registrarEventoInternoClase({
+        sedeId: clase.sede_id,
+        claseId: ins.clase_id,
+        userId: user.id,
+        tipo: 'cancelacion',
+        payload: { fecha: ins.fecha, hora_inicio: ins.hora_inicio, inscripcion_id_original: ins.id },
+      });
+
       res.json({ ok: true });
     } catch (err) {
       const st = err.status || 500;
@@ -560,6 +588,16 @@ export function registerModuloClasesRoutes(app, deps) {
         throw insErr;
       }
 
+
+      await registrarEventoInternoClase({
+        sedeId: clase.sede_id,
+        claseId,
+        inscripcionId: inscripcion.id,
+        userId: user.id,
+        tipo: 'inscripcion',
+        payload: { fecha, hora_inicio: horaInicio, reserva_id: reserva?.id ?? null },
+      });
+
       res.status(201).json(inscripcion);
     } catch (err) {
       const st = err.status || 500;
@@ -606,7 +644,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const { data, error } = await supabase
         .from('profesores')
         .select(
-          'id, sede_id, nombre, apellido, foto_url, bio, whatsapp, deportes, certificado_fipa, aprobado, activo, created_at, updated_at',
+          'id, sede_id, nombre, apellido, foto_url, bio, whatsapp, deportes, especialidad, nivel, certificado_fipa, certificado_numero, certificado_url, certificado_estado, certificado_nota, aprobado, activo, created_at, updated_at',
         )
         .eq('sede_id', sedeId)
         .order('nombre', { ascending: true });
@@ -693,9 +731,14 @@ export function registerModuloClasesRoutes(app, deps) {
             apellido: String(b.apellido || '').trim() || null,
             foto_url: b.foto_url != null ? String(b.foto_url).trim() || null : null,
             bio: b.bio != null ? String(b.bio).trim() || null : null,
+            especialidad: b.especialidad != null ? String(b.especialidad).trim() || null : null,
+            nivel: b.nivel != null ? String(b.nivel).trim() || null : null,
             whatsapp: b.whatsapp != null ? String(b.whatsapp).trim() || null : null,
             deportes,
             certificado_fipa: Boolean(b.certificado_fipa),
+            certificado_numero: b.certificado_numero != null ? String(b.certificado_numero).trim() || null : null,
+            certificado_url: b.certificado_url != null ? String(b.certificado_url).trim() || null : null,
+            certificado_estado: b.certificado_url ? 'pendiente' : 'sin_documento',
             aprobado: false,
             activo: true,
           },
@@ -718,6 +761,20 @@ export function registerModuloClasesRoutes(app, deps) {
       const { user } = await assertSuperAdminReq(req);
       const profId = Number(req.params.id);
       if (!Number.isFinite(profId)) return res.status(400).json({ error: 'ID inválido' });
+
+      const { data: existing, error: existingError } = await supabaseAdmin
+        .from('profesores')
+        .select('id, deportes, certificado_url, certificado_estado')
+        .eq('id', profId)
+        .maybeSingle();
+      if (existingError) throw existingError;
+      if (!existing) return res.status(404).json({ error: 'Profesor no encontrado' });
+      const enseñaPadbol = Array.isArray(existing.deportes) && existing.deportes.includes('padbol');
+      if (enseñaPadbol && (!existing.certificado_url || existing.certificado_estado !== 'aprobado')) {
+        return res.status(409).json({
+          error: 'Para aprobar un instructor de Padbol primero verificá y aprobá su certificado',
+        });
+      }
 
       const { data, error } = await supabaseAdmin
         .from('profesores')
@@ -750,7 +807,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data: existing, error: fetchErr } = await supabaseAdmin
         .from('profesores')
-        .select('id, sede_id, deportes, certificado_fipa')
+        .select('id, sede_id, deportes, certificado_fipa, certificado_url, certificado_estado')
         .eq('id', profId)
         .maybeSingle();
       if (fetchErr) throw fetchErr;
@@ -777,6 +834,25 @@ export function registerModuloClasesRoutes(app, deps) {
       }
       if (b.certificado_fipa !== undefined) {
         patch.certificado_fipa = Boolean(b.certificado_fipa);
+      }
+      if (b.certificado_numero !== undefined) {
+        patch.certificado_numero = String(b.certificado_numero || '').trim() || null;
+      }
+      if (b.certificado_url !== undefined) {
+        patch.certificado_url = String(b.certificado_url || '').trim() || null;
+        if (!scope.superA) patch.certificado_estado = patch.certificado_url ? 'pendiente' : 'sin_documento';
+      }
+      if (b.especialidad !== undefined) patch.especialidad = String(b.especialidad || '').trim() || null;
+      if (b.nivel !== undefined) patch.nivel = String(b.nivel || '').trim() || null;
+      if (scope.superA && b.certificado_estado !== undefined) {
+        const estado = String(b.certificado_estado || '').trim().toLowerCase();
+        if (!['sin_documento', 'pendiente', 'aprobado', 'rechazado'].includes(estado)) {
+          return res.status(400).json({ error: 'certificado_estado inválido' });
+        }
+        patch.certificado_estado = estado;
+        patch.certificado_nota = String(b.certificado_nota || '').trim() || null;
+        patch.certificado_verificado_at = new Date().toISOString();
+        patch.certificado_verificado_por = scope.user?.id || null;
       }
       if (b.whatsapp !== undefined) {
         patch.whatsapp = String(b.whatsapp || '').trim() || null;
@@ -1172,6 +1248,14 @@ export function registerModuloClasesRoutes(app, deps) {
         .select('id, asistio, asistencia_marcada_at, asistencia_marcada_por')
         .single();
       if (error) throw error;
+      await registrarEventoInternoClase({
+        sedeId: clase.sede_id,
+        claseId,
+        inscripcionId: insId,
+        userId: null,
+        tipo: 'asistencia',
+        payload: { asistio: req.body.asistio, marcado_por: marcadoPor },
+      });
       res.json(data);
     } catch (err) {
       const st = err.status || 500;
@@ -1181,7 +1265,7 @@ export function registerModuloClasesRoutes(app, deps) {
     }
   });
 
-  /** PATCH /api/admin/clases/:id — activo */
+  /** PATCH /api/admin/clases/:id — edición completa de clase y horarios */
   app.patch('/api/admin/clases/:id', async (req, res) => {
     try {
       await assertAdminClubOrSuper(req);
@@ -1190,16 +1274,79 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data: existing, error: exErr } = await supabase
         .from('clases')
-        .select('id, sede_id')
+        .select('id, sede_id, profesor_id, cancha_id, deporte')
         .eq('id', claseId)
         .maybeSingle();
       if (exErr) throw exErr;
       if (!existing) return res.status(404).json({ error: 'Clase no encontrada' });
       await assertUsuarioPuedeAdministrarSede(req, existing.sede_id);
 
+      const b = req.body || {};
       const patch = {};
       if (typeof req.body?.activo === 'boolean') patch.activo = req.body.activo;
-      if (!Object.keys(patch).length) return res.status(400).json({ error: 'Nada que actualizar' });
+      if (b.titulo !== undefined) {
+        const titulo = String(b.titulo || '').trim();
+        if (!titulo) return res.status(400).json({ error: 'titulo requerido' });
+        patch.titulo = titulo;
+      }
+      if (b.descripcion !== undefined) patch.descripcion = String(b.descripcion || '').trim() || null;
+      if (b.tipo !== undefined) {
+        const tipo = String(b.tipo || '').trim().toLowerCase();
+        if (!['individual', 'grupal'].includes(tipo)) return res.status(400).json({ error: 'tipo inválido' });
+        patch.tipo = tipo;
+      }
+      if (b.cupo_maximo !== undefined) patch.cupo_maximo = Math.max(1, parseInt(String(b.cupo_maximo), 10) || 1);
+      if (b.duracion_minutos !== undefined) patch.duracion_minutos = Math.max(15, parseInt(String(b.duracion_minutos), 10) || 60);
+      if (b.precio !== undefined) patch.precio = Math.max(0, Number(b.precio) || 0);
+      if (b.horas_cancelacion !== undefined) patch.horas_cancelacion = Math.max(0, parseInt(String(b.horas_cancelacion), 10) || 24);
+      if (b.deporte !== undefined) patch.deporte = String(b.deporte || '').trim().toLowerCase();
+      if (b.profesor_id !== undefined) patch.profesor_id = Number(b.profesor_id);
+      if (b.cancha_id !== undefined) patch.cancha_id = Number(b.cancha_id);
+
+      const profesorId = patch.profesor_id ?? existing.profesor_id;
+      const canchaId = patch.cancha_id ?? existing.cancha_id;
+      const deporte = patch.deporte ?? existing.deporte;
+      if (!Number.isFinite(Number(profesorId)) || !Number.isFinite(Number(canchaId)) || !deporte) {
+        return res.status(400).json({ error: 'profesor, cancha y deporte válidos son requeridos' });
+      }
+      const { data: prof, error: profErr } = await supabaseAdmin
+        .from('profesores')
+        .select('id, sede_id, aprobado, activo, deportes, certificado_estado')
+        .eq('id', profesorId)
+        .maybeSingle();
+      if (profErr) throw profErr;
+      if (!prof || Number(prof.sede_id) !== Number(existing.sede_id) || !prof.aprobado || prof.activo === false) {
+        return res.status(409).json({ error: 'Instructor inválido, inactivo o sin aprobar' });
+      }
+      if (!Array.isArray(prof.deportes) || !prof.deportes.includes(deporte)) {
+        return res.status(400).json({ error: 'El instructor no está habilitado para ese deporte' });
+      }
+      if (deporte === 'padbol' && prof.certificado_estado !== 'aprobado') {
+        return res.status(409).json({ error: 'El certificado del instructor debe estar aprobado' });
+      }
+      const { data: cancha, error: canchaErr } = await supabaseAdmin
+        .from('canchas').select('id, sede_id').eq('id', canchaId).maybeSingle();
+      if (canchaErr) throw canchaErr;
+      if (!cancha || Number(cancha.sede_id) !== Number(existing.sede_id)) {
+        return res.status(400).json({ error: 'La cancha no pertenece a la sede' });
+      }
+
+      const horarios = b.horarios;
+      let horariosRows = null;
+      if (horarios !== undefined) {
+        if (!Array.isArray(horarios) || !horarios.length) return res.status(400).json({ error: 'Se requiere al menos un horario' });
+        horariosRows = horarios.map((h) => {
+          const dia = Number(h.dia_semana);
+          const hi = normalizeHoraClase(h.hora_inicio);
+          const hf = normalizeHoraClase(h.hora_fin);
+          if (!Number.isFinite(dia) || dia < 0 || dia > 6 || !hi || !hf || hi >= hf) {
+            throw Object.assign(new Error('Horario inválido'), { status: 400 });
+          }
+          return { clase_id: claseId, dia_semana: dia, hora_inicio: hi, hora_fin: hf };
+        });
+      }
+
+      if (!Object.keys(patch).length && !horariosRows) return res.status(400).json({ error: 'Nada que actualizar' });
       patch.updated_at = new Date().toISOString();
 
       const { data, error } = await supabaseAdmin
@@ -1209,7 +1356,13 @@ export function registerModuloClasesRoutes(app, deps) {
         .select()
         .single();
       if (error) throw error;
-      res.json(data);
+      if (horariosRows) {
+        const { error: deleteError } = await supabaseAdmin.from('clases_horarios').delete().eq('clase_id', claseId);
+        if (deleteError) throw deleteError;
+        const { error: insertError } = await supabaseAdmin.from('clases_horarios').insert(horariosRows);
+        if (insertError) throw insertError;
+      }
+      res.json({ ...data, horarios: await fetchHorariosClase(claseId) });
     } catch (err) {
       const st = err.status || 500;
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
@@ -1230,8 +1383,8 @@ export function registerModuloClasesRoutes(app, deps) {
       const deporte = String(b.deporte || '').trim().toLowerCase();
       const horarios = Array.isArray(b.horarios) ? b.horarios : [];
 
-      if (!Number.isFinite(sedeId) || !Number.isFinite(profesorId) || !titulo || !deporte) {
-        return res.status(400).json({ error: 'sede_id, profesor_id, deporte y titulo son requeridos' });
+      if (!Number.isFinite(sedeId) || !Number.isFinite(profesorId) || !Number.isFinite(canchaId) || !titulo || !deporte) {
+        return res.status(400).json({ error: 'sede_id, profesor_id, cancha_id, deporte y titulo son requeridos' });
       }
       if (!horarios.length) return res.status(400).json({ error: 'horarios requerido (al menos un turno)' });
 
@@ -1239,15 +1392,24 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data: prof, error: profErr } = await supabase
         .from('profesores')
-        .select('id, sede_id')
+        .select('id, sede_id, aprobado, activo, deportes, certificado_estado')
         .eq('id', profesorId)
         .maybeSingle();
       if (profErr) throw profErr;
       if (!prof || Number(prof.sede_id) !== sedeId) {
         return res.status(400).json({ error: 'profesor_id no pertenece a la sede' });
       }
+      if (!prof.aprobado || prof.activo === false) {
+        return res.status(409).json({ error: 'El instructor debe estar aprobado y activo' });
+      }
+      if (!Array.isArray(prof.deportes) || !prof.deportes.includes(deporte)) {
+        return res.status(400).json({ error: 'El instructor no está habilitado para ese deporte' });
+      }
+      if (deporte === 'padbol' && prof.certificado_estado !== 'aprobado') {
+        return res.status(409).json({ error: 'El certificado del instructor debe estar aprobado' });
+      }
 
-      if (canchaId != null && Number.isFinite(canchaId)) {
+      if (Number.isFinite(canchaId)) {
         const { data: cancha, error: canchaErr } = await supabase
           .from('canchas')
           .select('id, sede_id')
@@ -1269,7 +1431,7 @@ export function registerModuloClasesRoutes(app, deps) {
           {
             sede_id: sedeId,
             profesor_id: profesorId,
-            cancha_id: Number.isFinite(canchaId) ? canchaId : null,
+            cancha_id: canchaId,
             deporte,
             titulo,
             descripcion: b.descripcion != null ? String(b.descripcion).trim() || null : null,
