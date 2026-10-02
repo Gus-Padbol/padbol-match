@@ -18,20 +18,20 @@ const WEEKLY_LIMITS = {
 };
 
 const INTERNAL_SCREEN_PATHS = Object.freeze({
-  inicio: '/home',
-  notificaciones: '/notificaciones',
-  torneos: '/torneos',
-  rankings: '/rankings',
-  jugar: '/jugar',
-  perfil: '/mi-perfil',
-  clases: '/clases',
+  inicio: 'HomeMain',
+  notificaciones: 'Notificaciones',
+  torneos: 'TorneosMain',
+  rankings: 'Rankings',
+  jugar: 'JugarMain',
+  perfil: 'PerfilMain',
+  clases: 'Clases',
 });
 
 const ADMIN_PUSH_DESTINATIONS = Object.freeze({
   noticia: { table: 'news_articles', idColumn: 'id', idKey: 'newsId' },
   torneo: { table: 'torneos', idColumn: 'id', idKey: 'torneoId', deepLinkPrefix: '/torneo/' },
   partido: { table: 'partidos', idColumn: 'id', idKey: 'partidoId', deepLinkPrefix: '/partido/' },
-  academy: { idKey: null, deepLink: '/academy' },
+  academy: { idKey: null, nativeScreen: 'Clases' },
   next_generation: { table: 'ng_crm_eventos', idColumn: 'session_id', idKey: 'sessionId' },
   pantalla: { idKey: 'screen', allowedValues: INTERNAL_SCREEN_PATHS },
 });
@@ -49,7 +49,7 @@ export function parseAdminPushDestination(raw) {
   const config = ADMIN_PUSH_DESTINATIONS[type];
   if (!config) throw httpError('Destino de notificación no permitido', 400, 'ADMIN_PUSH_DESTINATION_INVALID');
   if (!config.idKey) {
-    return { type, label: 'Padbol Academy', deepLink: config.deepLink };
+    return { type, label: 'Padbol Academy', nativeScreen: config.nativeScreen };
   }
   const entityId = String(raw?.[config.idKey] ?? raw?.entityId ?? '').trim();
   // Los IDs de contenido y jornadas pueden usar namespaces. Permitimos dos
@@ -58,16 +58,16 @@ export function parseAdminPushDestination(raw) {
     throw httpError(`Selecciona un ${type} válido`, 400, 'ADMIN_PUSH_DESTINATION_INVALID');
   }
   if (config.allowedValues) {
-    const deepLink = config.allowedValues[entityId];
-    if (!deepLink) throw httpError('Selecciona una pantalla interna válida', 400, 'ADMIN_PUSH_DESTINATION_INVALID');
-    return { type, entityId, [config.idKey]: entityId, label: `Pantalla · ${entityId}`, deepLink };
+    const nativeScreen = config.allowedValues[entityId];
+    if (!nativeScreen) throw httpError('Selecciona una pantalla interna válida', 400, 'ADMIN_PUSH_DESTINATION_INVALID');
+    return { type, entityId, [config.idKey]: entityId, label: `Pantalla · ${entityId}`, nativeScreen };
   }
   return {
     type,
     entityId,
     [config.idKey]: entityId,
     label: `${type[0].toUpperCase()}${type.slice(1)} #${entityId}`,
-    deepLink: `${config.deepLinkPrefix}${encodeURIComponent(entityId)}`,
+    ...(config.deepLinkPrefix ? { nativeScreen: type === 'torneo' ? 'TorneoDetalle' : 'PartidoDetalle' } : {}),
   };
 }
 
@@ -91,7 +91,7 @@ export async function validateAdminPushDestination(supabase, raw) {
       ...destination,
       slug: String(data.slug),
       label: `Noticia · ${data.slug}`,
-      deepLink: `/noticias/${encodeURIComponent(data.slug)}`,
+      nativeScreen: 'Notificaciones',
     };
   }
   if (destination.type === 'next_generation') {
@@ -99,7 +99,7 @@ export async function validateAdminPushDestination(supabase, raw) {
       ...destination,
       sessionId: String(data.session_id),
       label: `Next Generation · ${data.session_id}`,
-      deepLink: `/next-generation/jornada?session_id=${encodeURIComponent(data.session_id)}`,
+      nativeScreen: 'NextGenerationRegistration',
     };
   }
   return destination;
@@ -108,11 +108,17 @@ export async function validateAdminPushDestination(supabase, raw) {
 export function buildAdminPushDestinationData(destination) {
   if (!destination || destination.type === 'none') throw httpError('Destino concreto requerido', 400, 'ADMIN_PUSH_DESTINATION_REQUIRED');
   return {
-    type: destination.type,
-    ...(ADMIN_PUSH_DESTINATIONS[destination.type].idKey
-      ? { [ADMIN_PUSH_DESTINATIONS[destination.type].idKey]: destination.entityId }
-      : {}),
-    deepLink: destination.deepLink,
+    type: 'admin_message',
+    route: destination.type === 'torneo'
+      ? 'TorneoDetalle'
+      : destination.type === 'partido'
+        ? 'PartidoDetalle'
+        : 'Notificaciones',
+    params: destination.type === 'torneo'
+      ? { torneoId: destination.entityId }
+      : destination.type === 'partido'
+        ? { partidoId: destination.entityId }
+        : {},
     destination,
   };
 }

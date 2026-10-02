@@ -8,10 +8,11 @@ import {
   parseAdminPushDestination,
   validateAdminPushDestination,
 } from './adminPushNotifications.js';
+import { createMobilePushService, sanitizePushData } from './mobilePushNotifications.js';
 
-test('destino torneo genera solamente un deep link interno seguro', () => {
+test('destino torneo genera solamente navegación nativa segura', () => {
   assert.deepEqual(parseAdminPushDestination({ type: 'torneo', torneoId: 42 }), {
-    type: 'torneo', entityId: '42', torneoId: '42', label: 'Torneo #42', deepLink: '/torneo/42',
+    type: 'torneo', entityId: '42', torneoId: '42', label: 'Torneo #42', nativeScreen: 'TorneoDetalle',
   });
   assert.throws(() => parseAdminPushDestination({ type: 'url', entityId: 'https://evil.test' }), /no permitido/);
   assert.throws(() => parseAdminPushDestination({ type: 'torneo', torneoId: '../admin' }), /válido/);
@@ -19,8 +20,8 @@ test('destino torneo genera solamente un deep link interno seguro', () => {
 });
 
 test('pantallas internas y Academy usan únicamente rutas de catálogo', () => {
-  assert.equal(parseAdminPushDestination({ type: 'academy' }).deepLink, '/academy');
-  assert.equal(parseAdminPushDestination({ type: 'pantalla', screen: 'notificaciones' }).deepLink, '/notificaciones');
+  assert.equal(parseAdminPushDestination({ type: 'academy' }).nativeScreen, 'Clases');
+  assert.equal(parseAdminPushDestination({ type: 'pantalla', screen: 'notificaciones' }).nativeScreen, 'Notificaciones');
   assert.throws(
     () => parseAdminPushDestination({ type: 'pantalla', screen: '../admin' }),
     (error) => error?.code === 'ADMIN_PUSH_DESTINATION_INVALID',
@@ -79,11 +80,63 @@ test('valida existencia y genera datos nativos sólo para destinos permitidos', 
   };
   const destination = await validateAdminPushDestination(supabase, { type: 'partido', entityId: 9 });
   assert.deepEqual(buildAdminPushDestinationData(destination), {
-    type: 'partido', partidoId: '9', deepLink: '/partido/9', destination,
+    type: 'admin_message', route: 'PartidoDetalle', params: { partidoId: '9' }, destination,
   });
   const news = await validateAdminPushDestination(supabase, { type: 'noticia', entityId: 'news-1' });
-  assert.equal(news.deepLink, '/noticias/gran-final');
+  assert.equal(news.nativeScreen, 'Notificaciones');
   const nextGeneration = await validateAdminPushDestination(supabase, { type: 'next_generation', entityId: 'session-1' });
-  assert.equal(nextGeneration.deepLink, '/next-generation/jornada?session_id=session-1');
+  assert.equal(nextGeneration.nativeScreen, 'NextGenerationRegistration');
   assert.throws(() => buildAdminPushDestinationData(), (error) => error?.code === 'ADMIN_PUSH_DESTINATION_REQUIRED');
+});
+
+test('builder administrativo atraviesa dispatch y registra el job sin contactar Expo', async () => {
+  let networkCalls = 0;
+  let loggedPayload = null;
+  const destination = parseAdminPushDestination({ type: 'pantalla', screen: 'notificaciones' });
+  const built = buildAdminPushDestinationData(destination);
+  assert.deepEqual(sanitizePushData(built).destination, {
+    type: 'pantalla', entityId: 'notificaciones', screen: 'notificaciones', nativeScreen: 'Notificaciones',
+  });
+  const supabaseAdmin = {
+    from(table) {
+      if (table === 'push_delivery_jobs') {
+        return {
+          insert(row) {
+            loggedPayload = row.payload;
+            return { select: () => ({ single: async () => ({ data: { id: 'job-admin-1', ...row }, error: null }) }) };
+          },
+          update() { return { eq: async () => ({ error: null }) }; },
+        };
+      }
+      if (table === 'push_tokens') {
+        return {
+          select() { return this; }, in() { return this; }, eq() { return this; }, is() { return this; },
+          range: async () => ({ data: [], error: null }),
+        };
+      }
+      if (table === 'push_notification_preferences') {
+        return { select() { return this; }, in: async () => ({ data: [], error: null }) };
+      }
+      throw new Error(`tabla inesperada: ${table}`);
+    },
+  };
+  const service = createMobilePushService({
+    serviceRoleConfigured: true,
+    supabaseAdmin,
+    fetchImpl: async () => { networkCalls += 1; throw new Error('no debe contactar Expo'); },
+  });
+  const result = await service.dispatch({
+    idempotencyKey: 'admin:admin-1:1234567890abcdef',
+    userIds: ['player-1'],
+    title: 'Novedad',
+    body: 'Revisa tus notificaciones.',
+    category: 'marketing',
+    data: built,
+    source: 'admin_panel',
+    actorUserId: 'admin-1',
+  });
+  assert.equal(result.status, 'no_tokens');
+  assert.equal(loggedPayload.type, 'admin_message');
+  assert.equal(loggedPayload.destination.nativeScreen, 'Notificaciones');
+  assert.equal(networkCalls, 0);
 });
