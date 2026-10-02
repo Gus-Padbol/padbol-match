@@ -66,7 +66,8 @@ function buildQuery(filters = {}) {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value === null || value === undefined || value === '') return;
-    params.set(key, String(value));
+    const apiKey = key === 'q' ? 'query' : key === 'region' ? 'country' : key;
+    params.set(apiKey, String(value));
   });
   const query = params.toString();
   return query ? `?${query}` : '';

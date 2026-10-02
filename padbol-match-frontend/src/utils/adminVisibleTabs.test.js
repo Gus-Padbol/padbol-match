@@ -51,6 +51,15 @@ describe('adminVisibleTabs — PadCoins y nacional', () => {
     expect(SUPER_ADMIN_VISIBLE_TABS).toContain('padcoins');
     expect(resolveAdminVisibleTab('padcoins', 'super_admin').tab).toBe('padcoins');
   });
+
+  it('5b. sólo super_admin ve Atención CRM', () => {
+    expect(SUPER_ADMIN_VISIBLE_TABS).toContain('crm');
+    expect(ADMIN_CLUB_VISIBLE_TABS).not.toContain('crm');
+    expect(ADMIN_NACIONAL_VISIBLE_TABS).not.toContain('crm');
+    expect(resolveAdminVisibleTab('crm', 'super_admin').tab).toBe('crm');
+    expect(resolveAdminVisibleTab('crm', 'admin_club').tab).toBe('mi_sede');
+    expect(dashboardSrc).toMatch(/activeTab === 'crm' && isSuperAdmin/);
+  });
 });
 
 describe('adminVisibleTabs — Sponsors', () => {

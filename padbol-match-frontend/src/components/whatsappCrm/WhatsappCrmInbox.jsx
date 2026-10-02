@@ -57,9 +57,9 @@ function ContactRow({ contact, active, onSelect }) {
         <span className="crm-row__tags">
           <span
             className={`crm-pill crm-pill--channel-${contact.channel || (contact.origins || [])[0] || 'otro'}`}
-            style={{ borderColor: channelColor(contact.channel) }}
+            style={{ borderColor: channelColor(contact.channel || (contact.origins || [])[0]) }}
           >
-            {channelLabel(contact.channel)}
+            {channelLabel(contact.channel || (contact.origins || [])[0])}
           </span>
           {(contact.origins || []).map((origin) => (
             <span key={origin} className="crm-pill" style={{ borderColor: originColor(origin) }}>

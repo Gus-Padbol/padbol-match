@@ -38,8 +38,11 @@ export default function WhatsappCrmContactDetail({ data, busy, onAction }) {
   const [estado, setEstado] = useState('');
   const [consentimiento, setConsentimiento] = useState('');
   const [seguimiento, setSeguimiento] = useState('');
+  const [seguimientoFecha, setSeguimientoFecha] = useState('');
   const [resultadoLlamada, setResultadoLlamada] = useState('');
   const [responsable, setResponsable] = useState('');
+  const [revisionCandidato, setRevisionCandidato] = useState('');
+  const [revisionMotivo, setRevisionMotivo] = useState('');
 
   const contacto = data?.contact || {};
   const timeline = data?.timeline || [];
@@ -116,7 +119,7 @@ export default function WhatsappCrmContactDetail({ data, busy, onAction }) {
             type="button"
             className="crm-btn crm-btn--quiet"
             disabled={busy || !consentimiento}
-            onClick={() => enviar('consentimiento', { status: consentimiento, origin: 'panel:manual' })}
+            onClick={() => enviar('consentimiento', { status: consentimiento, source: 'panel:manual' })}
           >
             Registrar
           </button>
@@ -166,7 +169,7 @@ export default function WhatsappCrmContactDetail({ data, busy, onAction }) {
           <div className="crm-actions__group">
             <label htmlFor="crm-nota">Nota interna</label>
             <textarea id="crm-nota" className="crm-field__input" rows={2} value={nota} onChange={(e) => setNota(e.target.value)} />
-            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !nota.trim()} onClick={() => { enviar('nota', { detail: nota }); setNota(''); }}>
+            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !nota.trim()} onClick={() => { enviar('nota', { text: nota }); setNota(''); }}>
               Guardar nota
             </button>
           </div>
@@ -187,7 +190,7 @@ export default function WhatsappCrmContactDetail({ data, busy, onAction }) {
           <div className="crm-actions__group">
             <label htmlFor="crm-llamada">Resultado de llamada</label>
             <input id="crm-llamada" className="crm-field__input" value={resultadoLlamada} placeholder="Ej.: no atendió" onChange={(e) => setResultadoLlamada(e.target.value)} />
-            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !resultadoLlamada.trim()} onClick={() => { enviar('llamada', { result: resultadoLlamada }); setResultadoLlamada(''); }}>
+            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !resultadoLlamada.trim()} onClick={() => { enviar('resultado_llamada', { summary: resultadoLlamada, answered: false }); setResultadoLlamada(''); }}>
               Registrar llamada
             </button>
           </div>
@@ -195,7 +198,8 @@ export default function WhatsappCrmContactDetail({ data, busy, onAction }) {
           <div className="crm-actions__group">
             <label htmlFor="crm-seguimiento">Próximo seguimiento</label>
             <input id="crm-seguimiento" className="crm-field__input" value={seguimiento} placeholder="Ej.: Reintentar el martes" onChange={(e) => setSeguimiento(e.target.value)} />
-            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !seguimiento.trim()} onClick={() => { enviar('seguimiento', { nextAction: seguimiento }); setSeguimiento(''); }}>
+            <input className="crm-field__input" type="datetime-local" aria-label="Fecha del próximo seguimiento" value={seguimientoFecha} onChange={(e) => setSeguimientoFecha(e.target.value)} />
+            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !seguimiento.trim() || !seguimientoFecha} onClick={() => { enviar('programar_seguimiento', { nextAction: seguimiento, nextActionAt: new Date(seguimientoFecha).toISOString() }); setSeguimiento(''); setSeguimientoFecha(''); }}>
               Agendar seguimiento
             </button>
           </div>
@@ -203,14 +207,16 @@ export default function WhatsappCrmContactDetail({ data, busy, onAction }) {
           <div className="crm-actions__group">
             <label htmlFor="crm-responsable">Responsable</label>
             <input id="crm-responsable" className="crm-field__input" value={responsable} placeholder="ID del responsable" onChange={(e) => setResponsable(e.target.value)} />
-            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !responsable.trim()} onClick={() => { enviar('asignacion', { ownerUserId: responsable }); setResponsable(''); }}>
+            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !responsable.trim()} onClick={() => { enviar('asignar', { ownerUserId: responsable }); setResponsable(''); }}>
               Asignar
             </button>
           </div>
 
           <div className="crm-actions__group">
             <label>Revisión</label>
-            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy} onClick={() => enviar('revision', { needsReview: true })}>
+            <input className="crm-field__input" value={revisionCandidato} placeholder="ID del contacto candidato" onChange={(e) => setRevisionCandidato(e.target.value)} />
+            <input className="crm-field__input" value={revisionMotivo} placeholder="Motivo de la revisión" onChange={(e) => setRevisionMotivo(e.target.value)} />
+            <button type="button" className="crm-btn crm-btn--quiet" disabled={busy || !revisionCandidato.trim()} onClick={() => { enviar('marcar_revision', { candidateContactId: revisionCandidato, reason: revisionMotivo }); setRevisionCandidato(''); setRevisionMotivo(''); }}>
               Marcar para revisión
             </button>
           </div>

@@ -93,6 +93,7 @@ import AdminSedeListaEsperaTorneosSection from '../components/AdminSedeListaEspe
 import AdminSedeConfiguracionGuiada from '../components/AdminSedeConfiguracionGuiada';
 import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
 import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
+import WhatsappCrmInbox from '../components/whatsappCrm/WhatsappCrmInbox';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
@@ -10149,6 +10150,7 @@ export default function AdminDashboard({
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
         ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', 'Membresías') }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
+        ...(isSuperAdmin ? [{ id: 'crm', label: 'Atención CRM' }] : []),
         ...(puedeVerMiSede ? [{ id: 'mi_sede', label: t('admin.tabs.miSede') }] : []),
         ...(puedeVerConfig
           ? [
@@ -11928,6 +11930,13 @@ export default function AdminDashboard({
             paisesOptions={sedesSuperAdminPaisesUnicos}
           />
         </div>
+      ) : null}
+
+      {activeTab === 'crm' && isSuperAdmin ? (
+        <WhatsappCrmInbox
+          accessToken={session?.access_token || ''}
+          isSuperAdmin
+        />
       ) : null}
 
       {activeTab === ADMIN_SEDES_TAB_ID && (esAdminNacional || isSuperAdmin) && (

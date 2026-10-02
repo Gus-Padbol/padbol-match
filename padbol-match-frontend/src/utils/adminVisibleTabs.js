@@ -23,6 +23,7 @@ export const SUPER_ADMIN_VISIBLE_TABS = Object.freeze([
   'personalizar_hub',
   'suspensiones',
   'notificaciones',
+  'crm',
   'scoreboard',
   'padcoins',
 ]);
