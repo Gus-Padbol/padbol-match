@@ -3,7 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = String(
   process.env.REACT_APP_SUPABASE_URL || 'https://auth.padbolmatch.com',
 ).replace(/\/$/, '');
-const supabaseAnonKey = 'sb_publishable_dY0TIrAnqgzg5yJ_XoZx-g_4aNMfHKY';
+const supabaseAnonKey =
+  process.env.REACT_APP_SUPABASE_ANON_KEY ||
+  'sb_publishable_dY0TIrAnqgzg5yJ_XoZx-g_4aNMfHKY';
 
 /**
  * Auth: PKCE + sesión en URL para callbacks; sin redirect global en la app.
