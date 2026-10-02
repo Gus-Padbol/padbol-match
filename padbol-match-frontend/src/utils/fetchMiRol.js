@@ -1,11 +1,20 @@
 import { getPublicApiBaseUrl } from './apiPublicBaseUrl';
 import { normalizeUserRole } from './adminPanelRoles';
 
-const API_BASE =
+const CONFIGURED_API_BASE =
   getPublicApiBaseUrl() ||
   (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com');
+
+// En la consola QA las rutas /api/* están proxyadas por Vercel. Usar una URL
+// relativa evita que navegadores móviles y webviews traten el chequeo de rol
+// como una petición CORS aunque el host configurado sea el mismo.
+const API_BASE =
+  typeof window !== 'undefined' &&
+  CONFIGURED_API_BASE === String(window.location.origin || '').replace(/\/$/, '')
+    ? ''
+    : CONFIGURED_API_BASE;
 
 const MI_ROL_PATHS = ['/api/auth/mi-rol', '/api/usuarios/mi-rol'];
 
