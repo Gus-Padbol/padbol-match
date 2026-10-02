@@ -345,7 +345,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { profesores, ...rest } = clase;
       res.json({
-        ...mapClaseListItem({ ...rest, profesores }, horarios),
+        ...(await mapClaseListItem({ ...rest, profesores }, horarios)),
         inscriptos,
         cupos_por_horario: cuposPorHorario,
         fecha_consultada: fecha,
