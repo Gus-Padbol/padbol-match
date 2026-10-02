@@ -4,8 +4,12 @@
   "framework": "create-react-app",
   "rewrites": [
     {
+      "source": "/api/admin/crm/:path*",
+      "destination": "https://padbol-backend-qa.onrender.com/api/admin/crm/:path*"
+    },
+    {
       "source": "/api/:path*",
-      "destination": "https://padbol-backend-qa.onrender.com/api/:path*"
+      "destination": "https://padbol-crm-qa-api.vercel.app/api/:path*"
     }
   ],
   "headers": [
