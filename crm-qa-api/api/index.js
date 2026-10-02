@@ -51,6 +51,42 @@ app.get('/health', (_req, res) => res.json({
   crmDispatchAllowed: false,
 }));
 
+async function handleGetMiRol(req, res) {
+  const user = await authUserFromBearer(req);
+  if (!user?.email) return res.status(401).json({ error: 'No autorizado' });
+
+  let query = await supabase
+    .from('user_roles')
+    .select('role, sede_id, nombre, pais, email, torneos_oficiales_habilitados')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (query.error && /column/i.test(String(query.error.message || ''))) {
+    query = await supabase
+      .from('user_roles')
+      .select('role, sede_id, nombre, pais, email')
+      .eq('user_id', user.id)
+      .maybeSingle();
+  }
+  if (query.error) return res.status(500).json({ error: 'No se pudo resolver el rol.' });
+
+  const row = query.data || {};
+  const role = String(row.role || '').trim().toLowerCase() || null;
+  const sedeId = row.sede_id == null ? null : Number(row.sede_id);
+  return res.json({
+    email: String(row.email || user.email).trim().toLowerCase(),
+    rol: role,
+    role,
+    sede_id: Number.isFinite(sedeId) ? sedeId : null,
+    sedeId: Number.isFinite(sedeId) ? sedeId : null,
+    nombre: row.nombre ?? null,
+    pais: row.pais ?? null,
+    torneosOficialesHabilitados: Boolean(row.torneos_oficiales_habilitados),
+  });
+}
+
+app.get('/api/auth/mi-rol', handleGetMiRol);
+app.get('/api/usuarios/mi-rol', handleGetMiRol);
+
 registerWhatsappCrmRoutes(app, { pgPool, authUserFromBearer });
 
 export default app;
