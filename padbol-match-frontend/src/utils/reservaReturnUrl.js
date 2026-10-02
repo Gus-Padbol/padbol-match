@@ -217,6 +217,13 @@ export function safeAdminPathFromLoginRedirect(loginSearch) {
   return pathOnly === '/admin' ? path : null;
 }
 
+/** Callback exclusivo para completar el restablecimiento de contraseña en QA. */
+export function safePasswordRecoveryPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  const pathOnly = String(path || '').split('?')[0].split('#')[0];
+  return pathOnly === '/auth/recovery' ? path : null;
+}
+
 /** `?redirect=` seguro hacia buscar partido (evita open redirect). */
 export function safePartidosBuscarPathFromLoginRedirect(loginSearch) {
   const path = decodeLoginRedirectParam(loginSearch);
@@ -275,6 +282,8 @@ export function clearPartidosBuscarReturnUrl() {
  * Los demás destinos conservan la prioridad de las operaciones deportivas pendientes.
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
+  const fromPasswordRecovery = safePasswordRecoveryPathFromLoginRedirect(loginSearch);
+  if (fromPasswordRecovery) return fromPasswordRecovery;
   const fromFipaDocuments = safeFipaDocumentsPathFromLoginRedirect(loginSearch);
   if (fromFipaDocuments) return fromFipaDocuments;
   if (peekReservaPendienteArmar()) {
