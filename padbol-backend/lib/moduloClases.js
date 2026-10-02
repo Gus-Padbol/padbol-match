@@ -114,7 +114,7 @@ export function registerModuloClasesRoutes(app, deps) {
   }
 
   async function countInscripcionesSlot(claseId, fecha, horaInicio) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('inscripciones_clases')
       .select('id, estado, hora_inicio')
       .eq('clase_id', claseId)
@@ -128,7 +128,7 @@ export function registerModuloClasesRoutes(app, deps) {
   }
 
   async function fetchHorariosClase(claseId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('clases_horarios')
       .select('id, clase_id, dia_semana, hora_inicio, hora_fin')
       .eq('clase_id', claseId)
@@ -149,7 +149,7 @@ export function registerModuloClasesRoutes(app, deps) {
   async function resolveCanchaNumeroReserva(canchaId) {
     const cid = Number(canchaId);
     if (!Number.isFinite(cid)) return null;
-    const { data, error } = await supabase.from('canchas').select('*').eq('id', cid).maybeSingle();
+    const { data, error } = await supabaseAdmin.from('canchas').select('*').eq('id', cid).maybeSingle();
     if (error) throw error;
     if (!data) return null;
     const [enriched] = canchasConNumeroReserva([data]);
@@ -240,7 +240,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const deporte = String(req.query.deporte || '').trim().toLowerCase();
       if (!Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id requerido' });
 
-      let q = supabase
+      let q = supabaseAdmin
         .from('clases')
         .select(
           `id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, profesores!inner(${PROFESOR_JOIN_PUBLIC_SELECT})`,
@@ -277,7 +277,7 @@ export function registerModuloClasesRoutes(app, deps) {
       if (!Number.isFinite(claseId)) return res.status(400).json({ error: 'ID inválido' });
       const fecha = normalizeFechaYmd(req.query.fecha);
 
-      const { data: clase, error } = await supabase
+      const { data: clase, error } = await supabaseAdmin
         .from('clases')
         .select(
           `id, sede_id, profesor_id, cancha_id, deporte, titulo, descripcion, tipo, cupo_maximo, duracion_minutos, precio, activo, horas_cancelacion, profesores!inner(${PROFESOR_JOIN_PUBLIC_SELECT})`,
@@ -293,7 +293,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const authUser = await authUserFromBearer(req);
       let mi_inscripcion = null;
       if (authUser?.id && fecha) {
-        const { data: insMine, error: insMineErr } = await supabase
+        const { data: insMine, error: insMineErr } = await supabaseAdmin
           .from('inscripciones_clases')
           .select('id, clase_id, fecha, hora_inicio, estado, reserva_id, asistio, created_at')
           .eq('clase_id', claseId)
@@ -313,7 +313,7 @@ export function registerModuloClasesRoutes(app, deps) {
       let inscriptos = null;
       let cuposPorHorario = null;
       if (fecha) {
-        const { data: ins, error: insErr } = await supabase
+        const { data: ins, error: insErr } = await supabaseAdmin
           .from('inscripciones_clases')
           .select('id, estado, hora_inicio')
           .eq('clase_id', claseId)
