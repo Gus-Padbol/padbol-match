@@ -1,0 +1,414 @@
+/* ============================================================================
+   CRM de WhatsApp · Super Admin
+   Reconstruido desde la evidencia aprobada: las 64 clases `crm-*` del DOM
+   capturado y las 16 capturas de referencia (tema claro, `theme-light`).
+   ========================================================================== */
+
+.crm-page {
+  --crm-bg: #ffffff;
+  --crm-bg-soft: #f6f7f9;
+  --crm-bg-sunken: #eef1f4;
+  --crm-line: #dfe3e8;
+  --crm-line-strong: #c8ced6;
+  --crm-text: #10151b;
+  --crm-text-soft: #5b6472;
+  --crm-text-faint: #8b94a1;
+  --crm-accent: #e11b22;
+  --crm-accent-soft: rgba(225, 27, 34, 0.08);
+  --crm-radius: 10px;
+  --crm-gap: 16px;
+  background: var(--crm-bg);
+  color: var(--crm-text);
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------- encabezado */
+.crm-inbox { display: grid; gap: var(--crm-gap); }
+
+.crm-inbox__header { display: grid; gap: 8px; }
+
+.crm-inbox__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.crm-inbox__subtitle {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--crm-text-soft);
+}
+
+.crm-inbox__notice {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--crm-line);
+  border-left: 3px solid var(--crm-accent);
+  border-radius: 6px;
+  background: var(--crm-accent-soft);
+  color: #7a1319;
+  font-size: 13px;
+}
+
+.crm-inbox__scope {
+  margin: 0;
+  color: var(--crm-text-faint);
+  font-size: 12.5px;
+}
+
+/* Procedencia de los datos: conectado / pendiente / simulado */
+.crm-source { margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.crm-source__badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--crm-line-strong);
+  background: var(--crm-bg-sunken);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.crm-source__text { color: var(--crm-text-faint); font-size: 12.5px; }
+
+.crm-source--connected .crm-source__badge {
+  border-color: #2f7d4f;
+  background: #e8f5ec;
+  color: #1f5c39;
+}
+
+.crm-source--pending .crm-source__badge {
+  border-color: #9a7418;
+  background: #fdf4e0;
+  color: #7a5a11;
+}
+
+.crm-source--error .crm-source__badge {
+  border-color: #a7262c;
+  background: #fdeaea;
+  color: #8c1f24;
+}
+
+/* ------------------------------------------------------------------ resumen */
+.crm-inbox__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crm-inbox__summary-item {
+  flex: 1 1 150px;
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--crm-line);
+  border-radius: var(--crm-radius);
+  background: var(--crm-bg-soft);
+}
+
+.crm-inbox__summary-value { font-size: 24px; font-weight: 800; }
+.crm-inbox__summary-label { color: var(--crm-text-soft); font-size: 12.5px; }
+
+.crm-inbox__summary-item--alert .crm-inbox__summary-value { color: var(--crm-accent); }
+
+/* ------------------------------------------------------------------ filtros */
+.crm-filters {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--crm-line);
+  border-radius: var(--crm-radius);
+  background: var(--crm-bg-soft);
+}
+
+.crm-panel__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--crm-text-soft);
+}
+
+.crm-filters__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.crm-field { display: grid; gap: 5px; min-width: 0; }
+
+.crm-field__label { font-size: 12px; font-weight: 700; color: var(--crm-text-soft); }
+
+.crm-field__input,
+.crm-field__select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--crm-line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--crm-text);
+  font: inherit;
+}
+
+.crm-field__input:focus-visible,
+.crm-field__select:focus-visible {
+  outline: 2px solid var(--crm-accent);
+  outline-offset: 1px;
+}
+
+.crm-filters__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.crm-filters__count { margin: 0; color: var(--crm-text-soft); font-size: 12.5px; }
+
+/* ------------------------------------------------------------------ botones */
+.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border: 1px solid var(--crm-line-strong);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--crm-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.crm-btn:hover:not(:disabled) { border-color: var(--crm-text-soft); }
+.crm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.crm-btn--tertiary { background: transparent; border-color: transparent; color: var(--crm-accent); }
+.crm-btn--primary { background: var(--crm-accent); border-color: var(--crm-accent); color: #fff; }
+.crm-btn--quiet { background: var(--crm-bg-sunken); border-color: var(--crm-line); }
+
+/* ------------------------------------------------------------ cuerpo y paneles */
+.crm-inbox__body {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: var(--crm-gap);
+  align-items: start;
+}
+
+.crm-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--crm-line);
+  border-radius: var(--crm-radius);
+  background: var(--crm-bg);
+  min-width: 0;
+}
+
+/* ------------------------------------------------------- lista de contactos */
+.crm-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+.crm-row {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--crm-line);
+  border-left: 3px solid var(--crm-line-strong);
+  border-radius: 8px;
+  background: var(--crm-bg-soft);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.crm-row:hover { border-color: var(--crm-line-strong); background: var(--crm-bg-sunken); }
+.crm-row.is-active { border-color: var(--crm-accent); border-left-color: var(--crm-accent); background: var(--crm-accent-soft); }
+.crm-row:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 1px; }
+
+/* El color de la barra izquierda es el diferenciador por procedencia. */
+.crm-row[data-crm-channel='whatsapp'] { border-left-color: #25d366; }
+.crm-row[data-crm-channel='formulario_web'],
+.crm-row[data-crm-channel='formulario'] { border-left-color: #2563eb; }
+.crm-row[data-crm-channel='importacion'] { border-left-color: #b45309; }
+.crm-row[data-crm-channel='manual'] { border-left-color: #7c3aed; }
+.crm-row[data-crm-channel='otro'] { border-left-color: #64748b; }
+
+.crm-row__identity { display: grid; gap: 2px; }
+.crm-row__name { font-weight: 700; overflow-wrap: anywhere; }
+.crm-row__sub { color: var(--crm-text-faint); font-size: 12px; overflow-wrap: anywhere; }
+
+.crm-row__meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.crm-row__tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.crm-row__meta-lines { display: grid; gap: 3px; }
+.crm-row__meta-line { color: var(--crm-text-soft); font-size: 12px; overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------------ píldoras */
+.crm-pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 1px solid var(--crm-line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--crm-text-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.crm-pill--channel-whatsapp { border-color: #25d366; background: #e9fbf0; color: #12653a; }
+.crm-pill--channel-formulario_web,
+.crm-pill--channel-formulario { border-color: #2563eb; background: #eaf0fe; color: #1a3f9e; }
+.crm-pill--channel-importacion { border-color: #b45309; background: #fdf3e7; color: #7a3a06; }
+.crm-pill--channel-manual { border-color: #7c3aed; background: #f3ecfe; color: #4c1d95; }
+.crm-pill--channel-otro { border-color: #64748b; background: #f1f4f8; color: #3f4a5a; }
+
+.crm-pill--status-nuevo { border-color: #2563eb; background: #eaf0fe; color: #1a3f9e; }
+.crm-pill--status-pendiente_revision { border-color: #d97706; background: #fdf4e3; color: #8a5308; }
+.crm-pill--status-asignado,
+.crm-pill--status-seguimiento { border-color: #0891b2; background: #e6f6fa; color: #075463; }
+.crm-pill--status-llamada_programada { border-color: #0f766e; background: #e7f5f3; color: #0b4f4a; }
+.crm-pill--status-no_respondio { border-color: #dc2626; background: #fdeaea; color: #8c1f24; }
+.crm-pill--status-interesado,
+.crm-pill--status-derivado { border-color: #16a34a; background: #e8f7ee; color: #14622f; }
+.crm-pill--status-no_interesado,
+.crm-pill--status-cerrado { border-color: #64748b; background: #f1f4f8; color: #3f4a5a; }
+
+.crm-pill--review { border-color: #d97706; background: #fdf4e3; color: #8a5308; }
+
+/* -------------------------------------------------------------------- ficha */
+.crm-detail { display: grid; gap: 16px; min-width: 0; }
+
+.crm-detail__head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.crm-detail__title { margin: 0; font-size: 20px; font-weight: 800; overflow-wrap: anywhere; }
+.crm-detail__sub { color: var(--crm-text-soft); font-size: 13px; overflow-wrap: anywhere; }
+.crm-detail__pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.crm-detail__section { display: grid; gap: 8px; }
+
+.crm-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.crm-fact { display: grid; gap: 2px; min-width: 0; }
+.crm-fact dt { color: var(--crm-text-faint); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.crm-fact dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Consentimiento: estado vigente + histórico */
+.crm-consent { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.crm-consent__badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--crm-line-strong);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.crm-consent__badge--granted { border-color: #16a34a; background: #e8f7ee; color: #14622f; }
+.crm-consent__badge--denied { border-color: #dc2626; background: #fdeaea; color: #8c1f24; }
+.crm-consent__badge--revoked { border-color: #7c3aed; background: #f3ecfe; color: #4c1d95; }
+.crm-consent__badge--unknown { border-color: #64748b; background: #f1f4f8; color: #3f4a5a; }
+
+/* Historial / timeline */
+.crm-timeline { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.crm-timeline__title { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--crm-text-soft); }
+
+.crm-timeline__item {
+  position: relative;
+  padding: 0 0 14px 20px;
+  border-left: 2px solid var(--crm-line);
+}
+
+.crm-timeline__item:last-child { border-left-color: transparent; padding-bottom: 0; }
+
+.crm-timeline__item::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--crm-dot, #64748b);
+}
+
+.crm-timeline__kind { font-weight: 700; }
+.crm-timeline__at { color: var(--crm-text-faint); font-size: 12px; margin-left: 6px; }
+.crm-timeline__text { margin: 2px 0 0; overflow-wrap: anywhere; }
+.crm-timeline__ref { margin: 2px 0 0; color: var(--crm-text-faint); font-size: 11.5px; overflow-wrap: anywhere; }
+
+/* Formularios recibidos */
+.crm-forms { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.crm-form { padding: 10px 12px; border: 1px solid var(--crm-line); border-radius: 8px; background: var(--crm-bg-soft); }
+.crm-form__origin { font-weight: 700; }
+.crm-form__at { color: var(--crm-text-faint); font-size: 12px; }
+.crm-form__fields { margin: 6px 0 0; display: grid; gap: 3px; }
+.crm-form__field { color: var(--crm-text-soft); font-size: 12.5px; overflow-wrap: anywhere; }
+
+/* Acciones de la ficha */
+.crm-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.crm-actions__group { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--crm-line); border-radius: 8px; background: var(--crm-bg-soft); }
+.crm-actions__group label { font-size: 12px; font-weight: 700; color: var(--crm-text-soft); }
+.crm-actions__row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* --------------------------------------------------- estados carga/vacío/error */
+.crm-state { padding: 22px; text-align: center; border: 1px dashed var(--crm-line-strong); border-radius: var(--crm-radius); background: var(--crm-bg-soft); }
+.crm-state__text { margin: 0; color: var(--crm-text-soft); }
+.crm-state__hint { margin: 6px 0 0; color: var(--crm-text-faint); font-size: 12.5px; }
+
+.crm-loading { display: flex; align-items: center; gap: 8px; color: var(--crm-text-soft); }
+
+.crm-error {
+  padding: 10px 12px;
+  border: 1px solid #a7262c;
+  border-left: 3px solid #a7262c;
+  border-radius: 6px;
+  background: #fdeaea;
+  color: #8c1f24;
+}
+
+.crm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------- responsive */
+@media (max-width: 1024px) {
+  .crm-inbox__body { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .crm-page { padding: 14px; }
+  .crm-inbox__title { font-size: 21px; }
+  .crm-inbox__summary-item { flex: 1 1 130px; padding: 10px 12px; }
+  .crm-inbox__summary-value { font-size: 20px; }
+  .crm-filters { padding: 13px; }
+  .crm-filters__row { grid-template-columns: minmax(0, 1fr); }
+  .crm-panel { padding: 13px; }
+  .crm-row__meta-lines .crm-row__meta-line { font-size: 11.5px; }
+  .crm-detail__facts { grid-template-columns: minmax(0, 1fr); }
+}
