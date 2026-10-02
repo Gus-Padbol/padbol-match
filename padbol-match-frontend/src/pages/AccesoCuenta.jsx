@@ -517,10 +517,10 @@ export default function AccesoCuenta() {
     <div
       className="acceso-cuenta-page"
       style={{
-        minHeight: 'auto',
+        minHeight: '100dvh',
         width: '100%',
         maxWidth: '100%',
-        background: 'var(--bg-page)',
+        background: '#000',
         paddingTop: accesoPaddingTop,
         paddingLeft: '16px',
         paddingRight: '16px',
@@ -544,7 +544,7 @@ export default function AccesoCuenta() {
           display: 'flex',
           justifyContent: 'center',
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '480px',
         }}
       >
         <img
@@ -562,7 +562,7 @@ export default function AccesoCuenta() {
         className="acceso-cuenta-panel"
         style={{
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '480px',
           minWidth: 0,
           padding: '0 24px',
           boxSizing: 'border-box',

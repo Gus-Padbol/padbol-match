@@ -207,6 +207,7 @@ function AdminDashboardGate() {
   const navigate = useNavigate();
   const { session, userProfile, signOutAndClear } = useAuth();
   const [roleGateTimedOut, setRoleGateTimedOut] = useState(false);
+  const [invalidSessionRedirecting, setInvalidSessionRedirecting] = useState(false);
 
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
@@ -234,6 +235,17 @@ function AdminDashboardGate() {
     });
   }, [roleLoading, session?.user?.email, rolPanel, sedeId, canAccessAdmin]);
 
+  // Una sesión almacenada puede quedar inválida después de recuperar/cambiar la
+  // contraseña. En ese caso no dejamos que el formulario de acceso aparezca un
+  // instante y sea reemplazado por una pantalla fatal: limpiamos el estado local
+  // y volvemos a un login estable conservando el destino del CRM.
+  useEffect(() => {
+    if (roleLoading || roleError || canAccessAdmin || !session?.user) return;
+    setInvalidSessionRedirecting(true);
+    signOutAndClear();
+    navigate('/login?redirect=%2Fadmin%3Ftab%3Dcrm', { replace: true });
+  }, [roleLoading, roleError, canAccessAdmin, session?.user, signOutAndClear, navigate]);
+
   // Última red de seguridad: el panel nunca debe quedar con un spinner infinito,
   // incluso si el navegador bloquea una promesa de autenticación o de red.
   useEffect(() => {
@@ -243,7 +255,7 @@ function AdminDashboardGate() {
     return () => window.clearTimeout(timeoutId);
   }, [roleLoading, currentCliente?.email]);
 
-  const stillResolvingRole = roleLoading;
+  const stillResolvingRole = roleLoading || invalidSessionRedirecting;
 
   const spinner = (
     <div
@@ -260,6 +272,7 @@ function AdminDashboardGate() {
         fontWeight: 600,
         fontSize: '16px',
         boxSizing: 'border-box',
+        background: '#000',
       }}
     >
       <div
@@ -295,7 +308,7 @@ function AdminDashboardGate() {
       <div
         style={{
           minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: 16, padding: 24, textAlign: 'center', color: 'rgba(255,255,255,0.95)', boxSizing: 'border-box',
+          gap: 16, padding: 24, textAlign: 'center', color: 'rgba(255,255,255,0.95)', boxSizing: 'border-box', background: '#000',
         }}
       >
         <strong style={{ fontSize: '20px' }}>No pudimos cargar el panel</strong>

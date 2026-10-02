@@ -40,10 +40,10 @@ input.acceso-cuenta-input:-webkit-autofill {
 }
 
 .acceso-cuenta-panel {
-  padding: 28px !important;
+  padding: 34px !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  background: #050505;
+  background: #030303;
   box-shadow: none;
 }
 
