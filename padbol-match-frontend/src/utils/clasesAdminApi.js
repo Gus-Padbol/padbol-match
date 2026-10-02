@@ -122,6 +122,17 @@ export async function patchClaseActivoAdmin({ claseId, activo, accessToken }) {
   return data;
 }
 
+export async function patchClaseAdmin({ claseId, body, accessToken }) {
+  const res = await fetch(`${API_BASE}/api/admin/clases/${Number(claseId)}`, {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo editar la clase');
+  return data;
+}
+
 export async function fetchAdminClaseAsistencia({ claseId, fecha, accessToken, signal } = {}) {
   const cid = Number(claseId);
   const f = String(fecha || '').trim().slice(0, 10);

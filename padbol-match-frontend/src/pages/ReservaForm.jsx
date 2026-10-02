@@ -71,6 +71,8 @@ import {
   PadcoinsCampaignPlayerBadge,
   PadcoinsCampaignPlayerHint,
 } from '../components/PadcoinsCampaignPlayerSurfaces';
+import ClasesHub from '../components/Clases/ClasesHub';
+import { fetchClases } from '../utils/clasesApi';
 
 /**
  * Flujo /reservar (sedes → fecha/cancha → resumen/pago).
@@ -718,6 +720,9 @@ export default function ReservaForm() {
 
   const [filtros, setFiltros] = useState(() => readPrimedSedeReserva().filtros);
   const [pantalla, setPantalla] = useState(() => readPrimedSedeReserva().pantalla);
+  const [reservaModalidad, setReservaModalidad] = useState('');
+  const [ofertaClases, setOfertaClases] = useState([]);
+  const [ofertaClasesLoading, setOfertaClasesLoading] = useState(false);
   const [reservaStripeExitoOpen, setReservaStripeExitoOpen] = useState(false);
 
   const {
@@ -774,6 +779,22 @@ export default function ReservaForm() {
     }
     return null;
   }, [sedes, filtros.sede_id]);
+
+  useEffect(() => {
+    const sid = Number(filtros.sede_id);
+    setReservaModalidad('');
+    setOfertaClases([]);
+    if (!Number.isFinite(sid)) return undefined;
+    const ac = new AbortController();
+    setOfertaClasesLoading(true);
+    fetchClases({ sedeId: sid, deporte: reservaDeporteUrl, signal: ac.signal })
+      .then((rows) => setOfertaClases(Array.isArray(rows) ? rows : []))
+      .catch((error) => {
+        if (error?.name !== 'AbortError') setOfertaClases([]);
+      })
+      .finally(() => setOfertaClasesLoading(false));
+    return () => ac.abort();
+  }, [filtros.sede_id, reservaDeporteUrl]);
 
   const reservaCampaignSedeId = useMemo(() => {
     const raw = filtros.sede_id ?? sedeSeleccionada?.id;
@@ -2543,6 +2564,64 @@ export default function ReservaForm() {
   // PANTALLA 2: fecha → horarios → canchas en una sola vista con scroll (revelación progresiva)
   if (pantalla === 2) {
     const hoyIso = ymdHoyParaReservaSede(sedeSeleccionada);
+    const tiposClaseDisponibles = new Set(
+      ofertaClases.map((row) => String(row?.tipo || '').trim().toLowerCase()),
+    );
+    const hayClasesIndividuales = tiposClaseDisponibles.has('individual');
+    const hayClasesGrupales = tiposClaseDisponibles.has('grupal');
+    const mostrarSelectorModalidad =
+      !ofertaClasesLoading &&
+      (hayClasesIndividuales || hayClasesGrupales) &&
+      !reservaModalidad;
+
+    if (mostrarSelectorModalidad) {
+      const opcionStyle = {
+        width: '100%',
+        padding: '18px 20px',
+        borderRadius: 16,
+        border: '1px solid var(--border)',
+        background: 'var(--bg-card)',
+        color: 'var(--text-primary)',
+        font: 'inherit',
+        fontSize: 17,
+        fontWeight: 800,
+        textAlign: 'left',
+        cursor: 'pointer',
+      };
+      return (
+        <div className="reserva-container" style={{ background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100dvh', paddingTop: reservaPaddingTopCss, paddingBottom: reservaPaddingBottomCss }}>
+          <AppHeader title={t('reservas.header')} onBack={handleReservaBack} />
+          <main style={{ ...hubInstagramColumnWrapStyle, padding: '20px max(16px, env(safe-area-inset-right, 0px))' }}>
+            <section className="reserva-card" aria-labelledby="reserva-modalidad-title">
+              <h1 id="reserva-modalidad-title" style={{ margin: '0 0 8px', fontSize: 24 }}>¿Qué querés reservar?</h1>
+              <p style={{ margin: '0 0 20px', color: 'var(--text-secondary)' }}>{sedeSeleccionada?.nombre || t('reservas.loadingVenue')}</p>
+              <div style={{ display: 'grid', gap: 12 }}>
+                <button type="button" style={opcionStyle} onClick={() => setReservaModalidad('cancha')}>🏟️ Cancha libre</button>
+                {hayClasesIndividuales ? (
+                  <button type="button" style={opcionStyle} onClick={() => setReservaModalidad('individual')}>👤 Clase individual</button>
+                ) : null}
+                {hayClasesGrupales ? (
+                  <button type="button" style={opcionStyle} onClick={() => setReservaModalidad('grupal')}>👥 Clase grupal</button>
+                ) : null}
+              </div>
+            </section>
+          </main>
+          <BottomNav />
+        </div>
+      );
+    }
+
+    if (reservaModalidad === 'individual' || reservaModalidad === 'grupal') {
+      return (
+        <div className="reserva-container" style={{ background: 'var(--bg-page)', color: 'var(--text-primary)', minHeight: '100dvh', paddingTop: reservaPaddingTopCss, paddingBottom: reservaPaddingBottomCss }}>
+          <AppHeader title={reservaModalidad === 'individual' ? 'Clase individual' : 'Clase grupal'} onBack={() => setReservaModalidad('')} />
+          <main style={{ ...hubInstagramColumnWrapStyle, padding: '18px max(16px, env(safe-area-inset-right, 0px))' }}>
+            <ClasesHub sedeId={Number(filtros.sede_id)} tipo={reservaModalidad} deporte={reservaDeporteUrl} />
+          </main>
+          <BottomNav />
+        </div>
+      );
+    }
     return (
       <div className="reserva-container" style={{
         background: 'var(--bg-page)',
@@ -2564,6 +2643,11 @@ export default function ReservaForm() {
           }}
         >
         <div className="reserva-card">
+          {(hayClasesIndividuales || hayClasesGrupales) && reservaModalidad === 'cancha' ? (
+            <button type="button" onClick={() => setReservaModalidad('')} style={{ margin: '0 0 14px', border: 0, background: 'transparent', color: 'var(--accent, #d4af37)', fontWeight: 800, cursor: 'pointer' }}>
+              ← Cambiar tipo de reserva
+            </button>
+          ) : null}
           <h1 style={{ margin: 0, marginBottom: mostrarEtiquetaSedeMasCercanaGeo ? '8px' : '20px' }}>
             📅 {sedeSeleccionada?.nombre || t('reservas.loadingVenue')}
           </h1>
