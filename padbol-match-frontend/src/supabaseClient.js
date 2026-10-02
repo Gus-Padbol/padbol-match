@@ -5,6 +5,7 @@ const { resolveClientEnvironment, PRODUCTION_SUPABASE_URL, PRODUCTION_SUPABASE_P
 const environment = resolveClientEnvironment(process.env);
 const supabaseUrl = environment.supabaseUrl || PRODUCTION_SUPABASE_URL;
 const supabaseAnonKey = environment.supabaseAnonKey || PRODUCTION_SUPABASE_PUBLIC_KEY;
+const isCrmQaAuth = supabaseUrl.includes('vxikhdulhuvghfqeutnp');
 
 /**
  * Auth: PKCE + sesión en URL para callbacks; sin redirect global en la app.
@@ -16,6 +17,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    // QA usa enlaces de activación que pueden abrirse desde otro dispositivo
+    // (por ejemplo, solicitar en Mac y abrir el correo en iPhone). El flujo
+    // implícito evita depender del code-verifier guardado en el navegador que
+    // originó la solicitud. Producción conserva PKCE.
+    flowType: isCrmQaAuth ? 'implicit' : 'pkce',
   },
 });
