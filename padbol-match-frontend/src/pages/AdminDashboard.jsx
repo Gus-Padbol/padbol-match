@@ -93,7 +93,7 @@ import AdminSedeListaEsperaTorneosSection from '../components/AdminSedeListaEspe
 import AdminSedeConfiguracionGuiada from '../components/AdminSedeConfiguracionGuiada';
 import AdminSuspensionesSection from '../components/AdminSuspensionesSection';
 import AdminNotificacionesSection from '../components/AdminNotificacionesSection';
-import WhatsappCrmInbox from '../components/whatsappCrm/WhatsappCrmInbox';
+import WhatsappCrmDemo from './WhatsappCrmDemo';
 import JugadorReputacionBadges from '../components/JugadorReputacionBadges';
 import AdminSedeExtrasPendientesSuper from '../components/AdminSedeExtrasPendientesSuper';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
@@ -11936,10 +11936,7 @@ export default function AdminDashboard({
       ) : null}
 
       {activeTab === 'crm' && isSuperAdmin ? (
-        <WhatsappCrmInbox
-          accessToken={session?.access_token || ''}
-          isSuperAdmin
-        />
+        <WhatsappCrmDemo />
       ) : null}
 
       {activeTab === ADMIN_SEDES_TAB_ID && (esAdminNacional || isSuperAdmin) && (
