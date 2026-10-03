@@ -18548,7 +18548,7 @@ scheduleBackgroundJob(
   { timezone: 'America/Argentina/Buenos_Aires' },
 );
 
-(async () => {
+if (!process.env.VERCEL) (async () => {
   try {
     if (runtime.outboundDeliveryEnabled) await ensureStripeSubscriptionPriceId();
   } catch (e) {
@@ -18567,3 +18567,5 @@ scheduleBackgroundJob(
     }
   });
 })();
+
+export default app;
