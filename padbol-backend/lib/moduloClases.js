@@ -1593,7 +1593,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       await assertUsuarioPuedeAdministrarSede(req, sedeId);
 
-      const { data: prof, error: profErr } = await supabase
+      const { data: prof, error: profErr } = await supabaseAdmin
         .from('profesores')
         .select('id, sede_id, aprobado, activo, deportes, certificado_estado')
         .eq('id', profesorId)
@@ -1613,7 +1613,7 @@ export function registerModuloClasesRoutes(app, deps) {
       }
 
       if (Number.isFinite(canchaId)) {
-        const { data: cancha, error: canchaErr } = await supabase
+        const { data: cancha, error: canchaErr } = await supabaseAdmin
           .from('canchas')
           .select('id, sede_id')
           .eq('id', canchaId)
