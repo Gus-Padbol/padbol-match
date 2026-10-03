@@ -55,6 +55,32 @@ export async function crearProfesorAdmin({ sedeId, body, accessToken }) {
   return data;
 }
 
+export async function uploadProfesorCertificado({ sedeId, file, accessToken }) {
+  const dataBase64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('No se pudo leer el certificado'));
+    reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+    reader.readAsDataURL(file);
+  });
+  const res = await fetch(`${API_BASE}/api/admin/profesores/certificado-upload`, {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify({ sede_id: Number(sedeId), mime_type: file.type, data_base64: dataBase64 }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo subir el certificado');
+  return data;
+}
+
+export async function fetchProfesorCertificadoUrl({ profesorId, accessToken }) {
+  const res = await fetch(`${API_BASE}/api/admin/profesores/${Number(profesorId)}/certificado-url`, {
+    headers: authHeaders(accessToken),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo abrir el certificado');
+  return data;
+}
+
 export async function aprobarProfesorAdmin({ profesorId, accessToken }) {
   const res = await fetch(`${API_BASE}/api/admin/profesores/${Number(profesorId)}/aprobar`, {
     method: 'PATCH',
@@ -119,6 +145,17 @@ export async function patchClaseActivoAdmin({ claseId, activo, accessToken }) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || 'No se pudo actualizar');
+  return data;
+}
+
+export async function patchClaseAdmin({ claseId, body, accessToken }) {
+  const res = await fetch(`${API_BASE}/api/admin/clases/${Number(claseId)}`, {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo editar la clase');
   return data;
 }
 

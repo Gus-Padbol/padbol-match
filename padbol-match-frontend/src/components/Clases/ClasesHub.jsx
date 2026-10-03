@@ -74,9 +74,10 @@ function ClaseMiniCard({ clase, onClick }) {
   );
 }
 
-export default function ClasesHub({ sedeId }) {
+export default function ClasesHub({ sedeId, tipo = '', deporte = '' }) {
   const navigate = useNavigate();
-  const [deporteElegido, setDeporteElegido] = useState(() => readHubDeporteFilterPersisted());
+  const deporteFijo = String(deporte || '').trim().toLowerCase();
+  const [deporteElegido, setDeporteElegido] = useState(() => deporteFijo || readHubDeporteFilterPersisted());
   const [profesores, setProfesores] = useState([]);
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +102,8 @@ export default function ClasesHub({ sedeId }) {
     ])
       .then(([profs, cls]) => {
         setProfesores(profs);
-        setClases(cls);
+        const tipoFiltro = String(tipo || '').trim().toLowerCase();
+        setClases(tipoFiltro ? cls.filter((c) => String(c.tipo || '').toLowerCase() === tipoFiltro) : cls);
       })
       .catch((e) => {
         if (e?.name === 'AbortError') return;
@@ -111,7 +113,11 @@ export default function ClasesHub({ sedeId }) {
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
-  }, [sid, deporteElegido]);
+  }, [sid, deporteElegido, tipo]);
+
+  useEffect(() => {
+    if (deporteFijo) setDeporteElegido(deporteFijo);
+  }, [deporteFijo]);
 
   const clasesDelProfesor = useMemo(() => {
     if (!profesorSel?.id) return [];
@@ -129,7 +135,9 @@ export default function ClasesHub({ sedeId }) {
 
   return (
         <div style={{ width: '100%', maxWidth: COL_MAX, margin: '0 auto', boxSizing: 'border-box' }}>
-      <HubDeporteSelect compact id="clases-deporte-select" value={deporteElegido} onChange={(v) => { setDeporteElegido(v); writeHubDeporteFilterToSession(v); setProfesorSel(null); }} />
+      {!deporteFijo ? (
+        <HubDeporteSelect compact id="clases-deporte-select" value={deporteElegido} onChange={(v) => { setDeporteElegido(v); writeHubDeporteFilterToSession(v); setProfesorSel(null); }} />
+      ) : null}
       {profesorSel ? (
         <>
           <button type="button" onClick={() => setProfesorSel(null)} style={{ margin: '14px 0 10px', padding: 0, border: 'none', background: 'none', color: ACCENT, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>← Volver a profesores</button>

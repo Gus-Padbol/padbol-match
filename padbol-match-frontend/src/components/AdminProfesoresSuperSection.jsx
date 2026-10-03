@@ -4,6 +4,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from './common/SportIcon';
 import {
   aprobarProfesorAdmin,
+  fetchProfesorCertificadoUrl,
   fetchAdminProfesoresTodos,
   patchProfesorAdmin,
   rechazarProfesorAdmin,
@@ -111,6 +112,10 @@ function rowToEditDraft(row) {
     sede_id: row?.sede_id != null ? String(row.sede_id) : '',
     deportes: Array.isArray(row?.deportes) ? [...row.deportes] : [],
     certificado_fipa: Boolean(row?.certificado_fipa),
+    certificado_estado: String(row?.certificado_estado || 'sin_documento'),
+    certificado_nota: String(row?.certificado_nota || ''),
+    especialidad: String(row?.especialidad || ''),
+    nivel: String(row?.nivel || ''),
     whatsapp: String(row?.whatsapp || '').trim(),
     bio: String(row?.bio || '').trim(),
     fecha_nacimiento: /^\d{4}-\d{2}-\d{2}$/.test(fecha) ? fecha : '',
@@ -126,6 +131,17 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
   const [sedesLoading, setSedesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+
+  const abrirCertificado = async () => {
+    setSaveError('');
+    try {
+      const data = await fetchProfesorCertificadoUrl({ profesorId: row.id, accessToken });
+      if (!data?.url) throw new Error('No se pudo generar el acceso al certificado');
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      setSaveError(error?.message || 'No se pudo abrir el certificado');
+    }
+  };
 
   useEffect(() => {
     setRow(rowProp);
@@ -197,6 +213,10 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
           sede_id: Number(draft.sede_id),
           deportes: draft.deportes,
           certificado_fipa: draft.certificado_fipa,
+          certificado_estado: draft.certificado_estado,
+          certificado_nota: String(draft.certificado_nota || '').trim() || null,
+          especialidad: String(draft.especialidad || '').trim() || null,
+          nivel: String(draft.nivel || '').trim() || null,
           whatsapp: String(draft.whatsapp || '').trim() || null,
           bio: String(draft.bio || '').trim() || null,
           fecha_nacimiento: draft.fecha_nacimiento || null,
@@ -284,6 +304,20 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
               <span>{t('instructor.campoCertificado')}</span>
             </label>
 
+            <label className="admin-profesores-super__ficha-edit-label">Especialidad</label>
+            <input className="admin-profesores-super__ficha-edit-input" value={draft.especialidad} onChange={(e) => setDraft((d) => ({ ...d, especialidad: e.target.value }))} disabled={saving} />
+            <label className="admin-profesores-super__ficha-edit-label">Nivel</label>
+            <input className="admin-profesores-super__ficha-edit-input" value={draft.nivel} onChange={(e) => setDraft((d) => ({ ...d, nivel: e.target.value }))} disabled={saving} />
+            <label className="admin-profesores-super__ficha-edit-label">Estado del certificado</label>
+            <select className="admin-profesores-super__ficha-edit-input" value={draft.certificado_estado} onChange={(e) => setDraft((d) => ({ ...d, certificado_estado: e.target.value }))} disabled={saving}>
+              <option value="sin_documento">Sin documento</option>
+              <option value="pendiente">Pendiente de revisión</option>
+              <option value="aprobado">Aprobado</option>
+              <option value="rechazado">Rechazado</option>
+            </select>
+            <label className="admin-profesores-super__ficha-edit-label">Nota de revisión</label>
+            <textarea className="admin-profesores-super__ficha-edit-textarea" value={draft.certificado_nota} onChange={(e) => setDraft((d) => ({ ...d, certificado_nota: e.target.value }))} disabled={saving} />
+
             <label className="admin-profesores-super__ficha-edit-label">{t('admin.profesores.colWhatsapp')}</label>
             <input
               type="tel"
@@ -357,6 +391,13 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
             <FichaRow label={t('admin.profesores.colSede')} value={row.sede_nombre || (row.sede_id != null ? `ID ${row.sede_id}` : '—')} />
             <FichaRow label={t('admin.profesores.colDeportes')} value={deportesLabel(row.deportes)} />
             <FichaRow label={t('admin.profesores.colCertificado')} value={row.certificado_fipa ? t('admin.profesores.certificadoSi') : '—'} />
+            <FichaRow label="Especialidad" value={String(row.especialidad || '').trim() || '—'} />
+            <FichaRow label="Nivel" value={String(row.nivel || '').trim() || '—'} />
+            <FichaRow label="Estado del certificado" value={String(row.certificado_estado || 'sin_documento')} />
+            <FichaRow label="Número de certificado" value={String(row.certificado_numero || '').trim() || '—'} />
+            <FichaRow label="Documento">
+              {row.certificado_url ? <button type="button" onClick={() => void abrirCertificado()} className="admin-profesores-super__btn admin-profesores-super__btn--ghost">Abrir certificado</button> : '—'}
+            </FichaRow>
             <FichaRow label={t('admin.profesores.fichaBio')} value={String(row.bio || '').trim() || '—'} />
             {isSuperAdmin ? (
               <FichaRow label={t('admin.profesores.colWhatsapp')}>
