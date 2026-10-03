@@ -9,7 +9,7 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://padbol-crm-qa-kz2x921i2-padbol1.vercel.app/api/:path*"
+      "destination": "https://padbol-crm-qa-api.vercel.app/api/:path*"
     }
   ],
   "headers": [
