@@ -400,7 +400,7 @@ export function registerModuloClasesRoutes(app, deps) {
       if (authUser?.id && fecha) {
         const { data: insMine, error: insMineErr } = await supabaseAdmin
           .from('inscripciones_clases')
-          .select('id, clase_id, fecha, hora_inicio, estado, reserva_id, asistio, created_at')
+          .select('id, clase_id, fecha, hora_inicio, estado, asistio, created_at')
           .eq('clase_id', claseId)
           .eq('user_id', authUser.id)
           .eq('fecha', fecha)
@@ -470,7 +470,7 @@ export function registerModuloClasesRoutes(app, deps) {
       const { data: rows, error } = await supabaseAdmin
         .from('inscripciones_clases')
         .select(
-          'id, clase_id, user_id, fecha, hora_inicio, estado, reserva_id, asistio, asistencia_marcada_at, created_at, clases!inner(id, titulo, deporte, sede_id, sedes(id, nombre), profesores!inner(id, nombre, apellido))',
+          'id, clase_id, user_id, fecha, hora_inicio, estado, asistio, asistencia_marcada_at, created_at, clases!inner(id, titulo, deporte, sede_id, sedes(id, nombre), profesores!inner(id, nombre, apellido))',
         )
         .eq('user_id', user.id)
         .neq('estado', 'cancelada')
@@ -514,7 +514,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data: ins, error: insErr } = await supabaseAdmin
         .from('inscripciones_clases')
-        .select('id, clase_id, user_id, fecha, hora_inicio, estado, reserva_id')
+        .select('id, clase_id, user_id, fecha, hora_inicio, estado')
         .eq('id', insId)
         .maybeSingle();
       if (insErr) throw insErr;
@@ -544,13 +544,6 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { error: delErr } = await supabaseAdmin.from('inscripciones_clases').delete().eq('id', insId);
       if (delErr) throw delErr;
-
-      if (ins.reserva_id != null) {
-        await supabaseAdmin
-          .from('reservas')
-          .update({ estado: 'cancelada' })
-          .eq('id', ins.reserva_id);
-      }
 
       await registrarEventoInternoClase({
         sedeId: clase.sede_id,
@@ -678,7 +671,6 @@ export function registerModuloClasesRoutes(app, deps) {
             fecha,
             hora_inicio: horaInicio,
             estado: 'pendiente',
-            reserva_id: reserva?.id ?? null,
           },
         ])
         .select()
