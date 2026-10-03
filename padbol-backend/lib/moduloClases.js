@@ -580,7 +580,7 @@ export function registerModuloClasesRoutes(app, deps) {
         return res.status(400).json({ error: 'clase_id, fecha (YYYY-MM-DD) y hora_inicio (HH:MM) son requeridos' });
       }
 
-      const { data: clase, error: claseErr } = await supabase
+      const { data: clase, error: claseErr } = await supabaseAdmin
         .from('clases')
         .select(
           'id, sede_id, cancha_id, deporte, titulo, cupo_maximo, duracion_minutos, precio, activo, profesores!inner(id, aprobado, activo)',
@@ -604,7 +604,7 @@ export function registerModuloClasesRoutes(app, deps) {
         return res.status(409).json({ error: 'No hay cupo disponible para este turno' });
       }
 
-      const { data: sedeRow, error: sedeErr } = await supabase
+      const { data: sedeRow, error: sedeErr } = await supabaseAdmin
         .from('sedes')
         .select('id, nombre, moneda')
         .eq('id', clase.sede_id)
