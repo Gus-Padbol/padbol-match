@@ -6,6 +6,7 @@
 - Integración CRM/push: merge `98fae79e`
 - Integración clases/profesores: merge `f209c2df`
 - Corrección final de español neutral: `94f61ab0`
+- Bandeja histórica unificada (incluye `Prueba 23`): `80c34f4c`
 - No se publicó ni modificó producción.
 - No se enviaron push, WhatsApp ni correos reales.
 
@@ -15,6 +16,7 @@
 - Frontend: 133/133 suites y 1097/1097 pruebas aprobadas.
 - ESLint: 0 errores; queda una advertencia preexistente por un import sin uso en `DownloadSection.jsx`.
 - Build optimizada: completada correctamente. Las únicas advertencias de build corresponden a sourcemaps incompletos de la dependencia `html5-qrcode` y al tamaño del bundle.
+- Regresión focal posterior a la restauración histórica: 8 suites y 48 pruebas aprobadas (CRM, push, visibilidad de pestañas, rutas QA, acceso y liberación de reservas).
 
 ## Contratos comprobados
 
@@ -45,5 +47,8 @@ Lectura autenticada y sin mutaciones contra la QA histórica:
 - 28 respuestas
 - 3 actividades
 - conversación WhatsApp `Prueba 23`: presente
+- `/api/auth/mi-rol`: sesión autenticada con rol `super_admin`
+- `/api/admin/crm/permissions`: auditoría habilitada
+- `/api/push/admin-quota`: `unlimited=true`
 
 No hubo pérdida de datos. La recuperación consiste en iniciar sesión en el origen QA anterior; no requiere restaurar ni copiar información.

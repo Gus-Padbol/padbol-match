@@ -139,7 +139,7 @@ export default function WhatsappCrmDemo() {
   const [error, setError] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [areaFilter, setAreaFilter] = useState('all');
-  const [channelFilter, setChannelFilter] = useState('');
+  const channelFilter = '';
   const [estadoFilter, setEstadoFilter] = useState('');
   const [replyText, setReplyText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -169,7 +169,7 @@ export default function WhatsappCrmDemo() {
       setPerms(p);
       if (p?.canOperate) {
         const inbox = await crmAdminApi.inbox(token, { channel: channelFilter, estado: estadoFilter });
-        setItems(Array.isArray(inbox) ? inbox : []);
+        setItems(Array.isArray(inbox) ? inbox : Array.isArray(inbox?.items) ? inbox.items : []);
       } else if (p?.canAudit) {
         const audit = await crmAdminApi.audit(token);
         setItems(Array.isArray(audit?.conversations) ? audit.conversations : []);
