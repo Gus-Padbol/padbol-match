@@ -5413,13 +5413,13 @@ async function assertReservaSinSolapeBackend({ sede, fecha, hora, cancha, duraci
   const duracion = Number.isFinite(Number(duracionMin)) && Number(duracionMin) > 0 ? parseInt(String(duracionMin), 10) : 90;
   let q = supabaseAdmin
     .from('reservas')
-    .select('id,hora,duracion,duracion_minutos,estado')
+    .select('id,hora,duracion_minutos,estado')
     .eq('sede', sede)
     .eq('fecha', fecha)
     .eq('cancha', canchaNum);
   if (excludeId != null && String(excludeId).trim() !== '') q = q.neq('id', excludeId);
   logCrearPreferenciaSupabaseQuery(supabaseAdmin, 'reservas', 'select', {
-    columns: 'id,hora,duracion,duracion_minutos,estado',
+    columns: 'id,hora,duracion_minutos,estado',
     eq: { sede, fecha, cancha: canchaNum },
     neq: excludeId != null && String(excludeId).trim() !== '' ? { id: excludeId } : undefined,
     context: { duracionMin: duracion },
