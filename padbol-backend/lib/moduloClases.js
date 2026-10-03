@@ -306,7 +306,11 @@ export function registerModuloClasesRoutes(app, deps) {
     try {
       const sedeId = req.query.sede_id != null && req.query.sede_id !== '' ? Number(req.query.sede_id) : null;
       const deporte = String(req.query.deporte || '').trim().toLowerCase();
+      const tipo = String(req.query.tipo || '').trim().toLowerCase();
+      const profesorId = req.query.profesor_id != null && req.query.profesor_id !== '' ? Number(req.query.profesor_id) : null;
       if (sedeId != null && !Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id inválido' });
+      if (tipo && !['individual', 'grupal'].includes(tipo)) return res.status(400).json({ error: 'tipo inválido' });
+      if (profesorId != null && !Number.isFinite(profesorId)) return res.status(400).json({ error: 'profesor_id inválido' });
 
       let query = supabaseAdmin
         .from('clases')
@@ -318,6 +322,8 @@ export function registerModuloClasesRoutes(app, deps) {
         .eq('profesores.activo', true);
       if (sedeId != null) query = query.eq('sede_id', sedeId);
       if (deporte) query = query.ilike('deporte', deporte);
+      if (tipo) query = query.eq('tipo', tipo);
+      if (profesorId != null) query = query.eq('profesor_id', profesorId);
       const { data, error } = await query.order('id', { ascending: true });
       if (error) throw error;
 
