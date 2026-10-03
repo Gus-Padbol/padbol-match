@@ -8,7 +8,7 @@
 - Corrección final de español neutral: `94f61ab0`
 - Bandeja histórica unificada (incluye `Prueba 23`): `80c34f4c`
 - No se publicó ni modificó producción.
-- No se enviaron push, WhatsApp ni correos reales.
+- No se enviaron push ni WhatsApp reales. Se envió únicamente el correo de recuperación QA autorizado al Super Admin.
 
 ## Verificaciones locales
 
@@ -52,3 +52,14 @@ Lectura autenticada y sin mutaciones contra la QA histórica:
 - `/api/push/admin-quota`: `unlimited=true`
 
 No hubo pérdida de datos. La recuperación consiste en iniciar sesión en el origen QA anterior; no requiere restaurar ni copiar información.
+
+## Candidato QA publicado
+
+- URL estable: `https://padbol-crm-superadmin-qa.vercel.app`
+- Deployment frontend: `dpl_3LMuiDEKurV7vAN2wvcqiFVFyjgW`
+- Deployment backend aislado: `dpl_74A972cbmnkdi8t1TqCd7Cn6yqt8`
+- Salud del backend: HTTP 200.
+- Lectura autenticada en el alias final: CRM con 65 conversaciones y `Prueba 23`; Super Admin con `unlimited=true`; profesores HTTP 200.
+- El alias estable fue asociado al candidato integrado, sin modificar producción.
+- Los eventos de recuperación que Supabase entrega en el Site URL QA son dirigidos a la pantalla de creación de contraseña y luego al panel `/admin`.
+- El primer correo de recuperación autorizado fue aceptado por Supabase (HTTP 200). Un reenvío inmediato posterior fue limitado temporalmente por Supabase (HTTP 429); el enlace anterior permanece dirigido al mismo alias estable ya actualizado.
