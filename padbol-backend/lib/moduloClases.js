@@ -156,7 +156,7 @@ export function registerModuloClasesRoutes(app, deps) {
     );
   }
 
-  function nextScheduledSlot(horarios, now = new Date()) {
+  function scheduledSlots(horarios, now = new Date()) {
     const candidates = [];
     for (let offset = 0; offset <= 14; offset += 1) {
       const date = new Date(now);
@@ -173,7 +173,15 @@ export function registerModuloClasesRoutes(app, deps) {
       }
     }
     candidates.sort((a, b) => a.startsAt - b.startsAt);
-    return candidates[0] || null;
+    return candidates;
+  }
+
+  async function nextAvailableSlot(claseId, horarios, cupoMax, now = new Date()) {
+    for (const slot of scheduledSlots(horarios, now)) {
+      const reservasCount = await countInscripcionesSlot(claseId, slot.fecha, slot.hora);
+      if (reservasCount < cupoMax) return { ...slot, reservasCount };
+    }
+    return null;
   }
 
   async function resolveCanchaNumeroReserva(canchaId) {
@@ -331,10 +339,10 @@ export function registerModuloClasesRoutes(app, deps) {
       for (const clase of data || []) {
         if (!profesorMatchesDeporte(clase.profesores, deporte)) continue;
         const horarios = await fetchHorariosClase(clase.id);
-        const slot = nextScheduledSlot(horarios);
-        if (!slot) continue;
-        const reservasCount = await countInscripcionesSlot(clase.id, slot.fecha, slot.hora);
         const cupoMax = Math.max(1, parseInt(String(clase.cupo_maximo), 10) || 1);
+        const slot = await nextAvailableSlot(clase.id, horarios, cupoMax);
+        if (!slot) continue;
+        const reservasCount = slot.reservasCount;
         const profesor = mapProfesorPublic(clase.profesores);
         const certApproved = String(clase.profesores?.certificado_estado || '') === 'aprobado';
         available.push({
@@ -711,8 +719,17 @@ export function registerModuloClasesRoutes(app, deps) {
     try {
       const claseId = Number(req.params.id);
       if (!Number.isFinite(claseId)) return res.status(400).json({ error: 'ID inválido' });
+      const { data: clase, error: claseError } = await supabaseAdmin
+        .from('clases')
+        .select('id, cupo_maximo, activo')
+        .eq('id', claseId)
+        .eq('activo', true)
+        .maybeSingle();
+      if (claseError) throw claseError;
+      if (!clase) return res.status(404).json({ error: 'Clase no disponible' });
       const horarios = await fetchHorariosClase(claseId);
-      const slot = nextScheduledSlot(horarios);
+      const cupoMax = Math.max(1, parseInt(String(clase.cupo_maximo), 10) || 1);
+      const slot = await nextAvailableSlot(claseId, horarios, cupoMax);
       if (!slot) return res.status(409).json({ error: 'La clase no tiene próximos horarios disponibles' });
       req.body = { ...(req.body || {}), clase_id: claseId, fecha: slot.fecha, hora_inicio: slot.hora };
       return inscribirClaseHandler(req, res);
