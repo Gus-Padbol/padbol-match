@@ -54,17 +54,16 @@ export default function PagoFallido() {
     setBusy(true);
     const p = readMpReservaPendingSlot();
     try {
-      if (p?.sede && p.fecha && p.hora && p.cancha != null) {
+      if (p?.releaseToken) {
         const body = {
-          sede: String(p.sede).trim(),
-          fecha: String(p.fecha).trim(),
-          hora: String(p.hora).trim(),
-          cancha: parseInt(String(p.cancha), 10),
+          release_token: String(p.releaseToken).trim(),
         };
-        if (p.email) body.email = String(p.email).trim().toLowerCase();
         await fetch(`${API_BASE}/api/reservas/liberar-slot-pendiente`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
           body: JSON.stringify(body),
         });
       }
@@ -82,7 +81,7 @@ export default function PagoFallido() {
       else navigate('/reservar', { replace: true });
       setBusy(false);
     }
-  }, [navigate, session?.user]);
+  }, [navigate, session?.access_token, session?.user]);
 
   return (
     <div

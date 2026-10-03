@@ -74,6 +74,13 @@ import {
   ventanasHorarioReserva,
 } from './lib/reservaSlotsHorarios.js';
 import {
+  RESERVA_RELEASE_PENDING_STATES,
+  assertReservaMatchesReleaseToken,
+  createReservaReleaseToken,
+  isReservaReleasePendingState,
+  verifyReservaReleaseToken,
+} from './lib/reservaReleaseToken.js';
+import {
   buildCanchaDeporteWritePatch,
   isMissingCanchaCustomColumnError,
   mapCanchaPublicDto,
@@ -229,6 +236,15 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = String(
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY ?? '',
 ).trim();
+// Preferir un secreto dedicado; la clave service-role es un fallback server-side de alta
+// entropía para que el flujo falle cerrado sin exigir una migración de datos inmediata.
+const RESERVA_RELEASE_TOKEN_SECRET = String(
+  process.env.RESERVA_RELEASE_TOKEN_SECRET || SUPABASE_SERVICE_ROLE_KEY || '',
+).trim();
+const RESERVA_RELEASE_TOKEN_TTL_SECONDS = Number.parseInt(
+  String(process.env.RESERVA_RELEASE_TOKEN_TTL_SECONDS || ''),
+  10,
+);
 const SUPABASE_CLIENT_GLOBAL_OPTS = {
   global: { WebSocket: ws },
   realtime: { enabled: false },
@@ -5538,7 +5554,22 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
       });
     }
 
-    res.json(data);
+    let responseData = data;
+    if (createdReserva?.id != null && isReservaReleasePendingState(estReserva)) {
+      const release = createReservaReleaseToken({
+        reserva: { ...createdReserva, estado: estReserva },
+        secret: RESERVA_RELEASE_TOKEN_SECRET,
+        ttlSeconds: RESERVA_RELEASE_TOKEN_TTL_SECONDS,
+      });
+      const withReleaseCapability = {
+        ...createdReserva,
+        release_token: release.token,
+        release_token_expires_at: release.expiresAt,
+      };
+      responseData = Array.isArray(data) ? [withReleaseCapability, ...data.slice(1)] : withReleaseCapability;
+    }
+
+    res.json(responseData);
   } catch (err) {
     const st = err.status || 500;
     if (st >= 400 && st < 500) {
@@ -5778,6 +5809,7 @@ async function assertReservaAccesibleHistorial(req, reservaId) {
 app.get('/api/reservas', async (req, res) => {
   try {
     const scope = await adminListScopeFromRequest(req);
+    if (!scope) return res.status(401).json({ error: 'No autorizado' });
     const logLine = scope
       ? { rol: scope.rol, alcance: scope.alcance, email: scope.email, sedeId: scope.sedeId }
       : { rol: null, alcance: null, email: null, sedeId: null };
@@ -5785,22 +5817,20 @@ app.get('/api/reservas', async (req, res) => {
 
     let query = supabaseAdmin.from('reservas').select('*');
 
-    if (scope) {
-      await assertFuncionOrganizacionHabilitada(scope, 'reservas');
-      if (scope.superA || scope.alcance === 'global') {
-        // sin filtro
-      } else if (scope.rol === 'admin_club' || scope.rol === 'admin_cadena' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
-        const allowed = await sedesPermitidasPorScope(scope);
-        const nombres = [
-          ...new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean)),
-        ];
-        if (!nombres.length) return res.json([]);
-        query = query.in('sede', nombres);
-      } else if (scope.authUserId) {
-        query = query.eq('user_id', scope.authUserId);
-      } else {
-        return res.json([]);
-      }
+    await assertFuncionOrganizacionHabilitada(scope, 'reservas');
+    if (scope.superA || scope.alcance === 'global') {
+      // sin filtro
+    } else if (scope.rol === 'admin_club' || scope.rol === 'admin_cadena' || scope.rol === 'admin_nacional' || scope.rol === 'empleado') {
+      const allowed = await sedesPermitidasPorScope(scope);
+      const nombres = [
+        ...new Set((allowed.sedes || []).map((s) => String(s?.nombre || '').trim()).filter(Boolean)),
+      ];
+      if (!nombres.length) return res.json([]);
+      query = query.in('sede', nombres);
+    } else if (scope.authUserId) {
+      query = query.eq('user_id', scope.authUserId);
+    } else {
+      return res.json([]);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -5917,13 +5947,31 @@ app.post('/api/checkin/confirmar/:qr_token', async (req, res) => {
 
     const { data: prev, error: prevErr } = await supabaseAdmin
       .from('reservas')
-      .select('id, checkin_at')
+      .select('id, fecha, estado, checkin_at')
       .eq('qr_token', qr_token)
       .maybeSingle();
     if (prevErr) throw prevErr;
     if (!prev) return res.status(404).json({ error: 'QR no encontrado' });
     if (prev.checkin_at) {
       return res.json({ ok: true, checkin_at: prev.checkin_at, ya_existia: true });
+    }
+
+    // El QR es una capacidad de acceso, no autorización para alterar cualquier reserva
+    // que alguna vez lo haya tenido. Revalidar aquí los mismos invariantes que expone
+    // GET /validar evita confirmar reservas canceladas o de otra fecha mediante un POST
+    // directo que omita deliberadamente el paso de previsualización.
+    const estado = String(prev.estado || '').trim().toLowerCase();
+    if (estado === 'cancelada') {
+      return res.status(409).json({ error: 'Reserva cancelada', code: 'CHECKIN_RESERVA_CANCELADA' });
+    }
+    const fechaReserva = ymdFromReservaFechaCheckin(prev.fecha);
+    const hoy = ymdTodayInTorneoTz();
+    if (!fechaReserva || !hoy || fechaReserva !== hoy) {
+      return res.status(409).json({
+        error: 'La reserva no es para hoy',
+        code: 'CHECKIN_FECHA_INVALIDA',
+        fecha: fechaReserva,
+      });
     }
 
     const checkin_by = String(req.body?.operador || 'kiosco').trim() || 'kiosco';
@@ -6226,51 +6274,35 @@ app.delete('/api/reservas/:id', async (req, res) => {
   }
 });
 
-/**
- * Libera turnos ocupados solo por reservas pendientes de pago (manual / MP),
- * para que otro usuario pueda reservar el mismo slot.
- * Body: { sede, fecha, hora, cancha, email? } — si viene email, solo filas con ese email.
- */
+/** Libera exactamente la reserva pendiente autorizada por una capacidad firmada y expirable. */
 app.post('/api/reservas/liberar-slot-pendiente', async (req, res) => {
   try {
-    const b = req.body || {};
-    const sede = String(b.sede || '').trim();
-    const fecha = String(b.fecha || '').trim();
-    const hora = String(b.hora || '').trim();
-    const cancha = parseInt(String(b.cancha), 10);
-    const emailNorm = b.email != null ? String(b.email).trim().toLowerCase() : '';
-    if (!sede || !fecha || !hora || !Number.isFinite(cancha)) {
-      return res.status(400).json({ error: 'Faltan sede, fecha, hora o cancha' });
-    }
-    const estadosPend = [
-      'pendiente_pago_manual',
-      'pendiente_pago_efectivo',
-      'pendiente_pago_mercadopago',
-      'pendiente_mercadopago',
-    ];
-    let q = supabaseAdmin
+    const claims = verifyReservaReleaseToken(req.body?.release_token, {
+      secret: RESERVA_RELEASE_TOKEN_SECRET,
+    });
+    const { data: reserva, error: selErr } = await supabaseAdmin
       .from('reservas')
-      .select('id')
-      .eq('sede', sede)
-      .eq('fecha', fecha)
-      .eq('hora', hora)
-      .eq('cancha', cancha)
-      .in('estado', estadosPend);
-    if (emailNorm) {
-      q = q.eq('email', emailNorm);
-    }
-    const { data: rows, error: selErr } = await q;
+      .select('id,sede,fecha,hora,cancha,estado')
+      .eq('id', claims.reservationId)
+      .maybeSingle();
     if (selErr) throw selErr;
-    const ids = (rows || []).map((r) => r.id).filter((id) => id != null);
-    if (!ids.length) {
+    // Un segundo consumo del mismo token es idempotente, pero nunca puede apuntar a otro ID.
+    if (!reserva) {
       return res.json({ ok: true, deleted: 0 });
     }
-    const { error: delErr } = await supabaseAdmin.from('reservas').delete().in('id', ids);
+    assertReservaMatchesReleaseToken(reserva, claims);
+    const { data: deletedRows, error: delErr } = await supabaseAdmin
+      .from('reservas')
+      .delete()
+      .eq('id', claims.reservationId)
+      .in('estado', RESERVA_RELEASE_PENDING_STATES)
+      .select('id');
     if (delErr) throw delErr;
-    res.json({ ok: true, deleted: ids.length });
+    res.json({ ok: true, deleted: Array.isArray(deletedRows) ? deletedRows.length : 0 });
   } catch (err) {
     console.error('❌ POST /api/reservas/liberar-slot-pendiente:', err?.message || err);
-    res.status(500).json({ error: err.message || String(err) });
+    const status = Number.isFinite(Number(err?.status)) ? Number(err.status) : 500;
+    res.status(status).json({ error: err.message || String(err), ...(err?.code ? { code: err.code } : {}) });
   }
 });
 
@@ -13553,13 +13585,24 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
           changed_by: 'sistema',
         });
       }
+      const release = createReservaReleaseToken({
+        reserva: reservaCreada,
+        secret: RESERVA_RELEASE_TOKEN_SECRET,
+        ttlSeconds: RESERVA_RELEASE_TOKEN_TTL_SECONDS,
+      });
       return res.json({
         manual_payment: !esEfectivo,
         efectivo_payment: esEfectivo,
         instructions: esEfectivo
           ? null
           : instruccionesManual || 'Transfiere o abona en sede y comparte el comprobante por WhatsApp.',
-        reservation: reservaCreada,
+        reservation: {
+          ...reservaCreada,
+          release_token: release.token,
+          release_token_expires_at: release.expiresAt,
+        },
+        release_token: release.token,
+        release_token_expires_at: release.expiresAt,
         partido: partidoCreado,
       });
     }
