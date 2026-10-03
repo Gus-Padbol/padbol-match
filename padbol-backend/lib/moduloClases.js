@@ -632,14 +632,16 @@ export function registerModuloClasesRoutes(app, deps) {
       });
 
       let nombreJugador = String(user.email || '').split('@')[0] || 'Alumno';
+      let telefonoJugador = '';
       const { data: perfil } = await supabase
         .from('jugadores_perfil')
-        .select('nombre, apellido, apodo, email')
+        .select('nombre, apellido, apodo, email, whatsapp')
         .eq('email', String(user.email || '').trim().toLowerCase())
         .maybeSingle();
       if (perfil) {
         nombreJugador =
           [perfil.nombre, perfil.apellido].filter(Boolean).join(' ').trim() || perfil.apodo || nombreJugador;
+        telefonoJugador = String(perfil.whatsapp || '').trim();
       }
 
       const precio = Number(clase.precio) || 0;
@@ -653,8 +655,8 @@ export function registerModuloClasesRoutes(app, deps) {
             cancha: canchaNum,
             nombre: nombreJugador,
             email: String(user.email || '').trim().toLowerCase(),
-            telefono: null,
-            whatsapp: null,
+            telefono: telefonoJugador,
+            whatsapp: telefonoJugador,
             nivel: 'Clase',
             precio,
             moneda: String(sedeRow.moneda || 'ARS').trim().toUpperCase() || 'ARS',
