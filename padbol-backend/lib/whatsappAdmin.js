@@ -302,26 +302,4 @@ export function registerWhatsappAdminRoutes(app, {
     }
   });
 
-  app.get('/api/admin/crm/permissions', async (req, res) => {
-    try {
-      const { email, role } = await adminContext(req);
-      return res.json(whatsappAdminService.getPermissions({ email, role }));
-    } catch (error) {
-      return handle(res, error);
-    }
-  });
-
-  app.get('/api/admin/crm/inbox', async (req, res) => {
-    try {
-      const { email, role } = await adminContext(req);
-      const result = await whatsappAdminService.listCrmInbox({
-        email,
-        role,
-        limit: Number(req.query.limit) || 100,
-      });
-      return res.json(result);
-    } catch (error) {
-      return handle(res, error);
-    }
-  });
 }

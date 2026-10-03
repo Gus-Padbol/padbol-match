@@ -16,6 +16,16 @@ const PROFESOR_ADMIN_DETAIL_SELECT =
 
 const GENERO_INSTRUCTOR_VALIDOS = new Set(['masculino', 'femenino', 'no_decir']);
 
+export function isProfesorCertificatePathForSede(pathValue, sedeIdValue) {
+  const sedeId = Number(sedeIdValue);
+  const path = String(pathValue || '').trim();
+  if (!Number.isInteger(sedeId) || sedeId <= 0 || !path || path.includes('\\')) return false;
+  const segments = path.split('/');
+  return segments.length >= 2
+    && segments[0] === `sede-${sedeId}`
+    && segments.slice(1).every((segment) => segment && segment !== '.' && segment !== '..');
+}
+
 export function registerModuloClasesRoutes(app, deps) {
   const {
     supabase,
@@ -167,19 +177,20 @@ export function registerModuloClasesRoutes(app, deps) {
   }
 
   async function registrarEventoInternoClase({ sedeId, claseId = null, inscripcionId = null, userId = null, tipo, payload = {} }) {
-    try {
-      const { error } = await supabaseAdmin.from('clases_eventos_internos').insert([{
-        sede_id: sedeId,
-        clase_id: claseId,
-        inscripcion_id: inscripcionId,
-        user_id: userId,
-        tipo,
-        payload,
-      }]);
-      if (error) console.warn('Clases: no se pudo registrar evento interno:', error.message);
-    } catch (error) {
-      console.warn('Clases: evento interno omitido:', error?.message || error);
+    if (!Number.isInteger(Number(sedeId)) || Number(sedeId) <= 0) {
+      const error = new Error('No se pudo determinar la sede para auditar la operación de clases');
+      error.status = 500;
+      throw error;
     }
+    const { error } = await supabaseAdmin.from('clases_eventos_internos').insert([{
+      sede_id: Number(sedeId),
+      clase_id: claseId,
+      inscripcion_id: inscripcionId,
+      user_id: userId,
+      tipo,
+      payload,
+    }]);
+    if (error) throw error;
   }
 
   function msHastaInicioClase(fechaYmd, horaInicio) {
@@ -423,7 +434,7 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const { data: clase, error: claseErr } = await supabase
         .from('clases')
-        .select('id, horas_cancelacion')
+        .select('id, sede_id, horas_cancelacion')
         .eq('id', ins.clase_id)
         .maybeSingle();
       if (claseErr) throw claseErr;
@@ -752,6 +763,12 @@ export function registerModuloClasesRoutes(app, deps) {
       if (!scope.superA) await assertUsuarioPuedeAdministrarSede(req, prof.sede_id);
       const path = String(prof.certificado_url || '').trim();
       if (!path) return res.status(404).json({ error: 'Sin certificado cargado' });
+      if (!isProfesorCertificatePathForSede(path, prof.sede_id)) {
+        return res.status(409).json({
+          error: 'El certificado no pertenece a la sede del profesor',
+          code: 'PROFESOR_CERTIFICADO_SEDE_INVALIDA',
+        });
+      }
       const { data, error } = await supabaseAdmin.storage.from('profesor-certificados').createSignedUrl(path, 120);
       if (error) throw error;
       res.json({ url: data?.signedUrl || null, expires_in: 120 });

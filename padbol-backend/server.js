@@ -50,6 +50,11 @@ import {
   createWhatsappAdminService,
   registerWhatsappAdminRoutes,
 } from './lib/whatsappAdmin.js';
+import {
+  createCrmAdminService,
+  createSupabaseCrmAdminRepository,
+  registerCrmAdminRoutes,
+} from './lib/crmAdmin.js';
 import { registerModuloComunidadMediaRoutes } from './lib/moduloComunidadMedia.js';
 import { registerAdminOrganizationsRoutes } from './lib/adminOrganizations.js';
 import { buildAdminRoleGeography, normalizeGeoText, resolveSedesPermitidasPorScope } from './lib/adminTerritorialScope.js';
@@ -18469,6 +18474,20 @@ registerWhatsappAdminRoutes(app, {
   whatsappAdminService,
   authUserFromBearer,
   fetchUserRoleRow,
+});
+
+const crmAdminService = createCrmAdminService({
+  repository: createSupabaseCrmAdminRepository(supabaseAdmin),
+  operators: whatsappAssistantConfig.authorizedOperators,
+  superAdminEmails: new Set(LEGACY_SUPER_ADMIN_EMAILS_API),
+  // Salida real deliberadamente apagada en este candidato DEV/QA.
+  sendWhatsappReply: null,
+});
+registerCrmAdminRoutes(app, {
+  crmAdminService,
+  authUserFromBearer,
+  fetchUserRoleRow,
+  fetchUserRoleRowForAuthUser,
 });
 
 let whatsappCloudOutboxSweepRunning = false;

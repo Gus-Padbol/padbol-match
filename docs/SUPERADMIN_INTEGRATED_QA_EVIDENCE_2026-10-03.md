@@ -12,7 +12,7 @@
 
 ## Verificaciones locales
 
-- Backend: 202/202 pruebas aprobadas.
+- Backend: 208/208 pruebas aprobadas.
 - Frontend: 133/133 suites y 1097/1097 pruebas aprobadas.
 - ESLint: 0 errores; queda una advertencia preexistente por un import sin uso en `DownloadSection.jsx`.
 - Build optimizada: completada correctamente. Las únicas advertencias de build corresponden a sourcemaps incompletos de la dependencia `html5-qrcode` y al tamaño del bundle.
@@ -50,6 +50,14 @@ Lectura autenticada y sin mutaciones contra la QA histórica:
 - `/api/auth/mi-rol`: sesión autenticada con rol `super_admin`
 - `/api/admin/crm/permissions`: auditoría habilitada
 - `/api/push/admin-quota`: `unlimited=true`
+
+## Correcciones posteriores a revisión
+
+- El backend canónico registra el contrato completo `/api/admin/crm/*`: auditoría, bandeja, detalle, respuesta retenida, derivación y seguimiento.
+- Un recorrido HTTP con servidor real (sin interceptar `fetch`) verifica auditoría, actividad, respuesta pendiente y derivación; la salida WhatsApp permanece apagada.
+- El recorrido autenticado contra QA confirmó `Prueba 23` y 65 conversaciones. Las tres acciones probadas con sesión Super Admin respondieron `403 CRM_ADMIN_FORBIDDEN`, como exige la separación entre auditor y operador, sin producir mutaciones ni envíos.
+- Los diplomas sólo se firman si `certificado_url` pertenece al prefijo exacto `sede-<sede_id>/`; rutas cruzadas o con traversal se rechazan antes de solicitar la URL firmada.
+- La cancelación de clases selecciona `sede_id`, registra ese valor en `clases_eventos_internos` y propaga cualquier fallo de auditoría en lugar de ocultarlo.
 
 No hubo pérdida de datos. La recuperación consiste en iniciar sesión en el origen QA anterior; no requiere restaurar ni copiar información.
 
