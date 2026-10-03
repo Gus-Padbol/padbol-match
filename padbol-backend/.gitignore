@@ -3,3 +3,4 @@
 .env.stripe-subscription
 
 node_modules/
+.vercel

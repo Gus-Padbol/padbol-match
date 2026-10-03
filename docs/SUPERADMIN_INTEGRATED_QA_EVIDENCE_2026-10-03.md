@@ -71,3 +71,14 @@ No hubo pérdida de datos. La recuperación consiste en iniciar sesión en el or
 - El alias estable fue asociado al candidato integrado, sin modificar producción.
 - Los eventos de recuperación que Supabase entrega en el Site URL QA son dirigidos a la pantalla de creación de contraseña y luego al panel `/admin`.
 - El primer correo de recuperación autorizado fue aceptado por Supabase (HTTP 200). Un reenvío inmediato posterior fue limitado temporalmente por Supabase (HTTP 429); el enlace anterior permanece dirigido al mismo alias estable ya actualizado.
+
+## Clases y profesores — contrato móvil QA
+
+- Backend estable: `https://padbol-crm-qa-api.vercel.app` (`dpl_DmMfqkAXMhK6dZY7uydh8jyLBMCi`).
+- `GET /api/clases/disponibles?sede_id=1` publica las clases individual `id=3` y grupal `id=4`.
+- Admite filtros secuenciales `tipo`, `profesor_id` y `deporte`; la sede se conserva desde el inicio del recorrido.
+- Profesor `id=2`: aprobado, activo, diploma privado comprobado con URL firmada y certificación `QA-FIPA-2026-001` aprobada.
+- La fecha publicada se calcula en cada consulta y avanza al primer turno futuro con cupo; al llenar el turno individual del 03/10, la oferta avanzó al 04/10 con un lugar disponible.
+- `POST /api/clases/:id/reservar`: autenticado devolvió 201 para individual y grupal; turno lleno devolvió 409; sin Bearer devolvió 401.
+- Super Admin y sede administran profesor, aprobación/certificación, clases, tipo, cupo y horarios mediante los endpoints administrativos existentes.
+- El frontend QA estable fue asociado al backend anterior y conserva el CRM histórico por su ruta específica.
