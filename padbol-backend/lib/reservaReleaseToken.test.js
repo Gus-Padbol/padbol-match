@@ -36,6 +36,10 @@ test('rechaza ausencia, manipulación y secreto incorrecto', () => {
     (error) => error.code === 'RESERVA_RELEASE_TOKEN_INVALID' && error.status === 401,
   );
   assert.throws(
+    () => verifyReservaReleaseToken(`${token}!`, { secret, nowMs }),
+    (error) => error.code === 'RESERVA_RELEASE_TOKEN_INVALID',
+  );
+  assert.throws(
     () => verifyReservaReleaseToken(token, { secret: `${secret}-other`, nowMs }),
     (error) => error.code === 'RESERVA_RELEASE_TOKEN_INVALID',
   );

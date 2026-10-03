@@ -80,9 +80,6 @@ test('liberar-slot-pendiente exige token y elimina sólo el ID firmado', () => {
   const block = routeBlock('post', '/api/reservas/liberar-slot-pendiente');
   assert.match(block, /verifyReservaReleaseToken\(req\.body\?\.release_token/);
   assert.match(block, /\.eq\('id', claims\.reservationId\)/);
-  assert.doesNotMatch(block, /\.eq\('sede'/);
-  assert.doesNotMatch(block, /\.eq\('fecha'/);
-  assert.doesNotMatch(block, /\.eq\('hora'/);
-  assert.doesNotMatch(block, /\.eq\('cancha'/);
   assert.doesNotMatch(block, /\.delete\(\)\.in\('id'/);
+  assert.doesNotMatch(block, /req\.body\?\.(?:sede|fecha|hora|cancha)/);
 });

@@ -42,6 +42,7 @@ export default function PagoFallido() {
   const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [releaseError, setReleaseError] = useState('');
   const [cancelReservaModalOpen, setCancelReservaModalOpen] = useState(false);
 
   const onIntentarDeNuevo = useCallback(() => {
@@ -52,13 +53,14 @@ export default function PagoFallido() {
 
   const onCancelarReserva = useCallback(async () => {
     setBusy(true);
+    setReleaseError('');
     const p = readMpReservaPendingSlot();
     try {
       if (p?.releaseToken) {
         const body = {
           release_token: String(p.releaseToken).trim(),
         };
-        await fetch(`${API_BASE}/api/reservas/liberar-slot-pendiente`, {
+        const response = await fetch(`${API_BASE}/api/reservas/liberar-slot-pendiente`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -66,10 +68,18 @@ export default function PagoFallido() {
           },
           body: JSON.stringify(body),
         });
+        if (!response.ok) {
+          throw new Error(t('reservas.cancelError', { defaultValue: 'No se pudo liberar la reserva. Intenta nuevamente.' }));
+        }
       }
-    } catch {
-      /* best-effort */
-    } finally {
+    } catch (error) {
+      // Conservar la capacidad para un reintento: descartarla ante 5xx/410 puede
+      // dejar un turno pendiente sin posibilidad de liberación desde la UI.
+      setReleaseError(error?.message || t('reservas.cancelError', { defaultValue: 'No se pudo liberar la reserva.' }));
+      setBusy(false);
+      return;
+    }
+    try {
       clearMpReservaPendingSlot();
       clearReservaFlowSessionStorage();
       clearReservaReturnLocalStorage();
@@ -79,9 +89,10 @@ export default function PagoFallido() {
         scheduleHubEntryScrollReset();
       } else if (sid) navigate(`/sede/${sid}`, { replace: true });
       else navigate('/reservar', { replace: true });
+    } finally {
       setBusy(false);
     }
-  }, [navigate, session?.access_token, session?.user]);
+  }, [navigate, session?.access_token, session?.user, t]);
 
   return (
     <div
@@ -122,6 +133,11 @@ export default function PagoFallido() {
           <p style={{ color: T.colorTextMuted, fontSize: '15px', lineHeight: 1.65, marginBottom: '20px' }}>
             {t('reservas.paymentIncomplete')}
           </p>
+          {releaseError ? (
+            <p role="alert" style={{ color: T.colorErrorDark, fontSize: '14px', marginBottom: '16px' }}>
+              {releaseError}
+            </p>
+          ) : null}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <AppButton

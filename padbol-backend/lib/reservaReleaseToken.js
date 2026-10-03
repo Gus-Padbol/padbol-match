@@ -75,6 +75,9 @@ export function verifyReservaReleaseToken(token, { secret, nowMs = Date.now() })
     throw tokenError('Token de liberación requerido', 'RESERVA_RELEASE_TOKEN_REQUIRED');
   }
   const [encodedPayload, providedSignature] = parts;
+  if (!/^[A-Za-z0-9_-]+$/.test(encodedPayload) || !/^[A-Za-z0-9_-]{43}$/.test(providedSignature)) {
+    throw tokenError('Token de liberación inválido', 'RESERVA_RELEASE_TOKEN_INVALID');
+  }
   const expectedSignature = crypto.createHmac('sha256', signingKey(secret)).update(encodedPayload).digest();
   let signature;
   try {

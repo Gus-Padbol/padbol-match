@@ -5458,6 +5458,9 @@ app.post('/api/reservas', checkSuscripcionActiva, async (req, res) => {
       estado != null &&
       String(estado).trim() !== '';
     const estadoFinal = estadoExplicito ? String(estado).trim() : 'confirmada';
+    if (isReservaReleasePendingState(estadoFinal) && !RESERVA_RELEASE_TOKEN_SECRET) {
+      return res.status(503).json({ error: 'Liberación segura de reservas no configurada' });
+    }
     let duracionMin = duracion != null && duracion !== '' ? parseInt(duracion, 10) : null;
     if (!Number.isFinite(duracionMin) || duracionMin <= 0) {
       const { data: sedeDur } = await supabase
@@ -6295,6 +6298,10 @@ app.post('/api/reservas/liberar-slot-pendiente', async (req, res) => {
       .from('reservas')
       .delete()
       .eq('id', claims.reservationId)
+      .eq('sede', reserva.sede)
+      .eq('fecha', reserva.fecha)
+      .eq('hora', reserva.hora)
+      .eq('cancha', reserva.cancha)
       .in('estado', RESERVA_RELEASE_PENDING_STATES)
       .select('id');
     if (delErr) throw delErr;
@@ -13507,6 +13514,9 @@ const postCrearPreferenciaMercadoPago = async (req, res) => {
         estado: estadoPresencial,
         duracion: r.duracion,
       };
+      if (!RESERVA_RELEASE_TOKEN_SECRET) {
+        return res.status(503).json({ error: 'Liberación segura de reservas no configurada' });
+      }
       try {
         logCrearPreferenciaSupabaseQuery(db, 'sedes', 'select.maybeSingle', {
           phase: 'assertCanchaPermitidaParaReservaPorNombreSede',

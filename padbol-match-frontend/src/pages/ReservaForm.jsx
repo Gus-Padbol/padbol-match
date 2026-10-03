@@ -26,7 +26,6 @@ import {
   saveReservaPendiente,
   saveReservaReturnUrl,
   saveMpReservaPendingSlot,
-  readMpReservaPendingSlot,
   clearMpReservaPendingSlot,
   clearReservaFlowSessionStorage,
   clearReservaReturnLocalStorage,
@@ -1327,21 +1326,8 @@ export default function ReservaForm() {
   }, [filtros.sede_id, formData.fecha, formData.hora, formData.cancha, reservaDeporteUrl, navigate]);
 
   const handleCancelarReservaDesdeResumen = useCallback(async () => {
-    try {
-      const pending = readMpReservaPendingSlot();
-      if (pending?.releaseToken) {
-        await fetch(apiUrl('/api/reservas/liberar-slot-pendiente'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-          },
-          body: JSON.stringify({ release_token: String(pending.releaseToken).trim() }),
-        });
-      }
-    } catch {
-      /* liberar es best-effort */
-    }
+    // En el resumen todavía no existe una reserva: nunca consumir aquí una
+    // capacidad singleton que pudiera pertenecer a un flujo anterior.
     clearReservaFlowSessionStorage();
     clearReservaReturnLocalStorage();
     clearMpReservaPendingSlot();
@@ -1351,7 +1337,7 @@ export default function ReservaForm() {
       scheduleHubEntryScrollReset();
     } else if (sidRaw) navigate(`/sede/${sidRaw}`, { replace: true });
     else navigate('/reservar', { replace: true });
-  }, [filtros.sede_id, session?.access_token, session?.user, navigate]);
+  }, [filtros.sede_id, session?.user, navigate]);
 
   const handleReservaBack = useCallback(() => {
     if (pantalla === 1) {
