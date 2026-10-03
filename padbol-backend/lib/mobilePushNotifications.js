@@ -41,6 +41,12 @@ const PUSH_ROUTES = new Set([
   'TorneoDetalle',
   'Perfil',
 ]);
+const ADMIN_DESTINATION_TYPES = new Set([
+  'noticia', 'torneo', 'partido', 'academy', 'next_generation', 'pantalla',
+]);
+const ADMIN_DESTINATION_KEYS = new Set([
+  'entityId', 'newsId', 'torneoId', 'partidoId', 'sessionId', 'screen', 'slug', 'nativeScreen',
+]);
 const ROUTE_PARAM_KEYS = Object.freeze({
   Notificaciones: new Set(),
   Reserva: new Set(['sedeId', 'deporte']),
@@ -125,10 +131,24 @@ export function sanitizePushData(raw = {}) {
 
   const notificationId = normalizeScalar(input.notificationId);
   const eventId = normalizeScalar(input.eventId);
+  let destination;
+  if (type === 'admin_message' && input.destination && typeof input.destination === 'object' && !Array.isArray(input.destination)) {
+    const destinationType = cleanString(input.destination.type, 40).toLowerCase();
+    if (!ADMIN_DESTINATION_TYPES.has(destinationType)) {
+      throw pushError('Destino administrativo no permitido', 400, 'PUSH_DESTINATION_INVALID');
+    }
+    destination = { type: destinationType };
+    for (const [key, value] of Object.entries(input.destination)) {
+      if (!ADMIN_DESTINATION_KEYS.has(key)) continue;
+      const scalar = normalizeScalar(value);
+      if (scalar != null) destination[key] = scalar;
+    }
+  }
   return {
     type,
     route,
     params,
+    ...(destination ? { destination } : {}),
     ...(notificationId != null ? { notificationId } : {}),
     ...(eventId != null ? { eventId } : {}),
   };

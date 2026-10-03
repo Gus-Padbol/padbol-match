@@ -8,12 +8,9 @@ import AppHeader from '../components/AppHeader';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
-  HUB_LOGO_CLEARANCE_TOP_PX,
-  hubAccesoContentPaddingTopCss,
 } from '../constants/hubLayout';
-import PadbolBrandLogo from '../components/PadbolBrandLogo';
+import padbolMatchIcon from '../assets/padbol-match-icon.svg';
 import { useAuth } from '../context/AuthContext';
-import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { supabase } from '../supabaseClient';
 import {
   RESERVA_RETURN_STORAGE_KEY,
@@ -154,7 +151,6 @@ export default function AccesoCuenta() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { navDock } = useHubNavLayout();
   const { refreshSession, session, loading } = useAuth();
 
   const [modo, setModo] = useState(() => readModoDesdeSearch(location.search));
@@ -506,21 +502,18 @@ export default function AccesoCuenta() {
     }
   };
 
-  const accesoPaddingTop = hubAccesoContentPaddingTopCss(location.pathname, navDock);
   const accesoPaddingBottomPx = Math.min(32, HUB_CONTENT_PADDING_BOTTOM_PX);
 
   return (
     <div
       className="acceso-cuenta-page"
       style={{
-        minHeight: 'auto',
+        minHeight: '100dvh',
         width: '100%',
         maxWidth: '100%',
         background: 'var(--bg-page)',
-        paddingTop: accesoPaddingTop,
-        paddingLeft: '16px',
-        paddingRight: '16px',
-        paddingBottom: `${accesoPaddingBottomPx}px`,
+        paddingTop: 0,
+        paddingBottom: `max(${accesoPaddingBottomPx + 180}px, calc(180px + env(safe-area-inset-bottom, 0px)))`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -533,31 +526,16 @@ export default function AccesoCuenta() {
         showBack={false}
         contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX}
       />
-      <div
-        style={{
-          marginBottom: '20px',
-          display: 'flex',
-          justifyContent: 'center',
-          width: '100%',
-          maxWidth: '400px',
-        }}
-      >
-        <PadbolBrandLogo
-          style={{
-            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-            marginBottom: '4px',
-          }}
-        />
-      </div>
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '400px',
-          minWidth: 0,
-          padding: '0 24px',
-          boxSizing: 'border-box',
-        }}
-      >
+      <main className="acceso-cuenta-shell">
+        <section className="acceso-cuenta-brand-panel" aria-label="Padbol Match">
+          <div className="acceso-cuenta-lockup">
+            <img src={padbolMatchIcon} alt="" className="acceso-cuenta-brand-icon" />
+            <span className="acceso-cuenta-brand-name">PADBOL <strong>MATCH</strong></span>
+          </div>
+          <p className="acceso-cuenta-brand-kicker">PLAY · CONNECT · COMPETE</p>
+          <div className="acceso-cuenta-brand-line" aria-hidden />
+        </section>
+        <section className="acceso-cuenta-card">
         <h2
           style={{
             marginTop: 0,
@@ -1358,7 +1336,8 @@ export default function AccesoCuenta() {
           </button>
         ) : null}
 
-      </div>
+        </section>
+      </main>
     </div>
   );
 }

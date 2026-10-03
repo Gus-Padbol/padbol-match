@@ -10155,7 +10155,7 @@ export default function AdminDashboard({
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
-        ...(puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'WhatsApp' }] : []),
+        ...(isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'Atención / CRM' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },
@@ -10294,9 +10294,9 @@ export default function AdminDashboard({
   return (
     <div
       className={
-        isSuperAdmin
+        `${isSuperAdmin
           ? 'admin-dashboard admin-dashboard--super admin-dashboard--with-sidebar'
-          : 'admin-dashboard admin-dashboard--with-sidebar'
+          : 'admin-dashboard admin-dashboard--with-sidebar'}${activeTab === 'whatsapp' ? ' admin-dashboard--crm' : ''}`
       }
       style={{
         display: 'flex',
@@ -11970,11 +11970,11 @@ export default function AdminDashboard({
         </div>
       ) : null}
 
-      {activeTab === 'whatsapp' && session?.access_token ? (
-        <div className="section">
-          <h2>WhatsApp</h2>
-          <AdminWhatsappSection accessToken={session.access_token} />
-        </div>
+      {activeTab === 'whatsapp' && (isSuperAdmin || puedeVerWhatsapp) && session?.access_token ? (
+        <AdminWhatsappSection
+          accessToken={session.access_token}
+          onBack={() => selectAdminTab('resumen')}
+        />
       ) : null}
 
       {activeTab === 'notificaciones' && puedeEnviarNotificacionesPush && session?.access_token ? (
@@ -12008,6 +12008,7 @@ export default function AdminDashboard({
                     : []
             }
             paisesOptions={sedesSuperAdminPaisesUnicos}
+            torneosOptions={torneos}
           />
         </div>
       ) : null}

@@ -10,6 +10,15 @@ describe('passwordlessAccess', () => {
     );
   });
 
+  it('mantiene el origen exacto de la preview QA y nunca deriva a localhost', () => {
+    const previewOrigin = 'https://padbol-match-9abn-git-codex-admin-crm-notificati-68339f-padbol1.vercel.app';
+    const redirectUrl = buildPasswordlessRedirectUrl(previewOrigin, '/admin?tab=crm');
+    expect(redirectUrl).toBe(
+      `${previewOrigin}/auth/callback?redirect=%2Fadmin%3Ftab%3Dcrm`,
+    );
+    expect(redirectUrl).not.toContain('localhost');
+  });
+
   it('conserva el documento FIPA exacto en el enlace mágico', () => {
     expect(buildPasswordlessRedirectUrl(
       'https://www.padbolmatch.com',

@@ -34,6 +34,7 @@ export default function CookieConsentBanner() {
   const { navDock } = useHubNavLayout();
   const { t } = useSafeTranslation();
   const [visible, setVisible] = useState(() => readConsent() == null);
+  const isAccountAccess = location.pathname === '/login';
 
   const bottomOffsetPx = useMemo(() => {
     let extra = 0;
@@ -63,12 +64,14 @@ export default function CookieConsentBanner() {
       aria-modal="false"
       aria-label={t('general.cookiesBanner')}
       style={{
-        position: 'fixed',
+        position: isAccountAccess ? 'relative' : 'fixed',
         left: 0,
         right: 0,
         zIndex: 10055,
         bottom:
-          bottomOffsetPx > 0
+          isAccountAccess
+            ? 'auto'
+            : bottomOffsetPx > 0
             ? `calc(env(safe-area-inset-bottom, 0px) + ${bottomOffsetPx}px)`
             : 'env(safe-area-inset-bottom, 0px)',
         padding:

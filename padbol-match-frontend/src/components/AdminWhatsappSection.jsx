@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { whatsappAdminApi } from '../utils/whatsappAdminApi';
+import './AdminWhatsappSection.css';
 
 const SEND_DISABLED_NOTE = 'Respuesta registrada — envío desactivado';
 
@@ -27,7 +28,10 @@ function InboxView({ accessToken }) {
 
   useEffect(() => { void load(); }, [load]);
 
-  const selected = items.find((item) => item.id === selectedId) || null;
+  const itemId = (item) => item.id || item.event_id;
+  const itemTitle = (item) => item.from_wa_id || item.contact_ref || 'Contacto protegido';
+  const itemBody = (item) => item.text_body || item.event_type || 'Evento CRM';
+  const selected = items.find((item) => itemId(item) === selectedId) || null;
 
   async function submitReply() {
     if (!selected || busy || !replyText.trim()) return;
@@ -68,13 +72,13 @@ function InboxView({ accessToken }) {
     <div>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {items.map((item) => (
-          <li key={item.id}>
+          <li key={itemId(item)}>
             <button
               type="button"
-              onClick={() => setSelectedId(item.id)}
+              onClick={() => setSelectedId(itemId(item))}
               style={{ textAlign: 'left', width: '100%', marginBottom: 4 }}
             >
-              <strong>{item.from_wa_id}</strong> · {String(item.text_body || '').slice(0, 80)}
+              <strong>{itemTitle(item)}</strong> · {String(itemBody(item)).slice(0, 80)}
             </button>
           </li>
         ))}
@@ -82,9 +86,11 @@ function InboxView({ accessToken }) {
 
       {selected && (
         <div style={{ marginTop: 12, borderTop: '1px solid #ccc', paddingTop: 12 }}>
-          <p><strong>De:</strong> {selected.from_wa_id}</p>
-          <p>{selected.text_body}</p>
-          <textarea
+          <p><strong>Contacto:</strong> {itemTitle(selected)}</p>
+          <p>{itemBody(selected)}</p>
+          {selected.registration_id ? <p><strong>Inscripción:</strong> {selected.registration_id}</p> : null}
+          {selected.session_id ? <p><strong>Jornada:</strong> {selected.session_id}</p> : null}
+          {selected.from_wa_id ? <><textarea
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             placeholder="Escribe la respuesta…"
@@ -100,53 +106,14 @@ function InboxView({ accessToken }) {
             </button>
           </div>
           {notice ? <p>{notice}</p> : null}
+          </> : null}
         </div>
       )}
     </div>
   );
 }
 
-function AuditView({ accessToken }) {
-  const [audit, setAudit] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const data = await whatsappAdminApi.audit(accessToken);
-        if (active) setAudit(data);
-      } catch (e) {
-        if (active) setError(e?.message || 'No se pudo cargar la auditoría');
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
-  }, [accessToken]);
-
-  if (loading) return <p>{"Cargando auditoría…"}</p>;
-  if (error) return <p style={{ color: '#e33030' }}>{error}</p>;
-
-  const count = (arr) => (Array.isArray(arr) ? arr.length : 0);
-  return (
-    <div>
-      <p><strong>Entrantes:</strong> {count(audit?.inbound)}</p>
-      <p><strong>Salientes:</strong> {count(audit?.outbox)}</p>
-      <p><strong>Clasificaciones:</strong> {count(audit?.classifications)}</p>
-      <p><strong>Operadores:</strong> {count(audit?.operators)}</p>
-      <p><strong>Configuración:</strong> {count(audit?.config)}</p>
-      {audit?.outbox?.map((o) => (
-        <p key={o.id} style={{ fontSize: 13 }}>
-          {o.status}{o.last_error ? ` · ${o.last_error}` : ''} · {o.to_wa_id} · {String(o.text_body || '').slice(0, 60)}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-export default function AdminWhatsappSection({ accessToken }) {
+export default function AdminWhatsappSection({ accessToken, onBack }) {
   const [perms, setPerms] = useState(null);
   const [error, setError] = useState(null);
 
@@ -157,16 +124,67 @@ export default function AdminWhatsappSection({ accessToken }) {
         const p = await whatsappAdminApi.permissions(accessToken);
         if (active) setPerms(p);
       } catch (e) {
-        if (active) setError(e?.status === 403 ? 'No tienes acceso a WhatsApp.' : (e?.message || 'Error de permisos'));
+        if (!active) return;
+        if (e?.status === 403) setError({ kind: 'forbidden', message: 'No tienes acceso a Atención / CRM.' });
+        else if (e?.status === 404) setError({ kind: 'backend-route', message: 'La bandeja todavía no está conectada en esta preview.' });
+        else setError({ kind: 'network', message: e?.message || 'No se pudo conectar con Atención / CRM.' });
       }
     })();
     return () => { active = false; };
   }, [accessToken]);
 
-  if (error) return <p style={{ color: '#e33030' }}>{error}</p>;
-  if (!perms) return <p>{"Cargando…"}</p>;
+  const workspaceBody = (() => {
+    if (error) {
+      return (
+        <section className="admin-crm-state" role="status">
+          <span className="admin-crm-state__icon" aria-hidden>!</span>
+          <div>
+            <h2>{error.kind === 'backend-route' ? 'Bandeja no conectada' : 'No pudimos abrir la bandeja'}</h2>
+            <p>{error.message}</p>
+            {error.kind === 'backend-route' ? (
+              <p className="admin-crm-state__detail">
+                El panel está listo, pero el backend de esta preview aún no publica las rutas de CRM.
+              </p>
+            ) : null}
+          </div>
+        </section>
+      );
+    }
+    if (!perms) return <section className="admin-crm-state"><p>{"Cargando bandeja…"}</p></section>;
+    if (perms.canOperate || perms.canAudit) return <InboxView accessToken={accessToken} />;
+    return <section className="admin-crm-state"><p>No tienes acceso a esta sección.</p></section>;
+  })();
 
-  if (perms.canOperate) return <InboxView accessToken={accessToken} />;
-  if (perms.canAudit) return <AuditView accessToken={accessToken} />;
-  return <p>{"No tienes acceso a esta sección."}</p>;
+  return (
+    <section className="admin-crm-workspace" aria-label="Atención y CRM">
+      <header className="admin-crm-header">
+        <div>
+          <button type="button" className="admin-crm-back" onClick={onBack}>← Volver al panel</button>
+          <p className="admin-crm-eyebrow">SUPER ADMIN · OPERACIONES</p>
+          <h1>Atención / CRM</h1>
+          <p>Consultas, contactos, historial y seguimiento en un único espacio de trabajo.</p>
+        </div>
+        <span className={`admin-crm-connection${error ? ' admin-crm-connection--offline' : ''}`}>
+          {error ? 'Conexión pendiente' : 'Conectado'}
+        </span>
+      </header>
+
+      <div className="admin-crm-summary" aria-label="Resumen de atención">
+        <article><span>Pendientes</span><strong>—</strong><small>Consultas por revisar</small></article>
+        <article><span>En seguimiento</span><strong>—</strong><small>Contactos activos</small></article>
+        <article><span>Resueltas</span><strong>—</strong><small>Últimos 30 días</small></article>
+        <article><span>Notificaciones</span><strong>—</strong><small>Programadas y enviadas</small></article>
+      </div>
+
+      <div className="admin-crm-layout">
+        <nav className="admin-crm-sections" aria-label="Secciones de Atención y CRM">
+          <button type="button" className="is-active">Bandeja</button>
+          <button type="button" disabled>Ficha del contacto</button>
+          <button type="button" disabled>Historial y reportes</button>
+          <button type="button" disabled>Notificaciones</button>
+        </nav>
+        <main className="admin-crm-main">{workspaceBody}</main>
+      </div>
+    </section>
+  );
 }

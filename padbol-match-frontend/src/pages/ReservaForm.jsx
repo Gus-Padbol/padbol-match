@@ -1326,24 +1326,8 @@ export default function ReservaForm() {
   }, [filtros.sede_id, formData.fecha, formData.hora, formData.cancha, reservaDeporteUrl, navigate]);
 
   const handleCancelarReservaDesdeResumen = useCallback(async () => {
-    try {
-      if (sedeSeleccionada && formData.fecha && formData.hora && formData.cancha != null) {
-        const body = {
-          sede: sedeSeleccionada.nombre,
-          fecha: formData.fecha,
-          hora: formData.hora,
-          cancha: parseInt(String(formData.cancha), 10),
-        };
-        if (session?.user?.email) body.email = String(session.user.email).trim().toLowerCase();
-        await fetch(apiUrl('/api/reservas/liberar-slot-pendiente'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      }
-    } catch {
-      /* liberar es best-effort */
-    }
+    // En el resumen todavía no existe una reserva: nunca consumir aquí una
+    // capacidad singleton que pudiera pertenecer a un flujo anterior.
     clearReservaFlowSessionStorage();
     clearReservaReturnLocalStorage();
     clearMpReservaPendingSlot();
@@ -1353,7 +1337,7 @@ export default function ReservaForm() {
       scheduleHubEntryScrollReset();
     } else if (sidRaw) navigate(`/sede/${sidRaw}`, { replace: true });
     else navigate('/reservar', { replace: true });
-  }, [sedeSeleccionada, formData.fecha, formData.hora, formData.cancha, filtros.sede_id, session?.user, navigate]);
+  }, [filtros.sede_id, session?.user, navigate]);
 
   const handleReservaBack = useCallback(() => {
     if (pantalla === 1) {
@@ -2255,18 +2239,48 @@ export default function ReservaForm() {
           email: String(ccEff.email || '').trim().toLowerCase(),
           sedeId: sedeSeleccionada.id,
           duracion: duracionReservaMin,
+          ...(data.release_token ? { releaseToken: String(data.release_token) } : {}),
+          ...(data.release_token_expires_at
+            ? { releaseTokenExpiresAt: String(data.release_token_expires_at) }
+            : {}),
         });
         handleCrearPreferenciaResponse(res, data, {
           sedeId: sedeSeleccionada.id,
           fromSede: sedeSeleccionada,
         });
       } else if (res.ok && data.efectivo_payment) {
+        if (data.release_token) {
+          saveMpReservaPendingSlot({
+            sede: sedeSeleccionada.nombre,
+            fecha: formData.fecha,
+            hora: formData.hora,
+            cancha: parseInt(String(formData.cancha), 10),
+            email: String(ccEff.email || '').trim().toLowerCase(),
+            sedeId: sedeSeleccionada.id,
+            duracion: duracionReservaMin,
+            releaseToken: String(data.release_token),
+            releaseTokenExpiresAt: data.release_token_expires_at || null,
+          });
+        }
         alert(t('reservas.payAtVenueAlert'));
         setPantalla(1);
         setFormData({ fecha: '', hora: '', cancha: '', duracion: '90', nombre: '', email: '', numeroTel: '' });
         setWhatsapp('');
         setMpLoading(false);
       } else if (res.ok && data.manual_payment) {
+        if (data.release_token) {
+          saveMpReservaPendingSlot({
+            sede: sedeSeleccionada.nombre,
+            fecha: formData.fecha,
+            hora: formData.hora,
+            cancha: parseInt(String(formData.cancha), 10),
+            email: String(ccEff.email || '').trim().toLowerCase(),
+            sedeId: sedeSeleccionada.id,
+            duracion: duracionReservaMin,
+            releaseToken: String(data.release_token),
+            releaseTokenExpiresAt: data.release_token_expires_at || null,
+          });
+        }
         const msgManual = [
           t('reservas.pendingManualPay'),
           data.instructions ? `Instrucciones: ${data.instructions}` : null,

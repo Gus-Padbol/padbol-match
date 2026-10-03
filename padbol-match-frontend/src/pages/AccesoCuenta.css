@@ -17,6 +17,110 @@ input.acceso-cuenta-input:-webkit-autofill {
 /* Evita scroll suave del documento al enfocar el email (p. ej. sugerencias de autocompletado). */
 .acceso-cuenta-page {
   scroll-behavior: auto;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 16% 22%, rgba(225, 27, 34, 0.16), transparent 31rem),
+    linear-gradient(145deg, #f7f8fa 0%, #ffffff 52%, #f1f3f6 100%) !important;
+}
+
+.acceso-cuenta-shell {
+  width: min(1120px, calc(100% - 40px));
+  margin: max(108px, 7vh) auto 0;
+  display: grid;
+  grid-template-columns: minmax(340px, 1fr) minmax(400px, 510px);
+  align-items: stretch;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 28px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 26px 80px rgba(15, 23, 42, 0.16);
+}
+
+.acceso-cuenta-brand-panel {
+  position: relative;
+  min-height: 620px;
+  padding: clamp(42px, 6vw, 78px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #fff;
+  background:
+    linear-gradient(155deg, rgba(229, 5, 17, 0.94) 0%, rgba(139, 0, 8, 0.97) 48%, #0b0d12 48.2%, #0b0d12 100%);
+  isolation: isolate;
+}
+
+.acceso-cuenta-brand-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.24;
+  background-image: repeating-linear-gradient(125deg, transparent 0 30px, rgba(255,255,255,0.13) 31px 32px);
+}
+
+.acceso-cuenta-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.acceso-cuenta-brand-icon {
+  width: clamp(76px, 8vw, 112px);
+  height: clamp(76px, 8vw, 112px);
+  flex: 0 0 auto;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.25));
+}
+
+.acceso-cuenta-brand-name {
+  color: #fff;
+  font-size: clamp(2.25rem, 4vw, 4.25rem);
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+}
+
+.acceso-cuenta-brand-name strong {
+  display: block;
+  color: #fff;
+  font-weight: 400;
+}
+
+.acceso-cuenta-brand-kicker {
+  margin: 28px 0 0;
+  color: rgba(255,255,255,0.84);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+}
+
+.acceso-cuenta-brand-line {
+  width: 76px;
+  height: 5px;
+  margin-top: 22px;
+  border-radius: 999px;
+  background: #e50511;
+}
+
+.acceso-cuenta-card {
+  width: 100%;
+  min-width: 0;
+  padding: clamp(38px, 5vw, 68px);
+  box-sizing: border-box;
+  background: #fff;
+  color: #111827;
+}
+
+.acceso-cuenta-card h2 {
+  font-size: clamp(1.65rem, 2.4vw, 2.15rem) !important;
+  letter-spacing: -0.025em;
+}
+
+.acceso-cuenta-card .acceso-cuenta-input,
+.acceso-cuenta-card input,
+.acceso-cuenta-card select,
+.acceso-cuenta-card textarea {
+  min-height: 48px;
 }
 
 /* DS Gero: borde gris, foco rojo Padbol */
@@ -45,4 +149,80 @@ input.acceso-cuenta-input:-webkit-autofill {
 .acceso-cuenta-torneo-reveal-inner {
   overflow: hidden;
   min-height: 0;
+}
+
+@media (max-width: 820px) {
+  .acceso-cuenta-page {
+    background: #fff !important;
+  }
+
+  .acceso-cuenta-shell {
+    width: 100%;
+    margin-top: 87px;
+    grid-template-columns: 1fr;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .acceso-cuenta-brand-panel {
+    min-height: auto;
+    padding: 16px max(22px, env(safe-area-inset-left, 0px));
+    background: linear-gradient(135deg, #0b0d12 0%, #151820 72%, #9d0009 100%);
+  }
+
+  .acceso-cuenta-brand-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .acceso-cuenta-lockup {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .acceso-cuenta-brand-name {
+    white-space: nowrap;
+  }
+
+  .acceso-cuenta-brand-name strong {
+    display: inline;
+  }
+
+  .acceso-cuenta-brand-name {
+    font-size: clamp(1.55rem, 7vw, 2.35rem);
+  }
+
+  .acceso-cuenta-brand-kicker {
+    margin-top: 8px;
+  }
+
+  .acceso-cuenta-brand-line {
+    margin-top: 8px;
+  }
+
+  .acceso-cuenta-card {
+    padding: 34px max(22px, env(safe-area-inset-left, 0px)) 48px;
+  }
+}
+
+@media (max-width: 390px) {
+  .acceso-cuenta-brand-panel {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+
+  .acceso-cuenta-brand-name {
+    font-size: 1.5rem;
+  }
+
+  .acceso-cuenta-brand-kicker {
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+  }
+
+  .acceso-cuenta-card {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
 }
