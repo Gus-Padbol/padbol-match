@@ -8,9 +8,9 @@ import CookieConsentBanner, {
   COOKIES_CONSENT_STORAGE_KEY,
 } from './CookieConsentBanner';
 
-function renderBanner() {
+function renderBanner(initialEntry = '/') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <HubNavLayoutProvider>
         <CookieConsentBanner />
       </HubNavLayoutProvider>
@@ -41,5 +41,11 @@ describe('CookieConsentBanner', () => {
 
     expect(localStorage.getItem(COOKIES_CONSENT_STORAGE_KEY)).toBe(COOKIES_CONSENT_ESSENTIAL);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('se integra al flujo del documento en login para no cubrir los controles de acceso', () => {
+    renderBanner('/login?redirect=/admin');
+
+    expect(screen.getByRole('dialog')).toHaveStyle({ position: 'relative', bottom: 'auto' });
   });
 });

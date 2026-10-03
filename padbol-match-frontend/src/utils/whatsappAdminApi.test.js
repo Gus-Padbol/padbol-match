@@ -11,14 +11,14 @@ test('permissions llama al endpoint con Bearer', async () => {
   const r = await whatsappAdminApi.permissions('tok');
   expect(r.canOperate).toBe(true);
   const [url, options] = spy.mock.calls[0];
-  expect(String(url)).toContain('/api/admin/whatsapp/permissions');
+  expect(String(url)).toContain('/api/admin/crm/permissions');
   expect(options.headers.Authorization).toBe('Bearer tok');
 });
 
 test('inbox codifica el límite', async () => {
   const spy = mockFetch({ items: [] });
   await whatsappAdminApi.inbox('tok', 25);
-  expect(String(spy.mock.calls[0][0])).toContain('/api/admin/whatsapp/inbox?limit=25');
+  expect(String(spy.mock.calls[0][0])).toContain('/api/admin/crm/inbox?limit=25');
 });
 
 test('reply envía POST con body { body }', async () => {

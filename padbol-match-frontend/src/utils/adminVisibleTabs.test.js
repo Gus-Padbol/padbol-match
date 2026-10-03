@@ -75,6 +75,17 @@ describe('adminVisibleTabs — Sponsors', () => {
     expect(r.redirected).toBe(true);
     expect(r.reason).toBe('sponsors_in_config');
   });
+
+  it('normaliza los accesos públicos de Atención / CRM al workspace técnico', () => {
+    expect(resolveAdminVisibleTab('crm', 'super_admin')).toMatchObject({
+      tab: 'whatsapp',
+      redirected: false,
+    });
+    expect(resolveAdminVisibleTab('atencion', 'super_admin')).toMatchObject({
+      tab: 'whatsapp',
+      redirected: false,
+    });
+  });
 });
 
 describe('adminVisibleTabs — guard y fallback', () => {
