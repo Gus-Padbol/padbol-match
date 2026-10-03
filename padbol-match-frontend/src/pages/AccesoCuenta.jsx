@@ -27,6 +27,7 @@ import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { digitsOnly } from '../utils/authIdentidad';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
+import { requestPasswordRecovery } from '../utils/passwordRecovery';
 import { assessAgeEligibility } from '../utils/ageEligibility';
 import { resolveRoleAwarePostLoginPath } from '../utils/postLoginDestination';
 import {
@@ -38,6 +39,10 @@ import {
 
 /** Misma clave que en FormEquipos: invitación a equipo con `?equipo=` antes del login. */
 const PENDING_TORNEO_INVITE_LS = 'padbol_invite_torneo_equipo_return';
+const CRM_QA_SUPABASE_PROJECT_REF = 'vxikhdulhuvghfqeutnp';
+const IS_CRM_QA_AUTH = String(process.env.REACT_APP_SUPABASE_URL || '').includes(
+  CRM_QA_SUPABASE_PROJECT_REF
+);
 
 /** Logo Google multicolor (inline; marca registrada de Google LLC). */
 function GoogleMarkIcon() {

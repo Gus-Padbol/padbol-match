@@ -76,6 +76,11 @@ input.acceso-cuenta-input:-webkit-autofill {
   min-height: 100dvh; display: flex; flex-direction: column; align-items: center;
   padding: 72px 18px; box-sizing: border-box; background: #070a12;
 }
+.acceso-cuenta-recovery-button {
+  width: 100%; min-height: 48px; margin-top: 12px;
+  border: 1px solid rgba(239, 27, 36, 0.72); border-radius: 10px;
+  background: #fff; color: #111827; font-weight: 800;
+}
 .acceso-cuenta-recovery__logo { width: min(300px, 76vw); height: auto; margin-bottom: 24px; }
 .acceso-cuenta-recovery__panel { width: min(420px, 100%); padding: 28px; border-radius: 20px; background: #fff; color: #111827; }
 .acceso-cuenta-recovery__panel h1 { margin: 0 0 10px; font-size: 26px; }
