@@ -156,6 +156,26 @@ export function registerModuloClasesRoutes(app, deps) {
     );
   }
 
+  function nextScheduledSlot(horarios, now = new Date()) {
+    const candidates = [];
+    for (let offset = 0; offset <= 14; offset += 1) {
+      const date = new Date(now);
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + offset);
+      const day = date.getDay();
+      const fecha = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      for (const horario of horarios || []) {
+        if (Number(horario.dia_semana) !== day) continue;
+        const hora = normalizeHoraClase(horario.hora_inicio);
+        if (!hora) continue;
+        const startsAt = new Date(`${fecha}T${hora}:00-03:00`);
+        if (startsAt.getTime() > now.getTime()) candidates.push({ fecha, hora, startsAt });
+      }
+    }
+    candidates.sort((a, b) => a.startsAt - b.startsAt);
+    return candidates[0] || null;
+  }
+
   async function resolveCanchaNumeroReserva(canchaId) {
     const cid = Number(canchaId);
     if (!Number.isFinite(cid)) return null;
@@ -277,6 +297,74 @@ export function registerModuloClasesRoutes(app, deps) {
       res.json(out);
     } catch (err) {
       console.error('❌ GET /api/clases:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** GET /api/clases/disponibles?sede_id=&deporte= — contrato compacto para app móvil. */
+  app.get('/api/clases/disponibles', async (req, res) => {
+    try {
+      const sedeId = req.query.sede_id != null && req.query.sede_id !== '' ? Number(req.query.sede_id) : null;
+      const deporte = String(req.query.deporte || '').trim().toLowerCase();
+      if (sedeId != null && !Number.isFinite(sedeId)) return res.status(400).json({ error: 'sede_id inválido' });
+
+      let query = supabaseAdmin
+        .from('clases')
+        .select(
+          `id, sede_id, profesor_id, deporte, titulo, tipo, cupo_maximo, duracion_minutos, precio, activo, sedes(id, nombre, moneda), profesores!inner(${PROFESOR_JOIN_PUBLIC_SELECT}, certificado_numero)`,
+        )
+        .eq('activo', true)
+        .eq('profesores.aprobado', true)
+        .eq('profesores.activo', true);
+      if (sedeId != null) query = query.eq('sede_id', sedeId);
+      if (deporte) query = query.ilike('deporte', deporte);
+      const { data, error } = await query.order('id', { ascending: true });
+      if (error) throw error;
+
+      const available = [];
+      for (const clase of data || []) {
+        if (!profesorMatchesDeporte(clase.profesores, deporte)) continue;
+        const horarios = await fetchHorariosClase(clase.id);
+        const slot = nextScheduledSlot(horarios);
+        if (!slot) continue;
+        const reservasCount = await countInscripcionesSlot(clase.id, slot.fecha, slot.hora);
+        const cupoMax = Math.max(1, parseInt(String(clase.cupo_maximo), 10) || 1);
+        const profesor = mapProfesorPublic(clase.profesores);
+        const certApproved = String(clase.profesores?.certificado_estado || '') === 'aprobado';
+        available.push({
+          id: clase.id,
+          titulo: clase.titulo,
+          deporte: clase.deporte,
+          nivel: clase.profesores?.nivel ?? null,
+          tipo: clase.tipo === 'individual' ? 'individual' : 'grupal',
+          sede_id: clase.sede_id,
+          sede_nombre: clase.sedes?.nombre ?? null,
+          fecha: slot.fecha,
+          hora: slot.hora,
+          horarios: horarios.map((h) => ({
+            dia_semana: Number(h.dia_semana),
+            hora_inicio: normalizeHoraClase(h.hora_inicio),
+            hora_fin: normalizeHoraClase(h.hora_fin),
+          })),
+          duracion_minutos: Number(clase.duracion_minutos) || 60,
+          precio: Number(clase.precio) || 0,
+          moneda: String(clase.sedes?.moneda || 'ARS').toUpperCase(),
+          cupo_max: cupoMax,
+          reservas_count: reservasCount,
+          spots_disponibles: Math.max(0, cupoMax - reservasCount),
+          profesor_id: clase.profesor_id,
+          profesor_nombre: profesor?.nombre ?? null,
+          profesor_foto_url: profesor?.foto_url ?? null,
+          profesor_bio: profesor?.bio ?? null,
+          profesor_certificaciones: certApproved
+            ? [clase.profesores?.certificado_numero || 'Certificación FIPA aprobada']
+            : [],
+          profesor_certificacion_estado: certApproved ? 'aprobado' : String(clase.profesores?.certificado_estado || 'sin_documento'),
+        });
+      }
+      res.json({ clases: available });
+    } catch (err) {
+      console.error('❌ GET /api/clases/disponibles:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
     }
   });
@@ -476,7 +564,7 @@ export function registerModuloClasesRoutes(app, deps) {
   });
 
   /** POST /api/clases/inscribir */
-  app.post('/api/clases/inscribir', async (req, res) => {
+  const inscribirClaseHandler = async (req, res) => {
     try {
       const user = await requireAuthUser(req);
       const claseId = Number(req.body?.clase_id);
@@ -615,6 +703,26 @@ export function registerModuloClasesRoutes(app, deps) {
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
       console.error('❌ POST /api/clases/inscribir:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
+    }
+  };
+
+  app.post('/api/clases/inscribir', inscribirClaseHandler);
+
+  /** POST /api/clases/:id/reservar — reserva el próximo turno publicado (app móvil). */
+  app.post('/api/clases/:id/reservar', async (req, res) => {
+    try {
+      const claseId = Number(req.params.id);
+      if (!Number.isFinite(claseId)) return res.status(400).json({ error: 'ID inválido' });
+      const horarios = await fetchHorariosClase(claseId);
+      const slot = nextScheduledSlot(horarios);
+      if (!slot) return res.status(409).json({ error: 'La clase no tiene próximos horarios disponibles' });
+      req.body = { ...(req.body || {}), clase_id: claseId, fecha: slot.fecha, hora_inicio: slot.hora };
+      return inscribirClaseHandler(req, res);
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ POST /api/clases/:id/reservar:', err?.message || err);
+      return res.status(500).json({ error: err.message || String(err) });
     }
   });
 
