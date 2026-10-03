@@ -659,10 +659,8 @@ export function registerModuloClasesRoutes(app, deps) {
             precio,
             moneda: String(sedeRow.moneda || 'ARS').trim().toUpperCase() || 'ARS',
             estado: 'confirmada',
-            duracion: duracionMin,
             duracion_minutos: duracionMin,
             user_id: user.id,
-            tipo: 'clase',
           },
         ])
         .select()
