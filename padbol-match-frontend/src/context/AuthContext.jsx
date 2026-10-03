@@ -255,8 +255,15 @@ export function AuthProvider({ children }) {
       setLoading(false);
     };
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       applyAuthSession(nextSession);
+      if (
+        event === 'PASSWORD_RECOVERY' &&
+        typeof window !== 'undefined' &&
+        window.location.pathname !== '/auth/recovery'
+      ) {
+        window.location.replace('/auth/recovery?redirect=%2Fadmin');
+      }
     });
 
     supabase.auth.getSession().then(({ data }) => {
