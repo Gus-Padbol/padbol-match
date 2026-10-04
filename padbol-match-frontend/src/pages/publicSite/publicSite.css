@@ -3676,13 +3676,13 @@ html.public-site-active #root {
 
   .ps-section--scoreboard .ps-scoreboard__snapshot {
     display: block;
-    flex: 0 0 var(--ps-scoreboard-media-width);
+    flex: 0 0 auto;
     margin: 0;
     border-radius: 16px;
   }
 
   .ps-section--scoreboard .ps-scoreboard__video {
-    flex: 0 0 var(--ps-scoreboard-media-width);
+    flex: 0 0 auto;
     margin: 0;
     border-radius: 16px;
   }
