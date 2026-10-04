@@ -47,7 +47,7 @@ export default function PasswordRecovery() {
     } finally { setBusy(false); }
   };
   return <main className="acceso-cuenta-page acceso-cuenta-recovery">
-    <img className="acceso-cuenta-recovery__logo" src="/brand/padbol-match-logo-on-light.png" alt="Padbol Match" />
+    <img className="acceso-cuenta-recovery__logo" src="/brand/padbol-match-logo-positive.svg" alt="Padbol Match" />
     <section className="acceso-cuenta-panel acceso-cuenta-recovery__panel">
       <h1>Creá tu contraseña de QA</h1>
       <p>La definís una sola vez. Después ingresás normalmente con tu correo y esta contraseña.</p>

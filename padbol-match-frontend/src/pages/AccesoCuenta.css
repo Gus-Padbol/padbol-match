@@ -82,7 +82,7 @@ input.acceso-cuenta-input:-webkit-autofill {
   background: #fff; color: #111827; font-weight: 800;
 }
 .acceso-cuenta-recovery__logo { width: min(300px, 76vw); height: auto; margin-bottom: 24px; }
-.acceso-cuenta-recovery__panel { width: min(420px, 100%); padding: 28px; border-radius: 20px; background: #fff; color: #111827; }
+.acceso-cuenta-recovery__panel { width: min(420px, 100%); padding: 28px; box-sizing: border-box; border-radius: 20px; background: #fff; color: #111827; }
 .acceso-cuenta-recovery__panel h1 { margin: 0 0 10px; font-size: 26px; }
 .acceso-cuenta-recovery__panel > p { color: #475569; line-height: 1.5; }
 .acceso-cuenta-recovery__panel label { display: block; margin: 16px 0 7px; font-weight: 700; }
