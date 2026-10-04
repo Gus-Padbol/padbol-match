@@ -1,4 +1,6 @@
 import { resolveWhatsappPermissions } from './whatsappAssistant.js';
+import { createHash, randomUUID } from 'node:crypto';
+import { normalizeEmail, normalizePhone } from './crmContact.js';
 
 function crmError(message, status = 403, code = 'CRM_ADMIN_FORBIDDEN') {
   const error = new Error(message);
@@ -8,6 +10,7 @@ function crmError(message, status = 403, code = 'CRM_ADMIN_FORBIDDEN') {
 }
 
 const ACTIVITY_TYPES = new Set(['note', 'phone_call', 'zoom_meeting', 'in_person_meeting']);
+const MANUAL_ORIGINS = new Set(['in_person', 'phone', 'whatsapp', 'email', 'other']);
 
 function optionalText(value, max = 2000) {
   const text = String(value ?? '').trim();
@@ -33,7 +36,9 @@ export function createCrmAdminService({
   if (!repository) throw crmError('El repositorio CRM no está configurado.', 503, 'CRM_ADMIN_UNAVAILABLE');
 
   function permissionsFor(email, role) {
-    return resolvePermissions({ email, role, operators, superAdminEmails });
+    const permissions = resolvePermissions({ email, role, operators, superAdminEmails });
+    const venueAdmin = ['admin_club', 'empleado'].includes(String(role || '').toLowerCase());
+    return { ...permissions, venueAdmin, canOperate: permissions.canOperate || venueAdmin };
   }
 
   function requireOperator(email, role) {
@@ -48,43 +53,69 @@ export function createCrmAdminService({
     return permissions;
   }
 
-  function requireRead(email, role) {
+  function requireRead(email, role, sedeId) {
     const permissions = permissionsFor(email, role);
     if (!permissions.canOperate && !permissions.canAudit) {
       throw crmError('No tienes acceso a la bandeja CRM.');
     }
+    if (permissions.venueAdmin && !Number.isFinite(Number(sedeId))) {
+      throw crmError('La cuenta no tiene una sede canónica asignada.', 403, 'CRM_SEDE_REQUIRED');
+    }
     return permissions;
   }
 
+  function scopedSede({ email, role, sedeId }, requestedSedeId = null) {
+    const permissions = requireRead(email, role, sedeId);
+    if (permissions.venueAdmin) return Number(sedeId);
+    const requested = requestedSedeId == null || requestedSedeId === '' ? null : Number(requestedSedeId);
+    if (requested != null && (!Number.isInteger(requested) || requested <= 0)) {
+      throw crmError('Sede inválida.', 400, 'CRM_SEDE_INVALID');
+    }
+    return requested;
+  }
+
+  function assertRowScope(context, permissions, conversation) {
+    if (permissions.venueAdmin && Number(conversation?.sede_id) !== Number(context.sedeId)) {
+      throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
+    }
+  }
+
   return {
-    getPermissions({ email, role }) {
+    getPermissions({ email, role, sedeId }) {
       const permissions = permissionsFor(email, role);
       return {
         role: permissions.role,
         canOperate: permissions.canOperate,
         canAudit: permissions.canAudit,
         whatsappSendEnabled: typeof sendWhatsappReply === 'function',
+        sede_id: permissions.venueAdmin ? Number(sedeId) || null : null,
       };
     },
 
-    async listInbox({ email, role, filters = {} }) {
-      requireRead(email, role);
+    async listInbox(context) {
+      const permissions = requireRead(context.email, context.role, context.sedeId);
+      const filters = { ...(context.filters || {}) };
+      if (permissions.venueAdmin) filters.sedeId = Number(context.sedeId);
       return repository.listConversations(filters);
     },
 
-    async getInbox({ email, role, id }) {
-      requireRead(email, role);
+    async getInbox(context) {
+      const permissions = requireRead(context.email, context.role, context.sedeId);
+      const { id } = context;
       const conversation = await repository.getConversation(id);
       if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
+      assertRowScope(context, permissions, conversation);
       return conversation;
     },
 
-    async reply({ email, role, id, body }) {
-      requireOperator(email, role);
+    async reply(context) {
+      const { email, role, sedeId, id, body } = context;
+      const permissions = requireOperator(email, role);
       const text = String(body ?? '').trim();
       if (!text) throw crmError('La respuesta no puede estar vacía.', 400, 'CRM_REPLY_INVALID');
       const conversation = await repository.getConversation(id);
       if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
+      assertRowScope({ email, role, sedeId }, permissions, conversation);
       if (conversation.source_channel !== 'whatsapp') {
         throw crmError(
           'Esta consulta llegó por formulario web. La respuesta por email todavía no está habilitada.',
@@ -116,10 +147,12 @@ export function createCrmAdminService({
       }
     },
 
-    async handoff({ email, role, id }) {
-      requireOperator(email, role);
+    async handoff(context) {
+      const { email, role, sedeId, id } = context;
+      const permissions = requireOperator(email, role);
       const conversation = await repository.getConversation(id);
       if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
+      assertRowScope({ email, role, sedeId }, permissions, conversation);
       if (conversation.handoff_ready !== true || conversation.qualification_status !== 'qualified') {
         throw crmError('El contacto todavía no completó la calificación guiada.', 409, 'CRM_HANDOFF_NOT_READY');
       }
@@ -127,15 +160,54 @@ export function createCrmAdminService({
       return { ok: true, disposition: 'handoff' };
     },
 
-    async listActivities({ email, role, id }) {
-      requireRead(email, role);
+    async listActivities(context) {
+      const permissions = requireRead(context.email, context.role, context.sedeId);
+      const { id } = context;
       const conversation = await repository.getConversation(id);
       if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
+      assertRowScope(context, permissions, conversation);
       return repository.listActivities(conversation.id);
     },
 
-    async createActivity({ email, role, id, activityType, summary, outcome, nextStep, followUpAt }) {
-      requireOperator(email, role);
+    async assignSede(context) {
+      requireAudit(context.email, context.role);
+      const sedeId = scopedSede(context, context.requestedSedeId);
+      if (!sedeId || !(await repository.sedeExists(sedeId))) {
+        throw crmError('La sede canónica no existe.', 400, 'CRM_SEDE_INVALID');
+      }
+      const conversation = await repository.getConversation(context.id);
+      if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
+      return repository.assignSede(context.id, sedeId, context.email);
+    },
+
+    async createManual(context) {
+      const permissions = requireRead(context.email, context.role, context.sedeId);
+      const sedeId = scopedSede(context, context.requestedSedeId);
+      if (!sedeId || !(await repository.sedeExists(sedeId))) {
+        throw crmError('La sede canónica no existe.', 400, 'CRM_SEDE_INVALID');
+      }
+      if (!permissions.venueAdmin && !permissions.canAudit && !permissions.canOperate) {
+        throw crmError('No autorizado.');
+      }
+      const origin = String(context.origin || '').trim().toLowerCase();
+      if (!MANUAL_ORIGINS.has(origin)) throw crmError('Origen manual inválido.', 400, 'CRM_ORIGIN_INVALID');
+      const email = normalizeEmail(context.emailAddress);
+      const phone = normalizePhone(context.phone);
+      const name = optionalText(context.name, 160);
+      if (!email && !phone) throw crmError('Ingresá un correo o teléfono válido.', 400, 'CRM_CONTACT_INVALID');
+      const sourceRef = `manual:${sedeId}:${randomUUID()}`;
+      return repository.createManualConversation({
+        sedeId, email, phone, name, origin: `manual:${origin}`,
+        sourceChannel: origin === 'whatsapp' ? 'whatsapp' : 'email',
+        sourceRef, attemptId: createHash('sha256').update(sourceRef).digest('hex'),
+        subject: optionalText(context.subject, 512) || 'Contacto cargado manualmente',
+        body: optionalText(context.body, 4000), author: context.email,
+      });
+    },
+
+    async createActivity(context) {
+      const { email, role, sedeId, id, activityType, summary, outcome, nextStep, followUpAt } = context;
+      const permissions = requireOperator(email, role);
       const type = String(activityType ?? '').trim();
       const text = optionalText(summary);
       if (!ACTIVITY_TYPES.has(type) || !text) {
@@ -143,6 +215,7 @@ export function createCrmAdminService({
       }
       const conversation = await repository.getConversation(id);
       if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
+      assertRowScope({ email, role, sedeId }, permissions, conversation);
       return repository.createActivity({
         contact_id: conversation.contact_id,
         conversation_id: conversation.id,
@@ -180,6 +253,7 @@ export function createSupabaseCrmAdminRepository(supabaseAdmin) {
         .limit(200);
       if (filters.sourceChannel) builder = builder.eq('source_channel', filters.sourceChannel);
       if (filters.estado) builder = builder.eq('estado', filters.estado);
+      if (filters.sedeId != null) builder = builder.eq('sede_id', Number(filters.sedeId));
       return query(builder, 'No se pudo cargar la bandeja CRM.');
     },
 
@@ -191,6 +265,50 @@ export function createSupabaseCrmAdminRepository(supabaseAdmin) {
         .maybeSingle();
       if (error) throw crmError('No se pudo cargar la conversación.', 503, 'CRM_ADMIN_UNAVAILABLE');
       return data || null;
+    },
+
+    async sedeExists(id) {
+      const { data, error } = await supabaseAdmin.from('sedes').select('id').eq('id', Number(id)).maybeSingle();
+      if (error) throw crmError('No se pudo validar la sede.', 503, 'CRM_ADMIN_UNAVAILABLE');
+      return Boolean(data);
+    },
+
+    async assignSede(id, sedeId, author) {
+      const { data, error } = await supabaseAdmin.from('crm_conversations').update({
+        sede_id: Number(sedeId), assigned_by: String(author).trim().toLowerCase(),
+        assigned_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      }).eq('id', id).select('*').single();
+      if (error) throw crmError('No se pudo asignar la sede.', 503, 'CRM_ADMIN_UNAVAILABLE');
+      return data;
+    },
+
+    async createManualConversation(payload) {
+      let contact = null;
+      if (payload.email) {
+        const result = await supabaseAdmin.from('crm_contacts').select('*').eq('email_normalized', payload.email).maybeSingle();
+        contact = result.data || null;
+      }
+      if (!contact && payload.phone) {
+        const result = await supabaseAdmin.from('crm_contacts').select('*').eq('phone_normalized', payload.phone).maybeSingle();
+        contact = result.data || null;
+      }
+      if (!contact) {
+        const result = await supabaseAdmin.from('crm_contacts').insert({
+          email_normalized: payload.email, phone_normalized: payload.phone, nombre: payload.name,
+        }).select('*').single();
+        if (result.error) throw crmError('No se pudo crear el contacto.', 503, 'CRM_ADMIN_UNAVAILABLE');
+        contact = result.data;
+      }
+      const now = new Date().toISOString();
+      const result = await supabaseAdmin.from('crm_conversations').insert({
+        contact_id: contact.id, source_channel: payload.sourceChannel, source_ref: payload.sourceRef,
+        attempt_id: payload.attemptId, identity_used: payload.email || payload.phone,
+        origin: payload.origin, subject: payload.subject, inbound_body: payload.body,
+        received_at: now, sede_id: payload.sedeId, assigned_by: payload.author,
+        assigned_at: now, estado: 'nuevo',
+      }).select('*, contact:crm_contacts(id, nombre, email_normalized, phone_normalized, review_needed)').single();
+      if (result.error) throw crmError('No se pudo registrar el contacto manual.', 503, 'CRM_ADMIN_UNAVAILABLE');
+      return result.data;
     },
 
     async createReply({ conversationId, body, operador, status }) {
@@ -264,7 +382,8 @@ export function registerCrmAdminRoutes(app, {
     const row = typeof fetchUserRoleRowForAuthUser === 'function'
       ? await fetchUserRoleRowForAuthUser(user)
       : await fetchUserRoleRow(user.email);
-    return { email: user.email, role: row?.role ?? null };
+    const sedeId = row?.sede_id == null || row.sede_id === '' ? null : Number(row.sede_id);
+    return { email: user.email, role: row?.role ?? null, sedeId: Number.isFinite(sedeId) ? sedeId : null };
   }
 
   function handle(res, error) {
@@ -319,6 +438,22 @@ export function registerCrmAdminRoutes(app, {
         outcome: req.body?.outcome,
         nextStep: req.body?.next_step,
         followUpAt: req.body?.follow_up_at,
+      }));
+    } catch (error) { return handle(res, error); }
+  });
+  app.patch('/api/admin/crm/inbox/:id/sede', async (req, res) => {
+    try {
+      return res.json(await crmAdminService.assignSede({
+        ...(await adminContext(req)), id: req.params.id, requestedSedeId: req.body?.sede_id,
+      }));
+    } catch (error) { return handle(res, error); }
+  });
+  app.post('/api/admin/crm/manual', async (req, res) => {
+    try {
+      return res.status(201).json(await crmAdminService.createManual({
+        ...(await adminContext(req)), requestedSedeId: req.body?.sede_id,
+        origin: req.body?.origin, name: req.body?.name, emailAddress: req.body?.email,
+        phone: req.body?.phone, subject: req.body?.subject, body: req.body?.body,
       }));
     } catch (error) { return handle(res, error); }
   });

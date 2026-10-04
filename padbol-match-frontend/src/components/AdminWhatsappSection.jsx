@@ -4,7 +4,7 @@ import './AdminWhatsappSection.css';
 
 const SEND_DISABLED_NOTE = 'Respuesta registrada — envío desactivado';
 
-function InboxView({ accessToken }) {
+function InboxView({ accessToken, permissions }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,6 +12,8 @@ function InboxView({ accessToken }) {
   const [replyText, setReplyText] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [sedes, setSedes] = useState([]);
+  const [manual, setManual] = useState({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -28,9 +30,14 @@ function InboxView({ accessToken }) {
 
   useEffect(() => { void load(); }, [load]);
 
+  useEffect(() => {
+    if (!permissions?.canAudit || typeof whatsappAdminApi.sedes !== 'function') return;
+    whatsappAdminApi.sedes(accessToken).then((data) => setSedes(Array.isArray(data) ? data : (data?.sedes || []))).catch(() => setSedes([]));
+  }, [accessToken, permissions?.canAudit]);
+
   const itemId = (item) => item.id || item.event_id;
-  const itemTitle = (item) => item.from_wa_id || item.contact_ref || 'Contacto protegido';
-  const itemBody = (item) => item.text_body || item.event_type || 'Evento CRM';
+  const itemTitle = (item) => item.contact?.nombre || item.contact?.email_normalized || item.contact?.phone_normalized || item.from_wa_id || item.contact_ref || 'Contacto protegido';
+  const itemBody = (item) => item.inbound_body || item.text_body || item.subject || item.event_type || 'Evento CRM';
   const selected = items.find((item) => itemId(item) === selectedId) || null;
 
   async function submitReply() {
@@ -64,13 +71,39 @@ function InboxView({ accessToken }) {
     }
   }
 
+  async function submitManual(event) {
+    event.preventDefault(); setBusy(true); setNotice(null);
+    try {
+      await whatsappAdminApi.createManual(accessToken, { ...manual, sede_id: permissions?.canAudit ? manual.sede_id : undefined });
+      setManual({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
+      setNotice('Contacto registrado en la sede, sin enviar comunicaciones.'); await load();
+    } catch (e) { setNotice(e?.message || 'No se pudo registrar el contacto'); }
+    finally { setBusy(false); }
+  }
+
+  async function assignSelectedSede(sedeId) {
+    if (!selected || !sedeId) return;
+    setBusy(true); setNotice(null);
+    try { await whatsappAdminApi.assignSede(accessToken, selected.id, sedeId); setNotice('Sede asignada.'); await load(); }
+    catch (e) { setNotice(e?.message || 'No se pudo asignar la sede'); }
+    finally { setBusy(false); }
+  }
+
   if (loading) return <p>{"Cargando bandeja…"}</p>;
   if (error) return <p style={{ color: '#e33030' }}>{error}</p>;
-  if (items.length === 0) return <p>{"No hay consultas."}</p>;
-
   return (
     <div>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginBottom: 18, padding: 12, border: '1px solid #ddd', borderRadius: 10 }}>
+        <strong>Agregar contacto recibido por la sede</strong>
+        <input aria-label="Nombre del contacto" placeholder="Nombre" value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><input aria-label="Correo del contacto" placeholder="Correo" type="email" value={manual.email} onChange={(e) => setManual({ ...manual, email: e.target.value })} /><input aria-label="Teléfono del contacto" placeholder="Teléfono" value={manual.phone} onChange={(e) => setManual({ ...manual, phone: e.target.value })} /></div>
+        <select aria-label="Origen del contacto" value={manual.origin} onChange={(e) => setManual({ ...manual, origin: e.target.value })}><option value="in_person">Presencial</option><option value="phone">Teléfono</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="other">Otro</option></select>
+        {permissions?.canAudit ? <select aria-label="Sede canónica" required value={manual.sede_id} onChange={(e) => setManual({ ...manual, sede_id: e.target.value })}><option value="">Elegir sede</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || sede.nombre_club || `Sede ${sede.id}`}</option>)}</select> : null}
+        <input aria-label="Asunto" placeholder="Asunto" value={manual.subject} onChange={(e) => setManual({ ...manual, subject: e.target.value })} />
+        <textarea aria-label="Detalle" placeholder="Detalle" rows={2} value={manual.body} onChange={(e) => setManual({ ...manual, body: e.target.value })} />
+        <button type="submit" disabled={busy || (!manual.email && !manual.phone)}>Guardar contacto</button>
+      </form>
+      {items.length === 0 ? <p>{"No hay consultas."}</p> : <ul style={{ listStyle: 'none', padding: 0 }}>
         {items.map((item) => (
           <li key={itemId(item)}>
             <button
@@ -82,12 +115,14 @@ function InboxView({ accessToken }) {
             </button>
           </li>
         ))}
-      </ul>
+      </ul>}
 
       {selected && (
         <div style={{ marginTop: 12, borderTop: '1px solid #ccc', paddingTop: 12 }}>
           <p><strong>Contacto:</strong> {itemTitle(selected)}</p>
           <p>{itemBody(selected)}</p>
+          <p><strong>Origen:</strong> {selected.origin || 'No informado'} · <strong>Sede:</strong> {selected.sede_id || 'Sin asignar'}</p>
+          {permissions?.canAudit ? <select aria-label="Asignar conversación a sede" value={selected.sede_id || ''} onChange={(e) => void assignSelectedSede(e.target.value)}><option value="">Sin asignar</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || sede.nombre_club || `Sede ${sede.id}`}</option>)}</select> : null}
           {selected.registration_id ? <p><strong>Inscripción:</strong> {selected.registration_id}</p> : null}
           {selected.session_id ? <p><strong>Jornada:</strong> {selected.session_id}</p> : null}
           {selected.from_wa_id ? <><textarea
@@ -151,7 +186,7 @@ export default function AdminWhatsappSection({ accessToken, onBack }) {
       );
     }
     if (!perms) return <section className="admin-crm-state"><p>{"Cargando bandeja…"}</p></section>;
-    if (perms.canOperate || perms.canAudit) return <InboxView accessToken={accessToken} />;
+    if (perms.canOperate || perms.canAudit) return <InboxView accessToken={accessToken} permissions={perms} />;
     return <section className="admin-crm-state"><p>No tienes acceso a esta sección.</p></section>;
   })();
 

@@ -10132,6 +10132,8 @@ export default function AdminDashboard({
         ...(puedeVerPadCoins ? [{ id: 'padcoins', label: 'PadCoins' }] : []),
         ...(puedeVerMembresias ? [{ id: 'membresias', label: t('admin.tabs.membresias', 'Membresías') }] : []),
         ...(puedeEnviarNotificacionesPush ? [{ id: 'notificaciones', label: t('admin.tabs.notificacionesPush') }] : []),
+        ...(puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'Atención / CRM' }] : []),
+        { id: 'next_generation', label: 'Next Generation' },
         { id: 'resumen', label: t('nav.admin.resumen') },
       ]
     : esAdminMultiplesSedes
@@ -11965,7 +11967,7 @@ export default function AdminDashboard({
         />
       ) : null}
 
-      {activeTab === 'next_generation' && isSuperAdmin && session?.access_token ? (
+      {activeTab === 'next_generation' && (isSuperAdmin || esAdminClub) && session?.access_token ? (
         <div className="section">
           <AdminNextGenerationSection accessToken={session.access_token} />
         </div>

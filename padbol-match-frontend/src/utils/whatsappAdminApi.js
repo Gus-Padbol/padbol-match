@@ -23,6 +23,13 @@ async function request(path, token, options = {}) {
 export const whatsappAdminApi = {
   permissions: (token) => request('/api/admin/crm/permissions', token),
   inbox: (token, limit = 100) => request(`/api/admin/crm/inbox?limit=${encodeURIComponent(limit)}`, token),
+  createManual: (token, payload) => request('/api/admin/crm/manual', token, {
+    method: 'POST', body: JSON.stringify(payload),
+  }),
+  assignSede: (token, id, sedeId) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/sede`, token, {
+    method: 'PATCH', body: JSON.stringify({ sede_id: sedeId }),
+  }),
+  sedes: (token) => request('/api/sedes', token),
   reply: (token, id, body) => request(
     `/api/admin/whatsapp/inbox/${encodeURIComponent(id)}/reply`,
     token,
