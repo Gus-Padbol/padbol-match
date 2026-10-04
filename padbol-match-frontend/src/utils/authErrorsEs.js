@@ -31,7 +31,7 @@ export function mensajeErrorAuthSupabase(raw) {
 
   if (!s) return 'Ocurrió un error. Prueba de nuevo.';
   if (m.includes('invalid login credentials') || m.includes('invalid_grant')) {
-    return 'WhatsApp, email o contraseña incorrectos. Verifica los datos e intenta de nuevo.';
+    return 'Correo electrónico o contraseña incorrectos. Verificá los datos e intentá nuevamente.';
   }
   if (m.includes('email not confirmed')) {
     return 'Tienes que confirmar tu correo antes de ingresar. Revisa tu bandeja de entrada.';
