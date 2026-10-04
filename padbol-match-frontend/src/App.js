@@ -124,49 +124,14 @@ function RegistroToMiPerfilRedirect() {
   return <Navigate to={buildMiPerfilRegistroUrl(r)} replace />;
 }
 
-/** `/auth` o `/login` con callback OAuth, `?modo=registro`, `?login=1` o `?redirect=` interno. URL vacía → no es acceso explícito. */
-function authLocationShowsLoginScreen(search, hash) {
-  const h = hash || '';
-  if (h.length > 1) return true;
-  const qs = search || '';
-  if (qs.length <= 1) return false;
-  try {
-    const sp = new URLSearchParams(qs.startsWith('?') ? qs.slice(1) : qs);
-    return (
-      sp.has('code') ||
-      sp.has('error') ||
-      sp.has('error_description') ||
-      sp.has('token_hash') ||
-      sp.has('type') ||
-      sp.has('redirect') ||
-      sp.get('login') === '1' ||
-      sp.get('modo') === 'registro' ||
-      sp.get('modo') === 'register' ||
-      sp.get('registro') === '1'
-    );
-  } catch {
-    return true;
-  }
-}
-
-function authRouteIsBare(search, hash) {
-  const q = String(search || '').replace(/^\?/, '');
-  const h = hash || '';
-  return q.length === 0 && h.length <= 1;
-}
-
-/** Solo mostrar login/registro cuando la URL indica intención explícita (no en `/auth` o `/login` vacíos). */
 function AuthEntryRoute() {
-  const { search, hash } = useLocation();
-  if (authRouteIsBare(search, hash) || !authLocationShowsLoginScreen(search, hash)) {
-    return <Navigate to="/" replace />;
-  }
   return <AccesoCuenta />;
 }
 
-/** `/acceso`: entrada explícita a ingresar (siempre formulario). */
-function AccesoRoute() {
-  return <AccesoCuenta />;
+/** Entradas históricas: una sola pantalla canónica, conservando destino y callback. */
+function LegacyAuthRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/auth${location.search || ''}${location.hash || ''}`} replace />;
 }
 
 /** La raíz siempre abre la presentación pública; la app queda en sus rutas internas. */
@@ -373,7 +338,7 @@ function AppRoutes() {
         <Route path="/auth" element={<AuthEntryRoute />} />
         <Route path="/auth/callback" element={<AuthOAuthCallback />} />
         <Route path="/auth/recovery" element={<PasswordRecovery />} />
-        <Route path="/acceso" element={<AccesoRoute />} />
+        <Route path="/acceso" element={<LegacyAuthRedirect />} />
         <Route path="/registro" element={<RegistroToMiPerfilRedirect />} />
 
         <Route path="/reserva" element={<Navigate to="/reservar" replace />} />
@@ -416,7 +381,8 @@ function AppRoutes() {
         <Route path="/perfil/:userId" element={<PerfilPublico />} />
         <Route path="/jugador/:alias" element={<PerfilPublico />} />
 
-        <Route path="/login" element={<AuthEntryRoute />} />
+        <Route path="/login" element={<LegacyAuthRedirect />} />
+        <Route path="/signin" element={<LegacyAuthRedirect />} />
         <Route path="/sobre" element={<SobrePadbolMatch />} />
         <Route path="/contacto" element={<ContactoSumarClub />} />
         <Route path="/terminos" element={<TerminosCondiciones />} />

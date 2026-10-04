@@ -25,7 +25,7 @@ export default function ProtectedRoute({ children }) {
 
   if (!session?.user) {
     const next = `${location.pathname}${location.search || ''}`;
-    return <Navigate to={`/login?redirect=${encodeURIComponent(next)}`} replace />;
+    return <Navigate to={`/auth?redirect=${encodeURIComponent(next)}`} replace />;
   }
 
   return children;
