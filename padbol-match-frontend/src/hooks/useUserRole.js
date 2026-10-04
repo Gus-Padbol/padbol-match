@@ -77,11 +77,17 @@ export default function useUserRole(currentCliente) {
     (async () => {
       try {
         setError(null);
-        const { data: sessWrap } = await withTimeout(
-          supabase.auth.getSession(),
-          'La sesión tardó demasiado en responder.',
-        );
-        const token = sessWrap?.session?.access_token;
+        // AuthContext ya resolvió y verificó esta sesión. Reutilizar su token evita
+        // competir por el lock interno de Supabase en Safari/móvil tras un callback.
+        // Sólo se consulta getSession como compatibilidad para consumidores antiguos.
+        let token = String(currentCliente?.accessToken || '').trim();
+        if (!token) {
+          const { data: sessWrap } = await withTimeout(
+            supabase.auth.getSession(),
+            'La sesión tardó demasiado en responder.',
+          );
+          token = sessWrap?.session?.access_token;
+        }
 
         if (!token) {
           if (!cancelled) {
@@ -128,7 +134,7 @@ export default function useUserRole(currentCliente) {
     return () => {
       cancelled = true;
     };
-  }, [emailKey]);
+  }, [emailKey, currentCliente?.accessToken]);
 
   return {
     rol: roleData?.rol ?? null,

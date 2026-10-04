@@ -187,6 +187,7 @@ function AdminDashboardGate() {
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
+      accessToken: session?.access_token || null,
     };
   }, [session, userProfile]);
 
@@ -266,18 +267,21 @@ function AdminDashboardGate() {
       <div
         style={{
           minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: 16, padding: 24, textAlign: 'center', color: 'rgba(255,255,255,0.95)', boxSizing: 'border-box',
+          gap: 16, padding: 24, textAlign: 'center', color: '#ffffff', background: 'linear-gradient(180deg, #0b1020 0%, #151832 100%)', boxSizing: 'border-box',
         }}
       >
         <strong style={{ fontSize: '20px' }}>No pudimos cargar el panel</strong>
-        <p style={{ maxWidth: 420, margin: 0, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>
-          La sesión está activa, pero la verificación de permisos no respondió a tiempo. Prueba nuevamente.
+        <p style={{ maxWidth: 420, margin: 0, color: '#e2e8f0', lineHeight: 1.5 }}>
+          La sesión está activa, pero no pudimos verificar los permisos. Reintentá; si continúa, cerrá sesión y volvé a ingresar.
         </p>
         <button type="button" onClick={() => window.location.reload()} style={{ padding: '12px 18px', border: 0, borderRadius: 10, background: '#e11b22', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
           Reintentar
         </button>
         <button type="button" onClick={() => navigate('/')} style={{ padding: '8px 14px', border: 0, background: 'transparent', color: 'rgba(255,255,255,0.78)', cursor: 'pointer' }}>
           Volver a la app
+        </button>
+        <button type="button" onClick={signOutAndClear} style={{ padding: '8px 14px', border: '1px solid #94a3b8', borderRadius: 10, background: 'transparent', color: '#ffffff', cursor: 'pointer' }}>
+          Cerrar sesión
         </button>
       </div>
     );
