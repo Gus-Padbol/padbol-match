@@ -591,12 +591,17 @@ export default function AdminProfesoresSuperSection({
   };
 
   const rechazar = async (id) => {
-    if (!window.confirm(t('admin.profesores.confirmarRechazar'))) return;
+    const motivo = window.prompt('Motivo del rechazo (quedará visible en la ficha):', '');
+    if (motivo == null) return;
+    if (String(motivo).trim().length < 3) {
+      setMsg('Escribe un motivo de rechazo.');
+      return;
+    }
     setBusyId(id);
     setBusyAction('rechazar');
     setMsg('');
     try {
-      await rechazarProfesorAdmin({ profesorId: id, accessToken });
+      await rechazarProfesorAdmin({ profesorId: id, motivo, accessToken });
       setFichaRow(null);
       await reloadAll();
     } catch (e) {
@@ -613,7 +618,7 @@ export default function AdminProfesoresSuperSection({
     setBusyAction('desactivar');
     setMsg('');
     try {
-      await rechazarProfesorAdmin({ profesorId: id, accessToken });
+      await rechazarProfesorAdmin({ profesorId: id, motivo: 'Desactivado por Super Admin', accessToken });
       setFichaRow(null);
       await reloadAll();
     } catch (e) {

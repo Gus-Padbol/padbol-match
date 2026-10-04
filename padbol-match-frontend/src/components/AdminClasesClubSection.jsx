@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
+  cancelarAdminClaseInscripcion,
   crearClaseAdmin,
   fetchAdminClaseAsistencia,
   fetchAdminClases,
@@ -51,6 +52,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
   const [asistenciaRows, setAsistenciaRows] = useState([]);
   const [asistenciaLoading, setAsistenciaLoading] = useState(false);
   const [asistenciaPatchId, setAsistenciaPatchId] = useState(null);
+  const [cancelandoId, setCancelandoId] = useState(null);
   const [form, setForm] = useState({
     titulo: '',
     descripcion: '',
@@ -207,6 +209,20 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       setMsg(e?.message || 'Error');
     } finally {
       setAsistenciaPatchId(null);
+    }
+  };
+
+  const cancelarInscripcion = async (insRow) => {
+    if (!asistenciaModal?.id || !window.confirm('¿Cancelar esta inscripción? Se respetará la política de anticipación de la clase.')) return;
+    setCancelandoId(insRow.id);
+    setMsg('');
+    try {
+      await cancelarAdminClaseInscripcion({ claseId: asistenciaModal.id, inscripcionId: insRow.id, accessToken });
+      await cargarAsistencia();
+    } catch (e) {
+      setMsg(e?.message || 'No se pudo cancelar');
+    } finally {
+      setCancelandoId(null);
     }
   };
 
@@ -433,7 +449,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                     >
                       <div style={{ fontWeight: 800, fontSize: 14 }}>{row.nombre}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
-                        {row.hora_inicio}
+                        {row.hora_inicio} · Cupos {asistenciaRows.filter((item) => item.hora_inicio === row.hora_inicio).length}/{Number(asistenciaModal.cupo_maximo) || 1}
                         {row.email ? ` · ${row.email}` : ''}
                         {row.telefono ? ` · ${row.telefono}` : ''}
                       </div>
@@ -471,6 +487,14 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                         {pendiente ? (
                           <span style={{ fontSize: 12, color: 'var(--text-secondary)', alignSelf: 'center' }}>— Pendiente</span>
                         ) : null}
+                        <button
+                          type="button"
+                          disabled={cancelandoId === row.id}
+                          onClick={() => void cancelarInscripcion(row)}
+                          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #dc2626', background: 'transparent', color: '#dc2626', fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          {cancelandoId === row.id ? '…' : 'Cancelar inscripción'}
+                        </button>
                       </div>
                     </li>
                   );

@@ -103,11 +103,11 @@ export async function patchProfesorAdmin({ profesorId, body, accessToken }) {
   return data;
 }
 
-export async function rechazarProfesorAdmin({ profesorId, accessToken }) {
+export async function rechazarProfesorAdmin({ profesorId, motivo, accessToken }) {
   const res = await fetch(`${API_BASE}/api/admin/profesores/${Number(profesorId)}/rechazar`, {
     method: 'PATCH',
     headers: authHeaders(accessToken),
-    body: JSON.stringify({}),
+    body: JSON.stringify({ motivo: String(motivo || '').trim() }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || 'No se pudo rechazar');
@@ -184,5 +184,15 @@ export async function patchAdminClaseAsistencia({ claseId, inscripcionId, asisti
   );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || 'No se pudo marcar asistencia');
+  return data;
+}
+
+export async function cancelarAdminClaseInscripcion({ claseId, inscripcionId, accessToken }) {
+  const res = await fetch(
+    `${API_BASE}/api/admin/clases/${Number(claseId)}/inscripciones/${Number(inscripcionId)}`,
+    { method: 'DELETE', headers: authHeaders(accessToken) },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'No se pudo cancelar la inscripción');
   return data;
 }

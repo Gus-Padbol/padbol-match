@@ -1016,6 +1016,13 @@ export function registerModuloClasesRoutes(app, deps) {
 
       const b = req.body || {};
       const patch = { updated_at: new Date().toISOString() };
+      if (b.nombre !== undefined) {
+        const nombre = String(b.nombre || '').trim();
+        if (!nombre) return res.status(400).json({ error: 'nombre requerido' });
+        patch.nombre = nombre;
+      }
+      if (b.apellido !== undefined) patch.apellido = String(b.apellido || '').trim() || null;
+      if (b.foto_url !== undefined) patch.foto_url = String(b.foto_url || '').trim() || null;
       if (b.sede_id !== undefined) {
         const newSedeId = Number(b.sede_id);
         if (!Number.isFinite(newSedeId)) return res.status(400).json({ error: 'sede_id inválido' });
@@ -1072,6 +1079,30 @@ export function registerModuloClasesRoutes(app, deps) {
 
       if (Object.keys(patch).length <= 1) {
         return res.status(400).json({ error: 'Sin campos para actualizar' });
+      }
+
+      // Una sede puede corregir la ficha, pero los cambios que alteran identidad,
+      // habilitación deportiva o documentación vuelven siempre a revisión central.
+      if (!scope.superA && [
+        'nombre', 'apellido', 'foto_url', 'deportes', 'certificado_fipa',
+        'certificado_numero', 'certificado_url', 'especialidad', 'nivel',
+      ].some((field) => Object.prototype.hasOwnProperty.call(patch, field))) {
+        patch.aprobado = false;
+        patch.aprobado_por = null;
+        if (patch.certificado_url || existing.certificado_url) {
+          patch.certificado_estado = 'pendiente';
+        }
+      }
+
+      const targetSedeId = patch.sede_id ?? existing.sede_id;
+      const targetCertificatePath = Object.prototype.hasOwnProperty.call(patch, 'certificado_url')
+        ? patch.certificado_url
+        : existing.certificado_url;
+      if (!scope.superA && targetCertificatePath && !isProfesorCertificatePathForSede(targetCertificatePath, targetSedeId)) {
+        return res.status(409).json({
+          error: 'El certificado no pertenece a la sede del profesor',
+          code: 'PROFESOR_CERTIFICADO_SEDE_INVALIDA',
+        });
       }
 
       const depCheck = patch.deportes ?? existing.deportes ?? [];
@@ -1295,10 +1326,19 @@ export function registerModuloClasesRoutes(app, deps) {
       await assertSuperAdminReq(req);
       const profId = Number(req.params.id);
       if (!Number.isFinite(profId)) return res.status(400).json({ error: 'ID inválido' });
+      const motivo = String(req.body?.motivo || '').trim();
+      if (motivo.length < 3) return res.status(400).json({ error: 'motivo de rechazo requerido' });
 
       const { data, error } = await supabaseAdmin
         .from('profesores')
-        .update({ activo: false })
+        .update({
+          activo: false,
+          aprobado: false,
+          certificado_estado: 'rechazado',
+          certificado_nota: motivo,
+          certificado_verificado_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', profId)
         .select()
         .single();
@@ -1473,6 +1513,54 @@ export function registerModuloClasesRoutes(app, deps) {
       const st = err.status || 500;
       if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
       console.error('❌ PATCH /api/admin/clases/:id/asistencia/:inscripcion_id:', err?.message || err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  /** DELETE /api/admin/clases/:id/inscripciones/:inscripcion_id — cancelar desde la sede, con la misma política. */
+  app.delete('/api/admin/clases/:id/inscripciones/:inscripcion_id', async (req, res) => {
+    try {
+      await assertAdminClubOrSuper(req);
+      const claseId = Number(req.params.id);
+      const insId = Number(req.params.inscripcion_id);
+      if (!Number.isFinite(claseId) || !Number.isFinite(insId)) {
+        return res.status(400).json({ error: 'ID inválido' });
+      }
+      const { data: clase, error: claseErr } = await supabaseAdmin
+        .from('clases')
+        .select('id, sede_id, horas_cancelacion')
+        .eq('id', claseId)
+        .maybeSingle();
+      if (claseErr) throw claseErr;
+      if (!clase) return res.status(404).json({ error: 'Clase no encontrada' });
+      await assertUsuarioPuedeAdministrarSede(req, clase.sede_id);
+
+      const { data: ins, error: insErr } = await supabaseAdmin
+        .from('inscripciones_clases')
+        .select('id, clase_id, user_id, fecha, hora_inicio, estado')
+        .eq('id', insId)
+        .eq('clase_id', claseId)
+        .maybeSingle();
+      if (insErr) throw insErr;
+      if (!ins) return res.status(404).json({ error: 'Inscripción no encontrada' });
+      const pol = evalPoliticaCancelacion(clase, ins);
+      if (!pol.ok) return res.status(409).json({ error: pol.motivo, horas_cancelacion: pol.horas_cancelacion });
+
+      const { error: deleteErr } = await supabaseAdmin.from('inscripciones_clases').delete().eq('id', insId);
+      if (deleteErr) throw deleteErr;
+      await registrarEventoInternoClase({
+        sedeId: clase.sede_id,
+        claseId,
+        inscripcionId: insId,
+        userId: ins.user_id,
+        tipo: 'cancelacion',
+        payload: { origen: 'dashboard_sede', fecha: ins.fecha, hora_inicio: ins.hora_inicio },
+      });
+      res.json({ ok: true, horas_cancelacion: pol.horas_cancelacion });
+    } catch (err) {
+      const st = err.status || 500;
+      if (st >= 400 && st < 500) return res.status(st).json({ error: err.message || String(err) });
+      console.error('❌ DELETE /api/admin/clases/:id/inscripciones/:inscripcion_id:', err?.message || err);
       res.status(500).json({ error: err.message || String(err) });
     }
   });

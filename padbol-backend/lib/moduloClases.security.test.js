@@ -166,3 +166,20 @@ test('un fallo de auditoría en cancelación no se silencia', async () => {
   assert.equal(fixture.auditRows.length, 1);
   assert.equal(fixture.auditRows[0].sede_id, 7);
 });
+
+test('super admin no puede rechazar un profesor sin dejar motivo', async () => {
+  const { app, routes } = routeApp();
+  const neverDb = {
+    from() { throw new Error('no debe consultar la base sin motivo'); },
+  };
+  registerModuloClasesRoutes(app, baseDeps({ supabase: neverDb, supabaseAdmin: neverDb }));
+  const response = responseRecorder();
+
+  await routes.get('PATCH /api/admin/profesores/:id/rechazar')(
+    { params: { id: '11' }, body: { motivo: '  ' } },
+    response,
+  );
+
+  assert.equal(response.statusCode, 400);
+  assert.match(response.payload.error, /motivo/i);
+});

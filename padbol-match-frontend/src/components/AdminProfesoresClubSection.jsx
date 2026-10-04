@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { supabase } from '../supabaseClient';
-import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores, uploadProfesorCertificado } from '../utils/clasesAdminApi';
+import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores, patchProfesorAdmin, uploadProfesorCertificado } from '../utils/clasesAdminApi';
 import { compressImageFile } from '../utils/compressImage';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
@@ -90,6 +90,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [approvingId, setApprovingId] = useState(null);
   const [fotoUploading, setFotoUploading] = useState(false);
@@ -229,10 +230,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
     setSaving(true);
     setMsg('');
     try {
-      await crearProfesorAdmin({
-        sedeId,
-        accessToken,
-          body: {
+      const body = {
           nombre,
           apellido: String(form.apellido || '').trim() || null,
           whatsapp: String(form.whatsapp || '').trim() || null,
@@ -244,8 +242,9 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
           certificado_url: String(form.certificado_url || '').trim() || null,
           especialidad: String(form.especialidad || '').trim() || null,
           nivel: String(form.nivel || '').trim() || null,
-        },
-      });
+        };
+      if (editingId) await patchProfesorAdmin({ profesorId: editingId, accessToken, body });
+      else await crearProfesorAdmin({ sedeId, accessToken, body });
       setForm({
         nombre: '',
         apellido: '',
@@ -260,12 +259,31 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
       });
       setFotoUploadError(false);
       setShowForm(false);
+      setEditingId(null);
       await load();
     } catch (e) {
       setMsg(e?.message || 'Error');
     } finally {
       setSaving(false);
     }
+  };
+
+  const editarProfesor = (p) => {
+    setForm({
+      nombre: String(p.nombre || ''),
+      apellido: String(p.apellido || ''),
+      whatsapp: String(p.whatsapp || ''),
+      foto_url: String(p.foto_url || ''),
+      bio: String(p.bio || ''),
+      deportes: Array.isArray(p.deportes) ? [...p.deportes] : [],
+      certificado_fipa_numero: String(p.certificado_numero || ''),
+      certificado_url: String(p.certificado_url || ''),
+      especialidad: String(p.especialidad || ''),
+      nivel: String(p.nivel || ''),
+    });
+    setEditingId(p.id);
+    setShowForm(true);
+    setMsg('');
   };
 
   return (
@@ -458,7 +476,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
               marginTop: 4,
             }}
           >
-            {saving ? t('admin.metricas.saving') : t('admin.sedes.saveCoach')}
+            {saving ? t('admin.metricas.saving') : editingId ? 'Guardar cambios' : t('admin.sedes.saveCoach')}
           </button>
           {!isSuperAdmin ? (
             <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -541,6 +559,13 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                       {approvingId === p.id ? '…' : t('admin.sedes.approve')}
                     </button>
                   ) : null}
+                  <button
+                    type="button"
+                    onClick={() => editarProfesor(p)}
+                    style={{ border: 'none', background: 'none', color: ACCENT, fontWeight: 800, fontSize: 12, cursor: 'pointer', padding: '6px 0' }}
+                  >
+                    Editar
+                  </button>
                 </div>
               </div>
             </li>
