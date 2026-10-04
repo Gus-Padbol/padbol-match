@@ -4,8 +4,9 @@ import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 const API_BASE = getApiBaseUrl();
 const STATE_LABEL = { confirmada: 'Confirmada', en_espera: 'En espera', cancelada: 'Cancelada' };
 
-export default function AdminNextGenerationSection({ accessToken }) {
-  const [data, setData] = useState({ summary: {}, inscripciones: [] });
+export default function AdminNextGenerationSection({ accessToken, isSuperAdmin = false }) {
+  const [data, setData] = useState({ summary: {}, inscripciones: [], sedes: [] });
+  const [canonicalSedes, setCanonicalSedes] = useState([]);
   const [filter, setFilter] = useState('todas');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -20,12 +21,27 @@ export default function AdminNextGenerationSection({ accessToken }) {
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'No se pudieron cargar las inscripciones.');
-      setData({ summary: body.summary || {}, inscripciones: body.inscripciones || [] });
+      setData({ summary: body.summary || {}, inscripciones: body.inscripciones || [], sedes: body.sedes || [] });
     } catch (loadError) { setError(loadError.message); }
     finally { setLoading(false); }
   }, [accessToken]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    fetch(`${API_BASE}/api/sedes`, { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' })
+      .then((response) => response.json()).then((body) => setCanonicalSedes(Array.isArray(body) ? body : (body?.sedes || []))).catch(() => setCanonicalSedes([]));
+  }, [accessToken, isSuperAdmin]);
+
+  async function assignVenue(venueId, sedeId) {
+    if (!sedeId) return;
+    const response = await fetch(`${API_BASE}/api/admin/next-generation/venues/${encodeURIComponent(venueId)}/sede`, {
+      method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ sede_id: sedeId }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) { setError(body.error || 'No se pudo vincular la sede.'); return; }
+    await load();
+  }
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -43,6 +59,7 @@ export default function AdminNextGenerationSection({ accessToken }) {
       <button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Actualizando…' : 'Actualizar'}</button>
     </div>
     {error ? <p role="alert" style={{ color: '#b91c1c', fontWeight: 700 }}>{error}</p> : null}
+    {isSuperAdmin && data.sedes.length ? <section style={{ marginTop: 16, padding: 14, border: '1px solid var(--border-color)', borderRadius: 12 }}><h3>Vinculación con sedes oficiales</h3>{data.sedes.map((venue) => <label key={venue.id} style={{ display: 'grid', gap: 6, marginTop: 10 }}>{venue.sede_club || venue.id}<select aria-label={`Sede oficial para ${venue.sede_club || venue.id}`} value={venue.canonical_sede_id || ''} onChange={(event) => void assignVenue(venue.id, event.target.value)}><option value="">Sin vincular</option>{canonicalSedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select></label>)}</section> : null}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(145px,1fr))', gap: 12, margin: '20px 0' }}>
       {[['Total', data.summary.total], ['Confirmadas', data.summary.confirmadas], ['En espera', data.summary.en_espera], ['Canceladas', data.summary.canceladas]].map(([label, value]) =>
         <article key={label} style={{ padding: 16, border: '1px solid var(--border-color)', borderRadius: 12 }}><span>{label}</span><strong style={{ display: 'block', fontSize: 26 }}>{Number(value) || 0}</strong></article>)}

@@ -58,6 +58,7 @@ export function buildNextGenerationOverview({ sessions = [], venues = [], regist
       canceladas: rows.filter((row) => row.estado === 'cancelada').length,
     },
     inscripciones: rows,
+    sedes: venues,
   };
 }
 
@@ -107,6 +108,23 @@ export function registerNextGenerationAdminRoutes(app, { supabaseAdmin, adminLis
         participants: (queries[3].data || []).filter((row) => registrationIds.has(String(row.inscripcion_id))),
         events: (queries[4].data || []).filter((row) => registrationIds.has(String(row.inscripcion_id))),
       }));
+    } catch (error) {
+      res.status(error.status || 500).json({ error: error.message || 'Error interno', code: error.code || 'NG_ADMIN_UNAVAILABLE' });
+    }
+  });
+
+  app.patch('/api/admin/next-generation/venues/:id/sede', async (req, res) => {
+    try {
+      const scope = await adminListScopeFromRequest(req);
+      if (!scope) throw ngAdminError('No autorizado.', 401, 'NG_ADMIN_UNAUTHENTICATED');
+      if (!scope.superA && String(scope.rol || '') !== 'super_admin') throw ngAdminError('Sólo el Super Admin puede vincular sedes.', 403, 'NG_ADMIN_FORBIDDEN');
+      const sedeId = Number(req.body?.sede_id);
+      if (!Number.isInteger(sedeId) || sedeId <= 0) throw ngAdminError('Sede canónica inválida.', 400, 'NG_SEDE_INVALID');
+      const canonical = await supabaseAdmin.from('sedes').select('id').eq('id', sedeId).maybeSingle();
+      if (canonical.error || !canonical.data) throw ngAdminError('La sede canónica no existe.', 400, 'NG_SEDE_INVALID');
+      const updated = await supabaseAdmin.from('ng_solicitudes_sede').update({ canonical_sede_id: sedeId, updated_at: new Date().toISOString() }).eq('id', req.params.id).select('id,canonical_sede_id,sede_club,ciudad,pais').single();
+      if (updated.error) throw ngAdminError('No se pudo vincular la sede.', 503, 'NG_ADMIN_UNAVAILABLE');
+      res.json(updated.data);
     } catch (error) {
       res.status(error.status || 500).json({ error: error.message || 'Error interno', code: error.code || 'NG_ADMIN_UNAVAILABLE' });
     }

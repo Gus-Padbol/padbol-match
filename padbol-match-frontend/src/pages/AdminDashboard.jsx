@@ -11969,7 +11969,7 @@ export default function AdminDashboard({
 
       {activeTab === 'next_generation' && (isSuperAdmin || esAdminClub) && session?.access_token ? (
         <div className="section">
-          <AdminNextGenerationSection accessToken={session.access_token} />
+          <AdminNextGenerationSection accessToken={session.access_token} isSuperAdmin={isSuperAdmin} />
         </div>
       ) : null}
 
