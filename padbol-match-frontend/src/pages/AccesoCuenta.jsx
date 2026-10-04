@@ -9,7 +9,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
 } from '../constants/hubLayout';
-import padbolMatchIcon from '../assets/padbol-match-icon.svg';
+import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import {
@@ -26,7 +26,6 @@ import { PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { digitsOnly } from '../utils/authIdentidad';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
 import { requestPasswordRecovery } from '../utils/passwordRecovery';
 import { assessAgeEligibility } from '../utils/ageEligibility';
 import { resolveRoleAwarePostLoginPath } from '../utils/postLoginDestination';
@@ -165,7 +164,6 @@ export default function AccesoCuenta() {
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
   const [busy, setBusy] = useState(false);
-  const [accessLinkBusy, setAccessLinkBusy] = useState(false);
   const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
@@ -382,7 +380,7 @@ export default function AccesoCuenta() {
     e.preventDefault();
     setErrorMsg('');
     setInfoMsg(peekReservaLoginGateMessage() ? t('auth.reservaLoginGate') : '');
-    if (busy || accessLinkBusy) return;
+    if (busy) return;
     const em = email.trim().toLowerCase();
     if (!em) {
       setErrorMsg(t('auth.enterEmail'));
@@ -416,7 +414,7 @@ export default function AccesoCuenta() {
 
   const handleRecuperarPassword = async () => {
     setErrorMsg(''); setInfoMsg('');
-    if (busy || accessLinkBusy || recoveryBusy) return;
+    if (busy || recoveryBusy) return;
     const em = email.trim().toLowerCase();
     if (!em) return setErrorMsg(t('auth.enterEmail'));
     setRecoveryBusy(true);
@@ -426,35 +424,6 @@ export default function AccesoCuenta() {
       if (error) return setErrorMsg(t('auth.passwordRecoveryFailed'));
       setInfoMsg(t('auth.passwordRecoverySent'));
     } finally { setRecoveryBusy(false); }
-  };
-
-  const handleEnviarEnlaceAcceso = async () => {
-    setErrorMsg('');
-    setInfoMsg('');
-    if (busy || accessLinkBusy) return;
-    const em = email.trim().toLowerCase();
-    if (!em) {
-      setErrorMsg(t('auth.enterEmail'));
-      return;
-    }
-    setAccessLinkBusy(true);
-    try {
-      const destination = resolvePostLoginNavigatePath(location.search);
-      const { error } = await requestPasswordlessAccess({
-        auth: supabase.auth,
-        email: em,
-        origin: window.location.origin,
-        destination,
-      });
-      if (error) {
-        console.error('Error acceso por enlace:', error.message);
-        setErrorMsg(t('auth.accessLinkFailed'));
-        return;
-      }
-      setInfoMsg(t('auth.accessLinkSent'));
-    } finally {
-      setAccessLinkBusy(false);
-    }
   };
 
   const handleRegistrar = async (e) => {
@@ -549,8 +518,11 @@ export default function AccesoCuenta() {
       <main className="acceso-cuenta-shell">
         <section className="acceso-cuenta-brand-panel" aria-label="Padbol Match">
           <div className="acceso-cuenta-lockup">
-            <img src={padbolMatchIcon} alt="" className="acceso-cuenta-brand-icon" />
-            <span className="acceso-cuenta-brand-name">PADBOL <strong>MATCH</strong></span>
+            <PadbolBrandLogo
+              variant="on-dark-tight"
+              className="acceso-cuenta-brand-logo"
+              alt="Padbol Match"
+            />
           </div>
           <p className="acceso-cuenta-brand-kicker">PLAY · CONNECT · COMPETE</p>
           <div className="acceso-cuenta-brand-line" aria-hidden />
@@ -725,7 +697,7 @@ export default function AccesoCuenta() {
             </div>
             <button
               type="submit"
-              disabled={busy || accessLinkBusy}
+              disabled={busy}
               style={{
                 width: '100%',
                 padding: '16px 12px',
@@ -735,8 +707,8 @@ export default function AccesoCuenta() {
                 color: 'white',
                 fontWeight: 700,
                 fontSize: '18px',
-                cursor: busy || accessLinkBusy ? 'default' : 'pointer',
-                opacity: busy || accessLinkBusy ? 0.7 : 1,
+                cursor: busy ? 'default' : 'pointer',
+                opacity: busy ? 0.7 : 1,
               }}
             >
               {busy ? t('auth.signingIn') : t('auth.signIn')}
@@ -745,32 +717,12 @@ export default function AccesoCuenta() {
               <button
                 type="button"
                 onClick={() => void handleRecuperarPassword()}
-                disabled={busy || accessLinkBusy || recoveryBusy}
+                disabled={busy || recoveryBusy}
                 className="acceso-cuenta-recovery-button"
               >
                 {recoveryBusy ? t('auth.sending') : t('auth.createOrRecoverPassword')}
               </button>
             ) : null}
-            <button
-              type="button"
-              onClick={() => void handleEnviarEnlaceAcceso()}
-              disabled={busy || accessLinkBusy}
-              style={{
-                marginTop: '12px',
-                width: '100%',
-                padding: '13px 12px',
-                borderRadius: '10px',
-                border: '1px solid var(--accent)',
-                background: 'transparent',
-                color: 'var(--accent)',
-                fontWeight: 700,
-                fontSize: '15px',
-                cursor: busy || accessLinkBusy ? 'default' : 'pointer',
-                opacity: busy || accessLinkBusy ? 0.7 : 1,
-              }}
-            >
-              {accessLinkBusy ? t('auth.sendingAccessLink') : t('auth.sendAccessLink')}
-            </button>
             <button
               type="button"
               onClick={() => setModo('register')}
