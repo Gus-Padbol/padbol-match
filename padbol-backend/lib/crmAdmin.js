@@ -48,6 +48,14 @@ export function createCrmAdminService({
     return permissions;
   }
 
+  function requireRead(email, role) {
+    const permissions = permissionsFor(email, role);
+    if (!permissions.canOperate && !permissions.canAudit) {
+      throw crmError('No tienes acceso a la bandeja CRM.');
+    }
+    return permissions;
+  }
+
   return {
     getPermissions({ email, role }) {
       const permissions = permissionsFor(email, role);
@@ -60,12 +68,12 @@ export function createCrmAdminService({
     },
 
     async listInbox({ email, role, filters = {} }) {
-      requireOperator(email, role);
+      requireRead(email, role);
       return repository.listConversations(filters);
     },
 
     async getInbox({ email, role, id }) {
-      requireOperator(email, role);
+      requireRead(email, role);
       const conversation = await repository.getConversation(id);
       if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
       return conversation;
@@ -120,7 +128,7 @@ export function createCrmAdminService({
     },
 
     async listActivities({ email, role, id }) {
-      requireOperator(email, role);
+      requireRead(email, role);
       const conversation = await repository.getConversation(id);
       if (!conversation) throw crmError('Conversación no encontrada.', 404, 'CRM_NOT_FOUND');
       return repository.listActivities(conversation.id);
@@ -275,10 +283,11 @@ export function registerCrmAdminRoutes(app, {
   app.get('/api/admin/crm/inbox', async (req, res) => {
     try {
       const context = await adminContext(req);
-      return res.json(await crmAdminService.listInbox({
+      const items = await crmAdminService.listInbox({
         ...context,
         filters: { sourceChannel: req.query.channel, estado: req.query.estado },
-      }));
+      });
+      return res.json({ items });
     } catch (error) { return handle(res, error); }
   });
   app.get('/api/admin/crm/inbox/:id', async (req, res) => {

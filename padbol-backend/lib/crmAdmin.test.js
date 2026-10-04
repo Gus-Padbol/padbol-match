@@ -101,6 +101,17 @@ test('contrato HTTP CRM registra auditoría y acciones reales con salidas extern
     const audit = await auditResponse.json();
     assert.equal(audit.conversations[0].subject, 'Prueba 23');
 
+    const superInboxResponse = await fetch(`${baseUrl}/api/admin/crm/inbox`, {
+      headers: auth('super-token'),
+    });
+    assert.equal(superInboxResponse.status, 200);
+    assert.equal((await superInboxResponse.json()).items[0].subject, 'Prueba 23');
+
+    const superActivitiesResponse = await fetch(`${baseUrl}/api/admin/crm/inbox/conversation-23/activities`, {
+      headers: auth('super-token'),
+    });
+    assert.equal(superActivitiesResponse.status, 200);
+
     const permissionsResponse = await fetch(`${baseUrl}/api/admin/crm/permissions`, {
       headers: auth('operator-token'),
     });
