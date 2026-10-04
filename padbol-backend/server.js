@@ -55,6 +55,8 @@ import {
   createSupabaseCrmAdminRepository,
   registerCrmAdminRoutes,
 } from './lib/crmAdmin.js';
+import { createCrmService, createSupabaseCrmRepository } from './lib/crmService.js';
+import { registerCrmInboundRoutes } from './lib/crmInboundRoutes.js';
 import { registerModuloComunidadMediaRoutes } from './lib/moduloComunidadMedia.js';
 import { registerAdminOrganizationsRoutes } from './lib/adminOrganizations.js';
 import { buildAdminRoleGeography, normalizeGeoText, resolveSedesPermitidasPorScope } from './lib/adminTerritorialScope.js';
@@ -18495,6 +18497,14 @@ registerCrmAdminRoutes(app, {
   authUserFromBearer,
   fetchUserRoleRow,
   fetchUserRoleRowForAuthUser,
+});
+
+const crmInboundService = createCrmService({
+  repository: createSupabaseCrmRepository(supabaseAdmin),
+});
+registerCrmInboundRoutes(app, {
+  crmService: crmInboundService,
+  emailInboundSecret: process.env.CRM_INBOUND_EMAIL_SECRET || '',
 });
 
 let whatsappCloudOutboxSweepRunning = false;
