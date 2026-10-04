@@ -34,4 +34,7 @@ export const crmAdminApi = {
   activities: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/activities`, token),
   addActivity: (token, id, activity) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/activities`, token, { method: 'POST', body: JSON.stringify(activity) }),
   audit: (token) => request('/api/admin/crm/audit', token),
+  createManual: (token, payload) => request('/api/admin/crm/manual', token, { method: 'POST', body: JSON.stringify(payload) }),
+  assignSede: (token, id, sedeId) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/sede`, token, { method: 'PATCH', body: JSON.stringify({ sede_id: sedeId }) }),
+  sedes: (token) => request('/api/sedes', token),
 };

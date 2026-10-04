@@ -155,6 +155,9 @@ export default function WhatsappCrmDemo() {
   const [activityResponsable, setActivityResponsable] = useState('');
   const [activityEstado, setActivityEstado] = useState('nuevo');
   const [activityDerivado, setActivityDerivado] = useState('no');
+  const [sedes, setSedes] = useState([]);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manual, setManual] = useState({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
 
   const load = useCallback(async ({ silent = false } = {}) => {
     if (!token) {
@@ -167,12 +170,9 @@ export default function WhatsappCrmDemo() {
     try {
       const p = await crmAdminApi.permissions(token);
       setPerms(p);
-      if (p?.canOperate) {
+      if (p?.canOperate || p?.canAudit) {
         const inbox = await crmAdminApi.inbox(token, { channel: channelFilter, estado: estadoFilter });
         setItems(Array.isArray(inbox) ? inbox : Array.isArray(inbox?.items) ? inbox.items : []);
-      } else if (p?.canAudit) {
-        const audit = await crmAdminApi.audit(token);
-        setItems(Array.isArray(audit?.conversations) ? audit.conversations : []);
       } else {
         setItems([]);
       }
@@ -184,6 +184,11 @@ export default function WhatsappCrmDemo() {
   }, [token, channelFilter, estadoFilter]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    if (!token || !perms?.canAudit) return;
+    crmAdminApi.sedes(token).then((data) => setSedes(Array.isArray(data) ? data : (data?.sedes || []))).catch(() => setSedes([]));
+  }, [token, perms?.canAudit]);
 
   useEffect(() => {
     const timer = window.setInterval(() => { void load({ silent: true }); }, 5000);
@@ -260,6 +265,24 @@ export default function WhatsappCrmDemo() {
     }
   };
 
+  const submitManual = async (event) => {
+    event.preventDefault(); setBusy(true); setNotice(null);
+    try {
+      await crmAdminApi.createManual(token, { ...manual, sede_id: perms?.canAudit ? manual.sede_id : undefined });
+      setManual({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
+      setManualOpen(false); setNotice('Contacto registrado en la sede, sin enviar comunicaciones.'); await load();
+    } catch (e) { setNotice(e?.message || 'No se pudo registrar el contacto'); }
+    finally { setBusy(false); }
+  };
+
+  const assignSede = async (sedeId) => {
+    if (!active || !sedeId) return;
+    setBusy(true); setNotice(null);
+    try { await crmAdminApi.assignSede(token, active.id, sedeId); setNotice('Sede asignada.'); await load(); }
+    catch (e) { setNotice(e?.message || 'No se pudo asignar la sede'); }
+    finally { setBusy(false); }
+  };
+
   const submitActivity = async () => {
     if (!active || busy || !activityTopic) return;
     setBusy(true);
@@ -319,6 +342,20 @@ export default function WhatsappCrmDemo() {
         <div><span className="wa-lock">✓</span><strong>Backend QA controlado</strong><small>Los formularios entran al CRM. Ninguna respuesta saliente está habilitada todavía.</small></div>
         <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span><span>WhatsApp saliente <b>PENDIENTE META</b></span><span>Email saliente <b>DESACTIVADO</b></span></div>
       </section>
+
+      {perms?.canOperate || perms?.canAudit ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
+        <button type="button" onClick={() => setManualOpen((value) => !value)}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
+        {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+          <strong>Contacto recibido por la sede</strong>
+          <input required aria-label="Nombre del contacto" placeholder="Nombre" value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><input aria-label="Correo del contacto" type="email" placeholder="Correo" value={manual.email} onChange={(e) => setManual({ ...manual, email: e.target.value })} /><input aria-label="Teléfono del contacto" placeholder="Teléfono" value={manual.phone} onChange={(e) => setManual({ ...manual, phone: e.target.value })} /></div>
+          <select aria-label="Origen del contacto" value={manual.origin} onChange={(e) => setManual({ ...manual, origin: e.target.value })}><option value="in_person">Presencial</option><option value="phone">Teléfono</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="other">Otro</option></select>
+          {perms?.canAudit ? <select required aria-label="Sede canónica" value={manual.sede_id} onChange={(e) => setManual({ ...manual, sede_id: e.target.value })}><option value="">Elegir sede</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select> : null}
+          <input aria-label="Asunto" placeholder="Asunto" value={manual.subject} onChange={(e) => setManual({ ...manual, subject: e.target.value })} />
+          <textarea aria-label="Detalle" placeholder="Detalle" rows={2} value={manual.body} onChange={(e) => setManual({ ...manual, body: e.target.value })} />
+          <button type="submit" disabled={busy || (!manual.email && !manual.phone)}>Guardar sin enviar mensajes</button>
+        </form> : null}
+      </section> : null}
 
       {loading ? (
         <div className="wa-empty"><p>Cargando bandeja…</p></div>
@@ -418,7 +455,9 @@ export default function WhatsappCrmDemo() {
                     <div><dt>Responsable</dt><dd>{active.operador || '—'}</dd></div>
                     <div><dt>Estado</dt><dd>{statusName(active.estado)}</dd></div>
                     <div><dt>Derivado</dt><dd>{active.derivado ? 'Sí' : 'No'}</dd></div>
+                    <div><dt>Sede</dt><dd>{active.sede_id || 'Sin asignar'}</dd></div>
                   </dl>
+                  {perms?.canAudit ? <label>Asignar a sede<select aria-label="Asignar conversación a sede" value={active.sede_id || ''} onChange={(e) => void assignSede(e.target.value)}><option value="">Sin asignar</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select></label> : null}
                 </section>
                 {perms?.canOperate ? <section className="wa-panel wa-followup"><h3>Registrar seguimiento</h3>
                   <label>Tipo<select value={activityType} onChange={(e) => setActivityType(e.target.value)}>
