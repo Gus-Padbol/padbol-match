@@ -8,6 +8,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0f172a" />
     <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var refreshId = params.get('qa_refresh');
+        if (!refreshId) return;
+        var guardKey = 'padbol:qa-refresh:' + refreshId;
+        if (sessionStorage.getItem(guardKey) === 'done') return;
+        sessionStorage.setItem(guardKey, 'done');
+        var unregister = !('serviceWorker' in navigator)
+          ? Promise.resolve()
+          : navigator.serviceWorker.getRegistrations().then(function (registrations) {
+              return Promise.all(registrations.map(function (registration) {
+                return registration.unregister();
+              }));
+            });
+        var clearCaches = !('caches' in window)
+          ? Promise.resolve()
+          : caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+            });
+        Promise.all([unregister, clearCaches]).finally(function () {
+          params.delete('qa_refresh');
+          params.set('qa_build', refreshId);
+          var next = window.location.pathname + '?' + params.toString() + window.location.hash;
+          window.location.replace(next);
+        });
+      })();
+    </script>
+    <script>
       if (new URLSearchParams(window.location.search).get('password_reset') === '1') {
         window.location.replace(
           'https://padbol-match-frontend.vercel.app/?password_reset=1' + window.location.hash
@@ -42,6 +70,18 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+      (function () {
+        var build = new URLSearchParams(window.location.search).get('qa_build');
+        if (!build) return;
+        var badge = document.createElement('div');
+        badge.id = 'qa-build-marker';
+        badge.textContent = 'QA ACTUALIZADO · ' + build;
+        badge.setAttribute('aria-label', 'Versión QA actualizada ' + build);
+        badge.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483647;padding:5px 8px;border-radius:6px;background:#111827;color:#fff;font:700 10px/1.2 Arial,sans-serif;letter-spacing:.04em;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+        document.body.appendChild(badge);
+      })();
+    </script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.

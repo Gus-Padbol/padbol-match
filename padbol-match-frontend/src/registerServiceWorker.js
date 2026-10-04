@@ -85,6 +85,20 @@ export function registerServiceWorker() {
     return;
   }
 
+  // QA must always reflect the deployment currently assigned to the alias. A
+  // service worker at root scope can otherwise keep an old auth shell alive in
+  // Safari/IAB even after the CDN alias has moved. Keep PWA caching in normal
+  // environments, but deliberately remove it on the Super Admin QA host.
+  if (window.location.hostname === 'padbol-crm-superadmin-qa.vercel.app') {
+    navigator.serviceWorker.getRegistrations().then((registrations) =>
+      Promise.all(registrations.map((registration) => registration.unregister()))
+    ).catch(() => {});
+    if ('caches' in window) {
+      caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => {});
+    }
+    return;
+  }
+
   // Tras un reload por update, limpiar el guard para el próximo ciclo de deploy.
   clearSwReloadGuard();
 

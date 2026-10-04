@@ -678,7 +678,13 @@ async function authUserFromBearer(req) {
   if (!m) return null;
   const token = m[1].trim();
   if (!token) return null;
-  const { data, error } = await supabase.auth.getUser(token);
+  // Some isolated QA deployments intentionally expose only the service-role
+  // credential to the server. Authentication must not depend on the optional
+  // anonymous client in that environment; both clients validate the user's
+  // bearer with the same Auth project.
+  const authClient = supabase || supabaseAdmin;
+  if (!authClient?.auth) return null;
+  const { data, error } = await authClient.auth.getUser(token);
   if (error || !data?.user?.email) return null;
   return data.user;
 }

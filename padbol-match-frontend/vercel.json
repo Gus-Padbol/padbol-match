@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/admin/crm/:path*",
-      "destination": "https://padbol-backend-qa.onrender.com/api/admin/crm/:path*"
+      "destination": "https://padbol-crm-qa-api.vercel.app/api/admin/crm/:path*"
     },
     {
       "source": "/api/:path*",
@@ -29,6 +29,14 @@
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
         }
+      ]
+    },
+    {
+      "source": "/(admin|plataforma|auth|login|signin|crear-password)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "CDN-Cache-Control", "value": "no-store" },
+        { "key": "Vercel-CDN-Cache-Control", "value": "no-store" }
       ]
     },
     {
