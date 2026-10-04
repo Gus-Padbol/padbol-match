@@ -60,12 +60,15 @@ input.acceso-cuenta-input:-webkit-autofill {
 
 .acceso-cuenta-lockup {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
+  gap: 18px;
 }
 
-.acceso-cuenta-brand-logo {
-  width: min(100%, 390px);
-  height: auto;
+.acceso-cuenta-brand-icon {
+  width: clamp(76px, 8vw, 112px);
+  height: clamp(76px, 8vw, 112px);
+  flex: 0 0 auto;
   filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.25));
 }
 
@@ -85,6 +88,20 @@ input.acceso-cuenta-input:-webkit-autofill {
 .acceso-cuenta-recovery__panel label { display: block; margin: 16px 0 7px; font-weight: 700; }
 .acceso-cuenta-recovery__panel input { width: 100%; box-sizing: border-box; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; }
 .acceso-cuenta-recovery__panel button[type='submit'] { width: 100%; min-height: 52px; margin-top: 18px; border: 0; border-radius: 10px; background: #ef1b24; color: #fff; font-weight: 800; font-size: 16px; }
+
+.acceso-cuenta-brand-name {
+  color: #fff;
+  font-size: clamp(2.25rem, 4vw, 4.25rem);
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+  font-weight: 900;
+}
+
+.acceso-cuenta-brand-name strong {
+  display: block;
+  color: #fff;
+  font-weight: 400;
+}
 
 .acceso-cuenta-brand-kicker {
   margin: 28px 0 0;
@@ -172,8 +189,26 @@ input.acceso-cuenta-input:-webkit-autofill {
     background: linear-gradient(135deg, #0b0d12 0%, #151820 72%, #9d0009 100%);
   }
 
-  .acceso-cuenta-brand-logo {
-    width: min(72vw, 285px);
+  .acceso-cuenta-brand-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .acceso-cuenta-lockup {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .acceso-cuenta-brand-name {
+    white-space: nowrap;
+  }
+
+  .acceso-cuenta-brand-name strong {
+    display: inline;
+  }
+
+  .acceso-cuenta-brand-name {
+    font-size: clamp(1.55rem, 7vw, 2.35rem);
   }
 
   .acceso-cuenta-brand-kicker {
@@ -193,6 +228,10 @@ input.acceso-cuenta-input:-webkit-autofill {
   .acceso-cuenta-brand-panel {
     padding-top: 14px;
     padding-bottom: 14px;
+  }
+
+  .acceso-cuenta-brand-name {
+    font-size: 1.5rem;
   }
 
   .acceso-cuenta-brand-kicker {

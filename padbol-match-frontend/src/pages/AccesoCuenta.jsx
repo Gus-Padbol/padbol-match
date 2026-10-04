@@ -9,7 +9,7 @@ import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
 } from '../constants/hubLayout';
-import PadbolBrandLogo from '../components/PadbolBrandLogo';
+import padbolMatchIcon from '../assets/padbol-match-icon.svg';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import {
@@ -518,11 +518,8 @@ export default function AccesoCuenta() {
       <main className="acceso-cuenta-shell">
         <section className="acceso-cuenta-brand-panel" aria-label="Padbol Match">
           <div className="acceso-cuenta-lockup">
-            <PadbolBrandLogo
-              variant="on-dark-tight"
-              className="acceso-cuenta-brand-logo"
-              alt="Padbol Match"
-            />
+            <img src={padbolMatchIcon} alt="" className="acceso-cuenta-brand-icon" />
+            <span className="acceso-cuenta-brand-name">PADBOL <strong>MATCH</strong></span>
           </div>
           <p className="acceso-cuenta-brand-kicker">PLAY · CONNECT · COMPETE</p>
           <div className="acceso-cuenta-brand-line" aria-hidden />
