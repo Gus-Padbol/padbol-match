@@ -102,6 +102,7 @@ import AdminOrganizacionesSection from '../components/AdminOrganizacionesSection
 import AdminIncentivosSection from '../components/AdminIncentivosSection';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
+import AdminNextGenerationSection from '../components/AdminNextGenerationSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import SedeWhatsappPhoneField from '../components/SedeWhatsappPhoneField';
@@ -10154,6 +10155,7 @@ export default function AdminDashboard({
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
+        ...(isSuperAdmin ? [{ id: 'next_generation', label: 'Next Generation' }] : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
         ...(isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'Atención / CRM' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
@@ -11961,6 +11963,12 @@ export default function AdminDashboard({
           tabActive={activeTab === 'profesores'}
           onPendientesCountChange={setSnapPendienteProfesores}
         />
+      ) : null}
+
+      {activeTab === 'next_generation' && isSuperAdmin && session?.access_token ? (
+        <div className="section">
+          <AdminNextGenerationSection accessToken={session.access_token} />
+        </div>
       ) : null}
 
       {activeTab === 'suspensiones' && isSuperAdmin && session?.access_token ? (
