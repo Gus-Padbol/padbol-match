@@ -6,9 +6,9 @@ import { handleAuthOnce } from '../utils/handleAuthOnce';
 
 function safeDestination(search) {
   try {
-    const value = new URLSearchParams(search).get('redirect') || '/admin';
-    return value.startsWith('/') && !value.startsWith('//') ? value : '/admin';
-  } catch { return '/admin'; }
+    const value = new URLSearchParams(search).get('redirect') || '/admin?tab=whatsapp';
+    return value.startsWith('/') && !value.startsWith('//') ? value : '/admin?tab=whatsapp';
+  } catch { return '/admin?tab=whatsapp'; }
 }
 
 function VisibilityIcon({ visible }) {

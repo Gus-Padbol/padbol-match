@@ -262,7 +262,7 @@ export function AuthProvider({ children }) {
         typeof window !== 'undefined' &&
         window.location.pathname !== '/auth/recovery'
       ) {
-        window.location.replace('/auth/recovery?redirect=%2Fadmin');
+        window.location.replace('/auth/recovery?redirect=%2Fadmin%3Ftab%3Dwhatsapp');
       }
     });
 
