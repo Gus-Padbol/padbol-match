@@ -5,11 +5,11 @@
   "rewrites": [
     {
       "source": "/api/admin/crm/:path*",
-      "destination": "https://padbol-crm-qa-api.vercel.app/api/admin/crm/:path*"
+      "destination": "https://padbol-backend.vercel.app/api/admin/crm/:path*"
     },
     {
       "source": "/api/:path*",
-      "destination": "https://padbol-crm-qa-api.vercel.app/api/:path*"
+      "destination": "https://padbol-backend.vercel.app/api/:path*"
     }
   ],
   "headers": [
