@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
 import './WhatsappCrmDemo.css';
 
+const CRM_IS_QA = String(process.env.REACT_APP_APP_VARIANT || '').toLowerCase() === 'qa';
+
 const statusTone = {
   nuevo: 'blue',
   en_atencion: 'amber',
@@ -334,12 +336,12 @@ export default function WhatsappCrmDemo() {
           <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
           <div><strong>Atención & CRM</strong><span>Centro de conversaciones</span></div>
         </div>
-        <div className="wa-demo-badge"><span /> CONECTADO A QA</div>
+        <div className="wa-demo-badge"><span /> {CRM_IS_QA ? 'CONECTADO A QA' : 'CONECTADO'}</div>
         <div className="wa-agent"><div className="wa-avatar wa-avatar--small">{perms?.canAudit ? 'SU' : perms?.canOperate ? 'OP' : '—'}</div><div><strong>{perms?.canAudit ? 'Auditoría' : perms?.canOperate ? 'Operador' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div></div>
       </header>
 
       <section className="wa-safety" aria-label="Estado de seguridad">
-        <div><span className="wa-lock">✓</span><strong>Backend QA controlado</strong><small>Los formularios entran al CRM. Ninguna respuesta saliente está habilitada todavía.</small></div>
+        <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Backend QA controlado' : 'Backend controlado'}</strong><small>Los formularios entran al CRM. Ninguna respuesta saliente está habilitada todavía.</small></div>
         <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span><span>WhatsApp saliente <b>PENDIENTE META</b></span><span>Email saliente <b>DESACTIVADO</b></span></div>
       </section>
 
@@ -435,7 +437,7 @@ export default function WhatsappCrmDemo() {
                   {active.audio_type ? <div className="wa-system">⌁ Audio entrante: {active.audio_type} {active.transcript ? `· ${active.transcript}` : ''}</div> : null}
                 </div>
                 <div className="wa-composer">
-                  <div className="wa-draft-label"><span>✦ Respuesta</span><small>{canReplyWhatsapp ? 'Se enviará por WhatsApp desde QA' : isWebForm ? 'Respuesta por email todavía no habilitada' : 'Envío desactivado'}</small></div>
+                  <div className="wa-draft-label"><span>✦ Respuesta</span><small>{canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Respuesta por email todavía no habilitada' : 'Envío desactivado'}</small></div>
                   <textarea disabled={!canReplyWhatsapp} value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribí una respuesta…'} />
                   <div className="wa-composer-actions">
                     <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
@@ -486,7 +488,7 @@ export default function WhatsappCrmDemo() {
                     {activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}</time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}
                   </div>
                 </section> : null}
-                <section className="wa-panel wa-audit"><div className="wa-panel-title"><h3>Auditoría</h3><span>QA</span></div><p>Consultá la vista de auditoría global desde el panel de superadmin.</p></section>
+                <section className="wa-panel wa-audit"><div className="wa-panel-title"><h3>Auditoría</h3><span>{CRM_IS_QA ? 'QA' : 'GLOBAL'}</span></div><p>Consultá la vista de auditoría global desde el panel de superadmin.</p></section>
               </aside>
             </>
           ) : null}

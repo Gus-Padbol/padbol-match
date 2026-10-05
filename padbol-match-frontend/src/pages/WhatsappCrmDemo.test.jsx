@@ -20,6 +20,7 @@ jest.mock('../utils/crmAdminApi', () => ({
     reply: jest.fn(),
     handoff: jest.fn(),
     addActivity: jest.fn(),
+    sedes: jest.fn(),
   },
 }));
 
@@ -32,8 +33,8 @@ describe('CRM histórico unificado', () => {
       canAudit: true,
       whatsappSendEnabled: false,
     });
-    crmAdminApi.audit.mockResolvedValue({
-      conversations: [{
+    crmAdminApi.inbox.mockResolvedValue({
+      items: [{
         id: 'conv-prueba-23',
         estado: 'nuevo',
         source_channel: 'email',
@@ -44,17 +45,17 @@ describe('CRM histórico unificado', () => {
         created_at: '2026-10-02T12:00:00.000Z',
       }],
     });
+    crmAdminApi.sedes.mockResolvedValue([]);
   });
 
   it('muestra la auditoría histórica y mantiene apagadas las salidas', async () => {
     render(<WhatsappCrmDemo />);
 
     expect((await screen.findAllByText('Prueba 23')).length).toBeGreaterThan(0);
-    expect(screen.getByText('CONECTADO A QA')).toBeInTheDocument();
+    expect(screen.getByText('CONECTADO')).toBeInTheDocument();
     expect(screen.getByText('DESACTIVADO')).toBeInTheDocument();
     expect(screen.getByText('PENDIENTE META')).toBeInTheDocument();
-    expect(crmAdminApi.audit).toHaveBeenCalledWith('qa-token');
-    expect(crmAdminApi.inbox).not.toHaveBeenCalled();
+    expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', { channel: '', estado: '' });
     await waitFor(() => expect(screen.getAllByText(/Prueba 23/i).length).toBeGreaterThan(0));
   });
 
