@@ -14,18 +14,18 @@ order by table_name;
 
 do $preflight$
 declare
-  table_name text;
+  rel_name text;
   row_count bigint;
   unassigned_count bigint;
   assigned_venues bigint;
   prueba_23_count bigint;
 begin
-  foreach table_name in array array['crm_contacts','crm_conversations','crm_activities','crm_inbound_events'] loop
-    if to_regclass(format('public.%I', table_name)) is null then
-      raise notice '%: MISSING', table_name;
+  foreach rel_name in array array['crm_contacts','crm_conversations','crm_activities','crm_inbound_events'] loop
+    if to_regclass(format('public.%I', rel_name)) is null then
+      raise notice '%: MISSING', rel_name;
     else
-      execute format('select count(*) from public.%I', table_name) into row_count;
-      raise notice '%: % rows', table_name, row_count;
+      execute format('select count(*) from public.%I', rel_name) into row_count;
+      raise notice '%: % rows', rel_name, row_count;
     end if;
   end loop;
 
