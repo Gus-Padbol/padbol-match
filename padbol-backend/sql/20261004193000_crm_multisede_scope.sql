@@ -21,10 +21,14 @@ comment on column public.crm_conversations.sede_id is
 comment on column public.crm_conversations.origin is
   'Origen preservado. Las altas manuales usan manual:in_person, manual:phone, manual:whatsapp, manual:email o manual:other.';
 
-alter table public.ng_solicitudes_sede
-  add column if not exists canonical_sede_id bigint references public.sedes(id) on delete set null;
-create unique index if not exists uq_ng_solicitudes_canonical_sede
-  on public.ng_solicitudes_sede (canonical_sede_id) where canonical_sede_id is not null;
+do $$ begin
+  if to_regclass('public.ng_solicitudes_sede') is not null then
+    alter table public.ng_solicitudes_sede
+      add column if not exists canonical_sede_id bigint references public.sedes(id) on delete set null;
+    create unique index if not exists uq_ng_solicitudes_canonical_sede
+      on public.ng_solicitudes_sede (canonical_sede_id) where canonical_sede_id is not null;
+  end if;
+end $$;
 
 -- El acceso directo permanece cerrado; el backend valida JWT, rol y sede canónica.
 revoke all on table public.crm_contacts from anon, authenticated;

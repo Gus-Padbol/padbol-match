@@ -2,7 +2,9 @@
 export const BACKEND_RELEASE = '2026-09-09.1';
 export function backendRuntime(env = process.env) {
   const staging = env.BACKEND_RUNTIME_MODE === 'staging';
-  const enabled = (name) => env[name] == null || env[name] === '' ? !staging : env[name] === 'true';
+  // Fail closed in every environment. A provider/background worker can run only
+  // after an operator explicitly opts in with the exact value `true`.
+  const enabled = (name) => env[name] === 'true';
   return Object.freeze({ staging, mode: staging ? 'staging' : 'standard',
     backgroundJobsEnabled: enabled('BACKGROUND_JOBS_ENABLED'),
     outboundDeliveryEnabled: enabled('OUTBOUND_DELIVERY_ENABLED'),

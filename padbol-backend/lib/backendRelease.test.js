@@ -10,6 +10,10 @@ test('staging isolated and all delivery/jobs disabled by default', () => {
  for(const patch of [{STAGING_SUPABASE_PROJECT_REF:'fixture-prod'},{SUPABASE_URL:'https://fixture-prod.supabase.co'},{DATABASE_URL:'postgres://other.invalid/db'},{STRIPE_SECRET_KEY:'fixture'},{TWILIO_AUTH_TOKEN:'fixture'},{RESEND_API_KEY:'fixture'},{ANTHROPIC_API_KEY:'fixture'},{MP_ACCESS_TOKEN:'fixture'},{SUPABASE_KEY:''}]) assert.throws(()=>assertStagingIsolation({...stage,...patch}));
 });
 test('global delivery off overrides per-channel push switch',()=>assert.equal(backendRuntime({...stage,OUTBOUND_DELIVERY_ENABLED:'false',PUSH_SEND_ENABLED:'true'}).pushSendEnabled,false));
+test('standard runtime also keeps jobs and every outbound channel off by default',()=>{
+ assert.deepEqual(backendRuntime({}),{staging:false,mode:'standard',backgroundJobsEnabled:false,outboundDeliveryEnabled:false,pushSendEnabled:false});
+ assert.deepEqual(backendRuntime({BACKGROUND_JOBS_ENABLED:'true',OUTBOUND_DELIVERY_ENABLED:'true',PUSH_SEND_ENABLED:'true'}),{staging:false,mode:'standard',backgroundJobsEnabled:true,outboundDeliveryEnabled:true,pushSendEnabled:true});
+});
 test('readiness verifies release and times out without leaking database error',async()=>{
  const runtime=backendRuntime(stage);
  const check=(rpc,timeoutMs)=>backendReadiness({supabaseAdmin:{rpc},serviceRoleConfigured:true,runtime,timeoutMs});
