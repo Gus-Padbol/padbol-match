@@ -244,27 +244,43 @@ export function createSupabaseCrmAdminRepository(supabaseAdmin) {
     return data;
   }
 
+  async function attachContacts(conversations) {
+    const rows = Array.isArray(conversations) ? conversations : [];
+    const ids = [...new Set(rows.map((row) => row?.contact_id).filter(Boolean))];
+    if (!ids.length) return rows.map((row) => ({ ...row, contact: null }));
+    const contacts = await query(
+      supabaseAdmin
+        .from('crm_contacts')
+        .select('id, nombre, email_normalized, phone_normalized, review_needed')
+        .in('id', ids),
+      'No se pudieron cargar los contactos del CRM.',
+    );
+    const byId = new Map((contacts || []).map((contact) => [contact.id, contact]));
+    return rows.map((row) => ({ ...row, contact: byId.get(row.contact_id) || null }));
+  }
+
   return {
     async listConversations(filters = {}) {
       let builder = supabaseAdmin
         .from('crm_conversations')
-        .select('*, contact:crm_contacts(id, nombre, email_normalized, phone_normalized, review_needed)')
+        .select('*')
         .order('updated_at', { ascending: false })
         .limit(200);
       if (filters.sourceChannel) builder = builder.eq('source_channel', filters.sourceChannel);
       if (filters.estado) builder = builder.eq('estado', filters.estado);
       if (filters.sedeId != null) builder = builder.eq('sede_id', Number(filters.sedeId));
-      return query(builder, 'No se pudo cargar la bandeja CRM.');
+      return attachContacts(await query(builder, 'No se pudo cargar la bandeja CRM.'));
     },
 
     async getConversation(id) {
       const { data, error } = await supabaseAdmin
         .from('crm_conversations')
-        .select('*, contact:crm_contacts(id, nombre, email_normalized, phone_normalized, review_needed)')
+        .select('*')
         .eq('id', id)
         .maybeSingle();
       if (error) throw crmError('No se pudo cargar la conversación.', 503, 'CRM_ADMIN_UNAVAILABLE');
-      return data || null;
+      if (!data) return null;
+      return (await attachContacts([data]))[0];
     },
 
     async sedeExists(id) {
@@ -306,9 +322,9 @@ export function createSupabaseCrmAdminRepository(supabaseAdmin) {
         origin: payload.origin, subject: payload.subject, inbound_body: payload.body,
         received_at: now, sede_id: payload.sedeId, assigned_by: payload.author,
         assigned_at: now, estado: 'nuevo',
-      }).select('*, contact:crm_contacts(id, nombre, email_normalized, phone_normalized, review_needed)').single();
+      }).select('*').single();
       if (result.error) throw crmError('No se pudo registrar el contacto manual.', 503, 'CRM_ADMIN_UNAVAILABLE');
-      return result.data;
+      return (await attachContacts([result.data]))[0];
     },
 
     async createReply({ conversationId, body, operador, status }) {
