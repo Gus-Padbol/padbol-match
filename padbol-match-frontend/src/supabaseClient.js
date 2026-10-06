@@ -3,7 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = String(
   process.env.REACT_APP_SUPABASE_URL || 'https://auth.padbolmatch.com',
 ).replace(/\/$/, '');
-const supabaseAnonKey = 'sb_publishable_dY0TIrAnqgzg5yJ_XoZx-g_4aNMfHKY';
+// La clave pública se puede sustituir por entorno para apuntar la app a otro
+// proyecto Supabase (QA/local). Sin variable definida se usa la de producción,
+// así que el comportamiento desplegado no cambia.
+const supabaseAnonKey = String(
+  process.env.REACT_APP_SUPABASE_ANON_KEY || 'sb_publishable_dY0TIrAnqgzg5yJ_XoZx-g_4aNMfHKY',
+);
 
 /**
  * Auth: PKCE + sesión en URL para callbacks; sin redirect global en la app.

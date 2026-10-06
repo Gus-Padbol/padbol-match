@@ -316,7 +316,7 @@ function readPrimedSedeReserva() {
 
 /** Una sola base para todas las llamadas API (local: mismo origen que Rankings; override con REACT_APP_API_BASE_URL). */
 const API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+  process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );
@@ -370,7 +370,7 @@ function reservaPlatformFeeRateForSede(sede) {
 }
 
 const STRIPE_PUBLISHABLE_KEY =
-  typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
+  process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
     ? String(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).trim()
     : '';
 

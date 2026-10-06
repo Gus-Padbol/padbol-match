@@ -659,7 +659,7 @@ function buildScoreboardPartidoBody({
 }
 
 const STRIPE_PUBLISHABLE_ADMIN =
-  typeof process !== 'undefined' && process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
+  process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
     ? String(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY).trim()
     : '';
 const stripePromiseAdmin = STRIPE_PUBLISHABLE_ADMIN ? loadStripe(STRIPE_PUBLISHABLE_ADMIN) : null;
@@ -700,14 +700,9 @@ const SUSCRIPCION_SELECTOR_SUPER_SEDE = [
 const SUSCRIPCION_SELECTOR_SUPER_VALUES = new Set(SUSCRIPCION_SELECTOR_SUPER_SEDE.map((o) => o.value));
 
 function supportWhatsAppUrlFromEnv() {
-  const raw =
-    typeof process !== 'undefined'
-      ? String(
-          process.env.REACT_APP_SUPPORT_WHATSAPP ||
-            process.env.SUPPORT_WHATSAPP ||
-            '',
-        ).trim()
-      : '';
+  const raw = String(
+    process.env.REACT_APP_SUPPORT_WHATSAPP || process.env.SUPPORT_WHATSAPP || '',
+  ).trim();
   const digits = raw.replace(/\D/g, '');
   if (!digits) return null;
   return `https://wa.me/${digits}`;
@@ -3416,7 +3411,7 @@ function SemanaCompareDelta({ pct }) {
 }
 
 export default function AdminDashboard({
-  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'https://padbol-backend.onrender.com',
   rol = null,
   sedeId = null,
   handleLogout = () => {},

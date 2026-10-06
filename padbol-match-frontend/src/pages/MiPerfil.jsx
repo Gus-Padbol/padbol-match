@@ -81,7 +81,7 @@ import { pathPerfilPublicoPorUserId } from '../utils/jugadorPerfilPublicoUrl';
 import { getPaisDisplay } from '../utils/paisDisplay';
 import './MiPerfilVerPublicoBtn.css';
 
-const API_BASE_URL = 'https://padbol-backend.onrender.com';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://padbol-backend.onrender.com';
 
 const MSG_CUENTA_Y_FICHA_OK = 'Cuenta creada y ficha guardada correctamente';
 

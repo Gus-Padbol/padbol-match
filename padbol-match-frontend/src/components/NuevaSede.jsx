@@ -8,7 +8,9 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import useUserRole from '../hooks/useUserRole';
 import { supabase } from '../supabaseClient';
 
-const API_DEFAULT = 'https://padbol-backend.onrender.com';
+// Se puede apuntar a otro backend por entorno (QA/local); sin variable se
+// mantiene el de producción, así que el comportamiento desplegado no cambia.
+const API_DEFAULT = process.env.REACT_APP_API_BASE_URL || 'https://padbol-backend.onrender.com';
 
 const LEGACY_SUPER = [
   'padbolinternacional@gmail.com',

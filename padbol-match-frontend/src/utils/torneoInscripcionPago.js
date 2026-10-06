@@ -1,7 +1,7 @@
 import { handleCrearPreferenciaResponse } from './mercadopagoCheckout';
 
 function defaultApiBackendBase() {
-  if (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL) {
+  if (process.env.REACT_APP_API_BASE_URL) {
     return String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '');
   }
   return 'https://padbol-backend.onrender.com';

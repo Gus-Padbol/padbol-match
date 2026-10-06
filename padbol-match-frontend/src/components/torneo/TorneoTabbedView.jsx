@@ -10,6 +10,10 @@ import {
   torneoTipoCompetenciaDb,
 } from '../../utils/torneoFormatters';
 import { resumenDeporteFormatoTorneo } from '../../utils/torneoDeporteFormato';
+// Guardado de resultado por la ruta AUTORIZADA del backend
+// (POST /api/torneos/:torneoId/partidos/:partidoId/resultado): valida permisos
+// de sede, valida el marcador y es idempotente.
+import { guardarResultadoManualTorneo } from '../../utils/torneoResultadoManualApi';
 import SportIcon from '../common/SportIcon';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
@@ -246,7 +250,7 @@ export default function TorneoTabbedView({
   showTorneoLogo = false,
   /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
   jugadorNombreTorneoCtx = null,
-  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'https://padbol-backend.onrender.com',
   /** super_admin / admin_club (panel): exportar jugadores del torneo a Excel. */
   puedeExportarJugadoresExcel = false,
   /** Panel admin / gestión: mostrar sorteo manual en pestaña Grupos. */
@@ -844,41 +848,38 @@ export default function TorneoTabbedView({
         return;
       }
       const resultadoPayload = resultadoConGanador(selectedPartido, norm);
-      const resultadoJson = JSON.stringify(resultadoPayload);
       try {
-        const base = String(apiBaseUrl || '').replace(/\/+$/, '');
-        const res = await fetch(`${base}/api/partidos/${selectedPartido.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            estado: 'finalizado',
-            resultado: resultadoJson,
-          }),
+        // Ruta AUTORIZADA: valida sesión y sede, valida el marcador y responde
+        // `finalized` o `idempotent` sin volver a sumar estadísticas.
+        const data = await guardarResultadoManualTorneo({
+          apiBaseUrl,
+          torneoId: torneo?.id ?? torneoId,
+          partidoId: selectedPartido.id,
+          resultado: norm,
         });
-        if (res.ok) {
-          setPartidos((prev) =>
-            prev.map((p) =>
-              p.id === selectedPartido.id
-                ? { ...p, estado: 'finalizado', resultado: resultadoPayload }
-                : p
-            )
-          );
-          setResultado(resultadoPayload);
-          setShowModalResultado(false);
-          setSelectedPartido(null);
-          setVoicePending(null);
-          setVoicePhase('idle');
-          setVoiceInterimText('');
-          setVoiceError(null);
-        } else {
-          const data = await res.json().catch(() => ({}));
-          alert(data.error || res.statusText || 'No se pudo guardar');
-        }
+        setPartidos((prev) =>
+          prev.map((p) =>
+            p.id === selectedPartido.id
+              ? { ...p, estado: 'finalizado', resultado: data?.resultado ?? resultadoPayload, ganador_equipo_id: data?.ganador_equipo_id }
+              : p
+          )
+        );
+        // Reutiliza la recarga que ya existe en el componente (torneo, equipos y
+        // partidos). Reconcilia tabla y clasificación con lo persistido, tanto en
+        // `finalized` como en `idempotent`. No cambia el diseño de la pantalla.
+        onAfterSorteoGrupos?.();
+        setResultado(resultadoPayload);
+        setShowModalResultado(false);
+        setSelectedPartido(null);
+        setVoicePending(null);
+        setVoicePhase('idle');
+        setVoiceInterimText('');
+        setVoiceError(null);
       } catch (err) {
-        alert('Error al guardar: ' + err.message);
+        alert(err?.message || 'Error al guardar: ' + err.message);
       }
     },
-    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, setPartidos, t]
+    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, torneo?.id, torneoId, setPartidos, onAfterSorteoGrupos, t]
   );
 
   const confirmarVozYGuardar = useCallback(async () => {
@@ -2200,9 +2201,14 @@ export default function TorneoTabbedView({
 
       <PartidoDetalleModal
         open={showModalDetallePartido && Boolean(selectedPartido)}
+        // No limpiar `selectedPartido` acá: el detalle puede derivar en el modal de
+        // carga de resultado (`onCargarResultado`) y React agrupa los dos cambios de
+        // estado dentro del mismo evento. Si este `onClose` volviera a dejar
+        // `selectedPartido` en null, el modal de resultado nunca se renderizaría
+        // (`showModalResultado && selectedPartido`). El detalle se cierra igual
+        // porque `open` depende de `showModalDetallePartido`.
         onClose={() => {
           setShowModalDetallePartido(false);
-          setSelectedPartido(null);
         }}
         partido={selectedPartido}
         equipos={equipos}

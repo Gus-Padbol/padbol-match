@@ -3,10 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import NuevaSedeSuperBottomSheet from '../components/NuevaSedeSuperBottomSheet';
 
 const DEFAULT_API = (() => {
-  const raw =
-    (typeof process !== 'undefined' &&
-      (process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || '')) ||
-    '';
+  const raw = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || '';
   const s = String(raw).trim().replace(/\/$/, '');
   return s || 'https://padbol-backend.onrender.com';
 })();

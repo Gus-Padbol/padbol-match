@@ -462,6 +462,31 @@ function AppRoutes() {
   );
 }
 
+/**
+ * Aviso de entorno. Se monta una sola vez en `App()`, por FUERA de las rutas,
+ * para que también sea visible en las pantallas públicas y previas al login
+ * (`/`, `/plataforma`, `/administradores`), que no pasan por AppShell.
+ * Sólo se renderiza si REACT_APP_ENV_LABEL está definido (no aparece en prod).
+ */
+function QaEnvBanner() {
+  const label = process.env.REACT_APP_ENV_LABEL;
+  if (!label) return null;
+  return (
+    <div
+      aria-label={`Entorno ${label}`}
+      style={{
+        position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 2147483000, background: '#b4001e', color: '#fff',
+        font: '800 12px/1 system-ui, sans-serif', letterSpacing: '.14em',
+        padding: '6px 14px', borderBottomLeftRadius: 8, borderBottomRightRadius: 8,
+        boxShadow: '0 2px 10px rgba(0,0,0,.35)', pointerEvents: 'none',
+      }}
+    >
+      {label}
+    </div>
+  );
+}
+
 function AppShell() {
   const location = useLocation();
   const legalFooterPad = isLegalFooterGlobalBarVisiblePathname(location.pathname)
@@ -493,6 +518,7 @@ function AppShell() {
 function App() {
   return (
     <Router>
+      <QaEnvBanner />
       <HubNavLayoutProvider>
         <GlobalErrorBoundary>
           <AppLanguageGate>

@@ -76,7 +76,7 @@ const EMPTY_TORNEO_FORM = () => ({
 });
 
 const TorneoCrear = forwardRef(function TorneoCrear({
-  apiBaseUrl = 'https://padbol-backend.onrender.com',
+  apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'https://padbol-backend.onrender.com',
   rol: rolProp = null,
   /** Dentro del panel /admin: sin AppHeader ni BottomNav. */
   embedded = false,

@@ -7,12 +7,12 @@ import { hubContentPaddingTopCss, hubMainPaddingBottomCss } from '../constants/h
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 const API_BASE =
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+  process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com';
 
 const PRECIO_MENSUAL_USD =
-  typeof process !== 'undefined' && process.env.REACT_APP_PRECIO_MENSUAL_USD != null
+  process.env.REACT_APP_PRECIO_MENSUAL_USD != null
     ? String(process.env.REACT_APP_PRECIO_MENSUAL_USD).trim()
     : '$29 USD/mes';
 

@@ -52,7 +52,7 @@ import '../styles/TorneoVista.css';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 
 const apiBaseUrlTorneo = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+  process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );

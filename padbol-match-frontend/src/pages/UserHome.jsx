@@ -82,7 +82,7 @@ function pickHubCmsPhotoUrl(rows, cmsPhotoIds) {
 }
 
 const HUB_API_BASE = (
-  typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+  process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com'
 );

@@ -3,7 +3,7 @@ import { normalizeUserRole } from './adminPanelRoles';
 
 const API_BASE =
   getPublicApiBaseUrl() ||
-  (typeof process !== 'undefined' && process.env.REACT_APP_API_BASE_URL
+  (process.env.REACT_APP_API_BASE_URL
     ? String(process.env.REACT_APP_API_BASE_URL).replace(/\/$/, '')
     : 'https://padbol-backend.onrender.com');
 

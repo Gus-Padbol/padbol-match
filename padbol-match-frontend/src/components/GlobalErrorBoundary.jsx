@@ -60,7 +60,7 @@ export default class GlobalErrorBoundary extends React.Component {
     const goHome = resolveTranslation('general.goHome', i18n.t('general.goHome'), 'Ir al inicio');
     const goLogin = resolveTranslation('general.goLogin', i18n.t('general.goLogin'), 'Ir a acceso');
     const showDevDetail =
-      typeof process !== 'undefined' && process.env.NODE_ENV === 'development' && err?.message;
+      process.env.NODE_ENV === 'development' && err?.message;
 
     return (
       <div
