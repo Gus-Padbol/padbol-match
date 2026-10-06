@@ -34,6 +34,15 @@ const INTERNAL_SCREEN_OPTIONS = Object.freeze([
   ['clases', 'Clases'],
 ]);
 
+const DESTINATION_HELP = Object.freeze({
+  noticia: 'Abre una noticia publicada dentro de Padbol Match.',
+  torneo: 'Abre la ficha del torneo que selecciones.',
+  partido: 'Abre la ficha de un partido concreto.',
+  academy: 'Abre la sección Padbol Academy.',
+  next_generation: 'Abre una jornada concreta de Next Generation.',
+  pantalla: 'Abre una sección general de la aplicación, por ejemplo Inicio, Rankings o Clases.',
+});
+
 function createAdminPushIdempotencyKey() {
   if (typeof window !== 'undefined' && typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
   return `web-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
@@ -375,22 +384,24 @@ export default function AdminNotificacionesSection({
         </div>
 
         <div className="admin-push-notif__field">
-          <label htmlFor="admin-push-destination">Destino al tocar</label>
+          <label htmlFor="admin-push-destination">¿Qué quieres que se abra al tocar la notificación?</label>
           <select
             id="admin-push-destination"
+            aria-label="Destino al tocar"
             value={destinationType}
             onChange={(event) => {
               setDestinationType(event.target.value);
               setDestinationEntityId('');
             }}
           >
-            <option value="noticia">Noticia publicada</option>
-            <option value="torneo">Torneo</option>
-            <option value="partido">Partido</option>
-            <option value="academy">Padbol Academy</option>
-            <option value="next_generation">Next Generation</option>
-            <option value="pantalla">Pantalla interna</option>
+            <option value="noticia">Una noticia publicada</option>
+            <option value="torneo">La ficha de un torneo</option>
+            <option value="partido">La ficha de un partido</option>
+            <option value="academy">La sección Padbol Academy</option>
+            <option value="next_generation">Una jornada de Next Generation</option>
+            <option value="pantalla">Otra sección de la aplicación</option>
           </select>
+          <small className="admin-push-notif__help">{DESTINATION_HELP[destinationType]}</small>
         </div>
         {destinationType === 'torneo' ? (
           <div className="admin-push-notif__field">
@@ -425,9 +436,9 @@ export default function AdminNotificacionesSection({
         ) : null}
         {destinationType === 'pantalla' ? (
           <div className="admin-push-notif__field">
-            <label htmlFor="admin-push-destination-id">Pantalla</label>
-            <select id="admin-push-destination-id" value={destinationEntityId} onChange={(event) => setDestinationEntityId(event.target.value)}>
-              <option value="">Selecciona una pantalla</option>
+            <label htmlFor="admin-push-destination-id">¿Qué sección quieres abrir?</label>
+            <select aria-label="Pantalla" id="admin-push-destination-id" value={destinationEntityId} onChange={(event) => setDestinationEntityId(event.target.value)}>
+              <option value="">Selecciona una sección</option>
               {INTERNAL_SCREEN_OPTIONS.map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
               ))}
@@ -435,7 +446,9 @@ export default function AdminNotificacionesSection({
           </div>
         ) : null}
         <p className="admin-push-notif__preview" role="status">
-          <strong>Vista previa del destino:</strong> {` al tocar abrirá ${currentDestinationLabel}.`}
+          <strong>Al tocarla:</strong> {destinationEntityId || destinationType === 'academy'
+            ? ` se abrirá ${currentDestinationLabel}.`
+            : ' todavía debes elegir el contenido o la sección.'}
         </p>
 
         <div className="admin-push-notif__field">

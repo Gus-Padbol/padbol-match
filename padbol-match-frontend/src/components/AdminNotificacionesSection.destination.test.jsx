@@ -36,7 +36,7 @@ test('superadmin configura torneo real, no ve cupo y el historial muestra destin
   fireEvent.change(screen.getByLabelText(/message|mensaje/i), { target: { value: 'Sumate hoy' } });
   fireEvent.change(screen.getByLabelText('Destino al tocar'), { target: { value: 'torneo' } });
   fireEvent.change(screen.getByLabelText('Torneo'), { target: { value: '42' } });
-  expect(screen.getByText(/al tocar abrirá Torneo Apertura/i)).toBeInTheDocument();
+  expect(screen.getByText(/se abrirá Torneo Apertura/i)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /send|enviar/i }));
 
   await waitFor(() => {
@@ -63,13 +63,13 @@ test('ofrece únicamente pantallas internas de catálogo y exige una selección 
     />,
   );
 
-  await screen.findByText(/destino para continuar/i);
+  await screen.findByText(/todavía debes elegir el contenido o la sección/i);
   fireEvent.change(screen.getByLabelText('Destino al tocar'), { target: { value: 'pantalla' } });
   const destinationSelect = screen.getByLabelText('Pantalla');
   expect([...destinationSelect.options].map((option) => option.value)).toEqual([
     '', 'inicio', 'notificaciones', 'torneos', 'rankings', 'jugar', 'perfil', 'clases',
   ]);
   fireEvent.change(destinationSelect, { target: { value: 'notificaciones' } });
-  expect(screen.getByText(/al tocar abrirá Notificaciones/i)).toBeInTheDocument();
+  expect(screen.getByText(/se abrirá Notificaciones/i)).toBeInTheDocument();
   expect(screen.queryByRole('option', { name: /reserva/i })).not.toBeInTheDocument();
 });

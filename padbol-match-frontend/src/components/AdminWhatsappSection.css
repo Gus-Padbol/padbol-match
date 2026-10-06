@@ -1,7 +1,7 @@
 .admin-crm-workspace {
   width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 22px;
   box-sizing: border-box;
   color: var(--text-primary);

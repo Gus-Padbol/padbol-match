@@ -9,10 +9,10 @@ describe('resolveRoleAwarePostLoginPath', () => {
     ).resolves.toBe('/admin');
   });
 
-  test('envia un usuario común al hub cuando entra sin destino', async () => {
+  test('envia un usuario común al sitio público cuando entra sin destino', async () => {
     await expect(
       resolveRoleAwarePostLoginPath('/', session, async () => ({ rol: 'jugador' })),
-    ).resolves.toBe('/hub');
+    ).resolves.toBe('/plataforma');
   });
 
   test.each(['super_admin', 'admin_nacional', 'admin_cadena', 'admin_club', 'empleado', 'editor_contenido'])(
@@ -30,9 +30,9 @@ describe('resolveRoleAwarePostLoginPath', () => {
     ).resolves.toBe('/admin');
   });
 
-  test('sin sesión utilizable evita volver a la presentación pública', async () => {
+  test('sin sesión utilizable vuelve al sitio público', async () => {
     const fetcher = jest.fn();
-    await expect(resolveRoleAwarePostLoginPath('/', null, fetcher)).resolves.toBe('/hub');
+    await expect(resolveRoleAwarePostLoginPath('/', null, fetcher)).resolves.toBe('/plataforma');
     expect(fetcher).not.toHaveBeenCalled();
   });
 
@@ -43,9 +43,9 @@ describe('resolveRoleAwarePostLoginPath', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  test('si falla la consulta nunca devuelve a la presentación pública', async () => {
+  test('si falla la consulta no expone el antiguo hub web', async () => {
     await expect(
       resolveRoleAwarePostLoginPath('/', session, async () => { throw new Error('offline'); }),
-    ).resolves.toBe('/hub');
+    ).resolves.toBe('/plataforma');
   });
 });

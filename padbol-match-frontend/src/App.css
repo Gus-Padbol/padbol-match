@@ -403,6 +403,13 @@ h3 {
   align-self: stretch;
 }
 
+/* El panel administrativo es un espacio de trabajo: usa el viewport completo. */
+.pm-app-shell-column:has(.pm-route-shell--admin) {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 @media (max-width: 767px) {
   .pm-app-shell-column {
     max-width: none;

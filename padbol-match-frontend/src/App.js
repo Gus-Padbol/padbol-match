@@ -29,7 +29,6 @@ import { buildMiPerfilRegistroUrl } from './utils/miPerfilRegistroUrl';
 import { useAuth } from './context/AuthContext';
 import { HubNavLayoutProvider } from './context/HubNavLayoutContext';
 import { getDisplayName } from './utils/displayName';
-import { scheduleHubEntryScrollReset } from './utils/hubEntryScrollReset';
 import { useSafeTranslation } from './i18n/tSafe';
 import {
   userCanAccessAdminPanel,
@@ -67,7 +66,6 @@ const ArmarPartido = lazy(() => import('./pages/ArmarPartido'));
 const ClasesPage = lazy(() => import('./pages/ClasesPage'));
 const ClaseDetallePage = lazy(() => import('./pages/ClaseDetallePage'));
 const EquipoVista = lazy(() => import('./pages/EquipoVista'));
-const UserHome = lazy(() => import('./pages/UserHome'));
 const SobrePadbolMatch = lazy(() => import('./pages/SobrePadbolMatch'));
 const ContactoSumarClub = lazy(() => import('./pages/ContactoSumarClub'));
 const AccesoCuenta = lazy(() => import('./pages/AccesoCuenta'));
@@ -140,11 +138,12 @@ function RootHomeRoute() {
 }
 
 /**
- * Rutas desconocidas: evita quedarse sin match útil. Con sesión → hub; sin sesión → landing (/).
+ * Rutas desconocidas: la experiencia web pública es el único destino general.
+ * El antiguo hub web fue retirado; una sesión existente no debe reabrirlo.
  * Mientras `loading` de auth, spinner compacto (no pantalla vacía sobre el gradiente de body).
  */
 function WildcardFallback() {
-  const { session, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -167,11 +166,7 @@ function WildcardFallback() {
     );
   }
 
-  if (session?.user) {
-    return <Navigate to="/hub" replace />;
-  }
-
-  return <Navigate to="/" replace />;
+  return <Navigate to="/plataforma" replace />;
 }
 
 function AdminDashboardGate() {
@@ -308,10 +303,7 @@ function AdminDashboardGate() {
       </p>
       <button
         type="button"
-        onClick={() => {
-          navigate('/hub');
-          scheduleHubEntryScrollReset();
-        }}
+        onClick={() => navigate('/plataforma')}
         style={{
           padding: '12px 20px',
           borderRadius: 12,
@@ -323,7 +315,7 @@ function AdminDashboardGate() {
           color: '#1e293b',
         }}
       >
-        Volver al hub
+        Volver al sitio público
       </button>
     </div>
   );
@@ -335,9 +327,10 @@ function AppRoutes() {
     <PerfilJugadorDatosMinimosGate>
     <Routes>
         <Route path="/" element={<RootHomeRoute />} />
-        <Route path="/hub" element={<UserHome />} />
-        <Route path="/inicio" element={<UserHome />} />
-        <Route path="/home" element={<UserHome />} />
+        {/* La app web de jugadores fue retirada: ningún enlace histórico vuelve a abrir el hub. */}
+        <Route path="/hub" element={<Navigate to="/plataforma" replace />} />
+        <Route path="/inicio" element={<Navigate to="/plataforma" replace />} />
+        <Route path="/home" element={<Navigate to="/plataforma" replace />} />
 
         <Route path="/auth" element={<AuthEntryRoute />} />
         <Route path="/auth/callback" element={<AuthOAuthCallback />} />
@@ -449,6 +442,7 @@ function AppRoutes() {
 function AppShell() {
   const location = useLocation();
   const normalizedPath = String(location.pathname || '/').replace(/\/+$/, '') || '/';
+  const isAdminWorkspace = normalizedPath === '/admin' || normalizedPath.startsWith('/admin/');
   const publicLayoutOwnsChatbot = normalizedPath === '/plataforma' || normalizedPath === '/planes';
   const legalFooterPad = isLegalFooterGlobalBarVisiblePathname(location.pathname)
     ? LEGAL_FOOTER_GLOBAL_SPACER_PX
@@ -458,6 +452,7 @@ function AppShell() {
   return (
     <>
       <div
+        className={isAdminWorkspace ? 'pm-route-shell pm-route-shell--admin' : 'pm-route-shell'}
         style={{
           flex: 1,
           width: '100%',

@@ -2,8 +2,8 @@ import { fetchMiRol } from './fetchMiRol';
 import { userCanAccessAdminPanel } from './adminPanelRoles';
 
 /**
- * El acceso público sin `redirect` no debe devolver al usuario a la presentación.
- * Los administradores entran directamente a su panel; el resto, a su hub.
+ * El acceso web sin `redirect` es exclusivamente administrativo.
+ * Los administradores entran directamente a su panel; el resto vuelve al sitio público.
  * Un destino explícito siempre se respeta.
  */
 export async function resolveRoleAwarePostLoginPath(
@@ -15,13 +15,13 @@ export async function resolveRoleAwarePostLoginPath(
   if (requested !== '/') return requested;
 
   const token = String(session?.access_token || '').trim();
-  if (!token) return '/hub';
+  if (!token) return '/plataforma';
 
   try {
     const roleData = await roleFetcher(token);
-    return userCanAccessAdminPanel(roleData?.rol) ? '/admin' : '/hub';
+    return userCanAccessAdminPanel(roleData?.rol) ? '/admin' : '/plataforma';
   } catch (error) {
     console.warn('No se pudo resolver el destino por rol tras el ingreso:', error?.message || error);
-    return '/hub';
+    return '/plataforma';
   }
 }

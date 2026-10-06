@@ -82,14 +82,29 @@ function channelLabel(channel) {
 const INBOX_AREAS = [
   { id: 'all', label: 'Todo', icon: '◉' },
   { id: 'commercial', label: 'Formularios', icon: '▤' },
+  { id: 'nextgen_venues', label: 'Next Generation · Sedes', icon: 'S' },
+  { id: 'nextgen_participants', label: 'Next Generation · Participantes', icon: 'NG' },
   { id: 'whatsapp', label: 'WhatsApp', icon: 'W' },
   { id: 'email', label: 'Email', icon: '@' },
   { id: 'support', label: 'Soporte y reclamos', icon: '!' },
 ];
 
 function conversationArea(conversation) {
+  const fields = conversation?.qualification_data?.form_submission?.fields || {};
+  const workflow = String(fields.workflow || '').trim().toLowerCase();
+  const participantType = String(fields.participantType || '').trim().toLowerCase();
   const searchable = [conversation?.subject, conversation?.inbound_body, conversation?.origin]
     .filter(Boolean).join(' ').toLocaleLowerCase('es');
+  if (
+    workflow === 'next_generation_venue'
+    || participantType === 'venue'
+    || /next generation.*(?:sede|adhesi[oó]n|beneficio)/.test(searchable)
+  ) return 'nextgen_venues';
+  if (
+    workflow === 'program_registration'
+    || ['youth_interest', 'player_interest'].includes(participantType)
+    || /nextgen\.(?:registration|waitlist)|next generation.*(?:jugador|participante|familia|jornada|inter[eé]s|u1[34568])/.test(searchable)
+  ) return 'nextgen_participants';
   if (/soporte|reclamo|problema|falla|error|no funciona|incidente/.test(searchable)) return 'support';
   if (String(conversation?.origin || '').startsWith('web_form:')) return 'commercial';
   if (conversation?.source_channel === 'whatsapp') return 'whatsapp';
@@ -160,6 +175,11 @@ export default function WhatsappCrmDemo() {
   const [sedes, setSedes] = useState([]);
   const [manualOpen, setManualOpen] = useState(false);
   const [manual, setManual] = useState({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
+  const [ngOverview, setNgOverview] = useState({ sedes: [], jornadas: [] });
+  const [ngOpen, setNgOpen] = useState(false);
+  const [ngDraft, setNgDraft] = useState({ sede_id: '', sesion_id: '', categoria: '', participant_name: '' });
+  const [ngVenueOpen, setNgVenueOpen] = useState(false);
+  const [ngVenueDraft, setNgVenueDraft] = useState({ sede_club: '', ciudad: '', pais: '' });
 
   const load = useCallback(async ({ silent = false } = {}) => {
     if (!token) {
@@ -193,6 +213,16 @@ export default function WhatsappCrmDemo() {
   }, [token, perms?.canAudit]);
 
   useEffect(() => {
+    if (!token || (!perms?.canOperate && !perms?.canAudit)) return;
+    crmAdminApi.nextGenerationOverview(token)
+      .then((data) => setNgOverview({
+        sedes: Array.isArray(data?.sedes) ? data.sedes : [],
+        jornadas: Array.isArray(data?.jornadas) ? data.jornadas : [],
+      }))
+      .catch(() => setNgOverview({ sedes: [], jornadas: [] }));
+  }, [token, perms?.canOperate, perms?.canAudit]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => { void load({ silent: true }); }, 5000);
     return () => window.clearInterval(timer);
   }, [load]);
@@ -211,6 +241,30 @@ export default function WhatsappCrmDemo() {
   const whatsappMetaPending = true;
   const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled && !whatsappMetaPending;
   const leadName = [detailValue(activeDetails, 'Nombre'), detailValue(activeDetails, 'Apellido')].filter(Boolean).join(' ') || active?.contact?.nombre || active?.identity_used || 'Contacto sin nombre';
+  const activeArea = conversationArea(active);
+  const isNextGenerationParticipant = activeArea === 'nextgen_participants';
+  const isNextGenerationVenue = activeArea === 'nextgen_venues';
+  const ngJornadas = ngOverview.jornadas.filter((jornada) => !ngDraft.sede_id || String(jornada.sede_id) === String(ngDraft.sede_id));
+  const activeNgSedeId = active?.sede_id ? String(active.sede_id) : '';
+  const activeNgCategory = detailValue(activeDetails, 'Categoría', 'Categoria') || '';
+  const activeNgParticipantName = active
+    ? ([detailValue(activeDetails, 'Nombre'), detailValue(activeDetails, 'Apellido')].filter(Boolean).join(' ') || active?.contact?.nombre || '')
+    : '';
+  const activeNgVenueName = detailValue(activeDetails, 'Sede / club', 'Sede', 'Empresa o club', 'Club') || '';
+  const activeNgVenueCity = detailValue(activeDetails, 'Ciudad', 'Ciudad o región', 'Ciudad o region') || '';
+  const activeNgVenueCountry = detailValue(activeDetails, 'País', 'Pais') || '';
+
+  useEffect(() => {
+    setNgOpen(false);
+    setNgVenueOpen(false);
+    setNgDraft({
+      sede_id: activeNgSedeId,
+      sesion_id: '',
+      categoria: activeNgCategory,
+      participant_name: activeNgParticipantName,
+    });
+    setNgVenueDraft({ sede_club: activeNgVenueName, ciudad: activeNgVenueCity, pais: activeNgVenueCountry });
+  }, [active?.id, activeNgSedeId, activeNgCategory, activeNgParticipantName, activeNgVenueName, activeNgVenueCity, activeNgVenueCountry]);
 
   const loadActivities = useCallback(async (conversationId) => {
     if (!token || !conversationId || !perms?.canOperate) {
@@ -283,6 +337,55 @@ export default function WhatsappCrmDemo() {
     try { await crmAdminApi.assignSede(token, active.id, sedeId); setNotice('Sede asignada.'); await load(); }
     catch (e) { setNotice(e?.message || 'No se pudo asignar la sede'); }
     finally { setBusy(false); }
+  };
+
+  const createNextGenerationRegistration = async (event) => {
+    event.preventDefault();
+    if (!active || busy) return;
+    setBusy(true); setNotice(null);
+    try {
+      const result = await crmAdminApi.createNextGenerationRegistration(token, {
+        conversation_id: active.id,
+        sede_id: ngDraft.sede_id,
+        sesion_id: ngDraft.sesion_id,
+        categoria: ngDraft.categoria.trim(),
+        participants: [{ nombre: ngDraft.participant_name.trim(), categoria: ngDraft.categoria.trim() }],
+      });
+      setNgOpen(false);
+      const registration = result?.registration || result;
+      setNotice(result?.created === false
+        ? `Esta conversación ya estaba vinculada a una inscripción (${registration?.estado || 'registrada'}).`
+        : `Inscripción creada como borrador${registration?.id ? ` (${registration.id})` : ''}. Todavía no ocupa un cupo.`);
+      await load({ silent: true });
+    } catch (e) {
+      setNotice(e?.message || 'No se pudo crear la inscripción Next Generation');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createNextGenerationVenueApplication = async (event) => {
+    event.preventDefault();
+    if (!active || busy || !perms?.canAudit) return;
+    setBusy(true); setNotice(null);
+    try {
+      const result = await crmAdminApi.createNextGenerationVenueApplication(token, {
+        conversation_id: active.id,
+        sede_club: ngVenueDraft.sede_club.trim(),
+        ciudad: ngVenueDraft.ciudad.trim(),
+        pais: ngVenueDraft.pais.trim(),
+      });
+      setNgVenueOpen(false);
+      const application = result?.venueApplication || result;
+      setNotice(result?.created === false
+        ? 'Esta conversación ya estaba vinculada a una postulación de sede.'
+        : `Postulación de sede creada${application?.id ? ` (${application.id})` : ''}. Ya puede evaluarse en Next Generation.`);
+      await load({ silent: true });
+    } catch (e) {
+      setNotice(e?.message || 'No se pudo crear la postulación de sede');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitActivity = async () => {
@@ -461,6 +564,26 @@ export default function WhatsappCrmDemo() {
                   </dl>
                   {perms?.canAudit ? <label>Asignar a sede<select aria-label="Asignar conversación a sede" value={active.sede_id || ''} onChange={(e) => void assignSede(e.target.value)}><option value="">Sin asignar</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select></label> : null}
                 </section>
+                {isNextGenerationParticipant ? <section className="wa-panel wa-ng-conversion">
+                  <h3>Inscripción Next Generation</h3>
+                  <p className="wa-ng-help">Esta consulta sigue en el CRM hasta que decidas convertirla. Crear la inscripción no significa “lista de espera”: primero queda como borrador y no ocupa un cupo.</p>
+                  {!ngOpen ? <button type="button" className="wa-ng-primary" onClick={() => setNgOpen(true)}>Preparar inscripción deportiva</button> : <form onSubmit={createNextGenerationRegistration}>
+                    <label>Nombre del participante<input required aria-label="Nombre del participante Next Generation" value={ngDraft.participant_name} onChange={(e) => setNgDraft({ ...ngDraft, participant_name: e.target.value })} /></label>
+                    <label>Sede<select required aria-label="Sede Next Generation" value={ngDraft.sede_id} onChange={(e) => setNgDraft({ ...ngDraft, sede_id: e.target.value, sesion_id: '' })}><option value="">Seleccionar sede…</option>{ngOverview.sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.sede_club || sede.nombre || `Sede ${sede.id}`}</option>)}</select></label>
+                    <label>Jornada<select required aria-label="Jornada Next Generation" value={ngDraft.sesion_id} onChange={(e) => { const jornada = ngOverview.jornadas.find((item) => String(item.id) === e.target.value); setNgDraft({ ...ngDraft, sesion_id: e.target.value, categoria: ngDraft.categoria || jornada?.categoria || '' }); }}><option value="">Seleccionar jornada…</option>{ngJornadas.map((jornada) => <option key={jornada.id} value={jornada.id}>{jornada.nombre_publico || 'Jornada sin nombre'}{jornada.categoria ? ` · ${jornada.categoria}` : ''}</option>)}</select></label>
+                    <label>Categoría<input required aria-label="Categoría Next Generation" placeholder="Ej.: U14" value={ngDraft.categoria} onChange={(e) => setNgDraft({ ...ngDraft, categoria: e.target.value })} /></label>
+                    {!ngOverview.jornadas.length ? <p className="wa-ng-warning">Todavía no hay jornadas disponibles. Créala antes de convertir esta consulta.</p> : null}
+                    <div className="wa-ng-actions"><button type="button" onClick={() => setNgOpen(false)}>Cancelar</button><button type="submit" className="wa-ng-primary" disabled={busy || !ngOverview.jornadas.length}>Crear como borrador</button></div>
+                  </form>}
+                </section> : null}
+                {isNextGenerationVenue ? <section className="wa-panel wa-ng-conversion"><h3>Postulación de sede</h3><p className="wa-ng-help">Esta es una postulación de sede, no una inscripción deportiva. Primero se atiende en el CRM y luego se crea la postulación formal para evaluarla en Next Generation.</p>
+                  {perms?.canAudit ? (!ngVenueOpen ? <button type="button" className="wa-ng-primary" onClick={() => setNgVenueOpen(true)}>Crear postulación de sede</button> : <form onSubmit={createNextGenerationVenueApplication}>
+                    <label>Nombre de la sede o club<input required aria-label="Nombre de sede postulante" value={ngVenueDraft.sede_club} onChange={(e) => setNgVenueDraft({ ...ngVenueDraft, sede_club: e.target.value })} /></label>
+                    <label>Ciudad<input required aria-label="Ciudad de sede postulante" value={ngVenueDraft.ciudad} onChange={(e) => setNgVenueDraft({ ...ngVenueDraft, ciudad: e.target.value })} /></label>
+                    <label>País<input required aria-label="País de sede postulante" value={ngVenueDraft.pais} onChange={(e) => setNgVenueDraft({ ...ngVenueDraft, pais: e.target.value })} /></label>
+                    <div className="wa-ng-actions"><button type="button" onClick={() => setNgVenueOpen(false)}>Cancelar</button><button type="submit" className="wa-ng-primary" disabled={busy}>Crear postulación</button></div>
+                  </form>) : <p className="wa-ng-warning">La creación formal de nuevas sedes la realiza el Super Admin.</p>}
+                </section> : null}
                 {perms?.canOperate ? <section className="wa-panel wa-followup"><h3>Registrar seguimiento</h3>
                   <label>Tipo<select value={activityType} onChange={(e) => setActivityType(e.target.value)}>
                     <option value="note">Nota / WhatsApp externo</option><option value="phone_call">Llamada</option><option value="zoom_meeting">Reunión online</option><option value="in_person_meeting">Reunión presencial</option>

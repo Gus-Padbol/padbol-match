@@ -10540,7 +10540,9 @@ export default function AdminDashboard({
       <div
         className="admin-dashboard-body-surface"
         style={{
-          ...hubInstagramColumnWrapStyle,
+          ...(activeTab === 'whatsapp'
+            ? { width: '100%', maxWidth: 'none', marginLeft: 0, marginRight: 0 }
+            : hubInstagramColumnWrapStyle),
           paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
           paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
         }}

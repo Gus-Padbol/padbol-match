@@ -407,14 +407,9 @@
     display: block;
     position: fixed;
     top: var(--pm-admin-sidebar-top);
-    /* Align to centered app column (same idea as chatbot-fab-anchor). */
-    left: max(
-      var(--pm-admin-sidebar-shell-pad-x),
-      calc(
-        (100vw - min(100vw, var(--pm-app-body-max-width, 900px))) / 2 +
-          var(--pm-admin-sidebar-shell-pad-x)
-      )
-    );
+    /* The admin workspace is full width: keep navigation at the true left edge.
+     * Its in-flow placeholder reserves the exact same width beside the panel. */
+    left: var(--pm-admin-sidebar-shell-pad-x);
     width: var(--pm-admin-sidebar-width);
     max-height: calc(100dvh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
     max-height: calc(100svh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
@@ -425,6 +420,10 @@
     pointer-events: auto;
     padding: 8px 4px 12px 0;
     box-sizing: border-box;
+  }
+
+  .admin-dashboard--with-sidebar .app-header-inner {
+    max-width: none;
   }
 
   .admin-dashboard--with-sidebar .admin-dashboard-panel {
@@ -550,19 +549,18 @@
 }
 
 @media (min-width: 768px) {
-  .admin-dashboard--crm .admin-dashboard-brand-shell,
-  .admin-dashboard--crm .admin-dashboard-nav {
+  .admin-dashboard--crm .admin-dashboard-brand-shell {
     display: none;
   }
 
   .admin-dashboard--crm .admin-dashboard-shell {
-    display: block;
-    padding: 0 20px 24px;
+    display: flex;
+    padding: 0 var(--pm-admin-sidebar-shell-pad-x) 24px;
   }
 
   .admin-dashboard--crm .admin-dashboard-panel,
   .admin-dashboard--crm .admin-dashboard-body-surface {
-    width: 100%;
+    width: auto;
     max-width: none;
     min-height: 0;
   }

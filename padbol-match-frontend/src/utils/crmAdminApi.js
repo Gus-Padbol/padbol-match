@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL || '';
+// CRM usa el proxy del mismo dominio. Ese proxy apunta al backend canónico de
+// CRM y evita heredar el backend general antiguo configurado para otras áreas.
+const API_BASE_URL = '';
 
 async function request(path, token, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -37,4 +39,13 @@ export const crmAdminApi = {
   createManual: (token, payload) => request('/api/admin/crm/manual', token, { method: 'POST', body: JSON.stringify(payload) }),
   assignSede: (token, id, sedeId) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/sede`, token, { method: 'PATCH', body: JSON.stringify({ sede_id: sedeId }) }),
   sedes: (token) => request('/api/sedes', token),
+  nextGenerationOverview: (token) => request('/api/admin/next-generation/overview', token),
+  createNextGenerationRegistration: (token, payload) => request('/api/admin/next-generation/registrations/from-crm', token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  createNextGenerationVenueApplication: (token, payload) => request('/api/admin/next-generation/venue-applications/from-crm', token, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
 };
