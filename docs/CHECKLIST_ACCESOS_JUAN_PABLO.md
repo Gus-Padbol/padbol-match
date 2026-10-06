@@ -9,7 +9,7 @@ Marcar cada acceso cuando funcione desde su propia cuenta. No compartir la contr
 - [ ] Render: desarrollador en `padbol-backend-qa` y visibilidad de logs/variables; producción con el nivel acordado.
 - [ ] Supabase: proyecto QA con Auth, logs, Storage y migraciones. Producción preferentemente solo lectura al comienzo.
 - [ ] Expo/EAS: miembro del proyecto `955c4a6f-572a-464f-a5e6-c536d42c0170`, capaz de ver builds y crear un `preview`.
-- [ ] Hosting web: acceso a previews y logs de Padbol Match sin permiso para modificar DNS inicialmente.
+- [ ] Vercel/hosting web: acceso al proyecto de Padbol Match, previews y logs, sin permiso para modificar DNS inicialmente.
 
 ## Según la tarea
 
