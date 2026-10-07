@@ -5444,9 +5444,17 @@ export default function AdminDashboard({
   const textoRolGestionAdminCompleto = useCallback(
     (row) => {
       const badge = ROLE_BADGE[row.role] || row.role || '—';
-      const alc = row.alcance || '—';
+      const alcanceLabels = {
+        global: 'Global',
+        pais: 'País',
+        provincia: 'Provincia',
+        ciudad: 'Ciudad',
+        sede: 'Sede',
+      };
+      const alc = alcanceLabels[String(row.alcance || '').trim().toLowerCase()] || 'Sin alcance';
       const asig = asignacionGestionAdminTexto(row);
-      return `${badge} · Alcance: ${alc} · ${asig}`;
+      const inconsistente = row.role === 'admin_nacional' && row.alcance === 'sede';
+      return `${badge} · Alcance: ${alc} · ${asig}${inconsistente ? ' · Revisar configuración' : ''}`;
     },
     [asignacionGestionAdminTexto, ROLE_BADGE],
   );
@@ -18348,9 +18356,11 @@ export default function AdminDashboard({
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.nombre || '—'}</td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>{row.email}</td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
-                            {row.role === 'editor_contenido' ? t('admin.formularios.contentEditorTitle') : row.role || '—'}
+                            {ROLE_BADGE[row.role] || row.role || '—'}
                           </td>
-                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.alcance || '—'}</td>
+                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
+                            {({ global: 'Global', pais: 'País', provincia: 'Provincia', ciudad: 'Ciudad', sede: 'Sede' })[row.alcance] || '—'}
+                          </td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>
                             {row.role === 'editor_contenido' ? t('admin.roles.editorScopeLabel') : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'sede'
