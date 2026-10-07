@@ -5762,28 +5762,54 @@ export default function AdminDashboard({
         estado: torneoRow?.estado || '',
       };
     });
-    const totalTx = reservasIngresoDetalle.length + torneosDetalle.length;
-    const totalMontoBase = isSuperAdmin
-      ? ['ARS', 'USD', 'EUR'].reduce((acc, k) => acc + (Number(cifrasFinanzasResumen?.total?.[k]) || 0), 0)
-      : Number(cifrasFinanzasResumen?.total) || 0;
-    const ticketPromedio = totalTx > 0 ? Math.round(totalMontoBase / totalTx) : 0;
+    const movimientosIngreso = [
+      ...reservasIngresoDetalle.map((r) => ({ moneda: r.moneda_calc, monto: r.precio_calc })),
+      ...torneosDetalle.map((row) => ({ moneda: row.moneda, monto: row.ingreso })),
+    ];
+    const totalTx = movimientosIngreso.length;
+    const transaccionesPorMoneda = movimientosIngreso.reduce(
+      (acc, row) => {
+        const moneda = bucketMonedaAdmin(row.moneda);
+        acc[moneda] = (acc[moneda] || 0) + 1;
+        return acc;
+      },
+      { ARS: 0, USD: 0, EUR: 0 }
+    );
+    const totalesPorMoneda = movimientosIngreso.reduce(
+      (acc, row) => {
+        const moneda = bucketMonedaAdmin(row.moneda);
+        acc[moneda] = (acc[moneda] || 0) + safeMoney(row.monto);
+        return acc;
+      },
+      { ARS: 0, USD: 0, EUR: 0 }
+    );
+    const ticketPromedioPorMoneda = ['ARS', 'USD', 'EUR'].reduce((acc, moneda) => {
+      const cantidad = transaccionesPorMoneda[moneda] || 0;
+      acc[moneda] = cantidad > 0 ? Math.round(totalesPorMoneda[moneda] / cantidad) : 0;
+      return acc;
+    }, {});
+    const monedaSede = bucketMonedaAdmin(cifrasFinanzasResumen?.moneda || 'ARS');
+    const ticketPromedio = ticketPromedioPorMoneda[monedaSede] || 0;
     const dailyRows = Object.keys(porDia)
       .sort((a, b) => a.localeCompare(b))
-      .map((d) => ({
-        fecha: d,
-        total:
-          (Number(porDia[d].ARS) || 0) +
-          (Number(porDia[d].USD) || 0) +
-          (Number(porDia[d].EUR) || 0),
-      }));
-    const maxDaily = dailyRows.reduce((m, r) => Math.max(m, r.total), 0);
+      .flatMap((fecha) =>
+        ['ARS', 'USD', 'EUR']
+          .map((moneda) => ({ fecha, moneda, total: Number(porDia[fecha][moneda]) || 0 }))
+          .filter((row) => row.total > 0)
+      );
+    const maxDailyPorMoneda = dailyRows.reduce(
+      (acc, row) => ({ ...acc, [row.moneda]: Math.max(acc[row.moneda] || 0, row.total) }),
+      { ARS: 0, USD: 0, EUR: 0 }
+    );
     return {
       reservasDetalle,
       torneosDetalle,
       totalTransacciones: totalTx,
       ticketPromedio,
+      ticketPromedioPorMoneda,
+      transaccionesPorMoneda,
       dailyRows,
-      maxDaily,
+      maxDailyPorMoneda,
     };
   }, [
     reservas,
@@ -5818,7 +5844,9 @@ export default function AdminDashboard({
               torneos_usd: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.USD) || 0,
               torneos_eur: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.EUR) || 0,
               transacciones: dashboardFinanciero.totalTransacciones,
-              ticket_promedio: Math.round(Number(dashboardFinanciero.ticketPromedio) || 0),
+              ticket_promedio_ars: Number(dashboardFinanciero.ticketPromedioPorMoneda?.ARS) || 0,
+              ticket_promedio_usd: Number(dashboardFinanciero.ticketPromedioPorMoneda?.USD) || 0,
+              ticket_promedio_eur: Number(dashboardFinanciero.ticketPromedioPorMoneda?.EUR) || 0,
             },
           ]
         : [
@@ -11393,7 +11421,10 @@ export default function AdminDashboard({
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metrics.avgTicket')}</div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
               {isSuperAdmin
-                ? Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })
+                ? ['ARS', 'USD', 'EUR']
+                    .filter((moneda) => Number(dashboardFinanciero.transaccionesPorMoneda?.[moneda]) > 0)
+                    .map((moneda) => `${moneda} ${Number(dashboardFinanciero.ticketPromedioPorMoneda?.[moneda] || 0).toLocaleString('es-AR')}`)
+                    .join(' · ') || '—'
                 : `$ ${Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })} ${cifrasFinanzasResumen.moneda || 'ARS'}`}
             </div>
           </div>
@@ -11416,9 +11447,10 @@ export default function AdminDashboard({
           ) : (
             <div style={{ display: 'grid', gap: '6px' }}>
               {dashboardFinanciero.dailyRows.map((row) => {
-                const pct = dashboardFinanciero.maxDaily > 0 ? Math.max(4, (row.total / dashboardFinanciero.maxDaily) * 100) : 0;
+                const maxDaily = Number(dashboardFinanciero.maxDailyPorMoneda?.[row.moneda]) || 0;
+                const pct = maxDaily > 0 ? Math.max(4, (row.total / maxDaily) * 100) : 0;
                 return (
-                  <div key={row.fecha} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
+                  <div key={`${row.fecha}-${row.moneda}`} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>
                       {ymdToLabelShort(row.fecha)}
                     </span>
@@ -11439,7 +11471,7 @@ export default function AdminDashboard({
                         fontWeight: 700,
                       }}
                     >
-                      {Number(row.total).toLocaleString('es-AR')}
+                      {row.moneda} {Number(row.total).toLocaleString('es-AR')}
                     </span>
                   </div>
                 );
@@ -12014,7 +12046,7 @@ export default function AdminDashboard({
                         <span className="admin-torneo-list-chip admin-torneo-list-chip--status" style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
                         {fechaFinVencida ? (
                           <span role="status" style={{ color: '#92400e', fontSize: 11, fontWeight: 700 }}>
-                            La fecha de fin venció; cerrá o actualizá el torneo.
+                            La fecha de fin venció; cierra o actualiza el torneo.
                           </span>
                         ) : null}
                       </div>

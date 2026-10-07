@@ -124,7 +124,7 @@ export default function AdminNotificacionesSection({
     ? selectedTournament.nombre || `Torneo #${selectedTournament.id}`
     : destinationEntityId.trim()
       ? `${DESTINATION_TYPE_LABELS[destinationType] || destinationType} #${destinationEntityId.trim()}`
-      : 'Elegí un destino para continuar';
+      : 'Elige un destino para continuar';
 
   const segmentPayload = useMemo(
     () =>
@@ -358,7 +358,7 @@ export default function AdminNotificacionesSection({
           <div className="admin-push-notif__field">
             <label htmlFor="admin-push-destination-id">Torneo</label>
             <select id="admin-push-destination-id" value={destinationEntityId} onChange={(event) => setDestinationEntityId(event.target.value)}>
-              <option value="">Seleccioná un torneo</option>
+              <option value="">Selecciona un torneo</option>
               {torneosOptions.map((torneo) => <option key={torneo.id} value={String(torneo.id)}>{torneo.nombre || `Torneo #${torneo.id}`}</option>)}
             </select>
           </div>
