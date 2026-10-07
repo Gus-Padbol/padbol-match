@@ -244,7 +244,9 @@ function AdminDashboardGate() {
   useEffect(() => {
     setRoleGateTimedOut(false);
     if (!roleLoading) return undefined;
-    const timeoutId = window.setTimeout(() => setRoleGateTimedOut(true), 15_000);
+    // Dejar margen para el arranque en frío del backend de QA. useUserRole corta
+    // su propia consulta a los 55 s; este límite es sólo la red de seguridad final.
+    const timeoutId = window.setTimeout(() => setRoleGateTimedOut(true), 65_000);
     return () => window.clearTimeout(timeoutId);
   }, [roleLoading, currentCliente?.email]);
 
