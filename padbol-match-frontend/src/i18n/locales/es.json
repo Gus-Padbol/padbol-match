@@ -932,6 +932,11 @@
     "badgeSuspended": "🚫 Suspendido",
     "admin": {
       "intro": "Jugadores con suspensión activa por cancelaciones repetidas.",
+      "criterionTitle": "Criterio automático",
+      "criterionBody": "Cinco cancelaciones dentro de los últimos 30 días generan una suspensión de siete días. Esta pantalla muestra únicamente suspensiones activas.",
+      "refresh": "Actualizar suspensiones",
+      "colReason": "Motivo",
+      "repeatedCancellationReason": "Cancelaciones repetidas",
       "loading": "Cargando suspensiones…",
       "loadError": "No se pudieron cargar las suspensiones",
       "empty": "No hay jugadores suspendidos en este momento.",

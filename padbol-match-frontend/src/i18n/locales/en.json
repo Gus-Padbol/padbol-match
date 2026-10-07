@@ -786,6 +786,11 @@
     "badgeSuspended": "🚫 Suspended",
     "admin": {
       "intro": "Players with an active suspension due to repeated cancellations.",
+      "criterionTitle": "Automatic rule",
+      "criterionBody": "Five cancellations within the last 30 days trigger a seven-day suspension. This screen shows active suspensions only.",
+      "refresh": "Refresh suspensions",
+      "colReason": "Reason",
+      "repeatedCancellationReason": "Repeated cancellations",
       "loading": "Loading suspensions…",
       "loadError": "Could not load suspensions",
       "empty": "No suspended players at the moment.",

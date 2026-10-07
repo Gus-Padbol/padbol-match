@@ -3417,6 +3417,9 @@ function AdminClubMetricasExtras({ metricas, moneda }) {
 }
 
 function SemanaCompareDelta({ pct }) {
+  if (pct == null) {
+    return <span className="admin-week-compare__delta admin-week-compare__delta--new">Nuevo</span>;
+  }
   const n = Number(pct) || 0;
   if (n === 0) {
     return <span className="admin-week-compare__delta admin-week-compare__delta--neutral">— 0%</span>;
@@ -4732,8 +4735,10 @@ export default function AdminDashboard({
 
   const [sedesPendientes, setSedesPendientes] = useState([]);
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
+  const [sedesPendientesError, setSedesPendientesError] = useState('');
   const [solicitudesLicencia, setSolicitudesLicencia] = useState([]);
   const [solicitudesLicenciaLoading, setSolicitudesLicenciaLoading] = useState(false);
+  const [solicitudesLicenciaError, setSolicitudesLicenciaError] = useState('');
   /** Modal al aprobar solicitud web: super_admin elige tipo_interes antes de ir a Nueva sede. */
   const [licApruebaTipoModal, setLicApruebaTipoModal] = useState(null);
   const [licApruebaTipoSaving, setLicApruebaTipoSaving] = useState(false);
@@ -4752,6 +4757,8 @@ export default function AdminDashboard({
   const [adminInvitacionesError, setAdminInvitacionesError] = useState('');
   /** GET /api/admin/analytics-globales (solo super_admin, mismo ciclo que fetchData). */
   const [analyticsGlobales, setAnalyticsGlobales] = useState(null);
+  const [analyticsGlobalesStatus, setAnalyticsGlobalesStatus] = useState('idle');
+  const [analyticsGlobalesError, setAnalyticsGlobalesError] = useState('');
   const [inviteClubModalOpen, setInviteClubModalOpen] = useState(false);
   const [inviteAdminModalStep, setInviteAdminModalStep] = useState('tipo');
   const [inviteAdminTipo, setInviteAdminTipo] = useState(null);
@@ -4814,6 +4821,7 @@ export default function AdminDashboard({
     async (estadoQuery = 'pendiente') => {
       if (!puedeVerSedesPendientes) return;
       setSedesPendientesLoading(true);
+      setSedesPendientesError('');
       try {
         const { data: sess } = await supabase.auth.getSession();
         const token = sess?.session?.access_token;
@@ -4822,11 +4830,6 @@ export default function AdminDashboard({
         const res = await fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=${encodeURIComponent(eq)}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.status === 404) {
-          setSedesPendientes([]);
-          if (eq === 'pendiente') setSnapPendienteSedes(0);
-          return;
-        }
         const j = await res.json().catch(() => []);
         if (!res.ok) throw new Error(j.error || res.statusText);
         const rows = Array.isArray(j) ? j : [];
@@ -4835,7 +4838,7 @@ export default function AdminDashboard({
       } catch (e) {
         console.error('[AdminDashboard] sedes pendientes:', e);
         setSedesPendientes([]);
-        if (String(estadoQuery || '').toLowerCase() === 'pendiente') setSnapPendienteSedes(0);
+        setSedesPendientesError(e?.message || 'No se pudieron cargar las altas de sedes.');
       } finally {
         setSedesPendientesLoading(false);
       }
@@ -4847,6 +4850,7 @@ export default function AdminDashboard({
     async (estadoQuery = 'pendiente') => {
       if (!isSuperAdmin) return;
       setSolicitudesLicenciaLoading(true);
+      setSolicitudesLicenciaError('');
       try {
         const { data: sess } = await supabase.auth.getSession();
         const token = sess?.session?.access_token;
@@ -4863,7 +4867,7 @@ export default function AdminDashboard({
       } catch (e) {
         console.error('[AdminDashboard] solicitudes licencia:', e);
         setSolicitudesLicencia([]);
-        if (String(estadoQuery || '').toLowerCase() === 'pendiente') setSnapPendienteLic(0);
+        setSolicitudesLicenciaError(e?.message || 'No se pudieron cargar las solicitudes web.');
       } finally {
         setSolicitudesLicenciaLoading(false);
       }
@@ -6964,6 +6968,7 @@ export default function AdminDashboard({
   const [editandoTipoData,   setEditandoTipoData]   = useState({ nombre: '', puntos: 0 });
   const [planPricingRows, setPlanPricingRows] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
+  const [planPricingError, setPlanPricingError] = useState('');
   const [planPricingEditId, setPlanPricingEditId] = useState(null);
   const [planPricingEditValue, setPlanPricingEditValue] = useState('');
   const [planPricingSavingId, setPlanPricingSavingId] = useState(null);
@@ -7023,14 +7028,22 @@ export default function AdminDashboard({
     if (!isSuperAdmin || activeTab !== 'planes') return;
     let cancelled = false;
     setPlanPricingLoading(true);
+    setPlanPricingError('');
     fetch(`${apiBaseUrl}/api/plan-pricing`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok) throw new Error(data?.error || `No se pudieron cargar los planes (HTTP ${r.status}).`);
+        return data;
+      })
       .then((data) => {
         if (cancelled) return;
         setPlanPricingRows(Array.isArray(data) ? data : []);
       })
-      .catch(() => {
-        if (!cancelled) setPlanPricingRows([]);
+      .catch((error) => {
+        if (!cancelled) {
+          setPlanPricingRows([]);
+          setPlanPricingError(error?.message || 'No se pudieron cargar los planes.');
+        }
       })
       .finally(() => {
         if (!cancelled) setPlanPricingLoading(false);
@@ -7411,6 +7424,8 @@ export default function AdminDashboard({
       setPartidosCountByTorneoId(partidosCnt);
 
       if (isSuperAdmin && session?.access_token) {
+        setAnalyticsGlobalesStatus('loading');
+        setAnalyticsGlobalesError('');
         try {
           const ar = await fetch(`${apiBaseUrl}/api/admin/analytics-globales`, {
             headers: { ...listAuthHeaders },
@@ -7418,14 +7433,21 @@ export default function AdminDashboard({
           const j = await ar.json().catch(() => null);
           if (ar.ok && j && typeof j === 'object' && !Array.isArray(j)) {
             setAnalyticsGlobales(j);
+            setAnalyticsGlobalesStatus('success');
           } else {
             setAnalyticsGlobales(null);
+            setAnalyticsGlobalesStatus('error');
+            setAnalyticsGlobalesError(j?.error || `No se pudieron cargar las métricas (HTTP ${ar.status}).`);
           }
-        } catch {
+        } catch (analyticsError) {
           setAnalyticsGlobales(null);
+          setAnalyticsGlobalesStatus('error');
+          setAnalyticsGlobalesError(analyticsError?.message || 'No se pudieron cargar las métricas.');
         }
       } else {
         setAnalyticsGlobales(null);
+        setAnalyticsGlobalesStatus('idle');
+        setAnalyticsGlobalesError('');
       }
 
       setLoading(false);
@@ -10844,7 +10866,13 @@ export default function AdminDashboard({
             <h2 style={{ marginTop: 0, marginBottom: '14px', fontSize: '18px' }}>
               Analytics globales
             </h2>
-            {!analyticsGlobales ? (
+            {analyticsGlobalesStatus === 'error' ? (
+              <div className="admin-load-error" role="alert">
+                <strong>No pudimos cargar Analytics globales.</strong>
+                <span>{analyticsGlobalesError}</span>
+                <button type="button" onClick={() => void fetchDataRef.current?.()}>Reintentar</button>
+              </div>
+            ) : !analyticsGlobales ? (
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600 }}>{t('admin.metrics.loadingMetrics')}</p>
             ) : (
               <>
@@ -11048,9 +11076,12 @@ export default function AdminDashboard({
           </div>
           {superAdminPeriodo === 'rango' ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px', maxWidth: '420px' }}>
+              <label className="admin-date-field">
+                <span>Desde</span>
               <input
                 type="date"
                 value={superAdminFechaDesde}
+                max={superAdminFechaHasta || undefined}
                 onChange={(e) => setSuperAdminFechaDesde(e.target.value)}
                 aria-label="Desde"
                 style={{
@@ -11064,9 +11095,13 @@ export default function AdminDashboard({
                   boxSizing: 'border-box',
                 }}
               />
+              </label>
+              <label className="admin-date-field">
+                <span>Hasta</span>
               <input
                 type="date"
                 value={superAdminFechaHasta}
+                min={superAdminFechaDesde || undefined}
                 onChange={(e) => setSuperAdminFechaHasta(e.target.value)}
                 aria-label="Hasta"
                 style={{
@@ -11080,6 +11115,10 @@ export default function AdminDashboard({
                   boxSizing: 'border-box',
                 }}
               />
+              </label>
+              {superAdminFechaDesde && superAdminFechaHasta && superAdminFechaDesde > superAdminFechaHasta ? (
+                <p className="admin-date-range-error" role="alert">La fecha «Desde» debe ser anterior o igual a «Hasta».</p>
+              ) : null}
             </div>
           ) : (
             <SuperAdminFinanzasPeriodoNav
@@ -12657,7 +12696,7 @@ export default function AdminDashboard({
       </div>}
 
       {activeTab === 'reservas' && <div className="admin-reservas-section">
-        {(esAdminClub || isSuperAdmin) ? (
+        {esAdminClub ? (
           <section style={{ marginBottom: '18px', padding: '14px 16px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card)' }}>
             <strong style={{ display: 'block', marginBottom: '5px' }}>{t('admin.reservas.configurationTitle', 'Booking configuration')}</strong>
             <span style={{ display: 'block', marginBottom: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
@@ -17963,6 +18002,16 @@ export default function AdminDashboard({
                       Cargando…
                     </td>
                   </tr>
+                ) : planPricingError ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '14px' }}>
+                      <div className="admin-load-error" role="alert">
+                        <strong>No pudimos cargar los planes.</strong>
+                        <span>{planPricingError}</span>
+                        <button type="button" onClick={() => { setPlanPricingError(''); setPlanPricingLoading(true); fetch(`${apiBaseUrl}/api/plan-pricing`).then(async (r) => { const data = await r.json().catch(() => null); if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`); return data; }).then((data) => setPlanPricingRows(Array.isArray(data) ? data : [])).catch((error) => setPlanPricingError(error?.message || 'No se pudieron cargar los planes.')).finally(() => setPlanPricingLoading(false)); }}>Reintentar</button>
+                      </div>
+                    </td>
+                  </tr>
                 ) : planPricingRows.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ padding: '14px', textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -18655,6 +18704,12 @@ export default function AdminDashboard({
           </div>
           {sedesPendientesLoading || solicitudesLicenciaLoading ? (
             <p style={{ color: '#e2e8f0', textAlign: 'center' }}>{t('admin.common.loadingEllipsis')}</p>
+          ) : sedesPendientesError || solicitudesLicenciaError ? (
+            <div className="admin-load-error" role="alert">
+              <strong>No pudimos cargar todas las solicitudes.</strong>
+              <span>{[sedesPendientesError, solicitudesLicenciaError].filter(Boolean).join(' ')}</span>
+              <button type="button" onClick={() => { void cargarSedesPendientes(solicitudesFiltroEstado); void cargarSolicitudesLicencia(solicitudesFiltroEstado); }}>Reintentar</button>
+            </div>
           ) : solicitudesUnificadas.length === 0 ? (
             <p style={{ color: '#e2e8f0', textAlign: 'center' }}>{t('admin.metricas.noRequestsFilter')}</p>
           ) : (
