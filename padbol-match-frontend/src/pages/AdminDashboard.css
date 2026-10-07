@@ -283,6 +283,31 @@
   margin-bottom: 16px;
 }
 
+.admin-dashboard-mobile-tab-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-dashboard-mobile-tab-picker select {
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+}
+
 @media (min-width: 768px) {
   .admin-dashboard-shell {
     flex-direction: row;
@@ -529,6 +554,59 @@
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     pointer-events: auto;
+  }
+}
+
+/* Tablets use the compact section picker as well. Keeping the full 232px
+ * navigation rail at 768px left too little room for operational tables. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-dashboard--with-sidebar {
+    --pm-admin-sidebar-slot: 0px;
+    --pm-admin-sidebar-width: 0px;
+  }
+
+  .admin-dashboard--with-sidebar .admin-dashboard-brand-shell {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .admin-dashboard-shell,
+  .admin-dashboard--with-sidebar .admin-dashboard-shell {
+    display: block;
+    padding: 0 12px 12px;
+  }
+
+  .admin-dashboard-nav,
+  .admin-dashboard--with-sidebar .admin-dashboard-nav {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    pointer-events: auto;
+  }
+
+  .admin-dashboard-sidebar,
+  .admin-dashboard--with-sidebar .admin-dashboard-sidebar {
+    display: none !important;
+  }
+
+  .admin-dashboard-tabs-strip--mobile {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    margin: 0 0 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-dashboard-body-surface {
+    width: 100%;
+    max-width: none !important;
   }
 }
 
