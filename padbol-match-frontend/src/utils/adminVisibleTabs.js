@@ -22,6 +22,7 @@ export const SUPER_ADMIN_VISIBLE_TABS = Object.freeze([
   'jugadores',
   'solicitudes',
   'profesores',
+  'next_generation',
   'personalizar_hub',
   'suspensiones',
   'notificaciones',

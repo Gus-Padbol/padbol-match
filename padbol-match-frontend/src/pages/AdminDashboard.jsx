@@ -102,6 +102,7 @@ import AdminOrganizacionesSection from '../components/AdminOrganizacionesSection
 import AdminIncentivosSection from '../components/AdminIncentivosSection';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
+import AdminNextGenerationSection from '../components/AdminNextGenerationSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import SedeWhatsappPhoneField from '../components/SedeWhatsappPhoneField';
@@ -6956,6 +6957,7 @@ export default function AdminDashboard({
   const [configNivelesHidden,setConfigNivelesHidden]= useState(() => new Set(loadConfigFromStorage().niveles_hidden || []));
   const [previewNivel,       setPreviewNivel]       = useState('nacional');
   const [configSaving,       setConfigSaving]       = useState(false);
+  const [configSubtab,       setConfigSubtab]       = useState('puntos');
   const [configMsg,          setConfigMsg]          = useState('');
   const [nuevoTipo,          setNuevoTipo]          = useState({ nombre: '', puntos: 0 });
   const [editandoTipoId,     setEditandoTipoId]     = useState(null);
@@ -10194,6 +10196,7 @@ export default function AdminDashboard({
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
+        ...(isSuperAdmin ? [{ id: 'next_generation', label: 'Next Generation' }] : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
         ...(puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'WhatsApp' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
@@ -12036,6 +12039,12 @@ export default function AdminDashboard({
         />
       ) : null}
 
+      {activeTab === 'next_generation' && isSuperAdmin && session?.access_token ? (
+        <div className="section">
+          <AdminNextGenerationSection accessToken={session.access_token} />
+        </div>
+      ) : null}
+
       {activeTab === 'suspensiones' && isSuperAdmin && session?.access_token ? (
         <div className="section">
           <h2>{t('admin.tabs.suspensiones')}</h2>
@@ -12081,6 +12090,7 @@ export default function AdminDashboard({
                     : []
             }
             paisesOptions={sedesSuperAdminPaisesUnicos}
+            torneosOptions={torneos}
           />
         </div>
       ) : null}
@@ -14934,7 +14944,15 @@ export default function AdminDashboard({
                 </p>
               ) : null}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
-                {isTextRule ? (
+                {rule.key === 'modo_calculo_reserva' ? (
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>Modo de cálculo</span>
+                    <select value={rule.value_text} onChange={(e) => updatePcGlobalConfigRow(idx, 'value_text', e.target.value)} style={pcInp} required>
+                      <option value="porcentaje_valor_pagado">Porcentaje del valor pagado</option>
+                      <option value="monto_fijo">Cantidad fija por reserva</option>
+                    </select>
+                  </label>
+                ) : isTextRule ? (
                   <label style={{ display: 'grid', gap: '6px' }}>
                     <span style={{ fontWeight: 600, fontSize: '13px' }}>
                       {t('admin.padcoins.globalConfigValueText', 'Valor (texto)')}
@@ -14988,8 +15006,14 @@ export default function AdminDashboard({
 
         return (
           <div className="section">
+            <nav className="admin-padcoins-section-nav" aria-label="Secciones de PadCoins">
+              {[
+                ['pc-config', 'Configuración'], ['pc-sedes', 'Sedes'], ['admin-padcoins-campaigns', 'Campañas'],
+                ['pc-reportes', 'Reportes'], ['pc-canjes', 'Canjes'], ['admin-padcoins-alertas', 'Alertas'], ['pc-movimientos', 'Movimientos'],
+              ].map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
+            </nav>
             {isSuperAdmin ? (
-              <div style={{ marginBottom: '36px', paddingBottom: '28px', borderBottom: '1px solid var(--border)' }}>
+              <div id="pc-config" style={{ marginBottom: '36px', paddingBottom: '28px', borderBottom: '1px solid var(--border)', scrollMarginTop: 80 }}>
                 <h2 style={{ marginTop: 0 }}>
                   ⚙️ {t('admin.padcoins.globalConfigTitle', 'Configuración global')}
                 </h2>
@@ -15110,7 +15134,7 @@ export default function AdminDashboard({
               </div>
             ) : null}
 
-            <div style={{
+            <div id="pc-sedes" style={{
               marginBottom: '32px',
               paddingBottom: '28px',
               borderBottom: '1px solid var(--border)',
@@ -16411,6 +16435,7 @@ export default function AdminDashboard({
             ) : null}
 
             {(isSuperAdmin || esAdminClub) ? (
+              <div id="pc-reportes" style={{ scrollMarginTop: 80 }}>
               <AdminPadcoinsReportesSection
                 apiBaseUrl={apiBaseUrl}
                 accessToken={session?.access_token || ''}
@@ -16422,6 +16447,7 @@ export default function AdminDashboard({
                 premios={premios}
                 sedeFlag={sedeFlag}
               />
+              </div>
             ) : null}
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
@@ -16756,7 +16782,7 @@ export default function AdminDashboard({
             ) : null}
 
             {effectivePcSedeId ? (
-              <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+              <div id="pc-canjes" style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)', scrollMarginTop: 80 }}>
                 <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
                   {t('admin.padcoins.redemptionsTitle', 'Canjes')}
                 </h3>
@@ -17251,7 +17277,7 @@ export default function AdminDashboard({
               </div>
             ) : null}
 
-            <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+            <div id="pc-movimientos" style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)', scrollMarginTop: 80 }}>
               <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
                 {esAdminClub
                   ? t('admin.padcoins.movementsClubTitle', 'Movimientos de tu sede')
@@ -17630,7 +17656,12 @@ export default function AdminDashboard({
       })() : null}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
-        <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>{t('admin.metricas.pointsConfigTitle')}</h2>
+        <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>Configuración</h2>
+        <div className="admin-config-subtabs" role="tablist" aria-label="Áreas de configuración">
+          <button type="button" role="tab" aria-selected={configSubtab === 'puntos'} onClick={() => setConfigSubtab('puntos')}>Puntos y posiciones</button>
+          <button type="button" role="tab" aria-selected={configSubtab === 'sponsors'} onClick={() => setConfigSubtab('sponsors')}>Sponsors</button>
+        </div>
+        {configSubtab === 'puntos' ? <>
         {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
         <div style={{ marginBottom: '4px' }}>
           <h3 style={{ color: 'var(--text-primary)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
@@ -17806,7 +17837,7 @@ export default function AdminDashboard({
                     return (
                       <tr key={pos} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg-page)' : 'var(--bg-card)' }}>
                         <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-primary)' }}>
-                          {pos === 1 ? '🥇 1ro' : pos === 2 ? '🥈 2do' : pos === 3 ? '🥉 3ro' : `${pos}°`}
+                          {pos === 1 ? '🥇 1°' : pos === 2 ? '🥈 2°' : pos === 3 ? '🥉 3°' : `${pos}°`}
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
                           <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -17889,10 +17920,12 @@ export default function AdminDashboard({
           </p>
         </div>
 
-        <AdminSponsorsSection
+        </> : null}
+
+        {configSubtab === 'sponsors' ? <AdminSponsorsSection
           isSuperAdmin={isSuperAdmin}
           allowedVenueId={esAdminClub ? sedeId : null}
-        />
+        /> : null}
 
       </div>}
 

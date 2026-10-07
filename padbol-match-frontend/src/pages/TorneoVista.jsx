@@ -1293,7 +1293,7 @@ export default function TorneoVista() {
       </div>
     ) : null}
     <div
-      className="torneo-vista-container"
+      className={`torneo-vista-container${fromAdmin ? ' torneo-vista-container--admin' : ''}`}
       style={{
         paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock),
         paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
@@ -1347,7 +1347,7 @@ export default function TorneoVista() {
           userProfile={userProfile}
         />
       </div>
-      <BottomNav />
+      {fromAdmin ? null : <BottomNav />}
     </div>
     </>
   );

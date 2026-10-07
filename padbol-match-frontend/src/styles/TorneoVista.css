@@ -10,6 +10,17 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+@media (min-width: 900px) {
+  .torneo-vista-container--admin {
+    max-width: 1280px;
+  }
+
+  .torneo-vista-container--admin > div {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
 /* Estado del torneo (finalizado, etc.): texto simple encima de las pestañas */
 .torneo-estado-linea-arriba-tabs {
   margin: 0 0 10px;
