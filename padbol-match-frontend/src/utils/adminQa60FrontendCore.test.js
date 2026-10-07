@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pctCambioPeriodo } from './adminMetricasConsistencia';
+import es from '../i18n/locales/es.json';
 
 const dashboardSrc = fs.readFileSync(path.join(__dirname, '../pages/AdminDashboard.jsx'), 'utf8');
 const nuevaSedeSrc = fs.readFileSync(path.join(__dirname, '../components/NuevaSedeSuperBottomSheet.jsx'), 'utf8');
@@ -11,6 +12,11 @@ describe('QA panel admin - núcleo funcional y visual', () => {
     expect(pctCambioPeriodo(25, 0)).toBeNull();
     expect(pctCambioPeriodo(0, 0)).toBe(0);
     expect(dashboardSrc).toMatch(/pct == null[\s\S]*Nuevo/);
+  });
+
+  it('R-07 corrige los textos del resumen financiero', () => {
+    expect(es.admin.metrics.historicalTotalHint).toBe('Acumulado histórico de los datos disponibles');
+    expect(es.admin.overview.todayRevenue).toBe('INGRESOS DEL DÍA');
   });
 
   it('R-04 etiqueta y limita el rango personalizado', () => {
@@ -43,6 +49,20 @@ describe('QA panel admin - núcleo funcional y visual', () => {
     expect(suspensionesSrc).toMatch(/criterionTitle/);
     expect(suspensionesSrc).toMatch(/criterionBody/);
     expect(suspensionesSrc).toMatch(/colReason/);
+  });
+
+  it('S-05 permite al Super Admin editar datos básicos mediante la API autorizada', () => {
+    expect(dashboardSrc).toMatch(/Editar datos de la sede/);
+    expect(dashboardSrc).toMatch(/fetch\(`\$\{apiBaseUrl\}\/api\/sedes\/\$\{id\}`/);
+    expect(dashboardSrc).toMatch(/method: 'PATCH'/);
+    expect(dashboardSrc).toMatch(/email_contacto/);
+  });
+
+  it('V-01 ofrece rechazo confirmado y conserva el error visible', () => {
+    expect(dashboardSrc).toMatch(/validationRejectConfirm/);
+    expect(dashboardSrc).toMatch(/\/api\/admin\/jugadores\/validaciones\/\$\{encodeURIComponent\(email\)\}\/rechazar/);
+    expect(dashboardSrc).toMatch(/admin-validacion-action--reject/);
+    expect(dashboardSrc).toMatch(/vs\.error \? <div role="alert"/);
   });
 
   it('G-05 no guarda ni presenta emojis regionales en los selectores de país', () => {

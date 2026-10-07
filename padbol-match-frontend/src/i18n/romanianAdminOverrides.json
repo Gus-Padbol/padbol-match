@@ -80,6 +80,12 @@
       "showLess": "Arată mai puține recenzii",
       "showAll": "Arată toate recenziile ({{count}})"
     },
+    "formularios": {
+      "validationReject": "Respinge",
+      "validationRejectConfirm": "Respingi această validare? Jucătorul va rămâne înregistrat și își va putea corecta datele.",
+      "validationRejectReason": "Validare respinsă de administrație",
+      "validationRejectError": "Validarea nu a putut fi respinsă."
+    },
     "tabs": {
       "profesoresTab": "Instructori",
       "suspensiones": "Suspendări",
@@ -193,6 +199,35 @@
         "avanzado": "Avansat",
         "advanced": "Avansat"
       }
+    }
+  },
+  "torneos": {
+    "create": {
+      "ageCutoffLabel": "Data de referință pentru vârstă (opțional)",
+      "ageCutoffHint": "Se folosește pentru calcularea vârstei jucătorilor. Dacă lipsește, se folosește data de început a turneului sau data curentă.",
+      "programaNextGenerationHint": "Categorie juvenilă: acest turneu aparține programului FIPA Next Generation (U13/U15/U17).",
+      "programaPadbolHint": "Categorie pentru adulți: acest turneu aparține Padbol. Nivelul sportiv este independent de vârstă."
+    },
+    "vista": {
+      "categoriaEdad": { "u13": "U13", "u15": "U15", "u17": "U17" },
+      "categoriaEdadGrupo": {
+        "nextGeneration": "Next Generation (juniori)",
+        "padbol": "Padbol (adulți)",
+        "divisionEspecial": "Divizie specială",
+        "legado": "Categorie anterioară"
+      },
+      "programa": { "next_generation": "FIPA Next Generation", "padbol": "Padbol" },
+      "filtros": { "programa": "Program", "todos": "Toate", "categoriaEdad": "Categorie de vârstă", "nivel": "Nivel sportiv" },
+      "nextGeneration": { "padboleros": "Jucători de Padbol" }
+    }
+  },
+  "reputacion": {
+    "admin": {
+      "criterionTitle": "Regulă automată",
+      "criterionBody": "Cinci anulări în ultimele 30 de zile determină o suspendare de șapte zile. Ecranul afișează doar suspendările active.",
+      "refresh": "Reîncarcă suspendările",
+      "colReason": "Motiv",
+      "repeatedCancellationReason": "Anulări repetate"
     }
   }
 }

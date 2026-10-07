@@ -186,7 +186,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
 
   return <section className="section incentive-dashboard" data-testid="admin-incentivos-section">
     <header className="incentive-dashboard__header">
-      <div><p className="incentive-dashboard__eyebrow">BENEFICIO PADBOL</p><h2>Informe mensual de tu sede</h2><p>Consulta la actividad registrada, el estado de cada objetivo y el beneficio estimado del mes.</p></div>
+      <div><p className="incentive-dashboard__eyebrow">BENEFICIO PADBOL</p><h2>{isSuperAdmin ? 'Informe mensual por sede' : 'Informe mensual de tu sede'}</h2><p>Consulta la actividad registrada, el estado de cada objetivo y el beneficio estimado del mes.</p></div>
       <div className="incentive-dashboard__billing-note"><strong>Beneficio estimado</strong><span>Este informe no confirma un descuento aplicado ni genera cobros.</span></div>
     </header>
     <div className="incentive-dashboard__filters">

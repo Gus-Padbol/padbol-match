@@ -3542,3 +3542,38 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 .admin-week-compare__delta--new {
   color: #2563eb;
 }
+
+.admin-super-sede-edit__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-super-sede-edit__grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-super-sede-edit__grid input {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 11px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.admin-form-error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .admin-super-sede-edit__grid { grid-template-columns: 1fr; }
+}

@@ -910,8 +910,8 @@ export default function AdminMembresiasSection({
                     onChange={(e) => onDirectionChange(e.target.value)}
                     style={inp}
                   >
-                    <option value="desc">desc</option>
-                    <option value="asc">asc</option>
+                    <option value="desc">Más recientes primero</option>
+                    <option value="asc">Más antiguas primero</option>
                   </select>
                 </label>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>

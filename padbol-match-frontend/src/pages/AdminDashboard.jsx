@@ -3522,6 +3522,10 @@ export default function AdminDashboard({
   const [sedesMap, setSedesMap] = useState({});
   const [contratosBySedeId, setContratosBySedeId] = useState({});
   const [sedeDetalleAbiertoId, setSedeDetalleAbiertoId] = useState(null);
+  const [sedeSuperEditando, setSedeSuperEditando] = useState(false);
+  const [sedeSuperEditDraft, setSedeSuperEditDraft] = useState({ nombre: '', direccion: '', telefono: '', email_contacto: '' });
+  const [sedeSuperEditSaving, setSedeSuperEditSaving] = useState(false);
+  const [sedeSuperEditError, setSedeSuperEditError] = useState('');
   /** Filtros país/ciudad super_admin (tabla desktop + tarjetas móvil; paginación sobre lista filtrada). */
   const [sedeMobileFiltroPais, setSedeMobileFiltroPais] = useState('');
   const [sedeMobileFiltroCiudad, setSedeMobileFiltroCiudad] = useState('');
@@ -5420,7 +5424,8 @@ export default function AdminDashboard({
   const textoRolGestionAdminCompleto = useCallback(
     (row) => {
       const badge = ROLE_BADGE[row.role] || row.role || '—';
-      const alc = row.alcance || '—';
+      const alcanceRaw = String(row?.alcance || '').trim().toLowerCase();
+      const alc = alcanceRaw === 'sede' ? 'Sede' : alcanceRaw === 'ciudad' ? 'Ciudad' : alcanceRaw === 'provincia' ? 'Provincia' : alcanceRaw === 'pais' ? 'País' : alcanceRaw === 'global' ? 'Global' : '—';
       const asig = asignacionGestionAdminTexto(row);
       return `${badge} · Alcance: ${alc} · ${asig}`;
     },
@@ -6648,6 +6653,30 @@ export default function AdminDashboard({
     setValidacionState(prev => { const s = { ...prev }; delete s[email]; return s; });
   };
 
+  const rechazarJugador = async (email) => {
+    if (!window.confirm(t('admin.formularios.validationRejectConfirm'))) return;
+    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/admin/jugadores/validaciones/${encodeURIComponent(email)}/rechazar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ motivo: t('admin.formularios.validationRejectReason') }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || t('admin.formularios.validationRejectError'));
+      setPendientes(prev => prev.filter(p => p.email !== email));
+      setValidacionState(prev => { const s = { ...prev }; delete s[email]; return s; });
+    } catch (error) {
+      setValidacionState(prev => ({
+        ...prev,
+        [email]: { ...prev[email], saving: false, error: error?.message || t('admin.formularios.validationRejectError') },
+      }));
+    }
+  };
+
   const guardarCategoria = async (email) => {
     const nuevaCategoria = validacionState[email]?.categoria;
     if (!nuevaCategoria) return;
@@ -6805,8 +6834,60 @@ export default function AdminDashboard({
   }, [isSuperAdmin, sedeDetalleAbiertoId, sedesSuperAdminLista]);
 
   useEffect(() => {
-    if (activeTab !== ADMIN_SEDES_TAB_ID) setSedeDetalleAbiertoId(null);
+    if (activeTab !== ADMIN_SEDES_TAB_ID) {
+      setSedeDetalleAbiertoId(null);
+      setSedeSuperEditando(false);
+      setSedeSuperEditError('');
+    }
   }, [activeTab]);
+
+  const abrirEdicionSedeSuper = useCallback(() => {
+    if (!sedeSuperAdminDetalleModal) return;
+    setSedeSuperEditDraft({
+      nombre: String(sedeSuperAdminDetalleModal.nombre || ''),
+      direccion: String(sedeSuperAdminDetalleModal.direccion || ''),
+      telefono: String(sedeSuperAdminDetalleModal.telefono || ''),
+      email_contacto: String(sedeSuperAdminDetalleModal.email_contacto || ''),
+    });
+    setSedeSuperEditError('');
+    setSedeSuperEditando(true);
+  }, [sedeSuperAdminDetalleModal]);
+
+  const guardarEdicionSedeSuper = useCallback(async () => {
+    const id = Number(sedeSuperAdminDetalleModal?.id);
+    const nombre = String(sedeSuperEditDraft.nombre || '').trim();
+    if (!Number.isFinite(id) || !nombre) {
+      setSedeSuperEditError('El nombre de la sede es obligatorio.');
+      return;
+    }
+    setSedeSuperEditSaving(true);
+    setSedeSuperEditError('');
+    try {
+      const patch = {
+        nombre,
+        direccion: String(sedeSuperEditDraft.direccion || '').trim(),
+        telefono: String(sedeSuperEditDraft.telefono || '').trim(),
+        email_contacto: String(sedeSuperEditDraft.email_contacto || '').trim(),
+      };
+      const response = await fetch(`${apiBaseUrl}/api/sedes/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify(patch),
+      });
+      const json = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(json?.error || 'No se pudo guardar la sede.');
+      const updated = json?.sede || { ...sedeSuperAdminDetalleModal, ...patch };
+      setSedesMap((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), ...updated } }));
+      setSedeSuperEditando(false);
+    } catch (error) {
+      setSedeSuperEditError(error?.message || 'No se pudo guardar la sede.');
+    } finally {
+      setSedeSuperEditSaving(false);
+    }
+  }, [apiBaseUrl, sedeSuperAdminDetalleModal, sedeSuperEditDraft, session?.access_token]);
 
   useEffect(() => {
     if (!esAdminNacional) {
@@ -12382,6 +12463,28 @@ export default function AdminDashboard({
                       guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
                       activarSuscripcionStripeSede={activarSuscripcionStripeSede}
                     />
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                      {!sedeSuperEditando ? (
+                        <button type="button" className="admin-edit-button" onClick={abrirEdicionSedeSuper}>
+                          <AdminEditIcon size={14} /> Editar datos de la sede
+                        </button>
+                      ) : (
+                        <div className="admin-super-sede-edit" aria-label="Editar datos de la sede">
+                          <h4 style={{ margin: '0 0 12px' }}>Editar datos de la sede</h4>
+                          <div className="admin-super-sede-edit__grid">
+                            <label>Nombre<input value={sedeSuperEditDraft.nombre} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, nombre: e.target.value }))} /></label>
+                            <label>Dirección<input value={sedeSuperEditDraft.direccion} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, direccion: e.target.value }))} /></label>
+                            <label>Teléfono<input value={sedeSuperEditDraft.telefono} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, telefono: e.target.value }))} /></label>
+                            <label>Correo de contacto<input type="email" value={sedeSuperEditDraft.email_contacto} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, email_contacto: e.target.value }))} /></label>
+                          </div>
+                          {sedeSuperEditError ? <p role="alert" className="admin-form-error">{sedeSuperEditError}</p> : null}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                            <button type="button" className="admin-primary-action" disabled={sedeSuperEditSaving} onClick={() => void guardarEdicionSedeSuper()}>{sedeSuperEditSaving ? 'Guardando…' : 'Guardar cambios'}</button>
+                            <button type="button" className="admin-secondary-action" disabled={sedeSuperEditSaving} onClick={() => { setSedeSuperEditando(false); setSedeSuperEditError(''); }}>Cancelar</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     {session?.access_token ? (
                       <SedeSuperDuracionesSection
                         apiBaseUrl={apiBaseUrl}
@@ -12586,6 +12689,14 @@ export default function AdminDashboard({
                     </button>
                     <button
                       disabled={vs.saving}
+                      onClick={() => void rechazarJugador(jugador.email)}
+                      className="admin-validacion-action admin-validacion-action--reject"
+                      style={{ padding: '7px 14px', background: '#b91c1c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
+                    >
+                      {t('admin.formularios.validationReject')}
+                    </button>
+                    <button
+                      disabled={vs.saving}
                       onClick={() => toggleCambiarCategoria(jugador.email, jugador.nivel)}
                       className="admin-validacion-action admin-validacion-action--category"
                       style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
@@ -12616,6 +12727,7 @@ export default function AdminDashboard({
                         </button>
                       </>
                     )}
+                    {vs.error ? <div role="alert" className="admin-form-error" style={{ flexBasis: '100%' }}>{vs.error}</div> : null}
                   </div>
                 </div>
               );
@@ -18267,7 +18379,7 @@ export default function AdminDashboard({
                             }}
                           >
                             <div style={{ fontWeight: 700, fontSize: '14px', lineHeight: 1.3 }}>
-                              {row.nombre || '—'}
+                              {row.nombre || row.email || 'Sin nombre'}
                             </div>
                             <div
                               style={{
@@ -18328,12 +18440,14 @@ export default function AdminDashboard({
                         </tr>
                       ) : (
                         <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: 'var(--text-primary)' }}>
-                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.nombre || '—'}</td>
+                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.nombre || row.email || 'Sin nombre'}</td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>{row.email}</td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
-                            {row.role === 'editor_contenido' ? t('admin.formularios.contentEditorTitle') : row.role || '—'}
+                            {ROLE_BADGE[row.role] || (row.role === 'editor_contenido' ? t('admin.formularios.contentEditorTitle') : '—')}
                           </td>
-                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.alcance || '—'}</td>
+                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
+                            {String(row.alcance || '').toLowerCase() === 'pais' ? 'País' : String(row.alcance || '').toLowerCase() === 'sede' ? 'Sede' : String(row.alcance || '').toLowerCase() === 'ciudad' ? 'Ciudad' : String(row.alcance || '').toLowerCase() === 'provincia' ? 'Provincia' : String(row.alcance || '').toLowerCase() === 'global' ? 'Global' : '—'}
+                          </td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>
                             {row.role === 'editor_contenido' ? t('admin.roles.editorScopeLabel') : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'sede'

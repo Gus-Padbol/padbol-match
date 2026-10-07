@@ -605,7 +605,7 @@ export default function AdminSponsorsSection({
       >
         <h3 style={{ margin: '0 0 12px', fontSize: 16, color: 'var(--text-primary)' }}>{t('admin.sponsors.quotaConfigTitle')}</h3>
         <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-          Límites de patrocinadores (fila única <code style={{ fontSize: 12 }}>sponsor_config.id = 1</code>). La aplicación
+          Límites generales de patrocinadores. La aplicación
           puede usar estos valores para validar altas futuras.
         </p>
         {cuposMsg ? (
@@ -755,7 +755,7 @@ export default function AdminSponsorsSection({
           </>
         ) : (
           <>
-        <label style={labelStyle}>Logo (bucket sponsors)</label>
+        <label style={labelStyle}>Logo del patrocinador</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12 }}>
           <input type="file" accept="image/*" disabled={uploading || saving} onChange={(e) => void onLogoFile(e)} />
           {form.logo_url ? (
@@ -792,7 +792,7 @@ export default function AdminSponsorsSection({
           style={{ ...inputStyle, color: 'var(--text-primary)', marginBottom: 12 }}
           value={form.banner_url}
           onChange={(e) => setForm((p) => ({ ...p, banner_url: e.target.value }))}
-          placeholder="https://… (bucket sponsors/banners/)"
+          placeholder="https://…"
         />
           </>
         )}
@@ -832,7 +832,7 @@ export default function AdminSponsorsSection({
         <label style={labelStyle}>Deportes (opcional)</label>
         <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
           Sin ninguno marcado = visible en todos los deportes. Con uno o más = solo cuando el usuario elige ese
-          deporte en el hub, rankings o torneos (coherente con GET /api/sponsors).
+          deporte en el inicio, rankings o torneos.
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
           {DEPORTES_CANCHA_SEDE_OPTIONS.map((o) => (
