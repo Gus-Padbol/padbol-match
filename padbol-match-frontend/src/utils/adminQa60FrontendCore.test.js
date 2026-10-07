@@ -44,4 +44,10 @@ describe('QA panel admin - núcleo funcional y visual', () => {
     expect(suspensionesSrc).toMatch(/criterionBody/);
     expect(suspensionesSrc).toMatch(/colReason/);
   });
+
+  it('G-05 no guarda ni presenta emojis regionales en los selectores de país', () => {
+    expect(dashboardSrc).toMatch(/value: `\$\{p\.bandera\} \$\{p\.nombre\}`\.trim\(\), label: p\.nombre/);
+    expect(nuevaSedeSrc).toMatch(/value: `\$\{p\.bandera\} \$\{p\.nombre\}`\.trim\(\), label: p\.nombre/);
+    expect(dashboardSrc).not.toMatch(/return flag \? `\$\{flag\} \$\{nombre\}`\.trim\(\) : nombre/);
+  });
 });
