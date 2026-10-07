@@ -1784,6 +1784,22 @@ function padcoinsMovReferenciaDisplay(row, t) {
   return [rtLabel, ri].filter(Boolean).join(' ') || '—';
 }
 
+function padcoinsMovimientoDescripcionVisible(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '—';
+  if (/^(EPHEMERAL\||QA\||E2E\||TEST\|)/i.test(value)) return 'Movimiento de prueba';
+  if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
+    try {
+      const parsed = JSON.parse(value);
+      const candidate = parsed?.descripcion || parsed?.description || parsed?.motivo || parsed?.concepto;
+      return String(candidate || 'Detalle técnico disponible').trim();
+    } catch (_) {
+      return 'Detalle técnico disponible';
+    }
+  }
+  return value;
+}
+
 function formatPadcoinsMovFechaCorta(raw, locale = 'es-AR') {
   const src = raw?.fecha ?? raw?.created_at;
   if (!src) return '—';
@@ -2344,6 +2360,14 @@ function formatFecha(str) {
   const [y, m, d] = str.split('-');
   const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   return `${parseInt(d)} ${meses[parseInt(m) - 1]} ${y}`;
+}
+
+function torneoEnCursoConFinVencido(torneo, now = new Date()) {
+  if (String(torneo?.estado || '').trim().toLowerCase() !== 'en_curso') return false;
+  const raw = String(torneo?.fecha_fin || '').trim();
+  if (!raw) return false;
+  const fin = new Date(`${raw.slice(0, 10)}T23:59:59`);
+  return !Number.isNaN(fin.getTime()) && fin.getTime() < now.getTime();
 }
 
 // "2026-04-10" → "Viernes 10 de Abril"
@@ -4724,6 +4748,7 @@ export default function AdminDashboard({
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
   const [adminInvitacionesRows, setAdminInvitacionesRows] = useState([]);
   const [adminInvitacionesLoading, setAdminInvitacionesLoading] = useState(false);
+  const [adminInvitacionesError, setAdminInvitacionesError] = useState('');
   /** GET /api/admin/analytics-globales (solo super_admin, mismo ciclo que fetchData). */
   const [analyticsGlobales, setAnalyticsGlobales] = useState(null);
   const [inviteClubModalOpen, setInviteClubModalOpen] = useState(false);
@@ -5091,6 +5116,7 @@ export default function AdminDashboard({
   const cargarInvitacionesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
     setAdminInvitacionesLoading(true);
+    setAdminInvitacionesError('');
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
@@ -5104,6 +5130,9 @@ export default function AdminDashboard({
     } catch (e) {
       console.error('[AdminDashboard] invitaciones admin:', e);
       setAdminInvitacionesRows([]);
+      setAdminInvitacionesError(
+        e?.message || 'No se pudieron cargar las invitaciones pendientes.',
+      );
     } finally {
       setAdminInvitacionesLoading(false);
     }
@@ -10531,7 +10560,20 @@ export default function AdminDashboard({
               paddingBottom: 0,
             }}
           >
-            {TABS.map((tab) => renderAdminNavTabButton(tab, 'strip'))}
+            <label className="admin-dashboard-mobile-tab-picker">
+              <span>Sección</span>
+              <select
+                value={activeTab}
+                onChange={(event) => selectAdminTab(event.target.value)}
+                aria-label="Elegir sección del panel"
+              >
+                {TABS.map((tab) => (
+                  <option key={`mobile-option-${tab.id}`} value={tab.id}>
+                    {tab.label}{tab.badge > 0 ? ` (${tab.badge})` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
 
@@ -11463,7 +11505,12 @@ export default function AdminDashboard({
                   color: '#ffffff',
                   label: String(torneo.estado || '').trim() || '—',
                 };
-              const estadoBadge = {
+              const fechaFinVencida = torneoEnCursoConFinVencido(torneo);
+              const estadoBadge = fechaFinVencida ? {
+                bg: '#fef3c7',
+                color: '#92400e',
+                label: 'Finalización pendiente',
+              } : {
                 ...estadoBadgeBase,
                 label: t(`torneos.vista.estado.${String(torneo.estado || '').trim().toLowerCase()}`, {
                   defaultValue: estadoBadgeBase.label,
@@ -11793,7 +11840,7 @@ export default function AdminDashboard({
                         {sede ? <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '3px' }}>{sede.nombre}</div> : null}
                         {ubicacionSede ? (
                           <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                            {flag ? `${flag} ${ubicacionSede}` : ubicacionSede}
+                            {ubicacionSede}
                           </div>
                         ) : null}
                       </div>
@@ -11834,6 +11881,11 @@ export default function AdminDashboard({
                             </span>
                           : null}
                         <span className="admin-torneo-list-chip admin-torneo-list-chip--status" style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
+                        {fechaFinVencida ? (
+                          <span role="status" style={{ color: '#92400e', fontSize: 11, fontWeight: 700 }}>
+                            La fecha de fin venció; cerrá o actualizá el torneo.
+                          </span>
+                        ) : null}
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -11927,7 +11979,7 @@ export default function AdminDashboard({
                             style={{ padding: '6px 10px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
                             title={t('admin.torneosSection.deleteTournament')}
                           >
-                            🗑️
+                            Eliminar
                           </button>
                         )}
                         </div>
@@ -17490,7 +17542,7 @@ export default function AdminDashboard({
                                 lineHeight: 1.35,
                                 verticalAlign: 'top',
                               }}>
-                                {mov.descripcion || '—'}
+                                {padcoinsMovimientoDescripcionVisible(mov.descripcion)}
                               </td>
                               <td style={{
                                 padding: '8px 10px',
@@ -18050,6 +18102,21 @@ export default function AdminDashboard({
                     <tr>
                       <td colSpan={7} style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)', fontWeight: 600 }}>
                         Cargando…
+                      </td>
+                    </tr>
+                  ) : adminInvitacionesError ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '14px', textAlign: 'center' }}>
+                        <div role="alert" style={{ color: '#b91c1c', fontWeight: 700, marginBottom: 10 }}>
+                          No se pudieron cargar las invitaciones. Esto no significa que la lista esté vacía.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void cargarInvitacionesAdmin()}
+                          style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Reintentar
+                        </button>
                       </td>
                     </tr>
                   ) : adminInvitacionesRows.length === 0 ? (
