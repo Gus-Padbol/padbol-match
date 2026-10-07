@@ -56,6 +56,13 @@ export default function AdminSuspensionesSection({ apiBaseUrl, accessToken }) {
       <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
         {t('reputacion.admin.intro')}
       </p>
+      <div className="admin-suspensiones__criterion">
+        <strong>{t('reputacion.admin.criterionTitle')}</strong>
+        <span>{t('reputacion.admin.criterionBody')}</span>
+      </div>
+      <button type="button" className="admin-suspensiones__refresh" onClick={() => void loadRows()} disabled={loading || liftingId != null}>
+        {t('reputacion.admin.refresh')}
+      </button>
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{t('reputacion.admin.loading')}</p>
@@ -73,6 +80,7 @@ export default function AdminSuspensionesSection({ apiBaseUrl, accessToken }) {
                 <th>{t('reputacion.admin.colName')}</th>
                 <th>{t('reputacion.admin.colEmail')}</th>
                 <th>{t('reputacion.admin.colUntil')}</th>
+                <th>{t('reputacion.admin.colReason')}</th>
                 <th />
               </tr>
             </thead>
@@ -83,6 +91,9 @@ export default function AdminSuspensionesSection({ apiBaseUrl, accessToken }) {
                   <td style={{ color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{row.email || '—'}</td>
                   <td style={{ color: 'var(--text-primary)' }}>
                     {formatFechaReputacion(row.suspendido_hasta, locale)}
+                  </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>
+                    {row.motivo || row.razon || t('reputacion.admin.repeatedCancellationReason')}
                   </td>
                   <td>
                     <button

@@ -3496,3 +3496,49 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   color: var(--text-secondary);
   font-size: 14px;
 }
+.admin-load-error {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+  color: var(--text-primary);
+}
+
+.admin-load-error span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.admin-load-error button {
+  justify-self: start;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 13px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-date-field {
+  display: grid;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-date-range-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-week-compare__delta--new {
+  color: #2563eb;
+}

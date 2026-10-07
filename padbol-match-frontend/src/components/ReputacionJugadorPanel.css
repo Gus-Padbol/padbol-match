@@ -59,6 +59,34 @@
   max-width: 720px;
 }
 
+.admin-suspensiones__criterion {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.admin-suspensiones__criterion span {
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.admin-suspensiones__refresh {
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .admin-suspensiones__table {
   width: 100%;
   border-collapse: collapse;
