@@ -2546,7 +2546,9 @@ function banderaEmojiDesdeNombrePais(paisRaw) {
   return '';
 }
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
-  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim() }))
+  // No guardar emojis regionales: Windows puede mostrarlos como "AR", "ES", "US".
+  // El nombre limpio también evita duplicados como "AR AR Argentina".
+  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: p.nombre }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
 /** Par U+1F1E6–U+1F1FF al inicio = bandera regional (ej. 🇦🇷 son 2 code points). */
@@ -2581,9 +2583,8 @@ function etiquetaPaisFiltroMobile(valorRaw) {
   const raw = String(valorRaw || '').trim();
   if (!raw) return '';
   const sinBandera = paisTextoSinBanderaInicial(raw);
-  const flag = banderaEmojiDesdeNombrePais(raw);
   const nombre = sinBandera || raw;
-  return flag ? `${flag} ${nombre}`.trim() : nombre;
+  return nombre;
 }
 
 function sedeFlag(sede) {
