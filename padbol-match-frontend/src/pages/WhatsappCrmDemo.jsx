@@ -148,6 +148,10 @@ function detailValue(details, ...labels) {
 }
 
 export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
+  const hasPanelExit = Boolean(onBack);
+  useEffect(() => {
+    if (hasPanelExit) window.scrollTo(0, 0);
+  }, [hasPanelExit]);
   const { session } = useAuth();
   const token = accessToken || session?.access_token || '';
   const [perms, setPerms] = useState(null);
@@ -434,7 +438,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
 
   return (
     <main className="wa-demo">
-      {onBack ? <button type="button" onClick={onBack}>← Volver al panel</button> : null}
+      {onBack ? <div className="wa-panel-exit"><button type="button" onClick={onBack}>Volver al panel general</button></div> : null}
       <header className="wa-topbar">
         <div className="wa-brand">
           <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />

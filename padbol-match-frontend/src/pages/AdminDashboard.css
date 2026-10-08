@@ -3742,6 +3742,33 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   color: var(--ink);
 }
 
+.admin-dashboard .wa-demo label {
+  color: #6e7887 !important;
+  -webkit-text-fill-color: #6e7887 !important;
+}
+
+.wa-panel-exit {
+  position: sticky;
+  top: var(--pm-app-header-stack-height, 86px);
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  border-bottom: 1px solid #344057;
+  background: #0b1324;
+}
+
+.admin-dashboard .wa-demo .wa-panel-exit button {
+  border: 1px solid #64748b;
+  border-radius: 9px;
+  padding: 10px 16px;
+  background: #172033;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .admin-dashboard .wa-demo .wa-inbox-head h1 {
   text-align: left;
   font-size: 21px;

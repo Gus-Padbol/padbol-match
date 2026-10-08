@@ -156,6 +156,7 @@ import {
   resolveAdminVisibleTab,
   defaultAdminTabForRole,
   canRoleSeePadCoins,
+  orderAdminSectionsAlphabetically,
 } from '../utils/adminVisibleTabs';
 import { asAdminDataArray } from '../utils/asAdminDataArray';
 import {
@@ -10358,9 +10359,9 @@ export default function AdminDashboard({
     membresias: 'membresias',
     padcoins: 'padcoins',
   };
-  const TABS = esAdminCadena
+  const TABS = orderAdminSectionsAlphabetically(esAdminCadena
     ? TABS_BASE.filter((tab) => !funcionPorTabCadena[tab.id] || funcionesCadena.has(funcionPorTabCadena[tab.id]))
-    : TABS_BASE;
+    : TABS_BASE);
 
   const sedeClubHeader =
     sedeId != null && sedeId !== ''

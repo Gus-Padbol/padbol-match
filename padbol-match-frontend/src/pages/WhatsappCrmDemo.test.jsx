@@ -160,3 +160,16 @@ describe('CRM histórico unificado', () => {
     expect(await screen.findByText(/Ya puede evaluarse en Next Generation/)).toBeInTheDocument();
   });
 });
+
+test('the CRM keeps an explicit exit to the general panel without sending messages', async () => {
+  const onBack = jest.fn();
+  const scroll = jest.spyOn(window, 'scrollTo').mockImplementation(() => {});
+  render(<WhatsappCrmDemo onBack={onBack} />);
+  await waitFor(() => expect(screen.queryByText('Cargando bandeja…')).not.toBeInTheDocument());
+  const exit = screen.getByRole('button', { name: 'Volver al panel general' });
+  expect(exit.closest('.wa-panel-exit')).toBeInTheDocument();
+  fireEvent.click(exit);
+  expect(onBack).toHaveBeenCalledTimes(1);
+  expect(scroll).toHaveBeenCalledWith(0, 0);
+  scroll.mockRestore();
+});

@@ -184,3 +184,8 @@ export function tabHasKnownRenderSurface(tabId, rolUsuario = null) {
   if (tab === 'padcoins') return canRoleSeePadCoins(rol);
   return getAllowedAdminTabsForRole(rol).includes(tab);
 }
+
+export function orderAdminSectionsAlphabetically(tabs) {
+  const collator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+  return [...tabs].sort((left, right) => collator.compare(left.label, right.label));
+}
