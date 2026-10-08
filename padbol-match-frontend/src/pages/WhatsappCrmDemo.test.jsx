@@ -65,6 +65,23 @@ describe('CRM histórico unificado', () => {
     await waitFor(() => expect(screen.getAllByText(/Prueba 23/i).length).toBeGreaterThan(0));
   });
 
+  it('muestra las 70 conversaciones históricas del contrato directo sin permisos de envío', async () => {
+    crmAdminApi.inbox.mockResolvedValue(Array.from({ length: 70 }, (_, index) => ({
+      id: `historical-${index}`, estado: 'nuevo', source_channel: 'email',
+      origin: 'web_form:contacto', identity_used: `contact-${index}@example.test`,
+      subject: `Consulta histórica ${index}`, inbound_body: `Nombre: Contacto ${index}`,
+      created_at: '2026-10-02T12:00:00.000Z',
+    })));
+    crmAdminApi.activities.mockResolvedValue([]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByRole('heading', { name: 'Conversaciones' })).toBeInTheDocument();
+    expect(document.querySelector('.wa-inbox-count')).toHaveTextContent('70');
+    expect(screen.queryByText('No hay conversaciones.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Respuesta no habilitada' })).toBeDisabled();
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+    expect(crmAdminApi.handoff).not.toHaveBeenCalled();
+  });
+
   it('acepta la bandeja operativa envuelta en items', async () => {
     crmAdminApi.permissions.mockResolvedValue({
       role: 'operator',
