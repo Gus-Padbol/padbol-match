@@ -181,7 +181,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
     } finally {
       setAsistenciaLoading(false);
     }
-  }, [asistenciaModal?.id, asistenciaFecha, accessToken]);
+  }, [asistenciaModal?.id, asistenciaFecha, accessToken, t]);
 
   useEffect(() => {
     if (!asistenciaModal) return;

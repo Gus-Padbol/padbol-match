@@ -9,7 +9,7 @@ export function padcoinsMovementDescription(raw) {
   }
   const clean = value.replace(/\s*\[(?:meta|metadata)\s*:[\s\S]*\]\s*$/i, '').trim();
   if (!clean) return 'Movimiento registrado';
-  if (/^[\[{]/.test(clean)) {
+  if (/^[[{]/.test(clean)) {
     try {
       const parsed = JSON.parse(clean);
       const label = parsed?.descripcion || parsed?.description || parsed?.motivo || parsed?.concepto;
