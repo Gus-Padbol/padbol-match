@@ -468,7 +468,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
       ) : error ? (
         <div className="wa-empty">
           <p style={{ color: '#e33030' }}>
-            {error?.status === 401 ? 'No autorizado. Iniciá sesión.' : error?.status === 403 ? 'No tenés acceso a esta sección.' : (error?.message || 'No se pudo cargar.')}
+            {error?.status === 401 ? 'No autorizado. Inicia sesión.' : error?.status === 403 ? 'No tienes acceso a esta sección.' : (error?.message || 'No se pudo cargar.')}
           </p>
           <button type="button" onClick={() => { setError(null); setLoading(true); void load(); }}>Reintentar</button>
         </div>
