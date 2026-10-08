@@ -51,18 +51,20 @@ function roleDataFromApi(apiResult, emailKey) {
 export default function useUserRole(currentCliente) {
   const email = currentCliente?.email ? String(currentCliente.email).trim() : null;
   const emailKey = email ? email.toLowerCase() : null;
+  const userId = String(currentCliente?.id || '').trim();
+  const accessToken = String(currentCliente?.accessToken || '').trim();
 
   const [roleData, setRoleData] = useState(() =>
     emailKey ? roleDataFromCached(emailKey) : null
   );
   /** true mientras no hay email; con email, true hasta resolver rol vía GET /api/auth/mi-rol. */
-  const [loading, setLoading] = useState(() => Boolean(emailKey));
+  const [loading, setLoading] = useState(() => Boolean(emailKey && !roleDataFromCached(emailKey)));
   const [error, setError] = useState(null);
 
   useLayoutEffect(() => {
     if (!emailKey) return;
-    setLoading(true);
     const cachedRow = roleDataFromCached(emailKey);
+    setLoading(!cachedRow);
     if (cachedRow) setRoleData(cachedRow);
   }, [emailKey]);
 
@@ -80,11 +82,19 @@ export default function useUserRole(currentCliente) {
     (async () => {
       try {
         setError(null);
-        const { data: sessWrap } = await withTimeout(
-          supabase.auth.getSession(),
-          'La sesión tardó demasiado en responder.',
-        );
-        const token = sessWrap?.session?.access_token;
+        // AuthContext ya resolvió la sesión antes de montar el panel. Reutilizar su
+        // token evita pedir la misma sesión otra vez y quedar atrapado en el lock
+        // interno de Supabase cuando hay varias pestañas abiertas.
+        let token = accessToken;
+        let authUser = { id: userId, email: emailKey };
+        if (!token) {
+          const { data: sessWrap } = await withTimeout(
+            supabase.auth.getSession(),
+            'La sesión tardó demasiado en responder.',
+          );
+          token = sessWrap?.session?.access_token;
+          authUser = sessWrap?.session?.user || authUser;
+        }
 
         if (!token) {
           if (!cancelled) {
@@ -113,7 +123,7 @@ export default function useUserRole(currentCliente) {
         if (!apiResult?.rol) {
           try {
             apiResult = await withTimeout(
-              fetchUserRoleFromSupabase(sessWrap?.session?.user),
+              fetchUserRoleFromSupabase(authUser),
               'La verificación alternativa de permisos tardó demasiado en responder.',
               10_000,
             );
@@ -149,7 +159,7 @@ export default function useUserRole(currentCliente) {
     return () => {
       cancelled = true;
     };
-  }, [emailKey]);
+  }, [emailKey, userId, accessToken]);
 
   return {
     rol: roleData?.rol ?? null,

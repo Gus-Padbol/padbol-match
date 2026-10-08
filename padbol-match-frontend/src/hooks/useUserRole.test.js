@@ -35,11 +35,13 @@ describe('useUserRole', () => {
     const { result } = renderHook(() => useUserRole({
       id: 'user-1',
       email: 'admin@padbol.test',
+      accessToken: 'valid-token',
     }));
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(fetchUserRoleFromSupabase).toHaveBeenCalledWith(expect.objectContaining({ id: 'user-1' }));
+    expect(supabase.auth.getSession).not.toHaveBeenCalled();
     expect(result.current.rol).toBe('super_admin');
     expect(result.current.error).toBeNull();
   });

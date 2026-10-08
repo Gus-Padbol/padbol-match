@@ -219,6 +219,7 @@ function AdminDashboardGate() {
     return {
       id: session.user.id,
       email: em,
+      accessToken: session.access_token,
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
