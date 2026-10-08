@@ -485,14 +485,7 @@
     display: block;
     position: fixed;
     top: var(--pm-admin-sidebar-top);
-    /* Align to centered app column (same idea as chatbot-fab-anchor). */
-    left: max(
-      var(--pm-admin-sidebar-shell-pad-x),
-      calc(
-        (100vw - min(100vw, var(--pm-app-body-max-width, 900px))) / 2 +
-          var(--pm-admin-sidebar-shell-pad-x)
-      )
-    );
+    left: var(--pm-admin-sidebar-shell-pad-x);
     width: var(--pm-admin-sidebar-width);
     max-height: calc(100dvh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
     max-height: calc(100svh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
@@ -657,6 +650,24 @@
 }
 
 @media (min-width: 1024px) {
+  .admin-dashboard--super {
+    --pm-admin-sidebar-width: 300px;
+    --pm-admin-sidebar-gap: 40px;
+    --pm-admin-sidebar-shell-pad-x: 28px;
+  }
+
+  .admin-dashboard--super .admin-dashboard-sidebar-btn {
+    min-height: 54px;
+    padding: 13px 16px 13px 18px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+
+  .admin-dashboard--super .admin-dashboard-sidebar-nav {
+    gap: 9px;
+    padding: 12px;
+  }
+
   .admin-dashboard-body-surface {
     width: 100%;
     max-width: none !important;
@@ -3722,6 +3733,43 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   color: #b91c1c;
   font-size: 13px;
   font-weight: 700;
+}
+
+/* Preserve the approved light CRM workspace inside the themed admin shell. */
+.admin-dashboard .wa-demo .wa-conversation,
+.admin-dashboard .wa-demo .wa-conversation strong,
+.admin-dashboard .wa-demo .wa-inbox-head h1 {
+  color: var(--ink);
+}
+
+.admin-dashboard .wa-demo .wa-inbox-head h1 {
+  text-align: left;
+  font-size: 21px;
+  margin: 0;
+}
+
+.admin-dashboard .wa-demo :is(input, select, textarea) {
+  color: var(--ink) !important;
+  -webkit-text-fill-color: var(--ink) !important;
+  background-color: var(--paper) !important;
+  border-color: var(--line) !important;
+}
+
+.admin-dashboard .wa-demo :is(input, textarea)::placeholder {
+  color: var(--muted) !important;
+  -webkit-text-fill-color: var(--muted) !important;
+}
+
+.admin-dashboard .wa-demo > section > button,
+.admin-dashboard .wa-demo > section > form > button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 15px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 @media (max-width: 620px) {

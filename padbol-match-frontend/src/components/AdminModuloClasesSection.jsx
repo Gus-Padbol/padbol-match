@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminClasesClubSection from './AdminClasesClubSection';
 import AdminProfesoresClubSection from './AdminProfesoresClubSection';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 
 export default function AdminModuloClasesSection({
   apiBaseUrl,

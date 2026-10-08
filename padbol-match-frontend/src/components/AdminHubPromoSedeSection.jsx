@@ -1,4 +1,5 @@
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { stripAdminEmoji } from '../i18n/adminTranslation';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import './AdminHubPromoSedeSection.css';
@@ -59,7 +60,7 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
     const { data, error } = await supabase.from('hub_promo_sede').select('*').eq('sede_id', sid).maybeSingle();
     setLoading(false);
     if (error) {
-      setMsg(`⚠️ ${t('admin.hub.hubLoadFailed')}`);
+      setMsg(` ${t('admin.hub.hubLoadFailed')}`);
       setRowId(null);
       const next = emptyForm();
       savedSnapshotRef.current = JSON.stringify(next);
@@ -148,10 +149,10 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
       const url = String(publicUrl || '').trim();
       if (!url) throw new Error(t('admin.hub.noPublicUrl'));
       patch({ imagen_url: url });
-      setMsg(t('admin.hub.imageUploaded', { defaultValue: '✅ Imagen subida' }));
+      setMsg(t('admin.hub.imageUploaded', { defaultValue: '\u200B Imagen subida' }));
       window.setTimeout(() => setMsg(''), 3000);
     } catch {
-      setMsg(`⚠️ ${t('admin.hub.imageUploadFailed')}`);
+      setMsg(` ${t('admin.hub.imageUploadFailed')}`);
     } finally {
       setImagenUploading(false);
     }
@@ -159,7 +160,7 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
 
   const guardar = async () => {
     if (!canSave || sid == null) {
-      setMsg(`⚠️ ${t('admin.formularios.completePromoTitleUrl')}`);
+      setMsg(` ${t('admin.formularios.completePromoTitleUrl')}`);
       return;
     }
     setSaving(true);
@@ -185,10 +186,10 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
       }
       savedSnapshotRef.current = JSON.stringify(form);
       onDirtyChange?.(false);
-      setMsg(t('admin.hub.promoSaved', { defaultValue: '✅ Promo guardada' }));
+      setMsg(t('admin.hub.promoSaved', { defaultValue: '\u200B Promo guardada' }));
       window.setTimeout(() => setMsg(''), 3500);
     } catch {
-      setMsg(`⚠️ ${t('general.error')}`);
+      setMsg(` ${t('general.error')}`);
     } finally {
       setSaving(false);
     }
@@ -305,10 +306,10 @@ export default function AdminHubPromoSedeSection({ sedeId, onDirtyChange }) {
             {msg ? (
               <p
                 className={`admin-hub-promo-sede__msg ${
-                  msg.startsWith('✅') ? 'admin-hub-promo-sede__msg--ok' : 'admin-hub-promo-sede__msg--err'
+                  msg.startsWith('\u200B') ? 'admin-hub-promo-sede__msg--ok' : 'admin-hub-promo-sede__msg--err'
                 }`}
               >
-                {msg}
+                {stripAdminEmoji(msg)}
               </p>
             ) : null}
           </>

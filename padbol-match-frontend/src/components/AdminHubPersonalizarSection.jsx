@@ -1,3 +1,4 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ImageCropModal from './ImageCropModal';
 import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
@@ -5,7 +6,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { HUB_JUGAR_ACTION_CARD_KEYS } from '../constants/hubJugarActionCards';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import {
   dedupeHubDeporteConfigRows,
   hubDeporteRowImagenUrl,
@@ -58,7 +59,7 @@ function normalizeHubDeporteRowPayload(data, deporte, cardKey) {
 /** Mensajes de éxito vs error legibles en claro y oscuro. */
 function hubEditorNoticeStyle(text) {
   const t = String(text || '');
-  if (/^✅|Guardado correctamente|Foto actualizada/i.test(t)) {
+  if (/^|Guardado correctamente|Foto actualizada/i.test(t)) {
     return { color: 'var(--pm-color-success, #16a34a)', fontWeight: 600 };
   }
   return { color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 };
@@ -799,7 +800,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       </h3>
       {inicioMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(inicioMsg) }}>
-          {inicioMsg}
+          {stripAdminEmoji(inicioMsg)}
         </p>
       ) : null}
       <input
@@ -928,7 +929,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       </p>
       {deporteMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(deporteMsg) }}>
-          {deporteMsg}
+          {stripAdminEmoji(deporteMsg)}
         </p>
       ) : null}
       <input
@@ -994,7 +995,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       </h3>
       {msg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(msg) }}>
-          {msg}
+          {stripAdminEmoji(msg)}
         </p>
       ) : null}
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(ev) => void onFileChange(ev)} />

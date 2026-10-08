@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
@@ -244,7 +244,12 @@ export default function AdminNotificacionesSection({
     const tid = window.setTimeout(async () => {
       setPreviewLoading(true);
       try {
-        const prev = await previewAdminPushSegment({ apiBaseUrl, accessToken, segment: segmentPayload });
+        const prev = await previewAdminPushSegment({
+          apiBaseUrl, accessToken, segment: segmentPayload,
+          ...(destinationType === 'academy' || destinationEntityId.trim()
+            ? { destination: { type: destinationType, entityId: destinationEntityId } }
+            : {}),
+        });
         if (!cancelled) {
           setPreviewCount(prev?.withPushToken ?? prev?.recipients ?? 0);
           setPreviewCategory(prev?.category || null);
@@ -263,7 +268,7 @@ export default function AdminNotificacionesSection({
       cancelled = true;
       window.clearTimeout(tid);
     };
-  }, [accessToken, apiBaseUrl, segmentPayload, previewRetry, t]);
+  }, [accessToken, apiBaseUrl, segmentPayload, previewRetry, destinationType, destinationEntityId, t]);
 
   useEffect(() => {
     if (segmentKind !== 'jugador' || playerQuery.trim().length < 2 || !accessToken) {
@@ -356,7 +361,7 @@ export default function AdminNotificacionesSection({
 
   return (
     <div className="admin-push-notif">
-      {quota && !quota.unlimited ? (
+      {quota && !isSuperAdmin && !quota.unlimited ? (
         <p className="admin-push-notif__quota" role="status">
           {t('admin.pushNotif.quotaRemaining', { count: quota.remaining ?? 0 })}
           {quota.unlimitedTargeted ? ` · ${t('admin.pushNotif.quotaTargetedHint')}` : null}

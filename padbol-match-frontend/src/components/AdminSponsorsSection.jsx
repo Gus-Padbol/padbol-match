@@ -9,7 +9,7 @@ import {
   maxPorSedeSegunNombrePlan,
 } from '../utils/sponsorQuotaShared';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import {
   SPONSOR_FORMATO_OPTIONS,
   etiquetaFormatoSponsorRow,
@@ -612,12 +612,12 @@ export default function AdminSponsorsSection({
           <div
             role="alert"
             style={
-              String(cuposMsg).startsWith('✅')
+              String(cuposMsg).startsWith('\u200B')
                 ? { ...successBannerStyle, marginBottom: 12 }
                 : { ...errorBannerStyle, marginBottom: 12 }
             }
           >
-            {cuposMsg.replace(/^✅\s*/i, '')}
+            {cuposMsg.replace(/^\s*/i, '')}
           </div>
         ) : null}
         <div
@@ -670,7 +670,7 @@ export default function AdminSponsorsSection({
 
       {msg ? (
         <div role={bannerIsSuccess ? 'status' : 'alert'} style={bannerIsSuccess ? successBannerStyle : errorBannerStyle}>
-          {msg.replace(/^✅\s*/i, '')}
+          {msg.replace(/^\s*/i, '')}
         </div>
       ) : null}
 

@@ -17,7 +17,7 @@ test('Configuración separa puntos y posiciones de sponsors', () => {
   expect(source).toContain("setConfigSubtab('sponsors')");
   expect(source).toContain("configSubtab === 'puntos'");
   expect(source).toContain("configSubtab === 'sponsors'");
-  expect(source).toContain("pos === 1 ? '🥇 1°'");
+  expect(source).toContain("pos === 1 ? ' 1°'");
 });
 
 test('el panel incorpora la superficie de Next Generation', () => {

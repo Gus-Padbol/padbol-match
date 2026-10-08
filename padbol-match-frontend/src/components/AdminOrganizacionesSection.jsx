@@ -1,3 +1,4 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 const fieldStyle = {
@@ -202,7 +203,7 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
       </div>
 
       {error ? <p role="alert" style={{ color: '#dc2626', fontWeight: 800 }}>{error}</p> : null}
-      {message ? <p role="status" style={{ color: '#15803d', fontWeight: 800 }}>{message}</p> : null}
+      {message ? <p role="status" style={{ color: '#15803d', fontWeight: 800 }}>{stripAdminEmoji(message)}</p> : null}
       {magicLink ? (
         <div style={{ padding: 12, borderRadius: 10, background: 'var(--bg-input)', border: '1px solid var(--border)', margin: '12px 0' }}>
           <strong>Enlace de acceso del administrador:</strong>{' '}

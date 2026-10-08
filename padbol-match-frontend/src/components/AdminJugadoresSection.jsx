@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useSafeTranslation } from '../i18n/tSafe';
+import { useSafeTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {

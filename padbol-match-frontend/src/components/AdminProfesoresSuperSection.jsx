@@ -1,3 +1,4 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
@@ -8,7 +9,7 @@ import {
   patchProfesorAdmin,
   rechazarProfesorAdmin,
 } from '../utils/clasesAdminApi';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import './AdminProfesoresSuperSection.css';
 
@@ -640,7 +641,7 @@ export default function AdminProfesoresSuperSection({
         {t('admin.profesores.tab')}
       </h2>
       {msg ? (
-        <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 12 }}>{msg}</p>
+        <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 12 }}>{stripAdminEmoji(msg)}</p>
       ) : null}
 
       <section className="admin-profesores-super__block admin-profesores-super__block--pendientes">

@@ -1,5 +1,6 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import './ResenasSede.css';
 
@@ -105,7 +106,7 @@ function ResenaItem({
                 </button>
               </div>
             </div>
-            {replyMsg ? <p className="reseñas-sede__form-msg reseñas-sede__form-msg--err">{replyMsg}</p> : null}
+            {replyMsg ? <p className="reseñas-sede__form-msg reseñas-sede__form-msg--err">{stripAdminEmoji(replyMsg)}</p> : null}
           </div>
         ) : !hasReply ? (
           <button type="button" className="reseñas-sede__submit" style={{ marginTop: 10 }} onClick={() => onOpenReply(row)}>

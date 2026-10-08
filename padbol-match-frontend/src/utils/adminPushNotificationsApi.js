@@ -26,13 +26,13 @@ export function fetchAdminPushHistory({ apiBaseUrl, accessToken }) {
   return adminPushFetch({ apiBaseUrl, accessToken, path: '/api/push/admin-history' });
 }
 
-export function previewAdminPushSegment({ apiBaseUrl, accessToken, segment }) {
+export function previewAdminPushSegment({ apiBaseUrl, accessToken, segment, destination }) {
   return adminPushFetch({
     apiBaseUrl,
     accessToken,
     path: '/api/push/admin-segment-preview',
     method: 'POST',
-    body: { segment },
+    body: { segment, ...(destination ? { destination } : {}) },
   });
 }
 

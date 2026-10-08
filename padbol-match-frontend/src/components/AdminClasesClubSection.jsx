@@ -1,5 +1,6 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   crearClaseAdmin,
@@ -242,7 +243,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       >
         {showForm ? 'Cerrar formulario' : '+ Crear clase'}
       </button>
-      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p> : null}
+      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{stripAdminEmoji(msg)}</p> : null}
       {showForm ? (
         <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 16, background: 'var(--bg-page)' }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.hub.title')}</label>
@@ -429,7 +430,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                             cursor: 'pointer',
                           }}
                         >
-                          ✅ Asistió
+                           Asistió
                         </button>
                         <button
                           type="button"
@@ -444,7 +445,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                             cursor: 'pointer',
                           }}
                         >
-                          ❌ No asistió
+                           No asistió
                         </button>
                         {pendiente ? (
                           <span style={{ fontSize: 12, color: 'var(--text-secondary)', alignSelf: 'center' }}>— Pendiente</span>

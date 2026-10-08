@@ -1,3 +1,4 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -217,7 +218,7 @@ import {
 import * as XLSX from 'xlsx';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import i18n from '../i18n';
 import {
@@ -776,7 +777,7 @@ function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
     <div style={{ marginTop: '12px' }}>
       <PaymentElement />
       {msg ? (
-        <p style={{ color: '#b91c1c', fontSize: '13px', marginTop: '10px' }}>{msg}</p>
+        <p style={{ color: '#b91c1c', fontSize: '13px', marginTop: '10px' }}>{stripAdminEmoji(msg)}</p>
       ) : null}
       <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
         <button
@@ -2038,7 +2039,7 @@ function AdminReservaJugadorContacto({ reserva, apiBaseUrl, accessToken }) {
               whiteSpace: 'nowrap',
             }}
           >
-            📱 WhatsApp
+             WhatsApp
           </a>
         </div>
       ) : null}
@@ -2464,10 +2465,10 @@ function EstadoBadge({ reserva }) {
     return <ReservaEstadoChip est={est}>{t('admin.reservas.badgeVenuePaymentPending')}</ReservaEstadoChip>;
   }
   if (est === 'cancelada' || reserva.cancelada) {
-    return <ReservaEstadoChip est="cancelada">❌ Cancelada</ReservaEstadoChip>;
+    return <ReservaEstadoChip est="cancelada"> Cancelada</ReservaEstadoChip>;
   }
   if (est === 'reservada') {
-    return <ReservaEstadoChip est="reservada">📋 Reservada</ReservaEstadoChip>;
+    return <ReservaEstadoChip est="reservada"> Reservada</ReservaEstadoChip>;
   }
   if (est === 'confirmada') {
     return <ReservaEstadoChip est="confirmada">{t('admin.reservas.badgeConfirmed')}</ReservaEstadoChip>;
@@ -2560,14 +2561,14 @@ function banderaEmojiDesdeNombrePais(paisRaw) {
   const raw = String(paisRaw || '').trim();
   if (!raw) return '';
   const rif = banderaRegionalAlInicio(raw);
-  if (rif) return rif;
+  if (rif) return '';
   const sin = paisTextoSinBanderaInicial(raw);
   const lk = sin.toLowerCase();
   const nk = normalizePaisKeyAdmin(sin);
-  if (FLAG_MAP[lk]) return FLAG_MAP[lk];
-  if (FLAG_MAP[nk]) return FLAG_MAP[nk];
+  if (FLAG_MAP[lk]) return '';
+  if (FLAG_MAP[nk]) return '';
   const aliasTarget = PAISES_BANDERA_ALIASES[nk] || PAISES_BANDERA_ALIASES[lk];
-  if (aliasTarget && FLAG_MAP[aliasTarget.toLowerCase()]) return FLAG_MAP[aliasTarget.toLowerCase()];
+  if (aliasTarget && FLAG_MAP[aliasTarget.toLowerCase()]) return '';
   return '';
 }
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
@@ -2576,7 +2577,7 @@ const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_
   .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: p.nombre }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
-/** Par U+1F1E6–U+1F1FF al inicio = bandera regional (ej. 🇦🇷 son 2 code points). */
+/** Par U+1F1E6–U+1F1FF al inicio = bandera regional (ej.  son 2 code points). */
 function esIndicadorRegionalChar(ch) {
   if (!ch) return false;
   const cp = ch.codePointAt(0);
@@ -2953,7 +2954,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
         Solo super admin puede agregar o quitar duraciones. Los clubes editan precio y activo desde su panel.
       </p>
       {msg ? (
-        <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 700, color: '#b91c1c' }}>{msg}</p>
+        <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 700, color: '#b91c1c' }}>{stripAdminEmoji(msg)}</p>
       ) : null}
       {loading ? (
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
@@ -3264,7 +3265,7 @@ function labelInvitacionAdminTipo(inv) {
   const alc = String(inv?.invited_alcance || '').toLowerCase();
   if (role === 'admin_nacional' && alc === 'pais') return i18n.t('admin.formularios.nationalAdminRole');
   if (role === 'admin_nacional' && (alc === 'provincia' || alc === 'ciudad')) return i18n.t('admin.sedes.adminCityRegion');
-  if (role === 'empleado') return '👤 Empleado';
+  if (role === 'empleado') return ' Empleado';
   return i18n.t('admin.sedes.adminClub');
 }
 
@@ -3493,12 +3494,12 @@ export default function AdminDashboard({
   const puedeVerSedesPendientes = isSuperAdmin;
   const puedeEnviarNotificacionesPush = isSuperAdmin || esAdminNacional || esAdminCadena || esAdminClub;
   const ROLE_BADGE = useMemo(() => ({
-    super_admin:    `👑 ${t('admin.role.super')}`,
-    admin_nacional: `🌎 ${t('admin.role.national')}`,
-    admin_cadena:   '🏢 Admin Multisede',
-    admin_club:     `🏠 ${t('admin.role.club')}`,
-    empleado:       `👤 ${t('admin.role.employee')}`,
-    editor_contenido: `📝 ${t('admin.role.editor')}`,
+    super_admin:    ` ${t('admin.role.super')}`,
+    admin_nacional: ` ${t('admin.role.national')}`,
+    admin_cadena:   ' Admin Multisede',
+    admin_club:     ` ${t('admin.role.club')}`,
+    empleado:       ` ${t('admin.role.employee')}`,
+    editor_contenido: ` ${t('admin.role.editor')}`,
   }), [t]);
   const roleBadgeLabel = ROLE_BADGE[rolPanel] || ROLE_BADGE[rol] || 'Admin';
 
@@ -8450,7 +8451,7 @@ export default function AdminDashboard({
 
   const guardarMiSede = async () => {
     if (!sedeId || !session?.access_token) {
-      setMiSedeMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
+      setMiSedeMsg(` ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setMiSedeMsg(''), 4000);
       return;
     }
@@ -8481,7 +8482,7 @@ export default function AdminDashboard({
       errorMsg = e?.message || String(e);
     }
     setMiSedeSaving(false);
-    setMiSedeMsg(errorMsg ? `⚠️ ${errorMsg}` : t('admin.sedes.venueUpdated'));
+    setMiSedeMsg(errorMsg ? ` ${stripAdminEmoji(errorMsg)}` : t('admin.sedes.venueUpdated'));
     setTimeout(() => setMiSedeMsg(''), errorMsg ? 5000 : 3000);
     if (!errorMsg && updated && prev) {
       const secret = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_PADBOL_SEDE_CRITICO_NOTIFY_SECRET : '';
@@ -8599,7 +8600,7 @@ export default function AdminDashboard({
 
   const guardarInstalacionesMiSede = async (amenitiesOverride) => {
     if (!sedeId || !session?.access_token) {
-      setMiSedeInstalacionesMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
+      setMiSedeInstalacionesMsg(` ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setMiSedeInstalacionesMsg(''), 4000);
       return;
     }
@@ -8629,7 +8630,7 @@ export default function AdminDashboard({
       errorMsg = e?.message || String(e);
     }
     setMiSedeInstalacionesSaving(false);
-    setMiSedeInstalacionesMsg(errorMsg ? `⚠️ ${errorMsg}` : '✅ Instalaciones guardadas');
+    setMiSedeInstalacionesMsg(errorMsg ? ` ${stripAdminEmoji(errorMsg)}` : '\u200B Instalaciones guardadas');
     setTimeout(() => setMiSedeInstalacionesMsg(''), errorMsg ? 5000 : 3000);
     if (!errorMsg && updated) {
       setMiSede(updated);
@@ -8727,7 +8728,7 @@ export default function AdminDashboard({
     if (!miSedeForm?.id) return;
     const validation = validateFranjaPrecioDraft(franjasPrecios, franjaDraft);
     if (!validation.ok) {
-      setFranjaPreciosMsg(`❌ ${validation.message}`);
+      setFranjaPreciosMsg(` ${validation.message}`);
       setFranjasPrecioOverlapMsg(validation.message);
       return;
     }
@@ -8752,7 +8753,7 @@ export default function AdminDashboard({
       setFranjaDraft({ deporte: 'padbol', dia_semana: '', hora_inicio: '', hora_fin: '', precio_60min: '', precio_90min: '', precio_120min: '' });
       await loadFranjasPrecios(miSedeForm.id);
     } catch {
-      setFranjaPreciosMsg(`❌ ${t('admin.metricas.saveError')}`);
+      setFranjaPreciosMsg(` ${t('admin.metricas.saveError')}`);
     } finally {
       setFranjaSaving(false);
     }
@@ -8932,7 +8933,7 @@ export default function AdminDashboard({
   const guardarSedeCamposPagosParcial = useCallback(
     async (partial) => {
       if (!sedeId || !session?.access_token) {
-        setMiSedeMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
+        setMiSedeMsg(` ${t('admin.formularios.loginAgainAlt')}`);
         setTimeout(() => setMiSedeMsg(''), 4000);
         return false;
       }
@@ -8946,7 +8947,7 @@ export default function AdminDashboard({
       ];
       const body = sanitizePagosPartialPayload(partial, placeholders);
       if (Object.keys(body).length === 0) {
-        setMiSedeMsg(`⚠️ ${t('admin.sedes.pagosSinCambios', { defaultValue: 'No hay una credencial nueva para guardar' })}`);
+        setMiSedeMsg(` ${t('admin.sedes.pagosSinCambios', { defaultValue: 'No hay una credencial nueva para guardar' })}`);
         setTimeout(() => setMiSedeMsg(''), 4000);
         return false;
       }
@@ -9210,7 +9211,7 @@ export default function AdminDashboard({
       error = caught;
     }
     setLicenciaSaving(false);
-    setLicenciaMsg(error ? `⚠️ ${error.message}` : t('admin.sedes.licenseUpdated'));
+    setLicenciaMsg(error ? ` ${error.message}` : t('admin.sedes.licenseUpdated'));
     setTimeout(() => setLicenciaMsg(''), 3000);
     if (!error && prev) {
       const secret = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_PADBOL_SEDE_CRITICO_NOTIFY_SECRET : '';
@@ -9317,7 +9318,7 @@ export default function AdminDashboard({
       .from('avatars')
       .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
     if (uploadError) {
-      setLogoMsg(`⚠️ ${t('admin.sedes.logoUploadFailed')}`);
+      setLogoMsg(` ${t('admin.sedes.logoUploadFailed')}`);
       setLogoUploading(false);
       return;
     }
@@ -9326,7 +9327,7 @@ export default function AdminDashboard({
     } = supabase.storage.from('avatars').getPublicUrl(path);
     const urlGuardar = String(publicUrl || '').trim();
     if (!urlGuardar) {
-      setLogoMsg(`⚠️ ${t('admin.sedes.logoPublicUrlMissing')}`);
+      setLogoMsg(` ${t('admin.sedes.logoPublicUrlMissing')}`);
       setLogoUploading(false);
       return;
     }
@@ -9349,7 +9350,7 @@ export default function AdminDashboard({
       setLogoMsg(t('admin.sedes.logoGuardado'));
       window.setTimeout(() => setLogoMsg(''), 3000);
     } catch (e) {
-      setLogoMsg(`⚠️ ${e?.message || t('admin.sedes.logoSaveFailed')}`);
+      setLogoMsg(` ${e?.message || t('admin.sedes.logoSaveFailed')}`);
     } finally {
       setLogoUploading(false);
     }
@@ -9366,7 +9367,7 @@ export default function AdminDashboard({
       cerrarModalLogoCrop();
       await subirLogoBlob(blob);
     } catch (e) {
-      setLogoMsg(`⚠️ ${e?.message || t('admin.sedes.cropError')}`);
+      setLogoMsg(` ${e?.message || t('admin.sedes.cropError')}`);
     } finally {
       setLogoUploading(false);
     }
@@ -9484,14 +9485,14 @@ export default function AdminDashboard({
     if (!validation.ok) {
       setFranjasSaving(false);
       setFranjasOverlapMsg(validation.message);
-      setFranjasMsg(`⚠️ ${validation.message}`);
+      setFranjasMsg(` ${validation.message}`);
       setTimeout(() => setFranjasMsg(''), 5000);
       return;
     }
     const { error } = await supabase.from(ADMIN_SEDES_TABLE).update({ franjas_horarias: validation.payload }).eq('id', sedeId);
     setFranjasSaving(false);
     if (error) {
-      setFranjasMsg(`⚠️ ${t('admin.metricas.saveError')}`);
+      setFranjasMsg(` ${t('admin.metricas.saveError')}`);
     } else {
       setFranjasOverlapMsg('');
       setFranjasMsg(t('admin.franjas.slotsSaved'));
@@ -9503,7 +9504,7 @@ export default function AdminDashboard({
 
   const persistFotosUrls = async (nextUrls) => {
     if (!sedeId || !session?.access_token) {
-      setFotosMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
+      setFotosMsg(` ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setFotosMsg(''), 4000);
       return false;
     }
@@ -9519,7 +9520,7 @@ export default function AdminDashboard({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
+        setFotosMsg(` ${t('admin.metricas.saveError')}`);
         setTimeout(() => setFotosMsg(''), 5000);
         return false;
       }
@@ -9530,7 +9531,7 @@ export default function AdminDashboard({
       setMiSede((prev) => (prev ? { ...prev, fotos_urls: saved } : prev));
       return true;
     } catch {
-      setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
+      setFotosMsg(` ${t('admin.metricas.saveError')}`);
       setTimeout(() => setFotosMsg(''), 5000);
       return false;
     }
@@ -9538,13 +9539,13 @@ export default function AdminDashboard({
 
   const persistFotoPortada = async (url) => {
     if (!sedeId || !session?.access_token) {
-      setFotosMsg(`⚠️ ${t('admin.formularios.loginAgainAlt')}`);
+      setFotosMsg(` ${t('admin.formularios.loginAgainAlt')}`);
       setTimeout(() => setFotosMsg(''), 4000);
       return false;
     }
     const heroUrl = url != null && String(url).trim() !== '' ? String(url).trim() : null;
     if (heroUrl && !fotosUrls.includes(heroUrl)) {
-      setFotosMsg(`⚠️ ${t('admin.sedes.photoMustBeInGallery')}`);
+      setFotosMsg(` ${t('admin.sedes.photoMustBeInGallery')}`);
       setTimeout(() => setFotosMsg(''), 4000);
       return false;
     }
@@ -9560,7 +9561,7 @@ export default function AdminDashboard({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
+        setFotosMsg(` ${t('admin.metricas.saveError')}`);
         setTimeout(() => setFotosMsg(''), 5000);
         return false;
       }
@@ -9580,7 +9581,7 @@ export default function AdminDashboard({
       );
       return true;
     } catch {
-      setFotosMsg(`⚠️ ${t('admin.metricas.saveError')}`);
+      setFotosMsg(` ${t('admin.metricas.saveError')}`);
       setTimeout(() => setFotosMsg(''), 5000);
       return false;
     } finally {
@@ -10065,7 +10066,7 @@ export default function AdminDashboard({
         : await createPartido(body);
       if (wasEditing) {
         resetScoreboardForm();
-        setMensajeExito(t('admin.scoreboard.savedOk', '✅ Cambios guardados correctamente'));
+        setMensajeExito(t('admin.scoreboard.savedOk', '\u200B Cambios guardados correctamente'));
         refreshScoreboardPartidos();
         setTimeout(() => setMensajeExito(''), 3000);
         if (typeof document !== 'undefined') {
@@ -10078,7 +10079,7 @@ export default function AdminDashboard({
         }
       } else {
         setSbCreated({ id: partido.id, sede_id: partido.sede_id });
-        setMensajeExito(t('admin.scoreboard.created', '✅ Partido de scoreboard creado'));
+        setMensajeExito(t('admin.scoreboard.created', '\u200B Partido de scoreboard creado'));
         refreshScoreboardPartidos();
         setTimeout(() => setMensajeExito(''), 4000);
       }
@@ -10572,23 +10573,6 @@ export default function AdminDashboard({
                                 if (typeof n.onClick === 'function') n.onClick();
                               }}
                             >
-                              <span className="admin-campanita-row__icon" aria-hidden>
-                                {n.category === 'instructores'
-                                  ? '🎓'
-                                  : n.category === 'sedes'
-                                    ? '🏟️'
-                                    : n.category === 'solicitudes'
-                                      ? '📝'
-                                    : n.category === 'pagos'
-                                      ? '💳'
-                                      : n.category === 'cancelaciones'
-                                        ? '❌'
-                                        : n.category === 'torneos'
-                                          ? '🏆'
-                                          : n.category === 'finanzas'
-                                            ? '💳'
-                                        : '🔔'}
-                              </span>
                               <span className="admin-campanita-row__main">
                                 <span className="admin-campanita-row__text">{n.title}</span>
                                 {n.body ? <span className="admin-campanita-row__sub">{n.body}</span> : null}
@@ -10629,7 +10613,7 @@ export default function AdminDashboard({
                       boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
                     }}
                   >
-                    📋 {t('admin.sedes.noLicense')}
+                     {t('admin.sedes.noLicense')}
                   </span>
                 </div>
               );
@@ -10676,7 +10660,7 @@ export default function AdminDashboard({
                     boxShadow: '0 1px 4px rgba(15,23,42,0.06)',
                   }}
                 >
-                  ⚠️ {t('admin.sedes.padbolLicenseSuspended')}
+                   {t('admin.sedes.padbolLicenseSuspended')}
                 </span>
               </div>
             );
@@ -10722,7 +10706,10 @@ export default function AdminDashboard({
       <div
         className="admin-dashboard-body-surface"
         style={{
-          ...hubInstagramColumnWrapStyle,
+          width: '100%',
+          maxWidth: 'none',
+          marginLeft: 0,
+          marginRight: 0,
           paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
           paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
         }}
@@ -10779,7 +10766,7 @@ export default function AdminDashboard({
               boxShadow: '0 4px 14px rgba(225, 27, 34, 0.35)',
             }}
           >
-            ➕ Nueva sede
+             Nueva sede
           </button>
         </div>
       )}
@@ -10792,7 +10779,7 @@ export default function AdminDashboard({
             onClick={() => navigate('/admin/nueva-sede')}
             style={{ padding: '10px 16px', borderRadius: 10, border: 0, background: '#E11B22', color: '#fff', fontWeight: 800, cursor: 'pointer' }}
           >
-            ➕ Solicitar nueva sede
+             Solicitar nueva sede
           </button>
         </div>
       ) : null}
@@ -10844,7 +10831,7 @@ export default function AdminDashboard({
                     lineHeight: 1.45,
                   }}
                 >
-                  ⚠️ Tu suscripción venció. Regulariza el pago para evitar interrupciones.
+                   Tu suscripción venció. Regulariza el pago para evitar interrupciones.
                 </div>
               );
             }
@@ -10864,7 +10851,7 @@ export default function AdminDashboard({
                     lineHeight: 1.45,
                   }}
                 >
-                  🔴 Segundo aviso: tu cuenta será suspendida en breve si no regularizas.
+                   Segundo aviso: tu cuenta será suspendida en breve si no regularizas.
                 </div>
               );
             }
@@ -10884,7 +10871,7 @@ export default function AdminDashboard({
                     lineHeight: 1.45,
                   }}
                 >
-                  🚫 Cuenta suspendida. Los jugadores no pueden reservar. Contacta soporte.
+                   Cuenta suspendida. Los jugadores no pueden reservar. Contacta soporte.
                   <div>{btnSoporte('#dc2626')}</div>
                 </div>
               );
@@ -10905,7 +10892,7 @@ export default function AdminDashboard({
                     lineHeight: 1.45,
                   }}
                 >
-                  ❌ Cuenta cancelada. Contacta soporte para reactivar.
+                   Cuenta cancelada. Contacta soporte para reactivar.
                   <div>{btnSoporte('#b91c1c')}</div>
                 </div>
               );
@@ -11243,7 +11230,7 @@ export default function AdminDashboard({
             <div className="ingresos-por-moneda">
               <div className="ingreso-fila" style={{ textAlign: 'left' }}>
                 <span className="ingreso-codigo" style={{ flex: 1 }}>
-                  ⚽ {t('admin.metrics.courtBookingsRevenue')}
+                   {t('admin.metrics.courtBookingsRevenue')}
                 </span>
                 <span className="ingreso-valor" style={{ fontSize: '1.1rem' }}>
                   $ {cifrasFinanzasResumen.reservas.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
@@ -11251,7 +11238,7 @@ export default function AdminDashboard({
               </div>
               <div className="ingreso-fila" style={{ textAlign: 'left' }}>
                 <span className="ingreso-codigo" style={{ flex: 1 }}>
-                  🏆 {t('admin.metrics.tournamentFeesRevenue')}
+                   {t('admin.metrics.tournamentFeesRevenue')}
                 </span>
                 <span className="ingreso-valor" style={{ fontSize: '1.1rem' }}>
                   $ {cifrasFinanzasResumen.inscripciones.toLocaleString('es-AR')} {cifrasFinanzasResumen.moneda}
@@ -11294,7 +11281,7 @@ export default function AdminDashboard({
                     style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
                   >
                     <span className="ingreso-codigo" style={{ width: '100%' }}>
-                      ⚽ {t('admin.metrics.courtBookingsRevenue')}
+                       {t('admin.metrics.courtBookingsRevenue')}
                     </span>
                     <span
                       className={valSin(resVac)}
@@ -11308,7 +11295,7 @@ export default function AdminDashboard({
                     style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
                   >
                     <span className="ingreso-codigo" style={{ width: '100%' }}>
-                      🏆 {t('admin.metrics.tournamentFeesRevenue')}
+                       {t('admin.metrics.tournamentFeesRevenue')}
                     </span>
                     <span
                       className={valSin(insVac)}
@@ -12070,17 +12057,17 @@ export default function AdminDashboard({
                           }
                           if (torneo.estado === 'planificacion') return (
                             <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                              🔧 <strong>{st.equipos_count}</strong> equipo{st.equipos_count !== 1 ? 's' : ''} inscripto{st.equipos_count !== 1 ? 's' : ''}
+                               <strong>{st.equipos_count}</strong> equipo{st.equipos_count !== 1 ? 's' : ''} inscripto{st.equipos_count !== 1 ? 's' : ''}
                             </div>
                           );
                           if (torneo.estado === 'en_curso') return (
                             <div style={{ fontSize: '11px', color: '#1d4ed8' }}>
-                              ⚔️ <strong>{st.partidos_jugados}/{st.total_partidos ?? st.partidos_total}</strong> partidos
+                               <strong>{st.partidos_jugados}/{st.total_partidos ?? st.partidos_total}</strong> partidos
                             </div>
                           );
                           if (torneo.estado === 'finalizado') return (
                             <div style={{ fontSize: '11px', color: '#92400e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              🥇 <strong>{st.winner_nombre || st.winner?.nombre || '—'}</strong>
+                               <strong>{st.winner_nombre || st.winner?.nombre || '—'}</strong>
                             </div>
                           );
                           return null;
@@ -12609,7 +12596,7 @@ export default function AdminDashboard({
                             color: 'var(--text-primary)',
                           }}
                         >
-                          🎓 {t('clases.titulo')}
+                           {t('clases.titulo')}
                         </h4>
                         <AdminModuloClasesSection
                           apiBaseUrl={apiBaseUrl}
@@ -13723,7 +13710,7 @@ export default function AdminDashboard({
                     boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
                   }}
                 >
-                  📊 Ver ranking de clubes
+                   Ver ranking de clubes
                 </button>
 
                 {reservasResumenPais.length === 0 ? (
@@ -13987,7 +13974,7 @@ export default function AdminDashboard({
                   opacity: isReservaActionBusyFor(reservaActionBusy, r.id) && !isReservaActionBusyFor(reservaActionBusy, r.id, 'cancel') ? 0.6 : 1,
                 })}
               >
-                {isReservaActionBusyFor(reservaActionBusy, r.id, 'cancel') ? t('admin.reservas.cancelling') : '🗑️'}
+                {isReservaActionBusyFor(reservaActionBusy, r.id, 'cancel') ? t('admin.reservas.cancelling') : 'Eliminar'}
               </button>
             </div>
           );
@@ -14137,7 +14124,7 @@ export default function AdminDashboard({
                                         whiteSpace: 'nowrap',
                                       }}
                                     >
-                                      📱 WhatsApp
+                                       WhatsApp
                                     </a>
                                   </div>
                                 ) : null;
@@ -14149,12 +14136,12 @@ export default function AdminDashboard({
                                 onChange={(e) => setEditFormData({ ...editFormData, estado: e.target.value })}
                                 style={{ padding: '4px 6px', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '12px', width: '100%' }}
                               >
-                                <option value="reservada">📋 Reservada</option>
-                                <option value="pendiente_pago_manual">🟡 Pendiente pago manual</option>
-                                <option value="pendiente_pago_efectivo">💵 Pendiente cobro en sede (efectivo)</option>
+                                <option value="reservada"> Reservada</option>
+                                <option value="pendiente_pago_manual"> Pendiente pago manual</option>
+                                <option value="pendiente_pago_efectivo"> Pendiente cobro en sede (efectivo)</option>
                                 <option value="confirmada">{t('admin.reservas.badgeConfirmed')}</option>
                                 <option value="completada">{t('admin.reservas.badgeCompleted')}</option>
-                                <option value="cancelada">❌ Cancelada</option>
+                                <option value="cancelada"> Cancelada</option>
                               </select>
                             </td>
                             <td style={{ padding: '6px 8px' }}>
@@ -14280,7 +14267,7 @@ export default function AdminDashboard({
 
       {activeTab === 'scoreboard' && puedeVerScoreboard ? (
         <div className="section">
-          <h2 style={{ marginTop: 0 }}>📺 {t('admin.scoreboard.title', 'Scoreboard en vivo')}</h2>
+          <h2 style={{ marginTop: 0 }}> {t('admin.scoreboard.title', 'Scoreboard en vivo')}</h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
             {t('admin.scoreboard.description', 'Crea un partido y comparte los links de la pantalla TV y el panel del árbitro.')}
           </p>
@@ -15197,7 +15184,7 @@ export default function AdminDashboard({
             {isSuperAdmin ? (
               <div id="pc-config" style={{ marginBottom: '36px', paddingBottom: '28px', borderBottom: '1px solid var(--border)', scrollMarginTop: 80 }}>
                 <h2 style={{ marginTop: 0 }}>
-                  ⚙️ {t('admin.padcoins.globalConfigTitle', 'Configuración global')}
+                   {t('admin.padcoins.globalConfigTitle', 'Configuración global')}
                 </h2>
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 12px', maxWidth: '640px', fontSize: '14px' }}>
                   {t(
@@ -17879,7 +17866,7 @@ export default function AdminDashboard({
                           setConfigNivelesLabels(prev => ({ ...prev, [key]: editandoTipoData.nombre }));
                           setConfigNiveles(prev => ({ ...prev, [key]: editandoTipoData.puntos }));
                           setEditandoTipoId(null);
-                        }} style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✅</button>
+                        }} style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>Guardar</button>
                         <button onClick={() => setEditandoTipoId(null)}
                           style={{ padding: '3px 8px', background: '#999', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
                       </td>
@@ -17895,9 +17882,9 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
-                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>Editar</button>
                         <button onClick={() => { if (window.confirm(t('admin.confirmaciones.deleteLevel', { name: configNivelesLabels[key] }))) setConfigNivelesHidden(prev => new Set([...prev, key])); }}
-                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
+                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Eliminar</button>
                       </td>
                     </>
                   )}
@@ -17928,7 +17915,7 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
                         <button onClick={() => { setConfigTiposCustom(prev => prev.map(t => t.id === tipo.id ? { ...t, ...editandoTipoData } : t)); setEditandoTipoId(null); }}
-                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✅</button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>Guardar</button>
                         <button onClick={() => setEditandoTipoId(null)}
                           style={{ padding: '3px 8px', background: '#999', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
                       </td>
@@ -17942,9 +17929,9 @@ export default function AdminDashboard({
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
-                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>✏️</button>
+                          style={{ padding: '3px 8px', background: '#E11B22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', marginRight: '3px' }}>Editar</button>
                         <button onClick={() => setConfigTiposCustom(prev => prev.filter(t => t.id !== tipo.id))}
-                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>🗑️</button>
+                          style={{ padding: '3px 8px', background: '#d32f2f', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Eliminar</button>
                       </td>
                     </>
                   )}
@@ -18019,7 +18006,7 @@ export default function AdminDashboard({
                     return (
                       <tr key={pos} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg-page)' : 'var(--bg-card)' }}>
                         <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-primary)' }}>
-                          {pos === 1 ? '🥇 1°' : pos === 2 ? '🥈 2°' : pos === 3 ? '🥉 3°' : `${pos}°`}
+                          {pos === 1 ? ' 1°' : pos === 2 ? ' 2°' : pos === 3 ? ' 3°' : `${pos}°`}
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
                           <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -18081,8 +18068,8 @@ export default function AdminDashboard({
             {configSaving ? t('admin.metricas.savingEllipsis') : t('admin.metricas.saveConfigBtn')}
           </button>
           {configMsg && (
-            <span style={{ fontSize: '14px', fontWeight: '600', color: configMsg.startsWith('✅') ? '#86efac' : '#fde68a' }}>
-              {configMsg}
+            <span style={{ fontSize: '14px', fontWeight: '600', color: configMsg.startsWith('\u200B') ? '#86efac' : '#fde68a' }}>
+              {stripAdminEmoji(configMsg)}
             </span>
           )}
         </div>
@@ -18274,7 +18261,7 @@ export default function AdminDashboard({
                                 fontSize: '14px',
                               }}
                             >
-                              ✏️
+
                             </button>
                           ) : null}
                         </td>
@@ -18290,7 +18277,7 @@ export default function AdminDashboard({
 
       {activeTab === 'roles' && puedeVerConfig && (
         <div className="section">
-          <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>👥 Roles</h2>
+          <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}> Roles</h2>
           <div style={{ marginBottom: '28px' }}>
             <h3 style={{ color: 'var(--text-primary)', marginBottom: '12px', fontSize: '16px' }}>
               Invitaciones de administradores
@@ -18314,7 +18301,7 @@ export default function AdminDashboard({
                   cursor: 'pointer',
                 }}
               >
-                ✉️ Invitar nuevo admin
+                 Invitar nuevo admin
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -19014,7 +19001,7 @@ export default function AdminDashboard({
                             cursor: 'pointer',
                           }}
                         >
-                          ✅ Aprobar
+                           Aprobar
                         </button>
                       ) : null}
                       {pendiente && row.kind === 'licencia_web' ? (
@@ -19031,7 +19018,7 @@ export default function AdminDashboard({
                             cursor: 'pointer',
                           }}
                         >
-                          ✅ Aprobar (crear sede)
+                           Aprobar (crear sede)
                         </button>
                       ) : null}
                       {pendiente ? (
@@ -19052,7 +19039,7 @@ export default function AdminDashboard({
                             cursor: 'pointer',
                           }}
                         >
-                          ❌ Rechazar
+                           Rechazar
                         </button>
                       ) : null}
                       {wa ? (
@@ -19070,7 +19057,7 @@ export default function AdminDashboard({
                             display: 'inline-block',
                           }}
                         >
-                          💬 Contactar
+                           Contactar
                         </a>
                       ) : (
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('admin.reservas.noWhatsappNumber')}</span>
@@ -19399,7 +19386,7 @@ export default function AdminDashboard({
                   </div>
                 ) : null}
                 {editarSedeModalMsg ? (
-                  <p className="admin-editar-sede-msg">{editarSedeModalMsg}</p>
+                  <p className="admin-editar-sede-msg">{stripAdminEmoji(editarSedeModalMsg)}</p>
                 ) : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px' }}>
                   <button
@@ -19695,7 +19682,7 @@ export default function AdminDashboard({
                   }}
                 />
                 {canchaModalMsg ? (
-                  <p style={{ color: '#b91c1c', fontSize: '13px', fontWeight: 600, margin: '0 0 12px' }}>{canchaModalMsg}</p>
+                  <p style={{ color: '#b91c1c', fontSize: '13px', fontWeight: 600, margin: '0 0 12px' }}>{stripAdminEmoji(canchaModalMsg)}</p>
                 ) : null}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                   <button
@@ -19858,7 +19845,7 @@ export default function AdminDashboard({
                       style={{ padding: '10px 24px', background: licenciaSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: licenciaSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
                       {licenciaSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.licenseSave')}
                     </button>
-                    {licenciaMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: licenciaMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{licenciaMsg}</span>}
+                    {licenciaMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: licenciaMsg.startsWith('\u200B') ? '#16a34a' : '#dc2626' }}>{stripAdminEmoji(licenciaMsg)}</span>}
                   </div>
                 </>
               ) : (
@@ -20140,8 +20127,8 @@ export default function AdminDashboard({
                       {miSedeInstalacionesSaving ? t('admin.metricas.saving') : t('admin.sedes.saveFacilities')}
                     </button>
                     {miSedeInstalacionesMsg ? (
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: miSedeInstalacionesMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>
-                        {miSedeInstalacionesMsg}
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: miSedeInstalacionesMsg.startsWith('\u200B') ? '#4ade80' : '#fca5a5' }}>
+                        {stripAdminEmoji(miSedeInstalacionesMsg)}
                       </span>
                     ) : null}
                   </div>
@@ -20239,7 +20226,7 @@ export default function AdminDashboard({
                   style={{ padding: '10px 24px', background: miSedeSaving ? '#fecaca' : 'linear-gradient(135deg, #E11B22, #991b1b)', color: 'white', border: 'none', borderRadius: '8px', cursor: miSedeSaving ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
                   {miSedeSaving ? t('admin.metricas.savingEllipsis') : t('admin.sedes.saveChanges')}
                 </button>
-                {miSedeMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: miSedeMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{miSedeMsg}</span>}
+                {miSedeMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: miSedeMsg.startsWith('\u200B') ? '#4ade80' : '#fca5a5' }}>{stripAdminEmoji(miSedeMsg)}</span>}
               </div>
             </div>
           </div>
@@ -20321,10 +20308,10 @@ export default function AdminDashboard({
                     style={{
                       fontSize: '13px',
                       fontWeight: 600,
-                      color: miSedeDuracionesMsg.startsWith('✅') ? '#4ade80' : '#fca5a5',
+                      color: miSedeDuracionesMsg.startsWith('\u200B') ? '#4ade80' : '#fca5a5',
                     }}
                   >
-                    {miSedeDuracionesMsg}
+                    {stripAdminEmoji(miSedeDuracionesMsg)}
                   </span>
                 ) : null}
               </div>
@@ -20946,7 +20933,7 @@ export default function AdminDashboard({
                     lineHeight: 1.45,
                   }}
                 >
-                  ⚠️ {franjasOverlapMsg}
+                   {stripAdminEmoji(franjasOverlapMsg)}
                 </div>
               ) : null}
               {franjasHorarias.map((fj, idx) => (
@@ -21130,7 +21117,7 @@ export default function AdminDashboard({
                       lineHeight: 1.45,
                     }}
                   >
-                    ⚠️ {franjasOverlapMsg}
+                     {stripAdminEmoji(franjasOverlapMsg)}
                   </div>
                 ) : null}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
@@ -21194,7 +21181,7 @@ export default function AdminDashboard({
                   {franjasSaving ? t('admin.metricas.savingEllipsis') : 'Guardar franjas'}
                 </button>
                 {franjasMsg ? (
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: franjasMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{franjasMsg}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: franjasMsg.startsWith('\u200B') ? '#16a34a' : '#dc2626' }}>{stripAdminEmoji(franjasMsg)}</span>
                 ) : null}
               </div>
               </div>
@@ -21221,7 +21208,7 @@ export default function AdminDashboard({
           {activeMiSedeSection === 'extras' && (esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-extras" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
-                🍕 Extras del tercer tiempo
+                 Extras del tercer tiempo
               </h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '560px' }}>
                 <AdminSedeExtrasSection
@@ -21253,7 +21240,7 @@ export default function AdminDashboard({
           {activeMiSedeSection === 'clases' && (esAdminClub || isSuperAdmin) && sedeIdKey && session?.access_token ? (
             <div id="admin-mi-sede-clases" style={{ marginBottom: '32px' }}>
               <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>
-                🎓 {isSuperAdmin ? t('clases.titulo') : t('admin.profesores.clasesYInstructores')}
+                 {isSuperAdmin ? t('clases.titulo') : t('admin.profesores.clasesYInstructores')}
               </h3>
               <div className="admin-mi-sede-theme-panel" style={{ maxWidth: '640px' }}>
                 <AdminModuloClasesSection
@@ -21639,7 +21626,7 @@ export default function AdminDashboard({
 
                 <div style={{ marginTop: '28px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                   <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                    ⚡ Surge — Precios Dinámicos
+                     Surge — Precios Dinámicos
                   </h4>
                   <label
                     style={{
@@ -21790,10 +21777,10 @@ export default function AdminDashboard({
                                 style={{
                                   fontSize: '13px',
                                   fontWeight: 600,
-                                  color: surgeSaveMsg.startsWith('✅') ? '#4ade80' : '#fca5a5',
+                                  color: surgeSaveMsg.startsWith('\u200B') ? '#4ade80' : '#fca5a5',
                                 }}
                               >
-                                {surgeSaveMsg}
+                                {stripAdminEmoji(surgeSaveMsg)}
                               </span>
                             ) : null}
                           </div>
@@ -21811,7 +21798,7 @@ export default function AdminDashboard({
 
                 <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                   <h4 className="admin-mi-sede-block-title" style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 800 }}>
-                    🕐 {t('admin.franjas.pricingTitle')}
+                     {t('admin.franjas.pricingTitle')}
                   </h4>
                   <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                     {t('admin.franjas.pricingHelp')}
@@ -21831,7 +21818,7 @@ export default function AdminDashboard({
                         lineHeight: 1.45,
                       }}
                     >
-                      ⚠️ {franjasPrecioOverlapMsg}
+                       {stripAdminEmoji(franjasPrecioOverlapMsg)}
                     </div>
                   ) : null}
 
@@ -21935,7 +21922,7 @@ export default function AdminDashboard({
                             lineHeight: 1.45,
                           }}
                         >
-                          ⚠️ {franjasPrecioOverlapMsg}
+                           {stripAdminEmoji(franjasPrecioOverlapMsg)}
                         </div>
                       ) : null}
                       <button type="button" onClick={saveFranja} disabled={franjaSaving || !!franjasPrecioOverlapMsg}
@@ -21943,7 +21930,7 @@ export default function AdminDashboard({
                         {franjaSaving ? t('admin.metricas.savingEllipsis') : t('admin.franjas.addSlot')}
                       </button>
                     </div>
-                    {franjaPreciosMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjaPreciosMsg.startsWith('✅') ? '#4ade80' : '#fca5a5' }}>{franjaPreciosMsg}</p> : null}
+                    {franjaPreciosMsg ? <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: franjaPreciosMsg.startsWith('\u200B') ? '#4ade80' : '#fca5a5' }}>{stripAdminEmoji(franjaPreciosMsg)}</p> : null}
                   </div>
                 </div>
               </div>
@@ -21990,7 +21977,7 @@ export default function AdminDashboard({
 
         {activeMiSedeSection === 'contrato' && !miSedeLoading ? (
         <div id="admin-mi-sede-contrato" style={{ marginBottom: '32px' }}>
-          <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}>📸 Fotos</h3>
+          <h3 className="admin-mi-sede-block-title" style={{ marginBottom: '16px', fontSize: '16px' }}> Fotos</h3>
 
           {/* Logo */}
           <div className="admin-mi-sede-theme-panel" style={{ marginBottom: '20px' }}>
@@ -22018,7 +22005,7 @@ export default function AdminDashboard({
                 </div>
               ) : (
                 <div style={{ width: '100px', height: '100px', borderRadius: '10px', border: '2px dashed var(--border)', background: 'var(--pm-color-muted-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '28px' }}>🏟️</span>
+                  <span style={{ fontSize: '28px' }}></span>
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Sin logo</span>
                 </div>
               )}
@@ -22030,7 +22017,7 @@ export default function AdminDashboard({
                   borderRadius: '8px', cursor: logoUploading ? 'not-allowed' : 'pointer',
                   fontWeight: 700, fontSize: '13px',
                 }}>
-                  {logoUploading ? '⏳ Subiendo...' : '📤 Subir logo'}
+                  {logoUploading ? ' Subiendo...' : ' Subir logo'}
                   <input
                     type="file" accept="image/jpeg,image/png,image/webp"
                     style={{ display: 'none' }}
@@ -22044,7 +22031,7 @@ export default function AdminDashboard({
                 </label>
                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('admin.sedes.photoFormatHint')}</span>
                 <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{t('admin.common.recommendedPhotoHint')}</span>
-                {logoMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: logoMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{logoMsg}</span>}
+                {logoMsg && <span style={{ fontSize: '13px', fontWeight: 600, color: logoMsg.startsWith('\u200B') ? '#16a34a' : '#dc2626' }}>{stripAdminEmoji(logoMsg)}</span>}
               </div>
             </div>
           </div>
@@ -22067,7 +22054,7 @@ export default function AdminDashboard({
                     borderRadius: '8px', cursor: fotosUploading ? 'not-allowed' : 'pointer',
                     fontWeight: 700, fontSize: '13px',
                   }}>
-                    {fotosUploading ? '⏳ Subiendo...' : '+ Agregar fotos'}
+                    {fotosUploading ? ' Subiendo...' : '+ Agregar fotos'}
                     <input
                       type="file"
                       accept="image/*"
@@ -22178,7 +22165,7 @@ export default function AdminDashboard({
                 })}
               </div>
             )}
-            {fotosMsg ? <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: fotosMsg.startsWith('✅') ? '#16a34a' : '#dc2626' }}>{fotosMsg}</p> : null}
+            {fotosMsg ? <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: 600, color: fotosMsg.startsWith('\u200B') ? '#16a34a' : '#dc2626' }}>{stripAdminEmoji(fotosMsg)}</p> : null}
             <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
               Imágenes · máx. 2MB por archivo · hasta {MAX_FOTOS_SEDE} fotos. En iPhone, si varias a la vez no suben, usa «+ Agregar una foto».
             </p>
@@ -22900,7 +22887,7 @@ export default function AdminDashboard({
               color: 'var(--text-primary)',
             }}
           >
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px' }}>🔗 Magic link de acceso</h3>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px' }}> Magic link de acceso</h3>
             <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.45, fontWeight: 500 }}>
               Enlace de inicio de sesión para <strong>{inviteMagicLinkModal.email}</strong>. Compártelo por un canal
               seguro si Make no envió el email automáticamente. Válido un solo uso (Supabase Auth).

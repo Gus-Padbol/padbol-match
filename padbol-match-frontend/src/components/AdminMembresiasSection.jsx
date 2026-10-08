@@ -1,5 +1,6 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { AdminJugadorSearchInput } from './AdminJugadoresSection';
 import ConfirmModal from './ConfirmModal';
 import {
@@ -759,7 +760,7 @@ export default function AdminMembresiasSection({
             </p>
           ) : null}
           {okMsg ? (
-            <p style={{ color: '#166534', fontWeight: 600, fontSize: 13 }}>{okMsg}</p>
+            <p style={{ color: '#166534', fontWeight: 600, fontSize: 13 }}>{stripAdminEmoji(okMsg)}</p>
           ) : null}
 
           {loading ? (
