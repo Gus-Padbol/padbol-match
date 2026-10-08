@@ -10328,7 +10328,7 @@ export default function AdminDashboard({
           : []),
         ...(isSuperAdmin ? [{ id: 'next_generation', label: 'Next Generation' }] : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
-        ...(puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'WhatsApp' }] : []),
+        ...(isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'Atención / CRM' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
         { id: 'torneos', label: t('admin.tabs.torneos') },
         { id: 'reservas', label: t('admin.tabs.reservas') },

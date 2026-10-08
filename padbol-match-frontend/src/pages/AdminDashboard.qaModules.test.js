@@ -25,3 +25,14 @@ test('el panel incorpora la superficie de Next Generation', () => {
   expect(source).toContain("id: 'next_generation'");
   expect(source).toContain('<AdminNextGenerationSection');
 });
+
+test('superadmin conserva Atención / CRM y el compositor completo de notificaciones', () => {
+  const dashboard = readSource('./AdminDashboard.jsx');
+  const notifications = readSource('../components/AdminNotificacionesSection.jsx');
+
+  expect(dashboard).toContain("isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'Atención / CRM' }]");
+  expect(notifications).toContain('Una noticia publicada');
+  expect(notifications).toContain('La sección Padbol Academy');
+  expect(notifications).toContain('Una jornada de Next Generation');
+  expect(notifications).toContain('Otra sección de la aplicación');
+});
