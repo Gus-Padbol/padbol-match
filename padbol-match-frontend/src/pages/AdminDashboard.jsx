@@ -1,3 +1,4 @@
+import { resolveReservaMoneda } from '../utils/resolveReservaMoneda';
 import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import { padcoinsMovementDescription } from '../utils/padcoinsMovementPresentation';
@@ -6084,10 +6085,7 @@ export default function AdminDashboard({
 
     const reservasPorHorario = buildReservasPorHorario(activasPeriodo);
     const periodoCompare = buildPeriodoCompare(reservasList, bounds, {
-      resolveMoneda: (r) => {
-        const sid = r?.sede_id ?? sedeIdDesdeNombreReserva(r?.sede, sedesMap);
-        return r?.moneda || sedesMap?.[String(sid)]?.moneda || 'ARS';
-      },
+      resolveMoneda: (r) => resolveReservaMoneda(r, sedesMap),
     });
 
     const canceladas = reservasPeriodo.filter(
@@ -13147,13 +13145,7 @@ export default function AdminDashboard({
           ) : null;
 
           if (isSuperAdmin) {
-            const getMonedaCanonica = (reserva) => {
-              const s = String(reserva?.moneda || '').trim().toUpperCase();
-              if (!s) return 'ARS';
-              if (s.includes('EUR') || s.includes('€')) return 'EUR';
-              if (s.includes('USD') || s.includes('US$') || s.includes('U$S') || s === '$US') return 'USD';
-              return 'ARS';
-            };
+            const getMonedaCanonica = (reserva) => resolveReservaMoneda(reserva, sedesMap);
             const resolveSedeDesdeReserva = (reserva) => {
               if (reserva?.sede_id != null && sedesMap?.[String(reserva.sede_id)]) return sedesMap[String(reserva.sede_id)];
               const sedeReserva = String(reserva?.sede || '').trim();
@@ -13188,7 +13180,7 @@ export default function AdminDashboard({
               const sedeInfo = resolveSedeDesdeReserva(r) || {};
               const pais = String(sedeInfo?.pais || '').trim() || 'Sin definir';
               const ciudad = String(sedeInfo?.ciudad || '').trim() || 'Sin definir';
-              const moneda = getMonedaCanonica({ moneda: r?.moneda || sedeInfo?.moneda });
+              const moneda = getMonedaCanonica(r);
               const precio = Number(r?.precio) || 0;
               if (isReservaEstadoIngresoValido(r?.estado, r?.cancelada)) ingresosMes[moneda] = (ingresosMes[moneda] || 0) + precio;
 
@@ -13217,7 +13209,7 @@ export default function AdminDashboard({
             reservasResumenPais.forEach((r) => {
               if (!isReservaEstadoIngresoValido(r?.estado, r?.cancelada)) return;
               const sedeInfo = resolveSedeDesdeReserva(r) || {};
-              const moneda = getMonedaCanonica({ moneda: r?.moneda || sedeInfo?.moneda });
+              const moneda = getMonedaCanonica(r);
               const precio = Number(r?.precio) || 0;
               ingresosResumenPais[moneda] = (ingresosResumenPais[moneda] || 0) + precio;
               const comision = precio * porcentajeComisionComercialSede(sedeInfo) / 100;
