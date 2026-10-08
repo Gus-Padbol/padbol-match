@@ -59,13 +59,30 @@ function formatInTimeZone(date, timeZone) {
   return `${day} · ${time} h`;
 }
 
-function compactDateTime(value) {
+export function compactDateTime(value, advisorTimeZone = ADVISOR_TIME_ZONE) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  const local = formatInTimeZone(date, ADVISOR_TIME_ZONE);
-  if (ADVISOR_TIME_ZONE === ARGENTINA_TIME_ZONE) return local;
-  return `${local} · AR ${formatInTimeZone(date, ARGENTINA_TIME_ZONE)}`;
+  const local = formatInTimeZone(date, advisorTimeZone);
+  const argentina = formatInTimeZone(date, ARGENTINA_TIME_ZONE);
+  if (local === argentina) return local;
+  return `${local} · Argentina: ${argentina}`;
+}
+
+export function formatCrmEventText(value) {
+  const text = String(value || '');
+  const labels = {
+    'nextgen.registration.created': 'Nueva inscripción a Next Generation',
+    'nextgen.registration.updated': 'Inscripción a Next Generation actualizada',
+    'nextgen.registration.cancelled': 'Inscripción a Next Generation cancelada',
+    'nextgen.registration.confirmed': 'Inscripción a Next Generation confirmada',
+    'nextgen.session.created': 'Nueva jornada de Next Generation',
+    'nextgen.session.updated': 'Jornada de Next Generation actualizada',
+    'nextgen.venue.created': 'Nueva sede de Next Generation',
+  };
+  if (labels[text.trim()]) return labels[text.trim()];
+  if (/^nextgen\.[a-z0-9_.]+$/i.test(text.trim())) return 'Actualización de Next Generation';
+  return text;
 }
 
 const REMINDER_TIMES = Array.from({ length: 12 }, (_, index) => `${String(index + 8).padStart(2, '0')}:00`);
@@ -449,7 +466,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
       </header>
 
       <section className="wa-safety" aria-label="Estado de seguridad">
-        <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Backend QA controlado' : 'Backend controlado'}</strong><small>Los formularios entran al CRM. Ninguna respuesta saliente está habilitada todavía.</small></div>
+        <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Entorno de prueba' : 'Centro de atención'}</strong><small>Los formularios entran al CRM. Ninguna respuesta saliente está habilitada todavía.</small></div>
         <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span><span>WhatsApp saliente <b>PENDIENTE META</b></span><span>Email saliente <b>DESACTIVADO</b></span></div>
       </section>
 
@@ -497,7 +514,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
                     <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={item.created_at || undefined}>{compactDateTime(item.created_at)}</time></div>
-                    <p>{String(item.subject || item.inbound_body || '').slice(0, 80)}</p>
+                    <p>{formatCrmEventText(item.subject || item.inbound_body).slice(0, 80)}</p>
                     <footer><span className={`wa-pill wa-pill--${statusTone[item.estado] || 'blue'}`}>{statusName(item.estado)}</span><ChannelIcon channel={item.source_channel} /></footer>
                   </div>
                 </button>
@@ -515,10 +532,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                 </header>
                 <div className="wa-messages">
                   <div className="wa-day">NUEVA CONSULTA · {compactDateTime(active.created_at)}</div>
-                  <div className="wa-system">⌁ {active.subject || 'Sin asunto'}</div>
+                  <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
                   {isWebForm && activeDetails.length ? <article className="wa-lead-card">
                     <header><span>Nuevo lead</span><div><h3>{leadName}</h3><p>{detailValue(activeDetails, 'Empresa o club') || 'Consulta particular'} · {[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Ubicación no indicada'}</p></div></header>
-                    <section className="wa-lead-section"><h4>Qué está buscando</h4><strong>{detailValue(activeDetails, 'Asunto') || active.subject || 'Consulta Padbol'}</strong></section>
+                    <section className="wa-lead-section"><h4>Qué está buscando</h4><strong>{formatCrmEventText(detailValue(activeDetails, 'Asunto') || active.subject) || 'Consulta Padbol'}</strong></section>
                     <dl>
                       <div><dt>Cantidad de canchas</dt><dd>{detailValue(activeDetails, 'Cantidad de canchas') || 'Sin definir'}</dd></div>
                       <div><dt>Destino</dt><dd>{detailValue(activeDetails, 'Destino de la cancha') || 'Sin definir'}</dd></div>
@@ -526,7 +543,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                       <div><dt>Ubicación</dt><dd>{[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Sin definir'}</dd></div>
                     </dl>
                     <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p>{detailValue(activeDetails, 'Información adicional') || 'No agregó información adicional.'}</p></section>
-                  </article> : <div className="wa-message wa-message--in"><p>{active.inbound_body || 'Sin contenido'}</p></div>}
+                  </article> : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
                   {leadAnalysis ? <article className="wa-executive-card">
                     <header><div><span>ANÁLISIS DEL LEAD</span><h3>Resumen ejecutivo</h3></div><div className="wa-executive-score"><strong>{leadAnalysis.score}</strong><small>/100</small><b>Prioridad {leadAnalysis.priority}</b></div></header>
                     {leadAnalysis.verdict ? <p className="wa-executive-verdict">{leadAnalysis.verdict}</p> : null}

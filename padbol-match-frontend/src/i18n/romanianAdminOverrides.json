@@ -1,5 +1,18 @@
 {
   "admin": {
+    "common": {
+      "operationFailed": "Operațiunea nu a putut fi finalizată. Încearcă din nou.",
+      "classesLoadFailed": "Cursurile nu au putut fi încărcate. Încearcă din nou.",
+      "configAreas": "Secțiuni de configurare",
+      "pointsAndPositions": "Puncte și clasament",
+      "customTypes": "Tipuri personalizate",
+      "previewWith": "Previzualizare pentru:",
+      "totalPoints": "{{count}} puncte în total",
+      "percentOfTotal": "% din total",
+      "add": "Adaugă",
+      "noPushRecipients": "Niciun utilizator din acest grup nu are notificările activate. Nu va fi trimisă nicio notificare.",
+      "venueConfigHintSuper": "În secțiunea „Cluburi” poți consulta și modifica datele fiecărui club și gestiona terenurile sale."
+    },
     "profesores": {
       "tab": "Instructori",
       "pendientes": "În așteptarea aprobării",

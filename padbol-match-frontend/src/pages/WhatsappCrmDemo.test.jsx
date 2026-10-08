@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import WhatsappCrmDemo from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, formatCrmEventText } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../context/AuthContext', () => ({
@@ -63,6 +63,19 @@ describe('CRM histórico unificado', () => {
     expect(screen.getByText('PENDIENTE META')).toBeInTheDocument();
     expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', { channel: '', estado: '' });
     await waitFor(() => expect(screen.getAllByText(/Prueba 23/i).length).toBeGreaterThan(0));
+  });
+
+  it('presenta eventos internos como inscripciones comprensibles sin exponer sus claves', async () => {
+    crmAdminApi.inbox.mockResolvedValue([{
+      id: 'ng-event', estado: 'nuevo', source_channel: 'nextgen',
+      identity_used: 'participante@example.test', subject: 'nextgen.registration.created',
+      inbound_body: 'nextgen.registration.created', created_at: '2026-10-05T15:45:00Z',
+    }]);
+    render(<WhatsappCrmDemo />);
+    expect((await screen.findAllByText(/Nueva inscripción a Next Generation/)).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/nextgen\.registration\.created/)).not.toBeInTheDocument();
+    expect(screen.getByText('Centro de atención')).toBeInTheDocument();
+    expect(screen.queryByText(/Backend/)).not.toBeInTheDocument();
   });
 
   it('muestra las 70 conversaciones históricas del contrato directo sin permisos de envío', async () => {
@@ -159,6 +172,23 @@ describe('CRM histórico unificado', () => {
     }));
     expect(await screen.findByText(/Ya puede evaluarse en Next Generation/)).toBeInTheDocument();
   });
+});
+
+test('una misma hora local y argentina se muestra una sola vez aunque la zona tenga otro nombre', () => {
+  const result = compactDateTime('2026-10-05T15:45:00Z', 'America/Buenos_Aires');
+  expect(result).toBe('05/10/2026 · 12:45 h');
+  expect(result.match(/05\/10\/2026/g)).toHaveLength(1);
+});
+
+test('una zona con otra hora conserva la referencia argentina con nombre legible', () => {
+  const result = compactDateTime('2026-10-05T15:45:00Z', 'Europe/Madrid');
+  expect(result).toContain('17:45 h');
+  expect(result).toContain('Argentina: 05/10/2026 · 12:45 h');
+});
+
+test('las consultas escritas por personas se conservan y los nuevos eventos se describen sin códigos', () => {
+  expect(formatCrmEventText('Consulta sobre clases')).toBe('Consulta sobre clases');
+  expect(formatCrmEventText('nextgen.registration.waitlisted')).toBe('Actualización de Next Generation');
 });
 
 test('the CRM keeps an explicit exit to the general panel without sending messages', async () => {

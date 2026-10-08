@@ -23,6 +23,8 @@ test('shows preview failures, prevents sending, and retries a genuine zero count
   expect(screen.getByRole('button', { name: 'admin.pushNotif.send' })).toBeDisabled();
   fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
   await screen.findByText('Destinatarios 0');
+  expect(screen.getByText('admin.common.noPushRecipients')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'admin.pushNotif.send' })).toBeDisabled();
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   expect(sendAdminPushNotification).not.toHaveBeenCalled();
 });

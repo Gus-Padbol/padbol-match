@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { AdminJugadorSearchInput } from './AdminJugadoresSection';
 import ConfirmModal from './ConfirmModal';
+import './AdminMembresiasSection.css';
+import { membershipPlanVisibleStatus } from '../utils/adminVenuePresentation';
 import {
   MEMBRESIA_DURACION_TIPOS,
   MEMBRESIA_ESTADOS,
@@ -61,6 +63,7 @@ function tdStyle(extra = {}) {
 function ScrollTable({ minWidth = 900, children }) {
   return (
     <div
+      className="admin-membresias-table-wrap"
       style={{
         overflowX: 'auto',
         WebkitOverflowScrolling: 'touch',
@@ -68,7 +71,7 @@ function ScrollTable({ minWidth = 900, children }) {
         borderRadius: 10,
       }}
     >
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth, fontSize: 13 }}>
+      <table className="admin-membresias-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth, fontSize: 13 }}>
         {children}
       </table>
     </div>
@@ -786,7 +789,7 @@ export default function AdminMembresiasSection({
                       <th style={thStyle()}>{tr('colDescripcion', 'Descripción')}</th>
                       <th style={thStyle()}>{tr('colPrecio', 'Precio')}</th>
                       <th style={thStyle()}>{tr('colDuracion', 'Duración')}</th>
-                      <th style={thStyle()}>{tr('colActivo', 'Activo')}</th>
+                      <th style={thStyle()}>{tr('colEstado', 'Estado')}</th>
                       <th style={thStyle()}>{tr('colCupo', 'Cupo')}</th>
                       <th style={thStyle()}>{tr('colVigencia', 'Vigencia')}</th>
                       <th style={thStyle()}>{tr('colActivos', 'Miembros activos')}</th>
@@ -815,7 +818,7 @@ export default function AdminMembresiasSection({
                           </td>
                           <td style={tdStyle()}>{dur}</td>
                           <td style={tdStyle()}>
-                            {p.activo !== false ? tr('yes', 'Sí') : tr('no', 'No')}
+                            {membershipPlanVisibleStatus(p)}
                           </td>
                           <td style={tdStyle()}>{p.cupo != null ? p.cupo : '—'}</td>
                           <td style={tdStyle({ whiteSpace: 'nowrap' })}>
@@ -900,7 +903,7 @@ export default function AdminMembresiasSection({
                   {tr('sortLabel', 'Orden')}
                   <select value={sort} onChange={(e) => onSortChange(e.target.value)} style={inp}>
                     {MEMBRESIAS_SORT_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>{({ created_at: 'Fecha de registro', inicio: 'Fecha de inicio', vencimiento: 'Fecha de vencimiento', estado: 'Estado' })[s]}</option>
                     ))}
                   </select>
                 </label>

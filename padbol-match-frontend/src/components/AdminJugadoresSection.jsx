@@ -462,7 +462,7 @@ export default function AdminJugadoresSection({
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
-      ) : displayItems.length === 0 ? (
+      ) : !sedeId || error ? null : displayItems.length === 0 ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.jugadores.empty')}</p>
       ) : (
         <div className="admin-jugadores-table-wrap">

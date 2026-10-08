@@ -332,6 +332,13 @@ export function buildPeriodoCompare(list, bounds, opts = {}) {
 
   const ingresosActual = sumIngresosReservas(activasActual);
   const ingresosAnterior = sumIngresosReservas(activasPrev);
+  const resolveMoneda = opts.resolveMoneda || ((r) => r?.moneda || 'ARS');
+  const actualPorMoneda = sumIngresosReservasPorMoneda(activasActual, { resolveMoneda });
+  const anteriorPorMoneda = sumIngresosReservasPorMoneda(activasPrev, { resolveMoneda });
+  const ingresosPorMoneda = Object.keys(actualPorMoneda)
+    .filter((moneda) => actualPorMoneda[moneda] !== 0 || anteriorPorMoneda[moneda] !== 0)
+    .map((moneda) => ({ moneda, actual: actualPorMoneda[moneda], anterior: anteriorPorMoneda[moneda],
+      pct: pctCambioPeriodo(actualPorMoneda[moneda], anteriorPorMoneda[moneda]) }));
 
   let compareLabelKey = 'admin.metrics.comparePreviousEqual';
   if (bounds.periodo === 'hoy') compareLabelKey = 'admin.metrics.compareTodayVsYesterday';
@@ -351,6 +358,7 @@ export function buildPeriodoCompare(list, bounds, opts = {}) {
     ingresosActual,
     ingresosAnterior,
     ingresosPct: pctCambioPeriodo(ingresosActual, ingresosAnterior),
+    ingresosPorMoneda,
     compareLabelKey,
   };
 }

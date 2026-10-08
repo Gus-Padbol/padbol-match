@@ -30,7 +30,8 @@ test('superadmin conserva Atención / CRM y el compositor completo de notificaci
   const dashboard = readSource('./AdminDashboard.jsx');
   const notifications = readSource('../components/AdminNotificacionesSection.jsx');
 
-  expect(dashboard).toContain("isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'Atención / CRM' }]");
+  expect(dashboard).toContain("isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: t('admin.tabs.crm'");
+  expect(dashboard).toContain("'Support / CRM' : 'Atención / CRM'");
   expect(notifications).toContain('Una noticia publicada');
   expect(notifications).toContain('La sección Padbol Academy');
   expect(notifications).toContain('Una jornada de Next Generation');

@@ -336,7 +336,7 @@ export default function AdminNotificacionesSection({
     (segmentKind !== 'sede' || sedeSel) &&
     (segmentKind !== 'deporte' || deporte) &&
     (destinationType === 'academy' || destinationEntityId.trim()) &&
-    !previewError && !previewLoading && previewCount !== null &&
+    !previewError && !previewLoading && Number(previewCount) > 0 &&
     !sending;
 
   const destinationLabel = (row) => {
@@ -596,6 +596,9 @@ export default function AdminNotificacionesSection({
             ? t('admin.pushNotif.previewLoading')
             : t('admin.pushNotif.preview', { count: previewCount ?? '—' })}
         </p>
+        {!previewLoading && !previewError && previewCount === 0 ? (
+          <p role="status">{t('admin.common.noPushRecipients')}</p>
+        ) : null}
         {previewCategory ? (
           <p className="admin-push-notif__preview">
             {previewCategory === 'marketing'

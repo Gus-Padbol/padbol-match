@@ -177,3 +177,12 @@ test('no ofrece cambiar las reglas de un programa activo', async () => {
   await screen.findByText('3 de 4 cumplidos');
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
 });
+
+test('un error de esquema no revela SQL ni afirma que el programa esté vacío', async () => {
+  global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503, json: async () => ({ error: "Could not find the table public.sede_programas_beneficios in the schema cache" }) });
+  render(<AdminIncentivosSection accessToken="token" sedeId={7} />);
+  expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cargar el informe. Vuelve a intentarlo.');
+  expect(screen.queryByText(/public\.sede_programas_beneficios/)).not.toBeInTheDocument();
+  expect(screen.queryByText('Programa pendiente de configuración')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+});

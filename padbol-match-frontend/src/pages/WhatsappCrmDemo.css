@@ -248,3 +248,45 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* On phones, use the page's vertical scroll instead of a nested card strip. */
+@media (max-width: 720px) {
+  .wa-crm-body,
+  .wa-crm-body .wa-workspace,
+  .wa-inbox,
+  .wa-list {
+    min-width: 0;
+    width: 100%;
+    max-height: none;
+    height: auto;
+    overflow: visible;
+  }
+  .wa-list { display: block; }
+  .wa-conversation {
+    width: 100%;
+    min-width: 0;
+  }
+  .wa-conversation-copy > div {
+    flex-wrap: wrap;
+  }
+  .wa-conversation strong {
+    overflow-wrap: anywhere;
+  }
+  .wa-conversation time {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .wa-area-tabs--top {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .wa-area-tabs--top button {
+    min-width: 0;
+    grid-template-columns: 24px minmax(0, 1fr) 22px;
+    gap: 5px;
+    padding: 9px;
+    text-align: left;
+  }
+  .wa-area-tabs--top button span { overflow-wrap: anywhere; }
+}

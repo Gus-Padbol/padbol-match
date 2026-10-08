@@ -1,3 +1,4 @@
+import { adminErrorMessage } from './adminErrorMessage';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useEffect, useMemo, useState } from 'react';
 import './AdminIncentivosSection.css';
@@ -156,7 +157,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
         if (nextReport.period !== period) throw new Error('El servidor devolvió otro período. Actualiza el informe para consultar el mes elegido.');
         finish({ kind: 'ready', program: nextProgram, supportsV4: true, report: nextReport, receivedAt: new Date() });
       } catch (error) {
-        if (error.name !== 'AbortError') finish({ kind: 'error', error: error.message });
+        if (error.name !== 'AbortError') finish({ kind: 'error', error: adminErrorMessage(error, 'No se pudo cargar el informe. Vuelve a intentarlo.') });
       }
     }
     void load();
@@ -175,7 +176,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
       });
       setActionNotice({ context, text: 'Los cuatro objetivos se guardaron en un borrador. No se activaron cobros.' });
       setRevision(value => value + 1);
-    } catch (error) { setActionNotice({ context, text: error.message, error: true }); }
+    } catch (error) { setActionNotice({ context, text: adminErrorMessage(error, 'No se pudo guardar la configuración. Vuelve a intentarlo.'), error: true }); }
     finally { setSaving(false); setConfirmedRules(false); }
   };
   const notice = actionNotice?.context.selectedId === selectedId && actionNotice?.context.accessToken === accessToken && actionNotice?.context.apiBaseUrl === apiBaseUrl ? actionNotice : null;
@@ -196,7 +197,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
     </div>
     {period ? <p className="incentive-dashboard__period">Período consultado: <strong>{monthLabel(month)}</strong> · calendario UTC</p> : null}
     {notice ? <p role={notice.error ? 'alert' : 'status'} className={`incentive-dashboard__alert incentive-dashboard__alert--${notice.error ? 'error' : 'success'}`}>{notice.text}</p> : null}
-    {!accessToken ? <p>Inicia sesión para consultar el informe de tu sede.</p> : !selectedId ? <p>Selecciona una sede.</p> : !period ? <p>Elige un mes válido, hasta el mes actual.</p> : loading ? <p role="status">Consultando el mes…</p> : current?.kind === 'error' ? <p role="alert" className="incentive-dashboard__alert incentive-dashboard__alert--error">{current.error}</p> : current?.kind === 'outdated' ? <div role="status" className="incentive-dashboard__empty"><strong>Actualización de objetivos pendiente</strong><p>El informe de cuatro objetivos todavía no está disponible para esta sede. Los registros anteriores no se usan para calcular este beneficio.</p></div> : current?.kind === 'empty' ? <div className="incentive-dashboard__empty"><strong>Programa pendiente de configuración</strong><p>Todavía no hay un programa asociado a esta sede. El informe se mostrará cuando esté configurado.</p></div> : null}
+    {!accessToken ? <p>Inicia sesión para consultar el informe de tu sede.</p> : !selectedId ? <p>Selecciona una sede.</p> : !period ? <p>Elige un mes válido, hasta el mes actual.</p> : loading ? <p role="status">Consultando el mes…</p> : current?.kind === 'error' ? <p role="alert" className="incentive-dashboard__alert incentive-dashboard__alert--error">{current.error}<button type="button" onClick={() => setRevision(value => value + 1)}>Reintentar</button></p> : current?.kind === 'outdated' ? <div role="status" className="incentive-dashboard__empty"><strong>Actualización de objetivos pendiente</strong><p>El informe de cuatro objetivos todavía no está disponible para esta sede. Los registros anteriores no se usan para calcular este beneficio.</p></div> : current?.kind === 'empty' ? <div className="incentive-dashboard__empty"><strong>Programa pendiente de configuración</strong><p>Todavía no hay un programa asociado a esta sede. El informe se mostrará cuando esté configurado.</p></div> : null}
     {report ? <>
       <div className="incentive-month-grid">
         <article><span>Objetivos del mes</span><strong>{allAvailable ? `${completed} de 4 cumplidos` : 'Cumplimiento no disponible'}</strong><small>Las cuatro metas se cumplen juntas para obtener el 50% adicional.</small></article>
