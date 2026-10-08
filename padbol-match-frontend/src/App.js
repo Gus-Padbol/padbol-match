@@ -217,6 +217,7 @@ function AdminDashboardGate() {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
     return {
+      id: session.user.id,
       email: em,
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
@@ -244,9 +245,9 @@ function AdminDashboardGate() {
   useEffect(() => {
     setRoleGateTimedOut(false);
     if (!roleLoading) return undefined;
-    // Dejar margen para el arranque en frío del backend de QA. useUserRole corta
-    // su propia consulta a los 55 s; este límite es sólo la red de seguridad final.
-    const timeoutId = window.setTimeout(() => setRoleGateTimedOut(true), 65_000);
+    // La consulta principal y el respaldo autenticado tienen sus propios límites.
+    // Este corte evita un spinner infinito ante un problema ajeno al panel.
+    const timeoutId = window.setTimeout(() => setRoleGateTimedOut(true), 28_000);
     return () => window.clearTimeout(timeoutId);
   }, [roleLoading, currentCliente?.email]);
 

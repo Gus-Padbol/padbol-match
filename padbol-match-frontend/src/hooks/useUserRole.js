@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { fetchMiRol } from '../utils/fetchMiRol';
+import { fetchUserRoleFromSupabase } from '../utils/fetchUserRoleSupabase';
 import { readCachedUserRoleForEmail } from '../utils/mergeUserRoleResult';
 import {
   USER_ROLE_STORAGE_KEY,
@@ -8,15 +9,14 @@ import {
 } from '../utils/adminPanelRoles';
 
 const STORAGE_KEY = USER_ROLE_STORAGE_KEY;
-// Render puede tardar varios segundos en reactivar QA después de un período sin uso.
-// El límite anterior (12 s) expulsaba del panel a usuarios válidos antes de que el
-// backend terminara de responder.
-const ROLE_LOOKUP_TIMEOUT_MS = 55_000;
+// Una consulta de permisos no debe bloquear el panel indefinidamente. Si este
+// primer camino no responde, se usa inmediatamente el respaldo autenticado.
+const ROLE_LOOKUP_TIMEOUT_MS = 12_000;
 
-function withTimeout(promise, message) {
+function withTimeout(promise, message, timeoutMs = ROLE_LOOKUP_TIMEOUT_MS) {
   let timeoutId;
   const timeout = new Promise((_, reject) => {
-    timeoutId = window.setTimeout(() => reject(new Error(message)), ROLE_LOOKUP_TIMEOUT_MS);
+    timeoutId = window.setTimeout(() => reject(new Error(message)), timeoutMs);
   });
   return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
 }
@@ -96,6 +96,7 @@ export default function useUserRole(currentCliente) {
         }
 
         let apiResult = null;
+        let apiError = null;
         try {
           apiResult = await withTimeout(
             fetchMiRol(token),
@@ -103,13 +104,30 @@ export default function useUserRole(currentCliente) {
           );
         } catch (apiErr) {
           console.warn('useUserRole: /api/auth/mi-rol error:', apiErr?.message || apiErr);
-          if (!cancelled) setError(apiErr?.message || 'No se pudo verificar el permiso administrativo.');
+          apiError = apiErr;
+        }
+
+        // Respaldo autenticado directo: si el backend está reiniciando o una petición
+        // queda bloqueada por el navegador, RLS sólo permite leer la fila del usuario
+        // conectado. Así el panel no depende de un único salto de red.
+        if (!apiResult?.rol) {
+          try {
+            apiResult = await withTimeout(
+              fetchUserRoleFromSupabase(sessWrap?.session?.user),
+              'La verificación alternativa de permisos tardó demasiado en responder.',
+              10_000,
+            );
+          } catch (fallbackErr) {
+            console.warn('useUserRole: respaldo Supabase error:', fallbackErr?.message || fallbackErr);
+            if (!apiError) apiError = fallbackErr;
+          }
         }
 
         if (cancelled) return;
 
         const result = roleDataFromApi(apiResult, emailKey);
         setRoleData(result);
+        setError(result?.rol ? null : (apiError?.message || null));
 
         if (result?.rol) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
