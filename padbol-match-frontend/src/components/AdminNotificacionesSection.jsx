@@ -119,6 +119,8 @@ export default function AdminNotificacionesSection({
   const [previewCount, setPreviewCount] = useState(null);
   const [previewCategory, setPreviewCategory] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+  const [previewRetry, setPreviewRetry] = useState(0);
   const [quota, setQuota] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -230,6 +232,9 @@ export default function AdminNotificacionesSection({
   }, [title, body, segmentPayload, destinationType, destinationEntityId]);
 
   useEffect(() => {
+    setPreviewError('');
+    setPreviewCount(null);
+    setPreviewLoading(Boolean(accessToken && segmentPayload));
     if (!accessToken || !segmentPayload) {
       setPreviewCount(null);
       setPreviewCategory(null);
@@ -244,10 +249,11 @@ export default function AdminNotificacionesSection({
           setPreviewCount(prev?.withPushToken ?? prev?.recipients ?? 0);
           setPreviewCategory(prev?.category || null);
         }
-      } catch {
+      } catch (e) {
         if (!cancelled) {
           setPreviewCount(null);
           setPreviewCategory(null);
+          setPreviewError(translatedPushError(e, t, 'admin.pushNotif.loadError'));
         }
       } finally {
         if (!cancelled) setPreviewLoading(false);
@@ -257,7 +263,7 @@ export default function AdminNotificacionesSection({
       cancelled = true;
       window.clearTimeout(tid);
     };
-  }, [accessToken, apiBaseUrl, segmentPayload]);
+  }, [accessToken, apiBaseUrl, segmentPayload, previewRetry, t]);
 
   useEffect(() => {
     if (segmentKind !== 'jugador' || playerQuery.trim().length < 2 || !accessToken) {
@@ -325,6 +331,7 @@ export default function AdminNotificacionesSection({
     (segmentKind !== 'sede' || sedeSel) &&
     (segmentKind !== 'deporte' || deporte) &&
     (destinationType === 'academy' || destinationEntityId.trim()) &&
+    !previewError && !previewLoading && previewCount !== null &&
     !sending;
 
   const destinationLabel = (row) => {
@@ -445,6 +452,7 @@ export default function AdminNotificacionesSection({
             </select>
           </div>
         ) : null}
+        {previewError ? <div role="alert"><p>{previewError}</p><button type="button" onClick={() => setPreviewRetry((value) => value + 1)}>Reintentar</button></div> : null}
         <p className="admin-push-notif__preview" role="status">
           <strong>Al tocarla:</strong> {destinationEntityId || destinationType === 'academy'
             ? ` se abrirá ${currentDestinationLabel}.`

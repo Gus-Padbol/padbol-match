@@ -542,7 +542,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                 </div>
                 <div className="wa-composer">
                   <div className="wa-draft-label"><span>✦ Respuesta</span><small>{canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Respuesta por email todavía no habilitada' : 'Envío desactivado'}</small></div>
-                  <textarea disabled={!canReplyWhatsapp} value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribí una respuesta…'} />
+                  <textarea disabled={!canReplyWhatsapp} value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
                   <div className="wa-composer-actions">
                     <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
                     <button type="button" className={`wa-send ${canReplyWhatsapp ? 'wa-send--enabled' : ''}`} disabled={busy || !perms?.canOperate || !canReplyWhatsapp || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
@@ -612,7 +612,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                     {activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}</time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}
                   </div>
                 </section> : null}
-                <section className="wa-panel wa-audit"><div className="wa-panel-title"><h3>Auditoría</h3><span>{CRM_IS_QA ? 'QA' : 'GLOBAL'}</span></div><p>Consultá la vista de auditoría global desde el panel de superadmin.</p></section>
+                <section className="wa-panel wa-audit"><div className="wa-panel-title"><h3>Auditoría</h3><span>{CRM_IS_QA ? 'QA' : 'GLOBAL'}</span></div><p>Consulta la vista de auditoría global desde el panel de superadmin.</p></section>
               </aside>
             </>
           ) : null}
