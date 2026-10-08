@@ -3748,14 +3748,20 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 }
 
 .wa-panel-exit {
-  position: sticky;
+  position: fixed;
   top: var(--pm-app-header-stack-height, 86px);
-  z-index: 120;
+  left: 0;
+  right: 0;
+  z-index: 500;
   display: flex;
   align-items: center;
   padding: 10px 24px;
   border-bottom: 1px solid #344057;
   background: #0b1324;
+}
+
+.wa-demo:has(.wa-panel-exit) {
+  padding-top: 64px;
 }
 
 .admin-dashboard .wa-demo .wa-panel-exit button {
