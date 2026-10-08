@@ -11028,8 +11028,8 @@ export default function AdminDashboard({
                       {String(analyticsGlobales.deporte_mas_popular?.label || '—')}
                     </p>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>
-                      {(Number(analyticsGlobales.deporte_mas_popular?.torneos_creados) || 0).toLocaleString('es-AR')}{' '}
-                      torneos (por deporte al crear)
+                      {(Number(analyticsGlobales.deporte_mas_popular?.reservas_realizadas) || 0).toLocaleString('es-AR')}{' '}
+                      reservas realizadas
                     </p>
                   </div>
                 </div>
