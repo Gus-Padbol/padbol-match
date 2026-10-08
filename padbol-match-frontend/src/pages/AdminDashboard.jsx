@@ -5821,7 +5821,6 @@ export default function AdminDashboard({
     superAdminFechaHasta,
     finanzasAnclaISO,
     torneoStats,
-    isSuperAdmin,
     cifrasFinanzasResumen,
     t,
   ]);
