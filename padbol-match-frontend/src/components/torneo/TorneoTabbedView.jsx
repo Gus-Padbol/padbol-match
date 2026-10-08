@@ -283,6 +283,18 @@ export default function TorneoTabbedView({
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [showModalDetallePartido, setShowModalDetallePartido] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
+  const openedNotificationMatchRef = useRef('');
+  useEffect(() => {
+    const requestedId = new URLSearchParams(location.search).get('partido');
+    if (!requestedId) return;
+    const requestKey = `${location.pathname}:${requestedId}`;
+    if (openedNotificationMatchRef.current === requestKey) return;
+    const requestedMatch = (partidos || []).find((match) => String(match.id) === requestedId);
+    if (!requestedMatch) return;
+    openedNotificationMatchRef.current = requestKey;
+    setSelectedPartido(requestedMatch);
+    setShowModalDetallePartido(true);
+  }, [location.pathname, location.search, partidos]);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
   /** Flujo voz: idle | listening | processing | confirm */
   const [voicePhase, setVoicePhase] = useState('idle');

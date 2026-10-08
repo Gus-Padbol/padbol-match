@@ -21,9 +21,9 @@ const originalFetch = global.fetch;
 const partida = { id: 45, torneo_id: 28, equipo_a_id: 71, equipo_b_id: 72, estado: 'pendiente' };
 const savedResult = { goles_a: 2, goles_b: 0, historial_sets: [{ set: 1, a: 6, b: 4 }, { set: 2, a: 6, b: 3 }] };
 
-function setup({ isAdmin = true } = {}) {
+function setup({ isAdmin = true, entry = '/', openByClick = true } = {}) {
   const setPartidos = jest.fn();
-  const rendered = render(<MemoryRouter><TorneoTabbedView
+  const rendered = render(<MemoryRouter initialEntries={[entry]}><TorneoTabbedView
     torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol' }}
     torneoId="28"
     equipos={[{ id: 71, nombre: 'Alfa', jugadores: [] }, { id: 72, nombre: 'Beta', jugadores: [] }]}
@@ -34,7 +34,7 @@ function setup({ isAdmin = true } = {}) {
     isAdmin={isAdmin}
     navigate={jest.fn()}
   /></MemoryRouter>);
-  fireEvent.click(rendered.container.querySelector('.partido-item'));
+  if (openByClick) fireEvent.click(rendered.container.querySelector('.partido-item'));
   return { ...rendered, setPartidos };
 }
 
@@ -82,6 +82,13 @@ test('un rechazo de permisos mantiene el formulario y no inventa un resultado gu
 
 test('la vista de jugador no ofrece el escritor administrativo', () => {
   setup({ isAdmin: false });
+  expect(screen.queryByRole('button', { name: 'torneos.partidoDetalle.cargarResultado' })).not.toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('el enlace de notificación abre el partido concreto sin ofrecer edición al jugador', () => {
+  const { container } = setup({ isAdmin: false, entry: '/torneo/28?partido=45', openByClick: false });
+  expect(container.querySelector('.pdm-dialog')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'torneos.partidoDetalle.cargarResultado' })).not.toBeInTheDocument();
   expect(global.fetch).not.toHaveBeenCalled();
 });
