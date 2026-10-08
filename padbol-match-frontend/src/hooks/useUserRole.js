@@ -8,7 +8,10 @@ import {
 } from '../utils/adminPanelRoles';
 
 const STORAGE_KEY = USER_ROLE_STORAGE_KEY;
-const ROLE_LOOKUP_TIMEOUT_MS = 12_000;
+// Render puede tardar varios segundos en reactivar QA después de un período sin uso.
+// El límite anterior (12 s) expulsaba del panel a usuarios válidos antes de que el
+// backend terminara de responder.
+const ROLE_LOOKUP_TIMEOUT_MS = 55_000;
 
 function withTimeout(promise, message) {
   let timeoutId;

@@ -6,7 +6,7 @@ import { codigoTelefonicoDesdePaisLabel } from '../utils/sedeWhatsappPais';
 import { validateSedeRequiredConfiguration } from '../utils/sedeRequiredConfiguration';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
-  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim(), codigo: p.codigo }))
+  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: p.nombre, codigo: p.codigo }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
 const DEPORTES_CATALOGO = DEPORTES_CANCHA_SEDE_OPTIONS;
@@ -220,21 +220,22 @@ export default function NuevaSedeSuperBottomSheet({
   }, [timezoneOpts, st.timezone]);
 
   const goNext = useCallback(() => {
+    setConfigurationError('');
     if (st.step === 1) {
       if (!String(st.nombre || '').trim()) {
-        alert('Completa el nombre de la sede.');
+        setConfigurationError('Completa el nombre de la sede.');
         return;
       }
       if (!String(st.direccion || '').trim()) {
-        alert('Completa la dirección.');
+        setConfigurationError('Completa la dirección.');
         return;
       }
       if (!String(st.pais || '').trim()) {
-        alert('Selecciona el país.');
+        setConfigurationError('Selecciona el país.');
         return;
       }
       if (!String(st.ciudad || '').trim()) {
-        alert('Completa la ciudad.');
+        setConfigurationError('Completa la ciudad.');
         return;
       }
       setSt((p) => ({ ...p, step: 2 }));
@@ -242,7 +243,7 @@ export default function NuevaSedeSuperBottomSheet({
     }
     if (st.step === 2) {
       if (totalCanchas <= 0) {
-        alert('Selecciona al menos un deporte e indica la cantidad de canchas (mayor a 0).');
+        setConfigurationError('Selecciona al menos un deporte e indica la cantidad de canchas (mayor a 0).');
         return;
       }
       setSt((p) => ({ ...p, step: 3 }));
@@ -498,6 +499,11 @@ export default function NuevaSedeSuperBottomSheet({
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 16px 20px', WebkitOverflowScrolling: 'touch' }}>
+        {configurationError && st.step < 3 ? (
+          <p role="alert" style={{ margin: '0 0 12px', padding: '10px 12px', borderRadius: 10, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontWeight: 800 }}>
+            {configurationError}
+          </p>
+        ) : null}
         {st.step === 1 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>

@@ -500,6 +500,10 @@
       "competitionTypeHint": "Define quién puede inscribirse. Es distinto del formato del fixture, como Round Robin.",
       "ageCategoryLabel": "Categoría de edad",
       "ageCategoryAria": "Categoría de edad del torneo",
+      "ageCutoffLabel": "Fecha de corte de edad (opcional)",
+      "ageCutoffHint": "Se usa para calcular la edad de los inscriptos. Si la dejás vacía, se toma la fecha de inicio del torneo y, si no hay, la fecha actual.",
+      "programaNextGenerationHint": "Categoría juvenil: la competencia pertenece al programa FIPA Next Generation (U13/U15/U17).",
+      "programaPadbolHint": "Categoría de adultos: la competencia pertenece a Padbol. El nivel deportivo (Principiante a Elite) es independiente de la edad.",
       "categoryLabel": "Categoría",
       "fixtureFormatLabel": "Formato del fixture",
       "initialStatusLabel": "Estado inicial del torneo",
@@ -664,10 +668,32 @@
         "mixto": "Mixto"
       },
       "categoriaEdad": {
-        "sub_18": "Sub 18",
-        "open": "Open",
-        "master_40": "Master 40",
-        "master_50": "Master 50"
+        "u13": "U13",
+        "u15": "U15",
+        "u17": "U17",
+        "open": "Adultos / Open",
+        "master_50": "+50 (división especial)",
+        "sub_18": "Sub 18 (legado)",
+        "master_40": "Máster +40 (legado)"
+      },
+      "categoriaEdadGrupo": {
+        "nextGeneration": "Next Generation (juvenil)",
+        "padbol": "Padbol (adultos)",
+        "divisionEspecial": "División especial",
+        "legado": "Legado"
+      },
+      "programa": {
+        "next_generation": "FIPA Next Generation",
+        "padbol": "Padbol"
+      },
+      "filtros": {
+        "programa": "Programa",
+        "todos": "Todos",
+        "categoriaEdad": "Categoría de edad",
+        "nivel": "Nivel deportivo"
+      },
+      "nextGeneration": {
+        "padboleros": "Padboleros"
       },
       "categoriaNivel": {
         "Libre": "Libre (todas las categorías)",
@@ -906,6 +932,11 @@
     "badgeSuspended": "🚫 Suspendido",
     "admin": {
       "intro": "Jugadores con suspensión activa por cancelaciones repetidas.",
+      "criterionTitle": "Criterio automático",
+      "criterionBody": "Cinco cancelaciones dentro de los últimos 30 días generan una suspensión de siete días. Esta pantalla muestra únicamente suspensiones activas.",
+      "refresh": "Actualizar suspensiones",
+      "colReason": "Motivo",
+      "repeatedCancellationReason": "Cancelaciones repetidas",
       "loading": "Cargando suspensiones…",
       "loadError": "No se pudieron cargar las suspensiones",
       "empty": "No hay jugadores suspendidos en este momento.",
@@ -1378,7 +1409,7 @@
       "periodSelected": "Período seleccionado",
       "last30Days": "Últimos 30 días",
       "historicalTotal": "Total histórico",
-      "historicalTotalHint": "Total histórico en el alcance cargado",
+      "historicalTotalHint": "Acumulado histórico de los datos disponibles",
       "cancellationRate": "Tasa de cancelación",
       "topSportReserved": "Deporte más reservado",
       "topSportReservedHint": "Top 3 · reservas activas · {{period}}",
@@ -1606,6 +1637,10 @@
       "saveOk": "✅ Guardar",
       "saveDisk": "Guardar",
       "validationApprove": "✅ Aprobar",
+      "validationReject": "Rechazar",
+      "validationRejectConfirm": "¿Rechazar esta validación? El jugador seguirá registrado y podrá corregir sus datos.",
+      "validationRejectReason": "Validación rechazada por administración",
+      "validationRejectError": "No se pudo rechazar la validación.",
       "validationChangeCategory": "✏️ Cambiar categoría",
       "validationViewProfile": "Ver perfil",
       "validationSearchLabel": "Buscar por nombre, apellido o email",
@@ -2119,7 +2154,7 @@
       "today": "Hoy",
       "bookings": "RESERVAS",
       "court": "Cancha",
-      "todayRevenue": "INGREERES DEL DÍA",
+      "todayRevenue": "INGRESOS DEL DÍA",
       "byVenueCurrency": "por moneda de cada sede",
       "fromToday": "de hoy",
       "noRevenueRegistered": "sin ingresos registrados",

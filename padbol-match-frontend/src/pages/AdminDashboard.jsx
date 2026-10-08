@@ -102,6 +102,7 @@ import AdminOrganizacionesSection from '../components/AdminOrganizacionesSection
 import AdminIncentivosSection from '../components/AdminIncentivosSection';
 import AdminModuloClasesSection from '../components/AdminModuloClasesSection';
 import AdminProfesoresSuperSection from '../components/AdminProfesoresSuperSection';
+import AdminNextGenerationSection from '../components/AdminNextGenerationSection';
 import ConfirmCancelReservaModal from '../components/ConfirmCancelReservaModal';
 import TorneoCrear from './TorneoCrear';
 import SedeWhatsappPhoneField from '../components/SedeWhatsappPhoneField';
@@ -1784,6 +1785,22 @@ function padcoinsMovReferenciaDisplay(row, t) {
   return [rtLabel, ri].filter(Boolean).join(' ') || '—';
 }
 
+function padcoinsMovimientoDescripcionVisible(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return '—';
+  if (/^(EPHEMERAL\||QA\||E2E\||TEST\|)/i.test(value)) return 'Movimiento de prueba';
+  if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
+    try {
+      const parsed = JSON.parse(value);
+      const candidate = parsed?.descripcion || parsed?.description || parsed?.motivo || parsed?.concepto;
+      return String(candidate || 'Detalle técnico disponible').trim();
+    } catch (_) {
+      return 'Detalle técnico disponible';
+    }
+  }
+  return value;
+}
+
 function formatPadcoinsMovFechaCorta(raw, locale = 'es-AR') {
   const src = raw?.fecha ?? raw?.created_at;
   if (!src) return '—';
@@ -2346,6 +2363,14 @@ function formatFecha(str) {
   return `${parseInt(d)} ${meses[parseInt(m) - 1]} ${y}`;
 }
 
+function torneoEnCursoConFinVencido(torneo, now = new Date()) {
+  if (String(torneo?.estado || '').trim().toLowerCase() !== 'en_curso') return false;
+  const raw = String(torneo?.fecha_fin || '').trim();
+  if (!raw) return false;
+  const fin = new Date(`${raw.slice(0, 10)}T23:59:59`);
+  return !Number.isNaN(fin.getTime()) && fin.getTime() < now.getTime();
+}
+
 // "2026-04-10" → "Viernes 10 de Abril"
 function formatFechaDia(str, locale = 'es-AR') {
   if (!str) return '';
@@ -2546,7 +2571,9 @@ function banderaEmojiDesdeNombrePais(paisRaw) {
   return '';
 }
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
-  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim() }))
+  // No guardar emojis regionales: Windows puede mostrarlos como "AR", "ES", "US".
+  // El nombre limpio también evita duplicados como "AR AR Argentina".
+  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: p.nombre }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
 /** Par U+1F1E6–U+1F1FF al inicio = bandera regional (ej. 🇦🇷 son 2 code points). */
@@ -2581,9 +2608,8 @@ function etiquetaPaisFiltroMobile(valorRaw) {
   const raw = String(valorRaw || '').trim();
   if (!raw) return '';
   const sinBandera = paisTextoSinBanderaInicial(raw);
-  const flag = banderaEmojiDesdeNombrePais(raw);
   const nombre = sinBandera || raw;
-  return flag ? `${flag} ${nombre}`.trim() : nombre;
+  return nombre;
 }
 
 function sedeFlag(sede) {
@@ -3392,6 +3418,9 @@ function AdminClubMetricasExtras({ metricas, moneda }) {
 }
 
 function SemanaCompareDelta({ pct }) {
+  if (pct == null) {
+    return <span className="admin-week-compare__delta admin-week-compare__delta--new">Nuevo</span>;
+  }
   const n = Number(pct) || 0;
   if (n === 0) {
     return <span className="admin-week-compare__delta admin-week-compare__delta--neutral">— 0%</span>;
@@ -3518,6 +3547,10 @@ export default function AdminDashboard({
   const [sedesMap, setSedesMap] = useState({});
   const [contratosBySedeId, setContratosBySedeId] = useState({});
   const [sedeDetalleAbiertoId, setSedeDetalleAbiertoId] = useState(null);
+  const [sedeSuperEditando, setSedeSuperEditando] = useState(false);
+  const [sedeSuperEditDraft, setSedeSuperEditDraft] = useState({ nombre: '', direccion: '', telefono: '', email_contacto: '' });
+  const [sedeSuperEditSaving, setSedeSuperEditSaving] = useState(false);
+  const [sedeSuperEditError, setSedeSuperEditError] = useState('');
   /** Filtros país/ciudad super_admin (tabla desktop + tarjetas móvil; paginación sobre lista filtrada). */
   const [sedeMobileFiltroPais, setSedeMobileFiltroPais] = useState('');
   const [sedeMobileFiltroCiudad, setSedeMobileFiltroCiudad] = useState('');
@@ -4707,8 +4740,10 @@ export default function AdminDashboard({
 
   const [sedesPendientes, setSedesPendientes] = useState([]);
   const [sedesPendientesLoading, setSedesPendientesLoading] = useState(false);
+  const [sedesPendientesError, setSedesPendientesError] = useState('');
   const [solicitudesLicencia, setSolicitudesLicencia] = useState([]);
   const [solicitudesLicenciaLoading, setSolicitudesLicenciaLoading] = useState(false);
+  const [solicitudesLicenciaError, setSolicitudesLicenciaError] = useState('');
   /** Modal al aprobar solicitud web: super_admin elige tipo_interes antes de ir a Nueva sede. */
   const [licApruebaTipoModal, setLicApruebaTipoModal] = useState(null);
   const [licApruebaTipoSaving, setLicApruebaTipoSaving] = useState(false);
@@ -4724,8 +4759,11 @@ export default function AdminDashboard({
   const [adminRolesLoading, setAdminRolesLoading] = useState(false);
   const [adminInvitacionesRows, setAdminInvitacionesRows] = useState([]);
   const [adminInvitacionesLoading, setAdminInvitacionesLoading] = useState(false);
+  const [adminInvitacionesError, setAdminInvitacionesError] = useState('');
   /** GET /api/admin/analytics-globales (solo super_admin, mismo ciclo que fetchData). */
   const [analyticsGlobales, setAnalyticsGlobales] = useState(null);
+  const [analyticsGlobalesStatus, setAnalyticsGlobalesStatus] = useState('idle');
+  const [analyticsGlobalesError, setAnalyticsGlobalesError] = useState('');
   const [inviteClubModalOpen, setInviteClubModalOpen] = useState(false);
   const [inviteAdminModalStep, setInviteAdminModalStep] = useState('tipo');
   const [inviteAdminTipo, setInviteAdminTipo] = useState(null);
@@ -4788,6 +4826,7 @@ export default function AdminDashboard({
     async (estadoQuery = 'pendiente') => {
       if (!puedeVerSedesPendientes) return;
       setSedesPendientesLoading(true);
+      setSedesPendientesError('');
       try {
         const { data: sess } = await supabase.auth.getSession();
         const token = sess?.session?.access_token;
@@ -4796,11 +4835,6 @@ export default function AdminDashboard({
         const res = await fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=${encodeURIComponent(eq)}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.status === 404) {
-          setSedesPendientes([]);
-          if (eq === 'pendiente') setSnapPendienteSedes(0);
-          return;
-        }
         const j = await res.json().catch(() => []);
         if (!res.ok) throw new Error(j.error || res.statusText);
         const rows = Array.isArray(j) ? j : [];
@@ -4809,7 +4843,7 @@ export default function AdminDashboard({
       } catch (e) {
         console.error('[AdminDashboard] sedes pendientes:', e);
         setSedesPendientes([]);
-        if (String(estadoQuery || '').toLowerCase() === 'pendiente') setSnapPendienteSedes(0);
+        setSedesPendientesError(e?.message || 'No se pudieron cargar las altas de sedes.');
       } finally {
         setSedesPendientesLoading(false);
       }
@@ -4821,6 +4855,7 @@ export default function AdminDashboard({
     async (estadoQuery = 'pendiente') => {
       if (!isSuperAdmin) return;
       setSolicitudesLicenciaLoading(true);
+      setSolicitudesLicenciaError('');
       try {
         const { data: sess } = await supabase.auth.getSession();
         const token = sess?.session?.access_token;
@@ -4837,7 +4872,7 @@ export default function AdminDashboard({
       } catch (e) {
         console.error('[AdminDashboard] solicitudes licencia:', e);
         setSolicitudesLicencia([]);
-        if (String(estadoQuery || '').toLowerCase() === 'pendiente') setSnapPendienteLic(0);
+        setSolicitudesLicenciaError(e?.message || 'No se pudieron cargar las solicitudes web.');
       } finally {
         setSolicitudesLicenciaLoading(false);
       }
@@ -5091,6 +5126,7 @@ export default function AdminDashboard({
   const cargarInvitacionesAdmin = useCallback(async () => {
     if (!isSuperAdmin) return;
     setAdminInvitacionesLoading(true);
+    setAdminInvitacionesError('');
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
@@ -5104,6 +5140,9 @@ export default function AdminDashboard({
     } catch (e) {
       console.error('[AdminDashboard] invitaciones admin:', e);
       setAdminInvitacionesRows([]);
+      setAdminInvitacionesError(
+        e?.message || 'No se pudieron cargar las invitaciones pendientes.',
+      );
     } finally {
       setAdminInvitacionesLoading(false);
     }
@@ -5415,9 +5454,17 @@ export default function AdminDashboard({
   const textoRolGestionAdminCompleto = useCallback(
     (row) => {
       const badge = ROLE_BADGE[row.role] || row.role || '—';
-      const alc = row.alcance || '—';
+      const alcanceLabels = {
+        global: 'Global',
+        pais: 'País',
+        provincia: 'Provincia',
+        ciudad: 'Ciudad',
+        sede: 'Sede',
+      };
+      const alc = alcanceLabels[String(row.alcance || '').trim().toLowerCase()] || 'Sin alcance';
       const asig = asignacionGestionAdminTexto(row);
-      return `${badge} · Alcance: ${alc} · ${asig}`;
+      const inconsistente = row.role === 'admin_nacional' && row.alcance === 'sede';
+      return `${badge} · Alcance: ${alc} · ${asig}${inconsistente ? ' · Revisar configuración' : ''}`;
     },
     [asignacionGestionAdminTexto, ROLE_BADGE],
   );
@@ -5715,28 +5762,54 @@ export default function AdminDashboard({
         estado: torneoRow?.estado || '',
       };
     });
-    const totalTx = reservasIngresoDetalle.length + torneosDetalle.length;
-    const totalMontoBase = isSuperAdmin
-      ? ['ARS', 'USD', 'EUR'].reduce((acc, k) => acc + (Number(cifrasFinanzasResumen?.total?.[k]) || 0), 0)
-      : Number(cifrasFinanzasResumen?.total) || 0;
-    const ticketPromedio = totalTx > 0 ? Math.round(totalMontoBase / totalTx) : 0;
+    const movimientosIngreso = [
+      ...reservasIngresoDetalle.map((r) => ({ moneda: r.moneda_calc, monto: r.precio_calc })),
+      ...torneosDetalle.map((row) => ({ moneda: row.moneda, monto: row.ingreso })),
+    ];
+    const totalTx = movimientosIngreso.length;
+    const transaccionesPorMoneda = movimientosIngreso.reduce(
+      (acc, row) => {
+        const moneda = bucketMonedaAdmin(row.moneda);
+        acc[moneda] = (acc[moneda] || 0) + 1;
+        return acc;
+      },
+      { ARS: 0, USD: 0, EUR: 0 }
+    );
+    const totalesPorMoneda = movimientosIngreso.reduce(
+      (acc, row) => {
+        const moneda = bucketMonedaAdmin(row.moneda);
+        acc[moneda] = (acc[moneda] || 0) + safeMoney(row.monto);
+        return acc;
+      },
+      { ARS: 0, USD: 0, EUR: 0 }
+    );
+    const ticketPromedioPorMoneda = ['ARS', 'USD', 'EUR'].reduce((acc, moneda) => {
+      const cantidad = transaccionesPorMoneda[moneda] || 0;
+      acc[moneda] = cantidad > 0 ? Math.round(totalesPorMoneda[moneda] / cantidad) : 0;
+      return acc;
+    }, {});
+    const monedaSede = bucketMonedaAdmin(cifrasFinanzasResumen?.moneda || 'ARS');
+    const ticketPromedio = ticketPromedioPorMoneda[monedaSede] || 0;
     const dailyRows = Object.keys(porDia)
       .sort((a, b) => a.localeCompare(b))
-      .map((d) => ({
-        fecha: d,
-        total:
-          (Number(porDia[d].ARS) || 0) +
-          (Number(porDia[d].USD) || 0) +
-          (Number(porDia[d].EUR) || 0),
-      }));
-    const maxDaily = dailyRows.reduce((m, r) => Math.max(m, r.total), 0);
+      .flatMap((fecha) =>
+        ['ARS', 'USD', 'EUR']
+          .map((moneda) => ({ fecha, moneda, total: Number(porDia[fecha][moneda]) || 0 }))
+          .filter((row) => row.total > 0)
+      );
+    const maxDailyPorMoneda = dailyRows.reduce(
+      (acc, row) => ({ ...acc, [row.moneda]: Math.max(acc[row.moneda] || 0, row.total) }),
+      { ARS: 0, USD: 0, EUR: 0 }
+    );
     return {
       reservasDetalle,
       torneosDetalle,
       totalTransacciones: totalTx,
       ticketPromedio,
+      ticketPromedioPorMoneda,
+      transaccionesPorMoneda,
       dailyRows,
-      maxDaily,
+      maxDailyPorMoneda,
     };
   }, [
     reservas,
@@ -5771,7 +5844,9 @@ export default function AdminDashboard({
               torneos_usd: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.USD) || 0,
               torneos_eur: Number(cifrasFinanzasResumen?.porFuente?.inscripciones?.EUR) || 0,
               transacciones: dashboardFinanciero.totalTransacciones,
-              ticket_promedio: Math.round(Number(dashboardFinanciero.ticketPromedio) || 0),
+              ticket_promedio_ars: Number(dashboardFinanciero.ticketPromedioPorMoneda?.ARS) || 0,
+              ticket_promedio_usd: Number(dashboardFinanciero.ticketPromedioPorMoneda?.USD) || 0,
+              ticket_promedio_eur: Number(dashboardFinanciero.ticketPromedioPorMoneda?.EUR) || 0,
             },
           ]
         : [
@@ -6643,6 +6718,30 @@ export default function AdminDashboard({
     setValidacionState(prev => { const s = { ...prev }; delete s[email]; return s; });
   };
 
+  const rechazarJugador = async (email) => {
+    if (!window.confirm(t('admin.formularios.validationRejectConfirm'))) return;
+    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/admin/jugadores/validaciones/${encodeURIComponent(email)}/rechazar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ motivo: t('admin.formularios.validationRejectReason') }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || t('admin.formularios.validationRejectError'));
+      setPendientes(prev => prev.filter(p => p.email !== email));
+      setValidacionState(prev => { const s = { ...prev }; delete s[email]; return s; });
+    } catch (error) {
+      setValidacionState(prev => ({
+        ...prev,
+        [email]: { ...prev[email], saving: false, error: error?.message || t('admin.formularios.validationRejectError') },
+      }));
+    }
+  };
+
   const guardarCategoria = async (email) => {
     const nuevaCategoria = validacionState[email]?.categoria;
     if (!nuevaCategoria) return;
@@ -6800,8 +6899,60 @@ export default function AdminDashboard({
   }, [isSuperAdmin, sedeDetalleAbiertoId, sedesSuperAdminLista]);
 
   useEffect(() => {
-    if (activeTab !== ADMIN_SEDES_TAB_ID) setSedeDetalleAbiertoId(null);
+    if (activeTab !== ADMIN_SEDES_TAB_ID) {
+      setSedeDetalleAbiertoId(null);
+      setSedeSuperEditando(false);
+      setSedeSuperEditError('');
+    }
   }, [activeTab]);
+
+  const abrirEdicionSedeSuper = useCallback(() => {
+    if (!sedeSuperAdminDetalleModal) return;
+    setSedeSuperEditDraft({
+      nombre: String(sedeSuperAdminDetalleModal.nombre || ''),
+      direccion: String(sedeSuperAdminDetalleModal.direccion || ''),
+      telefono: String(sedeSuperAdminDetalleModal.telefono || ''),
+      email_contacto: String(sedeSuperAdminDetalleModal.email_contacto || ''),
+    });
+    setSedeSuperEditError('');
+    setSedeSuperEditando(true);
+  }, [sedeSuperAdminDetalleModal]);
+
+  const guardarEdicionSedeSuper = useCallback(async () => {
+    const id = Number(sedeSuperAdminDetalleModal?.id);
+    const nombre = String(sedeSuperEditDraft.nombre || '').trim();
+    if (!Number.isFinite(id) || !nombre) {
+      setSedeSuperEditError('El nombre de la sede es obligatorio.');
+      return;
+    }
+    setSedeSuperEditSaving(true);
+    setSedeSuperEditError('');
+    try {
+      const patch = {
+        nombre,
+        direccion: String(sedeSuperEditDraft.direccion || '').trim(),
+        telefono: String(sedeSuperEditDraft.telefono || '').trim(),
+        email_contacto: String(sedeSuperEditDraft.email_contacto || '').trim(),
+      };
+      const response = await fetch(`${apiBaseUrl}/api/sedes/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify(patch),
+      });
+      const json = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(json?.error || 'No se pudo guardar la sede.');
+      const updated = json?.sede || { ...sedeSuperAdminDetalleModal, ...patch };
+      setSedesMap((prev) => ({ ...prev, [id]: { ...(prev[id] || {}), ...updated } }));
+      setSedeSuperEditando(false);
+    } catch (error) {
+      setSedeSuperEditError(error?.message || 'No se pudo guardar la sede.');
+    } finally {
+      setSedeSuperEditSaving(false);
+    }
+  }, [apiBaseUrl, sedeSuperAdminDetalleModal, sedeSuperEditDraft, session?.access_token]);
 
   useEffect(() => {
     if (!esAdminNacional) {
@@ -6919,12 +7070,14 @@ export default function AdminDashboard({
   const [configNivelesHidden,setConfigNivelesHidden]= useState(() => new Set(loadConfigFromStorage().niveles_hidden || []));
   const [previewNivel,       setPreviewNivel]       = useState('nacional');
   const [configSaving,       setConfigSaving]       = useState(false);
+  const [configSubtab,       setConfigSubtab]       = useState('puntos');
   const [configMsg,          setConfigMsg]          = useState('');
   const [nuevoTipo,          setNuevoTipo]          = useState({ nombre: '', puntos: 0 });
   const [editandoTipoId,     setEditandoTipoId]     = useState(null);
   const [editandoTipoData,   setEditandoTipoData]   = useState({ nombre: '', puntos: 0 });
   const [planPricingRows, setPlanPricingRows] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
+  const [planPricingError, setPlanPricingError] = useState('');
   const [planPricingEditId, setPlanPricingEditId] = useState(null);
   const [planPricingEditValue, setPlanPricingEditValue] = useState('');
   const [planPricingSavingId, setPlanPricingSavingId] = useState(null);
@@ -6984,14 +7137,22 @@ export default function AdminDashboard({
     if (!isSuperAdmin || activeTab !== 'planes') return;
     let cancelled = false;
     setPlanPricingLoading(true);
+    setPlanPricingError('');
     fetch(`${apiBaseUrl}/api/plan-pricing`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok) throw new Error(data?.error || `No se pudieron cargar los planes (HTTP ${r.status}).`);
+        return data;
+      })
       .then((data) => {
         if (cancelled) return;
         setPlanPricingRows(Array.isArray(data) ? data : []);
       })
-      .catch(() => {
-        if (!cancelled) setPlanPricingRows([]);
+      .catch((error) => {
+        if (!cancelled) {
+          setPlanPricingRows([]);
+          setPlanPricingError(error?.message || 'No se pudieron cargar los planes.');
+        }
       })
       .finally(() => {
         if (!cancelled) setPlanPricingLoading(false);
@@ -7125,6 +7286,7 @@ export default function AdminDashboard({
       categoria:    torneo.categoria    || CATEGORIA_TORNEO_DEFAULT,
       tipo_competencia: torneoTipoCompetenciaDb(torneo) || TORNEO_GENERO_COMPETENCIA_DEFAULT,
       categoria_edad: torneo.categoria_edad || TORNEO_CATEGORIA_EDAD_DEFAULT,
+      fecha_corte_edad: torneo.fecha_corte_edad || '',
       tipo_torneo:  torneo.tipo_torneo  || '',
       estado:       mapEstadoTorneoDesdeApiParaForm(torneo.estado),
       fecha_inicio: torneo.fecha_inicio || '',
@@ -7180,6 +7342,8 @@ export default function AdminDashboard({
         deporte: dep,
         formato_equipo: formatoEquipoPayloadParaApi(dep, editTorneoForm.formato_equipo),
       };
+      // No enviar la fecha de corte vacía: evita referenciar la columna antes de aplicar la migración.
+      if (!String(body.fecha_corte_edad ?? '').trim()) delete body.fecha_corte_edad;
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
       const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoId}`, {
@@ -7369,6 +7533,8 @@ export default function AdminDashboard({
       setPartidosCountByTorneoId(partidosCnt);
 
       if (isSuperAdmin && session?.access_token) {
+        setAnalyticsGlobalesStatus('loading');
+        setAnalyticsGlobalesError('');
         try {
           const ar = await fetch(`${apiBaseUrl}/api/admin/analytics-globales`, {
             headers: { ...listAuthHeaders },
@@ -7376,14 +7542,21 @@ export default function AdminDashboard({
           const j = await ar.json().catch(() => null);
           if (ar.ok && j && typeof j === 'object' && !Array.isArray(j)) {
             setAnalyticsGlobales(j);
+            setAnalyticsGlobalesStatus('success');
           } else {
             setAnalyticsGlobales(null);
+            setAnalyticsGlobalesStatus('error');
+            setAnalyticsGlobalesError(j?.error || `No se pudieron cargar las métricas (HTTP ${ar.status}).`);
           }
-        } catch {
+        } catch (analyticsError) {
           setAnalyticsGlobales(null);
+          setAnalyticsGlobalesStatus('error');
+          setAnalyticsGlobalesError(analyticsError?.message || 'No se pudieron cargar las métricas.');
         }
       } else {
         setAnalyticsGlobales(null);
+        setAnalyticsGlobalesStatus('idle');
+        setAnalyticsGlobalesError('');
       }
 
       setLoading(false);
@@ -10154,6 +10327,7 @@ export default function AdminDashboard({
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
+        ...(isSuperAdmin ? [{ id: 'next_generation', label: 'Next Generation' }] : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
         ...(puedeVerWhatsapp ? [{ id: 'whatsapp', label: 'WhatsApp' }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
@@ -10294,9 +10468,9 @@ export default function AdminDashboard({
   return (
     <div
       className={
-        isSuperAdmin
+        `${isSuperAdmin
           ? 'admin-dashboard admin-dashboard--super admin-dashboard--with-sidebar'
-          : 'admin-dashboard admin-dashboard--with-sidebar'
+          : 'admin-dashboard admin-dashboard--with-sidebar'}${activeTab === 'whatsapp' ? ' admin-dashboard--crm' : ''}`
       }
       style={{
         display: 'flex',
@@ -10528,7 +10702,20 @@ export default function AdminDashboard({
               paddingBottom: 0,
             }}
           >
-            {TABS.map((tab) => renderAdminNavTabButton(tab, 'strip'))}
+            <label className="admin-dashboard-mobile-tab-picker">
+              <span>Sección</span>
+              <select
+                value={activeTab}
+                onChange={(event) => selectAdminTab(event.target.value)}
+                aria-label="Elegir sección del panel"
+              >
+                {TABS.map((tab) => (
+                  <option key={`mobile-option-${tab.id}`} value={tab.id}>
+                    {tab.label}{tab.badge > 0 ? ` (${tab.badge})` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
 
@@ -10788,7 +10975,13 @@ export default function AdminDashboard({
             <h2 style={{ marginTop: 0, marginBottom: '14px', fontSize: '18px' }}>
               Analytics globales
             </h2>
-            {!analyticsGlobales ? (
+            {analyticsGlobalesStatus === 'error' ? (
+              <div className="admin-load-error" role="alert">
+                <strong>No pudimos cargar Analytics globales.</strong>
+                <span>{analyticsGlobalesError}</span>
+                <button type="button" onClick={() => void fetchDataRef.current?.()}>Reintentar</button>
+              </div>
+            ) : !analyticsGlobales ? (
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 600 }}>{t('admin.metrics.loadingMetrics')}</p>
             ) : (
               <>
@@ -10992,9 +11185,12 @@ export default function AdminDashboard({
           </div>
           {superAdminPeriodo === 'rango' ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px', maxWidth: '420px' }}>
+              <label className="admin-date-field">
+                <span>Desde</span>
               <input
                 type="date"
                 value={superAdminFechaDesde}
+                max={superAdminFechaHasta || undefined}
                 onChange={(e) => setSuperAdminFechaDesde(e.target.value)}
                 aria-label="Desde"
                 style={{
@@ -11008,9 +11204,13 @@ export default function AdminDashboard({
                   boxSizing: 'border-box',
                 }}
               />
+              </label>
+              <label className="admin-date-field">
+                <span>Hasta</span>
               <input
                 type="date"
                 value={superAdminFechaHasta}
+                min={superAdminFechaDesde || undefined}
                 onChange={(e) => setSuperAdminFechaHasta(e.target.value)}
                 aria-label="Hasta"
                 style={{
@@ -11024,6 +11224,10 @@ export default function AdminDashboard({
                   boxSizing: 'border-box',
                 }}
               />
+              </label>
+              {superAdminFechaDesde && superAdminFechaHasta && superAdminFechaDesde > superAdminFechaHasta ? (
+                <p className="admin-date-range-error" role="alert">La fecha «Desde» debe ser anterior o igual a «Hasta».</p>
+              ) : null}
             </div>
           ) : (
             <SuperAdminFinanzasPeriodoNav
@@ -11217,7 +11421,10 @@ export default function AdminDashboard({
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>{t('admin.metrics.avgTicket')}</div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
               {isSuperAdmin
-                ? Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })
+                ? ['ARS', 'USD', 'EUR']
+                    .filter((moneda) => Number(dashboardFinanciero.transaccionesPorMoneda?.[moneda]) > 0)
+                    .map((moneda) => `${moneda} ${Number(dashboardFinanciero.ticketPromedioPorMoneda?.[moneda] || 0).toLocaleString('es-AR')}`)
+                    .join(' · ') || '—'
                 : `$ ${Math.round(Number(dashboardFinanciero.ticketPromedio) || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })} ${cifrasFinanzasResumen.moneda || 'ARS'}`}
             </div>
           </div>
@@ -11240,9 +11447,10 @@ export default function AdminDashboard({
           ) : (
             <div style={{ display: 'grid', gap: '6px' }}>
               {dashboardFinanciero.dailyRows.map((row) => {
-                const pct = dashboardFinanciero.maxDaily > 0 ? Math.max(4, (row.total / dashboardFinanciero.maxDaily) * 100) : 0;
+                const maxDaily = Number(dashboardFinanciero.maxDailyPorMoneda?.[row.moneda]) || 0;
+                const pct = maxDaily > 0 ? Math.max(4, (row.total / maxDaily) * 100) : 0;
                 return (
-                  <div key={row.fecha} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
+                  <div key={`${row.fecha}-${row.moneda}`} style={{ display: 'grid', gridTemplateColumns: '50px 1fr auto', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 700 }}>
                       {ymdToLabelShort(row.fecha)}
                     </span>
@@ -11263,7 +11471,7 @@ export default function AdminDashboard({
                         fontWeight: 700,
                       }}
                     >
-                      {Number(row.total).toLocaleString('es-AR')}
+                      {row.moneda} {Number(row.total).toLocaleString('es-AR')}
                     </span>
                   </div>
                 );
@@ -11460,7 +11668,12 @@ export default function AdminDashboard({
                   color: '#ffffff',
                   label: String(torneo.estado || '').trim() || '—',
                 };
-              const estadoBadge = {
+              const fechaFinVencida = torneoEnCursoConFinVencido(torneo);
+              const estadoBadge = fechaFinVencida ? {
+                bg: '#fef3c7',
+                color: '#92400e',
+                label: 'Finalización pendiente',
+              } : {
                 ...estadoBadgeBase,
                 label: t(`torneos.vista.estado.${String(torneo.estado || '').trim().toLowerCase()}`, {
                   defaultValue: estadoBadgeBase.label,
@@ -11586,6 +11799,16 @@ export default function AdminDashboard({
                               <option key={o.value} value={o.value}>{o.label}</option>
                             ))}
                           </select>
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('torneos.create.ageCutoffLabel')}</label>
+                          <input
+                            style={inp}
+                            type="date"
+                            value={editTorneoForm.fecha_corte_edad || ''}
+                            onChange={(e) => setEditTorneoForm((p) => ({ ...p, fecha_corte_edad: e.target.value }))}
+                          />
+                          <small style={{ color: 'var(--text-secondary)', fontSize: '11px', display: 'block', marginTop: '3px' }}>{t('torneos.create.ageCutoffHint')}</small>
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.categoryRequiredLabel')}</label>
@@ -11780,7 +12003,7 @@ export default function AdminDashboard({
                         {sede ? <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '3px' }}>{sede.nombre}</div> : null}
                         {ubicacionSede ? (
                           <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                            {flag ? `${flag} ${ubicacionSede}` : ubicacionSede}
+                            {ubicacionSede}
                           </div>
                         ) : null}
                       </div>
@@ -11821,6 +12044,11 @@ export default function AdminDashboard({
                             </span>
                           : null}
                         <span className="admin-torneo-list-chip admin-torneo-list-chip--status" style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
+                        {fechaFinVencida ? (
+                          <span role="status" style={{ color: '#92400e', fontSize: 11, fontWeight: 700 }}>
+                            La fecha de fin venció; cierra o actualiza el torneo.
+                          </span>
+                        ) : null}
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -11914,7 +12142,7 @@ export default function AdminDashboard({
                             style={{ padding: '6px 10px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
                             title={t('admin.torneosSection.deleteTournament')}
                           >
-                            🗑️
+                            Eliminar
                           </button>
                         )}
                         </div>
@@ -11963,6 +12191,12 @@ export default function AdminDashboard({
         />
       ) : null}
 
+      {activeTab === 'next_generation' && isSuperAdmin && session?.access_token ? (
+        <div className="section">
+          <AdminNextGenerationSection accessToken={session.access_token} />
+        </div>
+      ) : null}
+
       {activeTab === 'suspensiones' && isSuperAdmin && session?.access_token ? (
         <div className="section">
           <h2>{t('admin.tabs.suspensiones')}</h2>
@@ -11970,11 +12204,11 @@ export default function AdminDashboard({
         </div>
       ) : null}
 
-      {activeTab === 'whatsapp' && session?.access_token ? (
-        <div className="section">
-          <h2>WhatsApp</h2>
-          <AdminWhatsappSection accessToken={session.access_token} />
-        </div>
+      {activeTab === 'whatsapp' && (isSuperAdmin || puedeVerWhatsapp) && session?.access_token ? (
+        <AdminWhatsappSection
+          accessToken={session.access_token}
+          onBack={() => selectAdminTab('resumen')}
+        />
       ) : null}
 
       {activeTab === 'notificaciones' && puedeEnviarNotificacionesPush && session?.access_token ? (
@@ -12008,6 +12242,7 @@ export default function AdminDashboard({
                     : []
             }
             paisesOptions={sedesSuperAdminPaisesUnicos}
+            torneosOptions={torneos}
           />
         </div>
       ) : null}
@@ -12329,6 +12564,28 @@ export default function AdminDashboard({
                       guardarSuscripcionEstadoSuper={guardarSuscripcionEstadoSuper}
                       activarSuscripcionStripeSede={activarSuscripcionStripeSede}
                     />
+                    <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                      {!sedeSuperEditando ? (
+                        <button type="button" className="admin-edit-button" onClick={abrirEdicionSedeSuper}>
+                          <AdminEditIcon size={14} /> Editar datos de la sede
+                        </button>
+                      ) : (
+                        <div className="admin-super-sede-edit" aria-label="Editar datos de la sede">
+                          <h4 style={{ margin: '0 0 12px' }}>Editar datos de la sede</h4>
+                          <div className="admin-super-sede-edit__grid">
+                            <label>Nombre<input value={sedeSuperEditDraft.nombre} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, nombre: e.target.value }))} /></label>
+                            <label>Dirección<input value={sedeSuperEditDraft.direccion} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, direccion: e.target.value }))} /></label>
+                            <label>Teléfono<input value={sedeSuperEditDraft.telefono} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, telefono: e.target.value }))} /></label>
+                            <label>Correo de contacto<input type="email" value={sedeSuperEditDraft.email_contacto} onChange={(e) => setSedeSuperEditDraft((p) => ({ ...p, email_contacto: e.target.value }))} /></label>
+                          </div>
+                          {sedeSuperEditError ? <p role="alert" className="admin-form-error">{sedeSuperEditError}</p> : null}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                            <button type="button" className="admin-primary-action" disabled={sedeSuperEditSaving} onClick={() => void guardarEdicionSedeSuper()}>{sedeSuperEditSaving ? 'Guardando…' : 'Guardar cambios'}</button>
+                            <button type="button" className="admin-secondary-action" disabled={sedeSuperEditSaving} onClick={() => { setSedeSuperEditando(false); setSedeSuperEditError(''); }}>Cancelar</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     {session?.access_token ? (
                       <SedeSuperDuracionesSection
                         apiBaseUrl={apiBaseUrl}
@@ -12533,6 +12790,14 @@ export default function AdminDashboard({
                     </button>
                     <button
                       disabled={vs.saving}
+                      onClick={() => void rechazarJugador(jugador.email)}
+                      className="admin-validacion-action admin-validacion-action--reject"
+                      style={{ padding: '7px 14px', background: '#b91c1c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
+                    >
+                      {t('admin.formularios.validationReject')}
+                    </button>
+                    <button
+                      disabled={vs.saving}
                       onClick={() => toggleCambiarCategoria(jugador.email, jugador.nivel)}
                       className="admin-validacion-action admin-validacion-action--category"
                       style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
@@ -12563,6 +12828,7 @@ export default function AdminDashboard({
                         </button>
                       </>
                     )}
+                    {vs.error ? <div role="alert" className="admin-form-error" style={{ flexBasis: '100%' }}>{vs.error}</div> : null}
                   </div>
                 </div>
               );
@@ -12574,7 +12840,7 @@ export default function AdminDashboard({
       </div>}
 
       {activeTab === 'reservas' && <div className="admin-reservas-section">
-        {(esAdminClub || isSuperAdmin) ? (
+        {esAdminClub ? (
           <section style={{ marginBottom: '18px', padding: '14px 16px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card)' }}>
             <strong style={{ display: 'block', marginBottom: '5px' }}>{t('admin.reservas.configurationTitle', 'Booking configuration')}</strong>
             <span style={{ display: 'block', marginBottom: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
@@ -14861,7 +15127,15 @@ export default function AdminDashboard({
                 </p>
               ) : null}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
-                {isTextRule ? (
+                {rule.key === 'modo_calculo_reserva' ? (
+                  <label style={{ display: 'grid', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '13px' }}>Modo de cálculo</span>
+                    <select value={rule.value_text} onChange={(e) => updatePcGlobalConfigRow(idx, 'value_text', e.target.value)} style={pcInp} required>
+                      <option value="porcentaje_valor_pagado">Porcentaje del valor pagado</option>
+                      <option value="monto_fijo">Cantidad fija por reserva</option>
+                    </select>
+                  </label>
+                ) : isTextRule ? (
                   <label style={{ display: 'grid', gap: '6px' }}>
                     <span style={{ fontWeight: 600, fontSize: '13px' }}>
                       {t('admin.padcoins.globalConfigValueText', 'Valor (texto)')}
@@ -14915,8 +15189,14 @@ export default function AdminDashboard({
 
         return (
           <div className="section">
+            <nav className="admin-padcoins-section-nav" aria-label="Secciones de PadCoins">
+              {[
+                ['pc-config', 'Configuración'], ['pc-sedes', 'Sedes'], ['admin-padcoins-campaigns', 'Campañas'],
+                ['pc-reportes', 'Reportes'], ['pc-canjes', 'Canjes'], ['admin-padcoins-alertas', 'Alertas'], ['pc-movimientos', 'Movimientos'],
+              ].map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
+            </nav>
             {isSuperAdmin ? (
-              <div style={{ marginBottom: '36px', paddingBottom: '28px', borderBottom: '1px solid var(--border)' }}>
+              <div id="pc-config" style={{ marginBottom: '36px', paddingBottom: '28px', borderBottom: '1px solid var(--border)', scrollMarginTop: 80 }}>
                 <h2 style={{ marginTop: 0 }}>
                   ⚙️ {t('admin.padcoins.globalConfigTitle', 'Configuración global')}
                 </h2>
@@ -15037,7 +15317,7 @@ export default function AdminDashboard({
               </div>
             ) : null}
 
-            <div style={{
+            <div id="pc-sedes" style={{
               marginBottom: '32px',
               paddingBottom: '28px',
               borderBottom: '1px solid var(--border)',
@@ -16338,6 +16618,7 @@ export default function AdminDashboard({
             ) : null}
 
             {(isSuperAdmin || esAdminClub) ? (
+              <div id="pc-reportes" style={{ scrollMarginTop: 80 }}>
               <AdminPadcoinsReportesSection
                 apiBaseUrl={apiBaseUrl}
                 accessToken={session?.access_token || ''}
@@ -16349,6 +16630,7 @@ export default function AdminDashboard({
                 premios={premios}
                 sedeFlag={sedeFlag}
               />
+              </div>
             ) : null}
 
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
@@ -16683,7 +16965,7 @@ export default function AdminDashboard({
             ) : null}
 
             {effectivePcSedeId ? (
-              <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+              <div id="pc-canjes" style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)', scrollMarginTop: 80 }}>
                 <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
                   {t('admin.padcoins.redemptionsTitle', 'Canjes')}
                 </h3>
@@ -17178,7 +17460,7 @@ export default function AdminDashboard({
               </div>
             ) : null}
 
-            <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)' }}>
+            <div id="pc-movimientos" style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid var(--border)', scrollMarginTop: 80 }}>
               <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--text-primary)' }}>
                 {esAdminClub
                   ? t('admin.padcoins.movementsClubTitle', 'Movimientos de tu sede')
@@ -17477,7 +17759,7 @@ export default function AdminDashboard({
                                 lineHeight: 1.35,
                                 verticalAlign: 'top',
                               }}>
-                                {mov.descripcion || '—'}
+                                {padcoinsMovimientoDescripcionVisible(mov.descripcion)}
                               </td>
                               <td style={{
                                 padding: '8px 10px',
@@ -17557,7 +17839,12 @@ export default function AdminDashboard({
       })() : null}
 
       {activeTab === 'config' && puedeVerConfig && <div className="section">
-        <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>{t('admin.metricas.pointsConfigTitle')}</h2>
+        <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>Configuración</h2>
+        <div className="admin-config-subtabs" role="tablist" aria-label="Áreas de configuración">
+          <button type="button" role="tab" aria-selected={configSubtab === 'puntos'} onClick={() => setConfigSubtab('puntos')}>Puntos y posiciones</button>
+          <button type="button" role="tab" aria-selected={configSubtab === 'sponsors'} onClick={() => setConfigSubtab('sponsors')}>Sponsors</button>
+        </div>
+        {configSubtab === 'puntos' ? <>
         {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
         <div style={{ marginBottom: '4px' }}>
           <h3 style={{ color: 'var(--text-primary)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
@@ -17733,7 +18020,7 @@ export default function AdminDashboard({
                     return (
                       <tr key={pos} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg-page)' : 'var(--bg-card)' }}>
                         <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-primary)' }}>
-                          {pos === 1 ? '🥇 1ro' : pos === 2 ? '🥈 2do' : pos === 3 ? '🥉 3ro' : `${pos}°`}
+                          {pos === 1 ? '🥇 1°' : pos === 2 ? '🥈 2°' : pos === 3 ? '🥉 3°' : `${pos}°`}
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
                           <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -17816,10 +18103,12 @@ export default function AdminDashboard({
           </p>
         </div>
 
-        <AdminSponsorsSection
+        </> : null}
+
+        {configSubtab === 'sponsors' ? <AdminSponsorsSection
           isSuperAdmin={isSuperAdmin}
           allowedVenueId={esAdminClub ? sedeId : null}
-        />
+        /> : null}
 
       </div>}
 
@@ -17855,6 +18144,16 @@ export default function AdminDashboard({
                   <tr>
                     <td colSpan={4} style={{ padding: '14px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                       Cargando…
+                    </td>
+                  </tr>
+                ) : planPricingError ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '14px' }}>
+                      <div className="admin-load-error" role="alert">
+                        <strong>No pudimos cargar los planes.</strong>
+                        <span>{planPricingError}</span>
+                        <button type="button" onClick={() => { setPlanPricingError(''); setPlanPricingLoading(true); fetch(`${apiBaseUrl}/api/plan-pricing`).then(async (r) => { const data = await r.json().catch(() => null); if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`); return data; }).then((data) => setPlanPricingRows(Array.isArray(data) ? data : [])).catch((error) => setPlanPricingError(error?.message || 'No se pudieron cargar los planes.')).finally(() => setPlanPricingLoading(false)); }}>Reintentar</button>
+                      </div>
                     </td>
                   </tr>
                 ) : planPricingRows.length === 0 ? (
@@ -18039,6 +18338,21 @@ export default function AdminDashboard({
                         Cargando…
                       </td>
                     </tr>
+                  ) : adminInvitacionesError ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '14px', textAlign: 'center' }}>
+                        <div role="alert" style={{ color: '#b91c1c', fontWeight: 700, marginBottom: 10 }}>
+                          No se pudieron cargar las invitaciones. Esto no significa que la lista esté vacía.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void cargarInvitacionesAdmin()}
+                          style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Reintentar
+                        </button>
+                      </td>
+                    </tr>
                   ) : adminInvitacionesRows.length === 0 ? (
                     <tr>
                       <td colSpan={7} style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)', fontWeight: 600 }}>
@@ -18204,7 +18518,7 @@ export default function AdminDashboard({
                             }}
                           >
                             <div style={{ fontWeight: 700, fontSize: '14px', lineHeight: 1.3 }}>
-                              {row.nombre || '—'}
+                              {row.nombre || row.email || 'Sin nombre'}
                             </div>
                             <div
                               style={{
@@ -18265,12 +18579,14 @@ export default function AdminDashboard({
                         </tr>
                       ) : (
                         <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: 'var(--text-primary)' }}>
-                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.nombre || '—'}</td>
+                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.nombre || row.email || 'Sin nombre'}</td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>{row.email}</td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
-                            {row.role === 'editor_contenido' ? t('admin.formularios.contentEditorTitle') : row.role || '—'}
+                            {ROLE_BADGE[row.role] || (row.role === 'editor_contenido' ? t('admin.formularios.contentEditorTitle') : '—')}
                           </td>
-                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.alcance || '—'}</td>
+                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
+                            {({ global: 'Global', pais: 'País', provincia: 'Provincia', ciudad: 'Ciudad', sede: 'Sede' })[row.alcance] || '—'}
+                          </td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>
                             {row.role === 'editor_contenido' ? t('admin.roles.editorScopeLabel') : null}
                             {row.role !== 'editor_contenido' && row.alcance === 'sede'
@@ -18532,6 +18848,12 @@ export default function AdminDashboard({
           </div>
           {sedesPendientesLoading || solicitudesLicenciaLoading ? (
             <p style={{ color: '#e2e8f0', textAlign: 'center' }}>{t('admin.common.loadingEllipsis')}</p>
+          ) : sedesPendientesError || solicitudesLicenciaError ? (
+            <div className="admin-load-error" role="alert">
+              <strong>No pudimos cargar todas las solicitudes.</strong>
+              <span>{[sedesPendientesError, solicitudesLicenciaError].filter(Boolean).join(' ')}</span>
+              <button type="button" onClick={() => { void cargarSedesPendientes(solicitudesFiltroEstado); void cargarSolicitudesLicencia(solicitudesFiltroEstado); }}>Reintentar</button>
+            </div>
           ) : solicitudesUnificadas.length === 0 ? (
             <p style={{ color: '#e2e8f0', textAlign: 'center' }}>{t('admin.metricas.noRequestsFilter')}</p>
           ) : (

@@ -22,12 +22,12 @@ export const SUPER_ADMIN_VISIBLE_TABS = Object.freeze([
   'jugadores',
   'solicitudes',
   'profesores',
+  'next_generation',
   'personalizar_hub',
   'suspensiones',
   'notificaciones',
   'scoreboard',
   'padcoins',
-  'whatsapp',
 ]);
 
 export const EDITOR_CONTENIDO_VISIBLE_TABS = Object.freeze(['personalizar_hub', 'sponsors']);

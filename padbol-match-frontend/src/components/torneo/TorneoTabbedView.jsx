@@ -11,6 +11,7 @@ import {
   torneoTipoCompetenciaDb,
 } from '../../utils/torneoFormatters';
 import { resumenDeporteFormatoTorneo } from '../../utils/torneoDeporteFormato';
+import { PROGRAMA_NEXT_GENERATION, programaDeTorneo } from '../../utils/torneoProgramaUI';
 import SportIcon from '../common/SportIcon';
 import { formatAliasConArroba, nombreListadoTorneoRanking } from '../../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../../utils/jugadorPreviewModalData';
@@ -903,19 +904,11 @@ export default function TorneoTabbedView({
     });
   }, [resultadosFilas]);
 
-  /** Posiciones 4–10 siempre; huecos vacíos con — */
+  /** Posiciones 4–10 cargadas; no inventar filas vacías. */
   const clasificacionFinalFilasCompletas = useMemo(() => {
-    const byPos = {};
-    resultadosFilas.forEach((f) => {
-      if (f.posicion >= 4 && f.posicion <= 10) byPos[f.posicion] = f;
-    });
-    const rows = [];
-    for (let pos = 4; pos <= 10; pos += 1) {
-      const f = byPos[pos];
-      if (f) rows.push({ ...f, vacio: false });
-      else rows.push({ posicion: pos, equipoNombre: '', jugadorLineas: [], jugadores: [], puntos: null, vacio: true });
-    }
-    return rows;
+    return resultadosFilas
+      .filter((f) => f.posicion >= 4 && f.posicion <= 10 && String(f.equipoNombre || '').trim())
+      .map((f) => ({ ...f, vacio: false }));
   }, [resultadosFilas]);
 
   useEffect(() => {
@@ -1971,10 +1964,19 @@ export default function TorneoTabbedView({
           <span>{resumenDeporteFormatoTorneo(torneo)}</span>
         </p>
         <p className="torneo-header-meta torneo-header-meta--detalle">
-          {formatNivelTorneo(torneo?.nivel_torneo)} • {labelCategoriaTorneo(torneo?.categoria)} •{' '}
-          {labelGeneroTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}
-          {labelCategoriaEdadTorneo(torneo?.categoria_edad)} • {formatTipoTorneo(torneo?.tipo_torneo)} •{' '}
-          {formatFecha(torneo?.fecha_inicio)} a {formatFecha(torneo?.fecha_fin)}
+          {[
+            formatNivelTorneo(torneo?.nivel_torneo),
+            labelCategoriaTorneo(torneo?.categoria),
+            labelGeneroTorneo(torneoTipoCompetenciaDb(torneo)),
+            programaDeTorneo(torneo) === PROGRAMA_NEXT_GENERATION
+              ? t('torneos.vista.programa.next_generation', { defaultValue: 'FIPA Next Generation' })
+              : '',
+            labelCategoriaEdadTorneo(torneo?.categoria_edad),
+            formatTipoTorneo(torneo?.tipo_torneo),
+            torneo?.fecha_inicio || torneo?.fecha_fin
+              ? `${formatFecha(torneo?.fecha_inicio)} a ${formatFecha(torneo?.fecha_fin)}`
+              : '',
+          ].filter((value) => value && value !== '—').join(' • ')}
         </p>
       </div>
 

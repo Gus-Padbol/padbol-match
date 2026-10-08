@@ -283,6 +283,84 @@
   margin-bottom: 16px;
 }
 
+.admin-dashboard-mobile-tab-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-dashboard-mobile-tab-picker select {
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-padcoins-section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px;
+  margin: 0 0 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.admin-padcoins-section-nav a {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-config-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.admin-config-subtabs button {
+  flex: 1 1 0;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-config-subtabs button[aria-selected='true'] {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+}
+
 @media (min-width: 768px) {
   .admin-dashboard-shell {
     flex-direction: row;
@@ -532,6 +610,59 @@
   }
 }
 
+/* Tablets use the compact section picker as well. Keeping the full 232px
+ * navigation rail at 768px left too little room for operational tables. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-dashboard--with-sidebar {
+    --pm-admin-sidebar-slot: 0px;
+    --pm-admin-sidebar-width: 0px;
+  }
+
+  .admin-dashboard--with-sidebar .admin-dashboard-brand-shell {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .admin-dashboard-shell,
+  .admin-dashboard--with-sidebar .admin-dashboard-shell {
+    display: block;
+    padding: 0 12px 12px;
+  }
+
+  .admin-dashboard-nav,
+  .admin-dashboard--with-sidebar .admin-dashboard-nav {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    pointer-events: auto;
+  }
+
+  .admin-dashboard-sidebar,
+  .admin-dashboard--with-sidebar .admin-dashboard-sidebar {
+    display: none !important;
+  }
+
+  .admin-dashboard-tabs-strip--mobile {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    margin: 0 0 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-dashboard-body-surface {
+    width: 100%;
+    max-width: none !important;
+  }
+}
+
 /* Super admin: shell transparente sobre --bg-page (separación en la franja de tabs) */
 .admin-dashboard--super .admin-dashboard-brand-shell {
   background: transparent;
@@ -547,6 +678,25 @@
   box-sizing: border-box;
   background: var(--bg-page);
   color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .admin-dashboard--crm .admin-dashboard-brand-shell,
+  .admin-dashboard--crm .admin-dashboard-nav {
+    display: none;
+  }
+
+  .admin-dashboard--crm .admin-dashboard-shell {
+    display: block;
+    padding: 0 20px 24px;
+  }
+
+  .admin-dashboard--crm .admin-dashboard-panel,
+  .admin-dashboard--crm .admin-dashboard-body-surface {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+  }
 }
 
 .admin-dashboard h1 {
@@ -3495,4 +3645,85 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   text-align: center;
   color: var(--text-secondary);
   font-size: 14px;
+}
+.admin-load-error {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+  color: var(--text-primary);
+}
+
+.admin-load-error span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.admin-load-error button {
+  justify-self: start;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 13px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-date-field {
+  display: grid;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-date-range-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-week-compare__delta--new {
+  color: #2563eb;
+}
+
+.admin-super-sede-edit__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-super-sede-edit__grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-super-sede-edit__grid input {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 11px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.admin-form-error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .admin-super-sede-edit__grid { grid-template-columns: 1fr; }
 }

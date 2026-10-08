@@ -21,6 +21,15 @@ import {
   formatCategoriaEdadTorneo,
   torneoTipoCompetenciaDb,
 } from '../utils/torneoFormatters';
+import {
+  PROGRAMA_FILTRO_TODOS,
+  PROGRAMA_NEXT_GENERATION,
+  PROGRAMA_PADBOL,
+  filtrarTorneos,
+  torneoEsNextGenerationUI,
+} from '../utils/torneoProgramaUI';
+import { TORNEO_CATEGORIAS_EDAD } from '../constants/torneoCategoriasEdad';
+import { TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
 import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
 import {
@@ -202,6 +211,10 @@ export default function TorneosPublicos() {
   const [userPos, setUserPos] = useState(null);
   const [geoStatus, setGeoStatus] = useState('idle');
   const [torneoSearchQuery, setTorneoSearchQuery] = useState('');
+  // Filtros por eje: programa (Next Generation / Padbol), categoría de edad y nivel deportivo.
+  const [filtroProgramaTorneo, setFiltroProgramaTorneo] = useState(PROGRAMA_FILTRO_TODOS);
+  const [filtroCategoriaEdadTorneo, setFiltroCategoriaEdadTorneo] = useState(PROGRAMA_FILTRO_TODOS);
+  const [filtroNivelTorneo, setFiltroNivelTorneo] = useState(PROGRAMA_FILTRO_TODOS);
   const torneoSearchInputRef = useRef(null);
   const [filtroEstadoTorneo, setFiltroEstadoTorneo] = useState('todos');
   const [vistaTorneosTab, setVistaTorneosTab] = useState('activos');
@@ -427,9 +440,26 @@ export default function TorneosPublicos() {
     [torneosTrasFiltroEstado]
   );
 
+  // Eje programa / edad / nivel (independiente del estado y del deporte).
+  const torneosTrasFiltroEjes = useMemo(
+    () =>
+      filtrarTorneos(
+        vistaTorneosTab === 'activos' ? torneosTrasFiltroEstadoActivos : torneosTrasFiltroEstado,
+        { programa: filtroProgramaTorneo, categoriaEdad: filtroCategoriaEdadTorneo, nivel: filtroNivelTorneo }
+      ),
+    [
+      torneosTrasFiltroEstado,
+      torneosTrasFiltroEstadoActivos,
+      filtroProgramaTorneo,
+      filtroCategoriaEdadTorneo,
+      filtroNivelTorneo,
+      vistaTorneosTab,
+    ]
+  );
+
   const torneosPorBusqueda = useMemo(() => {
     const q = normalizeSearchText(torneoSearchQuery);
-    const base = vistaTorneosTab === 'activos' ? torneosTrasFiltroEstadoActivos : torneosTrasFiltroEstado;
+    const base = torneosTrasFiltroEjes;
     if (!q) return base;
     return base.filter((t) => {
       const sede = sedesMap[String(t.sede_id)];
@@ -438,7 +468,7 @@ export default function TorneosPublicos() {
       );
       return blob.includes(q);
     });
-  }, [torneosTrasFiltroEstado, torneosTrasFiltroEstadoActivos, torneoSearchQuery, sedesMap, vistaTorneosTab]);
+  }, [torneosTrasFiltroEjes, torneoSearchQuery, sedesMap]);
 
   const torneosFinalizadosFiltrados = useMemo(() => {
     const q = normalizeSearchText(torneoSearchQuery);
@@ -729,6 +759,12 @@ export default function TorneosPublicos() {
                     }),
                   })}
                 />
+                {torneoEsNextGenerationUI(torneo) && (
+                  <Row
+                    icon="🌍"
+                    label={t('torneos.vista.programa.next_generation', { defaultValue: 'FIPA Next Generation' })}
+                  />
+                )}
                 {(() => {
                   const max =
                     torneo.cupos_maximos != null && String(torneo.cupos_maximos).trim() !== ''
@@ -1133,6 +1169,61 @@ export default function TorneosPublicos() {
             </div>
           </div>
         ) : null}
+
+        {/* Filtros visibles por programa, categoría de edad y nivel deportivo */}
+        <div
+          role="group"
+            aria-label={t('torneos.vista.filtros.programa')}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '8px',
+              marginTop: '10px',
+            }}
+          >
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+              <span>{t('torneos.vista.filtros.programa')}</span>
+              <select
+                value={filtroProgramaTorneo}
+                onChange={(e) => setFiltroProgramaTorneo(e.target.value)}
+                style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '13px' }}
+              >
+                <option value={PROGRAMA_FILTRO_TODOS}>{t('torneos.vista.filtros.todos')}</option>
+                <option value={PROGRAMA_NEXT_GENERATION}>{t('torneos.vista.programa.next_generation', { defaultValue: 'FIPA Next Generation' })}</option>
+                <option value={PROGRAMA_PADBOL}>{t('torneos.vista.programa.padbol', { defaultValue: 'Padbol' })}</option>
+              </select>
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+              <span>{t('torneos.vista.filtros.categoriaEdad')}</span>
+              <select
+                value={filtroCategoriaEdadTorneo}
+                onChange={(e) => setFiltroCategoriaEdadTorneo(e.target.value)}
+                style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '13px' }}
+              >
+                <option value={PROGRAMA_FILTRO_TODOS}>{t('torneos.vista.filtros.todos')}</option>
+                {TORNEO_CATEGORIAS_EDAD.filter((c) => c.ofrecida).map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {t(`torneos.vista.categoriaEdad.${c.value}`, { defaultValue: c.labelEs })}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+              <span>{t('torneos.vista.filtros.nivel')}</span>
+              <select
+                value={filtroNivelTorneo}
+                onChange={(e) => setFiltroNivelTorneo(e.target.value)}
+                style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '13px' }}
+              >
+                <option value={PROGRAMA_FILTRO_TODOS}>{t('torneos.vista.filtros.todos')}</option>
+                {TORNEO_CATEGORIA_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {t(`torneos.vista.categoriaNivel.${o.value}`, { defaultValue: o.label })}
+                  </option>
+                ))}
+              </select>
+            </label>
+        </div>
 
         {tickerSponsors?.length > 0 ? (
           <div style={{ marginBottom: '14px' }}>

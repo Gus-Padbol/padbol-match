@@ -2,13 +2,13 @@
 export const GENERO_JUGADOR_VALUES = ['masculino', 'femenino', 'otro', 'open'];
 
 /** Categoría deportiva masculina (columna `nivel`): lista histórica completa. */
-export const CATEGORIAS_NIVEL_MASCULINO = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+export const CATEGORIAS_NIVEL_MASCULINO = ['Principiante', '6ta', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
 /** Categorías femeninas (lista aparte). */
-export const CATEGORIAS_NIVEL_FEMENINO = ['Principiante', '3ra', '2da', '1ra', 'Elite'];
+export const CATEGORIAS_NIVEL_FEMENINO = ['Principiante', '6ta', '3ra', '2da', '1ra', 'Elite'];
 
 /** Orden de presentación para la lista combinada (Otro / Open) y filtros globales. */
-const ORDEN_CATEGORIAS = ['Principiante', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
+const ORDEN_CATEGORIAS = ['Principiante', '6ta', '5ta', '4ta', '3ra', '2da', '1ra', 'Elite'];
 
 function categoriasCombinadas() {
   const set = new Set([...CATEGORIAS_NIVEL_MASCULINO, ...CATEGORIAS_NIVEL_FEMENINO]);

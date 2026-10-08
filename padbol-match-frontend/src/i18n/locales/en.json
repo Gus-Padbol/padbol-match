@@ -368,6 +368,10 @@
       "competitionTypeLabel": "Tournament division (Male / Female / Mixed)", "competitionTypeAria": "Tournament division",
       "competitionTypeHint": "Defines who can register. This is separate from the fixture format, such as Round Robin.",
       "ageCategoryLabel": "Age category", "ageCategoryAria": "Tournament age category", "categoryLabel": "Category",
+      "ageCutoffLabel": "Age cutoff date (optional)",
+      "ageCutoffHint": "Used to calculate players' age. If empty, the tournament start date is used, and the current date if there is none.",
+      "programaNextGenerationHint": "Youth category: this tournament belongs to the FIPA Next Generation program (U13/U15/U17).",
+      "programaPadbolHint": "Adult category: this tournament belongs to Padbol. The sports level (Beginner to Elite) is independent from age.",
       "fixtureFormatLabel": "Fixture format", "initialStatusLabel": "Initial tournament status",
       "initialStatusHint": "Upcoming means planning. You can open registration now or later from the admin panel.",
       "teamsPerGroupLabel": "Teams per group", "qualifiersPerGroupLabel": "Qualifiers per group", "bestThirdsLabel": "Best third-place qualifiers",
@@ -514,10 +518,32 @@
         "mixto": "Mixed"
       },
       "categoriaEdad": {
-        "sub_18": "Under 18",
-        "open": "Open",
-        "master_40": "Master 40",
-        "master_50": "Master 50"
+        "u13": "U13",
+        "u15": "U15",
+        "u17": "U17",
+        "open": "Adults / Open",
+        "master_50": "50+ (special division)",
+        "sub_18": "Under 18 (legacy)",
+        "master_40": "Masters 40+ (legacy)"
+      },
+      "categoriaEdadGrupo": {
+        "nextGeneration": "Next Generation (youth)",
+        "padbol": "Padbol (adults)",
+        "divisionEspecial": "Special division",
+        "legado": "Legacy"
+      },
+      "programa": {
+        "next_generation": "FIPA Next Generation",
+        "padbol": "Padbol"
+      },
+      "filtros": {
+        "programa": "Program",
+        "todos": "All",
+        "categoriaEdad": "Age category",
+        "nivel": "Sports level"
+      },
+      "nextGeneration": {
+        "padboleros": "Padbolers"
       },
       "categoriaNivel": {
         "Libre": "Open (all categories)",
@@ -760,6 +786,11 @@
     "badgeSuspended": "🚫 Suspended",
     "admin": {
       "intro": "Players with an active suspension due to repeated cancellations.",
+      "criterionTitle": "Automatic rule",
+      "criterionBody": "Five cancellations within the last 30 days trigger a seven-day suspension. This screen shows active suspensions only.",
+      "refresh": "Refresh suspensions",
+      "colReason": "Reason",
+      "repeatedCancellationReason": "Repeated cancellations",
       "loading": "Loading suspensions…",
       "loadError": "Could not load suspensions",
       "empty": "No suspended players at the moment.",
@@ -1464,6 +1495,10 @@
       "saveOk": "✅ Save",
       "saveDisk": "Save",
       "validationApprove": "✅ Approve",
+      "validationReject": "Reject",
+      "validationRejectConfirm": "Reject this validation? The player will remain registered and may correct their details.",
+      "validationRejectReason": "Validation rejected by administration",
+      "validationRejectError": "The validation could not be rejected.",
       "validationChangeCategory": "✏️ Change category",
       "validationViewProfile": "View profile",
       "validationSearchLabel": "Search by name, surname or email",

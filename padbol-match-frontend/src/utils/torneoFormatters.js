@@ -2,6 +2,8 @@
  * Etiquetas amigables para `tipo_torneo` y `nivel_torneo` guardados en Supabase.
  */
 
+import { TORNEO_CATEGORIAS_EDAD } from '../constants/torneoCategoriasEdad';
+
 function capitalizeFirstAfterUnderscores(raw) {
   const s = String(raw || '').trim();
   if (!s) return '—';
@@ -72,13 +74,17 @@ export function formatGeneroCompetenciaTorneo(raw) {
   return capitalizeFirstAfterUnderscores(raw);
 }
 
-/** `torneos.categoria_edad`: sub_18 | open | master_40 | master_50 */
+/**
+ * `torneos.categoria_edad`:
+ * u13 | u15 | u17 (Next Generation) | open | master_30 | master_40 | master_50 | sub_18 (legado)
+ *
+ * Etiquetas desde el registro canónico (`constants/torneoCategoriasEdad`), así los valores
+ * nuevos no requieren tocar cada vista.
+ */
 export function formatCategoriaEdadTorneo(raw) {
   const v = String(raw || '').trim().toLowerCase();
   if (!v) return '—';
-  if (v === 'sub_18') return 'Sub 18';
-  if (v === 'open') return 'Open';
-  if (v === 'master_40') return 'Máster +40';
-  if (v === 'master_50') return 'Máster +50';
+  const meta = TORNEO_CATEGORIAS_EDAD.find((c) => c.value === v);
+  if (meta) return meta.labelEs;
   return capitalizeFirstAfterUnderscores(raw);
 }

@@ -42,6 +42,7 @@ import {
   normalizeTorneoDeporte,
 } from '../utils/torneoDeporteFormato';
 import { useSafeTranslation } from '../i18n/tSafe';
+import { esCategoriaJuvenil } from '../constants/torneoCompetencia';
 
 function formatSedeTorneoOption(sede) {
   const nombre = String(sede?.nombre || '').trim();
@@ -56,6 +57,7 @@ const EMPTY_TORNEO_FORM = () => ({
   categoria: CATEGORIA_TORNEO_DEFAULT,
   tipo_competencia: TORNEO_TIPO_COMPETENCIA_DEFAULT,
   categoria_edad: TORNEO_CATEGORIA_EDAD_DEFAULT,
+  fecha_corte_edad: '',
   tipo_torneo: 'round_robin',
   fecha_inicio: '',
   fecha_fin: '',
@@ -269,6 +271,11 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       categoria: String(formData.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
       tipo_competencia: String(formData.tipo_competencia || '').trim() || TORNEO_TIPO_COMPETENCIA_DEFAULT,
       categoria_edad: String(formData.categoria_edad || '').trim() || TORNEO_CATEGORIA_EDAD_DEFAULT,
+      // Se omite si está vacía: no referenciar la columna antes de aplicar la migración.
+      ...(() => {
+        const corte = String(formData.fecha_corte_edad || '').trim();
+        return corte ? { fecha_corte_edad: corte } : {};
+      })(),
       tipo_torneo: formData.tipo_torneo,
       estado: mapEstadoTorneoFormParaApi(formData.estado || 'proximo'),
       fecha_inicio: formData.fecha_inicio,
@@ -554,6 +561,26 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                     <option key={o.value} value={o.value}>{t(`torneos.vista.categoriaEdad.${o.value}`, { defaultValue: o.label })}</option>
                   ))}
                 </select>
+                <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
+                  {esCategoriaJuvenil(formData.categoria_edad)
+                    ? t('torneos.create.programaNextGenerationHint')
+                    : t('torneos.create.programaPadbolHint')}
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="torneo-fecha-corte-edad">{t('torneos.create.ageCutoffLabel')}</label>
+                <input
+                  id="torneo-fecha-corte-edad"
+                  type="date"
+                  name="fecha_corte_edad"
+                  value={formData.fecha_corte_edad}
+                  onChange={handleChange}
+                  aria-describedby="torneo-fecha-corte-edad-hint"
+                />
+                <small id="torneo-fecha-corte-edad-hint" style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
+                  {t('torneos.create.ageCutoffHint')}
+                </small>
               </div>
 
               <div className="form-group">

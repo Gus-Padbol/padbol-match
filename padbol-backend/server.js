@@ -57,6 +57,11 @@ import { registerSedeIncentiveRoutes } from './lib/sedeIncentives.js';
 import { registerFipaDocumentLibraryRoutes, strictSuperAdminRole } from './lib/fipaDocumentLibrary.js';
 import { commercialCommissionMinor, commercialCommissionPercent } from './lib/commercialPlanCommission.js';
 import {
+  TORNEO_CATEGORIA_EDAD_VALORES,
+  normalizeTorneoCategoriaEdad as normalizeTorneoCategoriaEdadCanonica,
+  normalizeTorneoFechaCorteEdad,
+} from './lib/torneoCategoriasEdad.js';
+import {
   isMercadoPagoTestAccessToken,
   mercadoPagoGlobalAccessToken,
   resolveMercadoPagoInitPoint,
@@ -6536,7 +6541,10 @@ function jugadoresRegistradosCountBuscaDupla(equipoRow) {
 // ===== TORNEOS =====
 
 const TORNEO_GENERO_COMP_VALID = new Set(['masculino', 'femenino', 'mixto']);
-const TORNEO_CATEGORIA_EDAD_VALID = new Set(['sub_18', 'open', 'master_40', 'master_50']);
+// Categorías por edad/programa: Next Generation (u13/u15/u17), Padbol adultos (open),
+// división especial opcional (master_50) y legado histórico (sub_18, master_40).
+// Fuente única: lib/torneoCategoriasEdad.js
+const TORNEO_CATEGORIA_EDAD_VALID = new Set(TORNEO_CATEGORIA_EDAD_VALORES);
 
 function normalizeTorneoTipoCompetencia(raw) {
   const s = String(raw || '').trim().toLowerCase();
@@ -6545,11 +6553,10 @@ function normalizeTorneoTipoCompetencia(raw) {
 }
 
 function normalizeTorneoCategoriaEdad(raw) {
-  const s = String(raw || '').trim().toLowerCase();
-  if (!s) return null;
-  if (TORNEO_CATEGORIA_EDAD_VALID.has(s)) return s;
-  return null;
+  return normalizeTorneoCategoriaEdadCanonica(raw);
 }
+
+// `normalizeTorneoFechaCorteEdad` se importa desde lib/torneoCategoriasEdad.js (probado allí).
 
 const TORNEO_DEPORTE_VALID = new Set([
   'padbol',
@@ -7312,6 +7319,7 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       genero_competencia: legacyGeneroCompBody,
       tipo_torneo_genero: tipoTorneoGeneroBody,
       categoria_edad: categoriaEdadBody,
+      fecha_corte_edad: fechaCorteEdadBody,
       deporte: deporteBody,
       formato_equipo: formatoEquipoBody,
       continente_sede: continenteSedeBody,
@@ -7335,6 +7343,7 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
           : tipoTorneoGeneroBody;
     const tipoComp = normalizeTorneoTipoCompetencia(tipoCompRaw) ?? 'masculino';
     const catEdad = normalizeTorneoCategoriaEdad(categoriaEdadBody) ?? 'open';
+    const fechaCorteEdad = normalizeTorneoFechaCorteEdad(fechaCorteEdadBody);
     const deporteNorm = normalizeTorneoDeporteForDb(deporteBody);
     const formatoEq = resolveTorneoFormatoEquipoForDb(deporteNorm, formatoEquipoBody);
     const continenteSede = String(continenteSedeBody || '').trim().toLowerCase();
@@ -7361,6 +7370,9 @@ app.post('/api/torneos', checkSuscripcionActiva, async (req, res) => {
       es_multisede,
       created_by,
     };
+    // Solo se escribe si hay fecha de corte: así el alta sigue funcionando aunque la migración
+    // `20260924120000_next_generation_categorias_edad.sql` todavía no esté aplicada.
+    if (fechaCorteEdad) row.fecha_corte_edad = fechaCorteEdad;
     const montoInscripcionParsed = parseTorneoOptionalAmount(
       inscripcion_monto !== undefined ? inscripcion_monto : costo_inscripcion
     );
@@ -8011,6 +8023,7 @@ async function handleTorneoPatchOrPut(req, res) {
       genero_competencia: legacyGeneroCompPatch,
       tipo_torneo_genero: tipoTorneoGeneroPatch,
       categoria_edad: categoriaEdadPatch,
+      fecha_corte_edad: fechaCorteEdadPatch,
       deporte,
       formato_equipo: formatoEquipoPatch,
       continente_sede: continenteSedePatch,
@@ -8145,9 +8158,22 @@ async function handleTorneoPatchOrPut(req, res) {
       } else {
         const ce = normalizeTorneoCategoriaEdad(categoriaEdadPatch);
         if (!ce) {
-          return res.status(400).json({ error: 'categoria_edad inválida (sub_18, open, master_40, master_50)' });
+          return res.status(400).json({
+            error: 'categoria_edad inválida (u13, u15, u17, open, master_50, sub_18, master_40)',
+          });
         }
         patch.categoria_edad = ce;
+      }
+    }
+    if (fechaCorteEdadPatch !== undefined) {
+      if (fechaCorteEdadPatch === null || fechaCorteEdadPatch === '') {
+        patch.fecha_corte_edad = null;
+      } else {
+        const fce = normalizeTorneoFechaCorteEdad(fechaCorteEdadPatch);
+        if (!fce) {
+          return res.status(400).json({ error: 'fecha_corte_edad inválida (formato YYYY-MM-DD)' });
+        }
+        patch.fecha_corte_edad = fce;
       }
     }
     if (deporte !== undefined || formatoEquipoPatch !== undefined) {

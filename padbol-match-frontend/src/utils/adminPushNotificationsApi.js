@@ -41,13 +41,13 @@ export function searchAdminPushPlayers({ apiBaseUrl, accessToken, q }) {
   return adminPushFetch({ apiBaseUrl, accessToken, path: `/api/push/admin-search-players?q=${qs}` });
 }
 
-export function sendAdminPushNotification({ apiBaseUrl, accessToken, title, body, segment, idempotencyKey }) {
+export function sendAdminPushNotification({ apiBaseUrl, accessToken, title, body, segment, destination, idempotencyKey }) {
   return adminPushFetch({
     apiBaseUrl,
     accessToken,
     path: '/api/push/send-admin',
     method: 'POST',
-    body: { title, body, segment, idempotencyKey },
+    body: { title, body, segment, destination, idempotencyKey },
   });
 }
 

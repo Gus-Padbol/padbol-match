@@ -990,7 +990,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
           color: 'var(--text-primary)',
         }}
       >
-        Cards globales (legacy)
+        Tarjetas globales anteriores
       </h3>
       {msg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(msg) }}>

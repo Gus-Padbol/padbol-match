@@ -68,7 +68,9 @@ export function safePct(part, total) {
 export function pctCambioPeriodo(actual, anterior) {
   const a = Number(actual) || 0;
   const p = Number(anterior) || 0;
-  if (p === 0) return a > 0 ? 100 : 0;
+  // Un período anterior en cero no tiene una variación porcentual definida.
+  // `null` permite que la UI muestre "Nuevo" en vez del engañoso "+100%".
+  if (p === 0) return a > 0 ? null : 0;
   return Math.round(((a - p) / p) * 100);
 }
 
