@@ -288,5 +288,10 @@
     padding: 9px;
     text-align: left;
   }
-  .wa-area-tabs--top button span { overflow-wrap: anywhere; }
+  .wa-area-tabs--top button span { overflow-wrap: normal; word-break: normal; }
+}
+
+/* Preserve complete channel names on narrow phones. */
+@media (max-width: 480px) {
+  .wa-area-tabs--top { grid-template-columns: minmax(0, 1fr); }
 }

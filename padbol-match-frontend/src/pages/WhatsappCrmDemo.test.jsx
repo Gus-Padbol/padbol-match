@@ -95,6 +95,38 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.handoff).not.toHaveBeenCalled();
   });
 
+  it('ofrece respuesta por email solo cuando el servidor habilita el canal para un operador', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, emailSendEnabled: true, whatsappSendEnabled: false });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'email-capability', estado: 'nuevo', source_channel: 'email', origin: 'web_form:contacto', contact: { nombre: 'Contacto fixture', email_normalized: 'contact@example.invalid' }, inbound_body: 'Consulta fixture' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.reply.mockResolvedValue({ status: 'sent' });
+    const { container } = render(<WhatsappCrmDemo />);
+    const send = await screen.findByRole('button', { name: 'Enviar por email' });
+    expect(send).toBeDisabled();
+    expect(container.querySelector('textarea')).toBeEnabled();
+    fireEvent.change(container.querySelector('textarea'), { target: { value: 'Respuesta fixture' } });
+    fireEvent.click(send);
+    expect(await screen.findByText('Mensaje enviado por email.')).toBeInTheDocument();
+    expect(crmAdminApi.reply).toHaveBeenCalledWith('qa-token', 'email-capability', 'Respuesta fixture');
+    expect(screen.getByText('HABILITADO')).toBeInTheDocument();
+  });
+
+  it('una capacidad email habilitada no otorga permisos de operación al auditor', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, emailSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'audit-email', estado: 'nuevo', source_channel: 'email', contact: { email_normalized: 'contact@example.invalid' } }]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByRole('button', { name: 'Enviar por email' })).toBeDisabled();
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+  });
+
+  it('no ofrece email si falta la capacidad del servidor o el destinatario registrado', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, emailSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'no-address', estado: 'nuevo', source_channel: 'email', contact: {} }]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByRole('button', { name: 'Respuesta no habilitada' })).toBeDisabled();
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+  });
+
   it('acepta la bandeja operativa envuelta en items', async () => {
     crmAdminApi.permissions.mockResolvedValue({
       role: 'operator',
