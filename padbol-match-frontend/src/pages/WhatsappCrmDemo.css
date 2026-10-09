@@ -299,6 +299,7 @@
 /* Long form titles, contact addresses and chips must stay inside the mobile thread. */
 @media (max-width: 720px) {
   .wa-messages { min-width: 0; }
+  .wa-day { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
   .wa-message, .wa-system, .wa-lead-card { min-width: 0; overflow-wrap: anywhere; }
   .wa-lead-card header { flex-wrap: wrap; }
   .wa-lead-card header > span { max-width: 100%; }
