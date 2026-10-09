@@ -1,3 +1,4 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
@@ -346,14 +347,7 @@ export default function AdminNotificacionesSection({
       || `${DESTINATION_TYPE_LABELS[destination.type] || destination.type} #${destination.entityId || '—'}`;
   };
 
-  const formatDate = (iso) => {
-    if (!iso) return '—';
-    try {
-      return new Date(iso).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' });
-    } catch {
-      return iso;
-    }
-  };
+  const formatDate = (iso) => formatAdminDate(iso, { locale, withTime: true });
 
   if (loading) {
     return <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{t('admin.loading')}</p>;

@@ -1,3 +1,4 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { fetchAdminListaEsperaGeneral } from '../utils/listaEsperaAdminApi';
@@ -11,16 +12,7 @@ function labelDeporte(key) {
 }
 
 function formatFechaAnotacion(iso, locale) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString(locale, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatAdminDate(iso, { locale, withTime: true });
 }
 
 export default function AdminSedeListaEsperaTorneosSection({ apiBaseUrl, accessToken, sedeId }) {

@@ -1,3 +1,4 @@
+import { fetchBuscaDuplaList } from '../utils/torneoBuscaDuplaApi';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -242,8 +243,8 @@ export default function TorneoVista() {
     if (!Number.isFinite(idNum)) return;
     setBuscaDuplaLoading(true);
     try {
-      const pub = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla`);
-      if (pub.ok) {
+      const pub = await fetchBuscaDuplaList(apiBaseUrlTorneo, torneoId, session?.access_token);
+      if (pub?.ok) {
         const j = await pub.json();
         setBuscaDuplaList(Array.isArray(j) ? j : []);
       } else {

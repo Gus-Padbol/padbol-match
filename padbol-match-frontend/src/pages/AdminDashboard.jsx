@@ -1,3 +1,4 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
 import SedeDurationSummary from '../components/SedeDurationSummary';
 import { resolveReservaMoneda } from '../utils/resolveReservaMoneda';
 import { stripAdminEmoji } from '../i18n/adminTranslation';
@@ -333,10 +334,7 @@ function mergeJugadoresTempFotos(jugadores, equipoLetter, temps) {
 }
 
 function formatScoreboardPartidoFecha(raw) {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return String(raw);
-  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+  return formatAdminDate(raw, { locale: padbolLangToIntlLocale(i18n.language), withTime: true });
 }
 
 function sortSbPartidosRecent(list) {
@@ -728,14 +726,7 @@ function supportWhatsAppUrlFromEnv() {
 }
 
 function formatProximoCobroAdmin(iso) {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' });
-  } catch {
-    return '—';
-  }
+  return formatAdminDate(iso, { locale: padbolLangToIntlLocale(i18n.language), withTime: true });
 }
 
 function AdminSuscripcionPayInner({ clientSecret, onSuccess, onClose }) {
@@ -1189,17 +1180,7 @@ function canjeJugadorDisplay(row) {
 }
 
 function canjeFechaCreacion(row) {
-  const raw = row?.created_at ?? row?.fecha_creacion ?? row?.creado_en;
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return String(raw).slice(0, 16);
-  return d.toLocaleString('es-AR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatAdminDate(row?.created_at ?? row?.fecha_creacion ?? row?.creado_en, { locale: padbolLangToIntlLocale(i18n.language), withTime: true });
 }
 
 function canjeCostoPadcoins(row) {
@@ -1797,17 +1778,7 @@ function padcoinsMovimientoDescripcionVisible(raw) {
 }
 
 function formatPadcoinsMovFechaCorta(raw, locale = 'es-AR') {
-  const src = raw?.fecha ?? raw?.created_at;
-  if (!src) return '—';
-  const d = new Date(src);
-  if (Number.isNaN(d.getTime())) return String(src).slice(0, 16);
-  return d.toLocaleString(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatAdminDate(raw?.fecha ?? raw?.created_at, { locale, withTime: true });
 }
 
 function padcoinsMovTipoBadge(row, t) {
@@ -2352,10 +2323,7 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
 
 // "2026-02-26" → "26 Feb 2026"
 function formatFecha(str) {
-  if (!str) return '';
-  const [y, m, d] = str.split('-');
-  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  return `${parseInt(d)} ${meses[parseInt(m) - 1]} ${y}`;
+  return formatAdminDate(str, { locale: padbolLangToIntlLocale(i18n.language), empty: '' });
 }
 
 function torneoEnCursoConFinVencido(torneo, now = new Date()) {
@@ -2377,10 +2345,7 @@ function formatFechaDia(str, locale = 'es-AR') {
 
 // ISO timestamptz → fecha y hora local (listado historial reservas)
 function formatReservaHistorialFechaHora(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return String(iso);
-  return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+  return formatAdminDate(iso, { locale: padbolLangToIntlLocale(i18n.language), withTime: true });
 }
 
 function etiquetaQuienReservaHistorial(changedBy) {
@@ -18393,10 +18358,7 @@ export default function AdminDashboard({
                       let venceTxt = '—';
                       try {
                         if (inv.expires_at) {
-                          venceTxt = new Date(inv.expires_at).toLocaleString('es-AR', {
-                            dateStyle: 'short',
-                            timeStyle: 'short',
-                          });
+                          venceTxt = formatAdminDate(inv.expires_at, { locale: padbolLangToIntlLocale(i18n.language), withTime: true });
                         }
                       } catch {
                         venceTxt = '—';
@@ -18960,7 +18922,7 @@ export default function AdminDashboard({
                         </div>
                       ) : null}
                       <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        #{row.id} · {row.created_at ? new Date(row.created_at).toLocaleString('es-AR') : '—'}
+                        #{row.id} · {row.created_at ? formatAdminDate(row.created_at, { locale: padbolLangToIntlLocale(i18n.language), withTime: true }) : '—'}
                       </div>
                     </div>
                     {row.kind === 'sede_nacional' && sp ? (

@@ -1,3 +1,4 @@
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
@@ -102,7 +103,8 @@ export default function AdminMembresiasSection({
   sedesOptions = [],
   sedeFlag = () => '',
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = padbolLangToIntlLocale(i18n.language);
   const tr = useCallback(
     (key, fallback, params) => {
       const raw = t(`admin.membresias.${key}`, fallback, params || undefined);
@@ -822,7 +824,7 @@ export default function AdminMembresiasSection({
                           </td>
                           <td style={tdStyle()}>{p.cupo != null ? p.cupo : '—'}</td>
                           <td style={tdStyle({ whiteSpace: 'nowrap' })}>
-                            {formatMembresiaFecha(p.vigencia_desde)} → {formatMembresiaFecha(p.vigencia_hasta)}
+                            {formatMembresiaFecha(p.vigencia_desde, dateLocale)} → {formatMembresiaFecha(p.vigencia_hasta, dateLocale)}
                           </td>
                           <td style={tdStyle()}>—</td>
                           <td style={tdStyle({ whiteSpace: 'normal', minWidth: 140 })}>
@@ -978,8 +980,8 @@ export default function AdminMembresiasSection({
                               </span>
                             </td>
                             <td style={tdStyle({ textTransform: 'capitalize' })}>{m.origen || '—'}</td>
-                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.inicio)}</td>
-                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.vencimiento)}</td>
+                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.inicio, dateLocale)}</td>
+                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.vencimiento, dateLocale)}</td>
                             <td style={tdStyle()}>
                               {m.renovacion_automatica ? tr('yes', 'Sí') : tr('no', 'No')}
                               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -1372,7 +1374,7 @@ export default function AdminMembresiasSection({
                 <strong>{tr('fieldVencimiento', 'Vencimiento')}</strong>
                 <div style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
                   {assignVencimientoPreview
-                    ? formatMembresiaFecha(assignVencimientoPreview)
+                    ? formatMembresiaFecha(assignVencimientoPreview, dateLocale)
                     : tr('vencimientoHint', 'Se calcula según la duración del plan.')}
                 </div>
               </div>
@@ -1461,11 +1463,11 @@ export default function AdminMembresiasSection({
               </div>
               <div>
                 <dt style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{tr('colInicio', 'Inicio')}</dt>
-                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.inicio)}</dd>
+                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.inicio, dateLocale)}</dd>
               </div>
               <div>
                 <dt style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{tr('colVencimiento', 'Vencimiento')}</dt>
-                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.vencimiento)}</dd>
+                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.vencimiento, dateLocale)}</dd>
               </div>
             </dl>
             <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>{tr('benefitsApplied', 'Beneficios')}</h4>

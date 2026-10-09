@@ -1,3 +1,4 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
 import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -46,17 +47,7 @@ function inicialProfesor(p) {
 }
 
 function formatFecha(iso) {
-  const raw = String(iso || '').trim();
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString('es-AR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatAdminDate(iso, { withTime: true });
 }
 
 function formatFechaNac(raw) {

@@ -1,3 +1,4 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
 import { adminErrorMessage } from './adminErrorMessage';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -205,7 +206,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
       </div>
       <div className="incentive-dashboard__objectives"><h3>Actividad por objetivo</h3><ul>{GOALS.map(goal => <ObjectiveRow key={goal[0]} goal={goal} evaluation={report.evaluation} />)}</ul><p className="incentive-dashboard__history">Las mismas parejas y los mismos jugadores pueden participar en meses siguientes.</p></div>
       <TournamentEvidence evidence={report.evidence} />
-      <p className="incentive-dashboard__history">Consulta actualizada el {current.receivedAt.toLocaleString('es')}. Los meses anteriores se recalculan con los registros disponibles; no son informes cerrados.</p>
+      <p className="incentive-dashboard__history">Consulta actualizada el {formatAdminDate(current.receivedAt, { withTime: true })}. Los meses anteriores se recalculan con los registros disponibles; no son informes cerrados.</p>
     </> : null}
     {canConfigure ? <details className="incentive-dashboard__configuration">
       <summary>{program ? 'Configurar los objetivos del borrador' : 'Crear un borrador del programa'}</summary>

@@ -1,3 +1,4 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
 import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
@@ -13,10 +14,7 @@ function resenaDisplayName(r, t) {
 }
 
 function formatFecha(iso, locale) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+  return formatAdminDate(iso, { locale });
 }
 
 function EstrellasLectura({ value, t }) {

@@ -1,3 +1,4 @@
+import { formatAdminDate } from './adminDateFormat';
 import { getApiBaseUrl } from './apiPublicBaseUrl';
 /**
  * Cliente Admin para Membresías por sede (/api/admin/membresias/*).
@@ -231,11 +232,8 @@ export function accionesDisponiblesParaEstado(estado) {
   return [];
 }
 
-export function formatMembresiaFecha(raw) {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return String(raw).slice(0, 10);
-  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+export function formatMembresiaFecha(raw, locale = 'es-AR') {
+  return formatAdminDate(raw, { locale });
 }
 
 export function formatMembresiaPrecio(precio, moneda = 'ARS') {
