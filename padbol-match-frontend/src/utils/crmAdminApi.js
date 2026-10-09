@@ -32,7 +32,7 @@ export const crmAdminApi = {
     return request(`/api/admin/crm/inbox${qs ? `?${qs}` : ''}`, token);
   },
   get: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}`, token),
-  reply: (token, id, body) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/reply`, token, { method: 'POST', body: JSON.stringify({ body }) }),
+  reply: (token, id, body, requestId) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/reply`, token, { method: 'POST', body: JSON.stringify({ body, ...(requestId ? { requestId } : {}) }) }),
   handoff: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/handoff`, token, { method: 'POST' }),
   activities: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/activities`, token),
   addActivity: (token, id, activity) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/activities`, token, { method: 'POST', body: JSON.stringify(activity) }),

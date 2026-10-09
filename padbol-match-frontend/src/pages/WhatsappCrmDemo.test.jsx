@@ -29,6 +29,7 @@ jest.mock('../utils/crmAdminApi', () => ({
 
 describe('CRM histórico unificado', () => {
   beforeEach(() => {
+    global.crypto = require('crypto').webcrypto;
     jest.clearAllMocks();
     crmAdminApi.permissions.mockResolvedValue({
       role: 'superadmin',
@@ -107,8 +108,63 @@ describe('CRM histórico unificado', () => {
     fireEvent.change(container.querySelector('textarea'), { target: { value: 'Respuesta fixture' } });
     fireEvent.click(send);
     expect(await screen.findByText('Mensaje enviado por email.')).toBeInTheDocument();
-    expect(crmAdminApi.reply).toHaveBeenCalledWith('qa-token', 'email-capability', 'Respuesta fixture');
+    expect(crmAdminApi.reply).toHaveBeenCalledWith('qa-token', 'email-capability', 'Respuesta fixture', expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/));
     expect(screen.getByText('HABILITADO')).toBeInTheDocument();
+  });
+
+  it('conserva la identidad del email tras un error ambiguo y la renueva al editar o completar', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, emailSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'retry-email', estado: 'nuevo', source_channel: 'email', contact: { email_normalized: 'contact@example.invalid' } }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.reply.mockRejectedValueOnce(new Error('Envío no confirmado')).mockRejectedValueOnce(new Error('Envío no confirmado')).mockResolvedValue({ status: 'sent' });
+    const { container } = render(<WhatsappCrmDemo />);
+    const send = await screen.findByRole('button', { name: 'Enviar por email' });
+    const compose = container.querySelector('textarea');
+    fireEvent.change(compose, { target: { value: 'Consulta original' } });
+    fireEvent.click(send);
+    await screen.findByText('Envío no confirmado');
+    await waitFor(() => expect(send).toBeEnabled());
+    const firstId = crmAdminApi.reply.mock.calls[0][3];
+    fireEvent.click(send);
+    await waitFor(() => expect(crmAdminApi.reply).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(send).toBeEnabled());
+    expect(crmAdminApi.reply.mock.calls[1][3]).toBe(firstId);
+    fireEvent.change(compose, { target: { value: 'Consulta editada' } });
+    fireEvent.click(send);
+    await screen.findByText('Mensaje enviado por email.');
+    const editedId = crmAdminApi.reply.mock.calls[2][3];
+    expect(editedId).not.toBe(firstId);
+    expect(compose).toHaveValue('');
+    fireEvent.change(compose, { target: { value: 'Consulta editada' } });
+    fireEvent.click(send);
+    await waitFor(() => expect(crmAdminApi.reply).toHaveBeenCalledTimes(4));
+    expect(crmAdminApi.reply.mock.calls[3][3]).not.toBe(editedId);
+  });
+
+  it('limpia borrador, aviso y referencia al cambiar de contacto sin reutilizar texto privado', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, emailSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([
+      { id: 'contact-a', estado: 'nuevo', source_channel: 'email', contact: { nombre: 'Ada fixture', email_normalized: 'a@example.invalid' } },
+      { id: 'contact-b', estado: 'nuevo', source_channel: 'email', contact: { nombre: 'Ben fixture', email_normalized: 'b@example.invalid' } },
+    ]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.reply.mockRejectedValue(new Error('Envío no confirmado'));
+    const { container } = render(<WhatsappCrmDemo />);
+    const send = await screen.findByRole('button', { name: 'Enviar por email' });
+    fireEvent.change(container.querySelector('textarea'), { target: { value: 'Texto privado para Ada' } });
+    fireEvent.click(send);
+    await screen.findByText('Envío no confirmado');
+    expect(container.querySelector('textarea')).toHaveValue('Texto privado para Ada');
+    fireEvent.click(container.querySelectorAll('.wa-conversation')[1]);
+    expect(container.querySelector('textarea')).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Enviar por email' })).toBeDisabled();
+    expect(screen.queryByText('Envío no confirmado')).not.toBeInTheDocument();
+    fireEvent.click(container.querySelectorAll('.wa-conversation')[0]);
+    expect(container.querySelector('textarea')).toHaveValue('');
+    fireEvent.change(container.querySelector('textarea'), { target: { value: 'Texto privado para Ada' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar por email' }));
+    await waitFor(() => expect(crmAdminApi.reply).toHaveBeenCalledTimes(2));
+    expect(crmAdminApi.reply.mock.calls[1][3]).not.toBe(crmAdminApi.reply.mock.calls[0][3]);
   });
 
   it('una capacidad email habilitada no otorga permisos de operación al auditor', async () => {
