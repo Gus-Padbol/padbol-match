@@ -13,6 +13,7 @@ import {
   emptyPlanForm,
   fetchAdminMembresias,
   filterMembresiasClient,
+  formatMembresiaPrecio,
   normalizeMembresiasDirection,
   normalizeMembresiasListResponse,
   normalizeMembresiasSort,
@@ -282,4 +283,13 @@ describe('membresiasAdminApi — paginación server-side', () => {
   it('45. no se toca Backend', () => {
     expect(apiSrc).not.toMatch(/padbol-backend\/src|require\('\.\.\/\.\.\/padbol-backend/);
   });
+});
+
+
+test('el importe de un plan conserva la moneda original con código inequívoco', () => {
+  for (const moneda of ['ARS', 'USD', 'EUR']) {
+    const result = formatMembresiaPrecio(123.45, moneda);
+    expect(result).toContain(moneda);
+    expect(result).toContain('123,45');
+  }
 });

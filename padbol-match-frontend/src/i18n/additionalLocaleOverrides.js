@@ -799,6 +799,10 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
         },
         common: {
           loadingEllipsis: "Načítání…",
+          otherPlayerAccess: "Další přístupy: hráči a FIPA",
+          reviewPlayerJourneys: "Zkontrolovat cesty hráčů",
+          manageFipaPlayers: "Spravovat hráče FIPA",
+          reviewFipaDocuments: "Zkontrolovat přístup k dokumentům FIPA",
           operationFailed: "Operaci se nepodařilo dokončit. Zkuste to znovu.",
           classesLoadFailed: "Lekce se nepodařilo načíst. Zkuste to znovu.",
           configAreas: "Oblasti nastavení",

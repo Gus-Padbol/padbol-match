@@ -29,3 +29,19 @@ test('errores operativos se conservan y detalles internos se sustituyen',()=>{
  expect(adminErrorMessage(new Error('No tienes acceso a esta sede.'),'Error de carga')).toBe('No tienes acceso a esta sede.');
  expect(adminErrorMessage(new Error('Could not find table public.sede_programas_beneficios in schema cache'),'Error de carga')).toBe('Error de carga');
 });
+
+test('el selector respeta la ausencia de sede incluso si hay sedes disponibles', async () => {
+ fetchAdminJugadoresList.mockResolvedValue({ items: [], total: 0, total_pages: 1 });
+ render(<AdminJugadoresSection accessToken="fixture-token" isSuperAdmin sedesMap={{ 7: { id: 7, nombre: 'Club siete' } }} />);
+ expect(await screen.findByRole('alert')).toHaveTextContent('Selecciona una sede');
+ expect(fetchAdminJugadoresList).not.toHaveBeenCalled();
+ const venueSelector = screen.getByRole('combobox', { name: 'admin.jugadores.sedeLabel' });
+ fireEvent.change(venueSelector, { target: { value: '7' } });
+ expect(await screen.findByText('No hay jugadores con historial en esta sede.')).toBeInTheDocument();
+ expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(1);
+ fireEvent.change(venueSelector, { target: { value: '' } });
+ expect(await screen.findByRole('alert')).toHaveTextContent('Selecciona una sede');
+ expect(screen.queryByText('No hay jugadores con historial en esta sede.')).not.toBeInTheDocument();
+ expect(venueSelector).toHaveValue('');
+ expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(1);
+});

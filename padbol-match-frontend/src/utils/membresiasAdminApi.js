@@ -244,7 +244,8 @@ export function formatMembresiaPrecio(precio, moneda = 'ARS') {
   try {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: String(moneda || 'ARS'),
+      currency: String(moneda || 'ARS').trim().toUpperCase(),
+      currencyDisplay: 'code',
       maximumFractionDigits: 2,
     }).format(n);
   } catch {

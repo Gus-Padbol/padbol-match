@@ -1,6 +1,10 @@
 {
   "admin": {
     "common": {
+      "otherPlayerAccess": "Alte accesări: jucători și FIPA",
+      "reviewPlayerJourneys": "Verifică parcursurile jucătorilor",
+      "manageFipaPlayers": "Gestionează jucătorii FIPA",
+      "reviewFipaDocuments": "Verifică accesul la documentele FIPA",
       "operationFailed": "Operațiunea nu a putut fi finalizată. Încearcă din nou.",
       "classesLoadFailed": "Cursurile nu au putut fi încărcate. Încearcă din nou.",
       "configAreas": "Secțiuni de configurare",

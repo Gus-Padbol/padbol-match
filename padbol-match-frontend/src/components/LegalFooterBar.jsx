@@ -73,7 +73,6 @@ export default function LegalFooterBar() {
         <a href="https://padbol.com/company" style={linkBase}>
           {t('publicSite.footer.legalOwner')}
         </a>
-        .
       </p>
     </footer>
   );

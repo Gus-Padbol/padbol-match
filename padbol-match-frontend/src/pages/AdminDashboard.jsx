@@ -2606,9 +2606,9 @@ function etiquetaPaisFiltroMobile(valorRaw) {
   return nombre;
 }
 
-function sedeFlag(sede) {
-  if (!sede?.pais) return '';
-  return banderaEmojiDesdeNombrePais(sede.pais);
+function sedeFlag() {
+  // Plain country names render consistently on platforms without flag glyphs.
+  return '';
 }
 
 /** Filtro país super admin: valor del `<select>` vs `sede.pais` de la reserva. */
@@ -11048,13 +11048,12 @@ export default function AdminDashboard({
                       {analyticsGlobales.sedes_por_pais_top5.map((row) => {
                         const n = Number(row.cantidad) || 0;
                         const paisNombre = String(row.pais || '').trim();
-                        const flag = banderaEmojiDesdeNombrePais(paisNombre);
                         const nombreSinFlag = paisTextoSinBanderaInicial(paisNombre) || paisNombre;
                         const sedeLabel = n === 1 ? t('admin.metricas.oneVenue') : `${n.toLocaleString('es-AR')} sedes`;
                         return (
                           <li key={String(row.pais)}>
                             <strong>
-                              {flag ? `${flag} ${nombreSinFlag}`.trim() : nombreSinFlag}
+                              {nombreSinFlag}
                             </strong>
                             <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
                               {' '}
@@ -11636,9 +11635,8 @@ export default function AdminDashboard({
           <div style={{ display: 'grid', gap: '10px' }}>
             {torneosFiltradosAdminEstado.map(torneo => {
               const sede = sedesMap[torneo.sede_id];
-              const flag = sedeFlag(sede);
               const ciudadSede = String(sede?.ciudad || '').trim();
-              const paisSede = String(sede?.pais || '').trim();
+              const paisSede = paisTextoSinBanderaInicial(sede?.pais);
               const ubicacionSede = [ciudadSede, paisSede].filter(Boolean).join(', ');
               const NIVEL_COLOR = {
                 club:          { bg: '#e2e8f0', color: 'var(--text-secondary)' },
@@ -11994,7 +11992,6 @@ export default function AdminDashboard({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                          {flag && <span style={{ fontSize: '18px', flexShrink: 0 }}>{flag}</span>}
                           <strong style={{ fontSize: '14px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{torneo.nombre}</strong>
                         </div>
                         {sede ? <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '3px' }}>{sede.nombre}</div> : null}
@@ -12402,7 +12399,7 @@ export default function AdminDashboard({
                               <button
                                 type="button"
                                 onClick={() => setSedeDetalleAbiertoId(s.id)}
-                                style={{ marginLeft: '8px', padding: '8px 12px', fontSize: '13px', fontWeight: 700, minHeight: 36, borderRadius: 8, border: '1px solid var(--accent)', background: 'var(--bg-input)', color: 'var(--text-primary)', cursor: 'pointer' }}
+                                style={{ marginLeft: '8px', padding: '10px 14px', fontSize: '14px', fontWeight: 700, minHeight: 44, borderRadius: 8, border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}
                               >
                                 Detalle
                               </button>
@@ -12721,7 +12718,6 @@ export default function AdminDashboard({
             ) : (
               <div style={{ display: 'grid', gap: '12px' }}>
             {pendientesFiltradosValidaciones.map(jugador => {
-              const flag = (jugador.pais || '').split(' ')[0];
               const vs = validacionState[jugador.email] || {};
               const nombreMostrar = [String(jugador.nombre || '').trim(), String(jugador.apellido || '').trim()]
                 .filter(Boolean)
@@ -12742,7 +12738,6 @@ export default function AdminDashboard({
                         : '—'}
                     </div>
                     <div style={{ marginTop: '5px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {flag && <span style={{ fontSize: '18px' }}>{flag}</span>}
                       <span className="admin-validacion-level-chip" style={{ background: '#fffde7', border: '1px solid #ffc107', color: '#7c5b00', borderRadius: '12px', padding: '2px 10px', fontSize: '12px', fontWeight: 'bold' }}>
                         {t(`torneos.vista.categoriaNivel.${formatNivelValidacionDisplay(jugador.nivel)}`, {
                           defaultValue: formatNivelValidacionDisplay(jugador.nivel),
@@ -13266,7 +13261,7 @@ export default function AdminDashboard({
                     { id: 'hoy', label: t('admin.metrics.periodToday') },
                     { id: 'semana', label: t('admin.metrics.periodWeek') },
                     { id: 'mes', label: t('admin.metrics.periodMonth') },
-                    { id: 'anio', label: t('admin.metricas.thisYear') },
+                    { id: 'anio', label: t('admin.formularios.yearLabel') },
                     { id: 'rango', label: t('admin.metrics.periodCustomRange') },
                   ].map((opt) => (
                     <button
@@ -13792,7 +13787,7 @@ export default function AdminDashboard({
                   { id: 'hoy', label: t('admin.metrics.periodToday') },
                   { id: 'semana', label: t('admin.metrics.periodWeek') },
                   { id: 'mes', label: t('admin.metrics.periodMonth') },
-                  { id: 'anio', label: t('admin.metricas.thisYear') },
+                  { id: 'anio', label: t('admin.formularios.yearLabel') },
                   { id: 'rango', label: t('admin.metrics.periodCustomRange') },
                 ].map((opt) => (
                   <button
@@ -15112,16 +15107,7 @@ export default function AdminDashboard({
                 <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
                   {padcoinsConfigKeyLabel(rule.key, t)}
                 </strong>
-                <span style={{
-                  fontSize: '11px',
-                  color: 'var(--text-muted)',
-                  fontFamily: 'monospace',
-                  background: 'var(--bg-page)',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                }}>
-                  {rule.key}
-                </span>
+
               </div>
               {help ? (
                 <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
@@ -18842,19 +18828,20 @@ export default function AdminDashboard({
             Altas enviadas por admin nacional e interés desde la web. Filtra por estado; las aprobadas y rechazadas siguen
             visibles.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <details style={{ marginBottom: '18px' }}>
+            <summary>{t('admin.common.otherPlayerAccess')}</summary>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
               <button type="button" className="btn-primary" onClick={() => navigate('/admin/recorridos-externos')}>
-                Revisar recorridos de jugadores
+                {t('admin.common.reviewPlayerJourneys')}
               </button>
               <button type="button" className="btn-primary" onClick={() => navigate('/admin/fipa-jugadores')}>
-                Gestionar 209 jugadores FIPA
+                {t('admin.common.manageFipaPlayers')}
               </button>
               <button type="button" className="btn-primary" onClick={() => navigate('/admin/fipa-biblioteca')}>
-                Revisar accesos a documentos FIPA
+                {t('admin.common.reviewFipaDocuments')}
               </button>
             </div>
-          </div>
+          </details>
           <div
             style={{
               display: 'flex',

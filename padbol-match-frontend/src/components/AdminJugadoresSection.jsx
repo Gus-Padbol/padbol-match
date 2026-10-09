@@ -266,7 +266,6 @@ export default function AdminJugadoresSection({
 
   const [sedeId, setSedeId] = useState(() => {
     if (sedeIdProp != null && sedeIdProp !== '') return String(sedeIdProp);
-    if ((isSuperAdmin || canSelectSede) && sedesList[0]?.id != null) return String(sedesList[0].id);
     return '';
   });
   const [q, setQ] = useState('');
@@ -285,12 +284,6 @@ export default function AdminJugadoresSection({
       setSedeId(String(sedeIdProp));
     }
   }, [sedeIdProp, esAdminClub]);
-
-  useEffect(() => {
-    if ((isSuperAdmin || canSelectSede) && !sedeId && sedesList[0]?.id != null) {
-      setSedeId(String(sedesList[0].id));
-    }
-  }, [canSelectSede, isSuperAdmin, sedeId, sedesList]);
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
