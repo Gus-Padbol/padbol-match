@@ -295,3 +295,12 @@
 @media (max-width: 480px) {
   .wa-area-tabs--top { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Long form titles, contact addresses and chips must stay inside the mobile thread. */
+@media (max-width: 720px) {
+  .wa-messages { min-width: 0; }
+  .wa-message, .wa-system, .wa-lead-card { min-width: 0; overflow-wrap: anywhere; }
+  .wa-lead-card header { flex-wrap: wrap; }
+  .wa-lead-card header > span { max-width: 100%; }
+  .wa-lead-card header > div { min-width: 0; max-width: 100%; }
+}

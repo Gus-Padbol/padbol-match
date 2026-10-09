@@ -197,7 +197,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   const [activityDerivado, setActivityDerivado] = useState('no');
   const [sedes, setSedes] = useState([]);
   const [manualOpen, setManualOpen] = useState(false);
-  const [manual, setManual] = useState({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
+  const [manualReceipt, setManualReceipt] = useState(null);
+  const [manualNotice, setManualNotice] = useState(null);
+  const [manual, setManual] = useState({ name: '', email: '', phone: '' });
   const [ngOverview, setNgOverview] = useState({ sedes: [], jornadas: [] });
   const [ngOpen, setNgOpen] = useState(false);
   const [ngDraft, setNgDraft] = useState({ sede_id: '', sesion_id: '', categoria: '', participant_name: '' });
@@ -367,12 +369,16 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   };
 
   const submitManual = async (event) => {
-    event.preventDefault(); setBusy(true); setNotice(null);
+    event.preventDefault();
+    if (!perms?.canOperate || busy) return;
+    setBusy(true); setManualNotice(null);
     try {
-      await crmAdminApi.createManual(token, { ...manual, sede_id: perms?.canAudit ? manual.sede_id : undefined });
-      setManual({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
-      setManualOpen(false); setNotice('Contacto registrado en la sede, sin enviar comunicaciones.'); await load();
-    } catch (e) { setNotice(e?.message || 'No se pudo registrar el contacto'); }
+      const result = await crmAdminApi.createManual(token, manual);
+      if (!result?.contact?.id) throw new Error('El servidor no confirmó el registro del contacto.');
+      setManualReceipt(result.contact);
+      setManual({ name: '', email: '', phone: '' });
+      setManualOpen(false); setManualNotice(result.existing ? 'El contacto ya existía; no se modificaron sus datos.' : 'Contacto registrado, sin enviar comunicaciones.');
+    } catch (e) { setManualNotice(e?.message || 'No se pudo registrar el contacto'); }
     finally { setBusy(false); }
   };
 
@@ -495,17 +501,16 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
       </section>
 
       {perms?.canOperate || perms?.canAudit ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
-        <button type="button" onClick={() => setManualOpen((value) => !value)}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
+        <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
         {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-          <strong>Contacto recibido por la sede</strong>
+          <strong>Registro de contacto</strong>
+          <p>Solo se registran nombre, correo y teléfono. Este alta no crea conversaciones ni guarda notas, origen o sede.</p>
           <input required aria-label="Nombre del contacto" placeholder="Nombre" value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><input aria-label="Correo del contacto" type="email" placeholder="Correo" value={manual.email} onChange={(e) => setManual({ ...manual, email: e.target.value })} /><input aria-label="Teléfono del contacto" placeholder="Teléfono" value={manual.phone} onChange={(e) => setManual({ ...manual, phone: e.target.value })} /></div>
-          <select aria-label="Origen del contacto" value={manual.origin} onChange={(e) => setManual({ ...manual, origin: e.target.value })}><option value="in_person">Presencial</option><option value="phone">Teléfono</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="other">Otro</option></select>
-          {perms?.canAudit ? <select required aria-label="Sede canónica" value={manual.sede_id} onChange={(e) => setManual({ ...manual, sede_id: e.target.value })}><option value="">Elegir sede</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select> : null}
-          <input aria-label="Asunto" placeholder="Asunto" value={manual.subject} onChange={(e) => setManual({ ...manual, subject: e.target.value })} />
-          <textarea aria-label="Detalle" placeholder="Detalle" rows={2} value={manual.body} onChange={(e) => setManual({ ...manual, body: e.target.value })} />
-          <button type="submit" disabled={busy || (!manual.email && !manual.phone)}>Guardar sin enviar mensajes</button>
+          <button type="submit" disabled={!perms?.canOperate || busy || (!manual.email && !manual.phone)}>Guardar sin enviar mensajes</button>
         </form> : null}
+        {manualReceipt ? <div role="status" style={{ marginTop: 12 }}><strong>Contacto registrado: {manualReceipt.nombre || 'Sin nombre'}</strong><p>{[manualReceipt.email_normalized, manualReceipt.phone_normalized].filter(Boolean).join(' · ')}</p><small>ID del contacto: {manualReceipt.id}</small><p>Este contacto no crea una conversación entrante ni un historial en la bandeja.</p></div> : null}
+        {manualNotice ? <p role="status">{manualNotice}</p> : null}
       </section> : null}
 
       {loading ? (

@@ -18,6 +18,7 @@ jest.mock('../utils/crmAdminApi', () => ({
     audit: jest.fn(),
     activities: jest.fn(),
     reply: jest.fn(),
+    createManual: jest.fn(),
     handoff: jest.fn(),
     addActivity: jest.fn(),
     sedes: jest.fn(),
@@ -165,6 +166,48 @@ describe('CRM histórico unificado', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Enviar por email' }));
     await waitFor(() => expect(crmAdminApi.reply).toHaveBeenCalledTimes(2));
     expect(crmAdminApi.reply.mock.calls[1][3]).not.toBe(crmAdminApi.reply.mock.calls[0][3]);
+  });
+
+  it('permite al auditor abrir el alta manual para consultar sin guardar ni llamar a la API', async () => {
+    const { container } = render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Agregar contacto manual' }));
+    fireEvent.change(screen.getByLabelText('Nombre del contacto'), { target: { value: 'Contacto fixture' } });
+    fireEvent.change(screen.getByLabelText('Correo del contacto'), { target: { value: 'fixture@example.invalid' } });
+    expect(screen.getByRole('button', { name: 'Guardar sin enviar mensajes' })).toBeDisabled();
+    fireEvent.submit(container.querySelector('form'));
+    expect(crmAdminApi.createManual).not.toHaveBeenCalled();
+  });
+
+  it('un error de alta manual no anuncia un guardado y conserva los datos del operador', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false });
+    crmAdminApi.createManual.mockRejectedValue(new Error('Alta manual no disponible'));
+    const { container } = render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Agregar contacto manual' }));
+    fireEvent.change(screen.getByLabelText('Nombre del contacto'), { target: { value: 'Contacto fixture' } });
+    fireEvent.change(screen.getByLabelText('Correo del contacto'), { target: { value: 'fixture@example.invalid' } });
+    fireEvent.submit(container.querySelector('form'));
+    await screen.findByText('Alta manual no disponible');
+    expect(screen.getByLabelText('Nombre del contacto')).toHaveValue('Contacto fixture');
+    expect(screen.queryByText('Contacto registrado en la sede, sin enviar comunicaciones.')).not.toBeInTheDocument();
+    expect(crmAdminApi.createManual).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([false, true])('confirma el contacto separado de la bandeja sin proveedor saliente (existing=%s)', async (existing) => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, emailSendEnabled: false, whatsappSendEnabled: false });
+    crmAdminApi.createManual.mockResolvedValue({ ok: true, existing, contact: { id: 'local-contact-receipt', nombre: 'Registro confirmado', email_normalized: 'fixture@example.invalid', phone_normalized: null } });
+    render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Agregar contacto manual' }));
+    expect(screen.getByText('Solo se registran nombre, correo y teléfono. Este alta no crea conversaciones ni guarda notas, origen o sede.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Origen del contacto')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Sede canónica')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Nombre del contacto'), { target: { value: 'Nombre solicitado' } });
+    fireEvent.change(screen.getByLabelText('Correo del contacto'), { target: { value: 'fixture@example.invalid' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar sin enviar mensajes' }));
+    await screen.findByText('Contacto registrado: Registro confirmado');
+    expect(screen.getByText('ID del contacto: local-contact-receipt')).toBeInTheDocument();
+    expect(screen.getByText(existing ? 'El contacto ya existía; no se modificaron sus datos.' : 'Contacto registrado, sin enviar comunicaciones.')).toBeInTheDocument();
+    expect(crmAdminApi.createManual).toHaveBeenCalledWith('qa-token', { name: 'Nombre solicitado', email: 'fixture@example.invalid', phone: '' });
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
   });
 
   it('una capacidad email habilitada no otorga permisos de operación al auditor', async () => {
