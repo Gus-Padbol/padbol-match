@@ -1,3 +1,4 @@
+import SedeDurationSummary from '../components/SedeDurationSummary';
 import { resolveReservaMoneda } from '../utils/resolveReservaMoneda';
 import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
@@ -2959,10 +2960,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
                 background: 'var(--bg-page)',
               }}
             >
-              <span style={{ fontWeight: 800, minWidth: '72px' }}>{row.duracion_minutos} min</span>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                {mon} {Number(row.precio ?? 0).toLocaleString('es-AR')} · {row.activo ? t('admin.sedes.subscriptionActive') : 'Inactiva'}
-              </span>
+              <SedeDurationSummary row={row} moneda={mon} activeLabel={t('admin.sedes.subscriptionActive')} inactiveLabel="Inactiva" />
               <button
                 type="button"
                 disabled={guardandoId === row.id}
