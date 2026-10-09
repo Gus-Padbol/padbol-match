@@ -23,7 +23,7 @@ Repositorio frontend: https://github.com/Gus-Padbol/padbol-match.git. Rama aisla
 
 R03 / N7: revisión de lectura encontró 88 reservas con deporte padbol; el DTO descartaba deporte y cancha_id. El agente backend corrige selección/DTO para devolver datos existentes, sin completar ni inventar registros. Su commit y pruebas se integran por separado.
 
-C01: el adaptador backend email se mantiene deshabilitado sin proveedor, remitente, secreto y flag efectivos. Esta rama no configura ninguno. La revisión independiente detectó necesidad de idempotencia entre solicitudes repetidas; backend está preparando requestId estable obligatorio para email y debe integrarse también en UI antes de habilitar el canal. La etiqueta HABILITADO solo refleja la capacidad retornada por el servidor. WhatsApp permanece pendiente del proveedor.
+C01: el adaptador backend email se mantiene deshabilitado sin proveedor, remitente, secreto y flag efectivos. Esta rama no configura ninguno. La revisión independiente detectó necesidad de idempotencia entre solicitudes repetidas. Backend168f63d5 la corrige con requestId UUID y claim atómico previo al envío. Frontend50c7bb7a conserva el UUID al reintentar tras error y lo renueva al editar, completar o cambiar conversación; también limpia borrador/aviso para evitar enviar texto de otro contacto. La suite final exacta50c7bb7a aprobó148 suites/1173 tests (321.803s); Revisor independiente qa_report terminó sin nuevos hallazgos confirmados sobre50c7bb7a:13 casos aprobados, incluyendo borrador cruzado, idempotencia, auditor/permisos, error tardío A→B, USD y alcances Base/Padbol. Un timeout bajo carga pasó al repetir el único caso sin cambios. Informe /private/tmp/jefe4-independent-admin-review/review-final-50c7bb7a.md. Compilación definitiva posterior50c7bb7a terminó EXIT0; solo advertencias existentes de sourcemaps html5-qrcode/Browserslist. Log /private/tmp/jefe4-admin2-50c7bb7a-build.log. La etiqueta HABILITADO solo refleja la capacidad retornada por el servidor. WhatsApp permanece pendiente del proveedor.
 
 ## Pendientes que requieren decisiones sobre datos reales
 
@@ -55,7 +55,9 @@ Suite completa: 146 suites y 1169 tests PASS (73 s, timeouts/assertions intactos
 
 Test posterior S03: resumen renderizado distingue alcance base/deporte, 1 test PASS.
 
-Compilación producción HEAD41c0bc75: EXIT0, compilada con advertencias existentes de sourcemaps html5-qrcode y Browserslist desactualizado. Se restauraron stamps PWA generados en este worktree para que la publicación los regenere. Log local /private/tmp/jefe4-admin2-build-final.log. Preview: http://127.0.0.1:8792/mobile-channels.html. Solo HTML local de lectura, sin autenticación ni servicios; recorrido visual de producción a cargo del coordinador.
+Compilación producción HEAD41c0bc75: EXIT0, compilada con advertencias existentes de sourcemaps html5-qrcode y Browserslist desactualizado. Se restauraron stamps PWA generados en este worktree para que la publicación los regenere. Log local /private/tmp/jefe4-admin2-build-final.log. Preview: http://127.0.0.1:8792/mobile-channels.html. Solo HTML local de lectura, sin autenticación ni servicios. Coordinador verificó visualmente en IAB el iframe390: canales completos sin clipping (PASS). Recorrido autenticado de producción permanece separado.
+
+Suite definitiva después de idempotencia/borradores:148 suites/1173 tests PASS sin cambiar timeouts/assertions, fuente50c7bb7a. La build posterior50c7bb7a terminó EXIT0; stamps regenerables restaurados solamente en este worktree. Fixture390 con viewport interno real: http://127.0.0.1:8792/mobile-frame.html.
 
 ## Inventario de lectura
 
@@ -66,3 +68,12 @@ Fecha consulta: 2026-10-09T16:20:32.048Z
 - Conversaciones con prueba genérica (requieren revisión): db0caba6-75f7-440e-a79e-3b766d53b7d0, b1e72018-f98a-4460-a1b6-69ff2932e850, 9035e493-b4dd-495c-be56-59de757ad475, f626e1ad-c027-4b74-8a02-fc2deef43f42, fbbe1e64-d2dd-42a5-9ca8-ff19ca7c1135, 4a007727-2f12-4851-8f1f-e6ac615485f3, 32846385-5876-444f-ae65-b43f24e743b9, e7a1d711-a07b-4f9a-8667-3d0f764be891, 90f2adcf-ef0f-4854-b139-1de6d680a9d1, 677d4bfc-fda6-426d-b109-f595388bf11e, 62f9e2f2-d658-42bc-ace0-bd49017f6aaa.
 - Movimientos de prueba: ef5cc6da-3ef1-4a35-b68b-34d825745460, b7f9d9e0-fe80-44cc-bd95-525deee598ec, f7707802-594e-43f6-b69b-2e20c87535cb, b10a631e-a7c6-4454-8f78-af4c6f1ac19c, 0b72762c-5ead-47af-a506-a49104364728, 2e0a2a3d-afec-4b46-ad54-653e11daf37c.
 - Reserva legacy Madrid Padbol Point: id 38, sin sede_id/cancha_id; no atribuir a La Meca.
+
+
+## Revisión independiente del backend (sin modificarlo)
+
+Objeto inmutable: `168f63d5722a80ca9dffdb957f52e9c27870855c`, incluye DTO3aa1f53a y adaptador ea7746be/1f65a142/168f63d5. Árbol limpio al revisar. Se ejecutaron 38 tests: crmEmailSender, crmEmailClaim, crm, crmRouteOwnership y postReservas, todos PASS; solo mocks, sin proveedores ni datos reales. Log local /private/tmp/jefe4-admin2-backend-final-review.log.
+
+El claim por UUID PK se guarda antes del proveedor; duplicado sent retorna resultado anterior, pending/cancelled y conflicto de cuerpo/operador devuelven409 sin reenviar. Flag, runtime, proveedor compatible, remitente y secreto son necesarios para crear callback; callback no amplía canOperate de auditor. Error de red/5xx/confirmación ausente permanece pending, rechazo explícito cancelled; aceptación seguida de fallo de auditoría permanece pending y exige revisión. Email ya no acepta fallback de escritura que pierda provider_message_id. Reserva DTO conserva deporte/cancha_id almacenados y null legítimo, sin claves de pago internas. No se encontró nuevo bloqueo de código en ese objeto.
+
+Bloqueo operativo C01 confirmado por autor backend en consulta de lectura producción: crm_replies.provider_message_id no existe (42703). Propuesta supabase/proposals/20261009_crm_email_provider_audit.sql añade nullabletext; no fue ejecutada por estos agentes. Proveedor/flags tampoco se activaron. Sin estos requisitos no se acredita envío real ni cierre C01. Referencia del retry se mantiene en la composición actual; recargar/recrear texto representa nueva composición y requiere respetar el aviso de revisar un intento ambiguo antes de volver a enviar.
