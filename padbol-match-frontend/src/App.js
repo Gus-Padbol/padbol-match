@@ -46,6 +46,7 @@ const RecorridoExterno = lazy(() => import('./pages/RecorridoExterno'));
 const AdminRecorridosExternos = lazy(() => import('./pages/AdminRecorridosExternos'));
 const AdminFipaPlayers = lazy(() => import('./pages/AdminFipaPlayers'));
 const AdminFipaLibrary = lazy(() => import('./pages/AdminFipaLibrary'));
+const AdminNextGeneration = lazy(() => import('./pages/AdminNextGeneration'));
 const FipaClaimInvitation = lazy(() => import('./pages/FipaClaimInvitation'));
 const FipaDocuments = lazy(() => import('./pages/FipaDocuments'));
 const PerfilPublico = lazy(() => import('./PerfilPublico'));
@@ -450,6 +451,7 @@ function AppRoutes() {
         <Route path="/admin/recorridos-externos" element={<ProtectedRoute><AdminRecorridosExternos /></ProtectedRoute>} />
         <Route path="/admin/fipa-jugadores" element={<ProtectedRoute><AdminFipaPlayers /></ProtectedRoute>} />
         <Route path="/admin/fipa-biblioteca" element={<ProtectedRoute><AdminFipaLibrary /></ProtectedRoute>} />
+        <Route path="/admin/next-generation" element={<ProtectedRoute><AdminNextGeneration /></ProtectedRoute>} />
         <Route
           path="/admin"
           element={

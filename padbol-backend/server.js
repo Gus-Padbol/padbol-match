@@ -55,6 +55,7 @@ import { registerAdminOrganizationsRoutes } from './lib/adminOrganizations.js';
 import { buildAdminRoleGeography, normalizeGeoText, resolveSedesPermitidasPorScope } from './lib/adminTerritorialScope.js';
 import { registerSedeIncentiveRoutes } from './lib/sedeIncentives.js';
 import { registerFipaDocumentLibraryRoutes, strictSuperAdminRole } from './lib/fipaDocumentLibrary.js';
+import { registerNextGenerationVenueRoutes } from './lib/nextGenerationVenue.js';
 import { commercialCommissionMinor, commercialCommissionPercent } from './lib/commercialPlanCommission.js';
 import {
   TORNEO_CATEGORIA_EDAD_VALORES,
@@ -18424,6 +18425,13 @@ registerSedeIncentiveRoutes(app, {
 registerFipaDocumentLibraryRoutes(app, {
   supabaseAdmin,
   serviceRoleConfigured: Boolean(SUPABASE_SERVICE_ROLE_KEY && supabaseAdmin),
+  authUserFromBearer,
+});
+
+registerNextGenerationVenueRoutes(app, {
+  supabaseAdmin,
+  adminListScopeFromRequest,
+  assertUsuarioPuedeAdministrarSede,
   authUserFromBearer,
 });
 
