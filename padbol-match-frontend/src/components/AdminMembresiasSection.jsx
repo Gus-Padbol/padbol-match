@@ -1,3 +1,4 @@
+import { membershipPlanDescription } from '../utils/membershipPlanDescription';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -813,7 +814,7 @@ export default function AdminMembresiasSection({
                         <tr key={p.id}>
                           <td style={tdStyle({ fontWeight: 700 })}>{p.nombre}</td>
                           <td style={tdStyle({ maxWidth: 180, whiteSpace: 'normal' })}>
-                            {p.descripcion || '—'}
+                            {membershipPlanDescription(p.descripcion, i18n.language) || '—'}
                           </td>
                           <td style={tdStyle({ whiteSpace: 'nowrap' })}>
                             {formatMembresiaPrecio(p.precio, p.moneda)}
