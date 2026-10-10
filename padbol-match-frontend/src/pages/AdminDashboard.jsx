@@ -1,3 +1,4 @@
+import { normalizeCanjeEstado, adminRoleIdentity, adminRoleScopeMismatch } from '../utils/adminRemainingPresentation';
 import { formatAdminDate } from '../utils/adminDateFormat';
 import SedeDurationSummary from '../components/SedeDurationSummary';
 import { resolveReservaMoneda } from '../utils/resolveReservaMoneda';
@@ -1128,12 +1129,6 @@ const CANJE_ESTADOS_FILTRO = [
   { id: 'todos', label: 'Todos' },
 ];
 
-function normalizeCanjeEstado(raw) {
-  const s = String(raw || '').trim().toLowerCase();
-  if (s === 'entregado' || s === 'entregada') return 'entregado';
-  if (s === 'cancelado' || s === 'cancelada') return 'cancelado';
-  return 'pendiente';
-}
 
 function parseCanjesList(data) {
   if (Array.isArray(data)) return data;
@@ -5417,7 +5412,7 @@ export default function AdminDashboard({
       };
       const alc = alcanceLabels[String(row.alcance || '').trim().toLowerCase()] || 'Sin alcance';
       const asig = asignacionGestionAdminTexto(row);
-      const inconsistente = row.role === 'admin_nacional' && row.alcance === 'sede';
+      const inconsistente = adminRoleScopeMismatch(row);
       return `${badge} · Alcance: ${alc} · ${asig}${inconsistente ? ' · Revisar configuración' : ''}`;
     },
     [asignacionGestionAdminTexto, ROLE_BADGE],
@@ -14889,7 +14884,8 @@ export default function AdminDashboard({
           if (est === 'cancelado') {
             return { bg: 'var(--bg-page)', color: 'var(--text-muted)', label: t('admin.padcoins.redeemCancelled', 'Cancelado') };
           }
-          return { bg: '#fef3c7', color: '#92400e', label: t('admin.padcoins.redeemPending', 'Pendiente') };
+          if (est === 'pendiente') return { bg: '#fef3c7', color: '#92400e', label: t('admin.padcoins.redeemPending', 'Pendiente') };
+          return { bg: 'var(--bg-page)', color: 'var(--text-muted)', label: est === 'desconocido' ? 'Estado no reconocido' : 'Estado no disponible' };
         };
         const pcInp = {
           padding: '10px',
@@ -18499,7 +18495,7 @@ export default function AdminDashboard({
                             }}
                           >
                             <div style={{ fontWeight: 700, fontSize: '14px', lineHeight: 1.3 }}>
-                              {row.nombre || row.email || 'Sin nombre'}
+                              {adminRoleIdentity(row)}
                             </div>
                             <div
                               style={{
@@ -18560,10 +18556,11 @@ export default function AdminDashboard({
                         </tr>
                       ) : (
                         <tr key={row.email} style={{ borderTop: '1px solid #e2e8f0', color: 'var(--text-primary)' }}>
-                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{row.nombre || row.email || 'Sin nombre'}</td>
+                          <td style={{ padding: '8px', color: 'var(--text-primary)' }}>{adminRoleIdentity(row)}</td>
                           <td style={{ padding: '8px', fontSize: '12px', color: 'var(--text-primary)' }}>{row.email}</td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
                             {ROLE_BADGE[row.role] || (row.role === 'editor_contenido' ? t('admin.formularios.contentEditorTitle') : '—')}
+                            {adminRoleScopeMismatch(row) && <div role="status" style={{ fontSize: '12px', marginTop: '4px' }}>Revisar configuración</div>}
                           </td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
                             {({ global: 'Global', pais: 'País', provincia: 'Provincia', ciudad: 'Ciudad', sede: 'Sede' })[row.alcance] || '—'}
