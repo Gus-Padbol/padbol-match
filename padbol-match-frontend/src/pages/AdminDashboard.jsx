@@ -3645,6 +3645,7 @@ export default function AdminDashboard({
   const [pcSedeParticipacionSaveError, setPcSedeParticipacionSaveError] = useState('');
   const [pcSedeParticipacionSaving, setPcSedeParticipacionSaving] = useState(false);
   const [pcSedesParticipacionList, setPcSedesParticipacionList] = useState([]);
+  const [pcSedesParticipacionListError, setPcSedesParticipacionListError] = useState('');
   const [pcSedeParticipacionBusqueda, setPcSedeParticipacionBusqueda] = useState('');
   const [pcSedeParticipacionFiltro, setPcSedeParticipacionFiltro] = useState('todas');
   const [pcMovimientos, setPcMovimientos] = useState([]);
@@ -3782,14 +3783,16 @@ export default function AdminDashboard({
 
   async function fetchPadcoinsSedesParticipacionList() {
     if (!isSuperAdmin) return;
+    setPcSedesParticipacionListError('');
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${apiBaseUrl}/api/admin/padcoins-sedes-config`, { headers });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return;
+      if (!res.ok) throw new Error('participation_load_failed');
       setPcSedesParticipacionList(parsePadcoinsSedesConfigList(data));
     } catch {
-      /* noop */
+      setPcSedesParticipacionList([]);
+      setPcSedesParticipacionListError(t('admin.padcoins.participationLoadFailed'));
     }
   }
 
@@ -14970,7 +14973,7 @@ export default function AdminDashboard({
                 <span style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.45 }}>
                   {t(
                     'admin.padcoins.sedeParticipationClubToggleHelp',
-                    'Enable or pause Padbol Benefits for this venue.',
+                    'Enable or pause PadCoins for this venue.',
                   )}
                 </span>
               ) : null}
@@ -15285,7 +15288,7 @@ export default function AdminDashboard({
                   <p style={{ color: 'var(--text-muted)', margin: '0 0 10px', maxWidth: '720px', fontSize: '14px' }}>
                     {t(
                       'admin.padcoins.sedeParticipationSuperIntro',
-                    'Control which venues participate in Padbol Benefits.',
+                    'Control which venues participate in PadCoins.',
                     )}
                   </p>
                   <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
@@ -15299,7 +15302,7 @@ export default function AdminDashboard({
                 <p style={{ color: 'var(--text-muted)', margin: '0 0 16px', maxWidth: '720px', fontSize: '14px' }}>
                   {t(
                     'admin.padcoins.sedeParticipationClubIntro',
-                    "Manage your venue's participation in Padbol Benefits.",
+                    "Manage your venue's participation in PadCoins.",
                   )}
                 </p>
               ) : (
@@ -15326,6 +15329,12 @@ export default function AdminDashboard({
                 )}
               </p>
 
+              {isSuperAdmin && pcSedesParticipacionListError ? (
+                <div role="alert">
+                  <p>{pcSedesParticipacionListError}</p>
+                  <button type="button" onClick={() => void fetchPadcoinsSedesParticipacionList()}>{t('admin.common.retry', 'Reintentar')}</button>
+                </div>
+              ) : null}
               {isSuperAdmin && pcSedesParticipacionList.length > 0 ? (
                 <div style={{ marginBottom: '20px', maxWidth: '720px' }}>
                   <div style={{
@@ -15372,12 +15381,7 @@ export default function AdminDashboard({
                     </div>
                   </div>
                   <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    {t(
-                      'admin.padcoins.sedeParticipationListCount',
-                        '{{shown}} of {{total}} venues',
-                    )
-                      .replace('{{shown}}', String(pcSedesParticipacionFiltradas.length))
-                      .replace('{{total}}', String(pcSedesParticipacionList.length))}
+                    {t('admin.padcoins.sedeParticipationListCount', { count: pcSedesParticipacionList.length })}
                   </p>
                   <div style={{ overflowX: 'auto', maxHeight: '280px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '10px' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -15542,7 +15546,7 @@ export default function AdminDashboard({
                     }}>
                       {t(
                         'admin.padcoins.sedeParticipationClubInactive',
-                      'Padbol Benefits are currently inactive for this venue.',
+                      'PadCoins are currently inactive for this venue.',
                       )}
                     </p>
                   ) : null}
@@ -16647,7 +16651,7 @@ export default function AdminDashboard({
               }}>
                 {t(
                   'admin.padcoins.sedeNotParticipating',
-                  'This venue is not participating in Padbol Benefits.',
+                  'This venue is not participating in PadCoins.',
                 )}
               </p>
             ) : null}
