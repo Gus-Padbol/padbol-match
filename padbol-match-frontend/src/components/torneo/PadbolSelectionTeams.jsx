@@ -4,7 +4,7 @@ import { confirmSelectionRegistration, createSelectionTeam, listSelectionTeams, 
 import { selectionPlayerId, selectionRosterPlayers, selectionTeamReady } from '../../utils/padbolSelectionRoster';
 import './PadbolSelection.css';
 
-function RosterEditor({ apiBaseUrl, torneoId, equipoId, userId, canManage, onChanged, en }) {
+function RosterEditor({ apiBaseUrl, torneoId, equipoId, userId, onChanged, en }) {
   const [data, setData] = useState(null);
   const [ids, setIds] = useState([]);
   const [error, setError] = useState('');
@@ -21,10 +21,10 @@ function RosterEditor({ apiBaseUrl, torneoId, equipoId, userId, canManage, onCha
     }).catch(err => { if (!cancelled) setError(err.message); });
     return () => { cancelled = true; live.current = false; };
   }, [apiBaseUrl, torneoId, equipoId]);
-  const editable = data && (canManage || String(data.creador_id) === String(userId));
+  const editable = data?.can_manage === true;
   const toggle = id => { setIds(prev => prev.includes(id) ? prev.filter(value => value !== id) : [...prev, id]); setNotice(''); };
   const search = async () => {
-    if (!canManage || query.trim().length < 2) return;
+    if (data?.can_add_profiles !== true || query.trim().length < 2) return;
     setError('');
     try {
       const { getAuthHeaders } = await import('../../utils/scoreboardApi');
@@ -74,15 +74,15 @@ function RosterEditor({ apiBaseUrl, torneoId, equipoId, userId, canManage, onCha
     <p>{en ? 'The captain accepts requests from registered players. An authorized administrator can select existing profiles. The roster is separate from the four players declared for each match.' : 'El capitán acepta solicitudes de jugadores registrados. Un administrador autorizado puede seleccionar perfiles existentes. El plantel es independiente de los cuatro presentados de cada partido.'}</p>
     {data ? <fieldset disabled={!editable || saving}>{[...choices].map(([id, player]) => <label key={id}>
       <span><input type="checkbox" checked={ids.includes(id)} disabled={id === String(data.creador_id).toLowerCase()} onChange={() => toggle(id)} /> {player.nombre || (en ? 'Registered player' : 'Jugador registrado')}{id === String(data.creador_id).toLowerCase() ? (en ? ' · Captain' : ' · Capitán') : ''}</span>
-    </label>)}</fieldset> : <p>{en ? 'Loading authoritative roster…' : 'Cargando plantel confirmado…'}</p>}
-    {editable && canManage ? <div className="padbol-selection-actions"><label>{en ? 'Find registered profile' : 'Buscar perfil registrado'}<input value={query} onChange={event => setQuery(event.target.value)} disabled={saving} /></label><button type="button" onClick={search} disabled={saving || query.trim().length < 2}>{en ? 'Search' : 'Buscar'}</button></div> : null}
+    </label>)}</fieldset> : !error ? <p>{en ? 'Loading authoritative roster…' : 'Cargando plantel confirmado…'}</p> : null}
+    {editable && data.can_add_profiles === true ? <div className="padbol-selection-actions"><label>{en ? 'Find registered profile' : 'Buscar perfil registrado'}<input value={query} onChange={event => setQuery(event.target.value)} disabled={saving} /></label><button type="button" onClick={search} disabled={saving || query.trim().length < 2}>{en ? 'Search' : 'Buscar'}</button></div> : null}
     {editable ? <button type="submit" disabled={saving}>{saving ? (en ? 'Saving…' : 'Guardando…') : (en ? 'Save roster' : 'Guardar plantel')}</button> : null}
     {data?.inscripcion_estado === 'confirmado' ? <p>{en ? 'Tournament registration confirmed.' : 'Inscripción al torneo confirmada.'}</p> : data ? <p>{en ? 'Tournament registration is not yet confirmed.' : 'La inscripción al torneo todavía no está confirmada.'}</p> : null}
     {editable && data.can_confirm && data.inscripcion_estado !== 'confirmado' ? <button type="button" disabled={saving} onClick={confirm}>{en ? 'Confirm free registration' : 'Confirmar inscripción sin costo'}</button> : null}
     {error ? <p role="alert">{error}</p> : null}{notice ? <p role="status">{notice}</p> : null}
   </form>;
 }
-export default function PadbolSelectionTeams({ apiBaseUrl, torneo, userId, canManage = false, profileReady = false, onCompleteProfile, onSignIn }) {
+export default function PadbolSelectionTeams({ apiBaseUrl, torneo, userId, profileReady = false, onCompleteProfile, onSignIn }) {
   const { i18n } = useSafeTranslation(); const en = String(i18n?.language || '').startsWith('en');
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +95,7 @@ export default function PadbolSelectionTeams({ apiBaseUrl, torneo, userId, canMa
   const load = useCallback(async () => {
     const generation = ++loadGeneration.current;
     if (!userId) { setLoading(false); return; }
-    setLoading(true); setError('');
+    setLoading(true); setListConfirmed(false); setError('');
     try {
       const rows = await listSelectionTeams({ apiBaseUrl, torneoId: torneo.id });
       if (live.current && generation === loadGeneration.current) { setTeams(rows); setListConfirmed(true); }
@@ -145,10 +145,10 @@ export default function PadbolSelectionTeams({ apiBaseUrl, torneo, userId, canMa
       <h3>{team.nombre}</h3><p>{team.inscripcion_estado === 'confirmado' ? (en ? 'Registration confirmed' : 'Inscripción confirmada') : (en ? 'Registration pending' : 'Inscripción pendiente')}</p><p>{selectionRosterPlayers(team.jugadores).length} / {team.cupo_maximo} {en ? 'roster places' : 'plazas del plantel'}</p>
       <p>{selectionTeamReady(team, torneo) ? (en ? 'At least four confirmed players. The match lineup still needs to be declared.' : 'Al menos cuatro jugadores confirmados. Falta declarar la alineación de cada partido.') : (en ? 'Roster still forming: at least four confirmed players are required.' : 'Plantel en formación: se requieren al menos cuatro jugadores confirmados.')}</p>
       <ul>{selectionRosterPlayers(team.jugadores).map(player => <li key={selectionPlayerId(player)}>{player.nombre || (en ? 'Registered player' : 'Jugador registrado')}</li>)}</ul>
-      {canManage || String(team.creador_id) === String(userId) ? <button type="button" onClick={() => setSelected(team.id)} disabled={saving}>{en ? 'Manage roster' : 'Gestionar plantel'}</button> : null}
-      {!own && userId && profileReady && registrationOpen && team.equipo_abierto === true ? <button type="button" onClick={() => request(team)} disabled={saving || selectionRosterPlayers(team.jugadores).length >= team.cupo_maximo}>{en ? 'Request a roster place' : 'Solicitar lugar en el plantel'}</button> : null}
+      {team.can_manage === true ? <button type="button" onClick={() => setSelected(team.id)} disabled={saving}>{en ? 'Manage roster' : 'Gestionar plantel'}</button> : null}
+      {!own && userId && profileReady && registrationOpen && team.equipo_abierto === true ? <button type="button" onClick={() => request(team)} disabled={!listConfirmed || saving || selectionRosterPlayers(team.jugadores).length >= team.cupo_maximo}>{en ? 'Request a roster place' : 'Solicitar lugar en el plantel'}</button> : null}
     </article>)}</div>
-    {selected && userId ? <RosterEditor key={`${torneo.id}:${selected}`} apiBaseUrl={apiBaseUrl} torneoId={torneo.id} equipoId={selected} userId={userId} canManage={canManage} onChanged={load} en={en} /> : null}
+    {selected && userId ? <RosterEditor key={`${torneo.id}:${selected}`} apiBaseUrl={apiBaseUrl} torneoId={torneo.id} equipoId={selected} userId={userId} onChanged={load} en={en} /> : null}
     <p>{en ? 'Roster confirmation and match lineups do not award official FIPA points or authorize payments.' : 'Confirmar el plantel y declarar alineaciones no adjudica puntos oficiales FIPA ni autoriza pagos.'}</p>
   </section>;
 }

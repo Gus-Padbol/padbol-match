@@ -21,8 +21,9 @@ const originalFetch = global.fetch;
 const partida = { id: 45, torneo_id: 28, equipo_a_id: 71, equipo_b_id: 72, estado: 'pendiente' };
 const savedResult = { goles_a: 2, goles_b: 0, historial_sets: [{ set: 1, a: 6, b: 4 }, { set: 2, a: 6, b: 3 }] };
 
-function setup({ isAdmin = true, entry = '/', openByClick = true, fromAdmin = false, dates = {}, mode } = {}) {
+function setup({ isAdmin = true, entry = '/', openByClick = true, fromAdmin = false, dates = {}, mode, participation = false } = {}) {
   const setPartidos = jest.fn();
+  const navigate = jest.fn();
   const rendered = render(<MemoryRouter initialEntries={[entry]}><TorneoTabbedView
     torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol', modalidad_plantel: mode, ...dates }}
     torneoId="28"
@@ -33,10 +34,11 @@ function setup({ isAdmin = true, entry = '/', openByClick = true, fromAdmin = fa
     session={{ user: { id: 'test-user' }, access_token: 'test-session' }}
     isAdmin={isAdmin}
     navigateState={fromAdmin ? { fromAdmin: true } : null}
-    navigate={jest.fn()}
+    navigate={navigate}
+    participacionModalOpen={participation}
   /></MemoryRouter>);
   if (openByClick) fireEvent.click(rendered.container.querySelector('.partido-item'));
-  return { ...rendered, setPartidos };
+  return { ...rendered, setPartidos, navigate };
 }
 
 function openAndFill(container) {
@@ -124,4 +126,13 @@ test('selection result rechecks both real declaration endpoints before existing 
  await waitFor(()=>expect(setPartidos).toHaveBeenCalledTimes(1));
  const calls=fetch.mock.calls;expect(calls.filter(([url])=>url.endsWith('/alineacion'))).toHaveLength(4);
  expect(calls.at(-1)[0]).toMatch(/\/resultado$/);expect(JSON.parse(calls.at(-1)[1].body)).toEqual(savedResult);
+});
+
+test('selection participation routes to dedicated authenticated roster flow without legacy player request',()=>{
+ const {navigate}=setup({mode:'selecciones',participation:true,openByClick:false});
+ expect(screen.queryByText('Tengo equipo completo')).not.toBeInTheDocument();
+ expect(screen.queryByText('Busco compañero/s')).not.toBeInTheDocument();
+ fireEvent.click(screen.getByText('Ver planteles y solicitudes'));
+ expect(navigate).toHaveBeenCalledWith('/torneo/28/equipos?crear=1',{replace:true});
+ expect(fetch).not.toHaveBeenCalled();
 });

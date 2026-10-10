@@ -10,9 +10,9 @@ test('only explicit Padbol selection mode changes roster minimum, never another 
  expect(jugadoresMinimosEquipoTorneo({deporte:'padbol'})).toBe(2);expect(jugadoresMinimosEquipoTorneo({deporte:'tenis',formato_equipo:'singles'})).toBe(1);
 });
 test('maximum eight is not a requirement to fill eight; four confirmed players qualify even with capacity eight',()=>{
- const team={id:1,cupo_maximo:8,jugadores:players.slice(0,4)};
+ const team={id:1,cupo_maximo:8,inscripcion_estado:'confirmado',jugadores:players.slice(0,4)};
  expect(selectionTeamReady(team,tournament)).toBe(true);expect(equiposConfirmadosParaSorteo([team],tournament)).toEqual([team]);
- expect(equiposConfirmadosParaSorteo([team])).toEqual([]);expect(selectionTeamReady({...team,jugadores:players.slice(0,3)},tournament)).toBe(false);
+ expect(equiposConfirmadosParaSorteo([{...team,inscripcion_estado:'pendiente'}],tournament)).toEqual([]);expect(equiposConfirmadosParaSorteo([team])).toEqual([]);expect(selectionTeamReady({...team,jugadores:players.slice(0,3)},tournament)).toBe(false);
  expect(selectionTeamReady({...team,jugadores:players.slice(0,8)},tournament)).toBe(true);expect(selectionTeamReady({...team,jugadores:players},tournament)).toBe(false);
 });
 test('duplicate, pending and unidentified players never satisfy confirmed roster readiness',()=>{

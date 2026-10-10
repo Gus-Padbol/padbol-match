@@ -11,7 +11,7 @@ let dto, teams, failure;
 const response = (body, status = 200) => Promise.resolve({ ok: status < 400, status, json: async () => body });
 beforeEach(() => {
   getAuthHeaders.mockResolvedValue({ Authorization: 'Bearer synthetic-fixture', 'Content-Type': 'application/json' });
-  dto = { ok: true, torneo_id: 9, equipo_id: 71, creador_id: id(1), jugadores: [1,2,3,4].map(player), solicitudes: [player(5)], cupo_maximo: 8, plantel_revision: 0, inscripcion_estado: 'pendiente', can_confirm: true, status: 'saved' };
+  dto = { ok: true, torneo_id: 9, equipo_id: 71, creador_id: id(1), jugadores: [1,2,3,4].map(player), solicitudes: [player(5)], cupo_maximo: 8, plantel_revision: 0, inscripcion_estado: 'pendiente', can_confirm: true, can_manage: true, can_add_profiles: false, status: 'saved' };
   teams = [{ ...dto, id: 71, nombre: 'Equipo QA', equipo_abierto: true }]; failure = null;
   global.fetch = jest.fn((url, options = {}) => {
     const method = options.method || 'GET';
@@ -41,6 +41,7 @@ test('four confirmed members are ready with capacity eight; captain accepts a re
   expect(within(form).getByLabelText(/Jugador 1/)).toBeDisabled();
 });
 test('unrelated authenticated viewer has no roster manager and cannot submit a roster update', async () => {
+  teams[0].can_manage = false;
   render(<PadbolSelectionTeams {...props} userId={id(20)} />);
   await screen.findByText('Equipo QA');
   expect(screen.queryByText('Gestionar plantel')).not.toBeInTheDocument();
@@ -78,9 +79,9 @@ test('paid/unknown costs represented by can_confirm false do not expose a free c
   await screen.findByText('La inscripción al torneo todavía no está confirmada.');
   expect(screen.queryByText('Confirmar inscripción sin costo')).not.toBeInTheDocument(); expect(mutations()).toHaveLength(0);
 });
-test('creation uses only tournament roster fields, never participant names or payment payloads', async () => {
+test.each(['abierto','inscripcion_abierta'])('creation in %s uses only tournament roster fields, never participant names or payment payloads', async estado => {
   teams = [];
-  render(<PadbolSelectionTeams {...props} />);
+  render(<PadbolSelectionTeams {...props} torneo={{...torneo,estado}} />);
   const form = await screen.findByRole('form', { name: 'Crear equipo de selección' });
   fireEvent.change(within(form).getByLabelText('Nombre del equipo'), { target: { value: 'Selección QA' } });
   fireEvent.submit(form);
@@ -93,4 +94,37 @@ test('initial list failure is visible and cannot be mistaken for an empty list p
   await screen.findByRole('alert');
   expect(screen.queryByRole('form', { name: 'Crear equipo de selección' })).not.toBeInTheDocument();
   expect(screen.queryByText('Todavía no hay equipos registrados.')).not.toBeInTheDocument(); expect(mutations()).toHaveLength(0);
+});
+
+test('failed reload keeps visible prior data but disables registration based on stale list',async()=>{
+ render(<PadbolSelectionTeams {...props} userId={id(20)} />);
+ await screen.findByText('Equipo QA');
+ expect(screen.getByRole('form',{name:'Crear equipo de selección'})).toBeInTheDocument();
+ fetch.mockImplementation(()=>response({error:'Lectura no confirmada.'},503));
+ fireEvent.click(screen.getByText('Recargar equipos'));
+ await screen.findByRole('alert');
+ expect(screen.getByText('Equipo QA')).toBeInTheDocument();
+ expect(screen.queryByRole('form',{name:'Crear equipo de selección'})).not.toBeInTheDocument();
+ expect(screen.getByText('Solicitar lugar en el plantel')).toBeDisabled();
+ expect(mutations()).toHaveLength(0);
+});
+test('a visible legacy management permission never turns a private backend403 into editable controls',async()=>{
+ const original=fetch.getMockImplementation();
+ fetch.mockImplementation((url,options={})=>url.endsWith('/selecciones/71')?response({error:'Sin autorización para este torneo.'},403):original(url,options));
+ render(<PadbolSelectionTeams {...props} userId={id(20)} canManage />);
+ fireEvent.click(await screen.findByText('Gestionar plantel'));
+ await screen.findByText('Sin autorización para este torneo.');
+ expect(screen.queryByText('Guardar plantel')).not.toBeInTheDocument();
+ expect(screen.queryByText('Cargando plantel confirmado…')).not.toBeInTheDocument();
+ expect(mutations()).toHaveLength(0);
+});
+test('server capability controls save even when a legacy frontend admin prop claims management',async()=>{
+ dto.can_manage=false;dto.can_add_profiles=false;
+ render(<PadbolSelectionTeams {...props} canManage />);
+ fireEvent.click(await screen.findByText('Gestionar plantel'));
+ const form=await screen.findByRole('form',{name:'Gestionar plantel registrado'});
+ await within(form).findByLabelText(/Jugador 5/);
+ expect(screen.queryByText('Guardar plantel')).not.toBeInTheDocument();
+ expect(screen.queryByText('Buscar perfil registrado')).not.toBeInTheDocument();
+ fireEvent.submit(form);expect(mutations()).toHaveLength(0);
 });

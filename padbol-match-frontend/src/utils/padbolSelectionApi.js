@@ -30,7 +30,7 @@ function teamReceipt(data, torneoId, equipoId, mutation = false) {
     || !validRoster(data.jugadores, data.cupo_maximo)
     || !data.jugadores.some(player => selectionPlayerId(player) === String(data.creador_id).toLowerCase())
     || data.solicitudes.some(player => !selectionPlayerId(player))
-    || typeof data.can_confirm !== 'boolean' || (mutation && !['saved','idempotent'].includes(data.status))) {
+    || typeof data.can_confirm !== 'boolean' || typeof data.can_manage !== 'boolean' || typeof data.can_add_profiles !== 'boolean' || (mutation && !['saved','idempotent'].includes(data.status))) {
     throw new Error('El servidor no confirmó el plantel de este equipo. Recarga para comprobarlo.');
   }
   revision(data.plantel_revision);
@@ -42,7 +42,7 @@ export async function listSelectionTeams({ apiBaseUrl, torneoId }) {
   if (data.equipos.some(team => !Number.isSafeInteger(Number(team.id)) || Number(team.id) <= 0
     || !Number.isInteger(team.cupo_maximo) || team.cupo_maximo < 4 || team.cupo_maximo > 8
     || !selectionPlayerId({ id: team.creador_id }) || !validRoster(team.jugadores, team.cupo_maximo)
-    || typeof team.equipo_abierto !== 'boolean')) throw new Error('La lista contiene un plantel que no se pudo confirmar. Recarga la ficha.');
+    || typeof team.equipo_abierto !== 'boolean' || typeof team.can_manage !== 'boolean')) throw new Error('La lista contiene un plantel que no se pudo confirmar. Recarga la ficha.');
   return data.equipos;
 }
 export async function readSelectionTeam({ apiBaseUrl, torneoId, equipoId }) {

@@ -5,7 +5,7 @@ const ids=Array.from({length:8},(_,i)=>`00000000-0000-4000-8000-${String(i+1).pa
 const plantel=ids.map((user_id,i)=>({user_id,nombre:`QA ${i+1}`,estado:'confirmado'}));
 const context={apiBaseUrl:'https://fixture.invalid/',torneoId:9,partidoId:33,equipoId:71};
 const lineup={ok:true,torneo_id:9,partido_id:33,equipo_id:71,required:true,can_edit:true,plantel,alineacion:null,alternancia:'games_impares'};
-const team={ok:true,torneo_id:9,equipo_id:71,plantel_revision:1,cupo_maximo:8,creador_id:ids[0],jugadores:plantel.slice(0,4),solicitudes:[],can_confirm:true,inscripcion_estado:'pendiente',status:'saved'};
+const team={ok:true,torneo_id:9,equipo_id:71,plantel_revision:1,cupo_maximo:8,creador_id:ids[0],jugadores:plantel.slice(0,4),solicitudes:[],can_confirm:true,can_manage:true,can_add_profiles:false,inscripcion_estado:'pendiente',status:'saved'};
 const response=data=>({ok:true,status:200,json:async()=>data});
 beforeEach(()=>{getAuthHeaders.mockResolvedValue({'Content-Type':'application/json',Authorization:'Bearer local-fixture'});global.fetch=jest.fn().mockResolvedValue(response(lineup));});
 test('actual lineup GET carries authenticated headers and refuses anonymous fallback',async()=>{

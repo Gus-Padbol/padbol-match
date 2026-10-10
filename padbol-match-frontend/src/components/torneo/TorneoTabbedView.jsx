@@ -545,7 +545,7 @@ export default function TorneoTabbedView({
   }, [participacionModalOpen]);
 
   useEffect(() => {
-    if (!participacionModalOpen || participacionPaso !== 'buscar') return;
+    if (selectionMode || !participacionModalOpen || participacionPaso !== 'buscar') return;
     let cancelled = false;
     setEquiposBusquedaLoading(true);
     setEquiposBusquedaError(null);
@@ -577,7 +577,7 @@ export default function TorneoTabbedView({
     return () => {
       cancelled = true;
     };
-  }, [participacionModalOpen, participacionPaso, apiBaseUrl, torneoId]);
+  }, [selectionMode, participacionModalOpen, participacionPaso, apiBaseUrl, torneoId]);
 
   const equiposParaChequeoMi = useMemo(() => {
     const m = new Map();
@@ -643,6 +643,7 @@ export default function TorneoTabbedView({
 
   const handleSolicitarUnirme = useCallback(
     async (equipoRow) => {
+      if (selectionMode) return;
       if (solicitudPendingId != null) return;
       setSolicitudPendingId(equipoRow.id);
       try {
@@ -669,6 +670,7 @@ export default function TorneoTabbedView({
       }
     },
     [
+      selectionMode,
       solicitudPendingId,
       session,
       userProfile,
@@ -1681,7 +1683,15 @@ export default function TorneoTabbedView({
 
   return (
     <>
-      {participacionModalOpen ? (
+      {participacionModalOpen && selectionMode ? <div className="torneo-modal-participacion-overlay" role="presentation">
+        <section className="torneo-modal-participacion-card" role="dialog" aria-modal="true" aria-label={String(i18n?.language || '').startsWith('en') ? 'Selection roster registration' : 'Inscripción de planteles de selección'}>
+          <h2>{String(i18n?.language || '').startsWith('en') ? 'Selection roster (up to eight)' : 'Plantel de selección (hasta ocho)'}</h2>
+          <p>{String(i18n?.language || '').startsWith('en') ? 'Create your roster or request a place through registered profiles. Four confirmed players are enough; eight places are optional.' : 'Crea tu plantel o solicita un lugar con perfiles registrados. Cuatro jugadores confirmados son suficientes; completar ocho plazas es opcional.'}</p>
+          <button type="button" className="torneo-modal-participacion-opcion" onClick={irACrearEquipoDefault}>{String(i18n?.language || '').startsWith('en') ? 'View rosters and requests' : 'Ver planteles y solicitudes'}</button>
+          <button type="button" className="torneo-modal-participacion-cerrar" onClick={() => onParticipacionModalClose?.()}>{String(i18n?.language || '').startsWith('en') ? 'Close' : 'Cerrar'}</button>
+        </section>
+      </div> : null}
+      {participacionModalOpen && !selectionMode ? (
         <div
           className="torneo-modal-participacion-overlay"
           role="presentation"

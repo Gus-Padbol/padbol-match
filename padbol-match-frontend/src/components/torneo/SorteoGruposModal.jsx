@@ -31,7 +31,7 @@ export function equiposConfirmadosParaSorteo(equipos, torneo) {
   const out = [];
   for (const eq of equipos || []) {
     if (isPadbolSelection(torneo)) {
-      if (selectionTeamReady(eq, torneo)) out.push(eq);
+      if (eq.inscripcion_estado === 'confirmado' && selectionTeamReady(eq, torneo)) out.push(eq);
       continue;
     }
     const cupo = Number(eq?.cupo_maximo || 2);

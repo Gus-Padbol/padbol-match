@@ -167,7 +167,7 @@ export default function PartidoDetalleModal({
   return (
     <div className="pdm-overlay" role="presentation" onClick={() => onClose?.()}>
       <div
-        className="pdm-dialog"
+        className={`pdm-dialog${children ? ' pdm-dialog--with-lineup' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="partido-detalle-titulo"
@@ -253,9 +253,8 @@ export default function PartidoDetalleModal({
           {[grupoLabel, rondaLabel].filter(Boolean).length > 0 ? (
             <p className="pdm-meta-extra">{[grupoLabel, rondaLabel].filter(Boolean).join(' · ')}</p>
           ) : null}
+          {children}
         </div>
-
-        {children ? <div className="pdm-body">{children}</div> : null}
         <footer className="pdm-footer">
           {showCargar ? (
             <button
