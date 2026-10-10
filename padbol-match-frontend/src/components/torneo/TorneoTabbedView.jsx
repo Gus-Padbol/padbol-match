@@ -1,3 +1,5 @@
+import { formatAdminDate } from '../../utils/adminDateFormat';
+import { padbolLangToIntlLocale } from '../../utils/padbolLang';
 import { getApiBaseUrl } from '../../utils/apiPublicBaseUrl';
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -269,7 +271,10 @@ export default function TorneoTabbedView({
   /** Deporte del torneo (slug) para metadata del ticker / coherencia con GET /api/sponsors. */
   presentadoPorDeporte = null,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const formatHeaderDate = (raw) => navigateState?.fromAdmin === true
+    ? formatAdminDate(raw, { locale: padbolLangToIntlLocale(i18n?.language), empty: '' })
+    : formatFecha(raw);
   usePadbolLangVersion();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() =>
@@ -1986,7 +1991,7 @@ export default function TorneoTabbedView({
             labelCategoriaEdadTorneo(torneo?.categoria_edad),
             formatTipoTorneo(torneo?.tipo_torneo),
             torneo?.fecha_inicio || torneo?.fecha_fin
-              ? `${formatFecha(torneo?.fecha_inicio)} a ${formatFecha(torneo?.fecha_fin)}`
+              ? `${formatHeaderDate(torneo?.fecha_inicio)} a ${formatHeaderDate(torneo?.fecha_fin)}`
               : '',
           ].filter((value) => value && value !== '—').join(' • ')}
         </p>

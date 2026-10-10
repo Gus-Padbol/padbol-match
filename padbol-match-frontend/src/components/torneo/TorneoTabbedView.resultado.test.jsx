@@ -5,7 +5,7 @@ import TorneoTabbedView from './TorneoTabbedView';
 
 jest.mock('../../i18n/tSafe', () => {
   const t = (key, values) => values?.defaultValue || key;
-  return { useSafeTranslation: () => ({ t }) };
+  return { useSafeTranslation: () => ({ t, i18n: { language: 'es' } }) };
 });
 jest.mock('../../hooks/usePadbolLang', () => ({ usePadbolLangVersion: () => 0 }));
 jest.mock('../../supabaseClient', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'test-session' } } }) } } }));
@@ -21,10 +21,10 @@ const originalFetch = global.fetch;
 const partida = { id: 45, torneo_id: 28, equipo_a_id: 71, equipo_b_id: 72, estado: 'pendiente' };
 const savedResult = { goles_a: 2, goles_b: 0, historial_sets: [{ set: 1, a: 6, b: 4 }, { set: 2, a: 6, b: 3 }] };
 
-function setup({ isAdmin = true, entry = '/', openByClick = true } = {}) {
+function setup({ isAdmin = true, entry = '/', openByClick = true, fromAdmin = false, dates = {} } = {}) {
   const setPartidos = jest.fn();
   const rendered = render(<MemoryRouter initialEntries={[entry]}><TorneoTabbedView
-    torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol' }}
+    torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol', ...dates }}
     torneoId="28"
     equipos={[{ id: 71, nombre: 'Alfa', jugadores: [] }, { id: 72, nombre: 'Beta', jugadores: [] }]}
     partidos={[partida]}
@@ -32,6 +32,7 @@ function setup({ isAdmin = true, entry = '/', openByClick = true } = {}) {
     apiBaseUrl="https://qa.example.test"
     session={{ user: { id: 'test-user' }, access_token: 'test-session' }}
     isAdmin={isAdmin}
+    navigateState={fromAdmin ? { fromAdmin: true } : null}
     navigate={jest.fn()}
   /></MemoryRouter>);
   if (openByClick) fireEvent.click(rendered.container.querySelector('.partido-item'));
@@ -91,4 +92,15 @@ test('el enlace de notificación abre el partido concreto sin ofrecer edición a
   expect(container.querySelector('.pdm-dialog')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'torneos.partidoDetalle.cargarResultado' })).not.toBeInTheDocument();
   expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('admin-origin tournament header uses the same full-year numeric dates as the admin list', () => {
+  setup({fromAdmin:true,openByClick:false,dates:{fecha_inicio:'2026-07-04',fecha_fin:'2026-07-18'}});
+  expect(screen.getByText(/04\/07\/2026 a 18\/07\/2026/)).toBeInTheDocument();
+  expect(screen.queryByText(/4 Jul 2026 a 18 Jul 2026/)).not.toBeInTheDocument();
+});
+test('an administrator entering through the public route retains the existing public date presentation', () => {
+  setup({isAdmin:true,fromAdmin:false,openByClick:false,dates:{fecha_inicio:'2026-07-04',fecha_fin:'2026-07-18'}});
+  expect(screen.getByText(/4 Jul 2026 a 18 Jul 2026/)).toBeInTheDocument();
+  expect(screen.queryByText(/04\/07\/2026 a 18\/07\/2026/)).not.toBeInTheDocument();
 });
