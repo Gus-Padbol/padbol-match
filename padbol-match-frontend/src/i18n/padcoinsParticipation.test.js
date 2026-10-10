@@ -1,10 +1,12 @@
-import i18next from 'i18next';
-import { getLocaleFallbacks } from './tSafe';
-test.each(['es','en'])('participation counter renders total number of venues in %s', async language => {
- const i18n=i18next.createInstance();
- await i18n.init({lng:language,resources:{[language]:{translation:getLocaleFallbacks(language)}},keySeparator:false});
- const text=i18n.t('admin.padcoins.sedeParticipationListCount',{count:4});
- expect(text).toContain('4');expect(text).not.toMatch(/\{\{/);
- expect(i18n.t('admin.padcoins.sedeParticipationSuperIntro')).toContain('PadCoins');
- expect(i18n.t('admin.padcoins.sedeParticipationSuperIntro')).not.toContain('Padbol Benefits');
+import i18n from './index';
+import { PADBOL_LANGUAGE_CODES } from '../constants/padbolLanguages';
+
+test.each(PADBOL_LANGUAGE_CODES)('actual initialized %s resources render the participation count and unified brand', language => {
+ const options={lng:language};
+ const counter=i18n.t('admin.padcoins.sedeParticipationListCount',{...options,count:4});
+ expect(counter).toContain('4');expect(counter).not.toMatch(/\{\{/);
+ for (const key of ['sedeParticipationSuperIntro','sedeParticipationSuperToggle','sedeParticipationClubToggleHelp']) {
+  const text=i18n.t(`admin.padcoins.${key}`,options);
+  expect(text).toContain('PadCoins');expect(text).not.toContain('Padbol Benefits');
+ }
 });
