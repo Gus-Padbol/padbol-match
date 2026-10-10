@@ -295,6 +295,7 @@ export default function FormEquipos() {
   }, [perfilLsKey]);
 
   const [torneo, setTorneo] = useState(null);
+  const selectionMode = isPadbolSelection(torneo);
   const [jugadoresTorneo, setJugadoresTorneo] = useState([]);
   const [equipos, setEquipos] = useState([]);
   const [nombreEquipo, setNombreEquipo] = useState('');
@@ -871,7 +872,7 @@ export default function FormEquipos() {
   ]);
 
   useEffect(() => {
-    if (loading || authLoading || isPadbolSelection(torneo)) return;
+    if (loading || authLoading || selectionMode) return;
     if (torneo?.estado === 'cancelado') return;
 
     const run = async () => {
@@ -903,7 +904,7 @@ export default function FormEquipos() {
       }
     };
     void run();
-  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, torneo?.modalidad_plantel, torneo?.deporte, authUserId, session?.user, cuentaAuth?.email]);
+  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, selectionMode, authUserId, session?.user, cuentaAuth?.email]);
 
   useEffect(() => {
     if (!isMobile || !flujoInscripcionTorneoActivo) return;
@@ -2662,7 +2663,7 @@ export default function FormEquipos() {
     );
   }
 
-  if (isPadbolSelection(torneo)) {
+  if (selectionMode) {
     return <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
       <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '12px', boxSizing: 'border-box' }}>

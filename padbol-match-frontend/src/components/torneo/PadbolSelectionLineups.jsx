@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSafeTranslation } from '../../i18n/tSafe';
 import { readSelectionLineup, saveSelectionLineup } from '../../utils/padbolSelectionApi';
 import { selectionPlayerId, validateSelectionLineup } from '../../utils/padbolSelectionRoster';
-import './PadbolSelection.css';
 
 const blank = () => ({ iniciales: ['', ''], suplentes: ['', ''] });
 function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid }) {

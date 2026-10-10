@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSafeTranslation } from '../../i18n/tSafe';
 import { confirmSelectionRegistration, createSelectionTeam, listSelectionTeams, readSelectionTeam, requestSelectionMembership, saveSelectionRoster } from '../../utils/padbolSelectionApi';
 import { selectionPlayerId, selectionRosterPlayers, selectionTeamReady } from '../../utils/padbolSelectionRoster';
-import './PadbolSelection.css';
 
 function RosterEditor({ apiBaseUrl, torneoId, equipoId, userId, onChanged, en }) {
   const [data, setData] = useState(null);
@@ -102,7 +101,7 @@ export default function PadbolSelectionTeams({ apiBaseUrl, torneo, userId, profi
     } catch (err) { if (live.current && generation === loadGeneration.current) setError(err.message); }
     finally { if (live.current && generation === loadGeneration.current) setLoading(false); }
   }, [apiBaseUrl, torneo.id, userId]);
-  useEffect(() => { live.current = true; void load(); return () => { live.current = false; loadGeneration.current++; }; }, [load]);
+  useEffect(() => { live.current = true; void load(); return () => { live.current = false; }; }, [load]);
   const own = teams.find(team => String(team.creador_id) === String(userId) || selectionRosterPlayers(team.jugadores).some(player => selectionPlayerId(player) === String(userId).toLowerCase()));
   const registrationOpen = ['planificacion', 'proximo', 'abierto', 'inscripcion_abierta'].includes(String(torneo.estado));
   const create = async event => {

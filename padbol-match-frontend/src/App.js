@@ -9,6 +9,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import './App.css';
+import './components/torneo/PadbolSelection.css';
 
 import useUserRole from './hooks/useUserRole';
 import ProtectedRoute from './components/ProtectedRoute';
