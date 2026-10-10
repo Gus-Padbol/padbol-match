@@ -15,3 +15,5 @@
 
 .padbol-selection input[type=checkbox] {width:20px;min-height:20px;height:20px;vertical-align:middle;margin-right:8px;}
 .padbol-selection label:has(input[type=checkbox]) {min-height:44px;align-items:center;}
+
+.padbol-selection :is(h2,h3,h4,label,legend,strong) {color:var(--text-primary);}

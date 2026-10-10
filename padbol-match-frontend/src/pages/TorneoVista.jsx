@@ -1,6 +1,7 @@
+import { isPadbolSelection } from '../utils/padbolSelectionRoster';
 import { fetchBuscaDuplaList } from '../utils/torneoBuscaDuplaApi';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -74,6 +75,8 @@ export default function TorneoVista() {
   }, [session?.user?.email]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentCliente);
   const [torneo, setTorneo] = useState(null);
+  const selectionMode = isPadbolSelection(torneo);
+  const selectionModeRef = useRef(false);
   const [equipos, setEquipos] = useState([]);
   const [sedesMap, setSedesMap] = useState({});
   const [partidos, setPartidos] = useState([]);
@@ -239,6 +242,10 @@ export default function TorneoVista() {
     !loading && equiposConfirmadosInscripcion >= 2 && tieneFixturePartidos;
 
   const loadBuscaDupla = useCallback(async () => {
+    if (selectionModeRef.current) {
+      setBuscaDuplaList([]); setBuscaDuplaEnrolled(false); setBuscaDuplaInvRecibidas([]); setBuscaDuplaInvEnviadas([]);
+      return;
+    }
     const idNum = parseInt(String(torneoId), 10);
     if (!Number.isFinite(idNum)) return;
     setBuscaDuplaLoading(true);
@@ -297,7 +304,7 @@ export default function TorneoVista() {
       if (torneoRes.ok) {
         try {
           const t = await torneoRes.json();
-          if (t && typeof t === 'object' && !t.error) setTorneo(t);
+          if (t && typeof t === 'object' && !t.error) { selectionModeRef.current = isPadbolSelection(t); setTorneo(t); }
         } catch (e) {
           console.error('[TorneoVista] recargar torneo JSON:', e);
         }
@@ -415,6 +422,7 @@ export default function TorneoVista() {
           nextSedesMap[String(sede.id)] = sede;
         });
 
+        selectionModeRef.current = isPadbolSelection(torneoData);
         setTorneo(torneoData);
         setEquipos(equiposData);
         setPartidos(partidosData);
@@ -931,6 +939,7 @@ export default function TorneoVista() {
   }, [navigate, torneoId]);
 
   const registrarBuscaDupla = useCallback(async () => {
+    if (selectionModeRef.current) return;
     if (!session?.access_token) {
       navigate(authUrlWithRedirect(`/torneo/${torneoId}`));
       return;
@@ -953,6 +962,7 @@ export default function TorneoVista() {
   }, [session?.access_token, torneoId, navigate, recargarDatosTorneo, t]);
 
   const salirBuscaDupla = useCallback(async () => {
+    if (selectionModeRef.current) return;
     if (!session?.access_token) return;
     setBuscaDuplaBusy(true);
     try {
@@ -973,6 +983,7 @@ export default function TorneoVista() {
 
   const invitarBuscaDupla = useCallback(
     async (toUserId) => {
+      if (selectionModeRef.current) return;
       if (!session?.access_token || !toUserId) return;
       setBuscaDuplaBusy(true);
       try {
@@ -999,6 +1010,7 @@ export default function TorneoVista() {
 
   const aceptarInvitacionBuscaDupla = useCallback(
     async (invId) => {
+      if (selectionModeRef.current) return;
       if (!session?.access_token || !invId) return;
       setBuscaDuplaBusy(true);
       try {
@@ -1024,6 +1036,7 @@ export default function TorneoVista() {
 
   const rechazarInvitacionBuscaDupla = useCallback(
     async (invId) => {
+      if (selectionModeRef.current) return;
       if (!session?.access_token || !invId) return;
       setBuscaDuplaBusy(true);
       try {
@@ -1111,10 +1124,16 @@ export default function TorneoVista() {
   }
 
   const puedePanelBuscaDupla =
-    torneo && !torneoPasadoCalendario && torneoPermiteNuevasInscripciones(torneo);
+    !selectionMode && torneo && !torneoPasadoCalendario && torneoPermiteNuevasInscripciones(torneo);
 
   const buscaDuplaSeccion =
-    puedePanelBuscaDupla ? (
+    selectionMode && !torneoPasadoCalendario && torneoPermiteNuevasInscripciones(torneo) ? (
+      <section className="padbol-selection">
+        <h3>{t('torneos.selecciones.selectionMode', { defaultValue: 'Plantel de selección (hasta 8)' })}</h3>
+        <p>{t('torneos.selecciones.modeHint', { defaultValue: 'Plantel de 4 a 8 jugadores. Cada partido presenta 2 iniciales y 2 suplentes; siempre juegan 2 en cancha y pueden alternar en games impares. La carga manual de sets no registra los cambios game por game.' })}</p>
+        <button type="button" onClick={() => navigate(`/torneo/${torneoId}/equipos`, location.state != null ? { state: location.state } : undefined)}>{t('torneos.vista.teamsAndRegistration')}</button>
+      </section>
+    ) : puedePanelBuscaDupla ? (
       <div className="torneo-busca-dupla">
         <h3 className="torneo-busca-dupla__titulo">{t('torneos.vista.playersSeekingPartner')}</h3>
         {session?.user && indiceCategoriaNivelBuscaDupla(userProfile?.nivel) >= 0 ? (
