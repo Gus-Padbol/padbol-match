@@ -164,6 +164,13 @@ function detailValue(details, ...labels) {
   return details.find(([label]) => expected.includes(String(label).toLocaleLowerCase('es')))?.[1] || null;
 }
 
+export function leadAnalysisNotice(status, enabled) {
+  if (status === 'disabled' || enabled === false) return { title: 'Análisis automático desactivado', message: 'El servicio de análisis no está habilitado. Esta consulta permanece disponible para revisión manual.', badge: 'DESACTIVADO' };
+  if (status === 'failed' || status === 'error') return { title: 'No se pudo completar el análisis', message: 'No hay un resultado confirmado. Esta consulta permanece disponible para revisión manual.', badge: 'SIN RESULTADO' };
+  if (status) return { title: 'Análisis solicitado, sin resultado confirmado', message: enabled === true ? 'La solicitud está pendiente. Se mostrará el resultado cuando esté disponible; este estado no confirma que el análisis esté ejecutándose.' : 'No se pudo confirmar la disponibilidad del servicio de análisis. Esta consulta permanece disponible para revisión manual.', badge: 'PENDIENTE' };
+  return { title: 'Sin análisis solicitado', message: 'Esta ficha no tiene una solicitud de análisis registrada.', badge: '' };
+}
+
 export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   const hasPanelExit = Boolean(onBack);
   useEffect(() => {
@@ -260,6 +267,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   const active = visibleItems.find((i) => i.id === activeId) || visibleItems[0] || null;
   const leadAnalysis = active?.qualification_data?.lead_analysis || null;
   const analysisRequestStatus = active?.qualification_data?.lead_analysis_request?.status || null;
+  const analysisNotice = leadAnalysisNotice(analysisRequestStatus, perms?.leadAnalysisEnabled);
   const whatsappSendEnabled = perms?.whatsappSendEnabled === true;
   const emailSendEnabled = perms?.emailSendEnabled === true;
   const activeDetails = formDetails(active);
@@ -587,7 +595,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                       {leadAnalysis.risks?.length ? <section className="wa-executive-risks"><h4>Atención</h4><ul>{leadAnalysis.risks.map((risk) => <li key={risk}>{risk}</li>)}</ul></section> : null}
                     </div>
                     <footer>{leadAnalysis.pdf_url ? <a href={leadAnalysis.pdf_url} target="_blank" rel="noreferrer">Ver informe completo en PDF <span>↗</span></a> : <span className="wa-pdf-pending">Informe detallado pendiente de asociar</span>}<small>Análisis integrado a esta ficha · sin duplicar el contacto</small></footer>
-                  </article> : analysisRequestStatus === 'pending' ? <article className="wa-analysis-pending is-running"><span>✦</span><div><strong>Analizando este lead</strong><p>La ficha se actualiza automáticamente cuando llega el resultado. No hace falta recargar ni abrir otro informe.</p></div><b>EN PROCESO</b></article> : <article className="wa-analysis-pending"><span>✦</span><div><strong>Sin análisis solicitado</strong><p>Este registro de prueba o histórico no disparó un análisis automático.</p></div></article>}
+                  </article> : <article className="wa-analysis-pending"><div><strong>{analysisNotice.title}</strong><p>{analysisNotice.message}</p></div>{analysisNotice.badge ? <b>{analysisNotice.badge}</b> : null}</article>}
                   {active.audio_type ? <div className="wa-system">⌁ Audio entrante: {active.audio_type} {active.transcript ? `· ${active.transcript}` : ''}</div> : null}
                 </div>
                 <div className="wa-composer">

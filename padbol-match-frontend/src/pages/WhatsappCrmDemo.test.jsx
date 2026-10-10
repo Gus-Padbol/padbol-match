@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, formatCrmEventText } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, formatCrmEventText, leadAnalysisNotice } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../context/AuthContext', () => ({
@@ -333,4 +333,38 @@ test('the CRM keeps an explicit exit to the general panel without sending messag
   expect(onBack).toHaveBeenCalledTimes(1);
   expect(scroll).toHaveBeenCalledWith(0, 0);
   scroll.mockRestore();
+});
+
+
+describe('estado honesto del análisis automático', () => {
+  test.each([['pending', false, 'Análisis automático desactivado'], ['disabled', true, 'Análisis automático desactivado'], ['pending', true, 'Análisis solicitado, sin resultado confirmado'], ['pending', undefined, 'Análisis solicitado, sin resultado confirmado'], ['failed', true, 'No se pudo completar el análisis'], [null, true, 'Sin análisis solicitado']])('estado %s con capacidad %s', (status, enabled, title) => {
+    const notice = leadAnalysisNotice(status, enabled);
+    expect(notice.title).toBe(title);
+    expect(notice.title).not.toMatch(/Analizando/);
+    expect(notice.badge).not.toBe('EN PROCESO');
+  });
+  test('lead histórico pending y servidor desactivado muestra revisión manual sin progreso falso', async () => {
+    jest.clearAllMocks();
+    crmAdminApi.sedes.mockResolvedValue([]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
+    crmAdminApi.permissions.mockResolvedValue({ canAudit: true, canOperate: false, leadAnalysisEnabled: false });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'analysis-fixture', source_channel: 'email', subject: 'Fixture análisis', qualification_data: { lead_analysis_request: { status: 'pending' } } }]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByText('Análisis automático desactivado')).toBeInTheDocument();
+    expect(screen.getByText(/consulta permanece disponible para revisión manual/)).toBeInTheDocument();
+    expect(screen.queryByText('EN PROCESO')).not.toBeInTheDocument();
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+  });
+});
+
+test('un resultado histórico confirmado se conserva aunque hoy el análisis esté desactivado', async () => {
+  jest.clearAllMocks();
+  crmAdminApi.permissions.mockResolvedValue({ canAudit: true, canOperate: false, leadAnalysisEnabled: false });
+  crmAdminApi.sedes.mockResolvedValue([]); crmAdminApi.activities.mockResolvedValue([]);
+  crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
+  crmAdminApi.inbox.mockResolvedValue([{ id: 'saved-analysis', source_channel: 'email', subject: 'Fixture resultado', qualification_data: { lead_analysis: { score: 50, priority: 'B', summary: 'Resultado histórico simulado' }, lead_analysis_request: { status: 'pending' } } }]);
+  render(<WhatsappCrmDemo />);
+  expect(await screen.findByText('Resultado histórico simulado')).toBeInTheDocument();
+  expect(screen.queryByText('Análisis automático desactivado')).not.toBeInTheDocument();
 });
