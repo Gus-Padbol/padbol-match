@@ -4,12 +4,43 @@ import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 const API_BASE = getApiBaseUrl();
 const STATE_LABEL = { confirmada: 'Confirmada', en_espera: 'En espera', cancelada: 'Cancelada' };
 
-export default function AdminNextGenerationSection({ accessToken }) {
-  const [data, setData] = useState({ summary: {}, inscripciones: [] });
+export default function AdminNextGenerationSection({ accessToken, role, sedeId }) {
+  const [data, setData] = useState({ summary: {}, inscripciones: [], sedes: [], jornadas: [] });
   const [filter, setFilter] = useState('todas');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [createError, setCreateError] = useState('');
+  const emptyForm = { sede_id: role === 'admin_club' ? String(sedeId || '') : '', nombre_publico: '', categoria: 'U14', comienza_at: '', termina_at: '', cupo: '', estado: 'borrador' };
+  const [form, setForm] = useState(emptyForm);
+  const canCreate = !!accessToken && (role === 'super_admin' || (role === 'admin_club' && Number(sedeId) > 0));
+  const venues = (data.sedes || []).filter((venue) => role !== 'admin_club' || String(venue.id) === String(sedeId));
+  const update = (event) => { setForm((current) => ({ ...current, [event.target.name]: event.target.value })); setCreateError(''); };
+  const createSession = async (event) => {
+    event.preventDefault();
+    if (!canCreate || saving) return;
+    const venue = role === 'admin_club' ? Number(sedeId) : Number(form.sede_id);
+    const starts = new Date(form.comienza_at);
+    const ends = form.termina_at ? new Date(form.termina_at) : null;
+    if (!venues.some((item) => Number(item.id) === venue) || !form.nombre_publico.trim() || !Number.isInteger(Number(form.cupo)) || Number(form.cupo) < 1 || Number.isNaN(starts.getTime()) || (ends && (Number.isNaN(ends.getTime()) || ends <= starts))) {
+      setCreateError('Revisa la sede, el nombre, el cupo y las fechas. El final debe ser posterior al inicio.'); return;
+    }
+    setSaving(true); setCreateError(''); setNotice('');
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/next-generation/sessions`, {
+        method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sede_id: venue, nombre_publico: form.nombre_publico.trim(), categoria: form.categoria, comienza_at: starts.toISOString(), termina_at: ends ? ends.toISOString() : null, cupo: Number(form.cupo), estado: form.estado }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || !body.session?.id) throw new Error('No se pudo confirmar el guardado de la jornada. Revisa el listado antes de volver a intentar.');
+      setNotice(`Jornada creada: ${body.session.nombre_publico || form.nombre_publico}.`);
+      setCreating(false); setForm(emptyForm); await load();
+    } catch (saveError) { setCreateError(saveError.message); }
+    finally { setSaving(false); }
+  };
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -22,7 +53,7 @@ export default function AdminNextGenerationSection({ accessToken }) {
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'No se pudieron cargar las inscripciones.');
-      setData({ summary: body.summary || {}, inscripciones: body.inscripciones || [] });
+      setData({ summary: body.summary || {}, inscripciones: body.inscripciones || [], sedes: body.sedes || [], jornadas: body.jornadas || body.sessions || [] });
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -51,6 +82,25 @@ export default function AdminNextGenerationSection({ accessToken }) {
         </div>
         <button type="button" onClick={() => void load()} disabled={loading}>{loading ? 'Actualizando…' : 'Actualizar'}</button>
       </div>
+      {canCreate ? <button type="button" onClick={() => { setCreating(true); setNotice(''); }} disabled={saving}>Crear jornada</button> : null}
+      {notice ? <p role="status">{notice}</p> : null}
+      {creating && canCreate ? <form onSubmit={createSession} aria-label="Crear jornada Next Generation" style={{ marginTop: 16, padding: 16, border: '1px solid var(--border)', borderRadius: 12 }}>
+        <h3>Nueva jornada</h3>
+        <p>Las fechas se ingresan en la zona horaria de este dispositivo. Ciudad y país se toman de la sede.</p>
+        <fieldset disabled={saving} style={{ border: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,240px),1fr))', gap: 12 }}>
+          <label>Sede<select required name="sede_id" value={role === 'admin_club' ? String(sedeId) : form.sede_id} onChange={update} disabled={role === 'admin_club'}><option value="">Seleccionar sede…</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.nombre || venue.sede_club || 'Sede sin nombre'}</option>)}</select></label>
+          <label>Nombre de la jornada<input required maxLength={160} name="nombre_publico" value={form.nombre_publico} onChange={update} /></label>
+          <label>Categoría<select name="categoria" value={form.categoria} onChange={update}><option>U14</option><option>U16</option><option>U18</option></select></label>
+          <label>Inicio<input required type="datetime-local" name="comienza_at" value={form.comienza_at} onChange={update} /></label>
+          <label>Final (opcional)<input type="datetime-local" name="termina_at" value={form.termina_at} onChange={update} /></label>
+          <label>Cupo<input required type="number" min="1" step="1" name="cupo" value={form.cupo} onChange={update} /></label>
+          <label>Estado<select name="estado" value={form.estado} onChange={update}><option value="borrador">Borrador</option><option value="programada">Programada</option></select></label>
+        </fieldset>
+        {!venues.length ? <p>No hay sedes disponibles para crear una jornada.</p> : null}
+        {createError ? <p role="alert">{createError}</p> : null}
+        <button type="submit" disabled={saving || !venues.length}>{saving ? 'Guardando…' : 'Guardar jornada'}</button>
+        <button type="button" disabled={saving} onClick={() => { setCreating(false); setCreateError(''); }}>Cancelar</button>
+      </form> : null}
       {error ? <p role="alert" style={{ color: '#b91c1c', fontWeight: 700 }}>{error}</p> : null}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(145px,1fr))', gap: 12, margin: '20px 0' }}>
         {[['Total', data.summary.total], ['Confirmadas', data.summary.confirmadas], ['En espera', data.summary.en_espera], ['Canceladas', data.summary.canceladas]].map(([label, value]) => (
