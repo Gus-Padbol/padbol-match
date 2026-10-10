@@ -1,3 +1,4 @@
+import './AdminNextGenerationSection.css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 
@@ -74,7 +75,7 @@ export default function AdminNextGenerationSection({ accessToken, role, sedeId }
   }, [data.inscripciones, filter, query]);
 
   return (
-    <section aria-label="Inscripciones Next Generation">
+    <section className="admin-ng-section" aria-label="Inscripciones Next Generation">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ marginBottom: 4 }}>Next Generation</h2>
@@ -84,10 +85,10 @@ export default function AdminNextGenerationSection({ accessToken, role, sedeId }
       </div>
       {canCreate ? <button type="button" onClick={() => { setCreating(true); setNotice(''); }} disabled={saving}>Crear jornada</button> : null}
       {notice ? <p role="status">{notice}</p> : null}
-      {creating && canCreate ? <form onSubmit={createSession} aria-label="Crear jornada Next Generation" style={{ marginTop: 16, padding: 16, border: '1px solid var(--border)', borderRadius: 12 }}>
+      {creating && canCreate ? <form className="admin-ng-session-form" onSubmit={createSession} aria-label="Crear jornada Next Generation">
         <h3>Nueva jornada</h3>
         <p>Las fechas se ingresan en la zona horaria de este dispositivo. Ciudad y país se toman de la sede.</p>
-        <fieldset disabled={saving} style={{ border: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,240px),1fr))', gap: 12 }}>
+        <fieldset disabled={saving}>
           <label>Sede<select required name="sede_id" value={role === 'admin_club' ? String(sedeId) : form.sede_id} onChange={update} disabled={role === 'admin_club'}><option value="">Seleccionar sede…</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.nombre || venue.sede_club || 'Sede sin nombre'}</option>)}</select></label>
           <label>Nombre de la jornada<input required maxLength={160} name="nombre_publico" value={form.nombre_publico} onChange={update} /></label>
           <label>Categoría<select name="categoria" value={form.categoria} onChange={update}><option>U14</option><option>U16</option><option>U18</option></select></label>
@@ -98,8 +99,10 @@ export default function AdminNextGenerationSection({ accessToken, role, sedeId }
         </fieldset>
         {!venues.length ? <p>No hay sedes disponibles para crear una jornada.</p> : null}
         {createError ? <p role="alert">{createError}</p> : null}
-        <button type="submit" disabled={saving || !venues.length}>{saving ? 'Guardando…' : 'Guardar jornada'}</button>
+        <div className="admin-ng-session-actions">
+        <button className="admin-ng-button--primary" type="submit" disabled={saving || !venues.length}>{saving ? 'Guardando…' : 'Guardar jornada'}</button>
         <button type="button" disabled={saving} onClick={() => { setCreating(false); setCreateError(''); }}>Cancelar</button>
+        </div>
       </form> : null}
       {error ? <p role="alert" style={{ color: '#b91c1c', fontWeight: 700 }}>{error}</p> : null}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(145px,1fr))', gap: 12, margin: '20px 0' }}>
