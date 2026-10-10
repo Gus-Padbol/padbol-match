@@ -788,6 +788,12 @@
       "equipoA": "Equipo A",
       "equipoB": "Equipo B",
       "ronda": "Ronda {{n}}"
+    },
+    "selecciones": {
+      "modeLabel": "Plantel del equipo",
+      "legacyMode": "Dobles (modalidad habitual)",
+      "selectionMode": "Plantel de selección (hasta 8)",
+      "modeHint": "Plantel de 4 a 8 jugadores. Cada partido presenta 2 iniciales y 2 suplentes; siempre juegan 2 en cancha y pueden alternar en games impares. La carga manual de sets no registra los cambios game por game."
     }
   },
   "competir": {

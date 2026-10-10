@@ -21,10 +21,10 @@ const originalFetch = global.fetch;
 const partida = { id: 45, torneo_id: 28, equipo_a_id: 71, equipo_b_id: 72, estado: 'pendiente' };
 const savedResult = { goles_a: 2, goles_b: 0, historial_sets: [{ set: 1, a: 6, b: 4 }, { set: 2, a: 6, b: 3 }] };
 
-function setup({ isAdmin = true, entry = '/', openByClick = true, fromAdmin = false, dates = {} } = {}) {
+function setup({ isAdmin = true, entry = '/', openByClick = true, fromAdmin = false, dates = {}, mode } = {}) {
   const setPartidos = jest.fn();
   const rendered = render(<MemoryRouter initialEntries={[entry]}><TorneoTabbedView
-    torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol', ...dates }}
+    torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol', modalidad_plantel: mode, ...dates }}
     torneoId="28"
     equipos={[{ id: 71, nombre: 'Alfa', jugadores: [] }, { id: 72, nombre: 'Beta', jugadores: [] }]}
     partidos={[partida]}
@@ -103,4 +103,25 @@ test('an administrator entering through the public route retains the existing pu
   setup({isAdmin:true,fromAdmin:false,openByClick:false,dates:{fecha_inicio:'2026-07-04',fecha_fin:'2026-07-18'}});
   expect(screen.getByText(/4 Jul 2026 a 18 Jul 2026/)).toBeInTheDocument();
   expect(screen.queryByText(/04\/07\/2026 a 18\/07\/2026/)).not.toBeInTheDocument();
+});
+
+const selectionIds = Array.from({length:8},(_,i)=>`00000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
+const selectionDto = equipoId => ({ ok:true, torneo_id:28, partido_id:45, equipo_id:equipoId, required:true, can_edit:false, alternancia:'games_impares', plantel:selectionIds.map(user_id=>({user_id,nombre:user_id})), alineacion:{iniciales:selectionIds.slice(0,2),suplentes:selectionIds.slice(2,4),revision:1} });
+test('selection result remains blocked until persisted four-player declarations exist for both teams', async()=>{
+ global.fetch.mockImplementation(url=>Promise.resolve({ok:true,status:200,json:async()=>({...selectionDto(url.includes('/71/')?71:72),alineacion:null})}));
+ const {container,setPartidos}=setup({mode:'selecciones'});
+ await screen.findByText('Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.');
+ const button=screen.getByRole('button',{name:'torneos.partidoDetalle.cargarResultado'});
+ expect(button).toBeDisabled();fireEvent.click(button);
+ expect(container.querySelector('.form-sets')).not.toBeInTheDocument();expect(setPartidos).not.toHaveBeenCalled();
+ expect(fetch.mock.calls.every(([,request])=>request.method==='GET')).toBe(true);
+});
+test('selection result rechecks both real declaration endpoints before existing result POST',async()=>{
+ global.fetch.mockImplementation(url=>Promise.resolve({ok:true,status:200,json:async()=>url.endsWith('/resultado')?{ok:true,status:'finalized',torneo_id:28,partido_id:45,resultado:savedResult,ganador_equipo_id:71}:selectionDto(url.includes('/71/')?71:72)}));
+ const {container,setPartidos}=setup({mode:'selecciones'});
+ await waitFor(()=>expect(screen.getByRole('button',{name:'torneos.partidoDetalle.cargarResultado'})).not.toBeDisabled());
+ openAndFill(container);fireEvent.click(screen.getByRole('button',{name:'Guardar',exact:true}));
+ await waitFor(()=>expect(setPartidos).toHaveBeenCalledTimes(1));
+ const calls=fetch.mock.calls;expect(calls.filter(([url])=>url.endsWith('/alineacion'))).toHaveLength(4);
+ expect(calls.at(-1)[0]).toMatch(/\/resultado$/);expect(JSON.parse(calls.at(-1)[1].body)).toEqual(savedResult);
 });

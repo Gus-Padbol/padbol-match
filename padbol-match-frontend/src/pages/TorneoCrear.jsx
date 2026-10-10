@@ -1,3 +1,4 @@
+import { PADBOL_SELECTION_MODE } from '../utils/padbolSelectionRoster';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, {
   useState,
@@ -76,6 +77,7 @@ const EMPTY_TORNEO_FORM = () => ({
   fecha_apertura_inscripcion: '',
   deporte: TORNEO_DEPORTE_PADBOL,
   formato_equipo: TORNEO_FORMATO_DOBLES,
+  modalidad_plantel: 'dobles',
 });
 
 const TorneoCrear = forwardRef(function TorneoCrear({
@@ -221,6 +223,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       setFormData((prev) => ({
         ...prev,
         deporte: value,
+        modalidad_plantel: 'dobles',
         formato_equipo: formatoEquipoDefaultParaDeporte(value),
       }));
       return;
@@ -284,6 +287,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       es_multisede: formData.es_multisede,
       created_by: null,
       deporte: normalizeTorneoDeporte(formData.deporte),
+      ...(normalizeTorneoDeporte(formData.deporte) === TORNEO_DEPORTE_PADBOL && formData.modalidad_plantel === PADBOL_SELECTION_MODE ? { modalidad_plantel: PADBOL_SELECTION_MODE } : {}),
       formato_equipo: formatoEquipoPayloadParaApi(formData.deporte, formData.formato_equipo),
     };
 
@@ -462,6 +466,15 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                   {t('torneos.create.teamFormatHint')}
                 </small>
               </div>
+
+              {normalizeTorneoDeporte(formData.deporte) === TORNEO_DEPORTE_PADBOL ? <div className="form-group">
+                <label htmlFor="torneo-modalidad-plantel">{t('torneos.selecciones.modeLabel', { defaultValue: 'Plantel del equipo' })}</label>
+                <select id="torneo-modalidad-plantel" name="modalidad_plantel" value={formData.modalidad_plantel} onChange={handleChange}>
+                  <option value="dobles">{t('torneos.selecciones.legacyMode', { defaultValue: 'Dobles (modalidad habitual)' })}</option>
+                  <option value="selecciones">{t('torneos.selecciones.selectionMode', { defaultValue: 'Plantel de selección (hasta 8)' })}</option>
+                </select>
+                {formData.modalidad_plantel === PADBOL_SELECTION_MODE ? <p>{t('torneos.selecciones.modeHint', { defaultValue: 'Plantel de 4 a 8 jugadores. Cada partido presenta 2 iniciales y 2 suplentes; siempre juegan 2 en cancha y pueden alternar en games impares. La carga manual de sets no registra los cambios game por game.' })}</p> : null}
+              </div> : null}
 
               <div className="form-group">
                 <label>{t('torneos.create.levelLabel')} *</label>

@@ -1,3 +1,6 @@
+import { isPadbolSelection } from '../../utils/padbolSelectionRoster';
+import { readSelectionLineup } from '../../utils/padbolSelectionApi';
+import PadbolSelectionLineups from './PadbolSelectionLineups';
 import { formatAdminDate } from '../../utils/adminDateFormat';
 import { padbolLangToIntlLocale } from '../../utils/padbolLang';
 import { getApiBaseUrl } from '../../utils/apiPublicBaseUrl';
@@ -300,6 +303,8 @@ export default function TorneoTabbedView({
     setSelectedPartido(requestedMatch);
     setShowModalDetallePartido(true);
   }, [location.pathname, location.search, partidos]);
+  const [selectionReady, setSelectionReady] = useState({});
+  const selectionMode = isPadbolSelection(torneo);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
   /** Flujo voz: idle | listening | processing | confirm */
   const [voicePhase, setVoicePhase] = useState('idle');
@@ -458,7 +463,7 @@ export default function TorneoTabbedView({
     esGruposKnockout &&
     grupos.length === 0 &&
     (estadoLower === 'abierto' || estadoLower === 'inscripcion_abierta') &&
-    equiposConfirmadosParaSorteo(equipos).length >= 2;
+    equiposConfirmadosParaSorteo(equipos, torneo).length >= 2;
 
   const sorteoGruposAutoOpenedRef = useRef(false);
   useEffect(() => {
@@ -685,6 +690,7 @@ export default function TorneoTabbedView({
   const abrirCargarResultadoDesdeDetalle = useCallback(
     (partido) => {
       if (!partido || !isAdmin || !puedeCargarResultados) return;
+      if (selectionMode && !selectionReady[String(partido.id)]) return;
       setSelectedPartido(partido);
       setResultado({ set1: '', set2: '', set3: '' });
       setVoiceError(null);
@@ -695,7 +701,7 @@ export default function TorneoTabbedView({
       setVoiceSaving(false);
       setShowModalResultado(true);
     },
-    [isAdmin, puedeCargarResultados],
+    [isAdmin, puedeCargarResultados, selectionMode, selectionReady],
   );
 
   const startVoiceResultado = useCallback(() => {
@@ -846,6 +852,11 @@ export default function TorneoTabbedView({
             set3: normalizeSetInput(resultado.set3),
           };
       try {
+        if (selectionMode) {
+          if (!selectionReady[String(selectedPartido.id)]) throw new Error('Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.');
+          const lineups = await Promise.all([selectedPartido.equipo_a_id, selectedPartido.equipo_b_id].map(equipoId => readSelectionLineup({ apiBaseUrl, torneoId: torneo?.id ?? torneoId, partidoId: selectedPartido.id, equipoId })));
+          if (lineups.some(dto => !dto.required || !dto.alineacion)) throw new Error('Las alineaciones de ambos equipos deben estar guardadas antes del resultado.');
+        }
         const data = await guardarResultadoManualTorneo({
           apiBaseUrl,
           torneoId: torneo?.id ?? torneoId,
@@ -870,7 +881,7 @@ export default function TorneoTabbedView({
         alert('Error al guardar: ' + err.message);
       }
     },
-    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, torneo?.id, torneoId, setPartidos, t]
+    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, torneo?.id, torneoId, setPartidos, t, selectionMode, selectionReady]
   );
 
   const confirmarVozYGuardar = useCallback(async () => {
@@ -2201,7 +2212,10 @@ export default function TorneoTabbedView({
         nombreEquipo={nombreEquipoMostrado}
         torneoId={torneo?.id ?? torneoId}
         onCargarResultado={puedeCargarResultados ? abrirCargarResultadoDesdeDetalle : undefined}
-      />
+        resultadoDisabled={selectionMode && !selectionReady[String(selectedPartido?.id)]}
+      >
+        {selectionMode && selectedPartido && showModalDetallePartido ? <PadbolSelectionLineups key={`${torneo?.id ?? torneoId}:${selectedPartido.id}`} apiBaseUrl={apiBaseUrl} torneoId={torneo?.id ?? torneoId} partido={selectedPartido} equipos={equipos} onReadyChange={ready => setSelectionReady(prev => prev[String(selectedPartido.id)] === ready ? prev : { ...prev, [String(selectedPartido.id)]: ready })} /> : null}
+      </PartidoDetalleModal>
 
       {showModalResultado && selectedPartido ? (
         <div

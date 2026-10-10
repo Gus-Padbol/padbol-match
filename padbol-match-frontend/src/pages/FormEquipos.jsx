@@ -1,3 +1,5 @@
+import { isPadbolSelection } from '../utils/padbolSelectionRoster';
+import PadbolSelectionTeams from '../components/torneo/PadbolSelectionTeams';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
@@ -869,7 +871,7 @@ export default function FormEquipos() {
   ]);
 
   useEffect(() => {
-    if (loading || authLoading) return;
+    if (loading || authLoading || isPadbolSelection(torneo)) return;
     if (torneo?.estado === 'cancelado') return;
 
     const run = async () => {
@@ -901,7 +903,7 @@ export default function FormEquipos() {
       }
     };
     void run();
-  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, authUserId, session?.user, cuentaAuth?.email]);
+  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, torneo?.modalidad_plantel, torneo?.deporte, authUserId, session?.user, cuentaAuth?.email]);
 
   useEffect(() => {
     if (!isMobile || !flujoInscripcionTorneoActivo) return;
@@ -2658,6 +2660,17 @@ export default function FormEquipos() {
         <BottomNav />
       </div>
     );
+  }
+
+  if (isPadbolSelection(torneo)) {
+    return <div style={inscripcionPageShellStyle}>
+      {renderInscripcionHeader()}
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '12px', boxSizing: 'border-box' }}>
+        <PadbolSelectionTeams apiBaseUrl={BACKEND_API_BASE} torneo={torneo} userId={session?.user?.id} canManage={puedeGestionarEquiposTorneo}
+          profileReady={perfilTorneoCompleto} onSignIn={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos`))}
+          onCompleteProfile={() => navigate(`/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(`/torneo/${id}/equipos`)}`)} />
+      </main><BottomNav />
+    </div>;
   }
 
   return (

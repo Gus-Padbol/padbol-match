@@ -1,4 +1,12 @@
 {
+  "torneos": {
+    "selecciones": {
+      "modeLabel": "Soupiska týmu",
+      "legacyMode": "Čtyřhra (obvyklý režim)",
+      "selectionMode": "Soupiska výběru (až 8 hráčů)",
+      "modeHint": "Soupiska má 4 až 8 hráčů. V každém zápase se uvedou 2 hráči základní sestavy a 2 náhradníci; na kurtu vždy hrají 2 a mohou se střídat v lichých gamech. Ruční zadávání setů nezaznamenává střídání po jednotlivých gamech."
+    }
+  },
   "auth": {
     "birthDate": "Datum narození",
     "ageEligibilityHelp": "Samostatné účty jsou dostupné od 16 let. Registrace osob ve věku 13 až 15 let zůstává vypnutá, dokud nebude k dispozici ověřitelný souhlas rodiče.",

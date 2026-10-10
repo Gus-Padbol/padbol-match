@@ -1,3 +1,4 @@
+import { isPadbolSelection, selectionTeamReady } from '../../utils/padbolSelectionRoster';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import SorteoAnimado from './SorteoAnimado';
 
@@ -26,9 +27,13 @@ function jugadoresArrayEquipo(eq) {
 }
 
 /** Equipos con cupo completo y sin jugadores pendientes (misma idea que inicio de torneo). */
-export function equiposConfirmadosParaSorteo(equipos) {
+export function equiposConfirmadosParaSorteo(equipos, torneo) {
   const out = [];
   for (const eq of equipos || []) {
+    if (isPadbolSelection(torneo)) {
+      if (selectionTeamReady(eq, torneo)) out.push(eq);
+      continue;
+    }
     const cupo = Number(eq?.cupo_maximo || 2);
     const arr = jugadoresArrayEquipo(eq);
     if (arr.length < cupo) continue;
@@ -112,7 +117,7 @@ export default function SorteoGruposModal({
   /** Como máximo una cabeza por grupo (solo resaltado UI; el POST sigue siendo `grupos`) */
   const [cabezaPorGrupo, setCabezaPorGrupo] = useState([]);
 
-  const confirmados = useMemo(() => equiposConfirmadosParaSorteo(equipos), [equipos]);
+  const confirmados = useMemo(() => equiposConfirmadosParaSorteo(equipos, torneo), [equipos, torneo]);
   const confirmadosIds = useMemo(
     () => confirmados.map((e) => e.id).sort((a, b) => a - b),
     [confirmados]

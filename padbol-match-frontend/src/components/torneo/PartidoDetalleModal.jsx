@@ -57,6 +57,8 @@ export default function PartidoDetalleModal({
   nombreEquipo,
   onCargarResultado,
   torneoId = null,
+  children,
+  resultadoDisabled = false,
 }) {
   const { t } = useTranslation();
 
@@ -253,12 +255,15 @@ export default function PartidoDetalleModal({
           ) : null}
         </div>
 
+        {children ? <div className="pdm-body">{children}</div> : null}
         <footer className="pdm-footer">
           {showCargar ? (
             <button
               type="button"
               className="pdm-btn-cargar"
+              disabled={resultadoDisabled}
               onClick={() => {
+                if (resultadoDisabled) return;
                 onCargarResultado(partido);
                 onClose?.();
               }}

@@ -1,0 +1,17 @@
+.padbol-selection {box-sizing:border-box;min-width:0;color:var(--text-primary);padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;}
+.padbol-selection p {line-height:1.5;overflow-wrap:anywhere;}
+.padbol-selection-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;}
+.padbol-selection-team {min-width:0;padding:12px;border:1px solid var(--border);border-radius:8px;}
+.padbol-selection fieldset {padding:0;margin:0 0 12px;border:0;min-width:0;}
+.padbol-selection-slots {display:grid;gap:10px;margin-bottom:14px;}
+.padbol-selection label {display:grid;gap:6px;min-width:0;}
+.padbol-selection :is(input,select,button) {box-sizing:border-box;min-height:44px;max-width:100%;min-width:0;font:inherit;border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-primary);background:var(--bg-input);}
+.padbol-selection :is(input,select) {width:100%;}
+.padbol-selection button {white-space:normal;cursor:pointer;}
+.padbol-selection :is(input,select,button):disabled {opacity:.65;cursor:not-allowed;}
+.padbol-selection :is(input,select,button):focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
+.padbol-selection [role=alert] {border-left:3px solid var(--accent);padding-left:10px;}
+.padbol-selection-actions {display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;}
+
+.padbol-selection input[type=checkbox] {width:20px;min-height:20px;height:20px;vertical-align:middle;margin-right:8px;}
+.padbol-selection label:has(input[type=checkbox]) {min-height:44px;align-items:center;}

@@ -259,6 +259,12 @@
     "calendarNextMonth": "Luna următoare"
   },
   "torneos": {
+    "selecciones": {
+      "modeLabel": "Lotul echipei",
+      "legacyMode": "Dublu (formatul obișnuit)",
+      "selectionMode": "Lot de selecție (până la 8 jucători)",
+      "modeHint": "Lot de 4 până la 8 jucători. Pentru fiecare meci se declară 2 titulari și 2 rezerve; pe teren joacă întotdeauna 2 și pot alterna în game-urile impare. Introducerea manuală a seturilor nu înregistrează schimbările game cu game."
+    },
     "titulo": "Turnee",
     "crear": "Creați un turneu",
     "inscribirse": "Registru",

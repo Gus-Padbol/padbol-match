@@ -351,6 +351,12 @@
     "calendarNextMonth": "Next month"
   },
   "torneos": {
+    "selecciones": {
+      "modeLabel": "Team roster",
+      "legacyMode": "Doubles (standard mode)",
+      "selectionMode": "Selection roster (up to 8)",
+      "modeHint": "Roster of 4 to 8 players. Each match declares 2 starting players and 2 substitutes; only 2 play on court at a time and may alternate in odd-numbered games. Manual set scores do not track substitutions game by game."
+    },
     "titulo": "Tournaments",
     "create": {
       "header": "Create tournament", "title": "Create a new tournament", "backToTournaments": "Back to tournaments",
