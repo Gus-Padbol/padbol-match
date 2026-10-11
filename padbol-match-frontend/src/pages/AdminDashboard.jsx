@@ -1,3 +1,5 @@
+import AdminTournamentLevelInput from '../components/AdminTournamentLevelInput';
+import {readLegacyTournamentDrawTeams} from '../utils/adminLegacyTournamentDraw';
 import AdminTournamentDeleteAction, {canDeleteAdminTournament,nationsTournamentDeletionNotice} from '../components/AdminTournamentDeleteAction';
 import { readPointsConfig, savePointsConfig, validatePointsConfig } from '../utils/pointsConfigApi';
 import { normalizeCanjeEstado, adminRoleIdentity, adminRoleScopeMismatch } from '../utils/adminRemainingPresentation';
@@ -6751,8 +6753,10 @@ export default function AdminDashboard({
 
   const abrirModalSorteoGrupos = useCallback(async (torneoRow) => {
     try {
-      const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoRow.id}/equipos`);
-      const equipos = res.ok ? await res.json() : [];
+      const equipos = await readLegacyTournamentDrawTeams(torneoRow,async()=>{
+        const res = await fetch(`${apiBaseUrl}/api/torneos/${torneoRow.id}/equipos`);
+        return res.ok ? await res.json() : [];
+      },i18n.language);
       setSorteoGruposCtx({
         torneo: torneoRow,
         equipos: Array.isArray(equipos) ? equipos : [],
@@ -7247,6 +7251,7 @@ export default function AdminDashboard({
     }
     setSavingTorneo(true);
     try {
+      const savedTournament=torneos.find(row=>String(row.id)===String(torneoId));
       const dep = normalizeTorneoDeporte(String(editTorneoForm.deporte || TORNEO_DEPORTE_PADBOL).trim()) || TORNEO_DEPORTE_PADBOL;
       const body = {
         ...editTorneoForm,
@@ -7256,6 +7261,7 @@ export default function AdminDashboard({
         deporte: dep,
         formato_equipo: formatoEquipoPayloadParaApi(dep, editTorneoForm.formato_equipo),
       };
+      if(savedTournament?.plan_nations!=null){body.nivel_torneo=savedTournament.nivel_torneo;delete body.puntos_total;}
       // No enviar la fecha de corte vacía: evita referenciar la columna antes de aplicar la migración.
       if (!String(body.fecha_corte_edad ?? '').trim()) delete body.fecha_corte_edad;
       const headers = { 'Content-Type': 'application/json' };
@@ -11639,7 +11645,7 @@ export default function AdminDashboard({
                         </div>
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.levelCol')}</label>
-                          <input style={inp} value={editTorneoForm.nivel_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, nivel_torneo: e.target.value }))} placeholder={t('admin.formularios.levelExamplePh')} />
+                          <AdminTournamentLevelInput torneo={torneo} language={i18n.language} style={inp} aria-label={t('admin.formularios.levelCol')} value={editTorneoForm.nivel_torneo} onChange={value => setEditTorneoForm(p => ({ ...p, nivel_torneo: value }))} placeholder={t('admin.formularios.levelExamplePh')} />
                         </div>
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.metricas.sportLabel')}</label>
@@ -11859,12 +11865,14 @@ export default function AdminDashboard({
                             step="1"
                             placeholder={t('admin.hub.optional')}
                             value={editTorneoForm.puntos_total ?? ''}
+                            disabled={torneo.plan_nations!=null}
                             onChange={(e) => setEditTorneoForm((p) => ({ ...p, puntos_total: e.target.value }))}
                           />
-                          {String(editTorneoForm.puntos_total || '').trim() ? (
+                          {torneo.plan_nations!=null?<p>{String(i18n.language).startsWith('en')?'The event uses its retained points policy; this historical field does not change it.':'El evento utiliza su política de puntos conservada; este campo histórico no la cambia.'}</p>:null}
+                          {torneo.plan_nations!=null||String(editTorneoForm.puntos_total || '').trim() ? (
                             <button
                               type="button"
-                              onClick={() => setPuntosDistribucionTorneo(editTorneoForm)}
+                              onClick={() => setPuntosDistribucionTorneo(torneo.plan_nations!=null?torneo:editTorneoForm)}
                               style={{
                                 marginTop: '6px',
                                 padding: '6px 10px',
@@ -12007,6 +12015,7 @@ export default function AdminDashboard({
                           const st = getTorneoResumenStat(torneoStats, torneo.id);
                           const mostrarSorteo =
                             isAdmin &&
+                            torneo.plan_nations == null &&
                             torneo.tipo_torneo === 'grupos_knockout' &&
                             torneoEstadoPermiteSorteoGrupos(torneo.estado) &&
                             st &&
