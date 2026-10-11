@@ -7,6 +7,7 @@ export default function OpenTournamentRegistration({available, apiBaseUrl, torne
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const pending = useRef(false);
+  const buttonStyle = {minHeight:'44px', maxWidth:'100%', whiteSpace:'normal'};
   const save = async () => {
     if (!available || pending.current) return;
     pending.current = true;
@@ -24,13 +25,13 @@ export default function OpenTournamentRegistration({available, apiBaseUrl, torne
       setLoading(false);
     }
   };
-  return <div style={{flexBasis: '100%'}}>
-    {available && !confirming && <button type="button" className="btn-agregar-jugadores" onClick={() => {setConfirming(true); setError(''); setSaved(false);}}>{t('torneos.vista.openRegistration')}</button>}
+  return <div style={{flexBasis:'100%', width:'100%', maxWidth:'100%', minWidth:0, overflowWrap:'anywhere'}}>
+    {available && !confirming && <button type="button" className="btn-agregar-jugadores" style={buttonStyle} onClick={() => {setConfirming(true); setError(''); setSaved(false);}}>{t('torneos.vista.openRegistration')}</button>}
     {available && confirming && <div role="group" aria-label={t('torneos.vista.confirmOpenRegistration')}>
       <p>{t('torneos.vista.confirmOpenRegistration')}</p>
       <div style={{display:'flex', flexWrap:'wrap', gap:'10px', justifyContent:'center'}}>
-        <button type="button" className="btn-agregar-jugadores" disabled={loading} onClick={() => void save()}>{loading ? t('torneos.vista.openingRegistration') : t('torneos.vista.openRegistration')}</button>
-        <button type="button" className="btn-agregar-jugadores" disabled={loading} onClick={() => {setConfirming(false); setError('');}}>{t('common.cancel', {defaultValue:'Cancelar'})}</button>
+        <button type="button" className="btn-agregar-jugadores" style={buttonStyle} disabled={loading} onClick={() => void save()}>{loading ? t('torneos.vista.openingRegistration') : t('torneos.vista.openRegistration')}</button>
+        <button type="button" className="btn-agregar-jugadores" style={buttonStyle} disabled={loading} onClick={() => {setConfirming(false); setError('');}}>{t('common.cancel', {defaultValue:'Cancelar'})}</button>
       </div>
     </div>}
     {error && <p role="alert">{error}</p>}
