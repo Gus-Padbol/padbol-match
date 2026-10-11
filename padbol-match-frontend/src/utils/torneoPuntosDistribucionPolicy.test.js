@@ -1,0 +1,4 @@
+import {calcularDistribucionPuntosTorneo} from './torneoPuntosDistribucion';
+test('international base300 produces300/180/120 from saved100/60/40 without shared-pool distribution',()=>{const rows=calcularDistribucionPuntosTorneo(300,{cantidad_equipos:15},{posiciones:{1:100,2:60,3:40,10:5},fallback_percentage:5,fallback_from_position:11});expect(rows.slice(0,3).map(row=>row.puntos)).toEqual([300,180,120]);expect(rows[10].puntos).toBe(15);expect(rows[3].puntos).toBeNull();});
+test('explicit later place and editable saved fallback are respected',()=>{const rows=calcularDistribucionPuntosTorneo(100,{cantidad_equipos:15},{posiciones:{1:100,10:7,11:9},fallback_percentage:7,fallback_from_position:11});expect(rows[10].puntos).toBe(9);expect(rows[11].puntos).toBe(7);});
+test('no server policy means no fabricated40/25/15/10 preview',()=>{expect(calcularDistribucionPuntosTorneo(1000,{cantidad_equipos:15})).toEqual([]);});

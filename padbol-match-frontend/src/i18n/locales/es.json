@@ -464,6 +464,7 @@
     "seeMoreMatches": "Ver más partidos"
   },
   "torneos": {
+    "nations": { "authoritativeStandings": "Consulta las posiciones, terceros y clasificados confirmados en el panel Nations Cup. Las reglas de este formato se calculan en el servidor." },
     "titulo": "Torneos",
     "create": {
       "header": "Crear torneo",
@@ -617,6 +618,7 @@
       "tenis": "Tenis"
     },
     "vista": {
+      "registrationExpired": "Fecha de inicio pasada · inscripción cerrada",
       "tabEquipos": "EQUIPOS",
       "tabGrupos": "GRUPOS",
       "tabFixture": "FIXTURE",
@@ -1155,6 +1157,14 @@
     "exploreWithoutLogin": "Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión."
   },
   "admin": {
+    "pointsPolicy": {
+  "independentPercentages": "Cada posición recibe su porcentaje de la base del nivel. Los porcentajes no son un fondo a repartir y no necesitan sumar 100%. Para posiciones posteriores no definidas, se usa el porcentaje guardado de la décima posición.",
+  "percentOfBase": "% de la base del nivel",
+  "basePoints": "Puntos base",
+  "baseValue": "Puntos base: {{count}}",
+  "unavailable": "Consulta la política guardada antes de crear el torneo.",
+  "levelUnavailable": "El nivel seleccionado no está habilitado en la política actual."
+},
     "mi_sede": "Mi sede",
     "canchas": "Canchas",
     "ingresos": "Ingresos",

@@ -1,3 +1,4 @@
+import { readPointsConfig, savePointsConfig, validatePointsConfig } from '../utils/pointsConfigApi';
 import { normalizeCanjeEstado, adminRoleIdentity, adminRoleScopeMismatch } from '../utils/adminRemainingPresentation';
 import { formatAdminDate } from '../utils/adminDateFormat';
 import SedeDurationSummary from '../components/SedeDurationSummary';
@@ -6984,8 +6985,6 @@ export default function AdminDashboard({
 
 
   // ── Config puntos (superAdmin only) ──
-  const CONFIG_NIVELES_DEFAULT       = { club_no_oficial: 10, club_oficial: 30, nacional: 100, internacional: 300, mundial: 1000 };
-  const CONFIG_POSICIONES_DEFAULT    = { 1: 30, 2: 20, 3: 15, 4: 12, 5: 8, 6: 6, 7: 4, 8: 3, 9: 1, 10: 1 };
   const CONFIG_NIVELES_LABELS_DEFAULT = { club_no_oficial: t('admin.sedes.unofficialClub'), club_oficial: t('admin.sedes.officialClub'), nacional: t('admin.sedes.national'), internacional: t('admin.sedes.international'), mundial: t('admin.sedes.world') };
   const STANDARD_KEYS = ['club_no_oficial', 'club_oficial', 'nacional', 'internacional', 'mundial'];
 
@@ -6994,32 +6993,17 @@ export default function AdminDashboard({
   // 'currentCliente' — logged-in user object (email, nombre, etc.)
   // 'adminActiveTab' — last active tab so browser-back preserves position
 
-  // Migrate old posiciones data: old system stored point-multipliers (pos 1 = 100).
-  // New system stores percentages summing to 100 (pos 1 = 30). Detect and reset.
-  const migratePositions = (posiciones) => {
-    if (!posiciones || posiciones[1] !== 30) return CONFIG_POSICIONES_DEFAULT;
-    return posiciones;
-  };
-
   const loadConfigFromStorage = () => {
-    try {
-      const raw = localStorage.getItem('config_puntos');
-      if (!raw) return { niveles: CONFIG_NIVELES_DEFAULT, posiciones: CONFIG_POSICIONES_DEFAULT, tipos_custom: [] };
-      const parsed = JSON.parse(raw);
-      const migratedPos = migratePositions(parsed.posiciones);
-      if (migratedPos !== parsed.posiciones) {
-        // Write migrated value back so next load is clean
-        parsed.posiciones = migratedPos;
-        localStorage.setItem('config_puntos', JSON.stringify(parsed));
-      }
-      return parsed;
-    } catch { return { niveles: CONFIG_NIVELES_DEFAULT, posiciones: CONFIG_POSICIONES_DEFAULT, tipos_custom: [] }; }
+    try { return validatePointsConfig(JSON.parse(localStorage.getItem('config_puntos') || 'null')); }
+    catch { return {niveles:{},posiciones:{},tipos_custom:[],niveles_labels:{},niveles_hidden:[]}; }
   };
-
+  const [configConfirmed,setConfigConfirmed]=useState(false);
+  const [configLoading,setConfigLoading]=useState(false);
+  const [configLoadError,setConfigLoadError]=useState('');
   const [configNiveles,      setConfigNiveles]      = useState(() => loadConfigFromStorage().niveles);
   const [configPosiciones,   setConfigPosiciones]   = useState(() => loadConfigFromStorage().posiciones);
   const [configTiposCustom,  setConfigTiposCustom]  = useState(() => loadConfigFromStorage().tipos_custom || []);
-  const [configNivelesLabels,setConfigNivelesLabels]= useState(() => ({ ...CONFIG_NIVELES_LABELS_DEFAULT, ...(loadConfigFromStorage().niveles_labels || {}) }));
+  const [configNivelesLabels,setConfigNivelesLabels]= useState(() => loadConfigFromStorage().niveles_labels || {});
   const [configNivelesHidden,setConfigNivelesHidden]= useState(() => new Set(loadConfigFromStorage().niveles_hidden || []));
   const [previewNivel,       setPreviewNivel]       = useState('nacional');
   const [configSaving,       setConfigSaving]       = useState(false);
@@ -7035,55 +7019,29 @@ export default function AdminDashboard({
   const [planPricingEditValue, setPlanPricingEditValue] = useState('');
   const [planPricingSavingId, setPlanPricingSavingId] = useState(null);
 
+  const applyConfirmedConfig = useCallback(data => {
+    setConfigNiveles(data.niveles);setConfigPosiciones(data.posiciones);setConfigTiposCustom(data.tipos_custom);
+    setConfigNivelesLabels(data.niveles_labels);setConfigNivelesHidden(new Set(data.niveles_hidden));setConfigConfirmed(true);
+    try {localStorage.setItem('config_puntos',JSON.stringify(data));} catch { /* server state remains confirmed without a local cache */ }
+  },[]);
+  const reloadPointsConfig = useCallback(async signal => {
+    setConfigLoading(true);setConfigConfirmed(false);setConfigLoadError('');
+    try {const data=await readPointsConfig({apiBaseUrl,signal});if(!signal?.aborted)applyConfirmedConfig(data);}
+    catch(error){if(!signal?.aborted)setConfigLoadError(error.message);}
+    finally{if(!signal?.aborted)setConfigLoading(false);}
+  },[apiBaseUrl,applyConfirmedConfig]);
   useEffect(() => {
-    if (!isSuperAdmin) return;
-    fetch(`${apiBaseUrl}/api/config/puntos`)
-      .then(r => r.json())
-      .then(data => {
-        const posiciones = migratePositions(data.posiciones);
-        if (data.niveles)        { setConfigNiveles(data.niveles); }
-        if (data.posiciones)     { setConfigPosiciones(posiciones); }
-        if (data.tipos_custom)   { setConfigTiposCustom(data.tipos_custom); }
-        if (data.niveles_labels) { setConfigNivelesLabels(prev => ({ ...CONFIG_NIVELES_LABELS_DEFAULT, ...data.niveles_labels })); }
-        if (data.niveles_hidden) { setConfigNivelesHidden(new Set(data.niveles_hidden)); }
-        localStorage.setItem('config_puntos', JSON.stringify({
-          niveles:        data.niveles,
-          posiciones:     posiciones,
-          tipos_custom:   data.tipos_custom   || [],
-          niveles_labels: data.niveles_labels || {},
-          niveles_hidden: data.niveles_hidden || [],
-        }));
-      })
-      .catch(() => {});
-  }, [isSuperAdmin, apiBaseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
-
+    if(!isSuperAdmin)return undefined;
+    const controller=new AbortController();reloadPointsConfig(controller.signal);return()=>controller.abort();
+  },[isSuperAdmin,reloadPointsConfig]);
   const guardarConfig = async () => {
-    setConfigSaving(true);
-    setConfigMsg('');
+    if(configSaving||!configConfirmed||configLoading)return;
+    setConfigSaving(true);setConfigMsg('');
     try {
-      const body = {
-        niveles:        configNiveles,
-        posiciones:     configPosiciones,
-        tipos_custom:   configTiposCustom,
-        niveles_labels: configNivelesLabels,
-        niveles_hidden: [...configNivelesHidden],
-      };
-      localStorage.setItem('config_puntos', JSON.stringify(body));
-      const headers = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrl}/api/config/puntos`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(body),
-      });
-      if (res.ok) { setConfigMsg(t('admin.metricas.configSaved')); }
-      else        { setConfigMsg(t('admin.metricas.localSaveServerError')); }
-    } catch {
-      setConfigMsg(t('admin.metricas.offlineLocalOnly'));
-    } finally {
-      setConfigSaving(false);
-      setTimeout(() => setConfigMsg(''), 3000);
-    }
+      const body={niveles:configNiveles,posiciones:configPosiciones,tipos_custom:configTiposCustom,niveles_labels:configNivelesLabels,niveles_hidden:[...configNivelesHidden]};
+      const confirmed=await savePointsConfig({apiBaseUrl},body);applyConfirmedConfig(confirmed);setConfigMsg(t('admin.metricas.configSaved'));
+    }catch(error){setConfigMsg(error.message);}
+    finally{setConfigSaving(false);}
   };
 
   useEffect(() => {
@@ -17829,6 +17787,9 @@ export default function AdminDashboard({
           <button type="button" role="tab" aria-selected={configSubtab === 'sponsors'} onClick={() => setConfigSubtab('sponsors')}>{t('admin.tabs.sponsors')}</button>
         </div>
         {configSubtab === 'puntos' ? <>
+        {configLoading?<p role="status">{t('general.loading')}</p>:null}
+        {configLoadError?<div role="alert"><p>{configLoadError}</p><button onClick={()=>reloadPointsConfig()}>{t('general.retry')}</button></div>:null}
+        {configConfirmed?<div inert={configSaving}>
         {/* Niveles de torneo + tipos custom unificados — título pegado a la tabla (nota “Mi Sede” abajo) */}
         <div style={{ marginBottom: '4px' }}>
           <h3 style={{ color: 'var(--text-primary)', marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
@@ -17839,7 +17800,7 @@ export default function AdminDashboard({
             <thead>
               <tr style={{ background: 'var(--accent)', color: '#fff' }}>
                 <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600, color: '#fff' }}>{t('admin.formularios.levelCol')}</th>
-                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '130px', color: '#fff' }}>{t('admin.formularios.totalTournamentPtsCol')}</th>
+                <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '130px', color: '#fff' }}>{t('admin.pointsPolicy.basePoints', { defaultValue:'Puntos base' })}</th>
                 <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '90px', color: '#fff' }}></th>
               </tr>
             </thead>
@@ -17876,7 +17837,7 @@ export default function AdminDashboard({
                         <input type="number" min="0" value={configNiveles[key] ?? 0}
                           onChange={e => setConfigNiveles(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
                           style={{ width: '80px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', textAlign: 'center', fontWeight: 'bold', color: 'var(--text-primary)' }} />
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.metricas.totalPtsShort')}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.pointsPolicy.basePoints')}</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
@@ -17923,7 +17884,7 @@ export default function AdminDashboard({
                       <td className="admin-config-puntos-nivel" style={{ padding: '10px 16px', fontSize: '14px' }}>{tipo.nombre || tipo.id}</td>
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{tipo.puntos}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.metricas.totalPtsShort')}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.pointsPolicy.basePoints')}</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
@@ -17966,12 +17927,10 @@ export default function AdminDashboard({
         {(() => {
           const todosNiveles = STANDARD_KEYS
             .filter(key => !configNivelesHidden.has(key))
-            .map(key => ({ value: key, label: configNivelesLabels[key] || key, pts: configNiveles[key] ?? 0 }))
+            .map(key => ({ value: key, label: configNivelesLabels[key] || CONFIG_NIVELES_LABELS_DEFAULT[key] || key, pts: configNiveles[key] ?? 0 }))
             .concat(configTiposCustom.map(t => ({ value: t.id, label: t.nombre, pts: t.puntos })));
           const totalPts = todosNiveles.find(n => n.value === previewNivel)?.pts
             ?? todosNiveles[0]?.pts ?? 0;
-          const pctSum = [1,2,3,4,5,6,7,8,9,10].reduce((acc, pos) => acc + (configPosiciones[pos] ?? 0), 0);
-          const pctDiff = pctSum - 100;
           return (
             <div style={{ marginBottom: 0 }}>
               <h3 style={{ color: 'var(--text-primary)', marginTop: '4px', marginBottom: '8px', fontSize: '16px' }}>
@@ -17984,7 +17943,7 @@ export default function AdminDashboard({
                 <select value={previewNivel} onChange={e => setPreviewNivel(e.target.value)}
                   style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', background: 'var(--bg-input)', cursor: 'pointer' }}>
                   {todosNiveles.map(n => (
-                    <option key={n.value} value={n.value}>{n.label} ({t('admin.common.totalPoints', { count: n.pts })})</option>
+                    <option key={n.value} value={n.value}>{n.label} ({t('admin.pointsPolicy.baseValue', { defaultValue:'Base: {{count}}',count:n.pts })})</option>
                   ))}
                 </select>
               </div>
@@ -17993,7 +17952,7 @@ export default function AdminDashboard({
                 <thead>
                   <tr style={{ background: 'var(--accent)', color: '#fff' }}>
                     <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: '#fff' }}>{t('admin.formularios.positionCol')}</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px', color: '#fff' }}>{t('admin.common.percentOfTotal')}</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, width: '110px', color: '#fff' }}>{t('admin.pointsPolicy.percentOfBase', { defaultValue:'% de la base del nivel' })}</th>
                     <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, width: '100px', whiteSpace: 'nowrap', color: '#fff' }}>{t('admin.metricas.pointsCol')}</th>
                   </tr>
                 </thead>
@@ -18023,24 +17982,8 @@ export default function AdminDashboard({
                 </tbody>
               </table>
               </div>
-              {/* Percentage sum indicator */}
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                marginTop: '10px', padding: '7px 14px', borderRadius: '8px',
-                background: pctDiff === 0 ? 'rgba(22,163,74,0.15)' : pctDiff > 0 ? 'rgba(220,38,38,0.12)' : 'rgba(234,88,12,0.12)',
-                border: `1.5px solid ${pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c'}`,
-              }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
-                  {t('admin.metricas.totalPct', { pct: pctSum })}
-                </span>
-                <span style={{ fontSize: '12px', color: pctDiff === 0 ? '#16a34a' : pctDiff > 0 ? '#dc2626' : '#ea580c' }}>
-                  {pctDiff === 0
-                    ? t('admin.metricas.distributionComplete')
-                    : pctDiff > 0
-                      ? t('admin.metricas.exceedsBy', { pct: pctDiff })
-                      : t('admin.metricas.missingBy', { pct: -pctDiff })}
-                </span>
-              </div>
+              <p style={{color:'var(--text-secondary)',lineHeight:1.5}}>{t('admin.pointsPolicy.independentPercentages', { defaultValue:'Cada posición recibe su porcentaje de la base del nivel. Los porcentajes no son un fondo a repartir y no necesitan sumar 100%. Para posiciones no definidas después de la décima, se aplica el porcentaje guardado de la décima posición.' })}</p>
+
             </div>
           );
         })()}
@@ -18087,6 +18030,7 @@ export default function AdminDashboard({
           </p>
         </div>
 
+        </div>:null}
         </> : null}
 
         {configSubtab === 'sponsors' ? <AdminSponsorsSection

@@ -26,3 +26,13 @@ export function labelTorneoEstadoPublico(estadoRaw, t) {
   const k = String(estadoRaw || '').toLowerCase().trim();
   return t(`torneos.vista.estado.${k}`, { defaultValue: b.label });
 }
+
+/** Active listings do not offer expired upcoming registration, but a real ongoing
+ * tournament remains ongoing even if its first day is already in the past. */
+export function torneoEstaEnListadoActivo(torneo, inicioPasado = false) {
+  const state = String(torneo?.estado || '').trim().toLowerCase().replace(/\s+/g,'_');
+  if (state === 'finalizado' || state === 'cancelado') return false;
+  if (state === 'en_curso' || state === 'activo') return true;
+  if (['abierto','inscripcion_abierta','proximo','planificacion'].includes(state)) return !inicioPasado;
+  return false;
+}

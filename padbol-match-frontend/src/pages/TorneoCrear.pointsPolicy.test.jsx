@@ -1,0 +1,15 @@
+import React from 'react';
+import {render,screen,fireEvent,waitFor} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
+import TorneoCrear from './TorneoCrear';
+import {readPointsConfig} from '../utils/pointsConfigApi';
+jest.mock('../utils/pointsConfigApi',()=>({readPointsConfig:jest.fn(),pointsBaseForLevel:(policy,level)=>policy.niveles[level==='club'?'club_oficial':level]??null}));
+jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{user:{email:'qa@fixture.invalid'},access_token:'fixture-only'}})}));
+jest.mock('../context/HubNavLayoutContext',()=>({useHubNavLayout:()=>({navDock:'bottom'})}));
+jest.mock('../hooks/useUserRole',()=>()=>({rol:'super_admin',sedeId:null}));
+jest.mock('../components/AppHeader',()=>()=>null);jest.mock('../components/BottomNav',()=>()=>null);jest.mock('../components/SedeSearchInput',()=>()=>null);
+jest.mock('../i18n/tSafe',()=>{const es=require('../i18n/locales/es.json');const t=(key,args)=>key.split('.').reduce((value,k)=>value?.[k],es)||args?.defaultValue||key;return {useSafeTranslation:()=>({t,i18n:{language:'es'}})};});
+const policy={niveles:{club_oficial:30,club_no_oficial:10,nacional:100,internacional:300,mundial:1000},posiciones:{1:100,2:60,3:40},tipos_custom:[{id:'special',nombre:'Especial aprobado',puntos:80}],niveles_labels:{internacional:'Internacional guardado'},niveles_hidden:['mundial']};
+beforeEach(()=>{jest.clearAllMocks();global.fetch=jest.fn().mockResolvedValue({json:async()=>[]});readPointsConfig.mockResolvedValue(policy);});
+test('create uses server labels/hidden levels and read-only base without a points_total input',async()=>{const {container}=render(<MemoryRouter><TorneoCrear embedded/></MemoryRouter>);await screen.findByRole('option',{name:'Internacional guardado'});expect(screen.queryByRole('option',{name:/Mundial/})).not.toBeInTheDocument();const level=container.querySelector('select[name="nivel_torneo"]');fireEvent.change(level,{target:{value:'internacional'}});expect(screen.getByLabelText('Puntos base')).toHaveValue('300');expect(container.querySelector('input[name="puntos_total"]')).toBeNull();expect(screen.getByLabelText('Puntos base')).toHaveAttribute('readonly');});
+test('unavailable policy shows retry and keeps level selection disabled',async()=>{readPointsConfig.mockRejectedValueOnce(new Error('Configuración no disponible'));const {container}=render(<MemoryRouter><TorneoCrear embedded/></MemoryRouter>);await screen.findByRole('alert');expect(container.querySelector('select[name="nivel_torneo"]')).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'Reintentar'}));await screen.findByRole('option',{name:'Internacional guardado'});await waitFor(()=>expect(container.querySelector('select[name="nivel_torneo"]')).not.toBeDisabled());});

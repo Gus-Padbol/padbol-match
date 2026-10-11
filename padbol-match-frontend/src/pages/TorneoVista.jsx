@@ -1,3 +1,4 @@
+import NationsCupPanel from '../components/torneo/NationsCupPanel';
 import { isPadbolSelection } from '../utils/padbolSelectionRoster';
 import { fetchBuscaDuplaList } from '../utils/torneoBuscaDuplaApi';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
@@ -75,6 +76,8 @@ export default function TorneoVista() {
   }, [session?.user?.email]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentCliente);
   const [torneo, setTorneo] = useState(null);
+  const [nationsState, setNationsState] = useState(null);
+  useEffect(() => { setNationsState(null); }, [torneoId]);
   const selectionMode = isPadbolSelection(torneo);
   const selectionModeRef = useRef(false);
   const [equipos, setEquipos] = useState([]);
@@ -892,15 +895,16 @@ export default function TorneoVista() {
         </button>
       </div>
     ) : null;
+  const nationsEnabled = Boolean(torneo?.plan_nations || nationsState?.config);
   const adminTorneoBar =
     torneo &&
     isAdminGestionEnEstaVista &&
     (adminBarFilaEquiposGestión || adminBarGenerarFixture || adminBarIniciarTorneo || adminBarFinalizarTorneo) ? (
       <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
         {adminBarFilaEquiposGestión}
-        {adminBarGenerarFixture}
-        {adminBarIniciarTorneo}
-        {adminBarFinalizarTorneo}
+        {nationsEnabled ? null : adminBarGenerarFixture}
+        {nationsEnabled ? null : adminBarIniciarTorneo}
+        {nationsEnabled ? null : adminBarFinalizarTorneo}
       </div>
     ) : null;
 
@@ -1321,9 +1325,14 @@ export default function TorneoVista() {
     >
       <div style={torneoVistaColumnStyle}>
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        {torneo && ((isPadbolSelection(torneo) && fromAdmin) || nationsEnabled) ? <NationsCupPanel
+          key={`nations-${torneoId}`} apiBaseUrl={apiBaseUrlTorneo} torneo={torneo} equipos={equipos}
+          accessToken={session?.access_token} management={fromAdmin} navigate={navigate} refreshKey={JSON.stringify(partidos)} onConfirmed={recargarDatosTorneo} onState={setNationsState}
+        /> : null}
         <TorneoTabbedView
           key={String(torneoId)}
           torneo={torneo}
+          nationsEnabled={nationsEnabled}
           equipos={equipos}
           partidos={partidos}
           setPartidos={setPartidos}
@@ -1357,7 +1366,7 @@ export default function TorneoVista() {
           presentadoPorDeporte={deporteParaSponsorTorneo}
           apiBaseUrl={apiBaseUrlTorneo}
           puedeExportarJugadoresExcel={puedeExportarJugadoresExcelVista}
-          adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}
+          adminPuedeSorteoGrupos={isAdminGestionEnEstaVista && !nationsEnabled}
           onAfterSorteoGrupos={recargarDatosTorneo}
           participacionModalOpen={modalInscribirseOpen && !torneoPasadoCalendario}
           onParticipacionModalClose={cerrarModalInscribirse}

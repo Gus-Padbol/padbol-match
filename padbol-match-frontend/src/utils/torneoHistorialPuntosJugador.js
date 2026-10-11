@@ -42,17 +42,26 @@ function jugadorEnEquipo(jugadoresArr, perfil) {
   return false;
 }
 
+export function equipoReconoceParticipacionJugador(equipo, perfil) {
+  if (equipo?.modalidad_plantel === 'selecciones') {
+    const uid = String(perfil?.user_id || '').trim();
+    return Boolean(uid && Array.isArray(equipo.participantes_ranking)
+      && equipo.participantes_ranking.some(participant => String(participant) === uid));
+  }
+  return jugadorEnEquipo(equipo?.jugadores, perfil);
+}
+
 async function fetchEquiposJugadorTodosTorneos(perfil) {
   const { data: equiposRows, error: equiposErr } = await supabase
     .from('equipos')
-    .select('id, torneo_id, nombre, jugadores');
+    .select('id, torneo_id, nombre, jugadores, modalidad_plantel, participantes_ranking');
   if (equiposErr) {
     console.warn('[torneoHistorialPuntosJugador] equipos', equiposErr);
     return [];
   }
   const matched = [];
   for (const eq of equiposRows || []) {
-    if (jugadorEnEquipo(eq.jugadores, perfil)) matched.push(eq);
+    if (equipoReconoceParticipacionJugador(eq, perfil)) matched.push(eq);
   }
   return matched;
 }
@@ -124,7 +133,7 @@ async function fetchTorneosConPuntosParaPerfilInner(perfil) {
   for (const pr of tpRows || []) {
     if (Number(pr.puntos) <= 0) continue;
     const eq = eqById[pr.equipo_id];
-    if (!eq || !jugadorEnEquipo(eq.jugadores, perfil)) continue;
+    if (!eq || !equipoReconoceParticipacionJugador(eq, perfil)) continue;
     misFilas.push({
       torneo_id: pr.torneo_id,
       equipo_id: pr.equipo_id,

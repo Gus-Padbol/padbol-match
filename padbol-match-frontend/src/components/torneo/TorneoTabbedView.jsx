@@ -235,6 +235,7 @@ export default function TorneoTabbedView({
   navigateState = null,
   /** Filas desde `tabla_puntos` + equipos (misma forma que FormEquipos). */
   clasificacionFinalFilas = null,
+  nationsEnabled = false,
   /** CTA inscripción encima de la lista de equipos (jugador). */
   equiposTabHeader = null,
   /** Contenido extra bajo la lista de equipos (inscripción en FormEquipos). */
@@ -992,7 +993,7 @@ export default function TorneoTabbedView({
       const ra = Number(a.ronda) || 1;
       const rb = Number(b.ronda) || 1;
       if (ra !== rb) return ra - rb;
-      return (a.id || 0) - (b.id || 0);
+      return nationsEnabled ? (Number(a.bracket_position)||0)-(Number(b.bracket_position)||0) : (a.id || 0) - (b.id || 0);
     });
     const byRonda = {};
     list.forEach((p) => {
@@ -1004,7 +1005,7 @@ export default function TorneoTabbedView({
       .map(Number)
       .sort((a, b) => a - b)
       .map((r) => ({ ronda: r, partidos: byRonda[r] }));
-  }, [partidosLlave]);
+  }, [partidosLlave,nationsEnabled]);
 
   const renderTabEquipos = () => (
     <div style={{ padding: '4px 0 20px' }}>
@@ -1206,6 +1207,7 @@ export default function TorneoTabbedView({
   );
 
   const renderTabGrupos = () => {
+    if (nationsEnabled) return <p>{t('torneos.nations.authoritativeStandings', { defaultValue: 'Consulta las posiciones, terceros y clasificados confirmados en el panel Nations Cup. Las reglas de este formato se calculan en el servidor.' })}</p>;
     const openEq = (row) => setModalEquipo(equipos.find((e) => e.id === row.id) || row);
     if (esGruposKnockout) {
       if (grupos.length === 0) {

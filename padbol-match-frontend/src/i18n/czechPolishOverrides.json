@@ -5,6 +5,12 @@
       "legacyMode": "Čtyřhra (obvyklý režim)",
       "selectionMode": "Soupiska výběru (až 8 hráčů)",
       "modeHint": "Soupiska má 4 až 8 hráčů. V každém zápase se uvedou 2 hráči základní sestavy a 2 náhradníci; na kurtu vždy hrají 2 a mohou se střídat v lichých gamech. Ruční zadávání setů nezaznamenává střídání po jednotlivých gamech."
+    },
+    "vista": {
+      "registrationExpired": "Datum zahájení uplynulo · registrace uzavřena"
+    },
+    "nations": {
+      "authoritativeStandings": "Potvrzené pořadí, porovnání třetích míst a postupující najdete v panelu Nations Cup. Pravidla tohoto formátu počítá server."
     }
   },
   "auth": {
@@ -207,6 +213,14 @@
       "matchesLoadFailed": "Zápasy se nepodařilo načíst.",
       "matchLoadFailed": "Zápas se nepodařilo načíst.",
       "copyLinkPrompt": "Zkopírujte tento odkaz:"
+    },
+    "pointsPolicy": {
+      "independentPercentages": "Každé pořadí získá svůj procentní podíl ze základu úrovně. Procenta nejsou společný fond a nemusí mít součet 100 %. Pozdější neurčená pořadí používají uložené procento desátého místa.",
+      "percentOfBase": "% ze základu úrovně",
+      "basePoints": "Základní body",
+      "baseValue": "Základ: {{count}}",
+      "unavailable": "Před vytvořením turnaje načtěte uložená pravidla.",
+      "levelUnavailable": "Vybraná úroveň není v aktuálních pravidlech povolena."
     }
   },
   "fipaAdminLibrary": {

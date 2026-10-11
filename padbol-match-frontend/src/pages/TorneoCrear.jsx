@@ -1,3 +1,4 @@
+import {readPointsConfig,pointsBaseForLevel} from '../utils/pointsConfigApi';
 import { PADBOL_SELECTION_MODE } from '../utils/padbolSelectionRoster';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, {
@@ -66,7 +67,6 @@ const EMPTY_TORNEO_FORM = () => ({
   inscripcion_monto: '',
   inscripcion_moneda: 'ARS',
   premios_descripcion: '',
-  puntos_total: '',
   cupos_maximos: '',
   horas_revelar_equipos: '48',
   estado: 'proximo',
@@ -92,6 +92,9 @@ const TorneoCrear = forwardRef(function TorneoCrear({
   const { t } = useSafeTranslation();
   const [sedes, setSedes] = useState([]);
   const [tiposCustom, setTiposCustom] = useState([]);
+  const [pointsPolicy,setPointsPolicy]=useState(null);
+  const [pointsPolicyError,setPointsPolicyError]=useState('');
+  const [pointsPolicyRetry,setPointsPolicyRetry]=useState(0);
   const [formData, setFormData] = useState(() => EMPTY_TORNEO_FORM());
   const [baseline, setBaseline] = useState(() => EMPTY_TORNEO_FORM());
   const [abandonOpen, setAbandonOpen] = useState(false);
@@ -132,13 +135,14 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       .then((data) => setSedes(data || []))
       .catch(() => setError(t('torneos.create.loadVenuesError')));
 
-    try {
-      const cfg = JSON.parse(localStorage.getItem('config_puntos') || '{}');
-      setTiposCustom(cfg.tipos_custom || []);
-    } catch {
-      /* ignore */
-    }
+
   }, [apiBaseUrl, t]);
+  useEffect(()=>{
+    const controller=new AbortController();setPointsPolicy(null);setPointsPolicyError('');
+    readPointsConfig({apiBaseUrl,signal:controller.signal}).then(policy=>{if(!controller.signal.aborted){setPointsPolicy(policy);setTiposCustom(policy.tipos_custom);}}).catch(error=>{if(!controller.signal.aborted)setPointsPolicyError(error.message);});
+    return()=>controller.abort();
+  },[apiBaseUrl,pointsPolicyRetry]);
+
 
   useEffect(() => {
     if (!esAdminClub || sedeId == null || sedeId === '') return;
@@ -236,6 +240,9 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!pointsPolicy){setError(pointsPolicyError||t('admin.pointsPolicy.unavailable',{defaultValue:'Consulta la política guardada antes de crear el torneo.'}));return;}
+    const pointsLevel=formData.nivel_torneo==='club'?'club_oficial':formData.nivel_torneo;
+    if(pointsPolicy.niveles_hidden.includes(pointsLevel)||pointsBaseForLevel(pointsPolicy,formData.nivel_torneo)===null){setError(t('admin.pointsPolicy.levelUnavailable',{defaultValue:'El nivel seleccionado no está habilitado en la política actual.'}));return;}
     if (!session?.user) {
       navigate(authUrlWithRedirect('/torneo/crear'));
       return;
@@ -308,14 +315,6 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
     const premios = String(formData.premios_descripcion ?? '').trim();
     payload.premios_descripcion = premios || null;
-
-    const rawPuntosTotal = String(formData.puntos_total ?? '').trim();
-    if (rawPuntosTotal !== '') {
-      const pts = parseInt(rawPuntosTotal, 10);
-      payload.puntos_total = Number.isFinite(pts) && pts >= 0 ? pts : null;
-    } else {
-      payload.puntos_total = null;
-    }
 
     const rawCupos = String(formData.cupos_maximos ?? '').trim();
     if (rawCupos !== '') {
@@ -478,20 +477,14 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
               <div className="form-group">
                 <label>{t('torneos.create.levelLabel')} *</label>
-                <select name="nivel_torneo" value={formData.nivel_torneo} onChange={handleChange}>
-                  <option value="club">{t('admin.tournamentLabels.level.club')}</option>
-                  <option value="club_no_oficial">{t('admin.tournamentLabels.level.club_no_oficial')}</option>
-                  {rol !== 'admin_club' && <option value="club_oficial">{t('admin.tournamentLabels.level.club_oficial')}</option>}
-                  {rol !== 'admin_club' && <option value="nacional">{t('admin.tournamentLabels.level.nacional')}</option>}
-                  {rol !== 'admin_club' && <option value="internacional">{t('admin.tournamentLabels.level.internacional')}</option>}
-                  {rol !== 'admin_club' && <option value="mundial">{t('admin.tournamentLabels.level.mundial')}</option>}
-                  {tiposCustom.length > 0 && <option disabled>──────────</option>}
-                  {tiposCustom.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nombre}
-                    </option>
-                  ))}
+                <select name="nivel_torneo" value={formData.nivel_torneo} onChange={handleChange} disabled={!pointsPolicy}>
+                  {['club','club_no_oficial','club_oficial','nacional','internacional','mundial'].filter(value=>
+                    (rol!=='admin_club'||['club','club_no_oficial'].includes(value))
+                    && !pointsPolicy?.niveles_hidden.includes(value==='club'?'club_oficial':value)).map(value=><option key={value} value={value}>{pointsPolicy?.niveles_labels[value==='club'?'club_oficial':value]||t(`admin.tournamentLabels.level.${value}`)}</option>)}
+                  {tiposCustom.filter(row=>!pointsPolicy?.niveles_hidden.includes(row.id)).map(row=><option key={row.id} value={row.id}>{row.nombre}</option>)}
                 </select>
+                {pointsPolicyError?<div role="alert"><p>{pointsPolicyError}</p><button type="button" onClick={()=>setPointsPolicyRetry(value=>value+1)}>{t('general.retry')}</button></div>:null}
+
                 {rol === 'admin_club' && (
                   <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
                     {t('torneos.create.restrictedLevelsHint')}
@@ -762,17 +755,9 @@ const TorneoCrear = forwardRef(function TorneoCrear({
               </div>
 
               <div className="form-group">
-                <label>{t('torneos.create.pointsLabel')}</label>
-                <input
-                  type="number"
-                  name="puntos_total"
-                  value={formData.puntos_total}
-                  onChange={handleChange}
-                  placeholder="1000"
-                  min="0"
-                  step="1"
-                />
-                {String(formData.puntos_total || '').trim() ? (
+                <label>{t('admin.pointsPolicy.basePoints',{defaultValue:'Puntos base'})}</label>
+                <input readOnly value={pointsPolicy?(pointsBaseForLevel(pointsPolicy,formData.nivel_torneo)??'—'):'—'} aria-label={t('admin.pointsPolicy.basePoints',{defaultValue:'Puntos base'})}/>
+                {pointsPolicy ? (
                   <button
                     type="button"
                     onClick={() => setPuntosModalOpen(true)}
@@ -841,6 +826,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       open={puntosModalOpen}
       onClose={() => setPuntosModalOpen(false)}
       torneo={formData}
+      apiBaseUrl={apiBaseUrl}
     />
   );
 

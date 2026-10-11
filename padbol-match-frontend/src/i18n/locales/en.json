@@ -351,6 +351,7 @@
     "calendarNextMonth": "Next month"
   },
   "torneos": {
+    "nations": { "authoritativeStandings": "See confirmed standings, third-place comparison and qualifiers in the Nations Cup panel. Rules for this format are calculated by the server." },
     "selecciones": {
       "modeLabel": "Team roster",
       "legacyMode": "Doubles (standard mode)",
@@ -477,6 +478,7 @@
       "tenis": "Tennis"
     },
     "vista": {
+      "registrationExpired": "Start date passed · registration closed",
       "tabEquipos": "TEAMS",
       "tabGrupos": "GROUPS",
       "tabFixture": "FIXTURE",
@@ -1009,6 +1011,14 @@
     "regularPartner": "Regular partner"
   },
   "admin": {
+    "pointsPolicy": {
+  "independentPercentages": "Each place receives its percentage of the level base. Percentages are not a shared pool and need not total 100%. Undefined later places use the saved percentage of tenth place.",
+  "percentOfBase": "% of level base",
+  "basePoints": "Base points",
+  "baseValue": "Base points: {{count}}",
+  "unavailable": "Load the saved policy before creating the tournament.",
+  "levelUnavailable": "The selected level is not enabled in the current policy."
+},
     "mi_sede": "My venue",
     "canchas": "Courts",
     "ingresos": "Revenue",
