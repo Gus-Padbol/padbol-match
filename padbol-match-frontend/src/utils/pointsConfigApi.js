@@ -35,7 +35,7 @@ export async function readTournamentPointsPolicy({apiBaseUrl,torneoId,signal}){
 }
 export function pointsBaseForLevel(policy,level){
   if(!policy||!Array.isArray(policy.tipos_custom)||!object(policy.niveles))return null;
-  const key=level==='club'?'club_oficial':level;
+  const key=level;
   const custom=policy.tipos_custom.find(row=>row.id===key);
   const value=custom?.puntos??policy.niveles[key];return Number.isFinite(value)&&value>=0?value:null;
 }

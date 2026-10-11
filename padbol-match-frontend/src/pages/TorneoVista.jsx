@@ -1,3 +1,4 @@
+import {getAuthHeaders} from '../utils/scoreboardApi';
 import NationsCupPanel from '../components/torneo/NationsCupPanel';
 import { isPadbolSelection } from '../utils/padbolSelectionRoster';
 import { fetchBuscaDuplaList } from '../utils/torneoBuscaDuplaApi';
@@ -298,10 +299,11 @@ export default function TorneoVista() {
 
   const recargarDatosTorneo = useCallback(async () => {
     try {
+      const readHeaders=await getAuthHeaders();
       const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
         fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
-        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`),
-        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`,{headers:readHeaders}),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`,{headers:readHeaders}),
         fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
       ]);
       if (torneoRes.ok) {
@@ -362,10 +364,11 @@ export default function TorneoVista() {
           return;
         }
 
-        const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
+        const readHeaders=await getAuthHeaders();
+      const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
           fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
-          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`),
-          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`,{headers:readHeaders}),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`,{headers:readHeaders}),
           fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
         ]);
 

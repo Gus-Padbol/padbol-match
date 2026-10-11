@@ -20,6 +20,7 @@ export function validateNationsReceipt(data, torneoId) {
     || !rowsValid(data.thirds) || !rowsValid(data.qualified)
     || [...data.matches,...data.bracket].some(match=>!idValid(match?.id) || typeof match.estado !== 'string')
     || data.ties.some(tie=>typeof tie?.scope !== 'string' || !Array.isArray(tie.team_ids) || tie.team_ids.some(id=>!idValid(id)))
+    || (data.teams !== undefined && (!Array.isArray(data.teams)||data.teams.some(team=>!idValid(team?.id)||typeof team.nombre!=='string')))
     || (data.courts !== undefined && (!Array.isArray(data.courts) || data.courts.some(court=>!idValid(court?.id) || typeof court.nombre !== 'string')))) {
     throw new Error('La respuesta de Nations Cup está incompleta. Actualiza antes de continuar.');
   }

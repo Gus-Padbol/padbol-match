@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { API_BASE } from '../utils/scoreboardApi';
 
-export default function useScoreboardSocket(partidoId, onUpdate) {
+export default function useScoreboardSocket(partidoId, onUpdate, accessToken = null) {
   const callbackRef = useRef(onUpdate);
   callbackRef.current = onUpdate;
   const socketRef = useRef(null);
@@ -29,6 +29,7 @@ export default function useScoreboardSocket(partidoId, onUpdate) {
       reconnection: true,
       reconnectionAttempts: Infinity,
       path: '/socket.io',
+      ...(accessToken ? {auth:{token:accessToken}} : {}),
     });
     socketRef.current = socket;
 
@@ -40,6 +41,8 @@ export default function useScoreboardSocket(partidoId, onUpdate) {
       setConnected(true);
       joinRoom();
     });
+
+    socket.on('scoreboard:access-denied', () => setConnected(false));
 
     socket.on('disconnect', () => {
       setConnected(false);
@@ -62,7 +65,7 @@ export default function useScoreboardSocket(partidoId, onUpdate) {
       socketRef.current = null;
       setConnected(false);
     };
-  }, [partidoId]);
+  }, [partidoId,accessToken]);
 
   return { connected, reconnect };
 }

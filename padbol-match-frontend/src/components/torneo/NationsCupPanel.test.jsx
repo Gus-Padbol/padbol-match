@@ -45,3 +45,26 @@ test('finished fixtures cannot create a scoreboard and knockout origins remain e
  expect(screen.getByText('Ganador de semifinal 1 — Ganador de semifinal 2')).toBeInTheDocument();
  expect(screen.getAllByRole('button',{name:'Abrir marcador de este partido'})).toHaveLength(1);
 });
+
+test('public group fixtures use only revealed safe team names before standings exist',async()=>{
+ readNationsCupPublic.mockResolvedValue({...state,teams:[{id:1,nombre:'País QA A'},{id:2,nombre:'País QA B'}],standings:[],matches:[{id:1,equipo_a_id:1,equipo_b_id:2,grupo:'A',estado:'pendiente'}]});
+ render(<NationsCupPanel {...props} management={false}/>);expect(await screen.findByText('País QA A — País QA B')).toBeInTheDocument();expect(screen.queryByText('Selección QA 1 — Selección QA 2')).not.toBeInTheDocument();
+});
+test('court identity survives saved refetch, then a closed fixture is excluded from the next draft',async()=>{
+ const match=id=>({id,equipo_a_id:1,equipo_b_id:2,grupo:'A',estado:'pendiente',fecha_hora:'2026-11-22T09:30:00Z',court_id:71101,cancha:'1',duration_minutes:60});
+ const current={...state,capabilities:{...state.capabilities,can_schedule:true},matches:[match(1),match(2)],courts:[{id:71101,nombre:'Cancha QA ordinal 1'}]};
+ readNationsCup.mockResolvedValue(current);mutateNationsCup.mockResolvedValue({...current,revision:2});const {container,rerender}=render(<NationsCupPanel {...props}/>);await screen.findAllByText('Selección QA 1 — Selección QA 2');
+ expect(screen.getAllByLabelText('Cancha')[0]).toHaveValue('71101');
+ fireEvent.change(container.querySelector('input[type="datetime-local"]'),{target:{value:'2026-11-22T11:30'}});fireEvent.click(screen.getByRole('button',{name:'Guardar programación editada'}));await waitFor(()=>expect(mutateNationsCup).toHaveBeenCalledTimes(1));expect(mutateNationsCup.mock.calls[0][2].matches[0].court_id).toBe(71101);
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Guardar programación editada'})).toBeDisabled());
+ readNationsCup.mockResolvedValue({...current,revision:3,matches:[{...match(1),estado:'finalizado'},match(2)]});rerender(<NationsCupPanel {...props} refreshKey="closed"/>);await waitFor(()=>expect(container.querySelector('input[type="datetime-local"]')).toBeDisabled());
+ fireEvent.change(container.querySelectorAll('input[type="datetime-local"]')[1],{target:{value:'2026-11-22T12:30'}});fireEvent.click(screen.getByRole('button',{name:'Guardar programación editada'}));await waitFor(()=>expect(mutateNationsCup).toHaveBeenCalledTimes(2));expect(mutateNationsCup.mock.calls[1][2].matches).toEqual([{partido_id:2,fecha_hora:'2026-11-22T11:30:00Z',court_id:71101,duration_minutes:60}]);
+});
+
+test('an explicitly chosen reveal time uses the event zone and is not presumed from the ceremony',async()=>{
+ readNationsCup.mockResolvedValue({...state,config:null});mutateNationsCup.mockResolvedValue({...state,revision:2});render(<NationsCupPanel {...props}/>);
+ fireEvent.change(await screen.findByLabelText('Zona horaria del evento (IANA)'),{target:{value:'Europe/Rome'}});
+ fireEvent.change(screen.getByLabelText('Revelación pública (opcional, hora del evento)'),{target:{value:'2026-11-20T18:00'}});
+ screen.getAllByLabelText(/país ISO de dos letras/).forEach(input=>fireEvent.change(input,{target:{value:'IT'}}));
+ fireEvent.click(screen.getByRole('button',{name:'Guardar configuración propuesta'}));await waitFor(()=>expect(mutateNationsCup).toHaveBeenCalled());expect(mutateNationsCup.mock.calls[0][2].config.reveal_at).toBe('2026-11-20T17:00:00Z');
+});

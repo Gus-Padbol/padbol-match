@@ -33,3 +33,9 @@ test('free registration requires authoritative confirmed state, not a generic ok
 test('list errors are never turned into empty teams',async()=>{
  fetch.mockResolvedValue(response({ok:true,torneo_id:99,equipos:[]}));await expect(listSelectionTeams(context)).rejects.toThrow();fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[]}));expect(await listSelectionTeams(context)).toEqual([]);
 });
+
+test('revealed opposing selection names do not require private creator or roster fields',async()=>{
+ fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[{id:71,cupo_maximo:8,creador_id:null,jugadores:[],equipo_abierto:false,can_manage:false,nombre:'Selección revelada'}]}));
+ await expect(listSelectionTeams(context)).resolves.toEqual([expect.objectContaining({creador_id:null,jugadores:[]})]);
+ fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[{id:71,cupo_maximo:8,creador_id:null,jugadores:[],equipo_abierto:false,can_manage:true}]}));await expect(listSelectionTeams(context)).rejects.toThrow();
+});

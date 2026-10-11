@@ -223,7 +223,7 @@ export default function ScoreboardControl() {
     setPartido(payload);
   }, []);
 
-  useScoreboardSocket(partidoId, handleUpdate);
+  useScoreboardSocket(partidoId, handleUpdate, session?.access_token);
   const timerSeconds = useServerCronometro(partido);
 
   useEffect(() => {

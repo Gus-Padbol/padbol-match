@@ -1,3 +1,4 @@
+import {getApiBaseUrl} from './apiPublicBaseUrl';
 import { supabase } from '../supabaseClient';
 import { normalizeEmailStr } from './jugadorNombreTorneo';
 import { nombreCompletoJugadorPerfil } from './jugadorPerfil';
@@ -99,16 +100,35 @@ export function emojiMedallaPosicionCompacta(pos) {
  * Torneos con `tabla_puntos.puntos > 0` donde el jugador pertenece al equipo (`jugadores` JSONB).
  * @param {object} perfil Fila `jugadores_perfil` o equivalente (user_id, email, alias, nombre…)
  */
-export async function fetchTorneosConPuntosParaPerfil(perfil) {
+export async function fetchTorneosConPuntosParaPerfil(perfil, options = {}) {
   try {
-    return await fetchTorneosConPuntosParaPerfilInner(perfil);
+    return await fetchTorneosConPuntosParaPerfilInner(perfil, options);
   } catch (e) {
     console.error('[torneoHistorialPuntosJugador] fetchTorneosConPuntosParaPerfil', e);
     return [];
   }
 }
 
-async function fetchTorneosConPuntosParaPerfilInner(perfil) {
+export async function fetchSelectionPointsForProfile(perfil) {
+  const uid=String(perfil?.user_id||'').trim();
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uid))return [];
+  const response=await fetch(`${getApiBaseUrl({preferLegacy:true})}/api/jugadores/${encodeURIComponent(uid)}/torneos-puntos`);
+  const data=await response.json().catch(()=>null);
+  if(!response.ok||data?.ok!==true||data.jugador_id!==uid||!Array.isArray(data.items)||data.items.some(row=>row.user_id!==uid||row.ranking_oficial!==false||row.ranking_origen!=='padbol_match_interno'))throw new Error('No se pudo confirmar la participación de selecciones.');
+  return data.items.filter(row=>Number(row.puntos)>0).map(row=>({torneo_id:row.torneo_id,equipo_id:row.equipo_id,nombreTorneo:row.torneo_nombre,fechaMostrar:formatFechaTorneoPublico(row.fecha,row.fecha),fechaSort:row.fecha,posicion:row.posicion,puntos:row.puntos,nivel_torneo:row.nivel}));
+}
+export async function combineProfileHistory(legacyRead, selectionRead, onIncomplete) {
+  const [legacy,nations]=await Promise.allSettled([legacyRead,selectionRead]);
+  if(legacy.status==='rejected'||nations.status==='rejected')onIncomplete?.();
+  return [...(legacy.status==='fulfilled'?legacy.value:[]),...(nations.status==='fulfilled'?nations.value:[])];
+}
+async function fetchTorneosConPuntosParaPerfilInner(perfil, options) {
+  const rows=await combineProfileHistory(fetchLegacyTorneosConPuntos(perfil),fetchSelectionPointsForProfile(perfil),options.onIncomplete);
+  const legacy=rows,nations=[];
+  const result=new Map([...legacy,...nations].map(row=>[`${row.torneo_id}:${row.equipo_id}`,row]));
+  return [...result.values()].sort((a,b)=>String(b.fechaSort||'').localeCompare(String(a.fechaSort||'')));
+}
+async function fetchLegacyTorneosConPuntos(perfil) {
   const equiposJugador = await fetchEquiposJugadorTodosTorneos(perfil);
   const equipoIds = [...new Set(equiposJugador.map((e) => e.id).filter((x) => x != null))];
   if (!equipoIds.length) return [];

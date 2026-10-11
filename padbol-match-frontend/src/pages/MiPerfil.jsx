@@ -295,7 +295,7 @@ function puedeMostrarComprobanteMp(r) {
 }
 
 export default function MiPerfil() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -312,6 +312,7 @@ export default function MiPerfil() {
   const [misClases, setMisClases] = useState([]);
   const [misClasesLoading, setMisClasesLoading] = useState(false);
   const [torneosConPuntosMiPerfil, setTorneosConPuntosMiPerfil] = useState([]);
+  const [historialTorneosIncompleto,setHistorialTorneosIncompleto]=useState(false);
   const [mostrarTodosTorneosMiPerfil, setMostrarTodosTorneosMiPerfil] = useState(false);
   const [editando, setEditando] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -905,13 +906,14 @@ export default function MiPerfil() {
 
   useEffect(() => {
     let cancelled = false;
+    setHistorialTorneosIncompleto(false);
     if (!perfil || typeof perfil !== 'object') {
       setTorneosConPuntosMiPerfil([]);
       return undefined;
     }
     (async () => {
       try {
-        const list = await fetchTorneosConPuntosParaPerfil(perfil);
+        const list = await fetchTorneosConPuntosParaPerfil(perfil,{onIncomplete:()=>{if(!cancelled)setHistorialTorneosIncompleto(true);}});
         if (!cancelled) setTorneosConPuntosMiPerfil(Array.isArray(list) ? list : []);
       } catch (e) {
         console.warn('[MiPerfil] torneos con puntos', e);
@@ -4013,6 +4015,7 @@ export default function MiPerfil() {
         </div>
       )}
 
+      {historialTorneosIncompleto&&!ocultarUiJugadorPorAdmin?<p role="alert">{String(i18n?.language||'es').startsWith('en')?'Tournament history is incomplete. Confirmed records remain visible; unavailable results are not included in this summary.':'El historial de torneos está incompleto. Se conservan los registros confirmados; los resultados no disponibles no están incluidos en este resumen.'}</p>:null}
       {torneosConPuntosMiPerfil.length > 0 && !ocultarUiJugadorPorAdmin ? (
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)', marginBottom: '16px' }}>
           <h4 style={{ margin: '0 0 14px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>🏆 Mis Torneos</h4>

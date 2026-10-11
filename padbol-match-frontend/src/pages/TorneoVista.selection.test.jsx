@@ -11,10 +11,11 @@ jest.mock('../hooks/useUserRole',()=>({__esModule:true,default:()=>({rol:'jugado
 jest.mock('../hooks/useSponsor',()=>({useSponsor:()=>({sponsor:null})}));
 jest.mock('../components/AppHeader',()=>()=>null);
 jest.mock('../components/BottomNav',()=>()=>null);
-jest.mock('../supabaseClient',()=>({supabase:{}}));
+jest.mock('../supabaseClient',()=>({supabase:{auth:{getSession:jest.fn(async()=>({data:{session:{access_token:'synthetic-fixture'}}}))}}}));
 jest.mock('../components/torneo/TorneoTabbedView',()=>{const actual=jest.requireActual('../components/torneo/TorneoTabbedView');return {...actual,__esModule:true,default:props=>require('react').createElement('div',null,props.bannerAntesTabs)};});
 let mode;
 beforeEach(()=>{
+ require('../supabaseClient').supabase.auth.getSession.mockResolvedValue({data:{session:{access_token:'synthetic-fixture'}}});
  mode='selecciones';mockNavigate.mockClear();
  global.fetch=jest.fn(async url=>({ok:true,status:200,json:async()=>{
   if(url.endsWith('/api/torneos/9'))return {id:9,nombre:'Torneo QA',deporte:'padbol',modalidad_plantel:mode,estado:'abierto',fecha_inicio:'2027-11-22',sede_id:7};
@@ -24,6 +25,7 @@ beforeEach(()=>{
  }}));
 });
 afterEach(()=>delete global.fetch);
+test('protected tournament teams and matches read with the current real-session contract',async()=>{render(<MemoryRouter><TorneoVista/></MemoryRouter>);await waitFor(()=>expect(fetch.mock.calls.some(([url])=>url.endsWith('/api/torneos/9/partidos'))).toBe(true));for(const [url,options] of fetch.mock.calls.filter(([url])=>/\/(equipos|partidos)$/.test(url)))expect(options.headers.Authorization).toBe('Bearer synthetic-fixture');});
 test('public selection tournament points to registered rosters without requesting or offering legacy two-player partner flow',async()=>{
  render(<MemoryRouter initialEntries={['/torneo/9']}><TorneoVista/></MemoryRouter>);
  const button=await screen.findByRole('button',{name:'torneos.vista.teamsAndRegistration'});

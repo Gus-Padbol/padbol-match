@@ -2120,3 +2120,7 @@ body.lang-ar [class*='torneo-tab-item'] {
   flex: 1;
   text-align: center;
 }
+
+/* Keep intrinsic table widths inside the tournament column. */
+.torneo-vista-container{width:100%;min-width:0;box-sizing:border-box}
+.torneo-vista-container>div,.torneo-vista-container>main{min-width:0;box-sizing:border-box}
