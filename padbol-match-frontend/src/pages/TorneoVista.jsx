@@ -1,3 +1,4 @@
+import {openConfirmedTournamentRegistration} from '../utils/adminTournamentRegistration';
 import {getAuthHeaders} from '../utils/scoreboardApi';
 import NationsCupPanel from '../components/torneo/NationsCupPanel';
 import { isPadbolSelection } from '../utils/padbolSelectionRoster';
@@ -488,21 +489,8 @@ export default function TorneoVista() {
     if (!window.confirm(t('torneos.vista.confirmOpenRegistration'))) return;
     setAbrirInscripcionLoading(true);
     try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ estado: 'abierto' }),
-      });
-      if (res.ok) {
-        const data = await res.json().catch(() => null);
-        const row = Array.isArray(data) ? data[0] : data;
-        setTorneo((prev) => ({ ...prev, estado: row?.estado ?? 'abierto' }));
-      } else {
-        const err = await res.json().catch(() => ({}));
-        alert(err?.error || t('torneos.vista.openRegistrationError'));
-      }
+      const row=await openConfirmedTournamentRegistration({apiBaseUrl:apiBaseUrlTorneo,torneoId});
+      setTorneo(prev=>({...prev,...row}));
     } catch (e) {
       alert(e?.message || t('torneos.vista.networkError'));
     } finally {

@@ -1,3 +1,4 @@
+import {createConfirmedAdminTournament} from '../utils/adminTournamentCreate';
 import {readPointsConfig,pointsBaseForLevel} from '../utils/pointsConfigApi';
 import { PADBOL_SELECTION_MODE } from '../utils/padbolSelectionRoster';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
@@ -99,6 +100,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
   const [baseline, setBaseline] = useState(() => EMPTY_TORNEO_FORM());
   const [abandonOpen, setAbandonOpen] = useState(false);
   const pendingLeaveRef = useRef(null);
+  const pendingCreationRef=useRef(null);
   const isDirtyRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
@@ -287,12 +289,11 @@ const TorneoCrear = forwardRef(function TorneoCrear({
         return corte ? { fecha_corte_edad: corte } : {};
       })(),
       tipo_torneo: formData.tipo_torneo,
-      estado: mapEstadoTorneoFormParaApi(formData.estado || 'proximo'),
+      estado: mapEstadoTorneoFormParaApi('proximo'),
       fecha_inicio: formData.fecha_inicio,
       fecha_fin: formData.fecha_fin,
       cantidad_equipos: formData.cantidad_equipos ? parseInt(formData.cantidad_equipos, 10) : null,
       es_multisede: formData.es_multisede,
-      created_by: null,
       deporte: normalizeTorneoDeporte(formData.deporte),
       ...(normalizeTorneoDeporte(formData.deporte) === TORNEO_DEPORTE_PADBOL && formData.modalidad_plantel === PADBOL_SELECTION_MODE ? { modalidad_plantel: PADBOL_SELECTION_MODE } : {}),
       formato_equipo: formatoEquipoPayloadParaApi(formData.deporte, formData.formato_equipo),
@@ -362,31 +363,15 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     }
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/torneos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      console.log('Result recibido:', result);
-
-      if (response.ok) {
-        setMensaje(t('torneos.create.createdSuccess'));
-        resetFormClean();
-        const nuevoId = result?.[0]?.id;
-        if (embedded) {
-          if (nuevoId != null) onCreated?.(nuevoId);
-          window.setTimeout(() => {
-            onClose?.();
-          }, 900);
-        } else {
-          setTimeout(() => {
-            navigate(`/torneo/${result[0].id}`);
-          }, 1500);
-        }
+      const confirmed=await createConfirmedAdminTournament({apiBaseUrl},payload,pendingCreationRef);
+      setMensaje(t('torneos.create.createdSuccess'));
+      resetFormClean();
+      const nuevoId=confirmed.id;
+      if (embedded) {
+        onCreated?.(nuevoId);
+        window.setTimeout(()=>{onClose?.();},900);
       } else {
-        setError(result.error || t('torneos.create.createError'));
+        setTimeout(()=>{navigate(`/torneo/${nuevoId}`);},1500);
       }
     } catch (err) {
       setError(t('torneos.create.errorWithDetail', { error: err.message }));
@@ -611,12 +596,8 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
               <div className="form-group">
                 <label>{t('torneos.create.initialStatusLabel')}</label>
-                <select name="estado" value={formData.estado} onChange={handleChange}>
+                <select name="estado" value="proximo" disabled>
                   <option value="proximo">{t('torneos.vista.estado.proximo')}</option>
-                  <option value="abierto">{t('torneos.vista.estado.abierto')}</option>
-                  <option value="en_curso">{t('torneos.vista.estado.en_curso')}</option>
-                  <option value="finalizado">{t('torneos.vista.estado.finalizado')}</option>
-                  <option value="cancelado">{t('torneos.vista.estado.cancelado')}</option>
                 </select>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
                   {t('torneos.create.initialStatusHint')}
@@ -810,7 +791,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                 </small>
               </div>
 
-              {error && <div className="error-message">{error}</div>}
+              {error && <div className="error-message" role="alert">{error}</div>}
               {mensaje && <div className="success-message">{mensaje}</div>}
 
               <button type="submit" disabled={loading} className="btn-submit">

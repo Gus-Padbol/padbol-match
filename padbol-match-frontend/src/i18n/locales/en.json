@@ -380,7 +380,7 @@
       "programaNextGenerationHint": "Youth category: this tournament belongs to the FIPA Next Generation program (U13/U15/U17).",
       "programaPadbolHint": "Adult category: this tournament belongs to Padbol. The sports level (Beginner to Elite) is independent from age.",
       "fixtureFormatLabel": "Fixture format", "initialStatusLabel": "Initial tournament status",
-      "initialStatusHint": "Upcoming means planning. You can open registration now or later from the admin panel.",
+      "initialStatusHint": "The tournament is created in planning (Upcoming). After saving and verifying it, you can open registration from its admin detail.",
       "teamsPerGroupLabel": "Teams per group", "qualifiersPerGroupLabel": "Qualifiers per group", "bestThirdsLabel": "Best third-place qualifiers",
       "nonePlaceholder": "0 = none", "bestThirdsHint": "Number of best third-place teams advancing to the final stage; enter 0 when not applicable.",
       "autoOpenLabel": "Automatic registration opening (optional)", "autoOpenHint": "At this date and time, a planned tournament will automatically change to Registration open.",

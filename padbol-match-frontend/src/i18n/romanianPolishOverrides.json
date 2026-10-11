@@ -407,7 +407,7 @@
       "categoryLabel": "Categorie",
       "fixtureFormatLabel": "Formatul programului",
       "initialStatusLabel": "Starea inițială a turneului",
-      "initialStatusHint": "Urmează înseamnă etapa de planificare. Poți deschide înscrierile acum sau ulterior din panoul de administrare.",
+      "initialStatusHint": "Turneul este creat în etapa de planificare (Urmează). După salvare și verificare, poți deschide înscrierile din pagina de administrare a turneului.",
       "teamsPerGroupLabel": "Echipe în grupă",
       "qualifiersPerGroupLabel": "Echipe calificate din grupă",
       "bestThirdsLabel": "Cele mai bune echipe de pe locul trei",

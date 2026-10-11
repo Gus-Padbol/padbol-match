@@ -34,8 +34,14 @@ export async function fetchSponsors(sedeId) {
   return data.sponsors || [];
 }
 
-export async function fetchPartido(partidoId) {
-  const res = await fetch(`${API_BASE}/api/scoreboard/partidos/${partidoId}`);
+export async function fetchPartido(partidoId, {authenticated=false} = {}) {
+  const url=`${API_BASE}/api/scoreboard/partidos/${partidoId}`;
+  let res;
+  if(authenticated){
+    const headers=await getAuthHeaders();
+    if(!headers.Authorization)throw new Error('Ingresa nuevamente para consultar el marcador privado.');
+    res=await fetch(url,{headers});
+  }else res=await fetch(url);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Error al cargar partido');
   return data;

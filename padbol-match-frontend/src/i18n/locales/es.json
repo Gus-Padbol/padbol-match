@@ -508,7 +508,7 @@
       "categoryLabel": "Categoría",
       "fixtureFormatLabel": "Formato del fixture",
       "initialStatusLabel": "Estado inicial del torneo",
-      "initialStatusHint": "Próximo equivale a planificación. Puedes abrir la inscripción ahora o más adelante desde el panel.",
+      "initialStatusHint": "El torneo se crea en planificación (Próximo). Después de guardar y comprobarlo, puedes abrir la inscripción desde su ficha administrativa.",
       "teamsPerGroupLabel": "Equipos por grupo",
       "qualifiersPerGroupLabel": "Clasificados por grupo",
       "bestThirdsLabel": "Mejores terceros clasificados",

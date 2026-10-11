@@ -231,7 +231,7 @@ export default function ScoreboardControl() {
     let cancelled = false;
     (async () => {
       try {
-        const p = await fetchPartido(partidoId);
+        const p = await fetchPartido(partidoId,{authenticated:true});
         if (!cancelled) {
           if (!canAdminScoreboard(rol, p.sede_id, userSedeId)) {
             setError(t('scoreboard.noPermission', 'No tienes permiso para controlar este scoreboard'));
@@ -250,7 +250,7 @@ export default function ScoreboardControl() {
   }, [partidoId, rol, userSedeId, roleLoading, t]);
 
   const refreshPartido = useCallback(async () => {
-    const p = await fetchPartido(partidoId);
+    const p = await fetchPartido(partidoId,{authenticated:true});
     setPartido(p);
     return p;
   }, [partidoId]);
