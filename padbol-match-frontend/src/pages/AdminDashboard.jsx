@@ -6764,7 +6764,7 @@ export default function AdminDashboard({
     } catch (e) {
       alert(e?.message || t('admin.alerts.loadTeams'));
     }
-  }, [apiBaseUrl, t]);
+  }, [apiBaseUrl, t, i18n.language]);
 
   /** Sorteo de grupos solo con torneo en inscripción / abierto (antes de `en_curso`). */
   const torneoEstadoPermiteSorteoGrupos = (est) => {

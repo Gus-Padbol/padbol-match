@@ -41,7 +41,7 @@ export async function listSelectionTeams({ apiBaseUrl, torneoId }) {
   if (Number(data.torneo_id) !== Number(torneoId) || !Array.isArray(data.equipos)) throw new Error('No se pudo confirmar la lista de equipos de este torneo.');
   if (data.equipos.some(team => !Number.isSafeInteger(Number(team.id)) || Number(team.id) <= 0
     || !Number.isInteger(team.cupo_maximo) || team.cupo_maximo < 4 || team.cupo_maximo > 8
-    || !(team.creador_id===null&&team.can_manage===false&&Array.isArray(team.jugadores)&&team.jugadores.length===0 || selectionPlayerId({ id: team.creador_id })&&validRoster(team.jugadores, team.cupo_maximo))
+    || !((team.creador_id===null&&team.can_manage===false&&Array.isArray(team.jugadores)&&team.jugadores.length===0) || (selectionPlayerId({ id: team.creador_id })&&validRoster(team.jugadores, team.cupo_maximo)))
     || typeof team.equipo_abierto !== 'boolean' || typeof team.can_manage !== 'boolean')) throw new Error('La lista contiene un plantel que no se pudo confirmar. Recarga la ficha.');
   return data.equipos;
 }
