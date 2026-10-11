@@ -1,3 +1,4 @@
+import AdminTournamentDeleteAction, {canDeleteAdminTournament,nationsTournamentDeletionNotice} from '../components/AdminTournamentDeleteAction';
 import { readPointsConfig, savePointsConfig, validatePointsConfig } from '../utils/pointsConfigApi';
 import { normalizeCanjeEstado, adminRoleIdentity, adminRoleScopeMismatch } from '../utils/adminRemainingPresentation';
 import { formatAdminDate } from '../utils/adminDateFormat';
@@ -6720,6 +6721,8 @@ export default function AdminDashboard({
   };
 
   const eliminarTorneo = async (torneoId, torneoNombre) => {
+    const currentTournament=torneos.find(row=>String(row.id)===String(torneoId));
+    if (!canDeleteAdminTournament(currentTournament)) {alert(nationsTournamentDeletionNotice(i18n.language));return;}
     if (!window.confirm(t('admin.notif.deleteTournamentConfirm', { name: torneoNombre }))) return;
     try {
       const headers = {};
@@ -12049,14 +12052,8 @@ export default function AdminDashboard({
                           </button>
                         )}
                         {isSuperAdmin && (
-                          <button
-                            onClick={() => eliminarTorneo(torneo.id, torneo.nombre)}
-                            className="admin-torneo-action admin-torneo-action--danger"
-                            style={{ padding: '6px 10px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px' }}
-                            title={t('admin.torneosSection.deleteTournament')}
-                          >
-                            Eliminar
-                          </button>
+                          <AdminTournamentDeleteAction torneo={torneo} language={i18n.language}
+                            onDelete={eliminarTorneo} title={t('admin.torneosSection.deleteTournament')} />
                         )}
                         </div>
                       </div>
