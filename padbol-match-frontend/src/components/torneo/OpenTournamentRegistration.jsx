@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {openConfirmedTournamentRegistration} from '../../utils/adminTournamentRegistration';
 
 export default function OpenTournamentRegistration({available, apiBaseUrl, torneoId, t, onSaved}) {
@@ -7,22 +7,31 @@ export default function OpenTournamentRegistration({available, apiBaseUrl, torne
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const pending = useRef(false);
+  const lifecycle = useRef(0);
+  useEffect(() => {
+    const generation = ++lifecycle.current;
+    return () => {if (lifecycle.current === generation) lifecycle.current += 1;};
+  }, [torneoId]);
   const buttonStyle = {minHeight:'44px', maxWidth:'100%', whiteSpace:'normal'};
   const save = async () => {
     if (!available || pending.current) return;
+    const generation = lifecycle.current;
+    const isCurrent = () => lifecycle.current === generation;
     pending.current = true;
     setLoading(true);
     setError('');
     try {
       const row = await openConfirmedTournamentRegistration({apiBaseUrl, torneoId});
+      if (!isCurrent()) return;
       onSaved(row);
       setSaved(true);
       setConfirming(false);
     } catch (e) {
+      if (!isCurrent()) return;
       setError(e?.message || t('torneos.vista.networkError'));
     } finally {
       pending.current = false;
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   };
   return <div style={{flexBasis:'100%', width:'100%', maxWidth:'100%', minWidth:0, overflowWrap:'anywhere'}}>
