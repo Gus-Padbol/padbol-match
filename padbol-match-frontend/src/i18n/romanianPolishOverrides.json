@@ -438,6 +438,7 @@
       "loadTournamentError": "Turneul nu a putut fi încărcat",
       "tournamentNotFound": "Turneul nu a fost găsit",
       "confirmOpenRegistration": "Deschizi înscrierile acum?",
+      "registrationOpened": "Înscrierile sunt deschise și salvarea a fost confirmată.",
       "openRegistrationError": "Înscrierile nu au putut fi deschise.",
       "networkError": "Eroare de rețea",
       "teamNumber": "Echipa nr. {{id}}",

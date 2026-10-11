@@ -715,6 +715,7 @@
       "loadTournamentError": "No pudimos cargar el torneo",
       "tournamentNotFound": "Torneo no encontrado",
       "confirmOpenRegistration": "¿Confirmar la apertura de la inscripción?",
+      "registrationOpened": "Inscripción abierta y guardado confirmado.",
       "openRegistrationError": "No se pudo abrir la inscripción.",
       "networkError": "Error de red",
       "teamNumber": "Equipo #{{id}}",

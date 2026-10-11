@@ -575,6 +575,7 @@
       "loadTournamentError": "We couldn't load the tournament",
       "tournamentNotFound": "Tournament not found",
       "confirmOpenRegistration": "Open registration now?",
+      "registrationOpened": "Registration is open and the saved state has been confirmed.",
       "openRegistrationError": "We couldn't open registration.",
       "networkError": "Network error",
       "teamNumber": "Team #{{id}}",

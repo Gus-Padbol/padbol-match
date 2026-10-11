@@ -2034,7 +2034,7 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
           },
           statSw: "SV", statSl: "SP", statGw: "HV", statGl: "HP", colPos: "#", statForma: "Forma",
           loadTournamentError: "Turnaj se nepodařilo načíst", tournamentNotFound: "Turnaj nebyl nalezen",
-          confirmOpenRegistration: "Otevřít registraci?", openRegistrationError: "Registraci se nepodařilo otevřít.", networkError: "Chyba sítě",
+          confirmOpenRegistration: "Otevřít registraci?", registrationOpened: "Registrace je otevřena a uložení bylo potvrzeno.", openRegistrationError: "Registraci se nepodařilo otevřít.", networkError: "Chyba sítě",
           teamNumber: "Tým č. {{id}}", confirmStartTournament: "Zahájit turnaj? Registrace se uzavře a stav se změní na Probíhá.",
           startTournamentError: "Turnaj se nepodařilo zahájit.", startTournamentDetails: "Potvrzené týmy: {{confirmed}} (minimum {{minimum}}). Vytvořené zápasy: {{matches}}.",
           errorWithDetail: "Chyba: {{error}}", confirmFinishTournament: "Ukončit turnaj? Vypočítá se konečné pořadí a přidělí body do žebříčku.",

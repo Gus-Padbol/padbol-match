@@ -1,4 +1,4 @@
-import {openConfirmedTournamentRegistration} from '../utils/adminTournamentRegistration';
+import OpenTournamentRegistration from '../components/torneo/OpenTournamentRegistration';
 import {getAuthHeaders} from '../utils/scoreboardApi';
 import NationsCupPanel from '../components/torneo/NationsCupPanel';
 import { isPadbolSelection } from '../utils/padbolSelectionRoster';
@@ -70,7 +70,6 @@ export default function TorneoVista() {
   const [listaEsperaEnrolled, setListaEsperaEnrolled] = useState(false);
   const [listaEsperaChecked, setListaEsperaChecked] = useState(false);
   const [listaEsperaMsg, setListaEsperaMsg] = useState('');
-  const [abrirInscripcionLoading, setAbrirInscripcionLoading] = useState(false);
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
@@ -485,18 +484,6 @@ export default function TorneoVista() {
     };
   }, [torneoId, torneo?.estado, session?.access_token]);
 
-  const abrirInscripcionDesdeAdmin = async () => {
-    if (!window.confirm(t('torneos.vista.confirmOpenRegistration'))) return;
-    setAbrirInscripcionLoading(true);
-    try {
-      const row=await openConfirmedTournamentRegistration({apiBaseUrl:apiBaseUrlTorneo,torneoId});
-      setTorneo(prev=>({...prev,...row}));
-    } catch (e) {
-      alert(e?.message || t('torneos.vista.networkError'));
-    } finally {
-      setAbrirInscripcionLoading(false);
-    }
-  };
 
   const tidNum = parseInt(String(torneoId), 10);
   useEffect(() => {
@@ -817,17 +804,14 @@ export default function TorneoVista() {
   const adminBarFilaEquiposGestión =
     isAdminGestionEnEstaVista && estadoTorneoLower !== 'finalizado' ? (
       <div style={{ textAlign: 'center', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-        {puedeMostrarAbrirInscripcionAdmin ? (
-          <button
-            type="button"
-            className="btn-agregar-jugadores"
-            style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', color: '#fff', fontWeight: 800 }}
-            onClick={() => void abrirInscripcionDesdeAdmin()}
-            disabled={abrirInscripcionLoading}
-          >
-            {abrirInscripcionLoading ? t('torneos.vista.openingRegistration') : t('torneos.vista.openRegistration')}
-          </button>
-        ) : null}
+        <OpenTournamentRegistration
+          key={torneoId}
+          available={puedeMostrarAbrirInscripcionAdmin}
+          apiBaseUrl={apiBaseUrlTorneo}
+          torneoId={torneoId}
+          t={t}
+          onSaved={row => setTorneo(prev => ({...prev, ...row}))}
+        />
         <button
           type="button"
           className="btn-agregar-jugadores"
