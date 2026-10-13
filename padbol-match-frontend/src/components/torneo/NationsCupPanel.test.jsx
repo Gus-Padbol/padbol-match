@@ -74,7 +74,7 @@ test('third place is an explicit saved rule; editing an existing 37-match plan p
  readNationsCup.mockResolvedValue({...state,config:null});mutateNationsCup.mockResolvedValue({...state,revision:2,config:{...state.config,rules:{...state.config.rules,third_place_match:true}}});render(<NationsCupPanel {...props}/>);
  fireEvent.change(await screen.findByLabelText('Zona horaria del evento (IANA)'),{target:{value:'Europe/Rome'}});
  screen.getAllByLabelText(/país ISO de dos letras/).forEach(input=>fireEvent.change(input,{target:{value:'IT'}}));
- const checkbox=screen.getByRole('checkbox',{name:/Incluir partido por el tercer puesto/});expect(checkbox).not.toBeChecked();fireEvent.click(checkbox);fireEvent.click(screen.getByRole('button',{name:'Guardar configuración propuesta'}));
+ const checkbox=screen.getByRole('checkbox',{name:/Incluir partido por el tercer puesto/});expect(checkbox).not.toBeChecked();fireEvent.click(checkbox);expect(screen.getByText(/Cuartos, semifinales, tercer puesto y final: 38 partidos/)).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Guardar configuración propuesta'}));
  await waitFor(()=>expect(mutateNationsCup).toHaveBeenCalled());expect(mutateNationsCup.mock.calls[0][2].config.rules.third_place_match).toBe(true);await screen.findByText(/Tercer puesto incluido: 38 partidos/);
 });
 test('bronze displays semifinal losers and shares the final scheduling stage without confusing its outcome',async()=>{
