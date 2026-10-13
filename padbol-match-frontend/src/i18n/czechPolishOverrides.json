@@ -24,6 +24,7 @@
     "legalPrivacyAcknowledgement": "Potvrzuji, že jsem si přečetl(a)"
   },
   "profileCompletion": {
+    "storageUnavailable": "Server nemohl připravit uložení profilu. Vaše údaje nejsou chybné. Zkuste to prosím později.",
     "eligibilityCheckFailed": "Na serveru se nepodařilo ověřit váš věk. Datum narození nebylo zamítnuto. Zkuste to znovu; pokud problém přetrvává, kontaktujte podporu.",
     "personalDataHelp": "Tyto údaje doplní váš sportovní profil, ověří minimální věk a bezpečně propojí vaši aktivitu. Způsob zpracování a svá práva najdete v zásadách ochrany soukromí.",
     "selectCountry": "Vyberte svou zemi."
@@ -420,5 +421,9 @@
       "request": "Žádost se nepodařilo odeslat.",
       "download": "Stažení se nepodařilo připravit."
     }
+  },
+  "reservas": {
+    "confirmFreeBooking": "Potvrdit bezplatnou rezervaci",
+    "freeBookingConfirmed": "Bezplatná rezervace potvrzena. Číslo rezervace: {{id}}."
   }
 }

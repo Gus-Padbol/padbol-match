@@ -129,6 +129,8 @@
     }
   },
   "reservas": {
+    "confirmFreeBooking": "Confirmă rezervarea gratuită",
+    "freeBookingConfirmed": "Rezervare gratuită confirmată. Numărul rezervării: {{id}}.",
     "payAtVenueBody": "Acest club acceptă plata la fața locului. Nu te redirecționăm către Mercado Pago sau către plata cu cardul: după confirmare, rezervarea rămâne în așteptare până când plătești la club.",
     "cancelar": "Anulează rezervarea",
     "paymentIncomplete": "Plata nu a fost finalizată. Poți încerca din nou sau poți anula rezervarea.",
@@ -170,6 +172,7 @@
     "handednessAmbi": "Ambidextru"
   },
   "profileCompletion": {
+    "storageUnavailable": "Serverul nu a putut pregăti salvarea profilului. Datele tale nu sunt greșite. Încearcă din nou mai târziu.",
     "eligibilityCheckFailed": "Nu am putut verifica vârsta pe server. Data nașterii nu a fost respinsă. Încearcă din nou; dacă problema persistă, contactează asistența.",
     "title": "Completează-ți profilul",
     "intro": "Completează-ți profilul pentru a rezerva Padbol Courts, a participa la turnee și a găsi parteneri de joc.",

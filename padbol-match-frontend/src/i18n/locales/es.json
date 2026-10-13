@@ -211,6 +211,7 @@
     "reservaLoginGate": "Para continuar con tu reserva, ingresa o crea una cuenta. Es rápido."
   },
   "profileCompletion": {
+    "storageUnavailable": "El servidor no pudo preparar el guardado del perfil. Tus datos no están mal. Intenta nuevamente más tarde.",
     "title": "Completa tu perfil",
     "intro": "Completa tu perfil para reservar Padbol Courts, jugar torneos y encontrar compañeros de juego.",
     "personalDataHelp": "Estos datos completan tu ficha deportiva, permiten verificar la edad mínima y vincular tu actividad de forma segura. Puedes revisar su tratamiento y tus derechos en la Política de Privacidad.",
@@ -263,6 +264,8 @@
     }
   },
   "reservas": {
+    "confirmFreeBooking": "Confirmar reserva sin cargo",
+    "freeBookingConfirmed": "Reserva confirmada sin cargo. Número de reserva: {{id}}.",
     "titulo": "Reservar cancha",
     "header": "Reservar",
     "heroTitle": "Reserva tu cancha",

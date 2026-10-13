@@ -288,7 +288,9 @@ export default function CompletarPerfilOAuth() {
         setErrorMsg(
           duplicateMessage
             ? t('profileCompletion.duplicateData')
-            : t('profileCompletion.saveFailed')
+            : String(err?.code || '') === '42P10'
+              ? t('profileCompletion.storageUnavailable', 'El servidor no pudo preparar el guardado del perfil. Tus datos no están mal. Intenta nuevamente más tarde.')
+              : t('profileCompletion.saveFailed')
         );
       } finally {
         setBusy(false);

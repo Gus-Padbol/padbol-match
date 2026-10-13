@@ -157,6 +157,7 @@
     "reservaLoginGate": "To continue your booking, sign in or create an account. It's quick."
   },
   "profileCompletion": {
+    "storageUnavailable": "The server could not prepare profile storage. Your details are not invalid. Please try again later.",
     "title": "Complete your profile",
     "intro": "Complete your profile to book Padbol Courts, play tournaments and find people to play with.",
     "personalDataHelp": "These details complete your sports profile, verify the minimum age and securely link your activity. You can review how they are used and your rights in the Privacy Policy.",
@@ -209,6 +210,8 @@
     }
   },
   "reservas": {
+    "confirmFreeBooking": "Confirm free booking",
+    "freeBookingConfirmed": "Free booking confirmed. Booking number: {{id}}.",
     "titulo": "Book a court",
     "header": "Book",
     "heroTitle": "Book your court",

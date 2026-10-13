@@ -2181,6 +2181,14 @@ export default function ReservaForm() {
 
   const handlePagarConMP = async () => {
     if (!gateReservaPago()) return;
+    if (!sedeSeleccionada) {
+      setError(t('reservas.loadingVenue'));
+      return;
+    }
+    if (!session?.access_token) {
+      setError(t('auth.sessionExpired', 'Tu sesión venció. Vuelve a ingresar.'));
+      return;
+    }
     const sesEm = session.user.email;
     const meta = session.user.user_metadata || {};
     const waPerfil = String(userProfile?.whatsapp || '').trim();
@@ -2227,13 +2235,14 @@ export default function ReservaForm() {
       creditUsed: creditoAplicado,
       duracion: duracionReservaMin,
       estado: 'confirmada',
+      deporte: reservaDeporteUrl,
       ...(extrasPayload.length ? { extras: extrasPayload } : {}),
     };
 
     try {
       const res = await fetch(apiUrl('/api/crear-preferencia'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           titulo: t('reservas.paymentDescription', { num: formData.cancha, venue: sedeSeleccionada.nombre }),
           precio: precioFinal,
@@ -2245,7 +2254,14 @@ export default function ReservaForm() {
         }),
       });
       const data = await res.json();
-      if (res.ok && data.init_point) {
+      if (res.ok && data.free_booking && data.reserva_id) {
+        alert(t('reservas.freeBookingConfirmed', 'Reserva confirmada sin cargo. Número de reserva: {{id}}.', { id: data.reserva_id }));
+        clearMpReservaPendingSlot();
+        setPantalla(1);
+        setFormData({ fecha: '', hora: '', cancha: '', duracion: '90', nombre: '', email: '', numeroTel: '' });
+        setWhatsapp('');
+        setMpLoading(false);
+      } else if (res.ok && data.init_point) {
         localStorage.setItem('ultima_sede', String(filtros.sede_id));
         saveMpReservaPendingSlot({
           sede: sedeSeleccionada.nombre,
@@ -2785,7 +2801,7 @@ export default function ReservaForm() {
 
   // PANTALLA 4: Resumen + pago (solo usuarios autenticados; login al elegir cancha / reservar)
   if (pantalla === 4) {
-    if (authLoading || !session?.user) {
+    if (authLoading || !session?.user || !sedeSeleccionada) {
       return (
         <div
           className="reserva-container"
@@ -2809,6 +2825,7 @@ export default function ReservaForm() {
     const creditoAplicado = 0;
     const precioTurnoResumen = precioReservaTurnoBase;
     const stripeMontoMainConExtras = Math.max(0, reservaSubtotalTurnoExtras - creditoAplicado);
+    const reservaSinCargo = stripeMontoMainConExtras === 0;
     const metodoPagoStripe = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'stripe';
     const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
     const stripeCuentaOk = String(sedeSeleccionada?.stripe_account_id || '').trim().startsWith('acct_');
@@ -3058,7 +3075,7 @@ export default function ReservaForm() {
 
           <PadcoinsCampaignPlayerHint campaign={pcActiveCampaign} variant="confirm" />
 
-          {metodoPagoEfectivo ? (
+          {metodoPagoEfectivo && !reservaSinCargo ? (
             <div
               style={{
                 margin: '0 0 16px',
@@ -3077,7 +3094,7 @@ export default function ReservaForm() {
             </div>
           ) : null}
 
-          {metodoPagoStripe && !stripeCuentaOk ? (
+          {metodoPagoStripe && !reservaSinCargo && !stripeCuentaOk ? (
             <div className="error-message" role="alert" style={{ marginBottom: '12px' }}>
               {t('reservas.stripeNotConnected')}
             </div>
@@ -3085,7 +3102,7 @@ export default function ReservaForm() {
 
           {error && <div className="error-message">{error}</div>}
 
-          {metodoPagoStripe ? (
+          {metodoPagoStripe && !reservaSinCargo ? (
             <ReservaStripeSection
               sedeId={sedeSeleccionada.id}
               moneda={moneda}
@@ -3135,7 +3152,7 @@ export default function ReservaForm() {
                 marginBottom: '12px',
               }}
             >
-              {mpLoading ? t('reservas.procesando') : metodoPagoEfectivo ? t('reservas.pago_sede') : t('reservas.pagar_mp')}
+              {mpLoading ? t('reservas.procesando') : reservaSinCargo ? t('reservas.confirmFreeBooking', 'Confirmar reserva sin cargo') : metodoPagoEfectivo ? t('reservas.pago_sede') : t('reservas.pagar_mp')}
             </button>
           )}
 
