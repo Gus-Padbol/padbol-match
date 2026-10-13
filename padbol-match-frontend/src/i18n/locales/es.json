@@ -131,6 +131,7 @@
     "error": "No pudimos registrar la solicitud de eliminación."
   },
   "auth": {
+    "accessLinkRegistrationRequired": "Para pedir un enlace, primero registra tu cuenta o revisa el correo ingresado.",
     "access": "Acceso",
     "login": "Iniciar sesión",
     "loginTitle": "Iniciar sesión",

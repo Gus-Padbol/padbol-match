@@ -77,6 +77,7 @@
     "sending": "Sending request…", "confirm": "Yes, send request", "error": "We could not register the deletion request."
   },
   "auth": {
+    "accessLinkRegistrationRequired": "To request a link, register your account first or check the email you entered.",
     "access": "Sign in",
     "login": "Sign in",
     "loginTitle": "Sign in",

@@ -28,6 +28,7 @@ export async function requestPasswordlessAccess({
 }
 
 export function passwordlessAccessErrorTranslationKey(error) {
+  if (error?.code === 'otp_disabled') return 'auth.accessLinkRegistrationRequired';
   if (error?.status === 429 || ['over_email_send_rate_limit', 'over_request_rate_limit'].includes(error?.code)) return 'auth.accessLinkRateLimited';
   return 'auth.accessLinkFailed';
 }

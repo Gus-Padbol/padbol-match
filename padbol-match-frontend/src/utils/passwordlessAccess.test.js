@@ -58,3 +58,7 @@ it('returns thrown network errors so the screen can recover instead of leaving a
  it('keeps provider failure generic and does not expose internals', () => {
    expect(passwordlessAccessErrorTranslationKey({ code: 'unexpected_failure', message: 'smtp secret internals' })).toBe('auth.accessLinkFailed');
  });
+
+it('explains that passwordless access requires registration without creating an account', () => {
+  expect(passwordlessAccessErrorTranslationKey({ status: 422, code: 'otp_disabled' })).toBe('auth.accessLinkRegistrationRequired');
+});

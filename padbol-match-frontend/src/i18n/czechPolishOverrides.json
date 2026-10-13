@@ -14,6 +14,8 @@
     }
   },
   "auth": {
+    "accessLinkRegistrationRequired": "Než požádáte o odkaz, zaregistrujte si účet nebo zkontrolujte zadaný e-mail.",
+    "accessLinkRateLimited": "E-mailová služba dosáhla dočasného limitu. Před další žádostí o odkaz počkejte nebo se přihlaste heslem.",
     "birthDate": "Datum narození",
     "ageEligibilityHelp": "Samostatné účty jsou dostupné od 16 let. Registrace osob ve věku 13 až 15 let zůstává vypnutá, dokud nebude k dispozici ověřitelný souhlas rodiče.",
     "ageEligibilityInvalid": "Zadejte platné datum narození. Samostatné účty jsou dostupné od 16 let.",
@@ -22,6 +24,7 @@
     "legalPrivacyAcknowledgement": "Potvrzuji, že jsem si přečetl(a)"
   },
   "profileCompletion": {
+    "eligibilityCheckFailed": "Na serveru se nepodařilo ověřit váš věk. Datum narození nebylo zamítnuto. Zkuste to znovu; pokud problém přetrvává, kontaktujte podporu.",
     "personalDataHelp": "Tyto údaje doplní váš sportovní profil, ověří minimální věk a bezpečně propojí vaši aktivitu. Způsob zpracování a svá práva najdete v zásadách ochrany soukromí.",
     "selectCountry": "Vyberte svou zemi."
   },

@@ -147,6 +147,8 @@
     "detalle": "Detaliile lecției"
   },
   "auth": {
+    "accessLinkRegistrationRequired": "Pentru a solicita un link, înregistrează mai întâi contul sau verifică adresa de e-mail introdusă.",
+    "accessLinkRateLimited": "Serviciul de e-mail a atins limita temporară. Așteaptă înainte de a solicita alt link sau autentifică-te cu parola.",
     "birthDate": "Data nașterii",
     "ageEligibilityHelp": "Conturile personale sunt disponibile de la 16 ani. Înregistrarea persoanelor între 13 și 15 ani rămâne dezactivată până când există o autorizare parentală verificabilă.",
     "ageEligibilityInvalid": "Introdu o dată de naștere validă. Conturile personale sunt disponibile de la 16 ani.",
@@ -168,6 +170,7 @@
     "handednessAmbi": "Ambidextru"
   },
   "profileCompletion": {
+    "eligibilityCheckFailed": "Nu am putut verifica vârsta pe server. Data nașterii nu a fost respinsă. Încearcă din nou; dacă problema persistă, contactează asistența.",
     "title": "Completează-ți profilul",
     "intro": "Completează-ți profilul pentru a rezerva Padbol Courts, a participa la turnee și a găsi parteneri de joc.",
     "personalDataHelp": "Aceste date completează profilul tău sportiv, verifică vârsta minimă și leagă activitatea în siguranță. Poți consulta utilizarea lor și drepturile tale în Politica de confidențialitate.",
