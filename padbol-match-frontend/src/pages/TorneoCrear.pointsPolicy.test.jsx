@@ -5,7 +5,7 @@ import TorneoCrear from './TorneoCrear';
 import {getAuthHeaders} from '../utils/scoreboardApi';
 jest.mock('../utils/scoreboardApi',()=>({getAuthHeaders:jest.fn()}));
 import {readPointsConfig} from '../utils/pointsConfigApi';
-jest.mock('../utils/pointsConfigApi',()=>({readPointsConfig:jest.fn(),pointsBaseForLevel:(policy,level)=>policy.niveles[level==='club'?'club_oficial':level]??null}));
+jest.mock('../utils/pointsConfigApi',()=>({...jest.requireActual('../utils/pointsConfigApi'),readPointsConfig:jest.fn()}));
 jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{user:{email:'qa@fixture.invalid'},access_token:'fixture-only'}})}));
 jest.mock('../context/HubNavLayoutContext',()=>({useHubNavLayout:()=>({navDock:'bottom'})}));
 jest.mock('../hooks/useUserRole',()=>()=>({rol:'super_admin',sedeId:null}));
@@ -34,3 +34,28 @@ test('actual form keeps its draft when the live token is missing or creation is 
  getAuthHeaders.mockResolvedValue({});const created=jest.fn();const {container}=render(<MemoryRouter><TorneoCrear embedded onCreated={created}/></MemoryRouter>);await fillCreateDraft(container);fireEvent.submit(container.querySelector('form'));await screen.findByRole('alert');expect(fetch.mock.calls.some(([,opts])=>opts?.method==='POST')).toBe(false);expect(container.querySelector('input[name="nombre"]')).toHaveValue('QA auth form');expect(created).not.toHaveBeenCalled();
  getAuthHeaders.mockResolvedValue({Authorization:'Bearer sdk-current'});fetch.mockResolvedValue({ok:false,status:403,json:async()=>({error:'Forbidden QA'})});fireEvent.submit(container.querySelector('form'));await waitFor(()=>expect(fetch.mock.calls.some(([,opts])=>opts?.method==='POST')).toBe(true));expect(container.querySelector('input[name="nombre"]')).toHaveValue('QA auth form');expect(created).not.toHaveBeenCalled();
 });
+
+ test('uses a real enabled canonical default, with no unsupported club alias',async()=>{
+  const {container}=render(<MemoryRouter><TorneoCrear embedded/></MemoryRouter>);
+  await waitFor(()=>expect(container.querySelector('select[name="nivel_torneo"]')).toHaveValue('club_no_oficial'));
+  expect(screen.getByLabelText('Puntos base')).toHaveValue('10');
+  expect(container.querySelector('option[value="club"]')).toBeNull();
+ });
+ test('falls back to a configured enabled level when the default is hidden or absent',async()=>{
+  readPointsConfig.mockResolvedValue({...policy,niveles:{internacional:300},tipos_custom:[],niveles_hidden:['club_no_oficial']});
+  const {container}=render(<MemoryRouter><TorneoCrear embedded/></MemoryRouter>);
+  await waitFor(()=>expect(container.querySelector('select[name="nivel_torneo"]')).toHaveValue('internacional'));
+  expect(screen.getByLabelText('Puntos base')).toHaveValue('300');
+  expect(container.querySelector('option[value="nacional"]')).toBeNull();
+ });
+ test('restricts club admins to configured club levels and keeps custom international levels unavailable',async()=>{
+  const {container}=render(<MemoryRouter><TorneoCrear embedded rol="admin_club"/></MemoryRouter>);
+  await waitFor(()=>expect(container.querySelector('select[name="nivel_torneo"]')).toHaveValue('club_no_oficial'));
+  expect([...container.querySelector('select[name="nivel_torneo"]').options].map(o=>o.value)).toEqual(['club_no_oficial','club_oficial']);
+ });
+ test('keeps the selector empty when no permitted club level is enabled',async()=>{
+  readPointsConfig.mockResolvedValue({...policy,niveles:{internacional:300},tipos_custom:[]});
+  const {container}=render(<MemoryRouter><TorneoCrear embedded rol="admin_club"/></MemoryRouter>);
+  await waitFor(()=>expect(container.querySelector('select[name="nivel_torneo"]')).toHaveValue(''));
+  expect(screen.getByLabelText('Puntos base')).toHaveValue('—');
+ });

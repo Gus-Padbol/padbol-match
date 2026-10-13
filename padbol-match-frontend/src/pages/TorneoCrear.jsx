@@ -56,7 +56,7 @@ function formatSedeTorneoOption(sede) {
 const EMPTY_TORNEO_FORM = () => ({
   nombre: '',
   sede_id: '',
-  nivel_torneo: 'club',
+  nivel_torneo: 'club_no_oficial',
   categoria: CATEGORIA_TORNEO_DEFAULT,
   tipo_competencia: TORNEO_TIPO_COMPETENCIA_DEFAULT,
   categoria_edad: TORNEO_CATEGORIA_EDAD_DEFAULT,
@@ -120,6 +120,24 @@ const TorneoCrear = forwardRef(function TorneoCrear({
   const { rol: rolFromHook, sedeId } = useUserRole(currentCliente);
   const rol = rolProp || rolFromHook;
   const esAdminClub = rol === 'admin_club';
+  const enabledLevels = useMemo(() => {
+    if (!pointsPolicy) return [];
+    const builtin = ['club_no_oficial', 'club_oficial', 'nacional', 'internacional', 'mundial'];
+    const values = [...builtin, ...pointsPolicy.tipos_custom.map(row => row.id)];
+    return [...new Set(values)].filter(value =>
+      (!esAdminClub || ['club_no_oficial', 'club_oficial'].includes(value))
+      && !pointsPolicy.niveles_hidden.includes(value)
+      && pointsBaseForLevel(pointsPolicy, value) !== null);
+  }, [pointsPolicy, esAdminClub]);
+
+  useEffect(() => {
+    if (!pointsPolicy) return;
+    const reconcile = previous => enabledLevels.includes(previous.nivel_torneo)
+      ? previous : { ...previous, nivel_torneo: enabledLevels[0] || '' };
+    setFormData(reconcile);
+    setBaseline(reconcile);
+  }, [pointsPolicy, enabledLevels]);
+
 
   const isDirty = useMemo(
     () => JSON.stringify(formData) !== JSON.stringify(baseline),
@@ -164,13 +182,14 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     const next = esAdminClub && sedeId != null && sedeId !== ''
       ? { ...EMPTY_TORNEO_FORM(), sede_id: String(sedeId), es_multisede: false }
       : EMPTY_TORNEO_FORM();
+    next.nivel_torneo = enabledLevels.includes(next.nivel_torneo) ? next.nivel_torneo : enabledLevels[0] || '';
     setFormData(next);
     setBaseline(next);
     setMensaje('');
     setError('');
     isDirtyRef.current = false;
     onDirtyChange?.(false);
-  }, [esAdminClub, onDirtyChange, sedeId]);
+  }, [esAdminClub, onDirtyChange, sedeId, enabledLevels]);
 
   const requestLeave = useCallback((onAllowed) => {
     if (!isDirtyRef.current) {
@@ -243,7 +262,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if(!pointsPolicy){setError(pointsPolicyError||t('admin.pointsPolicy.unavailable',{defaultValue:'Consulta la política guardada antes de crear el torneo.'}));return;}
-    const pointsLevel=formData.nivel_torneo==='club'?'club_oficial':formData.nivel_torneo;
+    const pointsLevel=formData.nivel_torneo;
     if(pointsPolicy.niveles_hidden.includes(pointsLevel)||pointsBaseForLevel(pointsPolicy,formData.nivel_torneo)===null){setError(t('admin.pointsPolicy.levelUnavailable',{defaultValue:'El nivel seleccionado no está habilitado en la política actual.'}));return;}
     if (!session?.user) {
       navigate(authUrlWithRedirect('/torneo/crear'));
@@ -463,10 +482,8 @@ const TorneoCrear = forwardRef(function TorneoCrear({
               <div className="form-group">
                 <label>{t('torneos.create.levelLabel')} *</label>
                 <select name="nivel_torneo" value={formData.nivel_torneo} onChange={handleChange} disabled={!pointsPolicy}>
-                  {['club','club_no_oficial','club_oficial','nacional','internacional','mundial'].filter(value=>
-                    (rol!=='admin_club'||['club','club_no_oficial'].includes(value))
-                    && !pointsPolicy?.niveles_hidden.includes(value==='club'?'club_oficial':value)).map(value=><option key={value} value={value}>{pointsPolicy?.niveles_labels[value==='club'?'club_oficial':value]||t(`admin.tournamentLabels.level.${value}`)}</option>)}
-                  {tiposCustom.filter(row=>!pointsPolicy?.niveles_hidden.includes(row.id)).map(row=><option key={row.id} value={row.id}>{row.nombre}</option>)}
+                  {enabledLevels.length === 0 ? <option value="">—</option> : null}
+                  {enabledLevels.map(value => <option key={value} value={value}>{pointsPolicy?.niveles_labels[value] || tiposCustom.find(row => row.id === value)?.nombre || t(`admin.tournamentLabels.level.${value}`)}</option>)}
                 </select>
                 {pointsPolicyError?<div role="alert"><p>{pointsPolicyError}</p><button type="button" onClick={()=>setPointsPolicyRetry(value=>value+1)}>{t('general.retry')}</button></div>:null}
 
