@@ -45,7 +45,7 @@ test('actual form keeps its draft when the live token is missing or creation is 
   readPointsConfig.mockResolvedValue({...policy,niveles:{internacional:300},tipos_custom:[],niveles_hidden:['club_no_oficial']});
   const {container}=render(<MemoryRouter><TorneoCrear embedded/></MemoryRouter>);
   await waitFor(()=>expect(container.querySelector('select[name="nivel_torneo"]')).toHaveValue('internacional'));
-  expect(screen.getByLabelText('Puntos base')).toHaveValue('300');
+  await waitFor(()=>expect(screen.getByLabelText('Puntos base')).toHaveValue('300'));
   expect(container.querySelector('option[value="nacional"]')).toBeNull();
  });
  test('restricts club admins to configured club levels and keeps custom international levels unavailable',async()=>{
