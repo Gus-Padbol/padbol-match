@@ -139,6 +139,7 @@ export default function NuevaSedeSuperBottomSheet({
   invitePrefill = null,
 }) {
   const { t } = useTranslation();
+  const freeLaunch = new Date().getFullYear() === 2026;
   const [st, setSt] = useState(initialState);
   const [planPricing, setPlanPricing] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
@@ -674,7 +675,9 @@ export default function NuevaSedeSuperBottomSheet({
                 Total de canchas declaradas: {totalCanchas}
               </div>
               <div style={{ marginTop: 8, fontSize: 14, color: '#b91c1c', lineHeight: 1.45 }}>
-                {planPricingLoading ? (
+                {freeLaunch ? (
+                  <><strong>Padbol Match gratuito durante todo 2026.</strong> El alta del club no genera una suscripción paga ni un cobro. No hace falta conectar un proveedor de pago para abrir el club.</>
+                ) : planPricingLoading ? (
                   'Cargando planes…'
                 ) : planMatch ? (
                   <>
@@ -682,7 +685,7 @@ export default function NuevaSedeSuperBottomSheet({
                     <strong>US$ {Number(planMatch.precio_usd).toFixed(2)}</strong> / mes
                   </>
                 ) : totalCanchas > 0 ? (
-                  'No hay un plan configurado para esta cantidad. Revisa plan_pricing en Supabase.'
+                  'No hay un plan disponible para esta cantidad. Contacta al administrador.'
                 ) : (
                   'Elige deportes y cantidades para ver el plan.'
                 )}

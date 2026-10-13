@@ -63,3 +63,15 @@ test.each(['','24:00','09:60','9:00','abc'])('schema validation rejects invalid 
 test('same-day, overnight and equal opening/closing are preserved without rewriting times',()=>{
  for(const [opening,closing] of [['08:00','23:00'],['20:00','02:00'],['00:00','00:00']])expect(validateSedeRequiredConfiguration({precio_turno:'0',horario_apertura:opening,horario_cierre:closing})).toEqual({ok:true,fields:{precio_turno:0,horario_apertura:opening,horario_cierre:closing}});
 });
+
+
+test('2026 onboarding explains free access even if catalog returns a paid plan; no checkout is called',async()=>{
+ jest.useFakeTimers().setSystemTime(new Date('2026-10-13T12:00:00Z'));
+ try {
+ global.fetch=jest.fn(async()=>({ok:true,json:async()=>[{nombre:'Starter',canchas_min:1,canchas_max:2,precio_usd:29}]}));
+ render(<NuevaSedeSuperBottomSheet open apiBaseUrl="https://api.qa.example" accessToken="fixture"/>);
+ await waitFor(()=>expect(global.fetch).toHaveBeenCalledTimes(1));
+ fireEvent.change(screen.getByLabelText(/Nombre de la sede/),{target:{value:'QA'}});fireEvent.change(screen.getByLabelText(/^País/),{target:{value:'🇦🇷 Argentina'}});fireEvent.change(screen.getByLabelText(/^Ciudad/),{target:{value:'La Plata'}});fireEvent.change(screen.getByLabelText(/^Dirección/),{target:{value:'QA'}});fireEvent.click(screen.getByRole('button',{name:'Siguiente'}));fireEvent.click(screen.getByRole('checkbox',{name:'Padbol'}));
+ expect(screen.getByText('Padbol Match gratuito durante todo 2026.')).toBeInTheDocument();expect(screen.queryByText(/US\$/)).not.toBeInTheDocument();expect(screen.getByText(/no genera una suscripción paga ni un cobro/)).toBeInTheDocument();expect(global.fetch).toHaveBeenCalledTimes(1);
+ } finally {jest.useRealTimers();}
+});
