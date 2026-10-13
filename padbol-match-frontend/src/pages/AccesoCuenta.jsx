@@ -29,7 +29,7 @@ import { PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { digitsOnly } from '../utils/authIdentidad';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
-import { requestPasswordlessAccess } from '../utils/passwordlessAccess';
+import { requestPasswordlessAccess, passwordlessAccessErrorTranslationKey } from '../utils/passwordlessAccess';
 import { assessAgeEligibility } from '../utils/ageEligibility';
 import { resolveRoleAwarePostLoginPath } from '../utils/postLoginDestination';
 import {
@@ -431,8 +431,7 @@ export default function AccesoCuenta() {
         destination,
       });
       if (error) {
-        console.error('Error acceso por enlace:', error.message);
-        setErrorMsg(t('auth.accessLinkFailed'));
+        setErrorMsg(t(passwordlessAccessErrorTranslationKey(error)));
         return;
       }
       setInfoMsg(t('auth.accessLinkSent'));

@@ -14,11 +14,20 @@ export async function requestPasswordlessAccess({
   destination = '/hub',
 }) {
   const normalizedEmail = String(email || '').trim().toLowerCase();
-  return auth.signInWithOtp({
-    email: normalizedEmail,
-    options: {
-      shouldCreateUser: false,
-      emailRedirectTo: buildPasswordlessRedirectUrl(origin, destination),
-    },
-  });
+  try {
+    return await auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: buildPasswordlessRedirectUrl(origin, destination),
+      },
+    });
+  } catch (error) {
+    return { error };
+  }
+}
+
+export function passwordlessAccessErrorTranslationKey(error) {
+  if (error?.status === 429 || ['over_email_send_rate_limit', 'over_request_rate_limit'].includes(error?.code)) return 'auth.accessLinkRateLimited';
+  return 'auth.accessLinkFailed';
 }

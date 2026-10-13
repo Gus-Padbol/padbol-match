@@ -155,6 +155,7 @@
     "sendingAccessLink": "Enviando enlace…",
     "accessLinkSent": "Te enviamos un enlace nuevo. Abrilo desde tu correo para ingresar.",
     "accessLinkFailed": "No pudimos enviar el enlace. Verifica el correo e intenta nuevamente.",
+    "accessLinkRateLimited": "El servicio alcanzó el límite temporal de correos. Espera antes de solicitar otro enlace o ingresa con tu contraseña.",
     "orDivider": "— o —",
     "noAccount": "¿No tienes cuenta? Regístrate",
     "hasAccount": "Ya tengo cuenta",
@@ -233,6 +234,7 @@
     "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
     "emailCheckFailed": "No se pudo verificar el correo electrónico.",
     "emailCheckRetry": "No se pudo verificar el correo electrónico. Intenta de nuevo.",
+    "eligibilityCheckFailed": "No pudimos verificar la edad en el servidor. Tu fecha no fue rechazada. Intenta nuevamente; si persiste, contacta a soporte.",
     "emailInUse": "Este correo electrónico ya tiene una cuenta. ¿Quieres iniciar sesión?",
     "duplicateData": "Ese número de teléfono o correo electrónico ya está en uso.",
     "saveFailed": "No se pudo guardar tu perfil."

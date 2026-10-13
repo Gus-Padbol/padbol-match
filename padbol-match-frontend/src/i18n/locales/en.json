@@ -101,6 +101,7 @@
     "sendingAccessLink": "Sending link…",
     "accessLinkSent": "We sent you a new link. Open it from your email to sign in.",
     "accessLinkFailed": "We could not send the link. Check the email and try again.",
+    "accessLinkRateLimited": "The email service reached its temporary limit. Wait before requesting another link or sign in with your password.",
     "orDivider": "— or —",
     "noAccount": "Don't have an account? Sign up",
     "hasAccount": "I already have an account",
@@ -179,6 +180,7 @@
     "sessionExpired": "Your session expired. Sign in again.",
     "emailCheckFailed": "We could not verify the email address.",
     "emailCheckRetry": "We could not verify the email address. Try again.",
+    "eligibilityCheckFailed": "We could not verify your age with the server. Your birth date was not rejected. Try again; if it persists, contact support.",
     "emailInUse": "This email address already has an account. Would you like to sign in?",
     "duplicateData": "That phone number or email address is already in use.",
     "saveFailed": "We could not save your profile."

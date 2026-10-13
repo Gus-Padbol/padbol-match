@@ -70,7 +70,12 @@ export async function registerCurrentAccountEligibility(birthDate, source = 'web
     p_fuente: auditValue(source, 40) || 'web_gate',
   });
   if (error) throw error;
-  if (!data?.allowed) throw new Error(data?.age_band === 'requires_verified_parent' ? 'verified_parental_authorization_required' : 'account_not_available_under_13');
+  if (data?.allowed !== true) {
+    const deniedBand = data?.age_band;
+    if (deniedBand === 'requires_verified_parent') throw new Error('verified_parental_authorization_required');
+    if (deniedBand === 'under_13') throw new Error('account_not_available_under_13');
+    throw new Error('account_eligibility_verification_failed');
+  }
   return data;
 }
 
@@ -121,4 +126,13 @@ export async function flushPendingOAuthLegalAcceptance() {
 
   clearPendingOAuthLegalAcceptance();
   return true;
+}
+
+/** Only age-specific server failures should accuse the user of an invalid date. */
+export function accountEligibilityErrorTranslationKey(error) {
+  const message = String(error?.message || '');
+  if (message === 'verified_parental_authorization_required') return 'auth.ageEligibilityParental';
+  if (message === 'account_not_available_under_13' || message === 'birth_date_invalid' || ['22007', '22008'].includes(error?.code)) return 'auth.ageEligibilityInvalid';
+  if (message === 'authentication_required' || ['PGRST301', 'PGRST302', 'PGRST303'].includes(error?.code)) return 'profileCompletion.sessionExpired';
+  return 'profileCompletion.eligibilityCheckFailed';
 }
