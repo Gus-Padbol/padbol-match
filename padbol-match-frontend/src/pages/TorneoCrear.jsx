@@ -487,11 +487,6 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                 </select>
                 {pointsPolicyError?<div role="alert"><p>{pointsPolicyError}</p><button type="button" onClick={()=>setPointsPolicyRetry(value=>value+1)}>{t('general.retry')}</button></div>:null}
 
-                {rol === 'admin_club' && (
-                  <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {t('torneos.create.restrictedLevelsHint')}
-                  </small>
-                )}
               </div>
 
               {!esAdminClub && (
