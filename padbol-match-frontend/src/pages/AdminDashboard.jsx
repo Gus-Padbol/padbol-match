@@ -2306,7 +2306,7 @@ function SuperAdminFinanzasPeriodoNav({ periodo, anclaISO, onShift }) {
         style={{
           fontSize: '13px',
           fontWeight: 700,
-          color: '#FFFFFF',
+          color: 'var(--text-primary)',
           minWidth: '140px',
           textAlign: 'center',
         }}
