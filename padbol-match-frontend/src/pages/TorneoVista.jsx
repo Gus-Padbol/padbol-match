@@ -829,7 +829,7 @@ export default function TorneoVista() {
         onClick={() => void generarFixture()}
         disabled={generarFixtureLoading}
       >
-        {generarFixtureLoading ? t('common.loading') : t('torneos.admin.generarFixture')}
+        {generarFixtureLoading ? t('general.loading') : t('torneos.admin.generarFixture')}
       </button>
     </div>
   ) : null;
@@ -1056,7 +1056,7 @@ export default function TorneoVista() {
       >
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="loading">
-          {t('common.loading')}
+          {t('general.loading')}
         </div>
         <BottomNav />
       </div>

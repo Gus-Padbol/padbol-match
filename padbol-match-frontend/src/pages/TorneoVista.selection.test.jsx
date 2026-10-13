@@ -60,3 +60,16 @@ test('real admin page cancels inline without PUT and confirms persisted opening 
  expect(fetch.mock.calls.filter(([,options])=>options?.method==='PUT')).toHaveLength(1);
  expect(screen.queryByRole('group',{name:'torneos.vista.confirmOpenRegistration'})).not.toBeInTheDocument();
 });
+
+ test('uses the translated general loading key while tournament data is pending',()=>{
+  global.fetch=jest.fn(()=>new Promise(()=>{}));
+  render(<MemoryRouter><TorneoVista/></MemoryRouter>);
+  expect(screen.getByText('general.loading')).toBeInTheDocument();
+  expect(screen.queryByText('common.loading')).not.toBeInTheDocument();
+ });
+ test.each(['es','en','it','ro','de'])('has an existing translated loading label for %s',lang=>{
+  const catalog=require(`../i18n/locales/${lang}.json`);
+  expect(catalog.general.loading).toEqual(expect.any(String));
+  expect(catalog.general.loading.trim()).not.toBe('');
+  expect(catalog.general.loading).not.toMatch(/^(common|general)\.loading$/);
+ });
