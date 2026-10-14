@@ -1985,6 +1985,7 @@ export default function ReservaForm() {
       const text = await response.text();
 
       if (!response.ok) {
+        setError(t('reservas.searchCourtsError'));
         setHorariosDisponibles([]);
         setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
         return;
@@ -1994,13 +1995,17 @@ export default function ReservaForm() {
       try {
         reservadas = JSON.parse(text);
       } catch {
+        setError(t('reservas.searchCourtsError'));
         setHorariosDisponibles([]);
         setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
         return;
       }
 
       if (!Array.isArray(reservadas)) {
-        reservadas = [];
+        setError(t('reservas.searchCourtsError'));
+        setHorariosDisponibles([]);
+        setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
+        return;
       }
 
       const sedeData = sedeSeleccionada;
@@ -2058,6 +2063,7 @@ export default function ReservaForm() {
       setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
     } catch (err) {
       console.error('[ReservaForm] disponibilidad fetch error', err);
+      setError(t('reservas.searchCourtsError'));
       setHorariosDisponibles([]);
       setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
     } finally {
@@ -2114,6 +2120,7 @@ export default function ReservaForm() {
       );
       if (!response.ok) throw new Error(t('reservas.searchCourtsError'));
       const reservadas = await response.json();
+      if (!Array.isArray(reservadas)) throw new Error(t('reservas.searchCourtsError'));
 
       const startMin = minutosDesdeHoraReserva(hora);
       const endMin = startMin == null ? null : startMin + duracionSeleccionadaMin;
@@ -2135,6 +2142,7 @@ export default function ReservaForm() {
         }))
       );
     } catch {
+      setCanchasDisponibles([]);
       setError(t('reservas.searchCourtsError'));
     }
   }, [formData.fecha, filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl, t]);

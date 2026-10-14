@@ -266,13 +266,13 @@ export function formatSedeUbicacionSubtitulo(sede, t) {
 
 /** Country equivalence used by catalog filters; preserves stored venue values. */
 export function mismosPaises(a, b) {
-  const keyA = paisRawToSlug(a);
-  return Boolean(keyA && keyA === paisRawToSlug(b));
+  const keyA = paisRawToSlug(a) || normalizePaisText(a);
+  return Boolean(keyA && keyA === (paisRawToSlug(b) || normalizePaisText(b)));
 }
 export function paisesCatalogoUnicos(rows) {
   const seen = new Set();
   return (rows || []).map(r => String(r?.pais || '').trim()).filter(p => {
-    const key = paisRawToSlug(p);
+    const key = paisRawToSlug(p) || normalizePaisText(p);
     if (!key || seen.has(key)) return false;
     seen.add(key); return true;
   }).sort((a, b) => a.localeCompare(b));

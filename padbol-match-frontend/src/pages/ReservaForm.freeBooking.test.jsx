@@ -92,3 +92,19 @@ test('occupied booking removes same and overlapping time buttons, preserving adj
  const [url,opts]=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/disponibilidad/'));
  expect(String(url)).toContain('sede_id=7');expect(opts.cache).toBe('no-store');
 });
+
+test.each([
+ ['server failure', {ok:false, text:async()=>JSON.stringify({error:'QA failure'}),json:async()=>({error:'QA failure'})}],
+ ['malformed payload', {ok:true,text:async()=>JSON.stringify({error:'not a booking list'}),json:async()=>({error:'not a booking list'})}],
+])('availability fails closed on %s instead of showing free courts',async(_label,response)=>{
+ const original=global.fetch.getMockImplementation();
+ global.fetch.mockImplementation(async(url,options)=>String(url).includes('/api/disponibilidad/')?response:original(url,options));
+ const availabilityUrl='/reservar?sedeId=7&deporte=padbol';
+ window.history.replaceState(null,'',availabilityUrl);
+ saveReservaPendiente({pantalla:2,filtros:{pais:'Argentina',ciudad:'La Plata',sede_id:7},formData:{fecha:futureDate,hora:'18:00',cancha:'',duracion:'60'},deporte:'padbol'});
+ render(<MemoryRouter initialEntries={[availabilityUrl]}><ReservaForm/></MemoryRouter>);
+ await waitFor(()=>expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/disponibilidad/'))).toBe(true));
+ await waitFor(()=>expect(screen.queryByRole('button',{name:/18:00 - 19:00/})).not.toBeInTheDocument());
+ expect(screen.queryByRole('button',{name:/19:00 - 20:00/})).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/Cancha 1.*Libre/i})).not.toBeInTheDocument();
+});

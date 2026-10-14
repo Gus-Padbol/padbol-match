@@ -6,3 +6,8 @@ test('Argentina variants share one catalog item without dropping venues', () => 
   expect(mismosPaises('Argentina', 'Italia')).toBe(false);
   expect(mismosPaises('', '')).toBe(false);
 });
+
+test('unlisted countries are preserved rather than erased from the catalog', () => {
+  expect(paisesCatalogoUnicos([{pais: 'Islandia'}, {pais: 'ISLANDIA'}, {pais: 'Malta'}])).toEqual(['Islandia', 'Malta']);
+  expect(mismosPaises('Islandia', 'ISLANDIA')).toBe(true);
+});

@@ -1,3 +1,4 @@
+import { mismosPaises, paisesCatalogoUnicos } from '../utils/paisI18n';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
@@ -368,7 +369,7 @@ export default function Rankings() {
 
   const paisesDesdeSedes = useMemo(
     () =>
-      [...new Set(sedes.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort((a, b) =>
+      paisesCatalogoUnicos(sedes).sort((a, b) =>
         a.localeCompare(b, sortLocale)
       ),
     [sedes, sortLocale]
@@ -415,7 +416,7 @@ export default function Rankings() {
     if (!p) return [];
     const set = new Set();
     for (const s of sedes) {
-      if (String(s.pais || '').trim().toLowerCase() !== p) continue;
+      if (!mismosPaises(s.pais, p)) continue;
       const pr = s.provincia != null ? String(s.provincia).trim() : '';
       if (pr) set.add(pr);
     }
@@ -430,7 +431,7 @@ export default function Rankings() {
     const prov = String(d.localProvincia || '').trim();
     const set = new Set();
     for (const s of sedes) {
-      if (String(s.pais || '').trim().toLowerCase() !== p) continue;
+      if (!mismosPaises(s.pais, p)) continue;
       if (prov && String(s.provincia || '').trim() !== prov) continue;
       const c = String(s.ciudad || '').trim();
       if (c) set.add(c);
