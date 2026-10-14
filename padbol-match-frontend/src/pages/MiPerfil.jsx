@@ -1,4 +1,4 @@
-import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador } from '../utils/reservaJugadorActions';
+import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, fechaDesdeReservasJugador } from '../utils/reservaJugadorActions';
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
@@ -849,8 +849,7 @@ export default function MiPerfil() {
       return;
     }
     try {
-      const d = new Date();
-      const todayYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const todayYmd = fechaDesdeReservasJugador();
       const { data, error } = await supabase
         .from('reservas')
         .select('id, sede, sede_id, fecha, hora, hora_inicio, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url, qr_token')

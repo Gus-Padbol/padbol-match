@@ -20,3 +20,8 @@ export async function cancelarReservaJugador({ baseUrl, reserva, session, fetchI
   if (!response.ok) throw new Error(result.error || 'No se pudo cancelar la reserva.');
   return result;
 }
+
+/** Query a conservative date window before comparing venue-local instants. */
+export function fechaDesdeReservasJugador(ahora = Date.now()) {
+  return new Date(ahora - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}

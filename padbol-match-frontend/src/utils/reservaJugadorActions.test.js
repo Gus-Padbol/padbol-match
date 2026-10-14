@@ -1,4 +1,4 @@
-import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador } from './reservaJugadorActions';
+import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, fechaDesdeReservasJugador } from './reservaJugadorActions';
 
 const reserva = { id: 21, fecha: '2026-11-22', hora: '18:00:00', estado: 'confirmada' };
 test('seconds in database time stay valid, using venue timezone instead of device timezone', () => {
@@ -22,4 +22,12 @@ test('missing session and server rejection cannot pretend cancellation succeeded
   await expect(cancelarReservaJugador({ baseUrl: '', reserva, session: null, fetchImpl })).rejects.toThrow('sesión');
   expect(fetchImpl).not.toHaveBeenCalled();
   await expect(cancelarReservaJugador({ baseUrl: '', reserva, session: { access_token: 'qa' }, fetchImpl })).rejects.toThrow('No pertenece');
+});
+
+test('Italy midnight cannot exclude a future Argentina booking from yesterday date', () => {
+  const now = Date.parse('2026-11-22T00:30:00+01:00');
+  const row = { fecha: '2026-11-21', hora: '23:00:00', timezone: 'America/Argentina/Buenos_Aires' };
+  expect(fechaDesdeReservasJugador(now)).toBe('2026-11-20');
+  expect(row.fecha >= fechaDesdeReservasJugador(now)).toBe(true);
+  expect(puedeCancelarReservaJugador(row, now)).toBe(true);
 });
