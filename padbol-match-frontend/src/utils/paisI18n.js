@@ -1,7 +1,7 @@
 /** Normaliza texto de país (sin emoji, sin tildes, minúsculas). */
 export function normalizePaisText(raw) {
   return String(raw || '')
-    .replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '')
+    .replace(/^[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\s]+/u, '')
     .trim()
     .toLowerCase()
     .normalize('NFD')
@@ -17,6 +17,7 @@ export function paisRawToSlug(paisRaw) {
   const compact = base.replace(/\s+/g, '');
 
   const aliases = {
+    ar: 'argentina',
     argentina: 'argentina',
     espana: 'espana',
     spain: 'espana',
@@ -155,7 +156,7 @@ const DEFAULT_FLAG_BY_SLUG = {
 function paisNombreSinBandera(paisRaw) {
   const p = String(paisRaw || '').trim();
   if (!p) return '';
-  const sinEmoji = p.replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
+  const sinEmoji = p.replace(/^[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\s]+/u, '').trim();
   return sinEmoji || p;
 }
 
@@ -249,7 +250,7 @@ export function formatSedeCiudadPaisLinea(sede, t) {
   const raw = String(sede?.pais || '').trim();
   if (!raw) return { linea: ciudad || '—', flag: '' };
   const flag = extractPaisFlag(raw) || DEFAULT_FLAG_BY_SLUG[paisRawToSlug(raw)] || '';
-  const paisLabel = formatPaisReservaLabel(raw, t).replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
+  const paisLabel = formatPaisReservaLabel(raw, t).replace(/^[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\s]+/u, '').trim();
   const linea = [ciudad, paisLabel].filter(Boolean).join(' · ') || paisLabel || ciudad || '—';
   return { flag, linea };
 }
@@ -261,4 +262,18 @@ export function formatSedeUbicacionSubtitulo(sede, t) {
     return `${linea} · ⚡ Precios dinámicos`;
   }
   return linea;
+}
+
+/** Country equivalence used by catalog filters; preserves stored venue values. */
+export function mismosPaises(a, b) {
+  const keyA = paisRawToSlug(a);
+  return Boolean(keyA && keyA === paisRawToSlug(b));
+}
+export function paisesCatalogoUnicos(rows) {
+  const seen = new Set();
+  return (rows || []).map(r => String(r?.pais || '').trim()).filter(p => {
+    const key = paisRawToSlug(p);
+    if (!key || seen.has(key)) return false;
+    seen.add(key); return true;
+  }).sort((a, b) => a.localeCompare(b));
 }

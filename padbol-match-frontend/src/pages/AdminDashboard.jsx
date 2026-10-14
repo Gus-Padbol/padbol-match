@@ -13957,7 +13957,7 @@ export default function AdminDashboard({
                       <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
                         <EstadoBadge reserva={r} />
                         <span style={{ marginLeft: 'auto', fontWeight: 800, color: 'var(--text-primary)', fontSize: '15px' }}>
-                          ${(r.precio || 30000).toLocaleString('es-AR')}
+                          ${(Number(r.precio ?? 0)).toLocaleString('es-AR')}
                         </span>
                       </div>
                       <div style={{ marginTop: '10px' }}>{accionesReservaRow(r)}</div>
@@ -14177,7 +14177,7 @@ export default function AdminDashboard({
                             <td style={{ padding: '6px 8px' }}>
                               <EstadoBadge reserva={r} />
                             </td>
-                            <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>${(r.precio || 30000).toLocaleString('es-AR')}</td>
+                            <td style={{ padding: '6px 8px', whiteSpace: 'nowrap' }}>${(Number(r.precio ?? 0)).toLocaleString('es-AR')}</td>
                             <td style={{ padding: '6px 8px' }}>{accionesReservaRow(r)}</td>
                           </tr>
                         )

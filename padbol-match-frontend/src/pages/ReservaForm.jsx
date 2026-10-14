@@ -40,6 +40,8 @@ import {
 } from '../utils/sedeCardUi';
 import {
   formatPaisReservaLabel,
+  mismosPaises,
+  paisesCatalogoUnicos,
   formatSedeUbicacionSubtitulo,
   inferPaisReservaDesdeCoordenadas,
   matchPaisReservaEnCatalogo,
@@ -228,7 +230,7 @@ function duracionReservaExistenteMin(reserva) {
 }
 
 function reservaSolapaIntervalo(reserva, inicioMin, finMin) {
-  const inicioReserva = minutosDesdeHoraReserva(reserva?.hora);
+  const inicioReserva = minutosDesdeHoraReserva(reserva?.hora_inicio || reserva?.hora);
   if (inicioReserva == null) return false;
   const finReserva = inicioReserva + duracionReservaExistenteMin(reserva);
   return inicioMin < finReserva && finMin > inicioReserva;
@@ -882,7 +884,7 @@ export default function ReservaForm() {
 
   const sedesFiltradasPorPais = useMemo(() => {
     if (!filtros.pais) return [];
-    return sedes.filter((sede) => String(sede.pais || '').trim() === String(filtros.pais).trim());
+    return sedes.filter((sede) => mismosPaises(sede.pais, filtros.pais));
   }, [sedes, filtros.pais]);
 
   /** Ordenar por distancia (GPS) si hay permiso; si no, alfabético por nombre. */
@@ -946,7 +948,7 @@ export default function ReservaForm() {
 
   const paisesOrdenados = useMemo(
     () =>
-      [...new Set(sedesCatalogo.map((s) => String(s.pais || '').trim()).filter(Boolean))].sort(),
+      paisesCatalogoUnicos(sedesCatalogo),
     [sedesCatalogo]
   );
 
@@ -1033,7 +1035,7 @@ export default function ReservaForm() {
           const parsed = JSON.parse(text);
           const arr = Array.isArray(parsed) ? parsed : [];
           const enPais = arr.some(
-            (s) => String(s?.pais || '').trim() === pais
+            (s) => mismosPaises(s?.pais, pais)
           );
           return { key: opt.key, available: enPais };
         } catch {
@@ -1617,7 +1619,7 @@ export default function ReservaForm() {
     const canchaQ = (sp.get('canchaId') || sp.get('cancha') || '').trim();
     const depPreserve = normalizeReservaDeporteUrl(sp.get('deporte'));
 
-    const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === sede.pais).map((s) => s.ciudad))].sort();
+    const ciudadesDelPais = [...new Set(sedes.filter((s) => mismosPaises(s.pais, sede.pais)).map((s) => s.ciudad))].sort();
     setCiudades(ciudadesDelPais);
     setFiltros({ pais: sede.pais, ciudad: sede.ciudad, sede_id: Number(sede.id) });
     sedeSeleccionadaCacheRef.current = sede;
@@ -1714,7 +1716,7 @@ export default function ReservaForm() {
     const mergeFiltrosForm = (filt, fd, sedeObj, extrasCantidad) => {
       const pais = String(filt?.pais || sedeObj?.pais || '').trim();
       const ciudad = String(filt?.ciudad || sedeObj?.ciudad || '').trim();
-      const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
+      const ciudadesDelPais = [...new Set(sedes.filter((s) => mismosPaises(s.pais, pais)).map((s) => s.ciudad))].sort();
       setCiudades(ciudadesDelPais);
       if (sedeObj) {
         setFiltros({ pais, ciudad, sede_id: Number(sedeObj.id) });
@@ -1877,7 +1879,7 @@ export default function ReservaForm() {
     sedeSeleccionadaCacheRef.current = null;
     setFiltros({ pais, ciudad: '', sede_id: '' });
     if (pais) {
-      const ciudadesDelPais = [...new Set(sedes.filter((s) => s.pais === pais).map((s) => s.ciudad))].sort();
+      const ciudadesDelPais = [...new Set(sedes.filter((s) => mismosPaises(s.pais, pais)).map((s) => s.ciudad))].sort();
       setCiudades(ciudadesDelPais);
     } else {
       setCiudades([]);
@@ -1973,13 +1975,13 @@ export default function ReservaForm() {
     if (filtros.sede_id === '' || filtros.sede_id == null) return;
 
     const url = apiUrl(
-      `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}`
+      `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}?sede_id=${encodeURIComponent(filtros.sede_id)}`
     );
 
     setLoading(true);
     const sedeIdKey = filtros.sede_id === '' || filtros.sede_id == null ? '' : String(filtros.sede_id);
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { cache: 'no-store' });
       const text = await response.text();
 
       if (!response.ok) {
@@ -2106,9 +2108,11 @@ export default function ReservaForm() {
     try {
       const response = await fetch(
         apiUrl(
-          `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}`
-        )
+          `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}?sede_id=${encodeURIComponent(filtros.sede_id)}`
+        ),
+        { cache: 'no-store' }
       );
+      if (!response.ok) throw new Error(t('reservas.searchCourtsError'));
       const reservadas = await response.json();
 
       const startMin = minutosDesdeHoraReserva(hora);

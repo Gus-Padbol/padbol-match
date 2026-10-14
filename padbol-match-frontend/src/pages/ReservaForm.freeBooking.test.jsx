@@ -70,3 +70,25 @@ test('occupied slot response stays visible and never announces a confirmed reser
  await screen.findByText('Este horario ya está reservado');
  expect(window.alert).not.toHaveBeenCalled();
 });
+
+test('occupied booking removes same and overlapping time buttons, preserving adjacency and sending venue id', async()=>{
+ const original=global.fetch.getMockImplementation();
+ global.fetch.mockImplementation(async(url, options)=>{
+  if(String(url).includes('/api/disponibilidad/')) {
+   const rows=[{cancha:1, hora:'18:00:00',duracion_minutos:60,estado:'confirmada'}];
+   return {ok:true,json:async()=>rows,text:async()=>JSON.stringify(rows)};
+  }
+  return original(url, options);
+ });
+ saveReservaPendiente({pantalla:2,filtros:{pais:'Argentina',ciudad:'La Plata',sede_id:7},formData:{fecha:futureDate,hora:'',cancha:'',duracion:'60',numeroTel:'+5491199901013',codigoPais:'+54'},deporte:'padbol'});
+ const availabilityUrl = '/reservar?sedeId=7&deporte=padbol';
+ window.history.replaceState(null, '', availabilityUrl);
+ render(<MemoryRouter initialEntries={[availabilityUrl]}><ReservaForm/></MemoryRouter>);
+ await screen.findByRole('button',{name:/19:00 - 20:00/});
+ expect(screen.queryByRole('button',{name:/18:00 - 19:00/})).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/17:30 - 18:30/})).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/18:30 - 19:30/})).not.toBeInTheDocument();
+ expect(screen.getByRole('button',{name:/17:00 - 18:00/})).toBeInTheDocument();
+ const [url,opts]=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/disponibilidad/'));
+ expect(String(url)).toContain('sede_id=7');expect(opts.cache).toBe('no-store');
+});

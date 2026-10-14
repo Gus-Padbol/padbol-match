@@ -1,3 +1,4 @@
+import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador } from '../utils/reservaJugadorActions';
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
@@ -307,7 +308,7 @@ export default function MiPerfil() {
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
-  const [misReservasColapsado, setMisReservasColapsado] = useState(true);
+  const [misReservasColapsado, setMisReservasColapsado] = useState(false);
   const [misClasesColapsado, setMisClasesColapsado] = useState(true);
   const [misClases, setMisClases] = useState([]);
   const [misClasesLoading, setMisClasesLoading] = useState(false);
@@ -359,21 +360,9 @@ export default function MiPerfil() {
   /** Solo confirmadas/pendientes con inicio ≥ ahora; orden próximo → lejano. */
   const reservasProximasOrdenadas = useMemo(() => {
     const rows = Array.isArray(reservas) ? reservas : [];
-    const parseHoraParts = (h) => {
-      const m = String(h || '').trim().match(/^(\d{1,2}):(\d{2})/);
-      return m ? [parseInt(m[1], 10), parseInt(m[2], 10)] : null;
-    };
-    const startMsLocal = (r) => {
-      const fy = String(r.fecha || '').trim().slice(0, 10);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(fy)) return null;
-      const hp = parseHoraParts(r.hora);
-      if (!hp) return null;
-      const [y, mo, da] = fy.split('-').map((x) => parseInt(x, 10));
-      return new Date(y, mo - 1, da, hp[0], hp[1], 0, 0).getTime();
-    };
     return rows
       .filter((r) => String(r.estado || '').toLowerCase() !== 'cancelada')
-      .map((r) => ({ r, ms: startMsLocal(r) }))
+      .map((r) => ({ r, ms: reservaInicioMs(r) }))
       .filter(({ ms }) => ms != null && Number.isFinite(ms) && ms >= Date.now())
       .sort((a, b) => a.ms - b.ms)
       .map(({ r }) => r);
@@ -864,7 +853,7 @@ export default function MiPerfil() {
       const todayYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const { data, error } = await supabase
         .from('reservas')
-        .select('id, sede, fecha, hora, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url, qr_token')
+        .select('id, sede, sede_id, fecha, hora, hora_inicio, cancha, estado, precio, moneda, monto_pagado, mp_payment_id, mp_comprobante_url, qr_token')
         .eq('user_id', uid)
         .gte('fecha', todayYmd)
         .order('fecha', { ascending: true })
@@ -880,7 +869,16 @@ export default function MiPerfil() {
       } else {
         console.log('[MiPerfil] reservas por user_id:', uid, 'filas:', Array.isArray(data) ? data.length : 0);
       }
-      setReservas(data || []);
+      const venueIds = [...new Set((data || []).map(r => r.sede_id).filter(id => id != null))];
+      const venueTimes = new Map(await Promise.all(venueIds.map(async id => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/sedes/${encodeURIComponent(id)}`);
+          if (!response.ok) return [String(id), null];
+          const venue = await response.json();
+          return [String(id), venue?.timezone || null];
+        } catch { return [String(id), null]; }
+      })));
+      setReservas((data || []).map(r => ({ ...r, timezone: venueTimes.get(String(r.sede_id)) || undefined })));
     } catch {
       // fail silently
     }
@@ -1714,13 +1712,9 @@ export default function MiPerfil() {
     if (!owner) return;
     setCancelando(r.id);
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/cancelar-reserva`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservaId: r.id, email: owner }),
+      const data = await cancelarReservaJugador({
+        baseUrl: API_BASE_URL, reserva: r, session, fetchImpl: fetch,
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || t('perfil.flow.cancelFailed'));
       if (data.credito) {
         alert(t('perfil.cancelCreditAlert', { amount: Number(data.credito.monto).toLocaleString('es-AR') }));
       } else {
@@ -4152,8 +4146,7 @@ export default function MiPerfil() {
         {!misReservasColapsado && reservasProximasOrdenadas.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {reservasProximasOrdenadas.map((r) => {
-              const horasHasta = (new Date(`${r.fecha}T${r.hora}:00-03:00`) - Date.now()) / (1000 * 60 * 60);
-              const canCancel = horasHasta > 2 && r.estado !== 'cancelada';
+              const canCancel = puedeCancelarReservaJugador(r);
               const mon = String(r.moneda || 'ARS').trim().toUpperCase();
               const montoNum = r.monto_pagado != null && r.monto_pagado !== '' ? Number(r.monto_pagado) : Number(r.precio) || 0;
               const mpId = String(r.mp_payment_id || '').trim();
@@ -4182,7 +4175,7 @@ export default function MiPerfil() {
                     </span>
                   </div>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: '#b91c1c' }}>
-                    Monto pagado: {montoNum > 0 ? `${Number(montoNum).toLocaleString('es-AR')} ${mon}` : '—'}
+                    Monto pagado: {montoNum > 0 ? `${Number(montoNum).toLocaleString('es-AR')} ${mon}` : 'Sin cargo'}
                   </div>
                   {mpId ? (
                     <div style={{ fontSize: '11px', color: 'var(--text-secondary)', wordBreak: 'break-all' }}>
