@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSafeTranslation } from '../../i18n/tSafe';
 import { readSelectionLineup, saveSelectionLineup } from '../../utils/padbolSelectionApi';
-import { selectionPlayerId, validateSelectionLineup } from '../../utils/padbolSelectionRoster';
+import { selectionSportingPlayerId, validateSelectionLineup } from '../../utils/padbolSelectionRoster';
 
 const blank = () => ({ iniciales: ['', ''], suplentes: ['', ''] });
 function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid }) {
@@ -65,7 +65,7 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
           {[0, 1].map(slot => <label key={slot}>{group === 'iniciales' ? (en ? 'Starting player' : 'Inicial') : (en ? 'Substitute' : 'Suplente')} {slot + 1}
             <select value={draft[group][slot]} onChange={event => change(group, slot, event.target.value)} required>
               <option value="">{en ? 'Choose a roster player' : 'Seleccionar jugador del plantel'}</option>
-              {data.plantel.map(player => { const id = selectionPlayerId(player); return id ? <option key={id} value={id} disabled={chosen.includes(id) && draft[group][slot] !== id}>{player.nombre || (en ? 'Registered player' : 'Jugador registrado')}</option> : null; })}
+              {data.plantel.map(player => { const id = selectionSportingPlayerId(player); return id ? <option key={id} value={id} disabled={chosen.includes(id) && draft[group][slot] !== id}>{player.nombre || (en ? 'Registered player' : 'Jugador registrado')}</option> : null; })}
             </select>
           </label>)}
         </div>)}
@@ -80,16 +80,17 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
 export default function PadbolSelectionLineups({ apiBaseUrl, torneoId, partido, equipos, onReadyChange }) {
   const { i18n } = useSafeTranslation();
   const en = String(i18n?.language || '').startsWith('en');
-  const [valid, setValid] = useState({});
+  const context = `${apiBaseUrl}:${torneoId}:${partido.id}`;
+  const [valid, setValid] = useState({ context, teams: {} });
   const callback = useRef(onReadyChange); callback.current = onReadyChange;
   const ids = [partido.equipo_a_id, partido.equipo_b_id];
-  const ready = ids.every(id => valid[String(id)] === true);
+  const ready = ids.every(id => valid.context === context && valid.teams[String(id)] === true);
   useEffect(() => { callback.current?.(ready); }, [ready]);
   return <section className="padbol-selection" aria-label={en ? 'Four players per team' : 'Cuatro presentados por equipo'}>
     <h3>{en ? 'Match lineup' : 'Alineación del partido'}</h3>
     <p>{en ? 'Each team declares exactly four players: two starting players and two substitutes. Only two play on court at a time. Players may alternate in odd-numbered games.' : 'Cada equipo presenta exactamente cuatro jugadores: dos iniciales y dos suplentes. Siempre juegan dos en cancha. Los jugadores pueden alternar en los games impares.'}</p>
     <p>{en ? 'This declaration is saved separately from the roster. Manual set scores do not track substitutions game by game.' : 'Esta declaración se guarda por separado del plantel. La carga manual de sets no registra los cambios game por game.'}</p>
-    <div className="padbol-selection-grid">{ids.map(id => <TeamLineup key={`${torneoId}:${partido.id}:${id}`} apiBaseUrl={apiBaseUrl} torneoId={torneoId} partidoId={partido.id} equipoId={id} nombre={equipos.find(team => String(team.id) === String(id))?.nombre || `${en ? 'Team' : 'Equipo'} ${id}`} onValid={value => setValid(prev => ({ ...prev, [String(id)]: value }))} />)}</div>
+    <div className="padbol-selection-grid">{ids.map(id => <TeamLineup key={`${torneoId}:${partido.id}:${id}`} apiBaseUrl={apiBaseUrl} torneoId={torneoId} partidoId={partido.id} equipoId={id} nombre={equipos.find(team => String(team.id) === String(id))?.nombre || `${en ? 'Team' : 'Equipo'} ${id}`} onValid={value => setValid(prev => ({ context, teams: { ...(prev.context === context ? prev.teams : {}), [String(id)]: value } }))} />)}</div>
     {!ready ? <p role="status">{en ? 'Confirm the four players of both teams before saving a result.' : 'Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.'}</p> : null}
   </section>;
 }

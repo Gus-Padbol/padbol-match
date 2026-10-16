@@ -1,4 +1,4 @@
-import { confirmedSelectionPlayers, isPadbolSelection, selectionTeamReady, validateSelectionLineup } from './padbolSelectionRoster';
+import { selectionPlayerId, selectionSportingPlayerId, confirmedSelectionPlayers, isPadbolSelection, selectionTeamReady, validateSelectionLineup } from './padbolSelectionRoster';
 import { jugadoresMinimosEquipoTorneo } from './torneoDeporteFormato';
 import { equiposConfirmadosParaSorteo } from '../components/torneo/SorteoGruposModal';
 const ids = Array.from({length:9},(_,i)=>`00000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
@@ -33,4 +33,12 @@ test('generic participant IDs support a four-player lineup and pending places ne
  expect(confirmedSelectionPlayers(team.jugadores)).toHaveLength(4);
  expect(validateSelectionLineup({iniciales:ids.slice(0,2),suplentes:ids.slice(2,4)},team.jugadores)).toEqual({iniciales:ids.slice(0,2),suplentes:ids.slice(2,4)});
  expect(()=>validateSelectionLineup({iniciales:ids.slice(0,2),suplentes:[ids[2],ids[4]]},team.jugadores)).toThrow();
+});
+
+test('linked participant keeps sporting PID while legacy roster API retains account UID',()=>{
+ const row={participante_id:ids[0],user_id:ids[8],id:ids[0],nombre:'Vinculado',estado:'confirmado'};
+ expect(selectionSportingPlayerId(row)).toBe(ids[0]);expect(selectionPlayerId(row)).toBe(ids[8]);
+ const roster=[row,...players.slice(1,4)];
+ expect(validateSelectionLineup({iniciales:ids.slice(0,2),suplentes:ids.slice(2,4)},roster).iniciales[0]).toBe(ids[0]);
+ expect(()=>validateSelectionLineup({iniciales:[ids[8],ids[1]],suplentes:ids.slice(2,4)},roster)).toThrow();
 });

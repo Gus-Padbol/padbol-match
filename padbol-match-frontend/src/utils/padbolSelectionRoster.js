@@ -15,14 +15,19 @@ export function selectionRosterPlayers(raw) {
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function selectionPlayerId(player) {
+  const id = String(player?.user_id || player?.id || '').trim().toLowerCase();
+  return UUID.test(id) ? id : null;
+}
+// Registered tournament participants retain their sporting identity after account linking.
+export function selectionSportingPlayerId(player) {
   if (player?.tipo_identidad === 'plaza_pendiente') return null;
-  const id = String(player?.user_id || player?.id || player?.participante_id || '').trim().toLowerCase();
+  const id = String(player?.participante_id || player?.user_id || player?.id || '').trim().toLowerCase();
   return UUID.test(id) ? id : null;
 }
 export function confirmedSelectionPlayers(raw) {
   const seen = new Set();
   return selectionRosterPlayers(raw).filter(player => {
-    const id = selectionPlayerId(player);
+    const id = selectionSportingPlayerId(player);
     if (!id || seen.has(id) || (player?.estado != null && String(player.estado).toLowerCase() !== 'confirmado')) return false;
     seen.add(id);
     return true;
@@ -36,8 +41,8 @@ export function selectionTeamReady(equipo, torneo) {
   return Number.isInteger(capacity) && capacity >= 4 && capacity <= 8
     && all.length >= 4 && all.length <= capacity && valid.length >= 4
     && all.every(player => player?.tipo_identidad === 'plaza_pendiente'
-      || (selectionPlayerId(player) && String(player.estado || '').toLowerCase() === 'confirmado'))
-    && new Set(valid.map(selectionPlayerId)).size === all.filter(player => player?.tipo_identidad !== 'plaza_pendiente').length;
+      || (selectionSportingPlayerId(player) && String(player.estado || '').toLowerCase() === 'confirmado'))
+    && new Set(valid.map(selectionSportingPlayerId)).size === all.filter(player => player?.tipo_identidad !== 'plaza_pendiente').length;
 }
 export function validateSelectionLineup({ iniciales, suplentes }, plantel) {
   if (!Array.isArray(iniciales) || iniciales.length !== 2 || !Array.isArray(suplentes) || suplentes.length !== 2) {
@@ -47,7 +52,7 @@ export function validateSelectionLineup({ iniciales, suplentes }, plantel) {
   if (ids.some(id => !UUID.test(id)) || new Set(ids).size !== 4) {
     throw new Error('Los cuatro jugadores deben estar identificados y no pueden repetirse.');
   }
-  const allowed = new Set(confirmedSelectionPlayers(plantel).map(selectionPlayerId));
+  const allowed = new Set(confirmedSelectionPlayers(plantel).map(selectionSportingPlayerId));
   if (ids.some(id => !allowed.has(id))) throw new Error('Todos los jugadores presentados deben pertenecer al plantel confirmado.');
   return { iniciales: ids.slice(0, 2), suplentes: ids.slice(2) };
 }
