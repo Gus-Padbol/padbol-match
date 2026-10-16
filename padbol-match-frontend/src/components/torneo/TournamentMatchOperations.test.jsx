@@ -1,0 +1,11 @@
+import React from 'react';import {render,screen,fireEvent,waitFor} from '@testing-library/react';import TournamentMatchOperations from './TournamentMatchOperations';
+const initial={ok:true,timezone:'Europe/Rome',partido:{id:3,estado:'pendiente',fecha_hora:null,cancha:null},schedule:null,canchas:[{id:9,nombre:'Cancha9'}],equipos:[{id:1,nombre:'Uno',jugadores:[{nombre:'Invitado sin cuenta'}]}],can_open:true,requirements:[]};
+afterEach(()=>jest.restoreAllMocks());
+test('schedule uses event timezone, then linked marker route opens confirmed scoreboard',async()=>{
+ global.fetch=jest.fn().mockImplementation(async url=>({ok:true,json:async()=>url.endsWith('/operacion')?initial:url.endsWith('/programacion')?{ok:true,partido_id:3,court_id:9,cancha:'1',fecha_hora:'2026-11-20T10:00:00Z',duration_minutes:60}:{ok:true,scoreboard_id:'qa-scoreboard'}}));const navigate=jest.fn();render(<TournamentMatchOperations torneoId={91} partidoId={3} apiBaseUrl="https://api.test" accessToken="qa" navigate={navigate}/>);
+ await screen.findByText(/Invitado sin cuenta/);expect(screen.getByText('Abrir marcador de este partido')).toBeDisabled();fireEvent.change(screen.getByLabelText('Fecha y hora'),{target:{value:'2026-11-20T11:00'}});fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'9'}});fireEvent.click(screen.getByText('Guardar fecha y cancha'));await screen.findByText('Fecha y cancha guardadas.');
+ expect(JSON.parse(fetch.mock.calls[1][1].body).fecha_hora).toBe('2026-11-20T10:00:00Z');fireEvent.click(screen.getByText('Abrir marcador de este partido'));await waitFor(()=>expect(navigate).toHaveBeenCalledWith('/admin/scoreboard/qa-scoreboard'));expect(fetch.mock.calls[2][0]).toBe('https://api.test/api/torneos/91/partidos/3/marcador');
+});
+test('missing readiness or server error never navigates to an invented marker',async()=>{
+ global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({...initial,can_open:false,requirements:['Faltan participantes']})});const navigate=jest.fn();render(<TournamentMatchOperations torneoId={91} partidoId={3} accessToken="qa" navigate={navigate}/>);await screen.findByText(/Faltan participantes/);expect(screen.getByText('Abrir marcador de este partido')).toBeDisabled();expect(navigate).not.toHaveBeenCalled();
+});

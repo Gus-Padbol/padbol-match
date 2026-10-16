@@ -1,0 +1,25 @@
+import React,{useEffect,useRef,useState} from 'react';
+import {nationsCupScheduleInstant,nationsCupScheduleLocal} from '../../utils/nationsCupScheduleTime';
+
+export default function TournamentMatchOperations({torneoId,partidoId,apiBaseUrl,accessToken,navigate,onSaved}) {
+ const [data,setData]=useState(null),[local,setLocal]=useState(''),[court,setCourt]=useState(''),[duration,setDuration]=useState('60'),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');const generation=useRef(0),pending=useRef(false);
+ const base=`${apiBaseUrl}/api/torneos/${torneoId}/partidos/${partidoId}`;
+ useEffect(()=>{const mine=++generation.current;const controller=new AbortController();setData(null);setError('');setNotice('');pending.current=false;setBusy(false);
+  fetch(`${base}/operacion`,{method:'GET',headers:{Authorization:`Bearer ${accessToken}`},signal:controller.signal}).then(async r=>{const next=await r.json();if(!r.ok||!next.ok||!next.partido||!Array.isArray(next.canchas)||!Array.isArray(next.equipos)||!Array.isArray(next.requirements)||Number(next.partido.id)!==Number(partidoId))throw new Error(next.error||'No se pudo cargar la programación.');if(mine!==generation.current)return;setData(next);setLocal(nationsCupScheduleLocal(next.partido.fecha_hora,next.timezone));setCourt(String(next.schedule?.court_id||''));setDuration(String(next.schedule?.duration_minutes||60));}).catch(e=>{if(e.name!=='AbortError'&&mine===generation.current)setError(e.message);});
+  return()=>{generation.current++;controller.abort();};
+ },[base,accessToken]);
+ async function execute(kind){if(pending.current)return;pending.current=true;setBusy(true);setError('');setNotice('');const mine=generation.current;try{
+  const body=kind==='programacion'?{fecha_hora:nationsCupScheduleInstant(local,data.timezone),court_id:Number(court),duration_minutes:Number(duration)}:{};
+  const r=await fetch(`${base}/${kind}`,{method:kind==='programacion'?'PUT':'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${accessToken}`},body:JSON.stringify(body)});const result=await r.json();if(!r.ok||!result.ok)throw new Error(result.error||'No se pudo confirmar la operación.');if(mine!==generation.current)return;
+  if(kind==='marcador'){if(!result.scoreboard_id)throw new Error('Marcador no confirmado.');navigate(`/admin/scoreboard/${result.scoreboard_id}`);}
+  else {setData(prev=>({...prev,partido:{...prev.partido,fecha_hora:result.fecha_hora,cancha:result.cancha},schedule:{court_id:result.court_id,duration_minutes:result.duration_minutes}}));onSaved?.(result);setNotice('Fecha y cancha guardadas.');}
+ }catch(e){if(mine===generation.current)setError(e.message);}finally{if(mine===generation.current){pending.current=false;setBusy(false);}}}
+ if(!data)return <section className="tournament-planner">{error?<p role="alert">{error}</p>:<p>Cargando requisitos del cruce…</p>}</section>;
+ const editable=['pendiente','programado'].includes(data.partido.estado);
+ return <section className="tournament-planner" aria-label="Programación y marcador del cruce"><h3>Programar y abrir marcador</h3><p>Horario de la sede: {data.timezone}. El marcador precarga los integrantes y conserva el vínculo con este cruce.</p>
+ <ul>{data.equipos.map(e=><li key={e.id}><strong>{e.nombre}</strong>: {e.jugadores.map(p=>[p.nombre,p.apellido].filter(Boolean).join(' ')).join(', ')||'Completar integrantes desde Equipos e inscripción'}</li>)}</ul>
+ {editable?<><label>Fecha y hora<input type="datetime-local" value={local} onChange={e=>setLocal(e.target.value)} disabled={busy}/></label><label>Cancha<select value={court} onChange={e=>setCourt(e.target.value)} disabled={busy}><option value="">Elegir cancha</option>{data.canchas.map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}</select></label><label>Duración en minutos<input type="number" min="1" max="720" value={duration} onChange={e=>setDuration(e.target.value)} disabled={busy}/></label><button type="button" disabled={busy||!local||!court} onClick={()=>execute('programacion')}>Guardar fecha y cancha</button></>:null}
+ {!data.can_open?<p role="status">Primero inicia el torneo y completa ambos equipos. {data.requirements.join(' ')}</p>:null}
+ <button type="button" disabled={busy||!data.can_open||!data.partido.fecha_hora||!data.partido.cancha||!editable} onClick={()=>execute('marcador')}>Abrir marcador de este partido</button>
+ {error?<p role="alert">{error}</p>:null}{notice?<p role="status">{notice}</p>:null}</section>;
+}

@@ -63,7 +63,7 @@ test('el clic desde el detalle conserva el partido, envía el resultado autentic
   openAndFill(container);
   fireEvent.click(screen.getByRole('button', { name: 'Guardar', exact: true }));
   await waitFor(() => expect(setPartidos).toHaveBeenCalledTimes(1));
-  const [url, request] = global.fetch.mock.calls[0];
+  const [url, request] = global.fetch.mock.calls.find(([target]) => target.endsWith('/resultado'));
   expect(url).toBe('https://qa.example.test/api/torneos/28/partidos/45/resultado');
   expect(request.method).toBe('POST');
   expect(request.headers.Authorization).toBe('Bearer test-session');

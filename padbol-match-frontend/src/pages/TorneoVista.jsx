@@ -1,3 +1,4 @@
+import TournamentFixturePlanner from '../components/torneo/TournamentFixturePlanner';
 import OpenTournamentRegistration from '../components/torneo/OpenTournamentRegistration';
 import {getAuthHeaders} from '../utils/scoreboardApi';
 import NationsCupPanel from '../components/torneo/NationsCupPanel';
@@ -89,7 +90,6 @@ export default function TorneoVista() {
   const [error, setError] = useState(null);
   const [iniciando, setIniciando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
-  const [generarFixtureLoading, setGenerarFixtureLoading] = useState(false);
   const [fixtureToast, setFixtureToast] = useState(null);
   const [buscaDuplaList, setBuscaDuplaList] = useState([]);
   const [buscaDuplaEnrolled, setBuscaDuplaEnrolled] = useState(false);
@@ -548,8 +548,8 @@ export default function TorneoVista() {
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {
-        method: 'PUT',
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}${torneo?.plan_nations ? '' : '/iniciar'}`, {
+        method: torneo?.plan_nations ? 'PUT' : 'POST',
         headers,
         body: JSON.stringify({ estado: 'en_curso' }),
       });
@@ -623,7 +623,7 @@ export default function TorneoVista() {
     estadoTorneoLower !== 'cancelado' &&
     (esListaEsperaTorneo || esInscripcionAbiertaJugador);
   const puedeMostrarIniciarTorneo =
-    isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
+    isAdmin && ['inscripcion_abierta','inscripcion','abierto','proximo','planificacion'].includes(estadoTorneoLower);
   const puedeMostrarAbrirInscripcionAdmin = isAdmin && esListaEsperaTorneo;
 
   const showFixtureToast = useCallback((type, message) => {
@@ -639,35 +639,6 @@ export default function TorneoVista() {
     (tipoTorneoLower === 'round_robin' || tipoTorneoLower === 'knockout') &&
     estadoTorneoLower !== 'finalizado' &&
     estadoTorneoLower !== 'cancelado';
-
-  const generarFixture = async () => {
-    if (generarFixtureLoading || !puedeMostrarGenerarFixture) return;
-    setGenerarFixtureLoading(true);
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/generar-partidos`, {
-        method: 'POST',
-        headers,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        if (Array.isArray(data.partidos)) {
-          setPartidos(data.partidos);
-        } else {
-          await recargarDatosTorneo();
-        }
-        setTorneo((prev) => (prev ? { ...prev, estado: 'en_curso' } : prev));
-        showFixtureToast('success', t('torneos.admin.fixtureGenerado'));
-      } else {
-        showFixtureToast('error', data?.error || t('torneos.admin.errorGenerarFixture'));
-      }
-    } catch (err) {
-      showFixtureToast('error', err?.message || t('torneos.admin.errorGenerarFixture'));
-    } finally {
-      setGenerarFixtureLoading(false);
-    }
-  };
 
   const miEquipoEnTorneo = useMemo(() => {
     if (!session?.user || !Array.isArray(equipos) || equipos.length === 0) return null;
@@ -822,18 +793,7 @@ export default function TorneoVista() {
         </button>
       </div>
     ) : null;
-  const adminBarGenerarFixture = puedeMostrarGenerarFixture ? (
-    <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-      <button
-        type="button"
-        className="btn-agregar-jugadores btn-generar-fixture"
-        onClick={() => void generarFixture()}
-        disabled={generarFixtureLoading}
-      >
-        {generarFixtureLoading ? t('general.loading') : t('torneos.admin.generarFixture')}
-      </button>
-    </div>
-  ) : null;
+  const adminBarGenerarFixture = puedeMostrarGenerarFixture ? <TournamentFixturePlanner torneo={torneo} equipos={equipos} apiBaseUrl={apiBaseUrlTorneo} accessToken={session?.access_token} onSaved={async()=>{await recargarDatosTorneo();showFixtureToast('success','Fixture guardado para revisar. El torneo todavía no se inició.');}} /> : null;
   const adminBarIniciarTorneo = isAdminGestionEnEstaVista && puedeMostrarIniciarTorneo ? (
     <div className="torneo-acciones torneo-acciones--sobre-violeta">
       {!loading && !puedeIniciarTorneoEnCurso ? (
