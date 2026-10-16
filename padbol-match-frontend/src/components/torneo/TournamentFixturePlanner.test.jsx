@@ -1,6 +1,6 @@
 import React from 'react';import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import TournamentFixturePlanner from './TournamentFixturePlanner';
-const torneo={id:91,tipo_torneo:'knockout'},equipos=[1,2,3,4].map(id=>({id,nombre:`Equipo${id}`,inscripcion_estado:'confirmada'}));
+const torneo={id:91,tipo_torneo:'knockout'},equipos=[1,2,3,4].map(id=>({id,nombre:`Equipo${id}`,inscripcion_estado:id%2?'confirmado':'confirmada'}));
 afterEach(()=>jest.restoreAllMocks());
 test('external draw is reviewed before exact authenticated save and never starts event',async()=>{
  global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({ok:true,partidos:[{id:1}],estado:'abierto'})});const onSaved=jest.fn();render(<TournamentFixturePlanner {...{torneo,equipos,onSaved}} apiBaseUrl="https://api.test" accessToken="qa-token"/>);

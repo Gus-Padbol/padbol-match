@@ -237,7 +237,7 @@ export default function TorneoVista() {
   const equiposConfirmadosInscripcion = useMemo(
     () =>
       (equipos || []).filter(
-        (eq) => String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado',
+        (eq) => ['confirmado','confirmada'].includes(String(eq?.inscripcion_estado || '').toLowerCase()),
       ).length,
     [equipos],
   );
