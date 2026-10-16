@@ -39,7 +39,9 @@ function resetViewportScroll() {
  * Carga o crea `jugadores_perfil`: primero por email de la sesión, luego por `user_id`.
  * Nunca usa `email.split` como nombre al crear filas nuevas.
  */
-async function refreshUserProfile(session, setUserProfile) {
+const sessionKey = s => `${s?.user?.id || ''}:${s?.access_token || ''}`;
+
+async function refreshUserProfile(session, setUserProfile, isCurrent = () => true) {
   const userId = session?.user?.id ?? null;
   const email = String(session?.user?.email || '').trim();
 
@@ -76,6 +78,9 @@ async function refreshUserProfile(session, setUserProfile) {
     console.log(`${PM_AUTH_LOG} refreshUserProfile user_id query done`, { hasRow: Boolean(data), hasError: Boolean(r2.error) });
   }
 
+  if (!isCurrent()) return;
+  if (error) throw error;
+
   /** Google / Facebook OAuth: no crear fila vacía; WhatsApp y género se piden al usar acciones que lo requieran. */
   if (!data && !error && authSessionUsaOAuthProveedorSocial(session)) {
     setUserProfile(null);
@@ -96,7 +101,7 @@ async function refreshUserProfile(session, setUserProfile) {
     const em = String(email || data.email || '').trim();
     if (em) {
       console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase…`);
-      await refreshJugadorPerfilFromSupabase(em);
+      await refreshJugadorPerfilFromSupabase(em, { profileRow: perfilDB, isCurrent });
       console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase done`);
     }
     console.log(`${PM_AUTH_LOG} refreshUserProfile exit (fila existente)`);
@@ -146,6 +151,7 @@ async function refreshUserProfile(session, setUserProfile) {
     row: insertRow,
   });
 
+  if (!isCurrent()) return;
   if (nuevo && !insErr) {
     const perfilDB = nuevo;
     console.log(`${PM_AUTH_LOG} refreshUserProfile insert ok`);
@@ -160,7 +166,7 @@ async function refreshUserProfile(session, setUserProfile) {
     const em = String(email || nuevo.email || '').trim();
     if (em) {
       console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase (post-insert)…`);
-      await refreshJugadorPerfilFromSupabase(em);
+      await refreshJugadorPerfilFromSupabase(em, { profileRow: perfilDB, isCurrent });
       console.log(`${PM_AUTH_LOG} refreshUserProfile refreshJugadorPerfilFromSupabase (post-insert) done`);
     }
   } else {
@@ -183,6 +189,14 @@ export function AuthProvider({ children }) {
 
   /** Encadena cargas de perfil para que un `refresh` anterior no cierre `profileLoading` ni pise el perfil del usuario actual. */
   const profileLoadChainRef = useRef(Promise.resolve());
+  const pendingProfilesRef = useRef(new Map());
+  const activeSessionRef = useRef(null);
+  const authEpochRef = useRef(0);
+  const manualEffectSessionRef = useRef(null);
+  const updateSession = useCallback(s => {
+    activeSessionRef.current = s;
+    setSession(prev => sessionKey(prev) === sessionKey(s) && JSON.stringify(prev?.user) === JSON.stringify(s?.user) ? prev : s);
+  }, []);
 
   const user = session?.user ?? null;
 
@@ -196,13 +210,19 @@ export function AuthProvider({ children }) {
     const uid = sessionArg?.user?.id ?? null;
     console.log(`${PM_AUTH_LOG} loadProfile scheduled`, { uid });
 
+    const key = sessionKey(sessionArg);
+    const existing = pendingProfilesRef.current.get(key);
+    if (existing) return existing;
+    const isCurrent = () => sessionKey(activeSessionRef.current) === key;
+    const guardedSetProfile = value => { if (isCurrent()) setUserProfile(value); };
     const run = async () => {
+      if (!isCurrent()) return;
       console.log(`${PM_AUTH_LOG} loadProfile START`, { uid });
       clearSaludoHomeLocalStorage();
       if (!sessionArg?.user?.id) {
         setProfileLoading(false);
         try {
-          await refreshUserProfile(sessionArg, setUserProfile);
+          await refreshUserProfile(sessionArg, guardedSetProfile, isCurrent);
           console.log(`${PM_AUTH_LOG} loadProfile END (sin sesión)`, { uid });
         } catch (e) {
           console.error(`${PM_AUTH_LOG} loadProfile error (sin sesión)`, e);
@@ -213,20 +233,24 @@ export function AuthProvider({ children }) {
       }
       setProfileLoading(true);
       try {
-        await refreshUserProfile(sessionArg, setUserProfile);
+        await refreshUserProfile(sessionArg, guardedSetProfile, isCurrent);
         console.log(`${PM_AUTH_LOG} loadProfile END ok`, { uid });
       } catch (e) {
         console.error(`${PM_AUTH_LOG} loadProfile error`, e);
-        setUserProfile(null);
+        guardedSetProfile(null);
         console.log(`${PM_AUTH_LOG} loadProfile END catch`, { uid });
       } finally {
-        setProfileLoading(false);
+        if (isCurrent()) setProfileLoading(false);
         console.log(`${PM_AUTH_LOG} loadProfile finally profileLoading=false`, { uid });
       }
     };
 
-    profileLoadChainRef.current = profileLoadChainRef.current.catch(() => {}).then(run);
-    return profileLoadChainRef.current;
+    const pending = profileLoadChainRef.current.catch(() => {}).then(run).finally(() => {
+      if (pendingProfilesRef.current.get(key) === pending) pendingProfilesRef.current.delete(key);
+    });
+    pendingProfilesRef.current.set(key, pending);
+    profileLoadChainRef.current = pending;
+    return pending;
   }, []);
 
   useEffect(() => {
@@ -248,39 +272,52 @@ export function AuthProvider({ children }) {
         clearJugadorPerfilLocalStorage();
         setUserProfile(null);
         setProfileLoading(false);
-      } else if (s.user) {
+      } else if (s.user && (sessionKey(activeSessionRef.current) !== sessionKey(s) || JSON.stringify(activeSessionRef.current?.user) !== JSON.stringify(s.user))) {
         setProfileLoading(true);
       }
-      setSession(s);
+      updateSession(s);
       setLoading(false);
     };
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      authEpochRef.current += 1;
       applyAuthSession(nextSession);
     });
 
+    const initialEpoch = authEpochRef.current;
     supabase.auth.getSession().then(({ data }) => {
-      applyAuthSession(data?.session ?? null);
+      if (authEpochRef.current === initialEpoch) applyAuthSession(data?.session ?? null);
     });
 
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, []);
+  }, [updateSession]);
 
   useEffect(() => {
+    if (manualEffectSessionRef.current === session && session) {
+      manualEffectSessionRef.current = null;
+      return;
+    }
     void loadProfile(session);
   }, [session, loadProfile]);
 
   const refreshSession = useCallback(async () => {
+    const epoch = authEpochRef.current;
     const {
       data: { session: s },
     } = await supabase.auth.getSession();
-    setSession(s ?? null);
+    if (authEpochRef.current !== epoch) return;
+    const next = s ?? null;
+    if (sessionKey(activeSessionRef.current) !== sessionKey(next) || JSON.stringify(activeSessionRef.current?.user) !== JSON.stringify(next?.user)) {
+      manualEffectSessionRef.current = next;
+    }
+    updateSession(next);
     await loadProfile(s ?? null);
-  }, [loadProfile]);
+  }, [loadProfile, updateSession]);
 
   const signOutAndClear = useCallback(() => {
+    authEpochRef.current += 1;
     profileLoadChainRef.current = Promise.resolve();
     try {
       localStorage.removeItem('userProfile');
@@ -288,7 +325,7 @@ export function AuthProvider({ children }) {
       /* ignore */
     }
     clearJugadorPerfilLocalStorage();
-    setSession(null);
+    updateSession(null);
     setUserProfile(null);
     setProfileLoading(false);
     /** Cierre remoto en segundo plano: el estado local ya es “sin sesión” para pintar la landing sin esperar la red. */
@@ -298,7 +335,7 @@ export function AuthProvider({ children }) {
       resetViewportScroll();
       window.setTimeout(resetViewportScroll, 0);
     });
-  }, []);
+  }, [updateSession]);
 
   const value = useMemo(
     () => ({
