@@ -144,6 +144,6 @@ test('ordinary registry viewer sees names without fabricated identity or false r
  teams=[{...teams[0],registro_participantes:true,referencias_plantel_disponibles:false,can_manage:false,can_add_profiles:false,can_confirm:false,equipo_abierto:false,jugadores:[{nombre:'Invitado visible',tipo_identidad:'generico',estado:'confirmado'}]}];
  render(<PadbolSelectionTeams apiBaseUrl="https://fixture.invalid" torneo={torneo} userId={id(9)} profileReady/>);
  await screen.findByText('Invitado visible');expect(screen.queryByText(/Plantel en formación:/)).not.toBeInTheDocument();
- expect(screen.getByText(/referencias y la verificación del plantel están reservadas/)).toBeInTheDocument();
+ expect(screen.getByText(/La confirmación del plantel corresponde al organizador/)).toBeInTheDocument();
  expect(screen.queryByRole('button',{name:'Gestionar plantel'})).not.toBeInTheDocument();expect(mutations()).toHaveLength(0);
 });
