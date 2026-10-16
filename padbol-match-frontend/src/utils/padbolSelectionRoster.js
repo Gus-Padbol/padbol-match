@@ -21,7 +21,7 @@ export function selectionPlayerId(player) {
 // Registered tournament participants retain their sporting identity after account linking.
 export function selectionSportingPlayerId(player) {
   if (player?.tipo_identidad === 'plaza_pendiente') return null;
-  const id = String(player?.participante_id || player?.user_id || player?.id || '').trim().toLowerCase();
+  const id = String(player?.user_id || player?.participante_id || player?.id || '').trim().toLowerCase();
   return UUID.test(id) ? id : null;
 }
 export function confirmedSelectionPlayers(raw) {

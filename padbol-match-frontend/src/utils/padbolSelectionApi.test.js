@@ -39,3 +39,11 @@ test('revealed opposing selection names do not require private creator or roster
  await expect(listSelectionTeams(context)).resolves.toEqual([expect.objectContaining({creador_id:null,jugadores:[]})]);
  fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[{id:71,cupo_maximo:8,creador_id:null,jugadores:[],equipo_abierto:false,can_manage:true}]}));await expect(listSelectionTeams(context)).rejects.toThrow();
 });
+
+test('registry list accepts sporting participant IDs without inventing auth accounts or editor permission',async()=>{
+ const registry={...team,id:71,equipo_abierto:false,registro_participantes:true,can_manage:false,can_confirm:false,can_add_profiles:false,jugadores:ids.map((participante_id,i)=>({participante_id,user_id:null,nombre:i<4?`Invitado ${i}`:'',tipo_identidad:i<4?'generico':'plaza_pendiente',estado:'confirmado'}))};
+ fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[registry]}));
+ expect(await listSelectionTeams(context)).toEqual([registry]);
+ fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[{...registry,can_manage:true}]}));
+ await expect(listSelectionTeams(context)).rejects.toThrow();
+});

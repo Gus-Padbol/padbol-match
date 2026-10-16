@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSafeTranslation } from '../../i18n/tSafe';
 import { confirmSelectionRegistration, createSelectionTeam, listSelectionTeams, readSelectionTeam, requestSelectionMembership, saveSelectionRoster } from '../../utils/padbolSelectionApi';
-import { selectionPlayerId, selectionRosterPlayers, selectionTeamReady } from '../../utils/padbolSelectionRoster';
+import { selectionPlayerId, selectionSportingPlayerId, selectionRosterPlayers, selectionTeamReady } from '../../utils/padbolSelectionRoster';
 
 function RosterEditor({ apiBaseUrl, torneoId, equipoId, userId, onChanged, en }) {
   const [data, setData] = useState(null);
@@ -116,7 +116,7 @@ export default function PadbolSelectionTeams({ apiBaseUrl, torneo, userId, profi
     finally { busy.current = false; if (live.current) setSaving(false); }
   };
   const request = async team => {
-    if (!listConfirmed || !userId || own || !profileReady || !registrationOpen || busy.current || team.equipo_abierto !== true) return;
+    if (!listConfirmed || !userId || own || !profileReady || !registrationOpen || busy.current || team.registro_participantes === true || team.equipo_abierto !== true) return;
     busy.current = true; setSaving(true); setError(''); setNotice('');
     try {
       await requestSelectionMembership({ apiBaseUrl, torneoId: torneo.id, equipoId: team.id });
@@ -143,9 +143,10 @@ export default function PadbolSelectionTeams({ apiBaseUrl, torneo, userId, profi
     <div className="padbol-selection-grid">{teams.map(team => <article className="padbol-selection-team" key={team.id}>
       <h3>{team.nombre}</h3><p>{team.inscripcion_estado === 'confirmado' ? (en ? 'Registration confirmed' : 'Inscripción confirmada') : (en ? 'Registration pending' : 'Inscripción pendiente')}</p>{team.creador_id===null?<p>{en?'Roster details are private.':'Los detalles del plantel son privados.'}</p>:<p>{selectionRosterPlayers(team.jugadores).length} / {team.cupo_maximo} {en ? 'roster places' : 'plazas del plantel'}</p>}
       {team.creador_id!==null?<p>{selectionTeamReady(team, torneo) ? (en ? 'At least four confirmed players. The match lineup still needs to be declared.' : 'Al menos cuatro jugadores confirmados. Falta declarar la alineación de cada partido.') : (en ? 'Roster still forming: at least four confirmed players are required.' : 'Plantel en formación: se requieren al menos cuatro jugadores confirmados.')}</p>:null}
-      <ul>{selectionRosterPlayers(team.jugadores).map(player => <li key={selectionPlayerId(player)}>{player.nombre || (en ? 'Registered player' : 'Jugador registrado')}</li>)}</ul>
-      {team.can_manage === true ? <button type="button" onClick={() => setSelected(team.id)} disabled={saving}>{en ? 'Manage roster' : 'Gestionar plantel'}</button> : null}
-      {!own && userId && profileReady && registrationOpen && team.equipo_abierto === true ? <button type="button" onClick={() => request(team)} disabled={!listConfirmed || saving || selectionRosterPlayers(team.jugadores).length >= team.cupo_maximo}>{en ? 'Request a roster place' : 'Solicitar lugar en el plantel'}</button> : null}
+      <ul>{selectionRosterPlayers(team.jugadores).map(player => <li key={selectionSportingPlayerId(player) || player.participante_id}>{player.nombre || (player.tipo_identidad === 'plaza_pendiente' ? (en ? 'Unfilled place' : 'Plaza por completar') : (en ? 'Registered player' : 'Jugador registrado'))}</li>)}</ul>
+      {team.registro_participantes === true ? <p>{en ? 'Manage these participants in Teams and participants; no account is required for named guests.' : 'Gestiona estos participantes en Equipos y participantes; los invitados identificados no necesitan cuenta.'}</p> : null}
+      {team.registro_participantes !== true && team.can_manage === true ? <button type="button" onClick={() => setSelected(team.id)} disabled={saving}>{en ? 'Manage roster' : 'Gestionar plantel'}</button> : null}
+      {!own && userId && profileReady && registrationOpen && team.registro_participantes !== true && team.equipo_abierto === true ? <button type="button" onClick={() => request(team)} disabled={!listConfirmed || saving || selectionRosterPlayers(team.jugadores).length >= team.cupo_maximo}>{en ? 'Request a roster place' : 'Solicitar lugar en el plantel'}</button> : null}
     </article>)}</div>
     {selected && userId ? <RosterEditor key={`${torneo.id}:${selected}`} apiBaseUrl={apiBaseUrl} torneoId={torneo.id} equipoId={selected} userId={userId} onChanged={load} en={en} /> : null}
     <p>{en ? 'Roster confirmation and match lineups do not award official FIPA points or authorize payments.' : 'Confirmar el plantel y declarar alineaciones no adjudica puntos oficiales FIPA ni autoriza pagos.'}</p>

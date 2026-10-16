@@ -128,3 +128,14 @@ test('server capability controls save even when a legacy frontend admin prop cla
  expect(screen.queryByText('Buscar perfil registrado')).not.toBeInTheDocument();
  fireEvent.submit(form);expect(mutations()).toHaveLength(0);
 });
+
+test('registry guests are visible as four of eight and cannot open the legacy account editor',async()=>{
+ teams=[{...teams[0],registro_participantes:true,can_manage:false,can_add_profiles:false,can_confirm:false,equipo_abierto:false,jugadores:Array.from({length:8},(_,i)=>({participante_id:id(i+11),user_id:null,nombre:i<4?`Invitado QA ${i}`:'',tipo_identidad:i<4?'generico':'plaza_pendiente',estado:'confirmado'}))}];
+ render(<PadbolSelectionTeams apiBaseUrl="https://fixture.invalid" torneo={torneo} userId={id(1)} profileReady/>);
+ await screen.findByText('Invitado QA 0');
+ expect(screen.getByText(/Al menos cuatro jugadores confirmados/)).toBeInTheDocument();
+ expect(screen.getByText(/Gestiona estos participantes en Equipos y participantes/)).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Gestionar plantel'})).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Solicitar lugar en el plantel'})).not.toBeInTheDocument();
+ expect(mutations()).toHaveLength(0);
+});
