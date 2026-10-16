@@ -8,9 +8,9 @@ test('only an explicit pending state allows pending redemption actions', () => {
   expect(normalizeCanjeEstado('approved')).toBe('desconocido');
   expect(normalizeCanjeEstado(null)).toBe('sin_estado');
 });
-test('real identity uses trimmed name then known email without inventing a name', () => {
+test('real identity shows name or explicit missing-name label, keeping email in its own field', () => {
   expect(adminRoleIdentity({nombre:' Ana ',email:'known@example.com'})).toBe('Ana');
-  [' ', 'Sin nombre', ' SIN   NOMBRE '].forEach(nombre => expect(adminRoleIdentity({nombre,email:' known@example.com '})).toBe('known@example.com'));
+  [' ', 'Sin nombre', ' SIN   NOMBRE '].forEach(nombre => expect(adminRoleIdentity({nombre,email:' known@example.com '})).toBe('Nombre sin completar'));
   expect(adminRoleIdentity({})).toBe('Identidad no disponible');
 });
 test('national role with venue scope is flagged, without widening its scope', () => {

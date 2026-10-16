@@ -21,7 +21,7 @@ export default function LegalFooterBar() {
   if (!isLegalFooterGlobalBarVisiblePathname(pathname)) return null;
 
   const linkColor =
-    theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 23, 42, 0.38)';
+    theme === 'dark' ? '#cbd5e1' : '#475569';
 
   const footerNavLift =
     !isHubNavBarHiddenPathname(pathname) && navDock === 'bottom'
@@ -40,15 +40,18 @@ export default function LegalFooterBar() {
 
   const linkBase = {
     fontWeight: 600,
-    fontSize: '11px',
-    textDecoration: 'none',
+    fontSize: '13px',
+    textDecoration: 'underline',
+    display: 'inline-flex',
+    alignItems: 'center',
+    minHeight: '44px',
     color: linkColor,
   };
 
   const companyStyle = {
     margin: 0,
     color: linkColor,
-    fontSize: '11px',
+    fontSize: '13px',
     lineHeight: 1.45,
   };
 

@@ -2901,7 +2901,7 @@ function SedeSuperDuracionesSection({ apiBaseUrl, accessToken, sedeId, moneda })
     <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '14px', marginTop: '4px' }}>
       <div style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>{t('admin.sedes.durationsPricesTable')}</div>
       <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-        Solo super admin puede agregar o quitar duraciones. Los clubes editan precio y activo desde su panel.
+        Solo super admin puede agregar o quitar duraciones. Los clubes editan precio y activo desde su panel. El precio del deporte tiene prioridad; la tarifa Base solo se aplica cuando no hay una tarifa específica para ese deporte.
       </p>
       {msg ? (
         <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 700, color: '#b91c1c' }}>{stripAdminEmoji(msg)}</p>
@@ -3099,9 +3099,10 @@ function SedeSuperDetallePanel({
         </div>
       </div>
       <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'grid', gap: '8px' }}>
-        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{t('admin.notif.stripeSubscription')}</div>
+        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>Acceso al club y facturación</div>
+        <p style={{margin:0,fontSize:13,color:'var(--text-secondary)',lineHeight:1.5}}>El estado administrativo de acceso no confirma una suscripción de pago. Durante la etapa sin cobros no es necesario activar Stripe.</p>
         <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
-          <strong>{t('admin.sedes.statusLabel')}</strong> {etiquetaSuscripcionEstado(s.suscripcion_estado)}
+          <strong>Estado administrativo:</strong> {etiquetaSuscripcionEstado(s.suscripcion_estado)}
           <br />
           <strong>{t('admin.sedes.nextChargeLabel')}</strong> {formatProximoCobroAdmin(s.suscripcion_proximo_cobro)}
         </div>
@@ -3174,7 +3175,7 @@ function SedeSuperDetallePanel({
               padding: '8px 16px',
               borderRadius: '8px',
               border: 'none',
-              background: 'linear-gradient(135deg, #635bff, #0a2540)',
+              background: '#b91c1c',
               color: '#fff',
               fontWeight: 700,
               fontSize: '13px',
@@ -5858,7 +5859,7 @@ export default function AdminDashboard({
       torneoById[t.id] = t;
     });
 
-    const reservasHoyLista = reservasList.filter((r) => String(r?.fecha || '').trim().slice(0, 10) === hoyISO);
+    const reservasHoyLista = reservasList.filter((r) => String(r?.fecha || '').trim().slice(0, 10) === hoyISO && isReservaEstadoActiva(r?.estado, r?.cancelada));
     const reservasHoy = reservasHoyLista.length;
     const reservasHoyOrdenadas = sortReservasHoyAsc(reservasHoyLista);
 
@@ -10928,7 +10929,7 @@ export default function AdminDashboard({
                     </p>
                   </div>
                   <div className="card ingresos" style={{ padding: '22px 18px' }}>
-                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>{t('admin.metrics.activeVenues')}</h2>
+                    <h2 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>Sedes con licencia activa</h2>
                     <p className="count" style={{ fontSize: '2.2rem' }}>
                       {(Number(analyticsGlobales.sedes_activas_total) || 0).toLocaleString('es-AR')}
                     </p>
@@ -10955,7 +10956,7 @@ export default function AdminDashboard({
                     </p>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '6px', fontSize: '0.82rem' }}>
                       {(Number(analyticsGlobales.deporte_mas_popular?.reservas_realizadas) || 0).toLocaleString('es-AR')}{' '}
-                      reservas realizadas
+                      reservas realizadas · últimos 30 días
                     </p>
                   </div>
                 </div>
@@ -11969,14 +11970,14 @@ export default function AdminDashboard({
                           : null}
                         <span className="admin-torneo-list-chip admin-torneo-list-chip--status" style={badge(estadoBadge.bg, estadoBadge.color)}>{estadoBadge.label}</span>
                         {fechaFinVencida ? (
-                          <span role="status" style={{ color: '#92400e', fontSize: 11, fontWeight: 700 }}>
+                          <span role="status" className="admin-torneo-warning" style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 700 }}>
                             La fecha de fin venció; cierra o actualiza el torneo.
                           </span>
                         ) : null}
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ fontSize: '11px', lineHeight: 1.5, color: '#374151' }}>
+                        <div className="admin-torneo-dates" style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-primary)' }}>
                           {torneo.fecha_inicio
                             ? <>
                                 <div>{formatFecha(torneo.fecha_inicio)}</div>
@@ -11999,13 +12000,13 @@ export default function AdminDashboard({
                             </div>
                           );
                           if (torneo.estado === 'en_curso') return (
-                            <div style={{ fontSize: '11px', color: '#1d4ed8' }}>
+                            <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                                <strong>{st.partidos_jugados}/{st.total_partidos ?? st.partidos_total}</strong> partidos
                             </div>
                           );
                           if (torneo.estado === 'finalizado') return (
-                            <div style={{ fontSize: '11px', color: '#92400e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                               <strong>{st.winner_nombre || st.winner?.nombre || '—'}</strong>
+                            <div style={{ fontSize: '13px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                               Campeón: <strong>{st.winner_nombre || st.winner?.nombre || '—'}</strong>
                             </div>
                           );
                           return null;
@@ -12699,7 +12700,7 @@ export default function AdminDashboard({
                       className="admin-validacion-action admin-validacion-action--approve"
                       style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
-                      {t('admin.formularios.validationApprove')}
+                      {stripAdminEmoji(t('admin.formularios.validationApprove')).replace(/\u200B/g, '').trim()}
                     </button>
                     <button
                       disabled={vs.saving}
@@ -14291,10 +14292,10 @@ export default function AdminDashboard({
                       fontWeight: 600,
                     }}
                   >
-                    {t('admin.scoreboard.selectFile')}
+                    Elegir logo
                   </label>
                   <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                    {sbTorneoLogoFile?.name || t('admin.scoreboard.noFileSelected')}
+                    {sbTorneoLogoFile?.name || 'Sin logo cargado'}
                   </span>
                   {sbTorneoLogoPreview ? (
                     <button
@@ -14545,6 +14546,7 @@ export default function AdminDashboard({
                             onChange={(e) => updateSbJugadorJersey(equipo, idx, e.target.value)}
                             placeholder="#"
                             title={t('admin.scoreboard.jerseyNumber', 'Número de camiseta')}
+                            aria-label={`${t('admin.scoreboard.jerseyNumber', 'Número de camiseta')} ${equipo} ${idx + 1}`}
                             className="admin-scoreboard-jugador-row__jersey"
                           />
                           <input
@@ -14556,6 +14558,7 @@ export default function AdminDashboard({
                                 ? `${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero} (${t('admin.scoreboard.playerOptional', 'opcional')})`
                                 : `${t('admin.scoreboard.playerName', 'Nombre jugador')} ${j.numero}`
                             }
+                            aria-label={`${t('admin.scoreboard.playerName', 'Nombre jugador')} ${equipo} ${idx + 1}`}
                             className="admin-scoreboard-jugador-row__nombre"
                           />
                           <div className="admin-scoreboard-jugador-row__foto">
@@ -17786,7 +17789,7 @@ export default function AdminDashboard({
         );
       })() : null}
 
-      {activeTab === 'config' && puedeVerConfig && <div className="section">
+      {activeTab === 'config' && puedeVerConfig && <div className="section admin-config-section">
         <h2 style={{ marginBottom: '10px', paddingBottom: '10px' }}>{t('admin.tabs.config')}</h2>
         <div className="admin-config-subtabs" role="tablist" aria-label={t('admin.common.configAreas')}>
           <button type="button" role="tab" aria-selected={configSubtab === 'puntos'} onClick={() => setConfigSubtab('puntos')}>{t('admin.common.pointsAndPositions')}</button>
@@ -17802,7 +17805,7 @@ export default function AdminDashboard({
             {t('admin.metricas.basePointsByLevel')}
           </h3>
           <div className="admin-config-puntos-wrap">
-          <table className="admin-config-puntos-table" style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse' }}>
+          <table className="admin-config-puntos-table admin-config-puntos-table--levels" style={{ width: '100%', maxWidth: '560px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'var(--accent)', color: '#fff' }}>
                 <th style={{ padding: '10px 16px', textAlign: 'left',   fontSize: '13px', fontWeight: 600, color: '#fff' }}>{t('admin.formularios.levelCol')}</th>
@@ -17817,12 +17820,12 @@ export default function AdminDashboard({
                   {editandoTipoId === key ? (
                     <>
                       <td style={{ padding: '7px 12px' }}>
-                        <input type="text" value={editandoTipoData.nombre}
+                        <input aria-label={t('admin.formularios.name')} type="text" value={editandoTipoData.nombre}
                           onChange={e => setEditandoTipoData(p => ({ ...p, nombre: e.target.value }))}
                           style={{ width: '100%', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', color: 'var(--text-primary)', boxSizing: 'border-box' }} />
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
-                        <input type="number" min="0" value={editandoTipoData.puntos}
+                        <input aria-label={t('admin.pointsPolicy.basePoints')} type="number" min="0" value={editandoTipoData.puntos}
                           onChange={e => setEditandoTipoData(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
                           style={{ width: '72px', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', textAlign: 'center', color: 'var(--text-primary)' }} />
                       </td>
@@ -17840,10 +17843,10 @@ export default function AdminDashboard({
                     <>
                       <td className="admin-config-puntos-nivel" style={{ padding: '10px 16px', fontSize: '14px' }}>{configNivelesLabels[key] || CONFIG_NIVELES_LABELS_DEFAULT[key] || key}</td>
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
-                        <input type="number" min="0" value={configNiveles[key] ?? 0}
+                        <input aria-label={`${t('admin.pointsPolicy.basePoints')}: ${configNivelesLabels[key] || CONFIG_NIVELES_LABELS_DEFAULT[key] || key}`} type="number" min="0" value={configNiveles[key] ?? 0}
                           onChange={e => setConfigNiveles(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
                           style={{ width: '80px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', textAlign: 'center', fontWeight: 'bold', color: 'var(--text-primary)' }} />
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.pointsPolicy.basePoints')}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.pointsPolicy.basePoints')}</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(key); setEditandoTipoData({ nombre: configNivelesLabels[key], puntos: configNiveles[key] ?? 0 }); }}
@@ -17869,12 +17872,12 @@ export default function AdminDashboard({
                   {editandoTipoId === tipo.id ? (
                     <>
                       <td style={{ padding: '7px 12px' }}>
-                        <input type="text" value={editandoTipoData.nombre}
+                        <input aria-label={t('admin.formularios.name')} type="text" value={editandoTipoData.nombre}
                           onChange={e => setEditandoTipoData(p => ({ ...p, nombre: e.target.value }))}
                           style={{ width: '100%', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', color: 'var(--text-primary)', boxSizing: 'border-box' }} />
                       </td>
                       <td style={{ padding: '7px 12px', textAlign: 'center' }}>
-                        <input type="number" min="0" value={editandoTipoData.puntos}
+                        <input aria-label={t('admin.pointsPolicy.basePoints')} type="number" min="0" value={editandoTipoData.puntos}
                           onChange={e => setEditandoTipoData(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
                           style={{ width: '72px', padding: '5px 8px', border: '1px solid #c4b5fd', borderRadius: '4px', fontSize: '13px', textAlign: 'center', color: 'var(--text-primary)' }} />
                       </td>
@@ -17890,7 +17893,7 @@ export default function AdminDashboard({
                       <td className="admin-config-puntos-nivel" style={{ padding: '10px 16px', fontSize: '14px' }}>{tipo.nombre || tipo.id}</td>
                       <td style={{ padding: '8px 16px', textAlign: 'center' }}>
                         <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{tipo.puntos}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.pointsPolicy.basePoints')}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{t('admin.pointsPolicy.basePoints')}</div>
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <button onClick={() => { setEditandoTipoId(tipo.id); setEditandoTipoData({ nombre: tipo.nombre, puntos: tipo.puntos }); }}
@@ -17906,13 +17909,13 @@ export default function AdminDashboard({
               {/* Add row */}
               <tr style={{ background: 'var(--bg-input)', borderTop: '1px solid var(--border)' }}>
                 <td style={{ padding: '8px 12px' }}>
-                  <input type="text" placeholder={t('admin.formularios.tournamentTypeExamplePh')} value={nuevoTipo.nombre}
+                  <input aria-label={t('admin.formularios.tournamentTypeExamplePh')} type="text" placeholder={t('admin.formularios.tournamentTypeExamplePh')} value={nuevoTipo.nombre}
                     onChange={e => setNuevoTipo(p => ({ ...p, nombre: e.target.value }))}
                     onKeyDown={e => { if (e.key === 'Enter' && nuevoTipo.nombre.trim()) { setConfigTiposCustom(prev => [...prev, { id: Date.now().toString(), nombre: nuevoTipo.nombre.trim(), puntos: nuevoTipo.puntos || 0 }]); setNuevoTipo({ nombre: '', puntos: 0 }); } }}
                     style={{ width: '100%', padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', background: 'var(--bg-input)', boxSizing: 'border-box' }} />
                 </td>
                 <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                  <input type="number" placeholder={t('admin.formularios.pointsAbbrPh')} min="0" value={nuevoTipo.puntos || ''}
+                  <input aria-label={t('admin.pointsPolicy.basePoints')} type="number" placeholder={t('admin.formularios.pointsAbbrPh')} min="0" value={nuevoTipo.puntos || ''}
                     onChange={e => setNuevoTipo(p => ({ ...p, puntos: parseInt(e.target.value) || 0 }))}
                     style={{ width: '72px', padding: '6px 8px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px', color: 'var(--text-primary)', textAlign: 'center', background: 'var(--bg-input)' }} />
                 </td>
@@ -17942,11 +17945,11 @@ export default function AdminDashboard({
               <h3 style={{ color: 'var(--text-primary)', marginTop: '4px', marginBottom: '8px', fontSize: '16px' }}>
                 {t('admin.metricas.pointsDistributionByPosition')}
               </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <label style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              <div className="admin-config-preview" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
+                <label htmlFor="admin-preview-level" style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   {t('admin.common.previewWith')}
                 </label>
-                <select value={previewNivel} onChange={e => setPreviewNivel(e.target.value)}
+                <select id="admin-preview-level" value={previewNivel} onChange={e => setPreviewNivel(e.target.value)}
                   style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', background: 'var(--bg-input)', cursor: 'pointer' }}>
                   {todosNiveles.map(n => (
                     <option key={n.value} value={n.value}>{n.label} ({t('admin.pointsPolicy.baseValue', { defaultValue:'Base: {{count}}',count:n.pts })})</option>
@@ -17973,13 +17976,13 @@ export default function AdminDashboard({
                         </td>
                         <td style={{ padding: '10px 16px', textAlign: 'center', verticalAlign: 'middle' }}>
                           <div style={{ position: 'relative', display: 'inline-block' }}>
-                            <input type="number" min="0" max="100" value={pct}
+                            <input aria-label={`${t('admin.pointsPolicy.percentOfBase')}: ${pos}°`} type="number" min="0" max="100" value={pct}
                               onChange={e => setConfigPosiciones(prev => ({ ...prev, [pos]: parseInt(e.target.value) || 0 }))}
                               style={{ width: '70px', padding: '5px 24px 5px 8px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '14px', textAlign: 'right', fontWeight: 'bold', color: 'var(--text-primary)' }} />
                             <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: 'var(--text-secondary)', pointerEvents: 'none' }}>%</span>
                           </div>
                         </td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right', width: '100px', verticalAlign: 'middle', fontSize: '15px', fontWeight: 'bold', color: pts > 0 ? '#3b2f6e' : '#ccc', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '10px 16px', textAlign: 'right', width: '100px', verticalAlign: 'middle', fontSize: '15px', fontWeight: 'bold', color: pts > 0 ? 'var(--text-primary)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                           {pts > 0 ? pts : '—'}
                         </td>
                       </tr>
@@ -18115,9 +18118,9 @@ export default function AdminDashboard({
                           background: idx % 2 === 0 ? '#fafafa' : '#fff',
                         }}
                       >
-                        <td className="admin-planes-nombre" style={{ padding: '10px 16px', fontWeight: 700 }}>{p.nombre}</td>
-                        <td style={{ padding: '10px 16px', color: 'var(--text-primary)', fontSize: '14px' }}>{rango}</td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right', verticalAlign: 'middle' }}>
+                        <td data-label={t('admin.formularios.name')} className="admin-planes-nombre" style={{ padding: '10px 16px', fontWeight: 700 }}>{p.nombre}</td>
+                        <td data-label={t('admin.formularios.courtsCol')} style={{ padding: '10px 16px', color: 'var(--text-primary)', fontSize: '14px' }}>{rango}</td>
+                        <td data-label={t('admin.metricas.priceUsdMonthCol')} style={{ padding: '10px 16px', textAlign: 'right', verticalAlign: 'middle' }}>
                           {isEditing ? (
                             <div
                               style={{
@@ -18129,6 +18132,7 @@ export default function AdminDashboard({
                               }}
                             >
                               <input
+                                aria-label={`Precio mensual en USD de ${p.nombre}`}
                                 type="number"
                                 step="0.01"
                                 min="0"
@@ -18183,7 +18187,7 @@ export default function AdminDashboard({
                               </button>
                             </div>
                           ) : (
-                            <span style={{ fontWeight: 700, color: '#312e81', fontSize: '15px' }}>
+                            <span className="admin-planes-price" style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '15px' }}>
                               {Number.isFinite(precioNum) ? precioNum.toFixed(2) : '—'}
                             </span>
                           )}
@@ -18193,7 +18197,7 @@ export default function AdminDashboard({
                             <button
                               type="button"
                               title="Editar precio"
-                              aria-label="Editar precio"
+                              aria-label={`Editar precio de ${p.nombre}`}
                               onClick={() => {
                                 setPlanPricingEditId(p.id);
                                 setPlanPricingEditValue(
@@ -18209,7 +18213,7 @@ export default function AdminDashboard({
                                 fontSize: '14px',
                               }}
                             >
-
+                              {t('general.edit')}
                             </button>
                           ) : null}
                         </td>
@@ -18381,7 +18385,7 @@ export default function AdminDashboard({
               </div>
             </div>
             <div style={{ overflowX: rolesTabViewportNarrow ? 'visible' : 'auto' }}>
-              <table
+              <table className="admin-roles-table"
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
@@ -18483,7 +18487,7 @@ export default function AdminDashboard({
                               textAlign: 'right',
                             }}
                           >
-                            {row.role === 'super_admin' ? (
+                            {row.role === 'super_admin' || !String(row.email || '').trim() ? (
                               <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
                             ) : (
                               <button
@@ -18539,7 +18543,7 @@ export default function AdminDashboard({
                             {row.role !== 'editor_contenido' && row.alcance === 'global' ? t('admin.sponsors.scopeGlobal') : null}
                           </td>
                           <td style={{ padding: '8px', color: 'var(--text-primary)' }}>
-                            {row.role === 'super_admin' ? (
+                            {row.role === 'super_admin' || !String(row.email || '').trim() ? (
                               <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>—</span>
                             ) : (
                               <button

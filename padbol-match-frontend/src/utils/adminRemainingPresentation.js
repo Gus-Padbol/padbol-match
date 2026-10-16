@@ -9,8 +9,8 @@ export function normalizeCanjeEstado(raw) {
 
 export function adminRoleIdentity(row = {}) {
   const name = String(row.nombre ?? '').trim();
-  if (name && !/^sin\s+nombre$/i.test(name)) return name;
-  return String(row.email ?? '').trim() || 'Identidad no disponible';
+  if (name && !/^sin\s+nombre$/i.test(name) && !name.includes('@')) return name;
+  return String(row.email ?? '').trim() ? 'Nombre sin completar' : 'Identidad no disponible';
 }
 
 export function adminRoleScopeMismatch(row = {}) {

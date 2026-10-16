@@ -3,7 +3,7 @@ import {render,screen,fireEvent} from '@testing-library/react';
 import AdminTournamentDeleteAction,{canDeleteAdminTournament} from './AdminTournamentDeleteAction';
 test('configured Nations record cannot trigger deletion and explains preservation',()=>{
  const onDelete=jest.fn();render(<AdminTournamentDeleteAction torneo={{id:7,nombre:'QA',plan_nations:{enabled:true}}} onDelete={onDelete}/>);
- expect(screen.getByRole('button',{name:'Eliminar'})).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'Eliminar'}));expect(onDelete).not.toHaveBeenCalled();expect(screen.getByText(/conserva su expediente/)).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Eliminar'})).not.toBeInTheDocument();expect(onDelete).not.toHaveBeenCalled();expect(screen.getByText(/conserva su expediente/)).toBeInTheDocument();
  expect(canDeleteAdminTournament({plan_nations:{}})).toBe(false);
 });
 test('legacy deletion remains available while unconfigured selection is not treated as a saved Nations event',()=>{

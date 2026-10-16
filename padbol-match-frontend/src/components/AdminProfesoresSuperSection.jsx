@@ -408,8 +408,8 @@ const TH_STYLE = {
   textAlign: 'left',
   fontSize: 12,
   fontWeight: 700,
-  color: 'var(--bg-card)',
-  background: 'var(--accent)',
+  color: '#fff',
+  background: '#b91c1c',
   whiteSpace: 'nowrap',
 };
 

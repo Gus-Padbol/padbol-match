@@ -9,9 +9,9 @@ export function nationsTournamentDeletionNotice(language) {
 export default function AdminTournamentDeleteAction({torneo,language,onDelete,title}) {
   const allowed=canDeleteAdminTournament(torneo);
   const notice=nationsTournamentDeletionNotice(language);
-  return <><button disabled={!allowed} onClick={()=>{if(allowed)onDelete(torneo.id,torneo.nombre);}}
+  return <>{allowed?<button disabled={!allowed} onClick={()=>{if(allowed)onDelete(torneo.id,torneo.nombre);}}
     className="admin-torneo-action admin-torneo-action--danger"
     style={{padding:'6px 10px',background:'#dc2626',color:'white',border:'none',borderRadius:'5px',cursor:allowed?'pointer':'not-allowed',fontSize:'12px'}}
-    title={allowed?title:notice}>{String(language||'es').startsWith('en')?'Delete':'Eliminar'}</button>
+    title={allowed?title:notice}>{String(language||'es').startsWith('en')?'Delete':'Eliminar'}</button>:null}
     {!allowed?<span>{notice}</span>:null}</>;
 }

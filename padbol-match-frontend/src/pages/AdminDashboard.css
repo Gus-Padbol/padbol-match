@@ -3831,3 +3831,51 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 .admin-dashboard input[type="file"]::file-selector-button:hover {
   border-color: var(--accent);
 }
+
+/* QA profundo 15/10: readable controls and complete actions at narrow widths. */
+.admin-dashboard button,
+.admin-dashboard select,
+.admin-dashboard input:not([type='checkbox']):not([type='radio']):not([type='file']) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.admin-dashboard .admin-config-subtabs button[aria-selected='true'] {
+  color: var(--text-primary);
+  box-shadow: inset 0 -3px 0 #e11b22;
+}
+.admin-dashboard .admin-config-preview select { max-width: 100%; min-width: 0; }
+.admin-dashboard .admin-planes-table .admin-planes-price { color: var(--text-primary) !important; }
+.admin-dashboard .admin-torneo-warning { border-left: 3px solid #f59e0b; padding: 6px 10px; }
+.admin-dashboard .admin-validacion-ver-perfil { min-height: 44px; display: inline-flex; align-items: center; }
+.admin-dashboard .admin-scoreboard-jugador-row__slot { color: var(--text-primary); background: var(--bg-input); }
+.admin-dashboard .admin-hub-legacy-details { margin-top: 24px; }
+.admin-dashboard .admin-hub-legacy-details > summary { min-height: 44px; }
+@media (max-width: 767px) {
+  .admin-dashboard .sedes-admin-filter-field--search { flex: 0 1 auto; }
+  .admin-dashboard .admin-roles-table,
+  .admin-dashboard .admin-roles-table tbody { display: block; width: 100%; }
+  .admin-dashboard .admin-roles-table thead { display: none; }
+  .admin-dashboard .admin-roles-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr); padding: 12px 4px; gap: 4px; }
+  .admin-dashboard .admin-roles-table tbody td { display: block; width: 100%; min-width: 0; padding: 6px 8px !important; overflow-wrap: anywhere; box-sizing: border-box; text-align: left !important; }
+  .admin-dashboard .admin-roles-table td button { max-width: 100%; white-space: normal; }
+  .admin-dashboard .admin-config-puntos-wrap { overflow: visible; }
+  .admin-dashboard .admin-config-puntos-table { table-layout: auto; width: 100% !important; }
+  .admin-dashboard .admin-config-puntos-table th,
+  .admin-dashboard .admin-config-puntos-table td { width: auto !important; padding: 8px 6px !important; overflow-wrap: anywhere; }
+  .admin-dashboard .admin-config-puntos-table--levels tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .admin-dashboard .admin-config-puntos-table--levels tbody td { display: block; min-width: 0; }
+  .admin-dashboard .admin-config-puntos-table--levels tbody td:last-child { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; }
+  .admin-dashboard .admin-config-puntos-table--levels tbody td:last-child button { flex: 1 1 80px; }
+  .admin-dashboard .admin-config-puntos-table--levels thead { display: none; }
+  .admin-dashboard .admin-config-puntos-table input { max-width: 100%; }
+  .admin-dashboard .admin-planes-table,
+  .admin-dashboard .admin-planes-table tbody { display: block; width: 100% !important; min-width: 0 !important; }
+  .admin-dashboard .admin-planes-table thead { display: none; }
+  .admin-dashboard .admin-planes-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px; padding: 12px 4px; }
+  .admin-dashboard .admin-planes-table td { display: block; min-width: 0; padding: 6px 10px !important; text-align: left !important; }
+  .admin-dashboard .admin-planes-table td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .admin-dashboard .admin-planes-table td:last-child { align-self: end; }
+  .admin-dashboard a[href^='mailto:'] { display: inline-flex; align-items: center; min-height: 44px; }
+}
+
+.admin-dashboard label[for="admin-scoreboard-tournament-logo"] { display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; }
