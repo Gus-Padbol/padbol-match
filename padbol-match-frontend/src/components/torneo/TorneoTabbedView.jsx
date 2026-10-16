@@ -1,3 +1,4 @@
+import { tournamentRosterPresentation } from '../../utils/tournamentRosterPresentation';
 import TournamentMatchOperations from './TournamentMatchOperations';
 import NationsStandings from './NationsStandings';
 import {formatTournamentEventTime, tournamentEventTimeZone} from '../../utils/tournamentEventTime';
@@ -168,7 +169,7 @@ export function safeJugadores(eq) {
 
 /** Texto principal en listados de torneo: nombre + apellido (sin usar alias como nombre). */
 export function jugadorEtiquetaConArroba(p) {
-  return nombreListadoTorneoRanking(p);
+  return tournamentRosterPresentation(p).name;
 }
 
 /** Nombre del equipo o pareja de etiquetas de jugadores (mismo criterio que {@link jugadorEtiquetaConArroba}). */
@@ -390,6 +391,7 @@ export default function TorneoTabbedView({
 
   const abrirPreviewJugador = useCallback(
     (p) => {
+      if (!tournamentRosterPresentation(p).canOpenProfile) return;
       setJugadorPreview(buildJugadorPreviewModalData(p, jugadorNombreTorneoCtx));
     },
     [jugadorNombreTorneoCtx]
@@ -397,6 +399,7 @@ export default function TorneoTabbedView({
 
   const abrirQrJugador = useCallback(
     (p) => {
+      if (!tournamentRosterPresentation(p).canOpenProfile) return;
       const alias = String(p?.alias || '').trim();
       if (!alias) {
         alert('Este jugador no tiene alias público.');
@@ -1100,8 +1103,10 @@ export default function TorneoTabbedView({
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('torneos.vista.sinJugadores')}</span>
                   ) : (
                     jugadores.map((p, idx) => {
-                      const nombreMain = nombreListadoTorneoRanking(p);
-                      const al = String(p?.alias || '').trim();
+                      const identity = tournamentRosterPresentation(p, i18n?.language);
+                      const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                      const nombreMain = identity.name;
+                      const al = identity.canOpenProfile ? String(p?.alias || '').trim() : '';
                       const initial = String(nombreMain || '?')
                         .charAt(0)
                         .toUpperCase();
@@ -1111,16 +1116,16 @@ export default function TorneoTabbedView({
                           key={`${equipo.id}-j-${idx}`}
                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => abrirPreviewJugador(p)}
+                          <PlayerTag
+                            type={identity.canOpenProfile ? "button" : undefined}
+                            onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
                               gap: '10px',
                               border: 'none',
                               background: 'transparent',
-                              cursor: 'pointer',
+                              cursor: identity.canOpenProfile ? 'pointer' : 'default',
                               padding: '4px 0',
                               textAlign: 'left',
                               flex: 1,
@@ -1161,14 +1166,15 @@ export default function TorneoTabbedView({
                             )}
                             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
                               <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{nombreMain}</span>
+                              {identity.badge ? <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{identity.badge}</span> : null}
                               {al ? (
                                 <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
                                   {formatAliasConArroba(al)}
                                 </span>
                               ) : null}
                             </span>
-                          </button>
-                          {puedeGestionarEquiposTorneo ? (
+                          </PlayerTag>
+                          {puedeGestionarEquiposTorneo && identity.canOpenProfile ? (
                             <button
                               type="button"
                               title="Ver QR"
@@ -1591,27 +1597,31 @@ export default function TorneoTabbedView({
                   )}
                 </div>
                 {!sinEquipo ? (
-                  <div className="podium-player-avatars">
+                  <div className="podium-player-avatars" style={fila.jugadores?.some(p => !tournamentRosterPresentation(p).canOpenProfile) ? { flexWrap: 'wrap', gap: '4px' } : undefined}>
                     {(Array.isArray(fila.jugadores) ? fila.jugadores : [])
                       .slice(0, 4)
                       .map((p, idx) => {
                         const a = avatarJugadorPodio(p);
-                        const nombreJug = String(p?.nombre || p?.name || a.label || 'Jugador').trim() || 'Jugador';
+                        const identity = tournamentRosterPresentation(p, i18n?.language);
+                        const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                        const nombreJug = identity.canOpenProfile
+                          ? String(p?.nombre || p?.name || a.label || 'Jugador').trim() || 'Jugador'
+                          : identity.name;
                         return (
-                          <button
+                          <PlayerTag
                             key={`${a.label}-${idx}`}
-                            type="button"
-                            className="podium-player-avatar-wrap"
-                            style={{ zIndex: idx + 1 }}
-                            onClick={() => abrirPreviewJugador(p)}
-                            aria-label={`Ver ${nombreJug}`}
+                            type={identity.canOpenProfile ? 'button' : undefined}
+                            className={identity.canOpenProfile ? 'podium-player-avatar-wrap' : undefined}
+                            style={identity.canOpenProfile ? { zIndex: idx + 1 } : { display: 'inline-flex', flexDirection: 'column', maxWidth: '100%', overflowWrap: 'anywhere', fontSize: '11px', padding: '4px' }}
+                            onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
+                            aria-label={identity.canOpenProfile ? `Ver ${nombreJug}` : undefined}
                           >
-                            {a.foto ? (
+                            {!identity.canOpenProfile ? <><span>{nombreJug}</span>{identity.badge ? <small>{identity.badge}</small> : null}</> : a.foto ? (
                               <img src={a.foto} alt="" className="podium-player-avatar" loading="lazy" referrerPolicy="no-referrer" />
                             ) : (
                               <span className="podium-player-avatar-fallback">{a.initial}</span>
                             )}
-                          </button>
+                          </PlayerTag>
                         );
                       })}
                   </div>
@@ -1648,16 +1658,19 @@ export default function TorneoTabbedView({
                 <span className={`clasificacion-final-equipo${vacio ? ' clasificacion-final-mute' : ''}`}>{nombre}</span>
                 <span className={`clasificacion-final-jug clasificacion-final-jug--chips${vacio ? ' clasificacion-final-mute' : ''}`}>
                   {!vacio && jugadoresRow.length ? (
-                    jugadoresRow.slice(0, 4).map((p, idx) => (
-                      <button
+                    jugadoresRow.slice(0, 4).map((p, idx) => {
+                      const identity = tournamentRosterPresentation(p, i18n?.language);
+                      const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                      return <PlayerTag
                         key={`${f.posicion}-${p?.id ?? p?.jugador_id ?? idx}-${jugadorEtiquetaConArroba(p)}`}
-                        type="button"
+                        type={identity.canOpenProfile ? 'button' : undefined}
                         className="clasificacion-final-jug-chip"
-                        onClick={() => abrirPreviewJugador(p)}
+                        style={identity.canOpenProfile ? undefined : { color: 'var(--text-primary)', textDecoration: 'none', cursor: 'default', overflowWrap: 'anywhere' }}
+                        onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
                       >
-                        {jugadorEtiquetaConArroba(p)}
-                      </button>
-                    ))
+                        {identity.name}{identity.badge ? <small style={{ display: 'block', fontWeight: 400 }}>{identity.badge}</small> : null}
+                      </PlayerTag>;
+                    })
                   ) : (
                     '—'
                   )}
@@ -2113,8 +2126,10 @@ export default function TorneoTabbedView({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
               {modalJugadores.map((p, i) => {
                 const fotoM = String(p?.foto_url || '').trim();
-                const alM = String(p?.alias || '').trim();
-                const nm = nombreListadoTorneoRanking(p);
+                const identity = tournamentRosterPresentation(p, i18n?.language);
+                const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                const alM = identity.canOpenProfile ? String(p?.alias || '').trim() : '';
+                const nm = identity.name;
                 const ini = String(nm || '?')
                   .charAt(0)
                   .toUpperCase();
@@ -2131,18 +2146,16 @@ export default function TorneoTabbedView({
                       background: 'var(--bg-card)',
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        abrirPreviewJugador(p);
-                      }}
+                    <PlayerTag
+                      type={identity.canOpenProfile ? "button" : undefined}
+                      onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
                         border: 'none',
                         background: 'transparent',
-                        cursor: 'pointer',
+                        cursor: identity.canOpenProfile ? 'pointer' : 'default',
                         textAlign: 'left',
                         flex: 1,
                         minWidth: 0,
@@ -2186,14 +2199,15 @@ export default function TorneoTabbedView({
                       )}
                       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
                         <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{nm}</span>
+                        {identity.badge ? <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{identity.badge}</span> : null}
                         {alM ? (
                           <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
                             {formatAliasConArroba(alM)}
                           </span>
                         ) : null}
                       </span>
-                    </button>
-                    {puedeGestionarEquiposTorneo ? (
+                    </PlayerTag>
+                    {puedeGestionarEquiposTorneo && identity.canOpenProfile ? (
                       <button
                         type="button"
                         title="Ver QR"
