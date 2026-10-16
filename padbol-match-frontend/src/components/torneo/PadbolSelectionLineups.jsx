@@ -19,7 +19,8 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
   validRef.current = onValid;
   useEffect(() => {
     let cancelled = false;
-    const epoch = ++generation.current;
+    const lifecycle = generation;
+    const epoch = ++lifecycle.current;
     savingRef.current = false; setSaving(false); setData(null); setDraft(blank()); setError(''); setNotice('');
     setLoading(true); validRef.current(false);
     readSelectionLineup({ apiBaseUrl, torneoId, partidoId, equipoId }).then(dto => {
@@ -28,7 +29,7 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
       setData(dto); setDraft(dto.alineacion ? { iniciales: [...dto.alineacion.iniciales], suplentes: [...dto.alineacion.suplentes] } : blank());
       validRef.current(Boolean(dto.alineacion));
     }).catch(err => { if (!cancelled) setError(err.message); }).finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; if (generation.current === epoch) generation.current++; };
+    return () => { cancelled = true; if (lifecycle.current === epoch) lifecycle.current++; };
   }, [apiBaseUrl, torneoId, partidoId, equipoId, en]);
   const change = (group, slot, value) => {
     setDraft(prev => ({ ...prev, [group]: prev[group].map((id, index) => index === slot ? value : id) }));
