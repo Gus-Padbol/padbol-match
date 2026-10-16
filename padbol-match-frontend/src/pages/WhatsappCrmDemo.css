@@ -350,3 +350,11 @@ html.theme-dark .wa-demo .wa-day { background: #29364d; color: #e5e7eb; }
   .wa-demo .wa-brand strong { font-size: 16px; }
   .wa-demo .wa-agent { min-width: 0; }
 }
+/* Status and stored analysis cards keep contrast when inheriting the dark theme. */
+html.theme-dark .wa-demo .wa-safety { background: #123b2c; border-color: #28754a; }
+html.theme-dark .wa-demo .wa-safety :is(strong,small) { color: #d9fbe6; }
+html.theme-dark .wa-demo .wa-safety-flags span { background: #172033; color: #e5e7eb; border-color: #3b475c; }
+html.theme-dark .wa-demo .wa-safety-flags b { color: #fca5a5; }
+html.theme-dark .wa-demo .wa-safety-flags b.is-on { color: #86efac; }
+html.theme-dark .wa-demo :is(.wa-executive-grid,.wa-executive-verdict,.wa-executive-risks,.wa-executive-card>footer) { background: #202c42; border-color: var(--line); }
+html.theme-dark .wa-demo :is(.wa-executive-card p,.wa-executive-card li,.wa-executive-card>footer small,.wa-pdf-pending,.wa-analysis-pending p) { color: var(--muted); }
