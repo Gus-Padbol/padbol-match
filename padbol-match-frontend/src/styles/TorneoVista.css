@@ -114,6 +114,10 @@
   line-height: 1.45;
 }
 
+html.theme-dark .torneo-inscripcion-jugador-banner__sub {
+  color: var(--text-primary);
+}
+
 .torneo-inscripcion-jugador-banner__cta {
   display: block;
   width: 100%;
