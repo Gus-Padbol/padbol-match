@@ -17,3 +17,5 @@
 .tournament-participants [role=alert] { color: var(--text-primary); border-left: 4px solid #ef4444; padding: 10px 12px; }
 .tournament-legacy-options { margin: 16px 0; padding: 12px; border: 1px solid var(--border-color, #64748b); border-radius: 10px; }
 .tournament-legacy-options > summary { min-height: 44px; padding: 8px; cursor: pointer; font-weight: 700; }
+
+.tournament-participants h2, .tournament-participants h3, .tournament-participants legend { color: var(--text-primary); }
