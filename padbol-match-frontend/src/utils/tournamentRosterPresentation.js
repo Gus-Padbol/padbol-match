@@ -15,7 +15,8 @@ const copy = {
 /** A sporting participant UUID is not a registered profile or a public alias. */
 export function tournamentRosterPresentation(player, language = 'es') {
   const labels = copy[String(language).split('-')[0]] || copy.en;
-  const registry = Boolean(player?.participante_id);
+  // Public selection DTOs expose the safe identity kind, while the PID remains admin-only.
+  const registry = Boolean(player?.participante_id) || ['cuenta', 'generico', 'plaza_pendiente'].includes(player?.tipo_identidad);
   const pending = registry && player?.tipo_identidad === 'plaza_pendiente';
   const withoutAccount = registry && !player?.user_id;
   return {
