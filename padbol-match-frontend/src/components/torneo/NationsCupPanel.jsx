@@ -1,3 +1,4 @@
+import NationsStandings from './NationsStandings';
 import {pointsBaseForLevel} from '../../utils/pointsConfigApi';
 import {calcularDistribucionPuntosTorneo} from '../../utils/torneoPuntosDistribucion';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -52,7 +53,7 @@ export default function NationsCupPanel({ apiBaseUrl, torneo, equipos = [], acce
   const ingest = useCallback(next => { setSchedule(previous=>Object.fromEntries(Object.entries(previous).filter(([id])=>next.matches.some(match=>String(match.id)===id&&['pendiente','programado'].includes(match.estado))))); setData(next); onStateRef.current?.(next); }, []);
   const load = useCallback(async signal => {
     const sequence=++loadSequence.current;
-    setLoading(true);setError('');setNotice('');
+    setLoading(true);setError('');setNotice('');onStateRef.current?.(null);
     try { const next = await (management ? readNationsCup : readNationsCupPublic)({...context,signal}); if(alive.current&&sequence===loadSequence.current) ingest(next); }
     catch(err){if(alive.current&&sequence===loadSequence.current&&err.name !== 'AbortError'){setError(err.message);setData(null);onStateRef.current?.(null);}}
     finally{if(alive.current&&sequence===loadSequence.current)setLoading(false);}
@@ -120,8 +121,6 @@ export default function NationsCupPanel({ apiBaseUrl, torneo, equipos = [], acce
   const pointRows=pointPolicy&&pointBase!==null?calcularDistribucionPuntosTorneo(pointBase,{cantidad_equipos:15},pointPolicy):[];
   const rules = config?.rules?.standings || [];
   const labels={points:text('Puntos','Points'),set_difference:text('Diferencia de sets','Set difference'),sets_for:text('Sets ganados','Sets won'),game_difference:text('Diferencia de games','Game difference'),games_for:text('Games ganados','Games won')};
-  const statistics = (row,index,seeded=false) => <tr key={`${row.group||''}-${row.equipo_id}`}><td>{(seeded?row.seed:row.position)??'—'}</td><td>{name(row.equipo_id)}</td><td>{row.group||'—'}</td><td>{row.jugados ?? '—'}</td><td>{row.puntos ?? '—'}</td><td>{row.diferencia_sets ?? '—'}</td><td>{row.sets_favor ?? '—'}</td><td>{row.diferencia_games ?? '—'}</td><td>{row.games_favor ?? '—'}</td></tr>;
-  const table = (rows,seeded=false) => <div className="nations-cup__table" tabIndex={0} role="region" aria-label={text('Tabla desplazable de Nations Cup','Scrollable Nations Cup table')}><p className="nations-cup__scroll-hint">{text('Desliza la tabla para ver todas las columnas. También puedes enfocarla y usar las flechas del teclado.','Scroll the table to view all columns. You can also focus it and use the keyboard arrows.')}</p><table><thead><tr>{[seeded?text('Siembra','Seed'):text('Posición en grupo','Group place'),text('Equipo','Team'),text('Grupo','Group'),'PJ','PTS','DS','SG','DG','GG'].map(label=><th key={label}>{label}</th>)}</tr></thead><tbody>{rows.map((row,index)=>statistics(row,index,seeded))}</tbody></table></div>;
   return <section className="nations-cup" aria-label="Nations Cup">
     <header><div><h2>Nations Cup · 15 → 8</h2><p>{includesThirdPlace ? text('Tres grupos de cinco. Dos primeros por grupo y dos mejores terceros. Cuartos, semifinales, tercer puesto y final: 38 partidos.','Three groups of five. Top two per group and two best third-placed teams. Quarterfinals, semifinals, third place and final: 38 matches.') : text('Tres grupos de cinco. Dos primeros por grupo y dos mejores terceros. Cuartos, semifinales y final: 37 partidos.','Three groups of five. Top two per group and two best third-placed teams. Quarterfinals, semifinals and final: 37 matches.')}</p></div><button type="button" disabled={busy||loading} onClick={()=>load()}>{text('Actualizar','Refresh')}</button></header>
     {loading?<p role="status">{text('Consultando el estado confirmado…','Loading confirmed state…')}</p>:null}
@@ -156,10 +155,7 @@ export default function NationsCupPanel({ apiBaseUrl, torneo, equipos = [], acce
         {candidates.map(eq=><label key={eq.id}>{eq.nombre}<select disabled={!cap('can_draw')} value={assignments[String(eq.id)]||''} onChange={e=>setAssignments(prev=>({...prev,[eq.id]:e.target.value}))}><option value="">{text('Elegir grupo','Choose group')}</option>{GROUPS.map(group=><option key={group}>{group}</option>)}</select></label>)}
         <button disabled={!cap('can_draw')} onClick={draw}>{text('Confirmar sorteo de tres grupos','Confirm three-group draw')}</button>
       </>}
-      {data.standings.map(group=><div key={group.group}><h3>{text('Posiciones del grupo','Group standings')} {group.group}</h3>{table(group.rows)}</div>)}
-      {data.thirds.length?<><h3>{text('Comparación de terceros','Third-place comparison')}</h3>{table(data.thirds)}</>:null}
-      <h3>{text('Ocho clasificados y siembra','Eight qualifiers and seeding')}</h3>
-      {data.qualified.length?table(data.qualified,true):<p>{text('La clasificación aún no está confirmada.','Qualification has not been confirmed yet.')}</p>}
+      <NationsStandings data={data} equipos={management ? equipos : []}/>
       {data.ties.map(tie=><fieldset key={tie.scope}><legend>{text('Empate pendiente','Unresolved tie')}: {tie.scope}</legend>{tie.team_ids.map((_,idx)=><label key={idx}>{text('Orden aprobado','Approved order')} {idx+1}<select disabled={!cap('can_resolve_ties')} value={resolutions[tie.scope]?.order?.[idx]||''} onChange={e=>setResolutions(prev=>({...prev,[tie.scope]:{...prev[tie.scope],order:{...prev[tie.scope]?.order,[idx]:e.target.value}}}))}><option value="">{text('Seleccionar equipo','Select team')}</option>{tie.team_ids.map(id=><option key={id} value={id}>{name(id)}</option>)}</select></label>)}<label>{text('Motivo de la decisión aprobada','Reason for the approved decision')}<textarea disabled={!cap('can_resolve_ties')} value={resolutions[tie.scope]?.reason||''} onChange={e=>setResolutions(prev=>({...prev,[tie.scope]:{...prev[tie.scope],reason:e.target.value}}))}/></label></fieldset>)}
       {data.ties.length?<button disabled={!cap('can_resolve_ties')} onClick={()=>advance('resolveTies')}>{text('Guardar decisiones de desempate','Save tie decisions')}</button>:null}
       <button disabled={!cap('can_advance')||data.ties.length>0} onClick={()=>advance('advance')}>{text('Confirmar avance de fase','Confirm phase advancement')}</button>

@@ -1,3 +1,4 @@
+import {formatTournamentEventTime} from '../../utils/tournamentEventTime';
 import React, { useEffect, useMemo } from 'react';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import {
@@ -59,6 +60,7 @@ export default function PartidoDetalleModal({
   torneoId = null,
   children,
   resultadoDisabled = false,
+  eventTimeZone,
 }) {
   const { t } = useTranslation();
 
@@ -126,8 +128,8 @@ export default function PartidoDetalleModal({
     if (!partido?.fecha_hora) return '';
     const d = new Date(partido.fecha_hora);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
-  }, [partido?.fecha_hora]);
+    return formatTournamentEventTime(partido.fecha_hora,eventTimeZone,'full');
+  }, [partido?.fecha_hora,eventTimeZone]);
 
   const grupoLabel = useMemo(() => {
     const g = partido?.grupo;

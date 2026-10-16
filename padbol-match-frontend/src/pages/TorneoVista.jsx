@@ -301,7 +301,7 @@ export default function TorneoVista() {
     try {
       const readHeaders=await getAuthHeaders();
       const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {headers:readHeaders}),
         fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`,{headers:readHeaders}),
         fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`,{headers:readHeaders}),
         fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
@@ -366,7 +366,7 @@ export default function TorneoVista() {
 
         const readHeaders=await getAuthHeaders();
       const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {headers:readHeaders}),
           fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`,{headers:readHeaders}),
           fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`,{headers:readHeaders}),
           fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
@@ -512,12 +512,13 @@ export default function TorneoVista() {
   }, [tidNum, torneo?.estado]);
 
   const clasificacionFinalFilas = useMemo(() => {
-    if (!tablaPuntosRows.length) return null;
+    const rows = torneo?.plan_nations ? (nationsState?.status === 'finalized' ? (nationsState.placements || []) : []) : tablaPuntosRows;
+    if (!rows.length) return null;
     const eqById = {};
     equipos.forEach((e) => {
       eqById[e.id] = e;
     });
-    return tablaPuntosRows
+    return rows
       .map((row) => {
         const eq = eqById[row.equipo_id];
         const players = eq ? safeJugadores(eq) : [];
@@ -532,7 +533,7 @@ export default function TorneoVista() {
         };
       })
       .sort((a, b) => (a.posicion || 999) - (b.posicion || 999));
-  }, [tablaPuntosRows, equipos, t]);
+  }, [tablaPuntosRows, equipos, t, nationsState, torneo?.plan_nations]);
 
   const iniciarTorneo = async () => {
     if (!puedeIniciarTorneoEnCurso) return;
@@ -1308,6 +1309,7 @@ export default function TorneoVista() {
           key={String(torneoId)}
           torneo={torneo}
           nationsEnabled={nationsEnabled}
+          nationsState={nationsState}
           equipos={equipos}
           partidos={partidos}
           setPartidos={setPartidos}

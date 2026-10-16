@@ -1,3 +1,5 @@
+import NationsStandings from './NationsStandings';
+import {formatTournamentEventTime, tournamentEventTimeZone} from '../../utils/tournamentEventTime';
 import { isPadbolSelection } from '../../utils/padbolSelectionRoster';
 import { readSelectionLineup } from '../../utils/padbolSelectionApi';
 import PadbolSelectionLineups from './PadbolSelectionLineups';
@@ -53,6 +55,7 @@ import { usePadbolLangVersion } from '../../hooks/usePadbolLang';
 import {
   buildTablaPosiciones,
   formatMarcadorPartidoDetalle,
+  formatSetsLineaNeutral,
   parseResultadoPartido,
   partidosDelGrupo,
   validarMarcadorSetsPartido,
@@ -236,6 +239,7 @@ export default function TorneoTabbedView({
   /** Filas desde `tabla_puntos` + equipos (misma forma que FormEquipos). */
   clasificacionFinalFilas = null,
   nationsEnabled = false,
+  nationsState = null,
   /** CTA inscripción encima de la lista de equipos (jugador). */
   equiposTabHeader = null,
   /** Contenido extra bajo la lista de equipos (inscripción en FormEquipos). */
@@ -900,6 +904,7 @@ export default function TorneoTabbedView({
   const resultadosFilas = useMemo(() => {
     if (clasificacionFinalFilas && clasificacionFinalFilas.length > 0) return clasificacionFinalFilas;
     if (!esFinalizado) return [];
+    if (nationsEnabled) return [];
     const sorted = [...equipos].sort((a, b) => (Number(b.puntos_ranking) || 0) - (Number(a.puntos_ranking) || 0));
     return sorted.map((eq, i) => ({
       equipoId: eq.id,
@@ -910,7 +915,7 @@ export default function TorneoTabbedView({
       equipoNombre: nombreEquipoMostrado(eq),
       jugadorLineas: safeJugadores(eq).slice(0, 4).map((p) => jugadorEtiquetaConArroba(p)),
     }));
-  }, [clasificacionFinalFilas, esFinalizado, equipos]);
+  }, [clasificacionFinalFilas, esFinalizado, equipos, nationsEnabled]);
 
   /** Podio olímpico 2° · 1° · 3°; siempre 3 huecos, con placeholder si falta fila. */
   const podioSlotsCompletos = useMemo(() => {
@@ -1056,7 +1061,7 @@ export default function TorneoTabbedView({
                       cursor: 'pointer',
                       fontWeight: 900,
                       fontSize: '16px',
-                      color: '#2563eb',
+                      color: 'var(--text-primary)',
                       textDecoration: 'underline',
                       marginBottom: '10px',
                       flex: 1,
@@ -1153,7 +1158,7 @@ export default function TorneoTabbedView({
                               </span>
                             )}
                             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
-                              <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{nombreMain}</span>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{nombreMain}</span>
                               {al ? (
                                 <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
                                   {formatAliasConArroba(al)}
@@ -1207,7 +1212,7 @@ export default function TorneoTabbedView({
   );
 
   const renderTabGrupos = () => {
-    if (nationsEnabled) return <p>{t('torneos.nations.authoritativeStandings', { defaultValue: 'Consulta las posiciones, terceros y clasificados confirmados en el panel Nations Cup. Las reglas de este formato se calculan en el servidor.' })}</p>;
+    if (nationsEnabled) return <NationsStandings data={nationsState} equipos={equipos}/>;
     const openEq = (row) => setModalEquipo(equipos.find((e) => e.id === row.id) || row);
     if (esGruposKnockout) {
       if (grupos.length === 0) {
@@ -1291,10 +1296,7 @@ export default function TorneoTabbedView({
     const clickable = true;
     const marcadorDetalle = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : '';
     const fh = partido.fecha_hora
-      ? new Date(partido.fecha_hora).toLocaleString('es-AR', {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        })
+      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
       : '—';
     const marcadorVal = tieneResultado ? validarMarcadorSetsPartido(partido) : null;
     const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
@@ -1410,13 +1412,13 @@ export default function TorneoTabbedView({
     const marcadorVal = fin && tieneResultado ? validarMarcadorSetsPartido(partido) : null;
     const ganaA = Boolean(marcadorVal?.valido && marcadorVal.sgA > marcadorVal.sgB);
     const ganaB = Boolean(marcadorVal?.valido && marcadorVal.sgB > marcadorVal.sgA);
-    const marcadorTxt = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : null;
+    const marcadorTxt = tieneResultado ? formatSetsLineaNeutral(partido) : null;
     const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
     const marcadorMostrar = marcadorInvalido
       ? t('torneos.partidoDetalle.resultadoInvalido', { defaultValue: 'Resultado inválido' })
       : marcadorTxt;
     const fh = partido.fecha_hora
-      ? new Date(partido.fecha_hora).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
+      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
       : null;
     const click = () => abrirDetallePartido(partido);
     return (
@@ -1425,14 +1427,17 @@ export default function TorneoTabbedView({
         className="torneo-bracket-card torneo-bracket-card--clickable"
         onClick={click}
         role="button"
+        tabIndex={0}
+        onKeyDown={event => {if(event.key === 'Enter' || event.key === ' '){event.preventDefault();click();}}}
       >
+        {nationsEnabled && Number(partido.bracket_round) === 3 ? <strong className="torneo-bracket-phase">{Number(partido.bracket_position) === 2 ? 'Tercer puesto' : 'Final'}</strong> : null}
         <div className={`torneo-bracket-team${ganaA ? ' torneo-bracket-team--winner' : ''}${na === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
-          <span className="torneo-bracket-team-name">{na}</span>
+          <span className="torneo-bracket-team-name" title={na}>{na}</span>
           {ganaA ? <span className="torneo-bracket-winner-mark">✓</span> : null}
         </div>
         <div className="torneo-bracket-vs">{t('torneos.vista.vs')}</div>
         <div className={`torneo-bracket-team${ganaB ? ' torneo-bracket-team--winner' : ''}${nb === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
-          <span className="torneo-bracket-team-name">{nb}</span>
+          <span className="torneo-bracket-team-name" title={nb}>{nb}</span>
           {ganaB ? <span className="torneo-bracket-winner-mark">✓</span> : null}
         </div>
         {marcadorMostrar ? (
@@ -1510,7 +1515,8 @@ export default function TorneoTabbedView({
     }
     const ultimaIdx = rondasLlave.length - 1;
     return (
-      <div className="torneo-bracket-scroll">
+      <div className="torneo-bracket-scroll" tabIndex={0} role="region" aria-label="Llave del torneo, desplazable horizontalmente">
+        <p className="torneo-bracket-hint">Desliza para ver los cruces. Abre un partido para consultar los nombres completos y el resultado.</p>
         <div className="torneo-bracket-track">
           {rondasLlave.map(({ ronda, partidos: plist }, colIdx) => {
             const isLastCol = colIdx === ultimaIdx;
@@ -1518,7 +1524,7 @@ export default function TorneoTabbedView({
             return (
               <Fragment key={ronda}>
                 <div className="torneo-bracket-col">
-                  <div className="torneo-bracket-ronda-label">Ronda {ronda}</div>
+                  <div className="torneo-bracket-ronda-label">{nationsEnabled ? ({1:'Cuartos de final',2:'Semifinales',3:'Final y tercer puesto'})[ronda] || `Ronda ${ronda}` : `Ronda ${ronda}`}</div>
                   {isLastCol && plist.length === 1 ? (
                     <div className="torneo-bracket-col-body torneo-bracket-col-body--final">
                       {plist[0] ? renderBracketMatchCard(plist[0]) : null}
@@ -1857,7 +1863,7 @@ export default function TorneoTabbedView({
                                 </span>
                               )}
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 900, color: '#0f172a', fontSize: '15px', lineHeight: 1.3 }}>
+                                <div style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: '15px', lineHeight: 1.3 }}>
                                   {titulo}
                                 </div>
                                 <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>
@@ -2175,7 +2181,7 @@ export default function TorneoTabbedView({
                         </span>
                       )}
                       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
-                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{nm}</span>
+                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{nm}</span>
                         {alM ? (
                           <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
                             {formatAliasConArroba(alM)}
@@ -2220,6 +2226,7 @@ export default function TorneoTabbedView({
           setShowModalDetallePartido(false);
         }}
         partido={selectedPartido}
+        eventTimeZone={tournamentEventTimeZone(torneo,nationsState)}
         equipos={equipos}
         nombreEquipo={nombreEquipoMostrado}
         torneoId={torneo?.id ?? torneoId}
@@ -2297,7 +2304,7 @@ export default function TorneoTabbedView({
                       border: '1px solid #e2e8f0',
                       fontSize: '15px',
                       fontWeight: 600,
-                      color: '#0f172a',
+                      color: 'var(--text-primary)',
                       minHeight: '48px',
                     }}
                   >

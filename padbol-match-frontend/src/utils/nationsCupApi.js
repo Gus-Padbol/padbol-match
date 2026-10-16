@@ -24,6 +24,9 @@ export function validateNationsReceipt(data, torneoId) {
     || (data.courts !== undefined && (!Array.isArray(data.courts) || data.courts.some(court=>!idValid(court?.id) || typeof court.nombre !== 'string')))) {
     throw new Error('La respuesta de Nations Cup está incompleta. Actualiza antes de continuar.');
   }
+  if (data.placements !== undefined && (!Array.isArray(data.placements) || data.placements.some(row => !idValid(row?.equipo_id) || !Number.isSafeInteger(row?.posicion) || row.posicion < 1 || row.posicion > 15) || new Set(data.placements.map(row => String(row.equipo_id))).size !== data.placements.length || new Set(data.placements.map(row => row.posicion)).size !== data.placements.length)) {
+    throw new Error('No se confirmó la clasificación final de Nations Cup.');
+  }
   return data;
 }
 
@@ -42,8 +45,8 @@ async function request({ apiBaseUrl, torneoId, accessToken, signal }, suffix = '
 }
 
 export function readNationsCup(context) { return request(context); }
-export async function readNationsCupPublic({apiBaseUrl,torneoId,signal}) {
-  const response=await fetch(`${String(apiBaseUrl).replace(/\/+$/, '')}/api/torneos/${torneoId}/nations-cup/publico`,{signal});
+export async function readNationsCupPublic({apiBaseUrl,torneoId,signal,accessToken}) {
+  const response=await fetch(`${String(apiBaseUrl).replace(/\/+$/, '')}/api/torneos/${torneoId}/nations-cup/publico`,{signal,headers:await getAuthHeaders(accessToken)});
   const data=await response.json().catch(()=>null);
   if(!response.ok)throw new Error(data?.error || 'La información pública de Nations Cup todavía no está disponible.');
   return validateNationsReceipt({...data,capabilities:Object.fromEntries(CAPABILITIES.map(key=>[key,false]))},torneoId);
