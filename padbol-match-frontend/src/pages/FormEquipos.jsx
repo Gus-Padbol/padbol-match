@@ -1,4 +1,5 @@
 import QaManualTeams from '../components/torneo/QaManualTeams';
+import TournamentParticipantsPanel from '../components/torneo/TournamentParticipantsPanel';
 import { isPadbolSelection } from '../utils/padbolSelectionRoster';
 import PadbolSelectionTeams from '../components/torneo/PadbolSelectionTeams';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
@@ -2668,9 +2669,13 @@ export default function FormEquipos() {
     return <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
       <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '12px', boxSizing: 'border-box' }}>
+        <TournamentParticipantsPanel apiBaseUrl={BACKEND_API_BASE} torneoId={torneoId} authenticated={Boolean(session?.user?.id)} authIdentityKey={session?.user?.id}
+          onSignIn={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos`))} onSaved={() => void refrescarEquiposDesdeSupabase()} />
+        <details className="tournament-legacy-options"><summary>{t('teamRegistration.linkedTeamsOptions', { defaultValue: 'Invitaciones y equipos con perfiles registrados' })}</summary>
         <PadbolSelectionTeams apiBaseUrl={BACKEND_API_BASE} torneo={torneo} userId={session?.user?.id} canManage={puedeGestionarEquiposTorneo}
           profileReady={perfilTorneoCompleto} onSignIn={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos`))}
           onCompleteProfile={() => navigate(`/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(`/torneo/${id}/equipos`)}`)} />
+        </details>
       </main><BottomNav />
     </div>;
   }
@@ -2680,6 +2685,13 @@ export default function FormEquipos() {
     <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
 
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 12px', boxSizing: 'border-box' }}>
+        <TournamentParticipantsPanel apiBaseUrl={BACKEND_API_BASE} torneoId={torneoId} authenticated={Boolean(session?.user?.id)} authIdentityKey={session?.user?.id}
+          onSignIn={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos`))} onSaved={() => void refrescarEquiposDesdeSupabase()} />
+      </div>
+      <details className="tournament-legacy-options" open={Number.isFinite(inviteEquipoIdNum)}
+        style={{ maxWidth: '1100px', margin: '12px auto', boxSizing: 'border-box' }}>
+      <summary>{t('teamRegistration.linkedTeamsOptions', { defaultValue: 'Invitaciones y equipos con perfiles registrados' })}</summary>
       <div
         style={{
           maxWidth: '1100px',
@@ -3671,6 +3683,7 @@ export default function FormEquipos() {
           </div>
         ) : null}
       </div>
+      </details>
       <ModalJugador
         open={Boolean(modalJugadorBuscar)}
         onClose={() => setModalJugadorBuscar(null)}

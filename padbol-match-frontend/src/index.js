@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom/client';
 import './i18n';
 import './index.css';
 import './components/torneo/NationsCupPanel.css';
+import './styles/TournamentParticipants.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { AuthProvider } from './context/AuthContext';
