@@ -2143,3 +2143,13 @@ body.lang-ar [class*='torneo-tab-item'] {
 
 .torneo-nations-details {margin-bottom:16px;color:var(--text-primary);}
 .torneo-nations-details > summary {cursor:pointer;min-height:44px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border-color,#cbd5e1);border-radius:12px;font-weight:700;}
+
+.qa-manual-teams {color:var(--text-primary);background:var(--bg-card);}
+.qa-manual-teams h2 {font-size:1.2rem;line-height:1.35;}
+.qa-manual-teams > label {display:block;font-weight:700;margin-bottom:6px;}
+.qa-manual-teams input:not([type=checkbox]) {display:block;width:100%;box-sizing:border-box;min-height:44px;border:1px solid var(--border-color,#64748b);border-radius:8px;background:var(--bg-input,var(--bg-card));color:var(--text-primary);font:inherit;padding:10px;margin-bottom:14px;}
+.qa-manual-teams fieldset {min-width:0;border:1px solid var(--border-color,#64748b);border-radius:8px;margin:12px 0;padding:10px;}
+.qa-manual-teams fieldset label {display:flex!important;align-items:center;gap:10px;min-height:44px;box-sizing:border-box;cursor:pointer;}
+.qa-manual-teams input[type=checkbox] {width:20px;height:20px;min-height:20px;flex:0 0 20px;margin:0;accent-color:var(--accent);}
+.qa-manual-teams button {min-height:44px;max-width:100%;padding:10px 14px;border:1px solid var(--border-color,#64748b);border-radius:8px;font:inherit;font-weight:700;background:var(--accent,#b91c1c);color:#fff;margin:4px 8px 4px 0;cursor:pointer;}
+.qa-manual-teams button:disabled {opacity:.5;cursor:not-allowed;}

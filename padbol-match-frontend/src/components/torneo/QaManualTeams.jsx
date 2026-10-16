@@ -16,7 +16,7 @@ export default function QaManualTeams({apiBaseUrl,torneoId,onSaved}){
   setCatalog(fresh);setName('');setSelected([]);setConfirm(false);request.current=null;setMessage('Dupla guardada y comprobada al volver a consultar.');onSaved?.(saved.equipo.id);
  }catch(e){if(mine===generation.current)setError(e.message);}finally{if(mine===generation.current){pending.current=false;setBusy(false);}}}
  if(!catalog)return error?<p role="alert">{error}</p>:null;
- return <section aria-label="Carga manual de jugadores QA" style={{padding:18,marginBottom:18,border:'1px solid #64748b',borderRadius:12}}>
+ return <section className="qa-manual-teams" aria-label="Carga manual de jugadores QA" style={{padding:18,marginBottom:18,border:'1px solid #64748b',borderRadius:12}}>
   <h2>Carga manual de jugadores QA</h2><p>Selecciona dos jugadores ficticios para formar una dupla. Esta carga sólo corresponde a este torneo de prueba.</p>
   {!catalog.can_write?<p>Inscripción cerrada o fixture generado. No se pueden agregar duplas.</p>:<>
    <label htmlFor="qa-team-name">Nombre de la dupla</label><input id="qa-team-name" value={name} maxLength={80} onChange={e=>{setName(e.target.value);setConfirm(false);request.current=null;}} disabled={busy}/>

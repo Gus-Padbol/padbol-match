@@ -1,6 +1,5 @@
 import React from 'react';
 import {useSafeTranslation} from '../../i18n/tSafe';
-import './NationsCupPanel.css';
 
 /** Renders only server-confirmed tables: never applies legacy tournament tie rules. */
 export default function NationsStandings({data, equipos = []}) {

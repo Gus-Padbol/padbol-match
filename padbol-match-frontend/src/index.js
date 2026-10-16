@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 /** i18n antes de App: init + react-i18next (useSuspense: false en ./i18n/index.js). */
 import './i18n';
 import './index.css';
+import './components/torneo/NationsCupPanel.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { AuthProvider } from './context/AuthContext';

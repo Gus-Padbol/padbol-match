@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSafeTranslation } from '../../i18n/tSafe';
 import { mutateNationsCup, nationsCupRequestId, NATIONS_STANDINGS_RULES, readNationsCup, readNationsCupPublic, createNationsScoreboard, readNationsCupActa } from '../../utils/nationsCupApi';
 import { nationsCupScheduleInstant, nationsCupScheduleLocal } from '../../utils/nationsCupScheduleTime';
-import './NationsCupPanel.css';
 
 const GROUPS = ['A','B','C'];
 export default function NationsCupPanel({ apiBaseUrl, torneo, equipos = [], accessToken, onConfirmed, onState, management = false, navigate, refreshKey = '' }) {
