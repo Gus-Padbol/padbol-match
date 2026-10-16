@@ -19,3 +19,6 @@
 .tournament-legacy-options > summary { min-height: 44px; padding: 8px; cursor: pointer; font-weight: 700; }
 
 .tournament-participants h2, .tournament-participants h3, .tournament-participants legend { color: var(--text-primary); }
+
+.tournament-context-nav { width: 100%; max-width: 1100px; box-sizing: border-box; margin: 0 auto; padding: 12px; }
+.tournament-context-nav button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--border-color, #64748b); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font: inherit; cursor: pointer; }

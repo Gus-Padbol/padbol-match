@@ -199,7 +199,7 @@ function esCreadorEquipoOMiAuth(eq, authEmailTrim, usuarioBasico, authUserId) {
 }
 
 export default function FormEquipos() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const mensajeCupoCompleto = useCallback((torneoActual) => {
     const raw = String(torneoActual?.fecha_inicio || '').trim();
     const start = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T12:00:00`) : new Date(raw);
@@ -2605,6 +2605,11 @@ export default function FormEquipos() {
           mostrarUiAdminFormEquipos && contextoGestionEquiposTorneo ? t('teamDetail.backAdmin') : undefined
         }
       />
+      <nav className="tournament-context-nav" aria-label={String(i18n?.language || '').startsWith('en') ? 'Tournament navigation' : 'Navegación del torneo'}>
+        <button type="button" onClick={() => navigate(`/torneo/${id}`, torneoNavStateForm ? { state: torneoNavStateForm } : undefined)}>
+          {String(i18n?.language || '').startsWith('en') ? 'Back to tournament' : 'Volver al torneo'}
+        </button>
+      </nav>
       <div
         style={{
           width: '100%',
