@@ -15,11 +15,14 @@ function validRoster(players, capacity) {
   return ids.every(Boolean) && new Set(ids).size === ids.length
     && players.every(player => player.estado === 'confirmado');
 }
-function validParticipantRoster(players, capacity) {
+function validParticipantRoster(players, capacity, referencesAvailable = true) {
   if (!Array.isArray(players) || players.length < 1 || players.length > capacity) return false;
   const ids = players.map(player => selectionPlayerId({ id: player.participante_id }));
-  return ids.every(Boolean) && new Set(ids).size === ids.length
-    && players.every(player => typeof player.tipo_identidad === 'string'
+  const identityValid = referencesAvailable
+    ? ids.every(Boolean) && new Set(ids).size === ids.length
+    : players.every(player => player.participante_id == null && player.user_id == null && player.id == null);
+  return identityValid
+    && players.every(player => ['cuenta', 'generico', 'plaza_pendiente'].includes(player.tipo_identidad)
       && (player.tipo_identidad === 'plaza_pendiente' || String(player.nombre || '').trim()));
 }
 async function request(base, path, method = 'GET', body) {
@@ -49,7 +52,7 @@ export async function listSelectionTeams({ apiBaseUrl, torneoId }) {
   if (data.equipos.some(team => !Number.isSafeInteger(Number(team.id)) || Number(team.id) <= 0
     || !Number.isInteger(team.cupo_maximo) || team.cupo_maximo < 4 || team.cupo_maximo > 8
     || !((team.creador_id===null&&team.can_manage===false&&Array.isArray(team.jugadores)&&team.jugadores.length===0) || (team.registro_participantes === true
-      ? team.can_manage === false && team.can_add_profiles === false && team.can_confirm === false && validParticipantRoster(team.jugadores, team.cupo_maximo)
+      ? team.can_manage === false && team.can_add_profiles === false && team.can_confirm === false && typeof team.referencias_plantel_disponibles === 'boolean' && validParticipantRoster(team.jugadores, team.cupo_maximo, team.referencias_plantel_disponibles)
       : selectionPlayerId({ id: team.creador_id })&&validRoster(team.jugadores, team.cupo_maximo)))
     || typeof team.equipo_abierto !== 'boolean' || typeof team.can_manage !== 'boolean')) throw new Error('La lista contiene un plantel que no se pudo confirmar. Recarga la ficha.');
   return data.equipos;

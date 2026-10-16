@@ -1,0 +1,132 @@
+{
+  "producer": "nationalTeamListDto",
+  "backendCommit": "a9a5126b",
+  "admin": {
+    "id": 179,
+    "nombre": "Equipo QA DTO",
+    "registro_participantes": true,
+    "referencias_plantel_disponibles": true,
+    "can_add_profiles": false,
+    "can_confirm": false,
+    "can_manage": false,
+    "cupo_maximo": 8,
+    "equipo_abierto": false,
+    "creador_id": "00000000-0000-4000-8000-000000000001",
+    "inscripcion_estado": "confirmado",
+    "plantel_revision": 1,
+    "jugadores": [
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000011",
+        "user_id": null,
+        "nombre": "Invitado QA 0",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000012",
+        "user_id": null,
+        "nombre": "Invitado QA 1",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000013",
+        "user_id": null,
+        "nombre": "Invitado QA 2",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000014",
+        "user_id": null,
+        "nombre": "Invitado QA 3",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000015",
+        "user_id": null,
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      },
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000016",
+        "user_id": null,
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      },
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000017",
+        "user_id": null,
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      },
+      {
+        "participante_id": "00000000-0000-4000-8000-000000000018",
+        "user_id": null,
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      }
+    ]
+  },
+  "viewer": {
+    "id": 179,
+    "nombre": "Equipo QA DTO",
+    "registro_participantes": true,
+    "referencias_plantel_disponibles": false,
+    "can_add_profiles": false,
+    "can_confirm": false,
+    "can_manage": false,
+    "cupo_maximo": 8,
+    "equipo_abierto": false,
+    "creador_id": "00000000-0000-4000-8000-000000000001",
+    "inscripcion_estado": "confirmado",
+    "plantel_revision": 1,
+    "jugadores": [
+      {
+        "nombre": "Invitado QA 0",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "nombre": "Invitado QA 1",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "nombre": "Invitado QA 2",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "nombre": "Invitado QA 3",
+        "estado": "confirmado",
+        "tipo_identidad": "generico"
+      },
+      {
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      },
+      {
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      },
+      {
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      },
+      {
+        "nombre": "",
+        "estado": "confirmado",
+        "tipo_identidad": "plaza_pendiente"
+      }
+    ]
+  }
+}

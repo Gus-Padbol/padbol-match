@@ -41,9 +41,24 @@ test('revealed opposing selection names do not require private creator or roster
 });
 
 test('registry list accepts sporting participant IDs without inventing auth accounts or editor permission',async()=>{
- const registry={...team,id:71,equipo_abierto:false,registro_participantes:true,can_manage:false,can_confirm:false,can_add_profiles:false,jugadores:ids.map((participante_id,i)=>({participante_id,user_id:null,nombre:i<4?`Invitado ${i}`:'',tipo_identidad:i<4?'generico':'plaza_pendiente',estado:'confirmado'}))};
+ const registry={...team,id:71,equipo_abierto:false,registro_participantes:true,referencias_plantel_disponibles:true,can_manage:false,can_confirm:false,can_add_profiles:false,jugadores:ids.map((participante_id,i)=>({participante_id,user_id:null,nombre:i<4?`Invitado ${i}`:'',tipo_identidad:i<4?'generico':'plaza_pendiente',estado:'confirmado'}))};
  fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[registry]}));
  expect(await listSelectionTeams(context)).toEqual([registry]);
  fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[{...registry,can_manage:true}]}));
  await expect(listSelectionTeams(context)).rejects.toThrow();
+});
+
+test('deidentified registry audience is accepted only with explicit references unavailable and no identifiers',async()=>{
+ const publicTeam={...team,id:71,equipo_abierto:false,registro_participantes:true,referencias_plantel_disponibles:false,can_manage:false,can_confirm:false,can_add_profiles:false,jugadores:[{nombre:'Invitado visible',tipo_identidad:'generico',estado:'confirmado'}]};
+ fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[publicTeam]}));expect(await listSelectionTeams(context)).toEqual([publicTeam]);
+ fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[{...publicTeam,jugadores:[{...publicTeam.jugadores[0],participante_id:ids[0]}]}]}));await expect(listSelectionTeams(context)).rejects.toThrow();
+});
+
+test('actual backend nationalTeamListDto JSON passes unchanged for admin and ordinary viewer',async()=>{
+ const actual=require('./nationalTeamListDto.qa16.fixture.json');
+ for(const row of [actual.admin,actual.viewer]) {
+ fetch.mockResolvedValue(response({ok:true,torneo_id:9,equipos:[row]}));
+ expect(await listSelectionTeams(context)).toEqual([row]);
+ }
+ expect(actual.viewer.jugadores.every(p=>!('participante_id' in p)&&!('user_id' in p))).toBe(true);
 });

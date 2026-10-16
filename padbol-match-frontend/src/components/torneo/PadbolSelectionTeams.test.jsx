@@ -130,7 +130,7 @@ test('server capability controls save even when a legacy frontend admin prop cla
 });
 
 test('registry guests are visible as four of eight and cannot open the legacy account editor',async()=>{
- teams=[{...teams[0],registro_participantes:true,can_manage:false,can_add_profiles:false,can_confirm:false,equipo_abierto:false,jugadores:Array.from({length:8},(_,i)=>({participante_id:id(i+11),user_id:null,nombre:i<4?`Invitado QA ${i}`:'',tipo_identidad:i<4?'generico':'plaza_pendiente',estado:'confirmado'}))}];
+ teams=[{...teams[0],registro_participantes:true,referencias_plantel_disponibles:true,can_manage:false,can_add_profiles:false,can_confirm:false,equipo_abierto:false,jugadores:Array.from({length:8},(_,i)=>({participante_id:id(i+11),user_id:null,nombre:i<4?`Invitado QA ${i}`:'',tipo_identidad:i<4?'generico':'plaza_pendiente',estado:'confirmado'}))}];
  render(<PadbolSelectionTeams apiBaseUrl="https://fixture.invalid" torneo={torneo} userId={id(1)} profileReady/>);
  await screen.findByText('Invitado QA 0');
  expect(screen.getByText(/Al menos cuatro jugadores confirmados/)).toBeInTheDocument();
@@ -138,4 +138,12 @@ test('registry guests are visible as four of eight and cannot open the legacy ac
  expect(screen.queryByRole('button',{name:'Gestionar plantel'})).not.toBeInTheDocument();
  expect(screen.queryByRole('button',{name:'Solicitar lugar en el plantel'})).not.toBeInTheDocument();
  expect(mutations()).toHaveLength(0);
+});
+
+test('ordinary registry viewer sees names without fabricated identity or false roster-forming status',async()=>{
+ teams=[{...teams[0],registro_participantes:true,referencias_plantel_disponibles:false,can_manage:false,can_add_profiles:false,can_confirm:false,equipo_abierto:false,jugadores:[{nombre:'Invitado visible',tipo_identidad:'generico',estado:'confirmado'}]}];
+ render(<PadbolSelectionTeams apiBaseUrl="https://fixture.invalid" torneo={torneo} userId={id(9)} profileReady/>);
+ await screen.findByText('Invitado visible');expect(screen.queryByText(/Plantel en formación:/)).not.toBeInTheDocument();
+ expect(screen.getByText(/referencias y la verificación del plantel están reservadas/)).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Gestionar plantel'})).not.toBeInTheDocument();expect(mutations()).toHaveLength(0);
 });
