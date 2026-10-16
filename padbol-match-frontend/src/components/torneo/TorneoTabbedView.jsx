@@ -483,18 +483,19 @@ export default function TorneoTabbedView({
     setSorteoModalOpen(true);
   }, [activeTab, puedeMostrarBotonSorteoGrupos, torneo?.id, equipos]);
 
+  const partidosConfirmados = useMemo(() => nationsEnabled ? (nationsState?.matches || []) : partidos, [nationsEnabled,nationsState?.matches,partidos]);
   const partidosOrdenados = useMemo(() => {
-    return [...partidos].sort((a, b) => {
+    return [...partidosConfirmados].sort((a, b) => {
       const ta = a.fecha_hora ? new Date(a.fecha_hora).getTime() : 0;
       const tb = b.fecha_hora ? new Date(b.fecha_hora).getTime() : 0;
       return ta - tb;
     });
-  }, [partidos]);
+  }, [partidosConfirmados]);
 
   const partidosLlave = useMemo(() => {
-    if (esKnockoutPuro) return partidos;
-    return partidos.filter((p) => p.grupo == null || p.grupo === '');
-  }, [partidos, esKnockoutPuro]);
+    if (esKnockoutPuro) return partidosConfirmados;
+    return partidosConfirmados.filter((p) => p.grupo == null || p.grupo === '');
+  }, [partidosConfirmados, esKnockoutPuro]);
 
   const hayLlaveConPartidos = partidosLlave.length > 0;
 
@@ -995,14 +996,14 @@ export default function TorneoTabbedView({
 
   const rondasLlave = useMemo(() => {
     const list = [...partidosLlave].sort((a, b) => {
-      const ra = Number(a.ronda) || 1;
-      const rb = Number(b.ronda) || 1;
+      const ra = Number(nationsEnabled ? a.bracket_round : a.ronda) || 1;
+      const rb = Number(nationsEnabled ? b.bracket_round : b.ronda) || 1;
       if (ra !== rb) return ra - rb;
       return nationsEnabled ? (Number(a.bracket_position)||0)-(Number(b.bracket_position)||0) : (a.id || 0) - (b.id || 0);
     });
     const byRonda = {};
     list.forEach((p) => {
-      const r = Number(p.ronda) || 1;
+      const r = Number(nationsEnabled ? p.bracket_round : p.ronda) || 1;
       if (!byRonda[r]) byRonda[r] = [];
       byRonda[r].push(p);
     });
@@ -2020,7 +2021,9 @@ export default function TorneoTabbedView({
             labelCategoriaEdadTorneo(torneo?.categoria_edad),
             formatTipoTorneo(torneo?.tipo_torneo),
             torneo?.fecha_inicio || torneo?.fecha_fin
-              ? `${formatHeaderDate(torneo?.fecha_inicio)} a ${formatHeaderDate(torneo?.fecha_fin)}`
+              ? (torneo?.fecha_inicio && torneo?.fecha_fin && String(torneo.fecha_fin).slice(0,10) < String(torneo.fecha_inicio).slice(0,10)
+                ? `${t('torneos.vista.plannedStart', {defaultValue:'Inicio previsto'})}: ${formatHeaderDate(torneo.fecha_inicio)} · ${t('torneos.vista.recordedClosure', {defaultValue:'Cierre registrado'})}: ${formatHeaderDate(torneo.fecha_fin)}`
+                : `${formatHeaderDate(torneo?.fecha_inicio)} a ${formatHeaderDate(torneo?.fecha_fin)}`)
               : '',
           ].filter((value) => value && value !== '—').join(' • ')}
         </p>

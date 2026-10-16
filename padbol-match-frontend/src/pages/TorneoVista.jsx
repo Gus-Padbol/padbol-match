@@ -1301,10 +1301,10 @@ export default function TorneoVista() {
     >
       <div style={torneoVistaColumnStyle}>
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
-        {torneo && ((isPadbolSelection(torneo) && fromAdmin) || nationsEnabled) ? <NationsCupPanel
+        {torneo && ((isPadbolSelection(torneo) && fromAdmin) || nationsEnabled) ? <details className="torneo-nations-details" open={fromAdmin || undefined}><summary>{t('torneos.nations.details', {defaultValue:'Reglamento y organización de Nations Cup'})}</summary><NationsCupPanel
           key={`nations-${torneoId}`} apiBaseUrl={apiBaseUrlTorneo} torneo={torneo} equipos={equipos}
           accessToken={session?.access_token} management={fromAdmin} navigate={navigate} refreshKey={JSON.stringify(partidos)} onConfirmed={recargarDatosTorneo} onState={setNationsState}
-        /> : null}
+        /></details> : null}
         <TorneoTabbedView
           key={String(torneoId)}
           torneo={torneo}

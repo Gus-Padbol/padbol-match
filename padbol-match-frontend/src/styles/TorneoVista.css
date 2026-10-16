@@ -2138,5 +2138,8 @@ body.lang-ar [class*='torneo-tab-item'] {
 
 /* Keep document scrolling as the sticky reference only on tournament pages. */
 @supports (overflow: clip) {
-  #root:has(.torneo-vista-container) {overflow-x:clip;overflow-y:visible;}
+  #root:has(.torneo-vista-container), body:has(.torneo-vista-container) {overflow-x:clip;overflow-y:visible;}
 }
+
+.torneo-nations-details {margin-bottom:16px;color:var(--text-primary);}
+.torneo-nations-details > summary {cursor:pointer;min-height:44px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border-color,#cbd5e1);border-radius:12px;font-weight:700;}

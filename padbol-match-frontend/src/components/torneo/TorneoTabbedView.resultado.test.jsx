@@ -136,3 +136,13 @@ test('selection participation routes to dedicated authenticated roster flow with
  expect(navigate).toHaveBeenCalledWith('/torneo/28/equipos?crear=1',{replace:true});
  expect(fetch).not.toHaveBeenCalled();
 });
+
+test('Nations shows three authoritative bracket rounds even when legacy ronda is absent',()=>{
+ const matches=[{id:1,bracket_round:1,bracket_position:1},{id:2,bracket_round:2,bracket_position:1},{id:3,bracket_round:3,bracket_position:1},{id:4,bracket_round:3,bracket_position:2}].map(m=>({...m,equipo_a_id:71,equipo_b_id:72,estado:'finalizado',resultado:savedResult}));
+ const {container}=render(<MemoryRouter><TorneoTabbedView torneo={{id:28,estado:'en_curso',tipo_torneo:'grupos_knockout',plan_nations:{enabled:true,timezone:'Europe/Rome'}}} torneoId="28" equipos={[{id:71,nombre:'Alfa',jugadores:[]},{id:72,nombre:'Beta',jugadores:[]}]} partidos={matches.map(({bracket_round,bracket_position,...legacy})=>legacy)} nationsEnabled nationsState={{matches}} navigate={jest.fn()} setPartidos={jest.fn()}/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'torneos.vista.tabLlave'}));
+ expect(container.querySelectorAll('.torneo-bracket-col')).toHaveLength(3);
+ expect(container.querySelectorAll('.torneo-bracket-card')).toHaveLength(4);
+ expect(screen.getByText('Tercer puesto')).toBeInTheDocument();
+ expect(screen.getByText('Semifinales')).toBeInTheDocument();
+});
