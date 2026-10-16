@@ -305,3 +305,48 @@
   .wa-lead-card header > span { max-width: 100%; }
   .wa-lead-card header > div { min-width: 0; max-width: 100%; }
 }
+
+/* QA15: complete channel names, bounded inbox, and inherited panel theme. */
+.wa-demo .wa-area-tabs--top {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  overflow: visible;
+}
+.wa-demo .wa-area-tabs--top button {
+  min-width: 0;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-height: 44px;
+  font-size: 12px;
+}
+.wa-demo .wa-draft-label label { font-size: 13px; font-weight: 700; }
+.wa-demo :is(.wa-safety-flags span, .wa-conversation time, .wa-panel dt, .wa-panel dd, .wa-panel label, .wa-draft-label small) { font-size: 12px; }
+.wa-demo :is(.wa-conversation time, .wa-panel dt, .wa-panel dd, .wa-draft-label small) { color: #526075; }
+.wa-demo .wa-thread-person p { flex-wrap: wrap; overflow-wrap: anywhere; }
+html.theme-dark .wa-demo { --ink: #e5e7eb; --muted: #cbd5e1; --paper: #172033; --wash: #101827; --line: #3b475c; }
+html.theme-dark .wa-demo :is(.wa-workspace, .wa-thread-head, .wa-composer, .wa-contact-card, .wa-panel, .wa-lead-card, .wa-lead-card header, .wa-lead-card dl, .wa-lead-card dl div, .wa-lead-note, .wa-message--in, .wa-system, .wa-executive-card, .wa-analysis-pending) { background: var(--paper); color: var(--ink); border-color: var(--line); }
+html.theme-dark .wa-demo .wa-conversation { background: var(--paper); color: var(--ink); border-bottom-color: var(--line); }
+html.theme-dark .wa-demo .wa-conversation.active { background: #29364d; }
+html.theme-dark .wa-demo .wa-thread { background: var(--wash); }
+html.theme-dark .wa-demo .wa-messages { background-color: var(--wash); background-image: none; }
+html.theme-dark .wa-demo :is(h1,h2,h3,h4,strong,.wa-lead-section strong,.wa-lead-card dd,.wa-lead-note p,.wa-contact-card p span) { color: var(--ink); }
+html.theme-dark .wa-demo :is(.wa-conversation p,.wa-conversation time,.wa-panel dt,.wa-panel dd,.wa-draft-label small,.wa-lead-card header p,.wa-lead-card dt,.wa-message span,.wa-system) { color: var(--muted); }
+html.theme-dark .admin-dashboard .wa-demo label { color: var(--muted) !important; -webkit-text-fill-color: var(--muted) !important; }
+html.theme-dark .wa-demo :is(input,select,textarea) { background: var(--wash) !important; color: var(--ink) !important; border-color: var(--line) !important; }
+html.theme-dark .wa-demo :is(input,textarea)::placeholder { color: #aeb7c6 !important; }
+html.theme-dark .wa-demo .wa-message--out { background: #123b2c; color: #e5e7eb; }
+html.theme-dark .wa-demo .wa-day { background: #29364d; color: #e5e7eb; }
+@media (max-width: 720px) {
+  .wa-demo .wa-area-tabs--top { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; padding: 10px; }
+  .wa-demo .wa-area-tabs--top button { grid-template-columns: minmax(0,1fr) 22px; padding: 8px; }
+  .wa-demo .wa-area-tabs--top button i { display: none; }
+  .wa-demo .wa-inbox { max-height: none; overflow: visible; }
+  .wa-demo .wa-list { max-height: min(40vh,320px); overflow-y: auto; overscroll-behavior: contain; }
+  .wa-demo .wa-list:focus-visible { outline: 2px solid #dc2430; outline-offset: -2px; }
+  .wa-demo .wa-panel-exit { top: auto; bottom: 0; padding: 8px 12px calc(8px + env(safe-area-inset-bottom,0px)); }
+  .wa-demo:has(.wa-panel-exit) { padding-top: 0; padding-bottom: calc(76px + env(safe-area-inset-bottom,0px)); }
+  .wa-demo .wa-topbar { min-height: 76px; height: auto; gap: 8px; padding: 12px; }
+  .wa-demo .wa-brand strong { font-size: 16px; }
+  .wa-demo .wa-agent { min-width: 0; }
+}

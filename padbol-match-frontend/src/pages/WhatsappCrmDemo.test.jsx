@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, formatCrmEventText, leadAnalysisNotice } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, formatCrmEventText, leadAnalysisNotice, crmOriginLabel } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../context/AuthContext', () => ({
@@ -62,6 +62,9 @@ describe('CRM histórico unificado', () => {
     expect((await screen.findAllByText('Prueba 23')).length).toBeGreaterThan(0);
     expect(screen.getByText('CONECTADO')).toBeInTheDocument();
     expect(screen.getByText('DESACTIVADO')).toBeInTheDocument();
+    expect(screen.getByLabelText('Respuesta')).toBeDisabled();
+    expect(screen.getByRole('region', { name: 'Listado de conversaciones' })).toHaveAttribute('tabindex', '0');
+    expect(screen.queryByText('web_form:contacto')).not.toBeInTheDocument();
     expect(screen.getByText('PENDIENTE META')).toBeInTheDocument();
     expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', { channel: '', estado: '' });
     await waitFor(() => expect(screen.getAllByText(/Prueba 23/i).length).toBeGreaterThan(0));
@@ -367,4 +370,12 @@ test('un resultado histórico confirmado se conserva aunque hoy el análisis est
   render(<WhatsappCrmDemo />);
   expect(await screen.findByText('Resultado histórico simulado')).toBeInTheDocument();
   expect(screen.queryByText('Análisis automático desactivado')).not.toBeInTheDocument();
+});
+
+
+test('origins are human readable without revealing transport keys', () => {
+  expect(crmOriginLabel({origin:'web_form:Next Generation · Sede',source_channel:'email'})).toBe('Formulario Next Generation · Sedes');
+  expect(crmOriginLabel({origin:'web_form:contacto',source_channel:'email'})).toBe('Formulario web');
+  expect(crmOriginLabel({origin:'internal:opaque-key',source_channel:'email'})).toBe('Email');
+  expect(crmOriginLabel({origin:'manual_contact',source_channel:'email'})).toBe('Registro manual');
 });

@@ -1,3 +1,4 @@
+import { coalesceAuthenticatedGet } from './coalesceAuthenticatedGet';
 import { getApiBaseUrl } from './apiPublicBaseUrl';
 import { normalizeUserRole } from './adminPanelRoles';
 
@@ -36,9 +37,7 @@ export async function fetchMiRol(accessToken) {
   let lastError = null;
 
   for (const path of MI_ROL_PATHS) {
-    const res = await fetch(`${API_BASE}${path}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await coalesceAuthenticatedGet(`${API_BASE}${path}`, token);
 
     const contentType = String(res.headers.get('content-type') || '').toLowerCase();
     let data = {};

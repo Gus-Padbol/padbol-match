@@ -92,6 +92,19 @@ function ChannelIcon({ channel }) {
   return <span className={`wa-channel wa-channel--${isWa ? 'wa' : 'mail'}`}>{isWa ? 'W' : '@'}</span>;
 }
 
+export function crmOriginLabel(conversation) {
+  const origin = String(conversation?.origin || '').trim();
+  const area = conversationArea(conversation);
+  if (origin.startsWith('web_form:')) {
+    if (area === 'nextgen_venues') return 'Formulario Next Generation · Sedes';
+    if (area === 'nextgen_participants') return 'Formulario Next Generation · Participantes';
+    return 'Formulario web';
+  }
+  if (/^nextgen[.:_]/i.test(origin)) return 'Next Generation';
+  if (origin === 'manual' || origin === 'manual_contact') return 'Registro manual';
+  return channelLabel(conversation?.source_channel);
+}
+
 function channelLabel(channel) {
   return channel === 'whatsapp' ? 'WhatsApp' : channel === 'email' ? 'Email' : String(channel || '—');
 }
@@ -545,7 +558,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                 <option value="">Todos los estados</option><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option>
               </select>
             </div>
-            <div className="wa-list">
+            <div className="wa-list" role="region" aria-label="Listado de conversaciones" tabIndex={0}>
               {visibleItems.length === 0 ? <div className="wa-area-empty">No hay conversaciones en esta sección.</div> : visibleItems.map((item) => (
                 <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => setActiveId(item.id)}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
@@ -564,7 +577,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
               <section className="wa-thread">
                 <header className="wa-thread-head">
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
-                  <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {active.origin || active.source_channel}</p></div>
+                  <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
@@ -599,8 +612,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                   {active.audio_type ? <div className="wa-system">⌁ Audio entrante: {active.audio_type} {active.transcript ? `· ${active.transcript}` : ''}</div> : null}
                 </div>
                 <div className="wa-composer">
-                  <div className="wa-draft-label"><span>✦ Respuesta</span><small>{canReplyEmail ? 'Se enviará por email al contacto registrado' : canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Configura el envío por email para responder' : 'Envío desactivado'}</small></div>
-                  <textarea disabled={busy || !perms?.canOperate || !canReply} value={replyText} onChange={(e) => { emailComposition.current = null; setReplyText(e.target.value); }} placeholder={!canReply && isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
+                  <div className="wa-draft-label"><label htmlFor="crm-response">Respuesta</label><small>{canReplyEmail ? 'Se enviará por email al contacto registrado' : canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Configura el envío por email para responder' : 'Envío desactivado'}</small></div>
+                  <textarea id="crm-response" disabled={busy || !perms?.canOperate || !canReply} value={replyText} onChange={(e) => { emailComposition.current = null; setReplyText(e.target.value); }} placeholder={!canReply && isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
                   <div className="wa-composer-actions">
                     <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
                     <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={busy || !perms?.canOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
@@ -614,7 +627,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                 {isWebForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{['Empresa o club', 'País', 'Ciudad o región', 'Cantidad de canchas', 'Destino de la cancha', 'Disponibilidad de espacio'].map((label) => <div key={label}><dt>{label}</dt><dd>{detailValue(activeDetails, label) || '—'}</dd></div>)}</dl></section> : null}
                 <section className="wa-panel"><h3>Gestión</h3>
                   <dl>
-                    <div><dt>Origen</dt><dd>{active.origin || active.source_channel || '—'}</dd></div>
+                    <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>
                     <div><dt>Canal</dt><dd>{channelLabel(active.source_channel)}</dd></div>
                     <div><dt>Responsable</dt><dd>{active.operador || '—'}</dd></div>
                     <div><dt>Estado</dt><dd>{statusName(active.estado)}</dd></div>

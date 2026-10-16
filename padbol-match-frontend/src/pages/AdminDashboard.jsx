@@ -1,3 +1,4 @@
+import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
 import AdminTournamentLevelInput from '../components/AdminTournamentLevelInput';
 import {readLegacyTournamentDrawTeams} from '../utils/adminLegacyTournamentDraw';
 import AdminTournamentDeleteAction, {canDeleteAdminTournament,nationsTournamentDeletionNotice} from '../components/AdminTournamentDeleteAction';
@@ -4789,9 +4790,7 @@ export default function AdminDashboard({
         const token = sess?.session?.access_token;
         if (!token) throw new Error(t('admin.formularios.noSession'));
         const eq = String(estadoQuery || 'pendiente').trim().toLowerCase();
-        const res = await fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=${encodeURIComponent(eq)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await coalesceAuthenticatedGet(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=${encodeURIComponent(eq)}`, token);
         const j = await res.json().catch(() => []);
         if (!res.ok) throw new Error(j.error || res.statusText);
         const rows = Array.isArray(j) ? j : [];
@@ -4818,9 +4817,7 @@ export default function AdminDashboard({
         const token = sess?.session?.access_token;
         if (!token) throw new Error(t('admin.formularios.noSession'));
         const eq = String(estadoQuery || 'pendiente').trim().toLowerCase();
-        const res = await fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=${encodeURIComponent(eq)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await coalesceAuthenticatedGet(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=${encodeURIComponent(eq)}`, token);
         const j = await res.json().catch(() => []);
         if (!res.ok) throw new Error(j?.error || res.statusText);
         const rows = Array.isArray(j) ? j : [];
@@ -4844,8 +4841,8 @@ export default function AdminDashboard({
       const token = sess?.session?.access_token;
       if (!token) return;
       const [r1, r2] = await Promise.all([
-        fetch(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=pendiente`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=pendiente`, { headers: { Authorization: `Bearer ${token}` } }),
+        coalesceAuthenticatedGet(`${apiBaseUrl}/api/admin/sedes-pendientes?estado=pendiente`, token),
+        coalesceAuthenticatedGet(`${apiBaseUrl}/api/admin/solicitudes-licencia?estado=pendiente`, token),
       ]);
       const j1 = await r1.json().catch(() => []);
       const j2 = await r2.json().catch(() => []);
