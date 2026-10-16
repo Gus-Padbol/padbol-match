@@ -1,3 +1,4 @@
+import QaManualTeams from '../components/torneo/QaManualTeams';
 import { isPadbolSelection } from '../utils/padbolSelectionRoster';
 import PadbolSelectionTeams from '../components/torneo/PadbolSelectionTeams';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
@@ -2689,6 +2690,8 @@ export default function FormEquipos() {
           boxSizing: 'border-box',
         }}
       >
+        {torneo?.es_prueba === true && session?.user?.id ? <QaManualTeams apiBaseUrl={BACKEND_API_BASE} torneoId={torneoId} onSaved={() => window.location.reload()} /> : null}
+
         {!mostrarUiAdminFormEquipos ? bloqueInvitacionEquipoDeepLink : null}
 
         {torneoCancelado ? (
