@@ -6,8 +6,8 @@ export default function TournamentMatchOperations({torneoId,partidoId,apiBaseUrl
  const base=`${apiBaseUrl}/api/torneos/${torneoId}/partidos/${partidoId}`;
  useEffect(()=>{const mine=++generation.current;const controller=new AbortController();setData(null);setError('');setNotice('');pending.current=false;setBusy(false);
   fetch(`${base}/operacion`,{method:'GET',headers:{Authorization:`Bearer ${accessToken}`},signal:controller.signal}).then(async r=>{const next=await r.json();if(!r.ok||!next.ok||!next.partido||!Array.isArray(next.canchas)||!Array.isArray(next.equipos)||!Array.isArray(next.requirements)||Number(next.partido.id)!==Number(partidoId))throw new Error(next.error||'No se pudo cargar la programación.');if(mine!==generation.current)return;setData(next);setLocal(nationsCupScheduleLocal(next.partido.fecha_hora,next.timezone));setCourt(String(next.schedule?.court_id||''));setDuration(String(next.schedule?.duration_minutes||60));}).catch(e=>{if(e.name!=='AbortError'&&mine===generation.current)setError(e.message);});
-  return()=>{generation.current++;controller.abort();};
- },[base,accessToken]);
+  return()=>{generation.current=mine+1;controller.abort();};
+ },[base,accessToken,partidoId]);
  async function execute(kind){if(pending.current)return;pending.current=true;setBusy(true);setError('');setNotice('');const mine=generation.current;try{
   const body=kind==='programacion'?{fecha_hora:nationsCupScheduleInstant(local,data.timezone),court_id:Number(court),duration_minutes:Number(duration)}:{};
   const r=await fetch(`${base}/${kind}`,{method:kind==='programacion'?'PUT':'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${accessToken}`},body:JSON.stringify(body)});const result=await r.json();if(!r.ok||!result.ok)throw new Error(result.error||'No se pudo confirmar la operación.');if(mine!==generation.current)return;

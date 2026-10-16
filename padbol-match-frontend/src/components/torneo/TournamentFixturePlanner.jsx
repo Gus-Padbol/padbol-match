@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 
 export default function TournamentFixturePlanner({torneo,equipos,apiBaseUrl,accessToken,onSaved}) {
  const [mode,setMode]=useState('automatico'),[pairs,setPairs]=useState({}),[review,setReview]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');const pending=useRef(false),generation=useRef(0);
- useEffect(()=>{generation.current++;setPairs({});setReview(false);setError('');setBusy(false);pending.current=false;return()=>{generation.current++;};},[torneo.id,accessToken]);
+ useEffect(()=>{const mine=++generation.current;setPairs({});setReview(false);setError('');setBusy(false);pending.current=false;return()=>{generation.current=mine+1;};},[torneo.id,accessToken]);
  const teams=(equipos||[]).filter(e=>['confirmado','confirmada'].includes(e.inscripcion_estado));
  const pairings=Array.from({length:Math.floor(teams.length/2)},(_,i)=>({equipo_a_id:Number(pairs[`${i}a`]),equipo_b_id:Number(pairs[`${i}b`])}));
  const ids=pairings.flatMap(p=>[p.equipo_a_id,p.equipo_b_id]);
