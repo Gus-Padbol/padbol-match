@@ -13,13 +13,14 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const active = useRef(true);
+  const generation = useRef(0);
   const savingRef = useRef(false);
   const validRef = useRef(onValid);
   validRef.current = onValid;
   useEffect(() => {
     let cancelled = false;
-    active.current = true;
+    const epoch = ++generation.current;
+    savingRef.current = false; setSaving(false); setData(null); setDraft(blank()); setError(''); setNotice('');
     setLoading(true); validRef.current(false);
     readSelectionLineup({ apiBaseUrl, torneoId, partidoId, equipoId }).then(dto => {
       if (cancelled) return;
@@ -27,7 +28,7 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
       setData(dto); setDraft(dto.alineacion ? { iniciales: [...dto.alineacion.iniciales], suplentes: [...dto.alineacion.suplentes] } : blank());
       validRef.current(Boolean(dto.alineacion));
     }).catch(err => { if (!cancelled) setError(err.message); }).finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; active.current = false; };
+    return () => { cancelled = true; if (generation.current === epoch) generation.current++; };
   }, [apiBaseUrl, torneoId, partidoId, equipoId, en]);
   const change = (group, slot, value) => {
     setDraft(prev => ({ ...prev, [group]: prev[group].map((id, index) => index === slot ? value : id) }));
@@ -38,18 +39,21 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
     if (savingRef.current || !data?.can_edit) return;
     let alignment;
     try { alignment = validateSelectionLineup(draft, data.plantel); } catch (err) { setError(err.message); return; }
+    const epoch = generation.current;
     savingRef.current = true; setSaving(true); setError(''); setNotice(''); validRef.current(false);
     try {
       const args = { apiBaseUrl, torneoId, partidoId, equipoId };
       const saved = await saveSelectionLineup({ ...args, alineacion: alignment, plantel: data.plantel, expected_revision: data.alineacion?.revision ?? 0 });
+      if (generation.current !== epoch) return;
       const confirmed = await readSelectionLineup(args);
+      if (generation.current !== epoch) return;
       if (!confirmed.alineacion || confirmed.alineacion.revision !== saved.alineacion.revision
         || ['iniciales', 'suplentes'].some(group => confirmed.alineacion[group].join() !== alignment[group].join())) throw new Error(en ? 'Reload the match: the saved lineup could not be confirmed.' : 'Recarga el partido: no se pudo confirmar la alineación guardada.');
-      if (!active.current) return;
+      if (generation.current !== epoch) return;
       setData(confirmed); setDraft(alignment); validRef.current(true);
       setNotice(en ? 'Lineup saved and verified.' : 'Alineación guardada y verificada.');
-    } catch (err) { if (active.current) setError(err.message); }
-    finally { savingRef.current = false; if (active.current) setSaving(false); }
+    } catch (err) { if (generation.current === epoch) setError(err.message); }
+    finally { if (generation.current === epoch) { savingRef.current = false; setSaving(false); } }
   };
   const chosen = [...draft.iniciales, ...draft.suplentes];
   return <form className="padbol-selection-team" onSubmit={save} aria-label={`${en ? 'Lineup' : 'Alineación'} ${nombre}`}>
@@ -85,7 +89,7 @@ export default function PadbolSelectionLineups({ apiBaseUrl, torneoId, partido, 
     <h3>{en ? 'Match lineup' : 'Alineación del partido'}</h3>
     <p>{en ? 'Each team declares exactly four players: two starting players and two substitutes. Only two play on court at a time. Players may alternate in odd-numbered games.' : 'Cada equipo presenta exactamente cuatro jugadores: dos iniciales y dos suplentes. Siempre juegan dos en cancha. Los jugadores pueden alternar en los games impares.'}</p>
     <p>{en ? 'This declaration is saved separately from the roster. Manual set scores do not track substitutions game by game.' : 'Esta declaración se guarda por separado del plantel. La carga manual de sets no registra los cambios game por game.'}</p>
-    <div className="padbol-selection-grid">{ids.map(id => <TeamLineup key={id} apiBaseUrl={apiBaseUrl} torneoId={torneoId} partidoId={partido.id} equipoId={id} nombre={equipos.find(team => String(team.id) === String(id))?.nombre || `${en ? 'Team' : 'Equipo'} ${id}`} onValid={value => setValid(prev => ({ ...prev, [String(id)]: value }))} />)}</div>
+    <div className="padbol-selection-grid">{ids.map(id => <TeamLineup key={`${torneoId}:${partido.id}:${id}`} apiBaseUrl={apiBaseUrl} torneoId={torneoId} partidoId={partido.id} equipoId={id} nombre={equipos.find(team => String(team.id) === String(id))?.nombre || `${en ? 'Team' : 'Equipo'} ${id}`} onValid={value => setValid(prev => ({ ...prev, [String(id)]: value }))} />)}</div>
     {!ready ? <p role="status">{en ? 'Confirm the four players of both teams before saving a result.' : 'Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.'}</p> : null}
   </section>;
 }

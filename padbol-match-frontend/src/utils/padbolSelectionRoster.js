@@ -15,7 +15,8 @@ export function selectionRosterPlayers(raw) {
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function selectionPlayerId(player) {
-  const id = String(player?.user_id || player?.id || '').trim().toLowerCase();
+  if (player?.tipo_identidad === 'plaza_pendiente') return null;
+  const id = String(player?.user_id || player?.id || player?.participante_id || '').trim().toLowerCase();
   return UUID.test(id) ? id : null;
 }
 export function confirmedSelectionPlayers(raw) {
@@ -33,8 +34,10 @@ export function selectionTeamReady(equipo, torneo) {
   const valid = confirmedSelectionPlayers(all);
   const capacity = Number(equipo?.cupo_maximo);
   return Number.isInteger(capacity) && capacity >= 4 && capacity <= 8
-    && all.length >= 4 && all.length <= capacity && valid.length === all.length
-    && all.every(player => String(player.estado || '').toLowerCase() === 'confirmado');
+    && all.length >= 4 && all.length <= capacity && valid.length >= 4
+    && all.every(player => player?.tipo_identidad === 'plaza_pendiente'
+      || (selectionPlayerId(player) && String(player.estado || '').toLowerCase() === 'confirmado'))
+    && new Set(valid.map(selectionPlayerId)).size === all.filter(player => player?.tipo_identidad !== 'plaza_pendiente').length;
 }
 export function validateSelectionLineup({ iniciales, suplentes }, plantel) {
   if (!Array.isArray(iniciales) || iniciales.length !== 2 || !Array.isArray(suplentes) || suplentes.length !== 2) {

@@ -64,3 +64,29 @@ test('double click claims one save, and an old-match error never leaks into the 
  let reject;delayed=new Promise((_,no)=>{reject=no});const view=render(<PadbolSelectionLineups key="33" {...props}/>);await within(a()).findByLabelText('Inicial 1');fillA();fireEvent.submit(a());fireEvent.submit(a());await waitFor(()=>expect(putCalls()).toHaveLength(1));
  view.rerender(<PadbolSelectionLineups key="34" {...props} partido={{...props.partido,id:34}}/>);await within(a()).findByLabelText('Inicial 1');reject(Error('Old match error'));await waitFor(()=>expect(within(a()).getByLabelText('Inicial 1')).toHaveValue(''));expect(screen.queryByText('Old match error')).not.toBeInTheDocument();
 });
+
+test('four accountless guests can be selected, saved and reread with participant identities',async()=>{
+ const original=fetch.getMockImplementation();
+ fetch.mockImplementation(async(url,options)=>{
+  const response=await original(url,options); const data=await response.json();
+  data.plantel=data.plantel.slice(0,4).map(p=>({participante_id:p.user_id,nombre:p.nombre,estado:'confirmado',tipo_identidad:'generico'}));
+  return {ok:true,status:200,json:async()=>data};
+ });
+ savedB();render(<PadbolSelectionLineups {...props}/>);
+ await within(a()).findByLabelText('Inicial 1');fillA();fireEvent.submit(a());
+ await within(a()).findByText('Alineación guardada y verificada.');
+ expect(JSON.parse(putCalls()[0][1].body)).toEqual({iniciales:[uuid(1),uuid(2)],suplentes:[uuid(3),uuid(4)],expected_revision:0});
+});
+
+test('same mounted panel ignores an old-match successful PUT before issuing its follow-up GET',async()=>{
+ let resolve;delayed=new Promise(yes=>{resolve=yes});const ready=jest.fn();
+ const view=render(<PadbolSelectionLineups {...props} onReadyChange={ready}/>);
+ await within(a()).findByLabelText('Inicial 1');fillA();fireEvent.submit(a());await waitFor(()=>expect(putCalls()).toHaveLength(1));
+ view.rerender(<PadbolSelectionLineups {...props} partido={{...props.partido,id:34}} onReadyChange={ready}/>);
+ await within(a()).findByLabelText('Inicial 1');const count=fetch.mock.calls.length;
+ resolve(response({...dto(33,71),alineacion:{iniciales:[uuid(1),uuid(2)],suplentes:[uuid(3),uuid(4)],revision:1}}));
+ await waitFor(()=>expect(within(a()).getByLabelText('Inicial 1')).toHaveValue(''));
+ await new Promise(r=>setTimeout(r,0));expect(fetch).toHaveBeenCalledTimes(count);
+ expect(screen.queryByText('Alineación guardada y verificada.')).not.toBeInTheDocument();
+ expect(within(a()).getByRole('button',{name:'Guardar los cuatro presentados'})).toBeEnabled();
+});

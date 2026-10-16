@@ -23,3 +23,14 @@ test('match declaration chooses exactly four different confirmed roster UUIDs, s
  const original=JSON.stringify(players);expect(validateSelectionLineup({iniciales:ids.slice(0,2),suplentes:ids.slice(2,4)},players)).toEqual({iniciales:ids.slice(0,2),suplentes:ids.slice(2,4)});expect(JSON.stringify(players)).toBe(original);
  for(const lineup of [{iniciales:[ids[0]],suplentes:ids.slice(1,3)},{iniciales:ids.slice(0,2),suplentes:[ids[0],ids[3]]},{iniciales:ids.slice(0,2),suplentes:[ids[2],ids[8]]},{iniciales:['not-a-player',ids[1]],suplentes:ids.slice(2,4)}]) expect(()=>validateSelectionLineup(lineup,players.slice(0,8))).toThrow();
 });
+
+test('generic participant IDs support a four-player lineup and pending places never qualify',()=>{
+ const guests=ids.slice(0,4).map((participante_id,i)=>({participante_id,nombre:`Invitado ${i}`,tipo_identidad:'generico',estado:'confirmado'}));
+ const pending=ids.slice(4,8).map(participante_id=>({participante_id,tipo_identidad:'plaza_pendiente',estado:'confirmado'}));
+ const team={cupo_maximo:8,inscripcion_estado:'confirmado',jugadores:[...guests,...pending]};
+ expect(selectionTeamReady(team,tournament)).toBe(true);
+ expect(equiposConfirmadosParaSorteo([team],tournament)).toEqual([team]);
+ expect(confirmedSelectionPlayers(team.jugadores)).toHaveLength(4);
+ expect(validateSelectionLineup({iniciales:ids.slice(0,2),suplentes:ids.slice(2,4)},team.jugadores)).toEqual({iniciales:ids.slice(0,2),suplentes:ids.slice(2,4)});
+ expect(()=>validateSelectionLineup({iniciales:ids.slice(0,2),suplentes:[ids[2],ids[4]]},team.jugadores)).toThrow();
+});
