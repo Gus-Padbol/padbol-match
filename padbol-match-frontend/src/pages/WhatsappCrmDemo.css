@@ -358,3 +358,9 @@ html.theme-dark .wa-demo .wa-safety-flags b { color: #fca5a5; }
 html.theme-dark .wa-demo .wa-safety-flags b.is-on { color: #86efac; }
 html.theme-dark .wa-demo :is(.wa-executive-grid,.wa-executive-verdict,.wa-executive-risks,.wa-executive-card>footer) { background: #202c42; border-color: var(--line); }
 html.theme-dark .wa-demo :is(.wa-executive-card p,.wa-executive-card li,.wa-executive-card>footer small,.wa-pdf-pending,.wa-analysis-pending p) { color: var(--muted); }
+/* Counts are atomic numbers, including three-digit inboxes. */
+.wa-demo .wa-area-tabs--top b { min-width: 36px; white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+.wa-demo .wa-area-tabs--top button { grid-template-columns: 24px minmax(0,1fr) 36px; }
+@media (max-width: 720px) {
+  .wa-demo .wa-area-tabs--top button { grid-template-columns: minmax(0,1fr) 36px; }
+}
