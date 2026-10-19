@@ -285,8 +285,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   const emailSendEnabled = perms?.emailSendEnabled === true;
   const activeDetails = formDetails(active);
   const isWebForm = String(active?.origin || '').startsWith('web_form:');
-  const whatsappMetaPending = true;
-  const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled && !whatsappMetaPending;
+  const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled;
   const canReplyEmail = active?.source_channel === 'email' && emailSendEnabled && Boolean(active?.contact?.email_normalized);
   const canReply = canReplyWhatsapp || canReplyEmail;
   activeConversationId.current = active?.id;
@@ -518,7 +517,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
 
       <section className="wa-safety" aria-label="Estado de seguridad">
         <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Entorno de prueba' : 'Centro de atención'}</strong><small>{emailSendEnabled ? 'El envío por email está habilitado para operadores autorizados.' : 'Los formularios entran al CRM. Configura un canal de respuesta para enviar mensajes.'}</small></div>
-        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span><span>WhatsApp saliente <b>PENDIENTE META</b></span><span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
+        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span><span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span><span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
       </section>
 
       {perms?.canOperate || perms?.canAudit ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>

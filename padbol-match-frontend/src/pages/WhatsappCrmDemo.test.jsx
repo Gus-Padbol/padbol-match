@@ -65,9 +65,34 @@ describe('CRM histórico unificado', () => {
     expect(screen.getByLabelText('Respuesta')).toBeDisabled();
     expect(screen.getByRole('region', { name: 'Listado de conversaciones' })).toHaveAttribute('tabindex', '0');
     expect(screen.queryByText('web_form:contacto')).not.toBeInTheDocument();
-    expect(screen.getByText('PENDIENTE META')).toBeInTheDocument();
+    expect(screen.getByText('NO HABILITADO')).toBeInTheDocument();
     expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', { channel: '', estado: '' });
     await waitFor(() => expect(screen.getAllByText(/Prueba 23/i).length).toBeGreaterThan(0));
+  });
+
+  it('permite WhatsApp solo con capacidad del servidor y permiso de operador, y muestra el rechazo real', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, whatsappSendEnabled: true, emailSendEnabled: false });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-qa', estado: 'nuevo', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.reply.mockRejectedValue(new Error('Meta no aceptó la respuesta de WhatsApp (código 131042).'));
+    render(<WhatsappCrmDemo />);
+    const send = await screen.findByRole('button', { name: 'Enviar por WhatsApp' });
+    expect(screen.queryByText('PENDIENTE META')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Respuesta'), { target: { value: 'Respuesta de prueba' } });
+    expect(send).toBeEnabled();
+    fireEvent.click(send);
+    expect(await screen.findByText('Meta no aceptó la respuesta de WhatsApp (código 131042).')).toBeInTheDocument();
+    expect(crmAdminApi.reply).toHaveBeenCalledTimes(1);
+  });
+
+  it('mantiene WhatsApp sin envío para auditor aun cuando el servidor ofrece el canal', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, whatsappSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-audit', estado: 'nuevo', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByRole('button', { name: 'Enviar por WhatsApp' })).toBeDisabled();
+    expect(screen.getByLabelText('Respuesta')).toBeDisabled();
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
   });
 
   it('presenta eventos internos como inscripciones comprensibles sin exponer sus claves', async () => {
