@@ -76,11 +76,11 @@ export function nationsCupRequestId() {
   return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
 }
 
-export async function createNationsScoreboard(context, partidoId) {
+export async function createNationsScoreboard(context, partidoId, courtId) {
   if (!Number.isSafeInteger(Number(partidoId)) || Number(partidoId)<=0) throw new Error('Partido inválido.');
   const headers=await getAuthHeaders(context.accessToken);
   if(!headers.Authorization)throw new Error('Ingresa nuevamente para abrir el marcador.');
-  const response=await fetch(`${String(context.apiBaseUrl).replace(/\/+$/,'')}/api/torneos/${context.torneoId}/nations-cup/partidos/${partidoId}/marcador`,{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:'{}'});
+  const response=await fetch(`${String(context.apiBaseUrl).replace(/\/+$/,'')}/api/torneos/${context.torneoId}/nations-cup/partidos/${partidoId}/marcador`,{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify(courtId==null?{}:{court_id:Number(courtId)})});
   const data=await response.json().catch(()=>null);
   if(!response.ok)throw new Error(data?.error||'No se pudo abrir el marcador de este partido.');
   if(data?.ok!==true||String(data.torneo_id)!==String(context.torneoId)||String(data.partido_id)!==String(partidoId)||typeof data.scoreboard_id!=='string'||!UUID.test(data.scoreboard_id)||typeof data.status!=='string')throw new Error('No se confirmó el marcador del partido.');

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import NationsCupPanel from './NationsCupPanel';
-import { readNationsCup, readNationsCupPublic, mutateNationsCup, nationsCupRequestId } from '../../utils/nationsCupApi';
+import { readNationsCup, readNationsCupPublic, mutateNationsCup, nationsCupRequestId, createNationsScoreboard } from '../../utils/nationsCupApi';
 jest.mock('../../i18n/tSafe',()=>({useSafeTranslation:()=>({i18n:{language:'es'}})}));
 jest.mock('../../utils/nationsCupApi',()=>({NATIONS_STANDINGS_RULES:['points','set_difference','sets_for','game_difference','games_for'],readNationsCup:jest.fn(),readNationsCupPublic:jest.fn(),mutateNationsCup:jest.fn(),nationsCupRequestId:jest.fn(),createNationsScoreboard:jest.fn(),readNationsCupActa:jest.fn()}));
 const equipos=Array.from({length:15},(_,i)=>({id:i+1,nombre:`Selección QA ${i+1}`,inscripcion_estado:'confirmado'}));
@@ -38,12 +38,12 @@ test('finished fixtures cannot create a scoreboard and knockout origins remain e
  await screen.findByText('Ganador de cuarto 1 — Ganador de cuarto 2');
  expect(screen.getByText('Ganador de cuarto 3 — Ganador de cuarto 4')).toBeInTheDocument();
  expect(screen.getByText('Ganador de semifinal 1 — Ganador de semifinal 2')).toBeInTheDocument();
- expect(screen.getAllByRole('button',{name:'Abrir marcador de este partido'})[0]).toBeDisabled();
+ expect(screen.getAllByRole('button',{name:'Abrir marcador ahora'})[0]).toBeDisabled();
  expect(container.querySelector('input[type="datetime-local"]')).toBeDisabled();
  fireEvent.change(screen.getByLabelText('Filtrar programación por fase o grupo'),{target:{value:'round:3'}});
  expect(screen.queryByText('Ganador de cuarto 1 — Ganador de cuarto 2')).not.toBeInTheDocument();
  expect(screen.getByText('Ganador de semifinal 1 — Ganador de semifinal 2')).toBeInTheDocument();
- expect(screen.getAllByRole('button',{name:'Abrir marcador de este partido'})).toHaveLength(1);
+ expect(screen.getAllByRole('button',{name:'Abrir marcador ahora'})).toHaveLength(1);
 });
 
 test('public group fixtures use only revealed safe team names before standings exist',async()=>{
@@ -80,5 +80,7 @@ test('third place is an explicit saved rule; editing an existing 37-match plan p
 test('bronze displays semifinal losers and shares the final scheduling stage without confusing its outcome',async()=>{
  const matches=[{id:37,bracket_round:3,bracket_position:1,estado:'pendiente'},{id:38,bracket_round:3,bracket_position:2,estado:'pendiente'}];
  readNationsCup.mockResolvedValue({...state,config:{...state.config,rules:{...state.config.rules,third_place_match:true}},matches});render(<NationsCupPanel {...props}/>);
- await screen.findByText('Perdedor de semifinal 1 — Perdedor de semifinal 2');expect(screen.getByText('Ganador de semifinal 1 — Ganador de semifinal 2')).toBeInTheDocument();expect(screen.getByRole('option',{name:'Final y tercer puesto'})).toBeInTheDocument();fireEvent.change(screen.getByLabelText('Filtrar programación por fase o grupo'),{target:{value:'round:3'}});expect(screen.getAllByRole('button',{name:'Abrir marcador de este partido'})).toHaveLength(2);
+ await screen.findByText('Perdedor de semifinal 1 — Perdedor de semifinal 2');expect(screen.getByText('Ganador de semifinal 1 — Ganador de semifinal 2')).toBeInTheDocument();expect(screen.getByRole('option',{name:'Final y tercer puesto'})).toBeInTheDocument();fireEvent.change(screen.getByLabelText('Filtrar programación por fase o grupo'),{target:{value:'round:3'}});expect(screen.getAllByRole('button',{name:'Abrir marcador ahora'})).toHaveLength(2);
 });
+
+test('Nations opens an unscheduled match with court only and keeps real start explicit',async()=>{const match={id:37,equipo_a_id:1,equipo_b_id:2,grupo:'A',estado:'pendiente',fecha_hora:null,cancha:null,duration_minutes:null};readNationsCup.mockResolvedValue({...state,groups:[{label:'A',team_ids:[1,2]}],capabilities:{...state.capabilities,can_schedule:true},matches:[match],courts:[{id:44,nombre:'Cancha QA'}]});createNationsScoreboard.mockResolvedValue({scoreboard_id:'qa-now'});const navigate=jest.fn();render(<NationsCupPanel {...props} navigate={navigate}/>);await screen.findByText('Cancha QA');expect(screen.getByRole('button',{name:'Abrir marcador ahora'})).toBeDisabled();fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'44'}});fireEvent.click(screen.getByRole('button',{name:'Abrir marcador ahora'}));await waitFor(()=>expect(navigate).toHaveBeenCalledWith('/admin/scoreboard/qa-now'));expect(createNationsScoreboard.mock.calls[0].slice(1)).toEqual([37,'44']);expect(mutateNationsCup).not.toHaveBeenCalled();});

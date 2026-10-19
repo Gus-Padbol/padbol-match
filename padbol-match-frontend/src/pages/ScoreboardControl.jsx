@@ -384,7 +384,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading || terminado || cronometroActivo}
             onClick={() => handleCronometro('start')}
           >
-            Start
+            Iniciar partido
           </button>
           <button
             type="button"
@@ -392,7 +392,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading || terminado || !cronometroActivo}
             onClick={() => handleCronometro('pause')}
           >
-            Pause
+            Pausar
           </button>
         </div>
       </header>

@@ -42,3 +42,5 @@ test('native browser cryptography produces a valid independent request identity 
  try { const first=nationsCupRequestId(); expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);expect(nationsCupRequestId()).not.toBe(first);expect(fetch).not.toHaveBeenCalled(); }
  finally {if(original)Object.defineProperty(window,'crypto',original);else delete window.crypto;}
 });
+
+test('scoreboard submits court only without a fictional estimated schedule',async()=>{fetch.mockResolvedValue(response({ok:true,torneo_id:7,partido_id:9,scoreboard_id:'00000000-0000-4000-8000-000000000099',status:'created'}));await createNationsScoreboard(context,9,44);expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({court_id:44});});
