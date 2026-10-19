@@ -58,7 +58,6 @@ export function readCachedUserRoleData() {
 const LEGACY_GLOBAL_ADMIN_EMAILS = [
   'padbolinternacional@gmail.com',
   'admin@padbol.com',
-  'sm@padbol.com',
 ];
 
 /** Super admin por email legacy o rol (sin implicar bypass fuera de /admin o `state.fromAdmin`). */

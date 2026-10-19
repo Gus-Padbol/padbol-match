@@ -113,6 +113,24 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.sedes).not.toHaveBeenCalled();
   });
 
+  it('guarda estado real y próximo paso al registrar seguimiento comercial y recarga la bandeja', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, commercialOnly: true, canAudit: false });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'lead-state', estado: 'nuevo', source_channel: 'email', contact: { nombre: 'Lead estado' } }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.addActivity.mockResolvedValue({id: 'saved'});
+    render(<WhatsappCrmDemo requiredScope="commercial" />);
+    await screen.findByText('Registrar seguimiento');
+    const topic = screen.getByLabelText('Motivo');
+    fireEvent.change(topic, {target:{value: topic.options[1].value}});
+    const states = screen.getAllByRole('combobox', {name: /^Estado/});
+    fireEvent.change(states[states.length - 1], {target:{value:'cerrado'}});
+    const next = screen.getByRole('combobox', {name: /^Próximo paso/});
+    fireEvent.change(next, {target:{value:next.options[1].value}});
+    fireEvent.click(screen.getByRole('button',{name:'Guardar seguimiento'}));
+    await waitFor(() => expect(crmAdminApi.addActivity).toHaveBeenCalledWith('qa-token','lead-state',expect.objectContaining({conversation_state:'cerrado', next_step:next.options[1].value})));
+    await waitFor(() => expect(crmAdminApi.inbox.mock.calls.length).toBeGreaterThan(1));
+  });
+
   it('entrada comercial exige capacidad del servidor incluso para una sesión superadmin', async () => {
     render(<WhatsappCrmDemo requiredScope="commercial" />);
     expect(await screen.findByText('No tienes acceso a esta sección.')).toBeInTheDocument();

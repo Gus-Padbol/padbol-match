@@ -471,10 +471,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
     setBusy(true);
     setNotice(null);
     try {
-      // El backend QA guarda el seguimiento con un esquema fijo
-      // (activity_type, summary, outcome, next_step, follow_up_at y author).
-      // Responsable, estado y derivación viajan dentro del resumen para que
-      // queden persistidos en la ficha sin cambiar el contrato del backend.
+      // El estado y la actividad se guardan juntos en el servidor.
       const responsable = (activityResponsable || session?.user?.email || '').trim();
       const contexto = [
         `Responsable: ${responsable || '—'}`,
@@ -486,6 +483,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         : activityTopic;
       await crmAdminApi.addActivity(token, active.id, {
         type: activityType,
+        conversation_state: activityEstado,
         summary: `${resumenBase} · ${contexto}`,
         outcome: activityOutcome.trim() || null,
         next_step: activityNextStep.trim() || null,
@@ -501,6 +499,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
       setReminderTime('10:00');
       setNotice('Seguimiento registrado.');
       await loadActivities(active.id);
+      await load({ silent: true });
     } catch (e) {
       setNotice(e?.message || 'No se pudo registrar el seguimiento');
     } finally {
