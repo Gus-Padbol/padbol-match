@@ -95,6 +95,31 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.reply).not.toHaveBeenCalled();
   });
 
+  it('entrada comercial conserva informes y seguimiento sin áreas de WhatsApp, soporte o alta manual', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ role: 'commercial_operator', canOperate: true, canAudit: false, commercialOnly: true, allowedAreas: ['commercial'], canCreateManual: false, emailSendEnabled: true, whatsappSendEnabled: false });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'commercial', source_channel: 'email', origin: 'web_form:Consulta Padbol · Quiero una cancha Padbol', contact: { nombre: 'Lead comercial', email_normalized: 'lead@example.invalid' }, qualification_data: { routing: { workflow: 'commercial_lead' } }, inbound_body: 'Proyecto comercial' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    render(<WhatsappCrmDemo requiredScope="commercial" />);
+    expect((await screen.findAllByText('Lead comercial')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Consultas comerciales')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /WhatsApp/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Soporte y reclamos/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Next Generation/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agregar contacto manual' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar por email' })).toBeInTheDocument();
+    expect(screen.getByText('Registrar seguimiento')).toBeInTheDocument();
+    expect(crmAdminApi.nextGenerationOverview).not.toHaveBeenCalled();
+    expect(crmAdminApi.audit).not.toHaveBeenCalled();
+    expect(crmAdminApi.sedes).not.toHaveBeenCalled();
+  });
+
+  it('entrada comercial exige capacidad del servidor incluso para una sesión superadmin', async () => {
+    render(<WhatsappCrmDemo requiredScope="commercial" />);
+    expect(await screen.findByText('No tienes acceso a esta sección.')).toBeInTheDocument();
+    expect(crmAdminApi.inbox).not.toHaveBeenCalled();
+    expect(crmAdminApi.nextGenerationOverview).not.toHaveBeenCalled();
+  });
+
   it('presenta eventos internos como inscripciones comprensibles sin exponer sus claves', async () => {
     crmAdminApi.inbox.mockResolvedValue([{
       id: 'ng-event', estado: 'nuevo', source_channel: 'nextgen',

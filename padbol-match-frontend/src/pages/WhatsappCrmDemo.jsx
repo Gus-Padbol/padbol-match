@@ -184,7 +184,7 @@ export function leadAnalysisNotice(status, enabled) {
   return { title: 'Sin análisis solicitado', message: 'Esta ficha no tiene una solicitud de análisis registrada.', badge: '' };
 }
 
-export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
+export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } = {}) {
   const hasPanelExit = Boolean(onBack);
   useEffect(() => {
     if (hasPanelExit) window.scrollTo(0, 0);
@@ -237,6 +237,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     try {
       const p = await crmAdminApi.permissions(token);
       setPerms(p);
+      if (requiredScope === 'commercial' && (!p?.commercialOnly || !p?.canOperate)) {
+        setItems([]);
+        setPerms(null);
+        throw Object.assign(new Error('No tienes acceso a las consultas comerciales.'), { status: 403 });
+      }
       if (p?.canOperate || p?.canAudit) {
         const inbox = await crmAdminApi.inbox(token, { channel: channelFilter, estado: estadoFilter });
         setItems(Array.isArray(inbox) ? inbox : Array.isArray(inbox?.items) ? inbox.items : []);
@@ -248,7 +253,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [token, channelFilter, estadoFilter]);
+  }, [token, channelFilter, estadoFilter, requiredScope]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -258,14 +263,14 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   }, [token, perms?.canAudit]);
 
   useEffect(() => {
-    if (!token || (!perms?.canOperate && !perms?.canAudit)) return;
+    if (!token || perms?.commercialOnly || (!perms?.canOperate && !perms?.canAudit)) return;
     crmAdminApi.nextGenerationOverview(token)
       .then((data) => setNgOverview({
         sedes: Array.isArray(data?.sedes) ? data.sedes : [],
         jornadas: Array.isArray(data?.jornadas) ? data.jornadas : [],
       }))
       .catch(() => setNgOverview({ sedes: [], jornadas: [] }));
-  }, [token, perms?.canOperate, perms?.canAudit]);
+  }, [token, perms?.canOperate, perms?.canAudit, perms?.commercialOnly]);
 
   useEffect(() => {
     const timer = window.setInterval(() => { void load({ silent: true }); }, 5000);
@@ -276,7 +281,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     ...counts,
     [area.id]: area.id === 'all' ? items.length : items.filter((item) => conversationArea(item) === area.id).length,
   }), {});
-  const visibleItems = areaFilter === 'all' ? items : items.filter((item) => conversationArea(item) === areaFilter);
+  const commercialOnly = requiredScope === 'commercial' || perms?.commercialOnly === true;
+  const areas = commercialOnly ? INBOX_AREAS.filter(area => area.id === 'commercial') : INBOX_AREAS;
+  const visibleItems = commercialOnly || areaFilter === 'all' ? items : items.filter((item) => conversationArea(item) === areaFilter);
   const active = visibleItems.find((i) => i.id === activeId) || visibleItems[0] || null;
   const leadAnalysis = active?.qualification_data?.lead_analysis || null;
   const analysisRequestStatus = active?.qualification_data?.lead_analysis_request?.status || null;
@@ -291,7 +298,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   activeConversationId.current = active?.id;
   useEffect(() => { emailComposition.current = null; setReplyText(''); setNotice(null); }, [active?.id]);
   const leadName = [detailValue(activeDetails, 'Nombre'), detailValue(activeDetails, 'Apellido')].filter(Boolean).join(' ') || active?.contact?.nombre || active?.identity_used || 'Contacto sin nombre';
-  const activeArea = conversationArea(active);
+  const activeArea = commercialOnly ? 'commercial' : conversationArea(active);
   const isNextGenerationParticipant = activeArea === 'nextgen_participants';
   const isNextGenerationVenue = activeArea === 'nextgen_venues';
   const ngJornadas = ngOverview.jornadas.filter((jornada) => !ngDraft.sede_id || String(jornada.sede_id) === String(ngDraft.sede_id));
@@ -509,7 +516,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
       <header className="wa-topbar">
         <div className="wa-brand">
           <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
-          <div><strong>Atención & CRM</strong><span>Centro de conversaciones</span></div>
+          <div><strong>{commercialOnly ? 'Consultas comerciales' : 'Atención & CRM'}</strong><span>{commercialOnly ? 'Formularios, informes y seguimiento' : 'Centro de conversaciones'}</span></div>
         </div>
         <div className="wa-demo-badge"><span /> {CRM_IS_QA ? 'CONECTADO A QA' : 'CONECTADO'}</div>
         <div className="wa-agent"><div className="wa-avatar wa-avatar--small">{perms?.canAudit ? 'SU' : perms?.canOperate ? 'OP' : '—'}</div><div><strong>{perms?.canAudit ? 'Auditoría' : perms?.canOperate ? 'Operador' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div></div>
@@ -517,10 +524,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
 
       <section className="wa-safety" aria-label="Estado de seguridad">
         <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Entorno de prueba' : 'Centro de atención'}</strong><small>{emailSendEnabled ? 'El envío por email está habilitado para operadores autorizados.' : 'Los formularios entran al CRM. Configura un canal de respuesta para enviar mensajes.'}</small></div>
-        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span><span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span><span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
+        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span>{!commercialOnly ? <span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span> : null}<span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
       </section>
 
-      {perms?.canOperate || perms?.canAudit ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
+      {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
         <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
         {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
           <strong>Registro de contacto</strong>
@@ -547,11 +554,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
       ) : (
         <div className="wa-crm-body">
           <nav className="wa-area-tabs wa-area-tabs--top" aria-label="Áreas de atención">
-            {INBOX_AREAS.map((area) => <button type="button" key={area.id} className={areaFilter === area.id ? 'active' : ''} onClick={() => { setAreaFilter(area.id); setActiveId(null); }}><i>{area.icon}</i><span>{area.label}</span><b>{areaCounts[area.id] || 0}</b></button>)}
+            {areas.map((area) => <button type="button" key={area.id} className={areaFilter === area.id ? 'active' : ''} onClick={() => { setAreaFilter(area.id); setActiveId(null); }}><i>{area.icon}</i><span>{area.label}</span><b>{commercialOnly ? items.length : areaCounts[area.id] || 0}</b></button>)}
           </nav>
           <div className="wa-workspace">
           <aside className="wa-inbox">
-            <div className="wa-inbox-head"><div><p>{INBOX_AREAS.find((area) => area.id === areaFilter)?.label || 'Todo'}</p><h1>Conversaciones</h1></div><span className="wa-inbox-count">{visibleItems.length}</span></div>
+            <div className="wa-inbox-head"><div><p>{commercialOnly ? 'Formularios comerciales' : INBOX_AREAS.find((area) => area.id === areaFilter)?.label || 'Todo'}</p><h1>Conversaciones</h1></div><span className="wa-inbox-count">{visibleItems.length}</span></div>
             <div className="wa-filters" aria-label="Filtros">
               <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)} aria-label="Estado">
                 <option value="">Todos los estados</option><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option>
@@ -659,7 +666,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                   <label>Tipo<select value={activityType} onChange={(e) => setActivityType(e.target.value)}>
                     <option value="note">Nota / WhatsApp externo</option><option value="phone_call">Llamada</option><option value="zoom_meeting">Reunión online</option><option value="in_person_meeting">Reunión presencial</option>
                   </select></label>
-                  <label>Motivo<select value={activityTopic} onChange={(e) => setActivityTopic(e.target.value)}><option value="">Elegir motivo…</option>{FOLLOW_UP_TOPICS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+                  <label>Motivo<select value={activityTopic} onChange={(e) => setActivityTopic(e.target.value)}><option value="">Elegir motivo…</option>{FOLLOW_UP_TOPICS.filter(option => !commercialOnly || !['Jugador o partido', 'Soporte técnico', 'Reclamo'].includes(option)).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label>Detalle opcional<textarea value={activitySummary} onChange={(e) => setActivitySummary(e.target.value)} placeholder="Sólo si hace falta agregar algo" /></label>
                   <label>Resultado<select value={activityOutcome} onChange={(e) => setActivityOutcome(e.target.value)}><option value="">Elegir resultado…</option>{FOLLOW_UP_RESULTS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label>Próximo paso<select value={activityNextStep} onChange={(e) => setActivityNextStep(e.target.value)}><option value="">Sin próximo paso</option>{FOLLOW_UP_NEXT_STEPS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
