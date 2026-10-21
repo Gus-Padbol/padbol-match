@@ -1,3 +1,4 @@
+import PendingValidationActions from '../components/PendingValidationActions';
 import { fetchAdminPendingValidations, updatePendingValidation } from '../utils/adminPendingValidationsApi';
 import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
 import AdminTournamentLevelInput from '../components/AdminTournamentLevelInput';
@@ -12676,30 +12677,16 @@ export default function AdminDashboard({
                         {t('admin.formularios.validationViewProfile')}
                       </a>
                     ) : null}
-                    <button
-                      disabled={vs.saving}
-                      onClick={() => aprobarJugador(jugador.id)}
-                      className="admin-validacion-action admin-validacion-action--approve"
-                      style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
-                    >
-                      {stripAdminEmoji(t('admin.formularios.validationApprove')).replace(/\u200B/g, '').trim()}
-                    </button>
-                    <button
-                      disabled={vs.saving}
-                      onClick={() => void rechazarJugador(jugador.id)}
-                      className="admin-validacion-action admin-validacion-action--reject"
-                      style={{ padding: '7px 14px', background: '#b91c1c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
-                    >
-                      {t('admin.formularios.validationReject')}
-                    </button>
-                    <button
-                      disabled={vs.saving}
-                      onClick={() => toggleCambiarCategoria(jugador.id, jugador.nivel)}
-                      className="admin-validacion-action admin-validacion-action--category"
-                      style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
-                    >
-                      {t('admin.formularios.validationChangeCategory')}
-                    </button>
+                    <PendingValidationActions
+                      isSuperAdmin={isSuperAdmin}
+                      saving={vs.saving}
+                      onApprove={() => aprobarJugador(jugador.id)}
+                      onReject={() => void rechazarJugador(jugador.id)}
+                      onCategory={() => toggleCambiarCategoria(jugador.id, jugador.nivel)}
+                      approveLabel={stripAdminEmoji(t('admin.formularios.validationApprove')).replace(/\u200B/g, '').trim()}
+                      rejectLabel={t('admin.formularios.validationReject')}
+                      categoryLabel={t('admin.formularios.validationChangeCategory')}
+                    />
 
                     {vs.open && (
                       <>
