@@ -2809,6 +2809,16 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   }
 }
 
+/* Los campos deben caber en la columna también en pantallas angostas. */
+#admin-scoreboard-form,
+#admin-scoreboard-form label,
+#admin-scoreboard-form input,
+#admin-scoreboard-form select {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 /* Scoreboard admin: títulos de jugadores legibles en tema oscuro */
 #admin-scoreboard-form h3 {
   color: var(--text-primary);

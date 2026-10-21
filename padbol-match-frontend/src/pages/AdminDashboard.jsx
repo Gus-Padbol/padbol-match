@@ -2336,6 +2336,14 @@ function torneoEnCursoConFinVencido(torneo, now = new Date()) {
   return !Number.isNaN(fin.getTime()) && fin.getTime() < now.getTime();
 }
 
+function torneoAbiertoConFinVencido(torneo, now = new Date()) {
+  if (String(torneo?.estado || '').trim().toLowerCase() !== 'abierto') return false;
+  const raw = String(torneo?.fecha_fin || '').trim();
+  if (!raw) return false;
+  const fin = new Date(`${raw.slice(0, 10)}T23:59:59`);
+  return !Number.isNaN(fin.getTime()) && fin.getTime() < now.getTime();
+}
+
 // "2026-04-10" → "Viernes 10 de Abril"
 function formatFechaDia(str, locale = 'es-AR') {
   if (!str) return '';
@@ -11574,10 +11582,11 @@ export default function AdminDashboard({
                   label: String(torneo.estado || '').trim() || '—',
                 };
               const fechaFinVencida = torneoEnCursoConFinVencido(torneo);
-              const estadoBadge = fechaFinVencida ? {
+              const abiertoConFinVencido = torneoAbiertoConFinVencido(torneo);
+              const estadoBadge = fechaFinVencida || abiertoConFinVencido ? {
                 bg: '#fef3c7',
                 color: '#92400e',
-                label: 'Finalización pendiente',
+                label: abiertoConFinVencido ? 'Fecha vencida' : 'Finalización pendiente',
               } : {
                 ...estadoBadgeBase,
                 label: t(`torneos.vista.estado.${String(torneo.estado || '').trim().toLowerCase()}`, {
