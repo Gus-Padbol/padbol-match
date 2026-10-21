@@ -1,3 +1,4 @@
+import { precioSedeParaDuracionMin } from './sedePreciosDuracion';
 // La respuesta pública contiene filas activas; la tarifa específica prevalece sobre Base.
 export function resolverOfertasCanonicas(rows, deporte) {
   const dep = String(deporte || '').trim().toLowerCase();
@@ -11,4 +12,10 @@ export function resolverOfertasCanonicas(rows, deporte) {
     if (!chosen.has(duration) || chosen.get(duration).priority < priority) chosen.set(duration, { duracion_minutos: duration, precio: price, priority });
   }
   return [...chosen.values()].sort((a,b) => a.duracion_minutos-b.duracion_minutos).map(({priority,...row}) => row);
+}
+
+// Only for a server that explicitly confirms that no duration rows exist.
+export function resolverOfertasLegacy(sede) {
+  const legacy = { ...sede, duraciones_oferta: [], duraciones: [] };
+  return [60,90,120].map(duracion_minutos => ({duracion_minutos,precio:precioSedeParaDuracionMin(legacy,duracion_minutos)})).filter(row => row.precio != null);
 }

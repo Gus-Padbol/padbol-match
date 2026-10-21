@@ -1,4 +1,4 @@
-import { resolverOfertasCanonicas } from '../utils/reservaOfertasCanonicas';
+import { resolverOfertasCanonicas, resolverOfertasLegacy } from '../utils/reservaOfertasCanonicas';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'react-router-dom';
@@ -1099,12 +1099,13 @@ export default function ReservaForm() {
     setOfertaCanonical({ key: ofertaKey, rows: [], loading: true, error: false });
     fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(sid))}/duraciones-disponibles?deporte=${encodeURIComponent(reservaDeporteUrl)}`))
       .then(async res => { if (!res.ok) throw new Error('No se pudieron consultar las tarifas'); return res.json(); })
-      .then(data => { if (!cancelled) setOfertaCanonical({ key: ofertaKey, rows: resolverOfertasCanonicas(data.duraciones, reservaDeporteUrl), loading: false, error: false }); })
+      .then(data => { if (!cancelled) setOfertaCanonical({ key: ofertaKey, rows: resolverOfertasCanonicas(data.duraciones, reservaDeporteUrl), configurada: data.configurada, loading: false, error: false }); })
       .catch(() => { if (!cancelled) setOfertaCanonical({ key: ofertaKey, rows: [], loading: false, error: true }); });
     return () => { cancelled = true; };
   }, [filtros.sede_id, reservaDeporteUrl, ofertaKey]);
   const ofertaVigente = ofertaCanonical.key === ofertaKey && !ofertaCanonical.loading && !ofertaCanonical.error;
-  const duracionesOfrecidas = useMemo(() => ofertaVigente ? ofertaCanonical.rows.map(row => row.duracion_minutos) : [], [ofertaVigente, ofertaCanonical.rows]);
+  const ofertaRows = useMemo(() => ofertaVigente && ofertaCanonical.configurada === false ? resolverOfertasLegacy(sedeSeleccionada) : ofertaCanonical.rows, [ofertaVigente, ofertaCanonical.configurada, ofertaCanonical.rows, sedeSeleccionada]);
+  const duracionesOfrecidas = useMemo(() => ofertaVigente ? ofertaRows.map(row => row.duracion_minutos) : [], [ofertaVigente, ofertaRows]);
   const duracionSolicitada = parseInt(String(formData.duracion || ''), 10);
   const duracionSeleccionadaMin = duracionesOfrecidas.includes(duracionSolicitada) ? duracionSolicitada : (duracionesOfrecidas[0] || 90);
 
@@ -1185,7 +1186,7 @@ export default function ReservaForm() {
     return s;
   }, [reservaExtrasDisponibles, reservaExtrasCantidad]);
 
-  const precioFijoTurno = useMemo(() => ofertaCanonical.rows.find(row => row.duracion_minutos === duracionSeleccionadaMin)?.precio ?? 0, [ofertaCanonical.rows, duracionSeleccionadaMin]);
+  const precioFijoTurno = useMemo(() => ofertaRows.find(row => row.duracion_minutos === duracionSeleccionadaMin)?.precio ?? 0, [ofertaRows, duracionSeleccionadaMin]);
 
   useEffect(() => {
     const sedeId = filtros.sede_id;
@@ -2632,7 +2633,7 @@ export default function ReservaForm() {
                       const active = duracionSeleccionadaMin === duracion;
                       const precioDurLabel = formatDuracionCardPrecio({
                         duracion,
-                        sede: { ...sedeSeleccionada, duraciones_oferta: ofertaCanonical.rows },
+                        sede: { ...sedeSeleccionada, duraciones_oferta: ofertaRows },
                         fecha: formData.fecha,
                         hora: formData.hora,
                         deporte: reservaDeporteUrl,
