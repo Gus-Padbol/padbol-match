@@ -9,7 +9,7 @@ export function buildSurgeSlotInicio(fecha, hora) {
   const f = String(fecha || '').trim();
   const h = String(hora || '').trim().slice(0, 5);
   if (!f || !h) return null;
-  return `${f}T${h}:00`;
+  return `${f}T${h}:00-03:00`;
 }
 
 /**

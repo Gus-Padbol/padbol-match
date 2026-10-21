@@ -1,3 +1,4 @@
+import { resolverOfertasCanonicas } from '../utils/reservaOfertasCanonicas';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation, createSearchParams } from 'react-router-dom';
@@ -110,10 +111,10 @@ function formatDuracionCardPrecio({
     return fmt(getPrecio(sede, '', fecha, duracion, deporte, preciosDeporteRows));
   }
 
-  if (surgeActivo) {
+  {
     const quote = surgeQuotesByDuracion?.[duracion];
     if (surgeQuotesLoading && !quote) return '…';
-    if (quote?.surge_activo && quote.precio != null && Number.isFinite(Number(quote.precio))) {
+    if (quote?.precio != null && Number.isFinite(Number(quote.precio))) {
       return fmt(quote.precio);
     }
   }
@@ -211,13 +212,6 @@ function duracionesReservaDesdeSede(sede) {
   return duracionesReservaDisponibles(sede);
 }
 
-function duracionReservaSeleccionada(formData, sede) {
-  const disponibles = duracionesReservaDesdeSede(sede);
-  const d = parseInt(String(formData?.duracion || ''), 10);
-  if (disponibles.length > 0 && disponibles.includes(d)) return d;
-  if (disponibles.length > 0) return disponibles[0];
-  return RESERVA_DURACIONES_MIN.includes(d) ? d : 90;
-}
 
 function reservaBloqueaDisponibilidad(reserva) {
   const estado = String(reserva?.estado || '').trim().toLowerCase();
@@ -1096,41 +1090,35 @@ export default function ReservaForm() {
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
-  const duracionesOfrecidas = useMemo(
-    () => duracionesReservaDesdeSede(sedeSeleccionada),
-    [sedeSeleccionada],
-  );
-
-  const duracionSeleccionadaMin = duracionReservaSeleccionada(formData, sedeSeleccionada);
+  const [ofertaCanonical, setOfertaCanonical] = useState({ key: '', rows: [], loading: true, error: false });
+  const ofertaKey = `${filtros.sede_id || ''}:${reservaDeporteUrl}`;
+  useEffect(() => {
+    const sid = filtros.sede_id;
+    if (!sid) { setOfertaCanonical({ key: '', rows: [], loading: false, error: false }); return undefined; }
+    let cancelled = false;
+    setOfertaCanonical({ key: ofertaKey, rows: [], loading: true, error: false });
+    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(sid))}/duraciones-disponibles?deporte=${encodeURIComponent(reservaDeporteUrl)}`))
+      .then(async res => { if (!res.ok) throw new Error('No se pudieron consultar las tarifas'); return res.json(); })
+      .then(data => { if (!cancelled) setOfertaCanonical({ key: ofertaKey, rows: resolverOfertasCanonicas(data.duraciones, reservaDeporteUrl), loading: false, error: false }); })
+      .catch(() => { if (!cancelled) setOfertaCanonical({ key: ofertaKey, rows: [], loading: false, error: true }); });
+    return () => { cancelled = true; };
+  }, [filtros.sede_id, reservaDeporteUrl, ofertaKey]);
+  const ofertaVigente = ofertaCanonical.key === ofertaKey && !ofertaCanonical.loading && !ofertaCanonical.error;
+  const duracionesOfrecidas = useMemo(() => ofertaVigente ? ofertaCanonical.rows.map(row => row.duracion_minutos) : [], [ofertaVigente, ofertaCanonical.rows]);
+  const duracionSolicitada = parseInt(String(formData.duracion || ''), 10);
+  const duracionSeleccionadaMin = duracionesOfrecidas.includes(duracionSolicitada) ? duracionSolicitada : (duracionesOfrecidas[0] || 90);
 
   const [reservaExtrasDisponibles, setReservaExtrasDisponibles] = useState([]);
   const [reservaExtrasLoading, setReservaExtrasLoading] = useState(false);
   const [reservaExtrasCantidad, setReservaExtrasCantidad] = useState({});
   const reservaExtrasSedeIdRef = useRef(null);
   const reservaExtrasFetchDoneRef = useRef(null);
-  const [preciosDeporteRows, setPreciosDeporteRows] = useState([]);
   const [surgeQuotesByDuracion, setSurgeQuotesByDuracion] = useState({});
   const [surgeQuotesLoading, setSurgeQuotesLoading] = useState(false);
+  const [surgeQuoteKey, setSurgeQuoteKey] = useState('');
+  const quoteKey = `${ofertaKey}:${formData.fecha}:${formData.hora}:${duracionesOfrecidas.join(',')}`;
+  const [changedPrice, setChangedPrice] = useState(null);
 
-  useEffect(() => {
-    const rawId = filtros.sede_id;
-    if (rawId === '' || rawId == null) {
-      setPreciosDeporteRows([]);
-      return undefined;
-    }
-    let cancelled = false;
-    fetch(apiUrl(`/api/sedes/${encodeURIComponent(String(rawId))}/precios-deporte`))
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled) setPreciosDeporteRows(Array.isArray(d.precios) ? d.precios : []);
-      })
-      .catch(() => {
-        if (!cancelled) setPreciosDeporteRows([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [filtros.sede_id]);
 
   /** Precarga extras en pantalla 2 para que el resumen (4) ya los tenga listos antes del botón de pago. */
   useEffect(() => {
@@ -1197,37 +1185,17 @@ export default function ReservaForm() {
     return s;
   }, [reservaExtrasDisponibles, reservaExtrasCantidad]);
 
-  const precioFijoTurno = useMemo(() => {
-    if (!sedeSeleccionada) return 0;
-    const p = getPrecio(
-      sedeSeleccionada,
-      formData.hora,
-      formData.fecha,
-      duracionSeleccionadaMin,
-      reservaDeporteUrl,
-      preciosDeporteRows,
-    );
-    return Number.isFinite(Number(p)) ? Number(p) : 0;
-  }, [
-    sedeSeleccionada,
-    formData.hora,
-    formData.fecha,
-    duracionSeleccionadaMin,
-    reservaDeporteUrl,
-    preciosDeporteRows,
-  ]);
+  const precioFijoTurno = useMemo(() => ofertaCanonical.rows.find(row => row.duracion_minutos === duracionSeleccionadaMin)?.precio ?? 0, [ofertaCanonical.rows, duracionSeleccionadaMin]);
 
   useEffect(() => {
     const sedeId = filtros.sede_id;
     const hora = formData.hora;
     const fecha = formData.fecha;
-    const surgeActivo = sedeSeleccionada?.surge_activo === true;
     if (
       !sedeId
       || !hora
       || !fecha
       || pantalla < 2
-      || !surgeActivo
       || duracionesOfrecidas.length === 0
     ) {
       setSurgeQuotesByDuracion({});
@@ -1235,12 +1203,14 @@ export default function ReservaForm() {
       return undefined;
     }
     let cancelled = false;
+    setSurgeQuoteKey('');
+    setSurgeQuotesByDuracion({});
     setSurgeQuotesLoading(true);
     Promise.all(
       duracionesOfrecidas.map((dur) =>
         fetchSurgePrecio(sedeId, reservaDeporteUrl, dur, fecha, hora)
           .then((data) => [dur, data])
-          .catch(() => [dur, { precio: null, surge_activo: false, ocupacion_porcentaje: 0, last_minute_discount: false }]),
+          .catch(() => [dur, { precio: null, error: true }]),
       ),
     )
       .then((entries) => {
@@ -1248,6 +1218,7 @@ export default function ReservaForm() {
         const map = {};
         for (const [dur, data] of entries) map[dur] = data;
         setSurgeQuotesByDuracion(map);
+        setSurgeQuoteKey(quoteKey);
       })
       .finally(() => {
         if (!cancelled) setSurgeQuotesLoading(false);
@@ -1261,6 +1232,7 @@ export default function ReservaForm() {
     reservaDeporteUrl,
     pantalla,
     sedeSeleccionada?.surge_activo,
+    quoteKey,
   ]);
 
   const surgeQuote = useMemo(() => {
@@ -1279,20 +1251,22 @@ export default function ReservaForm() {
 
   const precioReservaTurnoBase = useMemo(() => {
     if (
-      surgeQuote.surge_activo
-      && surgeQuote.precio != null
+      surgeQuote.precio != null
       && Number.isFinite(Number(surgeQuote.precio))
     ) {
       return Number(surgeQuote.precio);
     }
     return precioFijoTurno;
   }, [surgeQuote, precioFijoTurno]);
+  const precioConfirmable = ofertaVigente && surgeQuoteKey === quoteKey && duracionesOfrecidas.includes(duracionSeleccionadaMin) && !surgeQuotesLoading && surgeQuote.precio != null && Number.isFinite(Number(surgeQuote.precio));
 
   const reservaSubtotalTurnoExtras = useMemo(
     () => precioReservaTurnoBase + reservaExtrasSubtotal,
     [precioReservaTurnoBase, reservaExtrasSubtotal],
   );
-  const reservaTotalDisplay = reservaSubtotalTurnoExtras;
+  const confirmationKey = `${quoteKey}:${duracionSeleccionadaMin}:${JSON.stringify(reservaExtrasCantidad)}`;
+  const changedTotal = changedPrice?.key === confirmationKey ? changedPrice.total : null;
+  const reservaTotalDisplay = changedTotal ?? reservaSubtotalTurnoExtras;
 
   const reservaExtrasPayload = useMemo(
     () => buildReservaExtrasPayload(reservaExtrasDisponibles, reservaExtrasCantidad),
@@ -2192,6 +2166,7 @@ export default function ReservaForm() {
   }, [pantalla, formData.hora, canchasDisponibles]);
 
   const handlePagarConMP = async () => {
+    if (!precioConfirmable) { setError('No se pudo confirmar la tarifa vigente. Volvé a seleccionar fecha y hora.'); return; }
     if (!gateReservaPago()) return;
     if (!sedeSeleccionada) {
       setError(t('reservas.loadingVenue'));
@@ -2230,7 +2205,7 @@ export default function ReservaForm() {
 
     const creditoAplicado = 0;
     const extrasPayload = reservaExtrasPayload;
-    const precioFinal = Math.max(0, reservaSubtotalTurnoExtras - creditoAplicado);
+    const precioFinal = Math.max(0, reservaTotalDisplay - creditoAplicado);
     const duracionReservaMin = duracionSeleccionadaMin;
     const reservaData = {
       sede_id: sedeSeleccionada.id,
@@ -2310,7 +2285,12 @@ export default function ReservaForm() {
         setError(data.message || t('reservas.stripeImplementing'));
         setMpLoading(false);
       } else {
-        setError(data.error || t('reservas.paymentStartFailed'));
+        const current = Number(data.serverTotal);
+        const hasUpdatedTotal = data.serverTotal != null && Number.isFinite(current) && current >= 0;
+        if (hasUpdatedTotal) setChangedPrice({ key: confirmationKey, total: current });
+        setError(hasUpdatedTotal
+          ? `La tarifa cambió a ${current.toLocaleString('es-AR')} ${data.moneda || sedeSeleccionada.moneda || 'ARS'}. Revisá el nuevo total y confirmá nuevamente.`
+          : (data.error || t('reservas.paymentStartFailed')));
         setMpLoading(false);
       }
     } catch (err) {
@@ -2637,7 +2617,7 @@ export default function ReservaForm() {
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
               {duracionesOfrecidas.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
-                  {t('reservas.noPricing')}
+                  {ofertaCanonical.error ? 'No se pudieron consultar las tarifas. Intentá nuevamente.' : t('reservas.noPricing')}
                 </p>
               ) : (
                 <>
@@ -2652,11 +2632,11 @@ export default function ReservaForm() {
                       const active = duracionSeleccionadaMin === duracion;
                       const precioDurLabel = formatDuracionCardPrecio({
                         duracion,
-                        sede: sedeSeleccionada,
+                        sede: { ...sedeSeleccionada, duraciones_oferta: ofertaCanonical.rows },
                         fecha: formData.fecha,
                         hora: formData.hora,
                         deporte: reservaDeporteUrl,
-                        preciosDeporteRows,
+                        preciosDeporteRows: [],
                         surgeQuotesByDuracion,
                         surgeQuotesLoading,
                         dynamicPriceLabel: t('reservas.dynamicPrice'),
@@ -2836,7 +2816,7 @@ export default function ReservaForm() {
     const moneda = sedeSeleccionada?.moneda || 'ARS';
     const creditoAplicado = 0;
     const precioTurnoResumen = precioReservaTurnoBase;
-    const stripeMontoMainConExtras = Math.max(0, reservaSubtotalTurnoExtras - creditoAplicado);
+    const stripeMontoMainConExtras = Math.max(0, reservaTotalDisplay - creditoAplicado);
     const reservaSinCargo = stripeMontoMainConExtras === 0;
     const metodoPagoStripe = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'stripe';
     const metodoPagoEfectivo = String(sedeSeleccionada?.metodo_pago || '').trim().toLowerCase() === 'efectivo';
@@ -2945,7 +2925,8 @@ export default function ReservaForm() {
                     lineHeight: 1.45,
                   }}
                 >
-                  {t('reservas.noServiceFeeVenue')}
+                  {t('reservas.noServiceFeeVenue')}<br />
+                  <strong>{t('reservas.totalPagar')}</strong> {formatMoneyMain(reservaTotalDisplay, moneda)}
                 </p>
               ) : (
                 <div style={{ margin: '12px 0 0', fontSize: '15px', lineHeight: 1.55, color: 'var(--text-primary)' }}>
@@ -3132,9 +3113,10 @@ export default function ReservaForm() {
                 nivel: 'Principiante',
                 precio: precioPayloadStripe,
                 duracion: duracionReservaMinP4,
+                deporte: reservaDeporteUrl,
                 ...(reservaExtrasPayload.length ? { extras: reservaExtrasPayload } : {}),
               }}
-              disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk || reputacionSuspendido}
+              disabledPrepare={!telefonoStripe.ok || !stripeCuentaOk || reputacionSuspendido || !precioConfirmable}
               onPaid={() => {
                 setReservaStripeExitoOpen(true);
               }}
@@ -3143,7 +3125,7 @@ export default function ReservaForm() {
             <button
               type="button"
               onClick={handlePagarConMP}
-              disabled={mpLoading || reputacionSuspendido}
+              disabled={mpLoading || reputacionSuspendido || !precioConfirmable}
               style={{
                 width: '100%',
                 padding: '14px',

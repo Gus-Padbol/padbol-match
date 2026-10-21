@@ -5,6 +5,7 @@ import ReservaForm from './ReservaForm';
 import { saveReservaPendiente } from '../utils/reservaReturnUrl';
 import es from '../i18n/locales/es.json';
 import { useAuth } from '../context/AuthContext';
+import { fetchSurgePrecio } from '../utils/surgePrecio';
 jest.mock('../context/AuthContext',()=>({useAuth:jest.fn()}));
 jest.mock('../context/HubNavLayoutContext',()=>({useHubNavLayout:()=>({navDock:'bottom'})}));
 jest.mock('../hooks/usePadbolLang',()=>({usePadbolLangVersion:()=>0}));
@@ -17,7 +18,7 @@ jest.mock('../components/BottomNav',()=>()=>null);
 jest.mock('../components/PadbolBrandLogo',()=>()=>null);
 jest.mock('../components/ReservaCalendarioMes',()=>()=>null);
 jest.mock('../components/ConfirmCancelReservaModal',()=>()=>null);
-jest.mock('../utils/surgePrecio',()=>({fetchSurgePrecio:async()=>({precio:0}),surgeBadgeFromQuote:()=>null}));
+jest.mock('../utils/surgePrecio',()=>({fetchSurgePrecio:jest.fn(),surgeBadgeFromQuote:()=>null}));
 jest.mock('@stripe/stripe-js',()=>({loadStripe:jest.fn()}));
 jest.mock('@stripe/react-stripe-js',()=>({Elements:()=>null,PaymentElement:()=>null,useStripe:()=>null,useElements:()=>null}));
 jest.mock('../supabaseClient',()=>({supabase:{auth:{getSession:async()=>({data:{session:null}})}}}));
@@ -31,12 +32,13 @@ const fixtureUrl=`/reservar?sedeId=7&fecha=${futureDate}&hora=18%3A00&canchaId=1
 const auth={session:{access_token:'qa-visible-test-token',user:{id:'qa-owner',email:'qa@example.invalid',user_metadata:{}}},loading:false,userProfile:{nombre:'QA',apellido:'Prueba',genero:'masculino',whatsapp:'+5491199901013'}};
 beforeEach(()=>{
  window.history.replaceState(null,'',fixtureUrl);
- localStorage.clear();sessionStorage.clear();useAuth.mockReturnValue(auth);
+ localStorage.clear();sessionStorage.clear();useAuth.mockReturnValue(auth);fetchSurgePrecio.mockReset();fetchSurgePrecio.mockResolvedValue({precio:0,surge_activo:false});
  window.scrollTo=jest.fn(); window.alert=jest.fn(); Element.prototype.scrollIntoView=jest.fn();
  const response=data=>({ok:true,json:async()=>data,text:async()=>JSON.stringify(data)});
  global.fetch=jest.fn(async(url,options)=>{
   const path=new URL(String(url),'https://test.invalid').pathname;
   if(path==='/api/crear-preferencia') return response({free_booking:true,reserva_id:123,reserva:{estado:'confirmada',precio:0}});
+  if(path.endsWith('/duraciones-disponibles')) return response({duraciones:venue.duraciones_oferta});
   if(path.endsWith('/precios-deporte')) return response({precios:[]});
   if(path.endsWith('/extras'))return response([]);
   if(path==='/api/sedes/7') return response(venue);
@@ -50,6 +52,7 @@ test('real checkout button uses authenticated zero-price booking and receipt wit
  render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
  await screen.findByText(venue.nombre);
  const button=await screen.findByRole('button',{name:es.reservas.confirmFreeBooking});
+ await waitFor(()=>expect(button).toBeEnabled());
  expect(screen.queryByText(es.reservas.stripeNotConnected)).not.toBeInTheDocument();
  fireEvent.click(button);
  await waitFor(()=>expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('123')));
@@ -66,7 +69,7 @@ test('occupied slot response stays visible and never announces a confirmed reser
    : original(url,options));
  render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
  await screen.findByText(venue.nombre);
- fireEvent.click(await screen.findByRole('button',{name:es.reservas.confirmFreeBooking}));
+ const button=await screen.findByRole('button',{name:es.reservas.confirmFreeBooking}); await waitFor(()=>expect(button).toBeEnabled()); fireEvent.click(button);
  await screen.findByText('Este horario ya está reservado');
  expect(window.alert).not.toHaveBeenCalled();
 });
@@ -107,4 +110,46 @@ test.each([
  await waitFor(()=>expect(screen.queryByRole('button',{name:/18:00 - 19:00/})).not.toBeInTheDocument());
  expect(screen.queryByRole('button',{name:/19:00 - 20:00/})).not.toBeInTheDocument();
  expect(screen.queryByRole('button',{name:/Cancha 1.*Libre/i})).not.toBeInTheDocument();
+});
+
+test('muestra el nuevo total y requiere una segunda confirmación explícita', async()=>{
+ const originalMethod=venue.metodo_pago;venue.metodo_pago='efectivo';
+ try {
+  const original=global.fetch.getMockImplementation();let attempts=0;
+  global.fetch.mockImplementation(async(url,options)=>{
+    if(String(url).includes('/api/crear-preferencia')) {
+      attempts++;
+      return attempts===1 ? {ok:false,status:400,json:async()=>({error:'Precio diferente',serverTotal:26000})}
+        : {ok:true,json:async()=>({efectivo_payment:true})};
+    }
+    return original(url,options);
+  });
+  render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
+  const first=await screen.findByRole('button',{name:es.reservas.confirmFreeBooking});
+  await waitFor(()=>expect(first).toBeEnabled());fireEvent.click(first);
+  await screen.findByText(/La tarifa cambió a 26.000 ARS/);
+  expect(attempts).toBe(1);
+  expect(screen.getByText(/26.000/)).toBeInTheDocument();
+  const next=screen.getByRole('button',{name:es.reservas.pago_sede});
+  fireEvent.click(next);
+  await waitFor(()=>expect(attempts).toBe(2));
+  const requests=global.fetch.mock.calls.filter(([url])=>String(url).includes('/api/crear-preferencia'));
+  expect(JSON.parse(requests[0][1].body).precio).toBe(0);
+  expect(JSON.parse(requests[1][1].body).precio).toBe(26000);
+ } finally {venue.metodo_pago=originalMethod;}
+});
+
+test('usa la cotización por franja del servidor aun sin precio dinámico',async()=>{
+ const originalMethod=venue.metodo_pago;venue.metodo_pago='efectivo';
+ try {
+  fetchSurgePrecio.mockResolvedValue({precio:26000,surge_activo:false});
+  render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
+  const button=await screen.findByRole('button',{name:es.reservas.pago_sede});
+  await waitFor(()=>expect(button).toBeEnabled());
+  expect(screen.getAllByText(/26.000/).length).toBeGreaterThan(0);
+  fireEvent.click(button);
+  await waitFor(()=>expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/crear-preferencia'))).toBe(true));
+  const request=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/crear-preferencia'));
+  expect(JSON.parse(request[1].body).precio).toBe(26000);
+ } finally {venue.metodo_pago=originalMethod;}
 });
