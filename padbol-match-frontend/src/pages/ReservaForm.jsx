@@ -2300,7 +2300,7 @@ export default function ReservaForm() {
         const hasUpdatedTotal = data.serverTotal != null && Number.isFinite(current) && current >= 0;
         if (hasUpdatedTotal) setChangedPrice({ key: confirmationKey, total: current });
         setError(hasUpdatedTotal
-          ? `La tarifa cambió a ${current.toLocaleString('es-AR')} ${data.moneda || sedeSeleccionada.moneda || 'ARS'}. Revisá el nuevo total y confirmá nuevamente.`
+          ? `La tarifa cambió a ${current.toLocaleString('es-AR')} ${data.moneda || sedeSeleccionada.moneda || 'ARS'}. Revisa el nuevo total y confirma nuevamente.`
           : (data.error || t('reservas.paymentStartFailed')));
         setMpLoading(false);
       }
