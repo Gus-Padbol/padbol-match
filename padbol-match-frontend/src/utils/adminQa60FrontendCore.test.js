@@ -58,11 +58,12 @@ describe('QA panel admin - núcleo funcional y visual', () => {
     expect(dashboardSrc).toMatch(/email_contacto/);
   });
 
-  it('V-01 ofrece rechazo confirmado y conserva el error visible', () => {
+  it('V-01 conecta los permisos del panel al rechazo confirmado y conserva el error visible', () => {
     expect(dashboardSrc).toMatch(/validationRejectConfirm/);
     expect(dashboardSrc).toMatch(/rechazarJugador\(jugador\.id\)/);
     expect(dashboardSrc).toMatch(/ejecutarValidacion\(id, 'rechazar'\)/);
-    expect(dashboardSrc).toMatch(/admin-validacion-action--reject/);
+    // El comportamiento por rol se ejercita en PendingValidationActions.test.jsx.
+    expect(dashboardSrc).toMatch(/<PendingValidationActions[\s\S]*?isSuperAdmin=\{isSuperAdmin\}[\s\S]*?onReject=\{\(\) => void rechazarJugador\(jugador\.id\)\}/);
     expect(dashboardSrc).toMatch(/vs\.error \? <div role="alert"/);
   });
 
