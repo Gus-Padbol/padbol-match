@@ -23,6 +23,7 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { savePartidosBuscarReturnUrl } from '../utils/reservaReturnUrl';
 import { parseFetchJsonSafe } from '../utils/fetchJsonSafe';
+import { createLatestRequestTracker } from '../utils/latestRequestTracker';
 
 const API_BASE = (
   getApiBaseUrl()
@@ -51,7 +52,7 @@ export default function PartidosAbiertos() {
   const [joinSuccess, setJoinSuccess] = useState(false);
   const [partidosVerTodos, setPartidosVerTodos] = useState(false);
   const hubDeporteHydratedRef = useRef(false);
-  const loadSequenceRef = useRef(0);
+  const loadSequenceRef = useRef(createLatestRequestTracker());
 
   const deporteFiltro = canonDeportePartidosAbiertos(searchParams.get('deporte'));
 
@@ -87,7 +88,7 @@ export default function PartidosAbiertos() {
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargar = useCallback(() => {
-    const sequence = ++loadSequenceRef.current;
+    const sequence = loadSequenceRef.current.begin();
     setLoading(true);
     setMsg('');
     fetch(`${API_BASE}/api/partidos-abiertos`, session?.access_token
@@ -99,16 +100,16 @@ export default function PartidosAbiertos() {
         return data;
       })
       .then((data) => {
-        if (sequence === loadSequenceRef.current) setPartidos(Array.isArray(data) ? data : []);
+        if (loadSequenceRef.current.isCurrent(sequence)) setPartidos(Array.isArray(data) ? data : []);
       })
-      .catch((err) => { if (sequence === loadSequenceRef.current) setMsg(err.message || t('partidosAbiertos.networkError')); })
-      .finally(() => { if (sequence === loadSequenceRef.current) setLoading(false); });
+      .catch((err) => { if (loadSequenceRef.current.isCurrent(sequence)) setMsg(err.message || t('partidosAbiertos.networkError')); })
+      .finally(() => { if (loadSequenceRef.current.isCurrent(sequence)) setLoading(false); });
   }, [t, session?.access_token]);
 
   useEffect(() => {
     setPartidos([]);
     cargar();
-    return () => { loadSequenceRef.current += 1; };
+    return () => { loadSequenceRef.current.invalidate(); };
   }, [cargar]);
 
   const cargarSolicitudes = useCallback(async () => {
