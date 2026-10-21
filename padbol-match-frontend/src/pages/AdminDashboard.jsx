@@ -3590,10 +3590,11 @@ export default function AdminDashboard({
   const [pendientesGuardados, setPendientes] = useState([]);
   const [pendientesScopeGuardado, setPendientesScopeGuardado] = useState(null);
   const pendientesScope = `${apiBaseUrl}:${rol}:${sedeId}:${session?.access_token || ''}`;
-  const pendientes = pendientesScopeGuardado === pendientesScope ? pendientesGuardados : [];
+  const pendientes = useMemo(() => pendientesScopeGuardado === pendientesScope ? pendientesGuardados : [], [pendientesGuardados, pendientesScopeGuardado, pendientesScope]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
   const [pendientesError, setPendientesError] = useState('');
   const pendientesRequestRef = useRef(0);
+  const fetchPendientesRef = useRef(null);
   const [busquedaValidaciones, setBusquedaValidaciones] = useState('');
   const [busquedaRolesAdmin, setBusquedaRolesAdmin] = useState('');
   // keyed by player email: { open: bool, categoria: string, saving: bool }
@@ -5445,7 +5446,7 @@ export default function AdminDashboard({
       return;
     }
     void fetchDataRef.current?.();
-    fetchPendientes();
+    void fetchPendientesRef.current?.();
     return () => { pendientesRequestRef.current += 1; };
   }, [apiBaseUrl, rol, sedeId, session?.access_token, esEditorContenido]); // token: alcance correcto en GET torneos/reservas
 
@@ -6677,6 +6678,8 @@ export default function AdminDashboard({
       if (pendientesRequestRef.current === request) setPendientesLoading(false);
     }
   };
+
+  fetchPendientesRef.current = fetchPendientes;
 
   const aprobarJugador = async (email) => {
     setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
