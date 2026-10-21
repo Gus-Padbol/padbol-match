@@ -95,6 +95,7 @@ function ChannelIcon({ channel }) {
 export function crmOriginLabel(conversation) {
   const origin = String(conversation?.origin || '').trim();
   const area = conversationArea(conversation);
+  if (isSupportEmail(conversation)) return 'support@padbol.com';
   if (origin.startsWith('web_form:')) {
     if (area === 'nextgen_venues') return 'Formulario Next Generation · Sedes';
     if (area === 'nextgen_participants') return 'Formulario Next Generation · Participantes';
@@ -119,7 +120,14 @@ const INBOX_AREAS = [
   { id: 'support', label: 'Soporte y reclamos', icon: '!' },
 ];
 
+function isSupportEmail(conversation) {
+  return conversation?.source_channel === 'email'
+    && conversation?.origin === 'support_email'
+    && conversation?.qualification_data?.mailbox?.address === 'support@padbol.com';
+}
+
 function conversationArea(conversation) {
+  if (isSupportEmail(conversation)) return 'support';
   const fields = conversation?.qualification_data?.form_submission?.fields || {};
   const workflow = String(fields.workflow || '').trim().toLowerCase();
   const participantType = String(fields.participantType || '').trim().toLowerCase();
@@ -290,10 +298,13 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const analysisNotice = leadAnalysisNotice(analysisRequestStatus, perms?.leadAnalysisEnabled);
   const whatsappSendEnabled = perms?.whatsappSendEnabled === true;
   const emailSendEnabled = perms?.emailSendEnabled === true;
+  const supportEmail = isSupportEmail(active);
+  const supportOrigin = active?.origin === 'support_email';
+  const activeCanOperate = perms?.canOperate === true || (supportEmail && perms?.canOperateSupport === true);
   const activeDetails = formDetails(active);
   const isWebForm = String(active?.origin || '').startsWith('web_form:');
   const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled;
-  const canReplyEmail = active?.source_channel === 'email' && emailSendEnabled && Boolean(active?.contact?.email_normalized);
+  const canReplyEmail = active?.source_channel === 'email' && (supportOrigin ? supportEmail && perms?.supportEmailSendEnabled === true : emailSendEnabled) && Boolean(active?.contact?.email_normalized);
   const canReply = canReplyWhatsapp || canReplyEmail;
   activeConversationId.current = active?.id;
   useEffect(() => { emailComposition.current = null; setReplyText(''); setNotice(null); }, [active?.id]);
@@ -346,7 +357,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   }, [active?.id, active?.estado, active?.derivado, session?.user?.email]);
 
   const submitReply = async () => {
-    if (!active || busy || !perms?.canOperate || !canReply || !replyText.trim()) return;
+    if (!active || busy || !activeCanOperate || !canReply || !replyText.trim()) return;
     setBusy(true);
     setNotice(null);
     try {
@@ -617,11 +628,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   {active.audio_type ? <div className="wa-system">⌁ Audio entrante: {active.audio_type} {active.transcript ? `· ${active.transcript}` : ''}</div> : null}
                 </div>
                 <div className="wa-composer">
-                  <div className="wa-draft-label"><label htmlFor="crm-response">Respuesta</label><small>{canReplyEmail ? 'Se enviará por email al contacto registrado' : canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Configura el envío por email para responder' : 'Envío desactivado'}</small></div>
-                  <textarea id="crm-response" disabled={busy || !perms?.canOperate || !canReply} value={replyText} onChange={(e) => { emailComposition.current = null; setReplyText(e.target.value); }} placeholder={!canReply && isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
+                  <div className="wa-draft-label"><label htmlFor="crm-response">Respuesta</label><small>{canReplyEmail ? (supportEmail ? 'Se enviará desde support@padbol.com al contacto registrado' : 'Se enviará por email al contacto registrado') : canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Configura el envío por email para responder' : 'Envío desactivado'}</small></div>
+                  <textarea id="crm-response" disabled={busy || !activeCanOperate || !canReply} value={replyText} onChange={(e) => { emailComposition.current = null; setReplyText(e.target.value); }} placeholder={!canReply && isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
                   <div className="wa-composer-actions">
                     <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
-                    <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={busy || !perms?.canOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
+                    <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={busy || !activeCanOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
                   </div>
                   {notice ? <p className="wa-notice">{notice}</p> : null}
                 </div>

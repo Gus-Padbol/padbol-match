@@ -184,6 +184,30 @@ describe('CRM histórico unificado', () => {
     expect(screen.getByText('HABILITADO')).toBeInTheDocument();
   });
 
+  it('clasifica support en Soporte y permite responder al operador autorizado con el canal de soporte habilitado', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, canOperateSupport: true, emailSendEnabled: false, supportEmailSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'support-1', estado: 'nuevo', source_channel: 'email', origin: 'support_email', qualification_data: { mailbox: { address: 'support@padbol.com' } }, subject: 'Prueba 1', contact: { nombre: 'Contacto fixture', email_normalized: 'contact@example.invalid' }, inbound_body: 'Consulta fixture' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.reply.mockResolvedValue({ status: 'sent' });
+    render(<WhatsappCrmDemo />);
+    const send = await screen.findByRole('button', { name: 'Enviar por email' });
+    expect(screen.getByText('support@padbol.com')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Soporte y reclamos/ }));
+    expect(screen.getAllByText('Prueba 1').length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByLabelText('Respuesta'), { target: { value: 'Respuesta fixture' } });
+    fireEvent.click(send);
+    expect(await screen.findByText('Mensaje enviado por email.')).toBeInTheDocument();
+    expect(crmAdminApi.reply).toHaveBeenCalledWith('qa-token', 'support-1', 'Respuesta fixture', expect.any(String));
+  });
+
+  it('no habilita soporte con el canal comercial o con datos de buzón incompletos', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: true, emailSendEnabled: true, supportEmailSendEnabled: false });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'support-incomplete', source_channel: 'email', origin: 'support_email', contact: { email_normalized: 'contact@example.invalid' } }]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByRole('button', { name: 'Respuesta no habilitada' })).toBeDisabled();
+    expect(screen.getByLabelText('Respuesta')).toBeDisabled();
+  });
+
   it('conserva la identidad del email tras un error ambiguo y la renueva al editar o completar', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, emailSendEnabled: true });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'retry-email', estado: 'nuevo', source_channel: 'email', contact: { email_normalized: 'contact@example.invalid' } }]);
