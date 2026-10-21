@@ -37,6 +37,7 @@ beforeEach(()=>{
  const response=data=>({ok:true,json:async()=>data,text:async()=>JSON.stringify(data)});
  global.fetch=jest.fn(async(url,options)=>{
   const path=new URL(String(url),'https://test.invalid').pathname;
+  if(path==='/api/reservas/price-capabilities') return response({strict_price_confirmation:true,version:1});
   if(path==='/api/crear-preferencia') return response({free_booking:true,reserva_id:123,reserva:{estado:'confirmada',precio:0}});
   if(path.endsWith('/duraciones-disponibles')) return response({duraciones:venue.duraciones_oferta});
   if(path.endsWith('/precios-deporte')) return response({precios:[]});
@@ -152,4 +153,14 @@ test('usa la cotización por franja del servidor aun sin precio dinámico',async
   const request=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/crear-preferencia'));
   expect(JSON.parse(request[1].body).precio).toBe(26000);
  } finally {venue.metodo_pago=originalMethod;}
+});
+
+test('no confirma cuando el servidor no anuncia validación estricta',async()=>{
+ const original=global.fetch.getMockImplementation();
+ global.fetch.mockImplementation(async(url,options)=>String(url).includes('/api/reservas/price-capabilities') ? {ok:false,status:404,json:async()=>({})} : original(url,options));
+ render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
+ const button=await screen.findByRole('button',{name:es.reservas.confirmFreeBooking});
+ await waitFor(()=>expect(fetchSurgePrecio).toHaveBeenCalled());
+ expect(button).toBeDisabled();fireEvent.click(button);
+ expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/crear-preferencia'))).toBe(false);
 });

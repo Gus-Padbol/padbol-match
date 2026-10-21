@@ -1089,6 +1089,15 @@ export default function ReservaForm() {
   const [horariosUltimaConsulta, setHorariosUltimaConsulta] = useState({ sedeId: '', fecha: '' });
   const [error, setError] = useState('');
   const [mpLoading, setMpLoading] = useState(false);
+  const [strictPriceSupported, setStrictPriceSupported] = useState(false);
+  useEffect(() => {
+    let cancelled=false;
+    fetch(apiUrl('/api/reservas/price-capabilities'), { cache: 'no-store' })
+      .then(async res => res.ok ? res.json() : null)
+      .then(data => { if (!cancelled) setStrictPriceSupported(data?.strict_price_confirmation === true && data?.version === 1); })
+      .catch(() => { if (!cancelled) setStrictPriceSupported(false); });
+    return () => { cancelled=true; };
+  }, []);
   const [cancelReservaDesdeResumenOpen, setCancelReservaDesdeResumenOpen] = useState(false);
   const [ofertaCanonical, setOfertaCanonical] = useState({ key: '', rows: [], loading: true, error: false });
   const ofertaKey = `${filtros.sede_id || ''}:${reservaDeporteUrl}`;
@@ -1259,7 +1268,7 @@ export default function ReservaForm() {
     }
     return precioFijoTurno;
   }, [surgeQuote, precioFijoTurno]);
-  const precioConfirmable = ofertaVigente && surgeQuoteKey === quoteKey && duracionesOfrecidas.includes(duracionSeleccionadaMin) && !surgeQuotesLoading && surgeQuote.precio != null && Number.isFinite(Number(surgeQuote.precio));
+  const precioConfirmable = strictPriceSupported && ofertaVigente && surgeQuoteKey === quoteKey && duracionesOfrecidas.includes(duracionSeleccionadaMin) && !surgeQuotesLoading && surgeQuote.precio != null && Number.isFinite(Number(surgeQuote.precio));
 
   const reservaSubtotalTurnoExtras = useMemo(
     () => precioReservaTurnoBase + reservaExtrasSubtotal,
