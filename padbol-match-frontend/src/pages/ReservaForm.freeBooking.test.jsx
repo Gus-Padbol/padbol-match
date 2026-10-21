@@ -193,3 +193,16 @@ test('Stripe pagado conserva tarifa legacy y no depende de capacidad v2',async()
   expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/stripe/crear-payment-intent'))).toBe(false);
  } finally {Object.assign(venue,previous);}
 });
+
+test('Stripe con precio dinámico conserva consulta legacy aunque v2 no esté disponible',async()=>{
+ const previous={...venue};Object.assign(venue,{metodo_pago:'stripe',stripe_account_id:'acct_fixture',precio_60min:25000,duraciones_oferta:[{duracion_minutos:60,precio:25000,activo:true,deporte:'padbol'}],surge_activo:true});
+ try {
+  fetchSurgePrecio.mockResolvedValue({precio:36000,surge_activo:true});
+  const original=global.fetch.getMockImplementation();
+  global.fetch.mockImplementation(async(url,options)=>String(url).includes('/api/v2/')?{ok:false,status:503,json:async()=>({})}:original(url,options));
+  render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
+  await waitFor(()=>expect(fetchSurgePrecio).toHaveBeenCalledWith(7,'padbol',60,expect.any(String),expect.any(String),{version2:false}));
+  await waitFor(()=>expect(screen.getAllByText(/36.000/).length).toBeGreaterThan(0));
+  expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/v2/'))).toBe(false);
+ } finally {Object.assign(venue,previous);}
+});
