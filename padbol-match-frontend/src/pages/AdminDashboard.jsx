@@ -1,3 +1,4 @@
+import { confirmInPersonPayment } from '../utils/adminInPersonPayment';
 import PendingValidationActions from '../components/PendingValidationActions';
 import { fetchAdminPendingValidations, updatePendingValidation } from '../utils/adminPendingValidationsApi';
 import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
@@ -7598,13 +7599,7 @@ export default function AdminDashboard({
     reservaActionBusyRef.current = begin.next;
     setReservaActionBusy(begin.next);
     try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const response = await fetch(`${apiBaseUrl}/api/reservas/${reservaId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({ estado: 'confirmada' }),
-      });
+      const response = await confirmInPersonPayment({ apiBaseUrl, reservaId, accessToken: session?.access_token });
       const j = await response.json().catch(() => ({}));
       if (response.ok) {
         invalidateReservaHistorialCache(reservaId);
