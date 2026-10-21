@@ -7,7 +7,8 @@ import {randomUUID} from 'crypto';
 jest.mock('../utils/apiPublicBaseUrl',()=>({getApiBaseUrl:()=>global.__SCOREBOARD_QA_URL__}));
 jest.mock('../supabaseClient',()=>({supabase:{auth:{getSession:async()=>({data:{session:{access_token:'synthetic'}}})}}}));
 jest.setTimeout(30000);
-const root='/Users/padbol2022/Documents/Codex/2026-10-20/le/work/scoreboard-backend-release';
+const root=process.env.SCOREBOARD_INTEGRATION_BACKEND;
+(root ? describe : describe.skip)('Suspension integration with isolated backend',()=>{
 const id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';let processHandle,Component,api;
 function nodeFetch(url,options={}){return new Promise((resolve,reject)=>{const req=http.request(url,{method:options.method||'GET',headers:options.headers||{}},res=>{let body='';res.on('data',x=>{body+=x});res.on('end',()=>resolve({ok:res.statusCode>=200&&res.statusCode<300,status:res.statusCode,json:async()=>JSON.parse(body)}))});req.on('error',reject);if(options.body)req.write(options.body);req.end()})}
 beforeAll(async()=>{
@@ -47,4 +48,6 @@ test('reconciliation cancels a request lost before dispatch without changing the
  const initial=await api.fetchPartido(id,{authenticated:true});global.fetch=async(url,options)=>{if(String(url).endsWith('/resume'))throw new Error('lost before dispatch');return nodeFetch(url,options)};
  render(<Harness initial={initial}/>);await screen.findByRole('option',{name:'Cancha 2'});fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'14'}});fireEvent.click(screen.getByRole('button',{name:'Reanudar en esta cancha'}));await screen.findByText(/No se pudo confirmar el resultado/);
  global.fetch=nodeFetch;fireEvent.click(screen.getByRole('button',{name:'Verificar y cancelar si sigue pendiente'}));await screen.findByText(/quedó cancelada/);expect((await api.fetchPartido(id,{authenticated:true})).estado).toBe('suspendido');expect(localStorage.length).toBe(0);
+});
+
 });
