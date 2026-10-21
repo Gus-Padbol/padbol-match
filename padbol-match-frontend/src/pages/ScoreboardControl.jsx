@@ -224,6 +224,7 @@ export default function ScoreboardControl() {
   const actionPendingRef = useRef(false);
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [suspensionEnabled, setSuspensionEnabled] = useState(false);
+  const [suspensionResumeEnabled, setSuspensionResumeEnabled] = useState(false);
   const [suspensionPending, setSuspensionPending] = useState(() => {
     try { return listSuspensionPending(partidoId).length > 0; } catch { return true; }
   });
@@ -268,6 +269,7 @@ export default function ScoreboardControl() {
             return;
           }
           setSuspensionEnabled(p.scoreboard_suspension_candidate_enabled === true);
+          setSuspensionResumeEnabled(p.scoreboard_suspension_resume_enabled === true);
           acceptPartido(p);
         }
       } catch (err) {
@@ -432,7 +434,7 @@ export default function ScoreboardControl() {
         </div>
       </header>
 
-      {(suspensionEnabled || suspensionPending) && <ScoreboardSuspensionCandidate key={partido.id} partido={partido} pending={suspensionPending} onPending={setSuspensionPending} onConfirmed={acceptPartido} refresh={refreshPartido} disabled={!suspensionEnabled || actionLoading || needsRefresh || terminado || !['en_curso','suspendido'].includes(String(partido.estado || '').toLowerCase())} />}
+      {(suspensionEnabled || suspensionResumeEnabled || suspensionPending) && <ScoreboardSuspensionCandidate key={partido.id} partido={partido} pending={suspensionPending} onPending={setSuspensionPending} onConfirmed={acceptPartido} refresh={refreshPartido} disabled={!(suspensionEnabled || (suspensionResumeEnabled && String(partido.estado || '').toLowerCase() === 'suspendido')) || actionLoading || needsRefresh || terminado || !['en_curso','suspendido'].includes(String(partido.estado || '').toLowerCase())} />}
       {error && <div className="sc-error">{error}</div>}
       {needsRefresh && (
         <div role="alert">
