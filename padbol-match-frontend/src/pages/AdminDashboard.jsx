@@ -1,3 +1,4 @@
+import { fetchAdminPendingValidations } from '../utils/adminPendingValidationsApi';
 import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
 import AdminTournamentLevelInput from '../components/AdminTournamentLevelInput';
 import {readLegacyTournamentDrawTeams} from '../utils/adminLegacyTournamentDraw';
@@ -3586,9 +3587,13 @@ export default function AdminDashboard({
   /** Formulario «Asignar editor»: colapsado hasta que el usuario pulse agregar. */
   const [editorContenidoFormAbierto, setEditorContenidoFormAbierto] = useState(false);
 
-  const [pendientes, setPendientes] = useState([]);
+  const [pendientesGuardados, setPendientes] = useState([]);
+  const [pendientesScopeGuardado, setPendientesScopeGuardado] = useState(null);
+  const pendientesScope = `${apiBaseUrl}:${rol}:${sedeId}:${session?.access_token || ''}`;
+  const pendientes = pendientesScopeGuardado === pendientesScope ? pendientesGuardados : [];
   const [pendientesLoading, setPendientesLoading] = useState(true);
   const [pendientesError, setPendientesError] = useState('');
+  const pendientesRequestRef = useRef(0);
   const [busquedaValidaciones, setBusquedaValidaciones] = useState('');
   const [busquedaRolesAdmin, setBusquedaRolesAdmin] = useState('');
   // keyed by player email: { open: bool, categoria: string, saving: bool }
@@ -5441,6 +5446,7 @@ export default function AdminDashboard({
     }
     void fetchDataRef.current?.();
     fetchPendientes();
+    return () => { pendientesRequestRef.current += 1; };
   }, [apiBaseUrl, rol, sedeId, session?.access_token, esEditorContenido]); // token: alcance correcto en GET torneos/reservas
 
   useEffect(() => {
@@ -6654,21 +6660,21 @@ export default function AdminDashboard({
   ]);
 
   const fetchPendientes = async () => {
+    const request = ++pendientesRequestRef.current;
+    setPendientes([]);
     setPendientesLoading(true);
     setPendientesError('');
     try {
-      const { data, error } = await supabase
-        .from('jugadores_perfil')
-        .select('email, nombre, apellido, alias, user_id, pais, nivel, genero')
-        .eq('pendiente_validacion', true)
-        .order('nombre');
-      if (error) throw error;
-      setPendientes(data || []);
+      const data = await fetchAdminPendingValidations({ apiBaseUrl, accessToken: session?.access_token });
+      if (pendientesRequestRef.current === request) { setPendientes(data); setPendientesScopeGuardado(pendientesScope); }
     } catch {
-      setPendientes([]);
-      setPendientesError(t('admin.formularios.pendingValidationLoadError', { defaultValue: 'No se pudieron cargar las validaciones pendientes. Intentá nuevamente.' }));
+      if (pendientesRequestRef.current === request) {
+        setPendientes([]);
+        setPendientesScopeGuardado(pendientesScope);
+        setPendientesError(t('admin.formularios.pendingValidationLoadError', { defaultValue: 'No se pudieron cargar las validaciones pendientes. Revisá el acceso e intentá nuevamente.' }));
+      }
     } finally {
-      setPendientesLoading(false);
+      if (pendientesRequestRef.current === request) setPendientesLoading(false);
     }
   };
 
