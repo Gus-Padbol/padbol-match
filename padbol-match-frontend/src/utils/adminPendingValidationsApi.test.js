@@ -23,3 +23,13 @@ test('actualiza por id autenticado y exige confirmación', async () => {
   await expect(updatePendingValidation(request)).rejects.toThrow('conflicto');
   await expect(updatePendingValidation({...request,id:9007199254740992})).rejects.toThrow('Perfil inválido');
 });
+
+test('rechaza por identificador estable usando sesión y motivo', async () => {
+  const { updatePendingValidation } = require('./adminPendingValidationsApi');
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ok:true}) });
+  await updatePendingValidation({apiBaseUrl:'https://example.test',accessToken:'test',id:42,accion:'rechazar',motivo:'Solicitud rechazada'});
+  expect(global.fetch).toHaveBeenCalledWith('https://example.test/api/admin/validaciones/perfil/42', expect.objectContaining({
+    method:'PATCH', headers:expect.objectContaining({Authorization:'Bearer test'}),
+    body:JSON.stringify({accion:'rechazar',motivo:'Solicitud rechazada'})
+  }));
+});

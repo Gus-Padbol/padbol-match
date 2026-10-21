@@ -60,7 +60,8 @@ describe('QA panel admin - núcleo funcional y visual', () => {
 
   it('V-01 ofrece rechazo confirmado y conserva el error visible', () => {
     expect(dashboardSrc).toMatch(/validationRejectConfirm/);
-    expect(dashboardSrc).toMatch(/\/api\/admin\/jugadores\/validaciones\/\$\{encodeURIComponent\(email\)\}\/rechazar/);
+    expect(dashboardSrc).toMatch(/rechazarJugador\(jugador\.id\)/);
+    expect(dashboardSrc).toMatch(/ejecutarValidacion\(id, 'rechazar'\)/);
     expect(dashboardSrc).toMatch(/admin-validacion-action--reject/);
     expect(dashboardSrc).toMatch(/vs\.error \? <div role="alert"/);
   });
