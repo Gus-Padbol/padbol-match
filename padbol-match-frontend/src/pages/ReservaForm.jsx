@@ -1113,9 +1113,10 @@ export default function ReservaForm() {
   }, [legacyPricing,filtros.sede_id]);
   const [ofertaCanonical, setOfertaCanonical] = useState({ key: '', rows: [], loading: true, error: false });
   const ofertaKey = `${filtros.sede_id || ''}:${reservaDeporteUrl}`;
+  const sedeIdSeleccionada = sedeSeleccionada?.id;
   useEffect(() => {
     const sid = filtros.sede_id;
-    if (!sid || !sedeSeleccionada || String(sedeSeleccionada.id)!==String(sid) || legacyPricing) { setOfertaCanonical({ key: '', rows: [], loading: false, error: false }); return undefined; }
+    if (!sid || sedeIdSeleccionada == null || String(sedeIdSeleccionada)!==String(sid) || legacyPricing) { setOfertaCanonical({ key: '', rows: [], loading: false, error: false }); return undefined; }
     let cancelled = false;
     setOfertaCanonical({ key: ofertaKey, rows: [], loading: true, error: false });
     fetch(apiUrl(`/api/v2/sedes/${encodeURIComponent(String(sid))}/duraciones-disponibles?deporte=${encodeURIComponent(reservaDeporteUrl)}`))
@@ -1123,7 +1124,7 @@ export default function ReservaForm() {
       .then(data => { if (!cancelled) setOfertaCanonical({ key: ofertaKey, rows: resolverOfertasCanonicas(data.duraciones, reservaDeporteUrl), configurada: data.configurada, loading: false, error: false }); })
       .catch(() => { if (!cancelled) setOfertaCanonical({ key: ofertaKey, rows: [], loading: false, error: true }); });
     return () => { cancelled = true; };
-  }, [filtros.sede_id, reservaDeporteUrl, ofertaKey, legacyPricing, sedeSeleccionada?.id]);
+  }, [filtros.sede_id, reservaDeporteUrl, ofertaKey, legacyPricing, sedeIdSeleccionada]);
   const ofertaVigente = ofertaCanonical.key === ofertaKey && !ofertaCanonical.loading && !ofertaCanonical.error;
   const ofertaRows = useMemo(() => ofertaVigente && ofertaCanonical.configurada === false ? resolverOfertasLegacy(sedeSeleccionada) : ofertaCanonical.rows, [ofertaVigente, ofertaCanonical.configurada, ofertaCanonical.rows, sedeSeleccionada]);
   const duracionesOfrecidas = useMemo(() => legacyPricing ? duracionesReservaDesdeSede(sedeSeleccionada) : (ofertaVigente ? ofertaRows.map(row => row.duracion_minutos) : []), [legacyPricing,sedeSeleccionada,ofertaVigente,ofertaRows]);
