@@ -2234,6 +2234,7 @@ export default function ReservaForm() {
         body: JSON.stringify({
           titulo: t('reservas.paymentDescription', { num: formData.cancha, venue: sedeSeleccionada.nombre }),
           precio: precioFinal,
+          price_confirmation_strict: true,
           moneda: sedeSeleccionada.moneda || 'ARS',
           sedeNombre: sedeSeleccionada.nombre,
           sedeId: sedeSeleccionada.id,

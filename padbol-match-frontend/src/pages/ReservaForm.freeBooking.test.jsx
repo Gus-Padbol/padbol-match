@@ -58,7 +58,7 @@ test('real checkout button uses authenticated zero-price booking and receipt wit
  await waitFor(()=>expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('123')));
  const [url,options]=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/crear-preferencia'));
  expect(options.headers.Authorization).toBe('Bearer qa-visible-test-token');
- const payload=JSON.parse(options.body);expect(payload.precio).toBe(0);expect(payload.reservaData.deporte).toBe('padbol');expect(payload.reservaData.duracion).toBe(60);
+ const payload=JSON.parse(options.body);expect(payload.precio).toBe(0);expect(payload.price_confirmation_strict).toBe(true);expect(payload.reservaData.deporte).toBe('padbol');expect(payload.reservaData.duracion).toBe(60);
  expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/stripe/crear-payment-intent'))).toBe(false);
 });
 
