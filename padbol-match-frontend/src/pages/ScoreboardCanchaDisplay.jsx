@@ -6,6 +6,7 @@ import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchPartidoByCancha, fetchSponsors } from '../utils/scoreboardApi';
 import { PADBOL_LOGO_ON_DARK } from '../constants/padbolBrandLogo';
 import { resolveScoreboardCanchaLabel } from '../utils/scoreboardVenueLabels';
+import { preferNewestScoreboard } from '../utils/scoreboardVersion';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import '../styles/ScoreboardDisplay.css';
 
@@ -42,12 +43,33 @@ export default function ScoreboardCanchaDisplay() {
   const [polling, setPolling] = useState(true);
 
   const activePartidoIdRef = useRef(null);
+  const currentPartidoRef = useRef(null);
+  const pollSequenceRef = useRef(0);
+  const selectionGenerationRef = useRef(0);
 
   const handleUpdate = useCallback((payload) => {
+    if (!payload || String(payload.id) !== String(activePartidoIdRef.current)) return;
+    const newest = preferNewestScoreboard(currentPartidoRef.current, payload);
+    if (newest !== payload) return;
+    if (String(payload.estado || '').toLowerCase() === 'suspendido'
+      || String(payload.cancha ?? '') !== String(canchaFromRoute)) {
+      pollSequenceRef.current += 1;
+      selectionGenerationRef.current += 1;
+      currentPartidoRef.current = null;
+      activePartidoIdRef.current = null;
+      setActivePartidoId(null);
+      setPartido(null);
+      setPolling(false);
+      return;
+    }
+    currentPartidoRef.current = payload;
     setPartido(payload);
-  }, []);
+  }, [canchaFromRoute]);
 
   const handleWinnerDismiss = useCallback(() => {
+    pollSequenceRef.current += 1;
+    selectionGenerationRef.current += 1;
+    currentPartidoRef.current = null;
     activePartidoIdRef.current = null;
     setActivePartidoId(null);
     setPartido(null);
@@ -60,20 +82,26 @@ export default function ScoreboardCanchaDisplay() {
   const timerSeconds = useServerCronometro(partido);
 
   const loadPartidoById = useCallback(async (partidoId) => {
+    const generation = selectionGenerationRef.current;
     const full = await fetchPartido(partidoId);
-    setPartido(full);
+    if (generation !== selectionGenerationRef.current || String(activePartidoIdRef.current) !== String(partidoId)) return full;
+    handleUpdate(full);
     setError('');
     return full;
-  }, []);
+  }, [handleUpdate]);
 
   const pollCancha = useCallback(async () => {
     // Lookup por el valor de ruta/DB (puede ser "Court One"); el label visible ya está normalizado.
     if (!sedeId || !canchaFromRoute) return;
+    const sequence = ++pollSequenceRef.current;
     try {
       const canchaPartido = await fetchPartidoByCancha(sedeId, canchaFromRoute);
+      if (sequence !== pollSequenceRef.current) return;
       const nextPartidoId = canchaPartido?.id ?? null;
 
       if (!nextPartidoId) {
+        selectionGenerationRef.current += 1;
+        currentPartidoRef.current = null;
         activePartidoIdRef.current = null;
         setActivePartidoId(null);
         setPartido(null);
@@ -82,14 +110,17 @@ export default function ScoreboardCanchaDisplay() {
       }
 
       if (nextPartidoId !== activePartidoIdRef.current) {
+        selectionGenerationRef.current += 1;
+        currentPartidoRef.current = null;
+        setPartido(null);
         activePartidoIdRef.current = nextPartidoId;
         setActivePartidoId(nextPartidoId);
         await loadPartidoById(nextPartidoId);
       }
     } catch (err) {
-      setError(err.message || t('scoreboardDisplay.courtMatchLoadError'));
+      if (sequence === pollSequenceRef.current) setError(err.message || t('scoreboardDisplay.courtMatchLoadError'));
     } finally {
-      setPolling(false);
+      if (sequence === pollSequenceRef.current) setPolling(false);
     }
   }, [sedeId, canchaFromRoute, loadPartidoById, t]);
 
@@ -118,9 +149,10 @@ export default function ScoreboardCanchaDisplay() {
 
   const refreshActivePartido = useCallback(async () => {
     if (!activePartidoId) return;
+    const generation = selectionGenerationRef.current;
     try {
       const p = await fetchPartido(activePartidoId);
-      handleUpdate(p);
+      if (generation === selectionGenerationRef.current) handleUpdate(p);
     } catch {
       /* fallback silencioso */
     }
