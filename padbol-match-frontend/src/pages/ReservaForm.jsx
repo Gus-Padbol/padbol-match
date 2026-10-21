@@ -2628,7 +2628,7 @@ export default function ReservaForm() {
               <label style={{ display: 'block', marginBottom: '10px' }}>{t('reservas.duration')}</label>
               {duracionesOfrecidas.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
-                  {ofertaCanonical.error ? 'No se pudieron consultar las tarifas. Intentá nuevamente.' : t('reservas.noPricing')}
+                  {ofertaCanonical.error ? 'No se pudieron consultar las tarifas. Intenta nuevamente.' : t('reservas.noPricing')}
                 </p>
               ) : (
                 <>
