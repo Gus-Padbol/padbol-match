@@ -420,7 +420,7 @@ export default function ScoreboardControl() {
       {error && <div className="sc-error">{error}</div>}
       {needsRefresh && (
         <div role="alert">
-          No se pudo confirmar la operación. Consultá el marcador actualizado antes de volver a actuar.
+          No se pudo confirmar la operación. Consulta el marcador actualizado antes de volver a actuar.
           <button type="button" disabled={actionLoading} onClick={async () => {
             setActionLoading(true);
             try {

@@ -364,7 +364,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      setAttachmentNotice('No se pudo descargar el archivo. Probá nuevamente.');
+      setAttachmentNotice('No se pudo descargar el archivo. Inténtalo nuevamente.');
     } finally {
       setDownloadingAttachment(null);
     }

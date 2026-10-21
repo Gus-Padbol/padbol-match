@@ -96,7 +96,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.whatsappMedia.mockRejectedValue(new Error('unavailable'));
     render(<WhatsappCrmDemo />);
     fireEvent.click(await screen.findByRole('button', { name: 'Descargar archivo 1' }));
-    expect(await screen.findByText('No se pudo descargar el archivo. Probá nuevamente.')).toBeInTheDocument();
+    expect(await screen.findByText('No se pudo descargar el archivo. Inténtalo nuevamente.')).toBeInTheDocument();
     expect(crmAdminApi.whatsappMedia).toHaveBeenCalledWith('qa-token', 'wa-attachment', 'event-1');
   });
 
