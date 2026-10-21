@@ -6681,63 +6681,26 @@ export default function AdminDashboard({
 
   fetchPendientesRef.current = fetchPendientes;
 
-  const aprobarJugador = async (email) => {
-    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
+  const ejecutarValidacion = async (id, accion, nivel) => {
+    if (accion === 'rechazar' && !window.confirm(t('admin.formularios.validationRejectConfirm'))) return;
+    setValidacionState(prev => ({ ...prev, [id]: { ...prev[id], saving: true, error: '' } }));
     try {
-      await updatePendingValidation(supabase, email, { pendiente_validacion: false });
-      setPendientes(prev => prev.filter(p => p.email !== email));
-      setValidacionState(prev => { const state = { ...prev }; delete state[email]; return state; });
-    } catch {
-      setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: false, error: t('admin.formularios.validationSaveError', { defaultValue: 'No se pudo confirmar el cambio de validación.' }) } }));
-    }
-  };
-
-  const rechazarJugador = async (email) => {
-    if (!window.confirm(t('admin.formularios.validationRejectConfirm'))) return;
-    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
-    try {
-      const res = await fetch(`${apiBaseUrl}/api/admin/jugadores/validaciones/${encodeURIComponent(email)}/rechazar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-        },
-        body: JSON.stringify({ motivo: t('admin.formularios.validationRejectReason') }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || t('admin.formularios.validationRejectError'));
-      setPendientes(prev => prev.filter(p => p.email !== email));
-      setValidacionState(prev => { const s = { ...prev }; delete s[email]; return s; });
+      await updatePendingValidation({ apiBaseUrl, accessToken: session?.access_token, id, accion, nivel,
+        motivo: accion === 'rechazar' ? t('admin.formularios.validationRejectReason') : undefined });
+      setPendientes(prev => prev.filter(p => String(p.id) !== String(id)));
+      setValidacionState(prev => { const state = { ...prev }; delete state[id]; return state; });
     } catch (error) {
-      setValidacionState(prev => ({
-        ...prev,
-        [email]: { ...prev[email], saving: false, error: error?.message || t('admin.formularios.validationRejectError') },
-      }));
+      setValidacionState(prev => ({ ...prev, [id]: { ...prev[id], saving: false, error: error?.message || t('admin.formularios.validationSaveError') } }));
     }
   };
-
-  const guardarCategoria = async (email) => {
-    const nuevaCategoria = validacionState[email]?.categoria;
-    if (!nuevaCategoria) return;
-    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
-    try {
-      await updatePendingValidation(supabase, email, { nivel: nuevaCategoria, pendiente_validacion: false });
-      setPendientes(prev => prev.filter(p => p.email !== email));
-      setValidacionState(prev => { const state = { ...prev }; delete state[email]; return state; });
-    } catch {
-      setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: false, error: t('admin.formularios.validationSaveError', { defaultValue: 'No se pudo confirmar el cambio de validación.' }) } }));
-    }
+  const aprobarJugador = id => ejecutarValidacion(id, 'aprobar');
+  const rechazarJugador = id => ejecutarValidacion(id, 'rechazar');
+  const guardarCategoria = id => {
+    const nivel = validacionState[id]?.categoria;
+    if (nivel) return ejecutarValidacion(id, 'categoria', nivel);
   };
-
-  const toggleCambiarCategoria = (email, nivelActual) => {
-    setValidacionState(prev => ({
-      ...prev,
-      [email]: {
-        open: !prev[email]?.open,
-        categoria: prev[email]?.categoria || nivelActual,
-        saving: false,
-      },
-    }));
+  const toggleCambiarCategoria = (id, nivelActual) => {
+    setValidacionState(prev => ({ ...prev, [id]: { open: !prev[id]?.open, categoria: prev[id]?.categoria || nivelActual, saving: false } }));
   };
 
   const eliminarTorneo = async (torneoId, torneoNombre) => {
@@ -12663,14 +12626,14 @@ export default function AdminDashboard({
             ) : (
               <div style={{ display: 'grid', gap: '12px' }}>
             {pendientesFiltradosValidaciones.map(jugador => {
-              const vs = validacionState[jugador.email] || {};
+              const vs = validacionState[jugador.id] || {};
               const nombreMostrar = [String(jugador.nombre || '').trim(), String(jugador.apellido || '').trim()]
                 .filter(Boolean)
                 .join(' ')
                 .trim();
               const perfilPathVal = pathJugadorPerfilPublico(jugador);
               return (
-                <div key={jugador.email} className="admin-validacion-pendiente-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
+                <div key={jugador.id} className="admin-validacion-pendiente-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: '180px' }}>
                     <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{nombreMostrar || jugador.nombre || '—'}</strong>
@@ -12715,7 +12678,7 @@ export default function AdminDashboard({
                     ) : null}
                     <button
                       disabled={vs.saving}
-                      onClick={() => aprobarJugador(jugador.email)}
+                      onClick={() => aprobarJugador(jugador.id)}
                       className="admin-validacion-action admin-validacion-action--approve"
                       style={{ padding: '7px 14px', background: '#43a047', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
@@ -12723,7 +12686,7 @@ export default function AdminDashboard({
                     </button>
                     <button
                       disabled={vs.saving}
-                      onClick={() => void rechazarJugador(jugador.email)}
+                      onClick={() => void rechazarJugador(jugador.id)}
                       className="admin-validacion-action admin-validacion-action--reject"
                       style={{ padding: '7px 14px', background: '#b91c1c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
@@ -12731,7 +12694,7 @@ export default function AdminDashboard({
                     </button>
                     <button
                       disabled={vs.saving}
-                      onClick={() => toggleCambiarCategoria(jugador.email, jugador.nivel)}
+                      onClick={() => toggleCambiarCategoria(jugador.id, jugador.nivel)}
                       className="admin-validacion-action admin-validacion-action--category"
                       style={{ padding: '7px 14px', background: '#1976d2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                     >
@@ -12742,7 +12705,7 @@ export default function AdminDashboard({
                       <>
                         <select
                           value={vs.categoria || jugador.nivel}
-                          onChange={e => setValidacionState(prev => ({ ...prev, [jugador.email]: { ...prev[jugador.email], categoria: e.target.value } }))}
+                          onChange={e => setValidacionState(prev => ({ ...prev, [jugador.id]: { ...prev[jugador.id], categoria: e.target.value } }))}
                           style={{ padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '13px' }}
                         >
                           {categoriasNivelPorGenero(jugador.genero).map((c) => (
@@ -12753,7 +12716,7 @@ export default function AdminDashboard({
                         </select>
                         <button
                           disabled={vs.saving}
-                          onClick={() => guardarCategoria(jugador.email)}
+                          onClick={() => guardarCategoria(jugador.id)}
                           className="admin-validacion-action admin-validacion-action--save"
                           style={{ padding: '7px 14px', background: '#7b1fa2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}
                         >

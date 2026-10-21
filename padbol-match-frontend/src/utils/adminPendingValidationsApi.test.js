@@ -13,16 +13,13 @@ test('un permiso denegado o respuesta inválida no se convierte en lista vacía'
   await expect(fetchAdminPendingValidations({ apiBaseUrl: 'https://example.test' })).rejects.toThrow('Sesión');
 });
 
-test('exige confirmación de la fila actualizada y detecta fallo o cero filas', async () => {
+test('actualiza por id autenticado y exige confirmación', async () => {
   const { updatePendingValidation } = require('./adminPendingValidationsApi');
-  const result = { data: { email: 'p@example.test' }, error: null };
-  const query = { update: jest.fn(), eq: jest.fn(), select: jest.fn(), maybeSingle: jest.fn() };
-  query.update.mockReturnValue(query); query.eq.mockReturnValue(query); query.select.mockReturnValue(query); query.maybeSingle.mockResolvedValue(result);
-  const db = { from: jest.fn().mockReturnValue(query) };
-  await expect(updatePendingValidation(db, 'p@example.test', { pendiente_validacion: false })).resolves.toBeUndefined();
-  expect(query.eq).toHaveBeenCalledWith('pendiente_validacion', true);
-  query.maybeSingle.mockResolvedValue({ data: null, error: null });
-  await expect(updatePendingValidation(db, 'p@example.test', { pendiente_validacion: false })).rejects.toThrow('confirmar');
-  query.maybeSingle.mockResolvedValue({ data: null, error: { message: 'denied' } });
-  await expect(updatePendingValidation(db, 'p@example.test', { pendiente_validacion: false })).rejects.toThrow('confirmar');
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+  const request = {apiBaseUrl:'https://example.test', accessToken:'test', id:12, accion:'categoria', nivel:'3ra'};
+  await updatePendingValidation(request);
+  expect(global.fetch).toHaveBeenCalledWith('https://example.test/api/admin/validaciones/perfil/12', expect.objectContaining({method:'PATCH',body:JSON.stringify({accion:'categoria',nivel:'3ra'})}));
+  global.fetch.mockResolvedValue({ok:false,json:async()=>({error:'conflicto'})});
+  await expect(updatePendingValidation(request)).rejects.toThrow('conflicto');
+  await expect(updatePendingValidation({...request,id:9007199254740992})).rejects.toThrow('Perfil inválido');
 });

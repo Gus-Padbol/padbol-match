@@ -8,8 +8,13 @@ export async function fetchAdminPendingValidations({ apiBaseUrl, accessToken, si
   return data.validaciones;
 }
 
-export async function updatePendingValidation(db, email, changes) {
-  const { data, error } = await db.from('jugadores_perfil').update(changes)
-    .eq('email', email).eq('pendiente_validacion', true).select('email').maybeSingle();
-  if (error || !data) throw new Error('No se pudo confirmar el cambio de validación.');
+export async function updatePendingValidation({ apiBaseUrl, accessToken, id, accion, nivel, motivo }) {
+  if (!accessToken) throw new Error('Sesión no disponible');
+  if (!/^[1-9]\d*$/.test(String(id)) || (typeof id === 'number' && !Number.isSafeInteger(id))) throw new Error('Perfil inválido');
+  const response = await fetch(`${String(apiBaseUrl).replace(/\/$/, '')}/api/admin/validaciones/perfil/${encodeURIComponent(String(id))}`, {
+    method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accion, nivel, motivo }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.ok !== true) throw new Error(data.error || 'No se pudo confirmar el cambio de validación.');
 }
