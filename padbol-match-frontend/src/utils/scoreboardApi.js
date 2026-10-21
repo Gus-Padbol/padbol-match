@@ -104,6 +104,25 @@ export async function scoreboardAction(path, method = 'POST') {
   return data;
 }
 
+export async function scoreboardSuspensionAction(partidoId, action, payload) {
+  if (!['suspend','resume'].includes(action)) throw new Error('Acción inválida');
+  const headers=await getAuthHeaders(); if (!headers.Authorization) throw new Error('Ingresá nuevamente.');
+  const res=await fetch(`${API_BASE}/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/${action}`,{method:'POST',headers,body:JSON.stringify(payload)});
+  const data=await res.json().catch(()=>({})); if(!res.ok)throw new Error(data.error||'No se pudo confirmar la operación.'); return data;
+}
+export async function reconcileScoreboardSuspension(partidoId,action,actionId) {
+  if (!['suspend','resume'].includes(action)) throw new Error('Acción inválida');
+  const headers=await getAuthHeaders(); if(!headers.Authorization)throw new Error('Ingresá nuevamente.');
+  const res=await fetch(`${API_BASE}/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/reconcile`,{method:'POST',headers,body:JSON.stringify({action,action_id:actionId})});
+  const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||'No se pudo confirmar la operación.');return data;
+}
+export async function fetchScoreboardCourts(sedeId) {
+  const headers=await getAuthHeaders();if(!headers.Authorization)throw new Error('Ingresá nuevamente.');
+  const res=await fetch(`${API_BASE}/api/sedes/${encodeURIComponent(String(sedeId))}/canchas`,{headers});const data=await res.json().catch(()=>null);
+  if(!res.ok)throw new Error(data?.error||'No se pudieron consultar las canchas.');const rows=Array.isArray(data)?data:data?.canchas;
+  if(!Array.isArray(rows))throw new Error('No se pudo confirmar el catálogo de canchas.');return rows;
+}
+
 export async function createPartido(payload) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/api/scoreboard/partidos`, {

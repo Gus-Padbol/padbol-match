@@ -7,6 +7,8 @@ import { getDisplayName } from '../utils/displayName';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
+import ScoreboardSuspensionCandidate from '../components/ScoreboardSuspensionCandidate';
+import { listSuspensionPending } from '../utils/scoreboardSuspensionPending';
 import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
 import {
   listVisibleScoreboardJugadores,
@@ -221,6 +223,11 @@ export default function ScoreboardControl() {
   const runActionRef = useRef(null);
   const actionPendingRef = useRef(false);
   const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [suspensionEnabled, setSuspensionEnabled] = useState(false);
+  const [suspensionPending, setSuspensionPending] = useState(() => {
+    try { return listSuspensionPending(partidoId).length > 0; } catch { return true; }
+  });
+  useEffect(() => { try { setSuspensionPending(listSuspensionPending(partidoId).length > 0); } catch { setSuspensionPending(true); } }, [partidoId]);
   const acceptPartido = useCallback((next) => {
     setPartido(current => preferNewestScoreboard(current, next));
   }, []);
@@ -254,6 +261,7 @@ export default function ScoreboardControl() {
             setLoading(false);
             return;
           }
+          setSuspensionEnabled(p.scoreboard_suspension_candidate_enabled === true);
           acceptPartido(p);
         }
       } catch (err) {
@@ -284,7 +292,7 @@ export default function ScoreboardControl() {
   }, [partido?.id, partidoId]);
 
   const runAction = useCallback(async (path, { refetchAfter = false } = {}) => {
-    if (actionPendingRef.current || needsRefresh) return false;
+    if (actionPendingRef.current || needsRefresh || suspensionPending) return false;
     actionPendingRef.current = true;
     setActionLoading(true);
     setError('');
@@ -310,7 +318,7 @@ export default function ScoreboardControl() {
       actionPendingRef.current = false;
       setActionLoading(false);
     }
-  }, [partido?.id, partidoId, refreshPartido, t, needsRefresh, acceptPartido]);
+  }, [partido?.id, partidoId, refreshPartido, t, needsRefresh, suspensionPending, acceptPartido]);
 
   runActionRef.current = runAction;
 
@@ -370,7 +378,8 @@ export default function ScoreboardControl() {
   const display = partido.display || {};
   const terminado = isMatchFinished(partido);
   const cronometroActivo = isCronometroRunning(partido);
-  const canScorePoints = !terminado && cronometroActivo && !needsRefresh;
+  const suspendido = String(partido.estado || '').toLowerCase() === 'suspendido';
+  const canScorePoints = !terminado && !suspendido && cronometroActivo && !needsRefresh && !suspensionPending;
   const torneoLabel = getTorneoLabel(partido);
   const { colorA, colorB } = resolveTeamColors(partido);
 
@@ -401,7 +410,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-timer-btn sc-timer-btn--start"
-            disabled={actionLoading || needsRefresh || terminado || cronometroActivo}
+            disabled={actionLoading || needsRefresh || suspensionPending || suspendido || terminado || cronometroActivo}
             onClick={() => handleCronometro('start')}
           >
             Iniciar partido
@@ -409,7 +418,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-timer-btn sc-timer-btn--pause"
-            disabled={actionLoading || needsRefresh || terminado || !cronometroActivo}
+            disabled={actionLoading || needsRefresh || suspensionPending || suspendido || terminado || !cronometroActivo}
             onClick={() => handleCronometro('pause')}
           >
             Pausar
@@ -417,6 +426,7 @@ export default function ScoreboardControl() {
         </div>
       </header>
 
+      {suspensionEnabled && <ScoreboardSuspensionCandidate key={partido.id} partido={partido} pending={suspensionPending} onPending={setSuspensionPending} onConfirmed={acceptPartido} refresh={refreshPartido} disabled={actionLoading || needsRefresh || terminado} />}
       {error && <div className="sc-error">{error}</div>}
       {needsRefresh && (
         <div role="alert">
@@ -443,7 +453,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-finished-banner__restart"
-            disabled={actionLoading || needsRefresh}
+            disabled={actionLoading || needsRefresh || suspensionPending}
             onClick={() => void handleRestartMatch()}
           >
             Iniciar otro partido
@@ -524,7 +534,7 @@ export default function ScoreboardControl() {
       <button
         type="button"
         className="sc-options-btn"
-        disabled={actionLoading || needsRefresh}
+        disabled={actionLoading || needsRefresh || suspensionPending}
         onClick={() => setOptionsOpen(true)}
       >
         ⚙️ Opciones
@@ -536,7 +546,7 @@ export default function ScoreboardControl() {
         partidoId={partido?.id ?? partidoId}
         terminado={terminado}
         isTiebreak={partido.es_tiebreak}
-        actionLoading={actionLoading}
+        actionLoading={actionLoading || suspensionPending || suspendido}
         onRunAction={runAction}
         onUndo={handleUndo}
         undoCount={undoCount}
