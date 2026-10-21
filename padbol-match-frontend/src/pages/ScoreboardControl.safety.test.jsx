@@ -22,6 +22,15 @@ test('recovery mode permits resuming a suspended match but not new suspensions',
   render(<ScoreboardControl />);
   expect(await screen.findByRole('button', {name:'Suspender partido'})).toBeDisabled();
 });
+test('recovery mode does not replay a pending suspension, but allows reconciliation', async () => {
+  const key='padbol:scoreboard:suspension-uncertain:match-1:action:12345678-1234-4234-8234-123456789abc';
+  localStorage.setItem(key,JSON.stringify({action:'suspend',body:{action_id:'12345678-1234-4234-8234-123456789abc',updated_at:'2026-10-21T12:00:00Z',reason:'Lluvia'}}));
+  fetchPartido.mockResolvedValue({...match(true),estado:'suspendido',updated_at:'2026-10-21T12:00:00Z',scoreboard_suspension_candidate_enabled:false,scoreboard_suspension_resume_enabled:true});
+  render(<ScoreboardControl />);
+  expect(await screen.findByRole('button',{name:'Recuperar operación'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Verificar y cancelar si sigue pendiente'})).not.toBeDisabled();
+  localStorage.removeItem(key);
+});
 test('does not allow points before starting or while paused', async () => {
   fetchPartido.mockResolvedValue(match(false));
   render(<ScoreboardControl />);

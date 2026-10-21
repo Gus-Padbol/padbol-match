@@ -434,7 +434,7 @@ export default function ScoreboardControl() {
         </div>
       </header>
 
-      {(suspensionEnabled || suspensionResumeEnabled || suspensionPending) && <ScoreboardSuspensionCandidate key={partido.id} partido={partido} pending={suspensionPending} onPending={setSuspensionPending} onConfirmed={acceptPartido} refresh={refreshPartido} disabled={!(suspensionEnabled || (suspensionResumeEnabled && String(partido.estado || '').toLowerCase() === 'suspendido')) || actionLoading || needsRefresh || terminado || !['en_curso','suspendido'].includes(String(partido.estado || '').toLowerCase())} />}
+      {(suspensionEnabled || suspensionResumeEnabled || suspensionPending) && <ScoreboardSuspensionCandidate key={partido.id} partido={partido} pending={suspensionPending} onPending={setSuspensionPending} onConfirmed={acceptPartido} refresh={refreshPartido} allowSuspend={suspensionEnabled} disabled={!(suspensionEnabled || (suspensionResumeEnabled && String(partido.estado || '').toLowerCase() === 'suspendido')) || actionLoading || needsRefresh || terminado || !['en_curso','suspendido'].includes(String(partido.estado || '').toLowerCase())} />}
       {error && <div className="sc-error">{error}</div>}
       {needsRefresh && (
         <div role="alert">
