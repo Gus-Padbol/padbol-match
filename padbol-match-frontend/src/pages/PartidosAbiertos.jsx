@@ -51,6 +51,7 @@ export default function PartidosAbiertos() {
   const [joinSuccess, setJoinSuccess] = useState(false);
   const [partidosVerTodos, setPartidosVerTodos] = useState(false);
   const hubDeporteHydratedRef = useRef(false);
+  const loadSequenceRef = useRef(0);
 
   const deporteFiltro = canonDeportePartidosAbiertos(searchParams.get('deporte'));
 
@@ -86,6 +87,7 @@ export default function PartidosAbiertos() {
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargar = useCallback(() => {
+    const sequence = ++loadSequenceRef.current;
     setLoading(true);
     setMsg('');
     fetch(`${API_BASE}/api/partidos-abiertos`, session?.access_token
@@ -97,14 +99,16 @@ export default function PartidosAbiertos() {
         return data;
       })
       .then((data) => {
-        setPartidos(Array.isArray(data) ? data : []);
+        if (sequence === loadSequenceRef.current) setPartidos(Array.isArray(data) ? data : []);
       })
-      .catch((err) => setMsg(err.message || t('partidosAbiertos.networkError')))
-      .finally(() => setLoading(false));
+      .catch((err) => { if (sequence === loadSequenceRef.current) setMsg(err.message || t('partidosAbiertos.networkError')); })
+      .finally(() => { if (sequence === loadSequenceRef.current) setLoading(false); });
   }, [t, session?.access_token]);
 
   useEffect(() => {
+    setPartidos([]);
     cargar();
+    return () => { loadSequenceRef.current += 1; };
   }, [cargar]);
 
   const cargarSolicitudes = useCallback(async () => {
