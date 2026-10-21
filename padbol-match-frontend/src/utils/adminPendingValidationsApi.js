@@ -7,3 +7,9 @@ export async function fetchAdminPendingValidations({ apiBaseUrl, accessToken, si
   if (!response.ok || !Array.isArray(data.validaciones)) throw new Error(data.error || 'No se pudieron cargar las validaciones');
   return data.validaciones;
 }
+
+export async function updatePendingValidation(db, email, changes) {
+  const { data, error } = await db.from('jugadores_perfil').update(changes)
+    .eq('email', email).eq('pendiente_validacion', true).select('email').maybeSingle();
+  if (error || !data) throw new Error('No se pudo confirmar el cambio de validación.');
+}

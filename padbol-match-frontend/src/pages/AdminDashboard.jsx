@@ -1,4 +1,4 @@
-import { fetchAdminPendingValidations } from '../utils/adminPendingValidationsApi';
+import { fetchAdminPendingValidations, updatePendingValidation } from '../utils/adminPendingValidationsApi';
 import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
 import AdminTournamentLevelInput from '../components/AdminTournamentLevelInput';
 import {readLegacyTournamentDrawTeams} from '../utils/adminLegacyTournamentDraw';
@@ -6679,13 +6679,14 @@ export default function AdminDashboard({
   };
 
   const aprobarJugador = async (email) => {
-    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true } }));
-    await supabase
-      .from('jugadores_perfil')
-      .update({ pendiente_validacion: false })
-      .eq('email', email);
-    setPendientes(prev => prev.filter(p => p.email !== email));
-    setValidacionState(prev => { const s = { ...prev }; delete s[email]; return s; });
+    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
+    try {
+      await updatePendingValidation(supabase, email, { pendiente_validacion: false });
+      setPendientes(prev => prev.filter(p => p.email !== email));
+      setValidacionState(prev => { const state = { ...prev }; delete state[email]; return state; });
+    } catch {
+      setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: false, error: t('admin.formularios.validationSaveError', { defaultValue: 'No se pudo confirmar el cambio de validación.' }) } }));
+    }
   };
 
   const rechazarJugador = async (email) => {
@@ -6715,13 +6716,14 @@ export default function AdminDashboard({
   const guardarCategoria = async (email) => {
     const nuevaCategoria = validacionState[email]?.categoria;
     if (!nuevaCategoria) return;
-    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true } }));
-    await supabase
-      .from('jugadores_perfil')
-      .update({ nivel: nuevaCategoria, pendiente_validacion: false })
-      .eq('email', email);
-    setPendientes(prev => prev.filter(p => p.email !== email));
-    setValidacionState(prev => { const s = { ...prev }; delete s[email]; return s; });
+    setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: true, error: '' } }));
+    try {
+      await updatePendingValidation(supabase, email, { nivel: nuevaCategoria, pendiente_validacion: false });
+      setPendientes(prev => prev.filter(p => p.email !== email));
+      setValidacionState(prev => { const state = { ...prev }; delete state[email]; return state; });
+    } catch {
+      setValidacionState(prev => ({ ...prev, [email]: { ...prev[email], saving: false, error: t('admin.formularios.validationSaveError', { defaultValue: 'No se pudo confirmar el cambio de validación.' }) } }));
+    }
   };
 
   const toggleCambiarCategoria = (email, nivelActual) => {
@@ -12623,7 +12625,7 @@ export default function AdminDashboard({
 
       {activeTab === 'validaciones' && <div className="section admin-validaciones-section">
         <h2>{t('admin.formularios.pendingValidationTitle')}</h2>
-        {pendientesLoading ? (
+        {pendientesLoading || pendientesScopeGuardado !== pendientesScope ? (
           <p style={{ color: 'var(--text-secondary)' }}>{t('admin.metricas.loading')}</p>
         ) : pendientesError ? (
           <div role="alert"><p>{pendientesError}</p><button type="button" onClick={() => void fetchPendientes()}>{t('admin.common.retry', { defaultValue: 'Reintentar' })}</button></div>
