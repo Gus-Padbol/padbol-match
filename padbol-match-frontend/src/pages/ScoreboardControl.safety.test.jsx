@@ -46,3 +46,13 @@ test('pending suspension from a previous session blocks scoring', async () => {
   expect(scoreboardAction).not.toHaveBeenCalled();
   localStorage.removeItem(key);
 });
+
+test('recovery remains visible with capability disabled or finished match', async () => {
+ const key='padbol:scoreboard:suspension-uncertain:match-1:action:12345678-1234-4234-8234-123456789abc';
+ localStorage.setItem(key,JSON.stringify({action:'suspend',body:{action_id:'12345678-1234-4234-8234-123456789abc',updated_at:'2026-10-21T12:00:00Z',reason:'Lluvia'}}));
+ fetchPartido.mockResolvedValue({...match(true),estado:'terminado',updated_at:'2026-10-21T12:00:00Z',scoreboard_suspension_candidate_enabled:false});
+ render(<ScoreboardControl/>);
+ expect(await screen.findByRole('button',{name:'Verificar y cancelar si sigue pendiente'})).not.toBeDisabled();
+ expect(screen.getByRole('button',{name:'Recuperar operación'})).toBeDisabled();
+ localStorage.removeItem(key);
+});
