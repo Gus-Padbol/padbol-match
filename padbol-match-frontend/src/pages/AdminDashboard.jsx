@@ -18182,6 +18182,7 @@ export default function AdminDashboard({
                                 borderRadius: '6px',
                                 border: '1px solid #c4b5fd',
                                 background: '#eef2ff',
+                                color: '#312e81',
                                 cursor: 'pointer',
                                 fontSize: '14px',
                               }}

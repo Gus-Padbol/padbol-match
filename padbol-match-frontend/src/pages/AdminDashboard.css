@@ -3889,3 +3889,13 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 }
 
 .admin-dashboard label[for="admin-scoreboard-tournament-logo"] { display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; }
+
+/* Keep scoreboard fields inside their card on narrow screens. */
+#admin-scoreboard-form,
+#admin-scoreboard-form label,
+#admin-scoreboard-form input,
+#admin-scoreboard-form select {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
