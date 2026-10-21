@@ -14,3 +14,10 @@ test('court selection opens unscheduled marker with prefilled teams and no sched
 test('occupied court server response shows error and does not navigate',async()=>{global.fetch=jest.fn().mockImplementation(async url=>({ok:url.endsWith('/operacion'),json:async()=>url.endsWith('/operacion')?initial:{ok:false,error:'Cancha ocupada'}}));const navigate=jest.fn();render(<TournamentMatchOperations torneoId={91} partidoId={3} accessToken="qa" navigate={navigate}/>);await screen.findByText(/Invitado sin cuenta/);fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'9'}});fireEvent.click(screen.getByText('Abrir marcador ahora'));await screen.findByRole('alert');expect(screen.getByRole('alert')).toHaveTextContent('Cancha ocupada');expect(navigate).not.toHaveBeenCalled();});
 
 test('reopening unscheduled match retains its assigned official court',async()=>{global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({...initial,partido:{...initial.partido,cancha_id:9,cancha:'1'}})});render(<TournamentMatchOperations torneoId={91} partidoId={3} accessToken="qa" navigate={jest.fn()}/>);await screen.findByText(/Invitado sin cuenta/);expect(screen.getByLabelText('Cancha').value).toBe('9');expect(screen.getByText('Abrir marcador ahora')).toBeEnabled();});
+
+
+test('al volver a un cruce en curso enlaza al mismo marcador sin pedir su creación',async()=>{
+ global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({...initial,partido:{...initial.partido,estado:'en_curso'},scoreboard_id:'partial-marker'})});
+ render(<TournamentMatchOperations torneoId={91} partidoId={3} accessToken="qa" navigate={jest.fn()}/>);
+ const link=await screen.findByRole('link',{name:'Continuar marcador existente'});expect(link).toHaveAttribute('href','/admin/scoreboard/partial-marker');expect(screen.queryByText('Abrir marcador ahora')).not.toBeInTheDocument();expect(fetch).toHaveBeenCalledTimes(1);
+});
