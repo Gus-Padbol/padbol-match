@@ -8,7 +8,7 @@ import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
 import ScoreboardSuspensionCandidate from '../components/ScoreboardSuspensionCandidate';
-import { listSuspensionPending } from '../utils/scoreboardSuspensionPending';
+import { listSuspensionPending, suspensionStoragePrefix } from '../utils/scoreboardSuspensionPending';
 import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
 import {
   listVisibleScoreboardJugadores,
@@ -227,7 +227,13 @@ export default function ScoreboardControl() {
   const [suspensionPending, setSuspensionPending] = useState(() => {
     try { return listSuspensionPending(partidoId).length > 0; } catch { return true; }
   });
-  useEffect(() => { try { setSuspensionPending(listSuspensionPending(partidoId).length > 0); } catch { setSuspensionPending(true); } }, [partidoId]);
+  useEffect(() => {
+    const prefix = suspensionStoragePrefix(partidoId);
+    const update = () => { try { setSuspensionPending(listSuspensionPending(partidoId).length > 0); } catch { setSuspensionPending(true); } };
+    const onStorage = event => { if (event.key === null || event.key === prefix || event.key?.startsWith(`${prefix}:action:`)) update(); };
+    update(); window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [partidoId]);
   const acceptPartido = useCallback((next) => {
     setPartido(current => preferNewestScoreboard(current, next));
   }, []);

@@ -56,3 +56,13 @@ test('recovery remains visible with capability disabled or finished match', asyn
  expect(screen.getByRole('button',{name:'Recuperar operación'})).toBeDisabled();
  localStorage.removeItem(key);
 });
+
+test('a reference created in another tab blocks scoring even when capability is off',async()=>{
+ fetchPartido.mockResolvedValue({...match(true),updated_at:'2026-10-21T12:00:00Z',scoreboard_suspension_candidate_enabled:false});
+ render(<ScoreboardControl/>);const point=(await screen.findAllByText('+ POINT'))[0];expect(point).not.toBeDisabled();
+ const key='padbol:scoreboard:suspension-uncertain:match-1:action:12345678-1234-4234-8234-123456789abc';
+ const value=JSON.stringify({action:'suspend',body:{action_id:'12345678-1234-4234-8234-123456789abc',updated_at:'2026-10-21T12:00:00Z',reason:'Lluvia'}});
+ localStorage.setItem(key,value);fireEvent(window,new StorageEvent('storage',{key,newValue:value,storageArea:localStorage}));
+ expect(await screen.findByRole('button',{name:'Verificar y cancelar si sigue pendiente'})).not.toBeDisabled();expect(point).toBeDisabled();
+ localStorage.removeItem(key);
+});
