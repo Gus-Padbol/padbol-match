@@ -88,7 +88,9 @@ export default function PartidosAbiertos() {
   const cargar = useCallback(() => {
     setLoading(true);
     setMsg('');
-    fetch(`${API_BASE}/api/partidos-abiertos`)
+    fetch(`${API_BASE}/api/partidos-abiertos`, session?.access_token
+      ? { headers: { Authorization: `Bearer ${session.access_token}` } }
+      : undefined)
       .then(async (r) => {
         const { ok, data, isJson } = await parseFetchJsonSafe(r);
         if (!ok || !isJson) throw new Error(t('partidosAbiertos.loadError'));
@@ -99,7 +101,7 @@ export default function PartidosAbiertos() {
       })
       .catch((err) => setMsg(err.message || t('partidosAbiertos.networkError')))
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [t, session?.access_token]);
 
   useEffect(() => {
     cargar();

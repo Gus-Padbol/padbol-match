@@ -210,7 +210,8 @@ export default function PartidoAbiertoCard({
   const canchaLabel = partidoCanchaLabel(partido);
   const duracion = Number(partido?.duracion_minutos) > 0 ? Number(partido.duracion_minutos) : 90;
   const isSede = variant === 'sede';
-  const lugaresLabel = faltan > 0 ? 'LUGARES DISPONIBLES' : 'SIN LUGAR';
+  const suspendido = partido?.estado === 'suspendido';
+  const lugaresLabel = suspendido ? 'PARTIDO SUSPENDIDO' : faltan > 0 ? 'LUGARES DISPONIBLES' : 'SIN LUGAR';
 
   const handleCardClick = onCardClick
     ? (e) => {
@@ -219,8 +220,8 @@ export default function PartidoAbiertoCard({
       }
     : undefined;
 
-  const ctaDisabled = joining || faltan <= 0 || yaEnPartido;
-  const ctaLabel = joining
+  const ctaDisabled = suspendido || joining || faltan <= 0 || yaEnPartido;
+  const ctaLabel = suspendido ? 'Reanudación pendiente' : joining
     ? isSede
       ? '…'
       : 'Enviando...'
@@ -240,7 +241,7 @@ export default function PartidoAbiertoCard({
           <span className="partido-abierto-card__meta-item partido-abierto-card__sede-deporte-label">{depLabel}</span>
         </div>
         <div className="partido-abierto-card__row partido-abierto-card__row--meta partido-abierto-card__sede-datetime">
-          <span className="partido-abierto-card__meta-item">{fechaPartidoLabel(partido?.fecha)}</span>
+          <span className="partido-abierto-card__meta-item">{suspendido ? `Fecha anterior: ${fechaPartidoLabel(partido?.fecha)}` : fechaPartidoLabel(partido?.fecha)}</span>
           <span className="partido-abierto-card__meta-sep" aria-hidden>
             ·
           </span>
@@ -339,7 +340,7 @@ export default function PartidoAbiertoCard({
           </div>
 
           <div className="partido-abierto-card__row partido-abierto-card__row--meta">
-            <span className="partido-abierto-card__meta-item">{fechaPartidoLabel(partido?.fecha)}</span>
+            <span className="partido-abierto-card__meta-item">{suspendido ? `Fecha anterior: ${fechaPartidoLabel(partido?.fecha)}` : fechaPartidoLabel(partido?.fecha)}</span>
             <span className="partido-abierto-card__meta-sep" aria-hidden>
               ·
             </span>
