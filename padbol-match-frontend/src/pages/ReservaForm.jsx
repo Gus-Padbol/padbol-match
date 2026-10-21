@@ -1,3 +1,4 @@
+import StripeSessionBoundary from '../components/StripeSessionBoundary';
 import { resolverOfertasCanonicas, resolverOfertasLegacy } from '../utils/reservaOfertasCanonicas';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
@@ -3107,6 +3108,7 @@ export default function ReservaForm() {
           {error && <div className="error-message">{error}</div>}
 
           {metodoPagoStripe && !reservaSinCargo ? (
+            <StripeSessionBoundary identity={[sedeSeleccionada.id, sedeSeleccionada.nombre, moneda, montoBaseMinor, formData, reservaExtrasPayload, reservaDeporteUrl, currentCliente?.email, currentCliente?.nombre, telefonoStripe.whatsappCompleto, precioConfirmable, telefonoStripe.ok, stripeCuentaOk, reputacionSuspendido]}>
             <ReservaStripeSection
               sedeId={sedeSeleccionada.id}
               moneda={moneda}
@@ -3132,6 +3134,7 @@ export default function ReservaForm() {
                 setReservaStripeExitoOpen(true);
               }}
             />
+            </StripeSessionBoundary>
           ) : (
             <button
               type="button"
