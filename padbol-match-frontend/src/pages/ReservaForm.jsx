@@ -2176,7 +2176,7 @@ export default function ReservaForm() {
   }, [pantalla, formData.hora, canchasDisponibles]);
 
   const handlePagarConMP = async () => {
-    if (!precioConfirmable) { setError('No se pudo confirmar la tarifa vigente. Volvé a seleccionar fecha y hora.'); return; }
+    if (!precioConfirmable) { setError('No se pudo confirmar la tarifa vigente. Vuelve a seleccionar fecha y hora.'); return; }
     if (!gateReservaPago()) return;
     if (!sedeSeleccionada) {
       setError(t('reservas.loadingVenue'));
