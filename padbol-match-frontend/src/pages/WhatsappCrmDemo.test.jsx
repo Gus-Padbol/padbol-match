@@ -17,6 +17,8 @@ jest.mock('../utils/crmAdminApi', () => ({
     inbox: jest.fn(),
     audit: jest.fn(),
     activities: jest.fn(),
+    whatsappMediaList: jest.fn(),
+    whatsappMedia: jest.fn(),
     reply: jest.fn(),
     createManual: jest.fn(),
     handoff: jest.fn(),
@@ -50,6 +52,7 @@ describe('CRM histórico unificado', () => {
         created_at: '2026-10-02T12:00:00.000Z',
       }],
     });
+    crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [] });
     crmAdminApi.sedes.mockResolvedValue([]);
     crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
     crmAdminApi.createNextGenerationRegistration.mockResolvedValue({ id: 'ng-reg-1', estado: 'borrador' });
@@ -83,6 +86,29 @@ describe('CRM histórico unificado', () => {
     fireEvent.click(send);
     expect(await screen.findByText('Meta no aceptó la respuesta de WhatsApp (código 131042).')).toBeInTheDocument();
     expect(crmAdminApi.reply).toHaveBeenCalledTimes(1);
+  });
+
+  it('permite solicitar un adjunto del evento autorizado y muestra fallos', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-attachment', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Imagen' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [{ eventId: 'event-1', mediaType: 'image' }] });
+    crmAdminApi.whatsappMedia.mockRejectedValue(new Error('unavailable'));
+    render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Descargar archivo 1' }));
+    expect(await screen.findByText('No se pudo descargar el archivo. Probá nuevamente.')).toBeInTheDocument();
+    expect(crmAdminApi.whatsappMedia).toHaveBeenCalledWith('qa-token', 'wa-attachment', 'event-1');
+  });
+
+  it('habilita al operador limitado solo para el número WhatsApp autorizado', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, canOperateWhatsapp: true, whatsappSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-approved', source_channel: 'whatsapp', origin: 'whatsapp:1376102838911694', identity_used: '15555550123', inbound_body: 'Hola' }, { id: 'wa-other', source_channel: 'whatsapp', origin: 'whatsapp:other', identity_used: '15555550124', inbound_body: 'Otro' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    render(<WhatsappCrmDemo />);
+    fireEvent.change(await screen.findByLabelText('Respuesta'), { target: { value: 'Hola' } });
+    expect(screen.getByRole('button', { name: 'Enviar por WhatsApp' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: /15555550124/ }));
+    expect(screen.getByLabelText('Respuesta')).toBeDisabled();
   });
 
   it('mantiene WhatsApp sin envío para auditor aun cuando el servidor ofrece el canal', async () => {

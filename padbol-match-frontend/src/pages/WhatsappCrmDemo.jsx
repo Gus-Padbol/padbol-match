@@ -213,6 +213,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [whatsappAttachments, setWhatsappAttachments] = useState([]);
+  const [attachmentNotice, setAttachmentNotice] = useState('');
+  const [downloadingAttachment, setDownloadingAttachment] = useState(null);
   const [activityType, setActivityType] = useState('note');
   const [activityTopic, setActivityTopic] = useState('');
   const [activitySummary, setActivitySummary] = useState('');
@@ -300,7 +303,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const emailSendEnabled = perms?.emailSendEnabled === true;
   const supportEmail = isSupportEmail(active);
   const supportOrigin = active?.origin === 'support_email';
-  const activeCanOperate = perms?.canOperate === true || (supportEmail && perms?.canOperateSupport === true);
+  const activeCanOperate = perms?.canOperate === true || (supportEmail && perms?.canOperateSupport === true)
+    || (active?.source_channel === 'whatsapp' && active?.origin === 'whatsapp:1376102838911694' && perms?.canOperateWhatsapp === true);
   const activeDetails = formDetails(active);
   const isWebForm = String(active?.origin || '').startsWith('web_form:');
   const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled;
@@ -333,6 +337,38 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
     });
     setNgVenueDraft({ sede_club: activeNgVenueName, ciudad: activeNgVenueCity, pais: activeNgVenueCountry });
   }, [active?.id, activeNgSedeId, activeNgCategory, activeNgParticipantName, activeNgVenueName, activeNgVenueCity, activeNgVenueCountry]);
+
+  useEffect(() => {
+    let current = true;
+    setWhatsappAttachments([]);
+    setAttachmentNotice('');
+    if (!token || !active?.id || active.source_channel !== 'whatsapp') return () => { current = false; };
+    crmAdminApi.whatsappMediaList(token, active.id)
+      .then((data) => { if (current) setWhatsappAttachments(Array.isArray(data?.attachments) ? data.attachments : []); })
+      .catch(() => { if (current) setAttachmentNotice('No se pudieron consultar los archivos adjuntos.'); });
+    return () => { current = false; };
+  }, [token, active?.id, active?.source_channel, active?.inbound_body]);
+
+  const downloadWhatsappAttachment = async (attachment) => {
+    if (!active?.id || downloadingAttachment) return;
+    setDownloadingAttachment(attachment.eventId);
+    setAttachmentNotice('');
+    try {
+      const { blob, filename } = await crmAdminApi.whatsappMedia(token, active.id, attachment.eventId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setAttachmentNotice('No se pudo descargar el archivo. Probá nuevamente.');
+    } finally {
+      setDownloadingAttachment(null);
+    }
+  };
 
   const loadActivities = useCallback(async (conversationId) => {
     if (!token || !conversationId || (!perms?.canOperate && !perms?.canAudit)) {
@@ -610,6 +646,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     </dl>
                     <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p>{detailValue(activeDetails, 'Información adicional') || 'No agregó información adicional.'}</p></section>
                   </article> : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
+                  {whatsappAttachments.length ? <section aria-label="Archivos de WhatsApp">
+                    <h3>Archivos recibidos</h3>
+                    {whatsappAttachments.map((attachment, index) => <button key={attachment.eventId} type="button" className="wa-secondary" disabled={Boolean(downloadingAttachment)} onClick={() => void downloadWhatsappAttachment(attachment)}>{downloadingAttachment === attachment.eventId ? 'Descargando…' : `Descargar archivo ${index + 1}`}</button>)}
+                  </section> : null}
+                  {attachmentNotice ? <p role="status">{attachmentNotice}</p> : null}
                   {leadAnalysis ? <article className="wa-executive-card">
                     <header><div><span>ANÁLISIS DEL LEAD</span><h3>Resumen ejecutivo</h3></div><div className="wa-executive-score"><strong>{leadAnalysis.score}</strong><small>/100</small><b>Prioridad {leadAnalysis.priority}</b></div></header>
                     {leadAnalysis.verdict ? <p className="wa-executive-verdict">{leadAnalysis.verdict}</p> : null}
