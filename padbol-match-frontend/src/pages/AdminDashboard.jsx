@@ -6671,7 +6671,7 @@ export default function AdminDashboard({
       if (pendientesRequestRef.current === request) {
         setPendientes([]);
         setPendientesScopeGuardado(pendientesScope);
-        setPendientesError(t('admin.formularios.pendingValidationLoadError', { defaultValue: 'No se pudieron cargar las validaciones pendientes. Revisá el acceso e intentá nuevamente.' }));
+        setPendientesError(t('admin.formularios.pendingValidationLoadError', { defaultValue: 'No se pudieron cargar las validaciones pendientes. Revise el acceso e inténtelo nuevamente.' }));
       }
     } finally {
       if (pendientesRequestRef.current === request) setPendientesLoading(false);
