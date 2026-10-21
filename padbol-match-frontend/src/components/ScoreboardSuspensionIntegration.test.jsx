@@ -49,5 +49,13 @@ test('reconciliation cancels a request lost before dispatch without changing the
  render(<Harness initial={initial}/>);await screen.findByRole('option',{name:'Cancha 2'});fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'14'}});fireEvent.click(screen.getByRole('button',{name:'Reanudar en esta cancha'}));await screen.findByText(/No se pudo confirmar el resultado/);
  global.fetch=nodeFetch;fireEvent.click(screen.getByRole('button',{name:'Verificar y cancelar si sigue pendiente'}));await screen.findByText(/quedó cancelada/);expect((await api.fetchPartido(id,{authenticated:true})).estado).toBe('suspendido');expect(localStorage.length).toBe(0);
 });
+test('evacuation preserves an existing suspension and permits resume but no new suspension',async()=>{
+ const before=await api.fetchPartido(id,{authenticated:true});expect(before.estado).toBe('suspendido');expect(before.score_a).toBe(40);
+ await nodeFetch(`${global.__SCOREBOARD_QA_URL__}/test/evacuate`,{method:'POST'});
+ const frozen=await api.fetchPartido(id,{authenticated:true});expect(frozen.scoreboard_suspension_candidate_enabled).toBe(false);expect(frozen.scoreboard_suspension_resume_enabled).toBe(true);expect(frozen.score_a).toBe(40);
+ const status=await new Promise((resolve,reject)=>{const req=http.request(`${global.__SCOREBOARD_QA_URL__}/api/scoreboard/partidos/${id}/suspend`,{method:'POST',headers:{authorization:'Bearer synthetic'}},res=>{res.resume();resolve(res.statusCode)});req.on('error',reject);req.end()});expect(status).toBe(404);
+ render(<Harness initial={frozen}/>);await screen.findByRole('option',{name:'Cancha 2'});fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'14'}});fireEvent.click(screen.getByRole('button',{name:'Reanudar en esta cancha'}));
+ await screen.findByLabelText('Motivo de suspensión');const after=await api.fetchPartido(id,{authenticated:true});expect(after.estado).toBe('en_curso');expect(after.score_a).toBe(40);expect(after.cancha).toBe('2');
+});
 
 });
