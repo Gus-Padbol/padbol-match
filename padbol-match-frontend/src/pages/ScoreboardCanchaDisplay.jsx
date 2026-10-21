@@ -116,6 +116,9 @@ export default function ScoreboardCanchaDisplay() {
         activePartidoIdRef.current = nextPartidoId;
         setActivePartidoId(nextPartidoId);
         await loadPartidoById(nextPartidoId);
+      } else if (!currentPartidoRef.current) {
+        // A connected socket does not guarantee an initial HTTP fetch succeeded.
+        await loadPartidoById(nextPartidoId);
       }
     } catch (err) {
       if (sequence === pollSequenceRef.current) setError(err.message || t('scoreboardDisplay.courtMatchLoadError'));

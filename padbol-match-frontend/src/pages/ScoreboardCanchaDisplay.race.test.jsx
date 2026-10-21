@@ -43,3 +43,16 @@ test('una respuesta anterior al cambio de cancha no revive el marcador suspendid
   await act(async () => resolveOld(match('2026-10-21T12:00:00.000001Z')));
   expect(screen.getByText('scoreboardDisplay.waiting')).toBeInTheDocument();
 });
+
+
+test('reintenta cargar el mismo partido tras fallos iniciales aunque el socket esté conectado', async () => {
+  jest.useFakeTimers();
+  try {
+    fetchPartidoByCancha.mockResolvedValue(match('2026-10-21T12:00:00.000001Z'));
+    fetchPartido.mockRejectedValueOnce(new Error('fallo 1')).mockRejectedValueOnce(new Error('fallo 2'))
+      .mockResolvedValue(match('2026-10-21T12:00:00.000001Z'));
+    await act(async () => { render(<ScoreboardCanchaDisplay />); });
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(screen.getByText('Vigente')).toBeInTheDocument();
+  } finally { jest.useRealTimers(); }
+});
