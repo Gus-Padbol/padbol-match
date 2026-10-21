@@ -32,32 +32,32 @@ export default function ScoreboardSuspensionCandidate({partido, pending, onPendi
         if(saved?.action===action && saved?.body?.action_id===body.action_id){
           window.localStorage.removeItem(operationKey);
           const entries=syncPending();
-          if(entries?.length)setError('Hay otra referencia pendiente. Revisá la operación antes de continuar.');
+          if(entries?.length)setError('Hay otra referencia pendiente. Revisa la operación antes de continuar.');
         } else {
-          syncPending();onPending(true);setError('Hay otra referencia pendiente. Revisá la operación antes de continuar.');
+          syncPending();onPending(true);setError('Hay otra referencia pendiente. Revisa la operación antes de continuar.');
         }
       }
-    }catch{if(mounted.current)setError('No se pudo confirmar el resultado. Podés intentar recuperar la misma operación.');}
+    }catch{if(mounted.current)setError('No se pudo confirmar el resultado. Puedes intentar recuperar la misma operación.');}
     finally{submitInFlight.current=false;if(mounted.current)setBusy(false)}
   };
   const submit=()=>{
     if(submitInFlight.current||busy||disabled||pending||(typeof partido.updated_at!=='string' || !Number.isFinite(Date.parse(partido.updated_at))))return;
-    if(!suspended&&!reason.trim()){setError('Indicá el motivo de la suspensión.');return;}
-    if(suspended&&(!court||!Number.isInteger(Number(duration))||Number(duration)<1||Number(duration)>720)){setError('Elegí una cancha y duración válidas.');return;}
+    if(!suspended&&!reason.trim()){setError('Indica el motivo de la suspensión.');return;}
+    if(suspended&&(!court||!Number.isInteger(Number(duration))||Number(duration)<1||Number(duration)>720)){setError('Elige una cancha y duración válidas.');return;}
     if(!window.crypto?.randomUUID){setError('Este dispositivo no puede generar una referencia segura.');return;}
     const action=suspended?'resume':'suspend';
     const body={action_id:window.crypto.randomUUID(),...(suspended?{updated_at:partido.updated_at,court_id:Number(court),duration_minutes:Number(duration)}:{updated_at:partido.updated_at,reason:reason.trim()})};
     const operationKey=`${prefix}:action:${body.action_id}`;
-    try{if(listSuspensionPending(partido.id).length){syncPending();setError('Hay una operación pendiente. Recuperá su referencia antes de continuar.');return;}window.localStorage.setItem(operationKey,JSON.stringify({action,body}));setOperations(listSuspensionPending(partido.id));}catch{setError('No se pudo guardar la referencia de seguridad en este dispositivo.');return;}
+    try{if(listSuspensionPending(partido.id).length){syncPending();setError('Hay una operación pendiente. Recupera su referencia antes de continuar.');return;}window.localStorage.setItem(operationKey,JSON.stringify({action,body}));setOperations(listSuspensionPending(partido.id));}catch{setError('No se pudo guardar la referencia de seguridad en este dispositivo.');return;}
     void send({action,body},operationKey);
   };
   const recover=(entry,reconcile=false)=>{
     try{const saved=JSON.parse(window.localStorage.getItem(entry.key));if(!saved?.body?.action_id||!['suspend','resume'].includes(saved.action))throw new Error('missing');void send(saved,entry.key,reconcile);}
-    catch{setError('Falta la referencia original. Contactá a soporte para revisar la operación.');}
+    catch{setError('Falta la referencia original. Contacta a soporte para revisar la operación.');}
   };
-  if(pending)return <section role="alert"><p>Hay una suspensión o reanudación sin confirmar. Podés verificarla y cancelar su ejecución pendiente. Cuando esté habilitada, también podés recuperar la operación original; si todavía no se realizó, se ejecutará ahora.</p>{notice&&<p>{notice}</p>}{error&&<p>{error}</p>}{operations.map((entry,index)=><React.Fragment key={entry.key||index}><button type="button" disabled={busy||disabled||!entry.key||(!allowSuspend && entry.operation?.action !== 'resume')} onClick={()=>recover(entry)}>{operations.length===1?'Recuperar operación':`Recuperar operación ${index+1}`}</button><button type="button" disabled={busy||!entry.key} onClick={()=>recover(entry,true)}>{operations.length===1?'Verificar y cancelar si sigue pendiente':`Verificar y cancelar operación ${index+1} si sigue pendiente`}</button></React.Fragment>)}<button type="button" onClick={()=>void refresh().catch(()=>setError('No se pudo consultar el estado.'))}>Consultar estado</button></section>;
+  if(pending)return <section role="alert"><p>Hay una suspensión o reanudación sin confirmar. Puedes verificarla y cancelar su ejecución pendiente. Cuando esté habilitada, también puedes recuperar la operación original; si todavía no se realizó, se ejecutará ahora.</p>{notice&&<p>{notice}</p>}{error&&<p>{error}</p>}{operations.map((entry,index)=><React.Fragment key={entry.key||index}><button type="button" disabled={busy||disabled||!entry.key||(!allowSuspend && entry.operation?.action !== 'resume')} onClick={()=>recover(entry)}>{operations.length===1?'Recuperar operación':`Recuperar operación ${index+1}`}</button><button type="button" disabled={busy||!entry.key} onClick={()=>recover(entry,true)}>{operations.length===1?'Verificar y cancelar si sigue pendiente':`Verificar y cancelar operación ${index+1} si sigue pendiente`}</button></React.Fragment>)}<button type="button" onClick={()=>void refresh().catch(()=>setError('No se pudo consultar el estado.'))}>Consultar estado</button></section>;
   return <section aria-label="Suspensión del partido">
-    {suspended?<><p>Partido suspendido. Al reanudar, el reloj permanece pausado hasta que lo inicies.</p><label>Cancha <select value={court} onChange={e=>setCourt(e.target.value)}><option value="">Elegí una cancha</option>{courts.map(row=><option key={row.id} value={row.id}>{row.nombre||`Cancha ${row.orden||row.id}`}</option>)}</select></label><label>Duración estimada en minutos <input type="number" min="1" max="720" value={duration} onChange={e=>setDuration(e.target.value)}/></label></>:<label>Motivo de suspensión <input maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>}
+    {suspended?<><p>Partido suspendido. Al reanudar, el reloj permanece pausado hasta que lo inicies.</p><label>Cancha <select value={court} onChange={e=>setCourt(e.target.value)}><option value="">Elige una cancha</option>{courts.map(row=><option key={row.id} value={row.id}>{row.nombre||`Cancha ${row.orden||row.id}`}</option>)}</select></label><label>Duración estimada en minutos <input type="number" min="1" max="720" value={duration} onChange={e=>setDuration(e.target.value)}/></label></>:<label>Motivo de suspensión <input maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>}
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}<button type="button" disabled={busy||disabled} onClick={()=>void submit()}>{busy?'Confirmando…':suspended?'Reanudar en esta cancha':'Suspender partido'}</button>
   </section>;
 }
