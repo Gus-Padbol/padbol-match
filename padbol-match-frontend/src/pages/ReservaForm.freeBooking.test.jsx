@@ -26,7 +26,7 @@ jest.mock('../i18n/tSafe',()=>{ const t=(key,fallback,opts)=>{
  const locale=require('../i18n/locales/es.json'); const value=key.split('.').reduce((v,k)=>v?.[k],locale); const text=value|| (typeof fallback==='string'?fallback:key); const args=typeof fallback==='object'?fallback:opts;
  return String(text).replace(/\{\{(\w+)\}\}/g,(_,k)=>args?.[k]??'');
 }; return {useSafeTranslation:()=>({t})}; });
-const venue={id:7,nombre:'QA free fixture',pais:'Argentina',ciudad:'La Plata',cantidad_canchas:1,moneda:'ARS',metodo_pago:'efectivo',stripe_account_id:null,horario_apertura:'10:00',horario_cierre:'23:00',timezone:'America/Argentina/Buenos_Aires',precio_60min:0,precio_90min:0,duraciones_oferta:[{duracion_minutos:60,precio:0,activo:true,deporte:'padbol'}],deportes_disponibles:['padbol']};
+const venue={id:7,nombre:'QA free fixture',pais:'Argentina',ciudad:'La Plata',cantidad_canchas:1,moneda:'ARS',metodo_pago:'efectivo',surge_activo:false,stripe_account_id:null,horario_apertura:'10:00',horario_cierre:'23:00',timezone:'America/Argentina/Buenos_Aires',precio_60min:0,precio_90min:0,duraciones_oferta:[{duracion_minutos:60,precio:0,activo:true,deporte:'padbol'}],deportes_disponibles:['padbol']};
 const futureDate=new Date(Date.now()+30*86400000).toISOString().slice(0,10);
 const fixtureUrl=`/reservar?sedeId=7&fecha=${futureDate}&hora=18%3A00&canchaId=1&deporte=padbol`;
 const auth={session:{access_token:'qa-visible-test-token',user:{id:'qa-owner',email:'qa@example.invalid',user_metadata:{}}},loading:false,userProfile:{nombre:'QA',apellido:'Prueba',genero:'masculino',whatsapp:'+5491199901013'}};
@@ -204,5 +204,32 @@ test('Stripe con precio dinámico conserva consulta legacy aunque v2 no esté di
   await waitFor(()=>expect(fetchSurgePrecio).toHaveBeenCalledWith(7,'padbol',60,expect.any(String),expect.any(String),{version2:false}));
   await waitFor(()=>expect(screen.getAllByText(/36.000/).length).toBeGreaterThan(0));
   expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/v2/'))).toBe(false);
+ } finally {Object.assign(venue,previous);}
+});
+
+
+test.each(['efectivo','mercadopago'])('Surge activo con %s conserva precio y confirmación legacy sin depender de v2',async metodo=>{
+ const previous={...venue};Object.assign(venue,{metodo_pago:metodo,surge_activo:true,precio_60min:25000,duraciones_oferta:[{duracion_minutos:60,precio:25000,activo:true,deporte:'padbol'}]});
+ try {
+  fetchSurgePrecio.mockResolvedValue({precio:36000,surge_activo:true});const original=global.fetch.getMockImplementation();
+  global.fetch.mockImplementation(async(url,options)=>String(url).includes('price-capabilities')||String(url).includes('/api/v2/')?{ok:false,status:503,json:async()=>({})}:original(url,options));
+  render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
+  await waitFor(()=>expect(fetchSurgePrecio).toHaveBeenCalledWith(7,'padbol',60,expect.any(String),expect.any(String),{version2:false}));
+  await waitFor(()=>expect(screen.getAllByText(/36.000/).length).toBeGreaterThan(0));
+  const button=await screen.findByRole('button',{name:metodo==='efectivo'?es.reservas.pago_sede:/Pagar con Mercado Pago/});
+  await waitFor(()=>expect(button).toBeEnabled());fireEvent.click(button);
+  await waitFor(()=>expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/crear-preferencia'))).toBe(true));
+  const request=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/crear-preferencia'));const body=JSON.parse(request[1].body);
+  expect(body.price_confirmation_strict).toBeUndefined();expect(body.precio).toBe(36000);expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/v2/'))).toBe(false);
+ } finally {Object.assign(venue,previous);}
+});
+
+test('sin estado Surge confirmado no solicita v2 ni aplica condición estricta',async()=>{
+ const previous={...venue};venue.surge_activo=null;
+ try {
+  render(<MemoryRouter initialEntries={[fixtureUrl]}><ReservaForm/></MemoryRouter>);
+  const button=await screen.findByRole('button',{name:es.reservas.confirmFreeBooking});await waitFor(()=>expect(button).toBeEnabled());fireEvent.click(button);
+  await waitFor(()=>expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/crear-preferencia'))).toBe(true));
+  const request=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/crear-preferencia'));expect(JSON.parse(request[1].body).price_confirmation_strict).toBeUndefined();expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/v2/'))).toBe(false);
  } finally {Object.assign(venue,previous);}
 });
