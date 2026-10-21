@@ -797,7 +797,7 @@ export default function AppHeader({
             type="button"
             onClick={() => {
               clearAdminNavContext();
-              navigate('/');
+              navigate('/hub');
               scheduleHubEntryScrollReset();
             }}
             aria-label={t('hub.backToHub')}

@@ -3588,6 +3588,7 @@ export default function AdminDashboard({
 
   const [pendientes, setPendientes] = useState([]);
   const [pendientesLoading, setPendientesLoading] = useState(true);
+  const [pendientesError, setPendientesError] = useState('');
   const [busquedaValidaciones, setBusquedaValidaciones] = useState('');
   const [busquedaRolesAdmin, setBusquedaRolesAdmin] = useState('');
   // keyed by player email: { open: bool, categoria: string, saving: bool }
@@ -6654,13 +6655,21 @@ export default function AdminDashboard({
 
   const fetchPendientes = async () => {
     setPendientesLoading(true);
-    const { data, error } = await supabase
-      .from('jugadores_perfil')
-      .select('email, nombre, apellido, alias, user_id, pais, nivel, genero')
-      .eq('pendiente_validacion', true)
-      .order('nombre');
-    if (!error) setPendientes(data || []);
-    setPendientesLoading(false);
+    setPendientesError('');
+    try {
+      const { data, error } = await supabase
+        .from('jugadores_perfil')
+        .select('email, nombre, apellido, alias, user_id, pais, nivel, genero')
+        .eq('pendiente_validacion', true)
+        .order('nombre');
+      if (error) throw error;
+      setPendientes(data || []);
+    } catch {
+      setPendientes([]);
+      setPendientesError(t('admin.formularios.pendingValidationLoadError', { defaultValue: 'No se pudieron cargar las validaciones pendientes. Intentá nuevamente.' }));
+    } finally {
+      setPendientesLoading(false);
+    }
   };
 
   const aprobarJugador = async (email) => {
@@ -10025,7 +10034,7 @@ export default function AdminDashboard({
     } catch {
       /* ignore */
     }
-    navigate('/');
+    navigate('/hub');
   };
 
   if (panelLoadError && !esEditorContenido) {
@@ -12610,6 +12619,8 @@ export default function AdminDashboard({
         <h2>{t('admin.formularios.pendingValidationTitle')}</h2>
         {pendientesLoading ? (
           <p style={{ color: 'var(--text-secondary)' }}>{t('admin.metricas.loading')}</p>
+        ) : pendientesError ? (
+          <div role="alert"><p>{pendientesError}</p><button type="button" onClick={() => void fetchPendientes()}>{t('admin.common.retry', { defaultValue: 'Reintentar' })}</button></div>
         ) : pendientes.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)' }}>{t('admin.formularios.noPendingValidation')}</p>
         ) : (
