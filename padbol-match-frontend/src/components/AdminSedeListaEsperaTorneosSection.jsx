@@ -1,5 +1,5 @@
 import { formatAdminDate } from '../utils/adminDateFormat';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { fetchAdminListaEsperaGeneral } from '../utils/listaEsperaAdminApi';
 import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
@@ -23,36 +23,42 @@ export default function AdminSedeListaEsperaTorneosSection({ apiBaseUrl, accessT
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [resultKey, setResultKey] = useState(null);
   const [filtroDeporte, setFiltroDeporte] = useState('');
-
-  const loadRows = useCallback(async () => {
-    if (!Number.isFinite(sid) || !accessToken) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      const data = await fetchAdminListaEsperaGeneral({ sedeId: sid, accessToken, apiBaseUrl });
-      setItems(Array.isArray(data.items) ? data.items : []);
-    } catch (e) {
-      setError(e.message || t('admin.sedes.listaEsperaLoadError'));
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, apiBaseUrl, sid, t]);
+  const requestKey = `${sid}:${accessToken || ''}:${apiBaseUrl || ''}`;
 
   useEffect(() => {
-    void loadRows();
-  }, [loadRows]);
+    let current = true;
+    const controller = new AbortController();
+    setItems([]);
+    setError('');
+    setFiltroDeporte('');
+    if (!Number.isFinite(sid) || !accessToken) {
+      setLoading(false);
+      setError(t('admin.sedes.listaEsperaLoadError'));
+      setResultKey(requestKey);
+      return () => { current = false; controller.abort(); };
+    }
+    setLoading(true);
+    (async () => {
+      try {
+        const data = await fetchAdminListaEsperaGeneral({ sedeId: sid, accessToken, apiBaseUrl, signal: controller.signal });
+        if (current) { setItems(data.items); setResultKey(requestKey); }
+      } catch (e) {
+        if (current) { setError(e.message || t('admin.sedes.listaEsperaLoadError')); setResultKey(requestKey); }
+      } finally {
+        if (current) setLoading(false);
+      }
+    })();
+    return () => { current = false; controller.abort(); };
+  }, [accessToken, apiBaseUrl, sid, requestKey, t]);
 
   const itemsFiltrados = useMemo(() => {
     const dep = String(filtroDeporte || '').trim().toLowerCase();
-    if (!dep) return items;
-    return items.filter((row) => String(row.deporte || '').trim().toLowerCase() === dep);
-  }, [items, filtroDeporte]);
+    const currentItems = resultKey === requestKey ? items : [];
+    if (!dep) return currentItems;
+    return currentItems.filter((row) => String(row.deporte || '').trim().toLowerCase() === dep);
+  }, [items, filtroDeporte, resultKey, requestKey]);
 
   return (
     <div className="admin-sede-lista-espera">
@@ -79,7 +85,7 @@ export default function AdminSedeListaEsperaTorneosSection({ apiBaseUrl, accessT
         </select>
       </div>
 
-      {loading ? (
+      {loading || resultKey !== requestKey ? (
         <p className="admin-mi-sede-theme-muted">{t('admin.common.loadingEllipsis')}</p>
       ) : error ? (
         <p className="admin-sede-lista-espera__error" role="alert">
