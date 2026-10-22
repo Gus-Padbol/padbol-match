@@ -132,14 +132,14 @@ describe('CRM histórico unificado', () => {
   });
 
   it('muestra en lista y ficha la fecha del último WhatsApp recibido', async () => {
-    crmAdminApi.inbox.mockResolvedValue({items:[{ id:'wa-date', estado:'nuevo', source_channel:'whatsapp', whatsapp_delivery_review:'clear', origin:'whatsapp:1376102838911694', identity_used:'Remitente de prueba', inbound_body:'Hola', created_at:'2026-09-23T12:00:00Z', received_at:'2026-10-21T12:00:00Z' }]});
+    crmAdminApi.inbox.mockResolvedValue({items:[{ id:'wa-date', estado:'nuevo', source_channel:'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', origin:'whatsapp:1376102838911694', identity_used:'Remitente de prueba', inbound_body:'Hola', created_at:'2026-09-23T12:00:00Z', received_at:'2026-10-21T12:00:00Z' }]});
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText(/MENSAJE RECIBIDO · 21\/10\/2026/)).toBeInTheDocument();
     expect(screen.getByRole('button', {name:/Remitente de prueba/}).querySelector('time')).toHaveAttribute('datetime','2026-10-21T12:00:00Z');
   });
 
   it('muestra mensajes entrantes y respuesta enviada con su estado', async () => {
-    crmAdminApi.inbox.mockResolvedValue([{id:'history-wa',source_channel:'whatsapp', whatsapp_delivery_review:'clear',identity_used:'15555550123',inbound_body:'Último',estado:'nuevo'}]);
+    crmAdminApi.inbox.mockResolvedValue([{id:'history-wa',source_channel:'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear',identity_used:'15555550123',inbound_body:'Último',estado:'nuevo'}]);
     crmAdminApi.whatsappHistory.mockResolvedValue({truncated:true,messages:[{id:'in-1',direction:'inbound',body:'Primer mensaje',at:'2026-10-21T10:00:00Z'},{id:'out-1',direction:'outbound',body:'Respuesta enviada',at:'2026-10-21T10:01:00Z',status:'sent'}]});
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText('Primer mensaje')).toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('CRM histórico unificado', () => {
   });
 
   it('muestra el contexto de WhatsApp y los textos originales sin cambiar asignaciones', async () => {
-    crmAdminApi.inbox.mockResolvedValue([{ id:'wa-context', source_channel:'whatsapp', whatsapp_delivery_review:'clear', identity_used:'15555550123', estado:'en_atencion', operador:'Equipo humano', sede_id:'sede-1', qualification_data:{ whatsapp_menu:{ topic:'sede', subtopic:'Comprar una cancha', initialMessage:'Hola, quiero\nuna cancha.', detailMessage:'Para Miami.' } } }]);
+    crmAdminApi.inbox.mockResolvedValue([{ id:'wa-context', source_channel:'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', identity_used:'15555550123', estado:'en_atencion', operador:'Equipo humano', sede_id:'sede-1', qualification_data:{ whatsapp_menu:{ topic:'sede', subtopic:'Comprar una cancha', initialMessage:'Hola, quiero\nuna cancha.', detailMessage:'Para Miami.' } } }]);
     crmAdminApi.activities.mockResolvedValue([]);
     render(<WhatsappCrmDemo />);
     const context = await screen.findByRole('region', { name:'Contexto de WhatsApp' });
@@ -167,7 +167,7 @@ describe('CRM histórico unificado', () => {
     { whatsapp_menu:{topic:'sede',needs_review:true,initialMessage:'Texto original'} },
   ])('advierte cuando el orden requiere revisión y no afirma el tema anterior', async (data) => {
     const menu = { topic:'sede', subtopic:'Comprar una cancha', initialMessage:'Texto original', ...data.whatsapp_menu };
-    crmAdminApi.inbox.mockResolvedValue([{id:'wa-uncertain',source_channel:'whatsapp', whatsapp_delivery_review:'clear',identity_used:'15555550123',estado:'derivado',operador:'Persona asignada',qualification_data:{...data,whatsapp_menu:menu}}]);
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-uncertain',source_channel:'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear',identity_used:'15555550123',estado:'derivado',operador:'Persona asignada',qualification_data:{...data,whatsapp_menu:menu}}]);
     crmAdminApi.whatsappHistory.mockResolvedValue({messages:[{id:'in-1',direction:'inbound',body:'Texto original',at:'2026-10-21T10:00:00Z'}]});
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText('Revisión humana necesaria')).toBeInTheDocument();
@@ -182,7 +182,7 @@ describe('CRM histórico unificado', () => {
 
   it('advierte entrega automática incierta y bloquea otro envío hasta revisión', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate:true, whatsappSendEnabled:true });
-    crmAdminApi.inbox.mockResolvedValue([{id:'wa-uncertain-delivery',source_channel:'whatsapp', whatsapp_delivery_review:'clear',estado:'nuevo',identity_used:'15555550123',qualification_data:{whatsapp_order_review:{required:true,reason:'uncertain_automated_delivery'}}}]);
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-uncertain-delivery',source_channel:'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear',estado:'nuevo',identity_used:'15555550123',qualification_data:{whatsapp_order_review:{required:true,reason:'uncertain_automated_delivery'}}}]);
     crmAdminApi.whatsappHistory.mockResolvedValue({messages:[]});
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText(/No se pudo confirmar si llegó una respuesta automática/)).toBeInTheDocument();
@@ -227,6 +227,29 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.reply).not.toHaveBeenCalled();
   });
 
+  it.each(['required', 'unknown'])('avisa orden %s sin bloquear respuesta humana ni ofrecer conciliación', async (order) => {
+    crmAdminApi.permissions.mockResolvedValue({ canAudit:true, canOperate:true, whatsappSendEnabled:true });
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-order',source_channel:'whatsapp',whatsapp_delivery_review:'clear',whatsapp_message_order_review:order,estado:'nuevo'}]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByText(order === 'required' ? /El orden de algunos mensajes no está confirmado/ : /No se pudo comprobar el orden de los mensajes/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Respuesta')).toBeEnabled();
+    expect(screen.queryByRole('form',{name:'Revisar entrega automática'})).not.toBeInTheDocument();
+  });
+
+  it('tras revisar no entregado consulta el servidor y solo desbloquea si informa clear', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canAudit:true, canOperate:true, whatsappSendEnabled:true });
+    crmAdminApi.inbox.mockResolvedValueOnce([{id:'wa-reviewed',source_channel:'whatsapp',whatsapp_delivery_review:'required',whatsapp_message_order_review:'clear',estado:'nuevo'}]).mockResolvedValue([{id:'wa-reviewed',source_channel:'whatsapp',whatsapp_delivery_review:'clear',whatsapp_message_order_review:'clear',estado:'nuevo'}]);
+    crmAdminApi.reviewWhatsappDelivery.mockResolvedValue({ok:true});
+    render(<WhatsappCrmDemo />);
+    fireEvent.change(await screen.findByLabelText('Resultado comprobado'), {target:{value:'not_delivered'}});
+    fireEvent.change(screen.getByLabelText('Evidencia comprobada'), {target:{value:'Registro de Meta revisado'}});
+    fireEvent.click(screen.getByLabelText('Revisé la evidencia y confirmo este resultado.'));
+    fireEvent.click(screen.getByRole('button',{name:'Registrar revisión'}));
+    await waitFor(() => expect(crmAdminApi.reviewWhatsappDelivery).toHaveBeenCalledWith('qa-token','wa-reviewed',{outcome:'not_delivered',evidence:'Registro de Meta revisado'}));
+    await waitFor(() => expect(screen.getByLabelText('Respuesta')).toBeEnabled());
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+  });
+
   it('un operador sin auditoría no puede registrar conciliación', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canAudit:false, canOperate:true, whatsappSendEnabled:true });
     crmAdminApi.inbox.mockResolvedValue([{id:'wa-review',source_channel:'whatsapp',whatsapp_delivery_review:'required',estado:'nuevo'}]);
@@ -237,7 +260,7 @@ describe('CRM histórico unificado', () => {
 
   it('permite WhatsApp solo con capacidad del servidor y permiso de operador, y muestra el rechazo real', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, whatsappSendEnabled: true, emailSendEnabled: false });
-    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-qa', estado: 'nuevo', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-qa', estado: 'nuevo', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
     crmAdminApi.activities.mockResolvedValue([]);
     crmAdminApi.reply.mockRejectedValue(new Error('Meta no aceptó la respuesta de WhatsApp (código 131042).'));
     render(<WhatsappCrmDemo />);
@@ -253,7 +276,7 @@ describe('CRM histórico unificado', () => {
 
   it('conserva la referencia WhatsApp al reintentar un resultado incierto', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, whatsappSendEnabled: true });
-    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-retry', estado: 'nuevo', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-retry', estado: 'nuevo', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
     crmAdminApi.activities.mockResolvedValue([]);
     crmAdminApi.reply.mockRejectedValue(new Error('Envío no confirmado'));
     render(<WhatsappCrmDemo />);
@@ -271,7 +294,7 @@ describe('CRM histórico unificado', () => {
     const revoke = jest.fn();
     URL.createObjectURL = create;
     URL.revokeObjectURL = revoke;
-    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-image', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', identity_used: '15555550123', inbound_body: 'Imagen' }]);
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-image', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', identity_used: '15555550123', inbound_body: 'Imagen' }]);
     crmAdminApi.activities.mockResolvedValue([]);
     crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [{ eventId: 'image-1', mediaType: 'image' }, { eventId: 'audio-1', mediaType: 'audio' }] });
     crmAdminApi.whatsappMedia.mockResolvedValue({ blob: { slice: () => ({ arrayBuffer: async () => Uint8Array.from([255, 216, 255, 0]).buffer }) }, filename: 'foto.jpg' });
@@ -285,7 +308,7 @@ describe('CRM histórico unificado', () => {
 
   it('permite solicitar un adjunto del evento autorizado y muestra fallos', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false });
-    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-attachment', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', identity_used: '15555550123', inbound_body: 'Imagen' }]);
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-attachment', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', identity_used: '15555550123', inbound_body: 'Imagen' }]);
     crmAdminApi.activities.mockResolvedValue([]);
     crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [{ eventId: 'event-1', mediaType: 'image' }] });
     crmAdminApi.whatsappMedia.mockRejectedValue(new Error('unavailable'));
@@ -297,7 +320,7 @@ describe('CRM histórico unificado', () => {
 
   it('habilita al operador limitado solo para el número WhatsApp autorizado', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, canOperateWhatsapp: true, whatsappSendEnabled: true });
-    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-approved', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', origin: 'whatsapp:1376102838911694', identity_used: '15555550123', inbound_body: 'Hola' }, { id: 'wa-other', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', origin: 'whatsapp:other', identity_used: '15555550124', inbound_body: 'Otro' }]);
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-approved', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', origin: 'whatsapp:1376102838911694', identity_used: '15555550123', inbound_body: 'Hola' }, { id: 'wa-other', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', origin: 'whatsapp:other', identity_used: '15555550124', inbound_body: 'Otro' }]);
     crmAdminApi.activities.mockResolvedValue([]);
     render(<WhatsappCrmDemo />);
     fireEvent.change(await screen.findByLabelText('Respuesta'), { target: { value: 'Hola' } });
@@ -308,7 +331,7 @@ describe('CRM histórico unificado', () => {
 
   it('mantiene WhatsApp sin envío para auditor aun cuando el servidor ofrece el canal', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, whatsappSendEnabled: true });
-    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-audit', estado: 'nuevo', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-audit', estado: 'nuevo', source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
     crmAdminApi.activities.mockResolvedValue([]);
     render(<WhatsappCrmDemo />);
     expect(await screen.findByRole('button', { name: 'Enviar por WhatsApp' })).toBeDisabled();
@@ -553,7 +576,7 @@ describe('CRM histórico unificado', () => {
       items: [{
         id: 'conv-operador',
         estado: 'nuevo',
-        source_channel: 'whatsapp', whatsapp_delivery_review:'clear',
+        source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear',
         origin: 'whatsapp',
         identity_used: '+5491100000000',
         subject: 'Consulta operativa',
@@ -622,7 +645,7 @@ describe('CRM histórico unificado', () => {
 });
 
 test('la fecha de WhatsApp usa el último mensaje y mantiene alternativas para otros canales', () => {
-  const row = { source_channel: 'whatsapp', whatsapp_delivery_review:'clear', created_at: '2026-09-23T12:00:00Z', received_at: '2026-10-21T12:00:00Z' };
+  const row = { source_channel: 'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', created_at: '2026-09-23T12:00:00Z', received_at: '2026-10-21T12:00:00Z' };
   expect(conversationDisplayDate(row)).toBe(row.received_at);
   expect(conversationDisplayDate({ ...row, received_at: null })).toBe(row.created_at);
   expect(conversationDisplayDate({ ...row, source_channel: 'email' })).toBe(row.created_at);
