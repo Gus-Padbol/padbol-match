@@ -509,6 +509,21 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
     } finally { setBusy(false); }
   };
 
+  const resumeWhatsappAutomation = async () => {
+    if (!active || active.source_channel !== 'whatsapp' || !activeCanOperate || !perms?.whatsappAutomationResumeEnabled || busy || waContext?.deliveryUncertain || waContext?.deliveryUnknown) return;
+    if (!window.confirm('¿Reanudar las respuestas automáticas para esta conversación? No se enviarán respuestas por mensajes anteriores.')) return;
+    const conversationId = active.id;
+    setBusy(true); setNotice(null);
+    try {
+      await crmAdminApi.resumeWhatsappAutomation(token, conversationId);
+      if (activeConversationId.current !== conversationId) return;
+      setNotice('Reanudación registrada. Las respuestas automáticas podrán funcionar en mensajes nuevos cuando corresponda.');
+      await load();
+    } catch (error) {
+      if (activeConversationId.current === conversationId) setNotice(error?.message || 'No se pudo reanudar las respuestas automáticas.');
+    } finally { setBusy(false); }
+  };
+
   const submitReply = async () => {
     if (!active || busy || !activeCanOperate || !canReply || !replyText.trim()) return;
     setBusy(true);
@@ -770,6 +785,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     catch (err) { setNotice(`No se pudo cambiar la visibilidad: ${err.message}`); }
                     finally { setBusy(false); }
                   }}>{hiddenOnly ? 'Restaurar conversación' : 'Ocultar prueba'}</button> : null}
+                  {active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true ? <button type="button" disabled={busy || waContext?.deliveryUncertain || waContext?.deliveryUnknown} onClick={resumeWhatsappAutomation}>Reanudar respuestas automáticas</button> : null}
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">

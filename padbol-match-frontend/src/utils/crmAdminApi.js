@@ -46,6 +46,7 @@ export const crmAdminApi = {
   },
   get: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}`, token),
   reviewWhatsappDelivery: (token, id, review) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/whatsapp-delivery-review`, token, { method: 'POST', body: JSON.stringify(review) }),
+  resumeWhatsappAutomation: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/whatsapp-automation-resume`, token, { method: 'POST' }),
   whatsappHistory: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/whatsapp-history`, token),
   reply: (token, id, body, requestId) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/reply`, token, { method: 'POST', body: JSON.stringify({ body, ...(requestId ? { requestId } : {}) }) }),
   handoff: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/handoff`, token, { method: 'POST' }),

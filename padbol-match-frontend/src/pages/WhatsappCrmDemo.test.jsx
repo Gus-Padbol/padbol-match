@@ -21,6 +21,7 @@ jest.mock('../utils/crmAdminApi', () => ({
     whatsappMediaList: jest.fn(),
     whatsappHistory: jest.fn(),
     reviewWhatsappDelivery: jest.fn(),
+    resumeWhatsappAutomation: jest.fn(),
     whatsappMedia: jest.fn(),
     reply: jest.fn(),
     createManual: jest.fn(),
@@ -199,6 +200,48 @@ describe('CRM histórico unificado', () => {
     render(<WhatsappCrmDemo />);
     await screen.findByLabelText('Listado de conversaciones');
     expect(screen.queryByText('Atención humana en inglés pendiente')).not.toBeInTheDocument();
+  });
+
+  it('requiere confirmación explícita antes de solicitar reanudación y no envía mensajes', async () => {
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,whatsappAutomationResumeEnabled:true});
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-resume',source_channel:'whatsapp',estado:'nuevo',whatsapp_delivery_review:'clear',whatsapp_message_order_review:'clear'}]);
+    crmAdminApi.resumeWhatsappAutomation.mockResolvedValue({ok:true});
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    render(<WhatsappCrmDemo />);
+    const button = await screen.findByRole('button',{name:'Reanudar respuestas automáticas'});
+    fireEvent.click(button);
+    expect(crmAdminApi.resumeWhatsappAutomation).not.toHaveBeenCalled();
+    fireEvent.click(button);
+    await waitFor(() => expect(crmAdminApi.resumeWhatsappAutomation).toHaveBeenCalledWith('qa-token','wa-resume'));
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+    confirm.mockRestore();
+  });
+
+  it('muestra error del servidor al no poder reanudar', async () => {
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,whatsappAutomationResumeEnabled:true});
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-resume-error',source_channel:'whatsapp',estado:'nuevo',whatsapp_delivery_review:'clear'}]);
+    crmAdminApi.resumeWhatsappAutomation.mockRejectedValueOnce(new Error('Hay atención humana en curso'));
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByRole('button',{name:'Reanudar respuestas automáticas'}));
+    expect(await screen.findByText('Hay atención humana en curso')).toBeInTheDocument();
+    confirm.mockRestore();
+  });
+
+  it('bloquea reanudación con entrega incierta', async () => {
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,whatsappAutomationResumeEnabled:true});
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-resume',source_channel:'whatsapp',estado:'nuevo',whatsapp_delivery_review:'required'}]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByRole('button',{name:'Reanudar respuestas automáticas'})).toBeDisabled();
+    expect(crmAdminApi.resumeWhatsappAutomation).not.toHaveBeenCalled();
+  });
+
+  it('no ofrece reanudación sin capacidad habilitada', async () => {
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true});
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-old',source_channel:'whatsapp',estado:'nuevo'}]);
+    render(<WhatsappCrmDemo />);
+    await screen.findByLabelText('Listado de conversaciones');
+    expect(screen.queryByRole('button',{name:'Reanudar respuestas automáticas'})).not.toBeInTheDocument();
   });
 
   it('advierte entrega automática incierta y bloquea otro envío hasta revisión', async () => {
