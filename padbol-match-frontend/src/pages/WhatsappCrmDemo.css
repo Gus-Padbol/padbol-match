@@ -386,3 +386,6 @@ html.theme-dark .wa-demo :is(.wa-executive-card p,.wa-executive-card li,.wa-exec
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
 }
+
+.wa-demo .wa-language-attention { color: #765100; font-weight: 700; }
+html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }

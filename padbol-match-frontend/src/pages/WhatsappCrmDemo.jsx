@@ -43,6 +43,14 @@ export function whatsappContext(conversation) {
   };
 }
 
+export function needsEnglishHumanAttention(conversation) {
+  return conversation?.source_channel === 'whatsapp'
+    && conversation.qualification_status === 'needs_review'
+    && conversation.next_step === 'advisor_handoff'
+    && conversation.qualification_data?.whatsapp_menu?.humanLanguage === 'en'
+    && conversation.estado !== 'cerrado';
+}
+
 const FOLLOW_UP_TOPICS = [
   'Consulta general', 'Información sobre Padbol', 'Interés comercial', 'Club o sede',
   'Jugador o partido', 'Soporte técnico', 'Reclamo', 'Seguimiento previo', 'Otro',
@@ -739,6 +747,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined}>{compactDateTime(conversationDisplayDate(item))}</time></div>
                     <p>{formatCrmEventText(item.subject || item.inbound_body).slice(0, 80)}</p>
                     {item.short_ticket_reference || item.ticket_reference ? <p>N.º de ticket: {item.short_ticket_reference || item.ticket_reference}</p> : null}
+                    {needsEnglishHumanAttention(item) ? <p className="wa-language-attention">Atención humana en inglés pendiente</p> : null}
                     <footer><span className={`wa-pill wa-pill--${statusTone[item.estado] || 'blue'}`}>{statusName(item.estado)}</span><ChannelIcon channel={item.source_channel} /></footer>
                   </div>
                 </button>
@@ -764,6 +773,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
+                  {needsEnglishHumanAttention(active) ? <div className="wa-context-warning" role="status"><strong>Atención humana en inglés pendiente</strong><p>La consulta necesita atención en inglés. Revisá la conversación para continuar.</p></div> : null}
                   {waContext?.deliveryUncertain || waContext?.deliveryUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión de entrega necesaria</strong><p>{waContext.deliveryUncertain ? 'No se pudo confirmar si llegó una respuesta automática. Revisa el envío antes de volver a responder para evitar duplicados.' : 'No se pudo comprobar el estado de las respuestas automáticas. Revisá la conversación antes de continuar.'}</p></div> : null}
                   {waContext?.orderUncertain || waContext?.orderUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>{waContext.orderUncertain ? 'El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.' : 'No se pudo comprobar el orden de los mensajes. Revisá la conversación antes de responder.'}</p></div> : null}
                   {waContext?.deliveryUncertain && perms?.canAudit ? <form className="wa-context-warning" aria-label="Revisar entrega automática" onSubmit={submitDeliveryReview}>

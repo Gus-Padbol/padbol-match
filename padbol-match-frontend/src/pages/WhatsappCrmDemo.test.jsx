@@ -180,6 +180,27 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
   });
 
+  it('muestra atención humana en inglés pendiente en lista y detalle sin afectar respuesta', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate:true, whatsappSendEnabled:true });
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-en',source_channel:'whatsapp',estado:'nuevo',identity_used:'English fixture',qualification_status:'needs_review',next_step:'advisor_handoff',whatsapp_delivery_review:'clear',whatsapp_message_order_review:'clear',qualification_data:{whatsapp_menu:{humanLanguage:'en',stage:'selected'}}}]);
+    render(<WhatsappCrmDemo />);
+    expect((await screen.findAllByText('Atención humana en inglés pendiente'))).toHaveLength(2);
+    expect(screen.getByLabelText('Respuesta')).toBeEnabled();
+    expect(screen.queryByText(/ya se asignó/i)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    {source_channel:'email',qualification_status:'needs_review',next_step:'advisor_handoff'},
+    {source_channel:'whatsapp',qualification_status:'pending',next_step:'advisor_handoff'},
+    {source_channel:'whatsapp',qualification_status:'needs_review',next_step:'other'},
+    {source_channel:'whatsapp',qualification_status:'needs_review',next_step:'advisor_handoff',estado:'cerrado'},
+  ])('no muestra falso aviso de atención inglesa en ficha ajena o finalizada', async (partial) => {
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-other',estado:'nuevo',whatsapp_delivery_review:'clear',whatsapp_message_order_review:'clear',qualification_data:{whatsapp_menu:{humanLanguage:'en'}},...partial}]);
+    render(<WhatsappCrmDemo />);
+    await screen.findByLabelText('Listado de conversaciones');
+    expect(screen.queryByText('Atención humana en inglés pendiente')).not.toBeInTheDocument();
+  });
+
   it('advierte entrega automática incierta y bloquea otro envío hasta revisión', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate:true, whatsappSendEnabled:true });
     crmAdminApi.inbox.mockResolvedValue([{id:'wa-uncertain-delivery',source_channel:'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear',estado:'nuevo',identity_used:'15555550123',qualification_data:{whatsapp_order_review:{required:true,reason:'uncertain_automated_delivery'}}}]);
