@@ -1290,7 +1290,6 @@ export default function TorneoVista() {
               {buscaDuplaSeccion}
             </>
           }
-          stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock)}
           showTorneoLogo={false}
           estadoLineaArribaTabs={
             !modoAdminExplicitoEnVista && (torneoPasadoCalendario || estadoTorneoLower === 'finalizado')

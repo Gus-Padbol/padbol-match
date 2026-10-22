@@ -254,7 +254,6 @@ export default function TorneoTabbedView({
   estadoLineaArribaTabs = null,
   /** Abre la pestaña Resultados al cargar (torneo finalizado o fecha pasada). */
   abrirTabResultadosInicial = false,
-  stickyTop = '110px',
   showTorneoLogo = false,
   /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
   jugadorNombreTorneoCtx = null,
@@ -2084,10 +2083,8 @@ export default function TorneoTabbedView({
       <div data-torneo-banner-slot={TORNEO_BANNER_ANTES_TABS_DATA_SLOT}>{bannerAntesTabs}</div>
 
       <div
-        className="torneo-tabs-sticky torneo-tabs"
+        className="torneo-tabs"
         style={{
-          position: 'sticky',
-          top: stickyTop,
           zIndex: 20,
           background: 'color-mix(in srgb, var(--bg-card) 96%, transparent)',
           backdropFilter: 'blur(8px)',

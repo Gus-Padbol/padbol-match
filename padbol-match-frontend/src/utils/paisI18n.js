@@ -1,3 +1,8 @@
+/** Conserva el nombre legible y quita la bandera decorativa al guardar. */
+export function paisSinBanderaParaGuardar(raw) {
+  return String(raw || '').replace(/^[\p{Regional_Indicator}]{2}\s*/u, '').trim();
+}
+
 /** Normaliza texto de país (sin emoji, sin tildes, minúsculas). */
 export function normalizePaisText(raw) {
   return String(raw || '')

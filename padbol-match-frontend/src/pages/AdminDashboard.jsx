@@ -1,4 +1,5 @@
 import { confirmInPersonPayment } from '../utils/adminInPersonPayment';
+import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
 import PendingValidationActions from '../components/PendingValidationActions';
 import { fetchAdminPendingValidations, updatePendingValidation } from '../utils/adminPendingValidationsApi';
 import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
@@ -1025,7 +1026,7 @@ function miSedeFormToApiPatchBody(form) {
     ciudad: form.ciudad || null,
     provincia:
       form.provincia != null && String(form.provincia).trim() !== '' ? String(form.provincia).trim() : null,
-    pais: form.pais || null,
+    pais: paisSinBanderaParaGuardar(form.pais) || null,
     telefono: normalizeWhatsappForStorage(form.telefono, form.pais),
     email_contacto: form.email_contacto || null,
     horario_apertura: form.horario_apertura || null,
@@ -7366,6 +7367,11 @@ export default function AdminDashboard({
         fetch(`${apiBaseUrl}/api/reservas`, { headers: { ...listAuthHeaders } }),
         fetch(`${apiBaseUrl}/api/torneos`, { headers: { ...listAuthHeaders } }),
       ]);
+      if (resRes.status === 401 || tornRes.status === 401) {
+        const authError = new Error('Sesión no válida');
+        authError.code = 'ADMIN_SESSION_REJECTED';
+        throw authError;
+      }
       if (!resRes.ok || !tornRes.ok) throw new Error('El servicio está temporalmente ocupado. Tus datos y la sección seleccionada se conservan. Reintenta en unos instantes.');
       let resData = await resRes.json();
       if (!Array.isArray(resData)) {
@@ -7482,7 +7488,7 @@ export default function AdminDashboard({
       setLoading(false);
     } catch (err) {
       console.error('Error:', err);
-      setPanelLoadError('El servicio está temporalmente ocupado. Tus datos y la sección seleccionada se conservan. Reintenta en unos instantes.');
+      setPanelLoadError(err?.code === 'ADMIN_SESSION_REJECTED' ? 'session_rejected' : 'El servicio está temporalmente ocupado. Tus datos y la sección seleccionada se conservan. Reintenta en unos instantes.');
       setAnalyticsGlobales(null);
       setLoading(false);
     }
@@ -10019,8 +10025,13 @@ export default function AdminDashboard({
     return <div className="admin-dashboard" style={{ minHeight: '100dvh', padding: '24px', background: 'var(--bg-page)', color: 'var(--text-primary)' }}>
       <AppHeader title="" showBack={false} adminPanelMinimalHeader />
       <div role="alert" style={{ marginTop: '100px', padding: '24px', border: '1px solid var(--border)', borderRadius: '12px' }}>
-        <p>{i18n.language.startsWith('en') ? 'The service is temporarily unavailable. Your data and selected section are preserved. Please try again shortly.' : panelLoadError}</p>
-        <button type="button" onClick={() => { setLoading(true); void fetchData(); }}>{t('general.retry', { defaultValue: i18n.language.startsWith('en') ? 'Retry' : 'Reintentar' })}</button>
+        {panelLoadError === 'session_rejected' ? <>
+          <p>{i18n.language.startsWith('en') ? 'Your session could not be verified. Please sign in again.' : 'No pudimos verificar tu sesión. Vuelve a iniciar sesión.'}</p>
+          <button type="button" onClick={() => { handleLogout(); navigate('/acceso?redirect=%2Fadmin'); }}>{i18n.language.startsWith('en') ? 'Sign in' : 'Iniciar sesión'}</button>
+        </> : <>
+          <p>{i18n.language.startsWith('en') ? 'The service is temporarily unavailable. Your data and selected section are preserved. Please try again shortly.' : panelLoadError}</p>
+          <button type="button" onClick={() => { setLoading(true); void fetchData(); }}>{t('general.retry', { defaultValue: i18n.language.startsWith('en') ? 'Retry' : 'Reintentar' })}</button>
+        </>}
       </div>
     </div>;
   }
@@ -18182,6 +18193,7 @@ export default function AdminDashboard({
                                 borderRadius: '6px',
                                 border: '1px solid #c4b5fd',
                                 background: '#eef2ff',
+                                color: '#312e81',
                                 cursor: 'pointer',
                                 fontSize: '14px',
                               }}

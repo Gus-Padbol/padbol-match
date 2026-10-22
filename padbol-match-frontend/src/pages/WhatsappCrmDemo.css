@@ -324,6 +324,15 @@
 .wa-demo :is(.wa-safety-flags span, .wa-conversation time, .wa-panel dt, .wa-panel dd, .wa-panel label, .wa-draft-label small) { font-size: 12px; }
 .wa-demo :is(.wa-conversation time, .wa-panel dt, .wa-panel dd, .wa-draft-label small) { color: #526075; }
 .wa-demo .wa-thread-person p { flex-wrap: wrap; overflow-wrap: anywhere; }
+.wa-ticket-search { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 18px; }
+.wa-ticket-search label { font-weight: 700; }
+.wa-demo .wa-ticket-search input { min-width: 0; width: min(100%, 340px); padding: 8px; border: 1px solid #d9dde4; border-radius: 7px; }
+.wa-ticket-search button { padding: 8px 11px; border: 1px solid #d9dde4; border-radius: 7px; background: white; cursor: pointer; }
+.wa-ticket-search [role="alert"] { color: #b91c28; flex-basis: 100%; margin: 0; }
+.wa-ticket-reference { font-size: 10px; overflow-wrap: anywhere; }
+.wa-context-warning { padding: 12px; border: 1px solid #c48400; border-radius: 8px; background: #fff8e6; color: #533800; }
+.wa-context-warning p { margin: 5px 0 0; }
+.wa-context-original { white-space: pre-wrap; overflow-wrap: anywhere; }
 html.theme-dark .wa-demo { --ink: #e5e7eb; --muted: #cbd5e1; --paper: #172033; --wash: #101827; --line: #3b475c; }
 html.theme-dark .wa-demo :is(.wa-workspace, .wa-thread-head, .wa-composer, .wa-contact-card, .wa-panel, .wa-lead-card, .wa-lead-card header, .wa-lead-card dl, .wa-lead-card dl div, .wa-lead-note, .wa-message--in, .wa-system, .wa-executive-card, .wa-analysis-pending) { background: var(--paper); color: var(--ink); border-color: var(--line); }
 html.theme-dark .wa-demo .wa-conversation { background: var(--paper); color: var(--ink); border-bottom-color: var(--line); }
@@ -331,6 +340,7 @@ html.theme-dark .wa-demo .wa-conversation.active { background: #29364d; }
 html.theme-dark .wa-demo .wa-thread { background: var(--wash); }
 html.theme-dark .wa-demo .wa-messages { background-color: var(--wash); background-image: none; }
 html.theme-dark .wa-demo :is(h1,h2,h3,h4,strong,.wa-lead-section strong,.wa-lead-card dd,.wa-lead-note p,.wa-contact-card p span) { color: var(--ink); }
+html.theme-dark .wa-demo .wa-context-warning strong { color: #533800; }
 html.theme-dark .wa-demo :is(.wa-conversation p,.wa-conversation time,.wa-panel dt,.wa-panel dd,.wa-draft-label small,.wa-lead-card header p,.wa-lead-card dt,.wa-message span,.wa-system) { color: var(--muted); }
 html.theme-dark .admin-dashboard .wa-demo label { color: var(--muted) !important; -webkit-text-fill-color: var(--muted) !important; }
 html.theme-dark .wa-demo :is(input,select,textarea) { background: var(--wash) !important; color: var(--ink) !important; border-color: var(--line) !important; }
@@ -363,4 +373,48 @@ html.theme-dark .wa-demo :is(.wa-executive-card p,.wa-executive-card li,.wa-exec
 .wa-demo .wa-area-tabs--top button { grid-template-columns: 24px minmax(0,1fr) 36px; }
 @media (max-width: 720px) {
   .wa-demo .wa-area-tabs--top button { grid-template-columns: minmax(0,1fr) 36px; }
+}
+
+.wa-attachment-download{display:inline-flex;align-items:center;gap:6px;margin:6px 0 12px;padding:10px 14px;border:1px solid #cbd4e0;border-radius:9px;background:#fff;color:#24344f;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.wa-attachment-download:hover{background:#edf3fa;border-color:#8aa1bd}.wa-attachment-download:focus-visible{outline:3px solid #7ca9df;outline-offset:2px}.wa-attachment-download:disabled{opacity:.6;cursor:wait}
+
+/* Let the CRM grow with its content so the page footer follows the report. */
+.wa-demo .wa-crm-body { height: auto; min-height: calc(100vh - 134px); }
+.wa-demo .wa-crm-body .wa-workspace { flex: 1 0 auto; min-height: 600px; }
+.wa-demo .wa-messages { overflow: visible; }
+.wa-demo .wa-executive-card > header h3,
+.admin-dashboard .wa-demo .wa-executive-card > header h3 {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+.wa-demo .wa-language-attention { color: #765100; font-weight: 700; }
+html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
+
+/* Acciones administrativas, fuera del flujo de atención habitual. */
+.wa-demo .wa-thread-admin { position: relative; flex: none; }
+.wa-demo .wa-thread-admin summary { cursor: pointer; list-style: none; border: 1px solid #d9e0e8; border-radius: 9px; padding: 8px 12px; color: #46536a; background: #fff; font-size: 12px; font-weight: 700; }
+.wa-demo .wa-thread-admin summary::-webkit-details-marker { display: none; }
+.wa-demo .wa-thread-admin summary:focus-visible,.wa-demo .wa-thread-admin button:focus-visible { outline: 3px solid #77a9e8; outline-offset: 2px; }
+.wa-demo .wa-thread-admin__actions { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; display: grid; gap: 4px; min-width: 240px; padding: 6px; border: 1px solid #d9e0e8; border-radius: 10px; background: #fff; box-shadow: 0 8px 24px #17203324; }
+.wa-demo .wa-thread-admin__actions button { text-align: left; border: 0; border-radius: 6px; background: #fff; color: #34445d; padding: 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.wa-demo .wa-thread-admin__actions button:hover:not(:disabled) { background: #f1f5fa; }
+.wa-demo .wa-thread-admin__actions button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Keep the areas visible while reading long consultations. */
+.wa-demo .wa-area-tabs--top { position: sticky; top: 0; z-index: 40; }
+@media (min-width: 721px) {
+  .wa-demo:has(.wa-panel-exit) .wa-area-tabs--top { top: calc(var(--pm-app-header-stack-height, 86px) + 64px); }
+}
+@media (max-width: 720px) {
+  .wa-demo .wa-area-tabs--top { max-height: 30vh; overflow-y: auto; overscroll-behavior: contain; }
+}
+
+/* Keep the list navigable without pushing the selected consultation away. */
+@media (min-width: 721px) {
+  .wa-demo .wa-inbox { overflow: visible; }
+  .wa-demo .wa-list { max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; }
+  .wa-demo .wa-thread { scroll-margin-top: calc(var(--pm-app-header-stack-height, 86px) + 150px); }
+}
+@media (max-width: 720px) {
+  .wa-demo .wa-thread { scroll-margin-top: 32vh; }
 }
