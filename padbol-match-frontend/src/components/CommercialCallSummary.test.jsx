@@ -1,5 +1,5 @@
 import React from 'react';
-import {fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import CommercialCallSummary from './CommercialCallSummary';
 test('requires all three fields and confirms only after save',async()=>{
  const api={completeCall:jest.fn().mockResolvedValue({version:2})}, onSaved=jest.fn();
@@ -30,4 +30,12 @@ test('advisor explicitly registers an external call before entering summary',asy
  await screen.findByLabelText('Situación del cliente');
  expect(api.startCall).toHaveBeenCalledWith('x','whatsapp');
  expect(screen.getByText('Resumen pendiente')).toBeInTheDocument();
+});
+
+test('dictado queda editable y no guarda sin confirmación',async()=>{
+ let engine;window.SpeechRecognition=class {constructor(){engine=this;this.start=jest.fn();this.abort=jest.fn();this.stop=jest.fn();}};
+ const api={completeCall:jest.fn().mockResolvedValue({id:'call-1'})};const view=render(<CommercialCallSummary api={api} caseId="x" channel="form" callId="call-1"/>);
+ fireEvent.change(screen.getByLabelText('Situación del cliente'),{target:{value:'Tiene un club'}});fireEvent.change(screen.getByLabelText('Detalles importantes'),{target:{value:'En Inglaterra'}});fireEvent.click(screen.getByText('Dictar nota'));expect(screen.getByText('Guardar resumen')).toBeDisabled();
+ act(()=>{engine.onresult({results:[Object.assign([{transcript:'Desea conocer opciones'}],{isFinal:true})]});engine.onend();});
+ expect(screen.getByLabelText('Qué se habló')).toHaveValue('Desea conocer opciones');expect(api.completeCall).not.toHaveBeenCalled();fireEvent.change(screen.getByLabelText('Qué se habló'),{target:{value:'Desea conocer costos'}});fireEvent.click(screen.getByText('Guardar resumen'));await waitFor(()=>expect(api.completeCall).toHaveBeenCalledWith('x','call-1',expect.objectContaining({discussed:'Desea conocer costos'})));view.unmount();delete window.SpeechRecognition;
 });
