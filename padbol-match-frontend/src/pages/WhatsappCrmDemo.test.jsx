@@ -95,6 +95,23 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.reply).toHaveBeenCalledTimes(1);
   });
 
+  it('muestra imágenes autorizadas y libera su URL al cerrar la conversación', async () => {
+    const create = jest.fn(() => 'blob:imagen');
+    const revoke = jest.fn();
+    URL.createObjectURL = create;
+    URL.revokeObjectURL = revoke;
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-image', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Imagen' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [{ eventId: 'image-1', mediaType: 'image' }, { eventId: 'audio-1', mediaType: 'audio' }] });
+    crmAdminApi.whatsappMedia.mockResolvedValue({ blob: new Blob(['jpg'], { type: 'image/jpeg' }), filename: 'foto.jpg' });
+    const view = render(<WhatsappCrmDemo />);
+    expect(await screen.findByRole('img', { name: 'Imagen recibida 1' })).toHaveAttribute('src', 'blob:imagen');
+    expect(crmAdminApi.whatsappMedia).toHaveBeenCalledTimes(1);
+    expect(crmAdminApi.whatsappMedia).toHaveBeenCalledWith('qa-token', 'wa-image', 'image-1');
+    view.unmount();
+    expect(revoke).toHaveBeenCalledWith('blob:imagen');
+  });
+
   it('permite solicitar un adjunto del evento autorizado y muestra fallos', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-attachment', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Imagen' }]);

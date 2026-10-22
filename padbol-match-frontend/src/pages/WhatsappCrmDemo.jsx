@@ -224,6 +224,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const [activities, setActivities] = useState([]);
   const [whatsappAttachments, setWhatsappAttachments] = useState([]);
   const [attachmentNotice, setAttachmentNotice] = useState('');
+  const [imagePreviews, setImagePreviews] = useState({});
   const [downloadingAttachment, setDownloadingAttachment] = useState(null);
   const [activityType, setActivityType] = useState('note');
   const [activityTopic, setActivityTopic] = useState('');
@@ -357,6 +358,23 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
       .catch(() => { if (current) setAttachmentNotice('No se pudieron consultar los archivos adjuntos.'); });
     return () => { current = false; };
   }, [token, active?.id, active?.source_channel, active?.inbound_body]);
+
+  useEffect(() => {
+    let current = true;
+    const urls = [];
+    setImagePreviews({});
+    if (token && active?.id) {
+      whatsappAttachments.filter((attachment) => attachment.mediaType === 'image').forEach((attachment) => {
+        crmAdminApi.whatsappMedia(token, active.id, attachment.eventId).then(({ blob }) => {
+          if (!current || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(blob.type.toLowerCase())) return;
+          const url = URL.createObjectURL(blob);
+          urls.push(url);
+          setImagePreviews((previous) => ({ ...previous, [attachment.eventId]: url }));
+        }).catch(() => {});
+      });
+    }
+    return () => { current = false; urls.forEach((url) => URL.revokeObjectURL(url)); };
+  }, [token, active?.id, whatsappAttachments]);
 
   const downloadWhatsappAttachment = async (attachment) => {
     if (!active?.id || downloadingAttachment) return;
@@ -657,7 +675,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   </article> : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
                   {whatsappAttachments.length ? <section aria-label="Archivos de WhatsApp">
                     <h3>Archivos recibidos</h3>
-                    {whatsappAttachments.map((attachment, index) => <button key={attachment.eventId} type="button" className="wa-secondary" disabled={Boolean(downloadingAttachment)} onClick={() => void downloadWhatsappAttachment(attachment)}>{downloadingAttachment === attachment.eventId ? 'Descargando…' : `Descargar archivo ${index + 1}`}</button>)}
+                    {whatsappAttachments.map((attachment, index) => <div key={attachment.eventId}>
+                      {imagePreviews[attachment.eventId] ? <img src={imagePreviews[attachment.eventId]} alt={`Imagen recibida ${index + 1}`} style={{ display: 'block', maxWidth: '100%', maxHeight: 400, objectFit: 'contain', marginBottom: 8 }} /> : null}
+                      <button type="button" className="wa-secondary" disabled={Boolean(downloadingAttachment)} onClick={() => void downloadWhatsappAttachment(attachment)}>{downloadingAttachment === attachment.eventId ? 'Descargando…' : `Descargar archivo ${index + 1}`}</button>
+                    </div>)}
                   </section> : null}
                   {attachmentNotice ? <p role="status">{attachmentNotice}</p> : null}
                   {leadAnalysis ? <article className="wa-executive-card">
