@@ -725,7 +725,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     const hide = !hiddenOnly;
                     if (hide && !window.confirm('Confirma que toda esta conversación es una prueba. Se ocultará de la bandeja y se podrá restaurar.')) return;
                     setBusy(true); setNotice(null);
-                    try { await crmAdminApi.setTestVisibility(token, active.id, hide, active.updated_at); setActiveId(null); await load(); }
+                    try { await crmAdminApi.setTestVisibility(token, active.id, hide, active.test_visibility_version); setActiveId(null); await load(); }
                     catch (err) { setNotice(`No se pudo cambiar la visibilidad: ${err.message}`); }
                     finally { setBusy(false); }
                   }}>{hiddenOnly ? 'Restaurar conversación' : 'Ocultar prueba'}</button> : null}

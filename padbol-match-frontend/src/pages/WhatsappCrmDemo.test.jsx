@@ -52,7 +52,7 @@ describe('CRM histórico unificado', () => {
         subject: 'Prueba 23',
         inbound_body: 'Nombre: Prueba 23\nAsunto: Consulta de sede',
         created_at: '2026-10-02T12:00:00.000Z',
-        updated_at: '2026-10-02T12:00:01.000Z',
+        updated_at: '2026-10-02T12:00:01.000Z', test_visibility_version: 0,
       }],
     });
     crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [] });
@@ -122,11 +122,11 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.setTestVisibility).not.toHaveBeenCalled();
     window.confirm.mockReturnValue(true);
     fireEvent.click(screen.getByRole('button', {name:'Ocultar prueba'}));
-    await waitFor(() => expect(crmAdminApi.setTestVisibility).toHaveBeenCalledWith('qa-token', 'conv-prueba-23', true, '2026-10-02T12:00:01.000Z'));
+    await waitFor(() => expect(crmAdminApi.setTestVisibility).toHaveBeenCalledWith('qa-token', 'conv-prueba-23', true, 0));
     fireEvent.click(await screen.findByRole('button', {name:'Ver pruebas ocultas'}));
     await waitFor(() => expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', expect.objectContaining({hiddenOnly:true})));
     fireEvent.click(await screen.findByRole('button', {name:'Restaurar conversación'}));
-    await waitFor(() => expect(crmAdminApi.setTestVisibility).toHaveBeenCalledWith('qa-token', 'conv-prueba-23', false, '2026-10-02T12:00:01.000Z'));
+    await waitFor(() => expect(crmAdminApi.setTestVisibility).toHaveBeenCalledWith('qa-token', 'conv-prueba-23', false, 0));
     window.confirm = originalConfirm;
   });
 
