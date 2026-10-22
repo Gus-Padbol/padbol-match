@@ -1,7 +1,8 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useState } from 'react';
 import ConfirmModal from './ConfirmModal';
 import { supabase } from '../supabaseClient';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 
 /**
  * Mi Sede — extras del tercer tiempo (admin club: CRUD sin aprobación; super puede aprobar en fila).
@@ -86,14 +87,14 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         cacheControl: '3600',
       });
       if (upErr) {
-        setMsg(`⚠️ ${upErr.message}`);
+        setMsg(` ${upErr.message}`);
         return;
       }
       const filePath = uploadData?.path != null && String(uploadData.path).trim() !== '' ? String(uploadData.path).trim() : path;
       const { data } = supabase.storage.from('sponsors').getPublicUrl(filePath);
       const publicUrl = data?.publicUrl != null ? String(data.publicUrl).trim() : '';
       if (!publicUrl) {
-        setMsg(`⚠️ ${t('admin.sedes.extrasPublicUrlError')}`);
+        setMsg(` ${t('admin.sedes.extrasPublicUrlError')}`);
         return;
       }
       assign(publicUrl);
@@ -126,7 +127,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
               fontSize: 22,
             }}
           >
-            🏷️
+
           </div>
         )}
         <label
@@ -141,7 +142,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
             cursor: busy ? 'wait' : 'pointer',
           }}
         >
-          {busy ? `⏳ ${t('admin.sedes.extrasUploading')}` : url ? t('admin.sedes.extrasChangeImage') : `📤 ${t('admin.sedes.extrasUploadImage')}`}
+          {busy ? ` ${t('admin.sedes.extrasUploading')}` : url ? t('admin.sedes.extrasChangeImage') : ` ${t('admin.sedes.extrasUploadImage')}`}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -357,7 +358,7 @@ export default function AdminSedeExtrasSection({ apiBaseUrl, accessToken, sedeId
         {t('admin.sedes.extrasIntro')}
       </p>
       {msg ? (
-        <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p>
+        <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{stripAdminEmoji(msg)}</p>
       ) : null}
       {loading ? (
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{t('admin.common.loadingEllipsis')}</p>

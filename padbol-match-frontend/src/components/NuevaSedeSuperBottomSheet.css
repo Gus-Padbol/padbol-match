@@ -1,0 +1,9 @@
+.nueva-sede-super-sheet #nueva-sede-sheet-title {
+  color: var(--text-primary) !important;
+}
+
+.nueva-sede-super-sheet .nueva-sede-super-sheet-close {
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  background: var(--bg-input) !important;
+}

@@ -60,7 +60,6 @@ function SearchIconSvg({ size = 16 }) {
 const LEGACY_GLOBAL_ADMIN_EMAILS_HEADER = [
   PADBOL_SUPER_ADMIN_EMAIL,
   'admin@padbol.com',
-  'sm@padbol.com',
 ];
 
 function emailEsLegacyAdminHub(emailRaw) {
@@ -798,7 +797,7 @@ export default function AppHeader({
             type="button"
             onClick={() => {
               clearAdminNavContext();
-              navigate('/');
+              navigate('/hub');
               scheduleHubEntryScrollReset();
             }}
             aria-label={t('hub.backToHub')}

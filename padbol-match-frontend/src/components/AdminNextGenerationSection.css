@@ -1,0 +1,88 @@
+.admin-ng-section {
+  min-width: 0;
+  color: var(--text-primary);
+}
+.admin-ng-section .admin-ng-session-form {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+.admin-ng-section .admin-ng-session-form > p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.admin-ng-section .admin-ng-session-form fieldset {
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 16px 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 18px;
+}
+.admin-ng-section .admin-ng-session-form label {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+.admin-ng-section .admin-ng-session-form :is(input, select) {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  font: inherit;
+}
+.admin-ng-section button {
+  box-sizing: border-box;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  font: inherit;
+  font-weight: 600;
+  white-space: normal;
+  cursor: pointer;
+}
+.admin-ng-section button.admin-ng-button--primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.admin-ng-section .admin-ng-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+.admin-ng-section :is(input, select, button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.admin-ng-section :is(input, select, button):disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+@media (max-width: 480px) {
+  .admin-ng-section .admin-ng-session-form { padding: 14px; }
+  .admin-ng-section .admin-ng-session-form fieldset { grid-template-columns: minmax(0, 1fr); }
+  .admin-ng-section .admin-ng-session-actions > button { flex: 1 1 140px; }
+}

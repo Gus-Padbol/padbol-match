@@ -1,0 +1,5 @@
+import { torneoEstaEnListadoActivo, badgeTorneoEstadoPublico } from './torneoEstadoPublico';
+test.each(['finalizado','cancelado',' FINALIZADO ','CANCELADO'])('terminal state %s is excluded even with a future date',estado=>{expect(torneoEstaEnListadoActivo({estado},false)).toBe(false);});
+test.each(['abierto','inscripcion_abierta','proximo','planificacion'])('expired upcoming %s is not offered as an active upcoming tournament',estado=>{expect(torneoEstaEnListadoActivo({estado},true)).toBe(false);expect(torneoEstaEnListadoActivo({estado},false)).toBe(true);});
+test.each(['en_curso','activo'])('a genuine ongoing tournament %s survives its first day and never gets a finished badge',estado=>{expect(torneoEstaEnListadoActivo({estado},true)).toBe(true);expect(badgeTorneoEstadoPublico(estado).label).toBe('En curso');});
+test('unknown state does not invent an active or finished tournament',()=>{expect(torneoEstaEnListadoActivo({estado:'unknown'},false)).toBe(false);expect(badgeTorneoEstadoPublico('unknown')).toBeNull();});

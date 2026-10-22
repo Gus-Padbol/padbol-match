@@ -15,7 +15,6 @@ const API_DEFAULT = getApiBaseUrl();
 const LEGACY_SUPER = [
   'padbolinternacional@gmail.com',
   'admin@padbol.com',
-  'sm@padbol.com',
   'juanpablo@padbol.com',
 ];
 

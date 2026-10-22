@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import AdminClasesClubSection from './AdminClasesClubSection';
 import AdminProfesoresClubSection from './AdminProfesoresClubSection';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
+
+const EMPTY_CANCHAS = [];
 
 export default function AdminModuloClasesSection({
   apiBaseUrl,
   accessToken,
   sedeId,
-  canchas = [],
+  canchas = EMPTY_CANCHAS,
   monedaSede = 'ARS',
   isSuperAdmin = false,
   /** Super admin gestiona instructores en tab global Profesores; aquí solo clases. */

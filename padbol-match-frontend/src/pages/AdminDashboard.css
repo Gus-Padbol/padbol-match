@@ -283,6 +283,84 @@
   margin-bottom: 16px;
 }
 
+.admin-dashboard-mobile-tab-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-dashboard-mobile-tab-picker select {
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-padcoins-section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px;
+  margin: 0 0 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.admin-padcoins-section-nav a {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-config-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.admin-config-subtabs button {
+  flex: 1 1 0;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-config-subtabs button[aria-selected='true'] {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12);
+}
+
 @media (min-width: 768px) {
   .admin-dashboard-shell {
     flex-direction: row;
@@ -407,14 +485,7 @@
     display: block;
     position: fixed;
     top: var(--pm-admin-sidebar-top);
-    /* Align to centered app column (same idea as chatbot-fab-anchor). */
-    left: max(
-      var(--pm-admin-sidebar-shell-pad-x),
-      calc(
-        (100vw - min(100vw, var(--pm-app-body-max-width, 900px))) / 2 +
-          var(--pm-admin-sidebar-shell-pad-x)
-      )
-    );
+    left: var(--pm-admin-sidebar-shell-pad-x);
     width: var(--pm-admin-sidebar-width);
     max-height: calc(100dvh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
     max-height: calc(100svh - var(--pm-admin-sidebar-top) - var(--pm-admin-sidebar-bottom-gap));
@@ -532,6 +603,77 @@
   }
 }
 
+/* Tablets use the compact section picker as well. Keeping the full 232px
+ * navigation rail at 768px left too little room for operational tables. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-dashboard--with-sidebar {
+    --pm-admin-sidebar-slot: 0px;
+    --pm-admin-sidebar-width: 0px;
+  }
+
+  .admin-dashboard--with-sidebar .admin-dashboard-brand-shell {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .admin-dashboard-shell,
+  .admin-dashboard--with-sidebar .admin-dashboard-shell {
+    display: block;
+    padding: 0 12px 12px;
+  }
+
+  .admin-dashboard-nav,
+  .admin-dashboard--with-sidebar .admin-dashboard-nav {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    pointer-events: auto;
+  }
+
+  .admin-dashboard-sidebar,
+  .admin-dashboard--with-sidebar .admin-dashboard-sidebar {
+    display: none !important;
+  }
+
+  .admin-dashboard-tabs-strip--mobile {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    margin: 0 0 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-dashboard--super {
+    --pm-admin-sidebar-width: 300px;
+    --pm-admin-sidebar-gap: 40px;
+    --pm-admin-sidebar-shell-pad-x: 28px;
+  }
+
+  .admin-dashboard--super .admin-dashboard-sidebar-btn {
+    min-height: 54px;
+    padding: 13px 16px 13px 18px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+
+  .admin-dashboard--super .admin-dashboard-sidebar-nav {
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .admin-dashboard-body-surface {
+    width: 100%;
+    max-width: none !important;
+  }
+}
+
 /* Super admin: shell transparente sobre --bg-page (separación en la franja de tabs) */
 .admin-dashboard--super .admin-dashboard-brand-shell {
   background: transparent;
@@ -547,6 +689,25 @@
   box-sizing: border-box;
   background: var(--bg-page);
   color: var(--text-primary);
+}
+
+@media (min-width: 768px) {
+  .admin-dashboard--crm .admin-dashboard-brand-shell,
+  .admin-dashboard--crm .admin-dashboard-nav {
+    display: none;
+  }
+
+  .admin-dashboard--crm .admin-dashboard-shell {
+    display: block;
+    padding: 0 20px 24px;
+  }
+
+  .admin-dashboard--crm .admin-dashboard-panel,
+  .admin-dashboard--crm .admin-dashboard-body-surface {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+  }
 }
 
 .admin-dashboard h1 {
@@ -2648,6 +2809,16 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   }
 }
 
+/* Los campos deben caber en la columna también en pantallas angostas. */
+#admin-scoreboard-form,
+#admin-scoreboard-form label,
+#admin-scoreboard-form input,
+#admin-scoreboard-form select {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 /* Scoreboard admin: títulos de jugadores legibles en tema oscuro */
 #admin-scoreboard-form h3 {
   color: var(--text-primary);
@@ -3495,4 +3666,236 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
   text-align: center;
   color: var(--text-secondary);
   font-size: 14px;
+}
+.admin-load-error {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+  color: var(--text-primary);
+}
+
+.admin-load-error span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.admin-load-error button {
+  justify-self: start;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 13px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-date-field {
+  display: grid;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-date-range-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-week-compare__delta--new {
+  color: #2563eb;
+}
+
+.admin-super-sede-edit__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-super-sede-edit__grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-super-sede-edit__grid input {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 11px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.admin-form-error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Preserve the approved light CRM workspace inside the themed admin shell. */
+.admin-dashboard .wa-demo .wa-conversation,
+.admin-dashboard .wa-demo .wa-conversation strong,
+.admin-dashboard .wa-demo .wa-inbox-head h1 {
+  color: var(--ink);
+}
+
+.admin-dashboard .wa-demo label {
+  color: #6e7887 !important;
+  -webkit-text-fill-color: #6e7887 !important;
+}
+
+.wa-panel-exit {
+  position: fixed;
+  top: var(--pm-app-header-stack-height, 86px);
+  left: 0;
+  right: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  border-bottom: 1px solid #344057;
+  background: #0b1324;
+}
+
+.wa-demo:has(.wa-panel-exit) {
+  padding-top: 64px;
+}
+
+.admin-dashboard .wa-demo .wa-panel-exit button {
+  border: 1px solid #64748b;
+  border-radius: 9px;
+  padding: 10px 16px;
+  background: #172033;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-dashboard .wa-demo .wa-inbox-head h1 {
+  text-align: left;
+  font-size: 21px;
+  margin: 0;
+}
+
+.admin-dashboard .wa-demo :is(input, select, textarea) {
+  color: var(--ink) !important;
+  -webkit-text-fill-color: var(--ink) !important;
+  background-color: var(--paper) !important;
+  border-color: var(--line) !important;
+}
+
+.admin-dashboard .wa-demo :is(input, textarea)::placeholder {
+  color: var(--muted) !important;
+  -webkit-text-fill-color: var(--muted) !important;
+}
+
+.admin-dashboard .wa-demo > section > button,
+.admin-dashboard .wa-demo > section > form > button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 15px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 620px) {
+  .admin-super-sede-edit__grid { grid-template-columns: 1fr; }
+}
+
+/* Native date/file controls follow the existing admin typography and theme. */
+.admin-dashboard input:is([type="date"], [type="datetime-local"], [type="month"], [type="time"], [type="file"]) {
+  font-family: inherit;
+}
+.admin-dashboard input:is([type="date"], [type="datetime-local"], [type="month"], [type="time"])::-webkit-datetime-edit {
+  font-family: inherit;
+}
+.admin-dashboard input[type="file"]::file-selector-button {
+  min-height: 44px;
+  margin-right: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-dashboard input[type="file"]::file-selector-button:hover {
+  border-color: var(--accent);
+}
+
+/* QA profundo 15/10: readable controls and complete actions at narrow widths. */
+.admin-dashboard button,
+.admin-dashboard select,
+.admin-dashboard input:not([type='checkbox']):not([type='radio']):not([type='file']) {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.admin-dashboard .admin-config-subtabs button[aria-selected='true'] {
+  color: var(--text-primary);
+  box-shadow: inset 0 -3px 0 #e11b22;
+}
+.admin-dashboard .admin-config-preview select { max-width: 100%; min-width: 0; }
+.admin-dashboard .admin-planes-table .admin-planes-price { color: var(--text-primary) !important; }
+.admin-dashboard .admin-torneo-warning { border-left: 3px solid #f59e0b; padding: 6px 10px; }
+.admin-dashboard .admin-validacion-ver-perfil { min-height: 44px; display: inline-flex; align-items: center; }
+.admin-dashboard .admin-scoreboard-jugador-row__slot { color: var(--text-primary); background: var(--bg-input); }
+.admin-dashboard .admin-hub-legacy-details { margin-top: 24px; }
+.admin-dashboard .admin-hub-legacy-details > summary { min-height: 44px; }
+@media (max-width: 767px) {
+  .admin-dashboard .sedes-admin-filter-field--search { flex: 0 1 auto; }
+  .admin-dashboard .admin-roles-table,
+  .admin-dashboard .admin-roles-table tbody { display: block; width: 100%; }
+  .admin-dashboard .admin-roles-table thead { display: none; }
+  .admin-dashboard .admin-roles-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr); padding: 12px 4px; gap: 4px; }
+  .admin-dashboard .admin-roles-table tbody td { display: block; width: 100%; min-width: 0; padding: 6px 8px !important; overflow-wrap: anywhere; box-sizing: border-box; text-align: left !important; }
+  .admin-dashboard .admin-roles-table td button { max-width: 100%; white-space: normal; }
+  .admin-dashboard .admin-config-puntos-wrap { overflow: visible; }
+  .admin-dashboard .admin-config-puntos-table { table-layout: auto; width: 100% !important; }
+  .admin-dashboard .admin-config-puntos-table th,
+  .admin-dashboard .admin-config-puntos-table td { width: auto !important; padding: 8px 6px !important; overflow-wrap: anywhere; }
+  .admin-dashboard .admin-config-puntos-table--levels tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .admin-dashboard .admin-config-puntos-table--levels tbody td { display: block; min-width: 0; }
+  .admin-dashboard .admin-config-puntos-table--levels tbody td:last-child { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; }
+  .admin-dashboard .admin-config-puntos-table--levels tbody td:last-child button { flex: 1 1 80px; }
+  .admin-dashboard .admin-config-puntos-table--levels thead { display: none; }
+  .admin-dashboard .admin-config-puntos-table input { max-width: 100%; }
+  .admin-dashboard .admin-planes-table,
+  .admin-dashboard .admin-planes-table tbody { display: block; width: 100% !important; min-width: 0 !important; }
+  .admin-dashboard .admin-planes-table thead { display: none; }
+  .admin-dashboard .admin-planes-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px; padding: 12px 4px; }
+  .admin-dashboard .admin-planes-table td { display: block; min-width: 0; padding: 6px 10px !important; text-align: left !important; }
+  .admin-dashboard .admin-planes-table td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .admin-dashboard .admin-planes-table td:last-child { align-self: end; }
+  .admin-dashboard a[href^='mailto:'] { display: inline-flex; align-items: center; min-height: 44px; }
+}
+
+.admin-dashboard label[for="admin-scoreboard-tournament-logo"] { display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; }
+
+/* Keep scoreboard fields inside their card on narrow screens. */
+#admin-scoreboard-form,
+#admin-scoreboard-form label,
+#admin-scoreboard-form input,
+#admin-scoreboard-form select {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }

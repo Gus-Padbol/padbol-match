@@ -64,5 +64,11 @@
   "torneos.deporte.pickleball",
   "torneos.listado.datesRange",
   "torneos.listado.deporteLabel",
-  "torneos.vista.colPos"
+  "torneos.vista.categoriaEdad.u13",
+  "torneos.vista.categoriaEdad.u15",
+  "torneos.vista.categoriaEdad.u17",
+  "torneos.vista.colPos",
+  "torneos.vista.filtros.programa",
+  "torneos.vista.programa.next_generation",
+  "torneos.vista.programa.padbol"
 ]

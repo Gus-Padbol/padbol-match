@@ -9,6 +9,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import './App.css';
+import './components/torneo/PadbolSelection.css';
 
 import useUserRole from './hooks/useUserRole';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -85,6 +86,7 @@ const ScoreboardJoin = lazy(() => import('./pages/ScoreboardJoin'));
 const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage'));
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
+const CommercialCrmPage = lazy(() => import('./pages/CommercialCrmPage'));
 const AdminVenueLandingPage = lazy(() => import('./pages/adminLanding/AdminVenueLandingPage'));
 const VenuePlansPage = lazy(() => import('./pages/adminLanding/VenuePlansPage'));
 const SupportTicketsPage = lazy(() => import('./pages/SupportTicketsPage'));
@@ -217,7 +219,9 @@ function AdminDashboardGate() {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
     return {
+      id: session.user.id,
       email: em,
+      accessToken: session.access_token,
       nombre: getDisplayName(userProfile, session),
       whatsapp: String(userProfile?.whatsapp || '').trim(),
       foto: userProfile?.foto_url ?? userProfile?.foto ?? null,
@@ -244,7 +248,9 @@ function AdminDashboardGate() {
   useEffect(() => {
     setRoleGateTimedOut(false);
     if (!roleLoading) return undefined;
-    const timeoutId = window.setTimeout(() => setRoleGateTimedOut(true), 15_000);
+    // La consulta principal y el respaldo autenticado tienen sus propios límites.
+    // Este corte evita un spinner infinito ante un problema ajeno al panel.
+    const timeoutId = window.setTimeout(() => setRoleGateTimedOut(true), 28_000);
     return () => window.clearTimeout(timeoutId);
   }, [roleLoading, currentCliente?.email]);
 
@@ -560,6 +566,7 @@ function App() {
                   </ErrorBoundary>
                 )}
               />
+              <Route path="/crm-leads" element={<ProtectedRoute><WebLegalConsentGate><CommercialCrmPage /></WebLegalConsentGate></ProtectedRoute>} />
               <Route
                 path="/admin/scoreboard/:partidoId"
                 element={(

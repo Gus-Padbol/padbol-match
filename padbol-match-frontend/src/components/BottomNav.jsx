@@ -35,7 +35,6 @@ const BottomNav = () => {
   const superAdminNavEmails = [
     'padbolinternacional@gmail.com',
     'admin@padbol.com',
-    'sm@padbol.com',
     'juanpablo@padbol.com',
   ];
 

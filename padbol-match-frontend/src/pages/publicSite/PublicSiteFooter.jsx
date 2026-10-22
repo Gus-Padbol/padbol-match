@@ -59,7 +59,6 @@ export default function PublicSiteFooter() {
             <a href="https://padbol.com/company">
               {text('publicSite.footer.legalOwner')}
             </a>
-            .
           </p>
         </div>
       </div>

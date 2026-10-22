@@ -26,13 +26,29 @@ export const crmAdminApi = {
   permissions: (token) => request('/api/admin/crm/permissions', token),
   inbox: (token, filters = {}) => {
     const q = new URLSearchParams();
+    if (filters.hiddenOnly) q.set('hidden','true');
     if (filters.channel) q.set('channel', filters.channel);
     if (filters.estado) q.set('estado', filters.estado);
+    if (filters.ticketReference) q.set('ticket_reference', filters.ticketReference);
     const qs = q.toString();
     return request(`/api/admin/crm/inbox${qs ? `?${qs}` : ''}`, token);
   },
+  setTestVisibility: (token, id, hide, expectedVersion) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/test-visibility`, token, { method:'POST', body:JSON.stringify({hide,expectedVersion}) }),
+  whatsappMediaList: (token, id) => request(`/api/admin/crm/conversations/${encodeURIComponent(id)}/whatsapp-media`, token),
+  whatsappMedia: async (token, id, eventId) => {
+    const response = await fetch(`${API_BASE_URL}/api/admin/crm/conversations/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/whatsapp-media`, {
+      cache: 'no-store', headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw Object.assign(new Error('No se pudo descargar el archivo.'), { status: response.status });
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const filename = disposition.match(/filename="(adjunto-whatsapp(?:\.[a-z0-9]{1,8})?)"/i)?.[1] || 'adjunto-whatsapp';
+    return { blob: await response.blob(), filename };
+  },
   get: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}`, token),
-  reply: (token, id, body) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/reply`, token, { method: 'POST', body: JSON.stringify({ body }) }),
+  reviewWhatsappDelivery: (token, id, review) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/whatsapp-delivery-review`, token, { method: 'POST', body: JSON.stringify(review) }),
+  resumeWhatsappAutomation: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/whatsapp-automation-resume`, token, { method: 'POST' }),
+  whatsappHistory: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/whatsapp-history`, token),
+  reply: (token, id, body, requestId) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/reply`, token, { method: 'POST', body: JSON.stringify({ body, ...(requestId ? { requestId } : {}) }) }),
   handoff: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/handoff`, token, { method: 'POST' }),
   activities: (token, id) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/activities`, token),
   addActivity: (token, id, activity) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/activities`, token, { method: 'POST', body: JSON.stringify(activity) }),

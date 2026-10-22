@@ -1,3 +1,5 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
@@ -8,7 +10,7 @@ import {
   patchProfesorAdmin,
   rechazarProfesorAdmin,
 } from '../utils/clasesAdminApi';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import './AdminProfesoresSuperSection.css';
 
@@ -45,17 +47,7 @@ function inicialProfesor(p) {
 }
 
 function formatFecha(iso) {
-  const raw = String(iso || '').trim();
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString('es-AR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatAdminDate(iso, { withTime: true });
 }
 
 function formatFechaNac(raw) {
@@ -135,7 +127,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
   }, [rowProp]);
 
   useEffect(() => {
-    if (!editMode || !isSuperAdmin) return;
+    if (!isSuperAdmin) return;
     let cancelled = false;
     setSedesLoading(true);
     fetch(`${API_BASE}/api/sedes`)
@@ -156,13 +148,16 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
     return () => {
       cancelled = true;
     };
-  }, [editMode, isSuperAdmin, locale]);
+  }, [isSuperAdmin, locale]);
 
   if (!row) return null;
 
   const wa = String(row.whatsapp || '').trim();
   const waUrl = waDigitsForUrl(wa);
   const boolLabel = (v) => (v ? t('admin.profesores.si') : t('admin.profesores.no'));
+  const sedeNombreFicha = String(row.sede_nombre || '').trim()
+    || String(sedes.find((s) => String(s?.id) === String(row.sede_id))?.nombre || '').trim()
+    || 'Sede sin identificar';
 
   const toggleDeporte = (key) => {
     setDraft((d) => {
@@ -354,7 +349,7 @@ function ProfesorFichaModal({ row: rowProp, isSuperAdmin, accessToken, onClose, 
             <FichaRow label={t('admin.profesores.fichaApellido')} value={String(row.apellido || '').trim() || '—'} />
             <FichaRow label={t('admin.profesores.fichaFechaNac')} value={formatFechaNac(row.fecha_nacimiento)} />
             <FichaRow label={t('admin.profesores.fichaGenero')} value={generoInstructorLabel(t, row.genero)} />
-            <FichaRow label={t('admin.profesores.colSede')} value={row.sede_nombre || (row.sede_id != null ? `ID ${row.sede_id}` : '—')} />
+            <FichaRow label={t('admin.profesores.colSede')} value={sedeNombreFicha} />
             <FichaRow label={t('admin.profesores.colDeportes')} value={deportesLabel(row.deportes)} />
             <FichaRow label={t('admin.profesores.colCertificado')} value={row.certificado_fipa ? t('admin.profesores.certificadoSi') : '—'} />
             <FichaRow label={t('admin.profesores.fichaBio')} value={String(row.bio || '').trim() || '—'} />
@@ -413,8 +408,8 @@ const TH_STYLE = {
   textAlign: 'left',
   fontSize: 12,
   fontWeight: 700,
-  color: 'var(--bg-card)',
-  background: 'var(--accent)',
+  color: '#fff',
+  background: '#b91c1c',
   whiteSpace: 'nowrap',
 };
 
@@ -444,6 +439,39 @@ export default function AdminProfesoresSuperSection({
   const [filtroSede, setFiltroSede] = useState('');
   const [filtroDeporte, setFiltroDeporte] = useState('');
   const [fichaRow, setFichaRow] = useState(null);
+  const [sedesCatalogo, setSedesCatalogo] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`${API_BASE}/api/sedes`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (!active) return;
+        const rows = Array.isArray(data) ? data : (Array.isArray(data?.sedes) ? data.sedes : []);
+        setSedesCatalogo(rows);
+      })
+      .catch(() => {
+        if (active) setSedesCatalogo([]);
+      });
+    return () => { active = false; };
+  }, []);
+
+  const sedesNombrePorId = useMemo(() => {
+    const map = new Map();
+    sedesCatalogo.forEach((sede) => {
+      if (sede?.id == null) return;
+      const nombre = String(sede?.nombre || '').trim();
+      if (nombre) map.set(String(sede.id), nombre);
+    });
+    return map;
+  }, [sedesCatalogo]);
+
+  const nombreSede = useCallback((row) => {
+    const directo = String(row?.sede_nombre || '').trim();
+    if (directo) return directo;
+    const id = row?.sede_id != null ? String(row.sede_id) : '';
+    return (id && sedesNombrePorId.get(id)) || 'Sede sin identificar';
+  }, [sedesNombrePorId]);
 
   const loadPendientes = useCallback(async () => {
     if (!accessToken) {
@@ -512,13 +540,13 @@ export default function AdminProfesoresSuperSection({
     for (const row of aprobados) {
       const id = Number(row.sede_id);
       if (!Number.isFinite(id)) continue;
-      const nombre = String(row.sede_nombre || '').trim() || `${t('admin.profesores.colSede')} #${id}`;
+      const nombre = nombreSede(row);
       if (!map.has(id)) map.set(id, nombre);
     }
     return [...map.entries()]
       .map(([id, nombre]) => ({ id, nombre }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, locale));
-  }, [aprobados, locale, t]);
+  }, [aprobados, locale, nombreSede]);
 
   const aprobadosFiltrados = useMemo(() => {
     const sid = filtroSede ? Number(filtroSede) : null;
@@ -604,7 +632,7 @@ export default function AdminProfesoresSuperSection({
         {t('admin.profesores.tab')}
       </h2>
       {msg ? (
-        <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 12 }}>{msg}</p>
+        <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 12 }}>{stripAdminEmoji(msg)}</p>
       ) : null}
 
       <section className="admin-profesores-super__block admin-profesores-super__block--pendientes">
@@ -631,7 +659,7 @@ export default function AdminProfesoresSuperSection({
                     {t('admin.profesores.estadoPendiente')}
                   </span>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-                    {t('admin.profesores.colSede')}: {row.sede_nombre || `ID ${row.sede_id}`}
+                    {t('admin.profesores.colSede')}: {nombreSede(row)}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
                     {t('admin.profesores.colDeportes')}: {deportesLabel(row.deportes)}
@@ -790,7 +818,7 @@ export default function AdminProfesoresSuperSection({
                           </button>
                         </div>
                       </td>
-                      <td style={TD_STYLE}>{row.sede_nombre || `ID ${row.sede_id}`}</td>
+                      <td style={TD_STYLE}>{nombreSede(row)}</td>
                       <td style={TD_STYLE}>{deportesLabel(row.deportes)}</td>
                       <td style={TD_STYLE}>{certLabel(row)}</td>
                       {isSuperAdmin ? (

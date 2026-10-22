@@ -5,7 +5,7 @@ import TorneoTabbedView from './TorneoTabbedView';
 
 jest.mock('../../i18n/tSafe', () => {
   const t = (key, values) => values?.defaultValue || key;
-  return { useSafeTranslation: () => ({ t }) };
+  return { useSafeTranslation: () => ({ t, i18n: { language: 'es' } }) };
 });
 jest.mock('../../hooks/usePadbolLang', () => ({ usePadbolLangVersion: () => 0 }));
 jest.mock('../../supabaseClient', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'test-session' } } }) } } }));
@@ -21,10 +21,11 @@ const originalFetch = global.fetch;
 const partida = { id: 45, torneo_id: 28, equipo_a_id: 71, equipo_b_id: 72, estado: 'pendiente' };
 const savedResult = { goles_a: 2, goles_b: 0, historial_sets: [{ set: 1, a: 6, b: 4 }, { set: 2, a: 6, b: 3 }] };
 
-function setup({ isAdmin = true } = {}) {
+function setup({ isAdmin = true, entry = '/', openByClick = true, fromAdmin = false, dates = {}, mode, participation = false } = {}) {
   const setPartidos = jest.fn();
-  const rendered = render(<MemoryRouter><TorneoTabbedView
-    torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol' }}
+  const navigate = jest.fn();
+  const rendered = render(<MemoryRouter initialEntries={[entry]}><TorneoTabbedView
+    torneo={{ id: 28, estado: 'en_curso', nombre: 'Torneo QA', sede_id: 7, deporte: 'padbol', modalidad_plantel: mode, ...dates }}
     torneoId="28"
     equipos={[{ id: 71, nombre: 'Alfa', jugadores: [] }, { id: 72, nombre: 'Beta', jugadores: [] }]}
     partidos={[partida]}
@@ -32,10 +33,12 @@ function setup({ isAdmin = true } = {}) {
     apiBaseUrl="https://qa.example.test"
     session={{ user: { id: 'test-user' }, access_token: 'test-session' }}
     isAdmin={isAdmin}
-    navigate={jest.fn()}
+    navigateState={fromAdmin ? { fromAdmin: true } : null}
+    navigate={navigate}
+    participacionModalOpen={participation}
   /></MemoryRouter>);
-  fireEvent.click(rendered.container.querySelector('.partido-item'));
-  return { ...rendered, setPartidos };
+  if (openByClick) fireEvent.click(rendered.container.querySelector('.partido-item'));
+  return { ...rendered, setPartidos, navigate };
 }
 
 function openAndFill(container) {
@@ -60,7 +63,7 @@ test('el clic desde el detalle conserva el partido, envía el resultado autentic
   openAndFill(container);
   fireEvent.click(screen.getByRole('button', { name: 'Guardar', exact: true }));
   await waitFor(() => expect(setPartidos).toHaveBeenCalledTimes(1));
-  const [url, request] = global.fetch.mock.calls[0];
+  const [url, request] = global.fetch.mock.calls.find(([target]) => target.endsWith('/resultado'));
   expect(url).toBe('https://qa.example.test/api/torneos/28/partidos/45/resultado');
   expect(request.method).toBe('POST');
   expect(request.headers.Authorization).toBe('Bearer test-session');
@@ -84,4 +87,62 @@ test('la vista de jugador no ofrece el escritor administrativo', () => {
   setup({ isAdmin: false });
   expect(screen.queryByRole('button', { name: 'torneos.partidoDetalle.cargarResultado' })).not.toBeInTheDocument();
   expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('el enlace de notificación abre el partido concreto sin ofrecer edición al jugador', () => {
+  const { container } = setup({ isAdmin: false, entry: '/torneo/28?partido=45', openByClick: false });
+  expect(container.querySelector('.pdm-dialog')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'torneos.partidoDetalle.cargarResultado' })).not.toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('admin-origin tournament header uses the same full-year numeric dates as the admin list', () => {
+  setup({fromAdmin:true,openByClick:false,dates:{fecha_inicio:'2026-07-04',fecha_fin:'2026-07-18'}});
+  expect(screen.getByText(/04\/07\/2026 a 18\/07\/2026/)).toBeInTheDocument();
+  expect(screen.queryByText(/4 Jul 2026 a 18 Jul 2026/)).not.toBeInTheDocument();
+});
+test('an administrator entering through the public route retains the existing public date presentation', () => {
+  setup({isAdmin:true,fromAdmin:false,openByClick:false,dates:{fecha_inicio:'2026-07-04',fecha_fin:'2026-07-18'}});
+  expect(screen.getByText(/4 Jul 2026 a 18 Jul 2026/)).toBeInTheDocument();
+  expect(screen.queryByText(/04\/07\/2026 a 18\/07\/2026/)).not.toBeInTheDocument();
+});
+
+const selectionIds = Array.from({length:8},(_,i)=>`00000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
+const selectionDto = equipoId => ({ ok:true, torneo_id:28, partido_id:45, equipo_id:equipoId, required:true, can_edit:false, alternancia:'games_impares', plantel:selectionIds.map(user_id=>({user_id,nombre:user_id})), alineacion:{iniciales:selectionIds.slice(0,2),suplentes:selectionIds.slice(2,4),revision:1} });
+test('selection result remains blocked until persisted four-player declarations exist for both teams', async()=>{
+ global.fetch.mockImplementation(url=>Promise.resolve({ok:true,status:200,json:async()=>({...selectionDto(url.includes('/71/')?71:72),alineacion:null})}));
+ const {container,setPartidos}=setup({mode:'selecciones'});
+ await screen.findByText('Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.');
+ const button=screen.getByRole('button',{name:'torneos.partidoDetalle.cargarResultado'});
+ expect(button).toBeDisabled();fireEvent.click(button);
+ expect(container.querySelector('.form-sets')).not.toBeInTheDocument();expect(setPartidos).not.toHaveBeenCalled();
+ expect(fetch.mock.calls.every(([,request])=>request.method==='GET')).toBe(true);
+});
+test('selection result rechecks both real declaration endpoints before existing result POST',async()=>{
+ global.fetch.mockImplementation(url=>Promise.resolve({ok:true,status:200,json:async()=>url.endsWith('/resultado')?{ok:true,status:'finalized',torneo_id:28,partido_id:45,resultado:savedResult,ganador_equipo_id:71}:selectionDto(url.includes('/71/')?71:72)}));
+ const {container,setPartidos}=setup({mode:'selecciones'});
+ await waitFor(()=>expect(screen.getByRole('button',{name:'torneos.partidoDetalle.cargarResultado'})).not.toBeDisabled());
+ openAndFill(container);fireEvent.click(screen.getByRole('button',{name:'Guardar',exact:true}));
+ await waitFor(()=>expect(setPartidos).toHaveBeenCalledTimes(1));
+ const calls=fetch.mock.calls;expect(calls.filter(([url])=>url.endsWith('/alineacion'))).toHaveLength(4);
+ expect(calls.at(-1)[0]).toMatch(/\/resultado$/);expect(JSON.parse(calls.at(-1)[1].body)).toEqual(savedResult);
+});
+
+test('selection participation routes to dedicated authenticated roster flow without legacy player request',()=>{
+ const {navigate}=setup({mode:'selecciones',participation:true,openByClick:false});
+ expect(screen.queryByText('Tengo equipo completo')).not.toBeInTheDocument();
+ expect(screen.queryByText('Busco compañero/s')).not.toBeInTheDocument();
+ fireEvent.click(screen.getByText('Ver planteles y solicitudes'));
+ expect(navigate).toHaveBeenCalledWith('/torneo/28/equipos?crear=1',{replace:true});
+ expect(fetch).not.toHaveBeenCalled();
+});
+
+test('Nations shows three authoritative bracket rounds even when legacy ronda is absent',()=>{
+ const matches=[{id:1,bracket_round:1,bracket_position:1},{id:2,bracket_round:2,bracket_position:1},{id:3,bracket_round:3,bracket_position:1},{id:4,bracket_round:3,bracket_position:2}].map(m=>({...m,equipo_a_id:71,equipo_b_id:72,estado:'finalizado',resultado:savedResult}));
+ const {container}=render(<MemoryRouter><TorneoTabbedView torneo={{id:28,estado:'en_curso',tipo_torneo:'grupos_knockout',plan_nations:{enabled:true,timezone:'Europe/Rome'}}} torneoId="28" equipos={[{id:71,nombre:'Alfa',jugadores:[]},{id:72,nombre:'Beta',jugadores:[]}]} partidos={matches.map(({bracket_round,bracket_position,...legacy})=>legacy)} nationsEnabled nationsState={{matches}} navigate={jest.fn()} setPartidos={jest.fn()}/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'torneos.vista.tabLlave'}));
+ expect(container.querySelectorAll('.torneo-bracket-col')).toHaveLength(3);
+ expect(container.querySelectorAll('.torneo-bracket-card')).toHaveLength(4);
+ expect(screen.getByText('Tercer puesto')).toBeInTheDocument();
+ expect(screen.getByText('Semifinales')).toBeInTheDocument();
 });

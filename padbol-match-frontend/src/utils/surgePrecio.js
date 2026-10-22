@@ -50,7 +50,7 @@ export function surgeBadgeFromQuote(quote) {
  * Consulta precio Surge v2 para sede, deporte, duración y slot seleccionado.
  * @returns {Promise<{ precio: number|null, ocupacion_porcentaje: number, surge_activo: boolean, last_minute_discount: boolean }>}
  */
-export async function fetchSurgePrecio(sedeId, deporte, duracionMin, fecha, hora) {
+export async function fetchSurgePrecio(sedeId, deporte, duracionMin, fecha, hora, {version2 = false} = {}) {
   const sid = parseInt(String(sedeId), 10);
   const dur = parseInt(String(duracionMin), 10);
   const dep = String(deporte || 'padbol').trim().toLowerCase();
@@ -62,7 +62,7 @@ export async function fetchSurgePrecio(sedeId, deporte, duracionMin, fecha, hora
 
   const qs = slot ? `?slot_inicio=${encodeURIComponent(slot)}` : '';
   const res = await fetch(
-    `${apiBaseUrl()}/api/surge/${encodeURIComponent(sid)}/${encodeURIComponent(dep)}/${encodeURIComponent(dur)}${qs}`,
+    `${apiBaseUrl()}/api${version2 ? '/v2' : ''}/surge/${encodeURIComponent(sid)}/${encodeURIComponent(dep)}/${encodeURIComponent(dur)}${qs}`,
   );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

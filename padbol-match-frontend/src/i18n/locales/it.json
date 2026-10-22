@@ -121,6 +121,8 @@
     }
   },
   "reservas": {
+    "confirmFreeBooking": "Conferma prenotazione gratuita",
+    "freeBookingConfirmed": "Prenotazione gratuita confermata. Numero di prenotazione: {{id}}.",
     "titulo": "Corte di riserva",
     "header": "Prenotare",
     "heroTitle": "Prenota la tua corte",
@@ -2146,5 +2148,8 @@
       },
       "signal": { "eyebrow": "VISIONE / IA", "title": "ADDESTRAMENTO\nIN CORSO" }
     }
+  },
+  "profileCompletion": {
+    "storageUnavailable": "Il server non ha potuto preparare il salvataggio del profilo. I tuoi dati non sono errati. Riprova più tardi."
   }
 }

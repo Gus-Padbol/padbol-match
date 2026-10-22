@@ -46,6 +46,14 @@
   font-size: 14px;
 }
 
+.admin-push-notif__help {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .admin-push-notif__field textarea {
   min-height: 88px;
   resize: vertical;

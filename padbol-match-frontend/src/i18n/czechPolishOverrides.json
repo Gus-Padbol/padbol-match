@@ -1,5 +1,21 @@
 {
+  "torneos": {
+    "selecciones": {
+      "modeLabel": "Soupiska týmu",
+      "legacyMode": "Čtyřhra (obvyklý režim)",
+      "selectionMode": "Soupiska výběru (až 8 hráčů)",
+      "modeHint": "Soupiska má 4 až 8 hráčů. V každém zápase se uvedou 2 hráči základní sestavy a 2 náhradníci; na kurtu vždy hrají 2 a mohou se střídat v lichých gamech. Ruční zadávání setů nezaznamenává střídání po jednotlivých gamech."
+    },
+    "vista": {
+      "registrationExpired": "Datum zahájení uplynulo · registrace uzavřena"
+    },
+    "nations": {
+      "authoritativeStandings": "Potvrzené pořadí, porovnání třetích míst a postupující najdete v panelu Nations Cup. Pravidla tohoto formátu počítá server."
+    }
+  },
   "auth": {
+    "accessLinkRegistrationRequired": "Než požádáte o odkaz, zaregistrujte si účet nebo zkontrolujte zadaný e-mail.",
+    "accessLinkRateLimited": "E-mailová služba dosáhla dočasného limitu. Před další žádostí o odkaz počkejte nebo se přihlaste heslem.",
     "birthDate": "Datum narození",
     "ageEligibilityHelp": "Samostatné účty jsou dostupné od 16 let. Registrace osob ve věku 13 až 15 let zůstává vypnutá, dokud nebude k dispozici ověřitelný souhlas rodiče.",
     "ageEligibilityInvalid": "Zadejte platné datum narození. Samostatné účty jsou dostupné od 16 let.",
@@ -8,6 +24,8 @@
     "legalPrivacyAcknowledgement": "Potvrzuji, že jsem si přečetl(a)"
   },
   "profileCompletion": {
+    "storageUnavailable": "Server nemohl připravit uložení profilu. Vaše údaje nejsou chybné. Zkuste to prosím později.",
+    "eligibilityCheckFailed": "Na serveru se nepodařilo ověřit váš věk. Datum narození nebylo zamítnuto. Zkuste to znovu; pokud problém přetrvává, kontaktujte podporu.",
     "personalDataHelp": "Tyto údaje doplní váš sportovní profil, ověří minimální věk a bezpečně propojí vaši aktivitu. Způsob zpracování a svá práva najdete v zásadách ochrany soukromí.",
     "selectCountry": "Vyberte svou zemi."
   },
@@ -127,11 +145,11 @@
       "redemptionsLoadFailed": "Uplatnění se nepodařilo načíst.",
       "globalConfigLoadFailed": "Globální nastavení se nepodařilo načíst.",
       "participationLoadFailed": "Nastavení účasti v PadCoins se nepodařilo načíst.",
-      "participationSelectVenue": "Před uložením účasti v Padbol Benefits vyberte sportovní centrum.",
+      "participationSelectVenue": "Před uložením účasti v PadCoins vyberte sportovní centrum.",
       "dateOrderInvalid": "Datum zahájení nesmí být pozdější než datum ukončení.",
       "participationPermissionDenied": "Nemáte oprávnění měnit účast tohoto sportovního centra.",
-      "participationSaveFailed": "Účast v Padbol Benefits se nepodařilo uložit.",
-      "participationUpdated": "✅ Účast v Padbol Benefits aktualizována",
+      "participationSaveFailed": "Účast v PadCoins se nepodařilo uložit.",
+      "participationUpdated": "✅ Účast v PadCoins aktualizována",
       "smartViewPermissionDenied": "Nemáte oprávnění zobrazit chytré nastavení tohoto sportovního centra.",
       "smartLoadFailed": "Chytré nastavení PadCoins se nepodařilo načíst.",
       "smartSelectVenueSave": "Před uložením chytrého nastavení vyberte sportovní centrum.",
@@ -199,6 +217,14 @@
       "matchesLoadFailed": "Zápasy se nepodařilo načíst.",
       "matchLoadFailed": "Zápas se nepodařilo načíst.",
       "copyLinkPrompt": "Zkopírujte tento odkaz:"
+    },
+    "pointsPolicy": {
+      "independentPercentages": "Každé pořadí získá svůj procentní podíl ze základu úrovně. Procenta nejsou společný fond a nemusí mít součet 100 %. Pozdější neurčená pořadí používají uložené procento desátého místa.",
+      "percentOfBase": "% ze základu úrovně",
+      "basePoints": "Základní body",
+      "baseValue": "Základ: {{count}}",
+      "unavailable": "Před vytvořením turnaje načtěte uložená pravidla.",
+      "levelUnavailable": "Vybraná úroveň není v aktuálních pravidlech povolena."
     }
   },
   "fipaAdminLibrary": {
@@ -395,5 +421,9 @@
       "request": "Žádost se nepodařilo odeslat.",
       "download": "Stažení se nepodařilo připravit."
     }
+  },
+  "reservas": {
+    "confirmFreeBooking": "Potvrdit bezplatnou rezervaci",
+    "freeBookingConfirmed": "Bezplatná rezervace potvrzena. Číslo rezervace: {{id}}."
   }
 }

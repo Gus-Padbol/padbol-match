@@ -129,6 +129,8 @@ describe('adminVisibleTabs — guard y fallback', () => {
   it('16. refresh mantiene tab permitido', () => {
     expect(sanitizeAdminActiveTab('reservas', 'admin_club')).toBe('reservas');
     expect(sanitizeAdminActiveTab('config', 'super_admin')).toBe('config');
+    expect(sanitizeAdminActiveTab('whatsapp', 'super_admin')).toBe('whatsapp');
+    expect(sanitizeAdminActiveTab('crm', 'super_admin')).toBe('whatsapp');
   });
 
   it('17. no se monta PadCoins antes de validar (guard en JSX)', () => {

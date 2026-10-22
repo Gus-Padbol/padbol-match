@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useSafeTranslation } from '../i18n/tSafe';
+import { useSafeTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
@@ -266,7 +266,6 @@ export default function AdminJugadoresSection({
 
   const [sedeId, setSedeId] = useState(() => {
     if (sedeIdProp != null && sedeIdProp !== '') return String(sedeIdProp);
-    if ((isSuperAdmin || canSelectSede) && sedesList[0]?.id != null) return String(sedesList[0].id);
     return '';
   });
   const [q, setQ] = useState('');
@@ -285,12 +284,6 @@ export default function AdminJugadoresSection({
       setSedeId(String(sedeIdProp));
     }
   }, [sedeIdProp, esAdminClub]);
-
-  useEffect(() => {
-    if ((isSuperAdmin || canSelectSede) && !sedeId && sedesList[0]?.id != null) {
-      setSedeId(String(sedesList[0].id));
-    }
-  }, [canSelectSede, isSuperAdmin, sedeId, sedesList]);
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -462,7 +455,7 @@ export default function AdminJugadoresSection({
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
-      ) : displayItems.length === 0 ? (
+      ) : !sedeId || error ? null : displayItems.length === 0 ? (
         <p style={{ color: 'var(--text-secondary)' }}>{t('admin.jugadores.empty')}</p>
       ) : (
         <div className="admin-jugadores-table-wrap">

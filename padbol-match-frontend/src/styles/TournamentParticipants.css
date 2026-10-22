@@ -1,0 +1,24 @@
+.tournament-participants { margin: 16px 0; padding: clamp(14px, 3vw, 24px); border: 1px solid var(--border-color, #64748b); border-radius: 14px; color: var(--text-primary); background: var(--bg-card); min-width: 0; overflow-wrap: anywhere; }
+.tournament-participants h2 { font-size: clamp(1.2rem, 4vw, 1.6rem); line-height: 1.3; margin-top: 0; }
+.tournament-participants p, .tournament-participants label, .tournament-participants span { font-size: 14px; line-height: 1.55; }
+.tournament-participants fieldset { border: 1px solid var(--border-color, #64748b); border-radius: 10px; padding: 14px; margin-bottom: 18px; min-width: 0; }
+.tournament-participants label, .tournament-participants li > span { display: block; margin: 8px 0 4px; }
+.tournament-participants input:not([type=checkbox]), .tournament-participants select, .tournament-participants textarea { display: block; width: 100%; min-width: 0; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--border-color, #64748b); border-radius: 8px; background: var(--bg-input, var(--bg-card)); color: var(--text-primary); font-size: 16px; }
+.tournament-participants button { min-height: 44px; max-width: 100%; padding: 10px 14px; margin: 8px 8px 4px 0; border: 1px solid var(--border-color, #64748b); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 14px; line-height: 1.4; white-space: normal; cursor: pointer; }
+.tournament-participants button:disabled { opacity: .55; cursor: default; }
+.tournament-participants button:focus-visible, .tournament-participants summary:focus-visible { outline: 3px solid #3b82f6; outline-offset: 2px; }
+.tournament-participants .participant-entry, .tournament-participants .participant-review { margin: 12px 0; padding: 12px; border: 1px solid var(--border-color, #64748b); border-radius: 8px; min-width: 0; }
+.tournament-participants .participant-check { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.tournament-participants input[type=checkbox] { width: 24px; height: 24px; }
+.tournament-participants .participant-team { padding: 12px; border: 1px solid var(--border-color, #64748b); border-radius: 10px; margin: 10px 0; }
+.tournament-participants summary { min-height: 44px; line-height: 1.5; cursor: pointer; font-weight: 700; }
+.tournament-participants ul { padding-left: 20px; }
+.tournament-participants li { padding: 10px 0; }
+.tournament-participants [role=alert] { color: var(--text-primary); border-left: 4px solid #ef4444; padding: 10px 12px; }
+.tournament-legacy-options { margin: 16px 0; padding: 12px; border: 1px solid var(--border-color, #64748b); border-radius: 10px; }
+.tournament-legacy-options > summary { min-height: 44px; padding: 8px; cursor: pointer; font-weight: 700; }
+
+.tournament-participants h2, .tournament-participants h3, .tournament-participants legend { color: var(--text-primary); }
+
+.tournament-context-nav { width: 100%; max-width: 1100px; box-sizing: border-box; margin: 0 auto; padding: 12px; }
+.tournament-context-nav button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--border-color, #64748b); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font: inherit; cursor: pointer; }

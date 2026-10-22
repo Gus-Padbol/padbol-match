@@ -1,5 +1,6 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
@@ -14,6 +15,34 @@ import './AdminNotificacionesSection.css';
 
 const TITLE_MAX = 50;
 const BODY_MAX = 150;
+
+const DESTINATION_TYPE_LABELS = Object.freeze({
+  noticia: 'Noticia',
+  torneo: 'Torneo',
+  partido: 'Partido',
+  academy: 'Padbol Academy',
+  next_generation: 'Next Generation',
+  pantalla: 'Pantalla interna',
+});
+
+const INTERNAL_SCREEN_OPTIONS = Object.freeze([
+  ['inicio', 'Inicio'],
+  ['notificaciones', 'Notificaciones'],
+  ['torneos', 'Torneos'],
+  ['rankings', 'Rankings'],
+  ['jugar', 'Jugar'],
+  ['perfil', 'Mi perfil'],
+  ['clases', 'Clases'],
+]);
+
+const DESTINATION_HELP = Object.freeze({
+  noticia: 'Abre una noticia publicada dentro de Padbol Match.',
+  torneo: 'Abre la ficha del torneo que selecciones.',
+  partido: 'Abre la ficha de un partido concreto.',
+  academy: 'Abre la sección Padbol Academy.',
+  next_generation: 'Abre una jornada concreta de Next Generation.',
+  pantalla: 'Abre una sección general de la aplicación, por ejemplo Inicio, Rankings o Clases.',
+});
 
 function createAdminPushIdempotencyKey() {
   if (typeof window !== 'undefined' && typeof window.crypto?.randomUUID === 'function') return window.crypto.randomUUID();
@@ -65,12 +94,15 @@ export default function AdminNotificacionesSection({
   sedeId = null,
   sedesOptions = [],
   paisesOptions = [],
+  torneosOptions = [],
 }) {
   const { t, i18n } = useTranslation();
   const locale = padbolLangToIntlLocale(i18n.language);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [destinationType, setDestinationType] = useState('pantalla');
+  const [destinationEntityId, setDestinationEntityId] = useState('');
   const [segmentKind, setSegmentKind] = useState(() => {
     if (isSuperAdmin) return 'todos_usuarios';
     if (esAdminNacional) return 'todos_pais';
@@ -88,6 +120,8 @@ export default function AdminNotificacionesSection({
   const [previewCount, setPreviewCount] = useState(null);
   const [previewCategory, setPreviewCategory] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+  const [previewRetry, setPreviewRetry] = useState(0);
   const [quota, setQuota] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +149,19 @@ export default function AdminNotificacionesSection({
     return [...options.values()].sort((a, b) => a.label.localeCompare(b.label, locale));
   }, [locale, sedesOptions]);
   const selectedCity = cityOptions.find((option) => option.key === ciudadSel) || null;
+  const selectedTournament = torneosOptions.find(
+    (torneo) => String(torneo?.id) === String(destinationEntityId),
+  );
+  const selectedInternalScreen = INTERNAL_SCREEN_OPTIONS.find(([value]) => value === destinationEntityId);
+  const currentDestinationLabel = destinationType === 'academy'
+    ? 'Padbol Academy'
+    : destinationType === 'pantalla' && selectedInternalScreen
+      ? selectedInternalScreen[1]
+    : destinationType === 'torneo' && selectedTournament
+    ? selectedTournament.nombre || `Torneo #${selectedTournament.id}`
+    : destinationEntityId.trim()
+      ? `${DESTINATION_TYPE_LABELS[destinationType] || destinationType} #${destinationEntityId.trim()}`
+      : 'Elige un destino para continuar';
 
   const segmentPayload = useMemo(
     () =>
@@ -183,9 +230,12 @@ export default function AdminNotificacionesSection({
 
   useEffect(() => {
     setIdempotencyKey(null);
-  }, [title, body, segmentPayload]);
+  }, [title, body, segmentPayload, destinationType, destinationEntityId]);
 
   useEffect(() => {
+    setPreviewError('');
+    setPreviewCount(null);
+    setPreviewLoading(Boolean(accessToken && segmentPayload));
     if (!accessToken || !segmentPayload) {
       setPreviewCount(null);
       setPreviewCategory(null);
@@ -195,15 +245,21 @@ export default function AdminNotificacionesSection({
     const tid = window.setTimeout(async () => {
       setPreviewLoading(true);
       try {
-        const prev = await previewAdminPushSegment({ apiBaseUrl, accessToken, segment: segmentPayload });
+        const prev = await previewAdminPushSegment({
+          apiBaseUrl, accessToken, segment: segmentPayload,
+          ...(destinationType === 'academy' || destinationEntityId.trim()
+            ? { destination: { type: destinationType, entityId: destinationEntityId } }
+            : {}),
+        });
         if (!cancelled) {
           setPreviewCount(prev?.withPushToken ?? prev?.recipients ?? 0);
           setPreviewCategory(prev?.category || null);
         }
-      } catch {
+      } catch (e) {
         if (!cancelled) {
           setPreviewCount(null);
           setPreviewCategory(null);
+          setPreviewError(translatedPushError(e, t, 'admin.pushNotif.loadError'));
         }
       } finally {
         if (!cancelled) setPreviewLoading(false);
@@ -213,7 +269,7 @@ export default function AdminNotificacionesSection({
       cancelled = true;
       window.clearTimeout(tid);
     };
-  }, [accessToken, apiBaseUrl, segmentPayload]);
+  }, [accessToken, apiBaseUrl, segmentPayload, previewRetry, destinationType, destinationEntityId, t]);
 
   useEffect(() => {
     if (segmentKind !== 'jugador' || playerQuery.trim().length < 2 || !accessToken) {
@@ -249,11 +305,14 @@ export default function AdminNotificacionesSection({
         title: title.trim(),
         body: body.trim(),
         segment: segmentPayload,
+        destination: { type: destinationType, entityId: destinationEntityId },
         idempotencyKey: requestIdempotencyKey,
       });
       setFeedback(t('admin.pushNotif.sentOk', { count: res.cantidad_enviadas ?? 0 }));
       setTitle('');
       setBody('');
+      setDestinationType('pantalla');
+      setDestinationEntityId('');
       setSelectedPlayer(null);
       setPlayerQuery('');
       setIdempotencyKey(null);
@@ -277,16 +336,18 @@ export default function AdminNotificacionesSection({
     (segmentKind !== 'ciudad' || selectedCity?.ciudad) &&
     (segmentKind !== 'sede' || sedeSel) &&
     (segmentKind !== 'deporte' || deporte) &&
+    (destinationType === 'academy' || destinationEntityId.trim()) &&
+    !previewError && !previewLoading && Number(previewCount) > 0 &&
     !sending;
 
-  const formatDate = (iso) => {
-    if (!iso) return '—';
-    try {
-      return new Date(iso).toLocaleString(locale, { dateStyle: 'short', timeStyle: 'short' });
-    } catch {
-      return iso;
-    }
+  const destinationLabel = (row) => {
+    const destination = row?.segmento?.destination;
+    if (!destination || destination.type === 'none') return 'Destino no registrado';
+    return destination.label
+      || `${DESTINATION_TYPE_LABELS[destination.type] || destination.type} #${destination.entityId || '—'}`;
   };
+
+  const formatDate = (iso) => formatAdminDate(iso, { locale, withTime: true });
 
   if (loading) {
     return <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{t('admin.loading')}</p>;
@@ -294,7 +355,7 @@ export default function AdminNotificacionesSection({
 
   return (
     <div className="admin-push-notif">
-      {quota ? (
+      {quota && !isSuperAdmin && !quota.unlimited ? (
         <p className="admin-push-notif__quota" role="status">
           {t('admin.pushNotif.quotaRemaining', { count: quota.remaining ?? 0 })}
           {quota.unlimitedTargeted ? ` · ${t('admin.pushNotif.quotaTargetedHint')}` : null}
@@ -327,6 +388,75 @@ export default function AdminNotificacionesSection({
             {title.length}/{TITLE_MAX}
           </div>
         </div>
+
+        <div className="admin-push-notif__field">
+          <label htmlFor="admin-push-destination">¿Qué quieres que se abra al tocar la notificación?</label>
+          <select
+            id="admin-push-destination"
+            aria-label="Destino al tocar"
+            value={destinationType}
+            onChange={(event) => {
+              setDestinationType(event.target.value);
+              setDestinationEntityId('');
+            }}
+          >
+            <option value="noticia">Una noticia publicada</option>
+            <option value="torneo">La ficha de un torneo</option>
+            <option value="partido">La ficha de un partido</option>
+            <option value="academy">La sección Padbol Academy</option>
+            <option value="next_generation">Una jornada de Next Generation</option>
+            <option value="pantalla">Otra sección de la aplicación</option>
+          </select>
+          <small className="admin-push-notif__help">{DESTINATION_HELP[destinationType]}</small>
+        </div>
+        {destinationType === 'torneo' ? (
+          <div className="admin-push-notif__field">
+            <label htmlFor="admin-push-destination-id">Torneo</label>
+            <select id="admin-push-destination-id" value={destinationEntityId} onChange={(event) => setDestinationEntityId(event.target.value)}>
+              <option value="">Selecciona un torneo</option>
+              {torneosOptions.map((torneo) => (
+                <option key={torneo.id} value={String(torneo.id)}>{torneo.nombre || `Torneo #${torneo.id}`}</option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+        {['noticia', 'partido', 'next_generation'].includes(destinationType) ? (
+          <div className="admin-push-notif__field">
+            <label htmlFor="admin-push-destination-id">
+              {destinationType === 'noticia'
+                ? 'ID de la noticia publicada'
+                : destinationType === 'next_generation'
+                  ? 'ID de la jornada Next Generation'
+                  : 'ID del partido'}
+            </label>
+            <input
+              id="admin-push-destination-id"
+              value={destinationEntityId}
+              onChange={(event) => setDestinationEntityId(event.target.value)}
+              placeholder="ID real"
+              pattern="[A-Za-z0-9_:-]+"
+              maxLength={160}
+              required
+            />
+          </div>
+        ) : null}
+        {destinationType === 'pantalla' ? (
+          <div className="admin-push-notif__field">
+            <label htmlFor="admin-push-destination-id">¿Qué sección quieres abrir?</label>
+            <select aria-label="Pantalla" id="admin-push-destination-id" value={destinationEntityId} onChange={(event) => setDestinationEntityId(event.target.value)}>
+              <option value="">Selecciona una sección</option>
+              {INTERNAL_SCREEN_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+        {previewError ? <div role="alert"><p>{previewError}</p><button type="button" onClick={() => setPreviewRetry((value) => value + 1)}>Reintentar</button></div> : null}
+        <p className="admin-push-notif__preview" role="status">
+          <strong>Al tocarla:</strong> {destinationEntityId || destinationType === 'academy'
+            ? ` se abrirá ${currentDestinationLabel}.`
+            : ' todavía debes elegir el contenido o la sección.'}
+        </p>
 
         <div className="admin-push-notif__field">
           <label htmlFor="admin-push-body">{t('admin.pushNotif.bodyLabel')}</label>
@@ -460,6 +590,9 @@ export default function AdminNotificacionesSection({
             ? t('admin.pushNotif.previewLoading')
             : t('admin.pushNotif.preview', { count: previewCount ?? '—' })}
         </p>
+        {!previewLoading && !previewError && previewCount === 0 ? (
+          <p role="status">{t('admin.common.noPushRecipients')}</p>
+        ) : null}
         {previewCategory ? (
           <p className="admin-push-notif__preview">
             {previewCategory === 'marketing'
@@ -485,6 +618,7 @@ export default function AdminNotificacionesSection({
                   <th>{t('admin.pushNotif.colDate')}</th>
                   <th>{t('admin.pushNotif.colTitle')}</th>
                   <th>{t('admin.pushNotif.colSegment')}</th>
+                  <th>Destino</th>
                   <th>{t('admin.pushNotif.colSent')}</th>
                   <th>{t('admin.pushNotif.colStatus')}</th>
                 </tr>
@@ -495,6 +629,7 @@ export default function AdminNotificacionesSection({
                     <td>{formatDate(row.created_at)}</td>
                     <td>{row.titulo}</td>
                     <td>{formatAdminPushSegmentLabel(row.segmento, t)}</td>
+                    <td>{destinationLabel(row)}</td>
                     <td>{row.cantidad_enviadas ?? 0}</td>
                     <td>
                       {row.estado === 'sent'

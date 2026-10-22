@@ -131,6 +131,7 @@
     "error": "No pudimos registrar la solicitud de eliminación."
   },
   "auth": {
+    "accessLinkRegistrationRequired": "Para pedir un enlace, primero registra tu cuenta o revisa el correo ingresado.",
     "access": "Acceso",
     "login": "Iniciar sesión",
     "loginTitle": "Iniciar sesión",
@@ -155,6 +156,7 @@
     "sendingAccessLink": "Enviando enlace…",
     "accessLinkSent": "Te enviamos un enlace nuevo. Abrilo desde tu correo para ingresar.",
     "accessLinkFailed": "No pudimos enviar el enlace. Verifica el correo e intenta nuevamente.",
+    "accessLinkRateLimited": "El servicio alcanzó el límite temporal de correos. Espera antes de solicitar otro enlace o ingresa con tu contraseña.",
     "orDivider": "— o —",
     "noAccount": "¿No tienes cuenta? Regístrate",
     "hasAccount": "Ya tengo cuenta",
@@ -209,6 +211,7 @@
     "reservaLoginGate": "Para continuar con tu reserva, ingresa o crea una cuenta. Es rápido."
   },
   "profileCompletion": {
+    "storageUnavailable": "El servidor no pudo preparar el guardado del perfil. Tus datos no están mal. Intenta nuevamente más tarde.",
     "title": "Completa tu perfil",
     "intro": "Completa tu perfil para reservar Padbol Courts, jugar torneos y encontrar compañeros de juego.",
     "personalDataHelp": "Estos datos completan tu ficha deportiva, permiten verificar la edad mínima y vincular tu actividad de forma segura. Puedes revisar su tratamiento y tus derechos en la Política de Privacidad.",
@@ -233,6 +236,7 @@
     "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
     "emailCheckFailed": "No se pudo verificar el correo electrónico.",
     "emailCheckRetry": "No se pudo verificar el correo electrónico. Intenta de nuevo.",
+    "eligibilityCheckFailed": "No pudimos verificar la edad en el servidor. Tu fecha no fue rechazada. Intenta nuevamente; si persiste, contacta a soporte.",
     "emailInUse": "Este correo electrónico ya tiene una cuenta. ¿Quieres iniciar sesión?",
     "duplicateData": "Ese número de teléfono o correo electrónico ya está en uso.",
     "saveFailed": "No se pudo guardar tu perfil."
@@ -260,6 +264,8 @@
     }
   },
   "reservas": {
+    "confirmFreeBooking": "Confirmar reserva sin cargo",
+    "freeBookingConfirmed": "Reserva confirmada sin cargo. Número de reserva: {{id}}.",
     "titulo": "Reservar cancha",
     "header": "Reservar",
     "heroTitle": "Reserva tu cancha",
@@ -464,6 +470,7 @@
     "seeMoreMatches": "Ver más partidos"
   },
   "torneos": {
+    "nations": { "authoritativeStandings": "Consulta las posiciones, terceros y clasificados confirmados en el panel Nations Cup. Las reglas de este formato se calculan en el servidor." },
     "titulo": "Torneos",
     "create": {
       "header": "Crear torneo",
@@ -507,7 +514,7 @@
       "categoryLabel": "Categoría",
       "fixtureFormatLabel": "Formato del fixture",
       "initialStatusLabel": "Estado inicial del torneo",
-      "initialStatusHint": "Próximo equivale a planificación. Puedes abrir la inscripción ahora o más adelante desde el panel.",
+      "initialStatusHint": "El torneo se crea en planificación (Próximo). Después de guardar y comprobarlo, puedes abrir la inscripción desde su ficha administrativa.",
       "teamsPerGroupLabel": "Equipos por grupo",
       "qualifiersPerGroupLabel": "Clasificados por grupo",
       "bestThirdsLabel": "Mejores terceros clasificados",
@@ -617,6 +624,7 @@
       "tenis": "Tenis"
     },
     "vista": {
+      "registrationExpired": "Fecha de inicio pasada · inscripción cerrada",
       "tabEquipos": "EQUIPOS",
       "tabGrupos": "GRUPOS",
       "tabFixture": "FIXTURE",
@@ -713,6 +721,7 @@
       "loadTournamentError": "No pudimos cargar el torneo",
       "tournamentNotFound": "Torneo no encontrado",
       "confirmOpenRegistration": "¿Confirmar la apertura de la inscripción?",
+      "registrationOpened": "Inscripción abierta y guardado confirmado.",
       "openRegistrationError": "No se pudo abrir la inscripción.",
       "networkError": "Error de red",
       "teamNumber": "Equipo #{{id}}",
@@ -788,6 +797,12 @@
       "equipoA": "Equipo A",
       "equipoB": "Equipo B",
       "ronda": "Ronda {{n}}"
+    },
+    "selecciones": {
+      "modeLabel": "Plantel del equipo",
+      "legacyMode": "Dobles (modalidad habitual)",
+      "selectionMode": "Plantel de selección (hasta 8)",
+      "modeHint": "Plantel de 4 a 8 jugadores. Cada partido presenta 2 iniciales y 2 suplentes; siempre juegan 2 en cancha y pueden alternar en games impares. La carga manual de sets no registra los cambios game por game."
     }
   },
   "competir": {
@@ -932,6 +947,11 @@
     "badgeSuspended": "🚫 Suspendido",
     "admin": {
       "intro": "Jugadores con suspensión activa por cancelaciones repetidas.",
+      "criterionTitle": "Criterio automático",
+      "criterionBody": "Cinco cancelaciones dentro de los últimos 30 días generan una suspensión de siete días. Esta pantalla muestra únicamente suspensiones activas.",
+      "refresh": "Actualizar suspensiones",
+      "colReason": "Motivo",
+      "repeatedCancellationReason": "Cancelaciones repetidas",
       "loading": "Cargando suspensiones…",
       "loadError": "No se pudieron cargar las suspensiones",
       "empty": "No hay jugadores suspendidos en este momento.",
@@ -1144,6 +1164,14 @@
     "exploreWithoutLogin": "Para ver y editar tu ficha necesitas una cuenta. Puedes explorar el resto de la app sin iniciar sesión."
   },
   "admin": {
+    "pointsPolicy": {
+  "independentPercentages": "Cada posición recibe su porcentaje de la base del nivel. Los porcentajes no son un fondo a repartir y no necesitan sumar 100%. Para posiciones posteriores no definidas, se usa el porcentaje guardado de la décima posición.",
+  "percentOfBase": "% de la base del nivel",
+  "basePoints": "Puntos base",
+  "baseValue": "Puntos base: {{count}}",
+  "unavailable": "Consulta la política guardada antes de crear el torneo.",
+  "levelUnavailable": "El nivel seleccionado no está habilitado en la política actual."
+},
     "mi_sede": "Mi sede",
     "canchas": "Canchas",
     "ingresos": "Ingresos",
@@ -1295,7 +1323,7 @@
       "playerSearchLabel": "Buscar jugador",
       "playerSearchPlaceholder": "Nombre o email…",
       "playerSelected": "Destinatario: {{name}}",
-      "preview": "Esta notificación llegará a ~{{count}} usuarios",
+      "preview": "Alcance: ~{{count}} usuarios con notificaciones habilitadas",
       "previewLoading": "Calculando destinatarios…",
       "marketingConsentNotice": "Los envíos a segmentos amplios llegan solo a usuarios que aceptaron comunicaciones promocionales.",
       "transactionalNotice": "El envío individual se trata como comunicación operativa y respeta la preferencia de notificaciones de la cuenta.",
@@ -1404,7 +1432,7 @@
       "periodSelected": "Período seleccionado",
       "last30Days": "Últimos 30 días",
       "historicalTotal": "Total histórico",
-      "historicalTotalHint": "Total histórico en el alcance cargado",
+      "historicalTotalHint": "Acumulado histórico de los datos disponibles",
       "cancellationRate": "Tasa de cancelación",
       "topSportReserved": "Deporte más reservado",
       "topSportReservedHint": "Top 3 · reservas activas · {{period}}",
@@ -1632,6 +1660,10 @@
       "saveOk": "✅ Guardar",
       "saveDisk": "Guardar",
       "validationApprove": "✅ Aprobar",
+      "validationReject": "Rechazar",
+      "validationRejectConfirm": "¿Rechazar esta validación? El jugador seguirá registrado y podrá corregir sus datos.",
+      "validationRejectReason": "Validación rechazada por administración",
+      "validationRejectError": "No se pudo rechazar la validación.",
       "validationChangeCategory": "✏️ Cambiar categoría",
       "validationViewProfile": "Ver perfil",
       "validationSearchLabel": "Buscar por nombre, apellido o email",
@@ -1725,9 +1757,9 @@
       "previewLabel": "Vista previa",
       "noGlobalCards": "No hay cards globales configuradas.",
       "chiviAvatarTitle": "Avatar de Chivi (chatbot)",
-      "chiviAvatarHint": "Imagen del botón flotante «¿Consultas?». Vacío = /chivi.png del sitio.",
+      "chiviAvatarHint": "Imagen del botón flotante «¿Consultas?». Si dejas el campo vacío, se usa la imagen predeterminada.",
       "chiviUpload": "Subir imagen",
-      "chiviUrlLabel": "URL de imagen (chivi_imagen_url)",
+      "chiviUrlLabel": "Dirección de la imagen",
       "promoActive": "Promo activa",
       "imageUrlCardBackground": "URL de imagen (fondo de la card)",
       "uploading": "Subiendo…",
@@ -1957,7 +1989,7 @@
       "noLicense": "Sin licencia",
       "durationsPricesTable": "Duraciones y precios (tabla)",
       "changeSubscriptionStatus": "Cambiar estado (super admin)",
-      "venueDataConfigHint": "Datos de la sede: si tienes la pestaña «Mi Sede», usa el botón «Editar sede» para nombre, ubicación, contacto, precios y método de pago. Los cambios se guardan vía API y se reflejan en el perfil público. En la misma pestaña, la sección «Mis Canchas» permite dar de alta canchas, activarlas o desactivarlas; las inactivas no se ofrecen en el flujo de reservas público.",
+      "venueDataConfigHint": "En «Mi Sede» puedes consultar y editar los datos de la sede y gestionar sus canchas.",
       "pricesByDurationCurrency": "Precios por duración ({{currency}}). Deja vacío un campo para no ofrecer esa duración en reservas.",
       "savePricesButton": "💾 Guardar precios",
       "pricesDurationHint": "Al guardar se actualizan la sede y la tabla de duraciones en Supabase. Las franjas horarias pueden ajustar el precio según la hora de inicio.",
@@ -2145,7 +2177,7 @@
       "today": "Hoy",
       "bookings": "RESERVAS",
       "court": "Cancha",
-      "todayRevenue": "INGREERES DEL DÍA",
+      "todayRevenue": "INGRESOS DEL DÍA",
       "byVenueCurrency": "por moneda de cada sede",
       "fromToday": "de hoy",
       "noRevenueRegistered": "sin ingresos registrados",
@@ -2361,6 +2393,21 @@
     },
     "common": {
       "loadingEllipsis": "Cargando…",
+      "operationFailed": "No se pudo completar la operación. Vuelve a intentarlo.",
+      "classesLoadFailed": "No se pudieron cargar las clases. Vuelve a intentarlo.",
+      "venueConfigHintSuper": "En «Sedes» puedes consultar y editar los datos de cada sede y gestionar sus canchas.",
+      "otherPlayerAccess": "Otros accesos: jugadores y FIPA",
+      "reviewPlayerJourneys": "Revisar recorridos de jugadores",
+      "manageFipaPlayers": "Gestionar jugadores FIPA",
+      "reviewFipaDocuments": "Revisar accesos a documentos FIPA",
+      "configAreas": "Áreas de configuración",
+      "pointsAndPositions": "Puntos y posiciones",
+      "customTypes": "Tipos personalizados",
+      "previewWith": "Previsualizar con:",
+      "totalPoints": "{{count}} puntos totales",
+      "percentOfTotal": "% del total",
+      "add": "Agregar",
+      "noPushRecipients": "No hay usuarios con notificaciones habilitadas en este grupo. No se realizará ningún envío.",
       "responsible": "Responsable:",
       "interestType": "Tipo interés:",
       "licenseeCountry": "Licenciatario país:",
@@ -2450,7 +2497,7 @@
       "vinculacionHistorial": "Con historial en sede",
       "vinculacionRegistrado": "Registrado en Padbol Match",
       "vinculacionSinHistorial": "Sin historial",
-      "vinculacionNote": "Se combina el historial de reservas con la vinculación formal a la sede. Puedes vincular o desvincular jugadores sin perder su historial.",
+      "vinculacionNote": "La lista reúne jugadores registrados y su historial en la sede. Los cambios de relación con la sede no se gestionan en esta vista.",
       "viewProfile": "Ver perfil",
       "fichaTitle": "Ficha del jugador",
       "pageOf": "Página {{page}} de {{total}} ({{count}})",
@@ -2463,7 +2510,7 @@
       "sortNameDesc": "Nombre Z–A",
       "sortActivityDesc": "Actividad reciente",
       "sortActivityAsc": "Actividad antigua",
-      "fichaLinkBlocked": "Vincular / desvincular formalmente a la sede aún no está disponible en Backend. La relación actual se infiere del historial de reservas."
+      "fichaLinkBlocked": "Esta ficha permite consultar la relación del jugador con la sede y su historial. No modifica esa relación."
     },
     "membresias": {
       "title": "Membresías",

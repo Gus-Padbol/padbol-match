@@ -1,3 +1,5 @@
+import { formatAdminDate } from '../utils/adminDateFormat';
+import { adminErrorMessage } from './adminErrorMessage';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useEffect, useMemo, useState } from 'react';
 import './AdminIncentivosSection.css';
@@ -156,7 +158,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
         if (nextReport.period !== period) throw new Error('El servidor devolvió otro período. Actualiza el informe para consultar el mes elegido.');
         finish({ kind: 'ready', program: nextProgram, supportsV4: true, report: nextReport, receivedAt: new Date() });
       } catch (error) {
-        if (error.name !== 'AbortError') finish({ kind: 'error', error: error.message });
+        if (error.name !== 'AbortError') finish({ kind: 'error', error: adminErrorMessage(error, 'No se pudo cargar el informe. Vuelve a intentarlo.') });
       }
     }
     void load();
@@ -175,7 +177,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
       });
       setActionNotice({ context, text: 'Los cuatro objetivos se guardaron en un borrador. No se activaron cobros.' });
       setRevision(value => value + 1);
-    } catch (error) { setActionNotice({ context, text: error.message, error: true }); }
+    } catch (error) { setActionNotice({ context, text: adminErrorMessage(error, 'No se pudo guardar la configuración. Vuelve a intentarlo.'), error: true }); }
     finally { setSaving(false); setConfirmedRules(false); }
   };
   const notice = actionNotice?.context.selectedId === selectedId && actionNotice?.context.accessToken === accessToken && actionNotice?.context.apiBaseUrl === apiBaseUrl ? actionNotice : null;
@@ -186,7 +188,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
 
   return <section className="section incentive-dashboard" data-testid="admin-incentivos-section">
     <header className="incentive-dashboard__header">
-      <div><p className="incentive-dashboard__eyebrow">BENEFICIO PADBOL</p><h2>Informe mensual de tu sede</h2><p>Consulta la actividad registrada, el estado de cada objetivo y el beneficio estimado del mes.</p></div>
+      <div><p className="incentive-dashboard__eyebrow">BENEFICIO PADBOL</p><h2>{isSuperAdmin ? 'Informe mensual por sede' : 'Informe mensual de tu sede'}</h2><p>Consulta la actividad registrada, el estado de cada objetivo y el beneficio estimado del mes.</p></div>
       <div className="incentive-dashboard__billing-note"><strong>Beneficio estimado</strong><span>Este informe no confirma un descuento aplicado ni genera cobros.</span></div>
     </header>
     <div className="incentive-dashboard__filters">
@@ -196,7 +198,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
     </div>
     {period ? <p className="incentive-dashboard__period">Período consultado: <strong>{monthLabel(month)}</strong> · calendario UTC</p> : null}
     {notice ? <p role={notice.error ? 'alert' : 'status'} className={`incentive-dashboard__alert incentive-dashboard__alert--${notice.error ? 'error' : 'success'}`}>{notice.text}</p> : null}
-    {!accessToken ? <p>Inicia sesión para consultar el informe de tu sede.</p> : !selectedId ? <p>Selecciona una sede.</p> : !period ? <p>Elige un mes válido, hasta el mes actual.</p> : loading ? <p role="status">Consultando el mes…</p> : current?.kind === 'error' ? <p role="alert" className="incentive-dashboard__alert incentive-dashboard__alert--error">{current.error}</p> : current?.kind === 'outdated' ? <div role="status" className="incentive-dashboard__empty"><strong>Actualización de objetivos pendiente</strong><p>El informe de cuatro objetivos todavía no está disponible para esta sede. Los registros anteriores no se usan para calcular este beneficio.</p></div> : current?.kind === 'empty' ? <div className="incentive-dashboard__empty"><strong>Programa pendiente de configuración</strong><p>Todavía no hay un programa asociado a esta sede. El informe se mostrará cuando esté configurado.</p></div> : null}
+    {!accessToken ? <p>Inicia sesión para consultar el informe de tu sede.</p> : !selectedId ? <p>Selecciona una sede.</p> : !period ? <p>Elige un mes válido, hasta el mes actual.</p> : loading ? <p role="status">Consultando el mes…</p> : current?.kind === 'error' ? <p role="alert" className="incentive-dashboard__alert incentive-dashboard__alert--error">{current.error}<button type="button" onClick={() => setRevision(value => value + 1)}>Reintentar</button></p> : current?.kind === 'outdated' ? <div role="status" className="incentive-dashboard__empty"><strong>Actualización de objetivos pendiente</strong><p>El informe de cuatro objetivos todavía no está disponible para esta sede. Los registros anteriores no se usan para calcular este beneficio.</p></div> : current?.kind === 'empty' ? <div className="incentive-dashboard__empty"><strong>Programa pendiente de configuración</strong><p>Todavía no hay un programa asociado a esta sede. El informe se mostrará cuando esté configurado.</p></div> : null}
     {report ? <>
       <div className="incentive-month-grid">
         <article><span>Objetivos del mes</span><strong>{allAvailable ? `${completed} de 4 cumplidos` : 'Cumplimiento no disponible'}</strong><small>Las cuatro metas se cumplen juntas para obtener el 50% adicional.</small></article>
@@ -204,7 +206,7 @@ export default function AdminIncentivosSection({ apiBaseUrl = API_DEFAULT, acces
       </div>
       <div className="incentive-dashboard__objectives"><h3>Actividad por objetivo</h3><ul>{GOALS.map(goal => <ObjectiveRow key={goal[0]} goal={goal} evaluation={report.evaluation} />)}</ul><p className="incentive-dashboard__history">Las mismas parejas y los mismos jugadores pueden participar en meses siguientes.</p></div>
       <TournamentEvidence evidence={report.evidence} />
-      <p className="incentive-dashboard__history">Consulta actualizada el {current.receivedAt.toLocaleString('es')}. Los meses anteriores se recalculan con los registros disponibles; no son informes cerrados.</p>
+      <p className="incentive-dashboard__history">Consulta actualizada el {formatAdminDate(current.receivedAt, { withTime: true })}. Los meses anteriores se recalculan con los registros disponibles; no son informes cerrados.</p>
     </> : null}
     {canConfigure ? <details className="incentive-dashboard__configuration">
       <summary>{program ? 'Configurar los objetivos del borrador' : 'Crear un borrador del programa'}</summary>

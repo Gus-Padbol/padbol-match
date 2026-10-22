@@ -1,4 +1,5 @@
 import { normalizePlayerNotifications, markPlayerNotificationsRead } from '../utils/playerNotificationsApi';
+import { resolvePlayerNotificationDestination } from '../utils/playerNotificationDestination';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -111,8 +112,9 @@ export default function NotificacionesPage() {
 
   const onItem = async (n) => {
     if (!n.leida) await markRead([n.id]);
-    const link = String(n.link || '').trim();
-    if (link) navigate(link);
+    const destination = resolvePlayerNotificationDestination(n.link, window.location.origin);
+    if (destination?.external) window.location.assign(destination.href);
+    else if (destination) navigate(destination.href);
   };
 
   return (

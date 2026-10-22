@@ -1,7 +1,12 @@
+import { membershipPlanDescription } from '../utils/membershipPlanDescription';
+import { padbolLangToIntlLocale } from '../utils/padbolLang';
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { AdminJugadorSearchInput } from './AdminJugadoresSection';
 import ConfirmModal from './ConfirmModal';
+import './AdminMembresiasSection.css';
+import { membershipPlanVisibleStatus } from '../utils/adminVenuePresentation';
 import {
   MEMBRESIA_DURACION_TIPOS,
   MEMBRESIA_ESTADOS,
@@ -60,6 +65,7 @@ function tdStyle(extra = {}) {
 function ScrollTable({ minWidth = 900, children }) {
   return (
     <div
+      className="admin-membresias-table-wrap"
       style={{
         overflowX: 'auto',
         WebkitOverflowScrolling: 'touch',
@@ -67,7 +73,7 @@ function ScrollTable({ minWidth = 900, children }) {
         borderRadius: 10,
       }}
     >
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth, fontSize: 13 }}>
+      <table className="admin-membresias-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth, fontSize: 13 }}>
         {children}
       </table>
     </div>
@@ -98,7 +104,8 @@ export default function AdminMembresiasSection({
   sedesOptions = [],
   sedeFlag = () => '',
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = padbolLangToIntlLocale(i18n.language);
   const tr = useCallback(
     (key, fallback, params) => {
       const raw = t(`admin.membresias.${key}`, fallback, params || undefined);
@@ -759,7 +766,7 @@ export default function AdminMembresiasSection({
             </p>
           ) : null}
           {okMsg ? (
-            <p style={{ color: '#166534', fontWeight: 600, fontSize: 13 }}>{okMsg}</p>
+            <p style={{ color: '#166534', fontWeight: 600, fontSize: 13 }}>{stripAdminEmoji(okMsg)}</p>
           ) : null}
 
           {loading ? (
@@ -785,7 +792,7 @@ export default function AdminMembresiasSection({
                       <th style={thStyle()}>{tr('colDescripcion', 'Descripción')}</th>
                       <th style={thStyle()}>{tr('colPrecio', 'Precio')}</th>
                       <th style={thStyle()}>{tr('colDuracion', 'Duración')}</th>
-                      <th style={thStyle()}>{tr('colActivo', 'Activo')}</th>
+                      <th style={thStyle()}>{tr('colEstado', 'Estado')}</th>
                       <th style={thStyle()}>{tr('colCupo', 'Cupo')}</th>
                       <th style={thStyle()}>{tr('colVigencia', 'Vigencia')}</th>
                       <th style={thStyle()}>{tr('colActivos', 'Miembros activos')}</th>
@@ -807,18 +814,18 @@ export default function AdminMembresiasSection({
                         <tr key={p.id}>
                           <td style={tdStyle({ fontWeight: 700 })}>{p.nombre}</td>
                           <td style={tdStyle({ maxWidth: 180, whiteSpace: 'normal' })}>
-                            {p.descripcion || '—'}
+                            {membershipPlanDescription(p.descripcion, i18n.language) || '—'}
                           </td>
                           <td style={tdStyle({ whiteSpace: 'nowrap' })}>
                             {formatMembresiaPrecio(p.precio, p.moneda)}
                           </td>
                           <td style={tdStyle()}>{dur}</td>
                           <td style={tdStyle()}>
-                            {p.activo !== false ? tr('yes', 'Sí') : tr('no', 'No')}
+                            {membershipPlanVisibleStatus(p)}
                           </td>
                           <td style={tdStyle()}>{p.cupo != null ? p.cupo : '—'}</td>
                           <td style={tdStyle({ whiteSpace: 'nowrap' })}>
-                            {formatMembresiaFecha(p.vigencia_desde)} → {formatMembresiaFecha(p.vigencia_hasta)}
+                            {formatMembresiaFecha(p.vigencia_desde, dateLocale)} → {formatMembresiaFecha(p.vigencia_hasta, dateLocale)}
                           </td>
                           <td style={tdStyle()}>—</td>
                           <td style={tdStyle({ whiteSpace: 'normal', minWidth: 140 })}>
@@ -899,7 +906,7 @@ export default function AdminMembresiasSection({
                   {tr('sortLabel', 'Orden')}
                   <select value={sort} onChange={(e) => onSortChange(e.target.value)} style={inp}>
                     {MEMBRESIAS_SORT_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>{({ created_at: 'Fecha de registro', inicio: 'Fecha de inicio', vencimiento: 'Fecha de vencimiento', estado: 'Estado' })[s]}</option>
                     ))}
                   </select>
                 </label>
@@ -910,8 +917,8 @@ export default function AdminMembresiasSection({
                     onChange={(e) => onDirectionChange(e.target.value)}
                     style={inp}
                   >
-                    <option value="desc">desc</option>
-                    <option value="asc">asc</option>
+                    <option value="desc">Más recientes primero</option>
+                    <option value="asc">Más antiguas primero</option>
                   </select>
                 </label>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -974,8 +981,8 @@ export default function AdminMembresiasSection({
                               </span>
                             </td>
                             <td style={tdStyle({ textTransform: 'capitalize' })}>{m.origen || '—'}</td>
-                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.inicio)}</td>
-                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.vencimiento)}</td>
+                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.inicio, dateLocale)}</td>
+                            <td style={tdStyle({ whiteSpace: 'nowrap' })}>{formatMembresiaFecha(m.vencimiento, dateLocale)}</td>
                             <td style={tdStyle()}>
                               {m.renovacion_automatica ? tr('yes', 'Sí') : tr('no', 'No')}
                               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -1368,7 +1375,7 @@ export default function AdminMembresiasSection({
                 <strong>{tr('fieldVencimiento', 'Vencimiento')}</strong>
                 <div style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
                   {assignVencimientoPreview
-                    ? formatMembresiaFecha(assignVencimientoPreview)
+                    ? formatMembresiaFecha(assignVencimientoPreview, dateLocale)
                     : tr('vencimientoHint', 'Se calcula según la duración del plan.')}
                 </div>
               </div>
@@ -1457,11 +1464,11 @@ export default function AdminMembresiasSection({
               </div>
               <div>
                 <dt style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{tr('colInicio', 'Inicio')}</dt>
-                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.inicio)}</dd>
+                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.inicio, dateLocale)}</dd>
               </div>
               <div>
                 <dt style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{tr('colVencimiento', 'Vencimiento')}</dt>
-                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.vencimiento)}</dd>
+                <dd style={{ margin: '2px 0 0' }}>{formatMembresiaFecha(detailRow.vencimiento, dateLocale)}</dd>
               </div>
             </dl>
             <h4 style={{ margin: '0 0 8px', fontSize: 14 }}>{tr('benefitsApplied', 'Beneficios')}</h4>

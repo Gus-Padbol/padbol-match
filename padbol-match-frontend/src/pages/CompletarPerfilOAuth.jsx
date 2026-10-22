@@ -30,7 +30,7 @@ import { fetchWhatsappDisponibleRegistro } from '../utils/registroWhatsappApi';
 import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
 import { supabase } from '../supabaseClient';
 import { assessAgeEligibility } from '../utils/ageEligibility';
-import { registerCurrentAccountEligibility } from '../utils/legalDocuments';
+import { registerCurrentAccountEligibility, accountEligibilityErrorTranslationKey } from '../utils/legalDocuments';
 import { resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 
 const API_BASE = (
@@ -288,7 +288,9 @@ export default function CompletarPerfilOAuth() {
         setErrorMsg(
           duplicateMessage
             ? t('profileCompletion.duplicateData')
-            : t('profileCompletion.saveFailed')
+            : String(err?.code || '') === '42P10'
+              ? t('profileCompletion.storageUnavailable', 'El servidor no pudo preparar el guardado del perfil. Tus datos no están mal. Intenta nuevamente más tarde.')
+              : t('profileCompletion.saveFailed')
         );
       } finally {
         setBusy(false);
@@ -330,9 +332,7 @@ export default function CompletarPerfilOAuth() {
             await registerCurrentAccountEligibility(fechaNacimiento, 'web_profile_completion');
           } catch (error) {
             setErrorMsg(
-              String(error?.message || '').includes('parental')
-                ? t('auth.ageEligibilityParental')
-                : t('auth.ageEligibilityInvalid'),
+              t(accountEligibilityErrorTranslationKey(error)),
             );
             return;
           }

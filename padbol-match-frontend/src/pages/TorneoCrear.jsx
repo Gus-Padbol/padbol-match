@@ -1,3 +1,6 @@
+import {createConfirmedAdminTournament} from '../utils/adminTournamentCreate';
+import {readPointsConfig,pointsBaseForLevel} from '../utils/pointsConfigApi';
+import { PADBOL_SELECTION_MODE } from '../utils/padbolSelectionRoster';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, {
   useState,
@@ -53,7 +56,7 @@ function formatSedeTorneoOption(sede) {
 const EMPTY_TORNEO_FORM = () => ({
   nombre: '',
   sede_id: '',
-  nivel_torneo: 'club',
+  nivel_torneo: 'club_no_oficial',
   categoria: CATEGORIA_TORNEO_DEFAULT,
   tipo_competencia: TORNEO_TIPO_COMPETENCIA_DEFAULT,
   categoria_edad: TORNEO_CATEGORIA_EDAD_DEFAULT,
@@ -65,7 +68,6 @@ const EMPTY_TORNEO_FORM = () => ({
   inscripcion_monto: '',
   inscripcion_moneda: 'ARS',
   premios_descripcion: '',
-  puntos_total: '',
   cupos_maximos: '',
   horas_revelar_equipos: '48',
   estado: 'proximo',
@@ -76,6 +78,7 @@ const EMPTY_TORNEO_FORM = () => ({
   fecha_apertura_inscripcion: '',
   deporte: TORNEO_DEPORTE_PADBOL,
   formato_equipo: TORNEO_FORMATO_DOBLES,
+  modalidad_plantel: 'dobles',
 });
 
 const TorneoCrear = forwardRef(function TorneoCrear({
@@ -90,10 +93,14 @@ const TorneoCrear = forwardRef(function TorneoCrear({
   const { t } = useSafeTranslation();
   const [sedes, setSedes] = useState([]);
   const [tiposCustom, setTiposCustom] = useState([]);
+  const [pointsPolicy,setPointsPolicy]=useState(null);
+  const [pointsPolicyError,setPointsPolicyError]=useState('');
+  const [pointsPolicyRetry,setPointsPolicyRetry]=useState(0);
   const [formData, setFormData] = useState(() => EMPTY_TORNEO_FORM());
   const [baseline, setBaseline] = useState(() => EMPTY_TORNEO_FORM());
   const [abandonOpen, setAbandonOpen] = useState(false);
   const pendingLeaveRef = useRef(null);
+  const pendingCreationRef=useRef(null);
   const isDirtyRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
@@ -113,6 +120,24 @@ const TorneoCrear = forwardRef(function TorneoCrear({
   const { rol: rolFromHook, sedeId } = useUserRole(currentCliente);
   const rol = rolProp || rolFromHook;
   const esAdminClub = rol === 'admin_club';
+  const enabledLevels = useMemo(() => {
+    if (!pointsPolicy) return [];
+    const builtin = ['club_no_oficial', 'club_oficial', 'nacional', 'internacional', 'mundial'];
+    const values = [...builtin, ...pointsPolicy.tipos_custom.map(row => row.id)];
+    return [...new Set(values)].filter(value =>
+      (!esAdminClub || ['club_no_oficial', 'club_oficial'].includes(value))
+      && !pointsPolicy.niveles_hidden.includes(value)
+      && pointsBaseForLevel(pointsPolicy, value) !== null);
+  }, [pointsPolicy, esAdminClub]);
+
+  useEffect(() => {
+    if (!pointsPolicy) return;
+    const reconcile = previous => enabledLevels.includes(previous.nivel_torneo)
+      ? previous : { ...previous, nivel_torneo: enabledLevels[0] || '' };
+    setFormData(reconcile);
+    setBaseline(reconcile);
+  }, [pointsPolicy, enabledLevels]);
+
 
   const isDirty = useMemo(
     () => JSON.stringify(formData) !== JSON.stringify(baseline),
@@ -130,13 +155,14 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       .then((data) => setSedes(data || []))
       .catch(() => setError(t('torneos.create.loadVenuesError')));
 
-    try {
-      const cfg = JSON.parse(localStorage.getItem('config_puntos') || '{}');
-      setTiposCustom(cfg.tipos_custom || []);
-    } catch {
-      /* ignore */
-    }
+
   }, [apiBaseUrl, t]);
+  useEffect(()=>{
+    const controller=new AbortController();setPointsPolicy(null);setPointsPolicyError('');
+    readPointsConfig({apiBaseUrl,signal:controller.signal}).then(policy=>{if(!controller.signal.aborted){setPointsPolicy(policy);setTiposCustom(policy.tipos_custom);}}).catch(error=>{if(!controller.signal.aborted)setPointsPolicyError(error.message);});
+    return()=>controller.abort();
+  },[apiBaseUrl,pointsPolicyRetry]);
+
 
   useEffect(() => {
     if (!esAdminClub || sedeId == null || sedeId === '') return;
@@ -156,13 +182,14 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     const next = esAdminClub && sedeId != null && sedeId !== ''
       ? { ...EMPTY_TORNEO_FORM(), sede_id: String(sedeId), es_multisede: false }
       : EMPTY_TORNEO_FORM();
+    next.nivel_torneo = enabledLevels.includes(next.nivel_torneo) ? next.nivel_torneo : enabledLevels[0] || '';
     setFormData(next);
     setBaseline(next);
     setMensaje('');
     setError('');
     isDirtyRef.current = false;
     onDirtyChange?.(false);
-  }, [esAdminClub, onDirtyChange, sedeId]);
+  }, [esAdminClub, onDirtyChange, sedeId, enabledLevels]);
 
   const requestLeave = useCallback((onAllowed) => {
     if (!isDirtyRef.current) {
@@ -221,6 +248,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       setFormData((prev) => ({
         ...prev,
         deporte: value,
+        modalidad_plantel: 'dobles',
         formato_equipo: formatoEquipoDefaultParaDeporte(value),
       }));
       return;
@@ -233,6 +261,9 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!pointsPolicy){setError(pointsPolicyError||t('admin.pointsPolicy.unavailable',{defaultValue:'Consulta la política guardada antes de crear el torneo.'}));return;}
+    const pointsLevel=formData.nivel_torneo;
+    if(pointsPolicy.niveles_hidden.includes(pointsLevel)||pointsBaseForLevel(pointsPolicy,formData.nivel_torneo)===null){setError(t('admin.pointsPolicy.levelUnavailable',{defaultValue:'El nivel seleccionado no está habilitado en la política actual.'}));return;}
     if (!session?.user) {
       navigate(authUrlWithRedirect('/torneo/crear'));
       return;
@@ -277,13 +308,13 @@ const TorneoCrear = forwardRef(function TorneoCrear({
         return corte ? { fecha_corte_edad: corte } : {};
       })(),
       tipo_torneo: formData.tipo_torneo,
-      estado: mapEstadoTorneoFormParaApi(formData.estado || 'proximo'),
+      estado: mapEstadoTorneoFormParaApi('proximo'),
       fecha_inicio: formData.fecha_inicio,
       fecha_fin: formData.fecha_fin,
       cantidad_equipos: formData.cantidad_equipos ? parseInt(formData.cantidad_equipos, 10) : null,
       es_multisede: formData.es_multisede,
-      created_by: null,
       deporte: normalizeTorneoDeporte(formData.deporte),
+      ...(normalizeTorneoDeporte(formData.deporte) === TORNEO_DEPORTE_PADBOL && formData.modalidad_plantel === PADBOL_SELECTION_MODE ? { modalidad_plantel: PADBOL_SELECTION_MODE } : {}),
       formato_equipo: formatoEquipoPayloadParaApi(formData.deporte, formData.formato_equipo),
     };
 
@@ -304,14 +335,6 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
     const premios = String(formData.premios_descripcion ?? '').trim();
     payload.premios_descripcion = premios || null;
-
-    const rawPuntosTotal = String(formData.puntos_total ?? '').trim();
-    if (rawPuntosTotal !== '') {
-      const pts = parseInt(rawPuntosTotal, 10);
-      payload.puntos_total = Number.isFinite(pts) && pts >= 0 ? pts : null;
-    } else {
-      payload.puntos_total = null;
-    }
 
     const rawCupos = String(formData.cupos_maximos ?? '').trim();
     if (rawCupos !== '') {
@@ -359,31 +382,15 @@ const TorneoCrear = forwardRef(function TorneoCrear({
     }
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/torneos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      console.log('Result recibido:', result);
-
-      if (response.ok) {
-        setMensaje(t('torneos.create.createdSuccess'));
-        resetFormClean();
-        const nuevoId = result?.[0]?.id;
-        if (embedded) {
-          if (nuevoId != null) onCreated?.(nuevoId);
-          window.setTimeout(() => {
-            onClose?.();
-          }, 900);
-        } else {
-          setTimeout(() => {
-            navigate(`/torneo/${result[0].id}`);
-          }, 1500);
-        }
+      const confirmed=await createConfirmedAdminTournament({apiBaseUrl},payload,pendingCreationRef);
+      setMensaje(t('torneos.create.createdSuccess'));
+      resetFormClean();
+      const nuevoId=confirmed.id;
+      if (embedded) {
+        onCreated?.(nuevoId);
+        window.setTimeout(()=>{onClose?.();},900);
       } else {
-        setError(result.error || t('torneos.create.createError'));
+        setTimeout(()=>{navigate(`/torneo/${nuevoId}`);},1500);
       }
     } catch (err) {
       setError(t('torneos.create.errorWithDetail', { error: err.message }));
@@ -463,27 +470,23 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                 </small>
               </div>
 
+              {normalizeTorneoDeporte(formData.deporte) === TORNEO_DEPORTE_PADBOL ? <div className="form-group">
+                <label htmlFor="torneo-modalidad-plantel">{t('torneos.selecciones.modeLabel', { defaultValue: 'Plantel del equipo' })}</label>
+                <select id="torneo-modalidad-plantel" name="modalidad_plantel" value={formData.modalidad_plantel} onChange={handleChange}>
+                  <option value="dobles">{t('torneos.selecciones.legacyMode', { defaultValue: 'Dobles (modalidad habitual)' })}</option>
+                  <option value="selecciones">{t('torneos.selecciones.selectionMode', { defaultValue: 'Plantel de selección (hasta 8)' })}</option>
+                </select>
+                {formData.modalidad_plantel === PADBOL_SELECTION_MODE ? <p>{t('torneos.selecciones.modeHint', { defaultValue: 'Plantel de 4 a 8 jugadores. Cada partido presenta 2 iniciales y 2 suplentes; siempre juegan 2 en cancha y pueden alternar en games impares. La carga manual de sets no registra los cambios game por game.' })}</p> : null}
+              </div> : null}
+
               <div className="form-group">
                 <label>{t('torneos.create.levelLabel')} *</label>
-                <select name="nivel_torneo" value={formData.nivel_torneo} onChange={handleChange}>
-                  <option value="club">{t('admin.tournamentLabels.level.club')}</option>
-                  <option value="club_no_oficial">{t('admin.tournamentLabels.level.club_no_oficial')}</option>
-                  {rol !== 'admin_club' && <option value="club_oficial">{t('admin.tournamentLabels.level.club_oficial')}</option>}
-                  {rol !== 'admin_club' && <option value="nacional">{t('admin.tournamentLabels.level.nacional')}</option>}
-                  {rol !== 'admin_club' && <option value="internacional">{t('admin.tournamentLabels.level.internacional')}</option>}
-                  {rol !== 'admin_club' && <option value="mundial">{t('admin.tournamentLabels.level.mundial')}</option>}
-                  {tiposCustom.length > 0 && <option disabled>──────────</option>}
-                  {tiposCustom.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nombre}
-                    </option>
-                  ))}
+                <select name="nivel_torneo" value={formData.nivel_torneo} onChange={handleChange} disabled={!pointsPolicy}>
+                  {enabledLevels.length === 0 ? <option value="">—</option> : null}
+                  {enabledLevels.map(value => <option key={value} value={value}>{pointsPolicy?.niveles_labels[value] || tiposCustom.find(row => row.id === value)?.nombre || t(`admin.tournamentLabels.level.${value}`)}</option>)}
                 </select>
-                {rol === 'admin_club' && (
-                  <small style={{ color: '#888', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {t('torneos.create.restrictedLevelsHint')}
-                  </small>
-                )}
+                {pointsPolicyError?<div role="alert"><p>{pointsPolicyError}</p><button type="button" onClick={()=>setPointsPolicyRetry(value=>value+1)}>{t('general.retry')}</button></div>:null}
+
               </div>
 
               {!esAdminClub && (
@@ -605,12 +608,8 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
               <div className="form-group">
                 <label>{t('torneos.create.initialStatusLabel')}</label>
-                <select name="estado" value={formData.estado} onChange={handleChange}>
+                <select name="estado" value="proximo" disabled>
                   <option value="proximo">{t('torneos.vista.estado.proximo')}</option>
-                  <option value="abierto">{t('torneos.vista.estado.abierto')}</option>
-                  <option value="en_curso">{t('torneos.vista.estado.en_curso')}</option>
-                  <option value="finalizado">{t('torneos.vista.estado.finalizado')}</option>
-                  <option value="cancelado">{t('torneos.vista.estado.cancelado')}</option>
                 </select>
                 <small style={{ color: '#666', fontSize: '12px', marginTop: '6px', display: 'block' }}>
                   {t('torneos.create.initialStatusHint')}
@@ -749,17 +748,9 @@ const TorneoCrear = forwardRef(function TorneoCrear({
               </div>
 
               <div className="form-group">
-                <label>{t('torneos.create.pointsLabel')}</label>
-                <input
-                  type="number"
-                  name="puntos_total"
-                  value={formData.puntos_total}
-                  onChange={handleChange}
-                  placeholder="1000"
-                  min="0"
-                  step="1"
-                />
-                {String(formData.puntos_total || '').trim() ? (
+                <label>{t('admin.pointsPolicy.basePoints',{defaultValue:'Puntos base'})}</label>
+                <input readOnly value={pointsPolicy?(pointsBaseForLevel(pointsPolicy,formData.nivel_torneo)??'—'):'—'} aria-label={t('admin.pointsPolicy.basePoints',{defaultValue:'Puntos base'})}/>
+                {pointsPolicy ? (
                   <button
                     type="button"
                     onClick={() => setPuntosModalOpen(true)}
@@ -812,7 +803,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
                 </small>
               </div>
 
-              {error && <div className="error-message">{error}</div>}
+              {error && <div className="error-message" role="alert">{error}</div>}
               {mensaje && <div className="success-message">{mensaje}</div>}
 
               <button type="submit" disabled={loading} className="btn-submit">
@@ -828,6 +819,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       open={puntosModalOpen}
       onClose={() => setPuntosModalOpen(false)}
       torneo={formData}
+      apiBaseUrl={apiBaseUrl}
     />
   );
 

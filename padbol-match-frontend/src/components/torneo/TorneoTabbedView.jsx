@@ -1,3 +1,12 @@
+import { tournamentRosterPresentation } from '../../utils/tournamentRosterPresentation';
+import TournamentMatchOperations from './TournamentMatchOperations';
+import NationsStandings from './NationsStandings';
+import {formatTournamentEventTime, tournamentEventTimeZone} from '../../utils/tournamentEventTime';
+import { isPadbolSelection } from '../../utils/padbolSelectionRoster';
+import { readSelectionLineup } from '../../utils/padbolSelectionApi';
+import PadbolSelectionLineups from './PadbolSelectionLineups';
+import { formatAdminDate } from '../../utils/adminDateFormat';
+import { padbolLangToIntlLocale } from '../../utils/padbolLang';
 import { getApiBaseUrl } from '../../utils/apiPublicBaseUrl';
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -48,6 +57,7 @@ import { usePadbolLangVersion } from '../../hooks/usePadbolLang';
 import {
   buildTablaPosiciones,
   formatMarcadorPartidoDetalle,
+  formatSetsLineaNeutral,
   parseResultadoPartido,
   partidosDelGrupo,
   validarMarcadorSetsPartido,
@@ -159,7 +169,7 @@ export function safeJugadores(eq) {
 
 /** Texto principal en listados de torneo: nombre + apellido (sin usar alias como nombre). */
 export function jugadorEtiquetaConArroba(p) {
-  return nombreListadoTorneoRanking(p);
+  return tournamentRosterPresentation(p).name;
 }
 
 /** Nombre del equipo o pareja de etiquetas de jugadores (mismo criterio que {@link jugadorEtiquetaConArroba}). */
@@ -230,6 +240,8 @@ export default function TorneoTabbedView({
   navigateState = null,
   /** Filas desde `tabla_puntos` + equipos (misma forma que FormEquipos). */
   clasificacionFinalFilas = null,
+  nationsEnabled = false,
+  nationsState = null,
   /** CTA inscripción encima de la lista de equipos (jugador). */
   equiposTabHeader = null,
   /** Contenido extra bajo la lista de equipos (inscripción en FormEquipos). */
@@ -242,7 +254,6 @@ export default function TorneoTabbedView({
   estadoLineaArribaTabs = null,
   /** Abre la pestaña Resultados al cargar (torneo finalizado o fecha pasada). */
   abrirTabResultadosInicial = false,
-  stickyTop = '110px',
   showTorneoLogo = false,
   /** Contexto opcional para enriquecer preview (perfil, foto, categoría, sede). */
   jugadorNombreTorneoCtx = null,
@@ -269,7 +280,10 @@ export default function TorneoTabbedView({
   /** Deporte del torneo (slug) para metadata del ticker / coherencia con GET /api/sponsors. */
   presentadoPorDeporte = null,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const formatHeaderDate = (raw) => navigateState?.fromAdmin === true
+    ? formatAdminDate(raw, { locale: padbolLangToIntlLocale(i18n?.language), empty: '' })
+    : formatFecha(raw);
   usePadbolLangVersion();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() =>
@@ -283,6 +297,20 @@ export default function TorneoTabbedView({
   const [showModalResultado, setShowModalResultado] = useState(false);
   const [showModalDetallePartido, setShowModalDetallePartido] = useState(false);
   const [selectedPartido, setSelectedPartido] = useState(null);
+  const openedNotificationMatchRef = useRef('');
+  useEffect(() => {
+    const requestedId = new URLSearchParams(location.search).get('partido');
+    if (!requestedId) return;
+    const requestKey = `${location.pathname}:${requestedId}`;
+    if (openedNotificationMatchRef.current === requestKey) return;
+    const requestedMatch = (partidos || []).find((match) => String(match.id) === requestedId);
+    if (!requestedMatch) return;
+    openedNotificationMatchRef.current = requestKey;
+    setSelectedPartido(requestedMatch);
+    setShowModalDetallePartido(true);
+  }, [location.pathname, location.search, partidos]);
+  const [selectionReady, setSelectionReady] = useState({});
+  const selectionMode = isPadbolSelection(torneo);
   const [resultado, setResultado] = useState({ set1: '', set2: '', set3: '' });
   /** Flujo voz: idle | listening | processing | confirm */
   const [voicePhase, setVoicePhase] = useState('idle');
@@ -362,6 +390,7 @@ export default function TorneoTabbedView({
 
   const abrirPreviewJugador = useCallback(
     (p) => {
+      if (!tournamentRosterPresentation(p).canOpenProfile) return;
       setJugadorPreview(buildJugadorPreviewModalData(p, jugadorNombreTorneoCtx));
     },
     [jugadorNombreTorneoCtx]
@@ -369,6 +398,7 @@ export default function TorneoTabbedView({
 
   const abrirQrJugador = useCallback(
     (p) => {
+      if (!tournamentRosterPresentation(p).canOpenProfile) return;
       const alias = String(p?.alias || '').trim();
       if (!alias) {
         alert('Este jugador no tiene alias público.');
@@ -441,7 +471,7 @@ export default function TorneoTabbedView({
     esGruposKnockout &&
     grupos.length === 0 &&
     (estadoLower === 'abierto' || estadoLower === 'inscripcion_abierta') &&
-    equiposConfirmadosParaSorteo(equipos).length >= 2;
+    equiposConfirmadosParaSorteo(equipos, torneo).length >= 2;
 
   const sorteoGruposAutoOpenedRef = useRef(false);
   useEffect(() => {
@@ -456,18 +486,19 @@ export default function TorneoTabbedView({
     setSorteoModalOpen(true);
   }, [activeTab, puedeMostrarBotonSorteoGrupos, torneo?.id, equipos]);
 
+  const partidosConfirmados = useMemo(() => nationsEnabled ? (nationsState?.matches || []) : partidos, [nationsEnabled,nationsState?.matches,partidos]);
   const partidosOrdenados = useMemo(() => {
-    return [...partidos].sort((a, b) => {
+    return [...partidosConfirmados].sort((a, b) => {
       const ta = a.fecha_hora ? new Date(a.fecha_hora).getTime() : 0;
       const tb = b.fecha_hora ? new Date(b.fecha_hora).getTime() : 0;
       return ta - tb;
     });
-  }, [partidos]);
+  }, [partidosConfirmados]);
 
   const partidosLlave = useMemo(() => {
-    if (esKnockoutPuro) return partidos;
-    return partidos.filter((p) => p.grupo == null || p.grupo === '');
-  }, [partidos, esKnockoutPuro]);
+    if (esKnockoutPuro) return partidosConfirmados;
+    return partidosConfirmados.filter((p) => p.grupo == null || p.grupo === '');
+  }, [partidosConfirmados, esKnockoutPuro]);
 
   const hayLlaveConPartidos = partidosLlave.length > 0;
 
@@ -523,7 +554,7 @@ export default function TorneoTabbedView({
   }, [participacionModalOpen]);
 
   useEffect(() => {
-    if (!participacionModalOpen || participacionPaso !== 'buscar') return;
+    if (selectionMode || !participacionModalOpen || participacionPaso !== 'buscar') return;
     let cancelled = false;
     setEquiposBusquedaLoading(true);
     setEquiposBusquedaError(null);
@@ -555,7 +586,7 @@ export default function TorneoTabbedView({
     return () => {
       cancelled = true;
     };
-  }, [participacionModalOpen, participacionPaso, apiBaseUrl, torneoId]);
+  }, [selectionMode, participacionModalOpen, participacionPaso, apiBaseUrl, torneoId]);
 
   const equiposParaChequeoMi = useMemo(() => {
     const m = new Map();
@@ -621,6 +652,7 @@ export default function TorneoTabbedView({
 
   const handleSolicitarUnirme = useCallback(
     async (equipoRow) => {
+      if (selectionMode) return;
       if (solicitudPendingId != null) return;
       setSolicitudPendingId(equipoRow.id);
       try {
@@ -647,6 +679,7 @@ export default function TorneoTabbedView({
       }
     },
     [
+      selectionMode,
       solicitudPendingId,
       session,
       userProfile,
@@ -668,6 +701,7 @@ export default function TorneoTabbedView({
   const abrirCargarResultadoDesdeDetalle = useCallback(
     (partido) => {
       if (!partido || !isAdmin || !puedeCargarResultados) return;
+      if (selectionMode && !selectionReady[String(partido.id)]) return;
       setSelectedPartido(partido);
       setResultado({ set1: '', set2: '', set3: '' });
       setVoiceError(null);
@@ -678,7 +712,7 @@ export default function TorneoTabbedView({
       setVoiceSaving(false);
       setShowModalResultado(true);
     },
-    [isAdmin, puedeCargarResultados],
+    [isAdmin, puedeCargarResultados, selectionMode, selectionReady],
   );
 
   const startVoiceResultado = useCallback(() => {
@@ -829,6 +863,11 @@ export default function TorneoTabbedView({
             set3: normalizeSetInput(resultado.set3),
           };
       try {
+        if (selectionMode) {
+          if (!selectionReady[String(selectedPartido.id)]) throw new Error('Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.');
+          const lineups = await Promise.all([selectedPartido.equipo_a_id, selectedPartido.equipo_b_id].map(equipoId => readSelectionLineup({ apiBaseUrl, torneoId: torneo?.id ?? torneoId, partidoId: selectedPartido.id, equipoId })));
+          if (lineups.some(dto => !dto.required || !dto.alineacion)) throw new Error('Las alineaciones de ambos equipos deben estar guardadas antes del resultado.');
+        }
         const data = await guardarResultadoManualTorneo({
           apiBaseUrl,
           torneoId: torneo?.id ?? torneoId,
@@ -853,7 +892,7 @@ export default function TorneoTabbedView({
         alert('Error al guardar: ' + err.message);
       }
     },
-    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, torneo?.id, torneoId, setPartidos, t]
+    [selectedPartido, puedeCargarResultados, resultado, apiBaseUrl, torneo?.id, torneoId, setPartidos, t, selectionMode, selectionReady]
   );
 
   const confirmarVozYGuardar = useCallback(async () => {
@@ -869,6 +908,7 @@ export default function TorneoTabbedView({
   const resultadosFilas = useMemo(() => {
     if (clasificacionFinalFilas && clasificacionFinalFilas.length > 0) return clasificacionFinalFilas;
     if (!esFinalizado) return [];
+    if (nationsEnabled) return [];
     const sorted = [...equipos].sort((a, b) => (Number(b.puntos_ranking) || 0) - (Number(a.puntos_ranking) || 0));
     return sorted.map((eq, i) => ({
       equipoId: eq.id,
@@ -879,7 +919,7 @@ export default function TorneoTabbedView({
       equipoNombre: nombreEquipoMostrado(eq),
       jugadorLineas: safeJugadores(eq).slice(0, 4).map((p) => jugadorEtiquetaConArroba(p)),
     }));
-  }, [clasificacionFinalFilas, esFinalizado, equipos]);
+  }, [clasificacionFinalFilas, esFinalizado, equipos, nationsEnabled]);
 
   /** Podio olímpico 2° · 1° · 3°; siempre 3 huecos, con placeholder si falta fila. */
   const podioSlotsCompletos = useMemo(() => {
@@ -904,19 +944,11 @@ export default function TorneoTabbedView({
     });
   }, [resultadosFilas]);
 
-  /** Posiciones 4–10 siempre; huecos vacíos con — */
+  /** Posiciones 4–10 cargadas; no inventar filas vacías. */
   const clasificacionFinalFilasCompletas = useMemo(() => {
-    const byPos = {};
-    resultadosFilas.forEach((f) => {
-      if (f.posicion >= 4 && f.posicion <= 10) byPos[f.posicion] = f;
-    });
-    const rows = [];
-    for (let pos = 4; pos <= 10; pos += 1) {
-      const f = byPos[pos];
-      if (f) rows.push({ ...f, vacio: false });
-      else rows.push({ posicion: pos, equipoNombre: '', jugadorLineas: [], jugadores: [], puntos: null, vacio: true });
-    }
-    return rows;
+    return resultadosFilas
+      .filter((f) => f.posicion >= 4 && f.posicion <= 10 && String(f.equipoNombre || '').trim())
+      .map((f) => ({ ...f, vacio: false }));
   }, [resultadosFilas]);
 
   useEffect(() => {
@@ -967,14 +999,14 @@ export default function TorneoTabbedView({
 
   const rondasLlave = useMemo(() => {
     const list = [...partidosLlave].sort((a, b) => {
-      const ra = Number(a.ronda) || 1;
-      const rb = Number(b.ronda) || 1;
+      const ra = Number(nationsEnabled ? a.bracket_round : a.ronda) || 1;
+      const rb = Number(nationsEnabled ? b.bracket_round : b.ronda) || 1;
       if (ra !== rb) return ra - rb;
-      return (a.id || 0) - (b.id || 0);
+      return nationsEnabled ? (Number(a.bracket_position)||0)-(Number(b.bracket_position)||0) : (a.id || 0) - (b.id || 0);
     });
     const byRonda = {};
     list.forEach((p) => {
-      const r = Number(p.ronda) || 1;
+      const r = Number(nationsEnabled ? p.bracket_round : p.ronda) || 1;
       if (!byRonda[r]) byRonda[r] = [];
       byRonda[r].push(p);
     });
@@ -982,7 +1014,7 @@ export default function TorneoTabbedView({
       .map(Number)
       .sort((a, b) => a - b)
       .map((r) => ({ ronda: r, partidos: byRonda[r] }));
-  }, [partidosLlave]);
+  }, [partidosLlave,nationsEnabled]);
 
   const renderTabEquipos = () => (
     <div style={{ padding: '4px 0 20px' }}>
@@ -1033,7 +1065,7 @@ export default function TorneoTabbedView({
                       cursor: 'pointer',
                       fontWeight: 900,
                       fontSize: '16px',
-                      color: '#2563eb',
+                      color: 'var(--text-primary)',
                       textDecoration: 'underline',
                       marginBottom: '10px',
                       flex: 1,
@@ -1070,8 +1102,10 @@ export default function TorneoTabbedView({
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('torneos.vista.sinJugadores')}</span>
                   ) : (
                     jugadores.map((p, idx) => {
-                      const nombreMain = nombreListadoTorneoRanking(p);
-                      const al = String(p?.alias || '').trim();
+                      const identity = tournamentRosterPresentation(p, i18n?.language);
+                      const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                      const nombreMain = identity.name;
+                      const al = identity.canOpenProfile ? String(p?.alias || '').trim() : '';
                       const initial = String(nombreMain || '?')
                         .charAt(0)
                         .toUpperCase();
@@ -1081,16 +1115,16 @@ export default function TorneoTabbedView({
                           key={`${equipo.id}-j-${idx}`}
                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}
                         >
-                          <button
-                            type="button"
-                            onClick={() => abrirPreviewJugador(p)}
+                          <PlayerTag
+                            type={identity.canOpenProfile ? "button" : undefined}
+                            onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
                               gap: '10px',
                               border: 'none',
                               background: 'transparent',
-                              cursor: 'pointer',
+                              cursor: identity.canOpenProfile ? 'pointer' : 'default',
                               padding: '4px 0',
                               textAlign: 'left',
                               flex: 1,
@@ -1130,15 +1164,16 @@ export default function TorneoTabbedView({
                               </span>
                             )}
                             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
-                              <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{nombreMain}</span>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{nombreMain}</span>
+                              {identity.badge ? <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{identity.badge}</span> : null}
                               {al ? (
                                 <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
                                   {formatAliasConArroba(al)}
                                 </span>
                               ) : null}
                             </span>
-                          </button>
-                          {puedeGestionarEquiposTorneo ? (
+                          </PlayerTag>
+                          {puedeGestionarEquiposTorneo && identity.canOpenProfile ? (
                             <button
                               type="button"
                               title="Ver QR"
@@ -1184,6 +1219,7 @@ export default function TorneoTabbedView({
   );
 
   const renderTabGrupos = () => {
+    if (nationsEnabled) return <NationsStandings data={nationsState} equipos={equipos}/>;
     const openEq = (row) => setModalEquipo(equipos.find((e) => e.id === row.id) || row);
     if (esGruposKnockout) {
       if (grupos.length === 0) {
@@ -1267,10 +1303,7 @@ export default function TorneoTabbedView({
     const clickable = true;
     const marcadorDetalle = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : '';
     const fh = partido.fecha_hora
-      ? new Date(partido.fecha_hora).toLocaleString('es-AR', {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        })
+      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
       : '—';
     const marcadorVal = tieneResultado ? validarMarcadorSetsPartido(partido) : null;
     const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
@@ -1386,13 +1419,13 @@ export default function TorneoTabbedView({
     const marcadorVal = fin && tieneResultado ? validarMarcadorSetsPartido(partido) : null;
     const ganaA = Boolean(marcadorVal?.valido && marcadorVal.sgA > marcadorVal.sgB);
     const ganaB = Boolean(marcadorVal?.valido && marcadorVal.sgB > marcadorVal.sgA);
-    const marcadorTxt = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : null;
+    const marcadorTxt = tieneResultado ? formatSetsLineaNeutral(partido) : null;
     const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
     const marcadorMostrar = marcadorInvalido
       ? t('torneos.partidoDetalle.resultadoInvalido', { defaultValue: 'Resultado inválido' })
       : marcadorTxt;
     const fh = partido.fecha_hora
-      ? new Date(partido.fecha_hora).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
+      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
       : null;
     const click = () => abrirDetallePartido(partido);
     return (
@@ -1401,14 +1434,17 @@ export default function TorneoTabbedView({
         className="torneo-bracket-card torneo-bracket-card--clickable"
         onClick={click}
         role="button"
+        tabIndex={0}
+        onKeyDown={event => {if(event.key === 'Enter' || event.key === ' '){event.preventDefault();click();}}}
       >
+        {nationsEnabled && Number(partido.bracket_round) === 3 ? <strong className="torneo-bracket-phase">{Number(partido.bracket_position) === 2 ? 'Tercer puesto' : 'Final'}</strong> : null}
         <div className={`torneo-bracket-team${ganaA ? ' torneo-bracket-team--winner' : ''}${na === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
-          <span className="torneo-bracket-team-name">{na}</span>
+          <span className="torneo-bracket-team-name" title={na}>{na}</span>
           {ganaA ? <span className="torneo-bracket-winner-mark">✓</span> : null}
         </div>
         <div className="torneo-bracket-vs">{t('torneos.vista.vs')}</div>
         <div className={`torneo-bracket-team${ganaB ? ' torneo-bracket-team--winner' : ''}${nb === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
-          <span className="torneo-bracket-team-name">{nb}</span>
+          <span className="torneo-bracket-team-name" title={nb}>{nb}</span>
           {ganaB ? <span className="torneo-bracket-winner-mark">✓</span> : null}
         </div>
         {marcadorMostrar ? (
@@ -1486,7 +1522,8 @@ export default function TorneoTabbedView({
     }
     const ultimaIdx = rondasLlave.length - 1;
     return (
-      <div className="torneo-bracket-scroll">
+      <div className="torneo-bracket-scroll" tabIndex={0} role="region" aria-label="Llave del torneo, desplazable horizontalmente">
+        <p className="torneo-bracket-hint">Desliza para ver los cruces. Abre un partido para consultar los nombres completos y el resultado.</p>
         <div className="torneo-bracket-track">
           {rondasLlave.map(({ ronda, partidos: plist }, colIdx) => {
             const isLastCol = colIdx === ultimaIdx;
@@ -1494,7 +1531,7 @@ export default function TorneoTabbedView({
             return (
               <Fragment key={ronda}>
                 <div className="torneo-bracket-col">
-                  <div className="torneo-bracket-ronda-label">Ronda {ronda}</div>
+                  <div className="torneo-bracket-ronda-label">{nationsEnabled ? ({1:'Cuartos de final',2:'Semifinales',3:'Final y tercer puesto'})[ronda] || `Ronda ${ronda}` : `Ronda ${ronda}`}</div>
                   {isLastCol && plist.length === 1 ? (
                     <div className="torneo-bracket-col-body torneo-bracket-col-body--final">
                       {plist[0] ? renderBracketMatchCard(plist[0]) : null}
@@ -1559,27 +1596,31 @@ export default function TorneoTabbedView({
                   )}
                 </div>
                 {!sinEquipo ? (
-                  <div className="podium-player-avatars">
+                  <div className="podium-player-avatars" style={fila.jugadores?.some(p => !tournamentRosterPresentation(p).canOpenProfile) ? { flexWrap: 'wrap', gap: '4px' } : undefined}>
                     {(Array.isArray(fila.jugadores) ? fila.jugadores : [])
                       .slice(0, 4)
                       .map((p, idx) => {
                         const a = avatarJugadorPodio(p);
-                        const nombreJug = String(p?.nombre || p?.name || a.label || 'Jugador').trim() || 'Jugador';
+                        const identity = tournamentRosterPresentation(p, i18n?.language);
+                        const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                        const nombreJug = identity.canOpenProfile
+                          ? String(p?.nombre || p?.name || a.label || 'Jugador').trim() || 'Jugador'
+                          : identity.name;
                         return (
-                          <button
+                          <PlayerTag
                             key={`${a.label}-${idx}`}
-                            type="button"
-                            className="podium-player-avatar-wrap"
-                            style={{ zIndex: idx + 1 }}
-                            onClick={() => abrirPreviewJugador(p)}
-                            aria-label={`Ver ${nombreJug}`}
+                            type={identity.canOpenProfile ? 'button' : undefined}
+                            className={identity.canOpenProfile ? 'podium-player-avatar-wrap' : undefined}
+                            style={identity.canOpenProfile ? { zIndex: idx + 1 } : { display: 'inline-flex', flexDirection: 'column', maxWidth: '100%', overflowWrap: 'anywhere', fontSize: '11px', padding: '4px' }}
+                            onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
+                            aria-label={identity.canOpenProfile ? `Ver ${nombreJug}` : undefined}
                           >
-                            {a.foto ? (
+                            {!identity.canOpenProfile ? <><span>{nombreJug}</span>{identity.badge ? <small>{identity.badge}</small> : null}</> : a.foto ? (
                               <img src={a.foto} alt="" className="podium-player-avatar" loading="lazy" referrerPolicy="no-referrer" />
                             ) : (
                               <span className="podium-player-avatar-fallback">{a.initial}</span>
                             )}
-                          </button>
+                          </PlayerTag>
                         );
                       })}
                   </div>
@@ -1616,16 +1657,19 @@ export default function TorneoTabbedView({
                 <span className={`clasificacion-final-equipo${vacio ? ' clasificacion-final-mute' : ''}`}>{nombre}</span>
                 <span className={`clasificacion-final-jug clasificacion-final-jug--chips${vacio ? ' clasificacion-final-mute' : ''}`}>
                   {!vacio && jugadoresRow.length ? (
-                    jugadoresRow.slice(0, 4).map((p, idx) => (
-                      <button
+                    jugadoresRow.slice(0, 4).map((p, idx) => {
+                      const identity = tournamentRosterPresentation(p, i18n?.language);
+                      const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                      return <PlayerTag
                         key={`${f.posicion}-${p?.id ?? p?.jugador_id ?? idx}-${jugadorEtiquetaConArroba(p)}`}
-                        type="button"
+                        type={identity.canOpenProfile ? 'button' : undefined}
                         className="clasificacion-final-jug-chip"
-                        onClick={() => abrirPreviewJugador(p)}
+                        style={identity.canOpenProfile ? undefined : { color: 'var(--text-primary)', textDecoration: 'none', cursor: 'default', overflowWrap: 'anywhere' }}
+                        onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
                       >
-                        {jugadorEtiquetaConArroba(p)}
-                      </button>
-                    ))
+                        {identity.name}{identity.badge ? <small style={{ display: 'block', fontWeight: 400 }}>{identity.badge}</small> : null}
+                      </PlayerTag>;
+                    })
                   ) : (
                     '—'
                   )}
@@ -1661,7 +1705,15 @@ export default function TorneoTabbedView({
 
   return (
     <>
-      {participacionModalOpen ? (
+      {participacionModalOpen && selectionMode ? <div className="torneo-modal-participacion-overlay" role="presentation">
+        <section className="torneo-modal-participacion-card" role="dialog" aria-modal="true" aria-label={String(i18n?.language || '').startsWith('en') ? 'Selection roster registration' : 'Inscripción de planteles de selección'}>
+          <h2>{String(i18n?.language || '').startsWith('en') ? 'Selection roster (up to eight)' : 'Plantel de selección (hasta ocho)'}</h2>
+          <p>{String(i18n?.language || '').startsWith('en') ? 'Create your roster or request a place through registered profiles. Four confirmed players are enough; eight places are optional.' : 'Crea tu plantel o solicita un lugar con perfiles registrados. Cuatro jugadores confirmados son suficientes; completar ocho plazas es opcional.'}</p>
+          <button type="button" className="torneo-modal-participacion-opcion" onClick={irACrearEquipoDefault}>{String(i18n?.language || '').startsWith('en') ? 'View rosters and requests' : 'Ver planteles y solicitudes'}</button>
+          <button type="button" className="torneo-modal-participacion-cerrar" onClick={() => onParticipacionModalClose?.()}>{String(i18n?.language || '').startsWith('en') ? 'Close' : 'Cerrar'}</button>
+        </section>
+      </div> : null}
+      {participacionModalOpen && !selectionMode ? (
         <div
           className="torneo-modal-participacion-overlay"
           role="presentation"
@@ -1825,7 +1877,7 @@ export default function TorneoTabbedView({
                                 </span>
                               )}
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 900, color: '#0f172a', fontSize: '15px', lineHeight: 1.3 }}>
+                                <div style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: '15px', lineHeight: 1.3 }}>
                                   {titulo}
                                 </div>
                                 <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>
@@ -1972,13 +2024,21 @@ export default function TorneoTabbedView({
           <span>{resumenDeporteFormatoTorneo(torneo)}</span>
         </p>
         <p className="torneo-header-meta torneo-header-meta--detalle">
-          {formatNivelTorneo(torneo?.nivel_torneo)} • {labelCategoriaTorneo(torneo?.categoria)} •{' '}
-          {labelGeneroTorneo(torneoTipoCompetenciaDb(torneo))} •{' '}
-          {programaDeTorneo(torneo) === PROGRAMA_NEXT_GENERATION
-            ? `${t('torneos.vista.programa.next_generation', { defaultValue: 'FIPA Next Generation' })} • `
-            : ''}
-          {labelCategoriaEdadTorneo(torneo?.categoria_edad)} • {formatTipoTorneo(torneo?.tipo_torneo)} •{' '}
-          {formatFecha(torneo?.fecha_inicio)} a {formatFecha(torneo?.fecha_fin)}
+          {[
+            formatNivelTorneo(torneo?.nivel_torneo),
+            labelCategoriaTorneo(torneo?.categoria),
+            labelGeneroTorneo(torneoTipoCompetenciaDb(torneo)),
+            programaDeTorneo(torneo) === PROGRAMA_NEXT_GENERATION
+              ? t('torneos.vista.programa.next_generation', { defaultValue: 'FIPA Next Generation' })
+              : '',
+            labelCategoriaEdadTorneo(torneo?.categoria_edad),
+            formatTipoTorneo(torneo?.tipo_torneo),
+            torneo?.fecha_inicio || torneo?.fecha_fin
+              ? (torneo?.fecha_inicio && torneo?.fecha_fin && String(torneo.fecha_fin).slice(0,10) < String(torneo.fecha_inicio).slice(0,10)
+                ? `${t('torneos.vista.plannedStart', {defaultValue:'Inicio previsto'})}: ${formatHeaderDate(torneo.fecha_inicio)} · ${t('torneos.vista.recordedClosure', {defaultValue:'Cierre registrado'})}: ${formatHeaderDate(torneo.fecha_fin)}`
+                : `${formatHeaderDate(torneo?.fecha_inicio)} a ${formatHeaderDate(torneo?.fecha_fin)}`)
+              : '',
+          ].filter((value) => value && value !== '—').join(' • ')}
         </p>
       </div>
 
@@ -2023,10 +2083,8 @@ export default function TorneoTabbedView({
       <div data-torneo-banner-slot={TORNEO_BANNER_ANTES_TABS_DATA_SLOT}>{bannerAntesTabs}</div>
 
       <div
-        className="torneo-tabs-sticky torneo-tabs"
+        className="torneo-tabs"
         style={{
-          position: 'sticky',
-          top: stickyTop,
           zIndex: 20,
           background: 'color-mix(in srgb, var(--bg-card) 96%, transparent)',
           backdropFilter: 'blur(8px)',
@@ -2065,8 +2123,10 @@ export default function TorneoTabbedView({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
               {modalJugadores.map((p, i) => {
                 const fotoM = String(p?.foto_url || '').trim();
-                const alM = String(p?.alias || '').trim();
-                const nm = nombreListadoTorneoRanking(p);
+                const identity = tournamentRosterPresentation(p, i18n?.language);
+                const PlayerTag = identity.canOpenProfile ? 'button' : 'span';
+                const alM = identity.canOpenProfile ? String(p?.alias || '').trim() : '';
+                const nm = identity.name;
                 const ini = String(nm || '?')
                   .charAt(0)
                   .toUpperCase();
@@ -2083,18 +2143,16 @@ export default function TorneoTabbedView({
                       background: 'var(--bg-card)',
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        abrirPreviewJugador(p);
-                      }}
+                    <PlayerTag
+                      type={identity.canOpenProfile ? "button" : undefined}
+                      onClick={identity.canOpenProfile ? () => abrirPreviewJugador(p) : undefined}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
                         border: 'none',
                         background: 'transparent',
-                        cursor: 'pointer',
+                        cursor: identity.canOpenProfile ? 'pointer' : 'default',
                         textAlign: 'left',
                         flex: 1,
                         minWidth: 0,
@@ -2137,15 +2195,16 @@ export default function TorneoTabbedView({
                         </span>
                       )}
                       <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', minWidth: 0 }}>
-                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{nm}</span>
+                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{nm}</span>
+                        {identity.badge ? <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{identity.badge}</span> : null}
                         {alM ? (
                           <span style={{ fontSize: '11px', fontWeight: 600, color: '#9ca3af' }}>
                             {formatAliasConArroba(alM)}
                           </span>
                         ) : null}
                       </span>
-                    </button>
-                    {puedeGestionarEquiposTorneo ? (
+                    </PlayerTag>
+                    {puedeGestionarEquiposTorneo && identity.canOpenProfile ? (
                       <button
                         type="button"
                         title="Ver QR"
@@ -2182,11 +2241,16 @@ export default function TorneoTabbedView({
           setShowModalDetallePartido(false);
         }}
         partido={selectedPartido}
+        eventTimeZone={tournamentEventTimeZone(torneo,nationsState)}
         equipos={equipos}
         nombreEquipo={nombreEquipoMostrado}
         torneoId={torneo?.id ?? torneoId}
         onCargarResultado={puedeCargarResultados ? abrirCargarResultadoDesdeDetalle : undefined}
-      />
+        resultadoDisabled={selectionMode && !selectionReady[String(selectedPartido?.id)]}
+      >
+        {isAdmin && !nationsEnabled && selectedPartido && showModalDetallePartido ? <TournamentMatchOperations key={`operations-${torneo?.id ?? torneoId}-${selectedPartido.id}-${selectionReady[String(selectedPartido.id)] ? 'ready' : 'pending'}`} torneoId={torneo?.id ?? torneoId} partidoId={selectedPartido.id} apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} navigate={navigate} onSaved={saved=>{setSelectedPartido(prev=>({...prev,fecha_hora:saved.fecha_hora,cancha:saved.cancha}));setPartidos(prev=>prev.map(p=>String(p.id)===String(saved.partido_id)?{...p,fecha_hora:saved.fecha_hora,cancha:saved.cancha}:p));}} /> : null}
+        {selectionMode && selectedPartido && showModalDetallePartido ? <PadbolSelectionLineups key={`${torneo?.id ?? torneoId}:${selectedPartido.id}`} apiBaseUrl={apiBaseUrl} torneoId={torneo?.id ?? torneoId} partido={selectedPartido} equipos={equipos} onReadyChange={ready => setSelectionReady(prev => prev[String(selectedPartido.id)] === ready ? prev : { ...prev, [String(selectedPartido.id)]: ready })} /> : null}
+      </PartidoDetalleModal>
 
       {showModalResultado && selectedPartido ? (
         <div
@@ -2256,7 +2320,7 @@ export default function TorneoTabbedView({
                       border: '1px solid #e2e8f0',
                       fontSize: '15px',
                       fontWeight: 600,
-                      color: '#0f172a',
+                      color: 'var(--text-primary)',
                       minHeight: '48px',
                     }}
                   >

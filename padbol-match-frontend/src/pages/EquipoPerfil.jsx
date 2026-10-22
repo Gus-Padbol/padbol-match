@@ -12,6 +12,7 @@ import { formatNivelTorneo } from '../utils/torneoFormatters';
 import { formatAliasConArroba, nombreCompletoJugadorPerfil } from '../utils/jugadorPerfil';
 import { buildJugadorPreviewModalData } from '../utils/jugadorPreviewModalData';
 import JugadorPreviewModal from '../components/JugadorPreviewModal';
+import { tournamentRosterPresentation } from '../utils/tournamentRosterPresentation';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 
 function safeJugadores(eq) {
@@ -31,14 +32,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 function userIdsDesdeJugadoresEquipo(raw) {
   const ids = new Set();
   for (const p of raw) {
-    const uid = String(p?.user_id || p?.id || '').trim();
+    const uid = tournamentRosterPresentation(p).canOpenProfile ? String(p?.user_id || p?.id || '').trim() : '';
     if (uid && UUID_RE.test(uid)) ids.add(uid);
   }
   return [...ids];
 }
 
 function mergeJugadorConPerfil(p, perfilPorUserId) {
-  const uid = String(p?.user_id || p?.id || '').trim();
+  const uid = tournamentRosterPresentation(p).canOpenProfile ? String(p?.user_id || p?.id || '').trim() : '';
   const perfil = uid && perfilPorUserId && perfilPorUserId[uid];
   if (!perfil) return p;
   const str = (v) => String(v ?? '').trim();
@@ -55,6 +56,8 @@ function mergeJugadorConPerfil(p, perfilPorUserId) {
 }
 
 function jugadorAliasLabel(p) {
+  const identity = tournamentRosterPresentation(p);
+  if (!identity.canOpenProfile) return identity.name;
   const alias = String(p?.alias || '').trim();
   if (alias) return formatAliasConArroba(alias);
   const full = nombreCompletoJugadorPerfil(p);
@@ -193,9 +196,7 @@ export default function EquipoPerfil() {
       setEquipo(eq);
 
       const rawJugadores = safeJugadores(eq);
-      console.log('[EquipoPerfil] jugadores raw (desde equipo.jugadores)', rawJugadores);
       const uids = userIdsDesdeJugadoresEquipo(rawJugadores);
-      console.log('[EquipoPerfil] userIds extraídos para join jugadores_perfil', uids);
       if (uids.length > 0) {
         const profiles = await Promise.all(uids.map((uid) => fetchPublicPlayerSummary(uid).catch(() => null)));
         if (cancelled) return;
@@ -271,7 +272,7 @@ export default function EquipoPerfil() {
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {loading ? (
           <div style={cardWhite}>
-            <p style={{ margin: 0, color: '#64748b' }}>Cargando equipo...</p>
+            <p style={{ margin: 0, color: 'var(--text-primary)' }}>Cargando equipo...</p>
           </div>
         ) : !equipo ? (
           <div style={cardWhite}>
@@ -307,7 +308,7 @@ export default function EquipoPerfil() {
                 )}
               </div>
 
-              <h1 style={{ margin: '0 0 4px', textAlign: 'center', fontSize: '32px', fontWeight: 900, lineHeight: 1.2, color: '#0f172a' }}>
+              <h1 style={{ margin: '0 0 4px', textAlign: 'center', fontSize: '32px', fontWeight: 900, lineHeight: 1.2, color: 'var(--text-primary)' }}>
                 {String(equipo.nombre || '').trim() || `Equipo #${equipo.id}`}
               </h1>
               </div>
@@ -315,17 +316,19 @@ export default function EquipoPerfil() {
               <div style={{ ...cardWhite, padding: 14, display: 'grid', gap: 10 }}>
                 {jugadores.map((p, idx) => {
                   const aliasLabel = jugadorAliasLabel(p);
-                  const fullName = jugadorNombreCompleto(p);
+                  const identity = tournamentRosterPresentation(p);
+                  const Row = identity.canOpenProfile ? 'button' : 'div';
+                  const fullName = identity.canOpenProfile ? jugadorNombreCompleto(p) : '';
                   const pais = parsePaisDisplay(p);
                   const foto = String(p?.foto_url || '').trim();
                   const paisTxt =
                     pais &&
                     [pais.flag, pais.name].filter((x) => String(x || '').trim()).join(' ').trim();
                   return (
-                    <button
+                    <Row
                       key={`${aliasLabel}-${idx}`}
-                      type="button"
-                      onClick={() => setJugadorPreviewPublico(buildJugadorPreviewModalData(p, null))}
+                      type={identity.canOpenProfile ? 'button' : undefined}
+                      onClick={identity.canOpenProfile ? () => setJugadorPreviewPublico(buildJugadorPreviewModalData(p, null)) : undefined}
                       style={{
                         border: '1px solid #e2e8f0',
                         background: 'var(--bg-card)',
@@ -335,7 +338,7 @@ export default function EquipoPerfil() {
                         alignItems: 'center',
                         gap: 10,
                         justifyContent: paisTxt ? 'space-between' : 'flex-start',
-                        cursor: 'pointer',
+                        cursor: identity.canOpenProfile ? 'pointer' : 'default',
                         textAlign: 'left',
                       }}
                     >
@@ -345,8 +348,8 @@ export default function EquipoPerfil() {
                           <div
                             style={{
                               fontWeight: 800,
-                              color: '#2563eb',
-                              textDecoration: 'underline',
+                              color: 'var(--text-primary)',
+                              textDecoration: identity.canOpenProfile ? 'underline' : 'none',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
@@ -354,11 +357,12 @@ export default function EquipoPerfil() {
                           >
                             {aliasLabel}
                           </div>
+                          {identity.badge ? <div style={{ color: 'var(--text-primary)', fontSize: 12 }}>{identity.badge}</div> : null}
                           {fullName && fullName !== aliasLabel ? (
                             <div
                               style={{
                                 marginTop: 2,
-                                color: '#64748b',
+                                color: 'var(--text-primary)',
                                 fontSize: 12,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
@@ -371,18 +375,18 @@ export default function EquipoPerfil() {
                         </div>
                       </div>
                       {paisTxt ? (
-                        <div style={{ flexShrink: 0, color: '#475569', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        <div style={{ flexShrink: 0, color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
                           {paisTxt}
                         </div>
                       ) : null}
-                    </button>
+                    </Row>
                   );
                 })}
               </div>
 
               {historial.length > 0 ? (
                 <div style={{ ...cardWhite, marginTop: 0 }}>
-                  <h3 style={{ margin: '0 0 10px', color: '#334155', fontSize: 16 }}>{`🏆 Historial del equipo (${historial.length} torneos)`}</h3>
+                  <h3 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 16 }}>{`🏆 Historial del equipo (${historial.length} torneos)`}</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {historial.map((h) => (
                       <button
@@ -412,7 +416,7 @@ export default function EquipoPerfil() {
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                             fontWeight: 700,
-                            color: '#0f172a',
+                            color: 'var(--text-primary)',
                           }}
                         >
                           {`${h.nombre} · ${h.nivel} · ${h.puntos} pts · ${fechaCorta(h.fecha)}`}

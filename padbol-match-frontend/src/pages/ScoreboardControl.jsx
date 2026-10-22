@@ -14,6 +14,7 @@ import {
   scoreboardPlayerName,
 } from '../utils/scoreboardPlayers';
 import { formatScoreboardVenueHeader } from '../utils/scoreboardVenueLabels';
+import { preferNewestScoreboard } from '../utils/scoreboardVersion';
 import '../styles/ScoreboardControl.css';
 
 function formatTimer(seconds) {
@@ -218,12 +219,27 @@ export default function ScoreboardControl() {
   const [undoCount, setUndoCount] = useState(0);
   const autoPauseDoneRef = useRef(null);
   const runActionRef = useRef(null);
-
-  const handleUpdate = useCallback((payload) => {
-    setPartido(payload);
+  const actionPendingRef = useRef(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+  const acceptPartido = useCallback((next) => {
+    setPartido(current => preferNewestScoreboard(current, next));
   }, []);
 
-  useScoreboardSocket(partidoId, handleUpdate);
+  useEffect(() => {
+    const warn = (event) => {
+      if (!actionPendingRef.current) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, []);
+
+  const handleUpdate = useCallback((payload) => {
+    acceptPartido(payload);
+  }, [acceptPartido]);
+
+  useScoreboardSocket(partidoId, handleUpdate, session?.access_token);
   const timerSeconds = useServerCronometro(partido);
 
   useEffect(() => {
@@ -231,14 +247,14 @@ export default function ScoreboardControl() {
     let cancelled = false;
     (async () => {
       try {
-        const p = await fetchPartido(partidoId);
+        const p = await fetchPartido(partidoId,{authenticated:true});
         if (!cancelled) {
           if (!canAdminScoreboard(rol, p.sede_id, userSedeId)) {
             setError(t('scoreboard.noPermission', 'No tienes permiso para controlar este scoreboard'));
             setLoading(false);
             return;
           }
-          setPartido(p);
+          acceptPartido(p);
         }
       } catch (err) {
         if (!cancelled) setError(err.message);
@@ -247,13 +263,13 @@ export default function ScoreboardControl() {
       }
     })();
     return () => { cancelled = true; };
-  }, [partidoId, rol, userSedeId, roleLoading, t]);
+  }, [partidoId, rol, userSedeId, roleLoading, t, acceptPartido]);
 
   const refreshPartido = useCallback(async () => {
-    const p = await fetchPartido(partidoId);
-    setPartido(p);
+    const p = await fetchPartido(partidoId,{authenticated:true});
+    acceptPartido(p);
     return p;
-  }, [partidoId]);
+  }, [partidoId, acceptPartido]);
 
   useEffect(() => {
     if (!partido) return undefined;
@@ -268,6 +284,8 @@ export default function ScoreboardControl() {
   }, [partido?.id, partidoId]);
 
   const runAction = useCallback(async (path, { refetchAfter = false } = {}) => {
+    if (actionPendingRef.current || needsRefresh) return false;
+    actionPendingRef.current = true;
     setActionLoading(true);
     setError('');
     try {
@@ -276,7 +294,7 @@ export default function ScoreboardControl() {
       if (refetchAfter) {
         await refreshPartido();
       } else {
-        setPartido(data);
+        acceptPartido(data);
       }
       return true;
     } catch (err) {
@@ -286,11 +304,13 @@ export default function ScoreboardControl() {
         message: err?.message || err,
       });
       setError(err?.message || t('general.somethingWentWrong'));
+      setNeedsRefresh(true);
       return false;
     } finally {
+      actionPendingRef.current = false;
       setActionLoading(false);
     }
-  }, [partido?.id, partidoId, refreshPartido, t]);
+  }, [partido?.id, partidoId, refreshPartido, t, needsRefresh, acceptPartido]);
 
   runActionRef.current = runAction;
 
@@ -350,7 +370,7 @@ export default function ScoreboardControl() {
   const display = partido.display || {};
   const terminado = isMatchFinished(partido);
   const cronometroActivo = isCronometroRunning(partido);
-  const canScorePoints = !terminado;
+  const canScorePoints = !terminado && cronometroActivo && !needsRefresh;
   const torneoLabel = getTorneoLabel(partido);
   const { colorA, colorB } = resolveTeamColors(partido);
 
@@ -381,23 +401,40 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-timer-btn sc-timer-btn--start"
-            disabled={actionLoading || terminado || cronometroActivo}
+            disabled={actionLoading || needsRefresh || terminado || cronometroActivo}
             onClick={() => handleCronometro('start')}
           >
-            Start
+            Iniciar partido
           </button>
           <button
             type="button"
             className="sc-timer-btn sc-timer-btn--pause"
-            disabled={actionLoading || terminado || !cronometroActivo}
+            disabled={actionLoading || needsRefresh || terminado || !cronometroActivo}
             onClick={() => handleCronometro('pause')}
           >
-            Pause
+            Pausar
           </button>
         </div>
       </header>
 
       {error && <div className="sc-error">{error}</div>}
+      {needsRefresh && (
+        <div role="alert">
+          No se pudo confirmar la operación. Consulta el marcador actualizado antes de volver a actuar.
+          <button type="button" disabled={actionLoading} onClick={async () => {
+            setActionLoading(true);
+            try {
+              await refreshPartido();
+              setNeedsRefresh(false);
+              setError('');
+            } catch (err) {
+              setError(err?.message || 'No se pudo actualizar el marcador');
+            } finally {
+              setActionLoading(false);
+            }
+          }}>Actualizar marcador</button>
+        </div>
+      )}
 
       {terminado && winnerName && (
         <div className="sc-finished-banner">
@@ -406,7 +443,7 @@ export default function ScoreboardControl() {
           <button
             type="button"
             className="sc-finished-banner__restart"
-            disabled={actionLoading}
+            disabled={actionLoading || needsRefresh}
             onClick={() => void handleRestartMatch()}
           >
             Iniciar otro partido
@@ -441,7 +478,7 @@ export default function ScoreboardControl() {
               disabled={actionLoading || terminado || !canScorePoints}
               onClick={() => runAction(
                 `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/A`,
-                { refetchAfter: true },
+                { refetchAfter: false },
               )}
             >
               + POINT
@@ -475,7 +512,7 @@ export default function ScoreboardControl() {
               disabled={actionLoading || terminado || !canScorePoints}
               onClick={() => runAction(
                 `/api/scoreboard/partidos/${resolvePartidoApiId()}/punto/B`,
-                { refetchAfter: true },
+                { refetchAfter: false },
               )}
             >
               + POINT
@@ -487,7 +524,7 @@ export default function ScoreboardControl() {
       <button
         type="button"
         className="sc-options-btn"
-        disabled={actionLoading}
+        disabled={actionLoading || needsRefresh}
         onClick={() => setOptionsOpen(true)}
       >
         ⚙️ Opciones

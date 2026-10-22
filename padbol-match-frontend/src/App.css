@@ -403,6 +403,13 @@ h3 {
   align-self: stretch;
 }
 
+.pm-app-shell-column:has(.admin-dashboard) {
+  max-width: none;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 @media (max-width: 767px) {
   .pm-app-shell-column {
     max-width: none;

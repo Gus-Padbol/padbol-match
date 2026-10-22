@@ -1,0 +1,11 @@
+import React from 'react';
+import {render,screen,fireEvent,waitFor} from '@testing-library/react';
+import TorneoPuntosDistribucionModal from './TorneoPuntosDistribucionModal';
+import {readPointsConfig,readTournamentPointsPolicy} from '../../utils/pointsConfigApi';
+jest.mock('../../utils/pointsConfigApi',()=>({readPointsConfig:jest.fn(),readTournamentPointsPolicy:jest.fn(),pointsBaseForLevel:(policy,level)=>policy.niveles[level]}));
+jest.mock('../../i18n/tSafe',()=>({useSafeTranslation:()=>({i18n:{language:'es'}})}));
+const policy={niveles:{internacional:300},posiciones:{1:100,2:60,3:40,4:25,10:5},fallback_percentage:5,fallback_from_position:11};
+beforeEach(()=>{jest.clearAllMocks();readPointsConfig.mockResolvedValue(policy);readTournamentPointsPolicy.mockResolvedValue({policy,base_points:300,source:'approved_snapshot'});});
+test('draft preview ignores old arbitrary pool and shows current independent base percentages',async()=>{render(<TorneoPuntosDistribucionModal open torneo={{nivel_torneo:'internacional',puntos_total:1000,cantidad_equipos:15}}/>);await screen.findByText('180');expect(screen.getAllByText('300').length).toBeGreaterThan(0);expect(screen.getByText('120')).toBeInTheDocument();expect(screen.queryByText('1000')).not.toBeInTheDocument();expect(screen.queryByText(/1ro 40/)).not.toBeInTheDocument();expect(readTournamentPointsPolicy).not.toHaveBeenCalled();});
+test('saved tournament preview uses its approved snapshot instead of current global config',async()=>{render(<TorneoPuntosDistribucionModal open torneo={{id:7,nivel_torneo:'internacional'}}/>);await screen.findByText('Política aprobada conservada para este torneo.');expect(readTournamentPointsPolicy).toHaveBeenCalledWith(expect.objectContaining({torneoId:7}));expect(readPointsConfig).not.toHaveBeenCalled();});
+test('failed policy produces visible error and retry without invented points',async()=>{readTournamentPointsPolicy.mockRejectedValueOnce(new Error('Política no disponible'));render(<TorneoPuntosDistribucionModal open torneo={{id:7}}/>);await screen.findByRole('alert');expect(screen.queryByRole('table')).not.toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'Reintentar'}));await screen.findByText('180');expect(readTournamentPointsPolicy).toHaveBeenCalledTimes(2);});

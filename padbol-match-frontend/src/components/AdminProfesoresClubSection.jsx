@@ -1,9 +1,10 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { supabase } from '../supabaseClient';
 import { aprobarProfesorAdmin, crearProfesorAdmin, fetchAdminProfesores } from '../utils/clasesAdminApi';
 import { compressImageFile } from '../utils/compressImage';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 
 /** Tamaño máximo del archivo original (fotos de celular se comprimen antes de subir). */
 const MAX_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024;
@@ -254,7 +255,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
           {showForm ? t('general.close') : t('admin.profesores.agregarInstructor')}
         </button>
       </div>
-      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p> : null}
+      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{stripAdminEmoji(msg)}</p> : null}
       {showForm ? (
         <div style={FORM_BOX_STYLE}>
           <label className="admin-mi-sede-field-label" style={LABEL_STYLE}>
@@ -465,7 +466,7 @@ export default function AdminProfesoresClubSection({ accessToken, sedeId, isSupe
                 {p.foto_url ? (
                   <img src={p.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ opacity: 0.4 }}>👤</span>
+                  <span style={{ opacity: 0.4 }}></span>
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>

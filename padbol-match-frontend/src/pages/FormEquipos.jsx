@@ -1,3 +1,7 @@
+import QaManualTeams from '../components/torneo/QaManualTeams';
+import TournamentParticipantsPanel from '../components/torneo/TournamentParticipantsPanel';
+import { isPadbolSelection } from '../utils/padbolSelectionRoster';
+import PadbolSelectionTeams from '../components/torneo/PadbolSelectionTeams';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
@@ -195,7 +199,7 @@ function esCreadorEquipoOMiAuth(eq, authEmailTrim, usuarioBasico, authUserId) {
 }
 
 export default function FormEquipos() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const mensajeCupoCompleto = useCallback((torneoActual) => {
     const raw = String(torneoActual?.fecha_inicio || '').trim();
     const start = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T12:00:00`) : new Date(raw);
@@ -293,6 +297,7 @@ export default function FormEquipos() {
   }, [perfilLsKey]);
 
   const [torneo, setTorneo] = useState(null);
+  const selectionMode = isPadbolSelection(torneo);
   const [jugadoresTorneo, setJugadoresTorneo] = useState([]);
   const [equipos, setEquipos] = useState([]);
   const [nombreEquipo, setNombreEquipo] = useState('');
@@ -869,7 +874,7 @@ export default function FormEquipos() {
   ]);
 
   useEffect(() => {
-    if (loading || authLoading) return;
+    if (loading || authLoading || selectionMode) return;
     if (torneo?.estado === 'cancelado') return;
 
     const run = async () => {
@@ -901,7 +906,7 @@ export default function FormEquipos() {
       }
     };
     void run();
-  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, authUserId, session?.user, cuentaAuth?.email]);
+  }, [loading, authLoading, authEmail, yo, equipos, torneo?.estado, selectionMode, authUserId, session?.user, cuentaAuth?.email]);
 
   useEffect(() => {
     if (!isMobile || !flujoInscripcionTorneoActivo) return;
@@ -2600,6 +2605,11 @@ export default function FormEquipos() {
           mostrarUiAdminFormEquipos && contextoGestionEquiposTorneo ? t('teamDetail.backAdmin') : undefined
         }
       />
+      <nav className="tournament-context-nav" aria-label={String(i18n?.language || '').startsWith('en') ? 'Tournament navigation' : 'Navegación del torneo'}>
+        <button type="button" onClick={() => navigate(`/torneo/${id}`, torneoNavStateForm ? { state: torneoNavStateForm } : undefined)}>
+          {String(i18n?.language || '').startsWith('en') ? 'Back to tournament' : 'Volver al torneo'}
+        </button>
+      </nav>
       <div
         style={{
           width: '100%',
@@ -2660,11 +2670,33 @@ export default function FormEquipos() {
     );
   }
 
+  if (selectionMode) {
+    return <div style={inscripcionPageShellStyle}>
+      {renderInscripcionHeader()}
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '12px', boxSizing: 'border-box' }}>
+        <TournamentParticipantsPanel apiBaseUrl={BACKEND_API_BASE} torneoId={torneoId} authenticated={Boolean(session?.user?.id)} authIdentityKey={session?.user?.id}
+          onSignIn={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos`))} onSaved={() => void refrescarEquiposDesdeSupabase()} />
+        <details className="tournament-legacy-options"><summary>{t('teamRegistration.linkedTeamsOptions', { defaultValue: 'Invitaciones y equipos con perfiles registrados' })}</summary>
+        <PadbolSelectionTeams apiBaseUrl={BACKEND_API_BASE} torneo={torneo} userId={session?.user?.id} canManage={puedeGestionarEquiposTorneo}
+          profileReady={perfilTorneoCompleto} onSignIn={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos`))}
+          onCompleteProfile={() => navigate(`/mi-perfil?from=torneo&id=${encodeURIComponent(String(id))}&redirect=${encodeURIComponent(`/torneo/${id}/equipos`)}`)} />
+        </details>
+      </main><BottomNav />
+    </div>;
+  }
+
   return (
     <>
     <div style={inscripcionPageShellStyle}>
       {renderInscripcionHeader()}
 
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 12px', boxSizing: 'border-box' }}>
+        <TournamentParticipantsPanel apiBaseUrl={BACKEND_API_BASE} torneoId={torneoId} authenticated={Boolean(session?.user?.id)} authIdentityKey={session?.user?.id}
+          onSignIn={() => navigate(authUrlWithRedirect(`/torneo/${id}/equipos`))} onSaved={() => void refrescarEquiposDesdeSupabase()} />
+      </div>
+      <details className="tournament-legacy-options" open={Number.isFinite(inviteEquipoIdNum)}
+        style={{ maxWidth: '1100px', margin: '12px auto', boxSizing: 'border-box' }}>
+      <summary>{t('teamRegistration.linkedTeamsOptions', { defaultValue: 'Invitaciones y equipos con perfiles registrados' })}</summary>
       <div
         style={{
           maxWidth: '1100px',
@@ -2675,6 +2707,8 @@ export default function FormEquipos() {
           boxSizing: 'border-box',
         }}
       >
+        {torneo?.es_prueba === true && session?.user?.id ? <QaManualTeams apiBaseUrl={BACKEND_API_BASE} torneoId={torneoId} onSaved={() => window.location.reload()} /> : null}
+
         {!mostrarUiAdminFormEquipos ? bloqueInvitacionEquipoDeepLink : null}
 
         {torneoCancelado ? (
@@ -3654,6 +3688,7 @@ export default function FormEquipos() {
           </div>
         ) : null}
       </div>
+      </details>
       <ModalJugador
         open={Boolean(modalJugadorBuscar)}
         onClose={() => setModalJugadorBuscar(null)}

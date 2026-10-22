@@ -10,6 +10,17 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+@media (min-width: 900px) {
+  .torneo-vista-container--admin {
+    max-width: 1280px;
+  }
+
+  .torneo-vista-container--admin > div {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
 /* Estado del torneo (finalizado, etc.): texto simple encima de las pestañas */
 .torneo-estado-linea-arriba-tabs {
   margin: 0 0 10px;
@@ -101,6 +112,10 @@
   color: #475569;
   text-align: center;
   line-height: 1.45;
+}
+
+html.theme-dark .torneo-inscripcion-jugador-banner__sub {
+  color: var(--text-primary);
 }
 
 .torneo-inscripcion-jugador-banner__cta {
@@ -1910,7 +1925,7 @@ button.podium-player-avatar-wrap {
 .torneo-bracket-ronda-label {
   font-weight: 900;
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-primary);
   margin-bottom: 10px;
   text-align: center;
   letter-spacing: 0.02em;
@@ -1959,7 +1974,7 @@ button.podium-player-avatar-wrap {
 .torneo-bracket-connector {
   width: 22px;
   flex-shrink: 0;
-  color: #94a3b8;
+  color: var(--text-primary);
   display: flex;
   align-items: stretch;
 }
@@ -1996,7 +2011,7 @@ button.podium-player-avatar-wrap {
   justify-content: space-between;
   gap: 6px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-primary);
   padding: 4px 6px;
   margin: 0 -4px;
   border-radius: 8px;
@@ -2005,33 +2020,37 @@ button.podium-player-avatar-wrap {
 .torneo-bracket-team-name {
   flex: 1;
   min-width: 0;
-  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
 }
 
 .torneo-bracket-team--winner {
   font-weight: 900;
-  color: #15803d;
+  color: var(--text-primary);
   background: linear-gradient(90deg, rgba(22, 163, 74, 0.12) 0%, rgba(22, 163, 74, 0.02) 100%);
   border-left: 3px solid #16a34a;
   padding-left: 8px;
 }
 
 .torneo-bracket-team--tbd:not(.torneo-bracket-team--winner) {
-  color: #94a3b8;
+  color: var(--text-primary);
   font-weight: 600;
   font-style: italic;
 }
 
 .torneo-bracket-winner-mark {
   flex-shrink: 0;
-  color: #15803d;
+  color: var(--text-primary);
   font-weight: 900;
   font-size: 13px;
 }
 
 .torneo-bracket-vs {
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-primary);
   font-size: 11px;
   font-weight: 700;
   margin: 2px 0;
@@ -2042,7 +2061,7 @@ button.podium-player-avatar-wrap {
   margin-top: 8px;
   padding-top: 6px;
   border-top: 1px solid #f1f5f9;
-  color: #475569;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
@@ -2054,7 +2073,7 @@ button.podium-player-avatar-wrap {
 .torneo-bracket-meta {
   margin-top: 6px;
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -2086,6 +2105,8 @@ button.podium-player-avatar-wrap {
 .torneo-tabbed-nav {
   display: flex;
   flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: auto;
   min-width: 0;
   gap: 2px;
   padding: 4px 6px;
@@ -2108,4 +2129,44 @@ body.lang-ar [class*='torneo-tab-item'] {
   white-space: nowrap;
   flex: 1;
   text-align: center;
+}
+
+/* Keep intrinsic table widths inside the tournament column. */
+.torneo-vista-container{width:100%;min-width:0;box-sizing:border-box}
+.torneo-vista-container>div,.torneo-vista-container>main{min-width:0;box-sizing:border-box}
+
+.torneo-bracket-phase {display:block; margin-bottom:6px; color:var(--text-primary);}
+.torneo-bracket-hint {font-size:13px; color:var(--text-secondary); margin:0 0 12px;}
+.torneo-tabbed-nav .torneo-tab-btn {flex:0 0 auto; min-height:44px;}
+.torneo-bracket-card:focus-visible {outline:3px solid var(--accent); outline-offset:2px;}
+
+/* Keep document scrolling as the sticky reference only on tournament pages. */
+@supports (overflow: clip) {
+  #root:has(.torneo-vista-container), body:has(.torneo-vista-container) {overflow-x:clip;overflow-y:visible;}
+}
+
+.torneo-nations-details {margin-bottom:16px;color:var(--text-primary);}
+.torneo-nations-details > summary {cursor:pointer;min-height:44px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border-color,#cbd5e1);border-radius:12px;font-weight:700;}
+
+.qa-manual-teams {color:var(--text-primary);background:var(--bg-card);}
+.qa-manual-teams h2 {font-size:1.2rem;line-height:1.35;}
+.qa-manual-teams > label {display:block;font-weight:700;margin-bottom:6px;}
+.qa-manual-teams input:not([type=checkbox]) {display:block;width:100%;box-sizing:border-box;min-height:44px;border:1px solid var(--border-color,#64748b);border-radius:8px;background:var(--bg-input,var(--bg-card));color:var(--text-primary);font:inherit;padding:10px;margin-bottom:14px;}
+.qa-manual-teams fieldset {min-width:0;border:1px solid var(--border-color,#64748b);border-radius:8px;margin:12px 0;padding:10px;}
+.qa-manual-teams fieldset label {display:flex!important;align-items:center;gap:10px;min-height:44px;box-sizing:border-box;cursor:pointer;}
+.qa-manual-teams input[type=checkbox] {width:20px;height:20px;min-height:20px;flex:0 0 20px;margin:0;accent-color:var(--accent);}
+.qa-manual-teams button {min-height:44px;max-width:100%;padding:10px 14px;border:1px solid var(--border-color,#64748b);border-radius:8px;font:inherit;font-weight:700;background:var(--accent,#b91c1c);color:#fff;margin:4px 8px 4px 0;cursor:pointer;}
+.qa-manual-teams button:disabled {opacity:.5;cursor:not-allowed;}
+
+.tournament-planner{color:var(--text-primary);background:var(--bg-card);border:1px solid var(--border-color,#64748b);padding:16px;border-radius:12px;margin:12px 0;min-width:0;overflow-wrap:anywhere}.tournament-planner label{display:block;font-weight:600;margin:8px 0}.tournament-planner :is(input,select){display:block;box-sizing:border-box;width:100%;min-height:44px;font:inherit;background:var(--bg-input,var(--bg-card));color:var(--text-primary);border:1px solid var(--border-color,#64748b);border-radius:8px;padding:10px}.tournament-planner button{min-height:44px;max-width:100%;white-space:normal;font:inherit;font-weight:700;padding:10px 14px;margin:6px 6px 6px 0;border-radius:8px;border:1px solid var(--border-color,#64748b);background:var(--accent,#b91c1c);color:#fff}.tournament-planner button:disabled{opacity:.55}.tournament-planner fieldset{min-width:0;margin:10px 0;border:1px solid var(--border-color,#64748b);border-radius:8px}.tournament-planner [role=alert]{color:var(--error,#ef4444)}
+
+.tournament-planner h3, .tournament-planner legend { color: var(--text-primary); }
+
+/* Long team names must stay inside narrow podium cards. */
+.podium-team-name,
+.podium-team-link {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }

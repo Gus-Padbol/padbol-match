@@ -1,0 +1,21 @@
+[data-padcoins-panel][hidden] {
+  display: none !important;
+}
+
+.admin-padcoins-section-nav button {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-padcoins-section-nav button[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 -3px 0 var(--accent);
+}

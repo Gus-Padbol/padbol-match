@@ -3,10 +3,12 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { codigoTelefonicoDesdePaisLabel } from '../utils/sedeWhatsappPais';
+import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
+import './NuevaSedeSuperBottomSheet.css';
 import { validateSedeRequiredConfiguration } from '../utils/sedeRequiredConfiguration';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 const PAISES_SEDE_OPTIONS = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS]
-  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: `${p.bandera} ${p.nombre}`.trim(), codigo: p.codigo }))
+  .map((p) => ({ value: `${p.bandera} ${p.nombre}`.trim(), label: p.nombre, codigo: p.codigo }))
   .sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
 
 const DEPORTES_CATALOGO = DEPORTES_CANCHA_SEDE_OPTIONS;
@@ -19,7 +21,9 @@ const inputBase = {
   maxWidth: '100%',
   boxSizing: 'border-box',
   borderRadius: 10,
-  border: '1px solid #cbd5e1',
+  border: '1px solid var(--border)',
+  color: 'var(--text-primary)',
+  background: 'var(--bg-input)',
   WebkitAppearance: 'none',
 };
 
@@ -136,6 +140,7 @@ export default function NuevaSedeSuperBottomSheet({
   invitePrefill = null,
 }) {
   const { t } = useTranslation();
+  const freeLaunch = new Date().getFullYear() === 2026;
   const [st, setSt] = useState(initialState);
   const [planPricing, setPlanPricing] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
@@ -220,21 +225,22 @@ export default function NuevaSedeSuperBottomSheet({
   }, [timezoneOpts, st.timezone]);
 
   const goNext = useCallback(() => {
+    setConfigurationError('');
     if (st.step === 1) {
       if (!String(st.nombre || '').trim()) {
-        alert('Completa el nombre de la sede.');
+        setConfigurationError('Completa el nombre de la sede.');
         return;
       }
       if (!String(st.direccion || '').trim()) {
-        alert('Completa la dirección.');
+        setConfigurationError('Completa la dirección.');
         return;
       }
       if (!String(st.pais || '').trim()) {
-        alert('Selecciona el país.');
+        setConfigurationError('Selecciona el país.');
         return;
       }
       if (!String(st.ciudad || '').trim()) {
-        alert('Completa la ciudad.');
+        setConfigurationError('Completa la ciudad.');
         return;
       }
       setSt((p) => ({ ...p, step: 2 }));
@@ -242,7 +248,7 @@ export default function NuevaSedeSuperBottomSheet({
     }
     if (st.step === 2) {
       if (totalCanchas <= 0) {
-        alert('Selecciona al menos un deporte e indica la cantidad de canchas (mayor a 0).');
+        setConfigurationError('Selecciona al menos un deporte e indica la cantidad de canchas (mayor a 0).');
         return;
       }
       setSt((p) => ({ ...p, step: 3 }));
@@ -279,7 +285,7 @@ export default function NuevaSedeSuperBottomSheet({
 
       const body = {
         nombre: String(st.nombre || '').trim(),
-        pais: String(st.pais || '').trim(),
+        pais: paisSinBanderaParaGuardar(st.pais),
         timezone: String(st.timezone || TZ_SEDE_DEFAULT).trim() || TZ_SEDE_DEFAULT,
         provincia: String(st.provincia || '').trim() || null,
         ciudad: String(st.ciudad || '').trim(),
@@ -422,6 +428,7 @@ export default function NuevaSedeSuperBottomSheet({
   const sheetInner = (
     <div
       role="dialog"
+      className="nueva-sede-super-sheet"
       aria-modal="true"
       aria-labelledby="nueva-sede-sheet-title"
       onClick={(ev) => ev.stopPropagation()}
@@ -452,10 +459,10 @@ export default function NuevaSedeSuperBottomSheet({
         }}
       >
         <div style={{ minWidth: 0 }}>
-          <h2 id="nueva-sede-sheet-title" style={{ margin: 0, fontSize: 18, color: '#0f172a', fontWeight: 800 }}>
+          <h2 id="nueva-sede-sheet-title" style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)', fontWeight: 800 }}>
             {inviteToken ? 'Completar alta de tu sede' : 'Nueva sede'}
           </h2>
-          <p style={{ margin: '6px 0 0', fontSize: 14, color: '#64748b', fontWeight: 600 }}>
+          <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
             Paso {st.step} de 3
             {inviteToken ? ' · invitación Padbol Match' : ''}
           </p>
@@ -465,13 +472,15 @@ export default function NuevaSedeSuperBottomSheet({
           onClick={() => !saving && onClose?.()}
           disabled={saving}
           aria-label={t('general.close')}
+          className="nueva-sede-super-sheet-close"
           style={{
             flexShrink: 0,
             width: 44,
             height: 44,
             borderRadius: 12,
             border: 'none',
-            background: '#f1f5f9',
+            background: 'var(--bg-input)',
+            color: 'var(--text-primary)',
             fontSize: 22,
             lineHeight: 1,
             cursor: saving ? 'not-allowed' : 'pointer',
@@ -498,9 +507,14 @@ export default function NuevaSedeSuperBottomSheet({
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '8px 16px 20px', WebkitOverflowScrolling: 'touch' }}>
+        {configurationError && st.step < 3 ? (
+          <p role="alert" style={{ margin: '0 0 12px', padding: '10px 12px', borderRadius: 10, background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontWeight: 800 }}>
+            {configurationError}
+          </p>
+        ) : null}
         {st.step === 1 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               Nombre de la sede *
               <input
                 type="text"
@@ -511,7 +525,7 @@ export default function NuevaSedeSuperBottomSheet({
                 autoComplete="organization"
               />
             </label>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               País *
               <select
                 value={st.pais}
@@ -527,7 +541,7 @@ export default function NuevaSedeSuperBottomSheet({
               </select>
             </label>
             {st.pais ? (
-              <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+              <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
                 Zona horaria (reservas) *
                 <select
                   value={st.timezone}
@@ -542,7 +556,7 @@ export default function NuevaSedeSuperBottomSheet({
                 </select>
               </label>
             ) : null}
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               Provincia / Estado
               <input
                 type="text"
@@ -552,7 +566,7 @@ export default function NuevaSedeSuperBottomSheet({
                 style={{ ...inputBase, marginTop: 8 }}
               />
             </label>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               Ciudad *
               <input
                 type="text"
@@ -562,7 +576,7 @@ export default function NuevaSedeSuperBottomSheet({
                 style={{ ...inputBase, marginTop: 8 }}
               />
             </label>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               Dirección *
               {placesEnabled && placesLoaded ? (
                 <input
@@ -596,7 +610,7 @@ export default function NuevaSedeSuperBottomSheet({
 
         {st.step === 2 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ margin: 0, fontSize: 14, color: '#475569', lineHeight: 1.45 }}>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
               Marca los deportes que ofrece el club e indica cuántas canchas tiene de cada uno.
             </p>
             {DEPORTES_CATALOGO.map((d) => {
@@ -629,7 +643,7 @@ export default function NuevaSedeSuperBottomSheet({
                     {d.label}
                   </label>
                   {checked ? (
-                    <label style={{ display: 'block', marginTop: 10, fontWeight: 600, fontSize: 14, color: '#475569' }}>
+                    <label style={{ display: 'block', marginTop: 10, fontWeight: 600, fontSize: 14, color: 'var(--text-secondary)' }}>
                       Cantidad de canchas de {d.label}
                       <input
                         type="number"
@@ -662,7 +676,9 @@ export default function NuevaSedeSuperBottomSheet({
                 Total de canchas declaradas: {totalCanchas}
               </div>
               <div style={{ marginTop: 8, fontSize: 14, color: '#b91c1c', lineHeight: 1.45 }}>
-                {planPricingLoading ? (
+                {freeLaunch ? (
+                  <><strong>Padbol Match gratuito durante todo 2026.</strong> El alta del club no genera una suscripción paga ni un cobro. No hace falta conectar un proveedor de pago para abrir el club.</>
+                ) : planPricingLoading ? (
                   'Cargando planes…'
                 ) : planMatch ? (
                   <>
@@ -670,12 +686,12 @@ export default function NuevaSedeSuperBottomSheet({
                     <strong>US$ {Number(planMatch.precio_usd).toFixed(2)}</strong> / mes
                   </>
                 ) : totalCanchas > 0 ? (
-                  'No hay un plan configurado para esta cantidad. Revisa plan_pricing en Supabase.'
+                  'No hay un plan disponible para esta cantidad. Contacta al administrador.'
                 ) : (
                   'Elige deportes y cantidades para ver el plan.'
                 )}
               </div>
-              <p style={{ margin: '10px 0 0', fontSize: 12, color: '#64748b' }}>
+              <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
                 Este total se guarda como límite máximo de canchas activas del club.
               </p>
             </div>
@@ -684,31 +700,31 @@ export default function NuevaSedeSuperBottomSheet({
 
         {st.step === 3 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <p style={{ margin: 0, fontSize: 14, color: '#64748b', lineHeight: 1.45 }}>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
               {inviteToken
                 ? 'El email debe ser el mismo que recibió la invitación. Después del alta podrás ingresar al panel como admin del club (revisa tu correo para definir la contraseña).'
                 : 'Completa el precio y los horarios de la sede. El admin del club podrá actualizarlos desde su panel.'}
             </p>
             {configurationError ? <p role="alert" style={{ margin: 0, color: '#b91c1c', fontWeight: 700 }}>{configurationError}</p> : null}
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               {t('admin.formularios.price')} *
               <input type="number" inputMode="numeric" min="0" max="2147483647" step="1" required value={st.precio_turno} onChange={(e) => setField('precio_turno', e.target.value)} style={{ ...inputBase, marginTop: 8 }} />
             </label>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               {t('admin.sedes.currency')}
               <select value={st.moneda} onChange={(e) => setField('moneda', e.target.value)} style={{ ...inputBase, marginTop: 8 }}>
                 {['ARS', 'USD', 'EUR'].map((currency) => <option key={currency} value={currency}>{currency}</option>)}
               </select>
             </label>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               {t('admin.sedes.openingTime')} *
               <input type="time" required value={st.horario_apertura} onChange={(e) => setField('horario_apertura', e.target.value)} style={{ ...inputBase, marginTop: 8 }} />
             </label>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               {t('admin.sedes.closingTime')} *
               <input type="time" required value={st.horario_cierre} onChange={(e) => setField('horario_cierre', e.target.value)} style={{ ...inputBase, marginTop: 8 }} />
             </label>
-            <label style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>
+            <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               Email de contacto *
               <input
                 type="email"
@@ -720,13 +736,13 @@ export default function NuevaSedeSuperBottomSheet({
                 style={{
                   ...inputBase,
                   marginTop: 8,
-                  ...(inviteToken ? { background: '#f1f5f9', color: '#475569' } : {}),
+                  ...(inviteToken ? { background: '#f1f5f9', color: 'var(--text-secondary)' } : {}),
                 }}
                 autoComplete="email"
               />
             </label>
             <div>
-              <span style={{ fontWeight: 700, fontSize: 14, color: '#334155' }}>Teléfono / WhatsApp *</span>
+              <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Teléfono / WhatsApp *</span>
               <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
                 <select
                   value={st.telefonoCodigo}
@@ -779,7 +795,7 @@ export default function NuevaSedeSuperBottomSheet({
                 borderRadius: 12,
                 border: '1px solid #cbd5e1',
                 background: 'var(--bg-card)',
-                color: '#334155',
+                color: 'var(--text-primary)',
                 cursor: saving ? 'not-allowed' : 'pointer',
               }}
             >

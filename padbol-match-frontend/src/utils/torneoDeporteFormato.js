@@ -1,3 +1,4 @@
+import { isPadbolSelection } from './padbolSelectionRoster';
 /** Valores persistidos en `torneos.deporte` / `torneos.formato_equipo`. */
 export const TORNEO_DEPORTE_PADBOL = 'padbol';
 export const TORNEO_DEPORTE_PADEL = 'padel';
@@ -66,6 +67,7 @@ export function esTorneoSingles(torneo) {
 
 /** Mínimo de jugadores registrados para considerar el equipo “completo” según el torneo. */
 export function jugadoresMinimosEquipoTorneo(torneo) {
+  if (isPadbolSelection(torneo)) return 4;
   const fmt = resolveFormatoEquipoTorneo(torneo);
   if (fmt === TORNEO_FORMATO_SINGLES) return 1;
   if (fmt === TORNEO_FORMATO_EQUIPO_5) return 5;

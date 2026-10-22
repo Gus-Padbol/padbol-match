@@ -1,4 +1,5 @@
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { stripAdminEmoji } from '../i18n/adminTranslation';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useState } from 'react';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 
@@ -80,7 +81,7 @@ export default function AdminSedeExtrasPendientesSuper({ apiBaseUrl, accessToken
       <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
         {t('admin.sedes.extrasReviewIntro')}
       </p>
-      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 8 }}>{msg}</p> : null}
+      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 8 }}>{stripAdminEmoji(msg)}</p> : null}
       {loading ? (
         <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
       ) : items.length === 0 ? (

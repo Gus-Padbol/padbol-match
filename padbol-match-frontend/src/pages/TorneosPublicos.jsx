@@ -31,7 +31,7 @@ import {
 import { TORNEO_CATEGORIAS_EDAD } from '../constants/torneoCategoriasEdad';
 import { TORNEO_CATEGORIA_OPTIONS } from '../constants/torneoCategoria';
 import { compareTorneosPublico } from '../utils/torneoOrdenPublico';
-import { badgeTorneoEstadoPublico } from '../utils/torneoEstadoPublico';
+import { badgeTorneoEstadoPublico, torneoEstaEnListadoActivo } from '../utils/torneoEstadoPublico';
 import {
   getFiltrosEstadoTorneoPills,
   torneoPasaFiltroEstadoVista,
@@ -132,8 +132,12 @@ export default function TorneosPublicos() {
 
   const badgeEstadoTorneoListado = useCallback(
     (torneo) => {
-      if (torneoFechaInicioEsPasadaCalendario(torneo?.fecha_inicio) || esEstadoFinalizadoTorneo(torneo?.estado)) {
+      if (esEstadoFinalizadoTorneo(torneo?.estado)) {
         return { label: t('torneos.vista.estado.finalizado'), bg: '#dc2626', color: '#fff' };
+      }
+      const stateKey = String(torneo?.estado || '').trim().toLowerCase();
+      if (torneoFechaInicioEsPasadaCalendario(torneo?.fecha_inicio) && ['abierto','inscripcion_abierta','proximo','planificacion'].includes(stateKey)) {
+        return { label: t('torneos.vista.registrationExpired', { defaultValue: 'Fecha de inicio pasada · inscripción cerrada' }), bg: '#e5e7eb', color: '#374151' };
       }
       const b = badgeTorneoEstadoPublico(torneo.estado);
       if (b) {
@@ -435,7 +439,7 @@ export default function TorneosPublicos() {
   const torneosTrasFiltroEstadoActivos = useMemo(
     () =>
       torneosTrasFiltroEstado.filter(
-        (t) => !esEstadoFinalizadoTorneo(t.estado) && String(t.estado || '').toLowerCase() !== 'cancelado'
+        (t) => torneoEstaEnListadoActivo(t, torneoFechaInicioEsPasadaCalendario(t?.fecha_inicio))
       ),
     [torneosTrasFiltroEstado]
   );

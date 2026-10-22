@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import NuevaSedeSuperBottomSheet from './NuevaSedeSuperBottomSheet';
 import { validateSedeRequiredConfiguration } from '../utils/sedeRequiredConfiguration';
+import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
 
 jest.mock('../hooks/useGooglePlaces', () => ({ useGooglePlaces: () => ({ isLoaded:false, placesEnabled:false }) }));
 jest.mock('../i18n/tSafe', () => ({ useSafeTranslation: () => ({ t:key=>key }) }));
@@ -9,6 +10,11 @@ const originalFetch = global.fetch;
 const originalAlert = window.alert;
 beforeEach(() => { global.fetch=jest.fn(async url => ({ok:true,json:async()=>url.endsWith('/api/plan-pricing')?[]:url.endsWith('/deportes')?{deportes:[]}:{id:123}}));window.alert=jest.fn(); });
 afterEach(() => {global.fetch=originalFetch;window.alert=originalAlert;});
+
+test.each([['🇦🇷 Argentina', 'Argentina'], ['🇪🇸 España', 'España'], [' México ', 'México'], ['', '']])(
+ 'guarda el país sin bandera y conserva el nombre: %s', (input, expected) => {
+  expect(paisSinBanderaParaGuardar(input)).toBe(expected);
+ });
 
 async function reachConfiguration(props={}) {
  const onSuccess=jest.fn();render(<NuevaSedeSuperBottomSheet open apiBaseUrl="https://api.qa.example" accessToken="fixture" onSuccess={onSuccess} {...props} />);
@@ -44,7 +50,7 @@ test('wizard sends the entered integer price, currency and overnight hours to th
  const onSuccess=await reachConfiguration();fillConfiguration();fireEvent.click(screen.getByRole('button',{name:'Crear sede'}));
  await waitFor(()=>expect(onSuccess).toHaveBeenCalledTimes(1));
  const call=global.fetch.mock.calls.find(([url])=>url==='https://api.qa.example/api/sedes');expect(call).toBeDefined();
- expect(JSON.parse(call[1].body)).toMatchObject({precio_turno:1250,moneda:'USD',horario_apertura:'20:00',horario_cierre:'02:00',cantidad_canchas:1,telefono:'+54 2215550000'});
+ expect(JSON.parse(call[1].body)).toMatchObject({pais:'Argentina',precio_turno:1250,moneda:'USD',horario_apertura:'20:00',horario_cierre:'02:00',cantidad_canchas:1,telefono:'+54 2215550000'});
 });
 
 test('invitation completion sends an explicitly entered zero without substituting a tariff',async()=>{
@@ -62,4 +68,16 @@ test.each(['','24:00','09:60','9:00','abc'])('schema validation rejects invalid 
 });
 test('same-day, overnight and equal opening/closing are preserved without rewriting times',()=>{
  for(const [opening,closing] of [['08:00','23:00'],['20:00','02:00'],['00:00','00:00']])expect(validateSedeRequiredConfiguration({precio_turno:'0',horario_apertura:opening,horario_cierre:closing})).toEqual({ok:true,fields:{precio_turno:0,horario_apertura:opening,horario_cierre:closing}});
+});
+
+
+test('2026 onboarding explains free access even if catalog returns a paid plan; no checkout is called',async()=>{
+ jest.useFakeTimers().setSystemTime(new Date('2026-10-13T12:00:00Z'));
+ try {
+ global.fetch=jest.fn(async()=>({ok:true,json:async()=>[{nombre:'Starter',canchas_min:1,canchas_max:2,precio_usd:29}]}));
+ render(<NuevaSedeSuperBottomSheet open apiBaseUrl="https://api.qa.example" accessToken="fixture"/>);
+ await waitFor(()=>expect(global.fetch).toHaveBeenCalledTimes(1));
+ fireEvent.change(screen.getByLabelText(/Nombre de la sede/),{target:{value:'QA'}});fireEvent.change(screen.getByLabelText(/^País/),{target:{value:'🇦🇷 Argentina'}});fireEvent.change(screen.getByLabelText(/^Ciudad/),{target:{value:'La Plata'}});fireEvent.change(screen.getByLabelText(/^Dirección/),{target:{value:'QA'}});fireEvent.click(screen.getByRole('button',{name:'Siguiente'}));fireEvent.click(screen.getByRole('checkbox',{name:'Padbol'}));
+ expect(screen.getByText('Padbol Match gratuito durante todo 2026.')).toBeInTheDocument();expect(screen.queryByText(/US\$/)).not.toBeInTheDocument();expect(screen.getByText(/no genera una suscripción paga ni un cobro/)).toBeInTheDocument();expect(global.fetch).toHaveBeenCalledTimes(1);
+ } finally {jest.useRealTimers();}
 });

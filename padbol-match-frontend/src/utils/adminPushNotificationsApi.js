@@ -26,13 +26,13 @@ export function fetchAdminPushHistory({ apiBaseUrl, accessToken }) {
   return adminPushFetch({ apiBaseUrl, accessToken, path: '/api/push/admin-history' });
 }
 
-export function previewAdminPushSegment({ apiBaseUrl, accessToken, segment }) {
+export function previewAdminPushSegment({ apiBaseUrl, accessToken, segment, destination }) {
   return adminPushFetch({
     apiBaseUrl,
     accessToken,
     path: '/api/push/admin-segment-preview',
     method: 'POST',
-    body: { segment },
+    body: { segment, ...(destination ? { destination } : {}) },
   });
 }
 
@@ -41,13 +41,13 @@ export function searchAdminPushPlayers({ apiBaseUrl, accessToken, q }) {
   return adminPushFetch({ apiBaseUrl, accessToken, path: `/api/push/admin-search-players?q=${qs}` });
 }
 
-export function sendAdminPushNotification({ apiBaseUrl, accessToken, title, body, segment, idempotencyKey }) {
+export function sendAdminPushNotification({ apiBaseUrl, accessToken, title, body, segment, destination, idempotencyKey }) {
   return adminPushFetch({
     apiBaseUrl,
     accessToken,
     path: '/api/push/send-admin',
     method: 'POST',
-    body: { title, body, segment, idempotencyKey },
+    body: { title, body, segment, destination, idempotencyKey },
   });
 }
 

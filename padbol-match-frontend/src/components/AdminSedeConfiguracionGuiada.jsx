@@ -1,5 +1,6 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import { useMemo, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import './AdminSedeConfiguracionGuiada.css';
 
@@ -219,7 +220,7 @@ export default function AdminSedeConfiguracionGuiada({ venue, existingCourts = [
                   </dl>
                 </>
               ) : null}
-              {message ? <p className={message.startsWith('✅') ? 'guided-setup__message is-success' : 'guided-setup__message'} role="status">{message}</p> : null}
+              {message ? <p className={message.startsWith('\u200B') ? 'guided-setup__message is-success' : 'guided-setup__message'} role="status">{stripAdminEmoji(message)}</p> : null}
             </main>
 
             <footer className="guided-setup__actions">

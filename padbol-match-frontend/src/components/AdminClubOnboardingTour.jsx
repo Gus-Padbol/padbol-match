@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import './AdminClubOnboardingTour.css';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 
 /** Coincide con lo pedido: no volver a mostrar el tour si ya se completó o saltó. */
 export const ADMIN_CLUB_ONBOARDING_LS_KEY = 'onboarding_completado';

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
 import './WhatsappCrmDemo.css';
@@ -11,6 +11,45 @@ const statusTone = {
   derivado: 'violet',
   cerrado: 'red',
 };
+
+const WHATSAPP_TOPICS = {
+  sede: 'Abrir una sede / comprar una cancha', match: 'Padbol Match',
+  next_generation: 'Next Generation', academy: 'Academy', fipa: 'FIPA',
+  soporte: 'Soporte', otros: 'Otra consulta',
+};
+
+export function whatsappContext(conversation) {
+  if (conversation?.source_channel !== 'whatsapp') return null;
+  const data = conversation.qualification_data || {};
+  const menu = data.whatsapp_menu;
+  const deliveryState = conversation.whatsapp_delivery_review;
+  const deliveryUnknown = deliveryState !== undefined && deliveryState !== 'clear' && deliveryState !== 'required';
+  const deliveryUncertain = deliveryState === 'required' || (data.whatsapp_order_review?.required === true && data.whatsapp_order_review?.reason === 'uncertain_automated_delivery');
+  const orderState = conversation.whatsapp_message_order_review;
+  const orderUnknown = orderState !== undefined && orderState !== 'clear' && orderState !== 'required';
+  const orderUncertain = orderState === 'required' || (data.whatsapp_order_review?.required === true && data.whatsapp_order_review?.reason === 'ambiguous_message_order') || menu?.needs_review === true;
+  const review = deliveryUncertain || deliveryUnknown || orderUncertain || orderUnknown;
+  if ((!menu || typeof menu !== 'object' || Array.isArray(menu)) && !review) return null;
+  return {
+    review,
+    deliveryUncertain,
+    deliveryUnknown,
+    orderUncertain,
+    orderUnknown,
+    topic: !review ? WHATSAPP_TOPICS[menu?.topic] || '' : '',
+    subtopic: !review && typeof menu?.subtopic === 'string' ? menu.subtopic : '',
+    initialMessage: typeof menu?.initialMessage === 'string' ? menu.initialMessage : '',
+    detailMessage: typeof menu?.detailMessage === 'string' ? menu.detailMessage : '',
+  };
+}
+
+export function needsEnglishHumanAttention(conversation) {
+  return conversation?.source_channel === 'whatsapp'
+    && conversation.qualification_status === 'needs_review'
+    && conversation.next_step === 'advisor_handoff'
+    && conversation.qualification_data?.whatsapp_menu?.humanLanguage === 'en'
+    && conversation.estado !== 'cerrado';
+}
 
 const FOLLOW_UP_TOPICS = [
   'Consulta general', 'Información sobre Padbol', 'Interés comercial', 'Club o sede',
@@ -59,13 +98,39 @@ function formatInTimeZone(date, timeZone) {
   return `${day} · ${time} h`;
 }
 
-function compactDateTime(value) {
+export function compactDateTime(value, advisorTimeZone = ADVISOR_TIME_ZONE) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  const local = formatInTimeZone(date, ADVISOR_TIME_ZONE);
-  if (ADVISOR_TIME_ZONE === ARGENTINA_TIME_ZONE) return local;
-  return `${local} · AR ${formatInTimeZone(date, ARGENTINA_TIME_ZONE)}`;
+  const local = formatInTimeZone(date, advisorTimeZone);
+  const argentina = formatInTimeZone(date, ARGENTINA_TIME_ZONE);
+  if (local === argentina) return local;
+  return `${local} · Argentina: ${argentina}`;
+}
+
+export function formatCrmEventText(value) {
+  const text = String(value || '');
+  const attachment = text.match(/^\[WhatsApp: (imagen|audio|video|documento|sticker) recibido\.(?: Archivo aún no disponible\.)?\]\s*/);
+  const names = { imagen: 'Imagen recibida', audio: 'Audio recibido', video: 'Video recibido', documento: 'Documento recibido', sticker: 'Sticker recibido' };
+  const normalized = attachment ? text.slice(attachment[0].length) || names[attachment[1]] : text;
+  const labels = {
+    'nextgen.registration.created': 'Nueva inscripción a Next Generation',
+    'nextgen.registration.updated': 'Inscripción a Next Generation actualizada',
+    'nextgen.registration.cancelled': 'Inscripción a Next Generation cancelada',
+    'nextgen.registration.confirmed': 'Inscripción a Next Generation confirmada',
+    'nextgen.session.created': 'Nueva jornada de Next Generation',
+    'nextgen.session.updated': 'Jornada de Next Generation actualizada',
+    'nextgen.venue.created': 'Nueva sede de Next Generation',
+  };
+  if (labels[text.trim()]) return labels[text.trim()];
+  if (/^nextgen\.[a-z0-9_.]+$/i.test(text.trim())) return 'Actualización de Next Generation';
+  return normalized;
+}
+
+export function conversationDisplayDate(conversation) {
+  return conversation?.source_channel === 'whatsapp'
+    ? conversation.received_at || conversation.created_at
+    : conversation?.created_at;
 }
 
 const REMINDER_TIMES = Array.from({ length: 12 }, (_, index) => `${String(index + 8).padStart(2, '0')}:00`);
@@ -73,6 +138,20 @@ const REMINDER_TIMES = Array.from({ length: 12 }, (_, index) => `${String(index 
 function ChannelIcon({ channel }) {
   const isWa = channel === 'whatsapp';
   return <span className={`wa-channel wa-channel--${isWa ? 'wa' : 'mail'}`}>{isWa ? 'W' : '@'}</span>;
+}
+
+export function crmOriginLabel(conversation) {
+  const origin = String(conversation?.origin || '').trim();
+  const area = conversationArea(conversation);
+  if (isSupportEmail(conversation)) return 'support@padbol.com';
+  if (origin.startsWith('web_form:')) {
+    if (area === 'nextgen_venues') return 'Formulario Next Generation · Sedes';
+    if (area === 'nextgen_participants') return 'Formulario Next Generation · Participantes';
+    return 'Formulario web';
+  }
+  if (/^nextgen[.:_]/i.test(origin)) return 'Next Generation';
+  if (origin === 'manual' || origin === 'manual_contact') return 'Registro manual';
+  return channelLabel(conversation?.source_channel);
 }
 
 function channelLabel(channel) {
@@ -89,7 +168,14 @@ const INBOX_AREAS = [
   { id: 'support', label: 'Soporte y reclamos', icon: '!' },
 ];
 
+function isSupportEmail(conversation) {
+  return conversation?.source_channel === 'email'
+    && conversation?.origin === 'support_email'
+    && conversation?.qualification_data?.mailbox?.address === 'support@padbol.com';
+}
+
 function conversationArea(conversation) {
+  if (isSupportEmail(conversation)) return 'support';
   const fields = conversation?.qualification_data?.form_submission?.fields || {};
   const workflow = String(fields.workflow || '').trim().toLowerCase();
   const participantType = String(fields.participantType || '').trim().toLowerCase();
@@ -147,7 +233,18 @@ function detailValue(details, ...labels) {
   return details.find(([label]) => expected.includes(String(label).toLocaleLowerCase('es')))?.[1] || null;
 }
 
-export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
+export function leadAnalysisNotice(status, enabled) {
+  if (status === 'disabled' || enabled === false) return { title: 'Análisis automático desactivado', message: 'El servicio de análisis no está habilitado. Esta consulta permanece disponible para revisión manual.', badge: 'DESACTIVADO' };
+  if (status === 'failed' || status === 'error') return { title: 'No se pudo completar el análisis', message: 'No hay un resultado confirmado. Esta consulta permanece disponible para revisión manual.', badge: 'SIN RESULTADO' };
+  if (status) return { title: 'Análisis solicitado, sin resultado confirmado', message: enabled === true ? 'La solicitud está pendiente. Se mostrará el resultado cuando esté disponible; este estado no confirma que el análisis esté ejecutándose.' : 'No se pudo confirmar la disponibilidad del servicio de análisis. Esta consulta permanece disponible para revisión manual.', badge: 'PENDIENTE' };
+  return { title: 'Sin análisis solicitado', message: 'Esta ficha no tiene una solicitud de análisis registrada.', badge: '' };
+}
+
+export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } = {}) {
+  const hasPanelExit = Boolean(onBack);
+  useEffect(() => {
+    if (hasPanelExit) window.scrollTo(0, 0);
+  }, [hasPanelExit]);
   const { session } = useAuth();
   const token = accessToken || session?.access_token || '';
   const [perms, setPerms] = useState(null);
@@ -158,10 +255,28 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   const [areaFilter, setAreaFilter] = useState('all');
   const channelFilter = '';
   const [estadoFilter, setEstadoFilter] = useState('');
+  const [ticketInput, setTicketInput] = useState('');
+  const [ticketReference, setTicketReference] = useState('');
+  const [ticketError, setTicketError] = useState('');
+  const [hiddenOnly, setHiddenOnly] = useState(false);
+  const loadSequence = useRef(0);
   const [replyText, setReplyText] = useState('');
+  const [reviewOutcome, setReviewOutcome] = useState('');
+  const [reviewEvidence, setReviewEvidence] = useState('');
+  const [reviewProviderId, setReviewProviderId] = useState('');
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
+  const replyComposition = useRef(null);
+  const activeConversationId = useRef(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [whatsappHistory, setWhatsappHistory] = useState(null);
+  const [historyError, setHistoryError] = useState(false);
+  const [historyRevision, setHistoryRevision] = useState(0);
+  const [whatsappAttachments, setWhatsappAttachments] = useState([]);
+  const [attachmentNotice, setAttachmentNotice] = useState('');
+  const [imagePreviews, setImagePreviews] = useState({});
+  const [downloadingAttachment, setDownloadingAttachment] = useState(null);
   const [activityType, setActivityType] = useState('note');
   const [activityTopic, setActivityTopic] = useState('');
   const [activitySummary, setActivitySummary] = useState('');
@@ -174,7 +289,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   const [activityDerivado, setActivityDerivado] = useState('no');
   const [sedes, setSedes] = useState([]);
   const [manualOpen, setManualOpen] = useState(false);
-  const [manual, setManual] = useState({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
+  const [manualReceipt, setManualReceipt] = useState(null);
+  const [manualNotice, setManualNotice] = useState(null);
+  const [manual, setManual] = useState({ name: '', email: '', phone: '' });
   const [ngOverview, setNgOverview] = useState({ sedes: [], jornadas: [] });
   const [ngOpen, setNgOpen] = useState(false);
   const [ngDraft, setNgDraft] = useState({ sede_id: '', sesion_id: '', categoria: '', participant_name: '' });
@@ -182,6 +299,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   const [ngVenueDraft, setNgVenueDraft] = useState({ sede_club: '', ciudad: '', pais: '' });
 
   const load = useCallback(async ({ silent = false } = {}) => {
+    const sequence = ++loadSequence.current;
     if (!token) {
       setError({ status: 401 });
       setLoading(false);
@@ -191,19 +309,27 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     setError(null);
     try {
       const p = await crmAdminApi.permissions(token);
+      if (sequence !== loadSequence.current) return;
       setPerms(p);
+      if (requiredScope === 'commercial' && (!p?.commercialOnly || !p?.canOperate)) {
+        setItems([]);
+        setPerms(null);
+        throw Object.assign(new Error('No tienes acceso a las consultas comerciales.'), { status: 403 });
+      }
       if (p?.canOperate || p?.canAudit) {
-        const inbox = await crmAdminApi.inbox(token, { channel: channelFilter, estado: estadoFilter });
+        const inbox = await crmAdminApi.inbox(token, { channel: channelFilter, estado: estadoFilter, ...(hiddenOnly ? { hiddenOnly:true } : {}), ...(ticketReference ? { ticketReference } : {}) });
+        if (sequence !== loadSequence.current) return;
         setItems(Array.isArray(inbox) ? inbox : Array.isArray(inbox?.items) ? inbox.items : []);
       } else {
         setItems([]);
       }
     } catch (e) {
+      if (sequence !== loadSequence.current) return;
       setError(e);
     } finally {
-      if (!silent) setLoading(false);
+      if (sequence === loadSequence.current) setLoading(false);
     }
-  }, [token, channelFilter, estadoFilter]);
+  }, [token, channelFilter, estadoFilter, ticketReference, requiredScope, hiddenOnly]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -213,14 +339,14 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   }, [token, perms?.canAudit]);
 
   useEffect(() => {
-    if (!token || (!perms?.canOperate && !perms?.canAudit)) return;
+    if (!token || perms?.commercialOnly || (!perms?.canOperate && !perms?.canAudit)) return;
     crmAdminApi.nextGenerationOverview(token)
       .then((data) => setNgOverview({
         sedes: Array.isArray(data?.sedes) ? data.sedes : [],
         jornadas: Array.isArray(data?.jornadas) ? data.jornadas : [],
       }))
       .catch(() => setNgOverview({ sedes: [], jornadas: [] }));
-  }, [token, perms?.canOperate, perms?.canAudit]);
+  }, [token, perms?.canOperate, perms?.canAudit, perms?.commercialOnly]);
 
   useEffect(() => {
     const timer = window.setInterval(() => { void load({ silent: true }); }, 5000);
@@ -231,17 +357,29 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     ...counts,
     [area.id]: area.id === 'all' ? items.length : items.filter((item) => conversationArea(item) === area.id).length,
   }), {});
-  const visibleItems = areaFilter === 'all' ? items : items.filter((item) => conversationArea(item) === areaFilter);
+  const commercialOnly = requiredScope === 'commercial' || perms?.commercialOnly === true;
+  const areas = commercialOnly ? INBOX_AREAS.filter(area => area.id === 'commercial') : INBOX_AREAS;
+  const visibleItems = commercialOnly || areaFilter === 'all' ? items : items.filter((item) => conversationArea(item) === areaFilter);
   const active = visibleItems.find((i) => i.id === activeId) || visibleItems[0] || null;
   const leadAnalysis = active?.qualification_data?.lead_analysis || null;
   const analysisRequestStatus = active?.qualification_data?.lead_analysis_request?.status || null;
+  const analysisNotice = leadAnalysisNotice(analysisRequestStatus, perms?.leadAnalysisEnabled);
   const whatsappSendEnabled = perms?.whatsappSendEnabled === true;
+  const emailSendEnabled = perms?.emailSendEnabled === true;
+  const supportEmail = isSupportEmail(active);
+  const supportOrigin = active?.origin === 'support_email';
+  const activeCanOperate = perms?.canOperate === true || (supportEmail && perms?.canOperateSupport === true)
+    || (active?.source_channel === 'whatsapp' && active?.origin === 'whatsapp:1376102838911694' && perms?.canOperateWhatsapp === true);
   const activeDetails = formDetails(active);
+  const waContext = whatsappContext(active);
   const isWebForm = String(active?.origin || '').startsWith('web_form:');
-  const whatsappMetaPending = true;
-  const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled && !whatsappMetaPending;
+  const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled;
+  const canReplyEmail = active?.source_channel === 'email' && (supportOrigin ? supportEmail && perms?.supportEmailSendEnabled === true : emailSendEnabled) && Boolean(active?.contact?.email_normalized);
+  const canReply = (canReplyWhatsapp && !waContext?.deliveryUncertain && !waContext?.deliveryUnknown) || canReplyEmail;
+  activeConversationId.current = active?.id;
+  useEffect(() => { replyComposition.current = null; setReplyText(''); setNotice(null); }, [active?.id]);
   const leadName = [detailValue(activeDetails, 'Nombre'), detailValue(activeDetails, 'Apellido')].filter(Boolean).join(' ') || active?.contact?.nombre || active?.identity_used || 'Contacto sin nombre';
-  const activeArea = conversationArea(active);
+  const activeArea = commercialOnly ? 'commercial' : conversationArea(active);
   const isNextGenerationParticipant = activeArea === 'nextgen_participants';
   const isNextGenerationVenue = activeArea === 'nextgen_venues';
   const ngJornadas = ngOverview.jornadas.filter((jornada) => !ngDraft.sede_id || String(jornada.sede_id) === String(ngDraft.sede_id));
@@ -266,6 +404,71 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     setNgVenueDraft({ sede_club: activeNgVenueName, ciudad: activeNgVenueCity, pais: activeNgVenueCountry });
   }, [active?.id, activeNgSedeId, activeNgCategory, activeNgParticipantName, activeNgVenueName, activeNgVenueCity, activeNgVenueCountry]);
 
+  useEffect(() => {
+    let current = true;
+    setWhatsappAttachments([]);
+    setAttachmentNotice('');
+    if (!token || !active?.id || active.source_channel !== 'whatsapp') return () => { current = false; };
+    crmAdminApi.whatsappMediaList(token, active.id)
+      .then((data) => { if (current) setWhatsappAttachments(Array.isArray(data?.attachments) ? data.attachments : []); })
+      .catch(() => { if (current) setAttachmentNotice('No se pudieron consultar los archivos adjuntos.'); });
+    return () => { current = false; };
+  }, [token, active?.id, active?.source_channel, active?.inbound_body]);
+
+  useEffect(() => {
+    let current = true;
+    setWhatsappHistory(null);
+    setHistoryError(false);
+    if (!token || !active?.id || active.source_channel !== 'whatsapp') return () => { current = false; };
+    crmAdminApi.whatsappHistory(token, active.id)
+      .then(data => { if (current) setWhatsappHistory({ conversationId: active.id, messages: Array.isArray(data?.messages) ? data.messages : [], truncated: data?.truncated === true }); })
+      .catch(() => { if (current) setHistoryError(true); });
+    return () => { current = false; };
+  }, [token, active?.id, active?.source_channel, active?.inbound_body, historyRevision]);
+
+  useEffect(() => {
+    let current = true;
+    const urls = [];
+    setImagePreviews({});
+    if (token && active?.id) {
+      whatsappAttachments.filter((attachment) => attachment.mediaType === 'image').forEach((attachment) => {
+        crmAdminApi.whatsappMedia(token, active.id, attachment.eventId).then(async ({ blob }) => {
+          const bytes = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+          const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+          const png = [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
+          const webp = bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70 && bytes[8] === 87 && bytes[9] === 69 && bytes[10] === 66 && bytes[11] === 80;
+          const type = jpeg ? 'image/jpeg' : png ? 'image/png' : webp ? 'image/webp' : '';
+          if (!current || !type) return;
+          const url = URL.createObjectURL(new Blob([blob], { type }));
+          urls.push(url);
+          setImagePreviews((previous) => ({ ...previous, [attachment.eventId]: url }));
+        }).catch(() => {});
+      });
+    }
+    return () => { current = false; urls.forEach((url) => URL.revokeObjectURL(url)); };
+  }, [token, active?.id, whatsappAttachments]);
+
+  const downloadWhatsappAttachment = async (attachment) => {
+    if (!active?.id || downloadingAttachment) return;
+    setDownloadingAttachment(attachment.eventId);
+    setAttachmentNotice('');
+    try {
+      const { blob, filename } = await crmAdminApi.whatsappMedia(token, active.id, attachment.eventId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setAttachmentNotice('No se pudo descargar el archivo. Inténtalo nuevamente.');
+    } finally {
+      setDownloadingAttachment(null);
+    }
+  };
+
   const loadActivities = useCallback(async (conversationId) => {
     if (!token || !conversationId || (!perms?.canOperate && !perms?.canAudit)) {
       setActivities([]);
@@ -288,19 +491,68 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     setActivityDerivado(active?.derivado ? 'si' : 'no');
   }, [active?.id, active?.estado, active?.derivado, session?.user?.email]);
 
+  useEffect(() => { setReviewOutcome(''); setReviewEvidence(''); setReviewProviderId(''); setReviewConfirmed(false); }, [active?.id]);
+
+  const submitDeliveryReview = async (event) => {
+    event.preventDefault();
+    if (!active || !perms?.canAudit || !waContext?.deliveryUncertain || busy || !reviewConfirmed || !['delivered', 'not_delivered'].includes(reviewOutcome) || reviewEvidence.trim().length < 10 || reviewEvidence.trim().length > 2048 || (reviewOutcome === 'delivered' && (!reviewProviderId.trim() || reviewProviderId.trim().length > 512))) return;
+    const conversationId = active.id;
+    setBusy(true); setNotice(null);
+    try {
+      await crmAdminApi.reviewWhatsappDelivery(token, conversationId, { outcome: reviewOutcome, evidence: reviewEvidence.trim(), ...(reviewOutcome === 'delivered' ? { providerId: reviewProviderId.trim() } : {}) });
+      if (activeConversationId.current !== conversationId) return;
+      setReviewOutcome(''); setReviewEvidence(''); setReviewProviderId(''); setReviewConfirmed(false);
+      setNotice('Revisión registrada. Comprobando el estado actualizado.');
+      await load();
+    } catch (error) {
+      if (activeConversationId.current === conversationId) setNotice(error?.message || 'No se pudo registrar la revisión.');
+    } finally { setBusy(false); }
+  };
+
+  const resumeWhatsappAutomation = async () => {
+    if (!active || active.source_channel !== 'whatsapp' || !activeCanOperate || !perms?.whatsappAutomationResumeEnabled || busy || waContext?.deliveryUncertain || waContext?.deliveryUnknown) return;
+    if (!window.confirm('¿Reanudar las respuestas automáticas para esta conversación? No se enviarán respuestas por mensajes anteriores.')) return;
+    const conversationId = active.id;
+    setBusy(true); setNotice(null);
+    try {
+      await crmAdminApi.resumeWhatsappAutomation(token, conversationId);
+      if (activeConversationId.current !== conversationId) return;
+      setNotice('Reanudación registrada. Las respuestas automáticas podrán funcionar en mensajes nuevos cuando corresponda.');
+      await load();
+    } catch (error) {
+      if (activeConversationId.current === conversationId) setNotice(error?.message || 'No se pudo reanudar las respuestas automáticas.');
+    } finally { setBusy(false); }
+  };
+
   const submitReply = async () => {
-    if (!active || busy || !replyText.trim()) return;
+    if (!active || busy || !activeCanOperate || !canReply || !replyText.trim()) return;
     setBusy(true);
     setNotice(null);
     try {
-      const result = await crmAdminApi.reply(token, active.id, replyText.trim());
+      let requestId;
+      if (canReplyEmail || canReplyWhatsapp) {
+        const composition = replyComposition.current;
+        if (!composition || composition.conversationId !== active.id || composition.body !== replyText) {
+          const bytes = new Uint8Array(16);
+          crypto.getRandomValues(bytes);
+          bytes[6] = (bytes[6] & 0x0f) | 0x40;
+          bytes[8] = (bytes[8] & 0x3f) | 0x80;
+          const hex = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
+          replyComposition.current = { conversationId: active.id, body: replyText, requestId: `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}` };
+        }
+        requestId = replyComposition.current.requestId;
+      }
+      const result = await crmAdminApi.reply(token, active.id, replyText.trim(), requestId);
+      if (activeConversationId.current !== active.id) return;
       setNotice(result?.status === 'sent'
-        ? 'Mensaje enviado por WhatsApp.'
+        ? (canReplyEmail ? 'Mensaje enviado por email.' : 'Mensaje enviado por WhatsApp.')
         : 'Respuesta guardada como pendiente.');
+      replyComposition.current = null;
       setReplyText('');
+      if (canReplyWhatsapp) setHistoryRevision(value => value + 1);
       await load();
     } catch (e) {
-      setNotice(e?.message || 'No se pudo registrar la respuesta');
+      if (activeConversationId.current === active.id) setNotice(e?.message || 'No se pudo registrar la respuesta');
     } finally {
       setBusy(false);
     }
@@ -322,12 +574,16 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
   };
 
   const submitManual = async (event) => {
-    event.preventDefault(); setBusy(true); setNotice(null);
+    event.preventDefault();
+    if (!perms?.canOperate || busy) return;
+    setBusy(true); setManualNotice(null);
     try {
-      await crmAdminApi.createManual(token, { ...manual, sede_id: perms?.canAudit ? manual.sede_id : undefined });
-      setManual({ name: '', email: '', phone: '', origin: 'in_person', subject: '', body: '', sede_id: '' });
-      setManualOpen(false); setNotice('Contacto registrado en la sede, sin enviar comunicaciones.'); await load();
-    } catch (e) { setNotice(e?.message || 'No se pudo registrar el contacto'); }
+      const result = await crmAdminApi.createManual(token, manual);
+      if (!result?.contact?.id) throw new Error('El servidor no confirmó el registro del contacto.');
+      setManualReceipt(result.contact);
+      setManual({ name: '', email: '', phone: '' });
+      setManualOpen(false); setManualNotice(result.existing ? 'El contacto ya existía; no se modificaron sus datos.' : 'Contacto registrado, sin enviar comunicaciones.');
+    } catch (e) { setManualNotice(e?.message || 'No se pudo registrar el contacto'); }
     finally { setBusy(false); }
   };
 
@@ -393,10 +649,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
     setBusy(true);
     setNotice(null);
     try {
-      // El backend QA guarda el seguimiento con un esquema fijo
-      // (activity_type, summary, outcome, next_step, follow_up_at y author).
-      // Responsable, estado y derivación viajan dentro del resumen para que
-      // queden persistidos en la ficha sin cambiar el contrato del backend.
+      // El estado y la actividad se guardan juntos en el servidor.
       const responsable = (activityResponsable || session?.user?.email || '').trim();
       const contexto = [
         `Responsable: ${responsable || '—'}`,
@@ -408,6 +661,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
         : activityTopic;
       await crmAdminApi.addActivity(token, active.id, {
         type: activityType,
+        conversation_state: activityEstado,
         summary: `${resumenBase} · ${contexto}`,
         outcome: activityOutcome.trim() || null,
         next_step: activityNextStep.trim() || null,
@@ -423,6 +677,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
       setReminderTime('10:00');
       setNotice('Seguimiento registrado.');
       await loadActivities(active.id);
+      await load({ silent: true });
     } catch (e) {
       setNotice(e?.message || 'No se pudo registrar el seguimiento');
     } finally {
@@ -434,66 +689,80 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
 
   return (
     <main className="wa-demo">
-      {onBack ? <button type="button" onClick={onBack}>← Volver al panel</button> : null}
+      {onBack ? <div className="wa-panel-exit"><button type="button" onClick={onBack}>Volver al panel general</button></div> : null}
       <header className="wa-topbar">
         <div className="wa-brand">
           <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
-          <div><strong>Atención & CRM</strong><span>Centro de conversaciones</span></div>
+          <div><strong>{commercialOnly ? 'Consultas comerciales' : 'Atención & CRM'}</strong><span>{commercialOnly ? 'Formularios, informes y seguimiento' : 'Centro de conversaciones'}</span></div>
         </div>
         <div className="wa-demo-badge"><span /> {CRM_IS_QA ? 'CONECTADO A QA' : 'CONECTADO'}</div>
         <div className="wa-agent"><div className="wa-avatar wa-avatar--small">{perms?.canAudit ? 'SU' : perms?.canOperate ? 'OP' : '—'}</div><div><strong>{perms?.canAudit ? 'Auditoría' : perms?.canOperate ? 'Operador' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div></div>
       </header>
 
       <section className="wa-safety" aria-label="Estado de seguridad">
-        <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Backend QA controlado' : 'Backend controlado'}</strong><small>Los formularios entran al CRM. Ninguna respuesta saliente está habilitada todavía.</small></div>
-        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span><span>WhatsApp saliente <b>PENDIENTE META</b></span><span>Email saliente <b>DESACTIVADO</b></span></div>
+        <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Entorno de prueba' : 'Centro de atención'}</strong><small>{emailSendEnabled ? 'El envío por email está habilitado para operadores autorizados.' : 'Los formularios entran al CRM. Configura un canal de respuesta para enviar mensajes.'}</small></div>
+        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span>{!commercialOnly ? <span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span> : null}<span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
       </section>
 
-      {perms?.canOperate || perms?.canAudit ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
-        <button type="button" onClick={() => setManualOpen((value) => !value)}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
+      {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
+        <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
         {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-          <strong>Contacto recibido por la sede</strong>
+          <strong>Registro de contacto</strong>
+          <p>Solo se registran nombre, correo y teléfono. Este alta no crea conversaciones ni guarda notas, origen o sede.</p>
           <input required aria-label="Nombre del contacto" placeholder="Nombre" value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><input aria-label="Correo del contacto" type="email" placeholder="Correo" value={manual.email} onChange={(e) => setManual({ ...manual, email: e.target.value })} /><input aria-label="Teléfono del contacto" placeholder="Teléfono" value={manual.phone} onChange={(e) => setManual({ ...manual, phone: e.target.value })} /></div>
-          <select aria-label="Origen del contacto" value={manual.origin} onChange={(e) => setManual({ ...manual, origin: e.target.value })}><option value="in_person">Presencial</option><option value="phone">Teléfono</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="other">Otro</option></select>
-          {perms?.canAudit ? <select required aria-label="Sede canónica" value={manual.sede_id} onChange={(e) => setManual({ ...manual, sede_id: e.target.value })}><option value="">Elegir sede</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select> : null}
-          <input aria-label="Asunto" placeholder="Asunto" value={manual.subject} onChange={(e) => setManual({ ...manual, subject: e.target.value })} />
-          <textarea aria-label="Detalle" placeholder="Detalle" rows={2} value={manual.body} onChange={(e) => setManual({ ...manual, body: e.target.value })} />
-          <button type="submit" disabled={busy || (!manual.email && !manual.phone)}>Guardar sin enviar mensajes</button>
+          <button type="submit" disabled={!perms?.canOperate || busy || (!manual.email && !manual.phone)}>Guardar sin enviar mensajes</button>
         </form> : null}
+        {manualReceipt ? <div role="status" style={{ marginTop: 12 }}><strong>Contacto registrado: {manualReceipt.nombre || 'Sin nombre'}</strong><p>{[manualReceipt.email_normalized, manualReceipt.phone_normalized].filter(Boolean).join(' · ')}</p><small>ID del contacto: {manualReceipt.id}</small><p>Este contacto no crea una conversación entrante ni un historial en la bandeja.</p></div> : null}
+        {manualNotice ? <p role="status">{manualNotice}</p> : null}
       </section> : null}
 
+      {(perms?.canOperate || perms?.canAudit) ? <form className="wa-ticket-search" onSubmit={(event) => {
+        event.preventDefault();
+        const reference = ticketInput.trim();
+        if (reference && !/^PB-(?:[a-f0-9]{32}|[1-9][0-9]{5,11})$/i.test(reference)) { setTicketError('Ingresa la referencia completa del ticket, por ejemplo PB-123456.'); return; }
+        setTicketError(''); setAreaFilter('all'); setEstadoFilter(''); setActiveId(null); setTicketReference(reference.toUpperCase());
+      }}>
+        <label htmlFor="wa-ticket-reference">Buscar por número de ticket</label>
+        <input id="wa-ticket-reference" value={ticketInput} onChange={(event) => setTicketInput(event.target.value)} placeholder="PB-…" maxLength={35} />
+        <button type="submit">Buscar</button>
+        {ticketReference ? <button type="button" onClick={() => { setTicketInput(''); setTicketReference(''); setTicketError(''); setActiveId(null); }}>Mostrar todos</button> : null}
+        {ticketError ? <p role="alert">{ticketError}</p> : null}
+      </form> : null}
+      {perms?.canAudit ? <div style={{padding:'0 18px 12px'}}><button type="button" onClick={() => { setHiddenOnly(v => !v); setActiveId(null); setTicketReference(''); setTicketInput(''); }}>{hiddenOnly ? 'Volver a la bandeja' : 'Ver pruebas ocultas'}</button></div> : null}
       {loading ? (
         <div className="wa-empty"><p>Cargando bandeja…</p></div>
       ) : error ? (
         <div className="wa-empty">
           <p style={{ color: '#e33030' }}>
-            {error?.status === 401 ? 'No autorizado. Iniciá sesión.' : error?.status === 403 ? 'No tenés acceso a esta sección.' : (error?.message || 'No se pudo cargar.')}
+            {error?.status === 401 ? 'No autorizado. Inicia sesión.' : error?.status === 403 ? 'No tienes acceso a esta sección.' : (error?.message || 'No se pudo cargar.')}
           </p>
           <button type="button" onClick={() => { setError(null); setLoading(true); void load(); }}>Reintentar</button>
         </div>
       ) : items.length === 0 ? (
-        <div className="wa-empty"><p>No hay conversaciones.</p></div>
+        <div className="wa-empty"><p>{ticketReference ? 'No se encontró el ticket.' : 'No hay conversaciones.'}</p></div>
       ) : (
         <div className="wa-crm-body">
           <nav className="wa-area-tabs wa-area-tabs--top" aria-label="Áreas de atención">
-            {INBOX_AREAS.map((area) => <button type="button" key={area.id} className={areaFilter === area.id ? 'active' : ''} onClick={() => { setAreaFilter(area.id); setActiveId(null); }}><i>{area.icon}</i><span>{area.label}</span><b>{areaCounts[area.id] || 0}</b></button>)}
+            {areas.map((area) => <button type="button" key={area.id} className={areaFilter === area.id ? 'active' : ''} onClick={() => { setAreaFilter(area.id); setActiveId(null); }}><i>{area.icon}</i><span>{area.label}</span><b>{commercialOnly ? items.length : areaCounts[area.id] || 0}</b></button>)}
           </nav>
           <div className="wa-workspace">
           <aside className="wa-inbox">
-            <div className="wa-inbox-head"><div><p>{INBOX_AREAS.find((area) => area.id === areaFilter)?.label || 'Todo'}</p><h1>Conversaciones</h1></div><span className="wa-inbox-count">{visibleItems.length}</span></div>
+            <div className="wa-inbox-head"><div><p>{commercialOnly ? 'Formularios comerciales' : INBOX_AREAS.find((area) => area.id === areaFilter)?.label || 'Todo'}</p><h1>Conversaciones</h1></div><span className="wa-inbox-count">{visibleItems.length}</span></div>
             <div className="wa-filters" aria-label="Filtros">
               <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)} aria-label="Estado">
                 <option value="">Todos los estados</option><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option>
               </select>
             </div>
-            <div className="wa-list">
+            <div className="wa-list" role="region" aria-label="Listado de conversaciones" tabIndex={0}>
               {visibleItems.length === 0 ? <div className="wa-area-empty">No hay conversaciones en esta sección.</div> : visibleItems.map((item) => (
                 <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => setActiveId(item.id)}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
-                    <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={item.created_at || undefined}>{compactDateTime(item.created_at)}</time></div>
-                    <p>{String(item.subject || item.inbound_body || '').slice(0, 80)}</p>
+                    <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined}>{compactDateTime(conversationDisplayDate(item))}</time></div>
+                    <p>{formatCrmEventText(item.subject || item.inbound_body).slice(0, 80)}</p>
+                    {item.short_ticket_reference || item.ticket_reference ? <p>N.º de ticket: {item.short_ticket_reference || item.ticket_reference}</p> : null}
+                    {needsEnglishHumanAttention(item) ? <p className="wa-language-attention">Atención humana en inglés pendiente</p> : null}
                     <footer><span className={`wa-pill wa-pill--${statusTone[item.estado] || 'blue'}`}>{statusName(item.estado)}</span><ChannelIcon channel={item.source_channel} /></footer>
                   </div>
                 </button>
@@ -506,15 +775,43 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
               <section className="wa-thread">
                 <header className="wa-thread-head">
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
-                  <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {active.origin || active.source_channel}</p></div>
+                  <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>
+                  {active.short_ticket_reference || active.ticket_reference ? <p className="wa-ticket-reference">N.º de ticket: <strong>{active.short_ticket_reference || active.ticket_reference}</strong></p> : null}
+                  {(perms?.canAudit || (active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true)) ? <details className="wa-thread-admin"><summary>Administración</summary><div className="wa-thread-admin__actions">
+                  {perms?.canAudit ? <button type="button" disabled={busy} onClick={async () => {
+                    const hide = !hiddenOnly;
+                    if (hide && !window.confirm('Confirma que toda esta conversación es una prueba. Se ocultará de la bandeja y se podrá restaurar.')) return;
+                    setBusy(true); setNotice(null);
+                    try { await crmAdminApi.setTestVisibility(token, active.id, hide, active.test_visibility_version); setActiveId(null); await load(); }
+                    catch (err) { setNotice(`No se pudo cambiar la visibilidad: ${err.message}`); }
+                    finally { setBusy(false); }
+                  }}>{hiddenOnly ? 'Restaurar conversación' : 'Ocultar prueba'}</button> : null}
+                  {active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true ? <button type="button" disabled={busy || waContext?.deliveryUncertain || waContext?.deliveryUnknown} onClick={resumeWhatsappAutomation}>Reanudar respuestas automáticas</button> : null}
+                  </div></details> : null}
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
-                  <div className="wa-day">NUEVA CONSULTA · {compactDateTime(active.created_at)}</div>
-                  <div className="wa-system">⌁ {active.subject || 'Sin asunto'}</div>
+                  {needsEnglishHumanAttention(active) ? <div className="wa-context-warning" role="status"><strong>Atención humana en inglés pendiente</strong><p>La consulta necesita atención en inglés. Revisa la conversación para continuar.</p></div> : null}
+                  {waContext?.deliveryUncertain || waContext?.deliveryUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión de entrega necesaria</strong><p>{waContext.deliveryUncertain ? 'No se pudo confirmar si llegó una respuesta automática. Revisa el envío antes de volver a responder para evitar duplicados.' : 'No se pudo comprobar el estado de las respuestas automáticas. Revisa la conversación antes de continuar.'}</p></div> : null}
+                  {waContext?.orderUncertain || waContext?.orderUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>{waContext.orderUncertain ? 'El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.' : 'No se pudo comprobar el orden de los mensajes. Revisa la conversación antes de responder.'}</p></div> : null}
+                  {waContext?.deliveryUncertain && perms?.canAudit ? <form className="wa-context-warning" aria-label="Revisar entrega automática" onSubmit={submitDeliveryReview}>
+                    <strong>Registrar revisión de entrega</strong>
+                    <p>Solo registra un resultado si comprobaste evidencia. Esta acción no reenvía el mensaje.</p>
+                    <label htmlFor="delivery-outcome">Resultado comprobado</label>
+                    <select id="delivery-outcome" value={reviewOutcome} onChange={e => { setReviewOutcome(e.target.value); setReviewConfirmed(false); }}>
+                      <option value="">Selecciona un resultado</option><option value="delivered">Comprobé que se entregó</option><option value="not_delivered">Comprobé que no se entregó</option>
+                    </select>
+                    <label htmlFor="delivery-evidence">Evidencia comprobada</label>
+                    <textarea id="delivery-evidence" maxLength={2048} value={reviewEvidence} onChange={e => { setReviewEvidence(e.target.value); setReviewConfirmed(false); }} />
+                    {reviewOutcome === 'delivered' ? <><label htmlFor="delivery-provider">Identificador de Meta</label><input id="delivery-provider" maxLength={512} value={reviewProviderId} onChange={e => { setReviewProviderId(e.target.value); setReviewConfirmed(false); }} /></> : null}
+                    <label><input type="checkbox" checked={reviewConfirmed} onChange={e => setReviewConfirmed(e.target.checked)} /> Revisé la evidencia y confirmo este resultado.</label>
+                    <button type="submit" disabled={busy || !reviewConfirmed || !reviewOutcome || reviewEvidence.trim().length < 10 || reviewEvidence.trim().length > 2048 || (reviewOutcome === 'delivered' && (!reviewProviderId.trim() || reviewProviderId.trim().length > 512))}>Registrar revisión</button>
+                  </form> : null}
+                  <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
+                  <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
                   {isWebForm && activeDetails.length ? <article className="wa-lead-card">
                     <header><span>Nuevo lead</span><div><h3>{leadName}</h3><p>{detailValue(activeDetails, 'Empresa o club') || 'Consulta particular'} · {[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Ubicación no indicada'}</p></div></header>
-                    <section className="wa-lead-section"><h4>Qué está buscando</h4><strong>{detailValue(activeDetails, 'Asunto') || active.subject || 'Consulta Padbol'}</strong></section>
+                    <section className="wa-lead-section"><h4>Qué está buscando</h4><strong>{formatCrmEventText(detailValue(activeDetails, 'Asunto') || active.subject) || 'Consulta Padbol'}</strong></section>
                     <dl>
                       <div><dt>Cantidad de canchas</dt><dd>{detailValue(activeDetails, 'Cantidad de canchas') || 'Sin definir'}</dd></div>
                       <div><dt>Destino</dt><dd>{detailValue(activeDetails, 'Destino de la cancha') || 'Sin definir'}</dd></div>
@@ -522,7 +819,17 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                       <div><dt>Ubicación</dt><dd>{[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Sin definir'}</dd></div>
                     </dl>
                     <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p>{detailValue(activeDetails, 'Información adicional') || 'No agregó información adicional.'}</p></section>
-                  </article> : <div className="wa-message wa-message--in"><p>{active.inbound_body || 'Sin contenido'}</p></div>}
+                  </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p>{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${{sent:'Enviado',pending:'Pendiente de confirmación',cancelled:'Entrega no confirmada'}[message.status] || 'Estado no disponible'}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
+                  {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
+                  {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
+                  {whatsappAttachments.length ? <section aria-label="Archivos de WhatsApp">
+                    <h3>Archivos recibidos</h3>
+                    {whatsappAttachments.map((attachment, index) => <div key={attachment.eventId}>
+                      {imagePreviews[attachment.eventId] ? <img src={imagePreviews[attachment.eventId]} alt={`Imagen recibida ${index + 1}`} style={{ display: 'block', maxWidth: '100%', maxHeight: 400, objectFit: 'contain', marginBottom: 8 }} /> : null}
+                      <button type="button" className="wa-attachment-download" disabled={Boolean(downloadingAttachment)} onClick={() => void downloadWhatsappAttachment(attachment)}>{downloadingAttachment === attachment.eventId ? 'Descargando…' : `↓ Descargar ${{ image: 'imagen', audio: 'audio', video: 'video', document: 'documento', sticker: 'sticker' }[attachment.mediaType] || 'archivo'}${whatsappAttachments.length > 1 ? ` ${index + 1}` : ''}`}</button>
+                    </div>)}
+                  </section> : null}
+                  {attachmentNotice ? <p role="status">{attachmentNotice}</p> : null}
                   {leadAnalysis ? <article className="wa-executive-card">
                     <header><div><span>ANÁLISIS DEL LEAD</span><h3>Resumen ejecutivo</h3></div><div className="wa-executive-score"><strong>{leadAnalysis.score}</strong><small>/100</small><b>Prioridad {leadAnalysis.priority}</b></div></header>
                     {leadAnalysis.verdict ? <p className="wa-executive-verdict">{leadAnalysis.verdict}</p> : null}
@@ -537,15 +844,15 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                       {leadAnalysis.risks?.length ? <section className="wa-executive-risks"><h4>Atención</h4><ul>{leadAnalysis.risks.map((risk) => <li key={risk}>{risk}</li>)}</ul></section> : null}
                     </div>
                     <footer>{leadAnalysis.pdf_url ? <a href={leadAnalysis.pdf_url} target="_blank" rel="noreferrer">Ver informe completo en PDF <span>↗</span></a> : <span className="wa-pdf-pending">Informe detallado pendiente de asociar</span>}<small>Análisis integrado a esta ficha · sin duplicar el contacto</small></footer>
-                  </article> : analysisRequestStatus === 'pending' ? <article className="wa-analysis-pending is-running"><span>✦</span><div><strong>Analizando este lead</strong><p>La ficha se actualiza automáticamente cuando llega el resultado. No hace falta recargar ni abrir otro informe.</p></div><b>EN PROCESO</b></article> : <article className="wa-analysis-pending"><span>✦</span><div><strong>Sin análisis solicitado</strong><p>Este registro de prueba o histórico no disparó un análisis automático.</p></div></article>}
+                  </article> : <article className="wa-analysis-pending"><div><strong>{analysisNotice.title}</strong><p>{analysisNotice.message}</p></div>{analysisNotice.badge ? <b>{analysisNotice.badge}</b> : null}</article>}
                   {active.audio_type ? <div className="wa-system">⌁ Audio entrante: {active.audio_type} {active.transcript ? `· ${active.transcript}` : ''}</div> : null}
                 </div>
                 <div className="wa-composer">
-                  <div className="wa-draft-label"><span>✦ Respuesta</span><small>{canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Respuesta por email todavía no habilitada' : 'Envío desactivado'}</small></div>
-                  <textarea disabled={!canReplyWhatsapp} value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribí una respuesta…'} />
+                  <div className="wa-draft-label"><label htmlFor="crm-response">Respuesta</label><small>{canReplyEmail ? (supportEmail ? 'Se enviará desde support@padbol.com al contacto registrado' : 'Se enviará por email al contacto registrado') : canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Configura el envío por email para responder' : 'Envío desactivado'}</small></div>
+                  <textarea id="crm-response" disabled={busy || !activeCanOperate || !canReply} value={replyText} onChange={(e) => { replyComposition.current = null; setReplyText(e.target.value); }} placeholder={!canReply && isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
                   <div className="wa-composer-actions">
                     <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
-                    <button type="button" className={`wa-send ${canReplyWhatsapp ? 'wa-send--enabled' : ''}`} disabled={busy || !perms?.canOperate || !canReplyWhatsapp || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
+                    <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={busy || !activeCanOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
                   </div>
                   {notice ? <p className="wa-notice">{notice}</p> : null}
                 </div>
@@ -553,10 +860,15 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
 
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2><p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p><p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
+                {waContext ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
+                  {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
+                  {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
+                  {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
+                </section> : null}
                 {isWebForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{['Empresa o club', 'País', 'Ciudad o región', 'Cantidad de canchas', 'Destino de la cancha', 'Disponibilidad de espacio'].map((label) => <div key={label}><dt>{label}</dt><dd>{detailValue(activeDetails, label) || '—'}</dd></div>)}</dl></section> : null}
                 <section className="wa-panel"><h3>Gestión</h3>
                   <dl>
-                    <div><dt>Origen</dt><dd>{active.origin || active.source_channel || '—'}</dd></div>
+                    <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>
                     <div><dt>Canal</dt><dd>{channelLabel(active.source_channel)}</dd></div>
                     <div><dt>Responsable</dt><dd>{active.operador || '—'}</dd></div>
                     <div><dt>Estado</dt><dd>{statusName(active.estado)}</dd></div>
@@ -589,7 +901,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                   <label>Tipo<select value={activityType} onChange={(e) => setActivityType(e.target.value)}>
                     <option value="note">Nota / WhatsApp externo</option><option value="phone_call">Llamada</option><option value="zoom_meeting">Reunión online</option><option value="in_person_meeting">Reunión presencial</option>
                   </select></label>
-                  <label>Motivo<select value={activityTopic} onChange={(e) => setActivityTopic(e.target.value)}><option value="">Elegir motivo…</option>{FOLLOW_UP_TOPICS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+                  <label>Motivo<select value={activityTopic} onChange={(e) => setActivityTopic(e.target.value)}><option value="">Elegir motivo…</option>{FOLLOW_UP_TOPICS.filter(option => !commercialOnly || !['Jugador o partido', 'Soporte técnico', 'Reclamo'].includes(option)).map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label>Detalle opcional<textarea value={activitySummary} onChange={(e) => setActivitySummary(e.target.value)} placeholder="Sólo si hace falta agregar algo" /></label>
                   <label>Resultado<select value={activityOutcome} onChange={(e) => setActivityOutcome(e.target.value)}><option value="">Elegir resultado…</option>{FOLLOW_UP_RESULTS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
                   <label>Próximo paso<select value={activityNextStep} onChange={(e) => setActivityNextStep(e.target.value)}><option value="">Sin próximo paso</option>{FOLLOW_UP_NEXT_STEPS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
@@ -612,7 +924,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack } = {}) {
                     {activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}</time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}
                   </div>
                 </section> : null}
-                <section className="wa-panel wa-audit"><div className="wa-panel-title"><h3>Auditoría</h3><span>{CRM_IS_QA ? 'QA' : 'GLOBAL'}</span></div><p>Consultá la vista de auditoría global desde el panel de superadmin.</p></section>
+                <section className="wa-panel wa-audit"><div className="wa-panel-title"><h3>Auditoría</h3><span>{CRM_IS_QA ? 'QA' : 'GLOBAL'}</span></div><p>Consulta la vista de auditoría global desde el panel de superadmin.</p></section>
               </aside>
             </>
           ) : null}

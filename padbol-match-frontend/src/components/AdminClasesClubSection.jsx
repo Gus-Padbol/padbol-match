@@ -1,5 +1,7 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
+import { adminErrorMessage } from './adminErrorMessage';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import {
   crearClaseAdmin,
@@ -42,6 +44,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
   const [asistenciaModal, setAsistenciaModal] = useState(null);
@@ -72,6 +75,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     setMsg('');
     try {
       const [cls, profs] = await Promise.all([
@@ -81,12 +85,13 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       setClases(cls);
       setProfesores(profs);
     } catch (e) {
-      setMsg(e?.message || 'Error');
+      setLoadError(true);
+      setMsg(adminErrorMessage(e, t('admin.common.classesLoadFailed', 'No se pudieron cargar las clases. Vuelve a intentarlo.')));
       setClases([]);
     } finally {
       setLoading(false);
     }
-  }, [sedeId, accessToken]);
+  }, [sedeId, accessToken, t]);
 
   useEffect(() => {
     void load();
@@ -153,7 +158,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       setShowForm(false);
       await load();
     } catch (e) {
-      setMsg(e?.message || 'Error');
+      setMsg(adminErrorMessage(e, t('admin.common.operationFailed', 'No se pudo completar la operación. Vuelve a intentarlo.')));
     } finally {
       setSaving(false);
     }
@@ -171,12 +176,12 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       });
       setAsistenciaRows(Array.isArray(data?.inscripciones) ? data.inscripciones : []);
     } catch (e) {
-      setMsg(e?.message || 'Error');
+      setMsg(adminErrorMessage(e, t('admin.common.operationFailed', 'No se pudo completar la operación. Vuelve a intentarlo.')));
       setAsistenciaRows([]);
     } finally {
       setAsistenciaLoading(false);
     }
-  }, [asistenciaModal?.id, asistenciaFecha, accessToken]);
+  }, [asistenciaModal?.id, asistenciaFecha, accessToken, t]);
 
   useEffect(() => {
     if (!asistenciaModal) return;
@@ -202,7 +207,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       });
       await cargarAsistencia();
     } catch (e) {
-      setMsg(e?.message || 'Error');
+      setMsg(adminErrorMessage(e, t('admin.common.operationFailed', 'No se pudo completar la operación. Vuelve a intentarlo.')));
     } finally {
       setAsistenciaPatchId(null);
     }
@@ -215,7 +220,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       await patchClaseActivoAdmin({ claseId: row.id, activo: !row.activo, accessToken });
       await load();
     } catch (e) {
-      setMsg(e?.message || 'Error');
+      setMsg(adminErrorMessage(e, t('admin.common.operationFailed', 'No se pudo completar la operación. Vuelve a intentarlo.')));
     } finally {
       setTogglingId(null);
     }
@@ -242,7 +247,8 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       >
         {showForm ? 'Cerrar formulario' : '+ Crear clase'}
       </button>
-      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{msg}</p> : null}
+      {msg ? <p style={{ color: 'var(--pm-color-error, #f87171)', fontSize: 13, marginBottom: 10 }}>{stripAdminEmoji(msg)}</p> : null}
+      {loadError ? <button type="button" disabled={loading} onClick={() => void load()}>{t('general.retry')}</button> : null}
       {showForm ? (
         <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 16, background: 'var(--bg-page)' }}>
           <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{t('admin.hub.title')}</label>
@@ -317,7 +323,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
       ) : null}
       {loading ? (
         <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
-      ) : clases.length === 0 ? (
+      ) : loadError ? null : clases.length === 0 ? (
         <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No hay clases creadas.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 10 }}>
@@ -429,7 +435,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                             cursor: 'pointer',
                           }}
                         >
-                          ✅ Asistió
+                           Asistió
                         </button>
                         <button
                           type="button"
@@ -444,7 +450,7 @@ export default function AdminClasesClubSection({ accessToken, sedeId, canchas = 
                             cursor: 'pointer',
                           }}
                         >
-                          ❌ No asistió
+                           No asistió
                         </button>
                         {pendiente ? (
                           <span style={{ fontSize: 12, color: 'var(--text-secondary)', alignSelf: 'center' }}>— Pendiente</span>

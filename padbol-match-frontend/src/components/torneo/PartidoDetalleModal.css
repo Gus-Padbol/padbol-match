@@ -36,6 +36,8 @@
   gap: 10px;
 }
 
+.pdm-dialog--with-lineup { max-width: min(920px, 100%); }
+
 .pdm-title {
   margin: 0;
   font-size: 1.1rem;

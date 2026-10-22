@@ -90,7 +90,6 @@ const ADMIN_ROLES_CHIP = ['super_admin', 'admin_nacional', 'admin_club', 'emplea
 const LEGACY_GLOBAL_ADMIN_EMAILS = [
   'padbolinternacional@gmail.com',
   'admin@padbol.com',
-  'sm@padbol.com',
 ];
 
 function readCachedRolHeader() {

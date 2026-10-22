@@ -22,7 +22,7 @@ describe('adminJugadoresApi helpers', () => {
 
   it('formatea la actividad con la región elegida', () => {
     const iso = '2026-06-15T12:00:00Z';
-    expect(formatJugadorActivity(iso, 'de-DE')).toContain('Juni');
+    expect(formatJugadorActivity(iso, 'de-DE')).toBe('15.06.2026');
     expect(formatJugadorActivity(iso, 'de-DE')).not.toBe(formatJugadorActivity(iso, 'en-US'));
   });
 

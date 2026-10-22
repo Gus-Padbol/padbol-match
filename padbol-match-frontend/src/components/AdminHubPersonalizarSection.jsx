@@ -1,3 +1,4 @@
+import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ImageCropModal from './ImageCropModal';
 import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
@@ -5,7 +6,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
 import { hubCardPhotoPorDeporte } from '../constants/hubFotosPorDeporte';
 import { HUB_JUGAR_ACTION_CARD_KEYS } from '../constants/hubJugarActionCards';
-import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import { useSafeTranslation as useTranslation } from '../i18n/adminTranslation';
 import {
   dedupeHubDeporteConfigRows,
   hubDeporteRowImagenUrl,
@@ -58,7 +59,7 @@ function normalizeHubDeporteRowPayload(data, deporte, cardKey) {
 /** Mensajes de éxito vs error legibles en claro y oscuro. */
 function hubEditorNoticeStyle(text) {
   const t = String(text || '');
-  if (/^✅|Guardado correctamente|Foto actualizada/i.test(t)) {
+  if (/^|Guardado correctamente|Foto actualizada/i.test(t)) {
     return { color: 'var(--pm-color-success, #16a34a)', fontWeight: 600 };
   }
   return { color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 };
@@ -799,7 +800,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       </h3>
       {inicioMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(inicioMsg) }}>
-          {inicioMsg}
+          {stripAdminEmoji(inicioMsg)}
         </p>
       ) : null}
       <input
@@ -928,7 +929,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       </p>
       {deporteMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(deporteMsg) }}>
-          {deporteMsg}
+          {stripAdminEmoji(deporteMsg)}
         </p>
       ) : null}
       <input
@@ -982,6 +983,8 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       </p>
       {deporteLoading ? null : hubOtrasDeporteCards.map(({ key: cardKey, label }) => renderDeporteCardEditor(cardKey, label))}
 
+      <details className="admin-hub-legacy-details">
+        <summary style={{fontWeight:700,padding:12,cursor:'pointer'}}>Tarjetas adicionales del hub</summary>
       <h3
         style={{
           margin: '28px 0 10px',
@@ -990,11 +993,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
           color: 'var(--text-primary)',
         }}
       >
-        Cards globales (legacy)
+        Tarjetas adicionales
       </h3>
       {msg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(msg) }}>
-          {msg}
+          {stripAdminEmoji(msg)}
         </p>
       ) : null}
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(ev) => void onFileChange(ev)} />
@@ -1011,7 +1014,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         return (
           <div key={id} className="admin-hub-editor-card" style={cardWrap}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.04em', marginBottom: '10px' }}>
-              ID: {id}
+              {draft.titulo || fb.titulo || 'Tarjeta del hub'}
             </div>
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
               <div style={{ flex: '0 0 140px' }}>
@@ -1052,21 +1055,23 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
               </div>
             </div>
 
-            <label style={labelStyle}>
+            <label htmlFor={`hub-legacy-title-${id}`} style={labelStyle}>
               {t('admin.hub.title')} {(!draft.titulo?.trim() && fb.titulo) ? t('admin.hub.defaultValue', { value: fb.titulo }) : null}
             </label>
             <input
+              id={`hub-legacy-title-${id}`}
               type="text"
-              style={inputStyle}
+              style={{...inputStyle,maxWidth:640}}
               value={draft.titulo}
               placeholder={fb.titulo}
               onChange={(e) => setDrafts((p) => ({ ...p, [id]: { ...draft, titulo: e.target.value } }))}
             />
 
-            <label style={labelStyle}>{t('admin.hub.subtitle')}</label>
+            <label htmlFor={`hub-legacy-subtitle-${id}`} style={labelStyle}>{t('admin.hub.subtitle')}</label>
             <input
+              id={`hub-legacy-subtitle-${id}`}
               type="text"
-              style={inputStyle}
+              style={{...inputStyle,maxWidth:640}}
               value={draft.subtitulo}
               placeholder={fb.subtitulo || t('admin.hub.optional')}
               onChange={(e) => setDrafts((p) => ({ ...p, [id]: { ...draft, subtitulo: e.target.value } }))}
@@ -1093,6 +1098,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         );
       })}
 
+      </details>
       <ImageCropModal
         open={cropModalOpen}
         imageSrc={cropImageSrc}

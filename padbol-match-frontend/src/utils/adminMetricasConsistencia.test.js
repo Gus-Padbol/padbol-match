@@ -239,3 +239,16 @@ describe('adminMetricasConsistencia — horario, vacíos, cableado', () => {
     expect(addDaysISO('2026-07-01', -1)).toBe('2026-06-30');
   });
 });
+
+it('compara ingresos ARS/EUR/USD sin mezclar monedas y excluye canceladas', () => {
+  const result = buildPeriodoCompare([
+    r({ precio: 1000, moneda: 'ARS' }),
+    r({ precio: 40, moneda: 'EUR' }),
+    r({ precio: 9000, moneda: 'ARS', estado: 'cancelada' }),
+    r({ precio: 500, moneda: 'ARS', fecha: '2026-07-09' }),
+  ], { periodo: 'hoy', startISO: '2026-07-10', endISO: '2026-07-10' });
+  expect(result.ingresosPorMoneda).toEqual([
+    { moneda: 'ARS', actual: 1000, anterior: 500, pct: 100 },
+    { moneda: 'EUR', actual: 40, anterior: 0, pct: null },
+  ]);
+});

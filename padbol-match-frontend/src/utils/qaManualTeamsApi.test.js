@@ -1,0 +1,7 @@
+import {readQaTeamEntry,saveQaTeamEntry} from './qaManualTeamsApi';
+import {getAuthHeaders} from './scoreboardApi';
+jest.mock('./scoreboardApi',()=>({getAuthHeaders:jest.fn()}));
+beforeEach(()=>{getAuthHeaders.mockResolvedValue({Authorization:'Bearer QA-current'});global.fetch=jest.fn();});
+test('missing session cannot reach an administrative catalog',async()=>{getAuthHeaders.mockResolvedValue({});await expect(readQaTeamEntry('https://qa.invalid',41)).rejects.toThrow('sesión');expect(fetch).not.toHaveBeenCalled();});
+test('read binds the current token and requires a managed same-tournament catalog',async()=>{fetch.mockResolvedValue({ok:true,status:200,json:async()=>({ok:true,torneo_id:41,can_manage:true,players:[]})});await readQaTeamEntry('https://qa.invalid/',41);expect(fetch.mock.calls[0][0]).toBe('https://qa.invalid/api/torneos/41/inscripcion-qa');expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer QA-current');fetch.mockResolvedValue({ok:true,status:200,json:async()=>({ok:true,torneo_id:39,can_manage:true,players:[]})});await expect(readQaTeamEntry('https://qa.invalid',41)).rejects.toThrow();});
+test('creation does not accept a success without confirmed team ownership',async()=>{fetch.mockResolvedValue({ok:true,status:201,json:async()=>({ok:true,torneo_id:41,status:'created',equipo:{id:3,torneo_id:39}})});await expect(saveQaTeamEntry('',41,{nombre:'QA',user_ids:['a','b']})).rejects.toThrow('confirmó');});

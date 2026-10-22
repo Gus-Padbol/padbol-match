@@ -1,5 +1,22 @@
 {
   "admin": {
+    "common": {
+      "otherPlayerAccess": "Alte accesări: jucători și FIPA",
+      "reviewPlayerJourneys": "Verifică parcursurile jucătorilor",
+      "manageFipaPlayers": "Gestionează jucătorii FIPA",
+      "reviewFipaDocuments": "Verifică accesul la documentele FIPA",
+      "operationFailed": "Operațiunea nu a putut fi finalizată. Încearcă din nou.",
+      "classesLoadFailed": "Cursurile nu au putut fi încărcate. Încearcă din nou.",
+      "configAreas": "Secțiuni de configurare",
+      "pointsAndPositions": "Puncte și clasament",
+      "customTypes": "Tipuri personalizate",
+      "previewWith": "Previzualizare pentru:",
+      "totalPoints": "{{count}} puncte în total",
+      "percentOfTotal": "% din total",
+      "add": "Adaugă",
+      "noPushRecipients": "Niciun utilizator din acest grup nu are notificările activate. Nu va fi trimisă nicio notificare.",
+      "venueConfigHintSuper": "În secțiunea „Cluburi” poți consulta și modifica datele fiecărui club și gestiona terenurile sale."
+    },
     "profesores": {
       "tab": "Instructori",
       "pendientes": "În așteptarea aprobării",
@@ -79,6 +96,12 @@
       "showingRecent": "Sunt afișate cele mai recente {{shown}} din {{total}} recenzii.",
       "showLess": "Arată mai puține recenzii",
       "showAll": "Arată toate recenziile ({{count}})"
+    },
+    "formularios": {
+      "validationReject": "Respinge",
+      "validationRejectConfirm": "Respingi această validare? Jucătorul va rămâne înregistrat și își va putea corecta datele.",
+      "validationRejectReason": "Validare respinsă de administrație",
+      "validationRejectError": "Validarea nu a putut fi respinsă."
     },
     "tabs": {
       "profesoresTab": "Instructori",
@@ -193,6 +216,35 @@
         "avanzado": "Avansat",
         "advanced": "Avansat"
       }
+    }
+  },
+  "torneos": {
+    "create": {
+      "ageCutoffLabel": "Data de referință pentru vârstă (opțional)",
+      "ageCutoffHint": "Se folosește pentru calcularea vârstei jucătorilor. Dacă lipsește, se folosește data de început a turneului sau data curentă.",
+      "programaNextGenerationHint": "Categorie juvenilă: acest turneu aparține programului FIPA Next Generation (U13/U15/U17).",
+      "programaPadbolHint": "Categorie pentru adulți: acest turneu aparține Padbol. Nivelul sportiv este independent de vârstă."
+    },
+    "vista": {
+      "categoriaEdad": { "u13": "U13", "u15": "U15", "u17": "U17" },
+      "categoriaEdadGrupo": {
+        "nextGeneration": "Next Generation (juniori)",
+        "padbol": "Padbol (adulți)",
+        "divisionEspecial": "Divizie specială",
+        "legado": "Categorie anterioară"
+      },
+      "programa": { "next_generation": "FIPA Next Generation", "padbol": "Padbol" },
+      "filtros": { "programa": "Program", "todos": "Toate", "categoriaEdad": "Categorie de vârstă", "nivel": "Nivel sportiv" },
+      "nextGeneration": { "padboleros": "Jucători de Padbol" }
+    }
+  },
+  "reputacion": {
+    "admin": {
+      "criterionTitle": "Regulă automată",
+      "criterionBody": "Cinci anulări în ultimele 30 de zile determină o suspendare de șapte zile. Ecranul afișează doar suspendările active.",
+      "refresh": "Reîncarcă suspendările",
+      "colReason": "Motiv",
+      "repeatedCancellationReason": "Anulări repetate"
     }
   }
 }

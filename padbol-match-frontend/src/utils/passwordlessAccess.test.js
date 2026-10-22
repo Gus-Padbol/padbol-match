@@ -1,6 +1,7 @@
 import {
   buildPasswordlessRedirectUrl,
   requestPasswordlessAccess,
+  passwordlessAccessErrorTranslationKey,
 } from './passwordlessAccess';
 
 describe('passwordlessAccess', () => {
@@ -43,4 +44,21 @@ describe('passwordlessAccess', () => {
       },
     });
   });
+});
+
+it('returns thrown network errors so the screen can recover instead of leaving an unhandled rejection', async () => {
+  const error = new TypeError('Failed to fetch');
+  const signInWithOtp = jest.fn().mockRejectedValue(error);
+  await expect(requestPasswordlessAccess({ auth: { signInWithOtp }, email: 'qa@example.com', origin: 'https://padbolmatch.com' })).resolves.toEqual({ error });
+});
+
+ it.each([{ status: 429 }, { code: 'over_email_send_rate_limit' }, { code: 'over_request_rate_limit' }])('explains temporary email limits without blaming the address: %p', (error) => {
+   expect(passwordlessAccessErrorTranslationKey(error)).toBe('auth.accessLinkRateLimited');
+ });
+ it('keeps provider failure generic and does not expose internals', () => {
+   expect(passwordlessAccessErrorTranslationKey({ code: 'unexpected_failure', message: 'smtp secret internals' })).toBe('auth.accessLinkFailed');
+ });
+
+it('explains that passwordless access requires registration without creating an account', () => {
+  expect(passwordlessAccessErrorTranslationKey({ status: 422, code: 'otp_disabled' })).toBe('auth.accessLinkRegistrationRequired');
 });

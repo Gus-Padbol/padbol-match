@@ -22,12 +22,13 @@ export const SUPER_ADMIN_VISIBLE_TABS = Object.freeze([
   'jugadores',
   'solicitudes',
   'profesores',
+  'next_generation',
   'personalizar_hub',
   'suspensiones',
   'notificaciones',
+  'whatsapp',
   'scoreboard',
   'padcoins',
-  'whatsapp',
 ]);
 
 export const EDITOR_CONTENIDO_VISIBLE_TABS = Object.freeze(['personalizar_hub', 'sponsors']);
@@ -106,6 +107,7 @@ export function canRoleSeeSponsorsTab(rolUsuario) {
 export function normalizeAdminTabAlias(raw) {
   const t0 = String(raw || '').trim();
   if (!t0) return '';
+  if (t0 === 'crm' || t0 === 'atencion') return 'whatsapp';
   if (t0 === 'sedes_pendientes') return 'solicitudes';
   if (coerceAdminSedesTabId(t0) === ADMIN_SEDES_TAB_ID) return ADMIN_SEDES_TAB_ID;
   return t0;
@@ -181,4 +183,9 @@ export function tabHasKnownRenderSurface(tabId, rolUsuario = null) {
   if (tab === 'sponsors') return rol === 'editor_contenido';
   if (tab === 'padcoins') return canRoleSeePadCoins(rol);
   return getAllowedAdminTabsForRole(rol).includes(tab);
+}
+
+export function orderAdminSectionsAlphabetically(tabs) {
+  const collator = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+  return [...tabs].sort((left, right) => collator.compare(left.label, right.label));
 }

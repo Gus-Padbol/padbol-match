@@ -153,18 +153,19 @@ export async function ensureJugadorPerfilRowForEmail(email) {
   return { error };
 }
 
-export async function refreshJugadorPerfilFromSupabase(email) {
+export async function refreshJugadorPerfilFromSupabase(email, { profileRow, isCurrent = () => true } = {}) {
   const em = String(email || '').trim();
   if (!em) return;
   try {
     const [{ data, error }, { data: cli }] = await Promise.all([
-      supabase
-        .from('jugadores_perfil')
-        .select('nombre, apellido, nivel, whatsapp, foto_url, genero, lateralidad')
-        .eq('email', em)
-        .maybeSingle(),
-      supabase.from('clientes').select('whatsapp').eq('email', em).maybeSingle(),
+      profileRow !== undefined
+        ? Promise.resolve({ data: profileRow, error: null })
+        : supabase.from('jugadores_perfil').select('nombre, apellido, nivel, whatsapp, foto_url, genero, lateralidad').eq('email', em).maybeSingle(),
+      String(profileRow?.whatsapp || '').trim()
+        ? Promise.resolve({ data: null })
+        : supabase.from('clientes').select('whatsapp').eq('email', em).maybeSingle(),
     ]);
+    if (!isCurrent()) return;
     const waCli = String(cli?.whatsapp || '').trim();
     const waJp = String(data?.whatsapp || '').trim();
     const wa = waJp || waCli;

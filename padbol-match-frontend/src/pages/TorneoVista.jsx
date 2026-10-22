@@ -1,5 +1,11 @@
+import TournamentFixturePlanner from '../components/torneo/TournamentFixturePlanner';
+import OpenTournamentRegistration from '../components/torneo/OpenTournamentRegistration';
+import {getAuthHeaders} from '../utils/scoreboardApi';
+import NationsCupPanel from '../components/torneo/NationsCupPanel';
+import { isPadbolSelection } from '../utils/padbolSelectionRoster';
+import { fetchBuscaDuplaList } from '../utils/torneoBuscaDuplaApi';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
@@ -65,7 +71,6 @@ export default function TorneoVista() {
   const [listaEsperaEnrolled, setListaEsperaEnrolled] = useState(false);
   const [listaEsperaChecked, setListaEsperaChecked] = useState(false);
   const [listaEsperaMsg, setListaEsperaMsg] = useState('');
-  const [abrirInscripcionLoading, setAbrirInscripcionLoading] = useState(false);
   const currentCliente = useMemo(() => {
     const em = String(session?.user?.email || '').trim();
     if (!em) return null;
@@ -73,6 +78,10 @@ export default function TorneoVista() {
   }, [session?.user?.email]);
   const { rol, sedeId: userSedeId, pais: userPaisRol } = useUserRole(currentCliente);
   const [torneo, setTorneo] = useState(null);
+  const [nationsState, setNationsState] = useState(null);
+  useEffect(() => { setNationsState(null); }, [torneoId]);
+  const selectionMode = isPadbolSelection(torneo);
+  const selectionModeRef = useRef(false);
   const [equipos, setEquipos] = useState([]);
   const [sedesMap, setSedesMap] = useState({});
   const [partidos, setPartidos] = useState([]);
@@ -81,7 +90,6 @@ export default function TorneoVista() {
   const [error, setError] = useState(null);
   const [iniciando, setIniciando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
-  const [generarFixtureLoading, setGenerarFixtureLoading] = useState(false);
   const [fixtureToast, setFixtureToast] = useState(null);
   const [buscaDuplaList, setBuscaDuplaList] = useState([]);
   const [buscaDuplaEnrolled, setBuscaDuplaEnrolled] = useState(false);
@@ -229,7 +237,7 @@ export default function TorneoVista() {
   const equiposConfirmadosInscripcion = useMemo(
     () =>
       (equipos || []).filter(
-        (eq) => String(eq?.inscripcion_estado || '').toLowerCase() === 'confirmado',
+        (eq) => ['confirmado','confirmada'].includes(String(eq?.inscripcion_estado || '').toLowerCase()),
       ).length,
     [equipos],
   );
@@ -238,12 +246,16 @@ export default function TorneoVista() {
     !loading && equiposConfirmadosInscripcion >= 2 && tieneFixturePartidos;
 
   const loadBuscaDupla = useCallback(async () => {
+    if (selectionModeRef.current) {
+      setBuscaDuplaList([]); setBuscaDuplaEnrolled(false); setBuscaDuplaInvRecibidas([]); setBuscaDuplaInvEnviadas([]);
+      return;
+    }
     const idNum = parseInt(String(torneoId), 10);
     if (!Number.isFinite(idNum)) return;
     setBuscaDuplaLoading(true);
     try {
-      const pub = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/busca-dupla`);
-      if (pub.ok) {
+      const pub = await fetchBuscaDuplaList(apiBaseUrlTorneo, torneoId, session?.access_token);
+      if (pub?.ok) {
         const j = await pub.json();
         setBuscaDuplaList(Array.isArray(j) ? j : []);
       } else {
@@ -287,16 +299,17 @@ export default function TorneoVista() {
 
   const recargarDatosTorneo = useCallback(async () => {
     try {
+      const readHeaders=await getAuthHeaders();
       const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
-        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`),
-        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {headers:readHeaders}),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`,{headers:readHeaders}),
+        fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`,{headers:readHeaders}),
         fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
       ]);
       if (torneoRes.ok) {
         try {
           const t = await torneoRes.json();
-          if (t && typeof t === 'object' && !t.error) setTorneo(t);
+          if (t && typeof t === 'object' && !t.error) { selectionModeRef.current = isPadbolSelection(t); setTorneo(t); }
         } catch (e) {
           console.error('[TorneoVista] recargar torneo JSON:', e);
         }
@@ -351,10 +364,11 @@ export default function TorneoVista() {
           return;
         }
 
-        const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
-          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`),
-          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`),
-          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`),
+        const readHeaders=await getAuthHeaders();
+      const [torneoRes, equiposRes, partidosRes, sedesRes] = await Promise.all([
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {headers:readHeaders}),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/equipos`,{headers:readHeaders}),
+          fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/partidos`,{headers:readHeaders}),
           fetch(`${apiBaseUrlTorneo}/api/sedes`).catch(() => null),
         ]);
 
@@ -414,6 +428,7 @@ export default function TorneoVista() {
           nextSedesMap[String(sede.id)] = sede;
         });
 
+        selectionModeRef.current = isPadbolSelection(torneoData);
         setTorneo(torneoData);
         setEquipos(equiposData);
         setPartidos(partidosData);
@@ -469,31 +484,6 @@ export default function TorneoVista() {
     };
   }, [torneoId, torneo?.estado, session?.access_token]);
 
-  const abrirInscripcionDesdeAdmin = async () => {
-    if (!window.confirm(t('torneos.vista.confirmOpenRegistration'))) return;
-    setAbrirInscripcionLoading(true);
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ estado: 'abierto' }),
-      });
-      if (res.ok) {
-        const data = await res.json().catch(() => null);
-        const row = Array.isArray(data) ? data[0] : data;
-        setTorneo((prev) => ({ ...prev, estado: row?.estado ?? 'abierto' }));
-      } else {
-        const err = await res.json().catch(() => ({}));
-        alert(err?.error || t('torneos.vista.openRegistrationError'));
-      }
-    } catch (e) {
-      alert(e?.message || t('torneos.vista.networkError'));
-    } finally {
-      setAbrirInscripcionLoading(false);
-    }
-  };
 
   const tidNum = parseInt(String(torneoId), 10);
   useEffect(() => {
@@ -522,12 +512,13 @@ export default function TorneoVista() {
   }, [tidNum, torneo?.estado]);
 
   const clasificacionFinalFilas = useMemo(() => {
-    if (!tablaPuntosRows.length) return null;
+    const rows = torneo?.plan_nations ? (nationsState?.status === 'finalized' ? (nationsState.placements || []) : []) : tablaPuntosRows;
+    if (!rows.length) return null;
     const eqById = {};
     equipos.forEach((e) => {
       eqById[e.id] = e;
     });
-    return tablaPuntosRows
+    return rows
       .map((row) => {
         const eq = eqById[row.equipo_id];
         const players = eq ? safeJugadores(eq) : [];
@@ -542,7 +533,7 @@ export default function TorneoVista() {
         };
       })
       .sort((a, b) => (a.posicion || 999) - (b.posicion || 999));
-  }, [tablaPuntosRows, equipos, t]);
+  }, [tablaPuntosRows, equipos, t, nationsState, torneo?.plan_nations]);
 
   const iniciarTorneo = async () => {
     if (!puedeIniciarTorneoEnCurso) return;
@@ -557,8 +548,8 @@ export default function TorneoVista() {
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}`, {
-        method: 'PUT',
+      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}${torneo?.plan_nations ? '' : '/iniciar'}`, {
+        method: torneo?.plan_nations ? 'PUT' : 'POST',
         headers,
         body: JSON.stringify({ estado: 'en_curso' }),
       });
@@ -632,7 +623,7 @@ export default function TorneoVista() {
     estadoTorneoLower !== 'cancelado' &&
     (esListaEsperaTorneo || esInscripcionAbiertaJugador);
   const puedeMostrarIniciarTorneo =
-    isAdmin && ['inscripcion_abierta', 'abierto'].includes(estadoTorneoLower);
+    isAdmin && ['inscripcion_abierta','inscripcion','abierto','proximo','planificacion'].includes(estadoTorneoLower);
   const puedeMostrarAbrirInscripcionAdmin = isAdmin && esListaEsperaTorneo;
 
   const showFixtureToast = useCallback((type, message) => {
@@ -648,35 +639,6 @@ export default function TorneoVista() {
     (tipoTorneoLower === 'round_robin' || tipoTorneoLower === 'knockout') &&
     estadoTorneoLower !== 'finalizado' &&
     estadoTorneoLower !== 'cancelado';
-
-  const generarFixture = async () => {
-    if (generarFixtureLoading || !puedeMostrarGenerarFixture) return;
-    setGenerarFixtureLoading(true);
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-      const res = await fetch(`${apiBaseUrlTorneo}/api/torneos/${torneoId}/generar-partidos`, {
-        method: 'POST',
-        headers,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        if (Array.isArray(data.partidos)) {
-          setPartidos(data.partidos);
-        } else {
-          await recargarDatosTorneo();
-        }
-        setTorneo((prev) => (prev ? { ...prev, estado: 'en_curso' } : prev));
-        showFixtureToast('success', t('torneos.admin.fixtureGenerado'));
-      } else {
-        showFixtureToast('error', data?.error || t('torneos.admin.errorGenerarFixture'));
-      }
-    } catch (err) {
-      showFixtureToast('error', err?.message || t('torneos.admin.errorGenerarFixture'));
-    } finally {
-      setGenerarFixtureLoading(false);
-    }
-  };
 
   const miEquipoEnTorneo = useMemo(() => {
     if (!session?.user || !Array.isArray(equipos) || equipos.length === 0) return null;
@@ -814,17 +776,14 @@ export default function TorneoVista() {
   const adminBarFilaEquiposGestión =
     isAdminGestionEnEstaVista && estadoTorneoLower !== 'finalizado' ? (
       <div style={{ textAlign: 'center', marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-        {puedeMostrarAbrirInscripcionAdmin ? (
-          <button
-            type="button"
-            className="btn-agregar-jugadores"
-            style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', color: '#fff', fontWeight: 800 }}
-            onClick={() => void abrirInscripcionDesdeAdmin()}
-            disabled={abrirInscripcionLoading}
-          >
-            {abrirInscripcionLoading ? t('torneos.vista.openingRegistration') : t('torneos.vista.openRegistration')}
-          </button>
-        ) : null}
+        <OpenTournamentRegistration
+          key={torneoId}
+          available={puedeMostrarAbrirInscripcionAdmin}
+          apiBaseUrl={apiBaseUrlTorneo}
+          torneoId={torneoId}
+          t={t}
+          onSaved={row => setTorneo(prev => ({...prev, ...row}))}
+        />
         <button
           type="button"
           className="btn-agregar-jugadores"
@@ -834,18 +793,7 @@ export default function TorneoVista() {
         </button>
       </div>
     ) : null;
-  const adminBarGenerarFixture = puedeMostrarGenerarFixture ? (
-    <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-      <button
-        type="button"
-        className="btn-agregar-jugadores btn-generar-fixture"
-        onClick={() => void generarFixture()}
-        disabled={generarFixtureLoading}
-      >
-        {generarFixtureLoading ? t('common.loading') : t('torneos.admin.generarFixture')}
-      </button>
-    </div>
-  ) : null;
+  const adminBarGenerarFixture = puedeMostrarGenerarFixture ? <TournamentFixturePlanner torneo={torneo} equipos={equipos} apiBaseUrl={apiBaseUrlTorneo} accessToken={session?.access_token} onSaved={async()=>{await recargarDatosTorneo();showFixtureToast('success','Fixture guardado para revisar. El torneo todavía no se inició.');}} /> : null;
   const adminBarIniciarTorneo = isAdminGestionEnEstaVista && puedeMostrarIniciarTorneo ? (
     <div className="torneo-acciones torneo-acciones--sobre-violeta">
       {!loading && !puedeIniciarTorneoEnCurso ? (
@@ -883,15 +831,16 @@ export default function TorneoVista() {
         </button>
       </div>
     ) : null;
+  const nationsEnabled = Boolean(torneo?.plan_nations || nationsState?.config);
   const adminTorneoBar =
     torneo &&
     isAdminGestionEnEstaVista &&
     (adminBarFilaEquiposGestión || adminBarGenerarFixture || adminBarIniciarTorneo || adminBarFinalizarTorneo) ? (
       <div className="torneo-admin-bar-violeta" style={{ marginBottom: '12px' }}>
         {adminBarFilaEquiposGestión}
-        {adminBarGenerarFixture}
-        {adminBarIniciarTorneo}
-        {adminBarFinalizarTorneo}
+        {nationsEnabled ? null : adminBarGenerarFixture}
+        {nationsEnabled ? null : adminBarIniciarTorneo}
+        {nationsEnabled ? null : adminBarFinalizarTorneo}
       </div>
     ) : null;
 
@@ -930,6 +879,7 @@ export default function TorneoVista() {
   }, [navigate, torneoId]);
 
   const registrarBuscaDupla = useCallback(async () => {
+    if (selectionModeRef.current) return;
     if (!session?.access_token) {
       navigate(authUrlWithRedirect(`/torneo/${torneoId}`));
       return;
@@ -952,6 +902,7 @@ export default function TorneoVista() {
   }, [session?.access_token, torneoId, navigate, recargarDatosTorneo, t]);
 
   const salirBuscaDupla = useCallback(async () => {
+    if (selectionModeRef.current) return;
     if (!session?.access_token) return;
     setBuscaDuplaBusy(true);
     try {
@@ -972,6 +923,7 @@ export default function TorneoVista() {
 
   const invitarBuscaDupla = useCallback(
     async (toUserId) => {
+      if (selectionModeRef.current) return;
       if (!session?.access_token || !toUserId) return;
       setBuscaDuplaBusy(true);
       try {
@@ -998,6 +950,7 @@ export default function TorneoVista() {
 
   const aceptarInvitacionBuscaDupla = useCallback(
     async (invId) => {
+      if (selectionModeRef.current) return;
       if (!session?.access_token || !invId) return;
       setBuscaDuplaBusy(true);
       try {
@@ -1023,6 +976,7 @@ export default function TorneoVista() {
 
   const rechazarInvitacionBuscaDupla = useCallback(
     async (invId) => {
+      if (selectionModeRef.current) return;
       if (!session?.access_token || !invId) return;
       setBuscaDuplaBusy(true);
       try {
@@ -1063,7 +1017,7 @@ export default function TorneoVista() {
       >
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         <div style={torneoVistaColumnStyle} className="loading">
-          {t('common.loading')}
+          {t('general.loading')}
         </div>
         <BottomNav />
       </div>
@@ -1110,10 +1064,16 @@ export default function TorneoVista() {
   }
 
   const puedePanelBuscaDupla =
-    torneo && !torneoPasadoCalendario && torneoPermiteNuevasInscripciones(torneo);
+    !selectionMode && torneo && !torneoPasadoCalendario && torneoPermiteNuevasInscripciones(torneo);
 
   const buscaDuplaSeccion =
-    puedePanelBuscaDupla ? (
+    selectionMode && !torneoPasadoCalendario && torneoPermiteNuevasInscripciones(torneo) ? (
+      <section className="padbol-selection">
+        <h3>{t('torneos.selecciones.selectionMode', { defaultValue: 'Plantel de selección (hasta 8)' })}</h3>
+        <p>{t('torneos.selecciones.modeHint', { defaultValue: 'Plantel de 4 a 8 jugadores. Cada partido presenta 2 iniciales y 2 suplentes; siempre juegan 2 en cancha y pueden alternar en games impares. La carga manual de sets no registra los cambios game por game.' })}</p>
+        <button type="button" onClick={() => navigate(`/torneo/${torneoId}/equipos`, location.state != null ? { state: location.state } : undefined)}>{t('torneos.vista.teamsAndRegistration')}</button>
+      </section>
+    ) : puedePanelBuscaDupla ? (
       <div className="torneo-busca-dupla">
         <h3 className="torneo-busca-dupla__titulo">{t('torneos.vista.playersSeekingPartner')}</h3>
         {session?.user && indiceCategoriaNivelBuscaDupla(userProfile?.nivel) >= 0 ? (
@@ -1293,7 +1253,7 @@ export default function TorneoVista() {
       </div>
     ) : null}
     <div
-      className="torneo-vista-container"
+      className={`torneo-vista-container${fromAdmin ? ' torneo-vista-container--admin' : ''}`}
       style={{
         paddingTop: hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock),
         paddingBottom: hubMainPaddingBottomCss(location.pathname, navDock),
@@ -1301,9 +1261,15 @@ export default function TorneoVista() {
     >
       <div style={torneoVistaColumnStyle}>
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+        {torneo && ((isPadbolSelection(torneo) && fromAdmin) || nationsEnabled) ? <details className="torneo-nations-details" open={fromAdmin || undefined}><summary>{t('torneos.nations.details', {defaultValue:'Reglamento y organización de Nations Cup'})}</summary><NationsCupPanel
+          key={`nations-${torneoId}`} apiBaseUrl={apiBaseUrlTorneo} torneo={torneo} equipos={equipos}
+          accessToken={session?.access_token} management={fromAdmin} navigate={navigate} refreshKey={JSON.stringify(partidos)} onConfirmed={recargarDatosTorneo} onState={setNationsState}
+        /></details> : null}
         <TorneoTabbedView
           key={String(torneoId)}
           torneo={torneo}
+          nationsEnabled={nationsEnabled}
+          nationsState={nationsState}
           equipos={equipos}
           partidos={partidos}
           setPartidos={setPartidos}
@@ -1324,7 +1290,6 @@ export default function TorneoVista() {
               {buscaDuplaSeccion}
             </>
           }
-          stickyTop={hubContentPaddingTopWithLogoClearanceCss(location.pathname, navDock)}
           showTorneoLogo={false}
           estadoLineaArribaTabs={
             !modoAdminExplicitoEnVista && (torneoPasadoCalendario || estadoTorneoLower === 'finalizado')
@@ -1337,7 +1302,7 @@ export default function TorneoVista() {
           presentadoPorDeporte={deporteParaSponsorTorneo}
           apiBaseUrl={apiBaseUrlTorneo}
           puedeExportarJugadoresExcel={puedeExportarJugadoresExcelVista}
-          adminPuedeSorteoGrupos={isAdminGestionEnEstaVista}
+          adminPuedeSorteoGrupos={isAdminGestionEnEstaVista && !nationsEnabled}
           onAfterSorteoGrupos={recargarDatosTorneo}
           participacionModalOpen={modalInscribirseOpen && !torneoPasadoCalendario}
           onParticipacionModalClose={cerrarModalInscribirse}
@@ -1347,7 +1312,7 @@ export default function TorneoVista() {
           userProfile={userProfile}
         />
       </div>
-      <BottomNav />
+      {fromAdmin ? null : <BottomNav />}
     </div>
     </>
   );

@@ -118,9 +118,19 @@
     },
     "onboarding": {
       "reservasBody": "Aici vezi și gestionezi toate rezervările terenurilor tale."
+    },
+    "pointsPolicy": {
+      "independentPercentages": "Fiecare poziție primește procentul său din baza nivelului. Procentele nu sunt un fond comun și nu trebuie să însumeze 100%. Pozițiile ulterioare nedefinite folosesc procentul salvat pentru locul zece.",
+      "percentOfBase": "% din baza nivelului",
+      "basePoints": "Puncte de bază",
+      "baseValue": "Bază: {{count}}",
+      "unavailable": "Consultați politica salvată înainte de a crea turneul.",
+      "levelUnavailable": "Nivelul selectat nu este activat în politica actuală."
     }
   },
   "reservas": {
+    "confirmFreeBooking": "Confirmă rezervarea gratuită",
+    "freeBookingConfirmed": "Rezervare gratuită confirmată. Numărul rezervării: {{id}}.",
     "payAtVenueBody": "Acest club acceptă plata la fața locului. Nu te redirecționăm către Mercado Pago sau către plata cu cardul: după confirmare, rezervarea rămâne în așteptare până când plătești la club.",
     "cancelar": "Anulează rezervarea",
     "paymentIncomplete": "Plata nu a fost finalizată. Poți încerca din nou sau poți anula rezervarea.",
@@ -139,6 +149,8 @@
     "detalle": "Detaliile lecției"
   },
   "auth": {
+    "accessLinkRegistrationRequired": "Pentru a solicita un link, înregistrează mai întâi contul sau verifică adresa de e-mail introdusă.",
+    "accessLinkRateLimited": "Serviciul de e-mail a atins limita temporară. Așteaptă înainte de a solicita alt link sau autentifică-te cu parola.",
     "birthDate": "Data nașterii",
     "ageEligibilityHelp": "Conturile personale sunt disponibile de la 16 ani. Înregistrarea persoanelor între 13 și 15 ani rămâne dezactivată până când există o autorizare parentală verificabilă.",
     "ageEligibilityInvalid": "Introdu o dată de naștere validă. Conturile personale sunt disponibile de la 16 ani.",
@@ -160,6 +172,8 @@
     "handednessAmbi": "Ambidextru"
   },
   "profileCompletion": {
+    "storageUnavailable": "Serverul nu a putut pregăti salvarea profilului. Datele tale nu sunt greșite. Încearcă din nou mai târziu.",
+    "eligibilityCheckFailed": "Nu am putut verifica vârsta pe server. Data nașterii nu a fost respinsă. Încearcă din nou; dacă problema persistă, contactează asistența.",
     "title": "Completează-ți profilul",
     "intro": "Completează-ți profilul pentru a rezerva Padbol Courts, a participa la turnee și a găsi parteneri de joc.",
     "personalDataHelp": "Aceste date completează profilul tău sportiv, verifică vârsta minimă și leagă activitatea în siguranță. Poți consulta utilizarea lor și drepturile tale în Politica de confidențialitate.",
@@ -399,7 +413,7 @@
       "categoryLabel": "Categorie",
       "fixtureFormatLabel": "Formatul programului",
       "initialStatusLabel": "Starea inițială a turneului",
-      "initialStatusHint": "Urmează înseamnă etapa de planificare. Poți deschide înscrierile acum sau ulterior din panoul de administrare.",
+      "initialStatusHint": "Turneul este creat în etapa de planificare (Urmează). După salvare și verificare, poți deschide înscrierile din pagina de administrare a turneului.",
       "teamsPerGroupLabel": "Echipe în grupă",
       "qualifiersPerGroupLabel": "Echipe calificate din grupă",
       "bestThirdsLabel": "Cele mai bune echipe de pe locul trei",
@@ -430,6 +444,7 @@
       "loadTournamentError": "Turneul nu a putut fi încărcat",
       "tournamentNotFound": "Turneul nu a fost găsit",
       "confirmOpenRegistration": "Deschizi înscrierile acum?",
+      "registrationOpened": "Înscrierile sunt deschise și salvarea a fost confirmată.",
       "openRegistrationError": "Înscrierile nu au putut fi deschise.",
       "networkError": "Eroare de rețea",
       "teamNumber": "Echipa nr. {{id}}",
@@ -486,7 +501,11 @@
       "noWhatsapp": "Profilul nu conține un număr de WhatsApp",
       "inviteToTeam": "Invită în echipă",
       "pendingInvitations": "Invitații trimise în așteptare: {{players}}",
-      "tournamentFinishedBanner": "✅ Turneu încheiat"
+      "tournamentFinishedBanner": "✅ Turneu încheiat",
+      "registrationExpired": "Data de început a trecut · înscriere închisă"
+    },
+    "nations": {
+      "authoritativeStandings": "Consultați clasamentul confirmat, comparația locurilor trei și echipele calificate în panoul Nations Cup. Regulile acestui format sunt calculate de server."
     }
   },
   "scoreboardDisplay": {

@@ -1,3 +1,4 @@
+import {formatTournamentEventTime} from '../../utils/tournamentEventTime';
 import React, { useEffect, useMemo } from 'react';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import {
@@ -57,6 +58,9 @@ export default function PartidoDetalleModal({
   nombreEquipo,
   onCargarResultado,
   torneoId = null,
+  children,
+  resultadoDisabled = false,
+  eventTimeZone,
 }) {
   const { t } = useTranslation();
 
@@ -124,8 +128,8 @@ export default function PartidoDetalleModal({
     if (!partido?.fecha_hora) return '';
     const d = new Date(partido.fecha_hora);
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' });
-  }, [partido?.fecha_hora]);
+    return formatTournamentEventTime(partido.fecha_hora,eventTimeZone,'full');
+  }, [partido?.fecha_hora,eventTimeZone]);
 
   const grupoLabel = useMemo(() => {
     const g = partido?.grupo;
@@ -165,7 +169,7 @@ export default function PartidoDetalleModal({
   return (
     <div className="pdm-overlay" role="presentation" onClick={() => onClose?.()}>
       <div
-        className="pdm-dialog"
+        className={`pdm-dialog${children ? ' pdm-dialog--with-lineup' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="partido-detalle-titulo"
@@ -251,14 +255,16 @@ export default function PartidoDetalleModal({
           {[grupoLabel, rondaLabel].filter(Boolean).length > 0 ? (
             <p className="pdm-meta-extra">{[grupoLabel, rondaLabel].filter(Boolean).join(' · ')}</p>
           ) : null}
+          {children}
         </div>
-
         <footer className="pdm-footer">
           {showCargar ? (
             <button
               type="button"
               className="pdm-btn-cargar"
+              disabled={resultadoDisabled}
               onClick={() => {
+                if (resultadoDisabled) return;
                 onCargarResultado(partido);
                 onClose?.();
               }}
