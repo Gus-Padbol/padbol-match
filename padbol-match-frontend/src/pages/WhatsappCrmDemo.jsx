@@ -267,6 +267,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const replyComposition = useRef(null);
   const activeConversationId = useRef(null);
+  const threadRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [activities, setActivities] = useState([]);
@@ -765,7 +766,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
             </div>
             <div className="wa-list" role="region" aria-label="Listado de conversaciones" tabIndex={0}>
               {visibleItems.length === 0 ? <div className="wa-area-empty">No hay conversaciones en esta sección.</div> : visibleItems.map((item) => (
-                <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => setActiveId(item.id)}>
+                <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => { setActiveId(item.id); threadRef.current?.scrollIntoView?.({ block: 'start' }); }}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
                     <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined}>{compactDateTime(conversationDisplayDate(item))}</time></div>
@@ -781,7 +782,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
 
           {active ? (
             <>
-              <section className="wa-thread">
+              <section className="wa-thread" ref={threadRef}>
                 <header className="wa-thread-head">
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>

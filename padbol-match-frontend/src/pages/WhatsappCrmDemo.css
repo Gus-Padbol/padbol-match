@@ -408,3 +408,13 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
 @media (max-width: 720px) {
   .wa-demo .wa-area-tabs--top { max-height: 30vh; overflow-y: auto; overscroll-behavior: contain; }
 }
+
+/* Keep the list navigable without pushing the selected consultation away. */
+@media (min-width: 721px) {
+  .wa-demo .wa-inbox { overflow: visible; }
+  .wa-demo .wa-list { max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; }
+  .wa-demo .wa-thread { scroll-margin-top: calc(var(--pm-app-header-stack-height, 86px) + 150px); }
+}
+@media (max-width: 720px) {
+  .wa-demo .wa-thread { scroll-margin-top: 32vh; }
+}
