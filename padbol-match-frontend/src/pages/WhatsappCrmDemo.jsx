@@ -777,6 +777,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>
                   {active.short_ticket_reference || active.ticket_reference ? <p className="wa-ticket-reference">N.º de ticket: <strong>{active.short_ticket_reference || active.ticket_reference}</strong></p> : null}
+                  {(perms?.canAudit || (active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true)) ? <details className="wa-thread-admin"><summary>Administración</summary><div className="wa-thread-admin__actions">
                   {perms?.canAudit ? <button type="button" disabled={busy} onClick={async () => {
                     const hide = !hiddenOnly;
                     if (hide && !window.confirm('Confirma que toda esta conversación es una prueba. Se ocultará de la bandeja y se podrá restaurar.')) return;
@@ -786,6 +787,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     finally { setBusy(false); }
                   }}>{hiddenOnly ? 'Restaurar conversación' : 'Ocultar prueba'}</button> : null}
                   {active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true ? <button type="button" disabled={busy || waContext?.deliveryUncertain || waContext?.deliveryUnknown} onClick={resumeWhatsappAutomation}>Reanudar respuestas automáticas</button> : null}
+                  </div></details> : null}
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">

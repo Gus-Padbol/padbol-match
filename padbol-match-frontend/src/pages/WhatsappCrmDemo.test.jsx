@@ -120,6 +120,7 @@ describe('CRM histórico unificado', () => {
     window.confirm = jest.fn(() => false);
     crmAdminApi.setTestVisibility.mockResolvedValue({changed:true});
     render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByText('Administración'));
     fireEvent.click(await screen.findByRole('button', {name:'Ocultar prueba'}));
     expect(crmAdminApi.setTestVisibility).not.toHaveBeenCalled();
     window.confirm.mockReturnValue(true);
@@ -127,6 +128,7 @@ describe('CRM histórico unificado', () => {
     await waitFor(() => expect(crmAdminApi.setTestVisibility).toHaveBeenCalledWith('qa-token', 'conv-prueba-23', true, 0));
     fireEvent.click(await screen.findByRole('button', {name:'Ver pruebas ocultas'}));
     await waitFor(() => expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', expect.objectContaining({hiddenOnly:true})));
+    fireEvent.click(await screen.findByText('Administración'));
     fireEvent.click(await screen.findByRole('button', {name:'Restaurar conversación'}));
     await waitFor(() => expect(crmAdminApi.setTestVisibility).toHaveBeenCalledWith('qa-token', 'conv-prueba-23', false, 0));
     window.confirm = originalConfirm;
@@ -208,6 +210,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.resumeWhatsappAutomation.mockResolvedValue({ok:true});
     const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
     render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByText('Administración'));
     const button = await screen.findByRole('button',{name:'Reanudar respuestas automáticas'});
     fireEvent.click(button);
     expect(crmAdminApi.resumeWhatsappAutomation).not.toHaveBeenCalled();
@@ -223,6 +226,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.resumeWhatsappAutomation.mockRejectedValueOnce(new Error('Hay atención humana en curso'));
     const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
     render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByText('Administración'));
     fireEvent.click(await screen.findByRole('button',{name:'Reanudar respuestas automáticas'}));
     expect(await screen.findByText('Hay atención humana en curso')).toBeInTheDocument();
     confirm.mockRestore();
@@ -232,6 +236,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.permissions.mockResolvedValue({canOperate:true,whatsappAutomationResumeEnabled:true});
     crmAdminApi.inbox.mockResolvedValue([{id:'wa-resume',source_channel:'whatsapp',estado:'nuevo',whatsapp_delivery_review:'required'}]);
     render(<WhatsappCrmDemo />);
+    fireEvent.click(await screen.findByText('Administración'));
     expect(await screen.findByRole('button',{name:'Reanudar respuestas automáticas'})).toBeDisabled();
     expect(crmAdminApi.resumeWhatsappAutomation).not.toHaveBeenCalled();
   });

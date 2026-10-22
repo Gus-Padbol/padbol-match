@@ -389,3 +389,13 @@ html.theme-dark .wa-demo :is(.wa-executive-card p,.wa-executive-card li,.wa-exec
 
 .wa-demo .wa-language-attention { color: #765100; font-weight: 700; }
 html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
+
+/* Acciones administrativas, fuera del flujo de atención habitual. */
+.wa-demo .wa-thread-admin { position: relative; flex: none; }
+.wa-demo .wa-thread-admin summary { cursor: pointer; list-style: none; border: 1px solid #d9e0e8; border-radius: 9px; padding: 8px 12px; color: #46536a; background: #fff; font-size: 12px; font-weight: 700; }
+.wa-demo .wa-thread-admin summary::-webkit-details-marker { display: none; }
+.wa-demo .wa-thread-admin summary:focus-visible,.wa-demo .wa-thread-admin button:focus-visible { outline: 3px solid #77a9e8; outline-offset: 2px; }
+.wa-demo .wa-thread-admin__actions { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; display: grid; gap: 4px; min-width: 240px; padding: 6px; border: 1px solid #d9e0e8; border-radius: 10px; background: #fff; box-shadow: 0 8px 24px #17203324; }
+.wa-demo .wa-thread-admin__actions button { text-align: left; border: 0; border-radius: 6px; background: #fff; color: #34445d; padding: 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.wa-demo .wa-thread-admin__actions button:hover:not(:disabled) { background: #f1f5fa; }
+.wa-demo .wa-thread-admin__actions button:disabled { opacity: .5; cursor: not-allowed; }
