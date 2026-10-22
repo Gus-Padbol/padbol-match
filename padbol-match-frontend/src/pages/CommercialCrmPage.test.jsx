@@ -19,3 +19,7 @@ test('ofrece área de equipo solo con rol confirmado por servidor',async()=>{
 test('mantiene el alcance comercial y permite cerrar sesión', async()=>{
  createCommercialAssignmentsApi.mockReturnValue({getRole:jest.fn().mockRejectedValue(new Error('no disponible'))});render(<CommercialCrmPage/>);expect(screen.getByTestId('crm')).toHaveTextContent('commercial');fireEvent.click(screen.getByRole('button',{name:'Cerrar sesión'}));expect(mockSignOut).toHaveBeenCalledTimes(1);await waitFor(()=>expect(screen.getByTestId('crm')).toBeInTheDocument());
 });
+
+test('el asesor entra directamente a sus consultas',async()=>{
+ createCommercialAssignmentsApi.mockReturnValue({getRole:jest.fn().mockResolvedValue({role:'advisor'})});render(<CommercialCrmPage/>);expect(await screen.findByText('Vista del equipo')).toBeInTheDocument();
+});
