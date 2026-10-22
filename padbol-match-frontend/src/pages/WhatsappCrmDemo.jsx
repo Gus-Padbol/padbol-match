@@ -365,9 +365,14 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
     setImagePreviews({});
     if (token && active?.id) {
       whatsappAttachments.filter((attachment) => attachment.mediaType === 'image').forEach((attachment) => {
-        crmAdminApi.whatsappMedia(token, active.id, attachment.eventId).then(({ blob }) => {
-          if (!current || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(blob.type.toLowerCase())) return;
-          const url = URL.createObjectURL(blob);
+        crmAdminApi.whatsappMedia(token, active.id, attachment.eventId).then(async ({ blob }) => {
+          const bytes = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+          const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+          const png = [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
+          const webp = bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70 && bytes[8] === 87 && bytes[9] === 69 && bytes[10] === 66 && bytes[11] === 80;
+          const type = jpeg ? 'image/jpeg' : png ? 'image/png' : webp ? 'image/webp' : '';
+          if (!current || !type) return;
+          const url = URL.createObjectURL(new Blob([blob], { type }));
           urls.push(url);
           setImagePreviews((previous) => ({ ...previous, [attachment.eventId]: url }));
         }).catch(() => {});

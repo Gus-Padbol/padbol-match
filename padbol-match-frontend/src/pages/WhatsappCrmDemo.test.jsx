@@ -103,7 +103,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-image', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Imagen' }]);
     crmAdminApi.activities.mockResolvedValue([]);
     crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [{ eventId: 'image-1', mediaType: 'image' }, { eventId: 'audio-1', mediaType: 'audio' }] });
-    crmAdminApi.whatsappMedia.mockResolvedValue({ blob: new Blob(['jpg'], { type: 'image/jpeg' }), filename: 'foto.jpg' });
+    crmAdminApi.whatsappMedia.mockResolvedValue({ blob: { slice: () => ({ arrayBuffer: async () => Uint8Array.from([255, 216, 255, 0]).buffer }) }, filename: 'foto.jpg' });
     const view = render(<WhatsappCrmDemo />);
     expect(await screen.findByRole('img', { name: 'Imagen recibida 1' })).toHaveAttribute('src', 'blob:imagen');
     expect(crmAdminApi.whatsappMedia).toHaveBeenCalledTimes(1);
