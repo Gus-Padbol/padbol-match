@@ -8,7 +8,7 @@ export function createCommercialReviewApi(token) {
  return {
   list:()=>request('/api/admin/crm/commercial-review'),
   decide:(caseId,eventId,version,decision)=>{
-   if(!Number.isSafeInteger(version)||version<0||!['commercial','other'].includes(decision))return Promise.reject(new Error('INVALID_REVIEW'));
+   if(typeof version !== 'string'||!/^[a-f0-9]{32}$/.test(version)||!['commercial','other'].includes(decision))return Promise.reject(new Error('INVALID_REVIEW'));
    return request(`/api/admin/crm/commercial-review/${encodeURIComponent(caseId)}/${encodeURIComponent(eventId)}`,{method:'POST',body:JSON.stringify({version,decision})});
   }
  };
