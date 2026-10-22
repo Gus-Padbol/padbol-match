@@ -692,6 +692,8 @@ export default function TorneoTabbedView({
     ]
   );
 
+  const partidoHref = partido => { const query = new URLSearchParams(location.search); query.set('partido', String(partido.id)); return `${location.pathname}?${query.toString()}`; };
+  const handlePartidoLink = (event, partido) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); abrirDetallePartido(partido); };
   const abrirDetallePartido = useCallback((partido) => {
     if (!partido) return;
     setSelectedPartido(partido);
@@ -1300,7 +1302,6 @@ export default function TorneoTabbedView({
     const nb = nombreEquipoMostrado(eqB || {});
     const tieneResultado = parseResultadoPartido(partido).length > 0;
     const pendiente = !tieneResultado && String(partido.estado || '').toLowerCase() !== 'finalizado';
-    const clickable = true;
     const marcadorDetalle = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : '';
     const fh = partido.fecha_hora
       ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
@@ -1314,12 +1315,11 @@ export default function TorneoTabbedView({
       : marcadorDetalle;
 
     return (
-      <div
+      <a
         key={partido.id}
-        className="partido-item"
-        style={{ cursor: clickable ? 'pointer' : 'default' }}
-        onClick={clickable ? () => abrirDetallePartido(partido) : undefined}
-        role={clickable ? 'button' : undefined}
+        className="partido-item torneo-match-link"
+        href={partidoHref(partido)}
+        onClick={event => handlePartidoLink(event, partido)}
       >
         <div className="partido-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px', flex: 1 }}>
           {pendiente ? (
@@ -1371,7 +1371,7 @@ export default function TorneoTabbedView({
         <span className={`estado ${pendiente ? 'pendiente' : 'finalizado'}`}>
           {pendiente ? `⏳ ${t('torneos.vista.pendiente')}` : `✅ ${t('torneos.vista.finalizado')}`}
         </span>
-      </div>
+      </a>
     );
   };
 
@@ -1427,15 +1427,12 @@ export default function TorneoTabbedView({
     const fh = partido.fecha_hora
       ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
       : null;
-    const click = () => abrirDetallePartido(partido);
     return (
-      <div
+      <a
         key={partido.id}
-        className="torneo-bracket-card torneo-bracket-card--clickable"
-        onClick={click}
-        role="button"
-        tabIndex={0}
-        onKeyDown={event => {if(event.key === 'Enter' || event.key === ' '){event.preventDefault();click();}}}
+        className="torneo-bracket-card torneo-bracket-card--clickable torneo-match-link"
+        href={partidoHref(partido)}
+        onClick={event => handlePartidoLink(event, partido)}
       >
         {nationsEnabled && Number(partido.bracket_round) === 3 ? <strong className="torneo-bracket-phase">{Number(partido.bracket_position) === 2 ? 'Tercer puesto' : 'Final'}</strong> : null}
         <div className={`torneo-bracket-team${ganaA ? ' torneo-bracket-team--winner' : ''}${na === tbdLabel ? ' torneo-bracket-team--tbd' : ''}`}>
@@ -1453,7 +1450,7 @@ export default function TorneoTabbedView({
           </div>
         ) : null}
         {!fin && fh ? <div className="torneo-bracket-meta">{fh}</div> : null}
-      </div>
+      </a>
     );
   };
 

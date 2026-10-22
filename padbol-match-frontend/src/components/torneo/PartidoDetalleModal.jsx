@@ -1,5 +1,5 @@
 import {formatTournamentEventTime} from '../../utils/tournamentEventTime';
-import React, { useEffect, useMemo } from 'react';
+import React, { createContext, useEffect, useMemo, useState } from 'react';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import {
   equipoIdKey,
@@ -9,6 +9,8 @@ import {
   validarMarcadorSetsPartido,
 } from '../../utils/torneoPartidoResultado';
 import './PartidoDetalleModal.css';
+
+export const ScoreboardFooterContext = createContext(null);
 
 /** Torneo de prueba: mock de sets cuando el JSONB viene vacío (solo visualización). */
 const TORNEO_ID_MOCK_RESULTADO = 21;
@@ -63,6 +65,7 @@ export default function PartidoDetalleModal({
   eventTimeZone,
 }) {
   const { t } = useTranslation();
+  const [scoreboardFooter, setScoreboardFooter] = useState(null);
 
   const eqA = useMemo(
     () => (partido ? equipoPorId(equipos, partido.equipo_a_id) : null),
@@ -255,9 +258,10 @@ export default function PartidoDetalleModal({
           {[grupoLabel, rondaLabel].filter(Boolean).length > 0 ? (
             <p className="pdm-meta-extra">{[grupoLabel, rondaLabel].filter(Boolean).join(' · ')}</p>
           ) : null}
-          {children}
+          <ScoreboardFooterContext.Provider value={scoreboardFooter}>{children}</ScoreboardFooterContext.Provider>
         </div>
         <footer className="pdm-footer">
+          <div ref={setScoreboardFooter} />
           {showCargar ? (
             <button
               type="button"

@@ -2170,3 +2170,9 @@ body.lang-ar [class*='torneo-tab-item'] {
   overflow-wrap: anywhere;
   word-break: normal;
 }
+
+.tournament-scoreboard-link{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box;padding:10px 14px;border-radius:8px;border:1px solid #b91c1c;background:#b91c1c;color:#fff;font-weight:700;text-decoration:none}.tournament-scoreboard-link:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}
+
+.torneo-match-link{text-decoration:none;color:inherit}.torneo-match-link:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+
+.pdm-footer .tournament-scoreboard-link{width:100%;justify-content:center;cursor:pointer}.pdm-footer .tournament-scoreboard-link:disabled{opacity:.55;cursor:not-allowed}
