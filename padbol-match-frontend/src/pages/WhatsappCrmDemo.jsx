@@ -248,6 +248,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const [hiddenOnly, setHiddenOnly] = useState(false);
   const loadSequence = useRef(0);
   const [replyText, setReplyText] = useState('');
+  const [reviewOutcome, setReviewOutcome] = useState('');
+  const [reviewEvidence, setReviewEvidence] = useState('');
+  const [reviewProviderId, setReviewProviderId] = useState('');
+  const [reviewConfirmed, setReviewConfirmed] = useState(false);
   const replyComposition = useRef(null);
   const activeConversationId = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -473,6 +477,24 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
     setActivityEstado(active?.estado || 'nuevo');
     setActivityDerivado(active?.derivado ? 'si' : 'no');
   }, [active?.id, active?.estado, active?.derivado, session?.user?.email]);
+
+  useEffect(() => { setReviewOutcome(''); setReviewEvidence(''); setReviewProviderId(''); setReviewConfirmed(false); }, [active?.id]);
+
+  const submitDeliveryReview = async (event) => {
+    event.preventDefault();
+    if (!active || !perms?.canAudit || !waContext?.deliveryUncertain || busy || !reviewConfirmed || !['delivered', 'not_delivered'].includes(reviewOutcome) || reviewEvidence.trim().length < 10 || reviewEvidence.trim().length > 2048 || (reviewOutcome === 'delivered' && (!reviewProviderId.trim() || reviewProviderId.trim().length > 512))) return;
+    const conversationId = active.id;
+    setBusy(true); setNotice(null);
+    try {
+      await crmAdminApi.reviewWhatsappDelivery(token, conversationId, { outcome: reviewOutcome, evidence: reviewEvidence.trim(), ...(reviewOutcome === 'delivered' ? { providerId: reviewProviderId.trim() } : {}) });
+      if (activeConversationId.current !== conversationId) return;
+      setReviewOutcome(''); setReviewEvidence(''); setReviewProviderId(''); setReviewConfirmed(false);
+      setNotice('Revisión registrada. Comprobando el estado actualizado.');
+      await load();
+    } catch (error) {
+      if (activeConversationId.current === conversationId) setNotice(error?.message || 'No se pudo registrar la revisión.');
+    } finally { setBusy(false); }
+  };
 
   const submitReply = async () => {
     if (!active || busy || !activeCanOperate || !canReply || !replyText.trim()) return;
@@ -738,6 +760,19 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                 </header>
                 <div className="wa-messages">
                   {waContext?.review ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>{waContext.deliveryUncertain ? 'No se pudo confirmar si llegó una respuesta automática. Revisa el envío antes de volver a responder para evitar duplicados.' : waContext.deliveryUnknown ? 'No se pudo comprobar el estado de las respuestas automáticas. Revisá la conversación antes de continuar.' : 'El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.'}</p></div> : null}
+                  {waContext?.deliveryUncertain && perms?.canAudit ? <form className="wa-context-warning" aria-label="Revisar entrega automática" onSubmit={submitDeliveryReview}>
+                    <strong>Registrar revisión de entrega</strong>
+                    <p>Solo registrá un resultado si comprobaste evidencia. Esta acción no reenvía el mensaje.</p>
+                    <label htmlFor="delivery-outcome">Resultado comprobado</label>
+                    <select id="delivery-outcome" value={reviewOutcome} onChange={e => { setReviewOutcome(e.target.value); setReviewConfirmed(false); }}>
+                      <option value="">Seleccioná un resultado</option><option value="delivered">Comprobé que se entregó</option><option value="not_delivered">Comprobé que no se entregó</option>
+                    </select>
+                    <label htmlFor="delivery-evidence">Evidencia comprobada</label>
+                    <textarea id="delivery-evidence" maxLength={2048} value={reviewEvidence} onChange={e => { setReviewEvidence(e.target.value); setReviewConfirmed(false); }} />
+                    {reviewOutcome === 'delivered' ? <><label htmlFor="delivery-provider">Identificador de Meta</label><input id="delivery-provider" maxLength={512} value={reviewProviderId} onChange={e => { setReviewProviderId(e.target.value); setReviewConfirmed(false); }} /></> : null}
+                    <label><input type="checkbox" checked={reviewConfirmed} onChange={e => setReviewConfirmed(e.target.checked)} /> Revisé la evidencia y confirmo este resultado.</label>
+                    <button type="submit" disabled={busy || !reviewConfirmed || !reviewOutcome || reviewEvidence.trim().length < 10 || reviewEvidence.trim().length > 2048 || (reviewOutcome === 'delivered' && (!reviewProviderId.trim() || reviewProviderId.trim().length > 512))}>Registrar revisión</button>
+                  </form> : null}
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
                   {isWebForm && activeDetails.length ? <article className="wa-lead-card">

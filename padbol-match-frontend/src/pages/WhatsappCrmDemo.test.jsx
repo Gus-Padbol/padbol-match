@@ -20,6 +20,7 @@ jest.mock('../utils/crmAdminApi', () => ({
     activities: jest.fn(),
     whatsappMediaList: jest.fn(),
     whatsappHistory: jest.fn(),
+    reviewWhatsappDelivery: jest.fn(),
     whatsappMedia: jest.fn(),
     reply: jest.fn(),
     createManual: jest.fn(),
@@ -205,6 +206,33 @@ describe('CRM histórico unificado', () => {
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText(/No se pudo comprobar el estado de las respuestas automáticas/)).toBeInTheDocument();
     expect(screen.getByLabelText('Respuesta')).toBeDisabled();
+  });
+
+  it('solo el superadmin registra una revisión con evidencia y confirmación', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canAudit:true, canOperate:true, whatsappSendEnabled:true });
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-review',source_channel:'whatsapp',whatsapp_delivery_review:'required',estado:'nuevo'}]);
+    crmAdminApi.reviewWhatsappDelivery.mockResolvedValue({ok:true});
+    render(<WhatsappCrmDemo />);
+    const submit = await screen.findByRole('button', { name:'Registrar revisión' });
+    expect(submit).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Resultado comprobado'), {target:{value:'delivered'}});
+    fireEvent.change(screen.getByLabelText('Evidencia comprobada'), {target:{value:'Confirmado con recibo de Meta'}});
+    fireEvent.click(screen.getByLabelText('Revisé la evidencia y confirmo este resultado.'));
+    expect(submit).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Identificador de Meta'), {target:{value:'wamid.test'}});
+    expect(submit).toBeDisabled();
+    fireEvent.click(screen.getByLabelText('Revisé la evidencia y confirmo este resultado.'));
+    fireEvent.click(submit);
+    await waitFor(() => expect(crmAdminApi.reviewWhatsappDelivery).toHaveBeenCalledWith('qa-token','wa-review',{outcome:'delivered',evidence:'Confirmado con recibo de Meta',providerId:'wamid.test'}));
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+  });
+
+  it('un operador sin auditoría no puede registrar conciliación', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canAudit:false, canOperate:true, whatsappSendEnabled:true });
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-review',source_channel:'whatsapp',whatsapp_delivery_review:'required',estado:'nuevo'}]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByText(/No se pudo confirmar si llegó una respuesta automática/)).toBeInTheDocument();
+    expect(screen.queryByRole('form',{name:'Revisar entrega automática'})).not.toBeInTheDocument();
   });
 
   it('permite WhatsApp solo con capacidad del servidor y permiso de operador, y muestra el rechazo real', async () => {
