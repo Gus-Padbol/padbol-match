@@ -202,10 +202,19 @@ describe('CRM histórico unificado', () => {
 
   it('bloquea el envío si no se puede comprobar el estado automático', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate:true, whatsappSendEnabled:true });
-    crmAdminApi.inbox.mockResolvedValue([{id:'wa-unknown',source_channel:'whatsapp',estado:'nuevo'}]);
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-unknown',source_channel:'whatsapp',whatsapp_delivery_review:'unknown',estado:'nuevo'}]);
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText(/No se pudo comprobar el estado de las respuestas automáticas/)).toBeInTheDocument();
     expect(screen.getByLabelText('Respuesta')).toBeDisabled();
+  });
+
+  it('mantiene disponible la respuesta ante un servidor anterior sin estados de revisión', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate:true, whatsappSendEnabled:true });
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-legacy',source_channel:'whatsapp',estado:'nuevo'}]);
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByLabelText('Respuesta')).toBeEnabled();
+    expect(screen.queryByText(/No se pudo comprobar el estado de las respuestas automáticas/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No se pudo comprobar el orden de los mensajes/)).not.toBeInTheDocument();
   });
 
   it('solo el superadmin registra una revisión con evidencia y confirmación', async () => {

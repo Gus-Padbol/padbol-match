@@ -23,10 +23,10 @@ export function whatsappContext(conversation) {
   const data = conversation.qualification_data || {};
   const menu = data.whatsapp_menu;
   const deliveryState = conversation.whatsapp_delivery_review;
-  const deliveryUnknown = deliveryState !== 'clear' && deliveryState !== 'required';
+  const deliveryUnknown = deliveryState !== undefined && deliveryState !== 'clear' && deliveryState !== 'required';
   const deliveryUncertain = deliveryState === 'required' || (data.whatsapp_order_review?.required === true && data.whatsapp_order_review?.reason === 'uncertain_automated_delivery');
   const orderState = conversation.whatsapp_message_order_review;
-  const orderUnknown = orderState !== 'clear' && orderState !== 'required';
+  const orderUnknown = orderState !== undefined && orderState !== 'clear' && orderState !== 'required';
   const orderUncertain = orderState === 'required' || (data.whatsapp_order_review?.required === true && data.whatsapp_order_review?.reason === 'ambiguous_message_order') || menu?.needs_review === true;
   const review = deliveryUncertain || deliveryUnknown || orderUncertain || orderUnknown;
   if ((!menu || typeof menu !== 'object' || Array.isArray(menu)) && !review) return null;
