@@ -190,7 +190,7 @@ export default function TorneoVista() {
     }),
     [perfilMapsVista, session, userProfile, authUserId]
   );
-  const fromAdmin = location.state?.fromAdmin === true;
+  const fromAdmin = location.state?.fromAdmin === true || new URLSearchParams(location.search).get('gestion') === '1';
   const enRutaAdminTorneo = pathnameIsAdminRoute(location.pathname);
   const isAdmin = useMemo(
     () =>

@@ -692,7 +692,7 @@ export default function TorneoTabbedView({
     ]
   );
 
-  const partidoHref = partido => { const query = new URLSearchParams(location.search); query.set('partido', String(partido.id)); return `${location.pathname}?${query.toString()}`; };
+  const partidoHref = partido => { const query = new URLSearchParams(location.search); query.set('partido', String(partido.id)); if (isAdmin) query.set('gestion', '1'); return `${location.pathname}?${query.toString()}`; };
   const handlePartidoLink = (event, partido) => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); abrirDetallePartido(partido); };
   const abrirDetallePartido = useCallback((partido) => {
     if (!partido) return;
