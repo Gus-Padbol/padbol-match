@@ -22,10 +22,15 @@ export function whatsappContext(conversation) {
   if (conversation?.source_channel !== 'whatsapp') return null;
   const data = conversation.qualification_data || {};
   const menu = data.whatsapp_menu;
-  const review = data.whatsapp_order_review?.required === true || menu?.needs_review === true;
+  const deliveryState = conversation.whatsapp_delivery_review;
+  const deliveryUnknown = deliveryState !== 'clear' && deliveryState !== 'required';
+  const deliveryUncertain = deliveryState === 'required' || (data.whatsapp_order_review?.required === true && data.whatsapp_order_review?.reason === 'uncertain_automated_delivery');
+  const review = deliveryUncertain || deliveryUnknown || data.whatsapp_order_review?.required === true || menu?.needs_review === true;
   if ((!menu || typeof menu !== 'object' || Array.isArray(menu)) && !review) return null;
   return {
     review,
+    deliveryUncertain,
+    deliveryUnknown,
     topic: !review ? WHATSAPP_TOPICS[menu?.topic] || '' : '',
     subtopic: !review && typeof menu?.subtopic === 'string' ? menu.subtopic : '',
     initialMessage: typeof menu?.initialMessage === 'string' ? menu.initialMessage : '',
@@ -353,7 +358,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const isWebForm = String(active?.origin || '').startsWith('web_form:');
   const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled;
   const canReplyEmail = active?.source_channel === 'email' && (supportOrigin ? supportEmail && perms?.supportEmailSendEnabled === true : emailSendEnabled) && Boolean(active?.contact?.email_normalized);
-  const canReply = canReplyWhatsapp || canReplyEmail;
+  const canReply = (canReplyWhatsapp && !waContext?.deliveryUncertain && !waContext?.deliveryUnknown) || canReplyEmail;
   activeConversationId.current = active?.id;
   useEffect(() => { replyComposition.current = null; setReplyText(''); setNotice(null); }, [active?.id]);
   const leadName = [detailValue(activeDetails, 'Nombre'), detailValue(activeDetails, 'Apellido')].filter(Boolean).join(' ') || active?.contact?.nombre || active?.identity_used || 'Contacto sin nombre';
@@ -732,7 +737,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
-                  {waContext?.review ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.</p></div> : null}
+                  {waContext?.review ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>{waContext.deliveryUncertain ? 'No se pudo confirmar si llegó una respuesta automática. Revisa el envío antes de volver a responder para evitar duplicados.' : waContext.deliveryUnknown ? 'No se pudo comprobar el estado de las respuestas automáticas. Revisá la conversación antes de continuar.' : 'El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.'}</p></div> : null}
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
                   {isWebForm && activeDetails.length ? <article className="wa-lead-card">
@@ -745,7 +750,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                       <div><dt>Ubicación</dt><dd>{[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Sin definir'}</dd></div>
                     </dl>
                     <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p>{detailValue(activeDetails, 'Información adicional') || 'No agregó información adicional.'}</p></section>
-                  </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p>{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${{sent:'Enviado',pending:'Pendiente de confirmación',cancelled:'No enviado'}[message.status] || 'Estado no disponible'}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
+                  </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p>{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${{sent:'Enviado',pending:'Pendiente de confirmación',cancelled:'Entrega no confirmada'}[message.status] || 'Estado no disponible'}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
                   {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
                   {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
                   {whatsappAttachments.length ? <section aria-label="Archivos de WhatsApp">
