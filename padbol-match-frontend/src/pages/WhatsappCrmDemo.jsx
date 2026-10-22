@@ -791,15 +791,15 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
-                  {needsEnglishHumanAttention(active) ? <div className="wa-context-warning" role="status"><strong>Atención humana en inglés pendiente</strong><p>La consulta necesita atención en inglés. Revisá la conversación para continuar.</p></div> : null}
-                  {waContext?.deliveryUncertain || waContext?.deliveryUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión de entrega necesaria</strong><p>{waContext.deliveryUncertain ? 'No se pudo confirmar si llegó una respuesta automática. Revisa el envío antes de volver a responder para evitar duplicados.' : 'No se pudo comprobar el estado de las respuestas automáticas. Revisá la conversación antes de continuar.'}</p></div> : null}
-                  {waContext?.orderUncertain || waContext?.orderUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>{waContext.orderUncertain ? 'El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.' : 'No se pudo comprobar el orden de los mensajes. Revisá la conversación antes de responder.'}</p></div> : null}
+                  {needsEnglishHumanAttention(active) ? <div className="wa-context-warning" role="status"><strong>Atención humana en inglés pendiente</strong><p>La consulta necesita atención en inglés. Revisa la conversación para continuar.</p></div> : null}
+                  {waContext?.deliveryUncertain || waContext?.deliveryUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión de entrega necesaria</strong><p>{waContext.deliveryUncertain ? 'No se pudo confirmar si llegó una respuesta automática. Revisa el envío antes de volver a responder para evitar duplicados.' : 'No se pudo comprobar el estado de las respuestas automáticas. Revisa la conversación antes de continuar.'}</p></div> : null}
+                  {waContext?.orderUncertain || waContext?.orderUnknown ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>{waContext.orderUncertain ? 'El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.' : 'No se pudo comprobar el orden de los mensajes. Revisa la conversación antes de responder.'}</p></div> : null}
                   {waContext?.deliveryUncertain && perms?.canAudit ? <form className="wa-context-warning" aria-label="Revisar entrega automática" onSubmit={submitDeliveryReview}>
                     <strong>Registrar revisión de entrega</strong>
-                    <p>Solo registrá un resultado si comprobaste evidencia. Esta acción no reenvía el mensaje.</p>
+                    <p>Solo registra un resultado si comprobaste evidencia. Esta acción no reenvía el mensaje.</p>
                     <label htmlFor="delivery-outcome">Resultado comprobado</label>
                     <select id="delivery-outcome" value={reviewOutcome} onChange={e => { setReviewOutcome(e.target.value); setReviewConfirmed(false); }}>
-                      <option value="">Seleccioná un resultado</option><option value="delivered">Comprobé que se entregó</option><option value="not_delivered">Comprobé que no se entregó</option>
+                      <option value="">Selecciona un resultado</option><option value="delivered">Comprobé que se entregó</option><option value="not_delivered">Comprobé que no se entregó</option>
                     </select>
                     <label htmlFor="delivery-evidence">Evidencia comprobada</label>
                     <textarea id="delivery-evidence" maxLength={2048} value={reviewEvidence} onChange={e => { setReviewEvidence(e.target.value); setReviewConfirmed(false); }} />
@@ -861,7 +861,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2><p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p><p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
                 {waContext ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
-                  {waContext.review ? <p>Revisá el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
+                  {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
                   {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
                 </section> : null}
