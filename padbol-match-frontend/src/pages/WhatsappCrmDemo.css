@@ -399,3 +399,12 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
 .wa-demo .wa-thread-admin__actions button { text-align: left; border: 0; border-radius: 6px; background: #fff; color: #34445d; padding: 10px; font: inherit; font-size: 12px; cursor: pointer; }
 .wa-demo .wa-thread-admin__actions button:hover:not(:disabled) { background: #f1f5fa; }
 .wa-demo .wa-thread-admin__actions button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Keep the areas visible while reading long consultations. */
+.wa-demo .wa-area-tabs--top { position: sticky; top: 0; z-index: 40; }
+@media (min-width: 721px) {
+  .wa-demo:has(.wa-panel-exit) .wa-area-tabs--top { top: calc(var(--pm-app-header-stack-height, 86px) + 64px); }
+}
+@media (max-width: 720px) {
+  .wa-demo .wa-area-tabs--top { max-height: 30vh; overflow-y: auto; overscroll-behavior: contain; }
+}

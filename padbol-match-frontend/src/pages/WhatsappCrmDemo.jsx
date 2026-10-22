@@ -382,6 +382,15 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const activeArea = commercialOnly ? 'commercial' : conversationArea(active);
   const isNextGenerationParticipant = activeArea === 'nextgen_participants';
   const isNextGenerationVenue = activeArea === 'nextgen_venues';
+  const isNextGenerationForm = isNextGenerationParticipant || isNextGenerationVenue;
+  const isCommercialForm = isWebForm && activeArea === 'commercial';
+  const nextGenerationDetails = [
+    ['Nombre', detailValue(activeDetails, 'Nombre del participante', 'Participante', 'Nombre')],
+    ['Categoría', detailValue(activeDetails, 'Categoría', 'Categoria')],
+    ['Sede o club', detailValue(activeDetails, 'Sede / club', 'Sede', 'Empresa o club', 'Club')],
+    ['Ciudad', detailValue(activeDetails, 'Ciudad', 'Ciudad o región', 'Ciudad o region')],
+    ['País', detailValue(activeDetails, 'País', 'Pais')],
+  ].filter(([,value]) => Boolean(value));
   const ngJornadas = ngOverview.jornadas.filter((jornada) => !ngDraft.sede_id || String(jornada.sede_id) === String(ngDraft.sede_id));
   const activeNgSedeId = active?.sede_id ? String(active.sede_id) : '';
   const activeNgCategory = detailValue(activeDetails, 'Categoría', 'Categoria') || '';
@@ -809,7 +818,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   </form> : null}
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
-                  {isWebForm && activeDetails.length ? <article className="wa-lead-card">
+                  {isCommercialForm && activeDetails.length ? <article className="wa-lead-card">
                     <header><span>Nuevo lead</span><div><h3>{leadName}</h3><p>{detailValue(activeDetails, 'Empresa o club') || 'Consulta particular'} · {[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Ubicación no indicada'}</p></div></header>
                     <section className="wa-lead-section"><h4>Qué está buscando</h4><strong>{formatCrmEventText(detailValue(activeDetails, 'Asunto') || active.subject) || 'Consulta Padbol'}</strong></section>
                     <dl>
@@ -830,7 +839,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     </div>)}
                   </section> : null}
                   {attachmentNotice ? <p role="status">{attachmentNotice}</p> : null}
-                  {leadAnalysis ? <article className="wa-executive-card">
+                  {isNextGenerationForm && nextGenerationDetails.length ? <section className="wa-panel wa-ng-details"><h3>Datos de Next Generation</h3><dl>{nextGenerationDetails.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section> : null}
+                  {isNextGenerationForm ? <article className="wa-analysis-pending"><div><strong>Análisis pendiente de validación para Next Generation</strong><p>Revisa los datos y el mensaje de esta consulta para continuar.</p></div></article> : leadAnalysis ? <article className="wa-executive-card">
                     <header><div><span>ANÁLISIS DEL LEAD</span><h3>Resumen ejecutivo</h3></div><div className="wa-executive-score"><strong>{leadAnalysis.score}</strong><small>/100</small><b>Prioridad {leadAnalysis.priority}</b></div></header>
                     {leadAnalysis.verdict ? <p className="wa-executive-verdict">{leadAnalysis.verdict}</p> : null}
                     <div className="wa-executive-grid">
@@ -865,7 +875,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
                   {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
                 </section> : null}
-                {isWebForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{['Empresa o club', 'País', 'Ciudad o región', 'Cantidad de canchas', 'Destino de la cancha', 'Disponibilidad de espacio'].map((label) => <div key={label}><dt>{label}</dt><dd>{detailValue(activeDetails, label) || '—'}</dd></div>)}</dl></section> : null}
+                {isCommercialForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{['Empresa o club', 'País', 'Ciudad o región', 'Cantidad de canchas', 'Destino de la cancha', 'Disponibilidad de espacio'].map((label) => <div key={label}><dt>{label}</dt><dd>{detailValue(activeDetails, label) || '—'}</dd></div>)}</dl></section> : null}
                 <section className="wa-panel"><h3>Gestión</h3>
                   <dl>
                     <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>

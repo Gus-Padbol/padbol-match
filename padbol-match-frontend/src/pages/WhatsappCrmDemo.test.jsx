@@ -671,6 +671,16 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.audit).not.toHaveBeenCalled();
   });
 
+  it('muestra datos reales de participantes sin usar campos ni análisis comerciales', async () => {
+    crmAdminApi.inbox.mockResolvedValue({items:[{id:'ng-display',estado:'nuevo',source_channel:'email',origin:'web_form:next-generation',subject:'Next Generation participante',inbound_body:'Quiero participar',contact:{nombre:'Familia'},qualification_data:{form_submission:{fields:{workflow:'program_registration',participantType:'youth_interest',Nombre:'Lucía',Categoría:'U14',País:'Uruguay'}},lead_analysis:{score:75,verdict:'Venta de canchas'}}}]});
+    render(<WhatsappCrmDemo/>);
+    expect(await screen.findByText('Datos de Next Generation')).toBeInTheDocument();
+    expect(screen.getByText('U14')).toBeInTheDocument();
+    expect(screen.queryByText('Cantidad de canchas')).not.toBeInTheDocument();
+    expect(screen.queryByText('Venta de canchas')).not.toBeInTheDocument();
+    expect(screen.getByText('Análisis pendiente de validación para Next Generation')).toBeInTheDocument();
+  });
+
   it('convierte un lead participante en borrador sin confundirlo con lista de espera', async () => {
     crmAdminApi.permissions.mockResolvedValue({ role: 'superadmin', canOperate: true, canAudit: true, whatsappSendEnabled: false });
     crmAdminApi.inbox.mockResolvedValue({ items: [{
