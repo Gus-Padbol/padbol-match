@@ -26,12 +26,14 @@ export const crmAdminApi = {
   permissions: (token) => request('/api/admin/crm/permissions', token),
   inbox: (token, filters = {}) => {
     const q = new URLSearchParams();
+    if (filters.hiddenOnly) q.set('hidden','true');
     if (filters.channel) q.set('channel', filters.channel);
     if (filters.estado) q.set('estado', filters.estado);
     if (filters.ticketReference) q.set('ticket_reference', filters.ticketReference);
     const qs = q.toString();
     return request(`/api/admin/crm/inbox${qs ? `?${qs}` : ''}`, token);
   },
+  setTestVisibility: (token, id, hide, expectedUpdatedAt) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/test-visibility`, token, { method:'POST', body:JSON.stringify({hide,expectedUpdatedAt}) }),
   whatsappMediaList: (token, id) => request(`/api/admin/crm/conversations/${encodeURIComponent(id)}/whatsapp-media`, token),
   whatsappMedia: async (token, id, eventId) => {
     const response = await fetch(`${API_BASE_URL}/api/admin/crm/conversations/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/whatsapp-media`, {

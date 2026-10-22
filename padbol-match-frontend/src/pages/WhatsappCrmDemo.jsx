@@ -240,6 +240,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const [ticketInput, setTicketInput] = useState('');
   const [ticketReference, setTicketReference] = useState('');
   const [ticketError, setTicketError] = useState('');
+  const [hiddenOnly, setHiddenOnly] = useState(false);
   const loadSequence = useRef(0);
   const [replyText, setReplyText] = useState('');
   const replyComposition = useRef(null);
@@ -294,7 +295,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         throw Object.assign(new Error('No tienes acceso a las consultas comerciales.'), { status: 403 });
       }
       if (p?.canOperate || p?.canAudit) {
-        const inbox = await crmAdminApi.inbox(token, { channel: channelFilter, estado: estadoFilter, ...(ticketReference ? { ticketReference } : {}) });
+        const inbox = await crmAdminApi.inbox(token, { channel: channelFilter, estado: estadoFilter, ...(hiddenOnly ? { hiddenOnly:true } : {}), ...(ticketReference ? { ticketReference } : {}) });
         if (sequence !== loadSequence.current) return;
         setItems(Array.isArray(inbox) ? inbox : Array.isArray(inbox?.items) ? inbox.items : []);
       } else {
@@ -306,7 +307,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
     } finally {
       if (sequence === loadSequence.current) setLoading(false);
     }
-  }, [token, channelFilter, estadoFilter, ticketReference, requiredScope]);
+  }, [token, channelFilter, estadoFilter, ticketReference, requiredScope, hiddenOnly]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -673,6 +674,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         {ticketReference ? <button type="button" onClick={() => { setTicketInput(''); setTicketReference(''); setTicketError(''); setActiveId(null); }}>Mostrar todos</button> : null}
         {ticketError ? <p role="alert">{ticketError}</p> : null}
       </form> : null}
+      {perms?.canAudit ? <div style={{padding:'0 18px 12px'}}><button type="button" onClick={() => { setHiddenOnly(v => !v); setActiveId(null); setTicketReference(''); setTicketInput(''); }}>{hiddenOnly ? 'Volver a la bandeja' : 'Ver pruebas ocultas'}</button></div> : null}
       {loading ? (
         <div className="wa-empty"><p>Cargando bandeja…</p></div>
       ) : error ? (
@@ -719,6 +721,14 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>
                   {active.short_ticket_reference || active.ticket_reference ? <p className="wa-ticket-reference">N.º de ticket: <strong>{active.short_ticket_reference || active.ticket_reference}</strong></p> : null}
+                  {perms?.canAudit ? <button type="button" disabled={busy} onClick={async () => {
+                    const hide = !hiddenOnly;
+                    if (hide && !window.confirm('Confirma que toda esta conversación es una prueba. Se ocultará de la bandeja y se podrá restaurar.')) return;
+                    setBusy(true); setNotice(null);
+                    try { await crmAdminApi.setTestVisibility(token, active.id, hide, active.updated_at); setActiveId(null); await load(); }
+                    catch (err) { setNotice(`No se pudo cambiar la visibilidad: ${err.message}`); }
+                    finally { setBusy(false); }
+                  }}>{hiddenOnly ? 'Restaurar conversación' : 'Ocultar prueba'}</button> : null}
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
