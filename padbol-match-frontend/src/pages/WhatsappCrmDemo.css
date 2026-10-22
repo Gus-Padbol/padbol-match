@@ -364,3 +364,5 @@ html.theme-dark .wa-demo :is(.wa-executive-card p,.wa-executive-card li,.wa-exec
 @media (max-width: 720px) {
   .wa-demo .wa-area-tabs--top button { grid-template-columns: minmax(0,1fr) 36px; }
 }
+
+.wa-attachment-download{display:inline-flex;align-items:center;gap:6px;margin:6px 0 12px;padding:10px 14px;border:1px solid #cbd4e0;border-radius:9px;background:#fff;color:#24344f;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.wa-attachment-download:hover{background:#edf3fa;border-color:#8aa1bd}.wa-attachment-download:focus-visible{outline:3px solid #7ca9df;outline-offset:2px}.wa-attachment-download:disabled{opacity:.6;cursor:wait}

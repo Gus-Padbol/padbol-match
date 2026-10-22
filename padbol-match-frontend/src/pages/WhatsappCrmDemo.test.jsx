@@ -135,7 +135,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [{ eventId: 'event-1', mediaType: 'image' }] });
     crmAdminApi.whatsappMedia.mockRejectedValue(new Error('unavailable'));
     render(<WhatsappCrmDemo />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Descargar archivo 1' }));
+    fireEvent.click(await screen.findByRole('button', { name: '↓ Descargar imagen' }));
     expect(await screen.findByText('No se pudo descargar el archivo. Inténtalo nuevamente.')).toBeInTheDocument();
     expect(crmAdminApi.whatsappMedia).toHaveBeenCalledWith('qa-token', 'wa-attachment', 'event-1');
   });
@@ -487,8 +487,10 @@ test('una zona con otra hora conserva la referencia argentina con nombre legible
 
 test('las consultas escritas por personas se conservan y los nuevos eventos se describen sin códigos', () => {
   expect(formatCrmEventText('Consulta sobre clases')).toBe('Consulta sobre clases');
-  expect(formatCrmEventText('[WhatsApp: imagen recibido. Archivo aún no disponible.]\nFoto de cancha')).toBe('[WhatsApp: imagen recibido.]\nFoto de cancha');
-  expect(formatCrmEventText('[WhatsApp: audio recibido. Archivo aún no disponible.]')).toBe('[WhatsApp: audio recibido.]');
+  expect(formatCrmEventText('[WhatsApp: imagen recibido.] Mensaje de prueba desde 🇺🇸')).toBe('Mensaje de prueba desde 🇺🇸');
+  expect(formatCrmEventText('[WhatsApp: imagen recibido.]')).toBe('Imagen recibida');
+  expect(formatCrmEventText('[WhatsApp: imagen recibido. Archivo aún no disponible.]\nFoto de cancha')).toBe('Foto de cancha');
+  expect(formatCrmEventText('[WhatsApp: audio recibido. Archivo aún no disponible.]')).toBe('Audio recibido');
   expect(formatCrmEventText('nextgen.registration.waitlisted')).toBe('Actualización de Next Generation');
 });
 

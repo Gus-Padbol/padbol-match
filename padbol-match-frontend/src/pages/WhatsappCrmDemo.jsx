@@ -71,9 +71,9 @@ export function compactDateTime(value, advisorTimeZone = ADVISOR_TIME_ZONE) {
 
 export function formatCrmEventText(value) {
   const text = String(value || '');
-  // Older attachment notices described an earlier limitation; availability is
-  // determined separately when the user opens the attachment in the CRM.
-  const normalized = text.replace(/\[WhatsApp: (imagen|audio|video|documento|sticker) recibido\. Archivo aún no disponible\.\]/g, '[WhatsApp: $1 recibido.]');
+  const attachment = text.match(/^\[WhatsApp: (imagen|audio|video|documento|sticker) recibido\.(?: Archivo aún no disponible\.)?\]\s*/);
+  const names = { imagen: 'Imagen recibida', audio: 'Audio recibido', video: 'Video recibido', documento: 'Documento recibido', sticker: 'Sticker recibido' };
+  const normalized = attachment ? text.slice(attachment[0].length) || names[attachment[1]] : text;
   const labels = {
     'nextgen.registration.created': 'Nueva inscripción a Next Generation',
     'nextgen.registration.updated': 'Inscripción a Next Generation actualizada',
@@ -680,7 +680,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     <h3>Archivos recibidos</h3>
                     {whatsappAttachments.map((attachment, index) => <div key={attachment.eventId}>
                       {imagePreviews[attachment.eventId] ? <img src={imagePreviews[attachment.eventId]} alt={`Imagen recibida ${index + 1}`} style={{ display: 'block', maxWidth: '100%', maxHeight: 400, objectFit: 'contain', marginBottom: 8 }} /> : null}
-                      <button type="button" className="wa-secondary" disabled={Boolean(downloadingAttachment)} onClick={() => void downloadWhatsappAttachment(attachment)}>{downloadingAttachment === attachment.eventId ? 'Descargando…' : `Descargar archivo ${index + 1}`}</button>
+                      <button type="button" className="wa-attachment-download" disabled={Boolean(downloadingAttachment)} onClick={() => void downloadWhatsappAttachment(attachment)}>{downloadingAttachment === attachment.eventId ? 'Descargando…' : `↓ Descargar ${{ image: 'imagen', audio: 'audio', video: 'video', document: 'documento', sticker: 'sticker' }[attachment.mediaType] || 'archivo'}${whatsappAttachments.length > 1 ? ` ${index + 1}` : ''}`}</button>
                     </div>)}
                   </section> : null}
                   {attachmentNotice ? <p role="status">{attachmentNotice}</p> : null}
