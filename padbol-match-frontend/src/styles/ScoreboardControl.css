@@ -755,3 +755,8 @@
   font-weight: 600;
   color: var(--sc-muted);
 }
+
+.sc-partial-correction { margin: 1rem 0; padding: 1rem; border: 1px solid #94a3b8; border-radius: 12px; background: #fff; color: #172033; }
+.sc-partial-correction label { display: block; margin: .5rem 0; }
+.sc-partial-correction input:not([type=checkbox]), .sc-partial-correction select, .sc-partial-correction textarea { display: block; padding: .5rem; max-width: 100%; }
+.sc-partial-correction button { margin: .4rem .4rem .4rem 0; padding: .6rem; }

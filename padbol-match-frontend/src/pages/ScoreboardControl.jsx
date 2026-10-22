@@ -6,8 +6,9 @@ import useUserRole from '../hooks/useUserRole';
 import { getDisplayName } from '../utils/displayName';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
-import { fetchPartido, scoreboardAction } from '../utils/scoreboardApi';
+import { fetchPartido, scoreboardAction, scoreboardPartialCorrection } from '../utils/scoreboardApi';
 import ScoreboardSuspensionCandidate from '../components/ScoreboardSuspensionCandidate';
+import ScoreboardPartialCorrection from '../components/ScoreboardPartialCorrection';
 import { listSuspensionPending, suspensionStoragePrefix } from '../utils/scoreboardSuspensionPending';
 import { resolveTeamColors, teamButtonStyle } from '../utils/scoreboardTeamColors';
 import {
@@ -328,6 +329,14 @@ export default function ScoreboardControl() {
     }
   }, [partido?.id, partidoId, refreshPartido, t, needsRefresh, suspensionPending, acceptPartido]);
 
+  const confirmPartialCorrection = useCallback(async payload => {
+    if (actionPendingRef.current || needsRefresh || suspensionPending) return false;
+    actionPendingRef.current=true; setActionLoading(true); setError('');
+    try { const updated=await scoreboardPartialCorrection(partidoId,payload); if(String(updated?.id)!==String(partidoId)) throw new Error('Respuesta no confirmada'); acceptPartido(updated); return true; }
+    catch(err) { setError(err?.message || 'No se pudo confirmar la corrección.'); setNeedsRefresh(true); return false; }
+    finally { actionPendingRef.current=false; setActionLoading(false); }
+  }, [partidoId,needsRefresh,suspensionPending,acceptPartido]);
+
   runActionRef.current = runAction;
 
   useEffect(() => {
@@ -435,6 +444,7 @@ export default function ScoreboardControl() {
       </header>
 
       {(suspensionEnabled || suspensionResumeEnabled || suspensionPending) && <ScoreboardSuspensionCandidate key={partido.id} partido={partido} pending={suspensionPending} onPending={setSuspensionPending} onConfirmed={acceptPartido} refresh={refreshPartido} allowSuspend={suspensionEnabled} disabled={!(suspensionEnabled || (suspensionResumeEnabled && String(partido.estado || '').toLowerCase() === 'suspendido')) || actionLoading || needsRefresh || terminado || !['en_curso','suspendido'].includes(String(partido.estado || '').toLowerCase())} />}
+      {partido.scoreboard_partial_correction_enabled === true && !terminado && !suspendido && <ScoreboardPartialCorrection partido={partido} disabled={actionLoading || needsRefresh || suspensionPending} onConfirm={confirmPartialCorrection} />}
       {error && <div className="sc-error">{error}</div>}
       {needsRefresh && (
         <div role="alert">

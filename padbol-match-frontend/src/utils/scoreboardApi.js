@@ -196,3 +196,12 @@ export async function updatePartido(partidoId, payload) {
 }
 
 export { API_BASE };
+
+export async function scoreboardPartialCorrection(partidoId, payload) {
+  const headers = await getAuthHeaders();
+  if (!headers.Authorization) throw new Error('Ingresa nuevamente para corregir el marcador.');
+  const res = await fetch(`${API_BASE}/api/scoreboard/partidos/${encodeURIComponent(String(partidoId))}/correccion-parcial`, {method:'POST',headers,body:JSON.stringify(payload)});
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.error || 'No se pudo confirmar la corrección.');
+  return data;
+}
