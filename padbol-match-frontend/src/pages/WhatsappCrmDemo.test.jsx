@@ -115,6 +115,38 @@ describe('CRM histórico unificado', () => {
     expect(screen.getByText(/hay mensajes anteriores/)).toBeInTheDocument();
   });
 
+  it('muestra el contexto de WhatsApp y los textos originales sin cambiar asignaciones', async () => {
+    crmAdminApi.inbox.mockResolvedValue([{ id:'wa-context', source_channel:'whatsapp', identity_used:'15555550123', estado:'en_atencion', operador:'Equipo humano', sede_id:'sede-1', qualification_data:{ whatsapp_menu:{ topic:'sede', subtopic:'Comprar una cancha', initialMessage:'Hola, quiero\nuna cancha.', detailMessage:'Para Miami.' } } }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    render(<WhatsappCrmDemo />);
+    const context = await screen.findByRole('region', { name:'Contexto de WhatsApp' });
+    expect(context).toHaveTextContent('Abrir una sede / comprar una cancha');
+    expect(context).toHaveTextContent('Comprar una cancha');
+    expect(context).toHaveTextContent('Hola, quiero una cancha.');
+    expect(context.querySelector('.wa-context-original').textContent).toBe('Hola, quiero\nuna cancha.');
+    expect(screen.getByText('Equipo humano')).toBeInTheDocument();
+    expect(crmAdminApi.handoff).not.toHaveBeenCalled();
+    expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { whatsapp_order_review:{required:true,reason:'ambiguous_message_order'} },
+    { whatsapp_menu:{topic:'sede',needs_review:true,initialMessage:'Texto original'} },
+  ])('advierte cuando el orden requiere revisión y no afirma el tema anterior', async (data) => {
+    const menu = { topic:'sede', subtopic:'Comprar una cancha', initialMessage:'Texto original', ...data.whatsapp_menu };
+    crmAdminApi.inbox.mockResolvedValue([{id:'wa-uncertain',source_channel:'whatsapp',identity_used:'15555550123',estado:'derivado',operador:'Persona asignada',qualification_data:{...data,whatsapp_menu:menu}}]);
+    crmAdminApi.whatsappHistory.mockResolvedValue({messages:[{id:'in-1',direction:'inbound',body:'Texto original',at:'2026-10-21T10:00:00Z'}]});
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByText('Revisión humana necesaria')).toBeInTheDocument();
+    expect(screen.getByText(/El orden de algunos mensajes no está confirmado/)).toBeInTheDocument();
+    expect(screen.queryByText('Abrir una sede / comprar una cancha')).not.toBeInTheDocument();
+    expect(screen.queryByText('Comprar una cancha')).not.toBeInTheDocument();
+    expect((await screen.findAllByText('Texto original')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Persona asignada')).toBeInTheDocument();
+    expect(crmAdminApi.handoff).not.toHaveBeenCalled();
+    expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
+  });
+
   it('permite WhatsApp solo con capacidad del servidor y permiso de operador, y muestra el rechazo real', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, whatsappSendEnabled: true, emailSendEnabled: false });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-qa', estado: 'nuevo', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);

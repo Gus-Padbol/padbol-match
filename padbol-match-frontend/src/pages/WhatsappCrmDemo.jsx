@@ -12,6 +12,27 @@ const statusTone = {
   cerrado: 'red',
 };
 
+const WHATSAPP_TOPICS = {
+  sede: 'Abrir una sede / comprar una cancha', match: 'Padbol Match',
+  next_generation: 'Next Generation', academy: 'Academy', fipa: 'FIPA',
+  soporte: 'Soporte', otros: 'Otra consulta',
+};
+
+export function whatsappContext(conversation) {
+  if (conversation?.source_channel !== 'whatsapp') return null;
+  const data = conversation.qualification_data || {};
+  const menu = data.whatsapp_menu;
+  const review = data.whatsapp_order_review?.required === true || menu?.needs_review === true;
+  if ((!menu || typeof menu !== 'object' || Array.isArray(menu)) && !review) return null;
+  return {
+    review,
+    topic: !review ? WHATSAPP_TOPICS[menu?.topic] || '' : '',
+    subtopic: !review && typeof menu?.subtopic === 'string' ? menu.subtopic : '',
+    initialMessage: typeof menu?.initialMessage === 'string' ? menu.initialMessage : '',
+    detailMessage: typeof menu?.detailMessage === 'string' ? menu.detailMessage : '',
+  };
+}
+
 const FOLLOW_UP_TOPICS = [
   'Consulta general', 'Información sobre Padbol', 'Interés comercial', 'Club o sede',
   'Jugador o partido', 'Soporte técnico', 'Reclamo', 'Seguimiento previo', 'Otro',
@@ -327,6 +348,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const activeCanOperate = perms?.canOperate === true || (supportEmail && perms?.canOperateSupport === true)
     || (active?.source_channel === 'whatsapp' && active?.origin === 'whatsapp:1376102838911694' && perms?.canOperateWhatsapp === true);
   const activeDetails = formDetails(active);
+  const waContext = whatsappContext(active);
   const isWebForm = String(active?.origin || '').startsWith('web_form:');
   const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled;
   const canReplyEmail = active?.source_channel === 'email' && (supportOrigin ? supportEmail && perms?.supportEmailSendEnabled === true : emailSendEnabled) && Boolean(active?.contact?.email_normalized);
@@ -700,6 +722,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
+                  {waContext?.review ? <div className="wa-context-warning" role="status"><strong>Revisión humana necesaria</strong><p>El orden de algunos mensajes no está confirmado. Revisa el historial y confirma la consulta con la persona antes de continuar.</p></div> : null}
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
                   {isWebForm && activeDetails.length ? <article className="wa-lead-card">
@@ -753,6 +776,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
 
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2><p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p><p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
+                {waContext ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
+                  {waContext.review ? <p>La consulta aún necesita confirmación por el orden incierto de los mensajes.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
+                  {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
+                  {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
+                </section> : null}
                 {isWebForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{['Empresa o club', 'País', 'Ciudad o región', 'Cantidad de canchas', 'Destino de la cancha', 'Disponibilidad de espacio'].map((label) => <div key={label}><dt>{label}</dt><dd>{detailValue(activeDetails, label) || '—'}</dd></div>)}</dl></section> : null}
                 <section className="wa-panel"><h3>Gestión</h3>
                   <dl>

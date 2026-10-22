@@ -330,6 +330,9 @@
 .wa-ticket-search button { padding: 8px 11px; border: 1px solid #d9dde4; border-radius: 7px; background: white; cursor: pointer; }
 .wa-ticket-search [role="alert"] { color: #b91c28; flex-basis: 100%; margin: 0; }
 .wa-ticket-reference { font-size: 10px; overflow-wrap: anywhere; }
+.wa-context-warning { padding: 12px; border: 1px solid #c48400; border-radius: 8px; background: #fff8e6; color: #533800; }
+.wa-context-warning p { margin: 5px 0 0; }
+.wa-context-original { white-space: pre-wrap; overflow-wrap: anywhere; }
 html.theme-dark .wa-demo { --ink: #e5e7eb; --muted: #cbd5e1; --paper: #172033; --wash: #101827; --line: #3b475c; }
 html.theme-dark .wa-demo :is(.wa-workspace, .wa-thread-head, .wa-composer, .wa-contact-card, .wa-panel, .wa-lead-card, .wa-lead-card header, .wa-lead-card dl, .wa-lead-card dl div, .wa-lead-note, .wa-message--in, .wa-system, .wa-executive-card, .wa-analysis-pending) { background: var(--paper); color: var(--ink); border-color: var(--line); }
 html.theme-dark .wa-demo .wa-conversation { background: var(--paper); color: var(--ink); border-bottom-color: var(--line); }
