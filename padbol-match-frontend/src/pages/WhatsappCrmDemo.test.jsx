@@ -93,6 +93,22 @@ describe('CRM histórico unificado', () => {
     fireEvent.click(send);
     expect(await screen.findByText('Meta no aceptó la respuesta de WhatsApp (código 131042).')).toBeInTheDocument();
     expect(crmAdminApi.reply).toHaveBeenCalledTimes(1);
+    expect(crmAdminApi.reply.mock.calls[0][3]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  });
+
+  it('conserva la referencia WhatsApp al reintentar un resultado incierto', async () => {
+    crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, whatsappSendEnabled: true });
+    crmAdminApi.inbox.mockResolvedValue([{ id: 'wa-retry', estado: 'nuevo', source_channel: 'whatsapp', identity_used: '15555550123', inbound_body: 'Prueba QA' }]);
+    crmAdminApi.activities.mockResolvedValue([]);
+    crmAdminApi.reply.mockRejectedValue(new Error('Envío no confirmado'));
+    render(<WhatsappCrmDemo />);
+    const send = await screen.findByRole('button', { name: 'Enviar por WhatsApp' });
+    fireEvent.change(screen.getByLabelText('Respuesta'), { target: { value: 'Respuesta de prueba' } });
+    fireEvent.click(send);
+    expect(await screen.findByText('Envío no confirmado')).toBeInTheDocument();
+    fireEvent.click(send);
+    await waitFor(() => expect(crmAdminApi.reply).toHaveBeenCalledTimes(2));
+    expect(crmAdminApi.reply.mock.calls[1][3]).toBe(crmAdminApi.reply.mock.calls[0][3]);
   });
 
   it('muestra imágenes autorizadas y libera su URL al cerrar la conversación', async () => {

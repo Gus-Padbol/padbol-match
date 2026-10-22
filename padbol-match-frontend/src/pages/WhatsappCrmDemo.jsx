@@ -217,7 +217,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const channelFilter = '';
   const [estadoFilter, setEstadoFilter] = useState('');
   const [replyText, setReplyText] = useState('');
-  const emailComposition = useRef(null);
+  const replyComposition = useRef(null);
   const activeConversationId = useRef(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -321,7 +321,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const canReplyEmail = active?.source_channel === 'email' && (supportOrigin ? supportEmail && perms?.supportEmailSendEnabled === true : emailSendEnabled) && Boolean(active?.contact?.email_normalized);
   const canReply = canReplyWhatsapp || canReplyEmail;
   activeConversationId.current = active?.id;
-  useEffect(() => { emailComposition.current = null; setReplyText(''); setNotice(null); }, [active?.id]);
+  useEffect(() => { replyComposition.current = null; setReplyText(''); setNotice(null); }, [active?.id]);
   const leadName = [detailValue(activeDetails, 'Nombre'), detailValue(activeDetails, 'Apellido')].filter(Boolean).join(' ') || active?.contact?.nombre || active?.identity_used || 'Contacto sin nombre';
   const activeArea = commercialOnly ? 'commercial' : conversationArea(active);
   const isNextGenerationParticipant = activeArea === 'nextgen_participants';
@@ -430,26 +430,24 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
     setNotice(null);
     try {
       let requestId;
-      if (canReplyEmail) {
-        const composition = emailComposition.current;
+      if (canReplyEmail || canReplyWhatsapp) {
+        const composition = replyComposition.current;
         if (!composition || composition.conversationId !== active.id || composition.body !== replyText) {
           const bytes = new Uint8Array(16);
           crypto.getRandomValues(bytes);
           bytes[6] = (bytes[6] & 0x0f) | 0x40;
           bytes[8] = (bytes[8] & 0x3f) | 0x80;
           const hex = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
-          emailComposition.current = { conversationId: active.id, body: replyText, requestId: `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}` };
+          replyComposition.current = { conversationId: active.id, body: replyText, requestId: `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}` };
         }
-        requestId = emailComposition.current.requestId;
+        requestId = replyComposition.current.requestId;
       }
-      const result = canReplyEmail
-        ? await crmAdminApi.reply(token, active.id, replyText.trim(), requestId)
-        : await crmAdminApi.reply(token, active.id, replyText.trim());
+      const result = await crmAdminApi.reply(token, active.id, replyText.trim(), requestId);
       if (activeConversationId.current !== active.id) return;
       setNotice(result?.status === 'sent'
         ? (canReplyEmail ? 'Mensaje enviado por email.' : 'Mensaje enviado por WhatsApp.')
         : 'Respuesta guardada como pendiente.');
-      emailComposition.current = null;
+      replyComposition.current = null;
       setReplyText('');
       await load();
     } catch (e) {
@@ -705,7 +703,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                 </div>
                 <div className="wa-composer">
                   <div className="wa-draft-label"><label htmlFor="crm-response">Respuesta</label><small>{canReplyEmail ? (supportEmail ? 'Se enviará desde support@padbol.com al contacto registrado' : 'Se enviará por email al contacto registrado') : canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : isWebForm ? 'Configura el envío por email para responder' : 'Envío desactivado'}</small></div>
-                  <textarea id="crm-response" disabled={busy || !activeCanOperate || !canReply} value={replyText} onChange={(e) => { emailComposition.current = null; setReplyText(e.target.value); }} placeholder={!canReply && isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
+                  <textarea id="crm-response" disabled={busy || !activeCanOperate || !canReply} value={replyText} onChange={(e) => { replyComposition.current = null; setReplyText(e.target.value); }} placeholder={!canReply && isWebForm ? 'Esta consulta se podrá responder cuando habilitemos el email saliente.' : 'Escribe una respuesta…'} />
                   <div className="wa-composer-actions">
                     <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
                     <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={busy || !activeCanOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
