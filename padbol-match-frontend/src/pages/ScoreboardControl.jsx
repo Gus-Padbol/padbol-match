@@ -332,10 +332,10 @@ export default function ScoreboardControl() {
   const confirmPartialCorrection = useCallback(async payload => {
     if (actionPendingRef.current || needsRefresh || suspensionPending) return false;
     actionPendingRef.current=true; setActionLoading(true); setError('');
-    try { const updated=await scoreboardPartialCorrection(partidoId,payload); if(String(updated?.id)!==String(partidoId)) throw new Error('Respuesta no confirmada'); acceptPartido(updated); return true; }
+    try { const updated=await scoreboardPartialCorrection(partidoId,payload); if(String(updated?.id)!==String(partidoId)) throw new Error('Respuesta no confirmada'); await refreshPartido(); return true; }
     catch(err) { setError(err?.message || 'No se pudo confirmar la corrección.'); setNeedsRefresh(true); return false; }
     finally { actionPendingRef.current=false; setActionLoading(false); }
-  }, [partidoId,needsRefresh,suspensionPending,acceptPartido]);
+  }, [partidoId,needsRefresh,suspensionPending,refreshPartido]);
 
   runActionRef.current = runAction;
 
