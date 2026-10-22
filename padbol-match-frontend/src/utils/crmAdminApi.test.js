@@ -1,6 +1,12 @@
 import { crmAdminApi } from './crmAdminApi';
 
 afterEach(() => jest.restoreAllMocks());
+it('searches the complete ticket reference on the authenticated inbox endpoint', async () => {
+  global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ items: [] }) }));
+  await crmAdminApi.inbox('fixture', { ticketReference: 'PB-0123456789abcdef0123456789abcdef' });
+  expect(fetch.mock.calls[0][0]).toContain('/api/admin/crm/inbox?ticket_reference=PB-0123456789abcdef0123456789abcdef');
+  expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer fixture');
+});
 it('sends the stable email request identity while preserving the legacy WhatsApp body', async () => {
   global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ status: 'sent' }) }));
   await crmAdminApi.reply('fixture', 'conversation', 'Email body', '12345678-1234-4123-8123-123456789012');

@@ -28,6 +28,7 @@ export const crmAdminApi = {
     const q = new URLSearchParams();
     if (filters.channel) q.set('channel', filters.channel);
     if (filters.estado) q.set('estado', filters.estado);
+    if (filters.ticketReference) q.set('ticket_reference', filters.ticketReference);
     const qs = q.toString();
     return request(`/api/admin/crm/inbox${qs ? `?${qs}` : ''}`, token);
   },

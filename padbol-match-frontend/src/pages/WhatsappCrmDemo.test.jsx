@@ -75,6 +75,29 @@ describe('CRM histórico unificado', () => {
     await waitFor(() => expect(screen.getAllByText(/Prueba 23/i).length).toBeGreaterThan(0));
   });
 
+  it('busca el ticket completo en el servidor y lo muestra en lista y ficha', async () => {
+    const reference = 'PB-0123456789ABCDEF0123456789ABCDEF';
+    crmAdminApi.inbox.mockImplementation(async (_token, filters) => filters.ticketReference
+      ? { items: [{ id: 'older', ticket_reference: reference, estado: 'cerrado', source_channel: 'email', subject: 'Caso anterior' }] }
+      : { items: [] });
+    render(<WhatsappCrmDemo />);
+    fireEvent.change(await screen.findByLabelText('Buscar por número de ticket'), { target: { value: reference.toLowerCase() } });
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
+    expect((await screen.findAllByText(/Caso anterior/)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(new RegExp(reference))).toHaveLength(2);
+    expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', { channel: '', estado: '', ticketReference: reference });
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar todos' }));
+    expect(await screen.findByText('No hay conversaciones.')).toBeInTheDocument();
+  });
+
+  it('rechaza una referencia incompleta sin ejecutar una búsqueda ambigua', async () => {
+    render(<WhatsappCrmDemo />);
+    fireEvent.change(await screen.findByLabelText('Buscar por número de ticket'), { target: { value: 'PB-123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('referencia completa');
+    expect(crmAdminApi.inbox).not.toHaveBeenCalledWith('qa-token', expect.objectContaining({ ticketReference: expect.anything() }));
+  });
+
   it('muestra en lista y ficha la fecha del último WhatsApp recibido', async () => {
     crmAdminApi.inbox.mockResolvedValue({items:[{ id:'wa-date', estado:'nuevo', source_channel:'whatsapp', origin:'whatsapp:1376102838911694', identity_used:'Remitente de prueba', inbound_body:'Hola', created_at:'2026-09-23T12:00:00Z', received_at:'2026-10-21T12:00:00Z' }]});
     render(<WhatsappCrmDemo />);

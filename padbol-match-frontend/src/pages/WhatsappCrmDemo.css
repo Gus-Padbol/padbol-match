@@ -324,6 +324,12 @@
 .wa-demo :is(.wa-safety-flags span, .wa-conversation time, .wa-panel dt, .wa-panel dd, .wa-panel label, .wa-draft-label small) { font-size: 12px; }
 .wa-demo :is(.wa-conversation time, .wa-panel dt, .wa-panel dd, .wa-draft-label small) { color: #526075; }
 .wa-demo .wa-thread-person p { flex-wrap: wrap; overflow-wrap: anywhere; }
+.wa-ticket-search { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 18px; }
+.wa-ticket-search label { font-weight: 700; }
+.wa-ticket-search input { min-width: 0; width: min(100%, 340px); padding: 8px; border: 1px solid #d9dde4; border-radius: 7px; }
+.wa-ticket-search button { padding: 8px 11px; border: 1px solid #d9dde4; border-radius: 7px; background: white; cursor: pointer; }
+.wa-ticket-search [role="alert"] { color: #b91c28; flex-basis: 100%; margin: 0; }
+.wa-ticket-reference { font-size: 10px; overflow-wrap: anywhere; }
 html.theme-dark .wa-demo { --ink: #e5e7eb; --muted: #cbd5e1; --paper: #172033; --wash: #101827; --line: #3b475c; }
 html.theme-dark .wa-demo :is(.wa-workspace, .wa-thread-head, .wa-composer, .wa-contact-card, .wa-panel, .wa-lead-card, .wa-lead-card header, .wa-lead-card dl, .wa-lead-card dl div, .wa-lead-note, .wa-message--in, .wa-system, .wa-executive-card, .wa-analysis-pending) { background: var(--paper); color: var(--ink); border-color: var(--line); }
 html.theme-dark .wa-demo .wa-conversation { background: var(--paper); color: var(--ink); border-bottom-color: var(--line); }
