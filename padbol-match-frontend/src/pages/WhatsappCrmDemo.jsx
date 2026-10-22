@@ -222,6 +222,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [whatsappHistory, setWhatsappHistory] = useState(null);
+  const [historyError, setHistoryError] = useState(false);
+  const [historyRevision, setHistoryRevision] = useState(0);
   const [whatsappAttachments, setWhatsappAttachments] = useState([]);
   const [attachmentNotice, setAttachmentNotice] = useState('');
   const [imagePreviews, setImagePreviews] = useState({});
@@ -361,6 +364,17 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
 
   useEffect(() => {
     let current = true;
+    setWhatsappHistory(null);
+    setHistoryError(false);
+    if (!token || !active?.id || active.source_channel !== 'whatsapp') return () => { current = false; };
+    crmAdminApi.whatsappHistory(token, active.id)
+      .then(data => { if (current) setWhatsappHistory({ conversationId: active.id, messages: Array.isArray(data?.messages) ? data.messages : [], truncated: data?.truncated === true }); })
+      .catch(() => { if (current) setHistoryError(true); });
+    return () => { current = false; };
+  }, [token, active?.id, active?.source_channel, active?.inbound_body, historyRevision]);
+
+  useEffect(() => {
+    let current = true;
     const urls = [];
     setImagePreviews({});
     if (token && active?.id) {
@@ -449,6 +463,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         : 'Respuesta guardada como pendiente.');
       replyComposition.current = null;
       setReplyText('');
+      if (canReplyWhatsapp) setHistoryRevision(value => value + 1);
       await load();
     } catch (e) {
       if (activeConversationId.current === active.id) setNotice(e?.message || 'No se pudo registrar la respuesta');
@@ -675,7 +690,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                       <div><dt>Ubicación</dt><dd>{[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Sin definir'}</dd></div>
                     </dl>
                     <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p>{detailValue(activeDetails, 'Información adicional') || 'No agregó información adicional.'}</p></section>
-                  </article> : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
+                  </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p>{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${{sent:'Enviado',pending:'Pendiente de confirmación',cancelled:'No enviado'}[message.status] || 'Estado no disponible'}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
+                  {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
+                  {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
                   {whatsappAttachments.length ? <section aria-label="Archivos de WhatsApp">
                     <h3>Archivos recibidos</h3>
                     {whatsappAttachments.map((attachment, index) => <div key={attachment.eventId}>

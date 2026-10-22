@@ -18,6 +18,7 @@ jest.mock('../utils/crmAdminApi', () => ({
     audit: jest.fn(),
     activities: jest.fn(),
     whatsappMediaList: jest.fn(),
+    whatsappHistory: jest.fn(),
     whatsappMedia: jest.fn(),
     reply: jest.fn(),
     createManual: jest.fn(),
@@ -53,6 +54,7 @@ describe('CRM histórico unificado', () => {
       }],
     });
     crmAdminApi.whatsappMediaList.mockResolvedValue({ attachments: [] });
+    crmAdminApi.whatsappHistory.mockResolvedValue({ messages: [] });
     crmAdminApi.sedes.mockResolvedValue([]);
     crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
     crmAdminApi.createNextGenerationRegistration.mockResolvedValue({ id: 'ng-reg-1', estado: 'borrador' });
@@ -78,6 +80,16 @@ describe('CRM histórico unificado', () => {
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText(/MENSAJE RECIBIDO · 21\/10\/2026/)).toBeInTheDocument();
     expect(screen.getByRole('button', {name:/Remitente de prueba/}).querySelector('time')).toHaveAttribute('datetime','2026-10-21T12:00:00Z');
+  });
+
+  it('muestra mensajes entrantes y respuesta enviada con su estado', async () => {
+    crmAdminApi.inbox.mockResolvedValue([{id:'history-wa',source_channel:'whatsapp',identity_used:'15555550123',inbound_body:'Último',estado:'nuevo'}]);
+    crmAdminApi.whatsappHistory.mockResolvedValue({truncated:true,messages:[{id:'in-1',direction:'inbound',body:'Primer mensaje',at:'2026-10-21T10:00:00Z'},{id:'out-1',direction:'outbound',body:'Respuesta enviada',at:'2026-10-21T10:01:00Z',status:'sent'}]});
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByText('Primer mensaje')).toBeInTheDocument();
+    expect(screen.getByText('Respuesta enviada')).toBeInTheDocument();
+    expect(screen.getByText(/Enviado/)).toBeInTheDocument();
+    expect(screen.getByText(/hay mensajes anteriores/)).toBeInTheDocument();
   });
 
   it('permite WhatsApp solo con capacidad del servidor y permiso de operador, y muestra el rechazo real', async () => {
