@@ -107,9 +107,10 @@ export default function PartidosAbiertos() {
   }, [t, session?.access_token]);
 
   useEffect(() => {
+    const tracker = loadSequenceRef.current;
     setPartidos([]);
     cargar();
-    return () => { loadSequenceRef.current.invalidate(); };
+    return () => { tracker.invalidate(); };
   }, [cargar]);
 
   const cargarSolicitudes = useCallback(async () => {
