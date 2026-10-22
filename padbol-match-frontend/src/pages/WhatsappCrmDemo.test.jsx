@@ -440,6 +440,8 @@ test('una zona con otra hora conserva la referencia argentina con nombre legible
 
 test('las consultas escritas por personas se conservan y los nuevos eventos se describen sin códigos', () => {
   expect(formatCrmEventText('Consulta sobre clases')).toBe('Consulta sobre clases');
+  expect(formatCrmEventText('[WhatsApp: imagen recibido. Archivo aún no disponible.]\nFoto de cancha')).toBe('[WhatsApp: imagen recibido.]\nFoto de cancha');
+  expect(formatCrmEventText('[WhatsApp: audio recibido. Archivo aún no disponible.]')).toBe('[WhatsApp: audio recibido.]');
   expect(formatCrmEventText('nextgen.registration.waitlisted')).toBe('Actualización de Next Generation');
 });
 

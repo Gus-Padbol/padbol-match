@@ -71,6 +71,9 @@ export function compactDateTime(value, advisorTimeZone = ADVISOR_TIME_ZONE) {
 
 export function formatCrmEventText(value) {
   const text = String(value || '');
+  // Older attachment notices described an earlier limitation; availability is
+  // determined separately when the user opens the attachment in the CRM.
+  const normalized = text.replace(/\[WhatsApp: (imagen|audio|video|documento|sticker) recibido\. Archivo aún no disponible\.\]/g, '[WhatsApp: $1 recibido.]');
   const labels = {
     'nextgen.registration.created': 'Nueva inscripción a Next Generation',
     'nextgen.registration.updated': 'Inscripción a Next Generation actualizada',
@@ -82,7 +85,7 @@ export function formatCrmEventText(value) {
   };
   if (labels[text.trim()]) return labels[text.trim()];
   if (/^nextgen\.[a-z0-9_.]+$/i.test(text.trim())) return 'Actualización de Next Generation';
-  return text;
+  return normalized;
 }
 
 const REMINDER_TIMES = Array.from({ length: 12 }, (_, index) => `${String(index + 8).padStart(2, '0')}:00`);
