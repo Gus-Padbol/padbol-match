@@ -90,6 +90,19 @@ describe('CRM histórico unificado', () => {
     expect(await screen.findByText('No hay conversaciones.')).toBeInTheDocument();
   });
 
+  it('busca y muestra el ticket corto para una conversación cerrada', async () => {
+    const shortReference = 'PB-100001';
+    crmAdminApi.inbox.mockImplementation(async (_token, filters) => filters.ticketReference
+      ? { items: [{ id: 'older', ticket_reference: 'PB-0123456789ABCDEF0123456789ABCDEF', short_ticket_reference: shortReference, estado: 'cerrado', source_channel: 'email', subject: 'Caso anterior' }] }
+      : { items: [] });
+    render(<WhatsappCrmDemo />);
+    fireEvent.change(await screen.findByLabelText('Buscar por número de ticket'), { target: { value: 'pb-100001' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
+    expect((await screen.findAllByText(new RegExp(shortReference))).length).toBe(2);
+    expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', { channel: '', estado: '', ticketReference: shortReference });
+    expect(screen.queryByText(/PB-0123456789ABCDEF0123456789ABCDEF/)).not.toBeInTheDocument();
+  });
+
   it('rechaza una referencia incompleta sin ejecutar una búsqueda ambigua', async () => {
     render(<WhatsappCrmDemo />);
     fireEvent.change(await screen.findByLabelText('Buscar por número de ticket'), { target: { value: 'PB-123' } });

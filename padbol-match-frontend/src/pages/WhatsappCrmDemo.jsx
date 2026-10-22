@@ -664,7 +664,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
       {(perms?.canOperate || perms?.canAudit) ? <form className="wa-ticket-search" onSubmit={(event) => {
         event.preventDefault();
         const reference = ticketInput.trim();
-        if (reference && !/^PB-[a-f0-9]{32}$/i.test(reference)) { setTicketError('Ingresa la referencia completa del ticket: PB- seguido de 32 caracteres.'); return; }
+        if (reference && !/^PB-(?:[a-f0-9]{32}|[1-9][0-9]{5,11})$/i.test(reference)) { setTicketError('Ingresa la referencia completa del ticket, por ejemplo PB-123456.'); return; }
         setTicketError(''); setAreaFilter('all'); setEstadoFilter(''); setActiveId(null); setTicketReference(reference.toUpperCase());
       }}>
         <label htmlFor="wa-ticket-reference">Buscar por número de ticket</label>
@@ -704,7 +704,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <div className="wa-conversation-copy">
                     <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined}>{compactDateTime(conversationDisplayDate(item))}</time></div>
                     <p>{formatCrmEventText(item.subject || item.inbound_body).slice(0, 80)}</p>
-                    {item.ticket_reference ? <p>N.º de ticket: {item.ticket_reference}</p> : null}
+                    {item.short_ticket_reference || item.ticket_reference ? <p>N.º de ticket: {item.short_ticket_reference || item.ticket_reference}</p> : null}
                     <footer><span className={`wa-pill wa-pill--${statusTone[item.estado] || 'blue'}`}>{statusName(item.estado)}</span><ChannelIcon channel={item.source_channel} /></footer>
                   </div>
                 </button>
@@ -718,7 +718,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                 <header className="wa-thread-head">
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-thread-person"><h2>{active.contact?.nombre || active.identity_used || '—'}</h2><p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>
-                  {active.ticket_reference ? <p className="wa-ticket-reference">N.º de ticket: <strong>{active.ticket_reference}</strong></p> : null}
+                  {active.short_ticket_reference || active.ticket_reference ? <p className="wa-ticket-reference">N.º de ticket: <strong>{active.short_ticket_reference || active.ticket_reference}</strong></p> : null}
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
