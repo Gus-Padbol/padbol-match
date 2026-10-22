@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, formatCrmEventText, leadAnalysisNotice, crmOriginLabel } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../context/AuthContext', () => ({
@@ -71,6 +71,13 @@ describe('CRM histórico unificado', () => {
     expect(screen.getByText('NO HABILITADO')).toBeInTheDocument();
     expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', { channel: '', estado: '' });
     await waitFor(() => expect(screen.getAllByText(/Prueba 23/i).length).toBeGreaterThan(0));
+  });
+
+  it('muestra en lista y ficha la fecha del último WhatsApp recibido', async () => {
+    crmAdminApi.inbox.mockResolvedValue({items:[{ id:'wa-date', estado:'nuevo', source_channel:'whatsapp', origin:'whatsapp:1376102838911694', identity_used:'Remitente de prueba', inbound_body:'Hola', created_at:'2026-09-23T12:00:00Z', received_at:'2026-10-21T12:00:00Z' }]});
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findByText(/MENSAJE RECIBIDO · 21\/10\/2026/)).toBeInTheDocument();
+    expect(screen.getByRole('button', {name:/Remitente de prueba/}).querySelector('time')).toHaveAttribute('datetime','2026-10-21T12:00:00Z');
   });
 
   it('permite WhatsApp solo con capacidad del servidor y permiso de operador, y muestra el rechazo real', async () => {
@@ -424,6 +431,13 @@ describe('CRM histórico unificado', () => {
     }));
     expect(await screen.findByText(/Ya puede evaluarse en Next Generation/)).toBeInTheDocument();
   });
+});
+
+test('la fecha de WhatsApp usa el último mensaje y mantiene alternativas para otros canales', () => {
+  const row = { source_channel: 'whatsapp', created_at: '2026-09-23T12:00:00Z', received_at: '2026-10-21T12:00:00Z' };
+  expect(conversationDisplayDate(row)).toBe(row.received_at);
+  expect(conversationDisplayDate({ ...row, received_at: null })).toBe(row.created_at);
+  expect(conversationDisplayDate({ ...row, source_channel: 'email' })).toBe(row.created_at);
 });
 
 test('una misma hora local y argentina se muestra una sola vez aunque la zona tenga otro nombre', () => {

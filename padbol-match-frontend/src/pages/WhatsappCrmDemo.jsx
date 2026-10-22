@@ -88,6 +88,12 @@ export function formatCrmEventText(value) {
   return normalized;
 }
 
+export function conversationDisplayDate(conversation) {
+  return conversation?.source_channel === 'whatsapp'
+    ? conversation.received_at || conversation.created_at
+    : conversation?.created_at;
+}
+
 const REMINDER_TIMES = Array.from({ length: 12 }, (_, index) => `${String(index + 8).padStart(2, '0')}:00`);
 
 function ChannelIcon({ channel }) {
@@ -618,7 +624,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                 <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => setActiveId(item.id)}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
-                    <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={item.created_at || undefined}>{compactDateTime(item.created_at)}</time></div>
+                    <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined}>{compactDateTime(conversationDisplayDate(item))}</time></div>
                     <p>{formatCrmEventText(item.subject || item.inbound_body).slice(0, 80)}</p>
                     <footer><span className={`wa-pill wa-pill--${statusTone[item.estado] || 'blue'}`}>{statusName(item.estado)}</span><ChannelIcon channel={item.source_channel} /></footer>
                   </div>
@@ -636,7 +642,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
                 </header>
                 <div className="wa-messages">
-                  <div className="wa-day">NUEVA CONSULTA · {compactDateTime(active.created_at)}</div>
+                  <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
                   {isWebForm && activeDetails.length ? <article className="wa-lead-card">
                     <header><span>Nuevo lead</span><div><h3>{leadName}</h3><p>{detailValue(activeDetails, 'Empresa o club') || 'Consulta particular'} · {[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Ubicación no indicada'}</p></div></header>
