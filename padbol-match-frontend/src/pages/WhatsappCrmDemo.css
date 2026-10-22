@@ -326,7 +326,7 @@
 .wa-demo .wa-thread-person p { flex-wrap: wrap; overflow-wrap: anywhere; }
 .wa-ticket-search { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 18px; }
 .wa-ticket-search label { font-weight: 700; }
-.wa-ticket-search input { min-width: 0; width: min(100%, 340px); padding: 8px; border: 1px solid #d9dde4; border-radius: 7px; }
+.wa-demo .wa-ticket-search input { min-width: 0; width: min(100%, 340px); padding: 8px; border: 1px solid #d9dde4; border-radius: 7px; }
 .wa-ticket-search button { padding: 8px 11px; border: 1px solid #d9dde4; border-radius: 7px; background: white; cursor: pointer; }
 .wa-ticket-search [role="alert"] { color: #b91c28; flex-basis: 100%; margin: 0; }
 .wa-ticket-reference { font-size: 10px; overflow-wrap: anywhere; }
@@ -340,6 +340,7 @@ html.theme-dark .wa-demo .wa-conversation.active { background: #29364d; }
 html.theme-dark .wa-demo .wa-thread { background: var(--wash); }
 html.theme-dark .wa-demo .wa-messages { background-color: var(--wash); background-image: none; }
 html.theme-dark .wa-demo :is(h1,h2,h3,h4,strong,.wa-lead-section strong,.wa-lead-card dd,.wa-lead-note p,.wa-contact-card p span) { color: var(--ink); }
+html.theme-dark .wa-demo .wa-context-warning strong { color: #533800; }
 html.theme-dark .wa-demo :is(.wa-conversation p,.wa-conversation time,.wa-panel dt,.wa-panel dd,.wa-draft-label small,.wa-lead-card header p,.wa-lead-card dt,.wa-message span,.wa-system) { color: var(--muted); }
 html.theme-dark .admin-dashboard .wa-demo label { color: var(--muted) !important; -webkit-text-fill-color: var(--muted) !important; }
 html.theme-dark .wa-demo :is(input,select,textarea) { background: var(--wash) !important; color: var(--ink) !important; border-color: var(--line) !important; }
