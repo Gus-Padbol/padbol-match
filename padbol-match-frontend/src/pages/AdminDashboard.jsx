@@ -1,4 +1,5 @@
 import { confirmInPersonPayment } from '../utils/adminInPersonPayment';
+import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
 import PendingValidationActions from '../components/PendingValidationActions';
 import { fetchAdminPendingValidations, updatePendingValidation } from '../utils/adminPendingValidationsApi';
 import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
@@ -1025,7 +1026,7 @@ function miSedeFormToApiPatchBody(form) {
     ciudad: form.ciudad || null,
     provincia:
       form.provincia != null && String(form.provincia).trim() !== '' ? String(form.provincia).trim() : null,
-    pais: form.pais || null,
+    pais: paisSinBanderaParaGuardar(form.pais) || null,
     telefono: normalizeWhatsappForStorage(form.telefono, form.pais),
     email_contacto: form.email_contacto || null,
     horario_apertura: form.horario_apertura || null,

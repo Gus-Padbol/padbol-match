@@ -3,6 +3,7 @@ import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { useGooglePlaces } from '../hooks/useGooglePlaces';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 import { codigoTelefonicoDesdePaisLabel } from '../utils/sedeWhatsappPais';
+import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
 import './NuevaSedeSuperBottomSheet.css';
 import { validateSedeRequiredConfiguration } from '../utils/sedeRequiredConfiguration';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
@@ -284,7 +285,7 @@ export default function NuevaSedeSuperBottomSheet({
 
       const body = {
         nombre: String(st.nombre || '').trim(),
-        pais: String(st.pais || '').trim(),
+        pais: paisSinBanderaParaGuardar(st.pais),
         timezone: String(st.timezone || TZ_SEDE_DEFAULT).trim() || TZ_SEDE_DEFAULT,
         provincia: String(st.provincia || '').trim() || null,
         ciudad: String(st.ciudad || '').trim(),

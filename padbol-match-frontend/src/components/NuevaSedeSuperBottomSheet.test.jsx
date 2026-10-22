@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import NuevaSedeSuperBottomSheet from './NuevaSedeSuperBottomSheet';
 import { validateSedeRequiredConfiguration } from '../utils/sedeRequiredConfiguration';
+import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
 
 jest.mock('../hooks/useGooglePlaces', () => ({ useGooglePlaces: () => ({ isLoaded:false, placesEnabled:false }) }));
 jest.mock('../i18n/tSafe', () => ({ useSafeTranslation: () => ({ t:key=>key }) }));
@@ -9,6 +10,11 @@ const originalFetch = global.fetch;
 const originalAlert = window.alert;
 beforeEach(() => { global.fetch=jest.fn(async url => ({ok:true,json:async()=>url.endsWith('/api/plan-pricing')?[]:url.endsWith('/deportes')?{deportes:[]}:{id:123}}));window.alert=jest.fn(); });
 afterEach(() => {global.fetch=originalFetch;window.alert=originalAlert;});
+
+test.each([['🇦🇷 Argentina', 'Argentina'], ['🇪🇸 España', 'España'], [' México ', 'México'], ['', '']])(
+ 'guarda el país sin bandera y conserva el nombre: %s', (input, expected) => {
+  expect(paisSinBanderaParaGuardar(input)).toBe(expected);
+ });
 
 async function reachConfiguration(props={}) {
  const onSuccess=jest.fn();render(<NuevaSedeSuperBottomSheet open apiBaseUrl="https://api.qa.example" accessToken="fixture" onSuccess={onSuccess} {...props} />);
@@ -44,7 +50,7 @@ test('wizard sends the entered integer price, currency and overnight hours to th
  const onSuccess=await reachConfiguration();fillConfiguration();fireEvent.click(screen.getByRole('button',{name:'Crear sede'}));
  await waitFor(()=>expect(onSuccess).toHaveBeenCalledTimes(1));
  const call=global.fetch.mock.calls.find(([url])=>url==='https://api.qa.example/api/sedes');expect(call).toBeDefined();
- expect(JSON.parse(call[1].body)).toMatchObject({precio_turno:1250,moneda:'USD',horario_apertura:'20:00',horario_cierre:'02:00',cantidad_canchas:1,telefono:'+54 2215550000'});
+ expect(JSON.parse(call[1].body)).toMatchObject({pais:'Argentina',precio_turno:1250,moneda:'USD',horario_apertura:'20:00',horario_cierre:'02:00',cantidad_canchas:1,telefono:'+54 2215550000'});
 });
 
 test('invitation completion sends an explicitly entered zero without substituting a tariff',async()=>{
