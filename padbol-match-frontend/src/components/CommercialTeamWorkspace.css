@@ -1,0 +1,10 @@
+.commercial-team { max-width: 1180px; margin: 0 auto; padding: 24px; color: #17243a; background: #f4f6fa; min-height: 80vh; }
+.commercial-team section, .commercial-team article { background: #fff; border: 1px solid #dfe5ee; border-radius: 12px; padding: 18px; margin: 16px 0; }
+.commercial-team h1, .commercial-team h2, .commercial-team h3 { color: #14233d; }
+.commercial-team label { display: block; font-weight: 600; margin: 10px 0; }
+.commercial-team textarea, .commercial-team input, .commercial-team select { display: block; box-sizing: border-box; width: 100%; max-width: 680px; margin-top: 6px; padding: 10px; border: 1px solid #b9c5d4; border-radius: 6px; font: inherit; }
+.commercial-team textarea { min-height: 75px; }
+.commercial-team button { background: #173a68; color: #fff; border: 0; border-radius: 6px; padding: 10px 14px; font: inherit; cursor: pointer; margin: 4px 4px 4px 0; }
+.commercial-team button:disabled { background: #a9b4c1; cursor: not-allowed; }
+.commercial-team [role='alert'] { color: #a01121; font-weight: 600; }
+@media(max-width: 600px) { .commercial-team { padding: 12px; } .commercial-team section, .commercial-team article { padding: 12px; } }
