@@ -55,10 +55,9 @@ import {
   precioReservaTurno,
   RESERVA_DURACIONES_MIN,
 } from '../utils/sedePreciosDuracion';
-import { generarSlotsHorarioReserva } from '../utils/reservaSlotsHorarios';
 import { precioBaseReservaConDeporte } from '../utils/sedePreciosDeporte';
+import { ymdHoyParaReservaSede } from '../utils/reservaTimezone';
 import { fetchSurgePrecio, surgeBadgeFromQuote } from '../utils/surgePrecio';
-import { ymdHoyParaReservaSede, slotStartMsParaReservaSede } from '../utils/reservaTimezone';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
@@ -153,7 +152,6 @@ function clienteTieneTelefonoGuardado(c) {
 
 /** Mínimo de dígitos (sin contar +) para considerar un teléfono válido al confirmar pago */
 const MIN_DIGITOS_TELEFONO = 8;
-const SLOT_STEP_MIN = 30;
 
 /** Perfil con teléfono/WhatsApp con cantidad de dígitos suficiente (no se re-evalúa en cada tecla del resumen). */
 function perfilTelefonoValido(c) {
@@ -191,15 +189,6 @@ function fechaMaxReservaISO() {
   return `${y}-${m}-${day}`;
 }
 
-function minutosDesdeHoraReserva(horaRaw) {
-  const t = String(horaRaw || '').split(' - ')[0].trim();
-  const m = /^(\d{1,2}):(\d{2})/.exec(t);
-  if (!m) return null;
-  const hh = parseInt(m[1], 10);
-  const mm = parseInt(m[2], 10);
-  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
-  return hh * 60 + mm;
-}
 
 /** sedes_duraciones (duraciones_oferta) si viene en la sede; si no, columnas legacy precio_60/90/120. */
 function duracionesReservaDesdeSede(sede) {
@@ -215,22 +204,6 @@ function duracionesReservaDesdeSede(sede) {
 }
 
 
-function reservaBloqueaDisponibilidad(reserva) {
-  const estado = String(reserva?.estado || '').trim().toLowerCase();
-  return estado !== 'cancelada';
-}
-
-function duracionReservaExistenteMin(reserva) {
-  const d = parseInt(String(reserva?.duracion_minutos ?? reserva?.duracion ?? ''), 10);
-  return Number.isFinite(d) && d > 0 ? d : 90;
-}
-
-function reservaSolapaIntervalo(reserva, inicioMin, finMin) {
-  const inicioReserva = minutosDesdeHoraReserva(reserva?.hora_inicio || reserva?.hora);
-  if (inicioReserva == null) return false;
-  const finReserva = inicioReserva + duracionReservaExistenteMin(reserva);
-  return inicioMin < finReserva && finMin > inicioReserva;
-}
 
 /** Intento “reservar desde la sede más cercana por geo” (pantalla 1 → perfil → /reservar?sedeId=). */
 const RESERVA_GEO_MAS_CERCANA_SESSION_KEY = 'reserva_geo_mas_cercana_sede_v1';
@@ -558,7 +531,6 @@ function ReservaStripeSection({
 }
 
 /** Solo se ofrecen / muestran las primeras 2 canchas en el flujo de reserva. */
-const MAX_CANCHAS_RESERVA_UI = 2;
 
 const RESERVA_CANCHA_DEPORTES = new Set(['padbol', 'padel', 'tenis', 'pickleball']);
 
@@ -628,35 +600,6 @@ function deportesActivosSedeKeys(sede) {
   return keys.sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
-/** Prioriza `canchas_activas` del GET /api/sedes/:id; si no hay catálogo, usa cantidad_canchas. Opcional: filtrar por ?deporte=. */
-function slotsReservaCantidadFallback(sedeData, t) {
-  const total = Math.max(1, Number(sedeData?.cantidad_canchas) || 2);
-  const n = Math.min(total, MAX_CANCHAS_RESERVA_UI);
-  return Array.from({ length: n }, (_, i) => ({
-    numero: i + 1,
-    nombre: `${t('reservas.court')} ${i + 1}`,
-  }));
-}
-
-function slotsReservaDesdeSede(sedeData, deporteCanon, t) {
-  const active = sedeData?.canchas_activas;
-  if (Array.isArray(active) && active.length > 0) {
-    let sorted = [...active].sort((a, b) => Number(a.numero) - Number(b.numero));
-    if (deporteCanon && RESERVA_CANCHA_DEPORTES.has(deporteCanon)) {
-      sorted = sorted.filter((x) => {
-        const d = String(x.deporte || 'padbol').trim().toLowerCase();
-        return d === deporteCanon;
-      });
-    }
-    if (sorted.length > 0) {
-      return sorted.slice(0, MAX_CANCHAS_RESERVA_UI).map((x) => ({
-        numero: Number(x.numero),
-        nombre: String(x.nombre || '').trim() || `${t('reservas.court')} ${x.numero}`,
-      }));
-    }
-  }
-  return slotsReservaCantidadFallback(sedeData, t);
-}
 
 export default function ReservaForm() {
   const { t } = useTranslation();
@@ -1973,105 +1916,24 @@ export default function ReservaForm() {
     syncReservaDeporteEnUrl(RESERVA_DEPORTE_DEFAULT);
   }, [syncReservaDeporteEnUrl]);
 
+  // La reserva pública usa el mismo motor de slots que «Armar partido».
   const buscarHorariosDisponibles = useCallback(async (fecha) => {
-    if (!fecha || !sedeSeleccionada) return;
-    if (filtros.sede_id === '' || filtros.sede_id == null) return;
-
-    const url = apiUrl(
-      `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}?sede_id=${encodeURIComponent(filtros.sede_id)}`
-    );
-
+    if (!fecha || !sedeSeleccionada || filtros.sede_id === '' || filtros.sede_id == null) return;
+    const sedeIdKey = String(filtros.sede_id);
     setLoading(true);
-    const sedeIdKey = filtros.sede_id === '' || filtros.sede_id == null ? '' : String(filtros.sede_id);
     try {
-      const response = await fetch(url, { cache: 'no-store' });
-      const text = await response.text();
-
-      if (!response.ok) {
-        setError(t('reservas.searchCourtsError'));
-        setHorariosDisponibles([]);
-        setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
-        return;
-      }
-
-      let reservadas;
-      try {
-        reservadas = JSON.parse(text);
-      } catch {
-        setError(t('reservas.searchCourtsError'));
-        setHorariosDisponibles([]);
-        setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
-        return;
-      }
-
-      if (!Array.isArray(reservadas)) {
-        setError(t('reservas.searchCourtsError'));
-        setHorariosDisponibles([]);
-        setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
-        return;
-      }
-
-      const sedeData = sedeSeleccionada;
-      console.log('[ReservaForm] sede for slot generation', {
-        horario_apertura: sedeData?.horario_apertura,
-        horario_cierre: sedeData?.horario_cierre,
-        sede: sedeData,
-      });
-      const duracion = duracionSeleccionadaMin;
-      const slotsOferta = slotsReservaDesdeSede(sedeData, reservaDeporteUrl, t);
-      const numsSlots = slotsOferta.map((s) => s.numero);
-      const hoyCalendarioNegocio = ymdHoyParaReservaSede(sedeData);
-      const filtrarSlotsPasadosHoy = Boolean(hoyCalendarioNegocio && fecha === hoyCalendarioNegocio);
-
-      const candidatos = generarSlotsHorarioReserva(sedeData, fecha, duracion, SLOT_STEP_MIN);
-      console.log('[ReservaForm] generarSlotsHorarioReserva result', {
-        fecha,
-        duracion,
-        candidatos,
-        candidatosCount: candidatos.length,
-      });
-      const todosLosHorarios = [];
-
-      for (const slot of candidatos) {
-        const { startMin, endMin, horaInicio, horario } = slot;
-        const ocupadasNums = Array.isArray(reservadas)
-          ? reservadas
-            .filter((r) => (
-              reservaBloqueaDisponibilidad(r) &&
-              numsSlots.includes(parseInt(String(r.cancha), 10)) &&
-              reservaSolapaIntervalo(r, startMin, endMin)
-            ))
-            .map((r) => parseInt(String(r.cancha), 10))
-          : [];
-        const ocupadas = new Set(ocupadasNums).size;
-        const libres = numsSlots.length - ocupadas;
-
-        if (libres > 0) {
-          if (filtrarSlotsPasadosHoy) {
-            const slotStartMs = slotStartMsParaReservaSede(fecha, horaInicio, sedeData);
-            if (slotStartMs != null && slotStartMs <= Date.now()) {
-              continue;
-            }
-          }
-          todosLosHorarios.push({
-            horario,
-            hora: horaInicio,
-            libres,
-            ocupadas,
-          });
-        }
-      }
-
-      setHorariosDisponibles(todosLosHorarios);
+      const query = new URLSearchParams({ sede_id: sedeIdKey, fecha, duracion: String(duracionSeleccionadaMin), deporte: reservaDeporteUrl });
+      const response = await fetch(apiUrl(`/api/disponibilidad?${query.toString()}`), { cache: 'no-store' });
+      const payload = await response.json();
+      if (!response.ok || !Array.isArray(payload?.slots)) throw new Error(t('reservas.searchCourtsError'));
+      setHorariosDisponibles(payload.slots.filter((slot) => slot?.disponible === true && Number(slot?.canchas_libres) > 0).map((slot) => ({ horario: String(slot.hora || ''), hora: String(slot.hora || ''), libres: Number(slot.canchas_libres), ocupadas: 0 })).filter((slot) => /^\d{2}:\d{2}$/.test(slot.hora)));
       setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
     } catch (err) {
       console.error('[ReservaForm] disponibilidad fetch error', err);
       setError(t('reservas.searchCourtsError'));
       setHorariosDisponibles([]);
       setHorariosUltimaConsulta({ sedeId: sedeIdKey, fecha });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [filtros.sede_id, sedeSeleccionada, duracionSeleccionadaMin, reservaDeporteUrl, t]);
 
   // Auto-load time slots when date is selected (pantalla 2)
@@ -2110,40 +1972,14 @@ export default function ReservaForm() {
 
   const buscarCanchasDisponibles = useCallback(async (hora, fechaReserva) => {
     const fecha = fechaReserva != null && String(fechaReserva).trim() !== '' ? String(fechaReserva).trim() : formData.fecha;
-    if (!hora || !fecha) return;
-    if (filtros.sede_id === '' || filtros.sede_id == null) return;
-    if (!sedeSeleccionada) return;
-
+    if (!hora || !fecha || filtros.sede_id === '' || filtros.sede_id == null || !sedeSeleccionada) return;
     try {
-      const response = await fetch(
-        apiUrl(
-          `/api/disponibilidad/${encodeURIComponent(sedeSeleccionada.nombre)}/${encodeURIComponent(fecha)}?sede_id=${encodeURIComponent(filtros.sede_id)}`
-        ),
-        { cache: 'no-store' }
-      );
-      if (!response.ok) throw new Error(t('reservas.searchCourtsError'));
-      const reservadas = await response.json();
-      if (!Array.isArray(reservadas)) throw new Error(t('reservas.searchCourtsError'));
-
-      const startMin = minutosDesdeHoraReserva(hora);
-      const endMin = startMin == null ? null : startMin + duracionSeleccionadaMin;
-      const ocupadas = Array.isArray(reservadas) && startMin != null && endMin != null
-        ? reservadas
-          .filter((r) => (
-            reservaBloqueaDisponibilidad(r) &&
-            reservaSolapaIntervalo(r, startMin, endMin)
-          ))
-          .map((r) => parseInt(String(r.cancha), 10))
-        : [];
-      const slots = slotsReservaDesdeSede(sedeSeleccionada, reservaDeporteUrl, t);
-
-      setCanchasDisponibles(
-        slots.map((s) => ({
-          num: s.numero,
-          label: s.nombre,
-          libre: !ocupadas.includes(s.numero),
-        }))
-      );
+      const query = new URLSearchParams({ sede_id: String(filtros.sede_id), fecha, duracion: String(duracionSeleccionadaMin), deporte: reservaDeporteUrl, expand_courts: 'true' });
+      const response = await fetch(apiUrl(`/api/disponibilidad?${query.toString()}`), { cache: 'no-store' });
+      const payload = await response.json();
+      if (!response.ok || !Array.isArray(payload?.slots)) throw new Error(t('reservas.searchCourtsError'));
+      const horaNormalizada = String(hora).split(' - ')[0].trim();
+      setCanchasDisponibles(payload.slots.filter((slot) => String(slot?.hora || '') === horaNormalizada && Number.isFinite(Number(slot?.cancha))).map((slot) => ({ num: Number(slot.cancha), label: String(slot.cancha_nombre || `Cancha ${slot.cancha}`), libre: slot?.disponible === true })));
     } catch {
       setCanchasDisponibles([]);
       setError(t('reservas.searchCourtsError'));
