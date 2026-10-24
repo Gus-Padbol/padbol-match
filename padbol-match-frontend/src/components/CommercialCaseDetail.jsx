@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import CommercialCallSummary from './CommercialCallSummary';
+import CommercialFollowupActivation from './CommercialFollowupActivation';
 
 export default function CommercialCaseDetail({item, api}) {
   const [activities,setActivities]=useState([]);
@@ -39,6 +40,7 @@ export default function CommercialCaseDetail({item, api}) {
     <form onSubmit={addNote}><label>Nota y próximo paso <textarea value={note} maxLength={2000} onChange={e=>setNote(e.target.value)}/></label><button disabled={noteBusy || !!pendingCall || !note.trim()}>Guardar nota</button></form>
     <CommercialCallSummary key={`${item.channel}:${item.id}:${pendingCall?.id || 'new'}`} caseId={item.id} channel={item.channel} callId={pendingCall?.id} api={api} onSaved={()=>load().catch(()=>setError('No se pudo actualizar la consulta.'))}/>
     <form onSubmit={updateProgress}><h3>Estado y próximo paso</h3><label>Estado <select value={state} onChange={e=>setState(e.target.value)}><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="en_espera">En espera</option><option value="cerrado">Cerrado</option></select></label><label>Próximo paso <textarea maxLength={2000} value={nextStep} onChange={e=>setNextStep(e.target.value)}/></label><button disabled={progressBusy || !!pendingCall || !Number.isSafeInteger(data.version)}>Guardar estado</button><p>El estado en espera no envía mensajes automáticamente.</p></form>
+    {data.progressState === 'en_espera' && !pendingCall && <CommercialFollowupActivation caseId={item.id} channel={item.channel} api={api} active={data.followup?.status === 'waiting'} onChanged={() => load().catch(() => setError('No se pudo actualizar la consulta.'))}/>} 
     <form onSubmit={send}><label>Respuesta <textarea value={body} onChange={e=>setBody(e.target.value)} maxLength={4096}/></label><button disabled={busy||uncertain||data.status==='suspended'||data.progressState==='cerrado'||!body.trim()}>Enviar respuesta</button></form>
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}
   </section>;

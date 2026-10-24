@@ -35,5 +35,7 @@ export function createCommercialAssignmentsApi(token) {
     },
     addAdvisor: email => request(advisors, 'POST', {email}),
     deactivateAdvisor: id => request(`${advisors}/${encodeURIComponent(id)}`, 'PATCH', {active:false}),
+    startFollowup: (id, channel, {consent, evidence, language}) => request(`${cases}/${encodeURIComponent(id)}/followup/start`, 'POST', {channel, consent, evidence, language}),
+    cancelFollowup: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/followup/cancel`, 'POST', {channel}),
   };
 }
