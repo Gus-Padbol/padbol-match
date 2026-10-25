@@ -6,7 +6,8 @@ export default function CommercialDictation({onText, onListeningChange}) {
   const callbacks = useRef({onText, onListeningChange});
   callbacks.current = {onText, onListeningChange};
   const [listening, setListening] = useState(false), [interim, setInterim] = useState(''), [error, setError] = useState('');
-  const pending = useRef('');
+  const pending = useRef(''), transientFailures = useRef(0);
+  const [reconnecting, setReconnecting] = useState(false);
   const available = typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
   useEffect(() => () => {
     wanted.current = false; clearTimeout(restart.current);
@@ -17,7 +18,7 @@ export default function CommercialDictation({onText, onListeningChange}) {
   }, []);
   function finish(message = '') {
     wanted.current = false; clearTimeout(restart.current);
-    setListening(false); callbacks.current.onListeningChange?.(false);
+    setListening(false); setReconnecting(false); callbacks.current.onListeningChange?.(false);
     if (message) {
       if (pending.current) { callbacks.current.onText(pending.current); pending.current = ''; setInterim(''); }
       setError(message);
@@ -32,6 +33,7 @@ export default function CommercialDictation({onText, onListeningChange}) {
       session.lang = 'es'; session.continuous = true; session.interimResults = true;
       session.onresult = event => {
         if (recognition.current !== session) return;
+        transientFailures.current = 0; setReconnecting(false);
         const finals = [], draft = [];
         Array.from(event.results || []).forEach((result, index) => {
           const text = String(result[0]?.transcript || '').trim();
@@ -42,7 +44,12 @@ export default function CommercialDictation({onText, onListeningChange}) {
         if (finals.length) callbacks.current.onText(finals.join(' '));
       };
       session.onerror = event => {
-        if (recognition.current !== session || event.error === 'no-speech') return;
+        if (recognition.current !== session || event.error === 'no-speech' || (event.error === 'aborted' && !wanted.current)) return;
+        if (wanted.current && ['network','aborted'].includes(event.error) && transientFailures.current < 3) {
+          transientFailures.current += 1;
+          setReconnecting(true);
+          return;
+        }
         finish(['not-allowed','service-not-allowed','audio-capture'].includes(event.error)
           ? 'No se pudo acceder al micrófono. Revisa el permiso del navegador o escribe el resumen.'
           : 'Se interrumpió el dictado. El texto recibido se conserva; puedes continuar dictando o escribir.');
@@ -52,7 +59,7 @@ export default function CommercialDictation({onText, onListeningChange}) {
         recognition.current = null;
         // Preserve the last visible draft if the browser ends before finalizing it.
         if (pending.current) { callbacks.current.onText(pending.current); pending.current = ''; setInterim(''); }
-        if (wanted.current) restart.current = setTimeout(begin, 300);
+        if (wanted.current) restart.current = setTimeout(begin, Math.max(300, transientFailures.current * 500));
         else finish();
       };
       session.start();
@@ -65,12 +72,12 @@ export default function CommercialDictation({onText, onListeningChange}) {
       else finish();
       return;
     }
-    setError(''); wanted.current = true; setListening(true); callbacks.current.onListeningChange?.(true); begin();
+    setError(''); transientFailures.current = 0; setReconnecting(false); wanted.current = true; setListening(true); callbacks.current.onListeningChange?.(true); begin();
   }
   if (!available) return <p>Puedes escribir o usar el dictado de tu dispositivo.</p>;
   return <div className="commercial-dictation-control">
     <button type="button" aria-pressed={listening} onClick={toggle}>{listening ? 'Terminar dictado' : 'Dictar resumen'}</button>
-    {listening && <p role="status">Escuchando… Puedes hacer pausas. Pulsa «Terminar dictado» cuando acabes.</p>}
+    {listening && <p role="status">{reconnecting ? 'Reconectando el micrófono… El texto se conserva.' : 'Escuchando… Puedes hacer pausas. Pulsa «Terminar dictado» cuando acabes.'}</p>}
     {interim && <p className="commercial-dictation-draft" aria-live="polite">{interim}</p>}
     {error && <p role="alert">{error}</p>}
     <details><summary>Sobre el dictado</summary><p>Solo dicta tu resumen después de la llamada. El navegador puede enviar el audio a su proveedor para transcribirlo. Revisa el texto antes de guardar.</p></details>
