@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import CommercialAssignments from './CommercialAssignments';
 import CommercialCaseDetail from './CommercialCaseDetail';
+import CommercialAgendaAlerts from './CommercialAgendaAlerts';
 import './CommercialTeamWorkspace.css';
 
 // The server determines the role and filters every case; client state never grants access.
@@ -12,5 +13,5 @@ export default function CommercialTeamWorkspace({api}) {
   async function refresh(){try{const c=await api.listCases();setCases(c.cases || []);setSelected(null);setError('');}catch{setError('No se pudieron actualizar las consultas.');}}
   if(error&&!role)return <p role="alert">{error}</p>;
   if(!role)return <p>Cargando área comercial…</p>;
-  return <main className="commercial-team"><h1>Área comercial</h1>{role==='manager'&&<CommercialAssignments api={api}/>}<section aria-label="Consultas comerciales"><h2>Consultas</h2><button type="button" onClick={refresh}>Actualizar consultas</button>{error&&<p role="alert">{error}</p>}{!cases.length&&<p>No hay consultas disponibles.</p>}<ul>{cases.map(c=><li key={`${c.channel}:${c.id}`}><button type="button" onClick={()=>setSelected(c)}>{c.contact?.name || c.contact?.phone || c.contact?.email || 'Consulta comercial'} · {c.channel === 'whatsapp' ? 'WhatsApp' : 'Formulario'}</button></li>)}</ul></section>{selected&&<CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api}/>}</main>;
+  return <main className="commercial-team"><h1>Área comercial</h1><CommercialAgendaAlerts api={api} onOpen={setSelected}/>{role==='manager'&&<CommercialAssignments api={api}/>}<section aria-label="Consultas comerciales"><h2>Consultas</h2><button type="button" onClick={refresh}>Actualizar consultas</button>{error&&<p role="alert">{error}</p>}{!cases.length&&<p>No hay consultas disponibles.</p>}<ul>{cases.map(c=><li key={`${c.channel}:${c.id}`}><button type="button" onClick={()=>setSelected(c)}>{c.contact?.name || c.contact?.phone || c.contact?.email || 'Consulta comercial'} · {c.channel === 'whatsapp' ? 'WhatsApp' : 'Formulario'}</button></li>)}</ul></section>{selected&&<CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api}/>}</main>;
 }

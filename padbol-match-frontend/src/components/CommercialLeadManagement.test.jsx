@@ -8,7 +8,7 @@ test('advance requires one summary and next step; preserves the selected state a
  fireEvent.change(screen.getByLabelText('Estado comercial'),{target:{value:'en_espera'}});expect(screen.getByText('Guardar gestión')).toBeDisabled();
  for(const [label,value] of [['Resumen de la conversación','Quiere dos canchas; está evaluando presupuesto'],['Próximo paso','Llamar el martes']])fireEvent.change(screen.getByLabelText(label),{target:{value}});
  fireEvent.click(screen.getByText('Guardar gestión'));
- await waitFor(()=>expect(api.progress).toHaveBeenCalledWith('case','form',4,'en_espera','Llamar el martes'));
+ await waitFor(()=>expect(api.progress).toHaveBeenCalledWith('case','form',4,'en_espera','Llamar el martes',null,[24,8]));
  expect(api.completeCall).toHaveBeenCalledWith('case','call',{channel:'form',situation:'Estado seleccionado: En espera del cliente',discussed:'Quiere dos canchas; está evaluando presupuesto',distinguishing:'No se agregaron detalles adicionales.'});
  expect(api.startCall.mock.invocationCallOrder[0]).toBeLessThan(api.completeCall.mock.invocationCallOrder[0]);expect(api.completeCall.mock.invocationCallOrder[0]).toBeLessThan(api.progress.mock.invocationCallOrder[0]);
 });
@@ -37,4 +37,22 @@ test('summary and next step are required even when the state is unchanged',async
  fireEvent.change(screen.getByLabelText('Próximo paso'),{target:{value:'Contactar el viernes.'}});
  expect(screen.getByText('Guardar gestión')).toBeEnabled();
  expect(screen.queryByLabelText('Situación actual')).not.toBeInTheDocument();
+});
+
+test('calendar persists a UTC appointment with default alerts 24 and 8 hours',async()=>{
+ const api=apiFixture();render(<CommercialLeadManagement conversation={conversation} api={api}/>);await screen.findByLabelText('Estado comercial');
+ fireEvent.change(screen.getByLabelText('Resumen de la conversación'),{target:{value:'Solicitó retomar la charla.'}});
+ fireEvent.change(screen.getByLabelText('Próximo paso'),{target:{value:'Videollamada para revisar propuesta.'}});
+ fireEvent.change(screen.getByLabelText('Próxima charla (opcional)'),{target:{value:'2099-06-20T14:30'}});
+ expect(screen.getByLabelText('Avisarme estas horas antes')).toHaveValue('24, 8');
+ fireEvent.click(screen.getByText('Guardar gestión'));
+ await waitFor(()=>expect(api.progress).toHaveBeenCalledWith('case','form',4,'nuevo','Videollamada para revisar propuesta.',new Date('2099-06-20T14:30').toISOString(),[24,8]));
+});
+test('closing clears an existing appointment',async()=>{
+ const api=apiFixture();api.readCase.mockResolvedValue({id:'case',version:4,progressState:'en_espera',nextContactAt:'2099-06-20T14:30:00Z',reminderHours:[48,1],assignedAdvisor:{name:'Nico'}});
+ render(<CommercialLeadManagement conversation={conversation} api={api}/>);await screen.findByLabelText('Estado comercial');
+ fireEvent.change(screen.getByLabelText('Estado comercial'),{target:{value:'cerrado'}});
+ expect(screen.queryByLabelText('Próxima charla (opcional)')).not.toBeInTheDocument();
+ fireEvent.change(screen.getByLabelText('Resumen de la conversación'),{target:{value:'El cliente decidió no continuar.'}});fireEvent.change(screen.getByLabelText('Resultado del cierre'),{target:{value:'Cerrado sin operación.'}});fireEvent.click(screen.getByText('Guardar gestión'));
+ await waitFor(()=>expect(api.progress).toHaveBeenCalledWith('case','form',4,'cerrado','Cerrado sin operación.',null,[48,1]));
 });

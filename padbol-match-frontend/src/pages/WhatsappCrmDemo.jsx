@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
 import CommercialLeadManagement from '../components/CommercialLeadManagement';
+import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
 import { createCommercialAssignmentsApi } from '../utils/commercialAssignmentsApi';
 import './WhatsappCrmDemo.css';
 
@@ -291,6 +292,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeId, setActiveId] = useState(null);
+  const [agendaLeadId, setAgendaLeadId] = useState(null);
   const [areaFilter, setAreaFilter] = useState('all');
   const channelFilter = '';
   const [estadoFilter, setEstadoFilter] = useState('');
@@ -756,6 +758,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
       </section>
 
       <div className="wa-tools" aria-label="Herramientas de la bandeja">
+      {(perms?.canAudit || commercialOnly) ? <CommercialAgendaAlerts api={commercialApi} onOpen={item=>{const id=item.conversationId || (item.channel==='form'?item.id:null);if(id){setAreaFilter('all');setTicketReference('');setTicketInput('');setEstadoFilter('');setHiddenOnly(false);setActiveId(id);setAgendaLeadId(id);if(threadRef.current)threadRef.current.scrollTop=0;}}}/> : null}
       {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section className="wa-manual-tool">
         <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
         {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
@@ -921,7 +924,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
 
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
-                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} onUpdated={load} /> : null}
+                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} onUpdated={load} showHistory={agendaLeadId===active.id} /> : null}
                 {waContext && !isCommercial ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}

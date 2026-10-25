@@ -16,7 +16,7 @@ export function createCommercialAssignmentsApi(token) {
     resolveConversation: id => request(`/api/admin/crm/commercial-case-by-conversation/${encodeURIComponent(id)}`),
     getRole: () => request('/api/admin/crm/commercial-role'),
     listCases: () => request(cases),
-    progress: (id, channel, expectedVersion, state, nextStep) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep}),
+    progress: (id, channel, expectedVersion, state, nextStep, nextContactAt, reminderHours) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep,...(nextContactAt !== undefined ? {nextContactAt,reminderHours:reminderHours || [24,8]} : {})}),
     media: async (id, eventId) => {
       const response = await fetch(`${getApiBaseUrl()}${cases}/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/media`, {headers:{Authorization:`Bearer ${token}`},cache:'no-store'});
       if (!response.ok) throw new Error('MEDIA_UNAVAILABLE');
