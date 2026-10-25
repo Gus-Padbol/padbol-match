@@ -749,7 +749,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
           <div><strong>{commercialOnly ? 'Consultas comerciales' : 'Atención & CRM'}</strong><span>{commercialOnly ? 'Formularios, informes y seguimiento' : 'Centro de conversaciones'}</span></div>
         </div>
         <div className="wa-demo-badge"><span /> {CRM_IS_QA ? 'CONECTADO A QA' : 'CONECTADO'}</div>
-        <div className="wa-agent"><div className="wa-avatar wa-avatar--small">{perms?.canAudit ? 'SU' : perms?.canOperate ? 'OP' : '—'}</div><div><strong>{perms?.canAudit ? 'Auditoría' : perms?.canOperate ? 'Operador' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div></div>
+        <div className="wa-agent"><img className="wa-agent-logo" src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol International" /><div><strong>{perms?.canAudit ? 'Auditoría' : perms?.canOperate ? 'Operador' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div></div>
       </header>
 
       <section className="wa-safety" aria-label="Estado de seguridad">
