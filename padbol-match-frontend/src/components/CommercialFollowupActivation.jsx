@@ -22,8 +22,8 @@ export default function CommercialFollowupActivation({caseId, channel, api, acti
       await api.startFollowup(caseId, channel, {consent: true, evidence: evidence.trim(), language});
       setNotice('Seguimiento activado. Se detendrá si la persona responde.');
       onChanged?.();
-    } catch {
-      setError('No se pudo activar el seguimiento. Verifica el consentimiento y las plantillas antes de reintentar.');
+    } catch (err) {
+      setError(err.userMessage || 'No se pudo activar el seguimiento. Verifica el consentimiento y las plantillas antes de reintentar.');
     } finally { setBusy(false); }
   }
 

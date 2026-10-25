@@ -86,7 +86,7 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
       const current = await api.readCase(data.id,data.channel);
       await api.progress(data.id,data.channel,current.version,state,next.trim(),date?.toISOString() || null,hours || [24,8],...(state==='cerrado'&&closureOutcome?[closureOutcome]:[]));
       await refresh(data); await onUpdated?.(); window.dispatchEvent(new Event('commercial-agenda-updated')); setSummary(''); setDetails(''); setNotice('Atención registrada. Estado y próximo paso actualizados.');
-    } catch {setError('No se pudo confirmar el registro completo. Actualiza la ficha y revisa el historial antes de volver a guardar.');}
+    } catch (err) {setError(err.userMessage || 'No se pudo confirmar el registro completo. Actualiza la ficha y revisa el historial antes de volver a guardar.');}
     finally {setBusy(false);}
   }
   if(!data) return <section className="commercial-lead-management" aria-label="Gestión comercial"><h3>Gestión comercial</h3>{error?<p role="alert">{error}</p>:<p>Cargando gestión comercial…</p>}</section>;
