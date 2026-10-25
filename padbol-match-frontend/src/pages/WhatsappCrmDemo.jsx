@@ -755,7 +755,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span>{!commercialOnly ? <span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span> : null}<span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
       </section>
 
-      {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
+      <div className="wa-tools" aria-label="Herramientas de la bandeja">
+      {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section className="wa-manual-tool">
         <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
         {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
           <strong>Registro de contacto</strong>
@@ -780,7 +781,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         {ticketReference ? <button type="button" onClick={() => { setTicketInput(''); setTicketReference(''); setTicketError(''); setActiveId(null); }}>Mostrar todos</button> : null}
         {ticketError ? <p role="alert">{ticketError}</p> : null}
       </form> : null}
-      {perms?.canAudit ? <div style={{padding:'0 18px 12px'}}><button type="button" onClick={() => { setHiddenOnly(v => !v); setActiveId(null); setTicketReference(''); setTicketInput(''); }}>{hiddenOnly ? 'Volver a la bandeja' : 'Ver pruebas ocultas'}</button></div> : null}
+      {perms?.canAudit ? <div className="wa-test-tool"><button type="button" onClick={() => { setHiddenOnly(v => !v); setActiveId(null); setTicketReference(''); setTicketInput(''); }}>{hiddenOnly ? 'Volver a la bandeja' : 'Ver pruebas ocultas'}</button></div> : null}
+      </div>
       {loading ? (
         <div className="wa-empty"><p>Cargando bandeja…</p></div>
       ) : error ? (
