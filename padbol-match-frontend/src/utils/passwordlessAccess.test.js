@@ -62,3 +62,6 @@ it('returns thrown network errors so the screen can recover instead of leaving a
 it('explains that passwordless access requires registration without creating an account', () => {
   expect(passwordlessAccessErrorTranslationKey({ status: 422, code: 'otp_disabled' })).toBe('auth.accessLinkRegistrationRequired');
 });
+
+it('verifies an email code without creating a user or exchanging a PKCE code',async()=>{const {verifyEmailAccessCode}=require('./passwordlessAccess');const verifyOtp=jest.fn().mockResolvedValue({data:{session:{user:{id:'person'}}}});await verifyEmailAccessCode({auth:{verifyOtp},email:' PERSON@EXAMPLE.INVALID ',code:'12345678'});expect(verifyOtp).toHaveBeenCalledWith({email:'person@example.invalid',token:'12345678',type:'email'});});
+it('does not transmit a malformed email code',async()=>{const {verifyEmailAccessCode}=require('./passwordlessAccess');const verifyOtp=jest.fn();expect((await verifyEmailAccessCode({auth:{verifyOtp},email:'person@example.invalid',code:'wrong'})).error).toBeTruthy();expect(verifyOtp).not.toHaveBeenCalled();});

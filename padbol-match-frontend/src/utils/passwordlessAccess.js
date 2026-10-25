@@ -32,3 +32,11 @@ export function passwordlessAccessErrorTranslationKey(error) {
   if (error?.status === 429 || ['over_email_send_rate_limit', 'over_request_rate_limit'].includes(error?.code)) return 'auth.accessLinkRateLimited';
   return 'auth.accessLinkFailed';
 }
+
+/** Verify the one-time code with Supabase; never persist or log the code. */
+export async function verifyEmailAccessCode({auth,email,code}) {
+  const token=String(code||'').trim();
+  if(!/^\d{6,10}$/.test(token))return {error:{code:'invalid_email_code'}};
+  try{return await auth.verifyOtp({email:String(email||'').trim().toLowerCase(),token,type:'email'});}
+  catch(error){return {error};}
+}
