@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase, AUTH_CALLBACK_FLOW } from '../supabaseClient';
+import { navigateAfterAuth } from '../utils/authCallbackFlow';
 import { useAuth } from '../context/AuthContext';
 import { resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 import { flushPendingOAuthLegalAcceptance, hasPendingOAuthLegalAcceptance } from '../utils/legalDocuments';
@@ -55,7 +56,7 @@ export default function AuthOAuthCallback() {
       const destination = await resolveRoleAwarePostLoginPath(requested, activeSession);
       if (cancelled || navigatedRef.current) return;
       navigatedRef.current = true;
-      navigate(resolveOAuthPostLoginPath(destination, needsProfile), {replace:true});
+      navigateAfterAuth(resolveOAuthPostLoginPath(destination, needsProfile), {flowType:AUTH_CALLBACK_FLOW,navigate});
     };
     const getSession = async () => {
       try {
