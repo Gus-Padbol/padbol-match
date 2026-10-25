@@ -13,6 +13,7 @@ export function createCommercialAssignmentsApi(token) {
   const cases = '/api/admin/crm/commercial-cases';
   const advisors = '/api/admin/crm/commercial-advisors';
   return {
+    resolveConversation: id => request(`/api/admin/crm/commercial-case-by-conversation/${encodeURIComponent(id)}`),
     getRole: () => request('/api/admin/crm/commercial-role'),
     listCases: () => request(cases),
     progress: (id, channel, expectedVersion, state, nextStep) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep}),
