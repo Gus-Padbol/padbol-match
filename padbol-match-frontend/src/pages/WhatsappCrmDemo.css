@@ -585,3 +585,5 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
   .admin-dashboard--crm .admin-dashboard-body-surface{padding-left:0!important;padding-right:0!important}
   .wa-demo,.admin-dashboard .wa-demo,.admin-dashboard .wa-demo:has(.wa-panel-exit){height:100dvh}
 }
+
+@media(min-width:721px){.admin-dashboard--crm .admin-dashboard-shell{padding:0!important}}

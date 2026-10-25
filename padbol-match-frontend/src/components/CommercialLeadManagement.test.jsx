@@ -9,7 +9,7 @@ test('advance requires one summary and next step; preserves the selected state a
  for(const [label,value] of [['Resumen de la conversación','Quiere dos canchas; está evaluando presupuesto'],['Próximo paso','Llamar el martes']])fireEvent.change(screen.getByLabelText(label),{target:{value}});
  fireEvent.click(screen.getByText('Guardar gestión'));
  await waitFor(()=>expect(api.progress).toHaveBeenCalledWith('case','form',4,'en_espera','Llamar el martes',null,[24,8]));
- expect(api.completeCall).toHaveBeenCalledWith('case','call',{channel:'form',situation:'Estado seleccionado: En espera del cliente',discussed:'Quiere dos canchas; está evaluando presupuesto',distinguishing:'No se agregaron detalles adicionales.'});
+ expect(api.completeCall).toHaveBeenCalledWith('case','call',{channel:'form',situation:'Estado seleccionado: En espera / seguimiento',discussed:'Quiere dos canchas; está evaluando presupuesto',distinguishing:'No se agregaron detalles adicionales.'});
  expect(api.startCall.mock.invocationCallOrder[0]).toBeLessThan(api.completeCall.mock.invocationCallOrder[0]);expect(api.completeCall.mock.invocationCallOrder[0]).toBeLessThan(api.progress.mock.invocationCallOrder[0]);
 });
 test('failed summary never advances the case',async()=>{
@@ -55,4 +55,10 @@ test('closing clears an existing appointment',async()=>{
  expect(screen.queryByLabelText('Próxima charla (opcional)')).not.toBeInTheDocument();
  fireEvent.change(screen.getByLabelText('Resumen de la conversación'),{target:{value:'El cliente decidió no continuar.'}});fireEvent.change(screen.getByLabelText('Resultado del cierre'),{target:{value:'Cerrado sin operación.'}});fireEvent.click(screen.getByText('Guardar gestión'));
  await waitFor(()=>expect(api.progress).toHaveBeenCalledWith('case','form',4,'cerrado','Cerrado sin operación.',null,[48,1]));
+});
+
+test('saved WhatsApp waiting state exposes explicit consent-based followup, draft state never activates it',async()=>{
+ const api=apiFixture();api.resolveConversation.mockResolvedValue({id:'case',channel:'whatsapp'});api.readCase.mockResolvedValue({id:'case',version:4,progressState:'nuevo',assignedAdvisor:{id:'nico',name:'Nico'}});
+ const {unmount}=render(<CommercialLeadManagement conversation={{id:'wa',source_channel:'whatsapp'}} api={api}/>);await screen.findByLabelText('Estado comercial');fireEvent.change(screen.getByLabelText('Estado comercial'),{target:{value:'en_espera'}});expect(screen.queryByRole('button',{name:'Activar seguimiento'})).not.toBeInTheDocument();unmount();
+ api.readCase.mockResolvedValue({id:'case',version:4,progressState:'en_espera',assignedAdvisor:{id:'nico',name:'Nico'}});render(<CommercialLeadManagement conversation={{id:'wa',source_channel:'whatsapp'}} api={api}/>);expect(await screen.findByRole('button',{name:'Activar seguimiento'})).toBeDisabled();expect(screen.getByLabelText(/Confirmo que autorizó/)).not.toBeChecked();
 });

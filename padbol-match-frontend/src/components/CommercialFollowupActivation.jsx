@@ -38,7 +38,8 @@ export default function CommercialFollowupActivation({caseId, channel, api, acti
   }
 
   return <section aria-label="Seguimiento comercial">
-    <h3>Seguimiento</h3>
+    <h3>Seguimiento por WhatsApp</h3>
+    <p>Hasta tres mensajes: a los 2, 5 y 8 días de activarlo. No son los avisos de tu agenda. Requiere plantillas aprobadas; si el cliente responde, la secuencia se detiene.</p>
     {active ? <><p>El seguimiento está activo. Si la persona responde, se detiene para evitar mensajes fuera de contexto.</p><button type="button" disabled={busy} onClick={cancel}>Detener seguimiento</button></> : <form onSubmit={start}>
       <p>Actívalo sólo cuando ya terminaste la atención y la persona autorizó recibir mensajes de seguimiento.</p>
       <label><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} /> Confirmo que autorizó el seguimiento por WhatsApp.</label>
