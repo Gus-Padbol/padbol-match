@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import {ADVISOR_REQUEST_STATUS,advisorOperationNotice} from '../utils/commercialAdvisorStatus';
 
 // Transport and authorization are provided by the calling CRM; this component
 // never derives an operator's access from client-supplied identity data.
@@ -7,19 +8,21 @@ export default function CommercialAssignments({ api }) {
   const [advisors, setAdvisors] = useState([]);
   const [selection, setSelection] = useState({});
   const [showAdvisorForm,setShowAdvisorForm]=useState(false);
+  const [requests,setRequests]=useState([]),[canApprove,setCanApprove]=useState(false),[conditions,setConditions]=useState('');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
   async function refresh() {
-    const [caseData, advisorData] = await Promise.all([api.listCases(), api.listAdvisors()]);
+    const [caseData, advisorData,requestData] = await Promise.all([api.listCases(), api.listAdvisors(),api.listAdvisorRequests?api.listAdvisorRequests():Promise.resolve({})]);
+    setRequests(requestData.requests||[]);setCanApprove(requestData.canApprove===true);
     setCases(caseData.cases || []);
     setAdvisors(advisorData.advisors || []);
     setReady(true);
   }
-  useEffect(() => { let active = true; Promise.all([api.listCases(), api.listAdvisors()]).then(([c, a]) => {
-    if (active) { setCases(c.cases || []); setAdvisors(a.advisors || []); setReady(true); }
+  useEffect(() => { let active = true; Promise.all([api.listCases(), api.listAdvisors(),api.listAdvisorRequests?api.listAdvisorRequests():Promise.resolve({})]).then(([c, a,r]) => {
+    if (active) { setCases(c.cases || []); setAdvisors(a.advisors || []);setRequests(r.requests||[]);setCanApprove(r.canApprove===true); setReady(true); }
   }).catch(() => { if (active) setError('No se pudieron cargar las consultas y los asesores.'); }); return () => { active = false; }; }, [api]);
   async function retryLoad() {
     setBusy(true); setError('');
@@ -38,10 +41,11 @@ export default function CommercialAssignments({ api }) {
   async function addAdvisor(event) {
     event.preventDefault(); if (!email.trim() || busy) return;
     setBusy(true); setError(''); setNotice('');
-    try { await api.addAdvisor(email.trim()); setEmail(''); await refresh(); setNotice('Solicitud registrada. El acceso queda pendiente de habilitación por Administración central.'); }
-    catch { setError('No se pudo confirmar el alta. Revisa la lista antes de intentarlo de nuevo.'); setReady(false); }
+    try {const result=await api.addAdvisor(email.trim(),{agreedConditions:conditions.trim()});setEmail('');setConditions('');await refresh();setShowAdvisorForm(false);setNotice(advisorOperationNotice(result));}
+    catch(err) { setError(err.userMessage || 'No se pudo confirmar el alta. Revisa la lista antes de intentarlo de nuevo.'); setReady(false); }
     finally { setBusy(false); }
   }
+  async function decideRequest(id,decision){if(busy)return;setBusy(true);setError('');try{const result=await api.decideAdvisorRequest(id,decision);await refresh();setNotice(advisorOperationNotice(result,decision));}catch(err){setError(err.userMessage||'No se pudo confirmar la habilitación. Actualizá la lista antes de repetirla.');}finally{setBusy(false);}}
   async function deactivateAdvisor(advisor) {
     if (busy || !window.confirm(`¿Desactivar a ${advisor.name || advisor.email}? Primero debes reasignar sus consultas abiertas.`)) return;
     setBusy(true); setError(''); setNotice('');
@@ -54,8 +58,10 @@ export default function CommercialAssignments({ api }) {
     <p>Consulta y distribuye las oportunidades comerciales entre los asesores.</p>
     {error && <div><p role="alert">{error}</p><button type="button" disabled={busy} onClick={retryLoad}>Actualizar lista</button></div>}{notice && <p role="status">{notice}</p>}
     {!ready && !error && <p>Cargando…</p>}
-    {ready && <><h3>Asesores</h3><button className="commercial-advisor-add" type="button" aria-expanded={showAdvisorForm} onClick={()=>setShowAdvisorForm(true)}>Agregar asesor</button><p>Completá los datos para solicitar el acceso. Quedará pendiente de habilitación por Administración central.</p><small>El asesor debe tener una cuenta de Padbol Match con el correo confirmado.</small>
-      {showAdvisorForm&&<form onSubmit={addAdvisor} aria-label="Solicitar acceso de asesor"><label>Correo del asesor <input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label> <button type="submit" disabled={busy}>Solicitar alta</button><button type="button" onClick={()=>setShowAdvisorForm(false)}>Cerrar formulario</button></form>}
+    {ready && <><h3>Asesores</h3>{!showAdvisorForm&&<button className="commercial-advisor-add" type="button" onClick={()=>setShowAdvisorForm(true)}>{canApprove?'Habilitar asesor':'Agregar asesor'}</button>}
+      <p>{canApprove?'Completá los datos para habilitar al asesor. Su cuenta debe tener el correo confirmado.':'Completá los datos para solicitar el acceso. Quedará pendiente de habilitación por Administración central.'}</p>
+      {showAdvisorForm&&<form onSubmit={addAdvisor} aria-label={canApprove?'Habilitar asesor':'Solicitar acceso de asesor'}><label>Correo del asesor<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></label><label>Condiciones acordadas (opcional)<textarea maxLength={2000} rows="3" value={conditions} onChange={e=>setConditions(e.target.value)}/></label><small>Las consultas se asignan desde cada ficha.</small><button type="submit" disabled={busy}>{canApprove?'Habilitar asesor':'Solicitar alta'}</button><button type="button" onClick={()=>setShowAdvisorForm(false)}>Cancelar</button></form>}
+      {canApprove&&requests.some(request=>['pending','pending_verification'].includes(request.status))&&<section aria-label="Accesos pendientes"><h3>Accesos pendientes</h3><ul>{requests.filter(request=>['pending','pending_verification'].includes(request.status)).map(request=><li key={request.id}><strong>{request.name||request.email}</strong><p>{ADVISOR_REQUEST_STATUS[request.status]}</p>{request.agreedConditions&&<p>Condiciones acordadas: {request.agreedConditions}</p>}<button type="button" disabled={busy} onClick={()=>decideRequest(request.id,'approved')}>Habilitar acceso</button><button type="button" disabled={busy} onClick={()=>decideRequest(request.id,'rejected')}>Rechazar</button></li>)}</ul></section>}
       {advisors.length ? <ul>{advisors.map(a => <li key={a.id}>{a.name || a.email} {a.status ? `· ${a.status}` : ''} {a.active === true && a.role !== 'manager' && <button type="button" disabled={busy} onClick={() => deactivateAdvisor(a)}>Desactivar</button>}</li>)}</ul> : <p>No hay asesores disponibles.</p>}
       <h3>Consultas comerciales</h3>
       {!cases.length && <p>No hay consultas comerciales para mostrar.</p>}

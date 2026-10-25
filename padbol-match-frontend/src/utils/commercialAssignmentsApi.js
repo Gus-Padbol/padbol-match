@@ -10,7 +10,7 @@ export function createCommercialAssignmentsApi(token) {
     if (!response.ok) {
       const failure=typeof response.json==='function'?await response.json().catch(()=>({})):{};
       const code=failure.code||failure.error;
-      const messages={CLOSURE_OUTCOME_REQUIRED:'Selecciona si la venta se concretó o no avanzó.',INVALID_CLOSURE_OUTCOME:'Elige un resultado comercial válido: Venta concretada o No avanzó.',FOLLOWUP_NOT_READY:'El seguimiento todavía no está habilitado. Revisa las plantillas aprobadas y la disponibilidad de envío.'};
+      const messages={ADVISOR_REQUEST_DETAILS_CONFLICT:'Ya hay un alta pendiente para este correo. Revisá sus datos y condiciones en la lista antes de habilitarla.',CLOSURE_OUTCOME_REQUIRED:'Selecciona si la venta se concretó o no avanzó.',INVALID_CLOSURE_OUTCOME:'Elige un resultado comercial válido: Venta concretada o No avanzó.',FOLLOWUP_NOT_READY:'El seguimiento todavía no está habilitado. Revisa las plantillas aprobadas y la disponibilidad de envío.'};
       throw Object.assign(new Error('COMMERCIAL_ACTION_UNAVAILABLE'), {status:response.status,code,userMessage:messages[code]});
     }
     return response.json();

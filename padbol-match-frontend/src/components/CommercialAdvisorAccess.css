@@ -10,3 +10,5 @@
 .commercial-advisor-access__panel ul{padding:0;list-style:none}
 .commercial-advisor-access__panel li{display:grid;gap:4px;padding:10px 0;border-bottom:1px solid var(--line,#dce2ec)}
 .commercial-advisor-access__panel li div{display:flex;gap:8px}
+
+.commercial-advisor-pending{display:inline-flex;align-items:center;margin-left:8px;padding:3px 7px;border-radius:12px;background:#cf1d2b;color:#fff;font-size:11px;font-weight:750;white-space:nowrap}
