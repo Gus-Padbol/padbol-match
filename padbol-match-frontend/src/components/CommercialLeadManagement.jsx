@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import './CommercialLeadManagement.css';
+import CommercialDictation from './CommercialDictation';
 
 // Match server identifiers only. Contact names, phone numbers and tickets cannot grant case access.
 export async function resolveCommercialLead(api, conversation) {
@@ -19,6 +20,7 @@ export default function CommercialLeadManagement({api, conversation}) {
   const [calls, setCalls] = useState([]), [activities, setActivities] = useState([]);
   const [state, setState] = useState('nuevo'), [next, setNext] = useState(''), [advisor, setAdvisor] = useState('');
   const [summary, setSummary] = useState(''), [situation, setSituation] = useState(''), [details, setDetails] = useState('');
+  const [dictating, setDictating] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const pending = calls.find(c => c.status === 'pending');
   async function refresh(item) {
@@ -53,7 +55,7 @@ export default function CommercialLeadManagement({api, conversation}) {
     finally {setBusy(false);}
   }
   async function save(event) {
-    event.preventDefault(); if(busy || !data || !Number.isSafeInteger(data.version)) return;
+    event.preventDefault(); if(busy || dictating || !data || !Number.isSafeInteger(data.version)) return;
     const needsSummary = !!pending || state !== 'nuevo' || [summary,situation,details].some(v=>v.trim());
     if(needsSummary && [summary,situation,details].some(v=>v.trim().length<3)) return;
     if(state !== 'nuevo' && next.trim().length<3) return;
@@ -81,12 +83,13 @@ export default function CommercialLeadManagement({api, conversation}) {
     {pending && <p role="status">Hay una atención pendiente de resumen. Complétala para avanzar.</p>}
     <form onSubmit={save}>
       <label>Estado comercial<select value={state} onChange={e=>setState(e.target.value)}><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="en_espera">En espera del cliente</option><option value="cerrado">Cerrado</option></select></label>
+      <CommercialDictation onListeningChange={setDictating} onText={text=>setSummary(current=>[current.trim(),text].filter(Boolean).join(' ').slice(0,2000))}/>
       <label>Qué se habló<textarea maxLength={2000} value={summary} onChange={e=>setSummary(e.target.value)} required={needsSummary} placeholder="Resume la conversación con el cliente."/></label>
       <label>Situación actual<textarea maxLength={2000} value={situation} onChange={e=>setSituation(e.target.value)} required={needsSummary} placeholder="Qué decidió o qué está evaluando."/></label>
       <label>Detalles importantes<textarea maxLength={2000} value={details} onChange={e=>setDetails(e.target.value)} required={needsSummary} placeholder="Acuerdos, dudas o particularidades. Si no hay, indícalo."/></label>
       <label>Próximo paso<textarea maxLength={2000} value={next} onChange={e=>setNext(e.target.value)} required={state!=='nuevo'} placeholder="Qué se hará y cuándo; si cierras, indica el resultado."/></label>
       <p>Para avanzar o cerrar, registra la conversación y el próximo paso. Las llamadas desde tu teléfono se resumen aquí.</p>
-      <button disabled={busy || !Number.isSafeInteger(data.version) || (needsSummary&&!validSummary) || (state!=='nuevo'&&next.trim().length<3)}>{busy?'Guardando…':'Guardar atención y próximo paso'}</button>
+      <button disabled={busy || dictating || !Number.isSafeInteger(data.version) || (needsSummary&&!validSummary) || (state!=='nuevo'&&next.trim().length<3)}>{busy?'Guardando…':'Guardar atención y próximo paso'}</button>
     </form>
     {(calls.some(c=>c.status==='completed') || activities.length>0) && <details><summary>Historial de atención</summary>{calls.filter(c=>c.status==='completed').map(c=><article key={c.id}><p><strong>Qué se habló:</strong> {c.discussed}</p><p><strong>Situación:</strong> {c.situation}</p><p><strong>Detalles:</strong> {c.distinguishing}</p></article>)}{activities.map(a=><p key={a.id}>{a.body}</p>)}</details>}
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}
