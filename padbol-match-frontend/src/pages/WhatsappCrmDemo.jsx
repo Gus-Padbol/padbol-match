@@ -6,6 +6,7 @@ import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
 import CommercialAdvisorAccess from '../components/CommercialAdvisorAccess';
 import { createCommercialAssignmentsApi } from '../utils/commercialAssignmentsApi';
 import './WhatsappCrmDemo.css';
+import '../components/CommercialCrmTheme.css';
 
 const CRM_IS_QA = String(process.env.REACT_APP_APP_VARIANT || '').toLowerCase() === 'qa';
 
