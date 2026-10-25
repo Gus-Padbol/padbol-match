@@ -34,7 +34,9 @@ export function createCommercialAssignmentsApi(token) {
       if (!['form', 'whatsapp'].includes(channel) || !Number.isSafeInteger(expectedVersion)) return Promise.reject(new Error('ASSIGNMENT_VERSION_REQUIRED'));
       return request(`${cases}/${encodeURIComponent(id)}/assignment`, 'PUT', {channel,advisorId,expectedVersion});
     },
-    addAdvisor: email => request(advisors, 'POST', {email}),
+    addAdvisor: (email, details = {}) => request(advisors, 'POST', {email, ...details}),
+    listAdvisorRequests: () => request('/api/admin/crm/commercial-advisor-requests'),
+    decideAdvisorRequest: (id, decision) => request(`/api/admin/crm/commercial-advisor-requests/${encodeURIComponent(id)}/decision`, 'POST', {decision}),
     deactivateAdvisor: id => request(`${advisors}/${encodeURIComponent(id)}`, 'PATCH', {active:false}),
     startFollowup: (id, channel, {consent, evidence, language}) => request(`${cases}/${encodeURIComponent(id)}/followup/start`, 'POST', {channel, consent, evidence, language}),
     cancelFollowup: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/followup/cancel`, 'POST', {channel}),
