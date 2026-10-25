@@ -1,0 +1,81 @@
+/* CRM-only theme contract: the same surfaces and contrast in both workspaces. */
+:is(.wa-demo,.commercial-team,.commercial-lead-management,.commercial-agenda,.commercial-advisor-access){
+  --crm-surface:var(--bg-card,#fff);
+  --crm-canvas:var(--bg-page,#f4f6f9);
+  --crm-field:var(--bg-input,#fff);
+  --crm-text:var(--text-primary,#17243a);
+  --crm-muted:var(--text-secondary,#526176);
+  --crm-border:var(--border,#dce3ed);
+  --crm-accent:#cf1d2b;
+  --crm-accent-hover:#b01623;
+  --crm-focus:#dc3545;
+  --crm-success-bg:#edf7f1;
+  --crm-success-text:#175c39;
+  --crm-warning-bg:#fff6df;
+  --crm-warning-text:#785100;
+  --crm-danger-bg:#fff0f1;
+  --crm-danger-text:#a31b2b;
+  --crm-shadow:0 12px 32px #0d1a3024;
+  color:var(--crm-text);
+  color-scheme:light;
+}
+html.theme-dark :is(.wa-demo,.commercial-team,.commercial-lead-management,.commercial-agenda,.commercial-advisor-access){
+  --crm-success-bg:#143c2d;--crm-success-text:#b5f3cc;
+  --crm-warning-bg:#40341b;--crm-warning-text:#f4d38d;
+  --crm-danger-bg:#421f2b;--crm-danger-text:#ffb9c0;
+  --crm-shadow:0 14px 36px #0006;
+  color-scheme:dark;
+}
+:is(.wa-demo,.commercial-team) .commercial-lead-management,
+.commercial-team :is(section,article){background:var(--crm-surface);color:var(--crm-text);border-color:var(--crm-border)}
+:is(.wa-demo,.commercial-team) .commercial-lead-management{border-radius:14px;border-top:3px solid var(--crm-accent);padding:20px;box-shadow:0 3px 14px #0d1a3007}
+:is(.wa-demo,.commercial-team) .commercial-lead-management :is(h2,h3,strong,p,label,summary,article){color:var(--crm-text)}
+:is(.wa-demo,.commercial-team) .commercial-lead-management :is(small,.commercial-next-chat small){color:var(--crm-muted)}
+/* Override the dashboard's inherited label fill; never put white text on white. */
+html.theme-dark .admin-dashboard .wa-demo .commercial-lead-management label,
+html.theme-dark .commercial-team .commercial-lead-management label{color:var(--crm-text)!important;-webkit-text-fill-color:var(--crm-text)!important}
+:is(.wa-demo,.commercial-team) .commercial-lead-management :is(input,select,textarea),
+:is(.wa-demo,.commercial-team) .commercial-advisor-access__panel :is(input,select,textarea){background:var(--crm-field);color:var(--crm-text);border:1px solid var(--crm-border);border-radius:9px;line-height:1.45;max-width:100%}
+:is(.wa-demo,.commercial-team) .commercial-lead-management textarea{min-height:88px}
+:is(.wa-demo,.commercial-team) .commercial-lead-management :is(input,textarea)::placeholder{color:var(--crm-muted);opacity:1}
+:is(.wa-demo,.commercial-team) .commercial-lead-management :is(details,article){border-color:var(--crm-border)}
+:is(.wa-demo,.commercial-team) .commercial-lead-management summary{padding:5px 0;font-size:13px}
+:is(.wa-demo,.commercial-team) .commercial-lead-management input[type=checkbox]{display:inline-block;width:18px;max-width:18px;min-height:18px;height:18px;margin:0 8px 0 0;vertical-align:middle;accent-color:var(--crm-accent)}
+:is(.wa-demo,.commercial-team) .commercial-lead-management :is([role=status],.commercial-dictation-draft){background:var(--crm-success-bg);color:var(--crm-success-text);border:1px solid var(--crm-border);border-radius:9px;padding:10px 12px}
+:is(.wa-demo,.commercial-team) .commercial-lead-management [role=alert],
+:is(.wa-demo,.commercial-team) .commercial-advisor-access__panel [role=alert]{background:var(--crm-danger-bg);color:var(--crm-danger-text);border-radius:8px;padding:10px 12px}
+/* Compact, clear secondary actions. Red is reserved for the primary operation. */
+:is(.wa-demo,.commercial-team) :is(.commercial-lead-management button,.commercial-agenda-panel button,.commercial-advisor-access button,.wa-thread-admin button,.wa-thread-admin summary,.commercial-agenda>summary){
+  min-height:36px;padding:9px 13px;border:1px solid var(--crm-border);border-radius:9px;
+  background:var(--crm-surface);color:var(--crm-text);font:inherit;font-size:13px;font-weight:650;line-height:1.3;cursor:pointer;
+  transition:border-color .15s,background-color .15s,box-shadow .15s;
+}
+:is(.wa-demo,.commercial-team) .commercial-lead-management form>button,
+:is(.wa-demo,.commercial-team) .commercial-advisor-access form>button,
+:is(.wa-demo,.commercial-team) .commercial-agenda-panel button{background:var(--crm-accent);border-color:var(--crm-accent);color:#fff}
+:is(.wa-demo,.commercial-team) .commercial-lead-management form>button:hover:not(:disabled),
+:is(.wa-demo,.commercial-team) .commercial-agenda-panel button:hover:not(:disabled){background:var(--crm-accent-hover);border-color:var(--crm-accent-hover)}
+:is(.wa-demo,.commercial-team) .commercial-dictation-control>button[aria-pressed=true]{background:var(--crm-danger-bg);color:var(--crm-danger-text);border-color:var(--crm-accent)}
+:is(.wa-demo,.commercial-team) :is(button,summary,a,input,select,textarea):focus-visible{outline:3px solid var(--crm-focus);outline-offset:3px;box-shadow:none}
+:is(.wa-demo,.commercial-team) :is(.commercial-lead-management button,.commercial-agenda-panel button,.commercial-advisor-access button):disabled{opacity:.48;cursor:not-allowed;box-shadow:none}
+:is(.wa-demo,.commercial-team) :is(.commercial-agenda-panel,.commercial-advisor-access__panel,.wa-thread-admin__actions){background:var(--crm-surface);color:var(--crm-text);border-color:var(--crm-border);box-shadow:var(--crm-shadow);border-radius:13px}
+:is(.wa-demo,.commercial-team) :is(.commercial-agenda-panel,.commercial-advisor-access__panel){box-sizing:border-box;max-width:calc(100vw - 24px)}
+:is(.wa-demo,.commercial-team) :is(.commercial-agenda-panel h3,.commercial-agenda-panel p,.commercial-agenda-panel strong,.commercial-agenda-panel time,.commercial-advisor-access__panel h2,.commercial-advisor-access__panel h3,.commercial-advisor-access__panel label,.commercial-advisor-access__panel p,.commercial-advisor-access__panel li){color:var(--crm-text)}
+:is(.wa-demo,.commercial-team) :is(.commercial-agenda-panel li,.commercial-advisor-access__panel li){border-color:var(--crm-border)}
+:is(.wa-demo,.commercial-team) .commercial-agenda-panel .is-overdue>strong{color:var(--crm-danger-text)}
+:is(.wa-demo,.commercial-team) .commercial-agenda-panel .is-due>strong{color:var(--crm-warning-text)}
+:is(.wa-demo,.commercial-team) .commercial-agenda>summary strong{background:var(--crm-accent);color:#fff}
+:is(.wa-demo,.commercial-team) .wa-thread-admin__actions button:hover:not(:disabled){background:var(--crm-field)}
+.commercial-team{background:var(--crm-canvas);color:var(--crm-text)}
+.commercial-team :is(h1,h2,h3){color:var(--crm-text)}
+.commercial-team :is(input,textarea,select){background:var(--crm-field);color:var(--crm-text);border-color:var(--crm-border)}
+html.theme-dark .wa-demo :is(.wa-ticket-search button,.wa-attachment-download,.wa-lead-actions button,.wa-reminder-quick button){background:var(--crm-surface);color:var(--crm-text);border-color:var(--crm-border)}
+html.theme-dark .wa-demo .wa-context-warning{background:var(--crm-warning-bg);color:var(--crm-warning-text);border-color:#806630}
+html.theme-dark .wa-demo .wa-context-warning strong{color:var(--crm-warning-text)}
+@media(max-width:640px){
+ :is(.wa-demo,.commercial-team) .commercial-lead-management{padding:14px;border-radius:11px}
+ :is(.wa-demo,.commercial-team) .commercial-lead-management :is(input,select,textarea){font-size:16px}
+ :is(.wa-demo,.commercial-team) :is(.commercial-agenda-panel,.commercial-advisor-access__panel){width:min(420px,calc(100vw - 24px));max-height:65dvh;padding:14px}
+ :is(.wa-demo,.commercial-team) .commercial-advisor-access__panel li div{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){:is(.wa-demo,.commercial-team) :is(button,summary){transition:none}}
