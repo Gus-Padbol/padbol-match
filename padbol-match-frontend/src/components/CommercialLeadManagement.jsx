@@ -2,6 +2,8 @@ import React, {useEffect, useState} from 'react';
 import './CommercialLeadManagement.css';
 import CommercialDictation from './CommercialDictation';
 
+const STATE_LABELS = {nuevo:'Nuevo',en_atencion:'En atención',en_espera:'En espera del cliente',cerrado:'Cerrado'};
+
 // Match server identifiers only. Contact names, phone numbers and tickets cannot grant case access.
 export async function resolveCommercialLead(api, conversation) {
   if (api.resolveConversation) return api.resolveConversation(conversation.id);
@@ -19,7 +21,7 @@ export default function CommercialLeadManagement({api, conversation, onUpdated})
   const [data, setData] = useState(null), [role, setRole] = useState(null), [advisors, setAdvisors] = useState([]);
   const [calls, setCalls] = useState([]), [activities, setActivities] = useState([]);
   const [state, setState] = useState('nuevo'), [next, setNext] = useState(''), [advisor, setAdvisor] = useState('');
-  const [summary, setSummary] = useState(''), [situation, setSituation] = useState(''), [details, setDetails] = useState('');
+  const [summary, setSummary] = useState(''), [details, setDetails] = useState('');
   const [dictating, setDictating] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const pending = calls.find(c => c.status === 'pending');
@@ -32,7 +34,7 @@ export default function CommercialLeadManagement({api, conversation, onUpdated})
   }
   useEffect(() => {
     let active = true;
-    setData(null); setRole(null); setError(''); setNotice(''); setCalls([]); setActivities([]); setSummary(''); setSituation(''); setDetails('');
+    setData(null); setRole(null); setError(''); setNotice(''); setCalls([]); setActivities([]); setSummary(''); setDetails('');
     (async () => {
       const permission = await api.getRole();
       if (!['manager','advisor'].includes(permission.role)) throw new Error('FORBIDDEN');
@@ -56,40 +58,33 @@ export default function CommercialLeadManagement({api, conversation, onUpdated})
   }
   async function save(event) {
     event.preventDefault(); if(busy || dictating || !data || !Number.isSafeInteger(data.version)) return;
-    const needsSummary = !!pending || state !== 'nuevo' || [summary,situation,details].some(v=>v.trim());
-    if(needsSummary && [summary,situation,details].some(v=>v.trim().length<3)) return;
-    if(state !== 'nuevo' && next.trim().length<3) return;
+    if(summary.trim().length<3 || next.trim().length<3 || (details.trim() && details.trim().length<3)) return;
     setBusy(true); setError(''); setNotice('');
     try {
-      if(needsSummary) {
-        // Opening first makes the server block any progress until the summary is committed.
+      // Opening first makes the server block any progress until the summary is committed.
         let call = pending;
         if(!call) {call=await api.startCall(data.id,data.channel); if(!call?.id) throw new Error('CALL_NOT_CONFIRMED'); setCalls(current=>[call,...current]);}
-        await api.completeCall(data.id,call.id,{channel:data.channel,situation:situation.trim(),discussed:summary.trim(),distinguishing:details.trim()});
-      }
+        await api.completeCall(data.id,call.id,{channel:data.channel,situation:`Estado seleccionado: ${STATE_LABELS[state]}`,discussed:summary.trim(),distinguishing:details.trim() || 'No se agregaron detalles adicionales.'});
       const current = await api.readCase(data.id,data.channel);
       await api.progress(data.id,data.channel,current.version,state,next.trim());
-      await refresh(data); await onUpdated?.(); setSummary(''); setSituation(''); setDetails(''); setNotice('Atención registrada. Estado y próximo paso actualizados.');
+      await refresh(data); await onUpdated?.(); setSummary(''); setDetails(''); setNotice('Atención registrada. Estado y próximo paso actualizados.');
     } catch {setError('No se pudo confirmar el registro completo. Actualiza la ficha y revisa el historial antes de volver a guardar.');}
     finally {setBusy(false);}
   }
   if(!data) return <section className="commercial-lead-management" aria-label="Gestión comercial"><h3>Gestión comercial</h3>{error?<p role="alert">{error}</p>:<p>Cargando gestión comercial…</p>}</section>;
-  const needsSummary = !!pending || state !== 'nuevo' || [summary,situation,details].some(v=>v.trim());
-  const validSummary = [summary,situation,details].every(v=>v.trim().length>=3);
+  const validSummary = summary.trim().length>=3 && (!details.trim() || details.trim().length>=3);
   return <section className="commercial-lead-management" aria-label="Gestión comercial">
     <h3>Gestión comercial</h3>
     <p>Asesor: <strong>{data.assignedAdvisor?.name || 'Sin asignar'}</strong></p>
-    {role==='manager' && <form onSubmit={saveAssignment}><label>Asignar asesor<select value={advisor} onChange={e=>setAdvisor(e.target.value)}><option value="">Selecciona un asesor</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name || a.email}</option>)}</select></label><button disabled={busy || !advisor || advisor===data.assignedAdvisor?.id || !Number.isSafeInteger(data.version)}>Guardar asignación</button></form>}
+    {role==='manager' && <details className="commercial-advisor-change"><summary>Cambiar asesor</summary><form onSubmit={saveAssignment}><label>Asignar asesor<select value={advisor} onChange={e=>setAdvisor(e.target.value)}><option value="">Selecciona un asesor</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name || a.email}</option>)}</select></label><button disabled={busy || !advisor || advisor===data.assignedAdvisor?.id || !Number.isSafeInteger(data.version)}>Guardar asignación</button></form></details>}
     {pending && <p role="status">Hay una atención pendiente de resumen. Complétala para avanzar.</p>}
     <form onSubmit={save}>
-      <label>Estado comercial<select value={state} onChange={e=>setState(e.target.value)}><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="en_espera">En espera del cliente</option><option value="cerrado">Cerrado</option></select></label>
-      <CommercialDictation onListeningChange={setDictating} onText={text=>setSummary(current=>[current.trim(),text].filter(Boolean).join(' ').slice(0,2000))}/>
-      <label>Qué se habló<textarea maxLength={2000} value={summary} onChange={e=>setSummary(e.target.value)} required={needsSummary} placeholder="Resume la conversación con el cliente."/></label>
-      <label>Situación actual<textarea maxLength={2000} value={situation} onChange={e=>setSituation(e.target.value)} required={needsSummary} placeholder="Qué decidió o qué está evaluando."/></label>
-      <label>Detalles importantes<textarea maxLength={2000} value={details} onChange={e=>setDetails(e.target.value)} required={needsSummary} placeholder="Acuerdos, dudas o particularidades. Si no hay, indícalo."/></label>
-      <label>Próximo paso<textarea maxLength={2000} value={next} onChange={e=>setNext(e.target.value)} required={state!=='nuevo'} placeholder="Qué se hará y cuándo; si cierras, indica el resultado."/></label>
-      <p>Para avanzar o cerrar, registra la conversación y el próximo paso. Las llamadas desde tu teléfono se resumen aquí.</p>
-      <button disabled={busy || dictating || !Number.isSafeInteger(data.version) || (needsSummary&&!validSummary) || (state!=='nuevo'&&next.trim().length<3)}>{busy?'Guardando…':'Guardar atención y próximo paso'}</button>
+      <label>Resumen de la conversación<textarea maxLength={2000} value={summary} onChange={e=>setSummary(e.target.value)} required placeholder="Qué hablaron, qué decidió el cliente y los acuerdos importantes."/></label>
+      <details className="commercial-dictation"><summary>Dictar el resumen</summary><CommercialDictation onListeningChange={setDictating} onText={text=>setSummary(current=>[current.trim(),text].filter(Boolean).join(' ').slice(0,2000))}/></details>
+      <label>Estado comercial<select value={state} onChange={e=>setState(e.target.value)}>{Object.entries(STATE_LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+      <label>{state==='cerrado'?'Resultado del cierre':'Próximo paso'}<textarea maxLength={2000} value={next} onChange={e=>setNext(e.target.value)} required placeholder={state==='cerrado'?'Cómo terminó la consulta.':'Qué vas a hacer y cuándo. Ej.: llamar el martes a las 15 h.'}/></label>
+      <details><summary>Agregar detalles adicionales (opcional)</summary><label>Detalles adicionales<textarea maxLength={2000} value={details} onChange={e=>setDetails(e.target.value)} placeholder="Solo si necesitas ampliar el resumen."/></label></details>
+      <button disabled={busy || dictating || !Number.isSafeInteger(data.version) || !validSummary || next.trim().length<3}>{busy?'Guardando…':'Guardar gestión'}</button>
     </form>
     {(calls.some(c=>c.status==='completed') || activities.length>0) && <details><summary>Historial de atención</summary>{calls.filter(c=>c.status==='completed').map(c=><article key={c.id}><p><strong>Qué se habló:</strong> {c.discussed}</p><p><strong>Situación:</strong> {c.situation}</p><p><strong>Detalles:</strong> {c.distinguishing}</p></article>)}{activities.map(a=><p key={a.id}>{a.body}</p>)}</details>}
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}

@@ -557,3 +557,11 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
     z-index:80;
   }
 }
+
+/* Read the full lead as one document; composition follows the report. */
+@media(min-width:721px){
+  .wa-demo .wa-crm-body .wa-thread{display:block;overflow-y:auto;overscroll-behavior:contain;min-height:0}
+  .wa-demo .wa-thread .wa-messages{display:block;overflow:visible;max-height:none;min-height:0;flex:none}
+  .wa-demo .wa-thread .wa-composer{position:static;height:auto;flex:none}
+  html:has(.wa-demo){overflow:hidden}
+}
