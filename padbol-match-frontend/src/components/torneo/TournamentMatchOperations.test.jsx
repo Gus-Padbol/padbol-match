@@ -34,3 +34,4 @@ test('el acceso para continuar permanece en el pie del diálogo',async()=>{
  expect(footer).toContainElement(link);expect(link).toHaveAttribute('target','_blank');
  unmount();footer.remove();
 });
+test('empty readiness from a bracket waiting for teams explains missing teams after choosing court',async()=>{global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({...initial,equipos:[],can_open:false,requirements:[]})});render(<TournamentMatchOperations torneoId={41} partidoId={3} accessToken="qa"/>);await screen.findByText(/Faltan los equipos de este cruce/);fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'9'}});expect(screen.getByText(/Faltan los equipos de este cruce/)).toHaveTextContent('resultados de los partidos anteriores');expect(screen.getByText('Abrir marcador ahora')).toBeDisabled();expect(fetch).toHaveBeenCalledTimes(1);});

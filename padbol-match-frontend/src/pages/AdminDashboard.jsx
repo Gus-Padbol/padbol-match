@@ -1,3 +1,4 @@
+import {hasTournamentFixture,tournamentStructureChanged,TOURNAMENT_FIXTURE_LOCK_MESSAGE} from '../utils/tournamentStructurePolicy';
 import { confirmInPersonPayment } from '../utils/adminInPersonPayment';
 import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
 import PendingValidationActions from '../components/PendingValidationActions';
@@ -7232,6 +7233,10 @@ export default function AdminDashboard({
       return;
     }
     const origRow = torneos.find((t) => t.id === torneoId);
+    if (hasTournamentFixture(origRow,getTorneoResumenStat(torneoStats,torneoId),partidosCountByTorneoId[torneoId]) && tournamentStructureChanged(origRow,editTorneoForm)) {
+      alert(TOURNAMENT_FIXTURE_LOCK_MESSAGE);
+      return;
+    }
     const errEstado = validarCambioEstadoTorneoAdminGuardar({
       estadoApiTorneoActual: origRow?.estado,
       estadoFormNuevo: editTorneoForm.estado,
@@ -11610,6 +11615,7 @@ export default function AdminDashboard({
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               });
 
+              const fixtureStructureLocked=hasTournamentFixture(torneo,getTorneoResumenStat(torneoStats,torneo.id),partidosCountByTorneoId[torneo.id]);
               const isEditingThis = editandoTorneoId === torneo.id;
               const inp = { padding: '6px 8px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '13px', width: '100%', boxSizing: 'border-box' };
 
@@ -11626,6 +11632,7 @@ export default function AdminDashboard({
                   {isEditingThis ? (
                     /* ── Inline edit form ── */
                     <div>
+                      {fixtureStructureLocked&&<p role="status">{TOURNAMENT_FIXTURE_LOCK_MESSAGE}</p>}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.formularios.name')}</label>
@@ -11690,7 +11697,7 @@ export default function AdminDashboard({
                         </div>
                         <div>
                           <label style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>{t('admin.metricas.formatLabel')}</label>
-                          <select style={inp} value={editTorneoForm.tipo_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, tipo_torneo: e.target.value }))}>
+                          <select disabled={fixtureStructureLocked} title={fixtureStructureLocked?TOURNAMENT_FIXTURE_LOCK_MESSAGE:undefined} style={inp} value={editTorneoForm.tipo_torneo} onChange={e => setEditTorneoForm(p => ({ ...p, tipo_torneo: e.target.value }))}>
                             <option value="">— Seleccionar —</option>
                             <option value="round_robin">{t('admin.metricas.formatRoundRobin')}</option>
                             <option value="knockout">{t('admin.metricas.formatKnockout')}</option>
@@ -11807,6 +11814,8 @@ export default function AdminDashboard({
                             min="1"
                             placeholder={t('admin.formularios.emptyNoCapHint')}
                             value={editTorneoForm.cupos_maximos ?? ''}
+                            disabled={fixtureStructureLocked}
+                            title={fixtureStructureLocked?TOURNAMENT_FIXTURE_LOCK_MESSAGE:undefined}
                             onChange={(e) => setEditTorneoForm((p) => ({ ...p, cupos_maximos: e.target.value }))}
                           />
                         </div>
