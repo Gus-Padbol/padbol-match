@@ -6,6 +6,7 @@ export default function CommercialAssignments({ api }) {
   const [cases, setCases] = useState([]);
   const [advisors, setAdvisors] = useState([]);
   const [selection, setSelection] = useState({});
+  const [showAdvisorForm,setShowAdvisorForm]=useState(false);
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
@@ -37,7 +38,7 @@ export default function CommercialAssignments({ api }) {
   async function addAdvisor(event) {
     event.preventDefault(); if (!email.trim() || busy) return;
     setBusy(true); setError(''); setNotice('');
-    try { await api.addAdvisor(email.trim()); setEmail(''); await refresh(); setNotice('Solicitud registrada. El acceso queda pendiente de aprobación de Gustavo.'); }
+    try { await api.addAdvisor(email.trim()); setEmail(''); await refresh(); setNotice('Solicitud registrada. El acceso queda pendiente de habilitación por Administración central.'); }
     catch { setError('No se pudo confirmar el alta. Revisa la lista antes de intentarlo de nuevo.'); setReady(false); }
     finally { setBusy(false); }
   }
@@ -53,8 +54,8 @@ export default function CommercialAssignments({ api }) {
     <p>Consulta y distribuye las oportunidades comerciales entre los asesores.</p>
     {error && <div><p role="alert">{error}</p><button type="button" disabled={busy} onClick={retryLoad}>Actualizar lista</button></div>}{notice && <p role="status">{notice}</p>}
     {!ready && !error && <p>Cargando…</p>}
-    {ready && <><h3>Asesores</h3><p>El alta requiere aprobación de Gustavo y una cuenta de Padbol Match con el correo confirmado.</p>
-      <form onSubmit={addAdvisor}><label>Correo del asesor <input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label> <button type="submit" disabled={busy}>Solicitar alta</button></form>
+    {ready && <><h3>Asesores</h3><button className="commercial-advisor-add" type="button" aria-expanded={showAdvisorForm} onClick={()=>setShowAdvisorForm(true)}>Agregar asesor</button><p>Completá los datos para solicitar el acceso. Quedará pendiente de habilitación por Administración central.</p><small>El asesor debe tener una cuenta de Padbol Match con el correo confirmado.</small>
+      {showAdvisorForm&&<form onSubmit={addAdvisor} aria-label="Solicitar acceso de asesor"><label>Correo del asesor <input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label> <button type="submit" disabled={busy}>Solicitar alta</button><button type="button" onClick={()=>setShowAdvisorForm(false)}>Cerrar formulario</button></form>}
       {advisors.length ? <ul>{advisors.map(a => <li key={a.id}>{a.name || a.email} {a.status ? `· ${a.status}` : ''} {a.active === true && a.role !== 'manager' && <button type="button" disabled={busy} onClick={() => deactivateAdvisor(a)}>Desactivar</button>}</li>)}</ul> : <p>No hay asesores disponibles.</p>}
       <h3>Consultas comerciales</h3>
       {!cases.length && <p>No hay consultas comerciales para mostrar.</p>}

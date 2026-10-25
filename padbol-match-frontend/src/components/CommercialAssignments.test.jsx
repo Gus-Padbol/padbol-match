@@ -15,7 +15,7 @@ test('does not claim a failed advisor creation succeeded', async () => {
   const api = {listCases:jest.fn().mockResolvedValue({cases:[]}),listAdvisors:jest.fn().mockResolvedValue({advisors:[]}),assign:jest.fn(),addAdvisor:jest.fn().mockRejectedValue(new Error('offline'))};
   render(<CommercialAssignments api={api}/>);
   await screen.findByText('No hay asesores disponibles.');
-  fireEvent.change(screen.getByLabelText('Correo del asesor'),{target:{value:'asesor@example.com'}});
+  fireEvent.click(screen.getByText('Agregar asesor'));fireEvent.change(screen.getByLabelText('Correo del asesor'),{target:{value:'asesor@example.com'}});
   fireEvent.click(screen.getByText('Solicitar alta'));
   expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo confirmar el alta');
   expect(screen.queryByText('Asesor habilitado.')).toBeNull();
