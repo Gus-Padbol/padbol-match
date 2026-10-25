@@ -755,7 +755,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span>{!commercialOnly ? <span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span> : null}<span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
       </section>
 
-      {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section style={{ margin: '12px 18px', padding: 14, border: '1px solid var(--border-color, #ddd)', borderRadius: 12 }}>
+      <div className="wa-tools" aria-label="Herramientas de la bandeja">
+      {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section className="wa-manual-tool">
         <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
         {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
           <strong>Registro de contacto</strong>
@@ -780,7 +781,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         {ticketReference ? <button type="button" onClick={() => { setTicketInput(''); setTicketReference(''); setTicketError(''); setActiveId(null); }}>Mostrar todos</button> : null}
         {ticketError ? <p role="alert">{ticketError}</p> : null}
       </form> : null}
-      {perms?.canAudit ? <div style={{padding:'0 18px 12px'}}><button type="button" onClick={() => { setHiddenOnly(v => !v); setActiveId(null); setTicketReference(''); setTicketInput(''); }}>{hiddenOnly ? 'Volver a la bandeja' : 'Ver pruebas ocultas'}</button></div> : null}
+      {perms?.canAudit ? <div className="wa-test-tool"><button type="button" onClick={() => { setHiddenOnly(v => !v); setActiveId(null); setTicketReference(''); setTicketInput(''); }}>{hiddenOnly ? 'Volver a la bandeja' : 'Ver pruebas ocultas'}</button></div> : null}
+      </div>
       {loading ? (
         <div className="wa-empty"><p>Cargando bandeja…</p></div>
       ) : error ? (
@@ -920,7 +922,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
                 {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} onUpdated={load} /> : null}
-                {waContext ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
+                {waContext && !isCommercial ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
                   {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
