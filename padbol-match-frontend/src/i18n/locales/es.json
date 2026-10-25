@@ -157,6 +157,7 @@
     "accessLinkSent": "Te enviamos un enlace nuevo. Abrilo desde tu correo para ingresar.",
     "accessCodeRequestFailed": "No pudimos solicitar el código. Revisá el correo e intentá nuevamente.",
     "accessCodeRequestRateLimited": "El servicio de correo alcanzó un límite temporal. Esperá antes de pedir otro código o ingresá con tu contraseña.",
+    "haveAccessCode": "Ya tengo un código",
     "sendAccessCode": "Recibir código de acceso",
     "sendingAccessCode": "Enviando código…",
     "accessCodeSent": "Solicitamos un código para tu correo. Copialo abajo para ingresar, sin abrir ningún enlace.",

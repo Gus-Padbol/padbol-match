@@ -103,6 +103,7 @@
     "accessLinkSent": "We sent you a new link. Open it from your email to sign in.",
     "accessCodeRequestFailed": "We could not request the code. Check your email address and try again.",
     "accessCodeRequestRateLimited": "The email service reached a temporary limit. Wait before requesting another code or sign in with your password.",
+    "haveAccessCode": "I already have a code",
     "sendAccessCode": "Get an access code",
     "sendingAccessCode": "Sending code…",
     "accessCodeSent": "We requested a code for your email. Enter it below to sign in without opening a link.",

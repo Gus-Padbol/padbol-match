@@ -774,7 +774,7 @@ export default function AccesoCuenta() {
             >
               {accessLinkBusy ? t('auth.sendingAccessCode') : accessCodeCooldown.remaining>0 ? t('auth.accessCodeResendWait',{seconds:accessCodeCooldown.remaining}) : t('auth.sendAccessCode')}
             </button>
-            <EmailAccessCode key={`${accessCodeEmail}:${accessCodeRequest}`} auth={supabase.auth} email={accessCodeEmail} onVerified={afterLogin} onBusyChange={setBusy} disabled={busy||accessLinkBusy}/>
+            {accessCodeEmail ? <EmailAccessCode key={`${accessCodeEmail}:${accessCodeRequest}`} auth={supabase.auth} email={accessCodeEmail} onVerified={afterLogin} onBusyChange={setBusy} disabled={busy||accessLinkBusy}/> : email.trim() ? <details style={{marginTop:14}}><summary style={{cursor:'pointer',color:'var(--accent)',fontWeight:600}}>{t('auth.haveAccessCode')}</summary><EmailAccessCode key={email.trim().toLowerCase()} auth={supabase.auth} email={email.trim().toLowerCase()} onVerified={afterLogin} onBusyChange={setBusy} disabled={busy||accessLinkBusy}/></details> : null}
             <button
               type="button"
               onClick={() => setModo('register')}
