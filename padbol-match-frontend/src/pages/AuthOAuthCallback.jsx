@@ -26,67 +26,69 @@ export default function AuthOAuthCallback() {
   const navigatedRef = useRef(false);
   const [retryNonce, setRetryNonce] = useState(0);
   const [legalError, setLegalError] = useState(false);
+  const [callbackError, setCallbackError] = useState(null);
+  const [callbackLocation] = useState(() => ({search:window.location.search,hash:window.location.hash}));
   const { t } = useTranslation();
 
   useEffect(() => {
     if (loading) return;
     let cancelled = false;
-    const necesitaCompletarPerfil = hasPendingOAuthLegalAcceptance();
+    let retryTimer;
+    const needsProfile = hasPendingOAuthLegalAcceptance();
+    const callbackParams = new URLSearchParams(callbackLocation.search);
+    const hashParams = new URLSearchParams(callbackLocation.hash.replace(/^#/, ''));
+    const providerError = callbackParams.get('error') || hashParams.get('error')
+      || callbackParams.get('error_code') || hashParams.get('error_code');
+    if (providerError) {
+      setCallbackError('invalid_link');
+      return undefined;
+    }
 
-    const destinoOAuth = async (activeSession) => {
-      const dest = resolvePostLoginNavigatePath(window.location.search);
-      const roleAwareDest = await resolveRoleAwarePostLoginPath(dest, activeSession);
-      return resolveOAuthPostLoginPath(roleAwareDest, necesitaCompletarPerfil);
-    };
-
-    const go = async () => {
-      let s = session;
-      if (!s?.user) {
-        const { data } = await supabase.auth.getSession();
-        s = data?.session ?? null;
-      }
-      if (cancelled || navigatedRef.current) return;
-      if (s?.user) {
-        try {
-          await flushPendingOAuthLegalAcceptance();
-        } catch (error) {
-          console.error('[PM Auth] no se pudo verificar aceptación legal OAuth', error);
-          if (!cancelled) setLegalError(true);
-          return;
-        }
-        navigatedRef.current = true;
-        const dest = await destinoOAuth(s);
-        console.log('[PM ArmarPartido restore] OAuth callback →', dest);
-        navigate(dest, { replace: true });
+    const complete = async (activeSession) => {
+      try {
+        await flushPendingOAuthLegalAcceptance();
+      } catch {
+        if (!cancelled) setLegalError(true);
         return;
       }
-      window.setTimeout(async () => {
+      const requested = resolvePostLoginNavigatePath(callbackLocation.search);
+      const destination = await resolveRoleAwarePostLoginPath(requested, activeSession);
+      if (cancelled || navigatedRef.current) return;
+      navigatedRef.current = true;
+      navigate(resolveOAuthPostLoginPath(destination, needsProfile), {replace:true});
+    };
+    const getSession = async () => {
+      try {
+        const result = await supabase.auth.getSession();
+        return result?.data?.session || null;
+      } catch { return null; }
+    };
+    const go = async () => {
+      const activeSession = session?.user ? session : await getSession();
+      if (cancelled || navigatedRef.current) return;
+      if (activeSession?.user) { await complete(activeSession); return; }
+      retryTimer = window.setTimeout(async () => {
+        const retriedSession = await getSession();
         if (cancelled || navigatedRef.current) return;
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.user) {
-          try {
-            await flushPendingOAuthLegalAcceptance();
-          } catch (error) {
-            console.error('[PM Auth] no se pudo verificar aceptación legal OAuth', error);
-            if (!cancelled) setLegalError(true);
-            return;
-          }
-          navigatedRef.current = true;
-          const dest = await destinoOAuth(data.session);
-          console.log('[PM ArmarPartido restore] OAuth callback (retry) →', dest);
-          navigate(dest, { replace: true });
-          return;
-        }
-        navigatedRef.current = true;
-        navigate('/', { replace: true });
+        if (retriedSession?.user) { await complete(retriedSession); return; }
+        setCallbackError('missing_session');
       }, 400);
     };
-
     void go();
-    return () => {
-      cancelled = true;
-    };
-  }, [loading, navigate, retryNonce, session]);
+    return () => { cancelled = true; window.clearTimeout(retryTimer); };
+  }, [callbackLocation, loading, navigate, retryNonce, session]);
+
+  if (callbackError) {
+    const returnPath = resolvePostLoginNavigatePath(callbackLocation.search);
+    return <main style={{minHeight:'50vh',display:'grid',placeItems:'center',padding:24}}>
+      <section role="alert" style={{maxWidth:480,color:'var(--text-primary)'}}>
+        <h1 style={{fontSize:'1.35rem'}}>No pudimos completar el acceso</h1>
+        <p>{callbackError==='invalid_link' ? 'El enlace no es válido, venció o ya fue utilizado.' : 'Este enlace no pudo abrir tu sesión.'}</p>
+        <p>Abrí el enlace más reciente en el mismo navegador donde solicitaste el acceso. Si no funciona, volvé a pedir uno nuevo.</p>
+        <Link to={`/login?redirect=${encodeURIComponent(returnPath)}`}>Volver a ingresar</Link>
+      </section>
+    </main>;
+  }
 
   if (legalError) {
     return (
