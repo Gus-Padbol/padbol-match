@@ -31,9 +31,17 @@ test('permission failure does not loop and navigation aborts the microphone',()=
 });
 test('offers text entry when dictation is unavailable',()=>{render(<CommercialDictation onText={()=>{}}/>);expect(screen.getByText(/dictado de tu dispositivo/)).toBeInTheDocument();});
 
-test('a connection error preserves the visible draft in the editable summary',()=>{
- engine();const onText=jest.fn();render(<CommercialDictation onText={onText}/>);fireEvent.click(screen.getByText('Dictar resumen'));
- act(()=>sessions[0].onresult({results:[result('retomar el próximo mes',false)]}));act(()=>sessions[0].onerror({error:'network'}));
- expect(onText).toHaveBeenCalledWith('retomar el próximo mes');expect(screen.getByRole('alert')).toHaveTextContent('se conserva');
- act(()=>sessions[0].onend());expect(onText).toHaveBeenCalledTimes(1);
+test('a transient connection error reconnects and preserves its draft exactly once',()=>{
+ jest.useFakeTimers();engine();const onText=jest.fn();render(<CommercialDictation onText={onText}/>);fireEvent.click(screen.getByText('Dictar resumen'));
+ act(()=>sessions[0].onresult({results:[result('retomar el próximo mes',false)]}));act(()=>sessions[0].onerror({error:'network'}));expect(screen.getByRole('status')).toHaveTextContent('Reconectando');
+ act(()=>sessions[0].onend());expect(onText).toHaveBeenCalledTimes(1);act(()=>jest.advanceTimersByTime(500));expect(sessions).toHaveLength(2);
+ act(()=>sessions[1].onresult({results:[result('para hablar del proyecto')]}));expect(onText.mock.calls).toEqual([['retomar el próximo mes'],['para hablar del proyecto']]);expect(screen.getByRole('status')).toHaveTextContent('Escuchando');
+});
+test('repeated network failures stop after three retries without an infinite loop',()=>{
+ jest.useFakeTimers();engine();render(<CommercialDictation onText={()=>{}}/>);fireEvent.click(screen.getByText('Dictar resumen'));
+ for(let i=0;i<4;i++){act(()=>sessions[i].onerror({error:'network'}));act(()=>sessions[i].onend());act(()=>jest.advanceTimersByTime(2000));}
+ expect(sessions).toHaveLength(4);expect(screen.getByRole('alert')).toHaveTextContent('se conserva');expect(screen.getByText('Dictar resumen')).toBeInTheDocument();
+});
+test('manual finish during reconnection cancels the pending retry',()=>{
+ jest.useFakeTimers();engine();render(<CommercialDictation onText={()=>{}}/>);fireEvent.click(screen.getByText('Dictar resumen'));act(()=>sessions[0].onerror({error:'network'}));act(()=>sessions[0].onend());fireEvent.click(screen.getByText('Terminar dictado'));act(()=>jest.advanceTimersByTime(2000));expect(sessions).toHaveLength(1);expect(screen.getByText('Dictar resumen')).toBeInTheDocument();
 });
