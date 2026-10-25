@@ -16,7 +16,7 @@ export function createCommercialAssignmentsApi(token) {
     resolveConversation: id => request(`/api/admin/crm/commercial-case-by-conversation/${encodeURIComponent(id)}`),
     getRole: () => request('/api/admin/crm/commercial-role'),
     listCases: () => request(cases),
-    progress: (id, channel, expectedVersion, state, nextStep, nextContactAt, reminderHours) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep,...(nextContactAt !== undefined ? {nextContactAt,reminderHours:reminderHours || [24,8]} : {})}),
+    progress: (id, channel, expectedVersion, state, nextStep, nextContactAt, reminderHours, closureOutcome) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep,...(closureOutcome ? {closureOutcome} : {}),...(nextContactAt !== undefined ? {nextContactAt,reminderHours:reminderHours || [24,8]} : {})}),
     media: async (id, eventId) => {
       const response = await fetch(`${getApiBaseUrl()}${cases}/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/media`, {headers:{Authorization:`Bearer ${token}`},cache:'no-store'});
       if (!response.ok) throw new Error('MEDIA_UNAVAILABLE');
@@ -38,6 +38,7 @@ export function createCommercialAssignmentsApi(token) {
     listAdvisorRequests: () => request('/api/admin/crm/commercial-advisor-requests'),
     decideAdvisorRequest: (id, decision) => request(`/api/admin/crm/commercial-advisor-requests/${encodeURIComponent(id)}/decision`, 'POST', {decision}),
     deactivateAdvisor: id => request(`${advisors}/${encodeURIComponent(id)}`, 'PATCH', {active:false}),
+    getFollowupReadiness: (id, channel, language) => request(`${cases}/${encodeURIComponent(id)}/followup/readiness?channel=${encodeURIComponent(channel)}&language=${encodeURIComponent(language)}`),
     startFollowup: (id, channel, {consent, evidence, language}) => request(`${cases}/${encodeURIComponent(id)}/followup/start`, 'POST', {channel, consent, evidence, language}),
     cancelFollowup: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/followup/cancel`, 'POST', {channel}),
   };
