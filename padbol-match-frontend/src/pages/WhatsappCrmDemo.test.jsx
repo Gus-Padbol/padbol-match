@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../context/AuthContext', () => ({
@@ -696,7 +696,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.activities.mockResolvedValue([]);
 
     render(<WhatsappCrmDemo />);
-    expect(await screen.findByText('Consulta de participante')).toBeInTheDocument();
+    expect(await screen.findByText('Juan Prueba')).toBeInTheDocument();
     expect(screen.queryByText('Cantidad de canchas')).not.toBeInTheDocument();
     expect(screen.queryByText('Resumen ejecutivo')).not.toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'Preparar inscripción deportiva' }));
@@ -816,4 +816,25 @@ test('origins are human readable without revealing transport keys', () => {
   expect(crmOriginLabel({origin:'web_form:contacto',source_channel:'email'})).toBe('Formulario web');
   expect(crmOriginLabel({origin:'internal:opaque-key',source_channel:'email'})).toBe('Email');
   expect(crmOriginLabel({origin:'manual_contact',source_channel:'email'})).toBe('Registro manual');
+});
+
+
+describe('Datos completos del formulario comercial', () => {
+  test('conserva campos originales, multilínea y valores no textuales', () => {
+    const details = formDetails({ qualification_data: { form_submission: { fields: {
+      'Cantidad de canchas proyectada': '4 canchas', 'Ubicación': 'Estoy buscando ubicación',
+      'Capital estimado de inversión': 'USD 50.000–100.000', 'Mensaje': 'Mi proyecto\nCon detalle',
+      'Red local disponible': 'Comenzaría desde cero', 'Consentimiento': false,
+    } } } });
+    expect(Object.fromEntries(details)).toEqual(expect.objectContaining({
+      'Cantidad de canchas proyectada': '4 canchas', 'Ubicación': 'Estoy buscando ubicación',
+      'Mensaje': 'Mi proyecto\nCon detalle', 'Red local disponible': 'Comenzaría desde cero', 'Consentimiento': 'No',
+    }));
+  });
+  test('completa datos heredados sin reemplazar campos guardados', () => {
+    const details = Object.fromEntries(formDetails({ qualification_data: { form_submission: { fields: { Nombre: 'Danna' } } }, inbound_body: 'Nombre: Danna\nPaís: Colombia\nInformación adicional: Quiero representar Padbol' }));
+    expect(details.Nombre).toBe('Danna');
+    expect(details.País).toBe('Colombia');
+    expect(details['Información adicional']).toBe('Quiero representar Padbol');
+  });
 });
