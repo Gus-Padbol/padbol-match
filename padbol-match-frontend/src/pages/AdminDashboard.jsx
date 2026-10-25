@@ -10113,6 +10113,7 @@ export default function AdminDashboard({
                   marginBottom: '10px',
                 }}
               />
+              <a href="/contenido-campanas" style={{padding:12,marginBottom:12,fontWeight:700}}>Contenido y campañas · entregas y publicaciones</a>
               <p className="admin-super-header__title" style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700, textAlign: 'center' }}>
                 Editor de contenido
               </p>
@@ -14178,6 +14179,7 @@ export default function AdminDashboard({
         </div>
       </div>}
 
+      {isSuperAdmin && <a href="/contenido-campanas" style={{display:"inline-block",padding:12,margin:"8px 0",fontWeight:700}}>Contenido y campañas</a>}
       {activeTab === 'personalizar_hub' && (isSuperAdmin || esEditorContenido) ? (
         <AdminHubPersonalizarSection
           apiBaseUrl={apiBaseUrl}
