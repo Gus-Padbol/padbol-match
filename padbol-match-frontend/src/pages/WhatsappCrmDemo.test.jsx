@@ -154,16 +154,15 @@ describe('CRM histórico unificado', () => {
     expect(screen.getByText(/hay mensajes anteriores/)).toBeInTheDocument();
   });
 
-  it('muestra el contexto de WhatsApp y los textos originales sin cambiar asignaciones', async () => {
+  it('preserva mensajes comerciales en el centro sin repetirlos en la columna del asesor', async () => {
     crmAdminApi.inbox.mockResolvedValue([{ id:'wa-context', source_channel:'whatsapp', whatsapp_delivery_review:'clear', whatsapp_message_order_review:'clear', identity_used:'15555550123', estado:'en_atencion', operador:'Equipo humano', sede_id:'sede-1', qualification_data:{ whatsapp_menu:{ topic:'sede', subtopic:'Comprar una cancha', initialMessage:'Hola, quiero\nuna cancha.', detailMessage:'Para Miami.' } } }]);
+    crmAdminApi.whatsappHistory.mockResolvedValue({messages:[{id:'initial',direction:'inbound',body:'Hola, quiero\nuna cancha.',at:'2026-10-21T10:00:00Z'},{id:'detail',direction:'inbound',body:'Para Miami.',at:'2026-10-21T10:01:00Z'}]});
     crmAdminApi.activities.mockResolvedValue([]);
-    render(<WhatsappCrmDemo />);
-    const context = await screen.findByRole('region', { name:'Contexto de WhatsApp' });
-    expect(context).toHaveTextContent('Abrir una sede / comprar una cancha');
-    expect(context).toHaveTextContent('Comprar una cancha');
-    expect(context).toHaveTextContent('Hola, quiero una cancha.');
-    expect(context.querySelector('.wa-context-original').textContent).toBe('Hola, quiero\nuna cancha.');
-    expect(screen.getByText('Equipo humano')).toBeInTheDocument();
+    const {container}=render(<WhatsappCrmDemo />);
+    expect(await screen.findByText('Hola, quiero una cancha.')).toBeInTheDocument();
+    expect(await screen.findByText('Para Miami.')).toBeInTheDocument();
+    expect(container.querySelector('.wa-detail')).not.toHaveTextContent('Para Miami.');
+    expect(screen.getByRole('region',{name:'Gestión comercial'})).toBeInTheDocument();
     expect(crmAdminApi.handoff).not.toHaveBeenCalled();
     expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
   });
