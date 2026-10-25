@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
+
+jest.mock('../components/CommercialLeadManagement', () => ({ conversation }) => <section aria-label="Gestión comercial">Gestión de {conversation.id}</section>);
 
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
@@ -844,4 +846,26 @@ test('la ficha comercial excluye metadatos y conserva todos los datos del proyec
   const fields = [['Nombre', 'Danna'], ['Capital estimado de inversión', 'A conversar'], ['Territorio solicitado', 'Colombia'], ['consentPrivacy', 'true'], ['consentTerms', 'true'], ['DocumentVersion', 'v2'], ['workflow', 'commercial'], ['participantType', 'investor']];
   expect(commercialFormDetails(fields)).toEqual(fields.slice(0, 3));
   expect(fields).toHaveLength(8);
+});
+
+
+test('commercial highlights use submitted investment and saved analysis without inferred budget', () => {
+  expect(commercialLeadHighlights([['Ciudad o región', 'Dortmund'], ['País', 'Germany'], ['Capital estimado de inversión', 'USD 100.000']], { score: 75, priority: 'B', summary: 'Inversión posible de 200.000' })).toEqual({ location: 'Dortmund, Germany', investment: 'USD 100.000', score: '75/100', priority: 'Prioridad B' });
+  expect(commercialLeadHighlights([], { summary: 'Presupuesto estimado 200.000' })).toEqual({ location: 'Ubicación no informada', investment: 'No informada', score: 'Sin calificación', priority: 'Prioridad pendiente' });
+});
+
+test('commercial record shows essentials first and does not assign a venue or duplicate form in sidebar', async () => {
+  jest.clearAllMocks();
+  crmAdminApi.permissions.mockResolvedValue({ canAudit: true, canOperate: false });
+  crmAdminApi.sedes.mockResolvedValue([]); crmAdminApi.activities.mockResolvedValue([]);
+  crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
+  crmAdminApi.inbox.mockResolvedValue([{ id: 'commercial-summary', source_channel: 'email', origin: 'web_form:contacto', contact: { nombre: 'Tomislav', email_normalized: 'tomislav@example.test' }, qualification_data: { form_submission: { fields: { Nombre: 'Tomislav', 'Ciudad o región': 'Dortmund', País: 'Germany', 'Capital estimado de inversión': 'USD 100.000', 'Información adicional': 'Mi proyecto real' } }, lead_analysis: { score: 75, priority: 'B', summary: 'Resumen guardado' } } }]);
+  const { container } = render(<WhatsappCrmDemo />);
+  expect(await screen.findByRole('region', { name: 'Datos principales del lead' })).toHaveTextContent('USD 100.000');
+  expect(container.querySelector('.wa-thread-head')).toHaveTextContent('Dortmund, Germany');
+  expect(container.querySelector('.wa-lead-highlights')).toHaveTextContent('75/100');
+  expect(container.querySelector('.wa-lead-highlights')).toHaveTextContent('Prioridad B');
+  expect(container.querySelector('.wa-detail')).not.toHaveTextContent('Mi proyecto real');
+  expect(screen.queryByLabelText('Asignar conversación a sede')).not.toBeInTheDocument();
+  expect(screen.getByText('Resumen guardado')).toBeInTheDocument();
 });

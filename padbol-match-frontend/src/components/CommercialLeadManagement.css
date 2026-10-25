@@ -1,0 +1,12 @@
+.commercial-lead-management {padding:20px;background:#fff;border:1px solid #dce3ee;border-radius:14px;color:#17243a;}
+.commercial-lead-management h3 {margin:0 0 12px;color:#17243a;font-size:20px;}
+.commercial-lead-management label {display:block;font-weight:650;margin:14px 0 8px;}
+.commercial-lead-management textarea,.commercial-lead-management select {box-sizing:border-box;display:block;width:100%;padding:10px 12px;margin-top:6px;border:1px solid #bdc8d7;border-radius:8px;background:#fff;color:#17243a;font:inherit;}
+.commercial-lead-management textarea {min-height:78px;resize:vertical;}
+.commercial-lead-management button {padding:11px 16px;border:0;border-radius:8px;background:#183b68;color:#fff;font:inherit;font-weight:650;cursor:pointer;}
+.commercial-lead-management button:disabled {opacity:.5;cursor:not-allowed;}
+.commercial-lead-management p {font-size:14px;line-height:1.5;}
+.commercial-lead-management [role=alert] {color:#a31b2b;}
+.commercial-lead-management [role=status] {padding:10px;background:#edf6f0;border-radius:8px;}
+.commercial-lead-management details {margin-top:16px;border-top:1px solid #e0e6ef;padding-top:12px;}
+.commercial-lead-management article {padding:8px 0;border-bottom:1px solid #e0e6ef;}
