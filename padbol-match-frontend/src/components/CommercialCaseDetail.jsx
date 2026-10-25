@@ -3,15 +3,15 @@ import CommercialLeadManagement from './CommercialLeadManagement';
 
 export default function CommercialCaseDetail({item, api}) {
   const [activities,setActivities]=useState([]);
-  const [data,setData]=useState(null), [pendingCall,setPendingCall]=useState(null), [error,setError]=useState('');
+  const [data,setData]=useState(null), [error,setError]=useState('');
   const [body,setBody]=useState(''), [busy,setBusy]=useState(false), [uncertain,setUncertain]=useState(false), [notice,setNotice]=useState('');
   async function load() {
-    const [result, calls, activityData]=await Promise.all([api.readCase(item.id,item.channel),api.listCalls(item.id,item.channel),api.listActivities(item.id,item.channel)]);
+    const [result, activityData]=await Promise.all([api.readCase(item.id,item.channel),api.listActivities(item.id,item.channel)]);
     setActivities(activityData.activities || []);
-    setData(result); setPendingCall((calls.calls || []).find(c=>c.status==='pending') || null);
+    setData(result);
   }
   useEffect(()=>{let active=true; setData(null);setError('');setBody('');setUncertain(false);setNotice('');
-    Promise.all([api.readCase(item.id,item.channel),api.listCalls(item.id,item.channel),api.listActivities(item.id,item.channel)]).then(([result,calls,activityData])=>{if(active){setActivities(activityData.activities || []);setData(result);setPendingCall((calls.calls||[]).find(c=>c.status==='pending')||null);}}).catch(()=>{if(active)setError('No se pudo abrir la consulta.');});
+    Promise.all([api.readCase(item.id,item.channel),api.listActivities(item.id,item.channel)]).then(([result,activityData])=>{if(active){setActivities(activityData.activities || []);setData(result);}}).catch(()=>{if(active)setError('No se pudo abrir la consulta.');});
     return ()=>{active=false};},[item.id,item.channel,api]);
   async function send(event){event.preventDefault();if(!body.trim()||busy||uncertain||(data?.status==='suspended'||data?.progressState==='cerrado'))return;
     if(!window.crypto?.randomUUID){setError('No se puede enviar desde este navegador.');return;}
