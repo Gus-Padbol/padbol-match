@@ -696,6 +696,9 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.activities.mockResolvedValue([]);
 
     render(<WhatsappCrmDemo />);
+    expect(await screen.findByText('Consulta de participante')).toBeInTheDocument();
+    expect(screen.queryByText('Cantidad de canchas')).not.toBeInTheDocument();
+    expect(screen.queryByText('Resumen ejecutivo')).not.toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'Preparar inscripción deportiva' }));
     fireEvent.change(screen.getByLabelText('Sede Next Generation'), { target: { value: 'venue-1' } });
     fireEvent.change(screen.getByLabelText('Jornada Next Generation'), { target: { value: 'session-1' } });
