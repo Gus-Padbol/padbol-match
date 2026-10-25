@@ -577,3 +577,11 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
   .wa-demo .wa-panel-exit{flex-basis:36px;height:36px;min-height:36px;padding:3px 16px}
   .wa-demo .wa-topbar{height:44px;min-height:44px}
 }
+@media(min-width:721px){
+  /* Remove the hub navigation reservation from this dedicated workspace. */
+  .pm-app-shell-column>div:has(>.admin-dashboard--crm){padding-bottom:0!important}
+  .admin-dashboard--crm .admin-dashboard-main-scroll{padding-top:54px!important;padding-bottom:0!important}
+  .admin-dashboard--crm .admin-dashboard-shell{padding:0}
+  .admin-dashboard--crm .admin-dashboard-body-surface{padding-left:0!important;padding-right:0!important}
+  .wa-demo,.admin-dashboard .wa-demo,.admin-dashboard .wa-demo:has(.wa-panel-exit){height:100dvh}
+}
