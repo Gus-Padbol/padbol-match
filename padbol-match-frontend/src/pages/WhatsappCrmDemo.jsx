@@ -247,6 +247,14 @@ export function formDetails(conversation) {
   return [...result];
 }
 
+export function commercialFormDetails(details) {
+  return details.filter(([label]) => {
+    const key = fieldKey(label);
+    return !/^(consent|consentimiento)/.test(key)
+      && !['workflow', 'participanttype', 'documentversion', 'privacyversion', 'termsversion', 'privacypolicyversion', 'termsandconditionsversion'].includes(key);
+  });
+}
+
 function detailValue(details, ...labels) {
   const expected = labels.map(label => fieldKey(fieldLabel(label)));
   return details.find(([label]) => expected.includes(fieldKey(fieldLabel(label))))?.[1] || null;
@@ -896,7 +904,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
                   {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
                 </section> : null}
-                {isCommercialForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{activeDetails.filter(([label]) => !['workflow', 'participantType'].includes(label)).map(([label, value]) => <div key={label}><dt>{label}</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{value}</dd></div>)}</dl></section> : null}
+                {isCommercialForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{commercialFormDetails(activeDetails).map(([label, value]) => <div key={label}><dt>{label}</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{value}</dd></div>)}</dl></section> : null}
                 <section className="wa-panel"><h3>Gestión</h3>
                   <dl>
                     <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>

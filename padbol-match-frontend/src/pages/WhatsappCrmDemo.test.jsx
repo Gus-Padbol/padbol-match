@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../context/AuthContext', () => ({
@@ -837,4 +837,11 @@ describe('Datos completos del formulario comercial', () => {
     expect(details.País).toBe('Colombia');
     expect(details['Información adicional']).toBe('Quiero representar Padbol');
   });
+});
+
+
+test('la ficha comercial excluye metadatos y conserva todos los datos del proyecto', () => {
+  const fields = [['Nombre', 'Danna'], ['Capital estimado de inversión', 'A conversar'], ['Territorio solicitado', 'Colombia'], ['consentPrivacy', 'true'], ['consentTerms', 'true'], ['DocumentVersion', 'v2'], ['workflow', 'commercial'], ['participantType', 'investor']];
+  expect(commercialFormDetails(fields)).toEqual(fields.slice(0, 3));
+  expect(fields).toHaveLength(8);
 });
