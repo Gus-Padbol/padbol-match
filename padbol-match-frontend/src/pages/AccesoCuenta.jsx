@@ -5,6 +5,8 @@ import { handleAuthOnce } from '../utils/handleAuthOnce';
 import { mensajeErrorAuthSupabase, mensajeErrorJugadoresPerfilDuplicado } from '../utils/authErrorsEs';
 import { refreshJugadorPerfilFromSupabase } from '../utils/jugadorPerfil';
 import AppHeader from '../components/AppHeader';
+import EmailAccessCode from '../components/EmailAccessCode';
+import {useAccessCodeCooldown} from '../utils/useAccessCodeCooldown';
 import {
   HUB_CONTENT_PADDING_BOTTOM_PX,
   HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX,
@@ -165,6 +167,10 @@ export default function AccesoCuenta() {
   const [infoMsg, setInfoMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [accessLinkBusy, setAccessLinkBusy] = useState(false);
+  const [accessCodeEmail, setAccessCodeEmail] = useState('');
+  const [accessCodeRequest,setAccessCodeRequest] = useState(0);
+  const accessCodeCooldown=useAccessCodeCooldown();
+  useEffect(()=>{setAccessCodeEmail('');},[email]);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showRegPassword2, setShowRegPassword2] = useState(false);
@@ -415,7 +421,7 @@ export default function AccesoCuenta() {
   const handleEnviarEnlaceAcceso = async () => {
     setErrorMsg('');
     setInfoMsg('');
-    if (busy || accessLinkBusy) return;
+    if (busy || accessLinkBusy || accessCodeCooldown.remaining>0) return;
     const em = email.trim().toLowerCase();
     if (!em) {
       setErrorMsg(t('auth.enterEmail'));
@@ -431,10 +437,15 @@ export default function AccesoCuenta() {
         destination,
       });
       if (error) {
-        setErrorMsg(t(passwordlessAccessErrorTranslationKey(error)));
+        if(error.status===429)accessCodeCooldown.start();
+        const key=passwordlessAccessErrorTranslationKey(error);
+        setErrorMsg(t(key==='auth.accessLinkFailed'?'auth.accessCodeRequestFailed':key==='auth.accessLinkRateLimited'?'auth.accessCodeRequestRateLimited':key));
         return;
       }
-      setInfoMsg(t('auth.accessLinkSent'));
+      setAccessCodeEmail(em);
+      setAccessCodeRequest(value=>value+1);
+      accessCodeCooldown.start();
+      setInfoMsg(t('auth.accessCodeSent'));
     } finally {
       setAccessLinkBusy(false);
     }
@@ -661,6 +672,7 @@ export default function AccesoCuenta() {
               className="acceso-cuenta-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={busy || accessLinkBusy}
               type="email"
               autoComplete="username"
               inputMode="email"
@@ -745,7 +757,7 @@ export default function AccesoCuenta() {
             <button
               type="button"
               onClick={() => void handleEnviarEnlaceAcceso()}
-              disabled={busy || accessLinkBusy}
+              disabled={busy || accessLinkBusy || accessCodeCooldown.remaining>0}
               style={{
                 marginTop: '12px',
                 width: '100%',
@@ -760,8 +772,9 @@ export default function AccesoCuenta() {
                 opacity: busy || accessLinkBusy ? 0.7 : 1,
               }}
             >
-              {accessLinkBusy ? t('auth.sendingAccessLink') : t('auth.sendAccessLink')}
+              {accessLinkBusy ? t('auth.sendingAccessCode') : accessCodeCooldown.remaining>0 ? t('auth.accessCodeResendWait',{seconds:accessCodeCooldown.remaining}) : t('auth.sendAccessCode')}
             </button>
+            <EmailAccessCode key={`${accessCodeEmail}:${accessCodeRequest}`} auth={supabase.auth} email={accessCodeEmail} onVerified={afterLogin} onBusyChange={setBusy} disabled={busy||accessLinkBusy}/>
             <button
               type="button"
               onClick={() => setModo('register')}
