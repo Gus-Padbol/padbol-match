@@ -428,3 +428,60 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
 .wa-lead-highlights strong{display:block;color:var(--ink);font-size:16px;overflow-wrap:anywhere}
 .wa-lead-note summary{cursor:pointer;font-weight:650;color:var(--ink)}
 @media(max-width:720px){.wa-lead-highlights{padding:12px;gap:7px;grid-template-columns:repeat(2,minmax(0,1fr))}.wa-lead-highlights>div:first-child{grid-column:1/-1}.wa-thread-person .wa-lead-location{font-size:18px}}
+
+/* One desktop workspace: only each reading pane scrolls, never the whole lead. */
+@media (min-width: 721px) {
+  .wa-demo {
+    height: calc(100dvh - var(--pm-app-header-stack-height, 86px));
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .wa-demo > :not(.wa-crm-body) { flex-shrink: 0; }
+  .wa-demo .wa-crm-body {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+  }
+  .wa-demo .wa-area-tabs--top,
+  .wa-demo:has(.wa-panel-exit) .wa-area-tabs--top {
+    position: relative;
+    top: auto;
+    flex: 0 0 auto;
+  }
+  .wa-demo .wa-crm-body .wa-workspace {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+    align-items: stretch;
+  }
+  .wa-demo .wa-inbox {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+  }
+  .wa-demo :is(.wa-inbox-head, .wa-filters) { flex: 0 0 auto; }
+  .wa-demo .wa-list {
+    display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .wa-demo .wa-thread { min-height: 0; overflow: hidden; }
+  .wa-demo .wa-thread-head,
+  .wa-demo .wa-composer { flex-shrink: 0; }
+  .wa-demo .wa-messages {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .wa-demo .wa-detail { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+}
