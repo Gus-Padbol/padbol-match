@@ -86,6 +86,7 @@ const ScoreboardJoin = lazy(() => import('./pages/ScoreboardJoin'));
 const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage'));
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
+const ContentWorkspacePage = lazy(() => import('./pages/ContentWorkspacePage'));
 const CommercialCrmPage = lazy(() => import('./pages/CommercialCrmPage'));
 const AdminVenueLandingPage = lazy(() => import('./pages/adminLanding/AdminVenueLandingPage'));
 const VenuePlansPage = lazy(() => import('./pages/adminLanding/VenuePlansPage'));
@@ -566,6 +567,7 @@ function App() {
                   </ErrorBoundary>
                 )}
               />
+              <Route path="/contenido-campanas" element={<ProtectedRoute><WebLegalConsentGate><ContentWorkspacePage /></WebLegalConsentGate></ProtectedRoute>} />
               <Route path="/crm-leads" element={<ProtectedRoute><WebLegalConsentGate><CommercialCrmPage /></WebLegalConsentGate></ProtectedRoute>} />
               <Route
                 path="/admin/scoreboard/:partidoId"

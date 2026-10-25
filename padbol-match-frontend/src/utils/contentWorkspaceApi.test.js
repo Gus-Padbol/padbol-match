@@ -1,0 +1,6 @@
+import {createContentWorkspaceApi} from './contentWorkspaceApi';
+jest.mock('./apiPublicBaseUrl',()=>({getApiBaseUrl:()=> 'https://backend.example'}));
+afterEach(()=>jest.restoreAllMocks());
+test('session stays in header and optimistic version is sent',async()=>{global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({item:{}})});const api=createContentWorkspaceApi('private-token');await api.update('item',{expectedVersion:4,title:'Video'});expect(fetch).toHaveBeenCalledWith('https://backend.example/api/admin/content/workspace/item',expect.objectContaining({method:'PATCH',headers:expect.objectContaining({Authorization:'Bearer private-token'}),body:JSON.stringify({expectedVersion:4,title:'Video'})}));});
+test('upload uses multipart with no JSON header',async()=>{global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({file:{id:'f'}})});await createContentWorkspaceApi('t').upload('a',new File(['video'],'clip.mp4',{type:'video/mp4'}));expect(fetch.mock.calls[0][1].headers).toEqual({Authorization:'Bearer t'});expect(fetch.mock.calls[0][1].body).toBeInstanceOf(FormData);});
+test('conflicts are actionable and never silently overwritten',async()=>{global.fetch=jest.fn().mockResolvedValue({ok:false,status:409});await expect(createContentWorkspaceApi('t').update('a',{})).rejects.toMatchObject({status:409});});
