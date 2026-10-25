@@ -44,6 +44,7 @@ describe('CRM histórico unificado', () => {
       role: 'superadmin',
       canOperate: false,
       canAudit: true,
+      canManageVisibility: true,
       whatsappSendEnabled: false,
     });
     crmAdminApi.inbox.mockResolvedValue({
@@ -868,4 +869,6 @@ test('commercial record shows essentials first and does not assign a venue or du
   expect(container.querySelector('.wa-detail')).not.toHaveTextContent('Mi proyecto real');
   expect(screen.queryByLabelText('Asignar conversación a sede')).not.toBeInTheDocument();
   expect(screen.getByText('Resumen guardado')).toBeInTheDocument();
+  expect(screen.getByRole('region', {name: 'Gestión comercial'})).toBeInTheDocument();
+  expect(screen.queryByRole('button', {name: 'Ocultar prueba'})).not.toBeInTheDocument();
 });

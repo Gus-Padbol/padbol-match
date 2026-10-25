@@ -15,7 +15,7 @@ export async function resolveCommercialLead(api, conversation) {
   return item;
 }
 
-export default function CommercialLeadManagement({api, conversation}) {
+export default function CommercialLeadManagement({api, conversation, onUpdated}) {
   const [data, setData] = useState(null), [role, setRole] = useState(null), [advisors, setAdvisors] = useState([]);
   const [calls, setCalls] = useState([]), [activities, setActivities] = useState([]);
   const [state, setState] = useState('nuevo'), [next, setNext] = useState(''), [advisor, setAdvisor] = useState('');
@@ -36,7 +36,7 @@ export default function CommercialLeadManagement({api, conversation}) {
     (async () => {
       const permission = await api.getRole();
       if (!['manager','advisor'].includes(permission.role)) throw new Error('FORBIDDEN');
-      const item = await resolveCommercialLead(api, conversation);
+      const item = await resolveCommercialLead(api, {id: conversation.id, source_channel: conversation.source_channel});
       const [read, callData, activityData, advisorData] = await Promise.all([
         api.readCase(item.id,item.channel), api.listCalls(item.id,item.channel), api.listActivities(item.id,item.channel),
         permission.role === 'manager' ? api.listAdvisors() : Promise.resolve({advisors:[]}),
@@ -50,7 +50,7 @@ export default function CommercialLeadManagement({api, conversation}) {
   async function saveAssignment(event) {
     event.preventDefault(); if(busy || !data || !advisor || !Number.isSafeInteger(data.version)) return;
     setBusy(true); setError(''); setNotice('');
-    try {await api.assign(data.channel,data.id,advisor,data.version); await refresh(data); setNotice('Asesor asignado.');}
+    try {await api.assign(data.channel,data.id,advisor,data.version); await refresh(data); await onUpdated?.(); setNotice('Asesor asignado.');}
     catch {setError('No se pudo confirmar la asignación. Actualiza la ficha antes de volver a intentarlo.');}
     finally {setBusy(false);}
   }
@@ -69,7 +69,7 @@ export default function CommercialLeadManagement({api, conversation}) {
       }
       const current = await api.readCase(data.id,data.channel);
       await api.progress(data.id,data.channel,current.version,state,next.trim());
-      await refresh(data); setSummary(''); setSituation(''); setDetails(''); setNotice('Atención registrada. Estado y próximo paso actualizados.');
+      await refresh(data); await onUpdated?.(); setSummary(''); setSituation(''); setDetails(''); setNotice('Atención registrada. Estado y próximo paso actualizados.');
     } catch {setError('No se pudo confirmar el registro completo. Actualiza la ficha y revisa el historial antes de volver a guardar.');}
     finally {setBusy(false);}
   }
