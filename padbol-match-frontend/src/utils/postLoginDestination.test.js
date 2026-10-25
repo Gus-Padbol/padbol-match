@@ -49,3 +49,8 @@ describe('resolveRoleAwarePostLoginPath', () => {
     ).resolves.toBe('/hub');
   });
 });
+
+test.each(['manager','advisor'])('sends a confirmed commercial %s without a venue to CRM', async role=>{const membership=jest.fn().mockResolvedValue({role});await expect(resolveRoleAwarePostLoginPath('/',{access_token:'commercial-session'},async()=>({rol:'jugador',sedeId:null}),membership)).resolves.toBe('/crm-leads');expect(membership).toHaveBeenCalledWith('commercial-session');});
+test('does not infer commercial access from a claimed role or email',async()=>{const membership=jest.fn().mockRejectedValue({status:403});await expect(resolveRoleAwarePostLoginPath('/',{access_token:'session',user:{email:'sm@padbol.com'}},async()=>({rol:'commercial_operator'}),membership)).resolves.toBe('/hub');});
+test('explicit CRM return is kept without requesting membership before the protected route',async()=>{const membership=jest.fn();await expect(resolveRoleAwarePostLoginPath('/crm-leads',{access_token:'session'},jest.fn(),membership)).resolves.toBe('/crm-leads');expect(membership).not.toHaveBeenCalled();});
+test('an ordinary player or a failed commercial lookup stays in the player hub',async()=>{await expect(resolveRoleAwarePostLoginPath('/',{access_token:'session'},async()=>({rol:'jugador'}),async()=>({role:'none'}))).resolves.toBe('/hub');});
