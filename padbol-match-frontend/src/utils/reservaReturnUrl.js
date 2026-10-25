@@ -217,6 +217,13 @@ export function safeAdminPathFromLoginRedirect(loginSearch) {
   return pathOnly === '/admin' ? path : null;
 }
 
+/** Retorno exacto al CRM comercial; el permiso se comprueba después con la sesión. */
+export function safeCommercialCrmPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  const pathOnly = String(path || '').split('?')[0].split('#')[0];
+  return pathOnly === '/crm-leads' ? path : null;
+}
+
 /** `?redirect=` seguro hacia buscar partido (evita open redirect). */
 export function safePartidosBuscarPathFromLoginRedirect(loginSearch) {
   const path = decodeLoginRedirectParam(loginSearch);
@@ -275,6 +282,8 @@ export function clearPartidosBuscarReturnUrl() {
  * Los demás destinos conservan la prioridad de las operaciones deportivas pendientes.
  */
 export function resolvePostLoginNavigatePath(loginSearch) {
+  const fromCommercialCrm = safeCommercialCrmPathFromLoginRedirect(loginSearch);
+  if (fromCommercialCrm) return fromCommercialCrm;
   const fromFipaDocuments = safeFipaDocumentsPathFromLoginRedirect(loginSearch);
   if (fromFipaDocuments) return fromFipaDocuments;
   if (peekReservaPendienteArmar()) {
