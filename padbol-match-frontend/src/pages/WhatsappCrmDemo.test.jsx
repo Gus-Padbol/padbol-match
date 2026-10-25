@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
+jest.mock('../components/CommercialLeadManagement', () => ({ conversation }) => <section aria-label="Gestión comercial">Gestión de {conversation.id}</section>);
+
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     session: {

@@ -1,6 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
+import CommercialLeadManagement from '../components/CommercialLeadManagement';
+import { createCommercialAssignmentsApi } from '../utils/commercialAssignmentsApi';
 import './WhatsappCrmDemo.css';
 
 const CRM_IS_QA = String(process.env.REACT_APP_APP_VARIANT || '').toLowerCase() === 'qa';
@@ -283,6 +285,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
   }, [hasPanelExit]);
   const { session } = useAuth();
   const token = accessToken || session?.access_token || '';
+  const commercialApi = useMemo(() => createCommercialAssignmentsApi(token), [token]);
   const [perms, setPerms] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -916,12 +919,13 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
 
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
+                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} /> : null}
                 {waContext ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
                   {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
                 </section> : null}
-                <section className="wa-panel"><h3>Gestión</h3>
+                <section className="wa-panel" hidden={isCommercial}><h3>Gestión</h3>
                   <dl>
                     <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>
                     <div><dt>Canal</dt><dd>{channelLabel(active.source_channel)}</dd></div>
