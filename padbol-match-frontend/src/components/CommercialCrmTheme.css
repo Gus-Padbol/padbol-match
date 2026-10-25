@@ -79,3 +79,5 @@ html.theme-dark .wa-demo .wa-context-warning strong{color:var(--crm-warning-text
  :is(.wa-demo,.commercial-team) .commercial-advisor-access__panel li div{flex-wrap:wrap}
 }
 @media(prefers-reduced-motion:reduce){:is(.wa-demo,.commercial-team) :is(button,summary){transition:none}}
+
+:is(.wa-demo,.commercial-team) .commercial-advisor-add{background:var(--crm-accent);border:1px solid var(--crm-accent);color:#fff;font-weight:700;margin:10px 0}
