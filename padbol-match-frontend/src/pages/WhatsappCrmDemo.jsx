@@ -198,39 +198,58 @@ function conversationArea(conversation) {
   return 'commercial';
 }
 
-function formDetails(conversation) {
+const FORM_FIELD_ALIASES = {
+  Nombre: ['name', 'firstName', 'first_name', 'nombre'],
+  Apellido: ['lastName', 'last_name', 'surname', 'apellido'],
+  Email: ['email', 'correo'],
+  WhatsApp: ['phone', 'telefono', 'whatsapp'],
+  'Empresa o club': ['company', 'club', 'empresa', 'companyName'],
+  País: ['country', 'pais'],
+  'Ciudad o región': ['city', 'location', 'ciudad', 'region', 'cityRegion'],
+  'Cantidad de canchas': ['courts', 'courtCount', 'court_count', 'cantidad_canchas', 'cantidadCanchas', 'numberOfCourts', 'Cantidad de canchas proyectada'],
+  'Destino de la cancha': ['destination', 'destino', 'courtDestination', 'court_destination', 'uso'],
+  'Disponibilidad de espacio': ['space', 'availableSpace', 'spaceAvailable', 'espacio', 'disponibilidad_espacio'],
+  'Información adicional': ['message', 'mensaje', 'additionalInfo', 'additional_info', 'comments', 'consulta'],
+  Asunto: ['subject', 'asunto'],
+};
+const fieldKey = (value) => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+function fieldLabel(label) {
+  const key = fieldKey(label);
+  return Object.entries(FORM_FIELD_ALIASES).find(([name, aliases]) => [name, ...aliases].some(alias => fieldKey(alias) === key))?.[0] || label;
+}
+function fieldText(value) {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'boolean') return value ? 'Sí' : 'No';
+  if (Array.isArray(value)) return value.map(fieldText).filter(Boolean).join(', ');
+  if (typeof value === 'object') return Object.entries(value).map(([key, item]) => `${key}: ${fieldText(item)}`).join(' · ');
+  return String(value).trim();
+}
+
+export function formDetails(conversation) {
   const saved = conversation?.qualification_data?.form_submission?.fields;
-  if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
-    const entries = Object.entries(saved).filter(([, value]) => String(value ?? '').trim());
-    if (entries.length) return entries;
-  }
   const body = String(conversation?.inbound_body || '');
-  const fromLines = body.split('\n').flatMap((line) => {
-    const separator = line.indexOf(':');
-    if (separator < 1) return [];
-    const label = line.slice(0, separator).trim();
-    const value = line.slice(separator + 1).trim();
-    return label && value ? [[label, value]] : [];
-  });
-  if (fromLines.length > 1) return fromLines;
-  const labels = [
-    'Disponibilidad de espacio', 'Información adicional', 'Cantidad de canchas',
-    'Destino de la cancha', 'Ciudad o región', 'Empresa o club', 'Programa Academy',
-    'WhatsApp', 'Apellido', 'Asunto', 'Nombre', 'Email', 'País', 'Curso',
-  ];
+  const labels = [...Object.keys(FORM_FIELD_ALIASES), 'Ciudad', 'Categoría', 'Curso', 'Programa Academy'];
   const pattern = new RegExp(`(?:^|\\s)(${labels.join('|')}):\\s*`, 'gi');
   const matches = [...body.matchAll(pattern)];
-  return matches.flatMap((match, index) => {
-    const valueStart = match.index + match[0].length;
-    const valueEnd = matches[index + 1]?.index ?? body.length;
-    const value = body.slice(valueStart, valueEnd).trim();
+  const parsed = matches.flatMap((match, index) => {
+    const value = body.slice(match.index + match[0].length, matches[index + 1]?.index ?? body.length).trim();
     return value ? [[match[1], value]] : [];
   });
+  const entries = saved && typeof saved === 'object' && !Array.isArray(saved) ? Object.entries(saved) : [];
+  const result = new Map();
+  // Preserve submitted fields, filling absent legacy fields from the original body.
+  for (const [key, value] of [...entries, ...parsed]) {
+    const text = fieldText(value);
+    const label = String(key);
+    const alreadySaved = [...result.keys()].some(existing => fieldKey(existing) === fieldKey(label));
+    if (text && !alreadySaved) result.set(label, text);
+  }
+  return [...result];
 }
 
 function detailValue(details, ...labels) {
-  const expected = labels.map((label) => label.toLocaleLowerCase('es'));
-  return details.find(([label]) => expected.includes(String(label).toLocaleLowerCase('es')))?.[1] || null;
+  const expected = labels.map(label => fieldKey(fieldLabel(label)));
+  return details.find(([label]) => expected.includes(fieldKey(fieldLabel(label))))?.[1] || null;
 }
 
 export function leadAnalysisNotice(status, enabled) {
@@ -820,15 +839,16 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
                   {isCommercialForm && activeDetails.length ? <article className="wa-lead-card">
-                    <header><span>Nuevo lead</span><div><h3>{leadName}</h3><p>{detailValue(activeDetails, 'Empresa o club') || 'Consulta particular'} · {[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Ubicación no indicada'}</p></div></header>
+                    <header><span>Nuevo lead</span><div><h3>{leadName}</h3><p>{detailValue(activeDetails, 'Empresa o club', 'Perfil actual') || 'Consulta comercial'} · {[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || detailValue(activeDetails, 'Territorio solicitado') || 'Ubicación no indicada'}</p></div></header>
                     <section className="wa-lead-section"><h4>Qué está buscando</h4><strong>{formatCrmEventText(detailValue(activeDetails, 'Asunto') || active.subject) || 'Consulta Padbol'}</strong></section>
                     <dl>
-                      <div><dt>Cantidad de canchas</dt><dd>{detailValue(activeDetails, 'Cantidad de canchas') || 'Sin definir'}</dd></div>
-                      <div><dt>Destino</dt><dd>{detailValue(activeDetails, 'Destino de la cancha') || 'Sin definir'}</dd></div>
-                      <div><dt>Espacio disponible</dt><dd>{detailValue(activeDetails, 'Disponibilidad de espacio') || 'Sin definir'}</dd></div>
-                      <div><dt>Ubicación</dt><dd>{[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || 'Sin definir'}</dd></div>
+                      <div><dt>Cantidad de canchas</dt><dd>{detailValue(activeDetails, 'Cantidad de canchas') || 'No informado en el formulario'}</dd></div>
+                      {detailValue(activeDetails, 'Destino de la cancha') ? <div><dt>Destino</dt><dd>{detailValue(activeDetails, 'Destino de la cancha')}</dd></div> : null}
+                      {detailValue(activeDetails, 'Disponibilidad de espacio', 'Ubicación') ? <div><dt>Espacio disponible</dt><dd>{detailValue(activeDetails, 'Disponibilidad de espacio', 'Ubicación')}</dd></div> : null}
+                      <div><dt>Ubicación</dt><dd>{[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || detailValue(activeDetails, 'Territorio solicitado') || 'No informado en el formulario'}</dd></div>
                     </dl>
-                    <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p>{detailValue(activeDetails, 'Información adicional') || 'No agregó información adicional.'}</p></section>
+                    <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p style={{ whiteSpace: 'pre-wrap' }}>{detailValue(activeDetails, 'Información adicional') || 'No se registró un mensaje adicional.'}</p></section>
+                    {active.inbound_body ? <details className="wa-lead-note"><summary>Ver envío original completo</summary><p style={{ whiteSpace: 'pre-wrap' }}>{active.inbound_body}</p></details> : null}
                   </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p>{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${{sent:'Enviado',pending:'Pendiente de confirmación',cancelled:'Entrega no confirmada'}[message.status] || 'Estado no disponible'}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p>{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
                   {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
                   {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
@@ -876,7 +896,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
                   {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
                 </section> : null}
-                {isCommercialForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{['Empresa o club', 'País', 'Ciudad o región', 'Cantidad de canchas', 'Destino de la cancha', 'Disponibilidad de espacio'].map((label) => <div key={label}><dt>{label}</dt><dd>{detailValue(activeDetails, label) || '—'}</dd></div>)}</dl></section> : null}
+                {isCommercialForm && activeDetails.length ? <section className="wa-panel wa-lead-summary"><h3>Datos de la consulta</h3><dl>{activeDetails.filter(([label]) => !['workflow', 'participantType'].includes(label)).map(([label, value]) => <div key={label}><dt>{label}</dt><dd style={{ whiteSpace: 'pre-wrap' }}>{value}</dd></div>)}</dl></section> : null}
                 <section className="wa-panel"><h3>Gestión</h3>
                   <dl>
                     <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>
