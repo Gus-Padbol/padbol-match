@@ -633,6 +633,13 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.reply).not.toHaveBeenCalled();
   });
 
+  it('capacidad de operación email habilita al propietario sin convertirlo en operador global', async () => {
+    crmAdminApi.permissions.mockResolvedValue({canOperate:false,canAudit:true,canOperateEmail:true,emailSendEnabled:true,whatsappSendEnabled:false});
+    crmAdminApi.inbox.mockResolvedValue([{id:'owner-email',estado:'nuevo',source_channel:'email',origin:'web_form:contacto',contact:{email_normalized:'fixture@example.invalid'}}]);
+    crmAdminApi.activities.mockResolvedValue([]);crmAdminApi.reply.mockResolvedValue({status:'sent'});
+    render(<WhatsappCrmDemo/>);const input=await screen.findByLabelText('Respuesta');expect(input).toBeEnabled();fireEvent.change(input,{target:{value:'Respuesta en prueba local'}});fireEvent.click(screen.getByRole('button',{name:'Enviar por email'}));await screen.findByText('Mensaje enviado por email.');expect(crmAdminApi.reply).toHaveBeenCalledWith('qa-token','owner-email','Respuesta en prueba local',expect.any(String));
+  });
+
   it('una capacidad email habilitada no otorga permisos de operación al auditor', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, emailSendEnabled: true });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'audit-email', estado: 'nuevo', source_channel: 'email', contact: { email_normalized: 'contact@example.invalid' } }]);
