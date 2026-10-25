@@ -37,7 +37,7 @@ export default function CommercialAssignments({ api }) {
   async function addAdvisor(event) {
     event.preventDefault(); if (!email.trim() || busy) return;
     setBusy(true); setError(''); setNotice('');
-    try { await api.addAdvisor(email.trim()); setEmail(''); await refresh(); setNotice('Asesor habilitado.'); }
+    try { await api.addAdvisor(email.trim()); setEmail(''); await refresh(); setNotice('Solicitud registrada. El acceso queda pendiente de aprobación de Gustavo.'); }
     catch { setError('No se pudo confirmar el alta. Revisa la lista antes de intentarlo de nuevo.'); setReady(false); }
     finally { setBusy(false); }
   }
@@ -53,8 +53,8 @@ export default function CommercialAssignments({ api }) {
     <p>Consulta y distribuye las oportunidades comerciales entre los asesores.</p>
     {error && <div><p role="alert">{error}</p><button type="button" disabled={busy} onClick={retryLoad}>Actualizar lista</button></div>}{notice && <p role="status">{notice}</p>}
     {!ready && !error && <p>Cargando…</p>}
-    {ready && <><h3>Asesores</h3><p>El asesor debe tener una cuenta de Padbol Match con el correo confirmado.</p>
-      <form onSubmit={addAdvisor}><label>Correo del asesor <input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label> <button type="submit" disabled={busy}>Dar de alta</button></form>
+    {ready && <><h3>Asesores</h3><p>El alta requiere aprobación de Gustavo y una cuenta de Padbol Match con el correo confirmado.</p>
+      <form onSubmit={addAdvisor}><label>Correo del asesor <input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label> <button type="submit" disabled={busy}>Solicitar alta</button></form>
       {advisors.length ? <ul>{advisors.map(a => <li key={a.id}>{a.name || a.email} {a.status ? `· ${a.status}` : ''} {a.active === true && a.role !== 'manager' && <button type="button" disabled={busy} onClick={() => deactivateAdvisor(a)}>Desactivar</button>}</li>)}</ul> : <p>No hay asesores disponibles.</p>}
       <h3>Consultas comerciales</h3>
       {!cases.length && <p>No hay consultas comerciales para mostrar.</p>}

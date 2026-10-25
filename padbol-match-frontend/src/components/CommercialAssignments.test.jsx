@@ -16,7 +16,7 @@ test('does not claim a failed advisor creation succeeded', async () => {
   render(<CommercialAssignments api={api}/>);
   await screen.findByText('No hay asesores disponibles.');
   fireEvent.change(screen.getByLabelText('Correo del asesor'),{target:{value:'asesor@example.com'}});
-  fireEvent.click(screen.getByText('Dar de alta'));
+  fireEvent.click(screen.getByText('Solicitar alta'));
   expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo confirmar el alta');
   expect(screen.queryByText('Asesor habilitado.')).toBeNull();
 });

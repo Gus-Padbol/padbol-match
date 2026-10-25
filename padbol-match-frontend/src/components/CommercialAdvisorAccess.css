@@ -1,0 +1,12 @@
+.commercial-advisor-access{position:relative}
+.commercial-advisor-access__panel{position:absolute;left:0;top:calc(100% + 8px);z-index:650;width:min(600px,90vw);max-height:70vh;overflow-y:auto;background:var(--paper,#fff);color:var(--ink,#172033);border:1px solid var(--line,#dce2ec);border-radius:12px;padding:18px;box-shadow:0 12px 36px #17203330}
+.commercial-advisor-access__panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.commercial-advisor-access__panel h2{font-size:18px;margin:0}
+.commercial-advisor-access__panel p,.commercial-advisor-access__panel li{font-size:13px;line-height:1.5}
+.commercial-advisor-access__panel form{display:grid;gap:10px}
+.commercial-advisor-access__panel label{display:grid;gap:5px;font-size:13px}
+.commercial-advisor-access__panel input{width:100%;padding:9px;border:1px solid var(--line,#dce2ec);border-radius:7px;background:var(--paper,#fff);color:inherit;font:inherit}
+.commercial-advisor-access__panel small{font-size:12px;line-height:1.5;color:var(--muted,#647084)}
+.commercial-advisor-access__panel ul{padding:0;list-style:none}
+.commercial-advisor-access__panel li{display:grid;gap:4px;padding:10px 0;border-bottom:1px solid var(--line,#dce2ec)}
+.commercial-advisor-access__panel li div{display:flex;gap:8px}

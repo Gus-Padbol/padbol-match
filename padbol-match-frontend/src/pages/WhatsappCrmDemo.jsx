@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
 import CommercialLeadManagement from '../components/CommercialLeadManagement';
 import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
+import CommercialAdvisorAccess from '../components/CommercialAdvisorAccess';
 import { createCommercialAssignmentsApi } from '../utils/commercialAssignmentsApi';
 import './WhatsappCrmDemo.css';
 
@@ -758,6 +759,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
       </section>
 
       <div className="wa-tools" aria-label="Herramientas de la bandeja">
+      {(perms?.canAudit || commercialOnly) ? <CommercialAdvisorAccess api={commercialApi}/> : null}
       {(perms?.canAudit || commercialOnly) ? <CommercialAgendaAlerts api={commercialApi} onOpen={item=>{const id=item.conversationId || (item.channel==='form'?item.id:null);if(id){setAreaFilter('all');setTicketReference('');setTicketInput('');setEstadoFilter('');setHiddenOnly(false);setActiveId(id);setAgendaLeadId(id);if(threadRef.current)threadRef.current.scrollTop=0;}}}/> : null}
       {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section className="wa-manual-tool">
         <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
@@ -988,7 +990,6 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                     {activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}</time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}
                   </div>
                 </section> : null}
-                <section className="wa-panel wa-audit"><div className="wa-panel-title"><h3>Auditoría</h3><span>{CRM_IS_QA ? 'QA' : 'GLOBAL'}</span></div><p>Consulta la vista de auditoría global desde el panel de superadmin.</p></section>
               </aside>
             </>
           ) : null}
