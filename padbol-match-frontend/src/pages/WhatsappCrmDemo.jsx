@@ -828,8 +828,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-thread-person"><h2>{isCommercial ? leadName : active.contact?.nombre || active.identity_used || '—'}</h2>{isCommercial ? <p className="wa-lead-location">{leadHighlights.location}</p> : null}<p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>
                   {active.short_ticket_reference || active.ticket_reference ? <p className="wa-ticket-reference">N.º de ticket: <strong>{active.short_ticket_reference || active.ticket_reference}</strong></p> : null}
-                  {(perms?.canAudit || (active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true)) ? <details className="wa-thread-admin"><summary>Administración</summary><div className="wa-thread-admin__actions">
-                  {perms?.canAudit ? <button type="button" disabled={busy} onClick={async () => {
+                  {(perms?.canManageVisibility || (active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true)) ? <details className="wa-thread-admin"><summary>Administración</summary><div className="wa-thread-admin__actions">
+                  {perms?.canManageVisibility ? <button type="button" disabled={busy} onClick={async () => {
                     const hide = !hiddenOnly;
                     if (hide && !window.confirm('Confirma que toda esta conversación es una prueba. Se ocultará de la bandeja y se podrá restaurar.')) return;
                     setBusy(true); setNotice(null);
@@ -919,7 +919,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
 
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
-                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} /> : null}
+                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} onUpdated={load} /> : null}
                 {waContext ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
