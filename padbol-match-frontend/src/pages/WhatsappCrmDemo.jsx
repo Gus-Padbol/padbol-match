@@ -809,7 +809,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
             </div>
             <div className="wa-list" role="region" aria-label="Listado de conversaciones" tabIndex={0}>
               {visibleItems.length === 0 ? <div className="wa-area-empty">No hay conversaciones en esta sección.</div> : visibleItems.map((item) => (
-                <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => { setActiveId(item.id); threadRef.current?.scrollIntoView?.({ block: 'start' }); }}>
+                <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => { setActiveId(item.id); if (threadRef.current) threadRef.current.scrollTop = 0; threadRef.current?.scrollIntoView?.({ block: 'start' }); }}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
                     <div><strong>{item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined}>{compactDateTime(conversationDisplayDate(item))}</time></div>

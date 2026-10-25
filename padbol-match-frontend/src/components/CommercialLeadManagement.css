@@ -10,3 +10,12 @@
 .commercial-lead-management [role=status] {padding:10px;background:#edf6f0;border-radius:8px;}
 .commercial-lead-management details {margin-top:16px;border-top:1px solid #e0e6ef;padding-top:12px;}
 .commercial-lead-management article {padding:8px 0;border-bottom:1px solid #e0e6ef;}
+
+.commercial-lead-management{padding:16px;border-radius:12px}
+.commercial-lead-management h3{font-size:18px;margin-bottom:8px}
+.commercial-lead-management label{font-size:13px;margin:12px 0 8px}
+.commercial-lead-management details{font-size:12px;margin-top:8px;padding-top:8px}
+.commercial-lead-management summary{cursor:pointer;font-weight:600;color:#425770}
+.commercial-lead-management form>button{width:100%;margin-top:14px}
+.commercial-lead-management textarea{min-height:86px}
+.commercial-lead-management .commercial-advisor-change{margin-bottom:14px}
