@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import './CommercialLeadManagement.css';
 import CommercialDictation from './CommercialDictation';
+import CommercialFollowupActivation from './CommercialFollowupActivation';
 
 export function toLocalDateTime(value) {
   if (!value || !Number.isFinite(new Date(value).getTime())) return '';
@@ -12,7 +13,7 @@ export function parseReminderHours(value) {
   if(!parts.length || parts.length>5 || parts.some(v=>!/^\d+$/.test(v) || Number(v)<1 || Number(v)>720)) return null;
   return [...new Set(parts.map(Number))].sort((a,b)=>b-a);
 }
-const STATE_LABELS = {nuevo:'Nuevo',en_atencion:'En atención',en_espera:'En espera del cliente',cerrado:'Cerrado'};
+const STATE_LABELS = {nuevo:'Nuevo',en_atencion:'En atención',en_espera:'En espera / seguimiento',cerrado:'Cerrado'};
 
 // Match server identifiers only. Contact names, phone numbers and tickets cannot grant case access.
 export async function resolveCommercialLead(api, conversation) {
@@ -102,6 +103,8 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
       <details><summary>Agregar detalles adicionales (opcional)</summary><label>Detalles adicionales<textarea maxLength={2000} value={details} onChange={e=>setDetails(e.target.value)} placeholder="Solo si necesitas ampliar el resumen."/></label></details>
       <button disabled={busy || dictating || !Number.isSafeInteger(data.version) || !validSummary || next.trim().length<3}>{busy?'Guardando…':'Guardar gestión'}</button>
     </form>
+    {state==='en_espera' && data.progressState!=='en_espera' && <p>Guarda el resumen y el próximo paso para habilitar el seguimiento por WhatsApp.</p>}
+    {data.progressState==='en_espera' && state==='en_espera' && !pending && <CommercialFollowupActivation caseId={data.id} channel={data.channel} api={api} active={data.followup?.status==='waiting'} onChanged={()=>refresh(data).then(()=>onUpdated?.()).catch(()=>setError('No se pudo actualizar el seguimiento. Actualiza la ficha.'))}/>}
     {data.nextContactAt && <p className="commercial-scheduled">Próxima charla guardada: <strong>{new Date(data.nextContactAt).toLocaleString()}</strong></p>}
     {(calls.some(c=>c.status==='completed') || activities.length>0) && <details open={showHistory || undefined}><summary>Historial de atención</summary>{calls.filter(c=>c.status==='completed').map(c=><article key={c.id}><p><strong>Qué se habló:</strong> {c.discussed}</p><p><strong>Situación:</strong> {c.situation}</p><p><strong>Detalles:</strong> {c.distinguishing}</p></article>)}{activities.map(a=><p key={a.id}>{a.body}</p>)}</details>}
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}

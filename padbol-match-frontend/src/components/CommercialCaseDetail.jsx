@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import CommercialLeadManagement from './CommercialLeadManagement';
-import CommercialFollowupActivation from './CommercialFollowupActivation';
 
 export default function CommercialCaseDetail({item, api}) {
   const [activities,setActivities]=useState([]);
@@ -34,7 +33,6 @@ export default function CommercialCaseDetail({item, api}) {
     {(data.activities||[]).map(a=><p key={a.id}>Nota: {a.summary || a.body || ''} {a.next_step ? `· Próximo paso: ${a.next_step}` : ''}</p>)}
     {activities.map(a=><p key={`commercial-${a.id}`}>Nota: {a.body}</p>)}
     <CommercialLeadManagement key={`${item.channel}:${item.id}`} api={api} conversation={{id:item.conversationId || item.id,source_channel:item.channel==='whatsapp'?'whatsapp':'email'}} caseItem={item} showHistory={true} onUpdated={()=>load()}/>
-    {data.progressState === 'en_espera' && !pendingCall && <CommercialFollowupActivation caseId={item.id} channel={item.channel} api={api} active={data.followup?.status === 'waiting'} onChanged={() => load().catch(() => setError('No se pudo actualizar la consulta.'))}/>} 
     <form onSubmit={send}><label>Respuesta <textarea value={body} onChange={e=>setBody(e.target.value)} maxLength={4096}/></label><button disabled={busy||uncertain||data.status==='suspended'||data.progressState==='cerrado'||!body.trim()}>Enviar respuesta</button></form>
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}
   </section>;
