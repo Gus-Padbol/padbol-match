@@ -1,5 +1,5 @@
 import React from 'react';
-import {render,screen,fireEvent,waitFor} from '@testing-library/react';
+import {render,screen,fireEvent,waitFor,act} from '@testing-library/react';
 import ContentWorkspacePage from './ContentWorkspacePage';
 jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{access_token:'test'}})}));
 const base={id:'a',version:1,title:'Video Match',campaign:'Padbol Match',language:'es',status:'preparando',assetKind:'final'};
@@ -12,3 +12,15 @@ test('editor lee devolución y no la reenvía ni cambia asignación',async()=>{c
 test('responsable asignable solo desde dirección y publicación adicional conserva versión',async()=>{const api=apiFor(true);api.editors=jest.fn().mockResolvedValue({editors:[{id:'editor1',name:'Editor Uno'}]});api.read.mockResolvedValue({item:{...base,status:'aprobado'},history:[]});api.addPublication=jest.fn().mockResolvedValue({});render(<ContentWorkspacePage api={api}/>);fireEvent.click(await screen.findByText('Video Match'));expect(await screen.findByRole('option',{name:'Editor Uno'})).toBeInTheDocument();fireEvent.change(screen.getByLabelText('Canal (Instagram, YouTube…)'),{target:{value:'YouTube'}});fireEvent.change(screen.getByLabelText('Perfil o cuenta'),{target:{value:'Padbol'}});fireEvent.change(screen.getByLabelText('Enlace de la publicación'),{target:{value:'https://youtube.com/watch?v=example'}});fireEvent.change(screen.getByLabelText('Fecha y hora local'),{target:{value:'2026-10-25T12:30'}});fireEvent.click(screen.getByText('Añadir publicación al historial'));await waitFor(()=>expect(api.addPublication).toHaveBeenCalledWith('a',expect.objectContaining({expectedVersion:1,channel:'YouTube',profile:'Padbol'})));});
 
 test('audiencia identifica al destinatario y se guarda sin exigir datos a piezas anteriores',async()=>{const api=apiFor();render(<ContentWorkspacePage api={api}/>);fireEvent.click(await screen.findByText('Registrar trabajo'));expect(screen.getByLabelText('Público al que se dirige')).toHaveValue('General');fireEvent.change(screen.getByLabelText('Título'),{target:{value:'Convocatoria de sedes'}});fireEvent.change(screen.getByLabelText('Público al que se dirige'),{target:{value:'Sedes'}});fireEvent.click(screen.getByText('Guardar trabajo'));await waitFor(()=>expect(api.create).toHaveBeenCalledWith(expect.objectContaining({audience:'Sedes'})));});
+test('refresco automático mantiene el borrador, solo consulta lista y limpia temporizador',async()=>{
+ jest.useFakeTimers();const api=apiFor();const {unmount}=render(<ContentWorkspacePage api={api}/>);
+ await act(async()=>{await Promise.resolve();});
+ fireEvent.click(screen.getByText('Registrar trabajo'));fireEvent.change(screen.getByLabelText('Título'),{target:{value:'Mi borrador sin guardar'}});
+ api.list.mockResolvedValue({items:[{...base,title:'Entrega nueva de Gero'}],can_approve:false});
+ await act(async()=>{jest.advanceTimersByTime(15000);await Promise.resolve();});
+ expect(screen.getByText('Entrega nueva de Gero')).toBeInTheDocument();expect(screen.getByLabelText('Título')).toHaveValue('Mi borrador sin guardar');expect(api.read).not.toHaveBeenCalled();expect(api.create).not.toHaveBeenCalled();expect(api.update).not.toHaveBeenCalled();
+ const calls=api.list.mock.calls.length;unmount();await act(async()=>{jest.advanceTimersByTime(30000);window.dispatchEvent(new Event('focus'));await Promise.resolve();});expect(api.list).toHaveBeenCalledTimes(calls);jest.useRealTimers();
+});
+test('pestaña oculta no consulta y recuperar foco actualiza sin cerrar ficha',async()=>{
+ jest.useFakeTimers();let visibility='visible';const original=Object.getOwnPropertyDescriptor(document,'visibilityState');Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>visibility});const api=apiFor();const {unmount}=render(<ContentWorkspacePage api={api}/>);await act(async()=>{await Promise.resolve();});fireEvent.click(screen.getByText('Registrar trabajo'));const calls=api.list.mock.calls.length;visibility='hidden';await act(async()=>{jest.advanceTimersByTime(15000);await Promise.resolve();});expect(api.list).toHaveBeenCalledTimes(calls);visibility='visible';await act(async()=>{window.dispatchEvent(new Event('focus'));await Promise.resolve();});expect(api.list).toHaveBeenCalledTimes(calls+1);expect(screen.getByLabelText('Título')).toBeInTheDocument();unmount();if(original)Object.defineProperty(document,'visibilityState',original);else delete document.visibilityState;jest.useRealTimers();
+});
