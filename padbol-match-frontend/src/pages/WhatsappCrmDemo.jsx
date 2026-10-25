@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
+import {PADBOL_ICON_SVG} from '../constants/padbolBrandLogo';
 import CommercialLeadManagement from '../components/CommercialLeadManagement';
 import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
 import CommercialAdvisorAccess from '../components/CommercialAdvisorAccess';
@@ -281,7 +282,7 @@ export function leadAnalysisNotice(status, enabled) {
   return { title: 'Sin análisis solicitado', message: 'Esta ficha no tiene una solicitud de análisis registrada.', badge: '' };
 }
 
-export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } = {}) {
+export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false } = {}) {
   const hasPanelExit = Boolean(onBack);
   useEffect(() => {
     if (hasPanelExit) window.scrollTo(0, 0);
@@ -746,20 +747,17 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
 
   return (
     <main className="wa-demo">
-      {onBack ? <div className="wa-panel-exit"><button type="button" onClick={onBack}>Volver al panel general</button></div> : null}
       <header className="wa-topbar">
+        {onBack&&!backInAppHeader?<button className="wa-inline-exit" type="button" onClick={onBack}>Volver al panel general</button>:null}
         <div className="wa-brand">
-          <img src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol" />
+          <img src={PADBOL_ICON_SVG} alt="Padbol" />
           <div><strong>{commercialOnly ? 'Consultas comerciales' : 'Atención & CRM'}</strong><span>{commercialOnly ? 'Formularios, informes y seguimiento' : 'Centro de conversaciones'}</span></div>
         </div>
         <div className="wa-demo-badge"><span /> {CRM_IS_QA ? 'CONECTADO A QA' : 'CONECTADO'}</div>
-        <div className="wa-agent"><img className="wa-agent-logo" src="/media/public-site/jero/padbol-logo-tertiary.png" alt="Padbol International" /><div><strong>{perms?.canOperate || perms?.canOperateEmail || perms?.canOperateWhatsapp ? 'Atención' : perms?.canAudit ? 'Consulta' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div></div>
+        <div className="wa-agent"><img className="wa-agent-logo" src={PADBOL_ICON_SVG} alt="Padbol International" /><div><strong>{perms?.canOperate || perms?.canOperateEmail || perms?.canOperateWhatsapp ? 'Atención' : perms?.canAudit ? 'Consulta' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div></div>
       </header>
 
-      <section className="wa-safety" aria-label="Estado de seguridad">
-        <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Entorno de prueba' : 'Centro de atención'}</strong><small>{emailSendEnabled ? 'El envío por email está habilitado para operadores autorizados.' : 'Los formularios entran al CRM. Configura un canal de respuesta para enviar mensajes.'}</small></div>
-        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span>{!commercialOnly ? <span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span> : null}<span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
-      </section>
+
 
       <div className="wa-tools" aria-label="Herramientas de la bandeja">
       {(perms?.canAudit || commercialOnly) ? <CommercialAdvisorAccess api={commercialApi}/> : null}
@@ -784,12 +782,16 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         setTicketError(''); setAreaFilter('all'); setEstadoFilter(''); setActiveId(null); setTicketReference(reference.toUpperCase());
       }}>
         <label htmlFor="wa-ticket-reference">Buscar por número de ticket</label>
-        <input id="wa-ticket-reference" value={ticketInput} onChange={(event) => setTicketInput(event.target.value)} placeholder="PB-…" maxLength={35} />
+        <input id="wa-ticket-reference" value={ticketInput} onChange={(event) => setTicketInput(event.target.value)} placeholder="Buscar ticket PB-…" maxLength={35} />
         <button type="submit">Buscar</button>
         {ticketReference ? <button type="button" onClick={() => { setTicketInput(''); setTicketReference(''); setTicketError(''); setActiveId(null); }}>Mostrar todos</button> : null}
         {ticketError ? <p role="alert">{ticketError}</p> : null}
       </form> : null}
-      {perms?.canAudit ? <div className="wa-test-tool"><button type="button" onClick={() => { setHiddenOnly(v => !v); setActiveId(null); setTicketReference(''); setTicketInput(''); }}>{hiddenOnly ? 'Volver a la bandeja' : 'Ver pruebas ocultas'}</button></div> : null}
+      <details className="wa-channel-status"><summary>Canales</summary>      <section className="wa-safety" aria-label="Estado de seguridad">
+        <div><span className="wa-lock">✓</span><strong>{CRM_IS_QA ? 'Entorno de prueba' : 'Centro de atención'}</strong><small>{emailSendEnabled ? 'El envío por email está habilitado para operadores autorizados.' : 'Los formularios entran al CRM. Configura un canal de respuesta para enviar mensajes.'}</small></div>
+        <div className="wa-safety-flags"><span>Entrada formularios <b className="is-on">HABILITADA</b></span>{!commercialOnly ? <span>WhatsApp saliente <b className={whatsappSendEnabled ? 'is-on' : undefined}>{whatsappSendEnabled ? 'HABILITADO' : 'NO HABILITADO'}</b></span> : null}<span>Email saliente <b className={emailSendEnabled ? 'is-on' : undefined}>{emailSendEnabled ? 'HABILITADO' : 'DESACTIVADO'}</b></span></div>
+      </section></details>
+      {perms?.canAudit&&['superadmin','super_admin'].includes(perms.role)?<details className="wa-inbox-options"><summary>Más opciones</summary><div><button type="button" onClick={()=>{setHiddenOnly(v=>!v);setActiveId(null);setTicketReference('');setTicketInput('');}}>{hiddenOnly?'Volver a la bandeja':'Registros de prueba archivados'}</button></div></details>:null}
       </div>
       {loading ? (
         <div className="wa-empty"><p>Cargando bandeja…</p></div>
@@ -804,6 +806,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope } =
         <div className="wa-empty"><p>{ticketReference ? 'No se encontró el ticket.' : 'No hay conversaciones.'}</p></div>
       ) : (
         <div className="wa-crm-body">
+          {hiddenOnly&&<p className="wa-archive-notice" role="status">Registros de prueba archivados. No forman parte de la bandeja activa.</p>}
           <nav className="wa-area-tabs wa-area-tabs--top" aria-label="Áreas de atención">
             {areas.map((area) => <button type="button" key={area.id} className={areaFilter === area.id ? 'active' : ''} onClick={() => { setAreaFilter(area.id); setActiveId(null); }}><i>{area.icon}</i><span>{area.label}</span><b>{commercialOnly ? items.length : areaCounts[area.id] || 0}</b></button>)}
           </nav>

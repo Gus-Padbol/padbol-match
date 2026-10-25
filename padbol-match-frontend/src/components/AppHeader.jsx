@@ -104,6 +104,7 @@ export default function AppHeader({
    * Panel /admin: chip compacto a la izquierda, logout a la derecha; sin ← Inicio ni menú ⋮.
    */
   adminPanelMinimalHeader = false,
+  adminPanelBackAction = null,
   /** Resumen de reserva (pago): solo ← Volver, título y columna derecha vacía; sin chip, tema ni búsqueda. */
   reservaCheckoutMinimal = false,
   /** Si se define (px), en desktop sustituye el max-width por defecto del cuerpo (~900px). */
@@ -792,6 +793,8 @@ export default function AppHeader({
   if (useAdminMinimalLayout) {
     const adminMinimalRow = (
       <>
+        <div className="app-header-admin-identity" style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
+        {adminPanelBackAction&&<button className="app-header-admin-back" type="button" onClick={adminPanelBackAction} aria-label="Volver al panel general" title="Volver al panel general">← <span>Volver al panel general</span></button>}
         {session?.user ? (
           <button
             type="button"
@@ -866,6 +869,7 @@ export default function AppHeader({
         ) : (
           <span aria-hidden style={{ width: 32, height: 32, flexShrink: 0 }} />
         )}
+        </div>
         {searchUiBlock}
         <div
           style={{

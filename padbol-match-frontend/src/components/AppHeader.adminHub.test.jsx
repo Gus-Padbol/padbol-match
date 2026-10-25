@@ -22,3 +22,5 @@ test('volver al hub mantiene la sesión del administrador', () => {
   expect(screen.getByTestId('path')).toHaveTextContent('/hub');
   expect(mockSignOut).not.toHaveBeenCalled();
 });
+
+test('el regreso al panel comparte el header y no cierra la sesión',()=>{const back=jest.fn();render(<MemoryRouter initialEntries={['/admin']}><AppHeader adminPanelMinimalHeader adminPanelBackAction={back}/></MemoryRouter>);const action=screen.getByRole('button',{name:'Volver al panel general'});expect(action.closest('.app-header-shell')).toBeInTheDocument();fireEvent.click(action);expect(back).toHaveBeenCalledTimes(1);expect(mockSignOut).not.toHaveBeenCalled();});

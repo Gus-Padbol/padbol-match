@@ -10422,7 +10422,7 @@ export default function AdminDashboard({
         boxSizing: 'border-box',
       }}
     >
-      <AppHeader title="" showBack={false} adminPanelMinimalHeader contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
+      <AppHeader title="" showBack={false} adminPanelMinimalHeader adminPanelBackAction={activeTab==='whatsapp'?()=>selectAdminTab('resumen'):null} contentMaxWidth={activeTab==='whatsapp'?1800:HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
       <div
         className="admin-dashboard-main-scroll"
         style={{
@@ -12133,6 +12133,7 @@ export default function AdminDashboard({
       {activeTab === 'whatsapp' && (isSuperAdmin || puedeVerWhatsapp) && session?.access_token ? (
         <AdminWhatsappSection
           accessToken={session.access_token}
+          backInAppHeader
           onBack={() => selectAdminTab('resumen')}
         />
       ) : null}

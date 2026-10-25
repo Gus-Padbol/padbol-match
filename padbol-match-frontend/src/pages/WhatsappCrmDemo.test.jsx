@@ -133,7 +133,7 @@ describe('CRM histórico unificado', () => {
     window.confirm.mockReturnValue(true);
     fireEvent.click(screen.getByRole('button', {name:'Ocultar prueba'}));
     await waitFor(() => expect(crmAdminApi.setTestVisibility).toHaveBeenCalledWith('qa-token', 'conv-prueba-23', true, 0));
-    fireEvent.click(await screen.findByRole('button', {name:'Ver pruebas ocultas'}));
+    fireEvent.click(screen.getByText('Más opciones'));fireEvent.click(screen.getByRole('button', {name:'Registros de prueba archivados'}));
     await waitFor(() => expect(crmAdminApi.inbox).toHaveBeenCalledWith('qa-token', expect.objectContaining({hiddenOnly:true})));
     fireEvent.click(await screen.findByText('Administración'));
     fireEvent.click(await screen.findByRole('button', {name:'Restaurar conversación'}));
@@ -640,6 +640,12 @@ describe('CRM histórico unificado', () => {
     render(<WhatsappCrmDemo/>);const input=await screen.findByLabelText('Respuesta');expect(input).toBeEnabled();fireEvent.change(input,{target:{value:'Respuesta en prueba local'}});fireEvent.click(screen.getByRole('button',{name:'Enviar por email'}));await screen.findByText('Mensaje enviado por email.');expect(crmAdminApi.reply).toHaveBeenCalledWith('qa-token','owner-email','Respuesta en prueba local',expect.any(String));
   });
 
+  it('los registros archivados solo aparecen en el menú secundario del superadmin', async()=>{
+    render(<WhatsappCrmDemo/>);await screen.findByText('Prueba 23',{selector:'h2'});const menu=screen.getByText('Más opciones').closest('details');expect(menu).not.toHaveAttribute('open');expect(screen.getByRole('button',{name:'Registros de prueba archivados'}).closest('details')).toBe(menu);fireEvent.click(screen.getByText('Más opciones'));expect(screen.getByRole('button',{name:'Registros de prueba archivados'})).toBeInTheDocument();expect(screen.queryByText('Ver pruebas ocultas')).not.toBeInTheDocument();
+  });
+
+  it('la recuperación archivada no se ofrece fuera del rol superadmin aunque haya acceso de consulta',async()=>{crmAdminApi.permissions.mockResolvedValue({role:'auditor',canAudit:true,canOperate:false});render(<WhatsappCrmDemo/>);await screen.findByText('Prueba 23',{selector:'h2'});expect(screen.queryByText('Más opciones')).not.toBeInTheDocument();expect(screen.queryByText('Registros de prueba archivados')).not.toBeInTheDocument();});
+
   it('una capacidad email habilitada no otorga permisos de operación al auditor', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: false, canAudit: true, emailSendEnabled: true });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'audit-email', estado: 'nuevo', source_channel: 'email', contact: { email_normalized: 'contact@example.invalid' } }]);
@@ -782,7 +788,7 @@ test('the CRM keeps an explicit exit to the general panel without sending messag
   render(<WhatsappCrmDemo onBack={onBack} />);
   await waitFor(() => expect(screen.queryByText('Cargando bandeja…')).not.toBeInTheDocument());
   const exit = screen.getByRole('button', { name: 'Volver al panel general' });
-  expect(exit.closest('.wa-panel-exit')).toBeInTheDocument();
+  expect(exit.closest('.wa-topbar')).toBeInTheDocument();expect(document.querySelector('.wa-panel-exit')).toBeNull();
   fireEvent.click(exit);
   expect(onBack).toHaveBeenCalledTimes(1);
   expect(scroll).toHaveBeenCalledWith(0, 0);
@@ -882,3 +888,5 @@ test('commercial record shows essentials first and does not assign a venue or du
   expect(screen.getByRole('region', {name: 'Gestión comercial'})).toBeInTheDocument();
   expect(screen.queryByRole('button', {name: 'Ocultar prueba'})).not.toBeInTheDocument();
 });
+
+test('el admin CRM delega el regreso al header de la aplicación sin banda duplicada',()=>{render(<WhatsappCrmDemo onBack={jest.fn()} backInAppHeader/>);expect(screen.queryByRole('button',{name:'Volver al panel general'})).not.toBeInTheDocument();expect(document.querySelector('.wa-panel-exit')).toBeNull();});

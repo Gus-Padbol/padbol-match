@@ -587,3 +587,58 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
 }
 
 @media(min-width:721px){.admin-dashboard--crm .admin-dashboard-shell{padding:0!important}}
+
+/* Compact CRM shell: one app header, one attention toolbar, fixed area filters. */
+.app-header-admin-back{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:7px 11px;border:1px solid var(--border);border-radius:9px;background:var(--bg-card);color:var(--text-primary);font:inherit;font-size:12px;font-weight:650;white-space:nowrap;cursor:pointer}
+.app-header-admin-back:focus-visible{outline:3px solid #cf1d2b;outline-offset:3px}
+.wa-demo .wa-inline-exit{border:1px solid #526179;background:transparent;color:#fff;border-radius:8px;padding:7px 10px;font:inherit;font-size:12px}
+.wa-demo .wa-tools{gap:12px;padding:10px 16px;position:relative;z-index:70;min-height:56px;align-content:center;overflow:visible}
+.wa-demo .wa-ticket-search{flex:0 1 320px;min-width:220px;margin-left:auto;gap:8px}
+.wa-demo .wa-ticket-search label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.wa-demo .wa-ticket-search input{width:180px;min-width:110px;max-width:none;flex:1;height:36px}
+.wa-demo .wa-tools button{min-height:36px;padding:8px 12px}
+.wa-demo :is(.wa-channel-status,.wa-inbox-options){position:relative;flex:none;font-size:12px}
+.wa-demo :is(.wa-channel-status,.wa-inbox-options)>summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:9px;padding:9px 12px;min-height:36px;font-weight:650;color:var(--ink);background:var(--paper);white-space:nowrap}
+.wa-demo :is(.wa-channel-status,.wa-inbox-options)>summary::-webkit-details-marker{display:none}
+.wa-demo :is(.wa-channel-status,.wa-inbox-options)>summary:focus-visible{outline:3px solid #cf1d2b;outline-offset:3px}
+.wa-demo .wa-channel-status>.wa-safety,.wa-demo .wa-inbox-options>div{position:absolute;right:0;top:calc(100% + 8px);z-index:680;box-shadow:var(--crm-shadow,0 12px 30px #17203333);width:min(380px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
+.wa-demo .wa-channel-status>.wa-safety{height:auto;min-height:0;max-height:none;display:grid;gap:12px}
+.wa-demo .wa-channel-status .wa-safety>div{flex-wrap:wrap;justify-content:flex-start;align-items:center}
+.wa-demo .wa-channel-status .wa-safety small{display:block;color:var(--muted);line-height:1.4}
+.wa-demo .wa-channel-status .wa-safety strong{color:var(--ink)}
+.wa-demo .wa-channel-status .wa-safety-flags{display:grid!important;justify-content:stretch;gap:8px!important}
+.wa-demo .wa-channel-status .wa-safety-flags span{font-size:12px;padding:8px}
+.wa-demo .wa-inbox-options>div{width:max-content;max-width:calc(100vw - 24px);display:grid;gap:6px}
+.wa-demo .wa-inbox-options>div>button{text-align:left;white-space:normal}
+.wa-demo .wa-archive-notice{padding:8px 16px;margin:0;background:var(--wash);color:var(--muted);font-size:12px;border-bottom:1px solid var(--line);flex:none}
+@media(min-width:721px){
+ .admin-dashboard--crm .wa-demo{height:calc(100dvh - var(--pm-app-header-stack-height,54px));min-height:0}
+ .admin-dashboard--crm .wa-demo .wa-topbar{height:48px;min-height:48px}
+ .admin-dashboard--crm .wa-demo .wa-brand span{display:none}
+ .admin-dashboard--crm .wa-demo .wa-agent{display:none}
+ .admin-dashboard--crm .wa-demo .wa-area-tabs--top{min-height:50px;max-height:50px}
+ .admin-dashboard--crm .wa-demo .wa-area-tabs--top button{min-height:38px;padding:5px 8px}
+}
+@media(min-width:1280px){
+ .admin-dashboard--crm .wa-demo{display:grid;grid-template-columns:280px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+ .admin-dashboard--crm .wa-demo .wa-topbar{grid-column:1;grid-row:1;height:auto;min-height:56px;padding:10px 16px;gap:10px;border-bottom:1px solid var(--line)}
+ .admin-dashboard--crm .wa-demo .wa-brand img{width:30px;height:30px}
+ .admin-dashboard--crm .wa-demo .wa-brand strong{font-size:14px;white-space:nowrap}
+ .admin-dashboard--crm .wa-demo .wa-demo-badge{font-size:8px;letter-spacing:.5px;padding:6px 7px;white-space:nowrap}
+ .admin-dashboard--crm .wa-demo .wa-demo-badge span{width:5px;height:5px;margin-right:5px}
+ .admin-dashboard--crm .wa-demo .wa-tools{grid-column:2;grid-row:1;flex-wrap:nowrap;border-bottom:1px solid var(--line)}
+ .admin-dashboard--crm .wa-demo .wa-crm-body,.admin-dashboard--crm .wa-demo>.wa-empty{grid-column:1/-1;grid-row:2;min-height:0}
+}
+@media(max-width:720px){
+ .app-header-admin-back span{display:none}.app-header-admin-back{min-width:32px;justify-content:center;padding:6px}
+ .app-header-admin-identity{gap:7px!important}
+ .wa-demo .wa-topbar{height:auto;min-height:52px;padding:10px 12px;gap:8px;flex-wrap:wrap}
+ .wa-demo .wa-agent{display:none}
+ .wa-demo .wa-tools{gap:10px;padding:10px 12px}
+ .wa-demo .wa-ticket-search{order:5;flex:1 0 100%;margin-left:0;min-width:0}
+ .wa-demo .wa-ticket-search input{min-width:0;font-size:16px}
+ .wa-demo .wa-channel-status>.wa-safety{right:auto;left:0}
+ .wa-demo .wa-area-tabs--top{position:sticky;top:var(--pm-app-header-stack-height,54px);z-index:60;max-height:110px}
+}
+
+.wa-demo .wa-agent-logo{width:32px;height:32px;object-fit:contain}
