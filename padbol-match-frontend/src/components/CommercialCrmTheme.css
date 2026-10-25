@@ -32,7 +32,7 @@ html.theme-dark :is(.wa-demo,.commercial-team,.commercial-lead-management,.comme
 :is(.wa-demo,.commercial-team) .commercial-lead-management :is(h2,h3,strong,p,label,summary,article){color:var(--crm-text)}
 :is(.wa-demo,.commercial-team) .commercial-lead-management :is(small,.commercial-next-chat small){color:var(--crm-muted)}
 /* Override the dashboard's inherited label fill; never put white text on white. */
-html.theme-dark .admin-dashboard .wa-demo .commercial-lead-management label,
+.admin-dashboard .wa-demo .commercial-lead-management label,
 html.theme-dark .commercial-team .commercial-lead-management label{color:var(--crm-text)!important;-webkit-text-fill-color:var(--crm-text)!important}
 :is(.wa-demo,.commercial-team) .commercial-lead-management :is(input,select,textarea),
 :is(.wa-demo,.commercial-team) .commercial-advisor-access__panel :is(input,select,textarea){background:var(--crm-field);color:var(--crm-text);border:1px solid var(--crm-border);border-radius:9px;line-height:1.45;max-width:100%}
