@@ -19,3 +19,8 @@
 .commercial-lead-management form>button{width:100%;margin-top:14px}
 .commercial-lead-management textarea{min-height:86px}
 .commercial-lead-management .commercial-advisor-change{margin-bottom:14px}
+
+.commercial-lead-management input{box-sizing:border-box;display:block;width:100%;padding:10px 12px;margin-top:6px;border:1px solid #bdc8d7;border-radius:8px;background:#fff;color:#17243a;font:inherit}
+.commercial-next-chat small{display:block;font-size:11px;font-weight:400;line-height:1.4;margin-top:5px;color:#536176}
+.commercial-dictation-control{margin:8px 0}.commercial-dictation-control>button{width:auto;font-size:12px;padding:8px 10px}
+.commercial-dictation-control p{font-size:12px}.commercial-dictation-draft{background:#eef4fb;padding:8px;border-radius:7px}

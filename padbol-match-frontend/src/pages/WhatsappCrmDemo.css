@@ -565,3 +565,15 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
   .wa-demo .wa-thread .wa-composer{position:static;height:auto;flex:none}
   html:has(.wa-demo){overflow:hidden}
 }
+
+/* Compact application chrome; retain natural page scrolling and full-height panes. */
+.wa-agent-logo{width:76px;height:30px;object-fit:contain;flex:none}
+@media(min-width:721px){
+  html:has(.wa-demo),body:has(.wa-demo){overflow-y:auto}
+  body:has(.wa-demo){--pm-app-header-inner-min-height:38px;--pm-app-header-stack-height:54px}
+  body:has(.wa-demo) .app-header-shell{min-height:38px!important;padding-top:0!important;padding-bottom:4px!important}
+  body:has(.wa-demo) .app-header-inner>div{min-height:38px!important}
+  .wa-demo,.admin-dashboard .wa-demo,.admin-dashboard .wa-demo:has(.wa-panel-exit){position:relative;inset:auto;height:calc(100dvh - 54px);min-height:520px}
+  .wa-demo .wa-panel-exit{flex-basis:36px;height:36px;min-height:36px;padding:3px 16px}
+  .wa-demo .wa-topbar{height:44px;min-height:44px}
+}

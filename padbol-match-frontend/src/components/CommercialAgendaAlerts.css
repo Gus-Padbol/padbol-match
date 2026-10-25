@@ -1,0 +1,8 @@
+.commercial-agenda{position:relative;font-size:12px;color:#17243a;flex:none}
+.commercial-agenda>summary{cursor:pointer;list-style:none;border:1px solid #cbd3df;background:#fff;padding:9px 12px;border-radius:9px;font-weight:700;white-space:nowrap}
+.commercial-agenda>summary strong{margin-left:6px;background:#b32430;color:#fff;border-radius:12px;padding:3px 6px;font-size:11px}
+.commercial-agenda-panel{position:absolute;left:0;top:calc(100% + 8px);width:min(420px,90vw);max-height:65vh;overflow:auto;z-index:600;background:#fff;box-shadow:0 14px 35px #17243a33;border:1px solid #dce3ee;border-radius:12px;padding:16px}
+.commercial-agenda-panel h3{margin:0;font-size:18px}.commercial-agenda-panel p{font-size:12px;line-height:1.45;margin:6px 0}
+.commercial-agenda-panel ul{list-style:none;padding:0;margin:8px 0 0}.commercial-agenda-panel li{padding:12px 0;border-top:1px solid #e1e6ef}
+.commercial-agenda-panel time{display:block;margin-top:5px;font-weight:700}.commercial-agenda-panel .is-overdue>strong{color:#a31b2b}.commercial-agenda-panel .is-due>strong{color:#815400}
+.commercial-agenda-panel button{background:#183b68;color:#fff;border:0;border-radius:7px;padding:9px 12px;cursor:pointer;font:inherit;font-weight:650}
