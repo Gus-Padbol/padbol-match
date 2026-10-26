@@ -12,7 +12,7 @@ jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     session: {
       access_token: 'qa-token',
-      user: { email: 'superadmin@example.test' },
+      user: { id:'actor', email: 'superadmin@example.test' },
     },
   }),
 }));
@@ -70,6 +70,25 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
     crmAdminApi.createNextGenerationRegistration.mockResolvedValue({ id: 'ng-reg-1', estado: 'borrador' });
     crmAdminApi.createNextGenerationVenueApplication.mockResolvedValue({ venueApplication: { id: 'venue-app-1' }, created: true });
+  });
+
+  it('filtra la bandeja comercial por asignación persistida sin modificar casos ni traducir mensajes', async()=>{
+    const factory=jest.spyOn(require('../utils/commercialAssignmentsApi'),'createCommercialAssignmentsApi').mockReturnValue({
+      getRole:jest.fn().mockResolvedValue({role:'manager'}),
+      listCases:jest.fn().mockResolvedValue({cases:[{id:'a',channel:'form',assignedAdvisor:{id:'actor',name:'Nico'}},{id:'b',channel:'form',assignedAdvisor:{id:'jp',name:'Juan Pablo'}}]}),
+      listAdvisors:jest.fn().mockResolvedValue({advisors:[{id:'actor',name:'Nico'},{id:'jp',name:'Juan Pablo'}]})
+    });
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,commercialOnly:true,role:'operator',emailSendEnabled:true});
+    crmAdminApi.inbox.mockResolvedValue({items:[{id:'a',source_channel:'email',origin:'web_form:business',identity_used:'Lead Nico',inbound_body:'Original English message',estado:'nuevo'},{id:'b',source_channel:'email',origin:'web_form:business',identity_used:'Lead Juan Pablo',inbound_body:'Otro original',estado:'nuevo'}]});
+    try{
+      render(<WhatsappCrmDemo requiredScope="commercial"/>);
+      const filter=await screen.findByLabelText('Filtrar por asesor');await waitFor(()=>expect(filter).toBeEnabled());
+      expect(screen.getAllByText('Original English message').some(el=>el.getAttribute('translate')==='no')).toBe(true);
+      fireEvent.change(filter,{target:{value:'mine'}});
+      expect(screen.queryByRole('button',{name:/Lead Juan Pablo/})).not.toBeInTheDocument();expect(screen.getByRole('button',{name:/Lead Nico/})).toBeInTheDocument();
+      fireEvent.change(filter,{target:{value:'jp'}});expect(screen.getByRole('button',{name:/Lead Juan Pablo/})).toBeInTheDocument();
+      expect(crmAdminApi.reply).not.toHaveBeenCalled();expect(crmAdminApi.setTestVisibility).not.toHaveBeenCalled();
+    }finally{factory.mockRestore();}
   });
 
   it('muestra la auditoría histórica y mantiene apagadas las salidas', async () => {

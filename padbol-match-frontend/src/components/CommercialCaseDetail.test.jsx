@@ -15,3 +15,9 @@ test('uses the same scoped management and agenda for advisor case details',async
  const api={listActivities:jest.fn().mockResolvedValue({activities:[]}),readCase:jest.fn().mockResolvedValue({status:'open',version:3,progressState:'nuevo',contact:{name:'Cliente'}}),listCalls:jest.fn().mockResolvedValue({calls:[]})};
  render(<CommercialCaseDetail item={{id:'case',channel:'form'}} api={api}/>);await screen.findByText('Cliente');expect(screen.getByText('Gestión y agenda de case')).toBeInTheDocument();
 });
+test('preserves the original client language against browser auto-translation',async()=>{
+ const original='I would like to develop a club in London.';
+ const api={listActivities:jest.fn().mockResolvedValue({activities:[]}),readCase:jest.fn().mockResolvedValue({body:original,inbound:[{id:'m',body:'Tell me about the project'}],contact:{name:'Cliente'}})};
+ render(<CommercialCaseDetail item={{id:'original',channel:'form'}} api={api}/>);
+ expect(await screen.findByText(original)).toHaveAttribute('translate','no');expect(screen.getByText('Tell me about the project')).toHaveClass('notranslate');expect(screen.getByLabelText('Respuesta')).toHaveAttribute('rows','7');
+});
