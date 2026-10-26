@@ -87,8 +87,21 @@ describe('CRM histórico unificado', () => {
       fireEvent.change(filter,{target:{value:'mine'}});
       expect(screen.queryByRole('button',{name:/Lead Juan Pablo/})).not.toBeInTheDocument();expect(screen.getByRole('button',{name:/Lead Nico/})).toBeInTheDocument();
       fireEvent.change(filter,{target:{value:'jp'}});expect(screen.getByRole('button',{name:/Lead Juan Pablo/})).toBeInTheDocument();
+      fireEvent.change(filter,{target:{value:'unassigned'}});expect(screen.queryByRole('button',{name:/Lead Nico/})).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button',{name:'Ver todas las consultas'}));expect(filter).toHaveValue('');expect(screen.getByLabelText('Estado')).toHaveValue('');expect(screen.getByRole('button',{name:/Lead Nico/})).toBeInTheDocument();
       expect(crmAdminApi.reply).not.toHaveBeenCalled();expect(crmAdminApi.setTestVisibility).not.toHaveBeenCalled();
     }finally{factory.mockRestore();}
+  });
+
+  it('mantiene los filtros visibles y permite volver cuando un estado no tiene consultas',async()=>{
+    const item={id:'recover',estado:'nuevo',source_channel:'email',origin:'web_form:business',identity_used:'Contacto recuperado',inbound_body:'Mensaje original'};
+    crmAdminApi.inbox.mockImplementation(async(_token,filters)=>({items:filters.estado==='cerrado'?[]:[item]}));
+    render(<WhatsappCrmDemo/>);await screen.findByRole('button',{name:/Contacto recuperado/});
+    fireEvent.change(screen.getByLabelText('Estado'),{target:{value:'cerrado'}});
+    await screen.findByText('No hay consultas con estos filtros.');
+    expect(screen.getByRole('navigation',{name:'Áreas de atención'})).toBeInTheDocument();expect(screen.getByLabelText('Estado')).toHaveValue('cerrado');
+    fireEvent.click(screen.getByRole('button',{name:'Ver todas las consultas'}));
+    await screen.findByRole('button',{name:/Contacto recuperado/});expect(screen.getByLabelText('Estado')).toHaveValue('');expect(crmAdminApi.setTestVisibility).not.toHaveBeenCalled();
   });
 
   it('muestra la auditoría histórica y mantiene apagadas las salidas', async () => {

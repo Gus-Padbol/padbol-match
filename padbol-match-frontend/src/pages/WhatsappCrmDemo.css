@@ -661,3 +661,5 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
 .crm-advisor-filter{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700}
 .crm-advisor-filter select{width:100%;min-height:40px}
 @media(max-width:600px){.wa-demo .wa-composer .crm-reply-textarea,.commercial-team .crm-reply-textarea{font-size:16px;max-height:280px}}
+
+.wa-demo .wa-filters .wa-clear-filters{min-height:40px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-size:13px;font-weight:700;text-align:left}

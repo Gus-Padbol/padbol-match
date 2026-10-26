@@ -761,6 +761,12 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     }
   };
 
+  const clearInboxFilters=()=>{
+    const needsQuery=Boolean(estadoFilter||ticketReference||hiddenOnly);
+    setEstadoFilter('');setAdvisorFilter('');setTicketReference('');setTicketInput('');setTicketError('');setAreaFilter('all');setHiddenOnly(false);setActiveId(null);
+    if(!needsQuery)void load({silent:true});
+  };
+
   const statusName = (s) => ({ nuevo: 'Nuevo', en_atencion: 'En atención', derivado: 'Derivado', cerrado: 'Cerrado' }[s] || String(s || '—'));
 
   return (
@@ -820,8 +826,6 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
           </p>
           <button type="button" onClick={() => { setError(null); setLoading(true); void load(); }}>Reintentar</button>
         </div>
-      ) : items.length === 0 ? (
-        <div className="wa-empty"><p>{ticketReference ? 'No se encontró el ticket.' : 'No hay conversaciones.'}</p></div>
       ) : (
         <div className="wa-crm-body">
           {hiddenOnly&&<p className="wa-archive-notice" role="status">Registros de prueba archivados. No forman parte de la bandeja activa.</p>}
@@ -836,9 +840,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
               <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)} aria-label="Estado">
                 <option value="">Todos los estados</option><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option>
               </select>
+              {(estadoFilter||advisorFilter||ticketReference||!visibleItems.length)&&<button className="wa-clear-filters" type="button" onClick={clearInboxFilters}>Ver todas las consultas</button>}
             </div>
             <div className="wa-list" role="region" aria-label="Listado de conversaciones" tabIndex={0}>
-              {visibleItems.length === 0 ? <div className="wa-area-empty">No hay conversaciones en esta sección.</div> : visibleItems.map((item) => (
+              {visibleItems.length === 0 ? <div className="wa-area-empty"><p>{!items.length?(ticketReference?'No se encontró el ticket.':estadoFilter||advisorFilter?'No hay consultas con estos filtros.':'No hay conversaciones.'):'No hay conversaciones en esta sección.'}</p></div> : visibleItems.map((item) => (
                 <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => { setActiveId(item.id); if (threadRef.current) threadRef.current.scrollTop = 0; threadRef.current?.scrollIntoView?.({ block: 'start' }); }}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
