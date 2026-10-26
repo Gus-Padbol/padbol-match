@@ -1,0 +1,11 @@
+.content-visual-assets{min-width:0;color:var(--text-primary);padding:clamp(12px,2vw,22px);border:1px solid var(--border);border-radius:18px;background:var(--bg-card)}
+.content-visual-assets>header{display:block;margin-bottom:18px}
+.content-visual-assets>header h2{margin:0 0 8px;font-size:clamp(20px,2vw,26px)}
+.content-visual-assets>header p{margin:0 0 18px;color:var(--text-secondary);line-height:1.5}
+.content-visual-assets__tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.content-visual-assets__tabs button,.content-visual-assets>button{padding:10px 16px;border:1px solid var(--border);border-radius:999px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-weight:700}
+.content-visual-assets__tabs button[aria-selected=true]{border-color:#e11b22;background:rgba(225,27,34,.1);color:var(--text-primary)}
+.content-visual-assets button:focus-visible{outline:3px solid var(--accent,#e11b22);outline-offset:3px}
+.content-visual-assets :is(input,textarea,select){max-width:100%;color:var(--text-primary);background-color:var(--bg-input,var(--bg-card));border-color:var(--border)}
+.content-visual-assets [role=tabpanel]{min-width:0;overflow-wrap:anywhere}
+@media(max-width:600px){.content-visual-assets{padding:12px;border-radius:14px}.content-visual-assets__tabs button{flex:1 1 160px;padding:10px 12px}}
