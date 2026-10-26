@@ -13,7 +13,7 @@ export function useMetaResultsAccess({api:providedApi,enabled=true}={}){
 const baseFilters={since:'',until:'',level:'campaign',campaignId:'',adsetId:'',adId:''};
 const sourceNames={none:'Sin resultados cargados',csv:'CSV importado',csv_import:'CSV importado',meta_api:'API de Meta',api:'API de Meta'};
 const resultNames={reach:'Alcance diario informado',link_click:'Clics en el enlace',link_clicks:'Clics en el enlace',post_engagement:'Interacciones',messaging_conversation_started_7d:'Conversaciones iniciadas'};
-function ResultsList({results=[]}){return results.length?<ul>{results.map(result=><li key={result.indicator}>{resultNames[result.indicator]||result.indicator}: {formatMetaNumber(result.value,{maximumFractionDigits:2})}</li>)}</ul>:<span>No informado</span>;}
+function ResultsList({results=[]}){const additiveResults=results.filter(result=>result.indicator!=='reach');return additiveResults.length?<ul>{additiveResults.map(result=><li key={result.indicator}>{resultNames[result.indicator]||result.indicator}: {formatMetaNumber(result.value,{maximumFractionDigits:2})}</li>)}</ul>:<span>No informado</span>;}
 export default function MetaResultsPanel({access,api:providedApi}){
  const localAccess=useMetaResultsAccess({api:providedApi||access?.api,enabled:!access});
  const permission=access||localAccess,api=providedApi||permission.api;
