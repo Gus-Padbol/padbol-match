@@ -15,6 +15,6 @@ export default function CommercialCrmPage() {
       {available&&role==='manager'&&<button type="button" onClick={()=>setTeam(!team)}>{team ? 'Volver a consultas actuales' : 'Área del equipo comercial'}</button>}
       <button type="button" onClick={signOutAndClear}>Cerrar sesión</button>
     </div>
-    {team && available ? <CommercialTeamWorkspace api={api}/> : <WhatsappCrmDemo requiredScope="commercial" />}
+    {team && available ? <CommercialTeamWorkspace api={api} currentUserId={session?.user?.id}/> : <WhatsappCrmDemo requiredScope="commercial" />}
   </>;
 }
