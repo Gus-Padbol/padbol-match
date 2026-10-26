@@ -32,10 +32,10 @@ export default function ContentVisualAssetsPanel({access,initialTab='photos'}){
  const [tab,setTab]=useState(initialTab==='promotions'?'promotions':'photos');
  if(permission.loading)return <p role="status">Cargando edición visual…</p>;
  if(permission.error)return <section className="content-visual-assets"><p role="alert">No pudimos comprobar el acceso a la edición visual.</p><button type="button" onClick={permission.retry}>Volver a intentar</button></section>;
- if(!permission.canEdit||!['editor_contenido','super_admin'].includes(permission.role)||!session?.access_token)return <p role="alert">No tenés habilitada la edición visual.</p>;
+ if(!permission.canEdit||!['editor_contenido','super_admin'].includes(permission.role)||!session?.access_token)return <p role="alert">No tienes habilitada la edición visual.</p>;
  const isSuperAdmin=permission.role==='super_admin';
  return <section className="content-visual-assets" aria-label="Imágenes y espacios de la app">
-  <header><h2>Imágenes y espacios de la app</h2><p>Actualizá las fotos de las pantallas y sus espacios publicitarios desde este mismo lugar.</p></header>
+  <header><h2>Imágenes y espacios de la app</h2><p>Actualiza las fotos de las pantallas y sus espacios publicitarios desde este mismo lugar.</p></header>
   <div className="content-visual-assets__tabs" role="tablist" aria-label="Edición visual">
    <button id="content-visual-photos" type="button" role="tab" aria-selected={tab==='photos'} aria-controls="content-visual-panel" onClick={()=>setTab('photos')}>Fotos y burbujas</button>
    <button id="content-visual-promotions" type="button" role="tab" aria-selected={tab==='promotions'} aria-controls="content-visual-panel" onClick={()=>setTab('promotions')}>Publicidad y promociones</button>
