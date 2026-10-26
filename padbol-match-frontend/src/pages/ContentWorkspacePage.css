@@ -3,3 +3,14 @@
 .cw-refresh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0}.cw-refresh button{font-size:13px;padding:7px 10px}
 
 .content-workspace--embedded{max-width:none;min-height:0;padding:12px 0 40px;background:transparent}.content-workspace h1,.content-workspace h2,.content-workspace h3,.content-workspace strong,.content-workspace label,.content-workspace summary{color:var(--text-primary,#172234)}.cw-daily{padding:20px;border:1px solid var(--border-color,#b5bfce);border-radius:18px;background:var(--bg-card,#fff);margin:20px 0}.cw-daily-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.cw-daily-list article{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--border-color,#b5bfce);border-radius:14px}.cw-daily-list article button{text-align:left}.cw-daily-list a{display:inline-block;margin-right:16px;text-decoration:underline}.content-workspace button,.cw-layout form,.cw-intro,.content-workspace input,.content-workspace textarea,.content-workspace select{border-color:var(--border-color,#bdc7d5)}
+
+/* Override the admin's white hero heading in both themes. */
+.admin-dashboard .content-workspace h1,
+.admin-dashboard .content-workspace h2,
+.admin-dashboard .content-workspace h3 {
+  color: var(--text-primary, #172234) !important;
+}
+.cw-responsibilities {border:1px solid var(--border,#cbd3de);border-radius:16px;padding:12px 18px;background:var(--bg-card,#fff);margin:16px 0}
+.cw-responsibilities p {margin:6px 0;font-size:14px}
+.cw-publication-list {margin:0;padding-left:20px;display:grid;gap:10px;overflow-wrap:anywhere}
+.cw-publication-list li {line-height:1.5}
