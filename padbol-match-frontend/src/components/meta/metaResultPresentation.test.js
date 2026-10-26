@@ -1,0 +1,4 @@
+import {formatMetaNumber,formatMetaMoney,UK_CAMPAIGN_ID,UK_ADSET_ID} from './metaResultPresentation';
+test('ausencia no se presenta como cero ni un valor no numérico como una medición',()=>{expect(formatMetaNumber(null)).toBe('No informado');expect(formatMetaMoney('', 'USD')).toBe('No informado');expect(formatMetaNumber('sin dato')).toBe('No informado');expect(formatMetaNumber(0)).toBe('0');});
+test('identificadores UK conservan exactitud como texto sin inferir ubicación',()=>{expect(typeof UK_CAMPAIGN_ID).toBe('string');expect(UK_CAMPAIGN_ID).toBe('120244279664900660');expect(UK_ADSET_ID).toBe('120244279664960660');});
+test('importes identifican moneda y no convierten moneda desconocida',()=>{expect(formatMetaMoney('12.50','USD')).toMatch(/12,50/);expect(formatMetaMoney('12.50','')).toContain('moneda no indicada');});
