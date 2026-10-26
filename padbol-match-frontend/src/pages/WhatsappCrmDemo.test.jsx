@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
@@ -88,7 +88,7 @@ describe('CRM histórico unificado', () => {
       expect(screen.queryByRole('button',{name:/Lead Juan Pablo/})).not.toBeInTheDocument();expect(screen.getByRole('button',{name:/Lead Nico/})).toBeInTheDocument();
       fireEvent.change(filter,{target:{value:'jp'}});expect(screen.getByRole('button',{name:/Lead Juan Pablo/})).toBeInTheDocument();
       fireEvent.change(filter,{target:{value:'unassigned'}});expect(screen.queryByRole('button',{name:/Lead Nico/})).not.toBeInTheDocument();
-      fireEvent.click(screen.getByRole('button',{name:'Ver todas las consultas'}));expect(filter).toHaveValue('');expect(screen.getByLabelText('Estado')).toHaveValue('');expect(screen.getByRole('button',{name:/Lead Nico/})).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button',{name:'Ver todas las consultas'}));expect(filter).toHaveValue('');expect(within(screen.getByLabelText('Filtros')).getByLabelText('Estado')).toHaveValue('');expect(screen.getByRole('button',{name:/Lead Nico/})).toBeInTheDocument();
       expect(crmAdminApi.reply).not.toHaveBeenCalled();expect(crmAdminApi.setTestVisibility).not.toHaveBeenCalled();
     }finally{factory.mockRestore();}
   });
