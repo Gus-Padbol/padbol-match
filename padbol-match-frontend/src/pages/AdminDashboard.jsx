@@ -1,3 +1,4 @@
+import ContentWorkspacePage from './ContentWorkspacePage';
 import {hasTournamentFixture,tournamentStructureChanged,TOURNAMENT_FIXTURE_LOCK_MESSAGE} from '../utils/tournamentStructurePolicy';
 import { confirmInPersonPayment } from '../utils/adminInPersonPayment';
 import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
@@ -10268,7 +10269,7 @@ export default function AdminDashboard({
         ...(isSuperAdmin
           ? [{ id: 'profesores', label: t('admin.tabs.profesoresTab'), badge: snapPendienteProfesores, badgeRed: true }]
           : []),
-        ...(isSuperAdmin ? [{ id: 'next_generation', label: 'Next Generation' }] : []),
+        ...(isSuperAdmin ? [{ id: 'next_generation', label: 'Next Generation' }, { id: 'contenido', label: 'Contenido y campañas' }] : []),
         ...(isSuperAdmin ? [{ id: 'suspensiones', label: t('admin.tabs.suspensiones') }] : []),
         ...(isSuperAdmin || puedeVerWhatsapp ? [{ id: 'whatsapp', label: t('admin.tabs.crm', { defaultValue: i18n.language.startsWith('en') ? 'Support / CRM' : 'Atención / CRM' }) }] : []),
         ...(isSuperAdmin ? [{ id: 'personalizar_hub', label: t('admin.tabs.personalizarHub') }] : []),
@@ -14189,7 +14190,7 @@ export default function AdminDashboard({
         </div>
       </div>}
 
-      {isSuperAdmin && <a href="/contenido-campanas" style={{display:"inline-block",padding:12,margin:"8px 0",fontWeight:700}}>Contenido y campañas</a>}
+      {isSuperAdmin && activeTab === 'contenido' && <ContentWorkspacePage embedded />}
       {activeTab === 'personalizar_hub' && (isSuperAdmin || esEditorContenido) ? (
         <AdminHubPersonalizarSection
           apiBaseUrl={apiBaseUrl}
