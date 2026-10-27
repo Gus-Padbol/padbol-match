@@ -260,7 +260,6 @@ export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
   }, []);
 
   useEffect(() => {
-    if (compact) return undefined;
     let settleTimer = 0;
     const markScrolling = () => {
       scrollingRef.current = true;
@@ -586,7 +585,7 @@ export default function PremiumGlobalGlobe({ text, forceMotion = false }) {
       // Durante un desplazamiento de escritorio el usuario prioriza navegar;
       // congelar este canvas por unos milisegundos evita que compita con la
       // respuesta del scroll. Al detenerse, la animación continúa sola.
-      const canPaint = compact || debugYaw != null || (visibleRef.current && !scrollingRef.current);
+      const canPaint = debugYaw != null || (visibleRef.current && !scrollingRef.current);
       if (canPaint) paint(now);
       if (!reducedMotion && debugYaw == null) raf = requestAnimationFrame(tick);
     };

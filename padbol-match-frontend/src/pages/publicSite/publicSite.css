@@ -3334,8 +3334,8 @@ html.public-site-active #root {
 
 /* Breakpoints */
 @media (max-width: 767px) {
-  .public-site__desktop-nav,
-  .public-site__login { display: none; }
+  .public-site__desktop-nav { display: none; }
+  .public-site__login { display: inline-flex; padding: 8px 10px; font-size: 12px; white-space: nowrap; }
 
   .public-site__nav-actions { gap: 6px; }
 
