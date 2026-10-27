@@ -183,6 +183,7 @@ export default function UnirsePage() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw Object.assign(new Error('LICENSE_REQUEST_FAILED'), { status: res.status, code: j.code });
+      if (!j.id) throw new Error('LICENSE_REQUEST_CONFIRMATION_MISSING');
       setMsg(isPadbolPromo
         ? promoCopy.success
         : t('clubOnboarding.success', { plan: selectedPlan.name }));
