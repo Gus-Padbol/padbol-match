@@ -85,7 +85,6 @@ export default function HeroStarfield({
     };
 
     const markScrolling = () => {
-      if (compact) return;
       scrollingRef.current = true;
       window.clearTimeout(settleTimer);
       settleTimer = window.setTimeout(() => {
@@ -206,7 +205,7 @@ export default function HeroStarfield({
     const tick = (now) => {
       // El fondo estelar se mueve muy lentamente; a ~24 fps en escritorio se
       // percibe igual, pero deja libre el hilo principal para el primer scroll.
-      if ((!scrollingRef.current || compact) && now - lastPaint >= minFrameMs) {
+      if (!scrollingRef.current && now - lastPaint >= minFrameMs) {
         paint(now);
         lastPaint = now;
       }
