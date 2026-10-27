@@ -1,3 +1,4 @@
+import { SWEDISH_STARTER_FEATURES } from '../swedishVenueOnboardingCopy';
 import GENERATED_STATIC_COPY_LOCALES from '../../i18n/generatedStaticCopyLocales.json';
 import commercialPlansKnowledge from '../../config/commercialPlansKnowledge.json';
 
@@ -218,6 +219,7 @@ export function venuePlansCopy(language) {
   const generated = Object.entries(GENERATED_STATIC_COPY_LOCALES)
     .find(([locale]) => locale.toLowerCase() === code)?.[1]?.venuePlans;
   // Generated editions use the same benefits invitation as the direct editions.
+  if (code.startsWith('sv')) return mergeCopy(mergeCopy(EN, generated || {}), { plans: { starter: { features: SWEDISH_STARTER_FEATURES } } });
   if (generated) return mergeCopy(EN, generated);
   return { ...EN, faqs: commercialPlansKnowledge.en.faqs };
 }

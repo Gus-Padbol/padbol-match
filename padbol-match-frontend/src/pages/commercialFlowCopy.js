@@ -1,3 +1,4 @@
+import { SWEDISH_VENUE_ONBOARDING } from './swedishVenueOnboardingCopy';
 import GENERATED_STATIC_COPY_LOCALES from '../i18n/generatedStaticCopyLocales.json';
 
 const mergeCopy = (base, override) => {
@@ -99,6 +100,7 @@ export function commercialFlowCopy(language) {
   const generated = Object.entries(GENERATED_STATIC_COPY_LOCALES)
     .find(([locale]) => locale.toLowerCase() === code)?.[1]?.commercialFlow;
   // Every edition uses the same monthly goals and capped Padbol benefit.
+  if (code.startsWith('sv')) return mergeCopy(mergeCopy(EN, generated || {}), { onboarding: SWEDISH_VENUE_ONBOARDING });
   if (generated) return mergeCopy(EN, generated);
   return EN;
 }
