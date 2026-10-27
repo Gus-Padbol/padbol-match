@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import '../pages/LandingPage.css';
@@ -8,6 +8,8 @@ import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { PAISES_TELEFONO_OTROS, PAISES_TELEFONO_PRINCIPALES, paisTelefonoTranslationKey } from '../constants/paisesTelefono';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { commercialFlowCopy } from './commercialFlowCopy';
+import { venuePlansCopy } from './adminLanding/venuePlansCopy';
+import { createLicenseRequestAttemptId, licenseRequestFailureCopy } from '../utils/licenseRequestAttempt';
 import { COMMERCIAL_PLANS_PREVIEW, PRO_MONTHLY_AMOUNT_USD, PADBOL_COURTS_PRO_MONTHLY_AMOUNT_USD, PADBOL_COURTS_PRO_OBJECTIVES_MONTHLY_AMOUNT_USD, PADBOL_COURTS_VENUE_SERVICE_PERCENT } from '../config/commercialPlans';
 
 const API_BASE = getApiBaseUrl();
@@ -72,6 +74,8 @@ export default function UnirsePage() {
   const location = useLocation();
   const { navDock } = useHubNavLayout();
   const [saving, setSaving] = useState(false);
+  const sendingRef = useRef(false);
+  const attemptRef = useRef(null);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [form, setForm] = useState(getInitialForm);
@@ -80,6 +84,8 @@ export default function UnirsePage() {
   const requestedPlanId = query.get('plan');
   const selectedPlan = COMMERCIAL_PLANS_PREVIEW.find((plan) => plan.slug === requestedPlanId && !plan.contactOnly)
     || COMMERCIAL_PLANS_PREVIEW.find((plan) => plan.slug === 'starter');
+  const localizedPlan = venuePlansCopy(i18n.resolvedLanguage || i18n.language).plans[selectedPlan.slug];
+  const planFeatures = localizedPlan?.features || selectedPlan.features;
   const legacyPlans = [];
   const selectedPlanId = '';
   const countryOptions = [...PAISES_TELEFONO_PRINCIPALES, ...PAISES_TELEFONO_OTROS];
@@ -100,6 +106,7 @@ export default function UnirsePage() {
   const onField = (k, v) => setForm((p) => ({ ...p, [k]: v }));
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (sendingRef.current) return;
     setErr('');
     setMsg('');
 
@@ -162,22 +169,30 @@ export default function UnirsePage() {
           solicitud_inicial: true,
         };
 
+    sendingRef.current = true;
     setSaving(true);
     try {
+      const serialized = JSON.stringify(body);
+      if (attemptRef.current?.payload !== serialized) {
+        attemptRef.current = { payload: serialized, key: createLicenseRequestAttemptId() };
+      }
       const res = await fetch(`${API_BASE}/api/solicitudes-licencia`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': attemptRef.current.key },
+        body: serialized,
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j.error || res.statusText);
+      if (!res.ok) throw Object.assign(new Error('LICENSE_REQUEST_FAILED'), { status: res.status, code: j.code });
+      if (!j.id) throw new Error('LICENSE_REQUEST_CONFIRMATION_MISSING');
       setMsg(isPadbolPromo
         ? promoCopy.success
         : t('clubOnboarding.success', { plan: selectedPlan.name }));
       setForm(getInitialForm());
-    } catch {
-      setErr(t('clubOnboarding.error.submit'));
+      attemptRef.current = null;
+    } catch (error) {
+      setErr(licenseRequestFailureCopy(i18n.resolvedLanguage || i18n.language, error, t('clubOnboarding.error.submit')));
     } finally {
+      sendingRef.current = false;
       setSaving(false);
     }
   };
@@ -374,7 +389,7 @@ export default function UnirsePage() {
             <section style={{ margin: '0 0 20px' }}>
               <h2 style={{ margin: '0 0 10px', color: 'var(--text-primary)', fontSize: 'clamp(1.2rem, 3vw, 1.45rem)', lineHeight: 1.15 }}>{onboardingCopy.includes}</h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 9 }}>
-                {selectedPlan.features.map((feature) => <li key={feature} style={{ padding: '12px 13px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)', fontSize: 13, lineHeight: 1.4 }}>✓ {feature}</li>)}
+                {planFeatures.map((feature) => <li key={feature} style={{ padding: '12px 13px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-card)', fontSize: 13, lineHeight: 1.4 }}>✓ {feature}</li>)}
               </ul>
             </section>
             <section style={{ margin: '0 0 20px' }}>
@@ -531,17 +546,17 @@ export default function UnirsePage() {
           ) : (
             <>
               <FormSection title={onboardingCopy.formTitle} subtitle={onboardingCopy.formLead}>
-                <label style={labelStyle}>{t('clubOnboarding.form.clubName')} *</label>
-                <input style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
-                <label style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.fullName')} *</label>
-                <input style={inputStyle} value={form.responsable_nombre} onChange={(e) => onField('responsable_nombre', e.target.value)} required />
-                <label style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.email')} *</label>
-                <input type="email" style={inputStyle} value={form.email} onChange={(e) => onField('email', e.target.value)} required autoComplete="email" />
-                <label style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.whatsapp')} *</label>
-                <input style={inputStyle} value={form.whatsapp} onChange={(e) => onField('whatsapp', e.target.value)} placeholder="+549…" required autoComplete="tel" />
+                <label htmlFor="join-club_nombre" style={labelStyle}>{t('clubOnboarding.form.clubName')} *</label>
+                <input id="join-club_nombre" autoComplete="organization" style={inputStyle} value={form.club_nombre} onChange={(e) => onField('club_nombre', e.target.value)} required />
+                <label htmlFor="join-responsable_nombre" style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.fullName')} *</label>
+                <input id="join-responsable_nombre" autoComplete="name" style={inputStyle} value={form.responsable_nombre} onChange={(e) => onField('responsable_nombre', e.target.value)} required />
+                <label htmlFor="join-email" style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.email')} *</label>
+                <input id="join-email" type="email" style={inputStyle} value={form.email} onChange={(e) => onField('email', e.target.value)} required autoComplete="email" />
+                <label htmlFor="join-whatsapp" style={{ ...labelStyle, ...rowGap }}>{t('clubOnboarding.form.whatsapp')} *</label>
+                <input id="join-whatsapp" type="tel" style={inputStyle} value={form.whatsapp} onChange={(e) => onField('whatsapp', e.target.value)} placeholder="+…" required autoComplete="tel" />
               </FormSection>
-              <label style={{ ...labelStyle, marginTop: 4 }}>{t('clubOnboarding.form.message')}</label>
-              <textarea rows={3} style={{ ...inputStyle, resize: 'vertical', maxWidth: '100%' }} value={form.mensaje} onChange={(e) => onField('mensaje', e.target.value)} />
+              <label htmlFor="join-message" style={{ ...labelStyle, marginTop: 4 }}>{t('clubOnboarding.form.message')}</label>
+              <textarea id="join-message" rows={3} style={{ ...inputStyle, resize: 'vertical', maxWidth: '100%' }} value={form.mensaje} onChange={(e) => onField('mensaje', e.target.value)} />
 
               <p style={{ margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.45 }}>
                 {t('clubOnboarding.form.disclaimer')}
