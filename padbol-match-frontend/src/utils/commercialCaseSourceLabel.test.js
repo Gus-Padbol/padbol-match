@@ -1,0 +1,3 @@
+import {commercialCaseSourceLabel} from './commercialCaseSourceLabel';
+test('un correo clasificado no se convierte visualmente en formulario por su canal interno',()=>{expect(commercialCaseSourceLabel({channel:'form',sourceOrigin:'institutional_email',sourceLabel:'Correo electrónico'})).toBe('Correo electrónico');});
+test('solo una fuente explícita del servidor habilita la etiqueta formulario web',()=>{expect(commercialCaseSourceLabel({channel:'form'})).toBe('Consulta comercial');expect(commercialCaseSourceLabel({channel:'form',sourceLabel:'Formulario web'})).toBe('Formulario web');expect(commercialCaseSourceLabel({channel:'whatsapp'})).toBe('WhatsApp');});

@@ -27,3 +27,5 @@ test('el formulario comercial carga las respuestas por correo en la misma ficha 
  render(<CommercialCaseDetail item={{id:'form-case',channel:'form'}} api={api}/>);
  expect(await screen.findByText('I can speak on Friday.')).toHaveAttribute('translate','no');expect(api.emailHistory).toHaveBeenCalledWith('form-case','form');expect(screen.getByText('Initial request')).toBeInTheDocument();
 });
+
+test('un correo directo conserva su procedencia aunque use el canal comercial form',async()=>{const api={listActivities:jest.fn().mockResolvedValue({activities:[]}),readCase:jest.fn().mockResolvedValue({sourceLabel:'Correo electrónico',body:'Original email',contact:{name:'Cliente'}}),emailHistory:jest.fn().mockResolvedValue({messages:[]})};render(<CommercialCaseDetail item={{id:'mail-case',channel:'form'}} api={api}/>);expect(await screen.findByText('Origen: Correo electrónico')).toBeInTheDocument();expect(screen.queryByText('Origen: Formulario web')).not.toBeInTheDocument();});

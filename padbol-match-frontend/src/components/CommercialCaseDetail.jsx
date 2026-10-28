@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
+import {commercialCaseSourceLabel} from '../utils/commercialCaseSourceLabel';
 import CrmReplyTextarea from './CrmReplyTextarea';
 import CrmEmailHistory from './CrmEmailHistory';
 import CommercialLeadManagement from './CommercialLeadManagement';
@@ -29,6 +30,7 @@ export default function CommercialCaseDetail({item, api}) {
   if(error&&!data)return <p role="alert">{error}</p>;
   if(!data)return <p>Cargando consulta…</p>;
   return <section aria-label="Detalle de consulta comercial"><h3>{data.contact?.name || data.contact?.phone || data.contact?.email || 'Consulta'}</h3>
+    <p>Origen: {commercialCaseSourceLabel({channel:item.channel,sourceLabel:data.sourceLabel||item.sourceLabel})}</p>
     <p>{data.contact?.phone && <>Teléfono: <a href={`tel:${data.contact.phone}`}>{data.contact.phone}</a> </>}{data.contact?.email && <>Correo: <a href={`mailto:${data.contact.email}`}>{data.contact.email}</a></>}</p><p>Puedes contactar a la persona desde tu dispositivo. Las conversaciones personales no aparecen automáticamente aquí; registra los detalles y el próximo paso.</p>
     {data.status==='suspended'&&<p role="status">Esta consulta está en revisión; no se puede responder por ahora.</p>}
     {data.subject&&<h4 translate="no" className="notranslate">{data.subject}</h4>}{data.body&&<p translate="no" className="notranslate" style={{whiteSpace:'pre-wrap'}}>{data.body}</p>}
