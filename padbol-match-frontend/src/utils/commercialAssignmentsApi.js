@@ -27,6 +27,7 @@ export function createCommercialAssignmentsApi(token) {
       if (!response.ok) throw new Error('MEDIA_UNAVAILABLE');
       return response.blob();
     },
+    emailHistory: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/email-history?channel=${encodeURIComponent(channel)}`),
     readCase: (id, channel) => request(`${cases}/${encodeURIComponent(id)}?channel=${encodeURIComponent(channel)}`),
     reply: (id, channel, body, requestId) => request(`${cases}/${encodeURIComponent(id)}/reply`, 'POST', {channel,body,requestId}),
     listActivities: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/activities?channel=${encodeURIComponent(channel)}`),

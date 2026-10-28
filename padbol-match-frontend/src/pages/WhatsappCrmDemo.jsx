@@ -7,6 +7,7 @@ import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
 import CommercialAdvisorAccess from '../components/CommercialAdvisorAccess';
 import { createCommercialAssignmentsApi } from '../utils/commercialAssignmentsApi';
 import CrmReplyTextarea from '../components/CrmReplyTextarea';
+import CrmEmailHistory from '../components/CrmEmailHistory';
 import CommercialAdvisorFilter, {matchesAdvisor} from '../components/CommercialAdvisorFilter';
 import './WhatsappCrmDemo.css';
 import '../components/CommercialCrmTheme.css';
@@ -441,6 +442,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const canReply = (canReplyWhatsapp && !waContext?.deliveryUncertain && !waContext?.deliveryUnknown) || canReplyEmail;
   const replyUnavailableReason = !activeCanOperate ? 'Esta cuenta tiene acceso de consulta a esta conversación y no puede enviar respuestas.' : active?.source_channel === 'email' && !active?.contact?.email_normalized ? 'Esta conversación no tiene un email de contacto válido.' : active?.source_channel === 'email' && !canReplyEmail ? 'El envío por email no está habilitado para este canal.' : active?.source_channel === 'whatsapp' && (waContext?.deliveryUncertain || waContext?.deliveryUnknown) ? 'Hay una entrega pendiente de confirmar. Revisa su estado antes de enviar otra respuesta.' : !canReply ? 'El envío por este canal no está habilitado.' : '';
 
+  const loadEmailHistory = useCallback(id=>crmAdminApi.emailHistory(token,id),[token]);
   activeConversationId.current = active?.id;
   useEffect(() => { replyComposition.current = null; setReplyText(''); setNotice(null); }, [active?.id]);
   const leadName = [detailValue(activeDetails, 'Nombre'), detailValue(activeDetails, 'Apellido')].filter(Boolean).join(' ') || active?.contact?.nombre || active?.identity_used || 'Contacto sin nombre';
@@ -625,7 +627,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
         : 'Respuesta guardada como pendiente.');
       replyComposition.current = null;
       setReplyText('');
-      if (canReplyWhatsapp) setHistoryRevision(value => value + 1);
+      if (canReplyWhatsapp || canReplyEmail) setHistoryRevision(value => value + 1);
       await load();
     } catch (e) {
       if (activeConversationId.current === active.id) setNotice(e?.message || 'No se pudo registrar la respuesta');
@@ -915,6 +917,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     <details className="wa-lead-note"><summary>Ver todos los datos del formulario</summary><dl>{commercialFormDetails(activeDetails).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></details>
                     {active.inbound_body ? <details className="wa-lead-note"><summary>Ver envío original completo</summary><p translate="no" className="notranslate" style={{ whiteSpace: 'pre-wrap' }}>{active.inbound_body}</p></details> : null}
                   </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p translate="no" className="notranslate">{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${{sent:'Enviado',pending:'Pendiente de confirmación',cancelled:'Entrega no confirmada'}[message.status] || 'Estado no disponible'}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p translate="no" className="notranslate">{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
+                  {active.source_channel === 'email' && <CrmEmailHistory key={active.id} recordId={active.id} loadHistory={loadEmailHistory} revision={historyRevision}/> }
                   {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
                   {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
                   {whatsappAttachments.length ? <section aria-label="Archivos de WhatsApp">

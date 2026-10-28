@@ -21,3 +21,9 @@ test('preserves the original client language against browser auto-translation',a
  render(<CommercialCaseDetail item={{id:'original',channel:'form'}} api={api}/>);
  expect(await screen.findByText(original)).toHaveAttribute('translate','no');expect(screen.getByText('Tell me about the project')).toHaveClass('notranslate');expect(screen.getByLabelText('Respuesta')).toHaveAttribute('rows','7');
 });
+
+test('el formulario comercial carga las respuestas por correo en la misma ficha con su alcance de asesor',async()=>{
+ const api={listActivities:jest.fn().mockResolvedValue({activities:[]}),readCase:jest.fn().mockResolvedValue({body:'Initial request',contact:{name:'Cliente'}}),emailHistory:jest.fn().mockResolvedValue({messages:[{id:'response',direction:'inbound',body:'I can speak on Friday.',at:'2026-10-28T12:00:00Z'}]})};
+ render(<CommercialCaseDetail item={{id:'form-case',channel:'form'}} api={api}/>);
+ expect(await screen.findByText('I can speak on Friday.')).toHaveAttribute('translate','no');expect(api.emailHistory).toHaveBeenCalledWith('form-case','form');expect(screen.getByText('Initial request')).toBeInTheDocument();
+});
