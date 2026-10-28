@@ -300,6 +300,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeId, setActiveId] = useState(null);
+  const [institutionalCase, setInstitutionalCase] = useState(null);
+  const [institutionalRevision, setInstitutionalRevision] = useState(0);
   const [agendaLeadId, setAgendaLeadId] = useState(null);
   const [areaFilter, setAreaFilter] = useState('all');
   const channelFilter = '';
@@ -425,6 +427,25 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const areaItems = commercialOnly || areaFilter === 'all' ? items : items.filter((item) => conversationArea(item) === areaFilter);
   const visibleItems=advisorFilter?areaItems.filter(item=>matchesAdvisor(assignmentScope.cases.find(c=>(c.conversationId||(c.channel==='form'?c.id:null))===item.id),advisorFilter,session?.user?.id)):areaItems;
   const active = visibleItems.find((i) => i.id === activeId) || visibleItems[0] || null;
+  const institutionalCandidate = !commercialOnly && active?.source_channel === 'email' && active?.origin === 'institutional_email';
+  useEffect(() => {
+    if (!institutionalCandidate || !token) return;
+    let live = true;
+    const identity = {conversationId:active.id,token};
+    setInstitutionalCase({...identity,status:'loading'});
+    commercialApi.resolveConversation(active.id).then(item => {
+      if (!live) return;
+      if (item?.id !== active.id || item?.channel !== 'form') throw new Error('INVALID_CASE');
+      setInstitutionalCase({...identity,status:'confirmed',item});
+    }).catch(error => {
+      if (live) setInstitutionalCase({...identity,status:[403,404].includes(error.status)?'not_commercial':'unavailable'});
+    });
+    return () => {live=false;};
+  }, [institutionalCandidate,active?.id,token,commercialApi,institutionalRevision]);
+  const currentInstitutionalCase = institutionalCandidate && institutionalCase?.conversationId === active?.id && institutionalCase?.token === token ? institutionalCase : null;
+  const verifiedCommercialCase = currentInstitutionalCase?.status === 'confirmed' ? currentInstitutionalCase.item : null;
+  const checkingInstitutional = institutionalCandidate && (!currentInstitutionalCase || currentInstitutionalCase.status === 'loading');
+  const institutionalUnavailable = institutionalCandidate && currentInstitutionalCase?.status === 'unavailable';
   const leadAnalysis = active?.qualification_data?.lead_analysis || null;
   const analysisRequestStatus = active?.qualification_data?.lead_analysis_request?.status || null;
   const analysisNotice = leadAnalysisNotice(analysisRequestStatus, perms?.leadAnalysisEnabled);
@@ -450,7 +471,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const isNextGenerationParticipant = activeArea === 'nextgen_participants';
   const isNextGenerationVenue = activeArea === 'nextgen_venues';
   const isNextGenerationForm = isNextGenerationParticipant || isNextGenerationVenue;
-  const isCommercial = activeArea === 'commercial' || (active?.source_channel === 'whatsapp' && waContext?.topic === WHATSAPP_TOPICS.sede);
+  const isCommercial = Boolean(verifiedCommercialCase) || activeArea === 'commercial' || (active?.source_channel === 'whatsapp' && waContext?.topic === WHATSAPP_TOPICS.sede);
   const isCommercialForm = isWebForm && activeArea === 'commercial';
   const leadHighlights = commercialLeadHighlights(activeDetails, leadAnalysis);
   const nextGenerationDetails = [
@@ -959,13 +980,15 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
 
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
-                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} onUpdated={load} showHistory={agendaLeadId===active.id} /> : null}
+                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory={agendaLeadId===active.id} /> : null}
                 {waContext && !isCommercial ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
                   {waContext.detailMessage ? <div><strong>Detalle compartido</strong><p className="wa-context-original">{waContext.detailMessage}</p></div> : null}
                 </section> : null}
-                <section className="wa-panel" hidden={isCommercial}><h3>Gestión</h3>
+                {checkingInstitutional ? <p role="status">Comprobando la gestión de esta consulta…</p> : null}
+                {institutionalUnavailable ? <section role="alert"><p>No se pudo comprobar la gestión de esta consulta.</p><button type="button" onClick={()=>setInstitutionalRevision(value=>value+1)}>Volver a comprobar</button></section> : null}
+                <section className="wa-panel" hidden={isCommercial || checkingInstitutional || institutionalUnavailable}><h3>Gestión</h3>
                   <dl>
                     <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>
                     <div><dt>Canal</dt><dd>{channelLabel(active.source_channel)}</dd></div>
@@ -974,7 +997,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     <div><dt>Derivado</dt><dd>{active.derivado ? 'Sí' : 'No'}</dd></div>
                     {!isCommercial ? <div><dt>Sede</dt><dd>{active.sede_id || 'Sin asignar'}</dd></div> : null}
                   </dl>
-                  {!isCommercial && perms?.canAudit ? <label>Asignar a sede<select aria-label="Asignar conversación a sede" value={active.sede_id || ''} onChange={(e) => void assignSede(e.target.value)}><option value="">Sin asignar</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select></label> : null}
+                  {!isCommercial && !checkingInstitutional && !institutionalUnavailable && perms?.canAudit ? <label>Asignar a sede<select aria-label="Asignar conversación a sede" value={active.sede_id || ''} onChange={(e) => void assignSede(e.target.value)}><option value="">Sin asignar</option>{sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre || `Sede ${sede.id}`}</option>)}</select></label> : null}
                 </section>
                 {isNextGenerationParticipant ? <section className="wa-panel wa-ng-conversion">
                   <h3>Inscripción Next Generation</h3>
