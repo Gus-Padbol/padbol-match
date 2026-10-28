@@ -1,3 +1,4 @@
+import { profileAvatarPath } from '../utils/profileAvatarPath';
 import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, fechaDesdeReservasJugador } from '../utils/reservaJugadorActions';
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
@@ -1095,9 +1096,7 @@ export default function MiPerfil() {
         setErrorMsg(t('perfil.flow.imageOver2mb'));
         return;
       }
-      const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
-      const ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extRaw) ? extRaw : 'jpg';
-      const path = `perfil/${userId}/${Date.now()}.${ext}`;
+      const path = profileAvatarPath(userId, pendingFoto.name);
       const { error: upErr } = await supabase.storage
         .from(AVATAR_STORAGE_BUCKET)
         .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
@@ -1301,9 +1300,9 @@ export default function MiPerfil() {
       const localConf = waConfirmLocal.trim();
       if (!digitsOnly(local)) {
         fe.whatsapp = 'Completa tu WhatsApp';
-      } else if (!whatsappNacionalValido(local)) {
+      } else if (!whatsappNacionalValido(local, waCodigoPais)) {
         fe.whatsapp = t('perfil.invalidWhatsapp');
-      } else if (digitsOnly(local) !== digitsOnly(localConf)) {
+      } else if (buildFullWhatsDigits(waCodigoPais, local) !== buildFullWhatsDigits(waCodigoPais, localConf)) {
         fe.whatsappConfirma = t('perfil.whatsappConfirmMismatch');
       }
       const waDigits = buildFullWhatsDigits(waCodigoPais, local);
@@ -1554,7 +1553,7 @@ export default function MiPerfil() {
         setErrorMsg('Completa tu WhatsApp');
         return;
       }
-      if (!whatsappNacionalValido(local)) {
+      if (!whatsappNacionalValido(local, waCodigoPais)) {
         setErrorMsg(t('perfil.completeWhatsappDigits'));
         return;
       }
@@ -1629,9 +1628,7 @@ export default function MiPerfil() {
           setErrorMsg(t('perfil.flow.imageOver2mb'));
           return;
         }
-        const extRaw = String(pendingFoto.name.split('.').pop() || 'jpg').toLowerCase();
-        const ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extRaw) ? extRaw : 'jpg';
-        const path = `perfil/${userId}/${Date.now()}.${ext}`;
+        const path = profileAvatarPath(userId, pendingFoto.name);
         const { error: upErr } = await supabase.storage
           .from(AVATAR_STORAGE_BUCKET)
           .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
