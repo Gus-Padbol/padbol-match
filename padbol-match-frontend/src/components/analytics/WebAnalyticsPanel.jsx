@@ -11,7 +11,7 @@ export function useWebAnalyticsAccess({api:providedApi,enabled=true}={}){
  const current=snapshot.api===api,status=current?snapshot.value:null;
  return {api,status,loading:!current||loading,error:current?error:'',canRead:status?.canRead===true,setStatus};
 }
-const metricNames=[['activeUsers','Usuarios activos'],['sessions','Sesiones'],['pageViews','Vistas de páginas'],['leads','Consultas enviadas']];
+const metricNames=[['activeUsers','Usuarios activos'],['sessions','Sesiones'],['pageViews','Vistas de páginas'],['leads','Consultas medidas']];
 const number=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0?new Intl.NumberFormat('es',{maximumFractionDigits:0}).format(value):'No informado';
 const completeDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
 export default function WebAnalyticsPanel({access,api:providedApi}){
@@ -40,7 +40,7 @@ export default function WebAnalyticsPanel({access,api:providedApi}){
  {loading&&<p role="status">Consultando Google Analytics…</p>}{error&&<p className="web-analytics__error" role="alert">{error}</p>}
  {!loading&&data&&<><p>Período: {data.range?.since} — {data.range?.until} · Horario del informe: {data.range?.timezone||'No informado'}</p><p className="web-analytics__identity">Fuente: Google Analytics · Consulta realizada: {data.meta?.queriedAt?new Date(data.meta.queriedAt).toLocaleString('es'):'No informada'}</p>
  <div className="web-analytics__metrics">{metricNames.map(([key,label])=><article key={key}><span>{label}</span><strong>{number(data.totals?.[key])}</strong></article>)}</div>
- <p className="web-analytics__notice">Las consultas enviadas son la medición de formularios del sitio. No representan ventas ni reemplazan el historial de atención del CRM. La medición depende del consentimiento de cada visitante.</p>
+ <p className="web-analytics__notice">Las consultas medidas corresponden a envíos confirmados de los formularios de la web nueva y solo incluyen visitantes que aceptaron la medición. No equivalen al total de consultas del CRM ni a ventas. Los períodos anteriores o sin medición activa pueden no estar representados.</p>
  {(data.meta?.warnings||[]).map((warning,index)=><p className="web-analytics__notice" key={index}>{warning}</p>)}
  {data.daily?.length>0?<div className="web-analytics__table"><table><caption>Detalle por día</caption><thead><tr><th>Día</th>{metricNames.map(([key,label])=><th key={key} scope="col">{label}</th>)}</tr></thead><tbody>{data.daily.map(row=><tr key={row.date}><th scope="row">{row.date}</th>{metricNames.map(([key])=><td key={key}>{number(row[key])}</td>)}</tr>)}</tbody></table></div>:<p>No hay filas diarias para este período en la respuesta de Google Analytics.</p>}
  <p className="web-analytics__identity">Los usuarios activos del período se consultan a Google Analytics; no se calculan sumando los usuarios de cada día.</p></>}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import {commercialCaseSourceLabel} from '../utils/commercialCaseSourceLabel';
 import {ADVISOR_REQUEST_STATUS,advisorOperationNotice} from '../utils/commercialAdvisorStatus';
 
 // Transport and authorization are provided by the calling CRM; this component
@@ -65,7 +66,7 @@ export default function CommercialAssignments({ api }) {
       {advisors.length ? <ul>{advisors.map(a => <li key={a.id}>{a.name || a.email} {a.status ? `· ${a.status}` : ''} {a.active === true && a.role !== 'manager' && <button type="button" disabled={busy} onClick={() => deactivateAdvisor(a)}>Desactivar</button>}</li>)}</ul> : <p>No hay asesores disponibles.</p>}
       <h3>Consultas comerciales</h3>
       {!cases.length && <p>No hay consultas comerciales para mostrar.</p>}
-      {cases.map(item => <article key={`${item.channel}:${item.id}`}><h4>{item.contact?.name || item.contact?.phone || 'Consulta comercial'}</h4><p>Canal: {item.channel === 'whatsapp' ? 'WhatsApp' : item.channel === 'form' ? 'Formulario' : 'No disponible'} · Estado: {item.status || 'No disponible'}</p><p>Asesor: {item.assignedAdvisor?.name || 'Sin asignar'}</p>
+      {cases.map(item => <article key={`${item.channel}:${item.id}`}><h4>{item.contact?.name || item.contact?.phone || 'Consulta comercial'}</h4><p>Origen: {commercialCaseSourceLabel(item)} · Estado: {item.status || 'No disponible'}</p><p>Asesor: {item.assignedAdvisor?.name || 'Sin asignar'}</p>
         <form onSubmit={e => assign(e, item)}><label>Asignar a <select value={selection[`${item.channel}:${item.id}`] || ''} onChange={e => setSelection({...selection, [`${item.channel}:${item.id}`]: e.target.value})} required><option value="">Selecciona un asesor</option>{advisors.filter(a => a.active === true).map(a => <option key={a.id} value={a.id}>{a.name || a.email}</option>)}</select></label> <button disabled={busy || !selection[`${item.channel}:${item.id}`] || !Number.isSafeInteger(item.version) || !['form','whatsapp'].includes(item.channel) || item.status === 'closed' || item.progressState === 'cerrado'}>Guardar asignación</button></form>
       </article>)}
     </>}
