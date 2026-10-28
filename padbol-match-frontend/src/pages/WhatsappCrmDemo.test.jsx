@@ -935,3 +935,43 @@ test('la ficha del formulario conserva el original y muestra las respuestas entr
  expect(await screen.findByText('Thank you, I have a location now.')).toHaveAttribute('translate','no');
  expect(crmAdminApi.emailHistory).toHaveBeenCalledWith('qa-token','email-thread');
 });
+
+describe('Correos institucionales clasificados mediante el servidor',()=>{
+ let factory,resolve;
+ beforeEach(()=>{
+  jest.clearAllMocks();
+  resolve=jest.fn();factory=jest.spyOn(require('../utils/commercialAssignmentsApi'),'createCommercialAssignmentsApi').mockReturnValue({resolveConversation:resolve});
+  crmAdminApi.permissions.mockResolvedValue({canAudit:true,canOperate:true,emailSendEnabled:true});
+  crmAdminApi.inbox.mockResolvedValue({items:[{id:'institutional',source_channel:'email',origin:'institutional_email',identity_used:'Cliente correo',inbound_body:'Original client message',estado:'nuevo',contact:{email_normalized:'fixture@example.invalid'},qualification_data:{routing:{workflow:'commercial_lead'}}}]});
+  crmAdminApi.emailHistory.mockResolvedValue({messages:[]});crmAdminApi.activities.mockResolvedValue([]);crmAdminApi.sedes.mockResolvedValue([]);crmAdminApi.nextGenerationOverview.mockResolvedValue({sedes:[],jornadas:[]});
+ });
+ afterEach(()=>factory.mockRestore());
+ test('muestra la gestión comercial solo tras resolver el caso autorizado',async()=>{
+  let confirm;resolve.mockImplementation(()=>new Promise(done=>{confirm=done}));
+  render(<WhatsappCrmDemo/>);await screen.findByText('Comprobando la gestión de esta consulta…');
+  expect(screen.queryByLabelText('Asignar conversación a sede')).not.toBeInTheDocument();expect(screen.queryByLabelText('Gestión comercial')).not.toBeInTheDocument();
+  confirm({id:'institutional',channel:'form',sourceLabel:'Correo electrónico'});
+  expect(await screen.findByLabelText('Gestión comercial')).toHaveTextContent('Gestión de institutional');
+  expect(resolve).toHaveBeenCalledWith('institutional');expect(screen.queryByLabelText('Asignar conversación a sede')).not.toBeInTheDocument();
+ });
+ test.each([403,404])('no convierte metadata local en autorización cuando el servidor devuelve %s',async status=>{
+  resolve.mockRejectedValue(Object.assign(new Error('DENIED'),{status}));render(<WhatsappCrmDemo/>);
+  await screen.findByLabelText('Asignar conversación a sede');expect(screen.queryByLabelText('Gestión comercial')).not.toBeInTheDocument();
+ });
+ test('un fallo temporal no habilita la gestión genérica equivocada y permite reintentar',async()=>{
+  resolve.mockRejectedValueOnce(Object.assign(new Error('UNAVAILABLE'),{status:503})).mockResolvedValueOnce({id:'institutional',channel:'form'});
+  render(<WhatsappCrmDemo/>);await screen.findByRole('button',{name:'Volver a comprobar'});expect(screen.queryByLabelText('Asignar conversación a sede')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Volver a comprobar'}));expect(await screen.findByLabelText('Gestión comercial')).toBeInTheDocument();
+ });
+ test('ignora una respuesta tardía al cambiar a otro correo institucional',async()=>{
+  let confirm;resolve.mockImplementationOnce(()=>new Promise(done=>{confirm=done})).mockRejectedValue(Object.assign(new Error('NOT_FOUND'),{status:404}));
+  crmAdminApi.inbox.mockResolvedValue({items:[{id:'first-mail',source_channel:'email',origin:'institutional_email',identity_used:'Primera consulta',estado:'nuevo'},{id:'second-mail',source_channel:'email',origin:'institutional_email',identity_used:'Segunda consulta',estado:'nuevo'}]});
+  render(<WhatsappCrmDemo/>);await screen.findByText('Comprobando la gestión de esta consulta…');
+  fireEvent.click(screen.getByRole('button',{name:/Segunda consulta/}));await screen.findByLabelText('Asignar conversación a sede');
+  confirm({id:'first-case',channel:'form'});await waitFor(()=>expect(screen.queryByLabelText('Gestión comercial')).not.toBeInTheDocument());
+  expect(resolve).toHaveBeenCalledWith('second-mail');
+ });
+ test.each([{sourceLabel:'Correo electrónico'},{id:'wrong-case',channel:'form'},{id:'institutional',channel:'whatsapp'}])('un DTO inválido %j no habilita el panel comercial',async item=>{
+  resolve.mockResolvedValue(item);render(<WhatsappCrmDemo/>);await screen.findByRole('button',{name:'Volver a comprobar'});expect(screen.queryByLabelText('Gestión comercial')).not.toBeInTheDocument();
+ });
+});
