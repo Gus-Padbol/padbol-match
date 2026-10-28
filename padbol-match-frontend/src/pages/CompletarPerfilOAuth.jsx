@@ -189,11 +189,11 @@ export default function CompletarPerfilOAuth() {
     }
     const waLoc = digitsOnly(waLocal);
     const waLoc2 = digitsOnly(waLocalConfirm);
-    if (waLoc !== waLoc2) {
+    if (buildFullWhatsDigits(waCodigo, waLoc) !== buildFullWhatsDigits(waCodigo, waLoc2)) {
       setErrorMsg(t('auth.phoneMismatch'));
       return false;
     }
-    if (!whatsappNacionalValido(waLoc)) {
+    if (!whatsappNacionalValido(waLoc, waCodigo)) {
       setErrorMsg(t('auth.invalidWhatsapp'));
       return false;
     }

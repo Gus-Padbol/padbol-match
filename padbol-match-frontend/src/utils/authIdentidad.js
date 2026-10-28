@@ -1,3 +1,4 @@
+import { parsePhoneNumberFromString } from 'libphonenumber-js/min';
 import { supabase } from '../supabaseClient';
 import { PAISES_TELEFONO_PRINCIPALES, PAISES_TELEFONO_OTROS } from '../constants/paisesTelefono';
 
@@ -27,37 +28,47 @@ export function syntheticAuthEmailFromDigits(digits) {
   return `usuario+${d}@padbolmatch.com`;
 }
 
-/** Concatena código país (+54 → 54) y número local solo dígitos. */
+/** Resolve national, +country and 00-country inputs without adding a prefix twice. */
+export function normalizedWhatsApp(codigoPais, numeroLocal) {
+  const c = digitsOnly(codigoPais).replace(/^00/, '');
+  const raw = String(numeroLocal || '').trim();
+  const n = digitsOnly(raw);
+  if (!c || !n) return null;
+  const possible = value => {
+    const parsed = parsePhoneNumberFromString(value);
+    return parsed?.countryCallingCode === c && parsed.isPossible() ? parsed : null;
+  };
+  if (raw.startsWith('+') || n.startsWith('00')) {
+    return possible(`+${n.replace(/^00/, '')}`);
+  }
+  // Prefer a national number. Only strip a bare pasted country code when
+  // concatenating it would not be a possible number for the selected country.
+  return possible(`+${c}${n}`) || possible(`+${n}`);
+}
+
 export function buildFullWhatsDigits(codigoPais, numeroLocal) {
-  const c = digitsOnly(codigoPais);
-  const n = digitsOnly(numeroLocal);
-  if (!n) return '';
-  return `${c}${n}`;
+  return normalizedWhatsApp(codigoPais, numeroLocal)?.number.slice(1) || '';
 }
 
-/** WhatsApp en formato E.164 con prefijo + (ej. +5491123456789). */
 export function formatWhatsAppE164(codigoPais, numeroLocal) {
-  const c = digitsOnly(codigoPais);
-  const n = digitsOnly(numeroLocal);
-  if (!c || !n) return '';
-  return `+${c}${n}`;
+  return normalizedWhatsApp(codigoPais, numeroLocal)?.number || '';
 }
 
-export function whatsappNacionalValido(numeroLocal) {
-  return digitsOnly(numeroLocal).length >= MIN_DIGITOS_WHATSAPP_NACIONAL;
+export function whatsappNacionalValido(numeroLocal, codigoPais = '+54') {
+  return Boolean(normalizedWhatsApp(codigoPais, numeroLocal));
 }
 
-/** Intenta separar un WhatsApp guardado (solo dígitos o con símbolos) en código + local. */
+/** Read historic international prefixes, including an accidental +34 0034. */
 export function splitStoredWhatsapp(fullRaw) {
-  const full = digitsOnly(fullRaw);
+  const full = digitsOnly(fullRaw).replace(/^00/, '');
   if (!full) return { codigo: '+54', local: '' };
-  const sorted = [...ALL_PAISES_TEL].sort(
-    (a, b) => digitsOnly(b.codigo).length - digitsOnly(a.codigo).length
-  );
+  const sorted = [...ALL_PAISES_TEL].sort((a,b) => digitsOnly(b.codigo).length-digitsOnly(a.codigo).length);
   for (const p of sorted) {
     const c = digitsOnly(p.codigo);
     if (c && full.startsWith(c)) {
-      return { codigo: p.codigo, local: full.slice(c.length) };
+      const local = full.slice(c.length);
+      const normalized = normalizedWhatsApp(p.codigo, local);
+      return { codigo: p.codigo, local: normalized?.nationalNumber || local };
     }
   }
   return { codigo: '+54', local: full };
@@ -69,6 +80,7 @@ export function splitStoredWhatsapp(fullRaw) {
  */
 export function whatsappDigitsValido(raw) {
   const d = digitsOnly(raw);
+  if (d.length > 15) return false;
   if (d.length >= MIN_DIGITOS_WHATSAPP_INTERNACIONAL) return true;
   if (d.length >= MIN_DIGITOS_WHATSAPP_NACIONAL) return true;
   return d.length >= MIN_WHATSAPP_DIGITS;
