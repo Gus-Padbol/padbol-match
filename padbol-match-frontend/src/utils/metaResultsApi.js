@@ -12,5 +12,5 @@ export function createMetaResultsApi(token){
   }
   return response.json();
  }
- return {status:()=>request('/status'),insights:filters=>request(`/insights?${new URLSearchParams(Object.entries(filters).filter(([,v])=>v!==''&&v!==null&&v!==undefined))}`),preview:(file,metadata)=>{const body=new FormData();body.append('file',file);Object.entries(metadata).forEach(([key,value])=>{if(value)body.append(key,value);});return request('/imports/preview','POST',body,true);},commit:(id,body)=>request(`/imports/${encodeURIComponent(id)}/commit`,'POST',body),sync:body=>request('/sync','POST',body)};
+ return {status:()=>request('/status'),monitor:()=>request('/monitor'),insights:filters=>request(`/insights?${new URLSearchParams(Object.entries(filters).filter(([,v])=>v!==''&&v!==null&&v!==undefined))}`),preview:(file,metadata)=>{const body=new FormData();body.append('file',file);Object.entries(metadata).forEach(([key,value])=>{if(value)body.append(key,value);});return request('/imports/preview','POST',body,true);},commit:(id,body)=>request(`/imports/${encodeURIComponent(id)}/commit`,'POST',body),sync:body=>request('/sync','POST',body)};
 }
