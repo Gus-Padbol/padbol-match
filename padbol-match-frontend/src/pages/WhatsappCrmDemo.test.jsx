@@ -26,6 +26,7 @@ jest.mock('../utils/crmAdminApi', () => ({
     activities: jest.fn(),
     whatsappMediaList: jest.fn(),
     whatsappHistory: jest.fn(),
+    emailHistory: jest.fn(),
     reviewWhatsappDelivery: jest.fn(),
     resumeWhatsappAutomation: jest.fn(),
     whatsappMedia: jest.fn(),
@@ -44,6 +45,7 @@ describe('CRM histórico unificado', () => {
   beforeEach(() => {
     global.crypto = require('crypto').webcrypto;
     jest.clearAllMocks();
+    crmAdminApi.emailHistory.mockResolvedValue({messages:[],truncated:false});
     crmAdminApi.permissions.mockResolvedValue({
       role: 'superadmin',
       canOperate: false,
@@ -837,6 +839,7 @@ describe('estado honesto del análisis automático', () => {
   });
   test('lead histórico pending y servidor desactivado muestra revisión manual sin progreso falso', async () => {
     jest.clearAllMocks();
+    crmAdminApi.emailHistory.mockResolvedValue({messages:[],truncated:false});
     crmAdminApi.sedes.mockResolvedValue([]);
     crmAdminApi.activities.mockResolvedValue([]);
     crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
@@ -922,3 +925,13 @@ test('commercial record shows essentials first and does not assign a venue or du
 });
 
 test('el admin CRM delega el regreso al header de la aplicación sin banda duplicada',()=>{render(<WhatsappCrmDemo onBack={jest.fn()} backInAppHeader/>);expect(screen.queryByRole('button',{name:'Volver al panel general'})).not.toBeInTheDocument();expect(document.querySelector('.wa-panel-exit')).toBeNull();});
+
+test('la ficha del formulario conserva el original y muestra las respuestas entrantes de correo',async()=>{
+ crmAdminApi.permissions.mockResolvedValue({role:'superadmin',canOperate:false,canAudit:true});
+ crmAdminApi.inbox.mockResolvedValue({items:[{id:'email-thread',source_channel:'email',origin:'web_form:business',identity_used:'Email thread fixture',inbound_body:'Original form request',estado:'nuevo'}]});
+ crmAdminApi.emailHistory.mockResolvedValue({messages:[{id:'received-answer',direction:'inbound',body:'Thank you, I have a location now.',at:'2026-10-28T12:00:00Z'}]});
+ crmAdminApi.activities.mockResolvedValue({items:[]});crmAdminApi.sedes.mockResolvedValue([]);crmAdminApi.nextGenerationOverview.mockResolvedValue({sedes:[],jornadas:[]});
+ render(<WhatsappCrmDemo/>);fireEvent.click(await screen.findByRole('button',{name:/Email thread fixture/}));
+ expect(await screen.findByText('Thank you, I have a location now.')).toHaveAttribute('translate','no');
+ expect(crmAdminApi.emailHistory).toHaveBeenCalledWith('qa-token','email-thread');
+});

@@ -23,3 +23,4 @@ it('downloads an attachment with session authorization and a safe server filenam
   expect(fetch.mock.calls[0][0]).toContain('/conversations/conversation/events/event/whatsapp-media');
   expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer session-token');
 });
+it('consulta el historial de correo del lead con su sesión y sin búsquedas por contacto',async()=>{global.fetch=jest.fn(async()=>({ok:true,json:async()=>({messages:[]})}));await crmAdminApi.emailHistory('fixture','conversation/id');expect(fetch.mock.calls[0][0]).toContain('/api/admin/crm/inbox/conversation%2Fid/email-history');expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer fixture');});

@@ -3,8 +3,10 @@ import {render,screen,fireEvent,waitFor,act} from '@testing-library/react';
 import ContentWorkspacePage from './ContentWorkspacePage';
 jest.mock('../components/ContentVisualAssetsPanel',()=>({__esModule:true,default:()=> <div>Editor visual existente</div>,useContentVisualAssetsAccess:()=>({canEdit:false,loading:false})}));
 let mockMetaAccess={canRead:false};
+let mockAnalyticsAccess={canRead:false};
+jest.mock('../components/analytics/WebAnalyticsPanel',()=>({__esModule:true,default:()=> <div>Analítica privada de la web</div>,useWebAnalyticsAccess:()=>mockAnalyticsAccess}));
 jest.mock('../components/meta/MetaResultsPanel',()=>({__esModule:true,default:()=> <div>Resultados privados</div>,useMetaResultsAccess:()=>mockMetaAccess}));
-afterEach(()=>{mockMetaAccess={canRead:false};});
+afterEach(()=>{mockMetaAccess={canRead:false};mockAnalyticsAccess={canRead:false};});
 jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{access_token:'test'}})}));
 const base={id:'a',version:1,title:'Video Match',campaign:'Padbol Match',language:'es',status:'preparando',assetKind:'final'};
 const apiFor=(approve=false)=>({list:jest.fn().mockResolvedValue({items:[base],can_approve:approve}),read:jest.fn().mockResolvedValue({item:base,history:[]}),create:jest.fn().mockResolvedValue({}),update:jest.fn().mockResolvedValue({})});
@@ -40,3 +42,14 @@ test('no pierde cambios de entrega al registrar una decisión de promoción',asy
 test('publicación permite sus datos propios pero protege cambios pendientes del material',async()=>{const api=apiFor(true);const approved={...base,status:'aprobado'};api.read.mockResolvedValue({item:approved,history:[]});render(<ContentWorkspacePage api={api}/>);fireEvent.click(await screen.findByText('Video Match'));await screen.findByLabelText('Título');fireEvent.change(screen.getByLabelText('Canal (Instagram, YouTube…)'),{target:{value:'Instagram'}});expect(screen.getByText('Añadir publicación al historial')).toBeEnabled();fireEvent.change(screen.getByLabelText('Enlace en la nube de la empresa'),{target:{value:'https://empresa.example/nueva-version'}});expect(screen.getByText('Añadir publicación al historial')).toBeDisabled();});
 
 test('resultados Meta solo aparece con capacidad verificada y abre un panel separado',async()=>{mockMetaAccess={canRead:true};render(<ContentWorkspacePage api={apiFor(true)}/>);fireEvent.click(await screen.findByRole('button',{name:'Resultados de Meta'}));expect(screen.getByText('Resultados privados')).toBeInTheDocument();expect(screen.queryByLabelText('Trabajos registrados')).not.toBeInTheDocument();});
+
+test('analítica web está dentro del panel y solo aparece con capacidad de lectura confirmada',async()=>{
+ const api=apiFor(true);mockAnalyticsAccess={canRead:true};render(<ContentWorkspacePage api={api} embedded/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Analítica web'}));
+ expect(screen.getByText('Analítica privada de la web')).toBeInTheDocument();
+ expect(screen.getByRole('heading',{name:'Contenido y campañas'})).toBeInTheDocument();
+});
+test('el editor de contenido no ve la pestaña privada de analítica web',async()=>{
+ render(<ContentWorkspacePage api={apiFor()}/>);await screen.findByText('Registrar entrega');
+ expect(screen.queryByRole('button',{name:'Analítica web'})).not.toBeInTheDocument();
+});
