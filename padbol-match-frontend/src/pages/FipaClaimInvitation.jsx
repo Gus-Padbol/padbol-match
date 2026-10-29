@@ -20,7 +20,8 @@ export default function FipaClaimInvitation() {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
   const location = useLocation();
-  const token = useMemo(() => String(new URLSearchParams(location.hash.slice(1)).get('token') || searchParams.get('token') || pendingToken() || '').trim(), [searchParams, location.hash]);
+  const [selfService, setSelfService] = useState(false);
+  const token = useMemo(() => selfService ? '' : String(new URLSearchParams(location.hash.slice(1)).get('token') || searchParams.get('token') || pendingToken() || '').trim(), [searchParams, location.hash, selfService]);
   const [player, setPlayer] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,6 +81,7 @@ export default function FipaClaimInvitation() {
       <AppHeader title={text("Perfil oficial FIPA", "Official FIPA profile")} />
       <div className="external-history-wrap">
         <button className="external-history-back" type="button" onClick={() => navigate('/rankings')}>{text("← Ver ranking", "← View ranking")}</button>
+        {token ? <button className="external-history-back" type="button" onClick={() => { try { window.sessionStorage.removeItem(PENDING_TOKEN); } catch {} setSelfService(true); setError(''); navigate('/fipa/reclamar', { replace: true }); }}>{text('Buscar mi perfil sin invitación', 'Find my profile without an invitation')}</button> : null}
         <section className="external-history-hero">
           <span>{text("Ranking oficial FIPA", "Official FIPA ranking")}</span>
           {!token ? <FipaSelfService accessToken={session?.access_token} navigate={navigate} en={en}/> : loading ? <h1>{text('Comprobando invitación…','Checking invitation…')}</h1> : accepted ? (

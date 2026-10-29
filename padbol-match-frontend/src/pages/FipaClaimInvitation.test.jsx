@@ -15,3 +15,5 @@ test('sin sesión abre el ingreso explícito y conserva el enlace privado como r
 
 test('al volver del ingreso recupera la invitación sin poner su token en la URL de login',async()=>{mockHash='';window.sessionStorage.setItem('padbol-fipa-pending-invitation','private-saved-token');render(<FipaClaimInvitation/>);await screen.findByText('Official Player');expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({token:'private-saved-token'});});
 test('la guía sin invitación no intenta aceptar ni validar un token vacío',async()=>{mockHash='';mockSession=null;render(<FipaClaimInvitation/>);expect(await screen.findByText('Vincular mis puntos FIPA')).toBeInTheDocument();expect(fetch).not.toHaveBeenCalled();});
+
+test('permite dejar una invitación vieja y usar la solicitud propia',async()=>{mockSession=null;window.sessionStorage.setItem('padbol-fipa-pending-invitation','personal-token');render(<FipaClaimInvitation/>);fireEvent.click(screen.getByText('Buscar mi perfil sin invitación'));expect(await screen.findByText('Vincular mis puntos FIPA')).toBeInTheDocument();expect(window.sessionStorage.getItem('padbol-fipa-pending-invitation')).toBeNull();});
