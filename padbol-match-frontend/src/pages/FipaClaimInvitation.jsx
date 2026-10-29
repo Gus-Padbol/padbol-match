@@ -2,6 +2,8 @@ import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
+import FipaSelfService from '../components/FipaSelfService';
+import './FipaClaims.css';
 import { useAuth } from '../context/AuthContext';
 import './RecorridoExterno.css';
 import { useTranslation } from 'react-i18next';
@@ -80,7 +82,7 @@ export default function FipaClaimInvitation() {
         <button className="external-history-back" type="button" onClick={() => navigate('/rankings')}>{text("← Ver ranking", "← View ranking")}</button>
         <section className="external-history-hero">
           <span>{text("Ranking oficial FIPA", "Official FIPA ranking")}</span>
-          {!token ? <><h1>{text('Vincular mis puntos FIPA','Link my FIPA points')}</h1><ol><li>{text('Crea tu cuenta personal o usa la que ya tienes. Confirma tu correo.','Create your personal account or use your existing one. Confirm your email.')}</li><li>{text('Indica al coordinador de tu delegación tu nombre del ranking, país y correo de la cuenta. El coordinador verifica tu identidad.','Give your delegation coordinator your ranking name, country and account email. Your coordinator verifies your identity.')}</li><li>{text('Abre el enlace personal que recibas, inicia sesión con ese correo y confirma que el perfil es tuyo. Conservas tus puntos y posición sin duplicarlos.','Open your personal invitation, sign in with that email and confirm the profile is yours. Your points and position are preserved without duplication.')}</li></ol><p>{text('La vinculación del ranking no sustituye la inscripción al torneo. Puedes crear tu cuenta mientras el coordinador prepara tu enlace.','Ranking linking does not replace tournament registration. You can create your account while the coordinator prepares your invitation.')}</p><button type="button" className="external-history-submit" onClick={()=>navigate('/login?login=1&redirect=%2Ffipa%2Freclamar')}>{text('Ingresar o crear mi cuenta','Sign in or create my account')}</button></> : loading ? <h1>{text('Comprobando invitación…','Checking invitation…')}</h1> : accepted ? (
+          {!token ? <FipaSelfService accessToken={session?.access_token} navigate={navigate} en={en}/> : loading ? <h1>{text('Comprobando invitación…','Checking invitation…')}</h1> : accepted ? (
             <><h1>{text('Tu perfil quedó vinculado','Your profile is now linked')}</h1><p>{text('Conservas el nombre, la posición y los puntos oficiales FIPA. Desde ahora este registro aparece asociado a tu cuenta. La inscripción al torneo se confirma por separado.','Your official FIPA name, position and points are preserved and linked to your account. Tournament registration is confirmed separately.')}</p></>
           ) : player ? (
             <>

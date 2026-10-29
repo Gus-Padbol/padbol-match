@@ -1,141 +1,37 @@
-import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
-import { useAuth } from '../context/AuthContext';
+import {useAuth} from '../context/AuthContext';
+import {getApiBaseUrl} from '../utils/apiPublicBaseUrl';
 import './RecorridoExterno.css';
+import './FipaClaims.css';
 
-const API_BASE = getApiBaseUrl();
-
-export default function AdminFipaPlayers() {
-  const navigate = useNavigate();
-  const { session } = useAuth();
-  const [payload, setPayload] = useState({ jugadores: [], total: 0, resumen: {} });
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [contacts, setContacts] = useState({});
-  const [verificationNotes, setVerificationNotes] = useState({});
-  const [verified, setVerified] = useState({});
-  const [links, setLinks] = useState({});
-  const [sending, setSending] = useState({});
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const params = new URLSearchParams();
-      if (query.trim()) params.set('q', query.trim());
-      if (status) params.set('estado', status);
-      const response = await fetch(`${API_BASE}/api/admin/fipa/jugadores?${params}`, {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'No pudimos cargar los jugadores FIPA.');
-      setPayload(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [query, session?.access_token, status]);
-
-  useEffect(() => {
-    const id = window.setTimeout(() => void load(), 250);
-    return () => window.clearTimeout(id);
-  }, [load]);
-
-  const summary = useMemo(() => payload.resumen || {}, [payload.resumen]);
-
-  async function prepareInvitation(player) {
-    const destination = String(contacts[player.id] || '').trim();
-    const destinationType = 'email';
-    if (!verified[player.id] || String(verificationNotes[player.id] || '').trim().length < 10) return setError('Confirma la identidad e indica cómo la verificaste.');
-    if (!destination) return setError('Indica el email o WhatsApp del jugador.');
-    setSending((current) => ({ ...current, [player.id]: true }));
-    setError('');
-    try {
-      const response = await fetch(`${API_BASE}/api/admin/fipa/jugadores/${player.id}/invitacion`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ destino_tipo: destinationType, destino_valor: destination, identidad_verificada: verified[player.id], justificacion: verificationNotes[player.id] }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'No pudimos preparar la invitación.');
-      setLinks((current) => ({ ...current, [player.id]: data.enlace }));
-      await load();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSending((current) => ({ ...current, [player.id]: false }));
-    }
-  }
-
-  return (
-    <main className="external-history-page">
-      <AppHeader title="Jugadores oficiales FIPA" />
-      <div className="external-history-wrap" style={{ width: 'min(1180px,calc(100% - 28px))' }}>
-        <button className="external-history-back" type="button" onClick={() => navigate('/admin?tab=solicitudes')}>← Volver al panel</button>
-        <section className="external-history-hero">
-          <span>Ranking oficial reclamable</span>
-          <h1>Vincular jugadores del ranking FIPA</h1><p>{payload.total} perfiles en esta búsqueda.</p>
-          <p>Son nombres oficiales con puntos, no cuentas creadas. Verifica al jugador con la nómina oficial de su delegación. Usa el correo de su cuenta de Padbol Match y comparte el enlace personal por WhatsApp o correo. No se crean cuentas ni se modifican puntos.</p>
-        </section>
-
-        <section className="external-history-message" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10 }}>
-          <strong>Sin reclamar: {summary.no_reclamado || 0}</strong>
-          <strong>Invitados: {summary.invitado || 0}</strong>
-          <strong>Vinculados: {summary.vinculado || 0}</strong>
-        </section>
-
-        <section className="external-history-message" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre, país o continente" style={{ flex: '1 1 280px', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }} />
-          <select value={status} onChange={(event) => setStatus(event.target.value)} style={{ padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
-            <option value="">Todos los estados</option>
-            <option value="no_reclamado">Sin reclamar</option>
-            <option value="invitado">Invitados</option>
-            <option value="vinculado">Vinculados</option>
-          </select>
-        </section>
-
-        {error ? <div className="external-history-message" style={{ borderColor: '#fecaca', background: '#fef2f2', color: '#991b1b' }}>{error}</div> : null}
-        <section className="external-history-status">
-          {loading ? <p>Cargando…</p> : payload.jugadores.length === 0 ? <p>No hay jugadores para este filtro.</p> : payload.jugadores.map((player) => {
-            const generatedLink = links[player.id];
-            const linked = player.estado_vinculacion === 'vinculado';
-            return (
-              <article key={player.id}>
-                <div>
-                  <strong>#{player.ranking?.posicion || '—'} · {player.ranking?.puntos ?? '—'} puntos</strong>
-                  <span>{player.pais} · {player.continente} · {player.estado_vinculacion.replaceAll('_', ' ')}</span>
-                </div>
-                <h3>{player.nombre_completo}</h3>
-                {!linked ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '150px minmax(220px,1fr) auto', gap: 8, alignItems: 'center' }}>
-                    <label style={{gridColumn:'1 / -1'}}>Correo de la cuenta del jugador<input type="email" value={contacts[player.id] || ''} onChange={(event) => setContacts((current) => ({ ...current, [player.id]: event.target.value }))} placeholder="Correo que el jugador confirmó o confirmará en Padbol Match" style={{ width:'100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)' }} /></label>
-                    <label style={{gridColumn:'1 / -1'}}>Verificación de identidad<input maxLength={500} value={verificationNotes[player.id] || ''} onChange={event=>setVerificationNotes(current=>({...current,[player.id]:event.target.value}))} placeholder="Ej.: identidad y correo confirmados con el responsable de la delegación de Nápoles" style={{width:'100%',padding:10}} /></label>
-                    <label style={{gridColumn:'1 / -1'}}><input type="checkbox" checked={verified[player.id]===true} onChange={event=>setVerified(current=>({...current,[player.id]:event.target.checked}))}/> Comprobé que el nombre, país y correo corresponden a este jugador.</label>
-                    <small style={{gridColumn:'1 / -1'}}>Si preparas otro enlace para este jugador, el anterior dejará de funcionar. No compartas enlaces en grupos.</small>
-                    <button className="external-history-submit" style={{ width: 'auto' }} type="button" disabled={sending[player.id] || !verified[player.id] || !contacts[player.id] || String(verificationNotes[player.id]||'').trim().length<10} onClick={() => prepareInvitation(player)}>{sending[player.id] ? 'Preparando…' : 'Preparar invitación'}</button>
-                  </div>
-                ) : <p>La cuenta del jugador ya está vinculada con este perfil oficial.</p>}
-                {generatedLink ? (
-                  <div className="external-history-ai-result" style={{ marginTop: 12 }}>
-                    <strong>Enlace personal listo: comparte solo con este jugador</strong>
-                    <p style={{ overflowWrap: 'anywhere' }}>{generatedLink}</p>
-                    <button type="button" onClick={() => navigator.clipboard.writeText(generatedLink)}>Copiar enlace</button>
-                  </div>
-                ) : null}
-              </article>
-            );
-          })}
-        </section>
-      </div>
-    </main>
-  );
+const stateLabel={pending:'Pendiente de verificación',approved:'Aprobada',rejected:'No aprobada'};
+export default function AdminFipaPlayers(){
+ const navigate=useNavigate();const {session}=useAuth();const token=session?.access_token;
+ const [snapshot,setSnapshot]=useState(null);const [query,setQuery]=useState('');const [status,setStatus]=useState('pending');
+ const [notes,setNotes]=useState({});const [verified,setVerified]=useState({});const [sending,setSending]=useState(false);const [error,setError]=useState('');
+ const load=useCallback(async()=>{
+  if(!token)return;const response=await fetch(`${getApiBaseUrl()}/api/admin/fipa/solicitudes`,{headers:{Authorization:`Bearer ${token}`}});const data=await response.json();if(!response.ok)throw Error(data.error||'No se pudieron cargar las solicitudes.');return {token,requests:data.solicitudes||[]};
+ },[token]);
+ useEffect(()=>{let active=true;setNotes({});setVerified({});setError('');load().then(data=>{if(active)setSnapshot(data)}).catch(err=>{if(active)setSnapshot({token,error:err.message})});return()=>{active=false}},[load,token]);
+ const current=snapshot?.token===token?snapshot:null;
+ async function refresh(){try{setError('');const data=await load();setSnapshot(data)}catch(err){setError(err.message)}}
+ async function resolve(request,decision){
+  const note=(notes[request.id]||'').trim();if(sending||note.length<10||(decision==='approved'&&!verified[request.id]))return;
+  setSending(true);setError('');
+  try{
+   const response=await fetch(`${getApiBaseUrl()}/api/admin/fipa/solicitudes/${request.id}/resolver`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({decision,nota:note})});const data=await response.json();if(!response.ok)throw Error(data.error||'No se pudo guardar la decisión.');await refresh();
+  }catch(err){setError(err.message)}finally{setSending(false)}
+ }
+ const requests=current?.requests||[];const rows=requests.filter(request=>(!status||request.state===status)&&`${request.jugador?.nombre_completo||''} ${request.jugador?.pais||''} ${request.email||''}`.toLowerCase().includes(query.trim().toLowerCase()));
+ return <main className="external-history-page"><AppHeader title="Vinculaciones FIPA"/><div className="external-history-wrap" style={{width:'min(980px,calc(100% - 28px))'}}>
+  <button className="external-history-back" type="button" onClick={()=>navigate('/admin?tab=solicitudes')}>← Volver al panel</button>
+  <section className="external-history-hero"><span>Coordinación FIPA</span><h1>Solicitudes de vinculación</h1><p>Cada jugador crea su cuenta, busca su nombre en el ranking y solicita la vinculación. Aquí solo revisas su identidad y apruebas o rechazas. No necesitas cargar jugadores ni enviar enlaces individuales.</p><p style={{marginTop:14}}>Comprueba el nombre, país y correo con la nómina o el responsable de su delegación. Aprobar conserva los puntos oficiales; no los modifica.</p><p style={{marginTop:14}}><strong>{requests.filter(request=>request.state==='pending').length} pendientes de revisión</strong></p></section>
+  <div className="fipa-claim-filters"><input aria-label="Buscar solicitudes" placeholder="Buscar por jugador, país o correo" value={query} onChange={event=>setQuery(event.target.value)}/><select aria-label="Estado de las solicitudes" value={status} onChange={event=>setStatus(event.target.value)}><option value="pending">Pendientes</option><option value="approved">Aprobadas</option><option value="rejected">No aprobadas</option><option value="">Todos los estados</option></select><button type="button" className="fipa-claim-refresh" disabled={sending} onClick={refresh}>Actualizar</button></div>
+  {error||current?.error?<p role="alert">{error||current.error}</p>:null}
+  {!current?<p role="status">Cargando solicitudes…</p>:!current.error&&!rows.length?<div className="fipa-claim-notice">No hay solicitudes para este filtro. Puedes cambiar a «Todos los estados» o actualizar la lista.</div>:rows.map(request=><article className="fipa-claim-review" key={request.id}><h2>{request.jugador?.nombre_completo||'Perfil oficial pendiente de revisión'}</h2><p><strong>{request.jugador?.pais} · {request.jugador?.puntos} puntos · posición {request.jugador?.posicion}</strong></p><p>Cuenta del jugador: <strong>{request.email}</strong><br/>Solicitud: {new Date(request.created_at).toLocaleString()} · {stateLabel[request.state]||request.state}</p>
+   {request.state==='pending'?<><label>Comprobación de identidad o motivo de la decisión<textarea aria-label={`Nota de revisión de ${request.jugador?.nombre_completo}`} maxLength={500} value={notes[request.id]||''} onChange={event=>setNotes(previous=>({...previous,[request.id]:event.target.value}))} placeholder="Ej.: identidad y correo confirmados con el responsable de la delegación"/></label><label className="fipa-claim-check" style={{display:'flex'}}><input type="checkbox" checked={verified[request.id]===true} onChange={event=>setVerified(previous=>({...previous,[request.id]:event.target.checked}))}/>Verifiqué que esta cuenta pertenece al jugador del ranking.</label><div className="fipa-claim-actions"><button className="external-history-submit" type="button" disabled={sending||!verified[request.id]||(notes[request.id]||'').trim().length<10} onClick={()=>resolve(request,'approved')}>Aprobar vinculación</button><button className="external-history-submit fipa-claim-reject" type="button" disabled={sending||(notes[request.id]||'').trim().length<10} onClick={()=>resolve(request,'rejected')}>No aprobar</button></div></>:<p>{request.review_note}</p>}
+  </article>)}
+ </div></main>;
 }
-
