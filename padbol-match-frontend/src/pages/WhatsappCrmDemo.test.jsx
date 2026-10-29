@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights, originalLeadMessage } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../components/CommercialAdvisorAccess', () => () => <div>Equipo comercial</div>);
@@ -974,4 +974,11 @@ describe('Correos institucionales clasificados mediante el servidor',()=>{
  test.each([{sourceLabel:'Correo electrónico'},{id:'wrong-case',channel:'form'},{id:'institutional',channel:'whatsapp'}])('un DTO inválido %j no habilita el panel comercial',async item=>{
   resolve.mockResolvedValue(item);render(<WhatsappCrmDemo/>);await screen.findByRole('button',{name:'Volver a comprobar'});expect(screen.queryByLabelText('Gestión comercial')).not.toBeInTheDocument();
  });
+});
+
+test('original message recovers full inbound beyond the legacy field cap without splitting message labels', () => {
+ const full = 'Dear team,\n' + 'Project detail. '.repeat(110) + '\nEmail: contact in the message\nBest regards, Kay';
+ const lead = {inbound_body:'Nombre: Kay\nMensaje: '+full+'\nconsentPrivacy: true\nconsentTerms: true',qualification_data:{form_submission:{fields:{Mensaje:full.slice(0,1000)}}}};
+ expect(originalLeadMessage(lead)).toBe(full);
+ expect(originalLeadMessage({inbound_body:'Unrelated body',qualification_data:lead.qualification_data})).toBe(full.slice(0,1000));
 });
