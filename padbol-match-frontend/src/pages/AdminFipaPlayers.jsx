@@ -16,7 +16,8 @@ export default function AdminFipaPlayers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [contacts, setContacts] = useState({});
-  const [contactTypes, setContactTypes] = useState({});
+  const [verificationNotes, setVerificationNotes] = useState({});
+  const [verified, setVerified] = useState({});
   const [links, setLinks] = useState({});
   const [sending, setSending] = useState({});
 
@@ -49,7 +50,8 @@ export default function AdminFipaPlayers() {
 
   async function prepareInvitation(player) {
     const destination = String(contacts[player.id] || '').trim();
-    const destinationType = contactTypes[player.id] || 'whatsapp';
+    const destinationType = 'email';
+    if (!verified[player.id] || String(verificationNotes[player.id] || '').trim().length < 10) return setError('Confirma la identidad e indica cómo la verificaste.');
     if (!destination) return setError('Indica el email o WhatsApp del jugador.');
     setSending((current) => ({ ...current, [player.id]: true }));
     setError('');
@@ -60,7 +62,7 @@ export default function AdminFipaPlayers() {
           Authorization: `Bearer ${session?.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ destino_tipo: destinationType, destino_valor: destination }),
+        body: JSON.stringify({ destino_tipo: destinationType, destino_valor: destination, identidad_verificada: verified[player.id], justificacion: verificationNotes[player.id] }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'No pudimos preparar la invitación.');
@@ -80,14 +82,13 @@ export default function AdminFipaPlayers() {
         <button className="external-history-back" type="button" onClick={() => navigate('/admin?tab=solicitudes')}>← Volver al panel</button>
         <section className="external-history-hero">
           <span>Ranking oficial reclamable</span>
-          <h1>{payload.total || 209} perfiles FIPA</h1>
-          <p>Son nombres oficiales con puntos, no cuentas creadas. Carga un contacto y prepara un enlace para que cada jugador vincule su propia cuenta.</p>
+          <h1>Vincular jugadores del ranking FIPA</h1><p>{payload.total} perfiles en esta búsqueda.</p>
+          <p>Son nombres oficiales con puntos, no cuentas creadas. Verifica al jugador con la nómina oficial de su delegación. Usa el correo de su cuenta de Padbol Match y comparte el enlace personal por WhatsApp o correo. No se crean cuentas ni se modifican puntos.</p>
         </section>
 
         <section className="external-history-message" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10 }}>
           <strong>Sin reclamar: {summary.no_reclamado || 0}</strong>
           <strong>Invitados: {summary.invitado || 0}</strong>
-          <strong>En revisión: {summary.reclamacion_pendiente || 0}</strong>
           <strong>Vinculados: {summary.vinculado || 0}</strong>
         </section>
 
@@ -97,7 +98,6 @@ export default function AdminFipaPlayers() {
             <option value="">Todos los estados</option>
             <option value="no_reclamado">Sin reclamar</option>
             <option value="invitado">Invitados</option>
-            <option value="reclamacion_pendiente">En revisión</option>
             <option value="vinculado">Vinculados</option>
           </select>
         </section>
@@ -116,17 +116,16 @@ export default function AdminFipaPlayers() {
                 <h3>{player.nombre_completo}</h3>
                 {!linked ? (
                   <div style={{ display: 'grid', gridTemplateColumns: '150px minmax(220px,1fr) auto', gap: 8, alignItems: 'center' }}>
-                    <select value={contactTypes[player.id] || 'whatsapp'} onChange={(event) => setContactTypes((current) => ({ ...current, [player.id]: event.target.value }))} style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)' }}>
-                      <option value="whatsapp">WhatsApp</option>
-                      <option value="email">Email</option>
-                    </select>
-                    <input value={contacts[player.id] || ''} onChange={(event) => setContacts((current) => ({ ...current, [player.id]: event.target.value }))} placeholder="Contacto privado" style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)' }} />
-                    <button className="external-history-submit" style={{ width: 'auto' }} type="button" disabled={sending[player.id]} onClick={() => prepareInvitation(player)}>{sending[player.id] ? 'Preparando…' : 'Preparar invitación'}</button>
+                    <label style={{gridColumn:'1 / -1'}}>Correo de la cuenta del jugador<input type="email" value={contacts[player.id] || ''} onChange={(event) => setContacts((current) => ({ ...current, [player.id]: event.target.value }))} placeholder="Correo que el jugador confirmó o confirmará en Padbol Match" style={{ width:'100%', padding: 10, borderRadius: 8, border: '1px solid var(--border)' }} /></label>
+                    <label style={{gridColumn:'1 / -1'}}>Verificación de identidad<input maxLength={500} value={verificationNotes[player.id] || ''} onChange={event=>setVerificationNotes(current=>({...current,[player.id]:event.target.value}))} placeholder="Ej.: identidad y correo confirmados con el responsable de la delegación de Nápoles" style={{width:'100%',padding:10}} /></label>
+                    <label style={{gridColumn:'1 / -1'}}><input type="checkbox" checked={verified[player.id]===true} onChange={event=>setVerified(current=>({...current,[player.id]:event.target.checked}))}/> Comprobé que el nombre, país y correo corresponden a este jugador.</label>
+                    <small style={{gridColumn:'1 / -1'}}>Si preparas otro enlace para este jugador, el anterior dejará de funcionar. No compartas enlaces en grupos.</small>
+                    <button className="external-history-submit" style={{ width: 'auto' }} type="button" disabled={sending[player.id] || !verified[player.id] || !contacts[player.id] || String(verificationNotes[player.id]||'').trim().length<10} onClick={() => prepareInvitation(player)}>{sending[player.id] ? 'Preparando…' : 'Preparar invitación'}</button>
                   </div>
                 ) : <p>La cuenta del jugador ya está vinculada con este perfil oficial.</p>}
                 {generatedLink ? (
                   <div className="external-history-ai-result" style={{ marginTop: 12 }}>
-                    <strong>Enlace listo para compartir manualmente</strong>
+                    <strong>Enlace personal listo: comparte solo con este jugador</strong>
                     <p style={{ overflowWrap: 'anywhere' }}>{generatedLink}</p>
                     <button type="button" onClick={() => navigator.clipboard.writeText(generatedLink)}>Copiar enlace</button>
                   </div>

@@ -1,3 +1,4 @@
+import OfficialFipaProfile from '../components/OfficialFipaProfile';
 import { profileAvatarPath } from '../utils/profileAvatarPath';
 import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, fechaDesdeReservasJugador } from '../utils/reservaJugadorActions';
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
@@ -2537,6 +2538,8 @@ export default function MiPerfil() {
           {avisoPerfilTorneoMsg}
         </div>
       ) : null}
+
+      {!ocultarUiJugadorPorAdmin ? <OfficialFipaProfile accessToken={session?.access_token} /> : null}
 
       <ReputacionJugadorPanel
         apiBaseUrl={API_BASE_URL}
