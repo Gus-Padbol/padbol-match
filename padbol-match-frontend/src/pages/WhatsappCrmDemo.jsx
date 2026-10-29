@@ -474,6 +474,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const isCommercial = Boolean(verifiedCommercialCase) || activeArea === 'commercial' || (active?.source_channel === 'whatsapp' && waContext?.topic === WHATSAPP_TOPICS.sede);
   const isCommercialForm = isWebForm && activeArea === 'commercial';
   const leadHighlights = commercialLeadHighlights(activeDetails, leadAnalysis);
+  const displayedLeadFields = ['Nombre', 'Apellido', 'Email', 'WhatsApp', 'Asunto', 'Información adicional', 'Ciudad o región', 'Ciudad', 'País', 'Capital estimado de inversión', 'Inversión estimada', 'Inversión', 'Presupuesto', 'Budget', 'investment', 'investmentBudget'].map(label => fieldKey(fieldLabel(label)));
+  const extraLeadDetails = commercialFormDetails(activeDetails).filter(([label]) => !displayedLeadFields.includes(fieldKey(fieldLabel(label))));
   const nextGenerationDetails = [
     ['Nombre', detailValue(activeDetails, 'Nombre del participante', 'Participante', 'Nombre')],
     ['Categoría', detailValue(activeDetails, 'Categoría', 'Categoria')],
@@ -924,21 +926,12 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     <button type="submit" disabled={busy || !reviewConfirmed || !reviewOutcome || reviewEvidence.trim().length < 10 || reviewEvidence.trim().length > 2048 || (reviewOutcome === 'delivered' && (!reviewProviderId.trim() || reviewProviderId.trim().length > 512))}>Registrar revisión</button>
                   </form> : null}
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
-                  <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div>
+                  {!isCommercialForm ? <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div> : null}
                   {isCommercialForm && activeDetails.length ? <article className="wa-lead-card">
-                    <header><span>Nuevo lead</span><div><h3>{leadName}</h3>{detailValue(activeDetails, 'Empresa o club', 'Perfil actual') ? <p>{detailValue(activeDetails, 'Empresa o club', 'Perfil actual')}</p> : null}</div></header>
-                    <section className="wa-lead-section"><h4>Qué está buscando</h4><strong translate="no" className="notranslate">{formatCrmEventText(detailValue(activeDetails, 'Asunto') || active.subject) || 'Consulta Padbol'}</strong></section>
-                    <dl>
-                      <div><dt>Cantidad de canchas</dt><dd>{detailValue(activeDetails, 'Cantidad de canchas') || 'No informado en el formulario'}</dd></div>
-                      {detailValue(activeDetails, 'Destino de la cancha') ? <div><dt>Destino</dt><dd>{detailValue(activeDetails, 'Destino de la cancha')}</dd></div> : null}
-                      {detailValue(activeDetails, 'Disponibilidad de espacio', 'Ubicación') ? <div><dt>Espacio disponible</dt><dd>{detailValue(activeDetails, 'Disponibilidad de espacio', 'Ubicación')}</dd></div> : null}
-                      <div><dt>Ubicación</dt><dd>{[detailValue(activeDetails, 'Ciudad o región'), detailValue(activeDetails, 'País')].filter(Boolean).join(', ') || detailValue(activeDetails, 'Territorio solicitado') || 'No informado en el formulario'}</dd></div>
-                    </dl>
-                    <section className="wa-lead-note"><h4>Mensaje de la persona</h4><p translate="no" className="notranslate" style={{ whiteSpace: 'pre-wrap' }}>{detailValue(activeDetails, 'Información adicional') || 'No se registró un mensaje adicional.'}</p></section>
-                    <details className="wa-lead-note"><summary>Ver todos los datos del formulario</summary><dl>{commercialFormDetails(activeDetails).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></details>
-                    {active.inbound_body ? <details className="wa-lead-note"><summary>Ver envío original completo</summary><p translate="no" className="notranslate" style={{ whiteSpace: 'pre-wrap' }}>{active.inbound_body}</p></details> : null}
+                    <section className="wa-lead-section"><h3>Consulta</h3><strong translate="no" className="notranslate">{formatCrmEventText(detailValue(activeDetails, 'Asunto') || active.subject) || 'Consulta Padbol'}</strong></section>
+                    <section className="wa-lead-note"><h4>Mensaje original</h4><p translate="no" className="notranslate" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{detailValue(activeDetails, 'Información adicional') || active.inbound_body || 'No se registró un mensaje adicional.'}</p></section>
+                    {extraLeadDetails.length ? <details className="wa-lead-note"><summary>Más datos del formulario</summary><dl>{extraLeadDetails.map(([label, value]) => <div key={label}><dt>{label}</dt><dd translate="no" className="notranslate">{value}</dd></div>)}</dl></details> : null}
                   </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p translate="no" className="notranslate">{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${{sent:'Enviado',pending:'Pendiente de confirmación',cancelled:'Entrega no confirmada'}[message.status] || 'Estado no disponible'}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p translate="no" className="notranslate">{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
-                  {active.source_channel === 'email' && <CrmEmailHistory key={active.id} recordId={active.id} loadHistory={loadEmailHistory} revision={historyRevision}/> }
                   {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
                   {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
                   {whatsappAttachments.length ? <section aria-label="Archivos de WhatsApp">
@@ -965,6 +958,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     </div>
                     <footer>{leadAnalysis.pdf_url ? <a href={leadAnalysis.pdf_url} target="_blank" rel="noreferrer">Ver informe completo en PDF <span>↗</span></a> : <span className="wa-pdf-pending">Informe detallado pendiente de asociar</span>}<small>Análisis integrado a esta ficha · sin duplicar el contacto</small></footer>
                   </article> : <article className="wa-analysis-pending"><div><strong>{analysisNotice.title}</strong><p>{analysisNotice.message}</p></div>{analysisNotice.badge ? <b>{analysisNotice.badge}</b> : null}</article>}
+                  {active.source_channel === 'email' && <CrmEmailHistory key={active.id} recordId={active.id} loadHistory={loadEmailHistory} revision={historyRevision} initialBody={active.inbound_body} initialMessage={detailValue(activeDetails, 'Información adicional')}/> }
                   {active.audio_type ? <div className="wa-system">⌁ Audio entrante: {active.audio_type} {active.transcript ? `· ${active.transcript}` : ''}</div> : null}
                 </div>
                 <div className="wa-composer">

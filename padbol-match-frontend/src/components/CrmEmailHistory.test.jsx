@@ -10,3 +10,19 @@ test('avisa si el historial está truncado en vez de prometer que muestra todo',
 test('actualiza tras enviar una respuesta con la misma ficha abierta',async()=>{const load=jest.fn().mockResolvedValue({messages:[]});const {rerender}=render(<CrmEmailHistory recordId="lead" loadHistory={load} revision={0}/>);await screen.findByText(/Todavía no hay correspondencia/);load.mockResolvedValue({messages});rerender(<CrmEmailHistory recordId="lead" loadHistory={load} revision={1}/>);expect(await screen.findByText('Re: Padbol')).toBeInTheDocument();expect(load).toHaveBeenCalledTimes(2);});
 test('refresco automático es solo lectura y limpia el temporizador al salir',async()=>{jest.useFakeTimers();const load=jest.fn().mockResolvedValue({messages:[]});const {unmount}=render(<CrmEmailHistory recordId="lead" loadHistory={load}/>);await act(async()=>{await Promise.resolve()});load.mockResolvedValue({messages});await act(async()=>{jest.advanceTimersByTime(60000);await Promise.resolve()});expect(screen.getByText('Re: Padbol')).toBeInTheDocument();expect(load).toHaveBeenCalledTimes(2);unmount();await act(async()=>{jest.advanceTimersByTime(60000)});expect(load).toHaveBeenCalledTimes(2);jest.useRealTimers();});
 test('los cuerpos se muestran como texto y nunca ejecutan HTML recibido',async()=>{const load=jest.fn().mockResolvedValue({messages:[{id:'html',direction:'inbound',body:'<img src=x onerror="bad()">'}]});const {container}=render(<CrmEmailHistory recordId="lead" loadHistory={load}/>);expect(await screen.findByText('<img src=x onerror="bad()">')).toBeInTheDocument();expect(container.querySelector('img')).toBeNull();});
+
+test('muestra el mensaje inicial una sola vez y conserva respuestas incluso si repiten el texto',async()=>{
+ const load=jest.fn().mockResolvedValue({messages:[
+  {id:'initial',direction:'inbound',body:'Original customer message'},
+  {id:'reply',direction:'outbound',body:'Our reply'},
+  {id:'followup',direction:'inbound',body:'Original customer message'}
+ ]});
+ render(<CrmEmailHistory recordId="lead" loadHistory={load} initialBody="Original customer message"/>);
+ expect(await screen.findByText('Our reply')).toBeInTheDocument();
+ expect(screen.getAllByText('Original customer message')).toHaveLength(1);
+});
+test('no oculta otro correo que sea distinto del mensaje inicial',async()=>{
+ const load=jest.fn().mockResolvedValue({messages:[{id:'other',direction:'inbound',body:'A different reply'}]});
+ render(<CrmEmailHistory recordId="lead" loadHistory={load} initialBody="Initial message"/>);
+ expect(await screen.findByText('A different reply')).toBeInTheDocument();
+});

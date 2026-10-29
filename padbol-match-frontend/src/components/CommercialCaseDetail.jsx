@@ -35,7 +35,7 @@ export default function CommercialCaseDetail({item, api}) {
     {data.status==='suspended'&&<p role="status">Esta consulta está en revisión; no se puede responder por ahora.</p>}
     {data.subject&&<h4 translate="no" className="notranslate">{data.subject}</h4>}{data.body&&<p translate="no" className="notranslate" style={{whiteSpace:'pre-wrap'}}>{data.body}</p>}
     {(data.inbound||[]).map(m=><div key={m.id}><p translate="no" className="notranslate">{m.body}</p>{m.hasMedia === true && <button type="button" onClick={()=>download(m.id)}>Descargar archivo</button>}</div>)}
-    {item.channel!=='whatsapp'&&<CrmEmailHistory key={item.id} recordId={item.id} loadHistory={loadEmailHistory} revision={emailRevision}/>}
+    {item.channel!=='whatsapp'&&<CrmEmailHistory key={item.id} recordId={item.id} loadHistory={loadEmailHistory} revision={emailRevision} initialBody={data.body}/>}
     {(item.channel==='whatsapp'?(data.replies||[]):[]).map(m=><p translate="no" className="notranslate" key={m.id}>Respuesta: {m.body} · {m.status}</p>)}
     {(data.activities||[]).map(a=><p key={a.id}>Nota: {a.summary || a.body || ''} {a.next_step ? `· Próximo paso: ${a.next_step}` : ''}</p>)}
     {activities.map(a=><p key={`commercial-${a.id}`}>Nota: {a.body}</p>)}
