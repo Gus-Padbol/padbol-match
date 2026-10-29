@@ -648,6 +648,7 @@ export default function Rankings() {
     <div style={containerStyle}>
       <AppHeader title={t('ranking.titulo')} />
       <div style={innerStyle}>
+        <p style={{fontSize:13,margin:'0 0 14px'}}><a href="/fipa/reclamar" style={{color:'var(--text-primary)',textDecoration:'underline'}}>¿Ya tienes puntos FIPA? / Already have FIPA points? →</a></p>
         {/* Deporte del ranking (encima de Local / Nacional / FIPA) */}
         <div style={{ marginBottom: '12px' }}>
           <label
