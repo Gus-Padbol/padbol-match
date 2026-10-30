@@ -3,7 +3,8 @@ import {render,screen,waitFor,fireEvent} from '@testing-library/react';
 import CommercialCrmPage from './CommercialCrmPage';
 import {createCommercialAssignmentsApi} from '../utils/commercialAssignmentsApi';
 const mockSignOut = jest.fn();
-jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{access_token:'test'},signOutAndClear:mockSignOut})}));
+let mockSession={access_token:'test',user:{id:'nico'}};
+jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:mockSession,signOutAndClear:mockSignOut})}));
 jest.mock('./WhatsappCrmDemo',()=>({requiredScope})=> <div data-testid="crm">Consultas actuales {requiredScope}</div>);
 jest.mock('../components/CommercialTeamWorkspace',()=>()=> <div>Vista del equipo</div>);
 jest.mock('../utils/commercialAssignmentsApi',()=>({createCommercialAssignmentsApi:jest.fn()}));
@@ -22,4 +23,9 @@ test('mantiene el alcance comercial y permite cerrar sesión', async()=>{
 
 test('el asesor entra directamente a sus consultas',async()=>{
  createCommercialAssignmentsApi.mockReturnValue({getRole:jest.fn().mockResolvedValue({role:'advisor'})});render(<CommercialCrmPage/>);expect(await screen.findByText('Vista del equipo')).toBeInTheDocument();
+});
+test('renovar token mantiene montada la vista elegida y no vuelve a consultas actuales',async()=>{
+ const api={getRole:jest.fn().mockResolvedValue({role:'manager'})};createCommercialAssignmentsApi.mockReturnValue(api);const view=render(<CommercialCrmPage/>);
+ fireEvent.click(await screen.findByText('Área del equipo comercial'));const detail=screen.getByText('Vista del equipo');
+ mockSession={access_token:'renewed',user:{id:'nico'}};view.rerender(<CommercialCrmPage/>);expect(screen.getByText('Vista del equipo')).toBe(detail);await waitFor(()=>expect(api.getRole).toHaveBeenCalledTimes(2));expect(screen.getByText('Vista del equipo')).toBe(detail);
 });
