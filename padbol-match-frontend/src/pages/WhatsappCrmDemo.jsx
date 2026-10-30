@@ -995,7 +995,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
 
               <aside className="wa-detail">
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
-                {isCommercial ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory={agendaLeadId===active.id} /> : null}
+                {isCommercial && !hiddenOnly ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory={agendaLeadId===active.id} /> : null}
                 {waContext && !isCommercial ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}

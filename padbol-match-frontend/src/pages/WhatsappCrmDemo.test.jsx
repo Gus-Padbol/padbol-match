@@ -990,3 +990,20 @@ test('WhatsApp distinguishes provider acceptance from confirmed delivery and nev
  expect(whatsappDeliveryLabel({status:'sent',deliveryStatus:'failed'})).toBe('No entregado');
  expect(whatsappDeliveryLabel({status:'pending',deliveryStatus:'read'})).toBe('Pendiente de confirmación');
 });
+
+test('archived test conversations never mount active commercial management',async()=>{
+ jest.clearAllMocks();
+ crmAdminApi.sedes.mockResolvedValue([]);
+ crmAdminApi.activities.mockResolvedValue([]);
+ crmAdminApi.nextGenerationOverview.mockResolvedValue({sedes:[],jornadas:[]});
+ crmAdminApi.permissions.mockResolvedValue({role:'superadmin',canAudit:true,canOperate:false});
+ crmAdminApi.emailHistory.mockResolvedValue({messages:[],truncated:false});
+ crmAdminApi.inbox.mockResolvedValue([{id:'archive-commercial',source_channel:'email',origin:'web_form:Consulta Padbol · Quiero una cancha Padbol',contact:{nombre:'Archived test'},inbound_body:'Original preserved',estado:'nuevo'}]);
+ render(<WhatsappCrmDemo/>);
+ expect(await screen.findByText('Gestión de archive-commercial')).toBeInTheDocument();
+ fireEvent.click(screen.getByText('Más opciones'));
+ fireEvent.click(screen.getByRole('button',{name:'Registros de prueba archivados'}));
+ await screen.findByText('Registros de prueba archivados. No forman parte de la bandeja activa.');
+ await waitFor(()=>expect(screen.queryByText('Gestión de archive-commercial')).not.toBeInTheDocument());
+ expect(crmAdminApi.setTestVisibility).not.toHaveBeenCalled();
+});
