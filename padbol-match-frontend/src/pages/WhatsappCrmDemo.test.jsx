@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights, originalLeadMessage } from './WhatsappCrmDemo';
+import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights, originalLeadMessage, whatsappDeliveryLabel } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';
 
 jest.mock('../components/CommercialAdvisorAccess', () => () => <div>Equipo comercial</div>);
@@ -188,7 +188,7 @@ describe('CRM histórico unificado', () => {
     render(<WhatsappCrmDemo />);
     expect(await screen.findByText('Primer mensaje')).toBeInTheDocument();
     expect(screen.getByText('Respuesta enviada')).toBeInTheDocument();
-    expect(screen.getByText(/Enviado/)).toBeInTheDocument();
+    expect(screen.getByText(/Aceptado por WhatsApp · entrega sin confirmar/)).toBeInTheDocument();
     expect(screen.getByText(/hay mensajes anteriores/)).toBeInTheDocument();
   });
 
@@ -981,4 +981,12 @@ test('original message recovers full inbound beyond the legacy field cap without
  const lead = {inbound_body:'Nombre: Kay\nMensaje: '+full+'\nconsentPrivacy: true\nconsentTerms: true',qualification_data:{form_submission:{fields:{Mensaje:full.slice(0,1000)}}}};
  expect(originalLeadMessage(lead)).toBe(full);
  expect(originalLeadMessage({inbound_body:'Unrelated body',qualification_data:lead.qualification_data})).toBe(full.slice(0,1000));
+});
+
+test('WhatsApp distinguishes provider acceptance from confirmed delivery and never infers old receipts',()=>{
+ expect(whatsappDeliveryLabel({status:'sent'})).toBe('Aceptado por WhatsApp · entrega sin confirmar');
+ expect(whatsappDeliveryLabel({status:'sent',deliveryStatus:'delivered'})).toBe('Entregado');
+ expect(whatsappDeliveryLabel({status:'sent',deliveryStatus:'read'})).toBe('Leído');
+ expect(whatsappDeliveryLabel({status:'sent',deliveryStatus:'failed'})).toBe('No entregado');
+ expect(whatsappDeliveryLabel({status:'pending',deliveryStatus:'read'})).toBe('Pendiente de confirmación');
 });
