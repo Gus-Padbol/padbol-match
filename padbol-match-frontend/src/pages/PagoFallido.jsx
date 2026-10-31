@@ -1,3 +1,4 @@
+import { releasePendingReservation } from '../utils/paymentReturn';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useCallback } from 'react';
 import { useNavigate, useLocation, createSearchParams } from 'react-router-dom';
@@ -42,6 +43,7 @@ export default function PagoFallido() {
   const { navDock } = useHubNavLayout();
   const { session } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [releaseError,setReleaseError]=useState('');
   const [cancelReservaModalOpen, setCancelReservaModalOpen] = useState(false);
 
   const onIntentarDeNuevo = useCallback(() => {
@@ -53,24 +55,13 @@ export default function PagoFallido() {
   const onCancelarReserva = useCallback(async () => {
     setBusy(true);
     const p = readMpReservaPendingSlot();
+    setReleaseError('');
     try {
-      if (p?.sede && p.fecha && p.hora && p.cancha != null) {
-        const body = {
-          sede: String(p.sede).trim(),
-          fecha: String(p.fecha).trim(),
-          hora: String(p.hora).trim(),
-          cancha: parseInt(String(p.cancha), 10),
-        };
-        if (p.email) body.email = String(p.email).trim().toLowerCase();
-        await fetch(`${API_BASE}/api/reservas/liberar-slot-pendiente`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+      await releasePendingReservation({apiBase:API_BASE,pending:p});
+      const current=readMpReservaPendingSlot();
+      if(current?.release_token!==p.release_token||String(current?.reserva_id)!==String(p.reserva_id)){
+        setReleaseError('Se liberó la reserva anterior. Conservamos el nuevo proceso de reserva.');return;
       }
-    } catch {
-      /* best-effort */
-    } finally {
       clearMpReservaPendingSlot();
       clearReservaFlowSessionStorage();
       clearReservaReturnLocalStorage();
@@ -80,6 +71,9 @@ export default function PagoFallido() {
         scheduleHubEntryScrollReset();
       } else if (sid) navigate(`/sede/${sid}`, { replace: true });
       else navigate('/reservar', { replace: true });
+    } catch(error) {
+      setReleaseError(error.message || 'No se pudo comprobar la liberación.');
+    } finally {
       setBusy(false);
     }
   }, [navigate, session?.user]);
@@ -96,6 +90,7 @@ export default function PagoFallido() {
       }}
     >
       <AppHeader title={t('pago.titulo')} />
+      {releaseError&&<p role="alert">{releaseError}</p>}
       <div
         style={{
           flex: 1,
