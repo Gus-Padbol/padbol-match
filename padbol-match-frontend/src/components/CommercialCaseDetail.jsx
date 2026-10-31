@@ -4,23 +4,27 @@ import CrmReplyTextarea from './CrmReplyTextarea';
 import CrmEmailHistory from './CrmEmailHistory';
 import CommercialLeadManagement from './CommercialLeadManagement';
 
-export default function CommercialCaseDetail({item, api, disabled=false}) {
+export default function CommercialCaseDetail({item, api, disabled=false, revalidationRevision=0}) {
   const [activities,setActivities]=useState([]);
   const [emailRevision,setEmailRevision]=useState(0);
   const loadEmailHistory=useCallback(id=>api.emailHistory(id,item.channel),[api,item.channel]);
   const [data,setData]=useState(null), [error,setError]=useState('');
   const [readAllowed,setReadAllowed]=useState(false);
+  const [authenticationRejected,setAuthenticationRejected]=useState(false);
   const [body,setBody]=useState(''), [busy,setBusy]=useState(false), [uncertain,setUncertain]=useState(false), [notice,setNotice]=useState('');
   const attempt=useRef(null);
+  const activeContext=useRef(null);activeContext.current={api,id:item.id,channel:item.channel};
+  const isCurrent=()=>activeContext.current.api===api&&activeContext.current.id===item.id&&activeContext.current.channel===item.channel;
   async function load() {
     const [result, activityData]=await Promise.all([api.readCase(item.id,item.channel),api.listActivities(item.id,item.channel)]);
+    if(!isCurrent())return;
     setActivities(activityData.activities || []);
     setData(result);
   }
-  useEffect(()=>{setData(null);setError('');setBody('');setUncertain(false);setNotice('');attempt.current=null;},[item.id,item.channel]);
+  useEffect(()=>{setData(null);setError('');setBody('');setUncertain(false);setNotice('');setAuthenticationRejected(false);attempt.current=null;},[item.id,item.channel]);
   useEffect(()=>{let active=true;setReadAllowed(false);
-    Promise.all([api.readCase(item.id,item.channel),api.listActivities(item.id,item.channel)]).then(([result,activityData])=>{if(active){setActivities(activityData.activities || []);setData(result);setReadAllowed(true);setError('');}}).catch(error=>{if(active){if(error?.status===403||error?.status===404)setData(null);setError('No se pudo abrir la consulta.');}});
-    return ()=>{active=false};},[item.id,item.channel,api]);
+    Promise.all([api.readCase(item.id,item.channel),api.listActivities(item.id,item.channel)]).then(([result,activityData])=>{if(active){setActivities(activityData.activities || []);setData(result);setReadAllowed(true);setAuthenticationRejected(false);setError('');}}).catch(error=>{if(active){if(error?.status===403||error?.status===404)setData(null);if(error?.status===401&&error?.code==='UNAUTHENTICATED')setAuthenticationRejected(true);setError('No se pudo abrir la consulta.');}});
+    return ()=>{active=false};},[item.id,item.channel,api,revalidationRevision]);
   async function send(event){event.preventDefault();if(disabled||!readAllowed||!body.trim()||busy||uncertain||(data?.status==='suspended'||data?.progressState==='cerrado'))return;
     if(!window.crypto?.randomUUID){setError('No se puede enviar desde este navegador.');return;}
     setBusy(true);setError('');setNotice('');
@@ -35,11 +39,18 @@ export default function CommercialCaseDetail({item, api, disabled=false}) {
         (error?.status===403&&error?.code==='FORBIDDEN')||
         (error?.status===400&&['INVALID_CHANNEL','INVALID_REPLY'].includes(error?.code))||
         (error?.status===409&&error?.code==='CHANNEL_UNAVAILABLE');
-      if(rejected){setUncertain(false);setError(error.code==='UNAUTHENTICATED'
+      if(rejected){setUncertain(false);setAuthenticationRejected(error.code==='UNAUTHENTICATED');setError(error.code==='UNAUTHENTICATED'
         ? 'Tu sesión no es válida. Conserva el borrador e inicia sesión nuevamente. La respuesta no se envió.'
         : 'La respuesta fue rechazada antes del envío. Conserva el borrador y revisa el acceso o los datos antes de intentar nuevamente.');}
       else {setUncertain(true);setError('');}
     }finally{setBusy(false);}
+  }
+  async function revalidateSession(){
+    if(busy||uncertain||typeof api.revalidateSession!=='function')return;
+    setBusy(true);
+    try{await api.revalidateSession();if(!isCurrent())return;await load();if(!isCurrent())return;setReadAllowed(true);setAuthenticationRejected(false);setError('');}
+    catch(error){if(!isCurrent())return;setReadAllowed(false);if(error?.status===403||error?.status===404)setData(null);setError('No se pudo verificar la sesión. Conserva el borrador e inicia sesión nuevamente.');}
+    finally{setBusy(false);}
   }
   async function download(eventId){try{const blob=await api.media(item.id,eventId);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='archivo-recibido';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch{setError('No se pudo descargar el archivo.');}}
   if(error&&!data)return <p role="alert">{error}</p>;
@@ -57,5 +68,5 @@ export default function CommercialCaseDetail({item, api, disabled=false}) {
     <CommercialLeadManagement key={`${item.channel}:${item.id}`} api={api} conversation={{id:item.conversationId || item.id,source_channel:item.channel==='whatsapp'?'whatsapp':'email'}} caseItem={item} showHistory={true} onUpdated={()=>load()}/>
     <form onSubmit={send}><label>Respuesta <CrmReplyTextarea aria-label="Respuesta" value={body} onChange={e=>setBody(e.target.value)} maxLength={4096}/></label><button disabled={disabled||busy||uncertain||data.status==='suspended'||data.progressState==='cerrado'||!body.trim()}>Enviar respuesta</button></form>
     {notice&&<p role="status">{notice}</p>}{uncertain&&<p role="alert">No se pudo confirmar el envío. Revisa el historial antes de volver a enviar.</p>}{error&&<p role="alert">{error}</p>}
-  </fieldset></section>;
+  </fieldset>{authenticationRejected&&!disabled&&!uncertain&&typeof api.revalidateSession==='function'&&<button type="button" disabled={busy} onClick={revalidateSession}>Volver a comprobar sesión</button>}</section>;
 }

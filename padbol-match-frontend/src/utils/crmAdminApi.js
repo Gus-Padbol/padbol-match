@@ -1,9 +1,11 @@
 // CRM usa el proxy del mismo dominio. Ese proxy apunta al backend canónico de
 // CRM y evita heredar el backend general antiguo configurado para otras áreas.
 import { getApiBaseUrl } from './apiPublicBaseUrl';
+import {assertCrmSessionFresh,recordCrmSessionRejection} from './crmSessionFreshness';
 const API_BASE_URL = getApiBaseUrl();
 
 async function request(path, token, options = {}) {
+  assertCrmSessionFresh(token);
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     cache: 'no-store',
@@ -15,8 +17,10 @@ async function request(path, token, options = {}) {
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) {
+    recordCrmSessionRejection(token,response.status,data?.code);
     const error = new Error(data?.error || 'No se pudo completar la acción');
     error.status = response.status;
+    error.code = data?.code;
     throw error;
   }
   return data;
@@ -36,10 +40,15 @@ export const crmAdminApi = {
   setTestVisibility: (token, id, hide, expectedVersion) => request(`/api/admin/crm/inbox/${encodeURIComponent(id)}/test-visibility`, token, { method:'POST', body:JSON.stringify({hide,expectedVersion}) }),
   whatsappMediaList: (token, id) => request(`/api/admin/crm/conversations/${encodeURIComponent(id)}/whatsapp-media`, token),
   whatsappMedia: async (token, id, eventId) => {
+    assertCrmSessionFresh(token);
     const response = await fetch(`${API_BASE_URL}/api/admin/crm/conversations/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/whatsapp-media`, {
       cache: 'no-store', headers: { Authorization: `Bearer ${token}` },
     });
-    if (!response.ok) throw Object.assign(new Error('No se pudo descargar el archivo.'), { status: response.status });
+    if (!response.ok) {
+      const failure=typeof response.json==='function'?await response.json().catch(()=>({})):{};
+      recordCrmSessionRejection(token,response.status,failure.code||failure.error);
+      throw Object.assign(new Error('No se pudo descargar el archivo.'),{status:response.status,code:failure.code||failure.error});
+    }
     const disposition = response.headers.get('Content-Disposition') || '';
     const filename = disposition.match(/filename="(adjunto-whatsapp(?:\.[a-z0-9]{1,8})?)"/i)?.[1] || 'adjunto-whatsapp';
     return { blob: await response.blob(), filename };

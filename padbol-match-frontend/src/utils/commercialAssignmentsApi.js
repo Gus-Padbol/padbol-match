@@ -1,8 +1,10 @@
 import { getApiBaseUrl } from './apiPublicBaseUrl';
+import {assertCrmSessionFresh,recordCrmSessionRejection,clearCrmSessionRejection} from './crmSessionFreshness';
 
 // The backend verifies the session, role, case scope and assignment version.
 export function createCommercialAssignmentsApi(token) {
-  async function request(path, method = 'GET', body) {
+  async function request(path, method = 'GET', body, revalidate=false) {
+    if(!revalidate)assertCrmSessionFresh(token);
     const response = await fetch(`${getApiBaseUrl()}${path}`, {
       method, cache: 'no-store', headers: { Authorization: `Bearer ${token}`, ...(body ? {'Content-Type':'application/json'} : {}) },
       ...(body ? {body:JSON.stringify(body)} : {}),
@@ -10,6 +12,7 @@ export function createCommercialAssignmentsApi(token) {
     if (!response.ok) {
       const failure=typeof response.json==='function'?await response.json().catch(()=>({})):{};
       const code=failure.code||failure.error;
+      recordCrmSessionRejection(token,response.status,code);
       const messages={ADVISOR_REQUEST_DETAILS_CONFLICT:'Ya hay un alta pendiente para este correo. Revisá sus datos y condiciones en la lista antes de habilitarla.',CLOSURE_OUTCOME_REQUIRED:'Selecciona si la venta se concretó o no avanzó.',INVALID_CLOSURE_OUTCOME:'Elige un resultado comercial válido: Venta concretada o No avanzó.',FOLLOWUP_NOT_READY:'El seguimiento todavía no está habilitado. Revisa las plantillas aprobadas y la disponibilidad de envío.'};
       throw Object.assign(new Error('COMMERCIAL_ACTION_UNAVAILABLE'), {status:response.status,code,userMessage:messages[code]});
     }
@@ -18,13 +21,24 @@ export function createCommercialAssignmentsApi(token) {
   const cases = '/api/admin/crm/commercial-cases';
   const advisors = '/api/admin/crm/commercial-advisors';
   return {
+    // Explicit user recovery probes authentication only; never replay a mutation.
+    revalidateSession: async()=>{
+      const result=await request('/api/admin/crm/commercial-role','GET',undefined,true);
+      if(!['manager','advisor'].includes(result?.role))throw Object.assign(new Error('COMMERCIAL_ACTION_UNAVAILABLE'),{status:403,code:'FORBIDDEN'});
+      clearCrmSessionRejection(token);return result;
+    },
     resolveConversation: id => request(`/api/admin/crm/commercial-case-by-conversation/${encodeURIComponent(id)}`),
     getRole: () => request('/api/admin/crm/commercial-role'),
     listCases: () => request(cases),
     progress: (id, channel, expectedVersion, state, nextStep, nextContactAt, reminderHours, closureOutcome) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep,...(closureOutcome ? {closureOutcome} : {}),...(nextContactAt !== undefined ? {nextContactAt,reminderHours:reminderHours || [24,8]} : {})}),
     media: async (id, eventId) => {
+      assertCrmSessionFresh(token);
       const response = await fetch(`${getApiBaseUrl()}${cases}/${encodeURIComponent(id)}/events/${encodeURIComponent(eventId)}/media`, {headers:{Authorization:`Bearer ${token}`},cache:'no-store'});
-      if (!response.ok) throw new Error('MEDIA_UNAVAILABLE');
+      if (!response.ok) {
+        const failure=typeof response.json==='function'?await response.json().catch(()=>({})):{};
+        recordCrmSessionRejection(token,response.status,failure.code||failure.error);
+        throw Object.assign(new Error('MEDIA_UNAVAILABLE'),{status:response.status,code:failure.code||failure.error});
+      }
       return response.blob();
     },
     emailHistory: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/email-history?channel=${encodeURIComponent(channel)}`),

@@ -1,0 +1,5 @@
+import {assertCrmSessionFresh,recordCrmSessionRejection} from './crmSessionFreshness';
+afterEach(()=>jest.restoreAllMocks());
+test.each([0,9999999999999])('local clock %s cannot reject a session without a backend verdict',now=>{jest.spyOn(Date,'now').mockReturnValue(now);for(const token of ['malformed','header.bad.signature','header.e30.signature','header.eyJleHAiOjF9.signature'])expect(()=>assertCrmSessionFresh(token)).not.toThrow();});
+test.each(['UNAUTHENTICATED','CRM_ADMIN_UNAUTHENTICATED'])('only a confirmed %s authentication rejection blocks that token',code=>{const token='rejected-'+code;recordCrmSessionRejection(token,401,code);expect(()=>assertCrmSessionFresh(token)).toThrow(expect.objectContaining({status:401,code:'UNAUTHENTICATED'}));expect(()=>assertCrmSessionFresh('renewed-'+code)).not.toThrow();});
+test.each([[401,'PROVIDER_REJECTED'],[403,'UNAUTHENTICATED'],[403,'FORBIDDEN'],[503,'UNAUTHENTICATED'],[401,undefined]])('ambiguous %s/%s never trips the authentication guard',(status,code)=>{const token='unknown-'+status+'-'+code;recordCrmSessionRejection(token,status,code);expect(()=>assertCrmSessionFresh(token)).not.toThrow();});
