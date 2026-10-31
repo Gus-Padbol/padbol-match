@@ -1,4 +1,4 @@
-import React from 'react';import {render,screen} from '@testing-library/react';import CommercialCaseDetail from './CommercialCaseDetail';
+import React from 'react';import {render,screen,fireEvent,waitFor} from '@testing-library/react';import CommercialCaseDetail from './CommercialCaseDetail';
 jest.mock('./CommercialLeadManagement',()=>({caseItem})=><div>Gestión y agenda de {caseItem.id}</div>);
 test('loads a pending call and prevents response to suspended case',async()=>{
  const api={listActivities:jest.fn().mockResolvedValue({activities:[]}),readCase:jest.fn().mockResolvedValue({status:'suspended',contact:{name:'Cliente'},inbound:[{id:'1',body:'Hola'}]}),listCalls:jest.fn().mockResolvedValue({calls:[{id:'c',status:'pending'}]})};
@@ -29,3 +29,13 @@ test('el formulario comercial carga las respuestas por correo en la misma ficha 
 });
 
 test('un correo directo conserva su procedencia aunque use el canal comercial form',async()=>{const api={listActivities:jest.fn().mockResolvedValue({activities:[]}),readCase:jest.fn().mockResolvedValue({sourceLabel:'Correo electrónico',body:'Original email',contact:{name:'Cliente'}}),emailHistory:jest.fn().mockResolvedValue({messages:[]})};render(<CommercialCaseDetail item={{id:'mail-case',channel:'form'}} api={api}/>);expect(await screen.findByText('Origen: Correo electrónico')).toBeInTheDocument();expect(screen.queryByText('Origen: Formulario web')).not.toBeInTheDocument();});
+
+test.each([['form',16384],['whatsapp',4096]])('editor %s conserva Unicode, bloquea exceso y no reintenta al editar',async(channel,max)=>{
+ Object.defineProperty(window,'crypto',{configurable:true,value:{randomUUID:jest.fn(()=> '12345678-1234-4234-8234-123456789abc')}});
+ const api={listActivities:jest.fn().mockResolvedValue({activities:[]}),readCase:jest.fn().mockResolvedValue({status:'open',contact:{name:'Fixture'}}),emailHistory:jest.fn().mockResolvedValue({messages:[]}),reply:jest.fn().mockRejectedValue(Object.assign(Error('invalid'),{status:400,code:'INVALID_REPLY'}))};
+ const {rerender}=render(<CommercialCaseDetail item={{id:'fixture',channel}} api={api}/>);await screen.findByText('Fixture');
+ const editor=screen.getByLabelText('Respuesta'),send=screen.getByRole('button',{name:'Enviar respuesta'}),body='😀'.repeat(channel==='whatsapp'?max/2:max);
+ expect(editor).not.toHaveAttribute('maxlength');fireEvent.change(editor,{target:{value:body+'x'}});expect(editor).toHaveValue(body+'x');expect(send).toBeDisabled();fireEvent.submit(editor.closest('form'));expect(api.reply).not.toHaveBeenCalled();
+ fireEvent.change(editor,{target:{value:body}});expect(send).toBeEnabled();expect(api.reply).not.toHaveBeenCalled();fireEvent.click(send);await waitFor(()=>expect(api.reply).toHaveBeenCalledTimes(1));await screen.findByText(/rechazada antes del envío/);expect(editor).toHaveValue(body);
+ const newer={...api};rerender(<CommercialCaseDetail item={{id:'fixture',channel}} api={newer}/>);await waitFor(()=>expect(send).toBeEnabled());expect(editor).toHaveValue(body);expect(api.reply).toHaveBeenCalledTimes(1);fireEvent.click(send);await waitFor(()=>expect(api.reply).toHaveBeenCalledTimes(2));expect(api.reply.mock.calls[1]).toEqual(api.reply.mock.calls[0]);
+});

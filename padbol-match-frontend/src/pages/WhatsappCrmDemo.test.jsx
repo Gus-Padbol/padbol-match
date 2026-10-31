@@ -530,6 +530,14 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.handoff).not.toHaveBeenCalled();
   });
 
+  it.each(['x','⚽','😀'])('conserva el borrador largo y cuenta caracteres Unicode antes de reservar (%s)', async char => {
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,canAudit:false,emailSendEnabled:true,whatsappSendEnabled:false});
+    crmAdminApi.inbox.mockResolvedValue([{id:'email-length',estado:'nuevo',source_channel:'email',origin:'web_form:contacto',contact:{nombre:'Fixture',email_normalized:'fixture@example.invalid'},inbound_body:'Consulta fixture'}]);crmAdminApi.activities.mockResolvedValue([]);crmAdminApi.reply.mockResolvedValue({status:'sent'});
+    const {container}=render(<WhatsappCrmDemo/>);const send=await screen.findByRole('button',{name:'Enviar por email'}),editor=container.querySelector('#crm-response'),body=char.repeat(16385);
+    fireEvent.change(editor,{target:{value:body}});expect(editor).toHaveValue(body);expect(screen.getByText('16385 / 16384 caracteres')).toBeInTheDocument();expect(screen.getByRole('alert')).toHaveTextContent('El borrador se conserva');expect(send).toBeDisabled();fireEvent.click(send);expect(crmAdminApi.reply).not.toHaveBeenCalled();
+    fireEvent.change(editor,{target:{value:char.repeat(16384)}});expect(send).toBeEnabled();expect(editor).toHaveValue(char.repeat(16384));expect(crmAdminApi.reply).not.toHaveBeenCalled();fireEvent.click(send);await waitFor(()=>expect(crmAdminApi.reply).toHaveBeenCalledTimes(1));expect(crmAdminApi.reply.mock.calls[0][2]).toBe(char.repeat(16384));
+  });
+
   it('ofrece respuesta por email solo cuando el servidor habilita el canal para un operador', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: false, emailSendEnabled: true, whatsappSendEnabled: false });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'email-capability', estado: 'nuevo', source_channel: 'email', origin: 'web_form:contacto', contact: { nombre: 'Contacto fixture', email_normalized: 'contact@example.invalid' }, inbound_body: 'Consulta fixture' }]);

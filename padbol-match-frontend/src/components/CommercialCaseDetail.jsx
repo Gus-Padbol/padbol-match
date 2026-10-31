@@ -1,3 +1,4 @@
+import {crmReplyLimit,crmReplyLength} from '../utils/crmReplyLimits';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {commercialCaseSourceLabel} from '../utils/commercialCaseSourceLabel';
 import CrmReplyTextarea from './CrmReplyTextarea';
@@ -12,6 +13,7 @@ export default function CommercialCaseDetail({item, api, disabled=false, revalid
   const [readAllowed,setReadAllowed]=useState(false);
   const [authenticationRejected,setAuthenticationRejected]=useState(false);
   const [body,setBody]=useState(''), [busy,setBusy]=useState(false), [uncertain,setUncertain]=useState(false), [notice,setNotice]=useState('');
+  const replyLimit=crmReplyLimit(item.channel),replyLength=crmReplyLength(body,item.channel),replyTooLong=replyLength>replyLimit;
   const attempt=useRef(null);
   const activeContext=useRef(null);activeContext.current={api,id:item.id,channel:item.channel};
   const isCurrent=()=>activeContext.current.api===api&&activeContext.current.id===item.id&&activeContext.current.channel===item.channel;
@@ -25,7 +27,7 @@ export default function CommercialCaseDetail({item, api, disabled=false, revalid
   useEffect(()=>{let active=true;setReadAllowed(false);
     Promise.all([api.readCase(item.id,item.channel),api.listActivities(item.id,item.channel)]).then(([result,activityData])=>{if(active){setActivities(activityData.activities || []);setData(result);setReadAllowed(true);setAuthenticationRejected(false);setError('');}}).catch(error=>{if(active){if(error?.status===403||error?.status===404)setData(null);if(error?.status===401&&error?.code==='UNAUTHENTICATED')setAuthenticationRejected(true);setError('No se pudo abrir la consulta.');}});
     return ()=>{active=false};},[item.id,item.channel,api,revalidationRevision]);
-  async function send(event){event.preventDefault();if(disabled||!readAllowed||!body.trim()||busy||uncertain||(data?.status==='suspended'||data?.progressState==='cerrado'))return;
+  async function send(event){event.preventDefault();if(replyTooLong||!replyLimit||disabled||!readAllowed||!body.trim()||busy||uncertain||(data?.status==='suspended'||data?.progressState==='cerrado'))return;
     if(!window.crypto?.randomUUID){setError('No se puede enviar desde este navegador.');return;}
     setBusy(true);setError('');setNotice('');
     if(!attempt.current||attempt.current.body!==body.trim())attempt.current={body:body.trim(),id:window.crypto.randomUUID()};
@@ -66,7 +68,7 @@ export default function CommercialCaseDetail({item, api, disabled=false, revalid
     {(data.activities||[]).map(a=><p key={a.id}>Nota: {a.summary || a.body || ''} {a.next_step ? `· Próximo paso: ${a.next_step}` : ''}</p>)}
     {activities.map(a=><p key={`commercial-${a.id}`}>Nota: {a.body}</p>)}
     <CommercialLeadManagement key={`${item.channel}:${item.id}`} api={api} conversation={{id:item.conversationId || item.id,source_channel:item.channel==='whatsapp'?'whatsapp':'email'}} caseItem={item} showHistory={true} onUpdated={()=>load()}/>
-    <form onSubmit={send}><label>Respuesta <CrmReplyTextarea aria-label="Respuesta" value={body} onChange={e=>setBody(e.target.value)} maxLength={4096}/></label><button disabled={disabled||busy||uncertain||data.status==='suspended'||data.progressState==='cerrado'||!body.trim()}>Enviar respuesta</button></form>
+    <form onSubmit={send}><label>Respuesta <CrmReplyTextarea aria-label="Respuesta" value={body} onChange={e=>setBody(e.target.value)} aria-describedby="commercial-reply-length"/></label><p id="commercial-reply-length">{replyLength} / {replyLimit} caracteres</p>{replyTooLong&&<p role="alert">La respuesta supera el límite de {replyLimit} caracteres. El borrador se conserva.</p>}<button disabled={!replyLimit||replyTooLong||disabled||busy||uncertain||data.status==='suspended'||data.progressState==='cerrado'||!body.trim()}>Enviar respuesta</button></form>
     {notice&&<p role="status">{notice}</p>}{uncertain&&<p role="alert">No se pudo confirmar el envío. Revisa el historial antes de volver a enviar.</p>}{error&&<p role="alert">{error}</p>}
   </fieldset>{authenticationRejected&&!disabled&&!uncertain&&typeof api.revalidateSession==='function'&&<button type="button" disabled={busy} onClick={revalidateSession}>Volver a comprobar sesión</button>}</section>;
 }
