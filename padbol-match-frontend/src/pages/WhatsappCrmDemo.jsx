@@ -1,3 +1,4 @@
+import {crmReplyLimit,crmReplyLength} from '../utils/crmReplyLimits';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
@@ -646,8 +647,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     } finally { setBusy(false); }
   };
 
+  const replyLimit = crmReplyLimit(active?.source_channel);
+  const replyLength = crmReplyLength(replyText,active?.source_channel);
+  const replyTooLong = replyLength > replyLimit;
   const submitReply = async () => {
-    if (!active || busy || !activeCanOperate || !canReply || !replyText.trim()) return;
+    if (!replyLimit || replyTooLong || !active || busy || !activeCanOperate || !canReply || !replyText.trim()) return;
     setBusy(true);
     setNotice(null);
     try {
@@ -985,9 +989,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                 <div className="wa-composer">
                   <div className="wa-draft-label"><label htmlFor="crm-response">Respuesta</label><small>{replyUnavailableReason || (canReplyEmail ? (supportEmail ? 'Se enviará desde support@padbol.com al contacto registrado' : 'Se enviará por email al contacto registrado') : canReplyWhatsapp ? (CRM_IS_QA ? 'Se enviará por WhatsApp desde QA' : 'Se enviará por WhatsApp') : 'Envío no habilitado')}</small></div>
                   <CrmReplyTextarea id="crm-response" disabled={busy || !activeCanOperate || !canReply} value={replyText} onChange={(e) => { replyComposition.current = null; setReplyText(e.target.value); }} placeholder={replyUnavailableReason || 'Escribe una respuesta…'} />
+                  <p>{replyLength} / {replyLimit} caracteres</p>{replyTooLong && <p role="alert">La respuesta supera el límite de {replyLimit} caracteres. El borrador se conserva.</p>}
                   <div className="wa-composer-actions">
                     <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
-                    <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={busy || !activeCanOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
+                    <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={!replyLimit || replyTooLong || busy || !activeCanOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
                   </div>
                   {notice ? <p className="wa-notice">{notice}</p> : null}
                 </div>
