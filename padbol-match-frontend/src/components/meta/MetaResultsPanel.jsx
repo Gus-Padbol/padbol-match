@@ -1,16 +1,9 @@
-import React,{useEffect,useMemo,useState} from 'react';
-import {useAuth} from '../../context/AuthContext';
-import {createMetaResultsApi} from '../../utils/metaResultsApi';
+import React,{useEffect,useState} from 'react';
+import {useMetaResultsAccess} from './useMetaResultsAccess';
 import {formatMetaDate,formatMetaMoney,formatMetaNumber,metaLevelLabels,UK_CAMPAIGN_ID,UK_ADSET_ID} from './metaResultPresentation';
 import './MetaResultsPanel.css';
 import MetaPerformanceMonitor from './MetaPerformanceMonitor';
-export function useMetaResultsAccess({api:providedApi,enabled=true}={}){
- const {session}=useAuth();
- const api=useMemo(()=>providedApi||createMetaResultsApi(session?.access_token||''),[providedApi,session?.access_token]);
- const [status,setStatus]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState('');
- useEffect(()=>{if(!enabled)return undefined;let active=true;setLoading(true);setStatus(null);setError('');api.status().then(data=>{if(active)setStatus(data);}).catch(err=>{if(active&&err.status!==403)setError(err.message);}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[api,enabled]);
- return {api,status,loading,error,canRead:!!status?.canRead,setStatus};
-}
+export {useMetaResultsAccess} from './useMetaResultsAccess';
 const baseFilters={since:'',until:'',level:'campaign',campaignId:'',adsetId:'',adId:''};
 const sourceNames={none:'Sin resultados cargados',csv:'CSV importado',csv_import:'CSV importado',meta_api:'API de Meta',api:'API de Meta'};
 const resultNames={reach:'Alcance diario informado',link_click:'Clics en el enlace',link_clicks:'Clics en el enlace',post_engagement:'Interacciones',messaging_conversation_started_7d:'Conversaciones iniciadas atribuidas por Meta','onsite_conversion.messaging_conversation_started_7d':'Conversaciones iniciadas atribuidas por Meta','offsite_conversion.fb_pixel_complete_registration':'Registros atribuidos por Meta'};

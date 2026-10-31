@@ -1,6 +1,6 @@
 import React from 'react';
 import {useAuth} from '../context/AuthContext';
-import {useMetaResultsAccess} from './meta/MetaResultsPanel';
+import {useMetaResultsAccess} from './meta/useMetaResultsAccess';
 
 function AuthorizedEntry() {
   const access = useMetaResultsAccess();
