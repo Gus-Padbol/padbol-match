@@ -2117,6 +2117,9 @@ export default function ReservaForm() {
       } else if (res.ok && data.init_point) {
         localStorage.setItem('ultima_sede', String(filtros.sede_id));
         saveMpReservaPendingSlot({
+          reserva_id: data.reserva_id,
+          release_token: data.release_token,
+          release_token_expires_at: data.release_token_expires_at,
           sede: sedeSeleccionada.nombre,
           fecha: formData.fecha,
           hora: formData.hora,

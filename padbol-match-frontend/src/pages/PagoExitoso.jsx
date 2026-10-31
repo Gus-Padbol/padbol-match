@@ -1,3 +1,5 @@
+import { useAuth } from '../context/AuthContext';
+import { readPaymentConfirmation } from '../utils/paymentReturn';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
@@ -7,7 +9,7 @@ import {
   hubContentPaddingTopCss,
   hubMainPaddingBottomCss,
 } from '../constants/hubLayout';
-import { clearMpReservaPendingSlot } from '../utils/reservaReturnUrl';
+import { clearMpReservaPendingSlot,readMpReservaPendingSlot } from '../utils/reservaReturnUrl';
 import { supabase } from '../supabaseClient';
 import { IconGeroUbicacion } from '../components/icons/GeroIcons';
 import SuccessPaymentHeroCheck from '../components/SuccessPaymentHeroCheck';
@@ -40,6 +42,8 @@ function PagoExitosoHeroCheck() {
 
 export default function PagoExitoso() {
   const { t } = useTranslation();
+  const { session } = useAuth();
+  const ownerId=session?.user?.id||null;
   const navigate = useNavigate();
   const location = useLocation();
   const { navDock } = useHubNavLayout();
@@ -48,7 +52,8 @@ export default function PagoExitoso() {
   const paymentId = params.get('payment_id') || params.get('collection_id');
 
   const [saving, setSaving] = useState(true);
-  const [reserva, setReserva] = useState(null);
+  const [ownedReserva,setOwnedReserva]=useState(null);
+  const [verifiedContext,setVerifiedContext]=useState(null);
   const [confirmError, setConfirmError] = useState(false);
   /** null | 'reserva' | 'torneo' | 'partido' */
   const [pagoKind, setPagoKind] = useState(null);
@@ -56,7 +61,11 @@ export default function PagoExitoso() {
   const [qrToken, setQrToken] = useState(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState('');
-  const savedRef = useRef(false);
+  const [pending,setPending]=useState(false);
+  const [verificationRevision,setVerificationRevision]=useState(0);
+  const paymentContext=JSON.stringify([paymentId,ownerId,verificationRevision]);
+  const reserva=ownedReserva?.context===paymentContext?ownedReserva.row:null;
+  const [detailNotice,setDetailNotice]=useState('');
   const qrCanvasWrapRef = useRef(null);
 
   const reservaSedeId = useMemo(() => {
@@ -96,52 +105,39 @@ export default function PagoExitoso() {
   const { getSlot: getHubJugarSlot } = useHubJugarSponsorSlots();
 
   useEffect(() => {
-    if (savedRef.current) return;
-
-    if (!paymentId) {
-      savedRef.current = true;
-      setConfirmError(true);
-      setSaving(false);
-      return;
-    }
-
-    savedRef.current = true;
-    const url = `${API_BASE}/api/pago-exitoso?payment_id=${encodeURIComponent(paymentId)}`;
-
-    fetch(url)
-      .then((r) => r.json().then((d) => ({ ok: r.ok, data: d })))
-      .then(({ ok, data }) => {
-        if (!ok || data?.ok === false) {
-          setConfirmError(true);
-          return;
-        }
-
-        clearMpReservaPendingSlot();
-        const tipo = String(data.tipo || 'reserva').toLowerCase();
-
-        if (tipo === 'torneo') {
-          setPagoKind('torneo');
-          setTorneoInscripcion({
-            torneo_id: data.torneo_id,
-            equipo_id: data.equipo_id,
-          });
-          return;
-        }
-
-        if (tipo === 'partido') {
-          setPagoKind('partido');
-          if (data.reserva) setReserva(data.reserva);
-          return;
-        }
-
-        setPagoKind('reserva');
-        setReserva(data.reserva || data.reservation || null);
-      })
-      .catch(() => {
-        setConfirmError(true);
-      })
-      .finally(() => setSaving(false));
-  }, [paymentId]);
+    const controller=new AbortController();let active=true;
+    setSaving(true);setPending(false);setConfirmError(false);setOwnedReserva(null);setDetailNotice('');
+    (async()=>{
+      try {
+        if(!paymentId)throw new Error('Falta referencia de pago.');
+        const result=await readPaymentConfirmation({url:`${API_BASE}/api/pago-exitoso?payment_id=${encodeURIComponent(paymentId)}`,signal:controller.signal});
+        if(!active)return;
+        if(!result.confirmed){setPending(true);return;}
+        const data=result.data;
+        const stored=readMpReservaPendingSlot();
+        if(stored?.reserva_id!=null&&String(stored.reserva_id)===String(data.reserva_id))clearMpReservaPendingSlot();
+        const tipo=String(data.tipo||'reserva').toLowerCase();
+        if(tipo==='torneo'&&data.torneo_id&&data.equipo_id){setPagoKind('torneo');setTorneoInscripcion({torneo_id:data.torneo_id,equipo_id:data.equipo_id});return;}
+        setPagoKind(tipo==='partido'?'partido':'reserva');
+        setVerifiedContext(paymentContext);setSaving(false);
+        // The public status DTO deliberately has no personal booking details.
+        // Obtain them only through the existing authenticated owner endpoint.
+        try {
+          const {data:sessionData}=await supabase.auth.getSession();if(!active)return;
+          const token=sessionData?.session?.access_token;
+          if(!token||!ownerId||sessionData.session.user?.id!==ownerId){setDetailNotice('Inicia sesión y revisa Mis reservas para ver los detalles y el QR.');return;}
+          const response=await fetch(`${API_BASE}/api/reservas/mis-reservas`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal});
+          const rows=await response.json();if(!active)return;
+          if(!response.ok||!Array.isArray(rows))throw new Error('Details unavailable');
+          const own=rows.find(row=>String(row.id)===String(data.reserva_id));
+          if(!own)throw new Error('Booking not visible');
+          setOwnedReserva({ownerId,context:paymentContext,row:own});
+        }catch{if(active)setDetailNotice('La confirmación está registrada. Revisa Mis reservas para consultar los detalles.');}
+      }catch(error){if(active&&error.name!=='AbortError')setConfirmError(true);}
+      finally{if(active){setVerifiedContext(paymentContext);setSaving(false);}}
+    })();
+    return()=>{active=false;controller.abort();};
+  },[paymentId,verificationRevision,ownerId,paymentContext]);
 
   useEffect(() => {
     const rid = reserva?.id;
@@ -201,7 +197,7 @@ export default function PagoExitoso() {
     <div className="pago-exitoso" style={pagePadding}>
       <AppHeader title={t('pago.titulo')} />
       <div className="pago-exitoso__panel">
-        {saving ? (
+        {(saving||verifiedContext!==paymentContext) ? (
           <>
             <div className="pago-exitoso__emoji" aria-hidden>
               ⏳
@@ -209,17 +205,18 @@ export default function PagoExitoso() {
             <h1 className="pago-exitoso__title pago-exitoso__title--loading">Confirmando pago...</h1>
             <p className="pago-exitoso__muted">Registrando tu operación, un momento.</p>
           </>
+        ) : pending ? (
+          <><h1>Pago pendiente de confirmación</h1><p>No hay una confirmación de la reserva todavía. Puedes volver a consultar sin repetir el pago.</p><button type="button" onClick={()=>setVerificationRevision(value=>value+1)}>Volver a consultar</button></>
         ) : confirmError ? (
           <>
             <div className="pago-exitoso__emoji" aria-hidden>
               ⚠️
             </div>
-            <h1 className="pago-exitoso__title pago-exitoso__title--warn">Pago exitoso, pero hubo un problema</h1>
+            <h1 className="pago-exitoso__title pago-exitoso__title--warn">No pudimos comprobar el pago</h1>
             <p className="pago-exitoso__lead" style={{ marginBottom: 20 }}>
-              Tu pago fue procesado correctamente
-              {paymentId ? ` (#${paymentId})` : ''}, pero no pudimos completar el registro automáticamente.
-              Por favor contacta a la sede con el número de pago.
+              No hay una confirmación comprobada todavía. No repitas el pago; revisa Mis reservas o consulta a la sede con la referencia.
             </p>
+            <button type="button" onClick={()=>setVerificationRevision(value=>value+1)}>Volver a consultar</button>
             <button type="button" className="pago-exitoso__btn pago-exitoso__btn--primary" onClick={() => navigate('/')}>
               Continuar
             </button>
@@ -278,8 +275,9 @@ export default function PagoExitoso() {
             <PagoExitosoHeroCheck />
             <h1 className="pago-exitoso__title">¡Pago exitoso!</h1>
             <p className="pago-exitoso__lead">
-              Tu reserva está confirmada. Recibirás la confirmación por WhatsApp.
+              Tu reserva está confirmada.
             </p>
+            {detailNotice&&<p role="status">{detailNotice}</p>}
             <PadcoinsCampaignPlayerHint campaign={pagoPadcoinsCampaign} variant="success" />
             <div className="pago-exitoso__slot-wrap">
               <HubJugarSlotRect slot={getHubJugarSlot(HUB_JUGAR_SLOT.CONFIRMACION_BANNER)} borderRadius={10} />
