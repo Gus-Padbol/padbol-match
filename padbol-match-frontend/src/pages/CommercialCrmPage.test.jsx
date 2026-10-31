@@ -8,6 +8,8 @@ jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:mockSession,signO
 jest.mock('./WhatsappCrmDemo',()=>({requiredScope})=> <div data-testid="crm">Consultas actuales {requiredScope}</div>);
 jest.mock('../components/CommercialTeamWorkspace',()=>()=> <div>Vista del equipo</div>);
 jest.mock('../utils/commercialAssignmentsApi',()=>({createCommercialAssignmentsApi:jest.fn()}));
+beforeEach(()=>{global.fetch=jest.fn().mockResolvedValue({ok:false,status:403,json:async()=>({})});});
+afterEach(()=>{jest.restoreAllMocks();});
 test('conserva la bandeja anterior si el servicio comercial no está disponible',async()=>{
  createCommercialAssignmentsApi.mockReturnValue({getRole:jest.fn().mockRejectedValue(new Error('no disponible'))});render(<CommercialCrmPage/>);
  await waitFor(()=>expect(screen.getByTestId('crm')).toBeInTheDocument());expect(screen.queryByText('Área del equipo comercial')).not.toBeInTheDocument();
