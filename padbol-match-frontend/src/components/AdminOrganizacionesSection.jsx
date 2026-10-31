@@ -1,5 +1,5 @@
 import { stripAdminEmoji } from '../i18n/adminTranslation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const fieldStyle = {
   width: '100%',
@@ -60,6 +60,9 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
   const [organizaciones, setOrganizaciones] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadedFor, setLoadedFor] = useState(null);
+  const generation = useRef(0);
+  const mutationRunning = useRef(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -70,22 +73,34 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
   const [admin, setAdmin] = useState({ nombre: '', email: '' });
 
   const load = useCallback(async () => {
-    if (!accessToken) return;
+    const currentGeneration = ++generation.current;
+    setLoadedFor(null);
+    setOrganizaciones([]);
+    if (!accessToken) {
+      setError('Inicia sesión para cargar las cadenas.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       const rows = await requestJson(`${apiBaseUrl}/api/admin/organizaciones`, accessToken);
-      const list = Array.isArray(rows) ? rows : [];
+      if (currentGeneration !== generation.current) return;
+      if (!Array.isArray(rows)) throw new Error('La respuesta de cadenas no es válida. Vuelve a actualizar.');
+      const list = rows;
+      setLoadedFor({ accessToken, apiBaseUrl });
       setOrganizaciones(list);
       setSelectedId((current) => (list.some((row) => row.id === current) ? current : list[0]?.id || ''));
     } catch (loadError) {
-      setError(loadError.message);
+      if (currentGeneration === generation.current) setError(loadError.message);
     } finally {
-      setLoading(false);
+      if (currentGeneration === generation.current) setLoading(false);
     }
   }, [accessToken, apiBaseUrl]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { setMagicLink(''); void load(); return () => { generation.current += 1; }; }, [load]);
+  const loadValid = !!accessToken && loadedFor?.accessToken === accessToken && loadedFor?.apiBaseUrl === apiBaseUrl;
+  const mutationsDisabled = !loadValid || loading || saving;
 
   const selected = useMemo(
     () => organizaciones.find((row) => row.id === selectedId) || null,
@@ -110,20 +125,25 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
   );
 
   const run = async (operation, successMessage) => {
+    if (mutationsDisabled || mutationRunning.current) return null;
+    mutationRunning.current = true;
+    const operationGeneration = generation.current;
     setSaving(true);
     setError('');
     setMessage('');
     setMagicLink('');
     try {
       const result = await operation();
+      if (operationGeneration !== generation.current) return null;
       if (result?.magic_link) setMagicLink(result.magic_link);
       setMessage(successMessage);
       await load();
       return result;
     } catch (operationError) {
-      setError(operationError.message);
+      if (operationGeneration === generation.current) setError(operationError.message);
       return null;
     } finally {
+      mutationRunning.current = false;
       setSaving(false);
     }
   };
@@ -225,10 +245,10 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
             {FEATURES.map(([id, label]) => <label key={id}><input type="checkbox" checked={newOrg.funciones_habilitadas.includes(id)} onChange={() => toggleFeature(setNewOrg, id)} /> {label}</label>)}
           </div>
         </fieldset>
-        <button type="submit" style={{ ...buttonStyle, alignSelf: 'end' }} disabled={saving}>Crear cadena</button>
+        <button type="submit" style={{ ...buttonStyle, alignSelf: 'end' }} disabled={mutationsDisabled}>Crear cadena</button>
       </form>
 
-      {loading ? <p>Cargando cadenas…</p> : organizaciones.length === 0 ? <p style={{ color: 'var(--text-secondary)' }}>Todavía no hay cadenas creadas.</p> : (
+      {loading ? <p role="status">Cargando cadenas…</p> : !loadValid ? null : organizaciones.length === 0 ? <p style={{ color: 'var(--text-secondary)' }}>Todavía no hay cadenas creadas.</p> : (
         <div style={{ marginTop: 24 }}>
           <label style={{ display: 'grid', gap: 6, maxWidth: 520, fontWeight: 800 }}>
             Organización
@@ -255,7 +275,7 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
                     {FEATURES.map(([id, label]) => <label key={id}><input type="checkbox" checked={(license?.funciones_habilitadas || []).includes(id)} onChange={() => toggleFeature(setLicense, id)} /> {label}</label>)}
                   </div>
                 </fieldset>
-                <button type="submit" style={buttonStyle} disabled={saving}>Guardar habilitación</button>
+                <button type="submit" style={buttonStyle} disabled={mutationsDisabled}>Guardar habilitación</button>
               </form>
               <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', marginTop: 18 }}>
               <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-card)' }}>
@@ -267,6 +287,7 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
                         <strong>{sede.nombre}</strong> · {[sede.ciudad, sede.pais].filter(Boolean).join(', ') || 'Sin ubicación'}
                         <button
                           type="button"
+                          disabled={mutationsDisabled}
                           onClick={() => run(
                             () => requestJson(`${apiBaseUrl}/api/admin/organizaciones/${selected.id}/sedes/${sede.id}`, accessToken, { method: 'DELETE' }),
                             'Sede desvinculada de la cadena.',
@@ -284,7 +305,7 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
                       {availableSedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre} · {sede.ciudad || sede.pais || '—'}</option>)}
                     </select>
                   </label>
-                  <button type="submit" style={buttonStyle} disabled={!sedeId || saving}>Vincular</button>
+                  <button type="submit" style={buttonStyle} disabled={!sedeId || mutationsDisabled}>Vincular</button>
                 </form>
               </div>
 
@@ -297,6 +318,7 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
                         <strong>{row.nombre || row.email}</strong>{row.nombre ? ` · ${row.email}` : ''}
                         <button
                           type="button"
+                          disabled={mutationsDisabled}
                           onClick={() => run(
                             () => requestJson(`${apiBaseUrl}/api/admin/organizaciones/${selected.id}/administradores/${encodeURIComponent(row.email)}`, accessToken, { method: 'DELETE' }),
                             'Acceso central revocado.',
@@ -310,7 +332,7 @@ export default function AdminOrganizacionesSection({ apiBaseUrl, accessToken, se
                 <form onSubmit={addAdmin} style={{ display: 'grid', gap: 8 }}>
                   <label>Nombre y apellido<input style={fieldStyle} value={admin.nombre} onChange={(e) => setAdmin((p) => ({ ...p, nombre: e.target.value }))} /></label>
                   <label>Email *<input type="email" required style={fieldStyle} value={admin.email} onChange={(e) => setAdmin((p) => ({ ...p, email: e.target.value }))} /></label>
-                  <button type="submit" style={buttonStyle} disabled={saving}>Asignar administrador central</button>
+                  <button type="submit" style={buttonStyle} disabled={mutationsDisabled}>Asignar administrador central</button>
                 </form>
               </div>
               </div>
