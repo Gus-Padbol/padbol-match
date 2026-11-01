@@ -570,6 +570,23 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.reply).toHaveBeenCalledWith('qa-token', 'support-1', 'Respuesta fixture', expect.any(String));
   });
 
+  it('DG11 keeps the activity identity and draft on uncertainty, then clears after confirmed receipt',async()=>{
+    global.TextEncoder=require('util').TextEncoder;sessionStorage.clear();
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,canAudit:true,supportActivityAtomicEnabled:true,supportEmailSendEnabled:true});
+    crmAdminApi.inbox.mockResolvedValue([{id:'support-dg11',estado:'en_atencion',source_channel:'email',origin:'support_email',qualification_data:{mailbox:{address:'support@padbol.com'}},contact:{email_normalized:'club@example.invalid'}}]);
+    crmAdminApi.activities.mockResolvedValue([]);crmAdminApi.addActivity.mockRejectedValueOnce(Object.assign(new Error('Resultado incierto'),{code:'CRM_ACTIVITY_OUTCOME_UNCONFIRMED'})).mockResolvedValueOnce({id:'11111111-1111-4111-8111-111111111111'});
+    render(<WhatsappCrmDemo/>);await screen.findByText('Registrar seguimiento');const topic=screen.getByLabelText('Motivo');fireEvent.change(topic,{target:{value:topic.options[1].value}});fireEvent.change(screen.getByLabelText('Detalle opcional'),{target:{value:'Diagnóstico local'}});fireEvent.click(screen.getByRole('button',{name:'Guardar seguimiento'}));
+    await screen.findByText('Resultado incierto');expect(screen.getByLabelText('Detalle opcional')).toHaveValue('Diagnóstico local');const first=crmAdminApi.addActivity.mock.calls[0][2];expect(first.requestId).toMatch(/^[0-9a-f-]{36}$/);fireEvent.click(screen.getByRole('button',{name:'Guardar seguimiento'}));await screen.findByText('Seguimiento registrado.');expect(crmAdminApi.addActivity.mock.calls[1][2].requestId).toBe(first.requestId);expect(screen.getByLabelText('Detalle opcional')).toHaveValue('');
+  });
+
+  it('DG11 nueva UI conserva el contrato del backend anterior con capacidad apagada',async()=>{
+    sessionStorage.clear();crmAdminApi.permissions.mockResolvedValue({canOperate:true,canAudit:true,supportEmailSendEnabled:true});crmAdminApi.inbox.mockResolvedValue([{id:'support-legacy-off',estado:'nuevo',source_channel:'email',origin:'support_email',qualification_data:{mailbox:{address:'support@padbol.com'}},qualification_status:'pending',handoff_ready:false}]);crmAdminApi.activities.mockResolvedValue([]);crmAdminApi.addActivity.mockResolvedValue({id:'legacy-receipt'});render(<WhatsappCrmDemo/>);await screen.findByText('Registrar seguimiento');expect(screen.queryByRole('button',{name:'Tomar caso de soporte'})).not.toBeInTheDocument();const topic=screen.getByLabelText('Motivo');fireEvent.change(topic,{target:{value:topic.options[1].value}});fireEvent.click(screen.getByRole('button',{name:'Guardar seguimiento'}));await screen.findByText('Seguimiento registrado.');expect(crmAdminApi.addActivity).toHaveBeenCalledWith('qa-token','support-legacy-off',expect.objectContaining({type:'note'}));expect(crmAdminApi.addActivity.mock.calls[0][2]).not.toHaveProperty('requestId');expect(sessionStorage.length).toBe(0);
+  });
+
+  it('DG11 support assignment does not require commercial qualification and preserves its request on retry',async()=>{
+    global.TextEncoder=require('util').TextEncoder;sessionStorage.clear();crmAdminApi.permissions.mockResolvedValue({canOperate:true,canAudit:true,supportActivityAtomicEnabled:true});crmAdminApi.inbox.mockResolvedValue([{id:'support-take',estado:'nuevo',source_channel:'email',origin:'support_email',qualification_data:{mailbox:{address:'support@padbol.com'}},qualification_status:'pending',handoff_ready:false}]);crmAdminApi.activities.mockResolvedValue([]);crmAdminApi.handoff.mockRejectedValueOnce(new Error('Asignación incierta')).mockResolvedValueOnce({ok:true,activityId:'11111111-1111-4111-8111-111111111111'});render(<WhatsappCrmDemo/>);const take=await screen.findByRole('button',{name:'Tomar caso de soporte'});expect(take).toBeEnabled();fireEvent.click(take);await screen.findByText('Asignación incierta');const first=crmAdminApi.handoff.mock.calls[0][2];fireEvent.click(take);await screen.findByText('Consulta derivada a una persona.');expect(crmAdminApi.handoff.mock.calls[1][2]).toBe(first);
+  });
+
   it('no habilita soporte con el canal comercial o con datos de buzón incompletos', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, canAudit: true, emailSendEnabled: true, supportEmailSendEnabled: false });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'support-incomplete', source_channel: 'email', origin: 'support_email', contact: { email_normalized: 'contact@example.invalid' } }]);

@@ -24,3 +24,5 @@ it('downloads an attachment with session authorization and a safe server filenam
   expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer session-token');
 });
 it('consulta el historial de correo del lead con su sesión y sin búsquedas por contacto',async()=>{global.fetch=jest.fn(async()=>({ok:true,json:async()=>({messages:[]})}));await crmAdminApi.emailHistory('fixture','conversation/id');expect(fetch.mock.calls[0][0]).toContain('/api/admin/crm/inbox/conversation%2Fid/email-history');expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer fixture');});
+
+it('carries support assignment requestId while preserving the legacy caller',async()=>{global.fetch=jest.fn(async()=>({ok:true,json:async()=>({ok:true})}));await crmAdminApi.handoff('fixture','case','11111111-1111-4111-8111-111111111111');expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({requestId:'11111111-1111-4111-8111-111111111111'});await crmAdminApi.handoff('fixture','case');expect(fetch.mock.calls[1][1].body).toBeUndefined();});
