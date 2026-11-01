@@ -1,3 +1,4 @@
+import {runCrmSupportCommand} from '../utils/crmSupportCommand';
 import {crmReplyLimit,crmReplyLength} from '../utils/crmReplyLimits';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -689,7 +690,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     setBusy(true);
     setNotice(null);
     try {
-      await crmAdminApi.handoff(token, active.id);
+      if (supportEmail && perms?.supportActivityAtomicEnabled) await runCrmSupportCommand({
+        actorId:session?.user?.id,conversationId:active.id,action:'assignment',payload:{},
+        execute:requestId=>crmAdminApi.handoff(token,active.id,requestId),
+      });
+      else await crmAdminApi.handoff(token, active.id);
       setNotice('Consulta derivada a una persona.');
       await load();
     } catch (e) {
@@ -785,14 +790,19 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
       const resumenBase = activitySummary.trim()
         ? `${activityTopic}: ${activitySummary.trim()}`
         : activityTopic;
-      await crmAdminApi.addActivity(token, active.id, {
+      const activityPayload = {
         type: activityType,
         conversation_state: activityEstado,
         summary: `${resumenBase} · ${contexto}`,
         outcome: activityOutcome.trim() || null,
         next_step: activityNextStep.trim() || null,
         follow_up_at: reminderDate ? `${reminderDate}T${reminderTime}` : null,
+      };
+      if (supportEmail && perms?.supportActivityAtomicEnabled) await runCrmSupportCommand({
+        actorId:session?.user?.id,conversationId:active.id,action:'activity',payload:activityPayload,
+        execute:requestId=>crmAdminApi.addActivity(token,active.id,{...activityPayload,requestId}),
       });
+      else await crmAdminApi.addActivity(token,active.id,activityPayload);
       setActivitySummary('');
       setActivityTopic('');
       setActivityOutcome('');
@@ -991,7 +1001,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                   <CrmReplyTextarea id="crm-response" disabled={busy || !activeCanOperate || !canReply} value={replyText} onChange={(e) => { replyComposition.current = null; setReplyText(e.target.value); }} placeholder={replyUnavailableReason || 'Escribe una respuesta…'} />
                   <p>{replyLength} / {replyLimit} caracteres</p>{replyTooLong && <p role="alert">La respuesta supera el límite de {replyLimit} caracteres. El borrador se conserva.</p>}
                   <div className="wa-composer-actions">
-                    <button type="button" className="wa-secondary" disabled={busy || active.handoff_ready !== true || active.qualification_status !== 'qualified'} onClick={submitHandoff}>Derivar a una persona</button>
+                    <button type="button" className="wa-secondary" disabled={busy || !(supportEmail && perms?.supportActivityAtomicEnabled ? activeCanOperate && active.estado !== 'cerrado' : active.handoff_ready === true && active.qualification_status === 'qualified')} onClick={submitHandoff}>{supportEmail && perms?.supportActivityAtomicEnabled ? 'Tomar caso de soporte' : 'Derivar a una persona'}</button>
                     <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={!replyLimit || replyTooLong || busy || !activeCanOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
                   </div>
                   {notice ? <p className="wa-notice">{notice}</p> : null}
