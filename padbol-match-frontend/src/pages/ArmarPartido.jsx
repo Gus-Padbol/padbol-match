@@ -1,3 +1,4 @@
+import { fetchPartidoDisponibilidadPublica, fetchPartidoCanchasPublicas } from '../utils/partidoDisponibilidadPublica';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -42,30 +43,6 @@ function formatoPrecioExtraCadaUnidad(unitMain, monedaCode, locale, perUnitLabel
   }
 }
 
-/** Normaliza `duraciones` del GET disponibilidad-slots (variantes de payload y precio numérico/string). */
-function normalizarDuracionesDisponibilidadSlotsPayload(d) {
-  if (!d || typeof d !== 'object') return [];
-  const listRaw = Array.isArray(d.duraciones)
-    ? d.duraciones
-    : Array.isArray(d?.data?.duraciones)
-      ? d.data.duraciones
-      : [];
-  const out = [];
-  for (const row of listRaw) {
-    if (!row || typeof row !== 'object') continue;
-    const dm = Number(row.duracion_minutos ?? row.duracionMinutos ?? row.minutos);
-    if (!Number.isFinite(dm) || dm < 15) continue;
-    const rawPr = row.precio;
-    let pr = null;
-    if (rawPr != null && rawPr !== '') {
-      const n = Number(String(rawPr).replace(/\./g, '').replace(',', '.'));
-      if (Number.isFinite(n) && n >= 0) pr = Math.round(n);
-    }
-    out.push({ duracion_minutos: Math.floor(dm), precio: pr });
-  }
-  out.sort((a, b) => a.duracion_minutos - b.duracion_minutos);
-  return out;
-}
 
 const DEPORTES = [
   { id: 'padbol', jugadores: 4 },
@@ -273,11 +250,11 @@ export default function ArmarPartido() {
 
   const [slotsApi, setSlotsApi] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
-  /** Oferta { duracion_minutos, precio } desde GET disponibilidad-slots (prioridad sobre columnas legacy de sede). */
-  const [duracionesApi, setDuracionesApi] = useState([]);
+  const [slotsError, setSlotsError] = useState(false);
 
   const [dispCanchas, setDispCanchas] = useState([]);
   const [dispLoading, setDispLoading] = useState(false);
+  const [dispError, setDispError] = useState(false);
 
   const [publicarPartido, setPublicarPartido] = useState(false);
 
@@ -437,22 +414,13 @@ export default function ArmarPartido() {
   const sede = useMemo(() => findSedeById(sedes, form.sedeId), [sedes, form.sedeId]);
 
   const duracionesOfrecidas = useMemo(() => {
-    if (duracionesApi.length > 0) {
-      return duracionesApi
-        .filter((x) => x && Number.isFinite(Number(x.duracion_minutos)))
-        .map((x) => ({
-          duracion_minutos: Number(x.duracion_minutos),
-          precio: x.precio != null && Number.isFinite(Number(x.precio)) ? Number(x.precio) : null,
-        }))
-        .sort((a, b) => a.duracion_minutos - b.duracion_minutos);
-    }
     if (!sede) {
       return RESERVA_DURACIONES_MIN.map((min) => ({ duracion_minutos: min, precio: null }));
     }
     const mins = duracionesReservaDisponibles(sede);
     const list = mins.length > 0 ? mins : RESERVA_DURACIONES_MIN;
     return list.map((min) => ({ duracion_minutos: min, precio: null }));
-  }, [sede, duracionesApi]);
+  }, [sede]);
 
   useEffect(() => {
     if (!sede) return;
@@ -483,39 +451,6 @@ export default function ArmarPartido() {
     });
   }, [sede, duracionesOfrecidas]);
 
-  /** Oferta de duraciones: misma API que los slots, pero sin depender de `form.duracion` (evita quedar en legacy de una sola fila). */
-  useEffect(() => {
-    if (!sede?.id || !form.fecha) {
-      setDuracionesApi([]);
-      return;
-    }
-    let cancelled = false;
-    const url = `${API_BASE}/api/sedes/${encodeURIComponent(sede.id)}/disponibilidad-slots?${new URLSearchParams({
-      fecha: form.fecha,
-      duracion: '90',
-      deporte: form.deporte,
-    })}`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled) return;
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[ArmarPartido] disponibilidad-slots (oferta duraciones)', {
-            url,
-            keys: d && typeof d === 'object' ? Object.keys(d) : [],
-            duracionesRaw: d?.duraciones,
-            normalizadas: normalizarDuracionesDisponibilidadSlotsPayload(d),
-          });
-        }
-        setDuracionesApi(normalizarDuracionesDisponibilidadSlotsPayload(d));
-      })
-      .catch(() => {
-        if (!cancelled) setDuracionesApi([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [sede?.id, form.fecha, form.deporte]);
 
   useEffect(() => {
     if (!sede?.id || !form.fecha || !form.duracion) {
@@ -524,19 +459,14 @@ export default function ArmarPartido() {
     }
     let cancelled = false;
     setSlotsLoading(true);
-    const url = `${API_BASE}/api/sedes/${encodeURIComponent(sede.id)}/disponibilidad-slots?${new URLSearchParams({
-      fecha: form.fecha,
-      duracion: String(form.duracion),
-      deporte: form.deporte,
-    })}`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled) return;
-        setSlotsApi(Array.isArray(d?.slots) ? d.slots : []);
+    setSlotsApi([]);
+    setSlotsError(false);
+    fetchPartidoDisponibilidadPublica({ apiBase: API_BASE, sedeId: sede.id, fecha: form.fecha, duracion: form.duracion, deporte: form.deporte })
+      .then((slots) => {
+        if (!cancelled) setSlotsApi(slots);
       })
       .catch(() => {
-        if (!cancelled) setSlotsApi([]);
+        if (!cancelled) { setSlotsApi([]); setSlotsError(true); }
       })
       .finally(() => {
         if (!cancelled) setSlotsLoading(false);
@@ -554,21 +484,14 @@ export default function ArmarPartido() {
     let cancelled = false;
     setDispLoading(true);
     const horaLimpia = String(form.hora).split(' - ')[0].trim();
-    const url = `${API_BASE}/api/reservas/disponibilidad?${new URLSearchParams({
-      sede_id: String(sede.id),
-      fecha: form.fecha,
-      hora_inicio: horaLimpia,
-      duracion_minutos: String(form.duracion),
-      deporte: form.deporte,
-    })}`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled) return;
-        setDispCanchas(Array.isArray(d?.canchas) ? d.canchas : []);
+    setDispCanchas([]);
+    setDispError(false);
+    fetchPartidoCanchasPublicas({ apiBase: API_BASE, sedeId: sede.id, fecha: form.fecha, hora: horaLimpia, duracion: form.duracion, deporte: form.deporte })
+      .then((canchas) => {
+        if (!cancelled) setDispCanchas(canchas);
       })
       .catch(() => {
-        if (!cancelled) setDispCanchas([]);
+        if (!cancelled) { setDispCanchas([]); setDispError(true); }
       })
       .finally(() => {
         if (!cancelled) setDispLoading(false);
@@ -1294,6 +1217,8 @@ export default function ArmarPartido() {
                   <label style={{ ...AP.label, marginTop: 16 }}>{t('reservas.availableTimes')}</label>
                   {slotsLoading ? (
                     <p style={{ ...AP.sub, marginTop: 8 }}>{t('reservas.loadingSlots')}</p>
+                  ) : slotsError ? (
+                    <p role="alert" style={{ ...AP.sub, marginTop: 8 }}>{t('reservas.searchCourtsError')}</p>
                   ) : slotsApi.length === 0 ? (
                     <p style={{ ...AP.sub, marginTop: 8 }}>{t('reservas.noSlotsTryOther')}</p>
                   ) : (
@@ -1365,6 +1290,8 @@ export default function ArmarPartido() {
               </p>
               {dispLoading ? (
                 <p style={AP.sub}>{t('reservas.checkingAvailability')}</p>
+              ) : dispError ? (
+                <p role="alert" style={AP.sub}>{t('reservas.searchCourtsError')}</p>
               ) : dispCanchas.length === 0 ? (
                 <p style={AP.sub}>{t('reservas.noCourtsStepBack')}</p>
               ) : (
