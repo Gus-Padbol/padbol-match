@@ -786,7 +786,7 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.activities.mockResolvedValue([]);
 
     render(<WhatsappCrmDemo />);
-    expect(await screen.findByText('Juan Prueba')).toBeInTheDocument();
+    expect((await screen.findAllByText('Juan Prueba')).length).toBeGreaterThan(0);
     expect(screen.queryByText('Cantidad de canchas')).not.toBeInTheDocument();
     expect(screen.queryByText('Resumen ejecutivo')).not.toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'Preparar inscripción deportiva' }));
