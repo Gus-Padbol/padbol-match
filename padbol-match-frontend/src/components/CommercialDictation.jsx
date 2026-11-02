@@ -65,6 +65,26 @@ export default function CommercialDictation({onText, onListeningChange}) {
       session.start();
     } catch { finish('No se pudo iniciar el dictado. Puedes intentarlo otra vez o escribir el resumen.'); }
   }
+  // Safari (iPhone incluido) exige que el permiso de micrófono se conceda antes
+  // de iniciar el reconocimiento; sin esto el motor falla con "not-allowed".
+  async function ensureMicrophone() {
+    if (!navigator.mediaDevices?.getUserMedia) return true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (e) {
+      const name = e?.name || '';
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        finish('El navegador bloqueó el micrófono. En iPhone: Ajustes → Safari → Micrófono → Permitir, y recargá el CRM. En Chrome: tocá el candado de la barra y habilitá Micrófono.');
+      } else if (name === 'NotFoundError') {
+        finish('No se encontró un micrófono en este dispositivo. Podés escribir el resumen o usar el dictado del teclado.');
+      } else {
+        finish('No se pudo acceder al micrófono. Podés escribir el resumen o usar el dictado del teclado.');
+      }
+      return false;
+    }
+  }
   function toggle() {
     if (wanted.current) {
       wanted.current = false; clearTimeout(restart.current);
@@ -72,7 +92,11 @@ export default function CommercialDictation({onText, onListeningChange}) {
       else finish();
       return;
     }
-    setError(''); transientFailures.current = 0; setReconnecting(false); wanted.current = true; setListening(true); callbacks.current.onListeningChange?.(true); begin();
+    setError(''); transientFailures.current = 0; setReconnecting(false);
+    ensureMicrophone().then(ok => {
+      if (!ok) { wanted.current = false; setListening(false); callbacks.current.onListeningChange?.(false); return; }
+      wanted.current = true; setListening(true); callbacks.current.onListeningChange?.(true); begin();
+    });
   }
   if (!available) return <p>Puedes escribir o usar el dictado de tu dispositivo.</p>;
   return <div className="commercial-dictation-control">
