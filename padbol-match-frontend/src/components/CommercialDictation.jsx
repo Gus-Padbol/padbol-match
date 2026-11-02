@@ -50,9 +50,18 @@ export default function CommercialDictation({onText, onListeningChange}) {
           setReconnecting(true);
           return;
         }
-        finish(['not-allowed','service-not-allowed','audio-capture'].includes(event.error)
-          ? 'No se pudo acceder al micrófono. Revisa el permiso del navegador o escribe el resumen.'
-          : 'Se interrumpió el dictado. El texto recibido se conserva; puedes continuar dictando o escribir.');
+        // Diagnostico: mostramos el codigo real del navegador en lugar de suponer permisos.
+        try { console.warn('[dictado] error de reconocimiento:', event.error, event.message || ''); } catch { /* noop */ }
+        const code = String(event.error || 'desconocido');
+        if (code === 'network') {
+          finish('El servicio de dictado del navegador no responde (network). Chrome usa el servicio de Google y puede estar bloqueado por la red. Probá con Safari o usá el dictado del teclado (Fn dos veces). Tu texto se conserva.');
+        } else if (code === 'audio-capture') {
+          finish('El navegador no encuentra el micrófono (audio-capture). Verificá que ninguna otra aplicación lo esté usando. Tu texto se conserva.');
+        } else if (code === 'not-allowed' || code === 'service-not-allowed') {
+          finish('El navegador bloqueó el reconocimiento de voz (' + code + '). No es solo el permiso del micrófono: Chrome además necesita permiso para el servicio de voz. Tu texto se conserva.');
+        } else {
+          finish('Se interrumpió el dictado (' + code + '). El texto recibido se conserva; podés seguir dictando o escribir.');
+        }
       };
       session.onend = () => {
         if (recognition.current !== session) return;
