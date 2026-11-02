@@ -525,7 +525,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const leadHighlights = commercialLeadHighlights(activeDetails, leadAnalysis);
   const displayedLeadFields = ['Nombre', 'Apellido', 'Email', 'WhatsApp', 'Asunto', 'Información adicional', 'Ciudad o región', 'Ciudad', 'País', 'Capital estimado de inversión', 'Inversión estimada', 'Inversión', 'Presupuesto', 'Budget', 'investment', 'investmentBudget'].map(label => fieldKey(fieldLabel(label)));
   const leadSubject = detailValue(activeDetails, 'Asunto', 'Tipo de consulta') || active?.subject || '';
-  const technicalDetails = technicalLeadDetails(activeDetails || []);
+  const whatsappConsentRaw = detailValue(activeDetails, 'consentWhatsapp', 'Consentimiento WhatsApp', 'Whatsapp consent', 'consentWhatsApp');
+  const whatsappConsentState = whatsappConsentRaw === null || whatsappConsentRaw === undefined || fieldText(whatsappConsentRaw) === ''
+    ? 'unknown'
+    : String(fieldText(whatsappConsentRaw)).toLowerCase() === 'true' ? 'yes' : 'no';
+  const whatsappConsentLabel = whatsappConsentState === 'yes' ? 'WhatsApp autorizado' : whatsappConsentState === 'no' ? 'Sin autorización de WhatsApp' : 'Consentimiento de WhatsApp sin dato';
   const extraLeadDetails = commercialFormDetails(activeDetails).filter(([label, value]) => {
     const key = fieldKey(fieldLabel(label));
     if (displayedLeadFields.includes(key)) return false;
@@ -984,10 +988,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   {!isCommercialForm ? <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div> : null}
                   {isCommercialForm && activeDetails.length ? <article className="wa-lead-card">
-                    <section className="wa-lead-section"><h3>Consulta</h3><strong translate="no" className="notranslate">{formatCrmEventText(leadSubject) || 'Consulta Padbol'}</strong></section>
+                    <section className="wa-lead-section"><h3>Consulta</h3><strong translate="no" className="notranslate">{formatCrmEventText(leadSubject) || 'Consulta Padbol'}</strong>
+                      <p style={{ margin: '6px 0 0', fontSize: 13, fontWeight: 600, color: whatsappConsentState === 'yes' ? '#15803d' : whatsappConsentState === 'no' ? '#b45309' : '#6b7280' }}>{whatsappConsentLabel}</p>
+                    </section>
                     <section className="wa-lead-note"><h4>Mensaje original</h4><p translate="no" className="notranslate" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{originalLeadMessage(active, activeDetails) || 'No se registró un mensaje adicional.'}</p></section>
                     {extraLeadDetails.length ? <details className="wa-lead-note"><summary>Más datos del formulario</summary><dl>{extraLeadDetails.map(([label, value]) => <div key={label}><dt>{label}</dt><dd translate="no" className="notranslate">{value}</dd></div>)}</dl></details> : null}
-                    {technicalDetails.length ? <details className="wa-lead-note"><summary>Datos técnicos y de atribución</summary><dl>{technicalDetails.map(([label, value]) => <div key={label}><dt>{label}</dt><dd translate="no" className="notranslate">{value}</dd></div>)}</dl></details> : null}
                   </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p translate="no" className="notranslate">{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${whatsappDeliveryLabel(message)}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p translate="no" className="notranslate">{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
                   {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
                   {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
