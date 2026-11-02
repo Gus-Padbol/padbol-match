@@ -270,6 +270,8 @@ export function whatsappDeliveryLabel(message) {
 export function originalLeadMessage(conversation, details = formDetails(conversation)) {
   const saved = detailValue(details, 'Información adicional');
   const body = String(conversation?.inbound_body || '').trim();
+  // Volcado estructurado del formulario: solo si el cuerpo ARRANCA con un campo.
+  const startsStructured = /^\s*(?:Asunto|Tipo de consulta|Origen|Nombre|Apellido|Email|WhatsApp|País|Ciudad o región|Cantidad de canchas|Destino de la cancha|Disponibilidad de espacio)\s*:/i.test(body);
   // Legacy field copies were capped at 1,000 characters; inbound retains the original.
   const start = /(?:^|\n)(?:Mensaje|Información adicional|message|additionalInfo):[ \t]*/i.exec(body);
   if (start) {
@@ -278,6 +280,8 @@ export function originalLeadMessage(conversation, details = formDetails(conversa
     if (!saved || original.startsWith(saved)) return original;
   }
   if (saved && body.startsWith(saved)) return body;
+  // Sin mensaje libre: no exponer el volcado de campos como si fuera el mensaje.
+  if (startsStructured) return saved || '';
   return saved || body;
 }
 
