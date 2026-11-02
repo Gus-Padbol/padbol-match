@@ -45,6 +45,7 @@ describe('CRM histórico unificado', () => {
   beforeEach(() => {
     global.crypto = require('crypto').webcrypto;
     jest.clearAllMocks();
+    crmAdminApi.activities.mockResolvedValue([]);
     crmAdminApi.emailHistory.mockResolvedValue({messages:[],truncated:false});
     crmAdminApi.permissions.mockResolvedValue({
       role: 'superadmin',
@@ -72,6 +73,17 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.nextGenerationOverview.mockResolvedValue({ sedes: [], jornadas: [] });
     crmAdminApi.createNextGenerationRegistration.mockResolvedValue({ id: 'ng-reg-1', estado: 'borrador' });
     crmAdminApi.createNextGenerationVenueApplication.mockResolvedValue({ venueApplication: { id: 'venue-app-1' }, created: true });
+  });
+
+  test('DG07 muestra error de actividad y recupera cero sin inventar una conversión', async () => {
+    crmAdminApi.activities.mockRejectedValueOnce(Error('synthetic503')).mockResolvedValue([]);
+    render(<WhatsappCrmDemo />);
+    const trace = await screen.findByRole('region', {name:'Trazabilidad de la consulta'});
+    await waitFor(()=>expect(within(trace).getByRole('alert')).toHaveTextContent('No se pudo consultar la actividad'));
+    expect(within(trace).queryByText('Sin actividad registrada')).not.toBeInTheDocument();
+    fireEvent.click(within(trace).getByRole('button',{name:'Reintentar actividad'}));
+    expect(await within(trace).findByText('Sin actividad registrada')).toBeInTheDocument();
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
   });
 
   it('filtra la bandeja comercial por asignación persistida sin modificar casos ni traducir mensajes', async()=>{
@@ -862,6 +874,8 @@ describe('estado honesto del análisis automático', () => {
     expect(notice.title).not.toMatch(/Analizando/);
     expect(notice.badge).not.toBe('EN PROCESO');
   });
+
+
   test('lead histórico pending y servidor desactivado muestra revisión manual sin progreso falso', async () => {
     jest.clearAllMocks();
     crmAdminApi.emailHistory.mockResolvedValue({messages:[],truncated:false});
