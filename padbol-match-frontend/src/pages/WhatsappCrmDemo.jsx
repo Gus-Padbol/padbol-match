@@ -1,3 +1,5 @@
+import CrmAttributionTrace from '../components/CrmAttributionTrace';
+import {useCrmActivityRead} from '../hooks/useCrmActivityRead';
 import {runCrmSupportCommand} from '../utils/crmSupportCommand';
 import {crmReplyLimit,crmReplyLength} from '../utils/crmReplyLimits';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -344,7 +346,6 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const threadRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
-  const [activities, setActivities] = useState([]);
   const [whatsappHistory, setWhatsappHistory] = useState(null);
   const [historyError, setHistoryError] = useState(false);
   const [historyRevision, setHistoryRevision] = useState(0);
@@ -593,20 +594,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     }
   };
 
-  const loadActivities = useCallback(async (conversationId) => {
-    if (!token || !conversationId || (!perms?.canOperate && !perms?.canAudit)) {
-      setActivities([]);
-      return;
-    }
-    try {
-      const rows = await crmAdminApi.activities(token, conversationId);
-      setActivities(Array.isArray(rows) ? rows : []);
-    } catch {
-      setActivities([]);
-    }
-  }, [token, perms?.canOperate, perms?.canAudit]);
-
-  useEffect(() => { void loadActivities(active?.id); }, [active?.id, loadActivities]);
+  const {rows:activities,status:activitiesStatus,reload:loadActivities}=useCrmActivityRead({token,conversationId:active?.id,enabled:Boolean(perms?.canOperate||perms?.canAudit),read:crmAdminApi.activities});
 
   /** Responsable, estado y derivación arrancan con lo que ya tiene la conversación. */
   useEffect(() => {
@@ -1009,6 +997,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
               </section>
 
               <aside className="wa-detail">
+                <CrmAttributionTrace conversation={active} activities={activities} status={activitiesStatus} onRetry={()=>loadActivities(active.id)}/>
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
                 {isCommercial && !hiddenOnly ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory={agendaLeadId===active.id} /> : null}
                 {waContext && !isCommercial ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
