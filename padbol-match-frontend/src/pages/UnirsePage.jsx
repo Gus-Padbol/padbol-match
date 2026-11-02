@@ -67,6 +67,8 @@ function FormSection({ title, subtitle, children }) {
 
 export default function UnirsePage() {
   const { t, i18n } = useTranslation();
+  const contactLanguage = /^es(?:-|$)/i.test(i18n.resolvedLanguage || i18n.language || 'es') ? 'es' : 'en';
+  const commercialContactUrl = contactLanguage === 'es' ? 'https://padbol.com/contacto' : 'https://padbol.com/en/contacto';
   const flowCopy = commercialFlowCopy(i18n.resolvedLanguage || i18n.language);
   const promoCopy = flowCopy.promo;
   const onboardingCopy = flowCopy.onboarding;
@@ -446,7 +448,7 @@ export default function UnirsePage() {
             })}
           </div>
           <p style={{ margin: '14px 0 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.45 }}>
-            {t('clubOnboarding.contact.before')} <a href={`mailto:info@padbol.com?subject=${encodeURIComponent(t('clubOnboarding.contact.subject'))}`} style={{ color: '#E11B22', fontWeight: 800 }}>info@padbol.com</a>. {t('clubOnboarding.contact.after')}
+            <a href={commercialContactUrl} target="_blank" rel="noopener noreferrer" aria-label={contactLanguage === 'es' ? 'Formulario de contacto (se abre en una pestaña nueva)' : 'Contact form (opens in a new tab)'} style={{ color: '#E11B22', fontWeight: 800 }}>{t('publicSite.footer.contact')} <span aria-hidden="true">↗</span></a>
           </p>
         </section>
           </>
