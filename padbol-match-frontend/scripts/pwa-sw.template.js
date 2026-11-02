@@ -154,3 +154,29 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(cacheFirst(event.request));
 });
+
+/* ── Notificaciones web push del CRM ──────────────────────────────────────── */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
+  event.waitUntil(self.registration.showNotification(data.title || 'PADBOL — CRM', {
+    body: data.body || '',
+    icon: '/brand/padbol-match-icon-192.png',
+    badge: '/brand/padbol-match-icon-192.png',
+    tag: data.tag || 'padbol-crm',
+    renotify: true,
+    data: { url: data.url || '/admin' },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  const target = (event.notification.data && event.notification.data.url) || '/admin';
+  event.notification.close();
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of all) {
+      if (client.url.includes(target)) { await client.focus(); return; }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(target);
+  })());
+});
