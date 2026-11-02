@@ -281,6 +281,27 @@ export function originalLeadMessage(conversation, details = formDetails(conversa
   return saved || body;
 }
 
+const TECHNICAL_FIELD_KEYS = ['workflow', 'participanttype', 'documentversion', 'privacyversion', 'termsversion', 'privacypolicyversion', 'termsandconditionsversion'];
+const CLICK_ID_KEYS = ['fbclid', 'gclid', 'wbraid', 'gbraid', 'msclkid', 'ttclid', 'fbc', 'fbp'];
+
+/**
+ * Campos que no pertenecen a la lectura comercial: consentimientos, versiones
+ * de documentos, identificadores de campana y parametros de atribucion.
+ * Se conservan integros; la vista solo los aparta a un bloque tecnico.
+ */
+export function isTechnicalLeadField(label) {
+  const raw = String(label ?? '').trim().toLowerCase();
+  if (raw.startsWith('utm') || /(^|[\s_-])utm[\s_-]/.test(raw)) return true;
+  if (CLICK_ID_KEYS.includes(fieldKey(label))) return true;
+  if (/^(consent|consentimiento)/.test(fieldKey(label))) return true;
+  return TECHNICAL_FIELD_KEYS.includes(fieldKey(label));
+}
+
+/** Datos tecnicos con valor, para el bloque plegable de auditoria. */
+export function technicalLeadDetails(details) {
+  return details.filter(([label, value]) => Boolean(fieldText(value)) && isTechnicalLeadField(label));
+}
+
 export function commercialFormDetails(details) {
   return details.filter(([label]) => {
     const key = fieldKey(label);
@@ -499,7 +520,15 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const isCommercialForm = isWebForm && activeArea === 'commercial';
   const leadHighlights = commercialLeadHighlights(activeDetails, leadAnalysis);
   const displayedLeadFields = ['Nombre', 'Apellido', 'Email', 'WhatsApp', 'Asunto', 'Información adicional', 'Ciudad o región', 'Ciudad', 'País', 'Capital estimado de inversión', 'Inversión estimada', 'Inversión', 'Presupuesto', 'Budget', 'investment', 'investmentBudget'].map(label => fieldKey(fieldLabel(label)));
-  const extraLeadDetails = commercialFormDetails(activeDetails).filter(([label]) => !displayedLeadFields.includes(fieldKey(fieldLabel(label))));
+  const leadSubject = detailValue(activeDetails, 'Asunto', 'Tipo de consulta') || active?.subject || '';
+  const technicalDetails = technicalLeadDetails(activeDetails || []);
+  const extraLeadDetails = commercialFormDetails(activeDetails).filter(([label, value]) => {
+    const key = fieldKey(fieldLabel(label));
+    if (displayedLeadFields.includes(key)) return false;
+    if (isTechnicalLeadField(label)) return false;
+    if (key === fieldKey('Tipo de consulta') && fieldText(value).trim().toLowerCase() === String(leadSubject).trim().toLowerCase()) return false;
+    return true;
+  });
   const nextGenerationDetails = [
     ['Nombre', detailValue(activeDetails, 'Nombre del participante', 'Participante', 'Nombre')],
     ['Categoría', detailValue(activeDetails, 'Categoría', 'Categoria')],
@@ -951,9 +980,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                   <div className="wa-day">{active.source_channel === 'whatsapp' && active.received_at ? 'MENSAJE RECIBIDO' : 'NUEVA CONSULTA'} · {compactDateTime(conversationDisplayDate(active))}</div>
                   {!isCommercialForm ? <div className="wa-system">⌁ {formatCrmEventText(active.subject) || 'Sin asunto'}</div> : null}
                   {isCommercialForm && activeDetails.length ? <article className="wa-lead-card">
-                    <section className="wa-lead-section"><h3>Consulta</h3><strong translate="no" className="notranslate">{formatCrmEventText(detailValue(activeDetails, 'Asunto') || active.subject) || 'Consulta Padbol'}</strong></section>
+                    <section className="wa-lead-section"><h3>Consulta</h3><strong translate="no" className="notranslate">{formatCrmEventText(leadSubject) || 'Consulta Padbol'}</strong></section>
                     <section className="wa-lead-note"><h4>Mensaje original</h4><p translate="no" className="notranslate" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{originalLeadMessage(active, activeDetails) || 'No se registró un mensaje adicional.'}</p></section>
                     {extraLeadDetails.length ? <details className="wa-lead-note"><summary>Más datos del formulario</summary><dl>{extraLeadDetails.map(([label, value]) => <div key={label}><dt>{label}</dt><dd translate="no" className="notranslate">{value}</dd></div>)}</dl></details> : null}
+                    {technicalDetails.length ? <details className="wa-lead-note"><summary>Datos técnicos y de atribución</summary><dl>{technicalDetails.map(([label, value]) => <div key={label}><dt>{label}</dt><dd translate="no" className="notranslate">{value}</dd></div>)}</dl></details> : null}
                   </article> : active.source_channel === 'whatsapp' && whatsappHistory?.conversationId === active.id && whatsappHistory.messages.length ? whatsappHistory.messages.map(message => <div key={`${message.direction}-${message.id}`} className={`wa-message wa-message--${message.direction === 'outbound' ? 'out' : 'in'}`}><p translate="no" className="notranslate">{formatCrmEventText(message.body) || 'Sin contenido'}</p><small>{compactDateTime(message.at)}{message.direction === 'outbound' ? ` · ${whatsappDeliveryLabel(message)}` : ''}</small></div>) : <div className="wa-message wa-message--in"><p translate="no" className="notranslate">{formatCrmEventText(active.inbound_body) || 'Sin contenido'}</p></div>}
                   {active.source_channel === 'whatsapp' && historyError ? <p role="status">No se pudo cargar el historial completo.</p> : null}
                   {whatsappHistory?.conversationId === active.id && whatsappHistory.truncated ? <p role="status">Se muestran los mensajes más recientes; hay mensajes anteriores.</p> : null}
