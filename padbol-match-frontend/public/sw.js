@@ -8,7 +8,7 @@
  * - /static/* hasheado: cache-first (immutable).
  * - Iconos/manifest: cache-first con revalidación al fallar red.
  */
-const CACHE_VERSION = 'pwa-1791470701616';
+const CACHE_VERSION = 'pwa-1792427029395';
 
 /** postMessage al cliente cuando se reemplazó una caché anterior (actualización real). */
 const MSG_UPDATED = 'PM_SW_UPDATED';
@@ -153,4 +153,35 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(cacheFirst(event.request));
+});
+
+/* ── Notificaciones web push del CRM ────────────────────────────────────────
+ * El payload llega como JSON {title, body, url, tag}. Al tocar la notificación
+ * se abre el caso exacto; si la app ya está abierta, se enfoca esa pestaña.
+ */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
+  const title = data.title || 'PADBOL — CRM';
+  const options = {
+    body: data.body || '',
+    icon: '/brand/padbol-match-icon-192.png',
+    badge: '/brand/padbol-match-icon-192.png',
+    tag: data.tag || 'padbol-crm',
+    renotify: true,
+    data: { url: data.url || '/admin' },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  const target = (event.notification.data && event.notification.data.url) || '/admin';
+  event.notification.close();
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of all) {
+      if (client.url.includes(target)) { await client.focus(); return; }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(target);
+  })());
 });
