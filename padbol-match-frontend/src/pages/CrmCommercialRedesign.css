@@ -174,6 +174,79 @@
   color: #fff !important;
 }
 
+.wa-demo .wa-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, .16);
+  min-width: 0;
+}
+.wa-demo .wa-topbar-actions :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #c2cfdf;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wa-demo .wa-topbar-actions :is(button, a):hover {
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+}
+.wa-demo .wa-topbar-actions .wa-team-toggle {
+  border: 1px solid rgba(255, 255, 255, .16);
+  color: #e4ebf5;
+}
+.wa-demo .wa-topbar-actions .wa-signout {
+  color: #ffc2c7;
+}
+.wa-demo .wa-topbar-actions .push-activation > button {
+  min-height: 30px;
+  padding: 3px 5px !important;
+  font-size: 15px !important;
+}
+.wa-demo .wa-topbar-actions .push-activation > button span:last-child {
+  font-size: 11px !important;
+}
+.commercial-crm-utility {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 4px max(24px, calc((100vw - 1680px) / 2 + 24px));
+  background: #081a33;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+.commercial-crm-utility :is(button, a) {
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #c2cfdf;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+.commercial-crm-utility :is(button, a):hover {
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+}
+
 /* Navegación: una sola línea en escritorio, herramientas secundarias discretas. */
 .wa-demo .wa-tools {
   display: flex !important;
@@ -222,7 +295,7 @@
 .wa-demo .commercial-agenda > summary::-webkit-details-marker {
   display: none;
 }
-.wa-demo .commercial-agenda-bell {
+.wa-demo .commercial-agenda-calendar {
   width: 16px;
   height: 16px;
   color: #65748a;
@@ -448,17 +521,20 @@
   font-weight: 800;
 }
 .wa-demo .wa-filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-end !important;
   gap: 7px;
   padding: 0 14px 12px;
   border-bottom: 1px solid #eef1f6;
 }
 .wa-demo .wa-filters .crm-advisor-filter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1 1 150px;
+  display: grid !important;
+  grid-template-columns: 1fr;
+  align-items: end;
+  gap: 4px;
+  flex: 1 1 170px;
   min-width: 0;
   color: #7a8799;
   font-size: 9px;
@@ -469,8 +545,11 @@
 .wa-demo .wa-filters .crm-advisor-filter select,
 .wa-demo .wa-filters > select {
   flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
-  height: 36px;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px;
   border: 1px solid #e2e8f0;
   border-radius: 9px;
   background: #fff;
@@ -991,6 +1070,17 @@
   .wa-demo .wa-demo-badge {
     display: none;
   }
+  .wa-demo .wa-topbar-main {
+    flex-wrap: wrap;
+  }
+  .wa-demo .wa-topbar-actions {
+    margin-left: auto;
+    padding-left: 0;
+    border-left: 0;
+  }
+  .wa-demo .wa-topbar-actions .wa-meta-entry {
+    display: none;
+  }
 }
 @media (max-width: 720px) {
   .wa-demo {
@@ -1058,6 +1148,23 @@
   .wa-demo .wa-agent span {
     display: none;
   }
+  .wa-demo .wa-topbar-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 3px 0 0;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+  }
+  .wa-demo .wa-topbar-actions .wa-meta-entry {
+    display: none;
+  }
+  .wa-demo .wa-topbar-actions :is(button, a) {
+    min-height: 27px;
+    padding: 4px 7px;
+    font-size: 9.5px;
+  }
   .wa-demo .wa-tools {
     flex-wrap: wrap !important;
     gap: 4px;
@@ -1071,7 +1178,7 @@
     border-color: #edf1f6;
     background: #fbfcfe;
   }
-  .wa-demo .commercial-agenda-bell {
+  .wa-demo .commercial-agenda-calendar {
     width: 14px;
     height: 14px;
   }
@@ -1125,11 +1232,12 @@
   }
   .wa-demo .wa-filters {
     padding: 0 12px 9px;
-    flex-wrap: nowrap;
+    flex-wrap: nowrap !important;
+    flex-direction: row !important;
   }
   .wa-demo .wa-filters .crm-advisor-filter {
     flex: 1 1 50%;
-    display: block;
+    display: block !important;
     font-size: 0;
   }
   .wa-demo .wa-filters .crm-advisor-filter select,

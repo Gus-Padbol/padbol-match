@@ -337,7 +337,7 @@ export function leadAnalysisNotice(status, enabled) {
   return { title: 'Sin análisis solicitado', message: 'Esta ficha no tiene una solicitud de análisis registrada.', badge: '' };
 }
 
-export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false } = {}) {
+export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false, headerActions=null } = {}) {
   const hasPanelExit = Boolean(onBack);
   useEffect(() => {
     if (hasPanelExit) window.scrollTo(0, 0);
@@ -883,6 +883,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
             <span className="wa-agent-avatar" aria-hidden="true">{String(session?.user?.user_metadata?.full_name || session?.user?.email || '?').slice(0,2).toUpperCase()}</span>
             <div><strong>{perms?.canOperate || perms?.canOperateEmail || perms?.canOperateWhatsapp ? 'Asesor comercial' : perms?.canAudit ? 'Consulta' : 'Sin acceso'}</strong><span>{session?.user?.email || ''}</span></div>
           </div>
+          {headerActions ? <div className="wa-topbar-actions">{headerActions}</div> : null}
         </div>
         <div className="wa-tools" aria-label="Herramientas de la bandeja">
       {(perms?.canAudit || commercialOnly) ? <CommercialAdvisorAccess api={commercialApi}/> : null}

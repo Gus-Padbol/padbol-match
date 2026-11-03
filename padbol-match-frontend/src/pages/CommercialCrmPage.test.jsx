@@ -5,7 +5,7 @@ import {createCommercialAssignmentsApi} from '../utils/commercialAssignmentsApi'
 const mockSignOut = jest.fn();
 let mockSession={access_token:'test',user:{id:'nico'}};
 jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:mockSession,signOutAndClear:mockSignOut})}));
-jest.mock('./WhatsappCrmDemo',()=>({requiredScope})=> <div data-testid="crm">Consultas actuales {requiredScope}</div>);
+jest.mock('./WhatsappCrmDemo',()=>({requiredScope,headerActions})=> <div data-testid="crm">{headerActions} Consultas actuales {requiredScope}</div>);
 jest.mock('../components/CommercialTeamWorkspace',()=>()=> <div>Vista del equipo</div>);
 jest.mock('../utils/commercialAssignmentsApi',()=>({createCommercialAssignmentsApi:jest.fn()}));
 beforeEach(()=>{global.fetch=jest.fn().mockResolvedValue({ok:false,status:403,json:async()=>({})});});
