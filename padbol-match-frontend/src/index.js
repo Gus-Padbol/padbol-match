@@ -33,3 +33,18 @@ root.render(
 reportWebVitals();
 
 registerServiceWorker();
+
+// Actualizacion automatica de la app instalada: al abrir, busca una version
+// nueva del service worker y recarga una sola vez cuando toma el control.
+// Evita que un iPhone quede semanas con un bundle viejo en la pantalla de inicio.
+if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+  let recargando = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (recargando) return;
+    recargando = true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.getRegistration()
+    .then((reg) => reg && reg.update())
+    .catch(() => {});
+}
