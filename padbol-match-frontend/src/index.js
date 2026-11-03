@@ -28,9 +28,9 @@ try {
   if (base.sw) {
     navigator.serviceWorker.getRegistration().then(async (reg) => {
       let sub = null;
-      try { sub = reg ? await reg.pushManager.getSubscription() : null; } catch (e) { base.error = String(e && e.name || e); }
+      try { sub = reg ? await reg.pushManager.getSubscription() : null; } catch (e) { base.error = String((e && e.name) || e); }
       enviar({ ...base, registro: Boolean(reg), activo: Boolean(reg && reg.active), suscripcion: Boolean(sub), endpoint: sub ? new URL(sub.endpoint).host : null });
-    }).catch((e) => enviar({ ...base, error: String(e && e.name || e) }));
+    }).catch((e) => enviar({ ...base, error: String((e && e.name) || e) }));
   } else { enviar(base); }
 } catch { /* ignore */ }
 
