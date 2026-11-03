@@ -11,6 +11,17 @@ export default function CommercialCrmPage() {
   const api=useMemo(()=>createCommercialAssignmentsApi(token),[token]);
   const [available,setAvailable]=useState(false), [team,setTeam]=useState(false), [role,setRole]=useState(null);
   useEffect(()=>{setAvailable(false);setTeam(false);setRole(null);},[session?.user?.id]);
+  // PADBOL CRM se instala como app independiente: este manifest define nombre,
+  // icono y start_url propios, de modo que el icono abra el CRM y no el area
+  // de jugadores. Se restaura el manifest original al salir.
+  useEffect(() => {
+    const link = document.querySelector('link[rel="manifest"]');
+    if (!link) return undefined;
+    const previous = link.getAttribute('href');
+    link.setAttribute('href', '/crm-manifest.json');
+    return () => { if (previous) link.setAttribute('href', previous); };
+  }, []);
+
   useEffect(()=>{let active=true;if(token)api.getRole().then(r=>{if(!active)return;if(['manager','advisor'].includes(r.role)){setAvailable(true);setRole(r.role);if(r.role==='advisor')setTeam(true);}else{setAvailable(false);setTeam(false);setRole(null);}}).catch(error=>{if(active&&(error?.status===403||error?.status===404)){setAvailable(false);setTeam(false);setRole(null);}});return ()=>{active=false};},[api,token]);
   return <>
     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '10px 20px', background: '#0b1324', color: '#fff' }}>
