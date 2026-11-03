@@ -22,6 +22,7 @@ import {
   resolvePostLoginNavigatePath,
   peekReservaLoginGateMessage,
   safeAdminPathFromLoginRedirect,
+  safeCommercialCrmPathFromLoginRedirect,
   safeFipaDocumentsPathFromLoginRedirect,
   safeRecorridoExternoPathFromLoginRedirect,
 } from '../utils/reservaReturnUrl';
@@ -255,7 +256,10 @@ export default function AccesoCuenta() {
       );
     }
     else clearPendingOAuthLegalAcceptance();
-    const returnPath = safeAdminPathFromLoginRedirect(location.search)
+    // El CRM tambien debe sobrevivir al salto de OAuth: sin esto, quien entra
+    // desde /crm-leads vuelve al inicio y termina en el area de jugadores.
+    const returnPath = safeCommercialCrmPathFromLoginRedirect(location.search)
+      || safeAdminPathFromLoginRedirect(location.search)
       || safeRecorridoExternoPathFromLoginRedirect(location.search)
       || safeFipaDocumentsPathFromLoginRedirect(location.search);
     const callbackQuery = returnPath ? `?redirect=${encodeURIComponent(returnPath)}` : '';
@@ -287,7 +291,10 @@ export default function AccesoCuenta() {
       );
     }
     else clearPendingOAuthLegalAcceptance();
-    const returnPath = safeAdminPathFromLoginRedirect(location.search)
+    // El CRM tambien debe sobrevivir al salto de OAuth: sin esto, quien entra
+    // desde /crm-leads vuelve al inicio y termina en el area de jugadores.
+    const returnPath = safeCommercialCrmPathFromLoginRedirect(location.search)
+      || safeAdminPathFromLoginRedirect(location.search)
       || safeRecorridoExternoPathFromLoginRedirect(location.search)
       || safeFipaDocumentsPathFromLoginRedirect(location.search);
     const callbackQuery = returnPath ? `?redirect=${encodeURIComponent(returnPath)}` : '';
