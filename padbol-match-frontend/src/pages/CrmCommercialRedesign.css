@@ -1400,10 +1400,11 @@
   flex: none;
 }
 .commercial-team {
-  max-width: none;
+  max-width: none !important;
+  width: 100%;
   min-height: 100vh;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   background: var(--crm-canvas);
   color: var(--crm-text);
 }
