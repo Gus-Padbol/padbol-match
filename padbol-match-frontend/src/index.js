@@ -20,6 +20,11 @@ import { registerServiceWorker } from './registerServiceWorker';
 // modo (app instalada o navegador). Sin datos personales ni credenciales.
 try {
   const mod = window.navigator.standalone === true ? 'app' : 'navegador';
+  // Si la app arranco en el CRM, queda marcada en ESTE contexto (la app instalada
+  // tiene su propio almacenamiento, distinto del de Safari).
+  if (window.location.pathname.startsWith('/crm')) {
+    try { localStorage.setItem('padbol_crm_app', '1'); } catch { /* ignore */ }
+  }
   const payload = { path: window.location.pathname.slice(0, 120), mode: mod,
     referrer: String(document.referrer || '').slice(0, 120) || null };
   import('./supabaseClient').then(({ supabase }) => {
