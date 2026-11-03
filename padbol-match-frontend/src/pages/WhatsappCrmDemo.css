@@ -663,3 +663,9 @@ html.theme-dark .wa-demo .wa-language-attention { color: #f5d58a; }
 @media(max-width:600px){.wa-demo .wa-composer .crm-reply-textarea,.commercial-team .crm-reply-textarea{font-size:16px;max-height:280px}}
 
 .wa-demo .wa-filters .wa-clear-filters{min-height:40px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-size:13px;font-weight:700;text-align:left}
+/* En iPhone la ficha lateral se ocultaba por completo; el origen y la gestión
+   deben seguir accesibles debajo del hilo, sin tapar la conversación. */
+@media(max-width:720px){
+  .wa-detail{display:block;border-left:0;border-top:1px solid var(--line);padding:14px;overflow:visible}
+  .wa-detail .wa-panel:first-child{margin-top:0}
+}
