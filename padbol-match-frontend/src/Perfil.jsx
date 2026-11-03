@@ -8,6 +8,7 @@ export default function Perfil() {
   const [fotoUrl, setFotoUrl] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [subiendo, setSubiendo] = useState(false);
+  const [mensajeFoto, setMensajeFoto] = useState('');
 
   useEffect(() => {
     const currentClienteStorage = localStorage.getItem('currentCliente');
@@ -27,38 +28,41 @@ export default function Perfil() {
   }, [navigate]);
 
   const handleFotoChange = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file || !usuario) return;
-
     setSubiendo(true);
+    setMensajeFoto('');
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target.result;
-        
-        const { error } = await supabase
-          .from('users')
-          .update({ foto_perfil: base64 })
-          .eq('email', usuario.email);
-
-        if (error) {
-          alert('Error: ' + error.message);
-          setSubiendo(false);
-          return;
-        }
-
-        setFotoUrl(base64);
-        const updated = { ...usuario, foto_perfil: base64 };
-        localStorage.setItem('currentCliente', JSON.stringify(updated));
-        setUsuario(updated);
-
-        alert('Foto guardada');
-      };
-      reader.readAsDataURL(file);
+      if (!file.type.startsWith('image/')) throw new Error('El archivo tiene que ser una imagen.');
+      if (file.size > 5 * 1024 * 1024) throw new Error('La imagen supera los 5 MB. Elegí una más liviana.');
+      // FileReader sin await dejaba la pantalla en "Subiendo" para siempre.
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+        reader.readAsDataURL(file);
+      });
+      const { error } = await supabase
+        .from('users')
+        .update({ foto_perfil: base64 })
+        .eq('email', usuario.email);
+      if (error) throw new Error(error.message || 'No se pudo guardar la foto.');
+      // Confirmar que quedó guardada releyendo del servidor.
+      const { data: verificado } = await supabase
+        .from('users').select('foto_perfil').eq('email', usuario.email).maybeSingle();
+      if (verificado && verificado.foto_perfil !== base64) {
+        throw new Error('El servidor no confirmó el guardado de la foto.');
+      }
+      setFotoUrl(base64);
+      const updated = { ...usuario, foto_perfil: base64 };
+      localStorage.setItem('currentCliente', JSON.stringify(updated));
+      setUsuario(updated);
+      setMensajeFoto('Foto guardada correctamente.');
     } catch (err) {
-      alert('Error: ' + err.message);
+      setMensajeFoto(err?.message || 'No se pudo guardar la foto. Intentá de nuevo.');
+    } finally {
+      setSubiendo(false);
     }
-    setSubiendo(false);
   };
 
   if (cargando) {
@@ -90,6 +94,11 @@ export default function Perfil() {
               style={{ display: 'none' }}
             />
           </label>
+          {mensajeFoto && (
+            <p role="status" style={{ marginTop: 8, fontSize: 14, color: mensajeFoto.startsWith('Foto guardada') ? '#16a34a' : '#dc2626' }}>
+              {mensajeFoto}
+            </p>
+          )}
         </div>
 
         <div style={styles.datos}>
