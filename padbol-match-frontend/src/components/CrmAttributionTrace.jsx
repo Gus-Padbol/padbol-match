@@ -1,19 +1,76 @@
 import React from 'react';
 
-export default function CrmAttributionTrace({conversation,activities,status,onRetry}) {
-  const fields=conversation?.qualification_data?.form_submission?.fields;
-  const value=key=>typeof fields?.[key]==='string'&&fields[key].trim()?fields[key].trim():null;
-  const source=value('utm_source'),campaign=value('utm_id')||value('utm_campaign');
-  const hasSede=Object.prototype.hasOwnProperty.call(conversation||{},'sede_id');
-  return <section className="wa-panel" aria-label="Trazabilidad de la consulta">
-    <h3>Origen y seguimiento</h3>
+const SOURCE_LABELS = {
+  fb: 'Meta (Facebook)',
+  facebook: 'Meta (Facebook)',
+  meta: 'Meta',
+  ig: 'Meta (Instagram)',
+  instagram: 'Meta (Instagram)',
+  google: 'Google Ads',
+  googleads: 'Google Ads',
+  adwords: 'Google Ads',
+  organic: 'Búsqueda orgánica',
+  seo: 'Búsqueda orgánica',
+  direct: 'Acceso directo',
+  directo: 'Acceso directo',
+  newsletter: 'Email',
+  email: 'Email',
+  whatsapp: 'WhatsApp',
+};
+
+const PAID_MEDIA = new Set(['paid', 'cpc', 'ppc', 'paid_social', 'paid-social', 'ads', 'advertising']);
+
+function field(fields, key) {
+  const value = fields?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function sourceFromFields(fields) {
+  const raw = field(fields, 'utm_source');
+  if (raw) {
+    const key = raw.toLowerCase();
+    const label = SOURCE_LABELS[key] || (/^[a-z0-9._-]{1,40}$/i.test(raw) ? raw : 'Origen no identificado');
+    const medium = field(fields, 'utm_medium');
+    return medium && PAID_MEDIA.has(medium.toLowerCase()) && !/pago$/i.test(label)
+      ? `${label} · pago`
+      : label;
+  }
+  if (field(fields, 'gclid') || field(fields, 'gbraid') || field(fields, 'wbraid')) return 'Google Ads';
+  if (field(fields, 'fbclid')) return 'Meta';
+  return null;
+}
+
+function sourceFromOrigin(conversation) {
+  const origin = String(conversation?.origin || '').trim();
+  if (origin.startsWith('web_form:')) return 'Formulario web';
+  if (origin.startsWith('whatsapp:')) return 'WhatsApp';
+  if (origin === 'institutional_email' || origin === 'support_email' || origin.startsWith('email:')) return 'Email';
+  if (origin === 'manual' || origin.startsWith('manual')) return 'Registro manual';
+  if (/^nextgen[.:_]/i.test(origin)) return 'Next Generation';
+  if (conversation?.source_channel === 'whatsapp') return 'WhatsApp';
+  if (conversation?.source_channel === 'email') return 'Email';
+  return 'Origen no identificado';
+}
+
+export function resolveOrigin(conversation) {
+  const fields = conversation?.qualification_data?.form_submission?.fields;
+  const source = sourceFromFields(fields) || sourceFromOrigin(conversation);
+  const campaign = field(fields, 'utm_id') || field(fields, 'utm_campaign') || field(fields, 'campaign_id');
+  const dateValue = conversation?.received_at || conversation?.created_at || null;
+  const date = dateValue && Number.isFinite(new Date(dateValue).getTime())
+    ? new Date(dateValue).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
+    : 'Fecha no disponible';
+  return { source, campaign, date };
+}
+
+export default function CrmAttributionTrace({ conversation }) {
+  const { source, campaign, date } = resolveOrigin(conversation);
+  return <section className="wa-panel" aria-label="Origen del interesado">
+    <h3>Origen del interesado</h3>
     <dl>
-      <div><dt>Fuente guardada</dt><dd>{source||'Sin UTM de fuente'}{value('utm_medium')?` · ${value('utm_medium')}`:''}</dd></div>
-      <div><dt>Campaña guardada</dt><dd>{campaign||'Sin UTM de campaña'}</dd></div>
-      <div><dt>Consulta recibida</dt><dd>{conversation?.received_at||conversation?.created_at||'Fecha no disponible'}</dd></div>
-      <div><dt>Sede vinculada</dt><dd>{hasSede?(conversation.sede_id?`Sede ${conversation.sede_id}`:'Sin sede todavía'):'Vínculo de sede no disponible en esta vista'}</dd></div>
+      <div><dt>Fuente</dt><dd>{source}</dd></div>
+      {campaign ? <div><dt>Campaña</dt><dd>{campaign}</dd></div> : null}
+      <div><dt>Fecha</dt><dd>{date}</dd></div>
     </dl>
-    {status==='loaded'?<p>{activities.length===0?'Sin actividad registrada':`${activities.length} actividad${activities.length===1?'':'es'} registrada${activities.length===1?'':'s'}`}</p>:status==='error'?<p role="alert">No se pudo consultar la actividad. <button type="button" onClick={onRetry}>Reintentar actividad</button></p>:<p role="status">{status==='loading'?'Consultando actividad…':'Actividad no disponible en esta vista'}</p>}
-    <small>Los UTM indican el origen guardado; no confirman atribución de la plataforma. Una nota o una sede vinculada no acredita una reserva, venta o actividad deportiva.</small>
   </section>;
 }

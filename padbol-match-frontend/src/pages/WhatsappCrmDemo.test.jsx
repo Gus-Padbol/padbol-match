@@ -75,14 +75,20 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.createNextGenerationVenueApplication.mockResolvedValue({ venueApplication: { id: 'venue-app-1' }, created: true });
   });
 
-  test('DG07 muestra error de actividad y recupera cero sin inventar una conversión', async () => {
+  test('la ficha muestra solo el origen del interesado, separado de la actividad comercial', async () => {
     crmAdminApi.activities.mockRejectedValueOnce(Error('synthetic503')).mockResolvedValue([]);
+    crmAdminApi.inbox.mockResolvedValueOnce({items:[{
+      id:'conv-origen',estado:'nuevo',source_channel:'email',origin:'web_form:contacto',
+      identity_used:'origen@example.test',subject:'Origen',created_at:'2026-11-01T19:11:37Z',
+      updated_at:'2026-11-01T19:11:38Z',test_visibility_version:0,
+      qualification_data:{form_submission:{fields:{utm_source:'fb',utm_medium:'paid',utm_id:'120240275542960660'}}},
+    }]});
     render(<WhatsappCrmDemo />);
-    const trace = await screen.findByRole('region', {name:'Trazabilidad de la consulta'});
-    await waitFor(()=>expect(within(trace).getByRole('alert')).toHaveTextContent('No se pudo consultar la actividad'));
-    expect(within(trace).queryByText('Sin actividad registrada')).not.toBeInTheDocument();
-    fireEvent.click(within(trace).getByRole('button',{name:'Reintentar actividad'}));
-    expect(await within(trace).findByText('Sin actividad registrada')).toBeInTheDocument();
+    const trace = await screen.findByRole('region', {name:'Origen del interesado'});
+    expect(within(trace).getByText('Meta (Facebook) · pago')).toBeInTheDocument();
+    expect(within(trace).getByText('120240275542960660')).toBeInTheDocument();
+    expect(within(trace).queryByText(/UTM|Sin actividad registrada|Consultar actividad/i)).toBeNull();
+    expect(within(trace).queryByRole('alert')).toBeNull();
     expect(crmAdminApi.reply).not.toHaveBeenCalled();expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
   });
 

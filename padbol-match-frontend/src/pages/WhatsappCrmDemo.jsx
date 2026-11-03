@@ -353,7 +353,6 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const [activeId, setActiveId] = useState(null);
   const [institutionalCase, setInstitutionalCase] = useState(null);
   const [institutionalRevision, setInstitutionalRevision] = useState(0);
-  const [agendaLeadId, setAgendaLeadId] = useState(null);
   const [areaFilter, setAreaFilter] = useState('all');
   const channelFilter = '';
   const [estadoFilter, setEstadoFilter] = useState('');
@@ -634,7 +633,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     }
   };
 
-  const {rows:activities,status:activitiesStatus,reload:loadActivities}=useCrmActivityRead({token,conversationId:active?.id,enabled:Boolean(perms?.canOperate||perms?.canAudit),read:crmAdminApi.activities});
+  const {rows:activities,reload:loadActivities}=useCrmActivityRead({token,conversationId:active?.id,enabled:Boolean(perms?.canOperate||perms?.canAudit),read:crmAdminApi.activities});
 
   /** Responsable, estado y derivación arrancan con lo que ya tiene la conversación. */
   useEffect(() => {
@@ -879,7 +878,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
 
       <div className="wa-tools" aria-label="Herramientas de la bandeja">
       {(perms?.canAudit || commercialOnly) ? <CommercialAdvisorAccess api={commercialApi}/> : null}
-      {(perms?.canAudit || commercialOnly) ? <CommercialAgendaAlerts api={commercialApi} onOpen={item=>{const id=item.conversationId || (item.channel==='form'?item.id:null);if(id){setAreaFilter('all');setTicketReference('');setTicketInput('');setEstadoFilter('');setHiddenOnly(false);setActiveId(id);setAgendaLeadId(id);if(threadRef.current)threadRef.current.scrollTop=0;}}}/> : null}
+      {(perms?.canAudit || commercialOnly) ? <CommercialAgendaAlerts api={commercialApi} onOpen={item=>{const id=item.conversationId || (item.channel==='form'?item.id:null);if(id){setAreaFilter('all');setTicketReference('');setTicketInput('');setEstadoFilter('');setHiddenOnly(false);setActiveId(id);if(threadRef.current)threadRef.current.scrollTop=0;}}}/> : null}
       {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section className="wa-manual-tool">
         <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
         {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
@@ -1048,9 +1047,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
               </section>
 
               <aside className="wa-detail">
-                <CrmAttributionTrace conversation={active} activities={activities} status={activitiesStatus} onRetry={()=>loadActivities(active.id)}/>
+                <CrmAttributionTrace conversation={active}/>
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
-                {isCommercial && !hiddenOnly ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory={agendaLeadId===active.id} /> : null}
+                {isCommercial && !hiddenOnly ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory /> : null}
                 {waContext && !isCommercial ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
@@ -1112,10 +1111,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     <button type="button" className={reminderDate === addDays(localDateValue(), 2) ? 'active' : ''} onClick={() => setReminderDate(addDays(localDateValue(), 2))}>Pasado mañana</button>
                   </div>
                   <button type="button" className="wa-followup-save" disabled={busy || !activityTopic} onClick={submitActivity}>Guardar seguimiento</button>
-                  <div className="wa-activity-list">
-                    {activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}
-<CrmComunicaciones token={token} conversationId={active?.id} /></time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}
-                  </div>
+                  {activities.length ? <div className="wa-activity-list">{activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}
+<CrmComunicaciones token={token} conversationId={active?.id} /></time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}</div> : null}
                 </section> : null}
               </aside>
             </>
