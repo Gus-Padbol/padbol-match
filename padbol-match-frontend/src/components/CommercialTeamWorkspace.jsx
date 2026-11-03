@@ -28,5 +28,38 @@ export default function CommercialTeamWorkspace({api,currentUserId=''}) {
   if(error&&!role)return <p role="alert">{error}</p>;
   if(!role)return <p>Cargando área comercial…</p>;
   const visibleCases=cases.filter(c=>matchesAdvisor(c,advisorFilter,currentUserId));
-  return <main className="commercial-team"><fieldset disabled={!authorized}><h1>Área comercial</h1><CommercialAgendaAlerts api={api} onOpen={setSelected}/>{role==='manager'&&<CommercialAssignments api={api}/>}<section aria-label="Consultas comerciales"><h2>Consultas</h2><button type="button" onClick={refresh}>Actualizar consultas</button>{error&&<p role="alert">{error}</p>}{!cases.length&&<p>No hay consultas disponibles.</p>}{role==='manager'&&<CommercialAdvisorFilter value={advisorFilter} onChange={value=>{setAdvisorFilter(value);setSelected(null);}} cases={cases} currentUserId={currentUserId}/>}{advisorFilter&&<button type="button" onClick={()=>{setAdvisorFilter('');setSelected(null);}}>Ver todas las consultas</button>}{advisorFilter&&!visibleCases.length&&<p>No hay consultas para este asesor.</p>}<ul>{visibleCases.map(c=><li key={`${c.channel}:${c.id}`}><button type="button" onClick={()=>setSelected(c)}>{c.contact?.name || c.contact?.phone || c.contact?.email || 'Consulta comercial'} · {commercialCaseSourceLabel(c)}</button></li>)}</ul></section>{selected&&<CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api} disabled={!authorized} revalidationRevision={sessionRevision}/>}</fieldset>{sessionRejected&&typeof api.revalidateSession==='function'&&<button type="button" disabled={recovering} onClick={recoverSession}>Volver a comprobar sesión</button>}</main>;
+  return <main className="commercial-team">
+    <header className="commercial-team-top">
+      <div className="commercial-team-brand">
+        <img src="/brand/padbol-internacional-a1.svg" alt="Padbol Internacional" />
+        <div><strong>Padbol Internacional</strong><span>Área comercial</span></div>
+      </div>
+      <div className="commercial-team-tools">
+        <CommercialAgendaAlerts api={api} onOpen={setSelected}/>
+        <button type="button" className="commercial-team-refresh" onClick={refresh}>Actualizar consultas</button>
+      </div>
+    </header>
+    <fieldset disabled={!authorized}>
+      <h1>Área comercial</h1>
+      {role==='manager'&&<CommercialAssignments api={api}/>}
+      <div className="commercial-team-workspace">
+        <section className="commercial-team-list" aria-label="Consultas comerciales">
+          <header>
+            <div><p>BANDEJA COMERCIAL</p><h2>Consultas</h2></div>
+            <span className="commercial-team-count">{cases.length}</span>
+          </header>
+          {error&&<p role="alert">{error}</p>}
+          <div className="commercial-team-filters">
+            {role==='manager'&&<CommercialAdvisorFilter value={advisorFilter} onChange={value=>{setAdvisorFilter(value);setSelected(null);}} cases={cases} currentUserId={currentUserId}/>}
+            {advisorFilter&&<button type="button" onClick={()=>{setAdvisorFilter('');setSelected(null);}}>Ver todas las consultas</button>}
+          </div>
+          {!cases.length&&<p>No hay consultas disponibles.</p>}
+          {advisorFilter&&!visibleCases.length&&<p>No hay consultas para este asesor.</p>}
+          <ul>{visibleCases.map(c=><li key={`${c.channel}:${c.id}`}><button type="button" className={selected?.id===c.id&&selected?.channel===c.channel?'is-active':''} onClick={()=>setSelected(c)}><strong>{c.contact?.name || c.contact?.phone || c.contact?.email || 'Consulta comercial'}</strong><span>{commercialCaseSourceLabel(c)}</span>{c.assignedAdvisor?.name&&<small>Asesor: {c.assignedAdvisor.name}</small>}</button></li>)}</ul>
+        </section>
+        {selected&&<div className="commercial-team-detail"><CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api} disabled={!authorized} revalidationRevision={sessionRevision}/></div>}
+      </div>
+    </fieldset>
+    {sessionRejected&&typeof api.revalidateSession==='function'&&<button type="button" disabled={recovering} onClick={recoverSession}>Volver a comprobar sesión</button>}
+  </main>
 }

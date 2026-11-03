@@ -1392,3 +1392,370 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Vista de equipo: misma identidad y jerarquía que la bandeja principal. */
+.commercial-agenda-calendar {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.commercial-team {
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--crm-canvas);
+  color: var(--crm-text);
+}
+.commercial-team-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 11px max(24px, calc((100vw - 1680px) / 2 + 24px));
+  background: linear-gradient(110deg, #07172e 0%, #0b203d 58%, #102b4d 100%);
+  border-bottom: 3px solid var(--crm-red);
+  color: #fff;
+}
+.commercial-team-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.commercial-team-brand img {
+  width: 180px;
+  height: 32px;
+  object-fit: contain;
+}
+.commercial-team-brand div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(255,255,255,.18);
+}
+.commercial-team-brand strong {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 750;
+}
+.commercial-team-brand span {
+  color: #adbbcf;
+  font-size: 10px;
+}
+.commercial-team-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.commercial-team-tools .commercial-agenda > summary,
+.commercial-team-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 9px;
+  background: rgba(255,255,255,.055);
+  color: #d6e0ed;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.commercial-team-tools .commercial-agenda > summary strong {
+  background: var(--crm-red);
+  color: #fff;
+  border-radius: 999px;
+  padding: 3px 6px;
+  font-size: 9px;
+}
+.commercial-team-tools .commercial-agenda-panel {
+  right: 0;
+  left: auto;
+  top: calc(100% + 8px);
+}
+.commercial-team fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 18px max(24px, calc((100vw - 1680px) / 2 + 24px)) 28px;
+  border: 0;
+}
+.commercial-team fieldset > h1 {
+  margin: 0 0 14px;
+  color: #172943;
+  font-size: 19px;
+  font-weight: 760;
+  letter-spacing: -.02em;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 22px rgba(15,32,57,.05);
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] > h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] > p {
+  margin: 0 0 10px;
+  color: #6a788c;
+  font-size: 11.5px;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] h3 {
+  margin: 14px 0 6px;
+  color: #42536a;
+  font-size: 11px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] :is(input,select,textarea) {
+  width: 100%;
+  max-width: none;
+  margin-top: 4px;
+  border: 1px solid #dfe6ef;
+  border-radius: 9px;
+  background: #fff;
+  color: #263850;
+  font: inherit;
+  font-size: 11.5px;
+  padding: 8px 10px;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] button,
+.commercial-team-refresh {
+  border-radius: 9px;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] article {
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid #e8edf4;
+  border-radius: 11px;
+  background: #fbfcfe;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] article h4 {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] article p {
+  margin: 3px 0;
+  font-size: 11px;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] ul {
+  padding: 0;
+  list-style: none;
+}
+.commercial-team > fieldset > section[aria-label="Administración comercial"] li {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f3f7;
+  font-size: 11px;
+}
+.commercial-team-workspace {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+.commercial-team-list {
+  max-height: calc(100vh - 160px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid #e2e8f1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 22px rgba(15,32,57,.05);
+}
+.commercial-team-list > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+.commercial-team-list > header p {
+  margin: 0 0 3px;
+  color: #a91524;
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  font-weight: 800;
+}
+.commercial-team-list > header h2 {
+  margin: 0;
+  color: #172943;
+  font-size: 19px;
+  letter-spacing: -.02em;
+}
+.commercial-team-count {
+  min-width: 28px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #eef2f8;
+  color: #3e506a;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+.commercial-team-filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid #eef1f6;
+}
+.commercial-team-filters .crm-advisor-filter {
+  display: grid;
+  gap: 4px;
+  color: #7a8799;
+  font-size: 8.5px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.commercial-team-filters select {
+  width: 100%;
+  height: 38px;
+  padding: 7px 9px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+  color: #35465e;
+  font: inherit;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.commercial-team-filters button {
+  min-height: 32px;
+  padding: 7px 9px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+  color: #52627a;
+  font: inherit;
+  font-size: 10.5px;
+}
+.commercial-team-list > ul {
+  display: grid;
+  gap: 5px;
+  padding: 8px 0 0;
+  margin: 0;
+  list-style: none;
+}
+.commercial-team-list > ul > li > button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #fbfcfe;
+  color: #263850;
+  text-align: left;
+  box-shadow: none;
+}
+.commercial-team-list > ul > li > button:hover {
+  border-color: #e4eaf3;
+  background: #fff;
+}
+.commercial-team-list > ul > li > button.is-active {
+  border-color: #f0cbd0;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(184,26,41,.08);
+}
+.commercial-team-list > ul > li > button strong {
+  color: #172943;
+  font-size: 12px;
+}
+.commercial-team-list > ul > li > button span,
+.commercial-team-list > ul > li > button small {
+  color: #6b7a8e;
+  font-size: 10px;
+}
+.commercial-team-detail {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e2e8f1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 22px rgba(15,32,57,.05);
+}
+.commercial-team-detail > section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.commercial-team-detail fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.commercial-team-detail h3 {
+  margin: 0 0 8px;
+  color: #172943;
+  font-size: 18px;
+}
+.commercial-team-detail > section > fieldset > p {
+  color: #65748a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.commercial-team-detail :is(input,select,textarea) {
+  border-color: #dfe6ef;
+  border-radius: 9px;
+}
+.commercial-team-detail .commercial-lead-management {
+  margin-top: 14px;
+  border: 1px solid #e5eaf2 !important;
+  border-top: 1px solid #e5eaf2 !important;
+  border-radius: 13px !important;
+  box-shadow: none !important;
+}
+@media (max-width: 900px) {
+  .commercial-team-workspace {
+    grid-template-columns: 1fr;
+  }
+  .commercial-team-list {
+    max-height: 40vh;
+  }
+  .commercial-team-top {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+  }
+  .commercial-team-brand img {
+    width: 150px;
+    height: 27px;
+  }
+  .commercial-team fieldset {
+    padding: 14px;
+  }
+}
+@media (max-width: 560px) {
+  .commercial-team-brand div {
+    display: none;
+  }
+  .commercial-team-brand img {
+    width: 145px;
+  }
+  .commercial-team-tools {
+    margin-left: auto;
+  }
+  .commercial-team-tools .commercial-agenda > summary,
+  .commercial-team-refresh {
+    font-size: 9.5px;
+    padding: 6px 8px;
+  }
+  .commercial-team-detail {
+    padding: 12px;
+  }
+}
