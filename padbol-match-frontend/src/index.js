@@ -16,6 +16,25 @@ import { PadbolI18nProvider } from './context/PadbolI18nContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { registerServiceWorker } from './registerServiceWorker';
 
+// Diagnostico de push: registra en el servidor el estado real del dispositivo
+// (permiso, service worker y si existe suscripcion) para saber por que no llega.
+try {
+  const enviar = (detail) => import('./supabaseClient').then(({ supabase }) => {
+    supabase.from('app_launch_events').insert({ path: '/push-diag', mode: 'diag', detail }).then(() => {}, () => {});
+  }).catch(() => {});
+  const base = { permission: typeof Notification !== 'undefined' ? Notification.permission : 'sin-api',
+    standalone: window.navigator.standalone === true, sw: 'serviceWorker' in navigator,
+    pushManager: 'PushManager' in window };
+  if (base.sw) {
+    navigator.serviceWorker.getRegistration().then(async (reg) => {
+      let sub = null;
+      try { sub = reg ? await reg.pushManager.getSubscription() : null; } catch (e) { base.error = String(e && e.name || e); }
+      enviar({ ...base, registro: Boolean(reg), activo: Boolean(reg && reg.active), suscripcion: Boolean(sub), endpoint: sub ? new URL(sub.endpoint).host : null });
+    }).catch((e) => enviar({ ...base, error: String(e && e.name || e) }));
+  } else { enviar(base); }
+} catch { /* ignore */ }
+
+
 // Telemetria minima de arranque: registra en el servidor la ruta inicial y el
 // modo (app instalada o navegador). Sin datos personales ni credenciales.
 try {
