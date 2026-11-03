@@ -42,7 +42,7 @@ export default function CommercialTeamWorkspace({api,currentUserId=''}) {
     </header>
     <fieldset disabled={!authorized}>
       <h1>Área comercial</h1>
-      {role==='manager'&&<CommercialAssignments api={api}/>}
+      {role==='manager'&&<details className="commercial-team-admin"><summary>Administración comercial</summary><CommercialAssignments api={api}/></details>}
       <div className="commercial-team-workspace">
         <section className="commercial-team-list" aria-label="Consultas comerciales">
           <header>
