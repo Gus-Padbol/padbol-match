@@ -415,6 +415,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
       setMsg(t('admin.hub.imageUploaded'));
       window.setTimeout(() => setMsg(''), 2500);
+    } catch (error) {
+      // Sin este catch el fallo quedaba invisible: la pantalla volvia de
+      // "Subiendo" sin mensaje y la foto no se guardaba.
+      setMsg(String(error?.message || t('admin.hub.imageUploadFailed')));
     } finally {
       setUploadingId(null);
     }
