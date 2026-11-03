@@ -19,6 +19,7 @@ export function createCommercialAssignmentsApi(token) {
     return response.json();
   }
   const cases = '/api/admin/crm/commercial-cases';
+  const manualLeads = '/api/admin/crm/manual-leads';
   const advisors = '/api/admin/crm/commercial-advisors';
   return {
     // Explicit user recovery probes authentication only; never replay a mutation.
@@ -28,6 +29,10 @@ export function createCommercialAssignmentsApi(token) {
       clearCrmSessionRejection(token);return result;
     },
     resolveConversation: id => request(`/api/admin/crm/commercial-case-by-conversation/${encodeURIComponent(id)}`),
+    searchManual: q => request(`${manualLeads}/search?q=${encodeURIComponent(q)}`),
+    createManual: payload => request(manualLeads, 'POST', payload),
+    readManual: id => request(`${manualLeads}/${encodeURIComponent(id)}`),
+    updateManual: (id, payload) => request(`${manualLeads}/${encodeURIComponent(id)}`, 'PATCH', payload),
     getRole: () => request('/api/admin/crm/commercial-role'),
     listCases: () => request(cases),
     progress: (id, channel, expectedVersion, state, nextStep, nextContactAt, reminderHours, closureOutcome) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep,...(closureOutcome ? {closureOutcome} : {}),...(nextContactAt !== undefined ? {nextContactAt,reminderHours:reminderHours || [24,8]} : {})}),

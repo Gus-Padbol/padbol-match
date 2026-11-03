@@ -8,3 +8,7 @@
 .commercial-team button:disabled { background: #a9b4c1; cursor: not-allowed; }
 .commercial-team [role='alert'] { color: #a01121; font-weight: 600; }
 @media(max-width: 600px) { .commercial-team { padding: 12px; } .commercial-team section, .commercial-team article { padding: 12px; } }
+.commercial-team-new{min-height:38px;padding:9px 14px;border:1px solid var(--crm-accent,#cf1d2b);border-radius:9px;background:var(--crm-accent,#cf1d2b);color:#fff;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.commercial-team-new:hover{background:var(--crm-accent-hover,#b01623)}
+.commercial-team-new:focus-visible{outline:3px solid var(--crm-focus,#dc3545);outline-offset:2px}
+@media(max-width:720px){.commercial-team-new{width:100%}}

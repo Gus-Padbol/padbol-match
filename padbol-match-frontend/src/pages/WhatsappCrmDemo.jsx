@@ -402,10 +402,6 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const [activityEstado, setActivityEstado] = useState('nuevo');
   const [activityDerivado, setActivityDerivado] = useState('no');
   const [sedes, setSedes] = useState([]);
-  const [manualOpen, setManualOpen] = useState(false);
-  const [manualReceipt, setManualReceipt] = useState(null);
-  const [manualNotice, setManualNotice] = useState(null);
-  const [manual, setManual] = useState({ name: '', email: '', phone: '' });
   const [ngOverview, setNgOverview] = useState({ sedes: [], jornadas: [] });
   const [ngOpen, setNgOpen] = useState(false);
   const [ngDraft, setNgDraft] = useState({ sede_id: '', sesion_id: '', categoria: '', participant_name: '' });
@@ -744,20 +740,6 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     }
   };
 
-  const submitManual = async (event) => {
-    event.preventDefault();
-    if (!perms?.canOperate || busy) return;
-    setBusy(true); setManualNotice(null);
-    try {
-      const result = await crmAdminApi.createManual(token, manual);
-      if (!result?.contact?.id) throw new Error('El servidor no confirmó el registro del contacto.');
-      setManualReceipt(result.contact);
-      setManual({ name: '', email: '', phone: '' });
-      setManualOpen(false); setManualNotice(result.existing ? 'El contacto ya existía; no se modificaron sus datos.' : 'Contacto registrado, sin enviar comunicaciones.');
-    } catch (e) { setManualNotice(e?.message || 'No se pudo registrar el contacto'); }
-    finally { setBusy(false); }
-  };
-
   const assignSede = async (sedeId) => {
     if (!active || !sedeId) return;
     setBusy(true); setNotice(null);
@@ -900,19 +882,6 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
         <div className="wa-tools" aria-label="Herramientas de la bandeja">
       {(perms?.canAudit || commercialOnly) ? <CommercialAdvisorAccess api={commercialApi}/> : null}
       {(perms?.canAudit || commercialOnly) ? <CommercialAgendaAlerts api={commercialApi} onOpen={item=>{const id=item.conversationId || (item.channel==='form'?item.id:null);if(id){setAreaFilter('all');setTicketReference('');setTicketInput('');setEstadoFilter('');setHiddenOnly(false);setActiveId(id);if(threadRef.current)threadRef.current.scrollTop=0;}}}/> : null}
-      {!commercialOnly && (perms?.canOperate || perms?.canAudit) ? <section className="wa-manual-tool">
-        <button type="button" onClick={() => { setManualOpen((value) => !value); setManualReceipt(null); setManualNotice(null); }}>{manualOpen ? 'Cerrar alta manual' : 'Agregar contacto manual'}</button>
-        {manualOpen ? <form onSubmit={submitManual} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-          <strong>Registro de contacto</strong>
-          <p>Solo se registran nombre, correo y teléfono. Este alta no crea conversaciones ni guarda notas, origen o sede.</p>
-          <input required aria-label="Nombre del contacto" placeholder="Nombre" value={manual.name} onChange={(e) => setManual({ ...manual, name: e.target.value })} />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><input aria-label="Correo del contacto" type="email" placeholder="Correo" value={manual.email} onChange={(e) => setManual({ ...manual, email: e.target.value })} /><input aria-label="Teléfono del contacto" placeholder="Teléfono" value={manual.phone} onChange={(e) => setManual({ ...manual, phone: e.target.value })} /></div>
-          <button type="submit" disabled={!perms?.canOperate || busy || (!manual.email && !manual.phone)}>Guardar sin enviar mensajes</button>
-        </form> : null}
-        {manualReceipt ? <div role="status" style={{ marginTop: 12 }}><strong>Contacto registrado: {manualReceipt.nombre || 'Sin nombre'}</strong><p>{[manualReceipt.email_normalized, manualReceipt.phone_normalized].filter(Boolean).join(' · ')}</p><small>ID del contacto: {manualReceipt.id}</small><p>Este contacto no crea una conversación entrante ni un historial en la bandeja.</p></div> : null}
-        {manualNotice ? <p role="status">{manualNotice}</p> : null}
-      </section> : null}
-
       {(perms?.canOperate || perms?.canAudit) ? <form className="wa-ticket-search" onSubmit={(event) => {
         event.preventDefault();
         const reference = ticketInput.trim();

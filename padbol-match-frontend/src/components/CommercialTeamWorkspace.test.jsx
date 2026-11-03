@@ -20,3 +20,8 @@ test('manager can isolate own, another advisor and unassigned cases without chan
  fireEvent.change(screen.getByLabelText('Filtrar por asesor'),{target:{value:'jp'}});expect(screen.getByRole('button',{name:/Lead JP/})).toBeInTheDocument();expect(screen.queryByRole('button',{name:/Lead Nico/})).not.toBeInTheDocument();
  fireEvent.change(screen.getByLabelText('Filtrar por asesor'),{target:{value:'unassigned'}});expect(screen.getByRole('button',{name:/Lead sin asesor/})).toBeInTheDocument();expect(api.listCases).toHaveBeenCalledTimes(initialReads);
 });
+
+test('el área comercial ofrece el alta manual desde un único acceso',async()=>{
+ const api={getRole:jest.fn().mockResolvedValue({role:'manager'}),listCases:jest.fn().mockResolvedValue({cases:[]}),listAdvisors:jest.fn().mockResolvedValue({advisors:[]})};
+ render(<CommercialTeamWorkspace api={api} currentUserId="nico"/>);await screen.findByRole('button',{name:'Nuevo lead'});fireEvent.click(screen.getByRole('button',{name:'Nuevo lead'}));await screen.findByRole('dialog',{name:'Nuevo lead manual'});expect(screen.getByText('Registrá una oportunidad aunque todavía no haya conversación.')).toBeInTheDocument();
+});
