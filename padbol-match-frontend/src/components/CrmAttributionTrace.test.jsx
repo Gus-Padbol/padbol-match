@@ -37,3 +37,28 @@ test('WhatsApp y email se identifican por su origen real',()=>{
  expect(resolveOrigin(lead({origin:'whatsapp:1376102838911694',source_channel:'whatsapp'})).source).toBe('WhatsApp');
  expect(resolveOrigin(lead({origin:'support_email',source_channel:'email'})).source).toBe('Email');
 });
+
+test('muestra fuente, red social, campaña, anuncio y fecha con la atribución nueva',()=>{
+ render(<CrmAttributionTrace conversation={lead({qualification_data:{form_submission:{fields:{
+  attribution_source:'meta',attribution_social:'instagram',attribution_campaign:'120240275542960660',attribution_ad:'120240275542970660',attribution_last_source:'meta',
+ }}}})}/>);
+ expect(screen.getByText('Meta')).toBeInTheDocument();
+ expect(screen.getByText('Instagram')).toBeInTheDocument();
+ expect(screen.getByText('120240275542960660')).toBeInTheDocument();
+ expect(screen.getByText('120240275542970660')).toBeInTheDocument();
+ expect(screen.getByText('Red social')).toBeInTheDocument();
+ expect(screen.getByText('Anuncio')).toBeInTheDocument();
+ expect(screen.queryByText(/UTM/i)).toBeNull();
+});
+
+test('Google Ads, búsqueda orgánica y acceso directo usan la evidencia estructurada',()=>{
+ expect(resolveOrigin(lead({qualification_data:{form_submission:{fields:{attribution_source:'google_ads'}}}})).source).toBe('Google Ads');
+ expect(resolveOrigin(lead({qualification_data:{form_submission:{fields:{attribution_source:'organic_search'}}}})).source).toBe('Búsqueda orgánica');
+ expect(resolveOrigin(lead({qualification_data:{form_submission:{fields:{attribution_source:'direct'}}}})).source).toBe('Acceso directo');
+ expect(resolveOrigin(lead({qualification_data:{form_submission:{fields:{attribution_source:'google_ads'}}}})).social).toBeNull();
+});
+
+test('sin evidencia estructurada sigue mostrando Formulario web y no inventa anuncio',()=>{
+ const origin=resolveOrigin(lead({origin:'web_form:contacto'}));
+ expect(origin).toMatchObject({source:'Formulario web',social:null,campaign:null,ad:null});
+});

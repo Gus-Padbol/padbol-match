@@ -18,6 +18,22 @@ const SOURCE_LABELS = {
   whatsapp: 'WhatsApp',
 };
 
+const ATTRIBUTION_SOURCES = {
+  meta: 'Meta',
+  google_ads: 'Google Ads',
+  google: 'Google',
+  organic_search: 'Búsqueda orgánica',
+  external_referral: 'Referencia externa',
+  direct: 'Acceso directo',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  threads: 'Threads',
+  messenger: 'Messenger',
+  email: 'Email',
+  other: 'Origen no identificado',
+};
+
+const SOCIAL_LABELS = {facebook: 'Facebook', instagram: 'Instagram'};
 const PAID_MEDIA = new Set(['paid', 'cpc', 'ppc', 'paid_social', 'paid-social', 'ads', 'advertising']);
 
 function field(fields, key) {
@@ -25,7 +41,7 @@ function field(fields, key) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-function sourceFromFields(fields) {
+function legacySourceFromFields(fields) {
   const raw = field(fields, 'utm_source');
   if (raw) {
     const key = raw.toLowerCase();
@@ -54,22 +70,29 @@ function sourceFromOrigin(conversation) {
 
 export function resolveOrigin(conversation) {
   const fields = conversation?.qualification_data?.form_submission?.fields;
-  const source = sourceFromFields(fields) || sourceFromOrigin(conversation);
-  const campaign = field(fields, 'utm_id') || field(fields, 'utm_campaign') || field(fields, 'campaign_id');
+  const attributionSource = field(fields, 'attribution_source');
+  const source = attributionSource
+    ? ATTRIBUTION_SOURCES[attributionSource.toLowerCase()] || 'Origen no identificado'
+    : legacySourceFromFields(fields) || sourceFromOrigin(conversation);
+  const social = attributionSource ? (SOCIAL_LABELS[field(fields, 'attribution_social')?.toLowerCase()] || null) : null;
+  const campaign = field(fields, 'attribution_campaign') || field(fields, 'utm_id') || field(fields, 'utm_campaign') || field(fields, 'campaign_id');
+  const ad = field(fields, 'attribution_ad') || field(fields, 'ad_id') || field(fields, 'utm_content');
   const dateValue = conversation?.received_at || conversation?.created_at || null;
   const date = dateValue && Number.isFinite(new Date(dateValue).getTime())
     ? new Date(dateValue).toLocaleString('es-AR', { dateStyle: 'medium', timeStyle: 'short' })
     : 'Fecha no disponible';
-  return { source, campaign, date };
+  return { source, social, campaign, ad, date };
 }
 
 export default function CrmAttributionTrace({ conversation }) {
-  const { source, campaign, date } = resolveOrigin(conversation);
+  const { source, social, campaign, ad, date } = resolveOrigin(conversation);
   return <section className="wa-panel" aria-label="Origen del interesado">
     <h3>Origen del interesado</h3>
     <dl>
       <div><dt>Fuente</dt><dd>{source}</dd></div>
+      {social ? <div><dt>Red social</dt><dd>{social}</dd></div> : null}
       {campaign ? <div><dt>Campaña</dt><dd>{campaign}</dd></div> : null}
+      {ad ? <div><dt>Anuncio</dt><dd>{ad}</dd></div> : null}
       <div><dt>Fecha</dt><dd>{date}</dd></div>
     </dl>
   </section>;
