@@ -13,7 +13,6 @@ export default function PushActivation({token}) {
   const supported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
 
   useEffect(() => {
-    let alive = true;
     (async () => {
       if (!supported) return setState({status: 'unsupported', message: 'Este navegador no permite notificaciones. En iPhone, abrí el CRM desde el ícono instalado en la pantalla de inicio.'});
       try {
@@ -27,7 +26,7 @@ export default function PushActivation({token}) {
         setState({status: 'error', message: error?.message || 'No se pudo consultar el estado de las notificaciones.'});
       }
     })();
-    return () => { alive = false; };
+    return undefined;
   }, [token, supported]);
 
   async function activate() {
