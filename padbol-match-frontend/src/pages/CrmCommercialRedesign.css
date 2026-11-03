@@ -216,6 +216,12 @@
   min-height: 30px;
   padding: 3px 5px !important;
   font-size: 15px !important;
+  filter: grayscale(1);
+  opacity: .82;
+}
+.wa-demo .wa-topbar-actions .push-activation > button:hover {
+  filter: none;
+  opacity: 1;
 }
 .wa-demo .wa-topbar-actions .push-activation > button span:last-child {
   font-size: 11px !important;
@@ -547,18 +553,21 @@
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
-  height: 36px !important;
-  min-height: 36px !important;
-  max-height: 36px;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px;
   border: 1px solid #e2e8f0;
   border-radius: 9px;
-  background: #fff;
+  appearance: auto !important;
+  background: #fff !important;
+  background-image: none !important;
   color: #35465e;
   font: inherit;
   font-size: 11px;
+  line-height: 1.2;
   text-transform: none;
   letter-spacing: 0;
-  padding: 0 9px;
+  padding: 7px 9px !important;
 }
 .wa-demo .wa-filters .wa-clear-filters {
   flex: 1 1 100%;
@@ -1067,6 +1076,14 @@
     display: none;
   }
   .wa-demo .wa-brand-copy span {
+    display: block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 8.5px;
+  }
+  .wa-demo .wa-brand-area {
     display: none;
   }
   .wa-demo .wa-topbar-center {
@@ -1116,6 +1133,14 @@
     white-space: normal;
   }
   .wa-demo .wa-brand-copy span {
+    display: block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 8.5px;
+  }
+  .wa-demo .wa-brand-area {
     display: none;
   }
   .wa-demo .wa-topbar-center {
@@ -1152,12 +1177,15 @@
   .wa-demo .wa-agent span {
     display: none;
   }
+  .wa-demo .wa-agent .wa-agent-avatar {
+    display: grid !important;
+  }
   .wa-demo .wa-topbar-actions {
     grid-column: 1 / -1;
     grid-row: 3;
     justify-content: flex-end;
     margin: 0;
-    padding: 3px 0 0;
+    padding: 5px 0 2px;
     border-left: 0;
     border-top: 1px solid rgba(255, 255, 255, .1);
   }
@@ -1249,9 +1277,11 @@
   .wa-demo .wa-filters .crm-advisor-filter select,
   .wa-demo .wa-filters > select {
     width: 100%;
-    height: 34px !important;
-    min-height: 34px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px;
     font-size: 11px;
+    padding: 7px 9px !important;
   }
   .wa-demo .wa-list {
     display: block;

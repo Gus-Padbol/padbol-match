@@ -883,7 +883,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
             <img className="wa-brand-logo" src="/brand/padbol-internacional-a1.svg" alt="Padbol Internacional" />
             <div className="wa-brand-copy">
               <strong>{commercialOnly ? 'Consultas comerciales' : 'Atención & CRM'}</strong>
-              <span>{commercialOnly ? 'Área comercial · Padbol Internacional' : 'Atención de consultas'}</span>
+              <span>{commercialOnly ? <><span className="wa-brand-area">Área comercial · </span>Padbol Internacional</> : 'Atención de consultas'}</span>
             </div>
           </div>
           <div className="wa-topbar-center">
