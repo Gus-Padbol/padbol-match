@@ -68,15 +68,28 @@ export default function PushActivation({token}) {
     }
   }
 
+  const ok = state.status === 'active';
   return (
-    <div className="push-activation">
-      <strong>Notificaciones del CRM</strong>
-      <p>{state.message}</p>
-      {(state.status === 'idle' || state.status === 'error') && (
-        <button type="button" onClick={activate}>Activar notificaciones</button>
+    <div className="push-activation" style={{position:'relative', display:'inline-flex', alignItems:'center'}}>
+      <button
+        type="button"
+        onClick={() => (ok ? setState({...state, open: !state.open}) : activate())}
+        disabled={state.status === 'working'}
+        title={ok ? 'Notificaciones activadas' : 'Activar notificaciones'}
+        aria-label={ok ? 'Notificaciones activadas' : 'Activar notificaciones'}
+        style={{background:'transparent', border:'none', cursor:'pointer', padding:'4px 6px', fontSize:'20px', lineHeight:1, display:'inline-flex', alignItems:'center', gap:2}}
+      >
+        <span aria-hidden>🔔</span>
+        {ok ? <span aria-hidden style={{color:'#22c55e', fontSize:'13px', fontWeight:700}}>✓</span>
+            : <span aria-hidden style={{color:'#ef4444', fontSize:'13px', fontWeight:700}}>!</span>}
+      </button>
+      {state.message && (
+        <div role="status" style={{position:'absolute', top:'100%', right:0, zIndex:20, width:'min(280px, 80vw)',
+          background:'#0b1324', color:'#fff', border:'1px solid rgba(255,255,255,.15)', borderRadius:8,
+          padding:'8px 10px', fontSize:'12px', lineHeight:1.35, marginTop:4}}>
+          {state.message}
+        </div>
       )}
-      {state.status === 'working' && <button type="button" disabled>Activando…</button>}
-      {state.status === 'active' && <span role="status">✅ Activadas</span>}
     </div>
   );
 }
