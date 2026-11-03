@@ -6,6 +6,7 @@ import CommercialCaseDetail from './CommercialCaseDetail';
 import CommercialAgendaAlerts from './CommercialAgendaAlerts';
 import './CommercialTeamWorkspace.css';
 import './CommercialCrmTheme.css';
+import '../pages/CrmCommercialRedesign.css';
 
 // The server determines the role and filters every case; client state never grants access.
 export default function CommercialTeamWorkspace({api,currentUserId=''}) {
