@@ -19,6 +19,7 @@ function withTimeout(promise, ms, code) {
 
 export default function PushActivation({token}) {
   const [state, setState] = useState({status: 'loading', message: ''});
+  const [showMessage, setShowMessage] = useState(false);
   const supported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
 
   useEffect(() => {
@@ -82,9 +83,13 @@ export default function PushActivation({token}) {
     <div className="push-activation" style={{position:'relative', display:'inline-flex', alignItems:'center'}}>
       <button
         type="button"
-        onClick={() => (ok ? setState({...state, open: !state.open}) : activate())}
+        onClick={() => {
+          if (ok) { setShowMessage(value => !value); setState({...state, open: !state.open}); }
+          else { setShowMessage(true); activate(); }
+        }}
         disabled={state.status === 'working'}
-        title={ok ? 'Notificaciones activadas' : 'Activar notificaciones'}
+        aria-expanded={showMessage}
+        title={state.message || (ok ? 'Notificaciones activadas' : 'Activar notificaciones')}
         aria-label={ok ? 'Notificaciones activadas' : 'Activar notificaciones'}
         style={{background:'transparent', border:'none', cursor:'pointer', padding:'4px 6px', fontSize:'20px', lineHeight:1, display:'inline-flex', alignItems:'center', gap:2}}
       >
@@ -92,7 +97,7 @@ export default function PushActivation({token}) {
         {ok ? <span aria-hidden style={{color:'#22c55e', fontSize:'13px', fontWeight:700}}>✓</span>
             : <span aria-hidden style={{color:'#ef4444', fontSize:'13px', fontWeight:700}}>!</span>}
       </button>
-      {state.message && (
+      {state.message && showMessage && (
         <div role="status" style={{position:'absolute', top:'100%', right:-4, zIndex:20, width:'min(240px, calc(100vw - 24px))', maxWidth:'calc(100vw - 24px)',
           background:'#0b1324', color:'#fff', border:'1px solid rgba(255,255,255,.15)', borderRadius:8,
           padding:'8px 10px', fontSize:'12px', lineHeight:1.35, marginTop:4}}>

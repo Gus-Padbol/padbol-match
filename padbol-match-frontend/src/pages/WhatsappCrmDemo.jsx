@@ -123,6 +123,17 @@ export function compactDateTime(value, advisorTimeZone = ADVISOR_TIME_ZONE) {
   return `${local} · Argentina: ${argentina}`;
 }
 
+export function conversationListDate(value, advisorTimeZone = ADVISOR_TIME_ZONE) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const now = new Date();
+  const sameDay = new Intl.DateTimeFormat('es-AR', { timeZone: advisorTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
+    === new Intl.DateTimeFormat('es-AR', { timeZone: advisorTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  if (sameDay) return new Intl.DateTimeFormat('es-AR', { timeZone: advisorTimeZone, hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
+  return new Intl.DateTimeFormat('es-AR', { timeZone: advisorTimeZone, day: '2-digit', month: '2-digit' }).format(date);
+}
+
 export function formatCrmEventText(value) {
   const text = String(value || '');
   const attachment = text.match(/^\[WhatsApp: (imagen|audio|video|documento|sticker) recibido\.(?: Archivo aún no disponible\.)?\]\s*/);
@@ -953,7 +964,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                 <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => { setActiveId(item.id); if (threadRef.current) threadRef.current.scrollTop = 0; threadRef.current?.scrollIntoView?.({ block: 'start' }); }}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
-                    <div><strong>{[detailValue(formDetails(item), 'Nombre'), detailValue(formDetails(item), 'Apellido')].filter(Boolean).join(' ') || item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined}>{compactDateTime(conversationDisplayDate(item))}</time></div>
+                    <div><strong>{[detailValue(formDetails(item), 'Nombre'), detailValue(formDetails(item), 'Apellido')].filter(Boolean).join(' ') || item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined} title={compactDateTime(conversationDisplayDate(item))}>{conversationListDate(conversationDisplayDate(item))}</time></div>
                     <p>{formatCrmEventText(item.subject || item.inbound_body).slice(0, 80)}</p>
                     {item.short_ticket_reference || item.ticket_reference ? <p>N.º de ticket: {item.short_ticket_reference || item.ticket_reference}</p> : null}
                     {needsEnglishHumanAttention(item) ? <p className="wa-language-attention">Atención humana en inglés pendiente</p> : null}
