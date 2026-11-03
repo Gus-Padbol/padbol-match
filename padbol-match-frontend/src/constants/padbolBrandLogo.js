@@ -7,10 +7,10 @@
  *   padding del asset se ve como un bloque negro sobredimensionado.
  * El ícono cuadrado conserva la geometría del isotipo vectorial oficial.
  */
-export const PADBOL_LOGO_ON_LIGHT = '/brand/padbol-match-logo-on-light.png';
-export const PADBOL_LOGO_ON_DARK = '/brand/padbol-match-logo-on-dark.png';
-export const PADBOL_LOGO_ON_DARK_TIGHT =
-  '/brand/padbol-match-logo-on-dark-tight.png';
+// Logo oficial vigente (IMAGO A COMPLETO.svg). Reemplaza a los PNG anteriores.
+export const PADBOL_LOGO_ON_LIGHT = '/brand/padbol-match-logo-oficial.svg';
+export const PADBOL_LOGO_ON_DARK = '/brand/padbol-match-logo-oficial.svg';
+export const PADBOL_LOGO_ON_DARK_TIGHT = '/brand/padbol-match-logo-oficial.svg';
 export const PADBOL_ICON_SVG = '/brand/padbol-match-icon.svg';
 export const PADBOL_ICON_192 = '/brand/padbol-match-icon-192.png';
 export const PADBOL_ICON_512 = '/brand/padbol-match-icon-512.png';

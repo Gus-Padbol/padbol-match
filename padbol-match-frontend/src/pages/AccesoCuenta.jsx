@@ -13,7 +13,6 @@ import {
   HUB_LOGO_CLEARANCE_TOP_PX,
   hubAccesoContentPaddingTopCss,
 } from '../constants/hubLayout';
-import PadbolBrandLogo from '../components/PadbolBrandLogo';
 import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { supabase } from '../supabaseClient';
@@ -567,10 +566,8 @@ export default function AccesoCuenta() {
       >
         <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center',
           alignItems: 'center', padding: '18px 0', borderRadius: 8, marginTop: HUB_LOGO_CLEARANCE_TOP_PX, marginBottom: '10px' }}>
-          <PadbolBrandLogo
-            variant="on-dark"
-            style={{ height: 'clamp(56px, 14vw, 96px)', width: 'auto', maxWidth: 'min(100%, 300px)', margin: 0 }}
-          />
+          <img src="/brand/padbol-match-logo-oficial.svg" alt="Padbol Match"
+            style={{height:'clamp(44px, 11vw, 78px)', width:'auto', maxWidth:'min(100%, 340px)', display:'block'}} />
         </div>
       </div>
       <div
