@@ -323,6 +323,10 @@ export default function AccesoCuenta() {
       await refreshSession();
       const destinoSolicitado = resolvePostLoginNavigatePath(location.search);
       const destinoTrasLogin = await resolveRoleAwarePostLoginPath(destinoSolicitado, s);
+      // Si la app se abrio desde el icono PADBOL CRM, el destino es el CRM aunque
+      // el rol lleve al panel de administracion.
+      let crmIntent = null;
+      try { crmIntent = localStorage.getItem('padbol_crm_return'); } catch { /* ignore */ }
       const destinoEsBibliotecaFipa = destinoTrasLogin.split('?')[0] === '/fipa/documentos';
       const fechaElegibilidadPendiente = String(s.user.user_metadata?.legal_birth_date || '').trim();
       if (destinoEsBibliotecaFipa && fechaElegibilidadPendiente) {
@@ -339,9 +343,10 @@ export default function AccesoCuenta() {
         }
       }
       const necesitaCompletarPerfil = Boolean(s.user.user_metadata?.profile_completion_required);
+      const destinoFinal = crmIntent && !destinoEsBibliotecaFipa ? crmIntent : destinoTrasLogin;
       const destinoNavegacion = necesitaCompletarPerfil && !destinoEsBibliotecaFipa
-        ? `/completar-perfil?redirect=${encodeURIComponent(destinoTrasLogin)}`
-        : destinoTrasLogin;
+        ? `/completar-perfil?redirect=${encodeURIComponent(destinoFinal)}`
+        : destinoFinal;
       try {
         localStorage.removeItem(RESERVA_RETURN_STORAGE_KEY);
       } catch {
@@ -352,6 +357,7 @@ export default function AccesoCuenta() {
       } catch {
         /* ignore */
       }
+      try { localStorage.removeItem('padbol_crm_return'); } catch { /* ignore */ }
       navigate(destinoNavegacion, { replace: true });
       if (isUserHomeHubPath(destinoNavegacion)) {
         scheduleHubEntryScrollReset();
@@ -559,15 +565,13 @@ export default function AccesoCuenta() {
           maxWidth: '400px',
         }}
       >
-        <PadbolBrandLogo
-          style={{
-            marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-            marginBottom: '10px',
-            height: 'clamp(64px, 16vw, 110px)',
-            width: 'auto',
-            maxWidth: 'min(100%, 320px)',
-          }}
-        />
+        <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center',
+          alignItems: 'center', padding: '18px 0', borderRadius: 8, marginTop: HUB_LOGO_CLEARANCE_TOP_PX, marginBottom: '10px' }}>
+          <PadbolBrandLogo
+            variant="on-dark"
+            style={{ height: 'clamp(56px, 14vw, 96px)', width: 'auto', maxWidth: 'min(100%, 300px)', margin: 0 }}
+          />
+        </div>
       </div>
       <div
         style={{

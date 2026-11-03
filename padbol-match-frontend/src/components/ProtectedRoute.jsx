@@ -25,6 +25,7 @@ export default function ProtectedRoute({ children }) {
 
   if (!session?.user) {
     const next = `${location.pathname}${location.search || ''}`;
+    try { if (location.pathname.startsWith('/crm')) localStorage.setItem('padbol_crm_return', '/crm-leads'); } catch { /* ignore */ }
     return <Navigate to={`/login?redirect=${encodeURIComponent(next)}`} replace />;
   }
 
