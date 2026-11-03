@@ -13,6 +13,14 @@ export async function resolveRoleAwarePostLoginPath(
   roleFetcher = fetchMiRol,
   commercialRoleFetcher = token => createCommercialAssignmentsApi(token).getRole(),
 ) {
+  // PADBOL CRM instalado: el destino posterior al login es siempre el CRM,
+  // sin importar el rol ni lo que devuelva el proveedor de autenticacion.
+  try {
+    if (localStorage.getItem('padbol_crm_app') === '1') {
+      console.info('[login] app PADBOL CRM detectada -> /crm-leads');
+      return '/crm-leads';
+    }
+  } catch { /* storage no disponible */ }
   const requested = String(destination || '/');
   if (requested !== '/') return requested;
 
@@ -21,7 +29,7 @@ export async function resolveRoleAwarePostLoginPath(
 
   try {
     const roleData = await roleFetcher(token);
-    if (userCanAccessAdminPanel(roleData?.rol)) return '/admin';
+    if (userCanAccessAdminPanel(roleData?.rol)) { console.info('[login] rol admin -> /admin'); return '/admin'; }
     // Membership is verified by the server, never by an email or local/JWT metadata.
     try {
       const commercial = await commercialRoleFetcher(token);
