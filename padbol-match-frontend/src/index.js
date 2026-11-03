@@ -1,3 +1,5 @@
+
+
 // Padbol Match frontend entry point.
 import './utils/ignoreResizeObserver';
 import React from 'react';
@@ -13,6 +15,16 @@ import { AuthProvider } from './context/AuthContext';
 import { PadbolI18nProvider } from './context/PadbolI18nContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { registerServiceWorker } from './registerServiceWorker';
+
+// PADBOL CRM instalado en la pantalla de inicio: iOS arranca la app en la raiz
+// ('/') porque el manifest con el que se instalo tenia start_url '/'. No hay
+// storage compartido entre Safari y la app instalada, asi que la unica marca
+// confiable es el modo standalone. Si la app instalada abre en la raiz, se va
+// al CRM. El panel de administracion sigue accesible en /admin.
+if (typeof window !== 'undefined' && window.navigator.standalone === true
+  && (window.location.pathname === '/' || window.location.pathname === '')) {
+  window.location.replace('/crm-leads');
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
