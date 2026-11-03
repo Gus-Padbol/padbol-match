@@ -1795,3 +1795,22 @@
   border-radius: 0 0 14px 14px !important;
   box-shadow: none !important;
 }
+.commercial-team-placeholder {
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  min-height: 240px;
+  padding: 24px;
+  border: 1px dashed #d9e2ee;
+  border-radius: 16px;
+  background: #fbfcfe;
+  color: #78869a;
+  text-align: center;
+}
+.commercial-team-placeholder strong {
+  color: #30425b;
+  font-size: 13px;
+}
+.commercial-team-placeholder span {
+  font-size: 11px;
+}

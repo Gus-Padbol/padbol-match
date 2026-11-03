@@ -33,7 +33,7 @@ export default function CommercialTeamWorkspace({api,currentUserId=''}) {
     <header className="commercial-team-top">
       <div className="commercial-team-brand">
         <img src="/brand/padbol-internacional-a1.svg" alt="Padbol Internacional" />
-        <div><strong>Padbol Internacional</strong><span>Área comercial</span></div>
+        <div><strong>Padbol Internacional</strong><span>Área comercial · Plataforma Padbol Match</span></div>
       </div>
       <div className="commercial-team-tools">
         <CommercialAgendaAlerts api={api} onOpen={setSelected}/>
@@ -58,7 +58,7 @@ export default function CommercialTeamWorkspace({api,currentUserId=''}) {
           {advisorFilter&&!visibleCases.length&&<p>No hay consultas para este asesor.</p>}
           <ul>{visibleCases.map(c=><li key={`${c.channel}:${c.id}`}><button type="button" className={selected?.id===c.id&&selected?.channel===c.channel?'is-active':''} onClick={()=>setSelected(c)}><strong>{c.contact?.name || c.contact?.phone || c.contact?.email || 'Consulta comercial'}</strong><span>{commercialCaseSourceLabel(c)}</span>{c.assignedAdvisor?.name&&<small>Asesor: {c.assignedAdvisor.name}</small>}</button></li>)}</ul>
         </section>
-        {selected&&<div className="commercial-team-detail"><CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api} disabled={!authorized} revalidationRevision={sessionRevision}/></div>}
+        {selected?<div className="commercial-team-detail"><CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api} disabled={!authorized} revalidationRevision={sessionRevision}/></div>:<div className="commercial-team-placeholder"><strong>Seleccioná una consulta</strong><span>Elegí un lead de la bandeja para ver su ficha, origen e historial.</span></div>}
       </div>
     </fieldset>
     {sessionRejected&&typeof api.revalidateSession==='function'&&<button type="button" disabled={recovering} onClick={recoverSession}>Volver a comprobar sesión</button>}
