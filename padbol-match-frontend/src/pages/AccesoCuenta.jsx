@@ -555,7 +555,10 @@ export default function AccesoCuenta() {
         <PadbolBrandLogo
           style={{
             marginTop: HUB_LOGO_CLEARANCE_TOP_PX,
-            marginBottom: '4px',
+            marginBottom: '10px',
+            height: 'clamp(64px, 16vw, 110px)',
+            width: 'auto',
+            maxWidth: 'min(100%, 320px)',
           }}
         />
       </div>

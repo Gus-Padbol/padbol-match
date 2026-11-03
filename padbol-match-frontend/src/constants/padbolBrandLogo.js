@@ -22,5 +22,7 @@ export const PADBOL_APPLE_TOUCH_ICON =
 /** @param {'light'|'dark'|boolean} themeOrIsDark */
 export function padbolBrandLogoSrc(themeOrIsDark) {
   const dark = themeOrIsDark === true || themeOrIsDark === 'dark';
-  return dark ? PADBOL_LOGO_ON_DARK : PADBOL_LOGO_ON_LIGHT;
+  // En fondos oscuros se usa el arte recortado: el asset 1024x1024 incluye
+  // lienzo negro que en pantalla se ve como un cuadrado alrededor del logo.
+  return dark ? PADBOL_LOGO_ON_DARK_TIGHT : PADBOL_LOGO_ON_LIGHT;
 }
