@@ -1,0 +1,11 @@
+Padbol Internacional — identidad oficial
+Fuente: PADBOL LOGOS.zip entregado por Gustavo (2026-10-08)
+SHA-256 del ZIP: 700d2e774b312dae80c1ff6688ea378fe91c0d9c0bbace5b780442d55a5ff7d0
+Copia de referencia: /Users/padbol2022/PADBOL-LAB-DEEPSEEK/brand-reference/PADBOL-LOGOS-oficial-2026-10-08.zip
+
+Variantes incluidas:
+- padbol-internacional-dark.svg / .png: LOGO FULL A (wordmark blanco + isotipo rojo/gris), para fondos oscuros.
+- padbol-internacional-light.svg / .png: LOGO FULL B (wordmark negro + isotipo rojo/negro), para fondos claros.
+- padbol-isotipo-dark.svg / light.svg: isotipos oficiales.
+
+No editar estos archivos a mano. No reemplazar la identidad propia de Padbol Match.

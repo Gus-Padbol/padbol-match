@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {commercialCaseSourceLabel} from '../utils/commercialCaseSourceLabel';
+import {PADBOL_INTERNACIONAL_LOGO_ON_DARK} from '../constants/padbolInstitutionalBrand';
 import CommercialAdvisorFilter, {matchesAdvisor} from './CommercialAdvisorFilter';
 import CommercialAssignments from './CommercialAssignments';
 import CommercialCaseDetail from './CommercialCaseDetail';
@@ -32,7 +33,7 @@ export default function CommercialTeamWorkspace({api,currentUserId=''}) {
   return <main className="commercial-team">
     <header className="commercial-team-top">
       <div className="commercial-team-brand">
-        <img src="/brand/padbol-internacional-a1.svg" alt="Padbol Internacional" />
+        <img src={PADBOL_INTERNACIONAL_LOGO_ON_DARK} alt="Padbol Internacional" />
         <div><strong>Padbol Internacional</strong><span>Área comercial · Plataforma Padbol Match</span></div>
       </div>
       <div className="commercial-team-tools">

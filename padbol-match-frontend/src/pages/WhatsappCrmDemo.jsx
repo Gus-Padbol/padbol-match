@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
 import CrmComunicaciones from '../components/CrmComunicaciones';
 import {PADBOL_ICON_SVG} from '../constants/padbolBrandLogo';
+import {PADBOL_INTERNACIONAL_LOGO_ON_DARK} from '../constants/padbolInstitutionalBrand';
 import CommercialLeadManagement from '../components/CommercialLeadManagement';
 import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
 import CommercialAdvisorAccess from '../components/CommercialAdvisorAccess';
@@ -880,7 +881,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
         <div className="wa-topbar-main">
           {onBack&&!backInAppHeader?<button className="wa-inline-exit" type="button" onClick={onBack}>Volver al panel general</button>:null}
           <div className="wa-brand">
-            <img className="wa-brand-logo" src="/brand/padbol-internacional-a1.svg" alt="Padbol Internacional" />
+            <img className="wa-brand-logo" src={PADBOL_INTERNACIONAL_LOGO_ON_DARK} alt="Padbol Internacional" />
             <div className="wa-brand-copy">
               <strong>{commercialOnly ? 'Consultas comerciales' : 'Atención & CRM'}</strong>
               <span>{commercialOnly ? <><span className="wa-brand-area">Área comercial · </span>Padbol Internacional</> : 'Atención de consultas'}</span>
