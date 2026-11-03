@@ -29,7 +29,16 @@ export default function PushActivation({token}) {
         if (!config?.enabled) return setState({status: 'disabled', message: 'El servidor todavía no tiene las claves de notificación configuradas.'});
         const reg = await navigator.serviceWorker.getRegistration();
         const sub = reg ? await reg.pushManager.getSubscription() : null;
-        if (sub) return setState({status: 'active', message: 'Notificaciones activadas en este dispositivo.'});
+        if (sub) {
+          // Reenviar la suscripcion al servidor: el estado verde no puede depender
+          // solo del almacenamiento local, porque el alta puede haber fallado.
+          try {
+            await crmAdminApi.pushSubscribe(token, sub.toJSON());
+            return setState({status: 'active', message: 'Notificaciones activadas en este dispositivo.'});
+          } catch {
+            return setState({status: 'idle', message: 'Este dispositivo todavía no está registrado en el servidor. Tocá para completar el registro.'});
+          }
+        }
         setState({status: 'idle', message: 'Activá las notificaciones para recibir leads y recordatorios en este teléfono.'});
       } catch (error) {
         setState({status: 'error', message: error?.message || 'No se pudo consultar el estado de las notificaciones.'});
