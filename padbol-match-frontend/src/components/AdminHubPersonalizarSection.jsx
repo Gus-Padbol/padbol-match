@@ -399,25 +399,48 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     fileRefDeporte.current?.click();
   };
 
+  // Sube la foto del hub usando el endpoint que SI existe (PATCH /api/hub-config/:id).
+  // El POST /api/hub-config/:id/foto no estaba implementado en el backend, por eso
+  // la imagen nunca se guardaba. Se reduce la imagen antes de enviarla.
   const subirFotoHubConfig = useCallback(async (id, file) => {
     setUploadingId(id);
     setMsg('');
     try {
-      const fd = new FormData();
-      fd.append('foto', file);
-      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(id)}/foto`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: fd,
+      if (!file || !String(file.type || '').startsWith('image/')) throw new Error('El archivo tiene que ser una imagen.');
+      const dataUrl = await new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          try {
+            const max = 900;
+            const escala = Math.min(1, max / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * escala);
+            canvas.height = Math.round(img.height * escala);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          } catch (e) { reject(new Error('No se pudo procesar la imagen.')); }
+          finally { URL.revokeObjectURL(url); }
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('No se pudo leer la imagen.')); };
+        img.src = url;
+      });
+      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ foto_url: dataUrl }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t('admin.hub.imageUploadFailed'));
+      // Verificar que quedó guardada releyendo del servidor.
+      const check = await fetch(`${apiBaseUrl}/api/hub-config`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const rowsNow = await check.json().catch(() => []);
+      const guardada = Array.isArray(rowsNow) && rowsNow.some((r) => String(r.id) === String(id) && r.foto_url);
+      if (!guardada) throw new Error('La foto no quedó guardada. Intentá de nuevo.');
       setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
       setMsg(t('admin.hub.imageUploaded'));
       window.setTimeout(() => setMsg(''), 2500);
     } catch (error) {
-      // Sin este catch el fallo quedaba invisible: la pantalla volvia de
-      // "Subiendo" sin mensaje y la foto no se guardaba.
       setMsg(String(error?.message || t('admin.hub.imageUploadFailed')));
     } finally {
       setUploadingId(null);
