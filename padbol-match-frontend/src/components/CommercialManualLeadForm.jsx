@@ -13,7 +13,7 @@ const INTERESTS = [
   ['representacion_nacional', 'Representación nacional'], ['otra', 'Otra consulta'],
 ];
 const STATUSES = [['nuevo', 'Nuevo'], ['en_atencion', 'En atención'], ['en_espera', 'En espera / seguimiento'], ['cerrado', 'Cerrado']];
-const ACTIVITY_TYPES = [['note', 'Nota / correo'], ['phone_call', 'Llamada'], ['zoom_meeting', 'Reunión online'], ['in_person_meeting', 'Reunión presencial']];
+const ACTIVITY_TYPES = [['note', 'Nota'], ['email', 'Correo electrónico'], ['phone_call', 'Llamada'], ['zoom_meeting', 'Reunión online'], ['in_person_meeting', 'Reunión presencial'], ['other', 'Otra gestión']];
 const EMPTY = {
   name: '', email: '', prefix: '54', phone: '', company: '', country: '', city: '',
   interest: 'club', status: 'nuevo', sourceDetail: '', notes: '', nextStep: '',
@@ -41,6 +41,7 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [force, setForce] = useState(false);
+  const [linked, setLinked] = useState([]), [linkable, setLinkable] = useState([]);
   const panel = useRef(null);
   const editing = mode === 'edit' && Boolean(caseId);
 
@@ -83,6 +84,7 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
             assignedAdvisorId: data.assignedAdvisor?.id || '',
             closureOutcome: data.closureOutcome || '',
           });
+          setLinked(data.linkedConversations || []); setLinkable(data.linkableConversations || []);
         }
       } catch (e) {
         if (active) setError(e?.message === 'FORBIDDEN' ? 'No tenés permiso para esta ficha.' : 'No se pudo cargar el formulario.');
@@ -138,7 +140,7 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
       notes: form.notes, nextStep: form.nextStep, nextContactAt,
       reminderHours: reminders || [24,8], assignedAdvisorId: form.assignedAdvisorId || undefined,
       closureOutcome: form.status === 'cerrado' ? form.closureOutcome : undefined,
-      activityType: form.activityType === 'email' ? 'note' : form.activityType,
+      activityType: form.activityType,
       ...(force ? {force: true} : {}),
     };
     setBusy(true); setError(''); setNotice('');
@@ -205,6 +207,7 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
             <label>Avisarme estas horas antes<input value={form.reminders} onChange={e=>update('reminders',e.target.value)} placeholder="24, 8" /><small>Horas separadas por coma. Por defecto 24 y 8.</small></label>
           </div>
         </section>
+        {editing && (linkable.length>0 || linked.length>0) ? <section aria-labelledby="manual-links-title" className="manual-links"><h3 id="manual-links-title">Conversaciones reales del mismo contacto</h3><p>Se vinculan a esta ficha sin fusionar ni eliminar registros. El historial comercial sigue siendo el de esta ficha.</p>{linkable.map(item=><div key={item.id} className="manual-link-row"><span>{item.source_channel==='whatsapp'?'WhatsApp':'Correo'} · {item.origin || 'sin origen'} · {item.subject || 'Sin asunto'}</span>{linked.includes(item.id)?<b>Vinculada</b>:<button type="button" className="manual-secondary" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const data=await api.linkManual(caseId,item.id);setLinked(data.linkedConversations||[]);setLinkable(data.linkableConversations||[]);setNotice('Conversación vinculada.');}catch(e){setError(e?.message||'No se pudo vincular.');}finally{setBusy(false);}}}>Vincular</button>}</div>)}</section> : null}
         {error && <p className="manual-lead-error" role="alert">{error}</p>}
         {notice && <p className="manual-lead-notice" role="status">{notice}</p>}
         <footer className="manual-lead-actions">

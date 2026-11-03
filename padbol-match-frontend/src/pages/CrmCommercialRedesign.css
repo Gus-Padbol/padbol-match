@@ -1814,3 +1814,6 @@
 .commercial-team-placeholder span {
   font-size: 11px;
 }
+.wa-new-lead{min-height:34px;padding:8px 12px;border:1px solid var(--crm-red);border-radius:8px;background:var(--crm-red);color:#fff;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.wa-new-lead:hover{background:var(--crm-red-dark);border-color:var(--crm-red-dark)}
+.wa-new-lead:focus-visible{outline:3px solid #fff;outline-offset:2px}

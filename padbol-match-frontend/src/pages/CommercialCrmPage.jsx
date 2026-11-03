@@ -10,7 +10,7 @@ export default function CommercialCrmPage() {
   const { session, signOutAndClear } = useAuth();
   const token=session?.access_token || '';
   const api=useMemo(()=>createCommercialAssignmentsApi(token),[token]);
-  const [available,setAvailable]=useState(false), [team,setTeam]=useState(false), [role,setRole]=useState(null);
+  const [available,setAvailable]=useState(false), [team,setTeam]=useState(false), [role,setRole]=useState(null), [manualRequest,setManualRequest]=useState(0);
   const [esAngosto,setEsAngosto]=useState(()=>typeof window!=='undefined' && window.innerWidth < 700);
   useEffect(()=>{const on=()=>setEsAngosto(window.innerWidth < 700);window.addEventListener('resize',on);return ()=>window.removeEventListener('resize',on);},[]);
   useEffect(()=>{setAvailable(false);setTeam(false);setRole(null);},[session?.user?.id]);
@@ -29,13 +29,14 @@ export default function CommercialCrmPage() {
   const utilityActions = <>
     <PushActivation token={token} />
     {!esAngosto && <span className="wa-meta-entry"><CrmMetaResultsEntry /></span>}
+    {available&&<button type="button" className="wa-new-lead" onClick={()=>{setTeam(true);setManualRequest(value=>value+1);}}>Nuevo lead</button>}
     {available&&role==='manager'&&<button type="button" className="wa-team-toggle" onClick={()=>setTeam(!team)}>{team ? 'Volver a consultas actuales' : 'Área del equipo comercial'}</button>}
     <button type="button" className="wa-signout" onClick={signOutAndClear}>Cerrar sesión</button>
   </>;
   return <>
     {team && available ? <>
       <div className="commercial-crm-utility" aria-label="Acciones de la cuenta">{utilityActions}</div>
-      <CommercialTeamWorkspace api={api} currentUserId={session?.user?.id}/>
+      <CommercialTeamWorkspace api={api} currentUserId={session?.user?.id} manualRequest={manualRequest}/>
     </> : <WhatsappCrmDemo requiredScope="commercial" headerActions={utilityActions} />}
   </>;
 }

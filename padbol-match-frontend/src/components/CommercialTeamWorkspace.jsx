@@ -11,7 +11,7 @@ import './CommercialCrmTheme.css';
 import '../pages/CrmCommercialRedesign.css';
 
 // The server determines the role and filters every case; client state never grants access.
-export default function CommercialTeamWorkspace({api,currentUserId=''}) {
+export default function CommercialTeamWorkspace({api,currentUserId='',manualRequest=0}) {
   const [advisorFilter,setAdvisorFilter]=useState('');
   const [authorized,setAuthorized]=useState(false);
   const [sessionRejected,setSessionRejected]=useState(false),[sessionRevision,setSessionRevision]=useState(0),[recovering,setRecovering]=useState(false);
@@ -19,6 +19,7 @@ export default function CommercialTeamWorkspace({api,currentUserId=''}) {
   const [role,setRole]=useState(null), [cases,setCases]=useState([]), [selected,setSelected]=useState(null), [error,setError]=useState('');
   const [manualOpen,setManualOpen]=useState(false),[manualEditId,setManualEditId]=useState(null);
   useEffect(()=>{setRole(null);setSelected(null);setCases([]);setError('');},[currentUserId]);
+  useEffect(()=>{if(manualRequest>0){setManualEditId(null);setManualOpen(true);}},[manualRequest]);
   useEffect(()=>{let active=true;setAuthorized(false);
     Promise.all([api.getRole(),api.listCases()]).then(([r,c])=>{if(!active)return;if(!['manager','advisor'].includes(r.role))throw Object.assign(new Error('Invalid role'),{status:403});setRole(r.role);setCases(c.cases || []);setSelected(current=>current&&(c.cases||[]).some(item=>item.id===current.id&&item.channel===current.channel)?current:null);setAuthorized(true);setSessionRejected(false);setError('');}).catch(error=>{if(active){setSessionRejected(error?.status===401&&error?.code==='UNAUTHENTICATED');if(error?.status===403||error?.status===404){setSelected(null);setCases([]);setRole(null);}setError('No se pudo abrir el área comercial.');}});
     return ()=>{active=false};},[api,sessionRevision]);

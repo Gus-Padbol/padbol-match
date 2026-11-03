@@ -33,6 +33,7 @@ export function createCommercialAssignmentsApi(token) {
     createManual: payload => request(manualLeads, 'POST', payload),
     readManual: id => request(`${manualLeads}/${encodeURIComponent(id)}`),
     updateManual: (id, payload) => request(`${manualLeads}/${encodeURIComponent(id)}`, 'PATCH', payload),
+    linkManual: (id, conversationId) => request(`${manualLeads}/${encodeURIComponent(id)}/link`, 'POST', {conversationId}),
     getRole: () => request('/api/admin/crm/commercial-role'),
     listCases: () => request(cases),
     progress: (id, channel, expectedVersion, state, nextStep, nextContactAt, reminderHours, closureOutcome) => request(`${cases}/${encodeURIComponent(id)}/progress`, 'PUT', {channel,expectedVersion,state,nextStep,...(closureOutcome ? {closureOutcome} : {}),...(nextContactAt !== undefined ? {nextContactAt,reminderHours:reminderHours || [24,8]} : {})}),
