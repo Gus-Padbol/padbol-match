@@ -5,6 +5,7 @@ import {crmReplyLimit,crmReplyLength} from '../utils/crmReplyLimits';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { crmAdminApi } from '../utils/crmAdminApi';
+import PushActivation from '../components/PushActivation';
 import {PADBOL_ICON_SVG} from '../constants/padbolBrandLogo';
 import CommercialLeadManagement from '../components/CommercialLeadManagement';
 import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
@@ -862,6 +863,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
 
   return (
     <main className="wa-demo">
+      <PushActivation token={token} />
       <header className="wa-topbar">
         {onBack&&!backInAppHeader?<button className="wa-inline-exit" type="button" onClick={onBack}>Volver al panel general</button>:null}
         <div className="wa-brand">

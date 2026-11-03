@@ -27,6 +27,9 @@ async function request(path, token, options = {}) {
 }
 
 export const crmAdminApi = {
+  pushConfig: (token) => request('/api/crm/push/config', token),
+  pushSubscribe: (token, subscription) => request('/api/crm/push/subscribe', token, { method: 'POST', body: JSON.stringify({ subscription }) }),
+  pushTest: (token, payload = {}) => request('/api/crm/push/test', token, { method: 'POST', body: JSON.stringify(payload) }),
   permissions: (token) => request('/api/admin/crm/permissions', token),
   inbox: (token, filters = {}) => {
     const q = new URLSearchParams();
