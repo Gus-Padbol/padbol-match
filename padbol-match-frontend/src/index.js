@@ -16,6 +16,18 @@ import { PadbolI18nProvider } from './context/PadbolI18nContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { registerServiceWorker } from './registerServiceWorker';
 
+// Telemetria minima de arranque: registra en el servidor la ruta inicial y el
+// modo (app instalada o navegador). Sin datos personales ni credenciales.
+try {
+  const mod = window.navigator.standalone === true ? 'app' : 'navegador';
+  const payload = { path: window.location.pathname.slice(0, 120), mode: mod,
+    referrer: String(document.referrer || '').slice(0, 120) || null };
+  import('./supabaseClient').then(({ supabase }) => {
+    supabase.from('app_launch_events').insert(payload).then(() => {}, () => {});
+  }).catch(() => {});
+} catch { /* ignore */ }
+
+
 // Traza de arranque visible (sin datos sensibles): permite leer en pantalla por
 // que camino entro la app instalada. Se muestra como linea discreta al pie.
 try {
