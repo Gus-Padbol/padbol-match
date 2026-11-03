@@ -20,7 +20,7 @@ export default function CommercialAgendaAlerts({api,onOpen}) {
   },[api]);
   const entries=agendaItems(items,now), due=entries.filter(item=>item.reminder!==null || item.overdue);
   return <details className="commercial-agenda" ref={panel}>
-    <summary>Agenda {due.length>0&&<strong>{due.length} {due.length===1?'aviso':'avisos'}</strong>}</summary>
+    <summary aria-label="Notificaciones y agenda"><svg className="commercial-agenda-bell" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg><span>Agenda</span> {due.length>0&&<strong>{due.length} {due.length===1?'aviso':'avisos'}</strong>}</summary>
     <div className="commercial-agenda-panel"><h3>Próximas charlas</h3><p>Fechas en tu hora local: {Intl.DateTimeFormat().resolvedOptions().timeZone}.</p>
       {error&&<p role="alert">No se pudo actualizar la agenda. Vuelve a abrir el CRM para comprobarla.</p>}
       {!entries.length&&!error&&<p>No tienes charlas programadas.</p>}

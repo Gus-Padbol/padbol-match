@@ -1,0 +1,1249 @@
+/* Rediseño integral del área comercial. Se importa último para ordenar las capas
+   visuales existentes sin tocar contratos de datos ni comportamiento. */
+.wa-demo {
+  --crm-navy: #081a33;
+  --crm-navy-2: #102847;
+  --crm-red: #e11d2e;
+  --crm-red-dark: #b91522;
+  --crm-canvas: #f2f5f9;
+  --crm-card: #ffffff;
+  --crm-line: #e3e8f0;
+  --crm-muted: #66748a;
+  --crm-text: #14233a;
+  --crm-radius: 14px;
+  background: var(--crm-canvas);
+  color: var(--crm-text);
+}
+
+/* Barra superior: identidad institucional y plataforma tecnológica. */
+.wa-demo .wa-topbar {
+  display: block !important;
+  height: auto !important;
+  min-height: 0;
+  padding: 0 !important;
+  background: linear-gradient(110deg, #07172e 0%, #0b203d 58%, #102b4d 100%) !important;
+  border: 0 !important;
+  box-shadow: 0 10px 34px rgba(3, 15, 35, .2);
+  color: #fff;
+  position: relative;
+  z-index: 80;
+}
+.wa-demo .wa-topbar::after {
+  content: "";
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--crm-red), #ff5964 52%, var(--crm-red));
+}
+.wa-demo .wa-topbar-main {
+  width: 100%;
+  max-width: 1680px;
+  min-height: 70px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.wa-demo .wa-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+.wa-demo .wa-brand .wa-brand-logo {
+  display: block;
+  width: 190px;
+  height: 34px;
+  margin: 0;
+  object-fit: contain;
+  object-position: left center;
+}
+.wa-demo .wa-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-left: 15px;
+  border-left: 1px solid rgba(255, 255, 255, .2);
+}
+.wa-demo .wa-brand-copy strong {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+.wa-demo .wa-brand-copy span {
+  color: #aebcd1;
+  font-size: 10.5px;
+  margin: 0;
+  white-space: nowrap;
+}
+.wa-demo .wa-topbar-center {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  min-width: 0;
+}
+.wa-demo .wa-platform-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .055);
+  color: #b9c6d8;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.wa-demo .wa-platform-chip img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.wa-demo .wa-platform-chip b {
+  color: #fff;
+  font-weight: 700;
+}
+.wa-demo .wa-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(57, 214, 139, .1);
+  color: #b9e8cd;
+  font-size: 9px;
+  letter-spacing: .08em;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.wa-demo .wa-demo-badge span {
+  width: 6px;
+  height: 6px;
+  margin: 0;
+  box-shadow: 0 0 0 3px rgba(57, 214, 139, .12);
+}
+.wa-demo .wa-agent {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: 6px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, .16);
+  min-width: 0;
+}
+.wa-demo .wa-agent-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ff4b57, #b71120);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  box-shadow: 0 5px 14px rgba(225, 29, 46, .28);
+}
+.wa-demo .wa-agent strong {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.wa-demo .wa-agent span {
+  display: block;
+  max-width: 175px;
+  margin-top: 2px;
+  color: #aebcd1;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-demo .wa-inline-exit {
+  flex: none;
+  border-color: rgba(255, 255, 255, .25) !important;
+  background: rgba(255, 255, 255, .06) !important;
+  color: #fff !important;
+}
+
+/* Navegación: una sola línea en escritorio, herramientas secundarias discretas. */
+.wa-demo .wa-tools {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 7px max(24px, calc((100vw - 1680px) / 2 + 24px)) !important;
+  min-height: 52px;
+  background: #fff !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--crm-line) !important;
+  position: relative;
+  z-index: 70;
+  overflow: visible;
+}
+.wa-demo .wa-tools > * {
+  flex: none;
+}
+.wa-demo .wa-tools :is(.commercial-advisor-access > button, .commercial-agenda > summary, .wa-channel-status > summary, .wa-inbox-options > summary, .wa-manual-tool > button) {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 37px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #40506a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+.wa-demo .wa-tools :is(.commercial-advisor-access > button, .commercial-agenda > summary, .wa-channel-status > summary, .wa-inbox-options > summary, .wa-manual-tool > button):hover {
+  background: #f5f7fb;
+  border-color: #e8edf5;
+  color: var(--crm-navy);
+}
+.wa-demo .commercial-agenda > summary {
+  list-style: none;
+}
+.wa-demo .commercial-agenda > summary::-webkit-details-marker {
+  display: none;
+}
+.wa-demo .commercial-agenda-bell {
+  width: 16px;
+  height: 16px;
+  color: #65748a;
+  flex: none;
+}
+.wa-demo .commercial-agenda > summary strong {
+  margin-left: 2px;
+  background: var(--crm-red);
+  color: #fff;
+  border-radius: 999px;
+  padding: 3px 6px;
+  font-size: 9px;
+  font-weight: 800;
+}
+.wa-demo .wa-ticket-search {
+  order: 8;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto !important;
+  padding: 3px 4px 3px 11px;
+  min-height: 38px;
+  width: auto;
+  max-width: 320px;
+  background: #f5f7fb;
+  border: 1px solid #e4e9f1;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.wa-demo .wa-ticket-search label {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.wa-demo .wa-ticket-search input {
+  width: 205px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 6px 3px;
+  color: var(--crm-text);
+  font: inherit;
+  font-size: 12px;
+  outline: 0;
+}
+.wa-demo .wa-ticket-search input::placeholder {
+  color: #8995a7;
+}
+.wa-demo .wa-ticket-search button {
+  min-height: 30px;
+  padding: 6px 11px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--crm-navy);
+  color: #fff;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.wa-demo .wa-ticket-search button[type="button"] {
+  background: transparent;
+  color: #5e6d82;
+  padding-inline: 8px;
+}
+.wa-demo .wa-ticket-search button:hover {
+  background: var(--crm-red);
+  color: #fff;
+}
+.wa-demo .wa-ticket-search p[role="alert"] {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  max-width: 330px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #f0c8cd;
+  border-radius: 9px;
+  background: #fff7f8;
+  color: #a31b2b;
+  font-size: 11px;
+  box-shadow: 0 8px 20px rgba(25, 38, 60, .12);
+}
+.wa-demo .wa-channel-status,
+.wa-demo .wa-inbox-options {
+  order: 9;
+  position: relative;
+  flex: none;
+  font-size: 12px;
+}
+.wa-demo .commercial-advisor-access {
+  order: 1;
+}
+.wa-demo .commercial-agenda {
+  order: 2;
+}
+.wa-demo .wa-channel-status {
+  order: 10;
+}
+.wa-demo .wa-inbox-options {
+  order: 11;
+}
+.wa-demo .commercial-advisor-pending {
+  margin-left: 3px;
+  padding: 3px 6px;
+  background: #fff1f2;
+  color: #b01624;
+  border: 1px solid #f2cdd2;
+  font-size: 9px;
+}
+
+/* Layout principal y superficies. */
+.wa-demo .wa-crm-body {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 125px) !important;
+  min-height: 0;
+  background: var(--crm-canvas);
+}
+.wa-demo .wa-crm-body:has(.wa-area-tabs--top) {
+  height: calc(100vh - 181px) !important;
+}
+.wa-demo .wa-workspace {
+  width: calc(100% - 32px);
+  max-width: 1680px;
+  height: calc(100% - 16px) !important;
+  min-height: 0;
+  margin: 16px auto 0;
+  background: #fff;
+  border: 1px solid #e0e6ef;
+  border-radius: 18px;
+  box-shadow: 0 18px 46px rgba(12, 27, 49, .09);
+  overflow: hidden;
+  grid-template-columns: 330px minmax(420px, 1fr) 350px;
+}
+.wa-demo .wa-area-tabs--top {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 24px;
+  gap: 4px;
+  min-height: 56px;
+  border: 0;
+  border-bottom: 1px solid var(--crm-line);
+  box-shadow: none;
+  background: #fff;
+  overflow: visible;
+}
+.wa-demo .wa-area-tabs--top button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #657389;
+  font-size: 12px;
+  font-weight: 650;
+  box-shadow: none;
+  transform: none;
+}
+.wa-demo .wa-area-tabs--top button:hover {
+  background: #f5f7fb;
+  transform: none;
+}
+.wa-demo .wa-area-tabs--top button.active {
+  background: #fff1f2;
+  color: #a91524;
+  border: 0;
+  box-shadow: inset 0 -2px 0 var(--crm-red);
+}
+.wa-demo .wa-area-tabs--top i {
+  display: none;
+}
+.wa-demo .wa-area-tabs--top b {
+  background: #f0f3f8;
+  color: #5d6b80;
+  font-size: 9px;
+}
+.wa-demo .wa-area-tabs--top button.active b {
+  background: #fff;
+  color: #a91524;
+}
+
+/* Bandeja de leads. */
+.wa-demo .wa-inbox {
+  background: #fbfcff;
+  border-right: 1px solid var(--crm-line);
+  padding: 0;
+  overflow: auto;
+}
+.wa-demo .wa-inbox-head {
+  align-items: flex-start;
+  padding: 22px 18px 11px;
+}
+.wa-demo .wa-inbox-head p {
+  color: #a91524;
+  font-size: 9px;
+  letter-spacing: .12em;
+  font-weight: 800;
+}
+.wa-demo .wa-inbox-head h1 {
+  color: #12233c;
+  font-size: 22px;
+  font-weight: 760;
+  letter-spacing: -.025em;
+}
+.wa-demo .wa-inbox-count {
+  min-width: 30px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #eef2f8;
+  color: #3e506a;
+  font-size: 10px;
+  font-weight: 800;
+}
+.wa-demo .wa-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 0 14px 12px;
+  border-bottom: 1px solid #eef1f6;
+}
+.wa-demo .wa-filters .crm-advisor-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 150px;
+  min-width: 0;
+  color: #7a8799;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.wa-demo .wa-filters .crm-advisor-filter select,
+.wa-demo .wa-filters > select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+  color: #35465e;
+  font: inherit;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 0 9px;
+}
+.wa-demo .wa-filters .wa-clear-filters {
+  flex: 1 1 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+  color: #52627a;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: left;
+}
+.wa-demo .wa-list {
+  padding: 8px;
+  background: transparent;
+}
+.wa-demo .wa-conversation {
+  position: relative;
+  width: 100%;
+  margin: 3px 0;
+  padding: 12px 11px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(16, 33, 58, .035);
+  text-align: left;
+  transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+.wa-demo .wa-conversation:not(.active) {
+  background: #fff !important;
+}
+.wa-demo .wa-conversation:hover {
+  border-color: #e4eaf3;
+  box-shadow: 0 7px 18px rgba(16, 33, 58, .07);
+}
+.wa-demo .wa-conversation.active {
+  border-color: #f1cbd0;
+  background: #fff !important;
+  box-shadow: 0 9px 24px rgba(184, 26, 41, .1);
+}
+.wa-demo .wa-conversation.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: var(--crm-red);
+}
+.wa-demo .wa-conversation .wa-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  font-size: 11px;
+  box-shadow: 0 3px 10px rgba(225, 29, 46, .16);
+}
+.wa-demo .wa-conversation-copy > div {
+  align-items: center;
+}
+.wa-demo .wa-conversation strong {
+  color: #172943;
+  font-size: 13px;
+  font-weight: 720;
+}
+.wa-demo .wa-conversation time {
+  color: #8a96a8;
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+.wa-demo .wa-conversation-copy p {
+  margin: 4px 0 7px;
+  color: #708097;
+  font-size: 11px;
+}
+.wa-demo .wa-conversation-copy p:has(+ p) {
+  margin-bottom: 3px;
+}
+.wa-demo .wa-conversation footer {
+  gap: 4px;
+  margin-top: 2px;
+}
+.wa-demo .wa-conversation footer .wa-pill {
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 8.5px;
+  letter-spacing: .02em;
+}
+.wa-demo .wa-conversation footer .wa-channel {
+  width: 17px;
+  height: 17px;
+}
+.wa-demo .wa-pill--blue {
+  background: #eaf2ff;
+  color: #245d9e;
+}
+.wa-demo .wa-pill--amber {
+  background: #fff5dc;
+  color: #8a5c00;
+}
+.wa-demo .wa-pill--violet {
+  background: #f2edff;
+  color: #6440a0;
+}
+.wa-demo .wa-pill--green {
+  background: #e8f7ee;
+  color: #246c45;
+}
+
+/* Ficha central. */
+.wa-demo .wa-thread {
+  background: #f6f8fc;
+}
+.wa-demo .wa-thread-head {
+  height: auto;
+  min-height: 82px;
+  padding: 15px 22px;
+  gap: 13px;
+  background: #fff;
+  border-bottom: 1px solid var(--crm-line);
+}
+.wa-demo .wa-thread-head .wa-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 13px;
+}
+.wa-demo .wa-thread-person h2 {
+  color: #12233c;
+  font-size: 20px;
+  font-weight: 760;
+  letter-spacing: -.025em;
+  margin-bottom: 3px;
+}
+.wa-demo .wa-thread-person p {
+  color: #6f7e92;
+  font-size: 11.5px;
+  gap: 6px;
+}
+.wa-demo .wa-thread-person .wa-lead-location {
+  color: #586981;
+  font-size: 12.5px;
+  margin-top: 1px;
+}
+.wa-demo .wa-ticket-reference {
+  margin: 0;
+  padding: 6px 9px;
+  border: 1px solid #e6ebf3;
+  border-radius: 8px;
+  background: #f7f9fc;
+  color: #728198;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.wa-demo .wa-ticket-reference strong {
+  color: #3c4c64;
+}
+.wa-demo .wa-thread-head .wa-pill {
+  align-self: flex-start;
+  padding: 5px 9px;
+  font-size: 9px;
+}
+.wa-demo .wa-lead-highlights {
+  grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 13px 22px;
+  background: #fff;
+  border-bottom: 1px solid var(--crm-line);
+}
+.wa-demo .wa-lead-highlights > div {
+  padding: 11px 13px;
+  border: 1px solid #e7ecf4;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.wa-demo .wa-lead-highlights > div:first-child {
+  border-color: #f1d4d9;
+  background: #fff7f8;
+}
+.wa-demo .wa-lead-highlights span {
+  margin-bottom: 5px;
+  color: #7b899c;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.wa-demo .wa-lead-highlights strong {
+  color: #1b2c45;
+  font-size: 16px;
+  font-weight: 720;
+}
+.wa-demo .wa-messages {
+  padding: 22px 6%;
+  background: #f6f8fc;
+  background-image: none;
+}
+.wa-demo .wa-day {
+  margin-bottom: 18px;
+  padding: 5px 10px;
+  background: #e9eef6;
+  color: #66758a;
+  font-size: 9px;
+}
+.wa-demo .wa-lead-card {
+  margin: 0 0 18px;
+  padding: 20px;
+  border: 1px solid #e4eaf2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 32, 57, .06);
+}
+.wa-demo .wa-lead-section h3 {
+  margin: 0 0 8px;
+  color: #a91524;
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.wa-demo .wa-lead-section > strong {
+  display: block;
+  color: #1a2b44;
+  font-size: 17px;
+  line-height: 1.35;
+  letter-spacing: -.01em;
+}
+.wa-demo .wa-lead-note {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #edf0f5;
+}
+.wa-demo .wa-lead-note h4,
+.wa-demo .wa-lead-note summary {
+  color: #66758a;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.wa-demo .wa-lead-note p {
+  color: #3f5068;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+.wa-demo .wa-lead-note dl div {
+  border-bottom: 1px solid #f0f2f6;
+}
+.wa-demo .wa-executive-card {
+  border: 1px solid #e1e8f2;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15, 32, 57, .07);
+}
+.wa-demo .wa-executive-card > header {
+  padding: 18px 20px;
+  background: linear-gradient(110deg, #0b1f3a, #142f54);
+}
+.wa-demo .wa-executive-card > header h3 {
+  color: #fff;
+}
+.wa-demo .wa-executive-card > header span {
+  color: #aebdd2;
+}
+.wa-demo .wa-executive-grid {
+  background: #fff;
+}
+.wa-demo .wa-executive-grid section {
+  padding: 15px 17px;
+}
+.wa-demo .wa-executive-card > footer,
+.wa-demo .wa-executive-verdict {
+  background: #f8fafc;
+}
+.wa-demo .wa-composer {
+  padding: 13px 20px;
+  background: #fff;
+  border-top: 1px solid var(--crm-line);
+}
+.wa-demo .wa-draft-label {
+  align-items: center;
+}
+.wa-demo .wa-draft-label label {
+  color: #34455d;
+  font-size: 11px;
+  font-weight: 750;
+}
+.wa-demo .wa-draft-label small {
+  color: #8491a4;
+  font-size: 9.5px;
+}
+.wa-demo .wa-composer textarea {
+  min-height: 82px;
+  padding: 11px 12px;
+  border: 1px solid #dde5ef;
+  border-radius: 12px;
+  background: #fbfcfe;
+  color: #263750;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.wa-demo .wa-composer textarea:focus {
+  border-color: #d7aeb4;
+  box-shadow: 0 0 0 3px rgba(225, 29, 46, .08);
+}
+.wa-demo .wa-composer-actions {
+  margin-top: 10px;
+  gap: 7px;
+}
+.wa-demo .wa-composer-actions button {
+  min-height: 36px;
+  padding: 8px 13px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 750;
+}
+.wa-demo .wa-secondary {
+  border-color: #dfe5ee;
+  color: #43536a;
+}
+.wa-demo .wa-secondary:hover:not(:disabled) {
+  background: #f7f9fc;
+}
+.wa-demo .wa-send.wa-send--enabled {
+  background: var(--crm-red) !important;
+  border-color: var(--crm-red) !important;
+  color: #fff !important;
+  box-shadow: 0 7px 18px rgba(225, 29, 46, .2) !important;
+}
+.wa-demo .wa-send.wa-send--enabled:hover:not(:disabled) {
+  background: var(--crm-red-dark) !important;
+}
+
+/* Panel lateral: origen, contacto y gestión. */
+.wa-demo .wa-detail {
+  padding: 16px;
+  background: #fbfcff;
+  border-left: 1px solid var(--crm-line);
+}
+.wa-demo .wa-detail > .wa-panel,
+.wa-demo .wa-detail > .wa-contact-card {
+  margin: 0 0 13px;
+  padding: 15px;
+  border: 1px solid #e5eaf2;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 5px 16px rgba(15, 32, 57, .035);
+}
+.wa-demo .wa-detail > .wa-panel:last-child {
+  border-bottom: 1px solid #e5eaf2;
+}
+.wa-demo .wa-detail .wa-panel h3 {
+  margin: 0 0 12px;
+  color: #6a788c;
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.wa-demo .wa-detail .wa-panel dl div {
+  margin: 9px 0;
+}
+.wa-demo .wa-detail .wa-panel dt,
+.wa-demo .wa-detail .wa-panel dd {
+  font-size: 11px;
+}
+.wa-demo .wa-detail .wa-panel dt {
+  color: #7a8799;
+}
+.wa-demo .wa-detail .wa-panel dd {
+  color: #263850;
+  font-weight: 620;
+}
+.wa-demo .wa-contact-card {
+  text-align: left;
+  border-bottom: 1px solid #e5eaf2;
+}
+.wa-demo .wa-contact-card h2 {
+  margin: 0 0 10px;
+  color: #182a44;
+  font-size: 14px;
+  font-weight: 750;
+}
+.wa-demo .wa-contact-card p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0;
+  color: #3e5068;
+  font-size: 10.5px;
+}
+.wa-demo .wa-contact-card p b {
+  color: #7c899b;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.wa-demo .wa-contact-card p span {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.wa-demo .commercial-advisor-access__panel,
+.wa-demo .commercial-agenda-panel,
+.wa-demo .wa-channel-status > .wa-safety,
+.wa-demo .wa-inbox-options > div {
+  border: 1px solid #e2e8f1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(10, 27, 51, .18);
+}
+.wa-demo .commercial-advisor-access__panel {
+  left: 0;
+  top: calc(100% + 9px);
+}
+.wa-demo .commercial-agenda-panel {
+  left: auto;
+  right: 0;
+  top: calc(100% + 9px);
+}
+.wa-demo .wa-channel-status > .wa-safety {
+  right: 0;
+  top: calc(100% + 9px);
+}
+.wa-demo .commercial-lead-management {
+  border: 1px solid #e5eaf2 !important;
+  border-top: 1px solid #e5eaf2 !important;
+  border-radius: 14px !important;
+  padding: 15px !important;
+  background: #fff !important;
+  box-shadow: 0 5px 16px rgba(15, 32, 57, .035) !important;
+}
+.wa-demo .commercial-lead-management h3 {
+  color: #182a44;
+  font-size: 15px;
+  font-weight: 750;
+}
+.wa-demo .commercial-lead-management > p {
+  color: #6b798d;
+  font-size: 10.5px;
+}
+.wa-demo .commercial-lead-management label {
+  color: #52627a;
+  font-size: 10.5px;
+  font-weight: 650;
+}
+.wa-demo .commercial-lead-management :is(input, select, textarea) {
+  border-color: #dfe6f0;
+  border-radius: 9px;
+  font-size: 11.5px;
+}
+.wa-demo .commercial-lead-management form > button {
+  background: var(--crm-red) !important;
+  border-color: var(--crm-red) !important;
+  border-radius: 9px !important;
+}
+.wa-demo .commercial-lead-management details > summary {
+  color: #52627a;
+  font-size: 11px;
+}
+.wa-demo .commercial-lead-management details article {
+  background: #f8fafc;
+  border: 1px solid #edf1f6;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 8px 0;
+  font-size: 11px;
+}
+.wa-demo .commercial-lead-management details time {
+  color: #7e8b9d;
+  font-size: 9.5px;
+}
+.wa-demo .commercial-scheduled {
+  color: #52627a;
+  font-size: 10.5px;
+}
+.wa-demo .commercial-dictation-control > button {
+  border-radius: 8px;
+}
+
+/* Adaptación a tablet y teléfono: sin cortes ni scroll horizontal. */
+@media (max-width: 1180px) {
+  .wa-demo .wa-workspace {
+    width: 100%;
+    margin: 0;
+    height: 100% !important;
+    border-radius: 0;
+    grid-template-columns: 300px minmax(0, 1fr) 320px;
+  }
+  .wa-demo .wa-brand .wa-brand-logo {
+    width: 168px;
+    height: 30px;
+  }
+}
+@media (max-width: 1050px) {
+  .wa-demo .wa-workspace {
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+  .wa-demo .wa-detail {
+    display: none;
+  }
+  .wa-demo .wa-brand-copy span {
+    display: none;
+  }
+  .wa-demo .wa-topbar-center {
+    gap: 6px;
+  }
+  .wa-demo .wa-demo-badge {
+    display: none;
+  }
+}
+@media (max-width: 720px) {
+  .wa-demo {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .wa-demo .wa-topbar-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    min-height: 0;
+    padding: 10px 12px;
+  }
+  .wa-demo .wa-brand {
+    grid-column: 1;
+    gap: 9px;
+    min-width: 0;
+  }
+  .wa-demo .wa-brand .wa-brand-logo {
+    width: 143px;
+    height: 25px;
+  }
+  .wa-demo .wa-brand-copy {
+    padding-left: 9px;
+  }
+  .wa-demo .wa-brand-copy strong {
+    font-size: 10px;
+    white-space: normal;
+  }
+  .wa-demo .wa-brand-copy span {
+    display: none;
+  }
+  .wa-demo .wa-topbar-center {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    margin: 0;
+    min-width: 0;
+  }
+  .wa-demo .wa-platform-chip {
+    padding: 5px 8px;
+    font-size: 9px;
+  }
+  .wa-demo .wa-platform-chip img {
+    width: 13px;
+    height: 13px;
+  }
+  .wa-demo .wa-agent {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    padding-left: 0;
+    border-left: 0;
+    gap: 6px;
+  }
+  .wa-demo .wa-agent-avatar {
+    width: 29px;
+    height: 29px;
+    font-size: 9px;
+  }
+  .wa-demo .wa-agent strong {
+    font-size: 9px;
+    white-space: nowrap;
+  }
+  .wa-demo .wa-agent span {
+    display: none;
+  }
+  .wa-demo .wa-tools {
+    flex-wrap: wrap !important;
+    gap: 4px;
+    padding: 7px 10px !important;
+    min-height: 0;
+  }
+  .wa-demo .wa-tools :is(.commercial-advisor-access > button, .commercial-agenda > summary, .wa-channel-status > summary, .wa-inbox-options > summary, .wa-manual-tool > button) {
+    min-height: 33px;
+    padding: 6px 8px;
+    font-size: 10.5px;
+    border-color: #edf1f6;
+    background: #fbfcfe;
+  }
+  .wa-demo .commercial-agenda-bell {
+    width: 14px;
+    height: 14px;
+  }
+  .wa-demo .wa-ticket-search {
+    order: 20;
+    display: flex;
+    width: 100%;
+    max-width: none;
+    margin: 2px 0 0 !important;
+    flex: 1 1 100%;
+  }
+  .wa-demo .wa-ticket-search input {
+    width: 100%;
+    flex: 1;
+  }
+  .wa-demo .wa-channel-status {
+    margin-left: auto;
+  }
+  .wa-demo .wa-crm-body {
+    display: block;
+    height: auto !important;
+    min-height: 0;
+  }
+  .wa-demo .wa-area-tabs--top {
+    padding: 0 10px;
+    min-height: 48px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+  .wa-demo .wa-workspace {
+    display: block;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+  }
+  .wa-demo .wa-inbox {
+    max-height: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--crm-line);
+    overflow: visible;
+  }
+  .wa-demo .wa-inbox-head {
+    padding: 14px 14px 8px;
+  }
+  .wa-demo .wa-inbox-head h1 {
+    font-size: 19px;
+  }
+  .wa-demo .wa-filters {
+    padding: 0 12px 9px;
+    flex-wrap: nowrap;
+  }
+  .wa-demo .wa-filters .crm-advisor-filter {
+    flex: 1 1 50%;
+    display: block;
+    font-size: 0;
+  }
+  .wa-demo .wa-filters .crm-advisor-filter select,
+  .wa-demo .wa-filters > select {
+    width: 100%;
+    height: 34px;
+    font-size: 10.5px;
+  }
+  .wa-demo .wa-list {
+    display: block;
+    max-height: 42vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px;
+  }
+  .wa-demo .wa-conversation {
+    width: 100%;
+    min-width: 0;
+    margin: 3px 0;
+    padding: 11px 10px;
+  }
+  .wa-demo .wa-thread {
+    min-height: 0;
+  }
+  .wa-demo .wa-thread-head {
+    padding: 13px 14px;
+    min-height: 0;
+    flex-wrap: wrap;
+  }
+  .wa-demo .wa-thread-person h2 {
+    font-size: 17px;
+  }
+  .wa-demo .wa-thread-person .wa-lead-location {
+    font-size: 11.5px;
+  }
+  .wa-demo .wa-ticket-reference {
+    font-size: 9px;
+  }
+  .wa-demo .wa-lead-highlights {
+    padding: 10px 14px;
+    gap: 7px;
+  }
+  .wa-demo .wa-lead-highlights > div {
+    padding: 9px 10px;
+  }
+  .wa-demo .wa-lead-highlights strong {
+    font-size: 13px;
+  }
+  .wa-demo .wa-messages {
+    padding: 16px 14px;
+  }
+  .wa-demo .wa-lead-card {
+    padding: 15px;
+    border-radius: 13px;
+  }
+  .wa-demo .wa-composer {
+    padding: 11px 14px;
+  }
+  .wa-demo .wa-composer textarea {
+    min-height: 74px;
+    font-size: 16px;
+  }
+  .wa-demo .wa-composer-actions {
+    flex-wrap: wrap;
+  }
+  .wa-demo .wa-detail {
+    display: block;
+    padding: 12px;
+    border-left: 0;
+    border-top: 1px solid var(--crm-line);
+    background: #f6f8fc;
+  }
+  .wa-demo .wa-detail > .wa-panel,
+  .wa-demo .wa-detail > .wa-contact-card,
+  .wa-demo .commercial-lead-management {
+    margin-bottom: 10px;
+    padding: 14px !important;
+  }
+  .wa-demo .commercial-lead-management :is(input, select, textarea) {
+    font-size: 16px;
+  }
+  .wa-demo .commercial-advisor-access__panel,
+  .wa-demo .commercial-agenda-panel,
+  .wa-demo .wa-channel-status > .wa-safety,
+  .wa-demo .wa-inbox-options > div {
+    position: fixed;
+    left: 12px !important;
+    right: 12px !important;
+    top: 84px !important;
+    width: auto !important;
+    max-width: none;
+    max-height: 72dvh;
+    overflow: auto;
+  }
+}
+@media (max-width: 380px) {
+  .wa-demo .wa-brand-copy {
+    display: none;
+  }
+  .wa-demo .wa-brand .wa-brand-logo {
+    width: 152px;
+    height: 26px;
+  }
+  .wa-demo .wa-tools :is(.commercial-advisor-access > button, .commercial-agenda > summary, .wa-channel-status > summary, .wa-inbox-options > summary) {
+    font-size: 10px;
+    padding-inline: 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wa-demo *,
+  .wa-demo *::before,
+  .wa-demo *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
