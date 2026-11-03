@@ -14,5 +14,7 @@ if (/rel="manifest"/.test(html)) {
 } else {
   html = html.replace('</head>', '  <link rel="manifest" href="/crm-manifest.json">\n</head>');
 }
+// Marca la app instalada como CRM: el login la usa para volver siempre aca.
+html = html.replace('</head>', '<script>try{localStorage.setItem("padbol_crm_app","1")}catch(e){}</script>\n</head>');
 fs.writeFileSync(path.join(build, 'crm.html'), html);
 console.log('[crm-shell] build/crm.html generado');

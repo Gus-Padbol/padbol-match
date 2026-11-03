@@ -320,7 +320,9 @@ export default function AccesoCuenta() {
       const ue = s.user.email?.trim();
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
-      const destinoSolicitado = resolvePostLoginNavigatePath(location.search);
+      let destinoSolicitado = resolvePostLoginNavigatePath(location.search);
+      // Si la app instalada es PADBOL CRM, el destino posterior al login es el CRM.
+      try { if (localStorage.getItem('padbol_crm_app') === '1') destinoSolicitado = '/crm-leads'; } catch { /* ignore */ }
       const destinoTrasLogin = await resolveRoleAwarePostLoginPath(destinoSolicitado, s);
       // Si la app se abrio desde el icono PADBOL CRM, el destino es el CRM aunque
       // el rol lleve al panel de administracion.
@@ -564,11 +566,9 @@ export default function AccesoCuenta() {
           maxWidth: '400px',
         }}
       >
-        <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center',
-          alignItems: 'center', padding: '18px 0', borderRadius: 8, marginTop: HUB_LOGO_CLEARANCE_TOP_PX, marginBottom: '10px' }}>
-          <img src="/brand/padbol-match-logo-oficial.svg" alt="Padbol Match"
-            style={{height:'clamp(44px, 11vw, 78px)', width:'auto', maxWidth:'min(100%, 340px)', display:'block'}} />
-        </div>
+        <img src="/brand/padbol-match-logo-oficial.svg" alt="Padbol Match"
+          style={{ height: 'clamp(44px, 11vw, 78px)', width: 'auto', maxWidth: 'min(100%, 340px)',
+            display: 'block', margin: `${HUB_LOGO_CLEARANCE_TOP_PX}px auto 10px`, background: 'transparent' }} />
       </div>
       <div
         style={{
