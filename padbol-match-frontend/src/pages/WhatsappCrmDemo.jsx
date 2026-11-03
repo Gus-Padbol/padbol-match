@@ -378,6 +378,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const [attachmentNotice, setAttachmentNotice] = useState('');
   const [imagePreviews, setImagePreviews] = useState({});
   const [downloadingAttachment, setDownloadingAttachment] = useState(null);
+  const [diagPermisos, setDiagPermisos] = useState(null);
   const [activityType, setActivityType] = useState('note');
   const [activityTopic, setActivityTopic] = useState('');
   const [activitySummary, setActivitySummary] = useState('');
@@ -427,6 +428,12 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     } catch (e) {
       if (sequence !== loadSequence.current) return;
       setError(e);
+      if (e?.status === 403) {
+        try {
+          const perm = await crmAdminApi.permissions(token);
+          setDiagPermisos({ role: perm?.role ?? 'sin rol', canOperate: perm?.canOperate === true, canAudit: perm?.canAudit === true });
+        } catch { setDiagPermisos({ role: 'sin respuesta', canOperate: false, canAudit: false }); }
+      }
     } finally {
       if (sequence === loadSequence.current) setLoading(false);
     }
@@ -913,7 +920,12 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
       ) : error ? (
         <div className="wa-empty">
           <p style={{ color: '#e33030' }}>
-            {error?.status === 401 ? 'No autorizado. Inicia sesión.' : error?.status === 403 ? 'No tienes acceso a esta sección.' : (error?.message || 'No se pudo cargar.')}
+            {error?.status === 401 ? 'No autorizado. Inicia sesión.'
+              : error?.status === 403 ? <>No tienes acceso a esta sección.
+                  {diagPermisos && <small style={{display:'block',opacity:.75,fontSize:11,marginTop:4}}>
+                    diagnóstico: rol={diagPermisos.role} · operar={String(diagPermisos.canOperate)} · auditar={String(diagPermisos.canAudit)}
+                  </small>}</>
+              : (error?.message || 'No se pudo cargar.')}
           </p>
           <button type="button" onClick={() => { setError(null); setLoading(true); void load(); }}>Reintentar</button>
         </div>

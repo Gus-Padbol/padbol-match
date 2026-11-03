@@ -84,7 +84,7 @@ export default function PushActivation({token}) {
             : <span aria-hidden style={{color:'#ef4444', fontSize:'13px', fontWeight:700}}>!</span>}
       </button>
       {state.message && (
-        <div role="status" style={{position:'absolute', top:'100%', right:0, zIndex:20, width:'min(280px, 80vw)',
+        <div role="status" style={{position:'absolute', top:'100%', right:-4, zIndex:20, width:'min(240px, calc(100vw - 24px))', maxWidth:'calc(100vw - 24px)',
           background:'#0b1324', color:'#fff', border:'1px solid rgba(255,255,255,.15)', borderRadius:8,
           padding:'8px 10px', fontSize:'12px', lineHeight:1.35, marginTop:4}}>
           {state.message}
