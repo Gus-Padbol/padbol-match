@@ -16,6 +16,20 @@ import { PadbolI18nProvider } from './context/PadbolI18nContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { registerServiceWorker } from './registerServiceWorker';
 
+// Traza de arranque visible (sin datos sensibles): permite leer en pantalla por
+// que camino entro la app instalada. Se muestra como linea discreta al pie.
+try {
+  const st = window.navigator.standalone === true ? 'app' : 'navegador';
+  window.__PADBOL_TRACE__ = `inicio:${window.location.pathname} | modo:${st}`;
+  window.addEventListener('load', () => {
+    const el = document.createElement('div');
+    el.textContent = window.__PADBOL_TRACE__;
+    el.style.cssText = 'position:fixed;bottom:2px;left:0;right:0;text-align:center;font-size:10px;color:#888;z-index:2147483647;pointer-events:none';
+    document.body && document.body.appendChild(el);
+  });
+} catch { /* ignore */ }
+
+
 // PADBOL CRM instalado en la pantalla de inicio: iOS arranca la app en la raiz
 // ('/') porque el manifest con el que se instalo tenia start_url '/'. No hay
 // storage compartido entre Safari y la app instalada, asi que la unica marca
