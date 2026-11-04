@@ -349,7 +349,7 @@ export function leadAnalysisNotice(status, enabled) {
   return { title: 'Sin análisis solicitado', message: 'Esta ficha no tiene una solicitud de análisis registrada.', badge: '' };
 }
 
-export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false, headerActions=null, headless=false, searchRequest=null } = {}) {
+export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false, headerActions=null, headless=false, searchRequest=null, openConversationId=null } = {}) {
   const hasPanelExit = Boolean(onBack);
   useEffect(() => {
     if (hasPanelExit) window.scrollTo(0, 0);
@@ -372,6 +372,10 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const [ticketInput, setTicketInput] = useState('');
   const [ticketReference, setTicketReference] = useState('');
   const [ticketError, setTicketError] = useState('');
+  useEffect(()=>{
+    if(!openConversationId)return;
+    setAreaFilter('all');setEstadoFilter('');setAdvisorFilter('');setHiddenOnly(false);setTicketReference('');setTicketInput('');setActiveId(openConversationId);
+  },[openConversationId]);
   useEffect(()=>{
     if(!searchRequest)return;
     const reference=String(searchRequest.reference||'').trim();

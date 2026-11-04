@@ -30,6 +30,9 @@ export const crmAdminApi = {
   pushConfig: (token) => request('/api/crm/push/config', token),
   pushSubscribe: (token, subscription) => request('/api/crm/push/subscribe', token, { method: 'POST', body: JSON.stringify({ subscription }) }),
   pushTest: (token, payload = {}) => request('/api/crm/push/test', token, { method: 'POST', body: JSON.stringify(payload) }),
+  leadNotifications: (token) => request('/api/admin/crm/lead-notifications', token),
+  markLeadNotificationRead: (token,id) => request(`/api/admin/crm/lead-notifications/${encodeURIComponent(id)}/read`, token, { method:'POST', body:'{}' }),
+  testLeadNotification: (token) => request('/api/admin/crm/lead-notifications/test', token, { method:'POST', body:'{}' }),
   permissions: (token) => request('/api/admin/crm/permissions', token),
   inbox: (token, filters = {}) => {
     const q = new URLSearchParams();
