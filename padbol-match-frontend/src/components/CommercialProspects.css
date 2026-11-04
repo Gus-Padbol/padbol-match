@@ -181,3 +181,18 @@
  .prospect-field--wide{grid-column:auto}
  .prospect-management-actions button{width:100%}
 }
+.prospect-territories{margin-top:22px;border-top:1px solid var(--p-line);padding-top:16px}
+.prospect-territories>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.prospect-territories h3{margin:0;font-size:15px}
+.prospect-territories header p{margin:0 0 3px;color:var(--p-red);font-size:8.5px;font-weight:850;letter-spacing:.12em}
+.prospect-territories header span{display:block;color:var(--p-muted);font-size:10.5px;line-height:1.4}
+.prospect-territory-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px}
+.prospect-territory-grid form{display:grid;gap:6px;border:1px solid var(--p-line);border-radius:10px;padding:10px;background:#fbfcfd}
+.prospect-territory-grid input{border:1px solid var(--p-line);border-radius:7px;padding:7px;font:inherit;font-size:10.5px;min-width:0}
+.prospect-territory-grid form button{justify-self:start;min-height:32px;font-size:10px}
+.prospect-territory-grid>div{display:flex;flex-direction:column;gap:5px}
+.prospect-territory-grid article{border:1px solid #f0d8a4;background:#fffaf0;border-radius:8px;padding:8px 9px}
+.prospect-territory-grid article strong{display:block;font-size:11px}
+.prospect-territory-grid article span{display:block;color:#795400;font-size:10px;margin-top:2px}
+.prospect-territory-grid article small{display:block;color:var(--p-muted);font-size:9px;margin-top:2px}
+@media(max-width:720px){.prospect-territory-grid{grid-template-columns:1fr}}

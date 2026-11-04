@@ -15,6 +15,7 @@ export default function CommercialProspects({api,embedded=false}) {
   const [detail,setDetail]=useState(null);
   const [dashboard,setDashboard]=useState(null);
   const [campaigns,setCampaigns]=useState([]);
+  const [territories,setTerritories]=useState([]);
   const [advisors,setAdvisors]=useState([]);
   const [campaignForm,setCampaignForm]=useState({name:'Piloto Estados Unidos',opportunityType:'venue_sale',language:'en',country:'US',dailyLimit:10});
   const [notice,setNotice]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
@@ -28,8 +29,8 @@ export default function CommercialProspects({api,embedded=false}) {
     try {
       const s=await api.prospectStatus(); setStatus(s);
       if(!s.enabled) return;
-      const [list,board,cl]=await Promise.all([api.listProspects(filters),api.prospectDashboard(),api.listProspectCampaigns()]);
-      setProspects(list.prospects||[]); setDashboard(board); setCampaigns(cl.campaigns||[]);
+      const [list,board,cl,tl]=await Promise.all([api.listProspects(filters),api.prospectDashboard(),api.listProspectCampaigns(),api.listProspectTerritories?.()||Promise.resolve({territories:[]})]);
+      setProspects(list.prospects||[]); setDashboard(board); setCampaigns(cl.campaigns||[]); setTerritories(tl?.territories||[]);
       if(s.role==='manager'&&api.listAdvisors){try{const a=await api.listAdvisors();setAdvisors(a.advisors||[]);}catch{setAdvisors([]);}}
     } catch(e) { setError(e?.code==='PROSPECT_DISABLED'?'PADBOL PROSPECT todavía no está habilitado.':(e?.message||'No se pudo abrir PADBOL PROSPECT.')); }
   },[api,filters]);
@@ -52,6 +53,12 @@ export default function CommercialProspects({api,embedded=false}) {
     setBusy(true);setError('');setNotice('');
     try{const result=await api.updateProspect(id,patch);setDetail(current=>current?{...current,prospect:result.prospect}:current);await load();setNotice('Prospecto actualizado.');}
     catch(e){setError(e?.message||'No se pudo actualizar.');}finally{setBusy(false);}
+  }
+  async function saveTerritory(payload){
+    setBusy(true);setCampaignError('');
+    try{const result=await api.saveProspectTerritory(payload);setTerritories(current=>[result.territory,...current.filter(x=>x.territory_key!==result.territory?.territory_key)]);setNotice('Territorio protegido guardado.');}
+    catch(e){setCampaignError(failure(e,'No se pudo guardar el territorio.'));}
+    finally{setBusy(false);}
   }
   async function createCampaign(event){
     event.preventDefault();setBusy(true);setError('');setNotice('');
@@ -148,7 +155,7 @@ export default function CommercialProspects({api,embedded=false}) {
     {tab==='dashboard'&&<section className="prospect-dashboard"><h2>Panel ejecutivo</h2><div className="prospect-metrics">{[
       ['Prospectos',metrics.prospects],['Verificados',metrics.verified],['Nuevos',metrics.new],['Existentes',metrics.existing],['Contactados',metrics.contacted],['Respuestas',metrics.responded],['Interesados',metrics.interested],['Negociaciones',metrics.negotiations],['Bajas',metrics.optOuts],['Rebotes',metrics.bounces],['Supresiones',metrics.suppressions],['Mensajes simulados',dashboard?.messages?.simulated],['Campañas',dashboard?.campaigns?.length]
     ].map(([label,value])=><article key={label}><span>{label}</span><strong>{value??0}</strong></article>)}</div><div className="prospect-dashboard-grid"><section><h3>Por país</h3>{byCountry.length?<ul>{byCountry.map(([k,v])=><li key={k}><span>{k}</span><b>{v}</b></li>)}</ul>:<p>Sin datos.</p>}</section><section><h3>Búsquedas recientes</h3>{(dashboard?.runs||[]).map(run=><article key={run.id}><strong>{run.city||run.state||run.country}</strong><span>{run.found_count} encontrados · {run.inserted_count} nuevos · {run.status}</span><small>{new Date(run.started_at).toLocaleString('es-AR')}</small></article>)}</section></div><p className="prospect-footnote">Costo de búsqueda registrado: USD {(dashboard?.sourceCostCents||0)/100}. Las aperturas de correo no se usan como interés. Envío real deshabilitado por defecto.</p></section>}
-    {tab==='campaigns'&&<CampaignsView campaigns={campaigns} status={status} busy={busy} simulation={simulation} simulationBusy={simulationBusy} error={campaignError} form={campaignForm} setForm={setCampaignForm} onCreate={createCampaign} onApprove={approveCampaign} onSimulate={simulate} onPreview={previewMessages} onFollowup={simulateFollowup}/>}
+    {tab==='campaigns'&&<CampaignsView campaigns={campaigns} status={status} busy={busy} simulation={simulation} simulationBusy={simulationBusy} error={campaignError} form={campaignForm} setForm={setCampaignForm} onCreate={createCampaign} onApprove={approveCampaign} onSimulate={simulate} onPreview={previewMessages} onFollowup={simulateFollowup} territories={territories} onSaveTerritory={saveTerritory}/>}
   </main>;
 }
 
@@ -210,7 +217,8 @@ function SimulationResults({simulation}){
   </section>;
 }
 
-function CampaignsView({campaigns,status,busy,simulation,simulationBusy,error,form,setForm,onCreate,onApprove,onSimulate,onPreview,onFollowup}){
+function CampaignsView({campaigns,status,busy,simulation,simulationBusy,error,form,setForm,onCreate,onApprove,onSimulate,onPreview,onFollowup,territories,onSaveTerritory}){
+  const [territory,setTerritory]=useState({country:'',region:'',city:'',reason:'',source:''});
   return <section className="prospect-campaigns">
     <header className="prospect-section-head"><div><p>CAMPAÑAS PILOTO · MODO SIMULACIÓN</p><h2>Campañas</h2><span>Prepará y leé cada correo antes de cualquier envío. El envío real permanece deshabilitado.</span></div><span className="prospect-mode is-sim">Sin envíos reales</span></header>
     {error&&<div className="prospect-alert prospect-inline-alert" role="alert"><strong>No se pudo completar la operación</strong><span>{error}</span></div>}
@@ -244,6 +252,7 @@ function CampaignsView({campaigns,status,busy,simulation,simulationBusy,error,fo
         })}
       </div>
     </div>
+    <section className="prospect-territories"><header><div><p>CONTROL DE TERRITORIOS</p><h3>Cuentas y territorios protegidos</h3><span>Los prospectos de estas áreas quedan excluidos de la simulación y de cualquier envío.</span></div><span className="prospect-status prospect-status--sim">{territories.length} protegidos</span></header><div className="prospect-territory-grid"><form onSubmit={e=>{e.preventDefault();onSaveTerritory(territory);setTerritory({country:'',region:'',city:'',reason:'',source:''});}}><input required placeholder="País" value={territory.country} onChange={e=>setTerritory({...territory,country:e.target.value})}/><input placeholder="Región / estado" value={territory.region} onChange={e=>setTerritory({...territory,region:e.target.value})}/><input placeholder="Ciudad" value={territory.city} onChange={e=>setTerritory({...territory,city:e.target.value})}/><input required placeholder="Motivo contractual" value={territory.reason} onChange={e=>setTerritory({...territory,reason:e.target.value})}/><input required placeholder="Fuente / referencia" value={territory.source} onChange={e=>setTerritory({...territory,source:e.target.value})}/><button type="submit" className="prospect-primary" disabled={busy}>Proteger</button></form><div>{!territories.length?<p className="prospect-empty">Sin territorios protegidos cargados.</p>:territories.map(t=><article key={t.territory_key||`${t.country}-${t.region}-${t.city}`}><strong>{[t.city,t.region,t.country].filter(Boolean).join(' · ')}</strong><span>{t.reason}</span><small>{t.source}</small></article>)}</div></div></section>
   </section>;
 }
 
