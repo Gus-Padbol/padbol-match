@@ -3,7 +3,7 @@ import './CrmMessageTranslation.css';
 
 const LANGUAGE_WORDS = {
   en: ['the','and','to','of','in','is','we','you','for','with','hello','hi','interested','would','like','price','court','need','project','our','your','please','thanks','thank','from','this','that'],
-  de: ['der','die','das','und','ist','wir','sie','für','mit','ein','eine','nicht','bitte','preis','anlage','interesse','haben','sind','auch','oder','von','zu','den','dem'],
+  de: ['der','die','das','und','ist','wir','sie','für','mit','ein','eine','nicht','bitte','preis','anlage','interesse','haben','sind','auch','oder','von','zu','den','dem','guten','tag','hallo','danke'],
   fr: ['le','la','les','et','est','nous','vous','pour','avec','un','une','pas','bonjour','merci','prix','projet','notre','votre','dans','sur','des','du','être','avoir'],
   ro: ['și','este','suntem','pentru','cu','un','o','nu','bună','mulțumesc','preț','proiect','noastră','dvs','sunt','avem','sau','din','la','în','pe'],
   pt: ['o','a','os','as','e','de','que','em','um','uma','para','com','não','olá','obrigado','preço','projeto','nosso','sua','seu','por','dos','das'],
@@ -36,7 +36,8 @@ export function detectLikelyLanguage(text) {
   const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const [best, score] = ranked[0] || [null, 0];
   const second = ranked[1]?.[1] || 0;
-  if (!best || score < 2 || score === second) return null;
+  const threshold = words.length <= 3 ? 1 : 2;
+  if (!best || score < threshold || score === second) return null;
   return best;
 }
 
