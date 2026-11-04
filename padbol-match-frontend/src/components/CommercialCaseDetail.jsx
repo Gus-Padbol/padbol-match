@@ -3,6 +3,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {commercialCaseSourceLabel} from '../utils/commercialCaseSourceLabel';
 import CrmReplyTextarea from './CrmReplyTextarea';
 import CrmEmailHistory from './CrmEmailHistory';
+import CrmMessageTranslation from './CrmMessageTranslation';
 import CommercialLeadManagement from './CommercialLeadManagement';
 
 export default function CommercialCaseDetail({item, api, disabled=false, revalidationRevision=0, onEditManual=null}) {
@@ -61,9 +62,9 @@ export default function CommercialCaseDetail({item, api, disabled=false, revalid
     <p>Origen: {commercialCaseSourceLabel({channel:item.channel,sourceLabel:data.sourceLabel||item.sourceLabel})}</p>
     <p>{data.contact?.phone && <>Teléfono: <a href={`tel:${data.contact.phone}`}>{data.contact.phone}</a> </>}{data.contact?.email && <>Correo: <a href={`mailto:${data.contact.email}`}>{data.contact.email}</a></>}</p><p>Puedes contactar a la persona desde tu dispositivo. Las conversaciones personales no aparecen automáticamente aquí; registra los detalles y el próximo paso.</p>
     {data.status==='suspended'&&<p role="status">Esta consulta está en revisión; no se puede responder por ahora.</p>}
-    {data.subject&&<h4 translate="no" className="notranslate">{data.subject}</h4>}{data.body&&<p translate="no" className="notranslate" style={{whiteSpace:'pre-wrap'}}>{data.body}</p>}
-    {(data.inbound||[]).map(m=><div key={m.id}><p translate="no" className="notranslate">{m.body}</p>{m.hasMedia === true && <button type="button" onClick={()=>download(m.id)}>Descargar archivo</button>}</div>)}
-    {item.channel!=='whatsapp'&&<CrmEmailHistory key={item.id} recordId={item.id} loadHistory={loadEmailHistory} revision={emailRevision} initialBody={data.body}/>}
+    {data.subject&&<h4 translate="no" className="notranslate">{data.subject}</h4>}{data.body&&<CrmMessageTranslation api={api} text={data.body} messageId={`${item.id}:initial`} channel={item.channel} caseId={item.id}/>}
+    {(data.inbound||[]).map(m=><div key={m.id}><CrmMessageTranslation api={api} text={m.body} messageId={m.id} channel={item.channel} caseId={item.id}/>{m.hasMedia === true && <button type="button" onClick={()=>download(m.id)}>Descargar archivo</button>}</div>)}
+    {item.channel!=='whatsapp'&&<CrmEmailHistory key={item.id} recordId={item.id} loadHistory={loadEmailHistory} revision={emailRevision} initialBody={data.body} api={api} caseId={item.id}/>}
     {(item.channel==='whatsapp'?(data.replies||[]):[]).map(m=><p translate="no" className="notranslate" key={m.id}>Respuesta: {m.body} · {m.status}</p>)}
     {(data.activities||[]).map(a=><p key={a.id}>Nota: {a.summary || a.body || ''} {a.next_step ? `· Próximo paso: ${a.next_step}` : ''}</p>)}
     {activities.map(a=><p key={`commercial-${a.id}`}>Nota: {a.body}</p>)}

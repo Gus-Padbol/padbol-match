@@ -66,6 +66,7 @@ export function createCommercialAssignmentsApi(token) {
     emailHistory: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/email-history?channel=${encodeURIComponent(channel)}`),
     readCase: (id, channel) => request(`${cases}/${encodeURIComponent(id)}?channel=${encodeURIComponent(channel)}`),
     reply: (id, channel, body, requestId) => request(`${cases}/${encodeURIComponent(id)}/reply`, 'POST', {channel,body,requestId}),
+    translateMessage: payload => request('/api/admin/crm/translate', 'POST', payload),
     listActivities: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/activities?channel=${encodeURIComponent(channel)}`),
     addActivity: (id, channel, body) => request(`${cases}/${encodeURIComponent(id)}/activities`, 'POST', {channel,body}),
     listAdvisors: () => request(advisors),
