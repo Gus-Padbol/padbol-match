@@ -20,7 +20,7 @@ export default function CommercialCrmHeader({view,role,user,token,api,onView,onN
         <div><h1>Consultas comerciales</h1><p>Padbol Internacional · CRM comercial</p></div>
       </div>
       <nav className="crm-header-nav" aria-label="Navegación comercial">
-        <button type="button" className={view==='inbox'?'is-active':''} aria-current={view==='inbox'?'page':undefined} onClick={()=>onView?.('inbox')}>Bandeja</button>
+        {role==='manager'&&<button type="button" className={view==='inbox'?'is-active':''} aria-current={view==='inbox'?'page':undefined} onClick={()=>onView?.('inbox')}>Bandeja</button>}
         {role==='manager'&&<button type="button" className={view==='team'?'is-active':''} aria-current={view==='team'?'page':undefined} onClick={()=>onView?.('team')}>Equipo comercial</button>}
         <button type="button" className={view==='prospect'?'is-active':''} aria-current={view==='prospect'?'page':undefined} onClick={()=>onView?.('prospect')}>PADBOL PROSPECT</button>
         <button type="button" className="crm-header-add" onClick={onNewLead}>Agregar contacto</button>
