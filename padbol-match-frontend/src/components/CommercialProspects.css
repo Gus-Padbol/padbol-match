@@ -118,3 +118,66 @@
   .prospect-campaigns .prospect-sim-metrics{grid-template-columns:1fr 1fr!important}
   .prospect-campaigns .prospect-campaign-actions{display:grid!important;grid-template-columns:1fr 1fr!important}
 }
+
+/* Puntuación explicable */
+.prospect-scorecard{margin:10px 0 14px;padding:14px;border:1px solid #dfe5ee;border-radius:13px;background:#f8fafc}
+.prospect-score-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.prospect-score-head h3{margin:0 0 4px;font-size:15px;color:#17243a}
+.prospect-score-head p{margin:0;max-width:62ch;color:#617086;font-size:10.5px;line-height:1.45}
+.prospect-score-summary{display:grid;gap:3px;justify-items:end;min-width:160px}
+.prospect-score-summary>strong{font-size:28px;line-height:1;color:#cf1d2b;letter-spacing:-.04em}
+.prospect-score-summary>strong small{font-size:10px;color:#617086;letter-spacing:0;margin-left:2px}
+.prospect-score-summary>span{color:#617086;font-size:9.5px;white-space:nowrap}
+.prospect-score-summary>span b{color:#17243a}
+.prospect-score-summary>span.is-low b{color:#a05a00}
+.prospect-score-summary>span.is-good b{color:#176b42}
+.prospect-score-formula{margin:9px 0 10px;color:#617086;font-size:9.5px;line-height:1.4}
+.prospect-score-list{display:flex;flex-direction:column;gap:5px}
+.prospect-score-item{border:1px solid #e2e8f1;border-radius:9px;background:#fff;overflow:hidden}
+.prospect-score-item.is-open{border-color:#e7b4ba;box-shadow:0 3px 12px #0d1a3008}
+.prospect-score-row{display:grid;grid-template-columns:minmax(180px,1.35fr) minmax(90px,1fr) 54px 74px 16px;align-items:center;gap:10px;width:100%;border:0;background:#fff;color:#17243a;text-align:left;font:inherit;padding:9px 10px;cursor:pointer}
+.prospect-score-row:hover{background:#fff8f9}
+.prospect-score-label{display:flex;flex-direction:column;gap:1px;min-width:0}
+.prospect-score-label strong{font-size:11px;font-weight:750;line-height:1.3;overflow-wrap:anywhere}
+.prospect-score-label small{color:#7a8799;font-size:8.5px;line-height:1.3;overflow-wrap:anywhere}
+.prospect-score-bar{display:block;height:7px;min-width:40px;border-radius:99px;background:#edf0f5;overflow:hidden}
+.prospect-score-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#cf1d2b,#e85360)}
+.prospect-score-points{font-size:13px;font-weight:850;text-align:right;white-space:nowrap;color:#17243a}
+.prospect-score-points small{font-size:9px;color:#7a8799;font-weight:600}
+.prospect-evidence{display:inline-flex;align-items:center;justify-content:center;border-radius:99px;padding:3px 6px;font-size:8.5px;font-weight:800;line-height:1.2;white-space:nowrap}
+.prospect-evidence.is-evidence{background:#e2f6eb;color:#175c39}
+.prospect-evidence.is-inferred{background:#fff3d8;color:#795400}
+.prospect-score-chevron{color:#8995a7;font-size:15px;line-height:1;text-align:center}
+.prospect-score-explain{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;padding:11px 12px 13px;border-top:1px solid #e7ecf3;background:#fff}
+.prospect-score-explain>div{min-width:0}
+.prospect-score-explain span{display:block;color:#cf1d2b;font-size:8.5px;font-weight:850;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.prospect-score-explain p{margin:0;color:#3b4b61;font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.prospect-score-explain a{color:#a51b2b;overflow-wrap:anywhere}
+.prospect-score-explain .is-inferred-note{grid-column:1/-1;border-left:2px solid #e1ad45;padding-left:8px}
+.prospect-score-explain .is-evidence-note{grid-column:1/-1;border-left:2px solid #52a879;padding-left:8px}
+
+/* Gestión comercial */
+.prospect-management-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.prospect-field{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:10.5px;font-weight:750;color:#17243a}
+.prospect-field>span{font-size:9.5px;color:#617086;font-weight:800;letter-spacing:.02em}
+.prospect-field select,.prospect-field textarea{width:100%;box-sizing:border-box;border:1px solid #dfe5ee;border-radius:8px;background:#fff;color:#17243a;font:inherit;font-size:11px;padding:8px}
+.prospect-field textarea{min-height:64px;resize:vertical}
+.prospect-field--wide{grid-column:1/-1}
+.prospect-management-actions{display:flex;justify-content:flex-end;margin-top:10px}
+.prospect-management-actions button{min-height:34px;font-size:10.5px;padding:7px 12px}
+@media(max-width:720px){
+ .prospect-scorecard{padding:11px}
+ .prospect-score-head{flex-direction:column;gap:9px}
+ .prospect-score-summary{justify-items:start;grid-template-columns:auto auto;align-items:baseline;gap:4px 10px}
+ .prospect-score-summary>strong{grid-row:span 2}
+ .prospect-score-row{grid-template-columns:minmax(0,1fr) 48px 66px 14px;grid-template-areas:"label points evidence chevron" "bar bar bar bar";gap:4px 7px;padding:8px}
+ .prospect-score-label{grid-area:label}
+ .prospect-score-bar{grid-area:bar;height:6px;margin:3px 0 2px}
+ .prospect-score-points{grid-area:points}
+ .prospect-evidence{grid-area:evidence;justify-self:end}
+ .prospect-score-chevron{grid-area:chevron}
+ .prospect-score-explain{grid-template-columns:1fr;gap:8px;padding:10px}
+ .prospect-management-grid{grid-template-columns:1fr}
+ .prospect-field--wide{grid-column:auto}
+ .prospect-management-actions button{width:100%}
+}

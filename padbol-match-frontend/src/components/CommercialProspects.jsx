@@ -247,15 +247,135 @@ function CampaignsView({campaigns,status,busy,simulation,simulationBusy,error,fo
   </section>;
 }
 
+const SCORE_MEANINGS = {
+  sport: 'Mide la afinidad del negocio con fútbol, fútbol sala o instalaciones deportivas compatibles con Padbol.',
+  investment: 'Estima si la organización tiene señales de escala o capacidad para invertir en una cancha o un proyecto Padbol.',
+  facilities: 'Evalúa si hay información pública sobre instalaciones existentes o posibilidades de expansión.',
+  locations: 'Considera cuántas sedes o ubicaciones gestiona la organización.',
+  compatibility: 'Mide qué tan compatible es la actividad declarada con el Sistema Padbol.',
+  representation: 'Estima el potencial de representar Padbol en una ciudad, región o cadena.',
+  franchise: 'Evalúa señales de un modelo de franquicia, cadena o expansión multisede.',
+  contactability: 'Comprueba si existe un canal comercial verificable para contactar a la organización.',
+  activity: 'Busca evidencia pública de que la organización está activa o en crecimiento.',
+};
+
+function confirmedStatus(prospect, key) {
+  const value = prospect?.data_status?.[key];
+  return value === 'confirmed' || value === 'verified' || value === true;
+}
+
+function explicitChainSignal(prospect) {
+  const value = [prospect?.name, prospect?.trade_name, prospect?.legal_name, prospect?.activities, prospect?.facility_notes].filter(Boolean).join(' ');
+  return /(franchise|franquicia|chain|cadena|group|grupo|operator|operador|resort|multisede|multi-sede)/i.test(value);
+}
+
+function hasFacilityEvidence(prospect) {
+  return Boolean(String(prospect?.facility_notes || '').trim() || String(prospect?.data_status?.facilities || '').match(/confirmed|verified/i));
+}
+
+function evidenceFor(row, prospect) {
+  const locations = Number(prospect?.locations_count || 1);
+  switch (row.key) {
+    case 'sport':
+    case 'compatibility':
+      return confirmedStatus(prospect, 'name') || confirmedStatus(prospect, 'sector') || confirmedStatus(prospect, 'activities');
+    case 'activity':
+      return Boolean(prospect?.website) && confirmedStatus(prospect, 'website');
+    case 'contactability':
+      return Boolean(prospect?.email) && confirmedStatus(prospect, 'email');
+    case 'locations':
+      return locations > 1 && confirmedStatus(prospect, 'locations');
+    case 'facilities':
+      return hasFacilityEvidence(prospect);
+    case 'investment':
+    case 'representation':
+    case 'franchise':
+      return explicitChainSignal(prospect) || locations > 1;
+    default:
+      return !row.inferred;
+  }
+}
+
+function scoreExplanation(row, prospect, isEvidence) {
+  const p = prospect || {};
+  const locations = Number(p.locations_count || 1);
+  const common = {
+    sport: { why: `La regla asignó ${row.points}/${row.max} por la actividad y el nombre del negocio; no se usaron datos de intención de compra.`, support: [p.sector, p.activities, p.name].filter(Boolean).join(' · ') || 'Sin actividad declarada.' },
+    investment: { why: `La regla asignó ${row.points}/${row.max}. ${explicitChainSignal(p) || locations > 1 ? 'Se encontraron señales de escala, pero no equivalen a capacidad financiera verificada.' : 'No hay evidencia de cadena o escala; el nombre genérico "Club" no se considera prueba de inversión.'}`, support: `Sedes declaradas: ${locations}. ${explicitChainSignal(p) ? 'Señal textual de cadena/operador.' : 'Sin señal explícita de cadena.'}` },
+    facilities: { why: `La regla asignó ${row.points}/${row.max} por los datos de dirección e instalaciones disponibles.`, support: p.facility_notes ? `Notas: ${p.facility_notes}` : p.address ? `Dirección pública: ${p.address}. No hay notas específicas de instalaciones.` : 'Sin dirección ni notas de instalaciones.' },
+    locations: { why: `La regla asignó ${row.points}/${row.max} según la cantidad de sedes conocida.`, support: `Sedes declaradas: ${locations}. ${p.data_status?.locations ? `Estado del dato: ${p.data_status.locations}.` : ''}` },
+    compatibility: { why: `La regla asignó ${row.points}/${row.max} por la actividad declarada y su compatibilidad con el Sistema Padbol.`, support: [p.sector, p.activities].filter(Boolean).join(' · ') || 'Sin actividad declarada.' },
+    representation: { why: `La regla asignó ${row.points}/${row.max}. ${explicitChainSignal(p) ? 'Hay una señal textual de escala, todavía no confirmada.' : 'No hay evidencia de escala territorial suficiente.'}`, support: `Sedes: ${locations}. ${explicitChainSignal(p) ? 'Señal de cadena/operador.' : 'Sin cadena o escala explícita.'}` },
+    franchise: { why: `La regla asignó ${row.points}/${row.max} por el modelo de negocio declarado.`, support: explicitChainSignal(p) ? 'Señal textual de cadena/franquicia.' : 'No se encontró un modelo de franquicia o cadena.' },
+    contactability: { why: `La regla asignó ${row.points}/${row.max} por los canales públicos disponibles.`, support: [p.email ? 'Correo público' : null, p.phone ? 'Teléfono público' : null, p.website ? 'Sitio web público' : null].filter(Boolean).join(' · ') || 'Sin contacto público.' },
+    activity: { why: `La regla asignó ${row.points}/${row.max} por la presencia de un sitio web público; no se interpreta como intención de compra.`, support: p.website ? `Sitio web: ${p.website}` : 'Sin sitio web.' },
+  };
+  const value = common[row.key] || { why: `La regla asignó ${row.points}/${row.max}.`, support: row.source || 'Sin detalle adicional.' };
+  return { ...value, isEvidence };
+}
+
+function formatScoreDate(value) {
+  if (!value || !Number.isFinite(Date.parse(value))) return 'Fecha no informada';
+  return new Date(value).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function ScoreBreakdown({ prospect }) {
+  const rows = prospect?.score_breakdown || [];
+  const [open, setOpen] = useState('');
+  const totalMax = rows.reduce((sum, row) => sum + Number(row.max || 0), 0);
+  const rawPoints = rows.reduce((sum, row) => sum + Number(row.points || 0), 0);
+  const evidenceRows = rows.filter(row => evidenceFor(row, prospect));
+  const evidencePoints = evidenceRows.reduce((sum, row) => sum + Number(row.points || 0), 0);
+  const confidence = rawPoints ? Math.round(evidencePoints / rawPoints * 100) : 0;
+  const sourceDate = formatScoreDate(prospect?.source_checked_at || prospect?.last_verified_at);
+  return <section className="prospect-scorecard" aria-label="Puntuación explicable">
+    <header className="prospect-score-head">
+      <div><h3>Puntuación explicable</h3><p>Cada punto indica qué se midió y cuánto respaldo verificable tiene. Tocá un criterio para ver el detalle.</p></div>
+      <div className="prospect-score-summary"><strong>{prospect?.score ?? 0}<small>/100</small></strong><span>{rawPoints} / {totalMax} puntos de criterios</span><span className={confidence < 60 ? 'is-low' : 'is-good'}>Confianza de evidencia <b>{confidence}%</b></span></div>
+    </header>
+    <p className="prospect-score-formula">El total se normaliza a 100 sobre {totalMax} puntos posibles. La confianza mide únicamente los puntos respaldados por evidencia verificable; no es una probabilidad de compra.</p>
+    <div className="prospect-score-list">{rows.map(row => {
+      const isEvidence = evidenceFor(row, prospect);
+      const detail = scoreExplanation(row, prospect, isEvidence);
+      const expanded = open === row.key;
+      return <div className={`prospect-score-item ${expanded ? 'is-open' : ''}`} key={row.key}>
+        <button type="button" className="prospect-score-row" onClick={() => setOpen(expanded ? '' : row.key)} aria-expanded={expanded} aria-controls={`score-${row.key}`}>
+          <span className="prospect-score-label"><strong>{row.label}</strong><small>{row.source}</small></span>
+          <span className="prospect-score-bar" aria-hidden="true"><i style={{ width: `${Math.round(row.points / Math.max(1, row.max) * 100)}%` }} /></span>
+          <span className="prospect-score-points">{row.points}<small>/{row.max}</small></span>
+          <span className={`prospect-evidence ${isEvidence ? 'is-evidence' : 'is-inferred'}`}>{isEvidence ? 'Evidencia' : 'Inferido'}</span>
+          <span className="prospect-score-chevron" aria-hidden="true">{expanded ? '−' : '+'}</span>
+        </button>
+        {expanded && <div className="prospect-score-explain" id={`score-${row.key}`}>
+          <div><span>Qué significa</span><p>{SCORE_MEANINGS[row.key] || 'Criterio de la puntuación comercial.'}</p></div>
+          <div><span>Por qué recibió {row.points}/{row.max}</span><p>{detail.why}</p></div>
+          <div><span>Información que lo respalda</span><p>{detail.support}</p></div>
+          <div><span>Fuente y fecha</span><p>{row.source || 'Fuente no informada'} · <a href={prospect.source_url || prospect.website || '#'} target="_blank" rel="noreferrer">{prospect.source_url || prospect.website || 'Sin URL'}</a> · Verificado: {sourceDate}</p></div>
+          <div className={isEvidence ? 'is-evidence-note' : 'is-inferred-note'}><span>Evidencia vs inferencia</span><p>{isEvidence ? 'Este criterio tiene respaldo en un dato confirmado de la ficha. No implica intención de compra ni una oportunidad validada por Padbol.' : 'Este valor es una inferencia de la regla de puntuación. No se presenta como un hecho confirmado ni reemplaza la verificación comercial.'}</p></div>
+        </div>}
+      </div>;
+    })}</div>
+    <p className="prospect-footnote">La puntuación no es una probabilidad de compra. La confianza de evidencia de {confidence}% refleja {evidencePoints} de {rawPoints} puntos respaldados; el resto son inferencias de la regla.</p>
+  </section>;
+}
+
 function ProspectDetail({data,busy,advisors,role,onUpdate,onResponse}) {
-  const p=data.prospect; const breakdown=p.score_breakdown||[];
+  const p=data.prospect;
   const [text,setText]=useState('');
   return <article className="prospect-card">
     <header><span className={`prospect-grade grade-${p.grade}`}>{p.grade}</span><div><h2>{p.name||'Prospecto'}</h2><p>{[p.sector,p.city,p.state,p.country].filter(Boolean).join(' · ')}</p></div><strong className="prospect-score">{p.score}<small>/100</small></strong></header>
     <div className="prospect-badges"><span>{STATUS_LABELS[p.status]||p.status}</span>{p.is_padel_only&&<b>Excluido: pádel exclusivo</b>}{p.contact_block_reason&&<b className="prospect-blocked">{p.contact_block_reason}</b>}</div>
     <div className="prospect-facts"><div><span>Web</span>{p.website?<a href={p.website} target="_blank" rel="noreferrer">{p.website}</a>:'Sin dato'}</div><div><span>Correo</span>{p.email||'Sin dato'}</div><div><span>Teléfono</span>{p.phone||'Sin dato'}</div><div><span>Dirección</span>{p.address||'Sin dato'}</div><div><span>Fuente</span><a href={p.source_url} target="_blank" rel="noreferrer">OpenStreetMap</a></div><div><span>Verificado</span>{p.last_verified_at?new Date(p.last_verified_at).toLocaleDateString('es-AR'):'Sin fecha'}</div></div>
-    <section><h3>Puntuación explicable</h3><p className="prospect-footnote">Confianza de evidencia: {p.score_breakdown?.reduce?.((s,x)=>s,0)===0?0:Math.round(breakdown.filter(x=>!x.inferred).reduce((s,x)=>s+x.points,0)/Math.max(1,breakdown.reduce((s,x)=>s+x.points,0))*100)}%. Los puntos inferidos están marcados.</p>{breakdown.map(row=><div className="prospect-criterion" key={row.key}><span>{row.label}{row.inferred?' · inferido':' · evidencia'}</span><div><i style={{width:`${Math.round(row.points/Math.max(1,row.max)*100)}%`}}/></div><b>{row.points}/{row.max}</b></div>)}</section>
-    <section className="prospect-management"><div className="prospect-section-head prospect-section-head--small"><div><h3>Gestión</h3><span>Actualizá el estado y el responsable sin disparar envíos.</span></div><span className="prospect-status prospect-status--draft">Solo CRM</span></div><label>Estado<select value={p.status} onChange={e=>onUpdate({status:e.target.value})} disabled={busy}>{STATUSES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{role==='manager'&&<label>Responsable<select value={p.assigned_user_id||''} onChange={e=>onUpdate({assignedUserId:e.target.value||null})} disabled={busy}><option value="">Sin asignar</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name||a.email}</option>)}</select></label>}<label>Nota de respuesta simulada<textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Pegá una respuesta para clasificarla sin enviar nada."/></label><button type="button" className="prospect-primary" onClick={()=>onResponse(text)} disabled={busy||!text.trim()}>Clasificar respuesta</button></section>
+    <ScoreBreakdown prospect={p}/>
+    <section className="prospect-management">
+      <div className="prospect-section-head prospect-section-head--small"><div><h3>Gestión comercial</h3><span>Actualizá el estado y el responsable sin disparar envíos.</span></div><span className="prospect-status prospect-status--draft">Solo CRM</span></div>
+      <div className="prospect-management-grid">
+        <label className="prospect-field"><span>Estado</span><select value={p.status} onChange={e=>onUpdate({status:e.target.value})} disabled={busy}>{STATUSES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        {role==='manager'&&<label className="prospect-field"><span>Responsable</span><select value={p.assigned_user_id||''} onChange={e=>onUpdate({assignedUserId:e.target.value||null})} disabled={busy}><option value="">Sin asignar</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name||a.email}</option>)}</select></label>}
+        <label className="prospect-field prospect-field--wide"><span>Nota de respuesta simulada</span><textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Pegá una respuesta para clasificarla sin enviar nada."/></label>
+      </div>
+      <div className="prospect-management-actions"><button type="button" className="prospect-primary" onClick={()=>onResponse(text)} disabled={busy||!text.trim()}>Clasificar respuesta</button></div>
+    </section>
     <section><h3>Mensajes de campaña</h3>{(data.messages||[]).length?<div className="prospect-messages">{data.messages.map(m=><details key={m.id}><summary><span>Día {m.step_day} · {m.status}</span><strong>{m.subject}</strong><small>{m.recipient}</small></summary><p>{m.body}</p></details>)}</div>:<p>Sin mensajes preparados. La simulación solo crea mensajes si hay correo verificado y la ficha no está bloqueada.</p>}</section>
     <section><h3>Historial</h3>{(data.events||[]).length?<ul className="prospect-history">{data.events.map(e=><li key={e.id}><span>{e.event_type}</span><small>{new Date(e.created_at).toLocaleString('es-AR')}</small></li>)}</ul>:<p>Sin eventos todavía.</p>}</section>
   </article>;
