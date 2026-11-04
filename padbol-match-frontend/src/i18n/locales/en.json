@@ -3105,7 +3105,9 @@
       "contactBody": "Questions about this policy or your data:",
       "aiTitle": "Chivi, the artificial-intelligence assistant",
       "aiBody": "Chivi is an optional in-app assistant that answers questions about Padbol Match and Padbol. To generate a reply, we send the question, the first name in your profile, an internal account identifier, the selected theme and language, and an instruction to answer in that language to Anthropic (Claude API). We do not send your email, phone number, password, payment-card data, precise location, photos, contacts or health data. Padbol Match does not store Chivi conversations in your profile or database; they remain in the app memory and are discarded when you close the app or sign out. Anthropic processes the content to produce the reply, does not use API content to train its models, and deletes it within 30 days unless it must retain it for an abuse investigation or legal obligation.",
-      "aiVoice": "Voice input and read-aloud are optional and use Apple Speech on your device. Padbol Match does not record or upload audio; only the transcribed text is sent to the assistant. You can type instead and can disable read-aloud at any time. Chivi cannot create, change or cancel reservations, take payments, or modify account data."
+      "aiVoice": "Voice input and read-aloud are optional and use Apple speech services, which may process audio on the device or on Apple servers. Padbol Match does not record or store the audio; only the transcribed text is sent to the assistant. You can type instead and can disable read-aloud at any time. Chivi cannot create, change or cancel reservations, take payments, or modify account data.",
+      "dataCommunity": "Photos, videos and posts you choose to share in Community",
+      "dataLocation": "Approximate or precise location, only if you enable nearby venues or matches"
     }
   },
   "ranking": {

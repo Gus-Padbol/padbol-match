@@ -40,6 +40,8 @@ export default function PoliticaPrivacidad() {
         <LegalLi>{t('legal.privacyPage.dataPhone')}</LegalLi>
         <LegalLi>{t('legal.privacyPage.dataProfile')}</LegalLi>
         <LegalLi>{t('legal.privacyPage.dataPhoto')}</LegalLi>
+        <LegalLi>{t('legal.privacyPage.dataCommunity')}</LegalLi>
+        <LegalLi>{t('legal.privacyPage.dataLocation')}</LegalLi>
         <LegalLi>{t('legal.privacyPage.dataActivity')}</LegalLi>
         <LegalLi>{t('legal.privacyPage.dataTechnical')}</LegalLi>
       </LegalUl>
