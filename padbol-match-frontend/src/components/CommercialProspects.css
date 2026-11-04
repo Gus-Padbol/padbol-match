@@ -114,3 +114,7 @@
 .prospect-campaigns .prospect-sim-metrics article strong{display:block!important;color:#17243a!important;font-size:21px!important;margin:2px 0 1px!important}
 .prospect-campaigns .prospect-sim-metrics article small{display:block!important;color:#617086!important;font-size:8.5px!important}
 @media(max-width:720px){.prospect-campaigns .prospect-sim-metrics{grid-template-columns:1fr 1fr!important}}
+@media(max-width:720px){
+  .prospect-campaigns .prospect-sim-metrics{grid-template-columns:1fr 1fr!important}
+  .prospect-campaigns .prospect-campaign-actions{display:grid!important;grid-template-columns:1fr 1fr!important}
+}
