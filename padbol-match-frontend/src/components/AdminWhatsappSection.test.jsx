@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import AdminWhatsappSection from './AdminWhatsappSection';
+jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{user:{id:'admin',email:'admin@example.invalid'}},signOutAndClear:jest.fn()})}));
 
 jest.mock('../pages/WhatsappCrmDemo', () => ({ accessToken, onBack }) => (
   <div><span>{accessToken}</span><button onClick={onBack}>Volver</button></div>

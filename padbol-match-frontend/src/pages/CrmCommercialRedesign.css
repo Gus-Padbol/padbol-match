@@ -1831,3 +1831,10 @@
 .wa-demo--headless .wa-crm-body:has(.wa-area-tabs--top){height:auto!important;min-height:calc(100dvh - 118px)}
 .wa-demo--headless .wa-workspace{height:calc(100dvh - 178px)!important;min-height:520px;margin-top:10px!important}
 @media(max-width:720px){.wa-demo--headless .wa-workspace{height:auto!important;min-height:0;margin-top:0!important}.wa-demo--headless .wa-crm-body{min-height:0}.wa-demo--headless .wa-area-tabs--top{position:static!important}}
+.admin-dashboard--crm .wa-demo--headless{display:flex!important;flex-direction:column!important;width:100%!important;max-width:none!important;grid-template-columns:none!important;grid-template-rows:none!important}
+.admin-dashboard--crm .wa-demo--headless>.wa-topbar{display:none!important}
+.admin-dashboard--crm .wa-demo--headless .wa-crm-body{width:100%!important;min-height:calc(100dvh - 220px)!important;height:auto!important}
+.admin-dashboard--crm .wa-demo--headless .wa-workspace{width:100%!important;max-width:none!important;height:calc(100dvh - 280px)!important;min-height:420px;margin-top:10px!important}
+@media(max-width:720px){.admin-dashboard--crm .wa-demo--headless .wa-workspace{height:auto!important;min-height:0}}
+
+@media(min-width:1280px){.admin-dashboard--crm .wa-demo{display:flex!important;flex-direction:column!important;grid-template-columns:none!important;grid-template-rows:none!important;width:100%!important}.admin-dashboard--crm .wa-demo .wa-topbar{grid-column:auto!important;grid-row:auto!important;width:100%!important;max-width:none!important}.admin-dashboard--crm .wa-demo .wa-tools{grid-column:auto!important;grid-row:auto!important;width:100%!important;max-width:none!important}.admin-dashboard--crm .wa-demo .wa-crm-body{grid-column:auto!important;grid-row:auto!important;width:100%!important}}
