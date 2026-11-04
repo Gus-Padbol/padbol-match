@@ -1879,3 +1879,7 @@
   .crm-page--inbox .wa-demo--lead-open .wa-mobile-back{display:flex!important}
   .crm-page--inbox .wa-demo--lead-open .wa-messages{overflow:visible!important}
 }
+
+@media (min-width: 721px) {
+  .wa-demo .wa-mobile-back { display: none !important; }
+}
