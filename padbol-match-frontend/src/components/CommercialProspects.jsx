@@ -19,6 +19,9 @@ export default function CommercialProspects({api,embedded=false}) {
   const [campaignForm,setCampaignForm]=useState({name:'Piloto Estados Unidos',opportunityType:'venue_sale',language:'en',country:'US',dailyLimit:10});
   const [notice,setNotice]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const [tab,setTab]=useState('prospects');
+  const [simulation,setSimulation]=useState(null);
+  const [simulationBusy,setSimulationBusy]=useState('');
+  const [campaignError,setCampaignError]=useState('');
 
   const load = useCallback(async()=>{
     setError('');
@@ -56,15 +59,37 @@ export default function CommercialProspects({api,embedded=false}) {
     catch(e){setError(e?.message||'No se pudo crear la campaña.');}finally{setBusy(false);}
   }
   async function approveCampaign(id){setBusy(true);setError('');setNotice('');try{const result=await api.updateProspectCampaign(id,{status:'approved'});setCampaigns(current=>current.map(c=>c.id===id?{...c,...result.campaign}:c));setNotice(result.note);}catch(e){setError(e?.message||'No se pudo aprobar la campaña.');}finally{setBusy(false);}}
+  function failure(e,fallback){
+    const code=e?.code||e?.status?`${e?.status?`HTTP ${e.status} · `:''}${e?.code||''}`.trim():'';
+    return [code, e?.userMessage||e?.message||fallback].filter(Boolean).join(' · ');
+  }
   async function simulate(id){
-    setBusy(true);setError('');setNotice('');
-    try{const result=await api.simulateProspectCampaign(id);setNotice(`Simulación: ${result.created} mensajes preparados, ${result.noEmail||0} sin correo, ${result.blocked||0} bloqueados. ${result.message}`);await load();}
-    catch(e){setError(e?.message||'No se pudo simular la campaña.');}finally{setBusy(false);}
+    if(simulationBusy) return;
+    if(simulation?.source==='simulate'&&simulation.campaignId===id) return;
+    setSimulationBusy(id);setCampaignError('');setError('');
+    try{
+      const result=await api.simulateProspectCampaign(id);
+      setSimulation({campaignId:id,source:'simulate',result});
+      setNotice(`Simulación completada: ${result.created} mensaje(s) preparado(s), ${result.existing||0} ya existente(s), ${result.excluded||0} excluido(s). No se envió ningún correo.`);
+    }catch(e){setCampaignError(failure(e,'No se pudo simular la campaña.'));}
+    finally{setSimulationBusy('');}
+    load().catch(()=>{});
+  }
+  async function previewMessages(id){
+    if(simulationBusy) return;
+    setSimulationBusy(id);setCampaignError('');
+    try{
+      const result=await api.campaignMessages(id);
+      setSimulation({campaignId:id,source:'messages',result});
+      setNotice(`Mensajes simulados: ${result.total||0}. Ninguno fue enviado.`);
+    }catch(e){setCampaignError(failure(e,'No se pudieron leer los mensajes simulados.'));}
+    finally{setSimulationBusy('');}
   }
   async function simulateFollowup(id){
-    setBusy(true);setError('');setNotice('');
-    try{const result=await api.simulateProspectFollowup(id,14);setNotice(`Seguimiento simulado día ${result.day}: ${result.planned} seguimientos planificados, ${result.skipped} bloqueados por respuesta o restricción. ${result.message}`);await load();}
-    catch(e){setError(e?.message||'No se pudo simular el seguimiento.');}finally{setBusy(false);}
+    if(simulationBusy) return;
+    setBusy(true);setCampaignError('');setNotice('');
+    try{const result=await api.simulateProspectFollowup(id,14);setNotice(`Seguimiento simulado día ${result.day}: ${result.planned} seguimientos planificados, ${result.skipped} bloqueados por respuesta o restricción. ${result.message}`);}
+    catch(e){setCampaignError(failure(e,'No se pudo simular el seguimiento.'));}finally{setBusy(false);}
   }
   async function response(id,text){
     setBusy(true);setError('');setNotice('');
@@ -123,8 +148,103 @@ export default function CommercialProspects({api,embedded=false}) {
     {tab==='dashboard'&&<section className="prospect-dashboard"><h2>Panel ejecutivo</h2><div className="prospect-metrics">{[
       ['Prospectos',metrics.prospects],['Verificados',metrics.verified],['Nuevos',metrics.new],['Existentes',metrics.existing],['Contactados',metrics.contacted],['Respuestas',metrics.responded],['Interesados',metrics.interested],['Negociaciones',metrics.negotiations],['Bajas',metrics.optOuts],['Rebotes',metrics.bounces],['Supresiones',metrics.suppressions],['Mensajes simulados',dashboard?.messages?.simulated],['Campañas',dashboard?.campaigns?.length]
     ].map(([label,value])=><article key={label}><span>{label}</span><strong>{value??0}</strong></article>)}</div><div className="prospect-dashboard-grid"><section><h3>Por país</h3>{byCountry.length?<ul>{byCountry.map(([k,v])=><li key={k}><span>{k}</span><b>{v}</b></li>)}</ul>:<p>Sin datos.</p>}</section><section><h3>Búsquedas recientes</h3>{(dashboard?.runs||[]).map(run=><article key={run.id}><strong>{run.city||run.state||run.country}</strong><span>{run.found_count} encontrados · {run.inserted_count} nuevos · {run.status}</span><small>{new Date(run.started_at).toLocaleString('es-AR')}</small></article>)}</section></div><p className="prospect-footnote">Costo de búsqueda registrado: USD {(dashboard?.sourceCostCents||0)/100}. Las aperturas de correo no se usan como interés. Envío real deshabilitado por defecto.</p></section>}
-    {tab==='campaigns'&&<section className="prospect-campaigns"><h2>Campañas piloto</h2><div className="prospect-campaign-grid"><form onSubmit={createCampaign}><h3>Nueva campaña</h3><label>Nombre<input required value={campaignForm.name} onChange={e=>setCampaignForm({...campaignForm,name:e.target.value})}/></label><label>Perfil<select value={campaignForm.opportunityType} onChange={e=>setCampaignForm({...campaignForm,opportunityType:e.target.value})}>{OPPORTUNITIES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><label>Idioma<select value={campaignForm.language} onChange={e=>setCampaignForm({...campaignForm,language:e.target.value})}><option value="en">Inglés</option><option value="es">Español</option></select></label><label>Límite diario<input type="number" min="1" max="200" value={campaignForm.dailyLimit} onChange={e=>setCampaignForm({...campaignForm,dailyLimit:e.target.value})}/></label><button type="submit" className="prospect-primary" disabled={busy}>Crear borrador</button><p>Los mensajes quedan en simulación. No se envía ningún correo sin aprobación y credenciales autorizadas.</p></form><section><h3>Campañas existentes</h3>{!campaigns.length&&<p>Sin campañas.</p>}{campaigns.map(c=><article key={c.id}><div><strong>{c.name}</strong><span>{c.language.toUpperCase()} · {c.status} · límite {c.daily_limit}/día</span></div>{status?.role==='manager'&&<button type="button" onClick={()=>approveCampaign(c.id)} disabled={busy||c.status==='approved'}>Aprobar</button>}<button type="button" onClick={()=>simulate(c.id)} disabled={busy}>Simular</button><button type="button" onClick={()=>simulateFollowup(c.id)} disabled={busy}>Simular seguimiento</button></article>)}</section></div></section>}
+    {tab==='campaigns'&&<CampaignsView campaigns={campaigns} status={status} busy={busy} simulation={simulation} simulationBusy={simulationBusy} error={campaignError} form={campaignForm} setForm={setCampaignForm} onCreate={createCampaign} onApprove={approveCampaign} onSimulate={simulate} onPreview={previewMessages} onFollowup={simulateFollowup}/>}
   </main>;
+}
+
+function CampaignStatus({status}){
+  const label={draft:'Borrador',approved:'Aprobada para simulación',paused:'Pausada',active:'Activa',stopped:'Detenida'}[status]||status;
+  return <span className={`prospect-status prospect-status--${status||'draft'}`}>{label}</span>;
+}
+
+function CampaignMetrics({result,source}){
+  if(source==='messages'){
+    const counts=result.counts||{};
+    return <div className="prospect-sim-metrics">
+      <article><span>Mensajes simulados</span><strong>{result.total||0}</strong><small>solo lectura</small></article>
+      <article><span>Simulados</span><strong>{counts.simulated||0}</strong><small>sin enviar</small></article>
+      <article><span>Otros estados</span><strong>{Object.entries(counts).filter(([k])=>k!=='simulated').reduce((sum,[,v])=>sum+v,0)}</strong><small>revisar</small></article>
+    </div>;
+  }
+  return <div className="prospect-sim-metrics">
+    <article><span>Prospectos evaluados</span><strong>{result.evaluated??result.candidates??0}</strong><small>candidatos de la campaña</small></article>
+    <article className="is-ok"><span>Mensajes preparados</span><strong>{result.created||0}</strong><small>listos para revisar</small></article>
+    <article><span>Ya existentes</span><strong>{result.existing||0}</strong><small>sin duplicar</small></article>
+    <article className="is-warn"><span>Excluidos</span><strong>{result.excluded||0}</strong><small>{result.noEmail||0} sin correo · {result.blocked||0} bloqueados{result.failed?` · ${result.failed} con error`:''}</small></article>
+  </div>;
+}
+
+function SimulationResults({simulation}){
+  if(!simulation) return null;
+  const {result,source}=simulation;
+  if(source==='messages'){
+    const rows=result.messages||[];
+    return <section className="prospect-simulation" aria-label="Mensajes simulados">
+      <header><div><p>VISTA PREVIA · SOLO LECTURA</p><h3>{result.campaign?.name||'Mensajes simulados'}</h3></div><span className="prospect-status prospect-status--approved">Sin enviar</span></header>
+      <CampaignMetrics result={result} source="messages"/>
+      {!rows.length&&<p className="prospect-empty">No hay mensajes preparados. Ejecutá una simulación para crear la vista previa.</p>}
+      <div className="prospect-sim-list">{rows.map(m=><details className="prospect-mail" key={m.id||`${m.prospect_id}-${m.step_day}`}>
+        <summary><span>Día {m.step_day}</span><strong>{m.subject}</strong><small>{m.prospect?.name||m.recipient} · {m.recipient}</small></summary>
+        <div className="prospect-mail-meta"><span>Para: {m.recipient}</span><span>Estado: {m.status}</span><span>Programado: {m.scheduled_at?new Date(m.scheduled_at).toLocaleString('es-AR'):'sin fecha'}</span></div>
+        <pre>{m.body}</pre>
+      </details>)}</div>
+    </section>;
+  }
+  const rows=result.results||[];
+  const problems=rows.filter(r=>r.outcome!=='prepared'&&r.outcome!=='already_prepared');
+  return <section className="prospect-simulation" aria-label="Resultado de simulación">
+    <header><div><p>RESULTADO DE SIMULACIÓN</p><h3>{result.campaign?.name||'Campaña'}</h3><span>{result.message}</span></div><span className="prospect-status prospect-status--sim">Ningún correo enviado</span></header>
+    <CampaignMetrics result={result} source="simulate"/>
+    {!!problems.length&&<div className="prospect-sim-block"><h4>Excluidos y motivos</h4><ul className="prospect-exclusions">{problems.map(r=><li key={r.prospectId}><strong>{r.name}</strong><span>{r.reason}</span>{r.email&&<small>{r.email}</small>}</li>)}</ul></div>}
+    <div className="prospect-sim-block"><h4>Mensajes preparados · abrí cada correo antes de aprobar cualquier envío</h4>
+      {!rows.some(r=>r.messages?.length)&&<p className="prospect-empty">No hay mensajes para previsualizar.</p>}
+      <div className="prospect-sim-list">{rows.filter(r=>r.messages?.length).map(r=><div className="prospect-sim-prospect" key={r.prospectId}>
+        <header><strong>{r.name}</strong><span>{r.email} · {r.outcome==='prepared'?'preparado':'ya existente'}</span></header>
+        {r.messages.map((m,i)=><details className="prospect-mail" key={m.id||`${r.prospectId}-${m.step_day}-${i}`}>
+          <summary><span>Día {m.step_day}</span><strong>{m.subject}</strong><small>{m.existing?'Ya existía · no se duplicó':'Preparado ahora'}</small></summary>
+          <div className="prospect-mail-meta"><span>Para: {m.recipient}</span><span>Estado: {m.status}</span><span>{m.scheduled_at?new Date(m.scheduled_at).toLocaleString('es-AR'):'sin fecha'}</span></div>
+          <pre>{m.body}</pre>
+        </details>)}
+      </div>)}</div>
+    </div>
+  </section>;
+}
+
+function CampaignsView({campaigns,status,busy,simulation,simulationBusy,error,form,setForm,onCreate,onApprove,onSimulate,onPreview,onFollowup}){
+  return <section className="prospect-campaigns">
+    <header className="prospect-section-head"><div><p>CAMPAÑAS PILOTO · MODO SIMULACIÓN</p><h2>Campañas</h2><span>Prepará y leé cada correo antes de cualquier envío. El envío real permanece deshabilitado.</span></div><span className="prospect-mode is-sim">Sin envíos reales</span></header>
+    {error&&<div className="prospect-alert prospect-inline-alert" role="alert"><strong>No se pudo completar la operación</strong><span>{error}</span></div>}
+    <div className="prospect-campaign-grid">
+      <form onSubmit={onCreate} className="prospect-create-card">
+        <h3>Nueva campaña</h3>
+        <p>Creá un borrador. No se envía nada sin aprobación y credenciales autorizadas.</p>
+        <label>Nombre<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
+        <label>Perfil<select value={form.opportunityType} onChange={e=>setForm({...form,opportunityType:e.target.value})}>{OPPORTUNITIES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>Idioma<select value={form.language} onChange={e=>setForm({...form,language:e.target.value})}><option value="en">Inglés</option><option value="es">Español</option></select></label>
+        <label>Límite diario<input type="number" min="1" max="200" value={form.dailyLimit} onChange={e=>setForm({...form,dailyLimit:e.target.value})}/></label>
+        <button type="submit" className="prospect-primary" disabled={busy}>{busy?'Guardando…':'Crear borrador'}</button>
+      </form>
+      <div className="prospect-campaign-list">
+        <h3>Campañas existentes <span>{campaigns.length}</span></h3>
+        {!campaigns.length&&<p className="prospect-empty">Sin campañas.</p>}
+        {campaigns.map(c=>{
+          const isCurrent=simulation?.campaignId===c.id;
+          const isSimulating=simulationBusy===c.id;
+          const hasSimulation=isCurrent&&simulation?.source==='simulate';
+          return <article className="prospect-campaign-card" key={c.id}>
+            <header><div><strong>{c.name}</strong><span>{c.language?.toUpperCase()} · límite {c.daily_limit}/día · {Array.isArray(c.crm_prospect_campaign_steps)?`${c.crm_prospect_campaign_steps.length} pasos`:'sin pasos'}</span></div><CampaignStatus status={c.status}/></header>
+            <div className="prospect-campaign-actions">
+              {status?.role==='manager'&&<button type="button" onClick={()=>onApprove(c.id)} disabled={busy||isSimulating||c.status==='approved'}>Aprobar</button>}
+              <button type="button" className="prospect-primary" onClick={()=>onSimulate(c.id)} disabled={busy||isSimulating||hasSimulation}>{isSimulating?'Simulando…':hasSimulation?'Simulación lista':'Simular'}</button>
+              <button type="button" onClick={()=>onPreview(c.id)} disabled={busy||isSimulating}>Leer mensajes</button>
+              <button type="button" onClick={()=>onFollowup(c.id)} disabled={busy||isSimulating}>Simular seguimiento</button>
+            </div>
+            {isCurrent&&<SimulationResults simulation={simulation}/>}
+          </article>;
+        })}
+      </div>
+    </div>
+  </section>;
 }
 
 function ProspectDetail({data,busy,advisors,role,onUpdate,onResponse}) {
@@ -135,7 +255,7 @@ function ProspectDetail({data,busy,advisors,role,onUpdate,onResponse}) {
     <div className="prospect-badges"><span>{STATUS_LABELS[p.status]||p.status}</span>{p.is_padel_only&&<b>Excluido: pádel exclusivo</b>}{p.contact_block_reason&&<b className="prospect-blocked">{p.contact_block_reason}</b>}</div>
     <div className="prospect-facts"><div><span>Web</span>{p.website?<a href={p.website} target="_blank" rel="noreferrer">{p.website}</a>:'Sin dato'}</div><div><span>Correo</span>{p.email||'Sin dato'}</div><div><span>Teléfono</span>{p.phone||'Sin dato'}</div><div><span>Dirección</span>{p.address||'Sin dato'}</div><div><span>Fuente</span><a href={p.source_url} target="_blank" rel="noreferrer">OpenStreetMap</a></div><div><span>Verificado</span>{p.last_verified_at?new Date(p.last_verified_at).toLocaleDateString('es-AR'):'Sin fecha'}</div></div>
     <section><h3>Puntuación explicable</h3><p className="prospect-footnote">Confianza de evidencia: {p.score_breakdown?.reduce?.((s,x)=>s,0)===0?0:Math.round(breakdown.filter(x=>!x.inferred).reduce((s,x)=>s+x.points,0)/Math.max(1,breakdown.reduce((s,x)=>s+x.points,0))*100)}%. Los puntos inferidos están marcados.</p>{breakdown.map(row=><div className="prospect-criterion" key={row.key}><span>{row.label}{row.inferred?' · inferido':' · evidencia'}</span><div><i style={{width:`${Math.round(row.points/Math.max(1,row.max)*100)}%`}}/></div><b>{row.points}/{row.max}</b></div>)}</section>
-    <section><h3>Gestión</h3><label>Estado<select value={p.status} onChange={e=>onUpdate({status:e.target.value})} disabled={busy}>{STATUSES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{role==='manager'&&<label>Responsable<select value={p.assigned_user_id||''} onChange={e=>onUpdate({assignedUserId:e.target.value||null})} disabled={busy}><option value="">Sin asignar</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name||a.email}</option>)}</select></label>}<label>Nota de respuesta simulada<textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Pegá una respuesta para clasificarla sin enviar nada."/></label><button type="button" onClick={()=>onResponse(text)} disabled={busy||!text.trim()}>Clasificar respuesta</button></section>
+    <section className="prospect-management"><div className="prospect-section-head prospect-section-head--small"><div><h3>Gestión</h3><span>Actualizá el estado y el responsable sin disparar envíos.</span></div><span className="prospect-status prospect-status--draft">Solo CRM</span></div><label>Estado<select value={p.status} onChange={e=>onUpdate({status:e.target.value})} disabled={busy}>{STATUSES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>{role==='manager'&&<label>Responsable<select value={p.assigned_user_id||''} onChange={e=>onUpdate({assignedUserId:e.target.value||null})} disabled={busy}><option value="">Sin asignar</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name||a.email}</option>)}</select></label>}<label>Nota de respuesta simulada<textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Pegá una respuesta para clasificarla sin enviar nada."/></label><button type="button" className="prospect-primary" onClick={()=>onResponse(text)} disabled={busy||!text.trim()}>Clasificar respuesta</button></section>
     <section><h3>Mensajes de campaña</h3>{(data.messages||[]).length?<div className="prospect-messages">{data.messages.map(m=><details key={m.id}><summary><span>Día {m.step_day} · {m.status}</span><strong>{m.subject}</strong><small>{m.recipient}</small></summary><p>{m.body}</p></details>)}</div>:<p>Sin mensajes preparados. La simulación solo crea mensajes si hay correo verificado y la ficha no está bloqueada.</p>}</section>
     <section><h3>Historial</h3>{(data.events||[]).length?<ul className="prospect-history">{data.events.map(e=><li key={e.id}><span>{e.event_type}</span><small>{new Date(e.created_at).toLocaleString('es-AR')}</small></li>)}</ul>:<p>Sin eventos todavía.</p>}</section>
   </article>;
