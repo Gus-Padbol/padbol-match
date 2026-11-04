@@ -311,6 +311,7 @@ export function isLegalFooterGlobalBarVisiblePathname(pathname) {
   if (p === '/sobre' || p.startsWith('/sobre/')) return false;
   if (p === '/contacto' || p.startsWith('/contacto/')) return false;
   if (p === '/plataforma' || p.startsWith('/plataforma/')) return false;
+  if (p === '/crm-leads' || p.startsWith('/crm-leads/')) return false;
   if (p === '/administradores' || p.startsWith('/administradores/')) return false;
   if (p === '/sede' || p.startsWith('/sede/')) return false;
   return true;

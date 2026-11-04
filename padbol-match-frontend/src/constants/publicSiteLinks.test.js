@@ -33,5 +33,6 @@ describe('publicSite links + shell isolation', () => {
   it('oculta BottomNav y pie legal global en /plataforma', () => {
     expect(isHubNavBarHiddenPathname('/plataforma')).toBe(true);
     expect(isLegalFooterGlobalBarVisiblePathname('/plataforma')).toBe(false);
+    expect(isLegalFooterGlobalBarVisiblePathname('/crm-leads')).toBe(false);
   });
 });

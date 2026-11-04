@@ -76,3 +76,16 @@
 .crm-bell-panel>p{font-size:10.5px;color:#65748a;line-height:1.45;padding:8px 2px}
 .crm-bell-panel>footer{display:flex;flex-direction:column;gap:6px;padding:8px 2px 2px;border-top:1px solid #edf0f5}.crm-bell-panel>footer span{font-size:9px;color:#65748a;line-height:1.4}.crm-bell-panel>footer button{min-height:32px;border:1px solid #cf1d2b;border-radius:7px;background:#cf1d2b;color:#fff;font:inherit;font-size:10px;font-weight:750;cursor:pointer}
 @media(max-width:720px){.crm-bell-panel{position:fixed;top:auto;bottom:12px;right:10px;left:10px;width:auto;max-height:70dvh}.crm-bell-panel>ul button{padding:9px 7px}.crm-bell-panel>ul strong{font-size:12px}.crm-bell-panel>ul span{font-size:11px}}
+
+/* Landscape phones/short desktop windows: prefer document scroll and keep the composer reachable. */
+@media(min-width:721px) and (max-height:560px){
+  .crm-page--inbox{height:auto;max-height:none;overflow:visible;display:block}
+  .crm-page--inbox>.wa-demo--headless{flex:none!important;height:auto!important;overflow:visible!important}
+  .crm-page--inbox .wa-crm-body{flex:none!important;height:auto!important;overflow:visible!important}
+  .crm-page--inbox .wa-crm-body .wa-workspace{flex:none!important;height:auto!important;min-height:520px!important;overflow:visible!important}
+  .crm-page--inbox .wa-inbox{overflow:visible!important}
+  .crm-page--inbox .wa-list{max-height:42vh!important;overflow-y:auto!important}
+  .crm-page--inbox .wa-thread{display:block!important;overflow:visible!important;min-height:420px!important}
+  .crm-page--inbox .wa-messages{overflow:visible!important}
+  .crm-page--inbox .wa-detail{overflow:visible!important}
+}
