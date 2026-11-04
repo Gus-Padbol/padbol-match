@@ -349,7 +349,7 @@ export function leadAnalysisNotice(status, enabled) {
   return { title: 'Sin análisis solicitado', message: 'Esta ficha no tiene una solicitud de análisis registrada.', badge: '' };
 }
 
-export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false, headerActions=null } = {}) {
+export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false, headerActions=null, headless=false, searchRequest=null } = {}) {
   const hasPanelExit = Boolean(onBack);
   useEffect(() => {
     if (hasPanelExit) window.scrollTo(0, 0);
@@ -372,6 +372,11 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const [ticketInput, setTicketInput] = useState('');
   const [ticketReference, setTicketReference] = useState('');
   const [ticketError, setTicketError] = useState('');
+  useEffect(()=>{
+    if(!searchRequest)return;
+    const reference=String(searchRequest.reference||'').trim();
+    setTicketInput(reference);setTicketReference(reference.toUpperCase());setTicketError('');setAreaFilter('all');setEstadoFilter('');setAdvisorFilter('');setActiveId(null);setHiddenOnly(false);
+  },[searchRequest]);
   const [hiddenOnly, setHiddenOnly] = useState(false);
   const loadSequence = useRef(0);
   const [replyText, setReplyText] = useState('');
@@ -858,7 +863,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const statusName = (s) => ({ nuevo: 'Nuevo', en_atencion: 'En atención', derivado: 'Derivado', cerrado: 'Cerrado' }[s] || String(s || '—'));
 
   return (
-    <main className={`wa-demo${commercialOnly ? ' wa-demo--commercial' : ''}`}>
+    <main className={`wa-demo${commercialOnly ? ' wa-demo--commercial' : ''}${headless ? ' wa-demo--headless' : ''}`}>
       <header className="wa-topbar">
         <div className="wa-topbar-main">
           {onBack&&!backInAppHeader?<button className="wa-inline-exit" type="button" onClick={onBack}>Volver al panel general</button>:null}

@@ -12,3 +12,8 @@
 .commercial-team-new:hover{background:var(--crm-accent-hover,#b01623)}
 .commercial-team-new:focus-visible{outline:3px solid var(--crm-focus,#dc3545);outline-offset:2px}
 @media(max-width:720px){.commercial-team-new{width:100%}}
+
+.commercial-team--headless>.commercial-team-top{display:none!important}
+.commercial-team--headless{padding-top:0!important;min-height:calc(100dvh - 118px)}
+.commercial-team--headless>fieldset{padding-top:8px}
+@media(max-width:720px){.commercial-team--headless{min-height:0}}

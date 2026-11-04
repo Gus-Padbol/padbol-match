@@ -1,3 +1,4 @@
+.prospect-shell--embedded>.prospect-top{display:none}
 .prospect-shell{--p-navy:#07172e;--p-navy2:#102b4d;--p-red:#cf1d2b;--p-line:#dfe5ee;--p-bg:#f3f6fa;--p-text:#17243a;--p-muted:#617086;background:var(--p-bg);color:var(--p-text);min-height:100dvh;padding:0 0 32px}
 .prospect-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:22px clamp(16px,3vw,34px);background:linear-gradient(112deg,#06152b,#0b2444 58%,#12345a);color:#fff}
 .prospect-top p{margin:0 0 4px;font-size:10px;font-weight:800;letter-spacing:.14em;color:#b7c8de}.prospect-top h1{margin:0;color:#fff;font-size:clamp(25px,4vw,36px);letter-spacing:-.03em}.prospect-top span{display:block;margin-top:5px;color:#c7d5e6;font-size:12px;line-height:1.45}

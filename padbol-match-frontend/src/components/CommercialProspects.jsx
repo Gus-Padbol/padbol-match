@@ -7,7 +7,7 @@ const STATUSES = [['','Todos los estados'],['investigated','Investigado'],['veri
 const BUCKETS=[['','Todos'],['new','Nuevos'],['existing','Existentes'],['contacted','Contactados'],['discarded','Descartados']];
 const STATUS_LABELS=Object.fromEntries(STATUSES);
 
-export default function CommercialProspects({api}) {
+export default function CommercialProspects({api,embedded=false}) {
   const [status,setStatus]=useState(null);
   const [filters,setFilters]=useState({country:'US',state:'',city:'',region:'',sector:'',opportunity:'',limit:50,minScore:0,status:'',bucket:'',assigned:'',source:'',lastVerified:''});
   const [prospects,setProspects]=useState([]);
@@ -69,9 +69,9 @@ export default function CommercialProspects({api}) {
 
   const metrics=dashboard?.totals||{};
   const byCountry=useMemo(()=>dashboard?.byCountry||[],[dashboard]);
-  if(status&&!status.enabled) return <main className="prospect-shell"><section className="prospect-disabled"><h1>PADBOL PROSPECT</h1><p>El módulo está deshabilitado por configuración. El CRM existente sigue funcionando normalmente.</p></section></main>;
+  if(status&&!status.enabled) return <main className={`prospect-shell${embedded?' prospect-shell--embedded':''}`}><section className="prospect-disabled"><h1>PADBOL PROSPECT</h1><p>El módulo está deshabilitado por configuración. El CRM existente sigue funcionando normalmente.</p></section></main>;
 
-  return <main className="prospect-shell">
+  return <main className={`prospect-shell${embedded?' prospect-shell--embedded':''}`}>
     <header className="prospect-top">
       <div><p>PADBOL INTERNACIONAL · PROSPECCIÓN COMERCIAL</p><h1>PADBOL PROSPECT</h1><span>Investigación de mercados, evidencia pública y oportunidades para el Sistema Padbol.</span></div>
       <div className="prospect-top-actions"><span className={`prospect-mode ${status?.sendEnabled?'is-live':'is-sim'}`}>{status?.sendEnabled?'Envío habilitado':'Modo simulación · sin envíos'}</span><button type="button" onClick={load} disabled={busy}>Actualizar</button></div>

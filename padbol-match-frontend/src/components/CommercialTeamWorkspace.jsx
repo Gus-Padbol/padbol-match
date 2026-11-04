@@ -11,7 +11,7 @@ import './CommercialCrmTheme.css';
 import '../pages/CrmCommercialRedesign.css';
 
 // The server determines the role and filters every case; client state never grants access.
-export default function CommercialTeamWorkspace({api,currentUserId='',manualRequest=0}) {
+export default function CommercialTeamWorkspace({api,currentUserId='',manualRequest=0,openCaseId=null,headless=false}) {
   const [advisorFilter,setAdvisorFilter]=useState('');
   const [authorized,setAuthorized]=useState(false);
   const [sessionRejected,setSessionRejected]=useState(false),[sessionRevision,setSessionRevision]=useState(0),[recovering,setRecovering]=useState(false);
@@ -20,6 +20,7 @@ export default function CommercialTeamWorkspace({api,currentUserId='',manualRequ
   const [manualOpen,setManualOpen]=useState(false),[manualEditId,setManualEditId]=useState(null);
   useEffect(()=>{setRole(null);setSelected(null);setCases([]);setError('');},[currentUserId]);
   useEffect(()=>{if(manualRequest>0){setManualEditId(null);setManualOpen(true);}},[manualRequest]);
+  useEffect(()=>{if(!openCaseId)return;const item=cases.find(c=>c.id===openCaseId);if(item)setSelected(item);},[openCaseId,cases]);
   useEffect(()=>{let active=true;setAuthorized(false);
     Promise.all([api.getRole(),api.listCases()]).then(([r,c])=>{if(!active)return;if(!['manager','advisor'].includes(r.role))throw Object.assign(new Error('Invalid role'),{status:403});setRole(r.role);setCases(c.cases || []);setSelected(current=>current&&(c.cases||[]).some(item=>item.id===current.id&&item.channel===current.channel)?current:null);setAuthorized(true);setSessionRejected(false);setError('');}).catch(error=>{if(active){setSessionRejected(error?.status===401&&error?.code==='UNAUTHENTICATED');if(error?.status===403||error?.status===404){setSelected(null);setCases([]);setRole(null);}setError('No se pudo abrir el área comercial.');}});
     return ()=>{active=false};},[api,sessionRevision]);
@@ -41,7 +42,7 @@ export default function CommercialTeamWorkspace({api,currentUserId='',manualRequ
   if(error&&!role)return <p role="alert">{error}</p>;
   if(!role)return <p>Cargando área comercial…</p>;
   const visibleCases=cases.filter(c=>matchesAdvisor(c,advisorFilter,currentUserId));
-  return <main className="commercial-team">
+  return <main className={`commercial-team${headless?' commercial-team--headless':''}`}>
     <header className="commercial-team-top">
       <div className="commercial-team-brand">
         <img src={PADBOL_INTERNACIONAL_LOGO_ON_DARK} alt="Padbol Internacional" />

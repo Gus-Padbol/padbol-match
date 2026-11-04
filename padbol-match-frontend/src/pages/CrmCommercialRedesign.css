@@ -1822,3 +1822,12 @@
 .crm-view-tabs button.is-active{color:var(--crm-accent,#cf1d2b);border-bottom-color:var(--crm-accent,#cf1d2b)}
 .crm-view-tabs button:focus-visible{outline:3px solid var(--crm-focus,#dc3545);outline-offset:-3px}
 @media(max-width:720px){.crm-view-tabs{padding:0 8px}.crm-view-tabs button{min-height:44px;font-size:11px;padding:0 10px}}
+
+/* Single CRM header: child workspaces render content only. */
+.wa-demo--headless{position:relative!important;inset:auto!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;background:var(--crm-canvas)}
+.wa-demo--headless>.wa-topbar{display:none!important}
+.wa-demo--headless .wa-tools{display:none!important}
+.wa-demo--headless .wa-crm-body{height:auto!important;min-height:calc(100dvh - 118px)}
+.wa-demo--headless .wa-crm-body:has(.wa-area-tabs--top){height:auto!important;min-height:calc(100dvh - 118px)}
+.wa-demo--headless .wa-workspace{height:calc(100dvh - 178px)!important;min-height:520px;margin-top:10px!important}
+@media(max-width:720px){.wa-demo--headless .wa-workspace{height:auto!important;min-height:0;margin-top:0!important}.wa-demo--headless .wa-crm-body{min-height:0}.wa-demo--headless .wa-area-tabs--top{position:static!important}}
