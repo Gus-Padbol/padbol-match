@@ -364,6 +364,14 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeId, setActiveId] = useState(null);
+  const [compactLayout, setCompactLayout] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 720px)').matches === true);
+  useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 720px)');
+    if (!media) return undefined;
+    const onChange = event => setCompactLayout(event.matches);
+    if (media.addEventListener) media.addEventListener('change', onChange); else media.addListener(onChange);
+    return () => { if (media.removeEventListener) media.removeEventListener('change', onChange); else media.removeListener(onChange); };
+  }, []);
   const [institutionalCase, setInstitutionalCase] = useState(null);
   const [institutionalRevision, setInstitutionalRevision] = useState(0);
   const [areaFilter, setAreaFilter] = useState('all');
@@ -495,7 +503,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   },[token,commercialOnly,perms?.canAudit,areaFilter,commercialApi]);
   const areaItems = commercialOnly || areaFilter === 'all' ? items : items.filter((item) => conversationArea(item) === areaFilter);
   const visibleItems=advisorFilter?areaItems.filter(item=>matchesAdvisor(assignmentScope.cases.find(c=>(c.conversationId||(c.channel==='form'?c.id:null))===item.id),advisorFilter,session?.user?.id)):areaItems;
-  const active = visibleItems.find((i) => i.id === activeId) || visibleItems[0] || null;
+  const active = activeId ? visibleItems.find((i) => i.id === activeId) || null : (compactLayout ? null : visibleItems[0] || null);
   const institutionalCandidate = !commercialOnly && active?.source_channel === 'email' && active?.origin === 'institutional_email';
   useEffect(() => {
     if (!institutionalCandidate || !token) return;
