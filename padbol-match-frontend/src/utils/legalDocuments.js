@@ -2,7 +2,7 @@ import { supabase } from '../supabaseClient';
 
 export const LEGAL_DOCUMENTS = Object.freeze({
   terms: Object.freeze({ version: '2026-09-05', url: '/terminos' }),
-  privacy: Object.freeze({ version: '2026-09-10', url: '/legal/privacidad-2026-09-10.html' }),
+  privacy: Object.freeze({ version: '2026-11-04', url: '/legal/privacidad-2026-11-04.html' }),
 });
 
 const PENDING_OAUTH_ACCEPTANCE_KEY = 'padbol_pending_legal_acceptance_v1';
