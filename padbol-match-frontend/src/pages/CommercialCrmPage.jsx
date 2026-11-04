@@ -2,6 +2,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import { useAuth } from '../context/AuthContext';
 import WhatsappCrmDemo from './WhatsappCrmDemo';
 import CommercialTeamWorkspace from '../components/CommercialTeamWorkspace';
+import CommercialProspects from '../components/CommercialProspects';
 import {createCommercialAssignmentsApi} from '../utils/commercialAssignmentsApi';
 import CrmMetaResultsEntry from '../components/CrmMetaResultsEntry';
 import PushActivation from '../components/PushActivation';
@@ -10,7 +11,7 @@ export default function CommercialCrmPage() {
   const { session, signOutAndClear } = useAuth();
   const token=session?.access_token || '';
   const api=useMemo(()=>createCommercialAssignmentsApi(token),[token]);
-  const [available,setAvailable]=useState(false), [team,setTeam]=useState(false), [role,setRole]=useState(null), [manualRequest,setManualRequest]=useState(0);
+  const [available,setAvailable]=useState(false), [team,setTeam]=useState(false), [view,setView]=useState('inbox'), [role,setRole]=useState(null), [manualRequest,setManualRequest]=useState(0);
   const [esAngosto,setEsAngosto]=useState(()=>typeof window!=='undefined' && window.innerWidth < 700);
   useEffect(()=>{const on=()=>setEsAngosto(window.innerWidth < 700);window.addEventListener('resize',on);return ()=>window.removeEventListener('resize',on);},[]);
   useEffect(()=>{setAvailable(false);setTeam(false);setRole(null);},[session?.user?.id]);
@@ -30,11 +31,12 @@ export default function CommercialCrmPage() {
     <PushActivation token={token} />
     {!esAngosto && <span className="wa-meta-entry"><CrmMetaResultsEntry /></span>}
     {available&&<button type="button" className="wa-new-lead" onClick={()=>{setTeam(true);setManualRequest(value=>value+1);}}>Nuevo lead</button>}
-    {available&&role==='manager'&&<button type="button" className="wa-team-toggle" onClick={()=>setTeam(!team)}>{team ? 'Volver a consultas actuales' : 'Área del equipo comercial'}</button>}
+    {available&&role==='manager'&&<button type="button" className="wa-team-toggle" onClick={()=>{setView(team?'inbox':'team');setTeam(!team);}}>{team ? 'Volver a consultas actuales' : 'Área del equipo comercial'}</button>}
     <button type="button" className="wa-signout" onClick={signOutAndClear}>Cerrar sesión</button>
   </>;
   return <>
-    {team && available ? <>
+    {available && <nav className="crm-view-tabs" role="tablist" aria-label="Vistas del CRM"><button type="button" role="tab" aria-selected={view==='inbox'} className={view==='inbox'?'is-active':''} onClick={()=>{setView('inbox');setTeam(false);}}>Bandeja</button>{role==='manager'&&<button type="button" role="tab" aria-selected={view==='team'} className={view==='team'?'is-active':''} onClick={()=>{setView('team');setTeam(true);}}>Equipo comercial</button>}<button type="button" role="tab" aria-selected={view==='prospect'} className={view==='prospect'?'is-active':''} onClick={()=>{setView('prospect');setTeam(false);}}>PADBOL PROSPECT</button></nav>}
+    {view==='prospect' && available ? <CommercialProspects api={api}/> : team && available ? <>
       <div className="commercial-crm-utility" aria-label="Acciones de la cuenta">{utilityActions}</div>
       <CommercialTeamWorkspace api={api} currentUserId={session?.user?.id} manualRequest={manualRequest}/>
     </> : <WhatsappCrmDemo requiredScope="commercial" headerActions={utilityActions} />}

@@ -20,6 +20,7 @@ export function createCommercialAssignmentsApi(token) {
   }
   const cases = '/api/admin/crm/commercial-cases';
   const manualLeads = '/api/admin/crm/manual-leads';
+  const prospect = '/api/admin/crm/prospect';
   const advisors = '/api/admin/crm/commercial-advisors';
   return {
     // Explicit user recovery probes authentication only; never replay a mutation.
@@ -29,6 +30,19 @@ export function createCommercialAssignmentsApi(token) {
       clearCrmSessionRejection(token);return result;
     },
     resolveConversation: id => request(`/api/admin/crm/commercial-case-by-conversation/${encodeURIComponent(id)}`),
+    prospectStatus: () => request(`${prospect}/status`),
+    listProspects: (query={}) => { const params=new URLSearchParams(Object.entries(query).filter(([,v])=>v!==''&&v!=null).map(([k,v])=>[k,String(v)])); return request(`${prospect}/prospects${params.toString()?`?${params}`:''}`); },
+    searchProspects: payload => request(`${prospect}/prospects/search`, 'POST', payload),
+    readProspect: id => request(`${prospect}/prospects/${encodeURIComponent(id)}`),
+    updateProspect: (id,payload) => request(`${prospect}/prospects/${encodeURIComponent(id)}`, 'PATCH', payload),
+    prospectDashboard: () => request(`${prospect}/dashboard`),
+    listProspectCampaigns: () => request(`${prospect}/campaigns`),
+    createProspectCampaign: payload => request(`${prospect}/campaigns`, 'POST', payload),
+    updateProspectCampaign: (id,payload) => request(`${prospect}/campaigns/${encodeURIComponent(id)}`, 'PATCH', payload),
+    simulateProspectCampaign: id => request(`${prospect}/campaigns/${encodeURIComponent(id)}/simulate`, 'POST', {}),
+    listProspectSuppressions: () => request(`${prospect}/suppressions`),
+    addProspectSuppression: payload => request(`${prospect}/suppressions`, 'POST', payload),
+    prospectResponse: (id,text) => request(`${prospect}/prospects/${encodeURIComponent(id)}/response`, 'POST', {text}),
     searchManual: q => request(`${manualLeads}/search?q=${encodeURIComponent(q)}`),
     createManual: payload => request(manualLeads, 'POST', payload),
     readManual: id => request(`${manualLeads}/${encodeURIComponent(id)}`),
