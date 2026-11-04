@@ -37,6 +37,12 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
   const [dictating, setDictating] = useState(false);
   const [nextContact, setNextContact] = useState(''), [reminders, setReminders] = useState('24, 8');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const advisorLabel = (id, email) => {
+    const found = advisors.find(a => String(a.id) === String(id));
+    return found?.name || found?.email || email || 'Asesor comercial';
+  };
+  const completedCalls = calls.filter(c => c.status === 'completed');
+  const historyCount = completedCalls.length + activities.length;
   const pending = calls.find(c => c.status === 'pending');
   async function refresh(item) {
     const [read, callData, activityData] = await Promise.all([api.readCase(item.id,item.channel),api.listCalls(item.id,item.channel),api.listActivities(item.id,item.channel)]);
@@ -95,6 +101,7 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
   return <section className="commercial-lead-management" aria-label="Gestión comercial">
     <h3>Gestión comercial</h3>
     <p>Asesor: <strong>{data.assignedAdvisor?.name || 'Sin asignar'}</strong></p>
+        {historyCount>0 && <details className="commercial-history" open={showHistory || undefined}><summary>Historial de atención ({historyCount})</summary>{completedCalls.map(c=><article key={c.id}><header><strong>{advisorLabel(c.completedBy,c.completedByEmail)}</strong><time dateTime={c.completedAt||c.createdAt||undefined}>{new Date(c.completedAt||c.createdAt).toLocaleString('es-AR')}</time></header><p><strong>Qué se habló:</strong> {c.discussed}</p><p><strong>Situación:</strong> {c.situation}</p><p><strong>Detalles:</strong> {c.distinguishing}</p></article>)}{activities.map(a=><article key={a.id}><header><strong>{advisorLabel(a.actorId)}</strong><time dateTime={a.createdAt||undefined}>{a.createdAt?new Date(a.createdAt).toLocaleString('es-AR'):''}</time></header><p>{a.body}</p></article>)}</details>}
     {role==='manager' && <details className="commercial-advisor-change"><summary>Cambiar asesor</summary><form onSubmit={saveAssignment}><label>Asignar asesor<select value={advisor} onChange={e=>setAdvisor(e.target.value)}><option value="">Selecciona un asesor</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name || a.email}</option>)}</select></label><button disabled={busy || !advisor || advisor===data.assignedAdvisor?.id || !Number.isSafeInteger(data.version)}>Guardar asignación</button></form></details>}
     {pending && <p role="status">Hay una atención pendiente de resumen. Complétala para avanzar.</p>}
     <form onSubmit={save}>
@@ -110,7 +117,6 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
     {state==='en_espera' && unsavedManagement && <p>Guarda el resumen y el próximo paso para habilitar el seguimiento por WhatsApp.</p>}
     {data.progressState==='en_espera' && state==='en_espera' && !pending && !unsavedManagement && <CommercialFollowupActivation caseId={data.id} channel={data.channel} api={api} active={data.followup?.status==='waiting'} onChanged={()=>refresh(data).then(()=>onUpdated?.()).catch(()=>setError('No se pudo actualizar el seguimiento. Actualiza la ficha.'))}/>}
     {data.nextContactAt && <p className="commercial-scheduled">Próxima charla guardada: <strong>{new Date(data.nextContactAt).toLocaleString()}</strong></p>}
-    {(calls.some(c=>c.status==='completed') || activities.length>0) && <details open={showHistory || undefined}><summary>Historial de atención</summary>{calls.filter(c=>c.status==='completed').map(c=><article key={c.id}><time dateTime={c.completedAt||c.createdAt||undefined}>{new Date(c.completedAt||c.createdAt).toLocaleString('es-AR')}</time><p><strong>Qué se habló:</strong> {c.discussed}</p><p><strong>Situación:</strong> {c.situation}</p><p><strong>Detalles:</strong> {c.distinguishing}</p></article>)}{activities.map(a=><p key={a.id}>{a.body}</p>)}</details>}
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}
   </section>;
 }
