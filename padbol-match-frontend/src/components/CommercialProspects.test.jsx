@@ -11,7 +11,7 @@ test('muestra prospectos reales con puntuación explicable y modo simulación',a
  expect(screen.getByText(/Modo simulación/)).toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:/Miami Soccer Center/}));
  await screen.findByText('Puntuación explicable');
- expect(screen.getByText('82')).toBeInTheDocument();
+ expect(screen.getAllByText('82').length).toBeGreaterThan(0);
  expect(screen.getByText(/Afinidad/)).toBeInTheDocument();
 });
 
