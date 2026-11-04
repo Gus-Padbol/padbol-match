@@ -300,17 +300,17 @@ function scoreExplanation(row, prospect, isEvidence) {
   const p = prospect || {};
   const locations = Number(p.locations_count || 1);
   const common = {
-    sport: { why: `La regla asignó ${row.points}/${row.max} por la actividad y el nombre del negocio; no se usaron datos de intención de compra.`, support: [p.sector, p.activities, p.name].filter(Boolean).join(' · ') || 'Sin actividad declarada.' },
-    investment: { why: `La regla asignó ${row.points}/${row.max}. ${explicitChainSignal(p) || locations > 1 ? 'Se encontraron señales de escala, pero no equivalen a capacidad financiera verificada.' : 'No hay evidencia de cadena o escala; el nombre genérico "Club" no se considera prueba de inversión.'}`, support: `Sedes declaradas: ${locations}. ${explicitChainSignal(p) ? 'Señal textual de cadena/operador.' : 'Sin señal explícita de cadena.'}` },
-    facilities: { why: `La regla asignó ${row.points}/${row.max} por los datos de dirección e instalaciones disponibles.`, support: p.facility_notes ? `Notas: ${p.facility_notes}` : p.address ? `Dirección pública: ${p.address}. No hay notas específicas de instalaciones.` : 'Sin dirección ni notas de instalaciones.' },
-    locations: { why: `La regla asignó ${row.points}/${row.max} según la cantidad de sedes conocida.`, support: `Sedes declaradas: ${locations}. ${p.data_status?.locations ? `Estado del dato: ${p.data_status.locations}.` : ''}` },
-    compatibility: { why: `La regla asignó ${row.points}/${row.max} por la actividad declarada y su compatibilidad con el Sistema Padbol.`, support: [p.sector, p.activities].filter(Boolean).join(' · ') || 'Sin actividad declarada.' },
-    representation: { why: `La regla asignó ${row.points}/${row.max}. ${explicitChainSignal(p) ? 'Hay una señal textual de escala, todavía no confirmada.' : 'No hay evidencia de escala territorial suficiente.'}`, support: `Sedes: ${locations}. ${explicitChainSignal(p) ? 'Señal de cadena/operador.' : 'Sin cadena o escala explícita.'}` },
-    franchise: { why: `La regla asignó ${row.points}/${row.max} por el modelo de negocio declarado.`, support: explicitChainSignal(p) ? 'Señal textual de cadena/franquicia.' : 'No se encontró un modelo de franquicia o cadena.' },
-    contactability: { why: `La regla asignó ${row.points}/${row.max} por los canales públicos disponibles.`, support: [p.email ? 'Correo público' : null, p.phone ? 'Teléfono público' : null, p.website ? 'Sitio web público' : null].filter(Boolean).join(' · ') || 'Sin contacto público.' },
-    activity: { why: `La regla asignó ${row.points}/${row.max} por la presencia de un sitio web público; no se interpreta como intención de compra.`, support: p.website ? `Sitio web: ${p.website}` : 'Sin sitio web.' },
+    sport: { source: 'Etiquetas de actividad / nombre confirmado', why: `La regla asignó ${row.points}/${row.max} por la actividad y el nombre del negocio; no se usaron datos de intención de compra.`, support: [p.sector, p.activities, p.name].filter(Boolean).join(' · ') || 'Sin actividad declarada.' },
+    investment: { source: explicitChainSignal(p) || locations > 1 ? 'Señal textual de escala / operador' : 'Inferencia por nombre genérico; sin fuente de inversión', why: `La regla asignó ${row.points}/${row.max}. ${explicitChainSignal(p) || locations > 1 ? 'Se encontraron señales de escala, pero no equivalen a capacidad financiera verificada.' : 'No hay evidencia de cadena o escala; el nombre genérico "Club" no se considera prueba de inversión.'}`, support: `Sedes declaradas: ${locations}. ${explicitChainSignal(p) ? 'Señal textual de cadena/operador.' : 'Sin señal explícita de cadena.'}` },
+    facilities: { source: hasFacilityEvidence(p) ? 'Notas públicas de instalaciones' : 'Dirección pública; sin notas de instalaciones', why: `La regla asignó ${row.points}/${row.max} por los datos de dirección e instalaciones disponibles.`, support: p.facility_notes ? `Notas: ${p.facility_notes}` : p.address ? `Dirección pública: ${p.address}. No hay notas específicas de instalaciones.` : 'Sin dirección ni notas de instalaciones.' },
+    locations: { source: locations > 1 ? 'Dato de sedes' : 'Inferencia: una sola sede conocida', why: `La regla asignó ${row.points}/${row.max} según la cantidad de sedes conocida.`, support: `Sedes declaradas: ${locations}. ${p.data_status?.locations ? `Estado del dato: ${p.data_status.locations}.` : ''}` },
+    compatibility: { source: 'Actividad declarada', why: `La regla asignó ${row.points}/${row.max} por la actividad declarada y su compatibilidad con el Sistema Padbol.`, support: [p.sector, p.activities].filter(Boolean).join(' · ') || 'Sin actividad declarada.' },
+    representation: { source: explicitChainSignal(p) ? 'Señal textual de escala' : 'Inferencia; sin fuente de escala territorial', why: `La regla asignó ${row.points}/${row.max}. ${explicitChainSignal(p) ? 'Hay una señal textual de escala, todavía no confirmada.' : 'No hay evidencia de escala territorial suficiente.'}`, support: `Sedes: ${locations}. ${explicitChainSignal(p) ? 'Señal de cadena/operador.' : 'Sin cadena o escala explícita.'}` },
+    franchise: { source: explicitChainSignal(p) ? 'Señal textual de cadena/franquicia' : 'Inferencia; sin fuente de franquicia', why: `La regla asignó ${row.points}/${row.max} por el modelo de negocio declarado.`, support: explicitChainSignal(p) ? 'Señal textual de cadena/franquicia.' : 'No se encontró un modelo de franquicia o cadena.' },
+    contactability: { source: p.email ? 'Correo público confirmado' : p.phone || p.website ? 'Canal público' : 'Sin contacto público', why: `La regla asignó ${row.points}/${row.max} por los canales públicos disponibles.`, support: [p.email ? 'Correo público' : null, p.phone ? 'Teléfono público' : null, p.website ? 'Sitio web público' : null].filter(Boolean).join(' · ') || 'Sin contacto público.' },
+    activity: { source: p.website ? 'Sitio web público' : 'Sin sitio web', why: `La regla asignó ${row.points}/${row.max} por la presencia de un sitio web público; no se interpreta como intención de compra.`, support: p.website ? `Sitio web: ${p.website}` : 'Sin sitio web.' },
   };
-  const value = common[row.key] || { why: `La regla asignó ${row.points}/${row.max}.`, support: row.source || 'Sin detalle adicional.' };
+  const value = common[row.key] || { source: row.source, why: `La regla asignó ${row.points}/${row.max}.`, support: row.source || 'Sin detalle adicional.' };
   return { ...value, isEvidence };
 }
 
@@ -340,7 +340,7 @@ function ScoreBreakdown({ prospect }) {
       const expanded = open === row.key;
       return <div className={`prospect-score-item ${expanded ? 'is-open' : ''}`} key={row.key}>
         <button type="button" className="prospect-score-row" onClick={() => setOpen(expanded ? '' : row.key)} aria-expanded={expanded} aria-controls={`score-${row.key}`}>
-          <span className="prospect-score-label"><strong>{row.label}</strong><small>{row.source}</small></span>
+          <span className="prospect-score-label"><strong>{row.label}</strong><small>{detail.source || row.source}</small></span>
           <span className="prospect-score-bar" aria-hidden="true"><i style={{ width: `${Math.round(row.points / Math.max(1, row.max) * 100)}%` }} /></span>
           <span className="prospect-score-points">{row.points}<small>/{row.max}</small></span>
           <span className={`prospect-evidence ${isEvidence ? 'is-evidence' : 'is-inferred'}`}>{isEvidence ? 'Evidencia' : 'Inferido'}</span>
@@ -350,7 +350,7 @@ function ScoreBreakdown({ prospect }) {
           <div><span>Qué significa</span><p>{SCORE_MEANINGS[row.key] || 'Criterio de la puntuación comercial.'}</p></div>
           <div><span>Por qué recibió {row.points}/{row.max}</span><p>{detail.why}</p></div>
           <div><span>Información que lo respalda</span><p>{detail.support}</p></div>
-          <div><span>Fuente y fecha</span><p>{row.source || 'Fuente no informada'} · <a href={prospect.source_url || prospect.website || '#'} target="_blank" rel="noreferrer">{prospect.source_url || prospect.website || 'Sin URL'}</a> · Verificado: {sourceDate}</p></div>
+          <div><span>Fuente y fecha</span><p>{detail.source || row.source || 'Fuente no informada'} · <a href={prospect.source_url || prospect.website || '#'} target="_blank" rel="noreferrer">{prospect.source_url || prospect.website || 'Sin URL'}</a> · Verificado: {sourceDate}</p></div>
           <div className={isEvidence ? 'is-evidence-note' : 'is-inferred-note'}><span>Evidencia vs inferencia</span><p>{isEvidence ? 'Este criterio tiene respaldo en un dato confirmado de la ficha. No implica intención de compra ni una oportunidad validada por Padbol.' : 'Este valor es una inferencia de la regla de puntuación. No se presenta como un hecho confirmado ni reemplaza la verificación comercial.'}</p></div>
         </div>}
       </div>;
