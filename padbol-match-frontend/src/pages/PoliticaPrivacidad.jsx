@@ -62,6 +62,10 @@ export default function PoliticaPrivacidad() {
       <LegalP>{t('legal.privacyPage.pushRevocation')}</LegalP>
       <LegalP>{t('legal.privacyPage.pushRetention')}</LegalP>
 
+      <LegalSectionTitle>{t('legal.privacyPage.aiTitle')}</LegalSectionTitle>
+      <LegalP>{t('legal.privacyPage.aiBody')}</LegalP>
+      <LegalP>{t('legal.privacyPage.aiVoice')}</LegalP>
+
       <LegalSectionTitle>{t('legal.privacyPage.noSaleTitle')}</LegalSectionTitle>
       <LegalP>{t('legal.privacyPage.noSaleBody')}</LegalP>
 

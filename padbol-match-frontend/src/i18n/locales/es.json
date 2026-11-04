@@ -483,7 +483,9 @@
     "seeMoreMatches": "Ver más partidos"
   },
   "torneos": {
-    "nations": { "authoritativeStandings": "Consulta las posiciones, terceros y clasificados confirmados en el panel Nations Cup. Las reglas de este formato se calculan en el servidor." },
+    "nations": {
+      "authoritativeStandings": "Consulta las posiciones, terceros y clasificados confirmados en el panel Nations Cup. Las reglas de este formato se calculan en el servidor."
+    },
     "titulo": "Torneos",
     "create": {
       "header": "Crear torneo",
@@ -1178,13 +1180,13 @@
   },
   "admin": {
     "pointsPolicy": {
-  "independentPercentages": "Cada posición recibe su porcentaje de la base del nivel. Los porcentajes no son un fondo a repartir y no necesitan sumar 100%. Para posiciones posteriores no definidas, se usa el porcentaje guardado de la décima posición.",
-  "percentOfBase": "% de la base del nivel",
-  "basePoints": "Puntos base",
-  "baseValue": "Puntos base: {{count}}",
-  "unavailable": "Consulta la política guardada antes de crear el torneo.",
-  "levelUnavailable": "El nivel seleccionado no está habilitado en la política actual."
-},
+      "independentPercentages": "Cada posición recibe su porcentaje de la base del nivel. Los porcentajes no son un fondo a repartir y no necesitan sumar 100%. Para posiciones posteriores no definidas, se usa el porcentaje guardado de la décima posición.",
+      "percentOfBase": "% de la base del nivel",
+      "basePoints": "Puntos base",
+      "baseValue": "Puntos base: {{count}}",
+      "unavailable": "Consulta la política guardada antes de crear el torneo.",
+      "levelUnavailable": "El nivel seleccionado no está habilitado en la política actual."
+    },
     "mi_sede": "Mi sede",
     "canchas": "Canchas",
     "ingresos": "Ingresos",
@@ -2744,7 +2746,10 @@
       "pushRecords": "Conservamos registros de registro, rotación y baja de tokens, cambios de preferencias e intentos de envío para gestionar las entregas, detectar errores y atender consultas. Incluyen identificadores de cuenta e instalación cuando corresponde, fechas, una huella del token, categoría y evento del aviso, título, mensaje, datos de navegación, identificador del envío, estados o errores y comprobantes técnicos de Expo. Los envíos administrativos también registran quién los ordenó. Un comprobante técnico no demuestra que hayas leído el aviso.",
       "pushControls": "Puedes cambiar las preferencias de avisos operativos y promocionales dentro de la app y retirar el permiso de notificaciones en los ajustes de Android o iOS. Los cambios de preferencias se confirman cuando el servidor los guarda. La vista previa del título y del mensaje, incluso en la pantalla bloqueada, depende de los ajustes de tu dispositivo. Desactivar los avisos promocionales no impide que uses tu cuenta.",
       "pushRevocation": "Al cerrar sesión, la app intenta dar de baja el registro de notificaciones. Si no puede completar la baja, por ejemplo por falta de conexión, puede conservar localmente una solicitud pendiente protegida con el almacenamiento seguro del dispositivo y reintentarla cuando vuelvas a iniciar sesión con la misma cuenta. Esa solicitud contiene los identificadores necesarios para la baja, sin guardar tu contraseña ni las credenciales de sesión. El identificador aleatorio de instalación puede permanecer en el almacenamiento local. Puedes retirar el permiso en los ajustes del dispositivo para impedir la presentación de notificaciones mientras se resuelve una baja pendiente.",
-      "pushRetention": "Dar de baja o invalidar un token lo desactiva para nuevos envíos desde nuestro servicio; no elimina automáticamente todos los registros anteriores. Los registros de entrega y auditoría pueden conservar huellas, texto y metadatos aunque se elimine la referencia directa a la cuenta. Solicitar la eliminación de la cuenta tampoco equivale a una eliminación inmediata de esos registros o de copias de respaldo. Para pedir acceso, corrección o supresión de estos datos, utiliza el canal de privacidad indicado al final de esta política."
+      "pushRetention": "Dar de baja o invalidar un token lo desactiva para nuevos envíos desde nuestro servicio; no elimina automáticamente todos los registros anteriores. Los registros de entrega y auditoría pueden conservar huellas, texto y metadatos aunque se elimine la referencia directa a la cuenta. Solicitar la eliminación de la cuenta tampoco equivale a una eliminación inmediata de esos registros o de copias de respaldo. Para pedir acceso, corrección o supresión de estos datos, utiliza el canal de privacidad indicado al final de esta política.",
+      "aiTitle": "Chivi, el asistente de inteligencia artificial",
+      "aiBody": "Chivi es un asistente opcional dentro de la app que responde consultas sobre Padbol Match y Padbol. Para generar una respuesta enviamos la consulta, el nombre de tu perfil, un identificador interno de cuenta, el tema y el idioma seleccionados y una instrucción para responder en ese idioma a Anthropic (API de Claude). No enviamos tu correo, teléfono, contraseña, datos de tarjetas, ubicación precisa, fotos, contactos ni datos de salud. Padbol Match no guarda las conversaciones de Chivi en tu perfil ni en su base de datos; quedan en la memoria de la app y se descartan al cerrarla o cerrar sesión. Anthropic procesa el contenido para producir la respuesta, no usa el contenido de la API para entrenar sus modelos y lo elimina en un plazo de 30 días salvo que deba conservarlo por una investigación de abuso u obligación legal.",
+      "aiVoice": "La entrada por voz y la lectura en voz alta son opcionales y usan Apple Speech en tu dispositivo. Padbol Match no graba ni sube audio; solo se envía el texto transcrito al asistente. Podés escribir en su lugar y desactivar la lectura en voz alta cuando quieras. Chivi no puede crear, modificar ni cancelar reservas, tomar pagos ni modificar datos de la cuenta."
     }
   },
   "ranking": {
