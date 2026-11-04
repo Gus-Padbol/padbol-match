@@ -1866,3 +1866,16 @@
   .wa-demo--lead-open .wa-messages{padding:16px 14px!important}
   .wa-demo--lead-open .wa-composer{padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px))!important}
 }
+
+/* Higher specificity than the shell's mobile overrides. */
+@media (max-width: 720px) {
+  .crm-page--inbox .wa-demo--lead-open .wa-inbox{display:none!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-workspace{display:block!important;height:auto!important;min-height:0!important;overflow:visible!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-thread{display:flex!important;flex-direction:column!important;width:100%!important;min-height:0!important;overflow:visible!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-detail{display:block!important;width:100%!important;overflow:visible!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-thread-head{display:flex!important;flex-direction:column!important;align-items:stretch!important;flex-wrap:nowrap!important;height:auto!important;min-height:0!important;gap:8px!important;padding:12px 14px!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-thread-person{width:100%!important;flex:1 1 100%!important;min-width:0!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-thread-person h2{font-size:19px!important;line-height:1.2!important;white-space:normal!important;overflow-wrap:anywhere!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-mobile-back{display:flex!important}
+  .crm-page--inbox .wa-demo--lead-open .wa-messages{overflow:visible!important}
+}
