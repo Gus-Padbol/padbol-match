@@ -867,7 +867,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const statusName = (s) => ({ nuevo: 'Nuevo', en_atencion: 'En atención', derivado: 'Derivado', cerrado: 'Cerrado' }[s] || String(s || '—'));
 
   return (
-    <main className={`wa-demo${commercialOnly ? ' wa-demo--commercial' : ''}${headless ? ' wa-demo--headless' : ''}`}>
+    <main className={`wa-demo${commercialOnly ? ' wa-demo--commercial' : ''}${headless ? ' wa-demo--headless' : ''}${active ? ' wa-demo--lead-open' : ''}`}>
       <header className="wa-topbar">
         <div className="wa-topbar-main">
           {onBack&&!backInAppHeader?<button className="wa-inline-exit" type="button" onClick={onBack}>Volver al panel general</button>:null}
@@ -958,6 +958,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
             <>
               <section className="wa-thread" ref={threadRef}>
                 <header className="wa-thread-head">
+                  <button type="button" className="wa-mobile-back" onClick={() => { setActiveId(null); window.scrollTo({top:0,behavior:'smooth'}); }}>← Volver a la lista</button>
                   <div className="wa-avatar">{String(active.identity_used || active.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-thread-person"><h2>{isCommercial ? leadName : active.contact?.nombre || active.identity_used || '—'}</h2>{isCommercial ? <p className="wa-lead-location">{leadHighlights.location}</p> : null}<p><ChannelIcon channel={active.source_channel} /> {channelLabel(active.source_channel)} · {crmOriginLabel(active)}</p></div>
                   {active.short_ticket_reference || active.ticket_reference ? <p className="wa-ticket-reference">N.º de ticket: <strong>{active.short_ticket_reference || active.ticket_reference}</strong></p> : null}
