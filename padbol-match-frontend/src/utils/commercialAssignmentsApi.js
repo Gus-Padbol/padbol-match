@@ -40,6 +40,7 @@ export function createCommercialAssignmentsApi(token) {
     createProspectCampaign: payload => request(`${prospect}/campaigns`, 'POST', payload),
     updateProspectCampaign: (id,payload) => request(`${prospect}/campaigns/${encodeURIComponent(id)}`, 'PATCH', payload),
     simulateProspectCampaign: id => request(`${prospect}/campaigns/${encodeURIComponent(id)}/simulate`, 'POST', {}),
+    simulateProspectFollowup: (id,day=14) => request(`${prospect}/campaigns/${encodeURIComponent(id)}/simulate-followup`, 'POST', {day}),
     listProspectSuppressions: () => request(`${prospect}/suppressions`),
     addProspectSuppression: payload => request(`${prospect}/suppressions`, 'POST', payload),
     prospectResponse: (id,text) => request(`${prospect}/prospects/${encodeURIComponent(id)}/response`, 'POST', {text}),
