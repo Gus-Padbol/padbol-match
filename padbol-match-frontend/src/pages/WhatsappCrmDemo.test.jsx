@@ -92,8 +92,16 @@ describe('CRM histórico unificado', () => {
     expect(crmAdminApi.reply).not.toHaveBeenCalled();expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
   });
 
+  it('una prueba interna no habilita el editor ni el envío al interesado',async()=>{
+    const factory=jest.spyOn(require('../utils/commercialAssignmentsApi'),'createCommercialAssignmentsApi').mockReturnValue({projectReview:jest.fn().mockResolvedValue({project:null}),getRole:jest.fn().mockResolvedValue({role:'manager'}),listCases:jest.fn().mockResolvedValue({cases:[]}),listAdvisors:jest.fn().mockResolvedValue({advisors:[]})});
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,commercialOnly:true,role:'operator',emailSendEnabled:true});
+    crmAdminApi.inbox.mockResolvedValue({items:[{id:'internal',source_channel:'email',origin:'codex_internal_space_test',identity_used:'PRUEBA INTERNA',inbound_body:'Revisión interna',estado:'nuevo',contact:{email_normalized:'example@example.invalid'},qualification_data:{routing:{workflow:'commercial_lead'},space:{}}}]});
+    try{render(<WhatsappCrmDemo requiredScope="commercial"/>);const response=await screen.findByLabelText('Respuesta');expect(response).toBeDisabled();expect(screen.getByRole('button',{name:'Respuesta no habilitada'})).toBeDisabled();expect(crmAdminApi.reply).not.toHaveBeenCalled();}finally{factory.mockRestore();}
+  });
+
   it('filtra la bandeja comercial por asignación persistida sin modificar casos ni traducir mensajes', async()=>{
     const factory=jest.spyOn(require('../utils/commercialAssignmentsApi'),'createCommercialAssignmentsApi').mockReturnValue({
+      projectReview:jest.fn().mockResolvedValue({project:null}),
       getRole:jest.fn().mockResolvedValue({role:'manager'}),
       listCases:jest.fn().mockResolvedValue({cases:[{id:'a',channel:'form',assignedAdvisor:{id:'actor',name:'Nico'}},{id:'b',channel:'form',assignedAdvisor:{id:'jp',name:'Juan Pablo'}}]}),
       listAdvisors:jest.fn().mockResolvedValue({advisors:[{id:'actor',name:'Nico'},{id:'jp',name:'Juan Pablo'}]})
@@ -487,28 +495,34 @@ describe('CRM histórico unificado', () => {
     expect(screen.queryByRole('button', { name: /Next Generation/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Agregar contacto manual' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enviar por email' })).toBeInTheDocument();
-    expect(screen.getByText('Registrar seguimiento')).toBeInTheDocument();
+    expect(screen.queryByText('Registrar seguimiento')).not.toBeInTheDocument();
+    expect(screen.getByRole('region',{name:'Gestión comercial'})).toBeInTheDocument();
     expect(crmAdminApi.nextGenerationOverview).not.toHaveBeenCalled();
     expect(crmAdminApi.audit).not.toHaveBeenCalled();
     expect(crmAdminApi.sedes).not.toHaveBeenCalled();
   });
 
-  it('guarda estado real y próximo paso al registrar seguimiento comercial y recarga la bandeja', async () => {
+  it('la entrada comercial usa una sola gestión y no ofrece el formulario legado', async () => {
     crmAdminApi.permissions.mockResolvedValue({ canOperate: true, commercialOnly: true, canAudit: false });
     crmAdminApi.inbox.mockResolvedValue([{ id: 'lead-state', estado: 'nuevo', source_channel: 'email', contact: { nombre: 'Lead estado' } }]);
-    crmAdminApi.activities.mockResolvedValue([]);
-    crmAdminApi.addActivity.mockResolvedValue({id: 'saved'});
     render(<WhatsappCrmDemo requiredScope="commercial" />);
-    await screen.findByText('Registrar seguimiento');
-    const topic = screen.getByLabelText('Motivo');
-    fireEvent.change(topic, {target:{value: topic.options[1].value}});
-    const states = screen.getAllByRole('combobox', {name: /^Estado/});
-    fireEvent.change(states[states.length - 1], {target:{value:'cerrado'}});
-    const next = screen.getByRole('combobox', {name: /^Próximo paso/});
-    fireEvent.change(next, {target:{value:next.options[1].value}});
-    fireEvent.click(screen.getByRole('button',{name:'Guardar seguimiento'}));
-    await waitFor(() => expect(crmAdminApi.addActivity).toHaveBeenCalledWith('qa-token','lead-state',expect.objectContaining({conversation_state:'cerrado', next_step:next.options[1].value})));
-    await waitFor(() => expect(crmAdminApi.inbox.mock.calls.length).toBeGreaterThan(1));
+    await screen.findByRole('region',{name:'Gestión comercial'});
+    expect(screen.queryByRole('button',{name:'Guardar seguimiento'})).not.toBeInTheDocument();
+    expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
+  });
+
+  it('closed commercial cases leave the active inbox and remain available in the closed filter', async () => {
+    crmAdminApi.permissions.mockResolvedValue({canOperate:true,commercialOnly:true,canAudit:false});
+    const open={id:'open-lead',source_channel:'email',origin:'web_form:Consulta Padbol · Quiero una cancha Padbol',estado:'nuevo',identity_used:'Consulta abierta',commercial_management:{progress_state:'nuevo',assigned_user_id:'juan'}};
+    const closed={...open,id:'closed-lead',identity_used:'Consulta cerrada',commercial_management:{progress_state:'cerrado',assigned_user_id:'nico'}};
+    crmAdminApi.inbox.mockImplementation(async(_token,filters)=>({items:filters.estado==='cerrado'?[closed]:[open,closed]}));
+    render(<WhatsappCrmDemo requiredScope="commercial" />);
+    await screen.findAllByText('Consulta abierta');
+    expect(screen.queryByText('Consulta cerrada')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Asignado · pendiente de atención').length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByRole('combobox',{name:'Estado',exact:true}),{target:{value:'cerrado'}});
+    await screen.findAllByText('Consulta cerrada');
+    expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
   });
 
   it('entrada comercial exige capacidad del servidor incluso para una sesión superadmin', async () => {
@@ -943,7 +957,7 @@ describe('Correos institucionales clasificados mediante el servidor',()=>{
  let factory,resolve;
  beforeEach(()=>{
   jest.clearAllMocks();
-  resolve=jest.fn();factory=jest.spyOn(require('../utils/commercialAssignmentsApi'),'createCommercialAssignmentsApi').mockReturnValue({resolveConversation:resolve});
+  resolve=jest.fn();factory=jest.spyOn(require('../utils/commercialAssignmentsApi'),'createCommercialAssignmentsApi').mockReturnValue({resolveConversation:resolve,projectReview:jest.fn().mockResolvedValue({project:null})});
   crmAdminApi.permissions.mockResolvedValue({canAudit:true,canOperate:true,emailSendEnabled:true});
   crmAdminApi.inbox.mockResolvedValue({items:[{id:'institutional',source_channel:'email',origin:'institutional_email',identity_used:'Cliente correo',inbound_body:'Original client message',estado:'nuevo',contact:{email_normalized:'fixture@example.invalid'},qualification_data:{routing:{workflow:'commercial_lead'}}}]});
   crmAdminApi.emailHistory.mockResolvedValue({messages:[]});crmAdminApi.activities.mockResolvedValue([]);crmAdminApi.sedes.mockResolvedValue([]);crmAdminApi.nextGenerationOverview.mockResolvedValue({sedes:[],jornadas:[]});

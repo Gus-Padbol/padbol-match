@@ -9,6 +9,7 @@ import CrmComunicaciones from '../components/CrmComunicaciones';
 import {PADBOL_ICON_SVG} from '../constants/padbolBrandLogo';
 import {PADBOL_INTERNACIONAL_LOGO_ON_DARK} from '../constants/padbolInstitutionalBrand';
 import CommercialLeadManagement from '../components/CommercialLeadManagement';
+import CommercialProjectReview from '../components/CommercialProjectReview';
 import CommercialAgendaAlerts from '../components/CommercialAgendaAlerts';
 import CommercialAdvisorAccess from '../components/CommercialAdvisorAccess';
 import { createCommercialAssignmentsApi } from '../utils/commercialAssignmentsApi';
@@ -334,10 +335,10 @@ function detailValue(details, ...labels) {
   return details.find(([label]) => expected.includes(fieldKey(fieldLabel(label))))?.[1] || null;
 }
 
-export function commercialLeadHighlights(details, analysis) {
+export function commercialLeadHighlights(details, analysis, simulation) {
   return {
     location: [detailValue(details, 'Ciudad o región', 'Ciudad'), detailValue(details, 'País')].filter(Boolean).join(', ') || detailValue(details, 'Territorio solicitado') || 'Ubicación no informada',
-    investment: detailValue(details, 'Capital estimado de inversión', 'Inversión estimada', 'Inversión', 'Presupuesto', 'Budget', 'investment', 'investmentBudget') || 'No informada',
+    investment: detailValue(details, 'Capital estimado de inversión', 'Inversión estimada', 'Inversión', 'Presupuesto', 'Budget', 'investment', 'investmentBudget') || (simulation?.budget != null ? `${simulation.currency || 'USD'} ${Number(simulation.budget).toLocaleString('es-AR')}` : 'No informada'),
     score: analysis?.score !== null && analysis?.score !== undefined && Number.isFinite(Number(analysis.score)) ? `${analysis.score}/100` : 'Sin calificación',
     priority: analysis?.priority ? `Prioridad ${analysis.priority}` : 'Prioridad pendiente',
   };
@@ -503,8 +504,12 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     return()=>{live=false;window.clearInterval(timer);window.removeEventListener('commercial-agenda-updated',refresh);};
   },[token,commercialOnly,perms?.canAudit,areaFilter,commercialApi]);
   const areaItems = commercialOnly || areaFilter === 'all' ? items : items.filter((item) => conversationArea(item) === areaFilter);
-  const visibleItems=advisorFilter?areaItems.filter(item=>matchesAdvisor(assignmentScope.cases.find(c=>(c.conversationId||(c.channel==='form'?c.id:null))===item.id),advisorFilter,session?.user?.id)):areaItems;
+  const caseFor = item => assignmentScope.cases.find(c=>(c.conversationId||(c.channel==='form'?c.id:null))===item.id);
+  const effectiveState = item => item.commercial_management?.progress_state || caseFor(item)?.progressState || item.estado;
+  const activeAreaItems = areaItems.filter(item => (!commercialOnly && areaFilter!=='commercial') || estadoFilter || ticketReference || hiddenOnly || effectiveState(item)!=='cerrado');
+  const visibleItems=advisorFilter?activeAreaItems.filter(item=>matchesAdvisor(caseFor(item),advisorFilter,session?.user?.id)):activeAreaItems;
   const active = activeId ? visibleItems.find((i) => i.id === activeId) || null : (compactLayout ? null : visibleItems[0] || null);
+  const internalProjectReview = active?.origin === 'codex_internal_space_test';
   const institutionalCandidate = !commercialOnly && active?.source_channel === 'email' && active?.origin === 'institutional_email';
   useEffect(() => {
     if (!institutionalCandidate || !token) return;
@@ -537,9 +542,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const waContext = whatsappContext(active);
   const isWebForm = String(active?.origin || '').startsWith('web_form:');
   const canReplyWhatsapp = active?.source_channel === 'whatsapp' && whatsappSendEnabled;
-  const canReplyEmail = active?.source_channel === 'email' && (supportOrigin ? supportEmail && perms?.supportEmailSendEnabled === true : emailSendEnabled) && Boolean(active?.contact?.email_normalized);
+  const canReplyEmail = !internalProjectReview && active?.source_channel === 'email' && (supportOrigin ? supportEmail && perms?.supportEmailSendEnabled === true : emailSendEnabled) && Boolean(active?.contact?.email_normalized);
   const canReply = (canReplyWhatsapp && !waContext?.deliveryUncertain && !waContext?.deliveryUnknown) || canReplyEmail;
-  const replyUnavailableReason = !activeCanOperate ? 'Esta cuenta tiene acceso de consulta a esta conversación y no puede enviar respuestas.' : active?.source_channel === 'email' && !active?.contact?.email_normalized ? 'Esta conversación no tiene un email de contacto válido.' : active?.source_channel === 'email' && !canReplyEmail ? 'El envío por email no está habilitado para este canal.' : active?.source_channel === 'whatsapp' && (waContext?.deliveryUncertain || waContext?.deliveryUnknown) ? 'Hay una entrega pendiente de confirmar. Revisa su estado antes de enviar otra respuesta.' : !canReply ? 'El envío por este canal no está habilitado.' : '';
+  const replyUnavailableReason = internalProjectReview ? 'Prueba interna: no se permite contactar ni enviar mensajes al interesado.' : !activeCanOperate ? 'Esta cuenta tiene acceso de consulta a esta conversación y no puede enviar respuestas.' : active?.source_channel === 'email' && !active?.contact?.email_normalized ? 'Esta conversación no tiene un email de contacto válido.' : active?.source_channel === 'email' && !canReplyEmail ? 'El envío por email no está habilitado para este canal.' : active?.source_channel === 'whatsapp' && (waContext?.deliveryUncertain || waContext?.deliveryUnknown) ? 'Hay una entrega pendiente de confirmar. Revisa su estado antes de enviar otra respuesta.' : !canReply ? 'El envío por este canal no está habilitado.' : '';
 
   const loadEmailHistory = useCallback(id=>crmAdminApi.emailHistory(token,id),[token]);
   activeConversationId.current = active?.id;
@@ -550,8 +555,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const isNextGenerationVenue = activeArea === 'nextgen_venues';
   const isNextGenerationForm = isNextGenerationParticipant || isNextGenerationVenue;
   const isCommercial = Boolean(verifiedCommercialCase) || activeArea === 'commercial' || (active?.source_channel === 'whatsapp' && waContext?.topic === WHATSAPP_TOPICS.sede);
+  const hasSpaceRequest = Boolean(active?.qualification_data?.space);
   const isCommercialForm = isWebForm && activeArea === 'commercial';
-  const leadHighlights = commercialLeadHighlights(activeDetails, leadAnalysis);
+  const leadHighlights = commercialLeadHighlights(activeDetails, leadAnalysis, active?.qualification_data?.commercial_simulation);
   const displayedLeadFields = ['Nombre', 'Apellido', 'Email', 'WhatsApp', 'Asunto', 'Información adicional', 'Ciudad o región', 'Ciudad', 'País', 'Capital estimado de inversión', 'Inversión estimada', 'Inversión', 'Presupuesto', 'Budget', 'investment', 'investmentBudget'].map(label => fieldKey(fieldLabel(label)));
   const leadSubject = detailValue(activeDetails, 'Asunto', 'Tipo de consulta') || active?.subject || '';
   const whatsappConsentRaw = detailValue(activeDetails, 'consentWhatsapp', 'Consentimiento WhatsApp', 'Whatsapp consent', 'consentWhatsApp');
@@ -873,7 +879,9 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     if(!needsQuery)void load({silent:true});
   };
 
-  const statusName = (s) => ({ nuevo: 'Nuevo', en_atencion: 'En atención', derivado: 'Derivado', cerrado: 'Cerrado' }[s] || String(s || '—'));
+  const statusName = (s) => ({ nuevo: 'Nuevo', en_atencion: 'En atención', derivado: 'Derivado', en_espera:'En espera / seguimiento', cerrado: 'Cerrado' }[s] || String(s || '—'));
+
+  const displayState = item => effectiveState(item)==='nuevo' && (item.commercial_management?.assigned_user_id || caseFor(item)?.assignedAdvisor?.id) ? 'Asignado · pendiente de atención' : statusName(effectiveState(item));
 
   return (
     <main className={`wa-demo${commercialOnly ? ' wa-demo--commercial' : ''}${headless ? ' wa-demo--headless' : ''}${active ? ' wa-demo--lead-open' : ''}`}>
@@ -943,20 +951,20 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
             <div className="wa-filters" aria-label="Filtros">
               {(commercialOnly||areaFilter==='commercial')&&assignmentScope.role==='manager'&&<CommercialAdvisorFilter value={advisorFilter} onChange={value=>{setAdvisorFilter(value);setActiveId(null);}} cases={assignmentScope.cases} advisors={assignmentScope.advisors} currentUserId={session?.user?.id} disabled={!assignmentScope.ready}/> }
               <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)} aria-label="Estado">
-                <option value="">Todos los estados</option><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option>
+                <option value="">{commercialOnly || areaFilter==='commercial' ? 'Consultas activas' : 'Todos los estados'}</option><option value="nuevo">Nuevo</option><option value="en_atencion">En atención</option><option value="en_espera">En espera / seguimiento</option><option value="derivado">Derivado</option><option value="cerrado">Cerrado</option>
               </select>
               {(estadoFilter||advisorFilter||ticketReference||!visibleItems.length)&&<button className="wa-clear-filters" type="button" onClick={clearInboxFilters}>Ver todas las consultas</button>}
             </div>
             <div className="wa-list" role="region" aria-label="Listado de conversaciones" tabIndex={0}>
               {visibleItems.length === 0 ? <div className="wa-area-empty"><p>{!items.length?(ticketReference?'No se encontró el ticket.':estadoFilter||advisorFilter?'No hay consultas con estos filtros.':'No hay conversaciones.'):'No hay conversaciones en esta sección.'}</p></div> : visibleItems.map((item) => (
-                <button type="button" className={`wa-conversation wa-conversation--${item.estado || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => { setActiveId(item.id); if (threadRef.current) threadRef.current.scrollTop = 0; threadRef.current?.scrollIntoView?.({ block: 'start' }); }}>
+                <button type="button" className={`wa-conversation wa-conversation--${effectiveState(item) || 'nuevo'} ${active?.id === item.id ? 'active' : ''}`} key={item.id} onClick={() => { setActiveId(item.id); if (threadRef.current) threadRef.current.scrollTop = 0; threadRef.current?.scrollIntoView?.({ block: 'start' }); }}>
                   <div className="wa-avatar">{(item.identity_used || item.contact?.nombre || '?').slice(0, 2).toUpperCase()}</div>
                   <div className="wa-conversation-copy">
                     <div><strong>{[detailValue(formDetails(item), 'Nombre'), detailValue(formDetails(item), 'Apellido')].filter(Boolean).join(' ') || item.contact?.nombre || item.identity_used || '—'}</strong><time dateTime={conversationDisplayDate(item) || undefined} title={compactDateTime(conversationDisplayDate(item))}>{conversationListDate(conversationDisplayDate(item))}</time></div>
                     <p>{formatCrmEventText(item.subject || item.inbound_body).slice(0, 80)}</p>
                     {item.short_ticket_reference || item.ticket_reference ? <p>N.º de ticket: {item.short_ticket_reference || item.ticket_reference}</p> : null}
                     {needsEnglishHumanAttention(item) ? <p className="wa-language-attention">Atención humana en inglés pendiente</p> : null}
-                    <footer><span className={`wa-pill wa-pill--${statusTone[item.estado] || 'blue'}`}>{statusName(item.estado)}</span><ChannelIcon channel={item.source_channel} /></footer>
+                    <footer><span className={`wa-pill wa-pill--${statusTone[effectiveState(item)] || 'blue'}`}>{displayState(item)}</span><ChannelIcon channel={item.source_channel} /></footer>
                   </div>
                 </button>
               ))}
@@ -982,7 +990,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                   }}>{hiddenOnly ? 'Restaurar conversación' : 'Ocultar prueba'}</button> : null}
                   {active.source_channel === 'whatsapp' && activeCanOperate && perms?.whatsappAutomationResumeEnabled === true ? <button type="button" disabled={busy || waContext?.deliveryUncertain || waContext?.deliveryUnknown} onClick={resumeWhatsappAutomation}>Reanudar respuestas automáticas</button> : null}
                   </div></details> : null}
-                  <span className={`wa-pill wa-pill--${statusTone[active.estado] || 'blue'}`}>{statusName(active.estado)}</span>
+                  <span className={`wa-pill wa-pill--${statusTone[effectiveState(active)] || 'blue'}`}>{displayState(active)}</span>
                 </header>
                 {isCommercial ? <section className="wa-lead-highlights" aria-label="Datos principales del lead">
                   <div><span>Inversión declarada</span><strong>{leadHighlights.investment}</strong></div>
@@ -1026,6 +1034,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                   </section> : null}
                   {attachmentNotice ? <p role="status">{attachmentNotice}</p> : null}
                   {isNextGenerationForm && nextGenerationDetails.length ? <section className="wa-panel wa-ng-details"><h3>Datos de Next Generation</h3><dl>{nextGenerationDetails.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section> : null}
+                  {isCommercial && !hiddenOnly ? <CommercialProjectReview api={commercialApi} conversation={active} onUpdated={load}/> : null}
                   {isNextGenerationForm ? <article className="wa-analysis-pending"><div><strong>Análisis pendiente de validación para Next Generation</strong><p>Revisa los datos y el mensaje de esta consulta para continuar.</p></div></article> : leadAnalysis ? <article className="wa-executive-card">
                     <header><div><span>ANÁLISIS DEL LEAD</span><h3>Resumen ejecutivo</h3></div><div className="wa-executive-score"><strong>{leadAnalysis.score}</strong><small>/100</small><b>Prioridad {leadAnalysis.priority}</b></div></header>
                     {leadAnalysis.verdict ? <p className="wa-executive-verdict">{leadAnalysis.verdict}</p> : null}
@@ -1040,7 +1049,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                       {leadAnalysis.risks?.length ? <section className="wa-executive-risks"><h4>Atención</h4><ul>{leadAnalysis.risks.map((risk) => <li key={risk}>{risk}</li>)}</ul></section> : null}
                     </div>
                     <footer>{leadAnalysis.pdf_url ? <a href={leadAnalysis.pdf_url} target="_blank" rel="noreferrer">Ver informe completo en PDF <span>↗</span></a> : <span className="wa-pdf-pending">Informe detallado pendiente de asociar</span>}<small>Análisis integrado a esta ficha · sin duplicar el contacto</small></footer>
-                  </article> : <article className="wa-analysis-pending"><div><strong>{analysisNotice.title}</strong><p>{analysisNotice.message}</p></div>{analysisNotice.badge ? <b>{analysisNotice.badge}</b> : null}</article>}
+                  </article> : hasSpaceRequest || active.qualification_data?.commercial_simulation ? null : <article className="wa-analysis-pending"><div><strong>{analysisNotice.title}</strong><p>{analysisNotice.message}</p></div>{analysisNotice.badge ? <b>{analysisNotice.badge}</b> : null}</article>}
                   {active.source_channel === 'email' && <CrmEmailHistory key={active.id} recordId={active.id} loadHistory={loadEmailHistory} revision={historyRevision} initialBody={active.inbound_body} initialMessage={detailValue(activeDetails, 'Información adicional')} api={commercialApi} caseId={active.id}/> }
                   {active.audio_type ? <div className="wa-system">⌁ Audio entrante: {active.audio_type} {active.transcript ? `· ${active.transcript}` : ''}</div> : null}
                 </div>
@@ -1049,7 +1058,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                   <CrmReplyTextarea id="crm-response" disabled={busy || !activeCanOperate || !canReply} value={replyText} onChange={(e) => { replyComposition.current = null; setReplyText(e.target.value); }} placeholder={replyUnavailableReason || 'Escribe una respuesta…'} />
                   <p>{replyLength} / {replyLimit} caracteres</p>{replyTooLong && <p role="alert">La respuesta supera el límite de {replyLimit} caracteres. El borrador se conserva.</p>}
                   <div className="wa-composer-actions">
-                    <button type="button" className="wa-secondary" disabled={busy || !(supportEmail && perms?.supportActivityAtomicEnabled ? activeCanOperate && active.estado !== 'cerrado' : active.handoff_ready === true && active.qualification_status === 'qualified')} onClick={submitHandoff}>{supportEmail && perms?.supportActivityAtomicEnabled ? 'Tomar caso de soporte' : 'Derivar a una persona'}</button>
+                    <button type="button" className="wa-secondary" disabled={internalProjectReview || busy || !(supportEmail && perms?.supportActivityAtomicEnabled ? activeCanOperate && active.estado !== 'cerrado' : active.handoff_ready === true && active.qualification_status === 'qualified')} onClick={submitHandoff}>{supportEmail && perms?.supportActivityAtomicEnabled ? 'Tomar caso de soporte' : 'Derivar a una persona'}</button>
                     <button type="button" className={`wa-send ${canReply ? 'wa-send--enabled' : ''}`} disabled={!replyLimit || replyTooLong || busy || !activeCanOperate || !canReply || !replyText.trim()} onClick={submitReply}>{busy ? 'Enviando…' : canReplyEmail ? 'Enviar por email' : canReplyWhatsapp ? 'Enviar por WhatsApp' : 'Respuesta no habilitada'}</button>
                   </div>
                   {notice ? <p className="wa-notice">{notice}</p> : null}
@@ -1059,7 +1068,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
               <aside className="wa-detail">
                 <CrmAttributionTrace conversation={active}/>
                 <section className="wa-contact-card"><h2>Contacto</h2>{!isCommercial ? <p><b>Nombre</b><span>{active.contact?.nombre || detailValue(activeDetails, 'Nombre') || '—'}</span></p> : null}<p><b>Email</b><span>{active.contact?.email_normalized || active.contact?.email || detailValue(activeDetails, 'Email') || '—'}</span></p><p><b>WhatsApp</b><span>{active.contact?.phone_normalized || active.contact?.phone || detailValue(activeDetails, 'WhatsApp') || '—'}</span></p></section>
-                {isCommercial && !hiddenOnly ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory /> : null}
+                {isCommercial && !hiddenOnly && (!hasSpaceRequest || verifiedCommercialCase) ? <CommercialLeadManagement key={active.id} api={commercialApi} conversation={active} caseItem={verifiedCommercialCase} onUpdated={load} showHistory /> : null}
+                {isCommercial && !hiddenOnly && hasSpaceRequest && !verifiedCommercialCase ? <section className="wa-panel commercial-management-fallback"><h3>Gestión comercial</h3><form onSubmit={event=>event.preventDefault()}><label>Estado<input value={displayState(active)} readOnly/></label><label>Responsable<input value={active.operador||'Pendiente de asignar'} readOnly/></label><button type="submit" disabled>Guardar gestión</button><p>Para habilitar este formulario falta un caso comercial vinculado a la consulta. La revisión del espacio y de la simulación está disponible en el panel central.</p></form></section> : null}
                 {waContext && !isCommercial ? <section className="wa-panel wa-whatsapp-context" aria-label="Contexto de WhatsApp"><h3>Contexto de WhatsApp</h3>
                   {waContext.review ? <p>Revisa el historial y los avisos de esta conversación antes de continuar.</p> : <dl>{waContext.topic ? <div><dt>Tema</dt><dd>{waContext.topic}</dd></div> : null}{waContext.subtopic ? <div><dt>Opción elegida</dt><dd>{waContext.subtopic}</dd></div> : null}</dl>}
                   {waContext.initialMessage ? <div><strong>Mensaje inicial</strong><p className="wa-context-original">{waContext.initialMessage}</p></div> : null}
@@ -1072,7 +1082,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     <div><dt>Origen</dt><dd>{crmOriginLabel(active)}</dd></div>
                     <div><dt>Canal</dt><dd>{channelLabel(active.source_channel)}</dd></div>
                     <div><dt>Responsable</dt><dd>{active.operador || '—'}</dd></div>
-                    <div><dt>Estado</dt><dd>{statusName(active.estado)}</dd></div>
+                    <div><dt>Estado</dt><dd>{displayState(active)}</dd></div>
                     <div><dt>Derivado</dt><dd>{active.derivado ? 'Sí' : 'No'}</dd></div>
                     {!isCommercial ? <div><dt>Sede</dt><dd>{active.sede_id || 'Sin asignar'}</dd></div> : null}
                   </dl>
@@ -1098,7 +1108,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     <div className="wa-ng-actions"><button type="button" onClick={() => setNgVenueOpen(false)}>Cancelar</button><button type="submit" className="wa-ng-primary" disabled={busy}>Crear postulación</button></div>
                   </form>) : <p className="wa-ng-warning">La creación formal de nuevas sedes la realiza el Super Admin.</p>}
                 </section> : null}
-                {perms?.canOperate ? <section className="wa-panel wa-followup"><h3>Registrar seguimiento</h3>
+                {isCommercial && activities.length>0 && <details className="wa-panel wa-activity-history"><summary>Notas y seguimientos anteriores ({activities.length})</summary>{activities.map(activity=><article key={activity.id}><time>{compactDateTime(activity.created_at)}</time><p>{activity.summary}</p>{activity.next_step && <small>Próximo paso: {activity.next_step}</small>}</article>)}</details>}
+                {perms?.canOperate && !isCommercial ? <section className="wa-panel wa-followup"><h3>Registrar seguimiento</h3>
                   <label>Tipo<select value={activityType} onChange={(e) => setActivityType(e.target.value)}>
                     <option value="note">Nota / WhatsApp externo</option><option value="phone_call">Llamada</option><option value="zoom_meeting">Reunión online</option><option value="in_person_meeting">Reunión presencial</option>
                   </select></label>
@@ -1121,8 +1132,8 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     <button type="button" className={reminderDate === addDays(localDateValue(), 2) ? 'active' : ''} onClick={() => setReminderDate(addDays(localDateValue(), 2))}>Pasado mañana</button>
                   </div>
                   <button type="button" className="wa-followup-save" disabled={busy || !activityTopic} onClick={submitActivity}>Guardar seguimiento</button>
-                  {activities.length ? <div className="wa-activity-list">{activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}
-<CrmComunicaciones token={token} conversationId={active?.id} /></time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}</div> : null}
+                  {activities.length ? <details className="wa-activity-history" open={!isCommercial}><summary>Historial de actividad ({activities.length})</summary><div className="wa-activity-list">{activities.map((activity) => <article key={activity.id}><header><strong>{({ note: 'Nota', phone_call: 'Llamada', zoom_meeting: 'Reunión online', in_person_meeting: 'Reunión presencial' })[activity.activity_type] || activity.activity_type}</strong><time dateTime={activity.created_at || undefined}>{compactDateTime(activity.created_at)}
+<CrmComunicaciones token={token} conversationId={active?.id} /></time></header><p>{activity.summary}</p>{activity.next_step ? <small>Próximo paso: {activity.next_step}</small> : null}</article>)}</div></details> : null}
                 </section> : null}
               </aside>
             </>

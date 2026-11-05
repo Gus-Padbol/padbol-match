@@ -71,7 +71,16 @@ test('las gestiones comerciales reales aparecen en el historial con fecha',async
  const api=apiFixture();
  api.listCalls.mockResolvedValue({calls:[{id:'call-1',status:'completed',situation:'Estado seleccionado: Nuevo',discussed:'Primer email enviado',distinguishing:'No se agregaron detalles adicionales.',createdAt:'2026-11-03T11:16:06.538577+00:00',completedAt:'2026-11-03T11:16:07.325089+00:00'}]});
  render(<CommercialLeadManagement conversation={conversation} api={api} showHistory/>);
- expect(await screen.findByText('Historial de atención')).toBeInTheDocument();
+ expect(await screen.findByText('Historial de atención (1)')).toBeInTheDocument();
  expect(screen.getByText('Primer email enviado')).toBeInTheDocument();
  expect(screen.getByText(/03\/11\/2026|3\/11\/2026/)).toBeInTheDocument();
+});
+
+test('closing needs a summary and outcome but does not demand the same closing detail twice',async()=>{
+ const api=apiFixture();render(<CommercialLeadManagement conversation={conversation} api={api}/>);await screen.findByLabelText('Estado comercial');
+ fireEvent.change(screen.getByLabelText('Estado comercial'),{target:{value:'cerrado'}});
+ fireEvent.change(screen.getByLabelText('Resultado comercial'),{target:{value:'no_avanzo'}});
+ fireEvent.change(screen.getByLabelText('Resumen de la conversación'),{target:{value:'Era una consulta sin interés comercial.'}});
+ expect(screen.getByText('Guardar gestión')).toBeEnabled();fireEvent.click(screen.getByText('Guardar gestión'));
+ await waitFor(()=>expect(api.progress).toHaveBeenCalledWith('case','form',4,'cerrado','Era una consulta sin interés comercial.',null,[24,8],'no_avanzo'));
 });
