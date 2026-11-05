@@ -33,7 +33,7 @@ export function createCommercialAssignmentsApi(token) {
     projectReview: id => request(`/api/admin/crm/project-review/by-conversation/${encodeURIComponent(id)}`),
     spaceRequestByConversation: id => request(`/api/admin/crm/space-requests/by-conversation/${encodeURIComponent(id)}`),
     spaceRequestMedia: (id,kind,index) => request(`/api/admin/crm/space-requests/${encodeURIComponent(id)}/media/${encodeURIComponent(kind)}/${encodeURIComponent(String(index))}`),
-    updateSpaceStatus: (id,status) => request(`/api/admin/crm/space-requests/${encodeURIComponent(id)}/status`, 'PATCH', {status}),
+    updateSpaceStatus: (id,status,expectedReviewVersion) => request(`/api/admin/crm/space-requests/${encodeURIComponent(id)}/status`, 'PATCH', {status,expectedReviewVersion}),
     prepareSpaceReview: (id,payload={}) => request(`/api/admin/crm/space-requests/${encodeURIComponent(id)}/prepare-review`, 'POST', payload),
     prospectStatus: () => request(`${prospect}/status`),
     listProspects: (query={}) => { const params=new URLSearchParams(Object.entries(query).filter(([,v])=>v!==''&&v!=null).map(([k,v])=>[k,String(v)])); return request(`${prospect}/prospects${params.toString()?`?${params}`:''}`); },
