@@ -32,3 +32,23 @@
 @media(max-width:700px){.crm-space-request{padding:16px}.crm-space-grid{grid-template-columns:1fr 1fr}.crm-space-grid>div{padding:11px}.crm-space-grid strong{font-size:16px}.crm-space-file-list{grid-template-columns:1fr}.crm-space-viewer-backdrop{padding:10px}.crm-space-viewer{height:92vh}.crm-space-viewer>header{padding:12px}.crm-space-review-actions button{width:100%}}
 .crm-space-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:700px){.crm-space-grid{grid-template-columns:1fr 1fr}}
+
+/* Private project materials: clear hierarchy, generous touch targets. */
+.crm-space-file-list button{display:flex;align-items:center;gap:14px;min-height:86px;background:#f8fafc;border:1px solid #dbe3ed;border-radius:14px;color:#192e47;text-align:left;transition:border-color .18s,background .18s,box-shadow .18s}
+.crm-space-file-list button .crm-space-material-copy{display:block;min-width:0;overflow-wrap:anywhere}
+.crm-space-material-icon{flex:0 0 26px;width:26px;height:26px;color:#50677f}
+.crm-space-file-list button:hover:not(:disabled){background:#fff;border-color:#a0afc0;box-shadow:0 5px 16px rgba(17,38,62,.07)}
+.crm-space-file-list .crm-space-render{grid-column:1/-1;min-height:104px;border-color:#162d47;border-left:4px solid #df1b2d;background:#162d47;color:#fff;padding:20px}
+.crm-space-file-list .crm-space-render .crm-space-material-icon{color:#fff;width:32px;height:32px;flex-basis:32px}
+.crm-space-file-list .crm-space-render small{color:#d5dfea;max-width:50ch}
+.crm-space-file-list .crm-space-render:hover:not(:disabled){background:#203d5c;border-color:#203d5c;border-left-color:#df1b2d;box-shadow:0 7px 20px rgba(17,38,62,.14)}
+.crm-space-review-actions button{min-height:44px;border-radius:10px;font-weight:600;background:#f8fafc}
+.crm-space-review-actions button:first-child{background:#162d47;border-color:#162d47;color:#fff}
+.crm-space-file-list button:focus-visible,.crm-space-review-actions button:focus-visible,.crm-space-viewer button:focus-visible{outline:3px solid #df1b2d;outline-offset:3px}
+.crm-space-review-actions button:hover:not(:disabled){border-color:#162d47;box-shadow:0 3px 10px rgba(17,38,62,.08)}
+.crm-space-review-note{color:#52677d!important}
+.crm-space-viewer header button{min-height:44px}
+@media(prefers-reduced-motion:reduce){.crm-space-file-list button{transition:none}}
+@media(max-width:700px){.crm-space-file-list button{width:100%;padding:16px;min-height:80px}.crm-space-file-list .crm-space-render{padding:18px;min-height:100px}.crm-space-review-actions{gap:8px}}
+
+.crm-space-open-arrow{width:22px;height:22px;flex:0 0 22px;margin-left:auto;opacity:.8}.crm-space-file-list button .crm-space-material-copy>span{font-weight:700;font-size:16px}.crm-space-file-list .crm-space-render .crm-space-material-copy>span{font-size:19px}
