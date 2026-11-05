@@ -19,10 +19,19 @@ export default function CommercialCrmPage() {
   // de jugadores. Se restaura el manifest original al salir.
   useEffect(() => {
     const link = document.querySelector('link[rel="manifest"]');
-    if (!link) return undefined;
-    const previous = link.getAttribute('href');
-    link.setAttribute('href', '/crm-manifest.json');
-    return () => { if (previous) link.setAttribute('href', previous); };
+    const icon = document.querySelector('link[rel="icon"]');
+    const apple = document.querySelector('link[rel="apple-touch-icon"]');
+    const previous = link?.getAttribute('href');
+    const previousIcon = icon?.getAttribute('href');
+    const previousApple = apple?.getAttribute('href');
+    if (link) link.setAttribute('href', '/crm-manifest.json');
+    if (icon) icon.setAttribute('href', '/brand/padbol-crm-icon.svg?v=20261103');
+    if (apple) apple.setAttribute('href', '/brand/padbol-crm-apple-touch-icon.png?v=20261103');
+    return () => {
+      if (link && previous) link.setAttribute('href', previous);
+      if (icon && previousIcon) icon.setAttribute('href', previousIcon);
+      if (apple && previousApple) apple.setAttribute('href', previousApple);
+    };
   }, []);
 
   useEffect(()=>{let active=true;if(token)api.getRole().then(r=>{if(!active)return;if(['manager','advisor'].includes(r.role)){setAvailable(true);setRole(r.role);if(r.role==='advisor')setTeam(true);}else{setAvailable(false);setTeam(false);setRole(null);}}).catch(error=>{if(active&&(error?.status===403||error?.status===404)){setAvailable(false);setTeam(false);setRole(null);}});return ()=>{active=false};},[api,token]);
