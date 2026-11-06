@@ -5,7 +5,7 @@ import PushActivation from './PushActivation';
 
 const initials = user => String(user?.user_metadata?.full_name || user?.email || '?').trim().slice(0, 2).toUpperCase();
 
-export default function CommercialCrmHeader({view,role,user,token,api,onView,onNewLead,onSearch,onSignOut}) {
+export default function CommercialCrmHeader({view,role,user,token,api,onView,onNewLead,onSearch,onSignOut,adminReturn}) {
   const [query,setQuery]=useState('');
   const [canalesOpen,setCanalesOpen]=useState(false);
   const submitSearch = event => {
@@ -20,6 +20,7 @@ export default function CommercialCrmHeader({view,role,user,token,api,onView,onN
         <div><h1>Consultas comerciales</h1><p>Padbol Internacional · CRM comercial</p></div>
       </div>
       <nav className="crm-header-nav" aria-label="Navegación comercial">
+        {adminReturn}
         {role==='manager'&&<button type="button" className={view==='inbox'?'is-active':''} aria-current={view==='inbox'?'page':undefined} onClick={()=>onView?.('inbox')}>Bandeja</button>}
         {role==='manager'&&<button type="button" className={view==='team'?'is-active':''} aria-current={view==='team'?'page':undefined} onClick={()=>onView?.('team')}>Equipo comercial</button>}
         <button type="button" className={view==='prospect'?'is-active':''} aria-current={view==='prospect'?'page':undefined} onClick={()=>onView?.('prospect')}>PADBOL PROSPECT</button>

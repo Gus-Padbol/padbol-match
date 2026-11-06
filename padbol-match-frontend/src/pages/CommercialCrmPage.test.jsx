@@ -1,3 +1,4 @@
+jest.mock('../components/CommercialAdminReturn',()=>()=>null);
 import React from 'react';
 import {render,screen,waitFor,fireEvent} from '@testing-library/react';
 import CommercialCrmPage from './CommercialCrmPage';

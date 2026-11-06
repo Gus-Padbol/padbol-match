@@ -1,0 +1,15 @@
+import React from 'react';
+import {render,screen,act} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
+import CommercialAdminReturn from './CommercialAdminReturn';
+import {fetchMiRol} from '../utils/fetchMiRol';
+jest.mock('../utils/fetchMiRol',()=>({fetchMiRol:jest.fn()}));
+const view=token=><MemoryRouter><CommercialAdminReturn token={token}/></MemoryRouter>;
+beforeEach(()=>{jest.clearAllMocks();localStorage.clear();});
+test.each(['super_admin','admin_nacional','admin_cadena','admin_club','empleado','editor_contenido'])('server-approved %s sees panel link',async rol=>{fetchMiRol.mockResolvedValue({rol});render(view('valid'));expect(await screen.findByRole('link',{name:'Panel de administración'})).toHaveAttribute('href','/admin');});
+test.each(['advisor','manager','jugador',null])('does not infer admin for %s',async rol=>{localStorage.setItem('user_role_data',JSON.stringify({rol:'super_admin'}));fetchMiRol.mockResolvedValue({rol});render(view('valid'));await act(async()=>{});expect(screen.queryByRole('link')).not.toBeInTheDocument();});
+test('server failure hides link',async()=>{fetchMiRol.mockRejectedValue(Error('offline'));render(view('valid'));await act(async()=>{});expect(screen.queryByRole('link')).not.toBeInTheDocument();});
+test('no token makes no role request',()=>{render(view(''));expect(fetchMiRol).not.toHaveBeenCalled();});
+test('token race rejects stale approval',async()=>{let oldDone,newDone;fetchMiRol.mockImplementation(t=>new Promise(r=>{if(t==='old')oldDone=r;else newDone=r;}));const v=render(view('old'));v.rerender(view('new'));await act(async()=>oldDone({rol:'super_admin'}));expect(screen.queryByRole('link')).not.toBeInTheDocument();await act(async()=>newDone({rol:'jugador'}));expect(screen.queryByRole('link')).not.toBeInTheDocument();});
+test('renewed token hides previously allowed link immediately',async()=>{let done;fetchMiRol.mockResolvedValueOnce({rol:'super_admin'}).mockImplementationOnce(()=>new Promise(r=>done=r));const v=render(view('old'));await screen.findByRole('link');v.rerender(view('new'));expect(screen.queryByRole('link')).not.toBeInTheDocument();await act(async()=>done({rol:'jugador'}));expect(screen.queryByRole('link')).not.toBeInTheDocument();});
+test('late unmounted approval makes no link',async()=>{let done;fetchMiRol.mockReturnValue(new Promise(r=>done=r));const v=render(view('old'));v.unmount();await act(async()=>done({rol:'super_admin'}));expect(screen.queryByRole('link')).not.toBeInTheDocument();});

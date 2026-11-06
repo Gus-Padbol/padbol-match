@@ -1,0 +1,4 @@
+import CommercialSpaceRequest from '../../src/components/CommercialSpaceRequest';import {commercial,space,conversation} from './api';
+import React from 'react';import {createRoot} from 'react-dom/client';import {MemoryRouter} from 'react-router-dom';import {FixtureAuth} from './auth';import CommercialCrmPage from '../../src/pages/CommercialCrmPage';
+window.fetch=()=>Promise.reject(Error('Network disabled in visual fixture'));
+createRoot(document.getElementById('root')).render(location.pathname==='/space'?<div style={{width:Number(new URLSearchParams(location.search).get('width'))||420,maxWidth:'100%'}}><CommercialSpaceRequest api={commercial} conversation={conversation} providedRequest={{...space,simulationAvailable:!new URLSearchParams(location.search).has('pending')}}/></div>:<MemoryRouter initialEntries={['/crm-leads']}><FixtureAuth><CommercialCrmPage/></FixtureAuth></MemoryRouter>);

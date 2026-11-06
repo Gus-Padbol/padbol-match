@@ -1,3 +1,4 @@
+beforeEach(()=>{jest.spyOn(require('../utils/commercialAssignmentsApi'),'createCommercialAssignmentsApi').mockImplementation(()=>({projectReview:async()=>({project:null}),getRole:async()=>{throw Object.assign(Error('fixture no membership'),{status:403});},listCases:async()=>({cases:[]}),listAdvisors:async()=>({advisors:[]}),resolveConversation:async()=>null}));});
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import WhatsappCrmDemo, { compactDateTime, conversationDisplayDate, formatCrmEventText, leadAnalysisNotice, crmOriginLabel, formDetails, commercialFormDetails, commercialLeadHighlights, originalLeadMessage, whatsappDeliveryLabel } from './WhatsappCrmDemo';
 import { crmAdminApi } from '../utils/crmAdminApi';

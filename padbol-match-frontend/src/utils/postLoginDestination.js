@@ -13,14 +13,6 @@ export async function resolveRoleAwarePostLoginPath(
   roleFetcher = fetchMiRol,
   commercialRoleFetcher = token => createCommercialAssignmentsApi(token).getRole(),
 ) {
-  // PADBOL CRM instalado: el destino posterior al login es siempre el CRM,
-  // sin importar el rol ni lo que devuelva el proveedor de autenticacion.
-  try {
-    if (localStorage.getItem('padbol_crm_app') === '1') {
-      console.info('[login] app PADBOL CRM detectada -> /crm-leads');
-      return '/crm-leads';
-    }
-  } catch { /* storage no disponible */ }
   const requested = String(destination || '/');
   if (requested !== '/') return requested;
 

@@ -1,3 +1,4 @@
+import CommercialAdminReturn from '../components/CommercialAdminReturn';
 import React, {useEffect, useMemo, useState} from 'react';
 import { useAuth } from '../context/AuthContext';
 import WhatsappCrmDemo from './WhatsappCrmDemo';
@@ -43,7 +44,8 @@ export default function CommercialCrmPage() {
   const submitSearch=reference=>{setTeam(false);setView('inbox');setSearchRequest({reference,nonce:Date.now()});};
   const inboxLocked=Boolean(available&&view==='inbox'&&!team);
   return <div className={`crm-page${inboxLocked?' crm-page--inbox':''}`}>
-    {available&&<CommercialCrmHeader view={view} role={role} user={session?.user} token={token} api={api} onView={openView} onNewLead={openNewLead} onSearch={submitSearch} onSignOut={signOutAndClear}/>}
+    {!available&&<div className="crm-admin-return-fallback"><CommercialAdminReturn token={token}/></div>}
+    {available&&<CommercialCrmHeader adminReturn={<CommercialAdminReturn token={token}/>} view={view} role={role} user={session?.user} token={token} api={api} onView={openView} onNewLead={openNewLead} onSearch={submitSearch} onSignOut={signOutAndClear}/>}
     {view==='prospect' && available ? <CommercialProspects api={api} embedded/> : team && available ? <CommercialTeamWorkspace api={api} currentUserId={session?.user?.id} manualRequest={manualRequest} openCaseId={openCaseId} headless/> : <WhatsappCrmDemo requiredScope="commercial" headless searchRequest={searchRequest} openConversationId={openConversationId}/>}
   </div>;
 }

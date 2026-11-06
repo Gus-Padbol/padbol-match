@@ -320,14 +320,8 @@ export default function AccesoCuenta() {
       const ue = s.user.email?.trim();
       if (ue) await refreshJugadorPerfilFromSupabase(ue);
       await refreshSession();
-      let destinoSolicitado = resolvePostLoginNavigatePath(location.search);
-      // Si la app instalada es PADBOL CRM, el destino posterior al login es el CRM.
-      try { if (localStorage.getItem('padbol_crm_app') === '1') destinoSolicitado = '/crm-leads'; } catch { /* ignore */ }
+      const destinoSolicitado = resolvePostLoginNavigatePath(location.search);
       const destinoTrasLogin = await resolveRoleAwarePostLoginPath(destinoSolicitado, s);
-      // Si la app se abrio desde el icono PADBOL CRM, el destino es el CRM aunque
-      // el rol lleve al panel de administracion.
-      let crmIntent = null;
-      try { crmIntent = localStorage.getItem('padbol_crm_return'); } catch { /* ignore */ }
       const destinoEsBibliotecaFipa = destinoTrasLogin.split('?')[0] === '/fipa/documentos';
       const fechaElegibilidadPendiente = String(s.user.user_metadata?.legal_birth_date || '').trim();
       if (destinoEsBibliotecaFipa && fechaElegibilidadPendiente) {
@@ -344,7 +338,7 @@ export default function AccesoCuenta() {
         }
       }
       const necesitaCompletarPerfil = Boolean(s.user.user_metadata?.profile_completion_required);
-      const destinoFinal = crmIntent && !destinoEsBibliotecaFipa ? crmIntent : destinoTrasLogin;
+      const destinoFinal = destinoTrasLogin;
       const destinoNavegacion = necesitaCompletarPerfil && !destinoEsBibliotecaFipa
         ? `/completar-perfil?redirect=${encodeURIComponent(destinoFinal)}`
         : destinoFinal;

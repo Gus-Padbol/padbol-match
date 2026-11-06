@@ -1,0 +1,4 @@
+const {defineConfig,transformWithEsbuild}=await import(process.env.CRM_QA_VITE_MODULE || 'vite');
+import path from 'node:path';import {fileURLToPath} from 'node:url';
+const dir=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(dir,'../..');
+export default defineConfig({root:dir,publicDir:false,define:{'process.env':{}},server:{host:'127.0.0.1',port:4392,strictPort:true,fs:{allow:[root]}},resolve:{alias:[{find:/.*\/context\/AuthContext$/,replacement:path.join(dir,'auth.jsx')},{find:/.*\/(?:utils\/(?:crmAdminApi|commercialAssignmentsApi|fetchMiRol)|supabaseClient)$/,replacement:path.join(dir,'api.js')}]},plugins:[{name:'fixture-jsx',enforce:'pre',async transform(code,id){if(id.endsWith('.js')&&id.includes('/src/'))return transformWithEsbuild(code,id,{loader:'jsx',jsx:'automatic'});}}],esbuild:{jsx:'automatic'},optimizeDeps:{esbuildOptions:{loader:{'.js':'jsx'}}}});

@@ -52,3 +52,28 @@
 @media(max-width:700px){.crm-space-file-list button{width:100%;padding:16px;min-height:80px}.crm-space-file-list .crm-space-render{padding:18px;min-height:100px}.crm-space-review-actions{gap:8px}}
 
 .crm-space-open-arrow{width:22px;height:22px;flex:0 0 22px;margin-left:auto;opacity:.8}.crm-space-file-list button .crm-space-material-copy>span{font-weight:700;font-size:16px}.crm-space-file-list .crm-space-render .crm-space-material-copy>span{font-size:19px}
+
+/* Proposed panel-width adaptation; no workflow or API changes. */
+.crm-space-request{container:space-review / inline-size;padding:clamp(12px,2%,20px);max-width:100%;overflow-wrap:anywhere;scroll-margin-block:16px}
+.crm-space-request>header{position:static;min-width:0}
+.crm-space-request>header>div{min-width:0;flex:1 1 220px}
+.crm-space-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr))}
+.crm-space-grid>div{min-width:0;padding:12px}
+.crm-space-grid strong{font-size:16px;line-height:1.4;overflow-wrap:anywhere}
+.crm-space-review-actions{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid #e2eaf2}
+.crm-space-action-label{flex-basis:100%;font-size:12px;font-weight:700;color:#52677d}
+.crm-space-review-actions button{width:auto;flex:0 1 auto;min-height:44px;padding:8px 12px;font-family:inherit;font-weight:600;font-size:13px;line-height:1.35;white-space:normal;max-width:100%}
+.crm-space-review-actions button:first-child{background:#f8fafc;border-color:#cbd6e4;color:#24384c}
+.crm-space-review-actions .crm-space-register{flex-basis:100%;width:fit-content;max-width:fit-content;background:#162d47;border-color:#162d47;color:#fff;margin-bottom:4px}
+.crm-space-file-list button,.crm-space-file-list .crm-space-render{min-height:64px;padding:12px;gap:10px}
+.crm-space-file-list button .crm-space-material-copy>span,.crm-space-file-list .crm-space-render .crm-space-material-copy>span{font-size:15px;line-height:1.4}
+@container space-review (max-width:520px){
+ .crm-space-file-list{grid-template-columns:1fr}
+ .crm-space-request h3{font-size:19px}
+ .crm-space-review-actions button{flex:1 1 150px}
+ .crm-space-review-actions .crm-space-register{flex-basis:100%;max-width:100%;width:auto}
+}
+@container space-review (max-width:300px){.crm-space-grid{grid-template-columns:1fr}}
+
+.crm-space-state-label{flex-basis:100%;font-size:12px;color:#52677d;margin-top:4px}
+.crm-space-review-actions button[aria-pressed="true"]{background:#edf3fb;border-color:#b7cce2;color:#1a4e82;opacity:1}
