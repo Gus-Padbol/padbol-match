@@ -131,3 +131,7 @@
  .crm-page--inbox .wa-messages{display:block!important;flex:none!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important}
  .crm-page--inbox .wa-composer{position:static!important;height:auto!important;flex:none!important}
 }
+/* At high zoom / narrow or short windows, let the full header scroll away. */
+@media(max-width:720px),(max-height:560px){
+ .crm-page>.crm-header{position:relative;top:auto}
+}
