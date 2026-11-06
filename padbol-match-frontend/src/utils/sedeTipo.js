@@ -15,3 +15,9 @@ export function puedeReservarSede(sede) {
 export function filtrarSedesReservables(sedes) {
   return (Array.isArray(sedes) ? sedes : []).filter((sede) => !esSedeTorneo(sede));
 }
+
+/** Filtra la respuesta cruda de GET /api/sedes: deja solo sedes reservables. */
+export function sedesDesdeRespuesta(payload) {
+  const lista = Array.isArray(payload) ? payload : (Array.isArray(payload?.sedes) ? payload.sedes : []);
+  return filtrarSedesReservables(lista);
+}

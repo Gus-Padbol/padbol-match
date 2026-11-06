@@ -1491,7 +1491,8 @@ export default function ReservaForm() {
         }
         try {
           const parsed = JSON.parse(text);
-          const arr = Array.isArray(parsed) ? parsed : [];
+          // Lista principal del selector: excluye sedes de torneo (no se reservan por hora).
+          const arr = filtrarSedesReservables(Array.isArray(parsed) ? parsed : []);
           setSedes((prev) => {
             const sid = Number(filtros.sede_id);
             if (!Number.isFinite(sid) || sid <= 0) return arr;
