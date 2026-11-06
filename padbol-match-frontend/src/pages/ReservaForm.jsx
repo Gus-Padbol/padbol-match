@@ -70,7 +70,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from '../components/common/SportIcon';
 import { useJugadorReputacionReserva } from '../components/ReputacionJugadorPanel';
 import { usePadcoinsActiveCampaign } from '../hooks/usePadcoinsActiveCampaign';
-import { filtrarSedesReservables } from '../utils/sedeTipo';
+import { esSedeTorneo, filtrarSedesReservables } from '../utils/sedeTipo';
 import {
   PadcoinsCampaignPlayerBadge,
   PadcoinsCampaignPlayerHint,
@@ -798,6 +798,8 @@ export default function ReservaForm() {
           horario_cierre: sedeFresh.horario_cierre,
           sede: sedeFresh,
         });
+        // Segunda barrera: una sede de torneo no se agrega al selector ni por URL directa.
+        if (esSedeTorneo(sedeFresh)) return;
         setSedes((prev) => {
           if (!Array.isArray(prev)) return prev;
           const nid = Number(rawId);
