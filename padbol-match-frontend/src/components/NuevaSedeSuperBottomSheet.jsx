@@ -39,7 +39,7 @@ function normalizeText(v) {
 const TZ_SEDE_DEFAULT = 'America/Argentina/Buenos_Aires';
 
 /** Opciones IANA según país (etiqueta del select de país incluye bandera + nombre). */
-function timezoneOptionsForPais(paisLabel) {
+export function timezoneOptionsForPais(paisLabel) {
   const key = normalizeText(paisLabel);
   if (!key) return [{ value: TZ_SEDE_DEFAULT, label: 'Argentina (ART)' }];
   if (key.includes('argentina')) {
@@ -55,6 +55,9 @@ function timezoneOptionsForPais(paisLabel) {
   }
   if (key.includes('espana') || key.includes('spain')) {
     return [{ value: 'Europe/Madrid', label: 'España peninsular — Europe/Madrid' }];
+  }
+  if (key.includes('italia') || key.includes('italy')) {
+    return [{ value: 'Europe/Rome', label: 'Italia — Europe/Rome' }];
   }
   if (key.includes('uruguay')) return [{ value: 'America/Montevideo', label: 'Uruguay — America/Montevideo' }];
   if (key.includes('chile')) return [{ value: 'America/Santiago', label: 'Chile — America/Santiago' }];
