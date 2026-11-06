@@ -10,3 +10,8 @@ export function esSedeTorneo(sede) {
 export function puedeReservarSede(sede) {
   return !esSedeTorneo(sede);
 }
+
+/** Deja solo las sedes que se pueden reservar por hora (excluye las de torneo). */
+export function filtrarSedesReservables(sedes) {
+  return (Array.isArray(sedes) ? sedes : []).filter((sede) => !esSedeTorneo(sede));
+}
