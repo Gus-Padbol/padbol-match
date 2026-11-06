@@ -128,6 +128,40 @@ const initialState = () => ({
   horario_cierre: '',
 });
 
+
+export const TIPO_SEDE_RESERVABLE = 'reservable';
+export const TIPO_SEDE_TORNEO = 'torneo';
+
+/**
+ * Sede de TORNEO: aloja un evento, no se reserva por hora.
+ * Los cinco campos de reserva viajan en null y no se piden.
+ * Sede RESERVABLE: conserva exactamente los requisitos actuales.
+ */
+export function buildSedePayload({ st, configuration, totalCanchas, paisSinBandera, telefonoFull, tipoSede }) {
+  const esTorneo = tipoSede === TIPO_SEDE_TORNEO;
+  return {
+    nombre: String(st.nombre || '').trim(),
+    pais: paisSinBandera(st.pais),
+    timezone: String(st.timezone || TZ_SEDE_DEFAULT).trim() || TZ_SEDE_DEFAULT,
+    provincia: String(st.provincia || '').trim() || null,
+    ciudad: String(st.ciudad || '').trim(),
+    direccion: String(st.direccion || '').trim() || null,
+    email_contacto: String(st.email_contacto || '').trim().toLowerCase() || null,
+    telefono: esTorneo ? null : telefonoFull,
+    metodo_pago: esTorneo ? null : 'mercadopago',
+    precio_turno: esTorneo ? null : configuration.fields.precio_turno,
+    moneda: esTorneo ? null : st.moneda,
+    google_maps_url: null,
+    latitud: st.latitud != null ? Number(st.latitud) : null,
+    longitud: st.longitud != null ? Number(st.longitud) : null,
+    horario_apertura: esTorneo ? null : configuration.fields.horario_apertura,
+    horario_cierre: esTorneo ? null : configuration.fields.horario_cierre,
+    cantidad_canchas: esTorneo ? null : totalCanchas,
+    tipo_sede: esTorneo ? TIPO_SEDE_TORNEO : TIPO_SEDE_RESERVABLE,
+    skip_autogen_canchas: true,
+  };
+}
+
 export default function NuevaSedeSuperBottomSheet({
   open,
   onClose,
@@ -142,6 +176,7 @@ export default function NuevaSedeSuperBottomSheet({
   const { t } = useTranslation();
   const freeLaunch = new Date().getFullYear() === 2026;
   const [st, setSt] = useState(initialState);
+  const [tipoSede, setTipoSede] = useState(TIPO_SEDE_RESERVABLE);
   const [planPricing, setPlanPricing] = useState([]);
   const [planPricingLoading, setPlanPricingLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -247,13 +282,13 @@ export default function NuevaSedeSuperBottomSheet({
       return;
     }
     if (st.step === 2) {
-      if (totalCanchas <= 0) {
+      if (tipoSede !== TIPO_SEDE_TORNEO && totalCanchas <= 0) {
         setConfigurationError('Selecciona al menos un deporte e indica la cantidad de canchas (mayor a 0).');
         return;
       }
       setSt((p) => ({ ...p, step: 3 }));
     }
-  }, [st, totalCanchas]);
+  }, [st, totalCanchas, tipoSede]);
 
   const goPrev = useCallback(() => {
     setSt((p) => ({ ...p, step: Math.max(1, p.step - 1) }));
@@ -261,7 +296,9 @@ export default function NuevaSedeSuperBottomSheet({
 
   const crearSede = useCallback(async () => {
     if (saving) return;
-    const configuration = validateSedeRequiredConfiguration(st);
+    const configuration = tipoSede === TIPO_SEDE_TORNEO
+      ? { ok: true, fields: {} }
+      : validateSedeRequiredConfiguration(st);
     if (!configuration.ok) {
       setConfigurationError(configuration.error === 'price'
         ? t('admin.formularios.validPriceRequired')
@@ -269,11 +306,12 @@ export default function NuevaSedeSuperBottomSheet({
       return;
     }
     setConfigurationError('');
-    if (!String(st.email_contacto || '').trim()) {
+    const esSedeTorneo = tipoSede === TIPO_SEDE_TORNEO;
+    if (!esSedeTorneo && !String(st.email_contacto || '').trim()) {
       alert('El email de contacto es obligatorio.');
       return;
     }
-    if (!String(st.telefonoLocal || '').trim()) {
+    if (!esSedeTorneo && !String(st.telefonoLocal || '').trim()) {
       alert('El teléfono / WhatsApp es obligatorio.');
       return;
     }
@@ -283,26 +321,14 @@ export default function NuevaSedeSuperBottomSheet({
       const headers = { 'Content-Type': 'application/json' };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
-      const body = {
-        nombre: String(st.nombre || '').trim(),
-        pais: paisSinBanderaParaGuardar(st.pais),
-        timezone: String(st.timezone || TZ_SEDE_DEFAULT).trim() || TZ_SEDE_DEFAULT,
-        provincia: String(st.provincia || '').trim() || null,
-        ciudad: String(st.ciudad || '').trim(),
-        direccion: String(st.direccion || '').trim() || null,
-        email_contacto: String(st.email_contacto || '').trim().toLowerCase(),
-        telefono: telefonoFull,
-        metodo_pago: 'mercadopago',
-        precio_turno: configuration.fields.precio_turno,
-        moneda: st.moneda,
-        google_maps_url: null,
-        latitud: st.latitud != null ? Number(st.latitud) : null,
-        longitud: st.longitud != null ? Number(st.longitud) : null,
-        horario_apertura: configuration.fields.horario_apertura,
-        horario_cierre: configuration.fields.horario_cierre,
-        cantidad_canchas: totalCanchas,
-        skip_autogen_canchas: true,
-      };
+      const body = buildSedePayload({
+        st,
+        configuration,
+        totalCanchas,
+        paisSinBandera: paisSinBanderaParaGuardar,
+        telefonoFull,
+        tipoSede,
+      });
 
       const deportesPayload = [];
       for (const d of DEPORTES_CATALOGO) {
@@ -331,6 +357,13 @@ export default function NuevaSedeSuperBottomSheet({
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || 'No se pudo crear la sede');
 
+      // Una sede de torneo no declara deportes ni canchas: no se llama al endpoint vacío.
+      if (!deportesPayload.length) {
+        onSuccess?.(j, []);
+        onClose?.();
+        return;
+      }
+
       const res2 = await fetch(`${apiBaseUrl}/api/sedes/${j.id}/deportes`, {
         method: 'POST',
         headers,
@@ -348,7 +381,7 @@ export default function NuevaSedeSuperBottomSheet({
     } finally {
       setSaving(false);
     }
-  }, [apiBaseUrl, accessToken, inviteToken, onClose, onSuccess, saving, st, t, totalCanchas]);
+  }, [apiBaseUrl, accessToken, inviteToken, onClose, onSuccess, saving, st, t, totalCanchas, tipoSede]);
 
   const applyPlaceFromGoogle = useCallback((place) => {
     try {
@@ -514,6 +547,38 @@ export default function NuevaSedeSuperBottomSheet({
         ) : null}
         {st.step === 1 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {inviteToken ? null : (
+            <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+              <legend style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', marginBottom: 8 }}>
+                Tipo de sede *
+              </legend>
+              <div role="radiogroup" aria-label="Tipo de sede" style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={tipoSede === TIPO_SEDE_RESERVABLE}
+                  onClick={() => setTipoSede(TIPO_SEDE_RESERVABLE)}
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: 12, border: tipoSede === TIPO_SEDE_RESERVABLE ? '2px solid #E11B22' : '1px solid #e2e8f0', background: '#fff', fontWeight: 700 }}
+                >
+                  Reservable
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={tipoSede === TIPO_SEDE_TORNEO}
+                  onClick={() => setTipoSede(TIPO_SEDE_TORNEO)}
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: 12, border: tipoSede === TIPO_SEDE_TORNEO ? '2px solid #E11B22' : '1px solid #e2e8f0', background: '#fff', fontWeight: 700 }}
+                >
+                  Sede para torneo
+                </button>
+              </div>
+              {tipoSede === TIPO_SEDE_TORNEO ? (
+                <p style={{ margin: '8px 0 0', fontSize: 12.5, color: '#5d626a' }}>
+                  Una sede de torneo no se reserva por hora: no se piden canchas, horarios, precio ni WhatsApp.
+                </p>
+              ) : null}
+            </fieldset>
+            )}
             <label style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
               Nombre de la sede *
               <input

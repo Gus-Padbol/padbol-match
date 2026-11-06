@@ -41,6 +41,7 @@ import {
 const ReservaForm = lazy(() => import('./pages/ReservaForm'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const TorneoCrear = lazy(() => import('./pages/TorneoCrear'));
+const AdminNationsActivation = lazy(() => import('./pages/AdminNationsActivation'));
 const FormEquipos = lazy(() => import('./pages/FormEquipos'));
 const MiPerfil = lazy(() => import('./pages/MiPerfil'));
 const RecorridoExterno = lazy(() => import('./pages/RecorridoExterno'));
@@ -458,6 +459,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <AdminDashboardGate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/nations-activacion"
+          element={
+            <ProtectedRoute>
+              <AdminNationsActivation />
             </ProtectedRoute>
           }
         />

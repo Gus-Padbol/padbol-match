@@ -49,6 +49,7 @@ import ResenasSede from '../components/ResenasSede';
 import { resolveSedeAmenityChips } from '../constants/sedeAmenities';
 import { formatSedeUbicacionSubtitulo } from '../utils/paisI18n';
 import './SedePublica.css';
+import { puedeReservarSede } from '../utils/sedeTipo';
 
 const PADBOL_PAGE_GRADIENT = 'var(--bg-page)';
 
@@ -2096,18 +2097,26 @@ export default function SedePublica() {
               onIndexChange={setFotosGalleryIndex}
             />
           ) : null}
-          <PadcoinsCampaignPlayerBanner
-            campaign={sedePadcoinsCampaign}
-            ctaLabel={t('sedes.publica.reservarAhora', { defaultValue: 'Reservar ahora' })}
-            onCtaClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
-          />
-          <button
-            type="button"
-            className="sede-publica-btn sede-publica-btn--primary sede-publica-reservar-sticky__btn"
-            onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
-          >
-            {t('sedes.publica.reservarCancha', { defaultValue: 'Reservar cancha' })}
-          </button>
+          {puedeReservarSede(sede) ? (
+            <>
+              <PadcoinsCampaignPlayerBanner
+                campaign={sedePadcoinsCampaign}
+                ctaLabel={t('sedes.publica.reservarAhora', { defaultValue: 'Reservar ahora' })}
+                onCtaClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
+              />
+              <button
+                type="button"
+                className="sede-publica-btn sede-publica-btn--primary sede-publica-reservar-sticky__btn"
+                onClick={() => navigate(`/reservar?sedeId=${encodeURIComponent(String(sedeId))}`)}
+              >
+                {t('sedes.publica.reservarCancha', { defaultValue: 'Reservar cancha' })}
+              </button>
+            </>
+          ) : (
+            <p className="sede-publica-reservar-sticky__btn" style={{ margin: 0, fontWeight: 700 }}>
+              {t('sedes.publica.sedeDeTorneo', { defaultValue: 'Sede de torneo: no se reserva por hora.' })}
+            </p>
+          )}
           </>
         );
       })()}

@@ -289,7 +289,10 @@ const TorneoCrear = forwardRef(function TorneoCrear({
       return;
     }
 
-    if (!formData.es_multisede && !formData.sede_id) {
+    // Un torneo oficial puede crearse con sede pendiente; la sede se asigna antes
+    // de programar canchas. Solo lo permite un administrador global.
+    const puedeSedePendiente = rol === 'super_admin';
+    if (!formData.es_multisede && !formData.sede_id && !puedeSedePendiente) {
       setError(t('torneos.create.selectVenueError'));
       setLoading(false);
       return;
@@ -297,7 +300,7 @@ const TorneoCrear = forwardRef(function TorneoCrear({
 
     const payload = {
       nombre: formData.nombre,
-      sede_id: formData.es_multisede ? null : parseInt(formData.sede_id, 10),
+      sede_id: formData.es_multisede || !formData.sede_id ? null : parseInt(formData.sede_id, 10),
       nivel_torneo: formData.nivel_torneo,
       categoria: String(formData.categoria || '').trim() || CATEGORIA_TORNEO_DEFAULT,
       tipo_competencia: String(formData.tipo_competencia || '').trim() || TORNEO_TIPO_COMPETENCIA_DEFAULT,

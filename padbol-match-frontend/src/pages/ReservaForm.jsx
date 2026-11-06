@@ -70,6 +70,7 @@ import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import SportIcon from '../components/common/SportIcon';
 import { useJugadorReputacionReserva } from '../components/ReputacionJugadorPanel';
 import { usePadcoinsActiveCampaign } from '../hooks/usePadcoinsActiveCampaign';
+import { esSedeTorneo } from '../utils/sedeTipo';
 import {
   PadcoinsCampaignPlayerBadge,
   PadcoinsCampaignPlayerHint,
@@ -1461,7 +1462,8 @@ export default function ReservaForm() {
         }
         try {
           const parsed = JSON.parse(text);
-          setSedesCatalogo(Array.isArray(parsed) ? parsed : []);
+          // Una sede de torneo no se ofrece para reservar por hora.
+          setSedesCatalogo((Array.isArray(parsed) ? parsed : []).filter((sede) => !esSedeTorneo(sede)));
         } catch {
           setSedesCatalogo([]);
         }
