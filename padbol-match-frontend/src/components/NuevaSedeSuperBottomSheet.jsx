@@ -763,7 +763,16 @@ export default function NuevaSedeSuperBottomSheet({
           </div>
         ) : null}
 
-        {st.step === 3 ? (
+        {st.step === 3 && tipoSede === TIPO_SEDE_TORNEO ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+              Esta sede es para un torneo: no se piden precio, horarios ni cantidad de canchas.
+            </p>
+            {configurationError ? <p role="alert" style={{ margin: 0, color: '#b91c1c', fontWeight: 700 }}>{configurationError}</p> : null}
+          </div>
+        ) : null}
+
+        {st.step === 3 && tipoSede !== TIPO_SEDE_TORNEO ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p style={{ margin: 0, fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
               {inviteToken
