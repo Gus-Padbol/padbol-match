@@ -85,6 +85,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     () => [{ key: 'torneos', label: t('torneos.titulo') }],
     [t],
   );
+  const [cropError, setCropError] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState('');
@@ -142,6 +143,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
     });
+    setCropError('');
     setCropModalOpen(true);
     return true;
   }, []);
@@ -503,6 +505,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     async (file) => {
       const pending = pendingUploadRef.current;
       if (!pending || !accessToken) return;
+      setCropError('');
       setCropUploadBusy(true);
       try {
         if (pending.kind === 'legacy') {
@@ -515,6 +518,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         cerrarCropModal();
       } catch (err) {
         const text = err?.message || String(err);
+        setCropError(text);
         if (pending.kind === 'legacy') setMsg(text);
         else if (pending.kind === 'inicio') setInicioMsg(text);
         else setDeporteMsg(text);
@@ -1126,7 +1130,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       })}
 
       </details>
-      <ImageCropModal
+      <ImageCropModal error={cropError}
         open={cropModalOpen}
         imageSrc={cropImageSrc}
         onClose={cerrarCropModal}

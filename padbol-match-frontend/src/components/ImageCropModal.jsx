@@ -3,7 +3,7 @@ import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
 import { getCroppedImgBlob } from '../utils/cropImage';
 
-export default function ImageCropModal({
+export default function ImageCropModal({ error = '',
   open,
   imageSrc,
   onClose,
@@ -96,7 +96,10 @@ export default function ImageCropModal({
         }}
         onClick={(ev) => ev.stopPropagation()}
       >
-        <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--border)' }}>
+              {error ? (
+        <p role="alert" style={{ margin: '0 0 14px', color: '#b91c1c', fontSize: '13px', fontWeight: 600 }}>{error}</p>
+      ) : null}
+<div style={{ padding: '16px 18px 12px', borderBottom: '1px solid var(--border)' }}>
           <h3 id="image-crop-modal-title" style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>
             {title}
           </h3>
