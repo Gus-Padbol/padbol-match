@@ -119,7 +119,7 @@ test('flujo configure -> preview -> confirm: token, confirmed, roster en false y
 
   const confirmCall = callsTo(fetchMock, '/imports/confirm')[0];
   const confirmBody = bodyOf(confirmCall);
-  expect(confirmBody.rows).toEqual([{rowKey: expect.stringMatching(/^r[a-z0-9]+$/), name: 'Jugador de prueba', country: 'XX', minor: false}]);
+  expect(confirmBody.rows).toEqual([{rowKey: expect.stringMatching(/^r[a-z0-9]+$/), name: 'Jugador de prueba', country: 'XX', minor: false, ageStatus: 'desconocido'}]);
   expect(confirmBody.batchId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
   expect(screen.getByText(/Nombres publicados: no/)).toBeInTheDocument();
 });

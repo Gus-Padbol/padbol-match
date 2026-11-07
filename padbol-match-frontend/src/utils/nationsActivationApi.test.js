@@ -13,8 +13,8 @@ describe('nationsActivationApi', () => {
   test('parsea filas ficticias y normaliza el país en mayúsculas', () => {
     const rows = parseRows('Jugador Uno, xx\n\nJugador Dos,yy ');
     expect([...rows]).toEqual([
-      {rowKey: expect.stringMatching(/^r[a-z0-9]+(-\d+)?$/), name: 'Jugador Uno', country: 'XX', minor: false},
-      {rowKey: expect.stringMatching(/^r[a-z0-9]+(-\d+)?$/), name: 'Jugador Dos', country: 'YY', minor: false},
+      {rowKey: expect.stringMatching(/^r[a-z0-9]+(-\d+)?$/), name: 'Jugador Uno', country: 'XX', minor: false, ageStatus: 'desconocido'},
+      {rowKey: expect.stringMatching(/^r[a-z0-9]+(-\d+)?$/), name: 'Jugador Dos', country: 'YY', minor: false, ageStatus: 'desconocido'},
     ]);
   });
 

@@ -171,13 +171,13 @@ export default function AdminNationsActivation() {
       </form>
 
       <label style={{display: 'block', marginBottom: 8}}>
-        Filas (una por línea: Nombre, PAÍS[, menor])
+        Filas (una por línea: Nombre, PAÍS[, menor|adulto])
         <textarea
           value={texto}
           onChange={(e) => cambiarTexto(e.target.value)}
           rows={8}
           style={{width: '100%', fontFamily: 'monospace'}}
-          placeholder={'Jugador de prueba, XX\nOtro jugador, YY\nMenor de prueba, ZZ, menor'}
+          placeholder={'Jugador de prueba, XX\nJugador adulto, YY, adulto\nMenor de prueba, ZZ, menor'}
         />
       </label>
 
@@ -210,14 +210,14 @@ export default function AdminNationsActivation() {
             </p>
           ) : null}
           <table style={{width: '100%', borderCollapse: 'collapse', marginBottom: 16}}>
-            <thead><tr><th align="left">Fila</th><th align="left">Nombre</th><th align="left">País</th><th align="left">Menor</th><th align="left">Coincidencia</th><th align="left">Problema</th></tr></thead>
+            <thead><tr><th align="left">Fila</th><th align="left">Nombre</th><th align="left">País</th><th align="left">Edad</th><th align="left">Coincidencia</th><th align="left">Problema</th></tr></thead>
             <tbody>
               {preview.map((row) => (
                 <tr key={row.rowKey}>
                   <td>{row.rowKey}</td>
                   <td>{row.name}</td>
                   <td>{row.country}</td>
-                  <td>{row.minor ? 'Sí' : 'No'}</td>
+                  <td>{({adulto: 'Adulto', menor: 'Menor', desconocido: 'Desconocida'})[row.age_status || row.ageStatus || (row.minor ? 'menor' : 'desconocido')] || 'Desconocida'}</td>
                   <td>{row.matchedParticipantId || row.existingParticipantId ? `Existente (${row.matchedParticipantId || row.existingParticipantId})` : 'Nueva'}</td>
                   <td>{Array.isArray(row.errors) && row.errors.length ? row.errors.join(', ') : '—'}</td>
                 </tr>

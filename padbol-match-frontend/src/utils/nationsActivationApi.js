@@ -48,11 +48,13 @@ export function parseRows(text) {
         errores.push({linea: index + 1, motivo: 'El país debe ser un código de dos letras, por ejemplo XX.'});
         return;
       }
-      if (marca !== '' && marca !== 'menor') {
-        errores.push({linea: index + 1, motivo: 'La tercera columna solo admite "menor" (o dejarla vacía).'});
+      if (marca !== '' && marca !== 'menor' && marca !== 'adulto') {
+        errores.push({linea: index + 1, motivo: 'La tercera columna solo admite "menor", "adulto" o dejarla vacía (edad desconocida).'});
         return;
       }
-      validas.push({name, country, minor: marca === 'menor'});
+      // Sin tercera columna la edad es DESCONOCIDA: no se asume adulto.
+      const ageStatus = marca === 'menor' ? 'menor' : (marca === 'adulto' ? 'adulto' : 'desconocido');
+      validas.push({name, country, minor: ageStatus === 'menor', ageStatus});
     });
 
   if (validas.length > MAX_ROWS) {
@@ -96,7 +98,7 @@ function hashClave(valor) {
 
 /** Huella estable de las filas: si cambia, el preview anterior deja de valer. */
 export function rowsFingerprint(rows) {
-  return JSON.stringify((rows || []).map((row) => [row.rowKey, row.name, row.country, row.minor === true]));
+  return JSON.stringify((rows || []).map((row) => [row.rowKey, row.name, row.country, row.ageStatus || 'desconocido']));
 }
 
 export function newBatchId() {

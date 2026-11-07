@@ -94,15 +94,15 @@ test('BAJO-3 corregido: al editar las filas después del preview aparece el avis
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
 });
 
-test('MEDIO-5 corregido: la tabla muestra la columna Menor y el valor del backend', async () => {
+test('MEDIO-5 corregido: la tabla muestra la columna Edad y el valor del backend', async () => {
   installBackend({sedeByTorneo: {1: 7}, previewMinor: true});
   render(<AdminNationsActivation />);
   configureEvent('1');
   await screen.findByText(/Evento configurado/);
   await previewRows();
 
-  expect(screen.getByRole('columnheader', {name: 'Menor'})).toBeInTheDocument();
-  expect(screen.getByText('Sí')).toBeInTheDocument();
+  expect(screen.getByRole('columnheader', {name: 'Edad'})).toBeInTheDocument();
+  expect(screen.getByText('Menor')).toBeInTheDocument();
 });
 
 test('MEDIO-2 corregido: el guard usa el torneo del evento, no el id del formulario', async () => {

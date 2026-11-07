@@ -120,7 +120,7 @@ describe('forma de filas y parseo', () => {
     global.fetch = jest.fn(async () => response({status: 200, payload: {rows: [], canConfirm: true, errors: []}}));
     await previewImport(ctx, {slug: 'nations-cup-prueba', rows: parseRows('  Jugador   de prueba , xx  ')});
     const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-    expect(body.rows).toEqual([{rowKey: expect.stringMatching(/^r[a-z0-9]+$/), name: 'Jugador   de prueba', country: 'XX', minor: false}]);
+    expect(body.rows).toEqual([{rowKey: expect.stringMatching(/^r[a-z0-9]+$/), name: 'Jugador   de prueba', country: 'XX', minor: false, ageStatus: 'desconocido'}]);
     // El backend colapsa espacios en name; el cliente no. No rompe el contrato, pero
     // el nombre mostrado en el preview puede diferir del que confirma.
     expect(body.rows[0].name).toBe('Jugador   de prueba');
