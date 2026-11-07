@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Link, useParams} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import {useSafeTranslation} from '../i18n/tSafe';
@@ -133,13 +133,23 @@ export default function NationsInscripcion() {
   const [sending, setSending] = useState(false);
   const epoch = useRef(0);
 
-  const requestId = useMemo(() => {
+  // El id vive en estado: al pedir una nueva solicitud DESPUES de un rechazo debe cambiar en
+  // memoria, no solo en sessionStorage (bug real: se reenviaba el id rechazado => 409).
+  const [requestId, setRequestId] = useState(() => {
     if (!actorId || !slug) return null;
     const existing = sessionStorage.getItem(keyFor(actorId, slug));
     if (existing) return existing;
     const fresh = newRequestId();
     sessionStorage.setItem(keyFor(actorId, slug), fresh);
     return fresh;
+  });
+  useEffect(() => {
+    if (!actorId || !slug) { setRequestId(null); return; }
+    const existing = sessionStorage.getItem(keyFor(actorId, slug));
+    if (existing) { setRequestId(existing); return; }
+    const fresh = newRequestId();
+    sessionStorage.setItem(keyFor(actorId, slug), fresh);
+    setRequestId(fresh);
   }, [actorId, slug]);
 
   // Cambio de actor o de evento: se limpia todo el estado local y se ignoran respuestas viejas.
@@ -155,6 +165,8 @@ export default function NationsInscripcion() {
 
   const loadStatus = useCallback(async () => {
     if (!actorId || !slug) return;
+    // Tras "nueva solicitud" no se re-restaura la rechazada (evita tapar el formulario).
+    if (ignoreServerStatus) return;
     const ticket = epoch.current;
     setRestoring(true);
     try {
@@ -178,7 +190,8 @@ export default function NationsInscripcion() {
 
   const submit = async (event) => {
     event.preventDefault();
-    if (sending || !requestId || restoring) return;
+    const idActual = (actorId && slug && sessionStorage.getItem(keyFor(actorId, slug))) || requestId;
+    if (sending || !idActual || restoring) return;
     setError(null);
     if (!name.trim() || !country) { setError(t.required); return; }
     if (age === 'menor' && !guardianConsent) { setError(t.required); return; }
@@ -190,7 +203,7 @@ export default function NationsInscripcion() {
         method: 'POST',
         headers: {'Content-Type': 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {})},
         body: JSON.stringify({
-          request_id: requestId,
+          request_id: idActual,
           declared_name: name.trim(),
           declared_country: country,
           age_status: age,
@@ -213,7 +226,9 @@ export default function NationsInscripcion() {
 
   const startNew = () => {
     if (!actorId) return;
-    sessionStorage.setItem(keyFor(actorId, slug), newRequestId());
+    const fresh = newRequestId();
+    sessionStorage.setItem(keyFor(actorId, slug), fresh);
+    setRequestId(fresh);
     setIgnoreServerStatus(true);
     setStatus(null); setError(null);
   };

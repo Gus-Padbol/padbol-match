@@ -120,11 +120,14 @@ export default function AdminNationsSolicitudes() {
         <section>
           <h2>Revisar solicitud</h2>
           <p>Identidad declarada: <strong>{selected.declared_name}</strong> ({selected.declared_country})</p>
+          <p>Cuenta solicitante: <strong>{selected.actor_email || 'sin email'}</strong>
+            {selected.actor_email_verified ? ' · email verificado' : ' · email NO verificado'}
+            {' · '}<code>{selected.actor_user_id}</code></p>
           <p>Edad declarada: {selected.age_status}</p>
           <label>Persona existente del mismo país
             <select value={matched} onChange={(e) => setMatched(e.target.value)}>
               <option value="">Seleccionar</option>
-              {candidatos.map((p) => <option key={p.id} value={p.id}>{p.name || p.nombre || p.id}</option>)}
+              {candidatos.map((p) => <option key={p.id} value={p.id}>{p.name || p.nombre || 'Persona'} · {p.country} · {p.id}</option>)}
             </select>
           </label>
           <label><input type="checkbox" checked={identity} onChange={(e) => setIdentity(e.target.checked)} /> Verifiqué la identidad</label>

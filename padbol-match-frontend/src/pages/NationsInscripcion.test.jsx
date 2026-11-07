@@ -141,3 +141,33 @@ test('rechazada permite nueva solicitud sin recargar y con id nuevo', async () =
   expect(despues).not.toBe(antes);
   expect(screen.getByRole('button', {name: 'Enviar solicitud'})).toBeInTheDocument();
 });
+
+test('REGRESION rechazo->nueva: el segundo POST usa OTRO request_id', async () => {
+  mockFetch.mockImplementation(async (url, opts) => {
+    const u = String(url);
+    if (opts?.method === 'POST') {
+      const body = JSON.parse(opts.body);
+      // el backend real devuelve 409 si se reusa un id ya revisado
+      if (body.request_id === 'req-rechazado-01') return {ok: false, status: 409, json: async () => ({code: 'REQUEST_CONFLICT'})};
+      return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})};
+    }
+    if (u.includes('/profile-request')) return {ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'rechazada', request_id: 'req-rechazado-01'}]})};
+    return {ok: true, status: 200, json: async () => ({})};
+  });
+  sessionStorage.setItem('nationsProfileRequest:actor-1:nations-cup-napoli-2026', 'req-rechazado-01');
+  mount();
+  await waitFor(() => expect(screen.getByText(/no fue aprobada/)).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', {name: 'Enviar nueva solicitud'}));
+  fireEvent.change(screen.getByLabelText('Nombre y apellido'), {target: {value: 'Jugador Ficticio'}});
+  fireEvent.change(screen.getByLabelText('País'), {target: {value: 'IT'}});
+  fireEvent.click(screen.getByLabelText('Mayor de edad'));
+  fireEvent.click(screen.getByLabelText(/Autorizo el uso de mis datos/));
+  fireEvent.click(screen.getByRole('button', {name: 'Enviar solicitud'}));
+  await new Promise((r) => setTimeout(r, 150));
+  const alerta = screen.queryByRole('alert');
+  const posts = mockFetch.mock.calls.filter(([, o]) => o?.method === 'POST').map(([, o]) => JSON.parse(o.body).request_id);
+  if (!screen.queryByText(/Queda pendiente/)) throw new Error('DIAG alerta=' + (alerta && alerta.textContent) + ' posts=' + JSON.stringify(posts) + ' body=' + document.body.textContent.slice(0, 200));
+  expect(posts).toHaveLength(1);
+  expect(posts[0]).not.toBe('req-rechazado-01');
+  expect(sessionStorage.getItem('nationsProfileRequest:actor-1:nations-cup-napoli-2026')).toBe(posts[0]);
+});

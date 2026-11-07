@@ -113,7 +113,7 @@ test('error de red al cargar es recuperable', async () => {
 test('C-01: dos decisiones consecutivas sin recargar (busy se libera)', async () => {
   let queue = [
     {id: 'r1', declared_name: 'Jugador Ficticio Uno', declared_country: 'IT', age_status: 'adulto', status: 'pendiente'},
-    {id: 'r2', declared_name: 'Jugador Ficticio Dos', declared_country: 'IT', age_status: 'adulto', status: 'pendiente'},
+    {id: 'r2', declared_name: 'Jugador Ficticio Dos', declared_country: 'IT', age_status: 'adulto', status: 'pendiente', actor_user_id: 'acc-2', actor_email: 'dos@sintetico.invalid', actor_email_verified: true},
   ];
   mockFetch.mockImplementation(async (url, opts) => {
     if (String(url).endsWith('/access')) return ok({access: {canConfigure: true}});
@@ -155,4 +155,14 @@ test('C-03: 409 recarga la cola de verdad', async () => {
   fireEvent.click(screen.getByRole('button', {name: 'Aprobar'}));
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/cambió de estado/));
   expect(llamadasCola).toBeGreaterThanOrEqual(2);
+});
+
+test('muestra la CUENTA solicitante (email verificado + id) para poder contrastar evidencia', async () => {
+  routes({queue: ok({requests: [{id: 'r1', declared_name: 'Jugador Ficticio', declared_country: 'IT', age_status: 'adulto', status: 'pendiente', actor_user_id: 'acc-1', actor_email: 'uno@sintetico.invalid', actor_email_verified: true}]})});
+  mount();
+  await waitFor(() => expect(screen.getByRole('button', {name: /Jugador Ficticio · IT/})).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', {name: /Jugador Ficticio · IT/}));
+  expect(screen.getByText(/uno@sintetico.invalid/)).toBeInTheDocument();
+  expect(screen.getByText(/email verificado/)).toBeInTheDocument();
+  expect(screen.getByText('acc-1')).toBeInTheDocument();
 });
