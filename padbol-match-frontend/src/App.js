@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useState, Suspense, lazy } from 'react';
+import SeguridadPassword from './pages/SeguridadPassword';
 import {
   BrowserRouter as Router,
   Routes,
