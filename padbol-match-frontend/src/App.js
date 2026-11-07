@@ -439,6 +439,14 @@ function AppRoutes() {
         />
 
         <Route
+          path="/perfil/seguridad"
+          element={
+            <ProtectedRoute>
+              <SeguridadPassword />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/perfil"
           element={
             <ProtectedRoute>
