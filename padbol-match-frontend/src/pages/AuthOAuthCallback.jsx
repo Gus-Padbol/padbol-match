@@ -29,9 +29,46 @@ export default function AuthOAuthCallback() {
   const [legalError, setLegalError] = useState(false);
   const [callbackError, setCallbackError] = useState(null);
   const [callbackLocation] = useState(() => ({search:window.location.search,hash:window.location.hash}));
+  const [recovery, setRecovery] = useState(() => {
+    const q = new URLSearchParams(window.location.search);
+    const h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    return q.get('type') === 'recovery' || h.get('type') === 'recovery';
+  });
+  const [nuevaPassword, setNuevaPassword] = useState('');
+  const [repetirPassword, setRepetirPassword] = useState('');
+  const [recoveryError, setRecoveryError] = useState(null);
+  const [recoveryDone, setRecoveryDone] = useState(false);
+  const [recoverySaving, setRecoverySaving] = useState(false);
   const { t } = useTranslation();
 
+  // Supabase avisa PASSWORD_RECOVERY al consumir el enlace; el hash puede haberse limpiado ya.
   useEffect(() => {
+    const auth = supabase?.auth;
+    if (!auth || typeof auth.onAuthStateChange !== 'function') return undefined;
+    const { data } = auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') { setRecovery(true); setRecoveryError(null); }
+    }) || {};
+    return () => { try { data?.subscription?.unsubscribe?.(); } catch { /* noop */ } };
+  }, []);
+
+  const guardarPassword = async (event) => {
+    event.preventDefault();
+    if (recoverySaving) return;
+    setRecoveryError(null);
+    if (String(nuevaPassword).length < 8) { setRecoveryError('La contraseña debe tener al menos 8 caracteres.'); return; }
+    if (nuevaPassword !== repetirPassword) { setRecoveryError('Las contraseñas no coinciden.'); return; }
+    setRecoverySaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: nuevaPassword });
+      if (error) { setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.'); return; }
+      setNuevaPassword(''); setRepetirPassword(''); setRecoveryDone(true);
+    } catch {
+      setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.');
+    } finally { setRecoverySaving(false); }
+  };
+
+  useEffect(() => {
+    if (recovery) return;
     if (loading) return;
     let cancelled = false;
     let retryTimer;
@@ -77,7 +114,35 @@ export default function AuthOAuthCallback() {
     };
     void go();
     return () => { cancelled = true; window.clearTimeout(retryTimer); };
-  }, [callbackLocation, loading, navigate, retryNonce, session]);
+  }, [callbackLocation, loading, navigate, recovery, retryNonce, session]);
+
+  if (recovery) {
+    return (
+      <main style={{minHeight:'50vh',display:'grid',placeItems:'center',padding:24}}>
+        <form onSubmit={guardarPassword} style={{maxWidth:460,width:'100%',color:'var(--text-primary)'}}>
+          <h1 style={{fontSize:'1.35rem'}}>Establecer una contraseña</h1>
+          {recoveryDone ? (
+            <>
+              <p role="status">Tu contraseña quedó guardada. Ya podés ingresar con tu email.</p>
+              <Link to={`/login?redirect=${encodeURIComponent(resolvePostLoginNavigatePath(callbackLocation.search))}`}>Ir a ingresar</Link>
+            </>
+          ) : (
+            <>
+              <p>Abrí el enlace en el mismo navegador donde lo pediste. Elegí una contraseña nueva.</p>
+              {recoveryError ? <p role="alert" style={{color:'#b91c1c'}}>{recoveryError}</p> : null}
+              <label style={{display:'block',marginTop:12}}>Contraseña nueva
+                <input type="password" autoComplete="new-password" value={nuevaPassword} onChange={(e)=>setNuevaPassword(e.target.value)} style={{display:'block',width:'100%',marginTop:4}} />
+              </label>
+              <label style={{display:'block',marginTop:12}}>Repetir contraseña
+                <input type="password" autoComplete="new-password" value={repetirPassword} onChange={(e)=>setRepetirPassword(e.target.value)} style={{display:'block',width:'100%',marginTop:4}} />
+              </label>
+              <button type="submit" disabled={recoverySaving} style={{marginTop:16}}>{recoverySaving ? 'Guardando…' : 'Guardar contraseña'}</button>
+            </>
+          )}
+        </form>
+      </main>
+    );
+  }
 
   if (callbackError) {
     const returnPath = resolvePostLoginNavigatePath(callbackLocation.search);
