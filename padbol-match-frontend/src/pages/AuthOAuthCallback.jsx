@@ -7,7 +7,7 @@ import { resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 import { flushPendingOAuthLegalAcceptance, hasPendingOAuthLegalAcceptance } from '../utils/legalDocuments';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { resolveRoleAwarePostLoginPath } from '../utils/postLoginDestination';
-import { hayRecuperacionPendiente, consumirRecuperacion, suscribirRecuperacion } from '../utils/passwordRecoverySignal';
+import { usuarioEnRecuperacion, limpiarRecuperacion, suscribirRecuperacion } from '../utils/passwordRecoverySignal';
 
 export function resolveOAuthPostLoginPath(destination, needsProfileCompletion) {
   const dest = String(destination || '/');
@@ -30,11 +30,8 @@ export default function AuthOAuthCallback() {
   const [legalError, setLegalError] = useState(false);
   const [callbackError, setCallbackError] = useState(null);
   const [callbackLocation] = useState(() => ({search:window.location.search,hash:window.location.hash}));
-  const [recovery, setRecovery] = useState(() => {
-    const q = new URLSearchParams(window.location.search);
-    const h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    return q.get('type') === 'recovery' || h.get('type') === 'recovery' || hayRecuperacionPendiente();
-  });
+  // `type=recovery` en la URL NO es prueba: solo la señal PASSWORD_RECOVERY habilita el form.
+  const [recovery, setRecovery] = useState(() => Boolean(usuarioEnRecuperacion()));
   const [nuevaPassword, setNuevaPassword] = useState('');
   const [repetirPassword, setRepetirPassword] = useState('');
   const [recoveryError, setRecoveryError] = useState(null);
@@ -53,15 +50,17 @@ export default function AuthOAuthCallback() {
     if (nuevaPassword !== repetirPassword) { setRecoveryError('Las contraseñas no coinciden.'); return; }
     setRecoverySaving(true);
     try {
-      // El enlace debe haber abierto una sesión de recuperación válida; si no, no se escribe nada.
+      // Debe existir sesión Y ser la MISMA identidad que emitió PASSWORD_RECOVERY.
       const actual = await supabase.auth.getSession().catch(() => null);
-      if (!actual?.data?.session?.user) {
+      const actualId = actual?.data?.session?.user?.id ? String(actual.data.session.user.id) : null;
+      const senalId = usuarioEnRecuperacion();
+      if (!actualId || !senalId || actualId !== senalId) {
         setRecoveryError('Este enlace venció o ya fue utilizado. Pedí uno nuevo desde “Olvidé mi contraseña”.');
         return;
       }
       const { error } = await supabase.auth.updateUser({ password: nuevaPassword });
       if (error) { setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.'); return; }
-      consumirRecuperacion();
+      limpiarRecuperacion();
       setNuevaPassword(''); setRepetirPassword(''); setRecoveryDone(true);
     } catch {
       setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.');
@@ -116,6 +115,22 @@ export default function AuthOAuthCallback() {
     void go();
     return () => { cancelled = true; window.clearTimeout(retryTimer); };
   }, [callbackLocation, loading, navigate, recovery, retryNonce, session]);
+
+  const errorEnlaceInmediato = (() => {
+    const q = new URLSearchParams(callbackLocation.search);
+    const h = new URLSearchParams(callbackLocation.hash.replace(/^#/, ''));
+    return Boolean(q.get('error') || h.get('error') || q.get('error_code') || h.get('error_code'));
+  })();
+
+  if (recovery && (callbackError || errorEnlaceInmediato)) {
+    return <main style={{minHeight:'50vh',display:'grid',placeItems:'center',padding:24}}>
+      <section role="alert" style={{maxWidth:480,color:'var(--text-primary)'}}>
+        <h1 style={{fontSize:'1.35rem'}}>El enlace no es válido</h1>
+        <p>Venció o ya fue utilizado. Pedí uno nuevo desde “Olvidé mi contraseña”.</p>
+        <Link to={`/login?redirect=${encodeURIComponent(resolvePostLoginNavigatePath(callbackLocation.search))}`}>Volver a ingresar</Link>
+      </section>
+    </main>;
+  }
 
   if (recovery) {
     return (
