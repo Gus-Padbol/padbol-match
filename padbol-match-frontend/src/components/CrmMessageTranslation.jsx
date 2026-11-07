@@ -67,7 +67,7 @@ export default function CrmMessageTranslation({ api, text, messageId, channel, c
       setTranslation(result.translation);
       setShowOriginal(false);
     } catch (failure) {
-      setError(failure?.userMessage || failure?.message || 'No se pudo traducir. Intentá de nuevo.');
+      setError(failure?.userMessage || failure?.message || 'No se pudo traducir. Intenta de nuevo.');
     } finally { setLoading(false); }
   }
 

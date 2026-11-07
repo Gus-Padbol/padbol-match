@@ -48,7 +48,7 @@ export default function CrmComunicaciones({token, conversationId}) {
               {salida && <span>{ETIQUETA[String(estadoReal).toLowerCase()] || estadoReal || 'sin estado'}</span>}
             </header>
             {fallo && <p role="alert" style={{color: '#dc2626', margin: '4px 0', fontSize: 13}}>
-              Este correo no se entregó{estadoReal ? ` (${ETIQUETA[String(estadoReal).toLowerCase()] || estadoReal})` : ''}. Revisá el contacto antes de reintentar.
+              Este correo no se entregó{estadoReal ? ` (${ETIQUETA[String(estadoReal).toLowerCase()] || estadoReal})` : ''}. Revisa el contacto antes de reintentar.
             </p>}
             <p style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: '4px 0'}}>{m.body}</p>
           </article>

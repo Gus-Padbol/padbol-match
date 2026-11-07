@@ -87,7 +87,7 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
           setLinked(data.linkedConversations || []); setLinkable(data.linkableConversations || []);
         }
       } catch (e) {
-        if (active) setError(e?.message === 'FORBIDDEN' ? 'No tenés permiso para esta ficha.' : 'No se pudo cargar el formulario.');
+        if (active) setError(e?.message === 'FORBIDDEN' ? 'No tienes permiso para esta ficha.' : 'No se pudo cargar el formulario.');
       } finally { if (active) setLoading(false); }
     })();
     return () => { active = false; };
@@ -103,13 +103,13 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
 
   async function search() {
     const q = form.email.trim() || phone || form.name.trim();
-    if (!q) { setError('Ingresá un correo, teléfono o nombre para buscar coincidencias.'); return; }
+    if (!q) { setError('Ingresa un correo, teléfono o nombre para buscar coincidencias.'); return; }
     setBusy(true); setError(''); setMatches([]);
     try {
       const result = await api.searchManual(q);
       setMatches(result.matches || []);
-      if (!(result.matches || []).length) setNotice('No encontramos coincidencias. Podés crear la ficha.');
-    } catch { setError('No se pudo buscar coincidencias. Intentá nuevamente.'); }
+      if (!(result.matches || []).length) setNotice('No encontramos coincidencias. Puedes crear la ficha.');
+    } catch { setError('No se pudo buscar coincidencias. Intenta nuevamente.'); }
     finally { setBusy(false); }
   }
 
@@ -122,18 +122,18 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
       email: match.email_normalized || current.email,
       ...(() => { const split = splitPhone(match.phone_normalized); return {prefix:split.prefix, phone:split.phone}; })(),
     }));
-    setMatches([]); setNotice('Contacto existente seleccionado. Completá el seguimiento y guardá.');
+    setMatches([]); setNotice('Contacto existente seleccionado. Completa el seguimiento y guarda.');
   }
 
   async function submit(event) {
     event.preventDefault();
     if (busy) return;
-    if (!form.email.trim() && !phone) { setError('Ingresá un correo o un teléfono para poder contactar al interesado.'); return; }
-    if (form.status === 'cerrado' && !editing && !form.closureOutcome) { setError('Indicá si la venta se concretó o no avanzó.'); return; }
+    if (!form.email.trim() && !phone) { setError('Ingresa un correo o un teléfono para poder contactar al interesado.'); return; }
+    if (form.status === 'cerrado' && !editing && !form.closureOutcome) { setError('Indica si la venta se concretó o no avanzó.'); return; }
     const reminders = parseReminderHours(form.reminders);
     let nextContactAt = null;
     if (form.nextContact) { const parsed = new Date(form.nextContact); if (!Number.isFinite(parsed.getTime())) { setError('La fecha de próximo contacto no es válida.'); return; } nextContactAt = parsed.toISOString(); }
-    if (form.nextContact && !reminders) { setError('Indicá las horas de aviso separadas por comas. Ej.: 24, 8.'); return; }
+    if (form.nextContact && !reminders) { setError('Indica las horas de aviso separadas por comas. Ej.: 24, 8.'); return; }
     const payload = {
       name: form.name, email: form.email, phone, company: form.company, country: form.country,
       city: form.city, interest: form.interest, status: form.status, sourceDetail: form.sourceDetail,
@@ -157,9 +157,9 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
       onClose?.();
     } catch (e) {
       if (e?.code === 'MANUAL_IDENTITY_CONFLICT' || e?.status === 409) {
-        setError(e?.message || 'El contacto coincide con otra ficha. Revisá las coincidencias.');
+        setError(e?.message || 'El contacto coincide con otra ficha. Revisa las coincidencias.');
         await search();
-      } else setError(e?.userMessage || e?.message || 'No se pudo guardar la ficha. Revisá los datos.');
+      } else setError(e?.userMessage || e?.message || 'No se pudo guardar la ficha. Revisa los datos.');
     } finally { setBusy(false); }
   }
 
@@ -168,7 +168,7 @@ export default function CommercialManualLeadForm({api, currentUserId='', mode='c
   return <div className="manual-lead-overlay" role="presentation">
     <section className="manual-lead-modal" role="dialog" aria-modal="true" aria-labelledby="manual-lead-title" ref={panel}>
       <header className="manual-lead-header">
-        <div><p>ÁREA COMERCIAL · PADBOL INTERNACIONAL</p><h2 id="manual-lead-title">{title}</h2><span>{editing ? 'Actualizá los datos y el seguimiento sin alterar el historial.' : 'Registrá una oportunidad aunque todavía no haya conversación.'}</span></div>
+        <div><p>ÁREA COMERCIAL · PADBOL INTERNACIONAL</p><h2 id="manual-lead-title">{title}</h2><span>{editing ? 'Actualiza los datos y el seguimiento sin alterar el historial.' : 'Registra una oportunidad aunque todavía no haya conversación.'}</span></div>
         <button type="button" className="manual-lead-close" onClick={onClose} disabled={busy} aria-label="Cerrar formulario">×</button>
       </header>
       {loading ? <p className="manual-lead-loading">Cargando ficha…</p> : <form onSubmit={submit} className="manual-lead-form">

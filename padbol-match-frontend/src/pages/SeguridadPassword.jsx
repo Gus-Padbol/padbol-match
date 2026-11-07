@@ -21,7 +21,7 @@ export default function SeguridadPassword() {
     event.preventDefault();
     if (guardando) return;
     setError(null);
-    if (!session?.user?.id) { setError('Necesitás iniciar sesión para cambiar tu contraseña.'); return; }
+    if (!session?.user?.id) { setError('Necesitas iniciar sesión para cambiar tu contraseña.'); return; }
     if (String(nueva).length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return; }
     if (nueva !== repetir) { setError('Las contraseñas no coinciden.'); return; }
     setGuardando(true);
@@ -29,20 +29,20 @@ export default function SeguridadPassword() {
       const { data } = await supabase.auth.getSession();
       const actual = data?.session?.user?.id ? String(data.session.user.id) : null;
       if (!actual || actual !== String(session.user.id)) {
-        setError('La sesión cambió. Volvé a iniciar sesión y reintentá.');
+        setError('La sesión cambió. Vuelve a iniciar sesión y reintenta.');
         return;
       }
       const { error: updateError } = await supabase.auth.updateUser({ password: nueva });
-      if (updateError) { setError('No pudimos guardar la contraseña. Reintentá en unos minutos.'); return; }
+      if (updateError) { setError('No pudimos guardar la contraseña. Reintenta en unos minutos.'); return; }
       setNueva(''); setRepetir(''); setListo(true);
     } catch {
-      setError('No pudimos guardar la contraseña. Reintentá en unos minutos.');
+      setError('No pudimos guardar la contraseña. Reintenta en unos minutos.');
     } finally { setGuardando(false); }
   };
 
   if (loading) return <main style={{minHeight:'50vh',display:'grid',placeItems:'center'}}>Cargando…</main>;
   if (!session?.user) return <main style={{minHeight:'50vh',display:'grid',placeItems:'center',padding:24}}>
-    <p>Iniciá sesión para gestionar tu contraseña. <Link to="/login">Ir a ingresar</Link></p>
+    <p>Inicia sesión para gestionar tu contraseña. <Link to="/login">Ir a ingresar</Link></p>
   </main>;
 
   return (
@@ -51,7 +51,7 @@ export default function SeguridadPassword() {
         <h1 style={{fontSize:'1.35rem'}}>Contraseña y seguridad</h1>
         {listo ? (
           <>
-            <p role="status">Tu contraseña quedó guardada. Podés usarla la próxima vez que ingreses.</p>
+            <p role="status">Tu contraseña quedó guardada. Puedes usarla la próxima vez que ingreses.</p>
             <button type="button" onClick={() => navigate(volver)}>Volver a mi perfil</button>
           </>
         ) : (

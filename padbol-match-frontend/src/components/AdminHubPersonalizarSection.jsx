@@ -438,7 +438,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       const check = await fetch(`${apiBaseUrl}/api/hub-config`, { headers: { Authorization: `Bearer ${accessToken}` } });
       const rowsNow = await check.json().catch(() => []);
       const guardada = Array.isArray(rowsNow) && rowsNow.some((r) => String(r.id) === String(id) && r.foto_url);
-      if (!guardada) throw new Error('La foto no quedó guardada. Intentá de nuevo.');
+      if (!guardada) throw new Error('La foto no quedó guardada. Intenta de nuevo.');
       setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
       setMsg(t('admin.hub.imageUploaded'));
       window.setTimeout(() => setMsg(''), 2500);

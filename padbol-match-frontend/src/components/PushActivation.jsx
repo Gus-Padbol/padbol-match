@@ -37,7 +37,7 @@ export default function PushActivation({token}) {
 
   useEffect(() => {
     (async () => {
-      if (!supported) return setState({status: 'unsupported', message: 'Este navegador no permite notificaciones. En iPhone, abrí el CRM desde el ícono instalado en la pantalla de inicio.'});
+      if (!supported) return setState({status: 'unsupported', message: 'Este navegador no permite notificaciones. En iPhone, abre el CRM desde el ícono instalado en la pantalla de inicio.'});
       try {
         const config = await crmAdminApi.pushConfig(token);
         if (!config?.enabled) return setState({status: 'disabled', message: 'El servidor todavía no tiene las claves de notificación configuradas.'});
@@ -48,10 +48,10 @@ export default function PushActivation({token}) {
             await crmAdminApi.pushSubscribe(token, sub.toJSON());
             return setState({status: 'active', message: 'Notificaciones activadas en este dispositivo.'});
           } catch {
-            return setState({status: 'idle', message: 'Este dispositivo todavía no está registrado en el servidor. Tocá para completar el registro.'});
+            return setState({status: 'idle', message: 'Este dispositivo todavía no está registrado en el servidor. Toca para completar el registro.'});
           }
         }
-        setState({status: 'idle', message: 'Activá las notificaciones para recibir leads y recordatorios en este teléfono.'});
+        setState({status: 'idle', message: 'Activa las notificaciones para recibir leads y recordatorios en este teléfono.'});
       } catch (error) {
         setState({status: 'error', message: error?.message || 'No se pudo consultar el estado de las notificaciones.'});
       }
@@ -74,7 +74,7 @@ export default function PushActivation({token}) {
       if (!config?.enabled || !config.publicKey) throw new Error('El servidor no tiene la clave pública configurada.');
       const permission = await withTimeout(Notification.requestPermission(), 20000, 'TIMEOUT_PERMISO');
       if (permission !== 'granted') {
-        return setState({status: 'blocked', message: 'Permiso de notificaciones bloqueado. En iPhone: Ajustes → Notificaciones → PADBOL CRM → Permitir. Luego recargá esta pantalla.'});
+        return setState({status: 'blocked', message: 'Permiso de notificaciones bloqueado. En iPhone: Ajustes → Notificaciones → PADBOL CRM → Permitir. Luego recarga esta pantalla.'});
       }
       const reg = await withTimeout(navigator.serviceWorker.register('/sw.js'), 20000, 'TIMEOUT_SW');
       await withTimeout(navigator.serviceWorker.ready, 20000, 'TIMEOUT_SW_LISTO');
@@ -86,12 +86,12 @@ export default function PushActivation({token}) {
     } catch (error) {
       const code = error?.code || '';
       const map = {
-        TIMEOUT_CONFIG: 'El servidor no respondió al pedir la configuración. Revisá tu conexión e intentá otra vez.',
-        TIMEOUT_PERMISO: 'El teléfono no respondió al pedido de permiso. Cerrá y volvé a abrir el CRM desde el ícono, e intentá de nuevo.',
-        TIMEOUT_SW: 'No se pudo preparar la aplicación en segundo plano. Cerrá el CRM y abrila otra vez desde el ícono.',
-        TIMEOUT_SW_LISTO: 'La aplicación no terminó de prepararse. Recargá la pantalla e intentá de nuevo.',
-        TIMEOUT_SUSCRIPCION: 'El teléfono no completó el registro de notificaciones. Verificá que la app esté abierta desde el ícono y reintentá.',
-        TIMEOUT_REGISTRO: 'No se pudo guardar el dispositivo en el servidor. Reintentá en unos segundos.',
+        TIMEOUT_CONFIG: 'El servidor no respondió al pedir la configuración. Revisa tu conexión e intenta otra vez.',
+        TIMEOUT_PERMISO: 'El teléfono no respondió al pedido de permiso. Cierra y vuelve a abrir el CRM desde el ícono, e intenta de nuevo.',
+        TIMEOUT_SW: 'No se pudo preparar la aplicación en segundo plano. Cierra el CRM y ábrelo otra vez desde el ícono.',
+        TIMEOUT_SW_LISTO: 'La aplicación no terminó de prepararse. Recarga la pantalla e intenta de nuevo.',
+        TIMEOUT_SUSCRIPCION: 'El teléfono no completó el registro de notificaciones. Verifica que la app esté abierta desde el ícono y reintenta.',
+        TIMEOUT_REGISTRO: 'No se pudo guardar el dispositivo en el servidor. Reintenta en unos segundos.',
       };
       setState({status: 'error', message: map[code] || error?.message || 'No se pudieron activar las notificaciones.'});
     }

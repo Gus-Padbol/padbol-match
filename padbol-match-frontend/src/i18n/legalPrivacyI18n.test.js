@@ -20,8 +20,8 @@ describe('Privacy policy translations', () => {
   it('preserves privacy rights in Romanian and Czech', () => {
     const ro = i18n.getResourceBundle('ro', 'translation').legal.privacyPage;
     const cs = i18n.getResourceBundle('cs', 'translation').legal.privacyPage;
-    expect(Object.keys(ro)).toHaveLength(33);
-    expect(Object.keys(cs)).toHaveLength(33);
+    expect(Object.keys(ro)).toHaveLength(38);
+    expect(Object.keys(cs)).toHaveLength(38);
     expect(ro.gdprBody).toMatch(/accesul.*rectificarea.*plângeri/iu);
     expect(cs.gdprBody).toMatch(/přístup.*opravu.*stížnost/iu);
     expect(ro.noSaleBody).toMatch(/Nu vindem.*terți/iu);

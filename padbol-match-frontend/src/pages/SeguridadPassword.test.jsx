@@ -63,6 +63,6 @@ test('error del proveedor no filtra detalles', async () => {
   fireEvent.change(screen.getByLabelText(/Contraseña nueva/), {target: {value: 'password-larga'}});
   fireEvent.change(screen.getByLabelText(/Repetir contraseña/), {target: {value: 'password-larga'}});
   fireEvent.click(screen.getByRole('button', {name: 'Guardar contraseña'}));
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Reintentá/));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Reintenta/));
   expect(document.body.textContent).not.toContain('provider-private-detail');
 });

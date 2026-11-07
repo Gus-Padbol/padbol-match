@@ -55,15 +55,15 @@ export default function AuthOAuthCallback() {
       const actualId = actual?.data?.session?.user?.id ? String(actual.data.session.user.id) : null;
       const senalId = usuarioEnRecuperacion();
       if (!actualId || !senalId || actualId !== senalId) {
-        setRecoveryError('Este enlace venció o ya fue utilizado. Pedí uno nuevo desde “Olvidé mi contraseña”.');
+        setRecoveryError('Este enlace venció o ya fue utilizado. Pide uno nuevo desde “Olvidé mi contraseña”.');
         return;
       }
       const { error } = await supabase.auth.updateUser({ password: nuevaPassword });
-      if (error) { setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.'); return; }
+      if (error) { setRecoveryError('No pudimos guardar la contraseña. Pide un enlace nuevo e intenta otra vez.'); return; }
       limpiarRecuperacion();
       setNuevaPassword(''); setRepetirPassword(''); setRecoveryDone(true);
     } catch {
-      setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.');
+      setRecoveryError('No pudimos guardar la contraseña. Pide un enlace nuevo e intenta otra vez.');
     } finally { setRecoverySaving(false); }
   };
 
@@ -126,7 +126,7 @@ export default function AuthOAuthCallback() {
     return <main style={{minHeight:'50vh',display:'grid',placeItems:'center',padding:24}}>
       <section role="alert" style={{maxWidth:480,color:'var(--text-primary)'}}>
         <h1 style={{fontSize:'1.35rem'}}>El enlace no es válido</h1>
-        <p>Venció o ya fue utilizado. Pedí uno nuevo desde “Olvidé mi contraseña”.</p>
+        <p>Venció o ya fue utilizado. Pide uno nuevo desde “Olvidé mi contraseña”.</p>
         <Link to={`/login?redirect=${encodeURIComponent(resolvePostLoginNavigatePath(callbackLocation.search))}`}>Volver a ingresar</Link>
       </section>
     </main>;
@@ -139,12 +139,12 @@ export default function AuthOAuthCallback() {
           <h1 style={{fontSize:'1.35rem'}}>Establecer una contraseña</h1>
           {recoveryDone ? (
             <>
-              <p role="status">Tu contraseña quedó guardada. Ya podés ingresar con tu email.</p>
+              <p role="status">Tu contraseña quedó guardada. Ya puedes ingresar con tu email.</p>
               <Link to={`/login?redirect=${encodeURIComponent(resolvePostLoginNavigatePath(callbackLocation.search))}`}>Ir a ingresar</Link>
             </>
           ) : (
             <>
-              <p>Abrí el enlace en el mismo navegador donde lo pediste. Elegí una contraseña nueva.</p>
+              <p>Abre el enlace en el mismo navegador donde lo pediste. Elige una contraseña nueva.</p>
               {recoveryError ? <p role="alert" style={{color:'#b91c1c'}}>{recoveryError}</p> : null}
               <label style={{display:'block',marginTop:12}}>Contraseña nueva
                 <input type="password" autoComplete="new-password" value={nuevaPassword} onChange={(e)=>setNuevaPassword(e.target.value)} style={{display:'block',width:'100%',marginTop:4}} />
@@ -166,7 +166,7 @@ export default function AuthOAuthCallback() {
       <section role="alert" style={{maxWidth:480,color:'var(--text-primary)'}}>
         <h1 style={{fontSize:'1.35rem'}}>No pudimos completar el acceso</h1>
         <p>{callbackError==='invalid_link' ? 'El enlace no es válido, venció o ya fue utilizado.' : 'Este enlace no pudo abrir tu sesión.'}</p>
-        <p>Abrí el enlace más reciente en el mismo navegador donde solicitaste el acceso. Si no funciona, volvé a pedir uno nuevo.</p>
+        <p>Abre el enlace más reciente en el mismo navegador donde solicitaste el acceso. Si no funciona, vuelve a pedir uno nuevo.</p>
         <Link to={`/login?redirect=${encodeURIComponent(returnPath)}`}>Volver a ingresar</Link>
       </section>
     </main>;

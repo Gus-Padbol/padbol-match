@@ -35,9 +35,9 @@ export default function CommercialTeamWorkspace({api,currentUserId='',manualRequ
     const c=await api.listCases(); setCases(c.cases || []);
     const item=(c.cases||[]).find(x=>x.id===id&&x.channel==='form');
     setSelected(item||null); setError('');
-    if(!item) setError('La ficha se guardó, pero todavía no aparece en la bandeja. Actualizá las consultas.');
+    if(!item) setError('La ficha se guardó, pero todavía no aparece en la bandeja. Actualiza las consultas.');
   }
-  const openManualCreated=async id=>{setManualOpen(false);setManualEditId(null);try{await selectCase(id);}catch{setError('La ficha se guardó, pero no se pudo abrir. Actualizá las consultas.');}};
+  const openManualCreated=async id=>{setManualOpen(false);setManualEditId(null);try{await selectCase(id);}catch{setError('La ficha se guardó, pero no se pudo abrir. Actualiza las consultas.');}};
   const openExisting=async id=>{setManualOpen(false);setManualEditId(null);try{await selectCase(id);}catch{setError('No se pudo abrir la ficha existente.');}};
   if(error&&!role)return <p role="alert">{error}</p>;
   if(!role)return <p>Cargando área comercial…</p>;
@@ -72,7 +72,7 @@ export default function CommercialTeamWorkspace({api,currentUserId='',manualRequ
           {advisorFilter&&!visibleCases.length&&<p>No hay consultas para este asesor.</p>}
           <ul>{visibleCases.map(c=><li key={`${c.channel}:${c.id}`}><button type="button" className={selected?.id===c.id&&selected?.channel===c.channel?'is-active':''} onClick={()=>setSelected(c)}><strong>{c.contact?.name || c.contact?.phone || c.contact?.email || 'Consulta comercial'}</strong><span>{commercialCaseSourceLabel(c)}</span>{c.assignedAdvisor?.name&&<small>Asesor: {c.assignedAdvisor.name}</small>}</button></li>)}</ul>
         </section>
-        {selected?<div className="commercial-team-detail"><CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api} disabled={!authorized} revalidationRevision={sessionRevision} onEditManual={()=>{setManualEditId(selected.id);setManualOpen(true);}}/></div>:<div className="commercial-team-placeholder"><strong>Seleccioná una consulta</strong><span>Elegí un lead de la bandeja para ver su ficha, origen e historial.</span></div>}
+        {selected?<div className="commercial-team-detail"><CommercialCaseDetail key={`${selected.channel}:${selected.id}`} item={selected} api={api} disabled={!authorized} revalidationRevision={sessionRevision} onEditManual={()=>{setManualEditId(selected.id);setManualOpen(true);}}/></div>:<div className="commercial-team-placeholder"><strong>Selecciona una consulta</strong><span>Elige un lead de la bandeja para ver su ficha, origen e historial.</span></div>}
       </div>
     </fieldset>
     {sessionRejected&&typeof api.revalidateSession==='function'&&<button type="button" disabled={recovering} onClick={recoverSession}>Volver a comprobar sesión</button>}

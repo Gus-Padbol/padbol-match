@@ -106,6 +106,18 @@ const ROMANIAN_LOCALE_OVERRIDES = {
     legalGateAccept: 'Acceptă și continuă',
     legalGateCheckError: 'Nu am putut verifica starea acceptării. Verificați conexiunea și încercați din nou.',
     legalGateSaveError: 'Nu am putut înregistra acceptarea în mod verificabil. Încercați din nou.',
+    sendAccessCode: 'Obține un cod de acces', sendingAccessCode: 'Se trimite codul…',
+    accessCodeRequestFailed: 'Nu am putut solicita codul. Verificați adresa de e-mail și încercați din nou.',
+    accessCodeRequestRateLimited: 'Serviciul de e-mail a atins o limită temporară. Așteptați înainte de a solicita alt cod sau autentificați-vă cu parola.',
+    haveAccessCode: 'Am deja un cod',
+    accessCodeSent: 'Am solicitat un cod pentru e-mailul dvs. Introduceți-l mai jos pentru a vă autentifica fără a deschide un link.',
+    accessCodeResendWait: 'Solicitați alt cod în {{seconds}} s',
+    emailCodeTitle: 'Autentificare cu cod',
+    emailCodeHelp: 'Introduceți codul din ultimul e-mail. Acesta va fi verificat pentru {{email}}.',
+    emailCodeLabel: 'Cod din e-mail',
+    emailCodeVerify: 'Verifică codul și autentifică-te',
+    emailCodeInvalid: 'Codul este invalid sau a expirat. Folosiți codul din ultimul e-mail sau solicitați unul nou.',
+    emailCodeRateLimited: 'Prea multe încercări. Așteptați câteva minute înainte de a încerca din nou.',
   },
   nav: {
     perfil: 'Profil', jugar: 'Joacă', competir: 'Competiții', logout: 'Deconectare',
@@ -418,6 +430,16 @@ const ROMANIAN_LOCALE_OVERRIDES = {
       },
     },
   },
+  legal: {
+    privacyPage: {
+      aiTitle: 'Chivi, asistentul de inteligență artificială',
+      aiBody: 'Chivi este un asistent opțional din aplicație care răspunde la întrebări despre Padbol Match și Padbol. Pentru a genera un răspuns, trimitem întrebarea, prenumele din profilul dvs., un identificator intern de cont, tema și limba selectate și o instrucțiune de a răspunde în acea limbă către Anthropic (Claude API). Nu trimitem e-mailul, numărul de telefon, parola, datele cardului de plată, locația exactă, fotografiile, contactele sau datele despre sănătate. Padbol Match nu stochează conversațiile Chivi în profilul sau baza de date; acestea rămân în memoria aplicației și sunt eliminate la închiderea aplicației sau la deconectare. Anthropic procesează conținutul pentru a produce răspunsul, nu folosește conținutul API pentru a-și antrena modelele și îl șterge în termen de 30 de zile, cu excepția cazului în care trebuie să îl păstreze pentru o investigație privind abuzul sau o obligație legală.',
+      aiVoice: 'Introducerea vocală și citirea cu voce tare sunt opționale și folosesc serviciile vocale Apple, care pot procesa audio pe dispozitiv sau pe serverele Apple. Padbol Match nu înregistrează și nu stochează audio; asistentului i se trimite doar textul transcris. Puteți tasta în schimb și puteți dezactiva citirea cu voce tare oricând. Chivi nu poate crea, modifica sau anula rezervări, nu poate primi plăți și nu poate modifica datele contului.',
+      dataCommunity: 'Fotografii, videoclipuri și postări pe care alegeți să le partajați în Comunitate',
+      dataLocation: 'Locație aproximativă sau exactă, numai dacă activați cluburile sau meciurile din apropiere',
+    },
+  },
+
 };
 
 export default ROMANIAN_LOCALE_OVERRIDES;

@@ -826,7 +826,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
     const tema = activityTopic.trim();
     const resumen = activitySummary.trim();
     if (!tema && !resumen) {
-      setNotice('Escribí el tema o el resumen de la gestión antes de guardar.');
+      setNotice('Escribe el tema o el resumen de la gestión antes de guardar.');
       return;
     }
     setBusy(true);

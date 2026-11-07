@@ -121,7 +121,7 @@ test('Austria esta en el catalogo y no aparece la nomina del torneo', async () =
 test('email sin verificar bloquea el envio y lo explica', async () => {
   mockUseAuth.mockReturnValue({session: {user: {id: 'actor-3'}, access_token: 'tok3'}, loading: false});
   mount();
-  expect(screen.getByRole('alert')).toHaveTextContent(/Verificá tu email/);
+  expect(screen.getByRole('alert')).toHaveTextContent(/Verifica tu email/);
   expect(screen.getByRole('button', {name: 'Enviar solicitud'})).toBeDisabled();
 });
 

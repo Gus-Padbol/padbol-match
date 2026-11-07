@@ -43,7 +43,7 @@ export default function AdminNationsSolicitudes() {
       setRequests(Array.isArray(reqBody?.requests) ? reqBody.requests : []);
       setParticipants(Array.isArray(partBody?.participants) ? partBody.participants : []);
     } catch {
-      if (ticket === epoch.current) setError('Error de red. Reintentá.');
+      if (ticket === epoch.current) setError('Error de red. Reintenta.');
     }
   }, [slug, token, headers]);
 
@@ -63,10 +63,10 @@ export default function AdminNationsSolicitudes() {
     setError(null);
     if (decision === 'aprobar') {
       if (evidence.trim().length < 20) { setError('La evidencia debe tener al menos 20 caracteres.'); return; }
-      if (!identity) { setError('Marcá la verificación de identidad.'); return; }
+      if (!identity) { setError('Marca la verificación de identidad.'); return; }
       if (selected.age_status === 'desconocido') { setError('Edad desconocida: no se puede aprobar.'); return; }
       if (selected.age_status === 'menor' && !guardian) { setError('Menor: falta verificación central del responsable.'); return; }
-      if (!matched) { setError('Elegí la persona existente del mismo país.'); return; }
+      if (!matched) { setError('Elige la persona existente del mismo país.'); return; }
     } else if (evidence.trim().length < 20) {
       setError('La nota de rechazo debe tener al menos 20 caracteres.'); return;
     }
@@ -92,14 +92,14 @@ export default function AdminNationsSolicitudes() {
       setBusy(false);            // liberar ANTES de recargar: cargar() incrementa el epoch
       await cargar();
     } catch {
-      if (ticket === epoch.current) setError('Error de red. Reintentá.');
+      if (ticket === epoch.current) setError('Error de red. Reintenta.');
     } finally {
       setBusy(false);
     }
   };
 
   if (loading) return <main className="admin-nations"><p>Cargando…</p></main>;
-  if (!session?.user) return <main className="admin-nations"><p>Iniciá sesión con una cuenta administradora.</p></main>;
+  if (!session?.user) return <main className="admin-nations"><p>Inicia sesión con una cuenta administradora.</p></main>;
   if (access === false) return <main className="admin-nations"><p role="alert">Sin permiso para revisar solicitudes.</p></main>;
 
   return (

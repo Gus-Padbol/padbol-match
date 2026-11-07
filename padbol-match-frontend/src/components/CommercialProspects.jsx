@@ -146,7 +146,7 @@ export default function CommercialProspects({api,embedded=false}) {
           <ul>{prospects.map(p=><li key={p.id}><button type="button" className={selected===p.id?'is-active':''} onClick={()=>open(p.id)}><span className={`prospect-grade grade-${p.grade}`}>{p.grade}</span><div><strong>{p.name||p.legal_name||'Prospecto sin nombre'}</strong><span>{[p.city,p.state,p.country].filter(Boolean).join(' · ')}</span><small>{p.sector||'Sector sin dato'} · {p.score}/100 · {STATUS_LABELS[p.status]||p.status}</small></div>{p.contact_block_reason&&<b className="prospect-blocked">Revisar</b>}</button></li>)}</ul>
         </div>
         <div className="prospect-detail">
-          {!selected&&<div className="prospect-placeholder"><strong>Seleccioná un prospecto</strong><span>Vas a ver la evidencia, la puntuación explicable, el estado y las acciones comerciales.</span></div>}
+          {!selected&&<div className="prospect-placeholder"><strong>Selecciona un prospecto</strong><span>Vas a ver la evidencia, la puntuación explicable, el estado y las acciones comerciales.</span></div>}
           {selected&&!detail&&<p>Cargando prospecto…</p>}
           {detail?.prospect&&<ProspectDetail data={detail} busy={busy} advisors={advisors} role={status?.role} onUpdate={patch=>update(detail.prospect.id,patch)} onResponse={text=>response(detail.prospect.id,text)}/>}
         </div>
@@ -203,7 +203,7 @@ function SimulationResults({simulation}){
     <header><div><p>RESULTADO DE SIMULACIÓN</p><h3>{result.campaign?.name||'Campaña'}</h3><span>{result.message}</span></div><span className="prospect-status prospect-status--sim">Ningún correo enviado</span></header>
     <CampaignMetrics result={result} source="simulate"/>
     {!!problems.length&&<div className="prospect-sim-block"><h4>Excluidos y motivos</h4><ul className="prospect-exclusions">{problems.map(r=><li key={r.prospectId}><strong>{r.name}</strong><span>{r.reason}</span>{r.email&&<small>{r.email}</small>}</li>)}</ul></div>}
-    <div className="prospect-sim-block"><h4>Mensajes preparados · abrí cada correo antes de aprobar cualquier envío</h4>
+    <div className="prospect-sim-block"><h4>Mensajes preparados · abre cada correo antes de aprobar cualquier envío</h4>
       {!rows.some(r=>r.messages?.length)&&<p className="prospect-empty">No hay mensajes para previsualizar.</p>}
       <div className="prospect-sim-list">{rows.filter(r=>r.messages?.length).map(r=><div className="prospect-sim-prospect" key={r.prospectId}>
         <header><strong>{r.name}</strong><span>{r.email} · {r.outcome==='prepared'?'preparado':'ya existente'}</span></header>
@@ -220,12 +220,12 @@ function SimulationResults({simulation}){
 function CampaignsView({campaigns,status,busy,simulation,simulationBusy,error,form,setForm,onCreate,onApprove,onSimulate,onPreview,onFollowup,territories,onSaveTerritory}){
   const [territory,setTerritory]=useState({country:'',region:'',city:'',reason:'',source:''});
   return <section className="prospect-campaigns">
-    <header className="prospect-section-head"><div><p>CAMPAÑAS PILOTO · MODO SIMULACIÓN</p><h2>Campañas</h2><span>Prepará y leé cada correo antes de cualquier envío. El envío real permanece deshabilitado.</span></div><span className="prospect-mode is-sim">Sin envíos reales</span></header>
+    <header className="prospect-section-head"><div><p>CAMPAÑAS PILOTO · MODO SIMULACIÓN</p><h2>Campañas</h2><span>Prepara y lee cada correo antes de cualquier envío. El envío real permanece deshabilitado.</span></div><span className="prospect-mode is-sim">Sin envíos reales</span></header>
     {error&&<div className="prospect-alert prospect-inline-alert" role="alert"><strong>No se pudo completar la operación</strong><span>{error}</span></div>}
     <div className="prospect-campaign-grid">
       <form onSubmit={onCreate} className="prospect-create-card">
         <h3>Nueva campaña</h3>
-        <p>Creá un borrador. No se envía nada sin aprobación y credenciales autorizadas.</p>
+        <p>Crea un borrador. No se envía nada sin aprobación y credenciales autorizadas.</p>
         <label>Nombre<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>
         <label>Perfil<select value={form.opportunityType} onChange={e=>setForm({...form,opportunityType:e.target.value})}>{OPPORTUNITIES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
         <label>Idioma<select value={form.language} onChange={e=>setForm({...form,language:e.target.value})}><option value="en">Inglés</option><option value="es">Español</option></select></label>
@@ -339,7 +339,7 @@ function ScoreBreakdown({ prospect }) {
   const sourceDate = formatScoreDate(prospect?.source_checked_at || prospect?.last_verified_at);
   return <section className="prospect-scorecard" aria-label="Puntuación explicable">
     <header className="prospect-score-head">
-      <div><h3>Puntuación explicable</h3><p>Cada punto indica qué se midió y cuánto respaldo verificable tiene. Tocá un criterio para ver el detalle.</p></div>
+      <div><h3>Puntuación explicable</h3><p>Cada punto indica qué se midió y cuánto respaldo verificable tiene. Toca un criterio para ver el detalle.</p></div>
       <div className="prospect-score-summary"><strong>{prospect?.score ?? 0}<small>/100</small></strong><span>{rawPoints} / {totalMax} puntos de criterios</span><span className={confidence < 60 ? 'is-low' : 'is-good'}>Confianza de evidencia <b>{confidence}%</b></span></div>
     </header>
     <p className="prospect-score-formula">El total se normaliza a 100 sobre {totalMax} puntos posibles. La confianza mide únicamente los puntos respaldados por evidencia verificable; no es una probabilidad de compra.</p>
@@ -377,7 +377,7 @@ function ProspectDetail({data,busy,advisors,role,onUpdate,onResponse}) {
     <div className="prospect-facts"><div><span>Web</span>{p.website?<a href={p.website} target="_blank" rel="noreferrer">{p.website}</a>:'Sin dato'}</div><div><span>Correo</span>{p.email||'Sin dato'}</div><div><span>Teléfono</span>{p.phone||'Sin dato'}</div><div><span>Dirección</span>{p.address||'Sin dato'}</div><div><span>Fuente</span><a href={p.source_url} target="_blank" rel="noreferrer">OpenStreetMap</a></div><div><span>Verificado</span>{p.last_verified_at?new Date(p.last_verified_at).toLocaleDateString('es-AR'):'Sin fecha'}</div></div>
     <ScoreBreakdown prospect={p}/>
     <section className="prospect-management">
-      <div className="prospect-section-head prospect-section-head--small"><div><h3>Gestión comercial</h3><span>Actualizá el estado y el responsable sin disparar envíos.</span></div><span className="prospect-status prospect-status--draft">Solo CRM</span></div>
+      <div className="prospect-section-head prospect-section-head--small"><div><h3>Gestión comercial</h3><span>Actualiza el estado y el responsable sin disparar envíos.</span></div><span className="prospect-status prospect-status--draft">Solo CRM</span></div>
       <div className="prospect-management-grid">
         <label className="prospect-field"><span>Estado</span><select value={p.status} onChange={e=>onUpdate({status:e.target.value})} disabled={busy}>{STATUSES.filter(([v])=>v).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
         {role==='manager'&&<label className="prospect-field"><span>Responsable</span><select value={p.assigned_user_id||''} onChange={e=>onUpdate({assignedUserId:e.target.value||null})} disabled={busy}><option value="">Sin asignar</option>{advisors.filter(a=>a.active).map(a=><option key={a.id} value={a.id}>{a.name||a.email}</option>)}</select></label>}

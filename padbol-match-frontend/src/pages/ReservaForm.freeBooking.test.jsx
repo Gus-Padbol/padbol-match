@@ -16,8 +16,11 @@ jest.mock('../components/common/SportIcon',()=>()=>null);
 jest.mock('../components/AppHeader',()=>()=>null);
 jest.mock('../components/BottomNav',()=>()=>null);
 jest.mock('../components/PadbolBrandLogo',()=>()=>null);
-jest.mock('../components/ReservaCalendarioMes',()=>()=>null);
 jest.mock('../components/ConfirmCancelReservaModal',()=>()=>null);
+jest.mock('../components/ReservaCalendarioMes',()=>function MockReservaCalendario({onSelectDay,disabled}){
+ const future=new Date(Date.now()+30*86400000).toISOString().slice(0,10);
+ return require('react').createElement('button',{type:'button',disabled,onClick:()=>onSelectDay(future)},'Elegir fecha futura');
+});
 jest.mock('../utils/surgePrecio',()=>({fetchSurgePrecio:jest.fn(),surgeBadgeFromQuote:()=>null}));
 jest.mock('@stripe/stripe-js',()=>({loadStripe:jest.fn()}));
 jest.mock('@stripe/react-stripe-js',()=>({Elements:()=>null,PaymentElement:()=>null,useStripe:()=>null,useElements:()=>null}));
@@ -29,6 +32,11 @@ jest.mock('../i18n/tSafe',()=>{ const t=(key,fallback,opts)=>{
 const venue={id:7,nombre:'QA free fixture',pais:'Argentina',ciudad:'La Plata',cantidad_canchas:1,moneda:'ARS',metodo_pago:'efectivo',surge_activo:false,stripe_account_id:null,horario_apertura:'10:00',horario_cierre:'23:00',timezone:'America/Argentina/Buenos_Aires',precio_60min:0,precio_90min:0,duraciones_oferta:[{duracion_minutos:60,precio:0,activo:true,deporte:'padbol'}],deportes_disponibles:['padbol']};
 const futureDate=new Date(Date.now()+30*86400000).toISOString().slice(0,10);
 const fixtureUrl=`/reservar?sedeId=7&fecha=${futureDate}&hora=18%3A00&canchaId=1&deporte=padbol`;
+async function selectFutureDay(){
+ await screen.findByRole('heading',{name:/QA free fixture/});
+ fireEvent.click(screen.getByRole('button',{name:'Elegir fecha futura'}));
+ fireEvent.click(screen.getByRole('button',{name:/60 min/}));
+}
 const auth={session:{access_token:'qa-visible-test-token',user:{id:'qa-owner',email:'qa@example.invalid',user_metadata:{}}},loading:false,userProfile:{nombre:'QA',apellido:'Prueba',genero:'masculino',whatsapp:'+5491199901013'}};
 beforeEach(()=>{
  window.history.replaceState(null,'',fixtureUrl);
@@ -44,7 +52,7 @@ beforeEach(()=>{
   if(path.endsWith('/extras'))return response([]);
   if(path==='/api/sedes/7') return response(venue);
   if(path==='/api/sedes')return response([venue]);
-  if(path.includes('disponibilidad'))return response([]);
+  if(path==='/api/disponibilidad')return response({slots:[]});
   return response([]);
  });
  saveReservaPendiente({pantalla:4,filtros:{pais:'Argentina',ciudad:'La Plata',sede_id:7},formData:{fecha:futureDate,hora:'18:00',cancha:'1',duracion:'60',numeroTel:'+5491199901013',codigoPais:'+54'},deporte:'padbol'});
@@ -77,26 +85,36 @@ test('occupied slot response stays visible and never announces a confirmed reser
  expect(window.alert).not.toHaveBeenCalled();
 });
 
-test('occupied booking removes same and overlapping time buttons, preserving adjacency and sending venue id', async()=>{
+test('UI renders only server-authoritative available slots, preserving adjacency and sending venue id', async()=>{
  const original=global.fetch.getMockImplementation();
  global.fetch.mockImplementation(async(url, options)=>{
-  if(String(url).includes('/api/disponibilidad/')) {
-   const rows=[{cancha:1, hora:'18:00:00',duracion_minutos:60,estado:'confirmada'}];
-   return {ok:true,json:async()=>rows,text:async()=>JSON.stringify(rows)};
+  if(new URL(String(url),'https://test.invalid').pathname === '/api/disponibilidad') {
+   // Server owns the overlap engine. UI only renders available slots.
+   const slots=[
+    {hora:'17:00',disponible:true,canchas_libres:1},
+    {hora:'17:30',disponible:false,canchas_libres:0},
+    {hora:'18:00',disponible:false,canchas_libres:0},
+    {hora:'18:30',disponible:false,canchas_libres:0},
+    {hora:'19:00',disponible:true,canchas_libres:1},
+   ];
+   return {ok:true,json:async()=>({slots}),text:async()=>JSON.stringify({slots})};
   }
   return original(url, options);
  });
  saveReservaPendiente({pantalla:2,filtros:{pais:'Argentina',ciudad:'La Plata',sede_id:7},formData:{fecha:futureDate,hora:'',cancha:'',duracion:'60',numeroTel:'+5491199901013',codigoPais:'+54'},deporte:'padbol'});
- const availabilityUrl = '/reservar?sedeId=7&deporte=padbol';
+ const availabilityUrl = `/reservar?sedeId=7&fecha=${futureDate}&duracion=60&deporte=padbol`;
  window.history.replaceState(null, '', availabilityUrl);
  render(<MemoryRouter initialEntries={[availabilityUrl]}><ReservaForm/></MemoryRouter>);
- await screen.findByRole('button',{name:/19:00 - 20:00/});
- expect(screen.queryByRole('button',{name:/18:00 - 19:00/})).not.toBeInTheDocument();
- expect(screen.queryByRole('button',{name:/17:30 - 18:30/})).not.toBeInTheDocument();
- expect(screen.queryByRole('button',{name:/18:30 - 19:30/})).not.toBeInTheDocument();
- expect(screen.getByRole('button',{name:/17:00 - 18:00/})).toBeInTheDocument();
- const [url,opts]=global.fetch.mock.calls.find(([url])=>String(url).includes('/api/disponibilidad/'));
- expect(String(url)).toContain('sede_id=7');expect(opts.cache).toBe('no-store');
+ await selectFutureDay();
+ await waitFor(()=>expect(global.fetch.mock.calls.some(([url])=>{const p=new URL(String(url),'https://test.invalid');return p.pathname==='/api/disponibilidad' && p.searchParams.get('fecha')===futureDate && p.searchParams.get('duracion')==='60';})).toBe(true));
+ await screen.findByRole('button',{name:/19:00/});
+ expect(screen.queryByRole('button',{name:/18:00/})).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/17:30/})).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/18:30/})).not.toBeInTheDocument();
+ expect(screen.getByRole('button',{name:/17:00/})).toBeInTheDocument();
+ const [url,opts]=global.fetch.mock.calls.find(([url])=>{const p=new URL(String(url),'https://test.invalid');return p.pathname==='/api/disponibilidad' && p.searchParams.get('fecha')===futureDate && p.searchParams.get('duracion')==='60';});
+ const parsed=new URL(String(url),'https://test.invalid');
+ expect(parsed.searchParams.get('sede_id')).toBe('7');expect(parsed.searchParams.get('fecha')).toBe(futureDate);expect(parsed.searchParams.get('duracion')).toBe('60');expect(opts.cache).toBe('no-store');
 });
 
 test.each([
@@ -104,14 +122,15 @@ test.each([
  ['malformed payload', {ok:true,text:async()=>JSON.stringify({error:'not a booking list'}),json:async()=>({error:'not a booking list'})}],
 ])('availability fails closed on %s instead of showing free courts',async(_label,response)=>{
  const original=global.fetch.getMockImplementation();
- global.fetch.mockImplementation(async(url,options)=>String(url).includes('/api/disponibilidad/')?response:original(url,options));
- const availabilityUrl='/reservar?sedeId=7&deporte=padbol';
+ global.fetch.mockImplementation(async(url,options)=>new URL(String(url),'https://test.invalid').pathname === '/api/disponibilidad'?response:original(url,options));
+ const availabilityUrl=`/reservar?sedeId=7&fecha=${futureDate}&duracion=60&deporte=padbol`;
  window.history.replaceState(null,'',availabilityUrl);
  saveReservaPendiente({pantalla:2,filtros:{pais:'Argentina',ciudad:'La Plata',sede_id:7},formData:{fecha:futureDate,hora:'18:00',cancha:'',duracion:'60'},deporte:'padbol'});
  render(<MemoryRouter initialEntries={[availabilityUrl]}><ReservaForm/></MemoryRouter>);
- await waitFor(()=>expect(global.fetch.mock.calls.some(([url])=>String(url).includes('/api/disponibilidad/'))).toBe(true));
- await waitFor(()=>expect(screen.queryByRole('button',{name:/18:00 - 19:00/})).not.toBeInTheDocument());
- expect(screen.queryByRole('button',{name:/19:00 - 20:00/})).not.toBeInTheDocument();
+ await selectFutureDay();
+ await waitFor(()=>expect(global.fetch.mock.calls.some(([url])=>new URL(String(url),'https://test.invalid').pathname === '/api/disponibilidad')).toBe(true));
+ await waitFor(()=>expect(screen.queryByRole('button',{name:/18:00/})).not.toBeInTheDocument());
+ expect(screen.queryByRole('button',{name:/19:00/})).not.toBeInTheDocument();
  expect(screen.queryByRole('button',{name:/Cancha 1.*Libre/i})).not.toBeInTheDocument();
 });
 

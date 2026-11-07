@@ -54,13 +54,13 @@ export default function CommercialDictation({onText, onListeningChange}) {
         try { console.warn('[dictado] error de reconocimiento:', event.error, event.message || ''); } catch { /* noop */ }
         const code = String(event.error || 'desconocido');
         if (code === 'network') {
-          finish('El servicio de dictado del navegador no responde (network). Chrome usa el servicio de Google y puede estar bloqueado por la red. Probá con Safari o usá el dictado del teclado (Fn dos veces). Tu texto se conserva.');
+          finish('El servicio de dictado del navegador no responde (network). Chrome usa el servicio de Google y puede estar bloqueado por la red. Prueba con Safari o usa el dictado del teclado (Fn dos veces). Tu texto se conserva.');
         } else if (code === 'audio-capture') {
-          finish('El navegador no encuentra el micrófono (audio-capture). Verificá que ninguna otra aplicación lo esté usando. Tu texto se conserva.');
+          finish('El navegador no encuentra el micrófono (audio-capture). Verifica que ninguna otra aplicación lo esté usando. Tu texto se conserva.');
         } else if (code === 'not-allowed' || code === 'service-not-allowed') {
           finish('El navegador bloqueó el reconocimiento de voz (' + code + '). No es solo el permiso del micrófono: Chrome además necesita permiso para el servicio de voz. Tu texto se conserva.');
         } else {
-          finish('Se interrumpió el dictado (' + code + '). El texto recibido se conserva; podés seguir dictando o escribir.');
+          finish('Se interrumpió el dictado (' + code + '). El texto recibido se conserva; puedes seguir dictando o escribir.');
         }
       };
       session.onend = () => {
@@ -85,11 +85,11 @@ export default function CommercialDictation({onText, onListeningChange}) {
     } catch (e) {
       const name = e?.name || '';
       if (name === 'NotAllowedError' || name === 'SecurityError') {
-        finish('El navegador bloqueó el micrófono. En iPhone: Ajustes → Safari → Micrófono → Permitir, y recargá el CRM. En Chrome: tocá el candado de la barra y habilitá Micrófono.');
+        finish('El navegador bloqueó el micrófono. En iPhone: Ajustes → Safari → Micrófono → Permitir, y recarga el CRM. En Chrome: toca el candado de la barra y habilita Micrófono.');
       } else if (name === 'NotFoundError') {
-        finish('No se encontró un micrófono en este dispositivo. Podés escribir el resumen o usar el dictado del teclado.');
+        finish('No se encontró un micrófono en este dispositivo. Puedes escribir el resumen o usar el dictado del teclado.');
       } else {
-        finish('No se pudo acceder al micrófono. Podés escribir el resumen o usar el dictado del teclado.');
+        finish('No se pudo acceder al micrófono. Puedes escribir el resumen o usar el dictado del teclado.');
       }
       return false;
     }

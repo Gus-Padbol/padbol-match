@@ -88,7 +88,7 @@ test('error del servidor es recuperable y no filtra detalles', async () => {
   fireEvent.change(screen.getByLabelText(/Contraseña nueva/), {target: {value: 'password-larga'}});
   fireEvent.change(screen.getByLabelText(/Repetir contraseña/), {target: {value: 'password-larga'}});
   fireEvent.click(screen.getByRole('button', {name: 'Guardar contraseña'}));
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Pedí un enlace nuevo/));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Pide un enlace nuevo/));
   expect(document.body.textContent).not.toContain('provider-secret-detail');
 });
 
