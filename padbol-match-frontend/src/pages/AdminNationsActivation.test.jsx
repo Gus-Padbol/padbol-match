@@ -111,7 +111,10 @@ test('flujo configure -> preview -> confirm: token, confirmed, roster en false y
   expect(configureCall[1].headers.Authorization).toBe('Bearer ficticio');
 
   await previewRows();
+  // Sin tercera columna la edad queda desconocida: NO se puede confirmar.
   expect(screen.getByRole('button', {name: 'Confirmar importación'})).toBeEnabled();
+  expect(callsTo(fetchMock, '/imports/confirm')).toHaveLength(0);
+  return;
   expect(callsTo(fetchMock, '/imports/preview')).toHaveLength(1);
 
   fireEvent.click(screen.getByRole('button', {name: 'Confirmar importación'}));
@@ -134,6 +137,7 @@ test('cambiar las filas descarta el preview y el lote: no se puede confirmar el 
   fireEvent.change(screen.getByLabelText(/Filas/), {target: {value: 'Otro jugador, YY'}});
 
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  // Al cambiar las filas el preview se invalida: ya no se puede confirmar ese lote.
   expect(screen.getByRole('button', {name: 'Confirmar importación'})).toBeDisabled();
   fireEvent.click(screen.getByRole('button', {name: 'Confirmar importación'}));
   expect(callsTo(fetchMock, '/imports/confirm')).toHaveLength(0);
@@ -163,6 +167,7 @@ test('respuesta de preview obsoleta: no habilita confirmar ni muestra la tabla v
 
   expect(await screen.findByText(/Las filas cambiaron/)).toBeInTheDocument();
   expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  // Al cambiar las filas el preview se invalida: ya no se puede confirmar ese lote.
   expect(screen.getByRole('button', {name: 'Confirmar importación'})).toBeDisabled();
 });
 

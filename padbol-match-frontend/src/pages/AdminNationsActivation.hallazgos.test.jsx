@@ -102,7 +102,7 @@ test('HALLAZGO ALTO: canConfirm=false y errores por fila del preview se ignoran;
   await screen.findByText(/Evento configurado/);
   await previewRows();
 
-  // El backend avisó que este lote NO se puede confirmar (lib/nationsActivation.js:33,46).
+  // El backend avisó que este lote NO se puede confirmar.
   expect(screen.getByRole('button', {name: 'Confirmar importación'})).toBeDisabled();
 });
 
