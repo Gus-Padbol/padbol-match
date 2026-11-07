@@ -83,6 +83,16 @@ export default function TorneoVista() {
   const selectionMode = isPadbolSelection(torneo);
   const selectionModeRef = useRef(false);
   const [equipos, setEquipos] = useState([]);
+  const [nationsSlug, setNationsSlug] = useState(null);
+  useEffect(() => {
+    let cancelado = false;
+    if (!torneoId) return undefined;
+    fetch(`${apiBaseUrlTorneo}/api/nations-activation/by-torneo/${torneoId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (!cancelado && data?.ok) setNationsSlug(data.slug || null); })
+      .catch(() => { if (!cancelado) setNationsSlug(null); });
+    return () => { cancelado = true; };
+  }, [torneoId, apiBaseUrlTorneo]);
   const [sedesMap, setSedesMap] = useState({});
   const [partidos, setPartidos] = useState([]);
   const [tablaPuntosRows, setTablaPuntosRows] = useState([]);
