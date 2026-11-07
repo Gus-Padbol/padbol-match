@@ -1,5 +1,5 @@
 import OfficialFipaProfile from '../components/OfficialFipaProfile';
-import { profileAvatarPath } from '../utils/profileAvatarPath';
+import { uploadProfileAvatar } from '../utils/profileAvatarUpload';
 import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, fechaDesdeReservasJugador } from '../utils/reservaJugadorActions';
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
@@ -1097,17 +1097,16 @@ export default function MiPerfil() {
         setErrorMsg(t('perfil.flow.imageOver2mb'));
         return;
       }
-      const path = profileAvatarPath(userId, pendingFoto.name);
-      const { error: upErr } = await supabase.storage
-        .from(AVATAR_STORAGE_BUCKET)
-        .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
+      const { error: upErr, publicUrl } = await uploadProfileAvatar({
+        storage: supabase.storage,
+        bucket: AVATAR_STORAGE_BUCKET,
+        userId,
+        file: pendingFoto,
+      });
       if (upErr) {
         setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
         return;
       }
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(AVATAR_STORAGE_BUCKET).getPublicUrl(path);
       const fotoUrlGuardada = `${publicUrl}?t=${Date.now()}`;
 
       let rowAfter = perfil;
@@ -1629,17 +1628,16 @@ export default function MiPerfil() {
           setErrorMsg(t('perfil.flow.imageOver2mb'));
           return;
         }
-        const path = profileAvatarPath(userId, pendingFoto.name);
-        const { error: upErr } = await supabase.storage
-          .from(AVATAR_STORAGE_BUCKET)
-          .upload(path, pendingFoto, { upsert: true, contentType: pendingFoto.type || 'image/jpeg' });
+        const { error: upErr, publicUrl } = await uploadProfileAvatar({
+          storage: supabase.storage,
+          bucket: AVATAR_STORAGE_BUCKET,
+          userId,
+          file: pendingFoto,
+        });
         if (upErr) {
           setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
           return;
         }
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(AVATAR_STORAGE_BUCKET).getPublicUrl(path);
         fotoUrlGuardada = `${publicUrl}?t=${Date.now()}`;
       }
       payloadDb.foto_url = fotoUrlGuardada;
