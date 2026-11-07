@@ -65,3 +65,12 @@ describe('old CRM storage cannot override destinations',()=>{
  test('player stays in hub',async()=>{await expect(resolveRoleAwarePostLoginPath('/',{access_token:'s'},async()=>({rol:'jugador'}),async()=>({role:null}))).resolves.toBe('/hub');});
  test('failure and missing session do not grant admin',async()=>{await expect(resolveRoleAwarePostLoginPath('/',{access_token:'s'},async()=>{throw Error('offline')})).resolves.toBe('/hub');await expect(resolveRoleAwarePostLoginPath('/',null)).resolves.toBe('/hub');});
 });
+
+test('un destino explícito /perfil gana aunque el flag PWA del CRM esté encendido', async () => {
+  localStorage.setItem('padbol_crm_app', '1');
+  const roleFetcher = async () => ({ rol: 'jugador' });
+  const commercialRoleFetcher = async () => ({ role: 'advisor' });
+  const destino = await resolveRoleAwarePostLoginPath('/perfil', { access_token: 'fixture' }, roleFetcher, commercialRoleFetcher);
+  expect(destino).toBe('/perfil');
+  localStorage.removeItem('padbol_crm_app');
+});

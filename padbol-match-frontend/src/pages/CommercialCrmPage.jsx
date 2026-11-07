@@ -45,6 +45,9 @@ export default function CommercialCrmPage() {
   const inboxLocked=Boolean(available&&view==='inbox'&&!team);
   return <div className={`crm-page${inboxLocked?' crm-page--inbox':''}`}>
     {!available&&<div className="crm-admin-return-fallback"><CommercialAdminReturn token={token}/></div>}
+    {available&&<div className="crm-profile-link" style={{padding:'8px 16px'}}>
+      <a href="/perfil" style={{fontWeight:700,color:'#E11B22'}}>Mi perfil de jugador</a>
+    </div>}
     {available&&<CommercialCrmHeader adminReturn={<CommercialAdminReturn token={token}/>} view={view} role={role} user={session?.user} token={token} api={api} onView={openView} onNewLead={openNewLead} onSearch={submitSearch} onSignOut={signOutAndClear}/>}
     {view==='prospect' && available ? <CommercialProspects api={api} embedded/> : team && available ? <CommercialTeamWorkspace api={api} currentUserId={session?.user?.id} manualRequest={manualRequest} openCaseId={openCaseId} headless/> : <WhatsappCrmDemo requiredScope="commercial" headless searchRequest={searchRequest} openConversationId={openConversationId}/>}
   </div>;
