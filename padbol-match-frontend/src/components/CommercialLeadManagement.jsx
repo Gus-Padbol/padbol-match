@@ -80,10 +80,12 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
     const nextStep = state==='cerrado' ? (next.trim() || summary.trim()) : next.trim();
     if(summary.trim().length<3 || nextStep.length<3 || (details.trim() && details.trim().length<3)) return;
     if(state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome){setError('Selecciona si la venta se concretó o no avanzó.');return;}
-    const date = state==='cerrado' || !nextContact ? null : new Date(nextContact);
+    const isClosed = state==='cerrado';
+    const date = isClosed || !nextContact ? null : new Date(nextContact);
     const hours = parseReminderHours(reminders);
-    if(date && (!Number.isFinite(date.getTime()) || date.getTime()<=Date.now())) {setError('Elige una fecha y hora futuras para la próxima charla.');return;}
-    if(date && !hours) {setError('Indica las horas de aviso, separadas por comas. Ej.: 24, 8.');return;}
+    if(!isClosed && !nextContact.trim()) {setError('Indica una fecha y hora futuras para la próxima gestión.');return;}
+    if(!isClosed && (!date || !Number.isFinite(date.getTime()) || date.getTime()<=Date.now())) {setError('Elige una fecha y hora futuras para la próxima gestión.');return;}
+    if(!isClosed && !hours) {setError('Indica las horas de aviso, separadas por comas. Ej.: 24, 8.');return;}
     setBusy(true); setError(''); setNotice('');
     try {
       // Opening first makes the server block any progress until the summary is committed.
@@ -111,15 +113,15 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
       <label>Estado comercial<select value={state} onChange={e=>{setState(e.target.value);if(e.target.value==='cerrado')setNext('');}}>{Object.entries(STATE_LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       {state==='cerrado'&&<label>Resultado comercial<select value={closureOutcome} onChange={e=>setClosureOutcome(e.target.value)} required={data.progressState!=='cerrado'}><option value="">{data.progressState==='cerrado'?'Cierre anterior sin clasificar':'Selecciona el resultado'}</option><option value="venta_concretada">Venta concretada</option><option value="no_avanzo">No avanzó</option></select></label>}
       <label>{state==='cerrado'?'Detalle del cierre':'Próximo paso'}<textarea maxLength={2000} value={next} onChange={e=>setNext(e.target.value)} required={state!=='cerrado'} placeholder={state==='cerrado'?'Opcional: amplía el resumen si hace falta.':'Qué vas a hacer y cuándo. Ej.: llamar el martes a las 15 h.'}/></label>
-      {state!=='cerrado' && <div className="commercial-next-chat"><label>Próxima charla (opcional)<input type="datetime-local" value={nextContact} onChange={e=>setNextContact(e.target.value)}/></label><small>Hora local: {Intl.DateTimeFormat().resolvedOptions().timeZone}</small>{nextContact && <label>Avisarme estas horas antes<input aria-label="Avisarme estas horas antes" value={reminders} onChange={e=>setReminders(e.target.value)} placeholder="24, 8"/><small>Por defecto: 24 y 8 horas antes. Puedes cambiarlo, por ejemplo a 48, 24, 1.</small></label>}</div>}
+      {state!=='cerrado' && <div className="commercial-next-chat"><label>Próxima gestión<input type="datetime-local" value={nextContact} onChange={e=>setNextContact(e.target.value)}/></label><small>Hora local: {Intl.DateTimeFormat().resolvedOptions().timeZone}</small>{nextContact && <label>Avisarme estas horas antes<input aria-label="Avisarme estas horas antes" value={reminders} onChange={e=>setReminders(e.target.value)} placeholder="24, 8"/><small>Por defecto: 24 y 8 horas antes. Puedes cambiarlo, por ejemplo a 48, 24, 1.</small></label>}</div>}
       <details><summary>Agregar detalles adicionales (opcional)</summary><label>Detalles adicionales<textarea maxLength={2000} value={details} onChange={e=>setDetails(e.target.value)} placeholder="Solo si necesitas ampliar el resumen."/></label></details>
-      {!busy && (!validSummary || (state!=='cerrado' && next.trim().length<3) || (state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome)) && <p className="commercial-save-help">Para guardar: {!validSummary ? 'escribe un resumen de al menos 3 caracteres. ' : ''}{state!=='cerrado' && next.trim().length<3 ? 'indica el próximo paso. ' : ''}{state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome ? 'selecciona el resultado del cierre.' : ''}</p>}
+      {!busy && (!validSummary || (state!=='cerrado' && next.trim().length<3) || (state!=='cerrado' && !nextContact.trim()) || (state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome)) && <p className="commercial-save-help">Para guardar: {!validSummary ? 'escribe un resumen de al menos 3 caracteres. ' : ''}{state!=='cerrado' && next.trim().length<3 ? 'indica el próximo paso. ' : ''}{state!=='cerrado' && !nextContact.trim() ? 'indica la próxima gestión con fecha y hora. ' : ''}{state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome ? 'selecciona el resultado del cierre.' : ''}</p>}
       {state==='cerrado' && <p>Al guardar, la consulta saldrá de la bandeja activa y conservará su historial.</p>}
       <button disabled={busy || dictating || !Number.isSafeInteger(data.version) || !validSummary || (state!=='cerrado' && next.trim().length<3) || (state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome)}>{busy?'Guardando…':'Guardar gestión'}</button>
     </form>
     {state==='en_espera' && unsavedManagement && <p>Guarda el resumen y el próximo paso para habilitar el seguimiento por WhatsApp.</p>}
     {data.progressState==='en_espera' && state==='en_espera' && !pending && !unsavedManagement && <CommercialFollowupActivation caseId={data.id} channel={data.channel} api={api} active={data.followup?.status==='waiting'} onChanged={()=>refresh(data).then(()=>onUpdated?.()).catch(()=>setError('No se pudo actualizar el seguimiento. Actualiza la ficha.'))}/>}
-    {data.nextContactAt && <p className="commercial-scheduled">Próxima charla guardada: <strong>{new Date(data.nextContactAt).toLocaleString()}</strong></p>}
+    {data.nextContactAt && <p className="commercial-scheduled">Próxima gestión guardada: <strong>{new Date(data.nextContactAt).toLocaleString()}</strong></p>}
     {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}
   </section>;
 }

@@ -3,7 +3,7 @@ import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import CommercialFollowupActivation from './CommercialFollowupActivation';
 
 test('requires explicit consent and evidence before a followup can start', async () => {
-  const api={getFollowupReadiness:jest.fn().mockResolvedValue({ready:true,templatesReady:true,enabled:true}),startFollowup:jest.fn().mockResolvedValue({status:'waiting'}),cancelFollowup:jest.fn()};
+  const api={getFollowupReadiness:jest.fn().mockResolvedValue({ready:true,templatesReady:true,enabled:true,language:'es',templateKey:'commercial_waiting_es_v1'}),startFollowup:jest.fn().mockResolvedValue({status:'active',id:'fu-1',conversationId:'conv-1',language:'es',templateKey:'commercial_waiting_es_v1'}),cancelFollowup:jest.fn()};
   render(<CommercialFollowupActivation caseId="case-1" channel="whatsapp" api={api}/>);
   const start=screen.getByRole('button',{name:'Activar seguimiento'});
   expect(start).toBeDisabled();
@@ -11,7 +11,7 @@ test('requires explicit consent and evidence before a followup can start', async
   fireEvent.change(screen.getByLabelText('Cómo lo autorizó'),{target:{value:'Lo autorizó por WhatsApp'}});
   await waitFor(() => expect(start).not.toBeDisabled());
   fireEvent.click(start);
-  await waitFor(()=>expect(api.startFollowup).toHaveBeenCalledWith('case-1','whatsapp',{consent:true,evidence:'Lo autorizó por WhatsApp',language:'es'}));
+  await waitFor(()=>expect(api.startFollowup).toHaveBeenCalledWith('case-1','whatsapp',{consent:true,consentEvidence:'Lo autorizó por WhatsApp',language:'es',templateKey:'commercial_waiting_es_v1'}));
   expect(await screen.findByRole('status')).toHaveTextContent('Seguimiento activado');
 });
 
@@ -22,4 +22,26 @@ test('does not show WhatsApp followup controls for form cases',()=>{
 
 test('plantillas no verificadas bloquean la activación incluso con consentimiento',async()=>{const api={getFollowupReadiness:jest.fn().mockResolvedValue({ready:false,enabled:false,templatesReady:false,reason:'Faltan plantillas aprobadas por Meta.'}),startFollowup:jest.fn()};render(<CommercialFollowupActivation caseId="case-1" channel="whatsapp" api={api}/>);expect(await screen.findByText('Faltan plantillas aprobadas por Meta.')).toBeInTheDocument();fireEvent.click(screen.getByLabelText(/Confirmo que autorizó/));fireEvent.change(screen.getByLabelText('Cómo lo autorizó'),{target:{value:'Lo autorizó por WhatsApp'}});expect(screen.getByRole('button',{name:'Activar seguimiento'})).toBeDisabled();expect(api.startFollowup).not.toHaveBeenCalled();});
 test('un seguimiento almacenado sin envío habilitado no se presenta como activo',async()=>{const api={getFollowupReadiness:jest.fn().mockResolvedValue({ready:false,reason:'Envío pendiente de habilitación.'})};render(<CommercialFollowupActivation caseId="case-1" channel="whatsapp" api={api} active/>);await screen.findByText('Envío pendiente de habilitación.');expect(screen.getByText(/no se enviarán mensajes/)).toBeInTheDocument();expect(screen.queryByText(/El seguimiento está activo/)).not.toBeInTheDocument();});
-test('cambiar el idioma exige verificar sus plantillas y no reutiliza la disponibilidad anterior',async()=>{const api={getFollowupReadiness:jest.fn().mockImplementation((id,ch,lang)=>Promise.resolve(lang==='es'?{ready:true}:{ready:false,reason:'Plantillas en inglés pendientes.'})),startFollowup:jest.fn()};render(<CommercialFollowupActivation caseId="case-1" channel="whatsapp" api={api}/>);await screen.findByText(/Plantillas y envío verificados/);fireEvent.click(screen.getByLabelText(/Confirmo que autorizó/));fireEvent.change(screen.getByLabelText('Cómo lo autorizó'),{target:{value:'Autorizado'}});expect(screen.getByRole('button',{name:'Activar seguimiento'})).toBeEnabled();fireEvent.change(screen.getByLabelText('Idioma'),{target:{value:'en'}});expect(screen.getByRole('button',{name:'Activar seguimiento'})).toBeDisabled();await screen.findByText('Plantillas en inglés pendientes.');expect(api.getFollowupReadiness).toHaveBeenLastCalledWith('case-1','whatsapp','en');expect(api.startFollowup).not.toHaveBeenCalled();});
+test('cambiar el idioma exige verificar sus plantillas y no reutiliza la disponibilidad anterior',async()=>{const api={getFollowupReadiness:jest.fn().mockImplementation((id,ch,lang)=>Promise.resolve(lang==='es'?{ready:true,enabled:true,templatesReady:true,language:'es',templateKey:'commercial_waiting_es_v1'}:{ready:false,reason:'Plantillas en inglés pendientes.'})),startFollowup:jest.fn()};render(<CommercialFollowupActivation caseId="case-1" channel="whatsapp" api={api}/>);await screen.findByText(/Plantillas y envío verificados/);fireEvent.click(screen.getByLabelText(/Confirmo que autorizó/));fireEvent.change(screen.getByLabelText('Cómo lo autorizó'),{target:{value:'Autorizado'}});expect(screen.getByRole('button',{name:'Activar seguimiento'})).toBeEnabled();fireEvent.change(screen.getByLabelText('Idioma'),{target:{value:'en'}});expect(screen.getByRole('button',{name:'Activar seguimiento'})).toBeDisabled();await screen.findByText('Plantillas en inglés pendientes.');expect(api.getFollowupReadiness).toHaveBeenLastCalledWith('case-1','whatsapp','en');expect(api.startFollowup).not.toHaveBeenCalled();});
+
+test('stale: cambiar de caso con start pendiente no escribe notice/error/finally sobre la ficha nueva',async()=>{
+  let resolver; const api={getFollowupReadiness:jest.fn().mockResolvedValue({ready:true,enabled:true,templatesReady:true,language:'es',templateKey:'commercial_waiting_es_v1'}),startFollowup:jest.fn().mockImplementation(()=>new Promise(r=>{resolver=r;}))};
+  const {rerender}=render(<CommercialFollowupActivation caseId="case-1" channel="whatsapp" api={api}/>);
+  await screen.findByText(/Plantillas y envío verificados/);
+  fireEvent.click(screen.getByLabelText(/Confirmo que autorizó/));fireEvent.change(screen.getByLabelText('Cómo lo autorizó'),{target:{value:'Autorizado'}});
+  fireEvent.click(screen.getByRole('button',{name:'Activar seguimiento'}));
+  rerender(<CommercialFollowupActivation caseId="case-2" channel="whatsapp" api={api}/>);
+  resolver({status:'active',id:'fu-1',conversationId:'conv-1',language:'es',templateKey:'commercial_waiting_es_v1'});
+  await new Promise(r=>setTimeout(r,20));
+  expect(screen.queryByText(/Seguimiento activado/)).not.toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+test('2xx incompleto no se declara activo',async()=>{
+  const api={getFollowupReadiness:jest.fn().mockResolvedValue({ready:true,enabled:true,templatesReady:true,language:'es',templateKey:'commercial_waiting_es_v1'}),startFollowup:jest.fn().mockResolvedValue({status:'active'})};
+  render(<CommercialFollowupActivation caseId="case-1" channel="whatsapp" api={api}/>);
+  await screen.findByText(/Plantillas y envío verificados/);
+  fireEvent.click(screen.getByLabelText(/Confirmo que autorizó/));fireEvent.change(screen.getByLabelText('Cómo lo autorizó'),{target:{value:'Autorizado'}});
+  fireEvent.click(screen.getByRole('button',{name:'Activar seguimiento'}));
+  await waitFor(()=>expect(screen.getByRole('alert')).toHaveTextContent(/respuesta incompleta/));
+  expect(screen.queryByText(/Seguimiento activado/)).not.toBeInTheDocument();
+});

@@ -74,6 +74,8 @@ const ClaseDetallePage = lazy(() => import('./pages/ClaseDetallePage'));
 const EquipoVista = lazy(() => import('./pages/EquipoVista'));
 const UserHome = lazy(() => import('./pages/UserHome'));
 const SobrePadbolMatch = lazy(() => import('./pages/SobrePadbolMatch'));
+const HelpCenterPage = lazy(() => import('./pages/helpCenter/HelpCenterPage'));
+const HelpCenterArticlePage = lazy(() => import('./pages/helpCenter/HelpCenterArticlePage'));
 const ContactoSumarClub = lazy(() => import('./pages/ContactoSumarClub'));
 const AccesoCuenta = lazy(() => import('./pages/AccesoCuenta'));
 const TerminosCondiciones = lazy(() => import('./pages/TerminosCondiciones'));
@@ -395,6 +397,8 @@ function AppRoutes() {
         <Route path="/competir" element={<Competir />} />
         <Route path="/partidos-abiertos" element={<PartidosAbiertos />} />
         <Route path="/notificaciones" element={<NotificacionesPage />} />
+        <Route path="/ayuda" element={<HelpCenterPage />} />
+        <Route path="/ayuda/:module/:slug" element={<HelpCenterArticlePage />} />
         <Route
           path="/soporte"
           element={<ProtectedRoute><SupportTicketsPage /></ProtectedRoute>}

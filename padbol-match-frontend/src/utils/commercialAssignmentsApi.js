@@ -13,7 +13,7 @@ export function createCommercialAssignmentsApi(token) {
       const failure=typeof response.json==='function'?await response.json().catch(()=>({})):{};
       const code=failure.code||failure.error;
       recordCrmSessionRejection(token,response.status,code);
-      const messages={ADVISOR_REQUEST_DETAILS_CONFLICT:'Ya hay un alta pendiente para este correo. Revisá sus datos y condiciones en la lista antes de habilitarla.',CLOSURE_OUTCOME_REQUIRED:'Selecciona si la venta se concretó o no avanzó.',INVALID_CLOSURE_OUTCOME:'Elige un resultado comercial válido: Venta concretada o No avanzó.',FOLLOWUP_NOT_READY:'El seguimiento todavía no está habilitado. Revisa las plantillas aprobadas y la disponibilidad de envío.'};
+      const messages={INVALID_FOLLOWUP:'Falta la autorización explícita, su evidencia o el plan de seguimiento verificado.',ADVISOR_REQUEST_DETAILS_CONFLICT:'Ya hay un alta pendiente para este correo. Revisá sus datos y condiciones en la lista antes de habilitarla.',CLOSURE_OUTCOME_REQUIRED:'Selecciona si la venta se concretó o no avanzó.',INVALID_CLOSURE_OUTCOME:'Elige un resultado comercial válido: Venta concretada o No avanzó.',FOLLOWUP_NOT_READY:'El seguimiento todavía no está habilitado. Revisa las plantillas aprobadas y la disponibilidad de envío.',NEXT_CONTACT_REQUIRED:'Indica una fecha y hora futuras para la próxima gestión.'};
       throw Object.assign(new Error('COMMERCIAL_ACTION_UNAVAILABLE'), {status:response.status,code,userMessage:messages[code]});
     }
     return response.json();
@@ -90,7 +90,17 @@ export function createCommercialAssignmentsApi(token) {
     decideAdvisorRequest: (id, decision) => request(`/api/admin/crm/commercial-advisor-requests/${encodeURIComponent(id)}/decision`, 'POST', {decision}),
     deactivateAdvisor: id => request(`${advisors}/${encodeURIComponent(id)}`, 'PATCH', {active:false}),
     getFollowupReadiness: (id, channel, language) => request(`${cases}/${encodeURIComponent(id)}/followup/readiness?channel=${encodeURIComponent(channel)}&language=${encodeURIComponent(language)}`),
-    startFollowup: (id, channel, {consent, evidence, language}) => request(`${cases}/${encodeURIComponent(id)}/followup/start`, 'POST', {channel, consent, evidence, language}),
+    startFollowup: (id, channel, {consent, consentEvidence, language, templateKey} = {}) => {
+      // Never manufacture evidence or a plan key. The server rechecks readiness.
+      if (channel !== 'whatsapp' || consent !== true || !['es','en'].includes(language)
+        || typeof consentEvidence !== 'string' || consentEvidence.trim().length < 3 || consentEvidence.length > 2000
+        || typeof templateKey !== 'string' || templateKey.trim().length < 3 || templateKey.length > 120) {
+        throw Object.assign(new Error('INVALID_FOLLOWUP'), {code:'INVALID_FOLLOWUP', userMessage:'Falta la autorización explícita, su evidencia o el plan de seguimiento verificado.'});
+      }
+      return request(`${cases}/${encodeURIComponent(id)}/followup/start`, 'POST', {
+        channel, language, consentEvidence:consentEvidence.trim(), templateKey:templateKey.trim(),
+      });
+    },
     cancelFollowup: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/followup/cancel`, 'POST', {channel}),
   };
 }
