@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { authFlowForCallbackLocation } from './utils/authCallbackFlow';
 import clientEnvironment from './config/clientEnvironment.js';
+import { vigilarRecuperacion } from './utils/passwordRecoverySignal';
 const { resolveClientEnvironment, PRODUCTION_SUPABASE_URL, PRODUCTION_SUPABASE_PUBLIC_KEY } = clientEnvironment;
 
 const environment = resolveClientEnvironment(process.env);
@@ -22,3 +23,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     flowType: AUTH_CALLBACK_FLOW,
   },
 });
+
+// La recuperación puede emitirse antes de montar React: se guarda como señal temprana.
+vigilarRecuperacion(supabase);

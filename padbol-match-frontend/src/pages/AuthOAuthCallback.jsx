@@ -7,6 +7,7 @@ import { resolvePostLoginNavigatePath } from '../utils/reservaReturnUrl';
 import { flushPendingOAuthLegalAcceptance, hasPendingOAuthLegalAcceptance } from '../utils/legalDocuments';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import { resolveRoleAwarePostLoginPath } from '../utils/postLoginDestination';
+import { hayRecuperacionPendiente, consumirRecuperacion, suscribirRecuperacion } from '../utils/passwordRecoverySignal';
 
 export function resolveOAuthPostLoginPath(destination, needsProfileCompletion) {
   const dest = String(destination || '/');
@@ -32,7 +33,7 @@ export default function AuthOAuthCallback() {
   const [recovery, setRecovery] = useState(() => {
     const q = new URLSearchParams(window.location.search);
     const h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    return q.get('type') === 'recovery' || h.get('type') === 'recovery';
+    return q.get('type') === 'recovery' || h.get('type') === 'recovery' || hayRecuperacionPendiente();
   });
   const [nuevaPassword, setNuevaPassword] = useState('');
   const [repetirPassword, setRepetirPassword] = useState('');
@@ -42,14 +43,7 @@ export default function AuthOAuthCallback() {
   const { t } = useTranslation();
 
   // Supabase avisa PASSWORD_RECOVERY al consumir el enlace; el hash puede haberse limpiado ya.
-  useEffect(() => {
-    const auth = supabase?.auth;
-    if (!auth || typeof auth.onAuthStateChange !== 'function') return undefined;
-    const { data } = auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') { setRecovery(true); setRecoveryError(null); }
-    }) || {};
-    return () => { try { data?.subscription?.unsubscribe?.(); } catch { /* noop */ } };
-  }, []);
+  useEffect(() => suscribirRecuperacion(() => { setRecovery(true); setRecoveryError(null); }), []);
 
   const guardarPassword = async (event) => {
     event.preventDefault();
@@ -59,8 +53,15 @@ export default function AuthOAuthCallback() {
     if (nuevaPassword !== repetirPassword) { setRecoveryError('Las contraseñas no coinciden.'); return; }
     setRecoverySaving(true);
     try {
+      // El enlace debe haber abierto una sesión de recuperación válida; si no, no se escribe nada.
+      const actual = await supabase.auth.getSession().catch(() => null);
+      if (!actual?.data?.session?.user) {
+        setRecoveryError('Este enlace venció o ya fue utilizado. Pedí uno nuevo desde “Olvidé mi contraseña”.');
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password: nuevaPassword });
       if (error) { setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.'); return; }
+      consumirRecuperacion();
       setNuevaPassword(''); setRepetirPassword(''); setRecoveryDone(true);
     } catch {
       setRecoveryError('No pudimos guardar la contraseña. Pedí un enlace nuevo e intentá otra vez.');
