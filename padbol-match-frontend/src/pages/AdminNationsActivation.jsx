@@ -154,6 +154,13 @@ export default function AdminNationsActivation() {
       <p style={{color: '#4c5158', marginTop: 0}}>
         La nómina queda privada: no se publica el nombre de los jugadores ni de las selecciones.
       </p>
+      {String(slug).trim() ? (
+        <p style={{marginTop: 0}}>
+          <a href={`/admin/nations-solicitudes/${encodeURIComponent(String(slug).trim())}`}>
+            Revisar solicitudes privadas de inscripción
+          </a>
+        </p>
+      ) : null}
 
       <form onSubmit={configurar} style={{display: 'grid', gap: 10, marginBottom: 20}}>
         <label>Identificador del evento
