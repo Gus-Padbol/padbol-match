@@ -84,7 +84,12 @@ export default function TorneoVista() {
   const selectionModeRef = useRef(false);
   const [equipos, setEquipos] = useState([]);
   const [nationsSlug, setNationsSlug] = useState(null);
-  const inscripcionPath = nationsSlug ? `/nations-cup/${nationsSlug}/inscripcion` : `/torneo/${torneoId}/equipos`;
+  const esNations = torneo?.modalidad_plantel === 'selecciones';
+  // Sin slug NO se cae al formulario generico: la inscripcion Nations es privada y distinta.
+  const inscripcionPath = nationsSlug
+    ? `/nations-cup/${nationsSlug}/inscripcion`
+    : (esNations ? null : `/torneo/${torneoId}/equipos`);
+  const inscripcionDeshabilitada = esNations && !nationsSlug;
   useEffect(() => {
     let cancelado = false;
     if (!torneoId) return undefined;
@@ -798,7 +803,8 @@ export default function TorneoVista() {
         <button
           type="button"
           className="btn-agregar-jugadores"
-          onClick={() => navigate(inscripcionPath, torneoNavState ? { state: torneoNavState } : undefined)}
+          disabled={inscripcionDeshabilitada}
+          onClick={() => { if (inscripcionPath) navigate(inscripcionPath, torneoNavState ? { state: torneoNavState } : undefined); }}
         >
           {t('torneos.vista.teamsAndRegistration')}
         </button>
@@ -1082,7 +1088,7 @@ export default function TorneoVista() {
       <section className="padbol-selection">
         <h3>{t('torneos.selecciones.selectionMode', { defaultValue: 'Plantel de selección (hasta 8)' })}</h3>
         <p>{t('torneos.selecciones.modeHint', { defaultValue: 'Plantel de 4 a 8 jugadores. Cada partido presenta 2 iniciales y 2 suplentes; siempre juegan 2 en cancha y pueden alternar en games impares. La carga manual de sets no registra los cambios game por game.' })}</p>
-        <button type="button" onClick={() => navigate(inscripcionPath, location.state != null ? { state: location.state } : undefined)}>{t('torneos.vista.teamsAndRegistration')}</button>
+        <button type="button" disabled={inscripcionDeshabilitada} onClick={() => { if (inscripcionPath) navigate(inscripcionPath, location.state != null ? { state: location.state } : undefined); }}>{t('torneos.vista.teamsAndRegistration')}</button>
       </section>
     ) : puedePanelBuscaDupla ? (
       <div className="torneo-busca-dupla">

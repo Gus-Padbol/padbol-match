@@ -86,14 +86,15 @@ export default function AdminNationsSolicitudes() {
       });
       if (ticket !== epoch.current) return;
       if (res.status === 403) { setAccess(false); return; }
-      if (res.status === 409) { setError('La solicitud cambió de estado. Actualizá la cola.'); return; }
+      if (res.status === 409) { setBusy(false); await cargar(); setError('La solicitud cambió de estado. Actualizamos la cola.'); return; }
       if (!res.ok) { setError('No pudimos registrar la decisión.'); return; }
       setSelected(null); setMatched(''); setEvidence(''); setIdentity(false); setGuardian(false);
+      setBusy(false);            // liberar ANTES de recargar: cargar() incrementa el epoch
       await cargar();
     } catch {
       if (ticket === epoch.current) setError('Error de red. Reintentá.');
     } finally {
-      if (ticket === epoch.current) setBusy(false);
+      setBusy(false);
     }
   };
 

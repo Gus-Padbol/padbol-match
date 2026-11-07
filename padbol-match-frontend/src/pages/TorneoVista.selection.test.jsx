@@ -32,7 +32,8 @@ test('public selection tournament points to registered rosters without requestin
  const button=await screen.findByRole('button',{name:'torneos.vista.teamsAndRegistration'});
  expect(screen.queryByText('torneos.vista.playersSeekingPartner')).not.toBeInTheDocument();
  expect(fetch.mock.calls.some(([url])=>url.includes('/busca-dupla'))).toBe(false);
- fireEvent.click(button);expect(mockNavigate).toHaveBeenCalledWith('/torneo/9/equipos',undefined);
+ fireEvent.click(button);// Nations sin slug: no hay fallback al formulario generico de equipos.
+  expect(mockNavigate).not.toHaveBeenCalled();
  expect(fetch.mock.calls.every(([,options])=>!options?.method||options.method==='GET')).toBe(true);
 });
 test('legacy doubles preserve authenticated partner discovery and its existing public section',async()=>{

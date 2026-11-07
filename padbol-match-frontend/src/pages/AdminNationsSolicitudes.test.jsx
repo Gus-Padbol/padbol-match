@@ -109,3 +109,50 @@ test('error de red al cargar es recuperable', async () => {
   mount();
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Error de red/));
 });
+
+test('C-01: dos decisiones consecutivas sin recargar (busy se libera)', async () => {
+  let queue = [
+    {id: 'r1', declared_name: 'Jugador Ficticio Uno', declared_country: 'IT', age_status: 'adulto', status: 'pendiente'},
+    {id: 'r2', declared_name: 'Jugador Ficticio Dos', declared_country: 'IT', age_status: 'adulto', status: 'pendiente'},
+  ];
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).endsWith('/access')) return ok({access: {canConfigure: true}});
+    if (String(url).includes('/review')) { queue = queue.slice(1); return ok({ok: true}); }
+    if (String(url).includes('/profile-requests')) return ok({requests: queue});
+    return ok({participants: [{id: 'p1', name: 'Jugador Ficticio', country: 'IT', linked: false}]});
+  });
+  mount();
+  await waitFor(() => expect(screen.getByRole('button', {name: /Jugador Ficticio Uno · IT/})).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', {name: /Jugador Ficticio Uno · IT/}));
+  fireEvent.change(screen.getByLabelText(/Persona existente/), {target: {value: 'p1'}});
+  fireEvent.change(screen.getByLabelText(/Evidencia/), {target: {value: 'Evidencia suficiente para la primera decision'}});
+  fireEvent.click(screen.getByLabelText(/Verifiqué la identidad/));
+  fireEvent.click(screen.getByRole('button', {name: 'Aprobar'}));
+  await waitFor(() => expect(screen.getByRole('button', {name: /Jugador Ficticio Dos · IT/})).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', {name: /Jugador Ficticio Dos · IT/}));
+  // Si busy no se libera, este boton queda disabled y la cola se traba.
+  expect(screen.getByRole('button', {name: 'Aprobar'})).toBeEnabled();
+  expect(screen.getByRole('button', {name: 'Rechazar'})).toBeEnabled();
+});
+
+test('C-03: 409 recarga la cola de verdad', async () => {
+  let llamadasCola = 0;
+  mockFetch.mockImplementation(async (url) => {
+    if (String(url).endsWith('/access')) return ok({access: {canConfigure: true}});
+    if (String(url).includes('/review')) return {ok: false, status: 409, json: async () => ({code: 'REQUEST_ALREADY_REVIEWED'})};
+    if (String(url).includes('/profile-requests')) {
+      llamadasCola += 1;
+      return ok({requests: [{id: 'r1', declared_name: 'Jugador Ficticio', declared_country: 'IT', age_status: 'adulto', status: 'pendiente'}]});
+    }
+    return ok({participants: [{id: 'p1', name: 'Jugador Ficticio', country: 'IT', linked: false}]});
+  });
+  mount();
+  await waitFor(() => expect(screen.getByRole('button', {name: /Jugador Ficticio · IT/})).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', {name: /Jugador Ficticio · IT/}));
+  fireEvent.change(screen.getByLabelText(/Persona existente/), {target: {value: 'p1'}});
+  fireEvent.change(screen.getByLabelText(/Evidencia/), {target: {value: 'Evidencia suficiente para el intento con conflicto'}});
+  fireEvent.click(screen.getByLabelText(/Verifiqué la identidad/));
+  fireEvent.click(screen.getByRole('button', {name: 'Aprobar'}));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/cambió de estado/));
+  expect(llamadasCola).toBeGreaterThanOrEqual(2);
+});
