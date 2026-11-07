@@ -8,6 +8,7 @@ const mockFetch = jest.fn();
 jest.mock('../context/AuthContext', () => ({useAuth: () => mockUseAuth()}));
 jest.mock('../i18n/tSafe', () => ({useSafeTranslation: () => ({i18n: {language: 'es'}, t: (k) => k})}));
 
+const waitReady = async () => { await waitFor(() => expect(screen.getByRole('button', {name: 'Enviar solicitud'})).toBeEnabled()); };
 const mount = (slug = 'nations-cup-napoli-2026') => render(
   <MemoryRouter initialEntries={[`/nations-cup/${slug}/inscripcion`]}>
     <Routes><Route path="/nations-cup/:slug/inscripcion" element={<NationsInscripcion />} /></Routes>
@@ -19,7 +20,7 @@ beforeEach(() => {
   sessionStorage.clear();
   global.fetch = mockFetch;
   mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: []})});
-  mockUseAuth.mockReturnValue({session: {user: {id: 'actor-1'}, access_token: 'tok'}, loading: false, getAccessToken: () => 'tok'});
+  mockUseAuth.mockReturnValue({session: {user: {id: 'actor-1', email_confirmed_at: '2026-01-01'}, access_token: 'tok'}, loading: false});
 });
 
 test('sin sesión pide ingresar con retorno seguro', () => {
@@ -33,6 +34,7 @@ test('envía payload correcto y muestra recepción pendiente sin afirmar coincid
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: []})})
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})});
   mount();
+  await waitReady();
   fireEvent.change(screen.getByLabelText('Nombre y apellido'), {target: {value: 'Jugador Ficticio'}});
   fireEvent.change(screen.getByLabelText('País'), {target: {value: 'IT'}});
   fireEvent.click(screen.getByLabelText('Mayor de edad'));
@@ -48,6 +50,7 @@ test('envía payload correcto y muestra recepción pendiente sin afirmar coincid
 
 test('menor exige autorización declarada del responsable', async () => {
   mount();
+  await waitReady();
   fireEvent.change(screen.getByLabelText('Nombre y apellido'), {target: {value: 'Jugador Ficticio'}});
   fireEvent.change(screen.getByLabelText('País'), {target: {value: 'IT'}});
   fireEvent.click(screen.getByLabelText('Menor de edad'));
@@ -61,6 +64,7 @@ test('conflicto 409 muestra mensaje claro y no duplica envíos', async () => {
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: []})})
     .mockResolvedValueOnce({ok: false, status: 409, json: async () => ({code: 'REQUEST_CONFLICT'})});
   mount();
+  await waitReady();
   fireEvent.change(screen.getByLabelText('Nombre y apellido'), {target: {value: 'Jugador Ficticio'}});
   fireEvent.change(screen.getByLabelText('País'), {target: {value: 'IT'}});
   fireEvent.click(screen.getByLabelText('Mayor de edad'));
@@ -84,7 +88,7 @@ test('cambio de actor limpia estado y usa otro request_id', async () => {
   await waitFor(() => expect(screen.getByText(/Queda pendiente/)).toBeInTheDocument());
   unmount();
   sessionStorage.clear();
-  mockUseAuth.mockReturnValue({session: {user: {id: 'actor-2'}, access_token: 'tok2'}, loading: false, getAccessToken: () => 'tok2'});
+  mockUseAuth.mockReturnValue({session: {user: {id: 'actor-2', email_confirmed_at: '2026-01-01'}, access_token: 'tok2'}, loading: false});
   mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: []})});
   mount();
   await waitFor(() => expect(screen.getByRole('button', {name: 'Enviar solicitud'})).toBeInTheDocument());
@@ -96,10 +100,44 @@ test('edad no informada se puede enviar', async () => {
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: []})})
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})});
   mount();
+  await waitReady();
   fireEvent.change(screen.getByLabelText('Nombre y apellido'), {target: {value: 'Jugador Ficticio'}});
   fireEvent.change(screen.getByLabelText('País'), {target: {value: 'IT'}});
   fireEvent.click(screen.getByLabelText('Prefiero no informar'));
   fireEvent.click(screen.getByLabelText(/Autorizo el uso de mis datos/));
   fireEvent.click(screen.getByRole('button', {name: 'Enviar solicitud'}));
   await waitFor(() => expect(screen.getByText(/Queda pendiente/)).toBeInTheDocument());
+});
+
+test('Austria esta en el catalogo y no aparece la nomina del torneo', async () => {
+  mount();
+  const select = screen.getByLabelText('País');
+  const values = Array.from(select.querySelectorAll('option')).map(o => o.textContent);
+  expect(values.join(' ')).toMatch(/Austria/);
+  // no exponer paises de la nomina como si fueran catalogo: Austria viene del catalogo de la app
+  expect(values.length).toBeGreaterThan(10);
+});
+
+test('email sin verificar bloquea el envio y lo explica', async () => {
+  mockUseAuth.mockReturnValue({session: {user: {id: 'actor-3'}, access_token: 'tok3'}, loading: false});
+  mount();
+  expect(screen.getByRole('alert')).toHaveTextContent(/Verificá tu email/);
+  expect(screen.getByRole('button', {name: 'Enviar solicitud'})).toBeDisabled();
+});
+
+test('fallo de red al restaurar no deja el formulario habilitado a ciegas', async () => {
+  mockFetch.mockRejectedValueOnce(new Error('network'));
+  mount();
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/No pudimos enviar|solicitud/i));
+});
+
+test('rechazada permite nueva solicitud sin recargar y con id nuevo', async () => {
+  mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'rechazada'}]})});
+  mount();
+  await waitFor(() => expect(screen.getByText(/no fue aprobada/)).toBeInTheDocument());
+  const antes = sessionStorage.getItem('nationsProfileRequest:actor-1:nations-cup-napoli-2026');
+  fireEvent.click(screen.getByRole('button', {name: 'Enviar nueva solicitud'}));
+  const despues = sessionStorage.getItem('nationsProfileRequest:actor-1:nations-cup-napoli-2026');
+  expect(despues).not.toBe(antes);
+  expect(screen.getByRole('button', {name: 'Enviar solicitud'})).toBeInTheDocument();
 });

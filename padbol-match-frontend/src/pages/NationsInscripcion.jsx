@@ -2,11 +2,13 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Link, useParams} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import {useSafeTranslation} from '../i18n/tSafe';
+import {PAISES_TELEFONO_PRINCIPALES} from '../constants/paisesTelefono';
 
 const COPY = {
   es: {
     title: 'Completá tus datos para la Nations Cup',
     intro: 'Enviás una solicitud privada. La organización revisa tu identidad antes de habilitarte.',
+    verifyEmail: 'Verificá tu email antes de enviar la solicitud. Revisá tu correo.',
     signIn: 'Iniciá sesión con tu cuenta verificada para continuar.',
     signInCta: 'Ingresar',
     name: 'Nombre y apellido',
@@ -34,6 +36,7 @@ const COPY = {
   en: {
     title: 'Complete your details for the Nations Cup',
     intro: 'You are sending a private request. The organisation reviews your identity before activation.',
+    verifyEmail: 'Verify your email before sending the request. Check your inbox.',
     signIn: 'Sign in with your verified account to continue.',
     signInCta: 'Sign in',
     name: 'Full name',
@@ -61,6 +64,7 @@ const COPY = {
   it: {
     title: 'Completa i tuoi dati per la Nations Cup',
     intro: 'Invii una richiesta privata. L’organizzazione verifica la tua identità prima di attivarti.',
+    verifyEmail: 'Verifica la tua email prima di inviare la richiesta. Controlla la posta.',
     signIn: 'Accedi con il tuo account verificato per continuare.',
     signInCta: 'Accedi',
     name: 'Nome e cognome',
@@ -87,11 +91,21 @@ const COPY = {
   },
 };
 
-const COUNTRIES = [
-  ['IT', 'Italia'], ['ES', 'España'], ['FR', 'France'], ['DE', 'Deutschland'], ['PT', 'Portugal'],
-  ['RO', 'România'], ['BE', 'België'], ['SE', 'Sverige'], ['DK', 'Danmark'], ['UA', 'Україна'],
-  ['MX', 'México'], ['EG', 'مصر'], ['QA', 'قطر'], ['AE', 'الإمارات'], ['AR', 'Argentina'],
-];
+// Catálogo mundial estático de la app (40 países), NO la nómina del torneo.
+const ISO = {
+  Argentina:'AR', España:'ES', Italia:'IT', Francia:'FR', Alemania:'DE', Rumania:'RO', Austria:'AT',
+  'Estados Unidos':'US', Brasil:'BR', Uruguay:'UY', Chile:'CL', Colombia:'CO', Perú:'PE', México:'MX',
+  Paraguay:'PY', Bolivia:'BO', Ecuador:'EC', Venezuela:'VE', Canadá:'CA', Portugal:'PT',
+  'Reino Unido':'GB', Irlanda:'IE', 'Países Bajos':'NL', Bélgica:'BE', Suiza:'CH', Suecia:'SE',
+  Noruega:'NO', Dinamarca:'DK', Finlandia:'FI', Polonia:'PL', 'República Checa':'CZ', Hungría:'HU',
+  Grecia:'GR', Turquía:'TR', Ucrania:'UA', Rusia:'RU', Egipto:'EG', Marruecos:'MA', Sudáfrica:'ZA',
+  Australia:'AU', Japón:'JP', China:'CN', India:'IN', 'Corea del Sur':'KR', 'Emiratos Árabes Unidos':'AE',
+  Catar:'QA', 'Arabia Saudita':'SA', Israel:'IL', Tailandia:'TH', Indonesia:'ID', Filipinas:'PH',
+  'Nueva Zelanda':'NZ', Singapur:'SG',
+};
+const COUNTRIES = PAISES_TELEFONO_PRINCIPALES
+  .map(({nombre, bandera}) => [ISO[nombre], `${bandera || ''} ${nombre}`.trim()])
+  .filter(([code]) => Boolean(code));
 
 const keyFor = (actor, slug) => `nationsProfileRequest:${actor}:${slug}`;
 function newRequestId() {
@@ -100,13 +114,15 @@ function newRequestId() {
 
 export default function NationsInscripcion() {
   const {slug = ''} = useParams();
-  const {session, loading, getAccessToken} = useAuth();
+  const {session, loading} = useAuth();
   const {i18n} = useSafeTranslation();
   const lang = (i18n?.language || 'es').slice(0, 2);
   const t = COPY[lang] || COPY.es;
   const actorId = session?.user?.id || null;
 
   const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState(false);
+  const [ignoreServerStatus, setIgnoreServerStatus] = useState(false);
   const [status, setStatus] = useState(null); // pendiente | aprobada | rechazada | en_revision
   const [name, setName] = useState('');
   const [country, setCountry] = useState('');
@@ -129,12 +145,13 @@ export default function NationsInscripcion() {
   // Cambio de actor o de evento: se limpia todo el estado local y se ignoran respuestas viejas.
   useEffect(() => {
     epoch.current += 1;
-    setStatus(null); setError(null); setName(''); setCountry(''); setAge('desconocido');
+    setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setConsent(false); setSending(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
-  const token = typeof getAccessToken === 'function' ? getAccessToken() : session?.access_token;
+  const token = session?.access_token || null;
+  const emailVerified = Boolean(session?.user?.email_confirmed_at || session?.user?.confirmed_at);
 
   const loadStatus = useCallback(async () => {
     if (!actorId || !slug) return;
@@ -149,17 +166,19 @@ export default function NationsInscripcion() {
       const body = await res.json().catch(() => null);
       if (ticket !== epoch.current) return;
       const latest = Array.isArray(body?.requests) ? body.requests[0] : null;
-      if (latest) { setStatus(latest.status); if (latest.age_status) setAge(latest.age_status); }
+      if (latest && !ignoreServerStatus) { setStatus(latest.status); if (latest.age_status) setAge(latest.age_status); }
+    } catch {
+      if (ticket === epoch.current) setRestoreError(true);
     } finally {
       if (ticket === epoch.current) setRestoring(false);
     }
-  }, [actorId, slug, apiBase, token]);
+  }, [actorId, slug, apiBase, token, ignoreServerStatus]);
 
   useEffect(() => { loadStatus(); }, [loadStatus]);
 
   const submit = async (event) => {
     event.preventDefault();
-    if (sending || !requestId) return;
+    if (sending || !requestId || restoring) return;
     setError(null);
     if (!name.trim() || !country) { setError(t.required); return; }
     if (age === 'menor' && !guardianConsent) { setError(t.required); return; }
@@ -194,9 +213,9 @@ export default function NationsInscripcion() {
 
   const startNew = () => {
     if (!actorId) return;
-    sessionStorage.removeItem(keyFor(actorId, slug));
+    sessionStorage.setItem(keyFor(actorId, slug), newRequestId());
+    setIgnoreServerStatus(true);
     setStatus(null); setError(null);
-    window.location.reload();
   };
 
   if (loading) return <main className="nations-form"><p>{t.restore}</p></main>;
@@ -218,6 +237,8 @@ export default function NationsInscripcion() {
       <p>{t.intro}</p>
 
       {restoring ? <p role="status">{t.restore}</p> : null}
+      {restoreError ? <p role="alert">{t.error}</p> : null}
+      {!emailVerified ? <p role="alert">{t.verifyEmail}</p> : null}
 
       {status === 'pendiente' || status === 'en_revision' ? (
         <section role="status">
@@ -265,7 +286,7 @@ export default function NationsInscripcion() {
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
             {t.consent}
           </label>
-          <button type="submit" disabled={sending}>{sending ? t.sending : t.submit}</button>
+          <button type="submit" disabled={sending || restoring || !emailVerified}>{sending ? t.sending : t.submit}</button>
         </form>
       )}
     </main>
