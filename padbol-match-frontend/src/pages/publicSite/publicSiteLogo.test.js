@@ -18,11 +18,11 @@ const layout = fs.readFileSync(path.join(__dirname, 'PublicSiteLayout.jsx'), 'ut
 describe('logo oficial de la web pública', () => {
   it('expone el asset on-dark recortado (sin lienzo negro)', () => {
     expect(brandConst).toMatch(
-      /PADBOL_LOGO_ON_DARK_TIGHT\s*=\s*['"]\/brand\/padbol-match-logo-on-dark-tight\.png['"]/,
+      /PADBOL_LOGO_ON_DARK_TIGHT\s*=\s*['"]\/brand\/padbol-match-logo-oficial\.svg['"]/,
     );
     const assetPath = path.join(
       __dirname,
-      '../../../public/brand/padbol-match-logo-on-dark-tight.png',
+      '../../../public/brand/padbol-match-logo-oficial.svg',
     );
     expect(fs.existsSync(assetPath)).toBe(true);
   });

@@ -48,8 +48,8 @@ describe('Padbol brand logos oficiales (horizontales)', () => {
   it('constantes y componente apuntan a /brand/', () => {
     const brandJs = fs.readFileSync(path.join(__dirname, 'padbolBrandLogo.js'), 'utf8');
     const comp = fs.readFileSync(path.join(__dirname, '../components/PadbolBrandLogo.jsx'), 'utf8');
-    expect(brandJs).toMatch(/\/brand\/padbol-match-logo-on-light\.png/);
-    expect(brandJs).toMatch(/\/brand\/padbol-match-logo-on-dark\.png/);
+    expect(brandJs).toMatch(/\/brand\/padbol-match-logo-oficial\.svg/);
+    expect(brandJs).toMatch(/\/brand\/padbol-match-logo-oficial\.svg/);
     expect(brandJs).toMatch(/\/brand\/padbol-match-icon\.svg/);
     expect(comp).toMatch(/PadbolBrandLogo/);
     expect(comp).toMatch(/padbolBrandLogoSrc|PADBOL_LOGO_ON_/);
