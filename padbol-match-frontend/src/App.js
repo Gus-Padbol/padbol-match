@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useState, Suspense, lazy } from 'react';
 import SeguridadPassword from './pages/SeguridadPassword';
+import NationsInscripcion from './pages/NationsInscripcion';
 import {
   BrowserRouter as Router,
   Routes,
@@ -404,6 +405,7 @@ function AppRoutes() {
         <Route path="/torneo/:id/jugadores" element={<Navigate to="/mi-perfil" replace />} />
         <Route path="/torneo/:id/equipos/:equipoId" element={<EquipoVista />} />
         <Route path="/equipo/:id" element={<EquipoPerfil />} />
+        <Route path="/nations-cup/:slug/inscripcion" element={<NationsInscripcion />} />
         <Route path="/torneo/:id/equipos" element={<FormEquipos />} />
         <Route path="/crear-equipo" element={<Navigate to="/torneos" replace />} />
         <Route path="/pago-exitoso" element={<PagoExitoso />} />
