@@ -1,5 +1,6 @@
 import OfficialFipaProfile from '../components/OfficialFipaProfile';
 import { uploadProfileAvatar } from '../utils/profileAvatarUpload';
+import { loadCanonicalProfile, updateOwnProfileRow, insertOwnProfileRow } from '../utils/canonicalProfile';
 import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, fechaDesdeReservasJugador } from '../utils/reservaJugadorActions';
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
@@ -342,6 +343,11 @@ export default function MiPerfil() {
   /** Archivo elegido hasta guardar (subida a Storage al confirmar el formulario). */
   const pendingFotoFileRef = useRef(null);
   const fotoPreviewRef = useRef(null);
+  const sessionUserIdRef = useRef(null);
+
+  useEffect(() => {
+    sessionUserIdRef.current = session?.user?.id ?? null;
+  }, [session?.user?.id]);
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
   const [reservaCancelModal, setReservaCancelModal] = useState(null);
@@ -780,20 +786,17 @@ export default function MiPerfil() {
         setTimeout(() => reject(new Error('Timeout loading profile')), 8000)
       );
       const uid = session?.user?.id ?? null;
-      const byUserId = uid
-        ? supabase.from('jugadores_perfil').select('*').eq('user_id', uid).maybeSingle()
-        : null;
-      const byEmail = supabase.from('jugadores_perfil').select('*').eq('email', owner).maybeSingle();
-
-      let data = null;
-      if (byUserId) {
-        const r1 = await Promise.race([byUserId, timeoutPromise]);
-        if (r1?.data) data = r1.data;
+      if (!uid) {
+        setPerfil(null);
+        setLoading(false);
+        return;
       }
-      if (!data) {
-        const r2 = await Promise.race([byEmail, timeoutPromise]);
-        data = r2?.data ?? null;
-      }
+      const loaded = await Promise.race([
+        loadCanonicalProfile({ supabase, userId: uid, email: owner }),
+        timeoutPromise,
+      ]);
+      if (sessionUserIdRef.current !== uid) return;
+      const data = loaded?.row ?? null;
 
       if (data) {
         setPerfil(data);
@@ -1109,21 +1112,24 @@ export default function MiPerfil() {
       }
       const fotoUrlGuardada = `${publicUrl}?t=${Date.now()}`;
 
+      if (sessionUserIdRef.current !== userId) return;
       let rowAfter = perfil;
       if (perfil) {
-        const { error: upDbErr } = await supabase
-          .from('jugadores_perfil')
-          .update({ foto_url: fotoUrlGuardada })
-          .eq('email', owner);
+        const { data: updated, error: upDbErr } = await updateOwnProfileRow({
+          supabase,
+          row: perfil,
+          userId,
+          email: owner,
+          patch: { foto_url: fotoUrlGuardada },
+        });
         if (upDbErr) {
           setErrorMsg(mensajeErrorDbSupabase(upDbErr));
           return;
         }
-        rowAfter = { ...perfil, foto_url: fotoUrlGuardada };
-        setPerfil((prev) => (prev ? { ...prev, foto_url: fotoUrlGuardada } : prev));
+        rowAfter = updated;
+        setPerfil(updated);
       } else {
         const payloadDb = {
-          user_id: userId,
           email: owner,
           nombre: getDisplayName(userProfile, session) || 'Jugador',
           whatsapp: String(userProfile?.whatsapp || '').trim() || null,
@@ -1135,32 +1141,17 @@ export default function MiPerfil() {
           companero_id: formData.companero_id || null,
           localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         };
-        const { data: inserted, error: insErr } = await supabase
-          .from('jugadores_perfil')
-          .upsert(payloadDb, { onConflict: 'email' })
-          .select()
-          .maybeSingle();
+        const { data: inserted, error: insErr } = await insertOwnProfileRow({
+          supabase, userId, payload: payloadDb,
+        });
         if (insErr) {
           setErrorMsg(mensajeErrorDbSupabase(insErr));
           return;
         }
-        if (inserted) {
-          rowAfter = inserted;
-          setPerfil(inserted);
-        } else {
-          const { data: reread } = await supabase
-            .from('jugadores_perfil')
-            .select('*')
-            .eq('email', owner)
-            .maybeSingle();
-          if (reread) {
-            rowAfter = reread;
-            setPerfil(reread);
-          } else {
-            rowAfter = payloadDb;
-          }
-        }
+        rowAfter = inserted;
+        setPerfil(inserted);
       }
+      if (sessionUserIdRef.current !== userId) return;
 
       pendingFotoFileRef.current = null;
       setFotoPendienteDeSubir(false);
@@ -1180,8 +1171,12 @@ export default function MiPerfil() {
         email: owner,
         foto_url: fotoUrlGuardada,
       });
-      await refreshJugadorPerfilFromSupabase(owner);
+      await refreshJugadorPerfilFromSupabase(owner, {
+        profileRow: rowAfter,
+        isCurrent: () => sessionUserIdRef.current === userId,
+      });
       await refreshSession();
+      if (sessionUserIdRef.current !== userId) return;
 
       setSuccessMsg('✅ Foto guardada');
       setTimeout(() => setSuccessMsg(''), 3000);
@@ -1214,18 +1209,19 @@ export default function MiPerfil() {
       try {
         const fotoVal =
           fotoUrlValue == null || String(fotoUrlValue).trim() === '' ? null : String(fotoUrlValue).trim();
+        if (sessionUserIdRef.current !== userId) return;
 
-        const { error: upDbErr } = await supabase
-          .from('jugadores_perfil')
-          .update({ foto_url: fotoVal })
-          .eq('email', owner);
+        const { data: updated, error: upDbErr } = await updateOwnProfileRow({
+          supabase, row: perfil, userId, email: owner, patch: { foto_url: fotoVal },
+        });
         if (upDbErr) {
           setErrorMsg(mensajeErrorDbSupabase(upDbErr));
           return;
         }
+        if (sessionUserIdRef.current !== userId) return;
 
-        setPerfil((prev) => (prev ? { ...prev, foto_url: fotoVal } : prev));
-        const na = nombreApellidoEditDesdePerfilRow(perfil);
+        setPerfil(updated);
+        const na = nombreApellidoEditDesdePerfilRow(updated);
         persistJugadorPerfil({
           nombre: na.nombre || String(perfil.nombre || '').trim() || 'Jugador',
           apellido: na.apellido,
@@ -1240,8 +1236,12 @@ export default function MiPerfil() {
           if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
           return null;
         });
-        await refreshJugadorPerfilFromSupabase(owner);
+        await refreshJugadorPerfilFromSupabase(owner, {
+          profileRow: updated,
+          isCurrent: () => sessionUserIdRef.current === userId,
+        });
         await refreshSession();
+        if (sessionUserIdRef.current !== userId) return;
         cerrarFotoAccionModal();
         setSuccessMsg(fotoVal ? '✅ Foto actualizada' : '✅ Foto eliminada');
         setTimeout(() => setSuccessMsg(''), 3000);
@@ -1452,7 +1452,7 @@ export default function MiPerfil() {
         deportes_preferidos: normalizeDeportesPreferidosArray(registroDeportesSel),
       };
 
-      const { error: jpErr } = await upsertJugadorPerfilPorSesion({
+      const { data: jpRow, error: jpErr } = await upsertJugadorPerfilPorSesion({
         userId: user?.id,
         email: owner,
         row: {
@@ -1477,7 +1477,10 @@ export default function MiPerfil() {
         whatsapp: wa,
         email: owner,
       });
-      await refreshJugadorPerfilFromSupabase(owner);
+      await refreshJugadorPerfilFromSupabase(owner, {
+        profileRow: jpRow,
+        isCurrent: () => sessionUserIdRef.current === (user?.id ?? null),
+      });
 
       setSuccessMsg(MSG_CUENTA_Y_FICHA_OK);
       setRegistroFieldErrors({});
@@ -1642,15 +1645,30 @@ export default function MiPerfil() {
       }
       payloadDb.foto_url = fotoUrlGuardada;
 
-      const { error } = await supabase
-        .from('jugadores_perfil')
-        .upsert(payloadDb, { onConflict: 'email' });
+      if (sessionUserIdRef.current !== userId) return;
+      let savedRow = null;
+      let persistError = null;
+      if (perfil) {
+        const updatePayload = { ...payloadDb };
+        delete updatePayload.user_id;
+        delete updatePayload.email;
+        const result = await updateOwnProfileRow({
+          supabase, row: perfil, userId, email: owner, patch: updatePayload,
+        });
+        savedRow = result.data;
+        persistError = result.error;
+      } else {
+        const result = await insertOwnProfileRow({ supabase, userId, payload: payloadDb });
+        savedRow = result.data;
+        persistError = result.error;
+      }
 
-      if (error) {
-        console.error('ERROR COMPLETO UPSERT:', JSON.stringify(error));
-        setErrorMsg(mensajeErrorDbSupabase(error));
+      if (persistError) {
+        console.error('ERROR COMPLETO PERSISTENCIA PERFIL:', JSON.stringify(persistError));
+        setErrorMsg(mensajeErrorDbSupabase(persistError));
         return;
       }
+      if (sessionUserIdRef.current !== userId) return;
 
       const nombreClienteDisplay = [nombreTrim, apellidoTrim].filter(Boolean).join(' ').trim();
       const { error: errCli } = await supabase
@@ -1668,6 +1686,7 @@ export default function MiPerfil() {
       });
 
       await fetchPerfil();
+      if (sessionUserIdRef.current !== userId) return;
       persistJugadorPerfil({
         nombre: nombreTrim,
         apellido: apellidoTrim,
@@ -1678,8 +1697,12 @@ export default function MiPerfil() {
         email: owner,
         ...(fotoUrlGuardada ? { foto_url: fotoUrlGuardada } : {}),
       });
-      await refreshJugadorPerfilFromSupabase(owner);
+      await refreshJugadorPerfilFromSupabase(owner, {
+        profileRow: savedRow,
+        isCurrent: () => sessionUserIdRef.current === userId,
+      });
       await refreshSession();
+      if (sessionUserIdRef.current !== userId) return;
 
       setPassRegistroTorneo('');
       setPassRegistroTorneo2('');

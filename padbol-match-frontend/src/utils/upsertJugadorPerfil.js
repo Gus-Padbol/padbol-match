@@ -20,8 +20,15 @@ export async function findJugadorPerfilPorSesion(userId, email) {
       .from('jugadores_perfil')
       .select('id, user_id, email, nombre, apellido')
       .eq('email', em)
+      .is('user_id', null)
       .maybeSingle();
-    return { data, error };
+    if (error) return { data: null, error };
+    if (data?.user_id != null && String(data.user_id) !== uid) {
+      const conflict = new Error('El email pertenece a otra cuenta.');
+      conflict.code = 'PROFILE_EMAIL_OTHER_USER';
+      return { data: null, error: conflict };
+    }
+    return { data, error: null };
   }
   return { data: null, error: null };
 }
@@ -51,24 +58,21 @@ export async function upsertJugadorPerfilPorSesion({ userId, email, row }) {
     if (existing.apellido && patch.apellido == null) {
       delete updatePayload.apellido;
     }
-    return supabase.from('jugadores_perfil').update(updatePayload).eq('id', existing.id).select().single();
+    // A confirmed own legacy NULL is linked to this UUID in the same conditional update.
+    let updateQuery = supabase.from('jugadores_perfil').update(updatePayload).eq('id', existing.id);
+    if (existing.user_id == null) {
+      if (!em) return { data: null, error: new Error('Falta el email de sesión para vincular la fila legacy.') };
+      updateQuery = updateQuery.is('user_id', null).eq('email', em);
+    } else {
+      updateQuery = updateQuery.eq('user_id', uid);
+    }
+    return updateQuery.select().single();
   }
 
-  let result = await supabase
+  // UUID-only conflict target. An email conflict is surfaced; never resolved by email.
+  return supabase
     .from('jugadores_perfil')
     .upsert(patch, { onConflict: 'user_id' })
     .select()
     .single();
-
-  if (!result.error || !em) return result;
-
-  const dup = String(result.error.message || '').toLowerCase();
-  if (dup.includes('duplicate') || String(result.error.code || '') === '23505') {
-    result = await supabase
-      .from('jugadores_perfil')
-      .upsert(patch, { onConflict: 'email' })
-      .select()
-      .single();
-  }
-  return result;
 }

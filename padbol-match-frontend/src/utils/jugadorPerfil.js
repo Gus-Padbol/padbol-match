@@ -116,6 +116,21 @@ export function persistJugadorPerfil(partial) {
   }
 }
 
+/** Removes only the cached avatar when the canonical row explicitly has no photo. */
+export function clearJugadorPerfilFoto() {
+  if (typeof window === 'undefined') return;
+  const prev = readJugadorPerfil();
+  if (!prev || !Object.prototype.hasOwnProperty.call(prev, 'foto_url')) return;
+  const next = { ...prev };
+  delete next.foto_url;
+  try {
+    localStorage.setItem(JUGADOR_PERFIL_LS_KEY, JSON.stringify(next));
+    window.dispatchEvent(new CustomEvent(PERFIL_CHANGE_EVENT));
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Garantiza fila en jugadores_perfil para el email (nombre desde perfil local, sin usar email como nombre).
  * Usa upsert por email. Si falta nombre completo en LS, devuelve error.
@@ -183,8 +198,10 @@ export async function refreshJugadorPerfilFromSupabase(email, { profileRow, isCu
     const apellido = a0;
     const categoria = String(data.nivel || '').trim();
     const fotoUrl = String(data?.foto_url || '').trim();
+    const hasCanonicalRow = profileRow !== undefined;
     const genero = String(data?.genero ?? '').trim();
     const lateralidad = String(data?.lateralidad ?? '').trim();
+    if (hasCanonicalRow && !fotoUrl) clearJugadorPerfilFoto();
     persistJugadorPerfil({
       ...(nombre ? { nombre } : {}),
       ...(apellido ? { apellido } : {}),

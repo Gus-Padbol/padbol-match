@@ -7,3 +7,15 @@ test('known complete profile persists without another network read',async()=>{aw
 test('known profile missing WhatsApp retains client fallback without rereading profile',async()=>{await refreshJugadorPerfilFromSupabase('qa@example.invalid',{profileRow:{nombre:'Known'}});expect(supabase.from).toHaveBeenCalledTimes(1);expect(supabase.from).toHaveBeenCalledWith('clientes');expect(readJugadorPerfil().whatsapp).toBe('fallback');});
 test('standalone refresh still fetches fresh profile and client',async()=>{await refreshJugadorPerfilFromSupabase('qa@example.invalid');expect(supabase.from).toHaveBeenCalledTimes(2);expect(readJugadorPerfil().nombre).toBe('Read');});
 test('stale asynchronous client fallback cannot persist after identity changes',async()=>{let finish;supabase.from.mockImplementation(()=>({select:()=>({eq:()=>({maybeSingle:()=>new Promise(r=>{finish=r})})})}));let active=true;const pending=refreshJugadorPerfilFromSupabase('qa@example.invalid',{profileRow:{nombre:'Old'},isCurrent:()=>active});active=false;finish({data:{whatsapp:'fallback'},error:null});await pending;expect(readJugadorPerfil()).toBeNull();});
+test('canonical UUID row with null photo clears stale cached photo and keeps other data',async()=>{
+  localStorage.setItem('jugadores_perfil',JSON.stringify({nombre:'Old',whatsapp:'own',foto_url:'https://old.example/legacy.png'}));
+  await refreshJugadorPerfilFromSupabase('actual@example.invalid',{profileRow:{nombre:'Current',whatsapp:'own',foto_url:null}});
+  const cached=readJugadorPerfil();
+  expect(cached.nombre).toBe('Current');expect(cached.whatsapp).toBe('own');expect(cached).not.toHaveProperty('foto_url');
+  expect(supabase.from).not.toHaveBeenCalled();
+});
+test('canonical row with non-null photo still replaces legacy cached photo',async()=>{
+  localStorage.setItem('jugadores_perfil',JSON.stringify({nombre:'Old',whatsapp:'own',foto_url:'https://old.example/legacy.png'}));
+  await refreshJugadorPerfilFromSupabase('actual@example.invalid',{profileRow:{nombre:'Current',whatsapp:'own',foto_url:'https://new.example/current.png'}});
+  expect(readJugadorPerfil().foto_url).toBe('https://new.example/current.png');
+});

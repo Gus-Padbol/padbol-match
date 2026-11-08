@@ -6,7 +6,7 @@ function queries(responses) {
   const calls=[];
   supabase.from.mockImplementation(table=>{
     const q={table}; calls.push(q);
-    const b={select:jest.fn(()=>b),eq:jest.fn((key,value)=>{q[key]=value;return b;}),
+    const b={select:jest.fn(()=>b),eq:jest.fn((key,value)=>{q[key]=value;return b;}),is:jest.fn((key,value)=>{q.is=[key,value];return b;}),
       update:jest.fn(row=>{q.update=row;return b;}),upsert:jest.fn((row,options)=>{q.upsert=row;q.options=options;return b;}),
       maybeSingle:jest.fn(async()=>responses.shift()),single:jest.fn(async()=>responses.shift())};
     return b;
@@ -34,4 +34,15 @@ test('conflict-target setup failure is preserved as a server error, not false su
 });
 test('invalid session never writes a profile',async()=>{
   expect((await upsertJugadorPerfilPorSesion({userId:'',email:'qa@example.invalid',row:{}})).error).toBeTruthy();expect(supabase.from).not.toHaveBeenCalled();
+});
+
+test('legacy email row updates by id without adopting user_id',async()=>{
+  const calls=queries([{data:null,error:null},{data:{id:9,user_id:null,email:'qa@example.invalid',nombre:'Legacy'},error:null},{data:{id:9,user_id:null,email:'qa@example.invalid'},error:null}]);
+  const result=await upsertJugadorPerfilPorSesion({userId:'qa-own',email:'qa@example.invalid',row:{nombre:'QA'}});
+  expect(result.error).toBeNull();expect(calls[2].id).toBe(9);expect(calls[2].is).toEqual(['user_id',null]);expect(calls[2].email).toBe('qa@example.invalid');expect(calls[2].update.user_id).toBe('qa-own');
+});
+test('email owned by another UUID is a conflict and never updates/upserts',async()=>{
+  const calls=queries([{data:null,error:null},{data:{id:9,user_id:'other-uid',email:'qa@example.invalid'},error:null}]);
+  const result=await upsertJugadorPerfilPorSesion({userId:'qa-own',email:'qa@example.invalid',row:{nombre:'QA'}});
+  expect(result.error.code).toBe('PROFILE_EMAIL_OTHER_USER');expect(calls).toHaveLength(2);expect(calls[1].update).toBeUndefined();expect(calls[1].upsert).toBeUndefined();
 });

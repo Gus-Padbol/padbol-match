@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { refreshJugadorPerfilFromSupabase, clearJugadorPerfilLocalStorage } from '../utils/jugadorPerfil';
 import { authSessionUsaOAuthProveedorSocial } from '../utils/perfilJugadorMinimo';
 import { upsertJugadorPerfilPorSesion } from '../utils/upsertJugadorPerfil';
+import { loadCanonicalProfile } from '../utils/canonicalProfile';
 
 const AuthContext = createContext(null);
 
@@ -60,35 +61,23 @@ async function refreshUserProfile(session, setUserProfile, isCurrent = () => tru
   }
 
   let data = null;
-  let error = null;
-
-  if (email) {
-    console.log(`${PM_AUTH_LOG} refreshUserProfile query jugadores_perfil by email…`);
-    const r1 = await supabase.from('jugadores_perfil').select('*').eq('email', email).maybeSingle();
-    if (r1.error) error = r1.error;
-    else data = r1.data;
-    console.log(`${PM_AUTH_LOG} refreshUserProfile email query done`, { hasRow: Boolean(data), hasError: Boolean(r1.error) });
+  try {
+    const loaded = await loadCanonicalProfile({ supabase, userId, email });
+    data = loaded.row;
+  } catch (loadError) {
+    if (!isCurrent()) return;
+    throw loadError;
   }
-
-  if (!data) {
-    console.log(`${PM_AUTH_LOG} refreshUserProfile query jugadores_perfil by user_id…`);
-    const r2 = await supabase.from('jugadores_perfil').select('*').eq('user_id', userId).maybeSingle();
-    if (r2.error && !error) error = r2.error;
-    if (r2.data) data = r2.data;
-    console.log(`${PM_AUTH_LOG} refreshUserProfile user_id query done`, { hasRow: Boolean(data), hasError: Boolean(r2.error) });
-  }
-
   if (!isCurrent()) return;
-  if (error) throw error;
 
   /** Google / Facebook OAuth: no crear fila vacía; WhatsApp y género se piden al usar acciones que lo requieran. */
-  if (!data && !error && authSessionUsaOAuthProveedorSocial(session)) {
+  if (!data && authSessionUsaOAuthProveedorSocial(session)) {
     setUserProfile(null);
     console.log(`${PM_AUTH_LOG} refreshUserProfile exit (OAuth social sin fila, perfil null)`);
     return;
   }
 
-  if (data && !error) {
+  if (data) {
     const perfilDB = data;
     setUserProfile({
       ...perfilDB,
