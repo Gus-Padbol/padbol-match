@@ -365,3 +365,19 @@ test('signup real: identity error with authenticated session prevents complete s
  expect(s.sandbox.saveChangedProfileBirthDate).toHaveBeenCalledWith(expect.objectContaining({value:'2000-01-01',accessToken:'fixture'}));
  expect(s.state.error).toMatch(/no se confirmó la fecha/);expect(s.state.success).toBeFalsy();expect(s.sandbox.persistJugadorPerfil).not.toHaveBeenCalled();
 });
+
+test('same-UID load started during save cannot overwrite date after PUT commit',async()=>{
+ const db=makeDb();const s=makeSandbox(db);const put=deferred();const putEntered=deferred();const get=deferred();const getEntered=deferred();
+ s.sandbox.formData.fecha_nacimiento='';
+ s.sandbox.saveChangedProfileBirthDate=jest.fn(()=>{putEntered.resolve();return put.promise});
+ s.sandbox.loadCanonicalProfile=jest.fn(async()=>({row:{id:1,user_id:OWN,fecha_nacimiento:'1990-01-01'}}));
+ s.sandbox.fetchProfileBirthDate=jest.fn(()=>{getEntered.resolve();return get.promise});
+ s.sandbox.fechaNacimientoDesdeDb=(v)=>v||'';s.sandbox.setFormData=jest.fn();s.sandbox.setLoading=jest.fn();
+ const saving=build('handleGuardar',s.proxy)({preventDefault(){}});await putEntered.promise;
+ const loading=build('fetchPerfil',s.proxy)();await getEntered.promise;
+ put.resolve(null);await saving;
+ expect(s.sandbox.birthDateSnapshotRef.current.date).toBeNull();
+ get.resolve('1990-01-01');await loading;
+ expect(s.sandbox.birthDateSnapshotRef.current.date).toBeNull();
+ expect(s.sandbox.setPerfil).toHaveBeenCalledTimes(1);expect(s.sandbox.setPerfil).toHaveBeenLastCalledWith(expect.objectContaining({fecha_nacimiento:null}));
+});

@@ -1772,6 +1772,7 @@ export default function MiPerfil() {
         return;
       }
       if (sessionUserIdRef.current !== activeUserId) return;
+      profileReadGenerationRef.current += 1;
       birthDateSnapshotRef.current = { userId: activeUserId, date: confirmedDate };
       setBirthDateNotice('');
       setPerfil({ ...reloaded, fecha_nacimiento: confirmedDate });
