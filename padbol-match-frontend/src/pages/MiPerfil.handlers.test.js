@@ -34,7 +34,7 @@ function extractHandler(name){
 
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r});return {promise,resolve};}
 
-function makeDb({write={data:[{id:1,user_id:OWN,email:'qa@example.invalid'}],error:null},reload={data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'x'},error:null},upload=async()=>({error:null})}={}){
+function makeDb({write={data:[{id:1,user_id:OWN,email:'qa@example.invalid'}],error:null},reload={data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'x'},error:null},upload=async()=>({error:null}),clientesDeferred=null}={}){
   const calls={update:null,insert:null,eqs:[],is:null};
   function profileQuery(){
     const q={};
@@ -50,7 +50,7 @@ function makeDb({write={data:[{id:1,user_id:OWN,email:'qa@example.invalid'}],err
   return {
     calls,
     client:{
-      from:(table)=>table==='clientes'?{update:()=>({eq:async()=>({error:null})})}:profileQuery(),
+      from:(table)=>table==='clientes'?{update:()=>({eq:()=>clientesDeferred?clientesDeferred.promise:Promise.resolve({error:null})})}:profileQuery(),
       storage:{from:()=>({upload,getPublicUrl:(p)=>({data:{publicUrl:`https://qa.example/${p}`}})})},
     },
   };
@@ -124,7 +124,7 @@ function build(name,sandbox){
 
 const flush=async()=>{for(let i=0;i<6;i+=1)await Promise.resolve();};
 
-test('handleGuardarFoto real: upload OK/DB 0/error/reload fail no success and preview intact',async()=>{
+test('handleGuardarFoto real: upload OK/DB 0 no success and preview intact',async()=>{
   const db=makeDb({write:{data:[],error:null}});
   const s=makeSandbox(db);const fn=build('handleGuardarFoto',s.proxy);
   await fn();
@@ -167,7 +167,7 @@ test('aplicarFotoUrlASesion real: null remove persists and reloads same row',asy
   expect(db.calls.update).toEqual({foto_url:null});expect(s.state.success).toBeTruthy();expect(s.sandbox.setPerfil).toHaveBeenCalled();expect(s.sandbox.refreshJugadorPerfilFromSupabase.mock.calls[0][1].profileRow).toMatchObject({id:1,user_id:OWN,foto_url:null});
 });
 
-test('handleGuardar real: session change after upload prevents write; reload fail prevents success',async()=>{
+test('handleGuardar real: session change after upload prevents write',async()=>{
   const upload=deferred();const db=makeDb({upload:()=>upload.promise});const s=makeSandbox(db);
   const fn=build('handleGuardar',s.proxy);const pending=fn({preventDefault(){}});await flush();
   s.sessionUserIdRef.current=OTHER;upload.resolve({error:null});await pending;
@@ -203,4 +203,22 @@ test('handleGuardar real: successful save rereads same id before state/cache/suc
   const db=makeDb({write:{data:[{id:1,user_id:OWN,foto_url:'new'}],error:null},reload:{data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'new'},error:null}});
   const s=makeSandbox(db);const fn=build('handleGuardar',s.proxy);await fn({preventDefault(){}});
   expect(s.state.error).toBeFalsy();expect(s.state.success).toBeTruthy();expect(s.sandbox.setPerfil).toHaveBeenCalledWith(expect.objectContaining({id:1,user_id:OWN}));expect(s.sandbox.refreshJugadorPerfilFromSupabase.mock.calls[0][1].profileRow).toMatchObject({id:1,user_id:OWN});
+});
+
+
+test('handleGuardar real: session changes during await clientes, no cleanup/cache/success',async()=>{
+  const clientes=deferred();
+  const db=makeDb({write:{data:[{id:1,user_id:OWN,foto_url:'new'}],error:null},reload:{data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'new'},error:null},clientesDeferred:clientes});
+  const s=makeSandbox(db);const fn=build('handleGuardar',s.proxy);const pending=fn({preventDefault(){}});await flush();
+  s.sessionUserIdRef.current=OTHER;clientes.resolve({error:null});await pending;
+  expect(s.state.success).toBeFalsy();expect(s.state.preview).toBe('blob:old');
+  expect(s.sandbox.setFotoPreview).not.toHaveBeenCalled();
+  expect(s.sandbox.refreshJugadorPerfilFromSupabase).not.toHaveBeenCalled();
+});
+
+test('handleGuardarFoto real: old upload error after session change does not set error',async()=>{
+  const upload=deferred();const db=makeDb({upload:()=>upload.promise});
+  const s=makeSandbox(db);const fn=build('handleGuardarFoto',s.proxy);const pending=fn();await flush();
+  s.sessionUserIdRef.current=OTHER;upload.resolve({error:{message:'old rls'}});await pending;
+  expect(s.state.error).toBeFalsy();expect(s.state.success).toBeFalsy();expect(s.state.preview).toBe('blob:old');
 });

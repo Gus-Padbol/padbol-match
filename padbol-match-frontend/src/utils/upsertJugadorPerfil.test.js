@@ -1,6 +1,6 @@
 import { supabase } from '../supabaseClient';
 import { upsertJugadorPerfilPorSesion } from './upsertJugadorPerfil';
-jest.mock('../supabaseClient', () => ({ supabase: {from:jest.fn()} }));
+jest.mock('../supabaseClient', () => ({ supabase: {from:jest.fn(),auth:{getSession:jest.fn(async()=>({data:{session:{user:{id:'qa-own'}}}}))}} }));
 
 function queries(responses) {
   const calls=[];
@@ -12,7 +12,7 @@ function queries(responses) {
     return b;
   });return calls;
 }
-beforeEach(()=>jest.clearAllMocks());
+beforeEach(()=>{jest.clearAllMocks();supabase.auth.getSession.mockResolvedValue({data:{session:{user:{id:'qa-own'}}}});});
 test('new authenticated profile saves full sports step with actor/email from session',async()=>{
   const saved={id:1,user_id:'qa-own',email:'qa@example.invalid',deportes_preferidos:['padbol']};
   const calls=queries([{data:null,error:null},{data:null,error:null},{data:saved,error:null}]);
@@ -46,6 +46,16 @@ test('email owned by another UUID is a conflict and never updates/upserts',async
   const result=await upsertJugadorPerfilPorSesion({userId:'qa-own',email:'qa@example.invalid',row:{nombre:'QA'}});
   expect(result.error.code).toBe('PROFILE_EMAIL_OTHER_USER');expect(calls).toHaveLength(2);expect(calls[1].update).toBeUndefined();expect(calls[1].upsert).toBeUndefined();
 });
+test('lookup without explicit guard uses current SDK session and never writes on change',async()=>{
+  let finish;let reads=0;
+  supabase.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,is:()=>q,maybeSingle:()=>{reads+=1;return reads===1?Promise.resolve({data:null,error:null}):new Promise(r=>{finish=r});}};return q;});
+  supabase.auth.getSession.mockResolvedValue({data:{session:{user:{id:'other-uid'}}}});
+  const pending=upsertJugadorPerfilPorSesion({userId:'qa-own',email:'qa@example.invalid',row:{nombre:'QA'}});
+  await Promise.resolve();finish({data:null,error:null});
+  const result=await pending;
+  expect(result.error.code).toBe('PROFILE_SESSION_CHANGED');expect(result.data).toBeNull();expect(supabase.from).toHaveBeenCalledTimes(2);
+});
+
 test('session change after lookup returns explicit error and never writes',async()=>{
   let current=true;let finish;let reads=0;
   supabase.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,is:()=>q,maybeSingle:()=>{reads+=1;return reads===1?Promise.resolve({data:null,error:null}):new Promise(r=>{finish=r});}};return q;});

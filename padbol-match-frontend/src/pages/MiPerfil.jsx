@@ -1107,6 +1107,7 @@ export default function MiPerfil() {
         userId,
         file: pendingFoto,
       });
+      if (sessionUserIdRef.current !== userId) return;
       if (upErr) {
         setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
         return;
@@ -1123,6 +1124,7 @@ export default function MiPerfil() {
           email: owner,
           patch: { foto_url: fotoUrlGuardada },
         });
+        if (sessionUserIdRef.current !== userId) return;
         if (upDbErr) {
           setErrorMsg(mensajeErrorDbSupabase(upDbErr));
           return;
@@ -1144,6 +1146,7 @@ export default function MiPerfil() {
         const { data: inserted, error: insErr } = await insertOwnProfileRow({
           supabase, userId, payload: payloadDb,
         });
+        if (sessionUserIdRef.current !== userId) return;
         if (insErr) {
           setErrorMsg(mensajeErrorDbSupabase(insErr));
           return;
@@ -1154,6 +1157,7 @@ export default function MiPerfil() {
       const { data: reloaded, error: reloadErr } = await reloadOwnProfile({
         supabase, userId, expectedId: rowAfter?.id,
       });
+      if (sessionUserIdRef.current !== userId) return;
       if (reloadErr || !reloaded) {
         setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
         return;
@@ -1184,13 +1188,14 @@ export default function MiPerfil() {
         profileRow: rowAfter,
         isCurrent: () => sessionUserIdRef.current === userId,
       });
+      if (sessionUserIdRef.current !== userId) return;
       await refreshSession();
       if (sessionUserIdRef.current !== userId) return;
 
       setSuccessMsg('✅ Foto guardada');
       setTimeout(() => setSuccessMsg(''), 3000);
     } finally {
-      setGuardandoFoto(false);
+      if (sessionUserIdRef.current === userId) setGuardandoFoto(false);
     }
   };
 
@@ -1256,13 +1261,14 @@ export default function MiPerfil() {
           profileRow: reloaded,
           isCurrent: () => sessionUserIdRef.current === userId,
         });
+        if (sessionUserIdRef.current !== userId) return;
         await refreshSession();
         if (sessionUserIdRef.current !== userId) return;
         cerrarFotoAccionModal();
         setSuccessMsg(fotoVal ? '✅ Foto actualizada' : '✅ Foto eliminada');
         setTimeout(() => setSuccessMsg(''), 3000);
       } finally {
-        setGuardandoFoto(false);
+        if (sessionUserIdRef.current === userId) setGuardandoFoto(false);
       }
     },
     [sessionOwnerEmail, session?.user?.id, perfil, formData.nivel, userProfile?.whatsapp, cerrarFotoAccionModal, refreshSession, t]
@@ -1526,6 +1532,7 @@ export default function MiPerfil() {
 
   const handleGuardar = async (e) => {
     e.preventDefault();
+    const activeUserId = session?.user?.id ?? null;
     if (perfilSubmitLockRef.current || isSubmitting) return;
     perfilSubmitLockRef.current = true;
     setErrorMsg('');
@@ -1621,11 +1628,14 @@ export default function MiPerfil() {
 
       if (!aliasPerfilExistente && aliasTrim) {
         try {
-          if (!(await checkRegistrationAliasAvailability(aliasTrim, { accessToken: session?.access_token }))) {
+          const aliasOk = await checkRegistrationAliasAvailability(aliasTrim, { accessToken: session?.access_token });
+          if (sessionUserIdRef.current !== activeUserId) return;
+          if (!aliasOk) {
             setErrorMsg(t('perfil.aliasTaken'));
             return;
           }
         } catch {
+          if (sessionUserIdRef.current !== activeUserId) return;
           setErrorMsg(t('general.somethingWentWrong'));
           return;
         }
@@ -1654,6 +1664,7 @@ export default function MiPerfil() {
           userId,
           file: pendingFoto,
         });
+        if (sessionUserIdRef.current !== activeUserId) return;
         if (upErr) {
           setErrorMsg(t('perfil.flow.uploadPhotoFailed', { message: upErr.message }));
           return;
@@ -1672,10 +1683,12 @@ export default function MiPerfil() {
         const result = await updateOwnProfileRow({
           supabase, row: perfil, userId, email: owner, patch: updatePayload,
         });
+        if (sessionUserIdRef.current !== activeUserId) return;
         savedRow = result.data;
         persistError = result.error;
       } else {
         const result = await insertOwnProfileRow({ supabase, userId, payload: payloadDb });
+        if (sessionUserIdRef.current !== activeUserId) return;
         savedRow = result.data;
         persistError = result.error;
       }
@@ -1689,11 +1702,11 @@ export default function MiPerfil() {
       const { data: reloaded, error: reloadErr } = await reloadOwnProfile({
         supabase, userId, expectedId: savedRow?.id,
       });
+      if (sessionUserIdRef.current !== userId) return;
       if (reloadErr || !reloaded) {
         setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
         return;
       }
-      if (sessionUserIdRef.current !== userId) return;
       setPerfil(reloaded);
 
       const nombreClienteDisplay = [nombreTrim, apellidoTrim].filter(Boolean).join(' ').trim();
@@ -1701,6 +1714,7 @@ export default function MiPerfil() {
         .from('clientes')
         .update({ whatsapp: waFinal, nombre: nombreClienteDisplay })
         .eq('email', owner);
+      if (sessionUserIdRef.current !== activeUserId) return;
       if (errCli) {
         console.error(errCli);
       }
@@ -1726,6 +1740,7 @@ export default function MiPerfil() {
         profileRow: reloaded,
         isCurrent: () => sessionUserIdRef.current === userId,
       });
+      if (sessionUserIdRef.current !== userId) return;
       await refreshSession();
       if (sessionUserIdRef.current !== userId) return;
 
@@ -1745,8 +1760,10 @@ export default function MiPerfil() {
       setFichaFieldErrors({});
       setTimeout(() => setSuccessMsg(''), 3000);
     } finally {
-      perfilSubmitLockRef.current = false;
-      setIsSubmitting(false);
+      if (sessionUserIdRef.current === activeUserId) {
+        perfilSubmitLockRef.current = false;
+        setIsSubmitting(false);
+      }
     }
   };
 
