@@ -37,7 +37,7 @@ export async function findJugadorPerfilPorSesion(userId, email) {
  * INSERT … ON CONFLICT (user_id) o actualización por fila existente (id / email legacy).
  * Requiere índice único `jugadores_perfil_user_id_unique` en Supabase.
  */
-export async function upsertJugadorPerfilPorSesion({ userId, email, row }) {
+export async function upsertJugadorPerfilPorSesion({ userId, email, row, isCurrent = () => true }) {
   const uid = String(userId || '').trim();
   if (!uid) {
     return { data: null, error: new Error('Sesión inválida (sin user_id).') };
@@ -48,6 +48,11 @@ export async function upsertJugadorPerfilPorSesion({ userId, email, row }) {
 
   const { data: existing, error: findErr } = await findJugadorPerfilPorSesion(uid, em);
   if (findErr) return { data: null, error: findErr };
+  if (!isCurrent()) {
+    const changed = new Error('La sesión cambió durante la lectura del perfil.');
+    changed.code = 'PROFILE_SESSION_CHANGED';
+    return { data: null, error: changed };
+  }
 
   if (existing?.id) {
     const nombreActual = String(existing.nombre || '').trim();

@@ -1,6 +1,6 @@
 import OfficialFipaProfile from '../components/OfficialFipaProfile';
 import { uploadProfileAvatar } from '../utils/profileAvatarUpload';
-import { loadCanonicalProfile, updateOwnProfileRow, insertOwnProfileRow } from '../utils/canonicalProfile';
+import { loadCanonicalProfile, updateOwnProfileRow, insertOwnProfileRow, reloadOwnProfile } from '../utils/canonicalProfile';
 import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, fechaDesdeReservasJugador } from '../utils/reservaJugadorActions';
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
@@ -348,6 +348,7 @@ export default function MiPerfil() {
   useEffect(() => {
     sessionUserIdRef.current = session?.user?.id ?? null;
   }, [session?.user?.id]);
+  useEffect(() => () => { sessionUserIdRef.current = null; }, []);
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
   const [reservaCancelModal, setReservaCancelModal] = useState(null);
@@ -1127,7 +1128,6 @@ export default function MiPerfil() {
           return;
         }
         rowAfter = updated;
-        setPerfil(updated);
       } else {
         const payloadDb = {
           email: owner,
@@ -1149,9 +1149,18 @@ export default function MiPerfil() {
           return;
         }
         rowAfter = inserted;
-        setPerfil(inserted);
       }
       if (sessionUserIdRef.current !== userId) return;
+      const { data: reloaded, error: reloadErr } = await reloadOwnProfile({
+        supabase, userId, expectedId: rowAfter?.id,
+      });
+      if (reloadErr || !reloaded) {
+        setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
+        return;
+      }
+      if (sessionUserIdRef.current !== userId) return;
+      rowAfter = reloaded;
+      setPerfil(reloaded);
 
       pendingFotoFileRef.current = null;
       setFotoPendienteDeSubir(false);
@@ -1219,9 +1228,16 @@ export default function MiPerfil() {
           return;
         }
         if (sessionUserIdRef.current !== userId) return;
-
-        setPerfil(updated);
-        const na = nombreApellidoEditDesdePerfilRow(updated);
+        const { data: reloaded, error: reloadErr } = await reloadOwnProfile({
+          supabase, userId, expectedId: updated?.id,
+        });
+        if (reloadErr || !reloaded) {
+          setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
+          return;
+        }
+        if (sessionUserIdRef.current !== userId) return;
+        setPerfil(reloaded);
+        const na = nombreApellidoEditDesdePerfilRow(reloaded);
         persistJugadorPerfil({
           nombre: na.nombre || String(perfil.nombre || '').trim() || 'Jugador',
           apellido: na.apellido,
@@ -1237,7 +1253,7 @@ export default function MiPerfil() {
           return null;
         });
         await refreshJugadorPerfilFromSupabase(owner, {
-          profileRow: updated,
+          profileRow: reloaded,
           isCurrent: () => sessionUserIdRef.current === userId,
         });
         await refreshSession();
@@ -1460,6 +1476,7 @@ export default function MiPerfil() {
           apellido: apellReg,
           ...payload,
         },
+        isCurrent: () => sessionUserIdRef.current === (user?.id ?? null),
       });
 
       if (jpErr) {
@@ -1669,6 +1686,15 @@ export default function MiPerfil() {
         return;
       }
       if (sessionUserIdRef.current !== userId) return;
+      const { data: reloaded, error: reloadErr } = await reloadOwnProfile({
+        supabase, userId, expectedId: savedRow?.id,
+      });
+      if (reloadErr || !reloaded) {
+        setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
+        return;
+      }
+      if (sessionUserIdRef.current !== userId) return;
+      setPerfil(reloaded);
 
       const nombreClienteDisplay = [nombreTrim, apellidoTrim].filter(Boolean).join(' ').trim();
       const { error: errCli } = await supabase
@@ -1685,7 +1711,6 @@ export default function MiPerfil() {
         return null;
       });
 
-      await fetchPerfil();
       if (sessionUserIdRef.current !== userId) return;
       persistJugadorPerfil({
         nombre: nombreTrim,
@@ -1698,7 +1723,7 @@ export default function MiPerfil() {
         ...(fotoUrlGuardada ? { foto_url: fotoUrlGuardada } : {}),
       });
       await refreshJugadorPerfilFromSupabase(owner, {
-        profileRow: savedRow,
+        profileRow: reloaded,
         isCurrent: () => sessionUserIdRef.current === userId,
       });
       await refreshSession();

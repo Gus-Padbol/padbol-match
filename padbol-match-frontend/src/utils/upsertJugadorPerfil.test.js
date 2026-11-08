@@ -46,3 +46,11 @@ test('email owned by another UUID is a conflict and never updates/upserts',async
   const result=await upsertJugadorPerfilPorSesion({userId:'qa-own',email:'qa@example.invalid',row:{nombre:'QA'}});
   expect(result.error.code).toBe('PROFILE_EMAIL_OTHER_USER');expect(calls).toHaveLength(2);expect(calls[1].update).toBeUndefined();expect(calls[1].upsert).toBeUndefined();
 });
+test('session change after lookup returns explicit error and never writes',async()=>{
+  let current=true;let finish;let reads=0;
+  supabase.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,is:()=>q,maybeSingle:()=>{reads+=1;return reads===1?Promise.resolve({data:null,error:null}):new Promise(r=>{finish=r});}};return q;});
+  const pending=upsertJugadorPerfilPorSesion({userId:'qa-own',email:'qa@example.invalid',row:{nombre:'QA'},isCurrent:()=>current});
+  await Promise.resolve();current=false;finish({data:null,error:null});
+  const result=await pending;
+  expect(result.error.code).toBe('PROFILE_SESSION_CHANGED');expect(result.data).toBeNull();expect(supabase.from).toHaveBeenCalledTimes(2);
+});

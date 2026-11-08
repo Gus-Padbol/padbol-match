@@ -138,6 +138,7 @@ async function refreshUserProfile(session, setUserProfile, isCurrent = () => tru
     userId,
     email,
     row: insertRow,
+    isCurrent,
   });
 
   if (!isCurrent()) return;
