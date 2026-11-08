@@ -1228,19 +1228,19 @@ export default function MiPerfil() {
         const { data: updated, error: upDbErr } = await updateOwnProfileRow({
           supabase, row: perfil, userId, email: owner, patch: { foto_url: fotoVal },
         });
+        if (sessionUserIdRef.current !== userId) return;
         if (upDbErr) {
           setErrorMsg(mensajeErrorDbSupabase(upDbErr));
           return;
         }
-        if (sessionUserIdRef.current !== userId) return;
         const { data: reloaded, error: reloadErr } = await reloadOwnProfile({
           supabase, userId, expectedId: updated?.id,
         });
+        if (sessionUserIdRef.current !== userId) return;
         if (reloadErr || !reloaded) {
           setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
           return;
         }
-        if (sessionUserIdRef.current !== userId) return;
         setPerfil(reloaded);
         const na = nombreApellidoEditDesdePerfilRow(reloaded);
         persistJugadorPerfil({

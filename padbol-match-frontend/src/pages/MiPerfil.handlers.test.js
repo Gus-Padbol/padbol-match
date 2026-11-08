@@ -34,7 +34,7 @@ function extractHandler(name){
 
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r});return {promise,resolve};}
 
-function makeDb({write={data:[{id:1,user_id:OWN,email:'qa@example.invalid'}],error:null},reload={data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'x'},error:null},upload=async()=>({error:null}),clientesDeferred=null}={}){
+function makeDb({write={data:[{id:1,user_id:OWN,email:'qa@example.invalid'}],error:null},reload={data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'x'},error:null},upload=async()=>({error:null}),clientesDeferred=null,writeDeferred=null,reloadDeferred=null}={}){
   const calls={update:null,insert:null,eqs:[],is:null};
   function profileQuery(){
     const q={};
@@ -43,8 +43,8 @@ function makeDb({write={data:[{id:1,user_id:OWN,email:'qa@example.invalid'}],err
     q.select=()=>q;
     q.eq=(k,v)=>{calls.eqs.push([k,v]);return q};
     q.is=(k,v)=>{calls.is=[k,v];return q};
-    q.limit=async()=>write;
-    q.maybeSingle=async()=>reload;
+    q.limit=async()=>writeDeferred||write;
+    q.maybeSingle=async()=>reloadDeferred||reload;
     return q;
   }
   return {
@@ -221,4 +221,19 @@ test('handleGuardarFoto real: old upload error after session change does not set
   const s=makeSandbox(db);const fn=build('handleGuardarFoto',s.proxy);const pending=fn();await flush();
   s.sessionUserIdRef.current=OTHER;upload.resolve({error:{message:'old rls'}});await pending;
   expect(s.state.error).toBeFalsy();expect(s.state.success).toBeFalsy();expect(s.state.preview).toBe('blob:old');
+});
+
+
+test('aplicarFotoUrlASesion real: deferred update error after session change is ignored',async()=>{
+  const d=deferred();const db=makeDb({writeDeferred:d.promise});
+  const s=makeSandbox(db);const fn=build('aplicarFotoUrlASesion',s.proxy);const pending=fn('https://qa.example/new.png');await flush();
+  s.sessionUserIdRef.current=OTHER;d.resolve({data:null,error:{message:'old update error'}});await pending;
+  expect(s.state.error).toBeFalsy();expect(s.state.success).toBeFalsy();expect(s.sandbox.setPerfil).not.toHaveBeenCalled();
+});
+
+test('aplicarFotoUrlASesion real: deferred reload error after session change is ignored',async()=>{
+  const d=deferred();const db=makeDb({write:{data:[{id:1,user_id:OWN,foto_url:'new'}],error:null},reloadDeferred:d.promise});
+  const s=makeSandbox(db);const fn=build('aplicarFotoUrlASesion',s.proxy);const pending=fn('https://qa.example/new.png');await flush();
+  s.sessionUserIdRef.current=OTHER;d.resolve({data:null,error:{message:'old reload error'}});await pending;
+  expect(s.state.error).toBeFalsy();expect(s.state.success).toBeFalsy();expect(s.sandbox.setPerfil).not.toHaveBeenCalled();
 });
