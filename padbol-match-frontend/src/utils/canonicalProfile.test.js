@@ -23,6 +23,7 @@ function fakeSupabase({maybe=[], writes=[]}={}){
       maybeSingle:jest.fn(async()=>maybe[mi++]??{data:null,error:null}),
       single:jest.fn(async()=>writes[wi++]??{data:null,error:null}),
       limit:jest.fn(async()=>writes[wi++]??{data:null,error:null}),
+      then:(resolve,reject)=>Promise.resolve(writes[wi++]??{data:null,error:null}).then(resolve,reject),
     };
     return b;
   });
@@ -124,4 +125,34 @@ test('reload reads expected id+UUID ownership and reports zero rows',async()=>{
   expect(f.calls[0].eqs).toContainEqual(['id',9]);expect(f.calls[0].eqs).toContainEqual(['user_id',OWN]);
   const zero=await reloadOwnProfile({supabase:f.client,userId:OWN,expectedId:9});
   expect(zero.error.code).toBe('PROFILE_ROW_ZERO');
+});
+
+test('installed SDK write shape: exact returning without PATCH/POST limit or order',async()=>{
+ const {createClient}=require('@supabase/supabase-js');
+ const calls=[];
+ const sb=createClient('https://fixture.invalid','fixture-key',{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:async(input,options)=>{
+  calls.push({url:new URL(String(input)),options});
+  return new Response(JSON.stringify([profile()]),{status:200,headers:{'Content-Type':'application/json'}});
+ }}});
+ const updated=await updateOwnProfileRow({supabase:sb,row:profile(),userId:OWN,patch:{nombre:'Fixture'}});
+ expect(updated.error).toBeNull();
+ const inserted=await insertOwnProfileRow({supabase:sb,userId:OWN,payload:{nombre:'Fixture'}});
+ expect(inserted.error).toBeNull();expect(calls).toHaveLength(2);
+ expect(calls[0].options.method).toBe('PATCH');expect(calls[1].options.method).toBe('POST');
+ expect(calls[0].url.searchParams.get('id')).toBe('eq.1');
+ expect(calls[0].url.searchParams.get('user_id')).toBe('eq.'+OWN);
+ for(const call of calls){
+  expect(call.url.searchParams.has('limit')).toBe(false);expect(call.url.searchParams.has('order')).toBe(false);
+  expect(call.url.searchParams.get('select')).toBe('*');
+  expect(new Headers(call.options.headers).get('Prefer')).toContain('return=representation');
+ }
+});
+
+test('installed SDK cannot report insert success from empty/multiple/metadata/missing-id response',async()=>{
+ const {createClient}=require('@supabase/supabase-js');
+ for(const result of [[],[profile(),profile({id:2})],{count:1},[{user_id:OWN}]]){
+  const sb=createClient('https://fixture.invalid','fixture-key',{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:async()=>new Response(JSON.stringify(result),{status:200,headers:{'Content-Type':'application/json'}})}});
+  const saved=await insertOwnProfileRow({supabase:sb,userId:OWN,payload:{nombre:'Fixture'}});
+  expect(saved.error).toBeTruthy();expect(saved.data).toBeNull();
+ }
 });

@@ -85,7 +85,7 @@ export async function updateOwnProfileRow({ supabase, row, userId, email, patch,
   } else {
     throw profileError('PROFILE_OTHER_OWNER', 'No se puede actualizar una fila de otra cuenta.');
   }
-  const { data, error } = await query.select(select).limit(2);
+  const { data, error } = await query.select(select);
   if (error) return { data: null, error };
   if (!Array.isArray(data) || data.length !== 1) return { data: null, error: countError() };
   const saved = data[0];
@@ -99,10 +99,10 @@ export async function updateOwnProfileRow({ supabase, row, userId, email, patch,
 export async function insertOwnProfileRow({ supabase, userId, payload, select = '*' }) {
   const uid = assertUid(userId);
   const row = { ...payload, user_id: uid };
-  const { data, error } = await supabase.from('jugadores_perfil').insert(row).select(select).limit(2);
+  const { data, error } = await supabase.from('jugadores_perfil').insert(row).select(select);
   if (error) return { data: null, error };
   if (!Array.isArray(data) || data.length !== 1) return { data: null, error: countError() };
-  if (String(data[0].user_id) !== uid) return { data: null, error: profileError('PROFILE_ROW_CHANGED', 'El insert devolvió otro propietario.') };
+  if (data[0]?.id == null || String(data[0].user_id) !== uid) return { data: null, error: profileError('PROFILE_ROW_CHANGED', 'El insert devolvió otro propietario.') };
   return { data: data[0], error: null };
 }
 

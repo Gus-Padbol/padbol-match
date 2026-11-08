@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 const parser=require('@babel/parser');
 const generate=require('@babel/generator').default;
+import { saveChangedProfileBirthDate } from '../utils/profileBirthDateApi';
 import { uploadProfileAvatar } from '../utils/profileAvatarUpload';
 import { updateOwnProfileRow, insertOwnProfileRow, reloadOwnProfile } from '../utils/canonicalProfile';
 
@@ -44,6 +45,7 @@ function makeDb({write={data:[{id:1,user_id:OWN,email:'qa@example.invalid'}],err
     q.eq=(k,v)=>{calls.eqs.push([k,v]);return q};
     q.is=(k,v)=>{calls.is=[k,v];return q};
     q.limit=async()=>writeDeferred||write;
+    q.then=(resolve,reject)=>Promise.resolve(writeDeferred||write).then(resolve,reject);
     q.maybeSingle=async()=>reloadDeferred||reload;
     return q;
   }
@@ -69,6 +71,11 @@ function makeSandbox(db,{upload=async()=>({error:null}),perfil={id:1,user_id:OWN
     perfil,
     formData:{nombre:'Nico',apellido:'Test',genero:'masculino',nivel:'Principiante',lateralidad:'Diestro',pais:'Argentina',localidad:'',ciudad:'',alias:'existing',apodo:'',instagram:'',companero_id:null,fecha_nacimiento:'1990-01-01',numero_fipa:'',es_federado:false,mostrar_torneos_jugados:false,busca_companero:false,deportes_preferidos:[]},
     sessionUserIdRef,pendingFotoFileRef,
+    profileReadGenerationRef:{current:0},
+    profileMountedRef:{current:true},
+    birthDateSnapshotRef:{current:{userId:OWN,date:'1990-01-01'}},
+    setBirthDateNotice:jest.fn(),
+    saveChangedProfileBirthDate:jest.fn(saveChangedProfileBirthDate),
     supabase:db.client,
     uploadProfileAvatar,updateOwnProfileRow,insertOwnProfileRow,reloadOwnProfile,
     storage:{from:()=>({upload,getPublicUrl:(p)=>({data:{publicUrl:`https://qa.example/${p}`}})})},
@@ -236,4 +243,125 @@ test('aplicarFotoUrlASesion real: deferred reload error after session change is 
   const s=makeSandbox(db);const fn=build('aplicarFotoUrlASesion',s.proxy);const pending=fn('https://qa.example/new.png');await flush();
   s.sessionUserIdRef.current=OTHER;d.resolve({data:null,error:{message:'old reload error'}});await pending;
   expect(s.state.error).toBeFalsy();expect(s.state.success).toBeFalsy();expect(s.sandbox.setPerfil).not.toHaveBeenCalled();
+});
+
+
+test('full-save unchanged identity date is omitted from profile DB and API',async()=>{
+ const db=makeDb();const s=makeSandbox(db);const fn=build('handleGuardar',s.proxy);
+ await fn({preventDefault(){}});
+ expect(db.calls.update).not.toHaveProperty('fecha_nacimiento');
+ expect(s.sandbox.saveChangedProfileBirthDate).toHaveBeenCalledWith(expect.objectContaining({value:'1990-01-01',initialDate:'1990-01-01'}));
+ expect(s.state.success).toBeTruthy();
+});
+test('full-save date API error after profile write cannot announce success',async()=>{
+ const db=makeDb();const s=makeSandbox(db);s.sandbox.formData.fecha_nacimiento='2000-01-01';
+ s.sandbox.saveChangedProfileBirthDate=jest.fn(async()=>{throw new Error('API error')});
+ await build('handleGuardar',s.proxy)({preventDefault(){}});
+ expect(db.calls.update).not.toHaveProperty('fecha_nacimiento');
+ expect(s.state.error).toMatch(/demás datos pueden haberse guardado/);
+ expect(s.state.success).toBeFalsy();expect(s.sandbox.persistJugadorPerfil).not.toHaveBeenCalled();
+});
+test.each([OTHER,null])('full-save deferred identity result discarded after session change/unmount %s',async(next)=>{
+ const db=makeDb();const s=makeSandbox(db);const d=deferred();
+ s.sandbox.formData.fecha_nacimiento='2000-01-01';
+ s.sandbox.saveChangedProfileBirthDate=jest.fn(()=>d.promise);
+ const pending=build('handleGuardar',s.proxy)({preventDefault(){}});await flush();
+ s.sessionUserIdRef.current=next;d.resolve('2000-01-01');await pending;
+ expect(s.sandbox.setPerfil).not.toHaveBeenCalled();expect(s.sandbox.persistJugadorPerfil).not.toHaveBeenCalled();expect(s.state.success).toBeFalsy();
+});
+test('full-save explicit deletion sends empty UI value against prior canonical date',async()=>{
+ const db=makeDb();const s=makeSandbox(db);s.sandbox.formData.fecha_nacimiento='';
+ s.sandbox.saveChangedProfileBirthDate=jest.fn(async()=>null);
+ await build('handleGuardar',s.proxy)({preventDefault(){}});
+ expect(s.sandbox.saveChangedProfileBirthDate).toHaveBeenCalledWith(expect.objectContaining({value:'',initialDate:'1990-01-01'}));
+ expect(s.sandbox.setPerfil).toHaveBeenCalledWith(expect.objectContaining({fecha_nacimiento:null}));
+});
+
+test('fetchPerfil real uses identity null instead of legacy date and warns without copying',async()=>{
+ const db=makeDb();const s=makeSandbox(db);
+ s.sandbox.loadCanonicalProfile=jest.fn(async()=>({row:{id:1,user_id:OWN,fecha_nacimiento:'2000-01-01'}}));
+ s.sandbox.fetchProfileBirthDate=jest.fn(async()=>null);
+ s.sandbox.fechaNacimientoDesdeDb=(v)=>v||'';
+ s.sandbox.setFormData=jest.fn();s.sandbox.setLoading=jest.fn();
+ await build('fetchPerfil',s.proxy)();
+ expect(s.sandbox.setPerfil).toHaveBeenCalledWith(expect.objectContaining({fecha_nacimiento:null}));
+ expect(s.sandbox.setFormData).toHaveBeenCalledWith(expect.objectContaining({fecha_nacimiento:''}));
+ expect(s.sandbox.setBirthDateNotice).toHaveBeenCalledWith(expect.stringMatching(/no se copiará/));
+});
+test('fetchPerfil real failed identity request invalidates date snapshot, no legacy fallback',async()=>{
+ const db=makeDb();const s=makeSandbox(db);
+ s.sandbox.loadCanonicalProfile=jest.fn(async()=>({row:{id:1,user_id:OWN,fecha_nacimiento:'2000-01-01'}}));
+ s.sandbox.fetchProfileBirthDate=jest.fn(async()=>{throw new Error('offline')});
+ await build('fetchPerfil',s.proxy)();
+ expect(s.sandbox.birthDateSnapshotRef.current).toBeNull();
+ expect(s.sandbox.setPerfil).not.toHaveBeenCalled();expect(s.state.error).toMatch(/fecha de identidad/);
+});
+
+test('real full-save + real identity adapter sends only date, confirms result',async()=>{
+ const db=makeDb();const s=makeSandbox(db);s.sandbox.formData.fecha_nacimiento='2000-01-01';
+ const previous=global.fetch;global.fetch=jest.fn(async()=>({ok:true,json:async()=>({fecha_nacimiento:'2000-01-01'})}));
+ try {
+  await build('handleGuardar',s.proxy)({preventDefault(){}});
+  expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/jugador/identidad'),expect.objectContaining({method:'PUT',headers:expect.objectContaining({Authorization:'Bearer fixture'}),body:JSON.stringify({fecha_nacimiento:'2000-01-01'})}));
+  expect(s.state.success).toBeTruthy();expect(db.calls.update).not.toHaveProperty('fecha_nacimiento');
+ }finally{global.fetch=previous;}
+});
+test('real full-save + real identity adapter discards HTTP response after unmount',async()=>{
+ const db=makeDb();const s=makeSandbox(db);s.sandbox.formData.fecha_nacimiento='2000-01-01';
+ const entered=deferred();const response=deferred();const previous=global.fetch;
+ global.fetch=jest.fn(()=>{entered.resolve();return response.promise});
+ try {
+  const pending=build('handleGuardar',s.proxy)({preventDefault(){}});await entered.promise;
+  s.sessionUserIdRef.current=null;response.resolve({ok:false,json:async()=>({error:'old'})});await pending;
+  expect(s.sandbox.setPerfil).not.toHaveBeenCalled();expect(s.sandbox.persistJugadorPerfil).not.toHaveBeenCalled();expect(s.state.error).toBeFalsy();expect(s.state.success).toBeFalsy();
+ }finally{global.fetch=previous;}
+});
+
+test('fetchPerfil real: old same-UID identity response cannot restore date after clear/save',async()=>{
+ const db=makeDb();const s=makeSandbox(db);const old=deferred();const entered=deferred();
+ s.sandbox.loadCanonicalProfile=jest.fn(async()=>({row:{id:1,user_id:OWN,fecha_nacimiento:'1990-01-01'}}));
+ s.sandbox.fetchProfileBirthDate=jest.fn(()=>{entered.resolve();return old.promise});
+ s.sandbox.fechaNacimientoDesdeDb=(v)=>v||'';s.sandbox.setFormData=jest.fn();s.sandbox.setLoading=jest.fn();
+ const reading=build('fetchPerfil',s.proxy)();await entered.promise;
+ s.sandbox.formData.fecha_nacimiento='';s.sandbox.saveChangedProfileBirthDate=jest.fn(async()=>null);
+ await build('handleGuardar',s.proxy)({preventDefault(){}});
+ expect(s.sandbox.birthDateSnapshotRef.current.date).toBeNull();
+ old.resolve('1990-01-01');await reading;
+ expect(s.sandbox.birthDateSnapshotRef.current.date).toBeNull();
+ expect(s.sandbox.setPerfil).toHaveBeenCalledTimes(1);expect(s.sandbox.setPerfil).toHaveBeenLastCalledWith(expect.objectContaining({fecha_nacimiento:null}));
+});
+test('fetchPerfil real: newest same-UID read wins over late older read',async()=>{
+ const db=makeDb();const s=makeSandbox(db);const old=deferred();const entered=deferred();let read=0;
+ s.sandbox.loadCanonicalProfile=jest.fn(async()=>({row:{id:1,user_id:OWN,fecha_nacimiento:'1990-01-01'}}));
+ s.sandbox.fetchProfileBirthDate=jest.fn(()=>{read+=1;if(read===1){entered.resolve();return old.promise}return Promise.resolve(null)});
+ s.sandbox.fechaNacimientoDesdeDb=(v)=>v||'';s.sandbox.setFormData=jest.fn();s.sandbox.setLoading=jest.fn();
+ const fn=build('fetchPerfil',s.proxy);const first=fn();await entered.promise;await fn();old.resolve('1990-01-01');await first;
+ expect(s.sandbox.birthDateSnapshotRef.current.date).toBeNull();expect(s.sandbox.setPerfil).toHaveBeenCalledTimes(1);
+});
+function signupSandbox({autoSession=false,dateError=false}={}){
+ const db=makeDb();const s=makeSandbox(db);s.sandbox.session={user:null};s.sessionUserIdRef.current=null;
+ Object.assign(s.sandbox,{
+  nombreRegistroTorneo:'QA',apellidoRegistroTorneo:'Test',emailRegistro:'qa@example.invalid',
+  emailValidoVisible:()=>true,waConfirmLocal:'12345678',passRegistroTorneo:'fixture-password',passRegistroTorneo2:'fixture-password',
+  aceptoTerminosPrivacidadRegistro:true,registroPasoDeportes:1,registroDeportesSel:['padbol'],aliasDuplicado:false,aliasVerificando:false,
+  setRegistroFieldErrors:jest.fn(),fetchWhatsappDisponibleRegistro:jest.fn(async()=>({disponible:true})),
+  getSignUpLegalMetadata:()=>({}),mensajeErrorAuthSupabase:()=> 'signup error',
+  upsertJugadorPerfilPorSesion:jest.fn(async()=>({data:{id:1,user_id:OWN},error:null})),
+  saveChangedProfileBirthDate:jest.fn(async()=>{if(dateError)throw new Error('identity failed');return '2000-01-01'}),
+  handleAuthOnce:jest.fn(async()=>{if(autoSession)s.sessionUserIdRef.current=OWN;return {data:{user:{id:OWN,email:'qa@example.invalid'},session:autoSession?{access_token:'fixture'}:null},error:null}}),
+ });
+ s.sandbox.formData.alias='';s.sandbox.formData.fecha_nacimiento='2000-01-01';
+ s.sandbox.supabase={...db.client,from:jest.fn(()=>({upsert:jest.fn(async()=>({error:null}))}))};
+ return s;
+}
+test('signup real: confirmation email/no auto-session shows explicit date not saved without DB/API writes',async()=>{
+ const s=signupSandbox();await build('handleRegistroCuenta',s.proxy)({preventDefault(){}});
+ expect(s.sandbox.handleAuthOnce).toHaveBeenCalled();expect(s.state.error).toMatch(/Confirma tu correo/);expect(s.state.error).toMatch(/No se ha guardado la fecha/);
+ expect(s.state.success).toBeFalsy();expect(s.sandbox.supabase.from).not.toHaveBeenCalled();expect(s.sandbox.saveChangedProfileBirthDate).not.toHaveBeenCalled();
+});
+test('signup real: identity error with authenticated session prevents complete success',async()=>{
+ const s=signupSandbox({autoSession:true,dateError:true});await build('handleRegistroCuenta',s.proxy)({preventDefault(){}});
+ expect(s.sandbox.upsertJugadorPerfilPorSesion).toHaveBeenCalled();expect(s.sandbox.upsertJugadorPerfilPorSesion.mock.calls[0][0].row).not.toHaveProperty('fecha_nacimiento');
+ expect(s.sandbox.saveChangedProfileBirthDate).toHaveBeenCalledWith(expect.objectContaining({value:'2000-01-01',accessToken:'fixture'}));
+ expect(s.state.error).toMatch(/no se confirmó la fecha/);expect(s.state.success).toBeFalsy();expect(s.sandbox.persistJugadorPerfil).not.toHaveBeenCalled();
 });

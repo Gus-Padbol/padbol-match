@@ -1,3 +1,4 @@
+import { fetchProfileBirthDate, saveChangedProfileBirthDate } from '../utils/profileBirthDateApi';
 import OfficialFipaProfile from '../components/OfficialFipaProfile';
 import { uploadProfileAvatar } from '../utils/profileAvatarUpload';
 import { loadCanonicalProfile, updateOwnProfileRow, insertOwnProfileRow, reloadOwnProfile } from '../utils/canonicalProfile';
@@ -175,13 +176,6 @@ function fechaNacimientoDesdeDb(raw) {
   return m ? m[1] : '';
 }
 
-/** Solo persiste calendario local YYYY-MM-DD; evita Date / toISOString(). */
-function fechaNacimientoParaPayload(inputValue) {
-  const s = String(inputValue ?? '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
-  return s;
-}
-
 /** Vista es-AR dd/mm/yyyy desde string almacenado, sin new Date(). */
 function fechaNacimientoDisplayEsAr(raw) {
   const ymd = fechaNacimientoDesdeDb(raw);
@@ -344,11 +338,24 @@ export default function MiPerfil() {
   const pendingFotoFileRef = useRef(null);
   const fotoPreviewRef = useRef(null);
   const sessionUserIdRef = useRef(null);
+  const birthDateSnapshotRef = useRef(null);
+  const profileReadGenerationRef = useRef(0);
+  const profileMountedRef = useRef(true);
+  const [birthDateNotice, setBirthDateNotice] = useState('');
 
   useEffect(() => {
     sessionUserIdRef.current = session?.user?.id ?? null;
+    birthDateSnapshotRef.current = null;
+    profileReadGenerationRef.current += 1;
   }, [session?.user?.id]);
-  useEffect(() => () => { sessionUserIdRef.current = null; }, []);
+  useEffect(() => {
+    profileMountedRef.current = true;
+    return () => {
+      profileMountedRef.current = false;
+      sessionUserIdRef.current = null;
+      profileReadGenerationRef.current += 1;
+    };
+  }, []);
   const hintEdicionTorneoRef = useRef(false);
   const [cancelando, setCancelando] = useState(null); // reservaId being cancelled
   const [reservaCancelModal, setReservaCancelModal] = useState(null);
@@ -777,6 +784,9 @@ export default function MiPerfil() {
 
   const fetchPerfil = async () => {
     const owner = sessionOwnerEmail;
+    const uid = session?.user?.id ?? null;
+    const readGeneration = ++profileReadGenerationRef.current;
+    const isCurrentLoad = () => profileMountedRef.current && sessionUserIdRef.current === uid && profileReadGenerationRef.current === readGeneration;
     if (!owner) {
       setLoading(false);
       return;
@@ -786,7 +796,6 @@ export default function MiPerfil() {
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout loading profile')), 8000)
       );
-      const uid = session?.user?.id ?? null;
       if (!uid) {
         setPerfil(null);
         setLoading(false);
@@ -796,8 +805,17 @@ export default function MiPerfil() {
         loadCanonicalProfile({ supabase, userId: uid, email: owner }),
         timeoutPromise,
       ]);
-      if (sessionUserIdRef.current !== uid) return;
-      const data = loaded?.row ?? null;
+      if (!isCurrentLoad()) return;
+      const canonicalDate = await fetchProfileBirthDate({
+        accessToken: session?.access_token,
+        isCurrent: isCurrentLoad,
+      });
+      if (!isCurrentLoad()) return;
+      birthDateSnapshotRef.current = { userId: uid, date: canonicalDate };
+      const legacyDate = fechaNacimientoDesdeDb(loaded?.row?.fecha_nacimiento);
+      setBirthDateNotice(legacyDate && legacyDate !== (canonicalDate || '')
+        ? 'La fecha anterior del perfil difiere de la identidad. Confirma manualmente la fecha correcta; no se copiará automáticamente.' : '');
+      const data = loaded?.row ? { ...loaded.row, fecha_nacimiento: canonicalDate } : null;
 
       if (data) {
         setPerfil(data);
@@ -842,10 +860,13 @@ export default function MiPerfil() {
         setPerfil(null);
       }
     } catch (err) {
-      // Profile is optional; silently fail if not found or network error
-      console.log('[MiPerfil] fetchPerfil error (expected if no profile yet):', err.message);
+      // Identity read failures must not masquerade as an empty birth date.
+      if (isCurrentLoad()) {
+        birthDateSnapshotRef.current = null;
+        setErrorMsg('No se pudo cargar la fecha de identidad. Vuelve a abrir el perfil antes de guardar.');
+      }
     }
-    setLoading(false);
+    if (isCurrentLoad()) setLoading(false);
   };
 
   const fetchReservas = async () => {
@@ -1164,7 +1185,7 @@ export default function MiPerfil() {
       }
       if (sessionUserIdRef.current !== userId) return;
       rowAfter = reloaded;
-      setPerfil(reloaded);
+      setPerfil({ ...reloaded, fecha_nacimiento: birthDateSnapshotRef.current?.date ?? null });
 
       pendingFotoFileRef.current = null;
       setFotoPendienteDeSubir(false);
@@ -1241,7 +1262,7 @@ export default function MiPerfil() {
           setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
           return;
         }
-        setPerfil(reloaded);
+        setPerfil({ ...reloaded, fecha_nacimiento: birthDateSnapshotRef.current?.date ?? null });
         const na = nombreApellidoEditDesdePerfilRow(reloaded);
         persistJugadorPerfil({
           nombre: na.nombre || String(perfil.nombre || '').trim() || 'Jugador',
@@ -1420,6 +1441,7 @@ export default function MiPerfil() {
           },
         },
       });
+      if (!profileMountedRef.current) return;
       if (authErr) {
         console.log('ERROR SIGNUP:', authErr);
         setErrorMsg(
@@ -1437,6 +1459,13 @@ export default function MiPerfil() {
         setErrorMsg(
           t('perfil.noEmailAfterSignup')
         );
+        return;
+      }
+      if (!profileMountedRef.current) return;
+      if (!authData?.session?.access_token || sessionUserIdRef.current !== (user?.id ?? null)) {
+        if (sessionUserIdRef.current == null || sessionUserIdRef.current === (user?.id ?? null)) {
+          setErrorMsg('Confirma tu correo e inicia sesión para completar el perfil y confirmar la fecha de nacimiento. No se ha guardado la fecha.');
+        }
         return;
       }
       const nombreCli = [nom, apellReg].filter(Boolean).join(' ').trim();
@@ -1461,7 +1490,6 @@ export default function MiPerfil() {
         pais: paisGuardado,
         localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
-        fecha_nacimiento: fechaNacimientoParaPayload(formData.fecha_nacimiento),
         numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
         es_federado: formData.es_federado,
         whatsapp: wa,
@@ -1490,6 +1518,21 @@ export default function MiPerfil() {
         return;
       }
 
+      if (sessionUserIdRef.current !== (user?.id ?? null)) return;
+      if (formData.fecha_nacimiento) {
+        try {
+          await saveChangedProfileBirthDate({
+            value: formData.fecha_nacimiento, initialDate: null,
+            accessToken: authData?.session?.access_token,
+            isCurrent: () => sessionUserIdRef.current === (user?.id ?? null),
+          });
+        } catch {
+          if (sessionUserIdRef.current !== (user?.id ?? null)) return;
+          setErrorMsg('La cuenta puede haberse creado, pero no se confirmó la fecha. Inicia sesión y completa el perfil.');
+          return;
+        }
+      }
+      if (sessionUserIdRef.current !== (user?.id ?? null)) return;
       void refreshSession();
       persistJugadorPerfil({
         nombre: nom,
@@ -1518,6 +1561,7 @@ export default function MiPerfil() {
         setErrorMsg(t('perfil.missingRequiredFields'));
       }
     } catch (err) {
+      if (!profileMountedRef.current) return;
       console.log('ERROR SIGNUP:', err);
       setErrorMsg(
         mensajeErrorJugadoresPerfilDuplicado(err) ||
@@ -1525,15 +1569,24 @@ export default function MiPerfil() {
           t('perfil.flow.registrationFailed')
       );
     } finally {
-      perfilSubmitLockRef.current = false;
-      setIsSubmitting(false);
+      if (profileMountedRef.current) {
+        perfilSubmitLockRef.current = false;
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleGuardar = async (e) => {
     e.preventDefault();
     const activeUserId = session?.user?.id ?? null;
+    const dateSnapshot = birthDateSnapshotRef.current;
+    if (!dateSnapshot || dateSnapshot.userId !== activeUserId) {
+      setErrorMsg('No se pudo verificar la fecha de identidad. Vuelve a abrir el perfil.');
+      return;
+    }
     if (perfilSubmitLockRef.current || isSubmitting) return;
+    profileReadGenerationRef.current += 1;
+    setLoading(false);
     perfilSubmitLockRef.current = true;
     setErrorMsg('');
     setSuccessMsg('');
@@ -1605,7 +1658,6 @@ export default function MiPerfil() {
         localidad: formData.localidad?.trim() ? formData.localidad.trim() : null,
         ciudad: formData.ciudad?.trim() ? formData.ciudad.trim() : null,
 
-        fecha_nacimiento: fechaNacimientoParaPayload(formData.fecha_nacimiento),
         numero_fipa: formData.numero_fipa?.trim() ? formData.numero_fipa.trim() : null,
         es_federado: formData.es_federado,
         mostrar_torneos_jugados: !!formData.mostrar_torneos_jugados,
@@ -1707,7 +1759,22 @@ export default function MiPerfil() {
         setErrorMsg(reloadErr?.message || t('general.somethingWentWrong'));
         return;
       }
-      setPerfil(reloaded);
+      let confirmedDate;
+      try {
+        confirmedDate = await saveChangedProfileBirthDate({
+          value: formData.fecha_nacimiento, initialDate: dateSnapshot.date,
+          accessToken: session?.access_token,
+          isCurrent: () => sessionUserIdRef.current === activeUserId,
+        });
+      } catch {
+        if (sessionUserIdRef.current !== activeUserId) return;
+        setErrorMsg('No se pudo confirmar la fecha de nacimiento. Los demás datos pueden haberse guardado; vuelve a abrir el perfil.');
+        return;
+      }
+      if (sessionUserIdRef.current !== activeUserId) return;
+      birthDateSnapshotRef.current = { userId: activeUserId, date: confirmedDate };
+      setBirthDateNotice('');
+      setPerfil({ ...reloaded, fecha_nacimiento: confirmedDate });
 
       const nombreClienteDisplay = [nombreTrim, apellidoTrim].filter(Boolean).join(' ').trim();
       const { error: errCli } = await supabase
@@ -2339,6 +2406,7 @@ export default function MiPerfil() {
                 />
               </div>
 
+              {birthDateNotice && <p role="status">{birthDateNotice}</p>}
               <label style={guestLabelStyle}>{t('perfil.birthDate')}</label>
               <input
                 type="date"
@@ -3573,6 +3641,7 @@ export default function MiPerfil() {
             </p>
 
             <label style={labelStyle}>{t('perfil.birthDate')}</label>
+            {birthDateNotice && <p role="status">{birthDateNotice}</p>}
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
             <label style={labelStyle}>{t('perfil.fipaNumberLong')}</label>

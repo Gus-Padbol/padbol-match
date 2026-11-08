@@ -14,7 +14,7 @@ function failingUpdate(){
   const error={code:'42501',message:'new row violates row-level security policy'};
   const query={
     update:jest.fn(()=>query),eq:jest.fn(()=>query),is:jest.fn(()=>query),
-    select:jest.fn(()=>query),limit:jest.fn(async()=>({data:null,error})),
+    select:jest.fn(()=>query),then:(resolve,reject)=>Promise.resolve({data:null,error}).then(resolve,reject),limit:jest.fn(async()=>({data:null,error})),
   };
   return {client:{from:()=>query},query};
 }
@@ -35,7 +35,7 @@ test.each([
 test('new-row insert conflict after upload is reported and never email-upserted',async()=>{
   const s=storage();
   const error={code:'23505',message:'duplicate key value violates unique constraint'};
-  const query={insert:jest.fn(()=>query),select:jest.fn(()=>query),limit:jest.fn(async()=>({data:null,error}))};
+  const query={insert:jest.fn(()=>query),select:jest.fn(()=>query),then:(resolve,reject)=>Promise.resolve({data:null,error}).then(resolve,reject),limit:jest.fn(async()=>({data:null,error}))};
   const uploaded=await uploadProfileAvatar({storage:s.client,userId:OWN,file:file()});
   expect(uploaded.error).toBeUndefined();
   const saved=await insertOwnProfileRow({supabase:{from:()=>query},userId:OWN,payload:{email:row.email,foto_url:uploaded.publicUrl}});
