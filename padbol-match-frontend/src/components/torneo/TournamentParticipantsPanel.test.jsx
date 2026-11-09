@@ -90,11 +90,12 @@ test('muestra totales de equipos, identificados y plazas, y expande/contrae todo
       { id: 'p1', nombre: 'QA Uno', tipo_identidad: 'generico', ranking_oficial_elegible: false },
       { id: 'p2', nombre: 'QA Dos', tipo_identidad: 'generico', ranking_oficial_elegible: false },
       { id: 'p3', tipo_identidad: 'plaza_pendiente', can_edit: true, ranking_oficial_elegible: false },
+      { id: 'empty', nombre: '', tipo_identidad: 'generico', ranking_oficial_elegible: false },
     ],
   };
   readTournamentParticipants.mockResolvedValue({ ...catalog, teams: [team, secondTeam] });
   mount();
-  expect(await screen.findByText('2 equipos · 2 participantes identificados · 2 plazas pendientes')).toBeInTheDocument();
+  expect(await screen.findByText('2 equipos · 2 participantes identificados · 2 plazas pendientes registradas · 1 faltantes para el mínimo')).toBeInTheDocument();
   const details = () => Array.from(document.querySelectorAll('details.participant-team'));
   expect(details()).toHaveLength(2);
   expect(details().every((d) => d.open)).toBe(false);
@@ -117,4 +118,27 @@ test('un equipo que cumple el mínimo no se presenta como plantel completo', asy
   mount();
   expect(await screen.findByText(/QA Mínimo — Cumple el mínimo para jugar/)).toBeInTheDocument();
   expect(screen.getByText(/no implica plantel completo/)).toBeInTheDocument();
+});
+
+
+test('details usa open estándar y conserva la edición al expandir/contraer', async () => {
+  readTournamentParticipants.mockResolvedValue({ ...catalog, teams: [team] });
+  mount();
+  await screen.findByText(/QA Equipo — Plantel por completar/);
+  const details = () => document.querySelector('details.participant-team');
+  expect(details().open).toBe(false);
+  expect(details().hasAttribute('open')).toBe(false);
+  fireEvent.click(screen.getByText(/QA Equipo — Plantel por completar/));
+  expect(details().open).toBe(true);
+  expect(details().hasAttribute('open')).toBe(true);
+  fireEvent.change(screen.getByLabelText('Completar nombre del participante'), { target: { value: 'QA Pendiente' } });
+  fireEvent.click(screen.getByText(/QA Equipo — Plantel por completar/));
+  expect(details().open).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Expandir todos' }));
+  expect(details().open).toBe(true);
+  expect(details().hasAttribute('open')).toBe(true);
+  expect(screen.getByLabelText('Completar nombre del participante')).toHaveValue('QA Pendiente');
+  fireEvent.click(screen.getByRole('button', { name: 'Contraer todos' }));
+  expect(details().open).toBe(false);
+  expect(details().hasAttribute('open')).toBe(false);
 });

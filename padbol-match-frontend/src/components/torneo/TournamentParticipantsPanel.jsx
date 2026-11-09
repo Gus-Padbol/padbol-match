@@ -96,11 +96,13 @@ export default function TournamentParticipantsPanel({ apiBaseUrl, torneoId, auth
   const canReview = !busy && name.trim() && total > 0 && total <= catalog.limits.max_jugadores && validRows;
   const payload = () => ({ request_id: requestId('registration'), nombre: name.trim(), incluir_capitan: captainIncluded, participantes: rows.map(r => r.kind === 'existente' ? { participante_id: r.participantId } : { tipo_identidad: r.kind, ...(r.name.trim() ? { nombre: r.name.trim() } : {}) }) });
   const teamCount = catalog.teams.length;
-  const identifiedCount = catalog.teams.reduce((sum, t) => sum + (t.participants || []).filter(p => p.tipo_identidad !== 'plaza_pendiente').length, 0);
-  const pendingCount = catalog.teams.reduce((sum, t) => {
-    const explicit = (t.participants || []).filter(p => p.tipo_identidad === 'plaza_pendiente').length;
+  const identifiedCount = catalog.teams.reduce((sum, t) => sum + (t.participants || []).filter(p => (
+    p.tipo_identidad !== 'plaza_pendiente' && String(p.nombre || '').trim()
+  )).length, 0);
+  const registeredPendingCount = catalog.teams.reduce((sum, t) => sum + (t.participants || []).filter(p => p.tipo_identidad === 'plaza_pendiente').length, 0);
+  const missingMinimumCount = catalog.teams.reduce((sum, t) => {
     const missing = Number(t.habilitacion_deportiva?.faltantes);
-    return sum + Math.max(explicit, Number.isFinite(missing) ? missing : 0);
+    return sum + (Number.isFinite(missing) && missing > 0 ? missing : 0);
   }, 0);
   const identityLabel = p => !p.participante_id && !p.tipo_identidad ? text('Participante del plantel previo', 'Participant from the previous roster') : p.tipo_identidad === 'plaza_pendiente' ? text('Plaza por completar', 'Unfilled place') : p.estado_vinculacion === 'vinculado' ? text('Perfil vinculado', 'Linked profile') : text('Participante sin cuenta vinculada', 'Participant without a linked account');
 
@@ -135,7 +137,7 @@ export default function TournamentParticipantsPanel({ apiBaseUrl, torneoId, auth
     <h3>{text('Inscripciones y planteles', 'Registrations and rosters')}</h3>
     {!catalog.teams.length ? <p>{text('Todavía no hay equipos inscritos.', 'No teams have registered yet.')}</p> : <>
       <div className="participant-teams-toolbar">
-        <p className="participant-teams-summary">{text(`${teamCount} equipos · ${identifiedCount} participantes identificados · ${pendingCount} plazas pendientes`, `${teamCount} teams · ${identifiedCount} identified participants · ${pendingCount} pending places`)}</p>
+        <p className="participant-teams-summary">{text(`${teamCount} equipos · ${identifiedCount} participantes identificados · ${registeredPendingCount} plazas pendientes registradas · ${missingMinimumCount} faltantes para el mínimo`, `${teamCount} teams · ${identifiedCount} identified participants · ${registeredPendingCount} registered pending places · ${missingMinimumCount} missing for the minimum`)}</p>
         <div className="participant-teams-actions">
           <button type="button" onClick={() => setOpenTeams(Object.fromEntries(catalog.teams.map(team => [team.id, true])))}>{text('Expandir todos', 'Expand all')}</button>
           <button type="button" onClick={() => setOpenTeams(Object.fromEntries(catalog.teams.map(team => [team.id, false])))}>{text('Contraer todos', 'Collapse all')}</button>
