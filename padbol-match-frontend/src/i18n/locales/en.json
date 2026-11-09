@@ -1627,7 +1627,16 @@
       "validationChangeCategory": "✏️ Change category",
       "validationViewProfile": "View profile",
       "validationSearchLabel": "Search by name, surname or email",
-      "validationGenderLabel": "Gender"
+      "validationGenderLabel": "Gender",
+      "bulkValidationSelectVisible": "Select all visible",
+      "bulkValidationSelected": "{{count}} selected",
+      "bulkValidationApprove": "Approve selected",
+      "bulkValidationReject": "Reject selected",
+      "bulkValidationProgress": "{{completed}} of {{total}} confirmed.",
+      "bulkValidationStopped": "Processing stopped. Refresh the list to check the last result before trying again.",
+      "bulkValidationRefresh": "Refresh list",
+      "bulkValidationConfirm": "{{action}}: {{count}}. Continue?",
+      "bulkValidationSelectPlayer": "Select {{name}}"
     },
     "sponsors": {
       "quotaConfigTitle": "Quota settings",

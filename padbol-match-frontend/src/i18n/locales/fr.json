@@ -920,7 +920,16 @@
       "validationChangeCategory": "✏️ Changer la catégorie",
       "validationViewProfile": "Voir le profil",
       "validationSearchLabel": "Rechercher par nom, prénom ou e-mail",
-      "validationGenderLabel": "Genre"
+      "validationGenderLabel": "Genre",
+      "bulkValidationSelectVisible": "Sélectionner tous les éléments visibles",
+      "bulkValidationSelected": "{{count}} sélectionnés",
+      "bulkValidationApprove": "Approuver la sélection",
+      "bulkValidationReject": "Refuser la sélection",
+      "bulkValidationProgress": "{{completed}} sur {{total}} confirmés.",
+      "bulkValidationStopped": "Le traitement a été interrompu. Actualisez la liste pour vérifier le dernier résultat avant de réessayer.",
+      "bulkValidationRefresh": "Actualiser la liste",
+      "bulkValidationConfirm": "{{action}} : {{count}}. Continuer ?",
+      "bulkValidationSelectPlayer": "Sélectionner {{name}}"
     },
     "sponsors": {
       "quotaConfigTitle": "Configuration des quotas",

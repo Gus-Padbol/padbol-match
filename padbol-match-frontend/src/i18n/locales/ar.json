@@ -949,7 +949,16 @@
       "validationChangeCategory": "✏️ تغيير الفئة",
       "validationViewProfile": "عرض الملف الشخصي",
       "validationSearchLabel": "البحث بالاسم الأول أو اسم العائلة أو البريد الإلكتروني",
-      "validationGenderLabel": "جنس"
+      "validationGenderLabel": "جنس",
+      "bulkValidationSelectVisible": "تحديد جميع الطلبات الظاهرة",
+      "bulkValidationSelected": "تم تحديد {{count}}",
+      "bulkValidationApprove": "الموافقة على المحدد",
+      "bulkValidationReject": "رفض المحدد",
+      "bulkValidationProgress": "تم تأكيد {{completed}} من {{total}}.",
+      "bulkValidationStopped": "توقفت المعالجة. حدّث القائمة للتحقق من آخر نتيجة قبل المحاولة مرة أخرى.",
+      "bulkValidationRefresh": "تحديث القائمة",
+      "bulkValidationConfirm": "{{action}}: {{count}}. هل تريد المتابعة؟",
+      "bulkValidationSelectPlayer": "تحديد {{name}}"
     },
     "sponsors": {
       "quotaConfigTitle": "تكوين الحصص",

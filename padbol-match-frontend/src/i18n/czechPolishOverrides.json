@@ -225,6 +225,17 @@
       "baseValue": "Základ: {{count}}",
       "unavailable": "Před vytvořením turnaje načtěte uložená pravidla.",
       "levelUnavailable": "Vybraná úroveň není v aktuálních pravidlech povolena."
+    },
+    "formularios": {
+      "bulkValidationSelectVisible": "Vybrat všechny viditelné",
+      "bulkValidationSelected": "Vybráno: {{count}}",
+      "bulkValidationApprove": "Schválit vybrané",
+      "bulkValidationReject": "Zamítnout vybrané",
+      "bulkValidationProgress": "Potvrzeno {{completed}} z {{total}}.",
+      "bulkValidationStopped": "Zpracování bylo zastaveno. Před dalším pokusem obnovte seznam a ověřte poslední výsledek.",
+      "bulkValidationRefresh": "Obnovit seznam",
+      "bulkValidationConfirm": "{{action}}: {{count}}. Pokračovat?",
+      "bulkValidationSelectPlayer": "Vybrat {{name}}"
     }
   },
   "fipaAdminLibrary": {

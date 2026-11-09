@@ -3,6 +3,8 @@ import {hasTournamentFixture,tournamentStructureChanged,TOURNAMENT_FIXTURE_LOCK_
 import { confirmInPersonPayment } from '../utils/adminInPersonPayment';
 import { paisSinBanderaParaGuardar } from '../utils/paisI18n';
 import PendingValidationActions from '../components/PendingValidationActions';
+import PendingValidationBulkActions from '../components/PendingValidationBulkActions';
+import useBulkPendingValidation from '../hooks/useBulkPendingValidation';
 import { fetchAdminPendingValidations, updatePendingValidation } from '../utils/adminPendingValidationsApi';
 import { coalesceAuthenticatedGet } from '../utils/coalesceAuthenticatedGet';
 import AdminTournamentLevelInput from '../components/AdminTournamentLevelInput';
@@ -5382,6 +5384,23 @@ export default function AdminDashboard({
     });
   }, [pendientes, busquedaValidaciones]);
 
+  const validationBusy = Object.values(validacionState).some(state => state.saving);
+  const bulkValidations = useBulkPendingValidation({
+    rows: pendientesFiltradosValidaciones,
+    context: `${pendientesScope}:${busquedaValidaciones}:${activeTab}:${pendientesRequestRef.current}`,
+    recoveryContext: `${pendientesScope}:${pendientesRequestRef.current}`,
+    ready: !pendientesLoading && !pendientesError && pendientesScopeGuardado === pendientesScope && !validationBusy,
+    isSuperAdmin,
+    update: (id, accion) => updatePendingValidation({ apiBaseUrl, accessToken: session?.access_token, id, accion,
+      motivo: accion === 'rechazar' ? t('admin.formularios.validationRejectReason') : undefined }),
+    onSuccess: id => {
+      setPendientes(previous => previous.filter(row => String(row.id) !== String(id)));
+      setValidacionState(previous => { const next = { ...previous }; delete next[id]; return next; });
+    },
+    actionLabel: action => t(action === 'aprobar' ? 'admin.formularios.bulkValidationApprove' : 'admin.formularios.bulkValidationReject', { defaultValue: action === 'aprobar' ? 'Approve selected' : 'Reject selected' }),
+    confirm: (action, count) => window.confirm(t('admin.formularios.bulkValidationConfirm', { defaultValue: '{{action}}: {{count}}. Continue?', action, count })),
+  });
+
   const adminRolesRowsFiltrados = useMemo(() => {
     const legacyTemporal = (row) => {
       const em = String(row?.email || '').trim().toLowerCase();
@@ -6695,7 +6714,9 @@ export default function AdminDashboard({
   fetchPendientesRef.current = fetchPendientes;
 
   const ejecutarValidacion = async (id, accion, nivel) => {
+    if (bulkValidations.lock.current || bulkValidations.blocked || validationBusy) return;
     if (accion === 'rechazar' && !window.confirm(t('admin.formularios.validationRejectConfirm'))) return;
+    bulkValidations.lock.current = true;
     setValidacionState(prev => ({ ...prev, [id]: { ...prev[id], saving: true, error: '' } }));
     try {
       await updatePendingValidation({ apiBaseUrl, accessToken: session?.access_token, id, accion, nivel,
@@ -6704,6 +6725,8 @@ export default function AdminDashboard({
       setValidacionState(prev => { const state = { ...prev }; delete state[id]; return state; });
     } catch (error) {
       setValidacionState(prev => ({ ...prev, [id]: { ...prev[id], saving: false, error: error?.message || t('admin.formularios.validationSaveError') } }));
+    } finally {
+      bulkValidations.lock.current = false;
     }
   };
   const aprobarJugador = id => ejecutarValidacion(id, 'aprobar');
@@ -12619,6 +12642,7 @@ export default function AdminDashboard({
 
       {activeTab === 'validaciones' && <div className="section admin-validaciones-section">
         <h2>{t('admin.formularios.pendingValidationTitle')}</h2>
+        {!pendientesLoading && !pendientesError && pendientesScopeGuardado === pendientesScope && (pendientes.length > 0 || bulkValidations.outcome) && <PendingValidationBulkActions bulk={bulkValidations} visibleCount={pendientesFiltradosValidaciones.length} isSuperAdmin={isSuperAdmin} disabled={bulkValidations.busy || validationBusy} onRefresh={() => void fetchPendientes()} t={t} />}
         {pendientesLoading || pendientesScopeGuardado !== pendientesScope ? (
           <p style={{ color: 'var(--text-secondary)' }}>{t('admin.metricas.loading')}</p>
         ) : pendientesError ? (
@@ -12635,6 +12659,7 @@ export default function AdminDashboard({
                 id="admin-busqueda-validaciones"
                 type="search"
                 value={busquedaValidaciones}
+                disabled={bulkValidations.busy || validationBusy}
                 onChange={(e) => setBusquedaValidaciones(e.target.value)}
                 placeholder={t('admin.formularios.searchPlayerPlaceholder')}
                 autoComplete="off"
@@ -12662,6 +12687,7 @@ export default function AdminDashboard({
               const perfilPathVal = pathJugadorPerfilPublico(jugador);
               return (
                 <div key={jugador.id} className="admin-validacion-pendiente-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
+                  <input type="checkbox" aria-label={t('admin.formularios.bulkValidationSelectPlayer', { defaultValue: 'Select {{name}}', name: nombreMostrar || jugador.email })} checked={bulkValidations.selected.includes(String(jugador.id))} disabled={bulkValidations.busy || validationBusy || bulkValidations.blocked} onChange={() => bulkValidations.toggle(jugador.id)} style={{ width: 22, height: 22 }} />
                   {/* Info */}
                   <div style={{ flex: 1, minWidth: '180px' }}>
                     <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{nombreMostrar || jugador.nombre || '—'}</strong>
@@ -12706,7 +12732,7 @@ export default function AdminDashboard({
                     ) : null}
                     <PendingValidationActions
                       isSuperAdmin={isSuperAdmin}
-                      saving={vs.saving}
+                      saving={vs.saving || bulkValidations.busy || bulkValidations.blocked || validationBusy}
                       onApprove={() => aprobarJugador(jugador.id)}
                       onReject={() => void rechazarJugador(jugador.id)}
                       onCategory={() => toggleCambiarCategoria(jugador.id, jugador.nivel)}
@@ -12729,7 +12755,7 @@ export default function AdminDashboard({
                           ))}
                         </select>
                         <button
-                          disabled={vs.saving}
+                          disabled={vs.saving || bulkValidations.busy || bulkValidations.blocked || validationBusy}
                           onClick={() => guardarCategoria(jugador.id)}
                           className="admin-validacion-action admin-validacion-action--save"
                           style={{ padding: '7px 14px', background: '#7b1fa2', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', opacity: vs.saving ? 0.6 : 1 }}

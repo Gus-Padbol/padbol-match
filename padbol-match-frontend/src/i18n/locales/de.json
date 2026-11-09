@@ -920,7 +920,16 @@
       "validationChangeCategory": "✏️ Kategorie ändern",
       "validationViewProfile": "Profil ansehen",
       "validationSearchLabel": "Suche nach Name, Nachname oder E-Mail",
-      "validationGenderLabel": "Geschlecht"
+      "validationGenderLabel": "Geschlecht",
+      "bulkValidationSelectVisible": "Alle sichtbaren auswählen",
+      "bulkValidationSelected": "{{count}} ausgewählt",
+      "bulkValidationApprove": "Auswahl genehmigen",
+      "bulkValidationReject": "Auswahl ablehnen",
+      "bulkValidationProgress": "{{completed}} von {{total}} bestätigt.",
+      "bulkValidationStopped": "Die Verarbeitung wurde angehalten. Aktualisieren Sie die Liste und prüfen Sie das letzte Ergebnis, bevor Sie es erneut versuchen.",
+      "bulkValidationRefresh": "Liste aktualisieren",
+      "bulkValidationConfirm": "{{action}}: {{count}}. Fortfahren?",
+      "bulkValidationSelectPlayer": "{{name}} auswählen"
     },
     "sponsors": {
       "quotaConfigTitle": "Kontingentkonfiguration",

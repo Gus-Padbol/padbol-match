@@ -927,7 +927,16 @@
       "validationChangeCategory": "✏️ Schimbă categoria",
       "validationViewProfile": "Vezi profilul",
       "validationSearchLabel": "Caută după nume, prenume sau email",
-      "validationGenderLabel": "Gen"
+      "validationGenderLabel": "Gen",
+      "bulkValidationSelectVisible": "Selectează toate cererile vizibile",
+      "bulkValidationSelected": "{{count}} selectate",
+      "bulkValidationApprove": "Aprobă cererile selectate",
+      "bulkValidationReject": "Respinge cererile selectate",
+      "bulkValidationProgress": "{{completed}} din {{total}} confirmate.",
+      "bulkValidationStopped": "Procesarea s-a oprit. Actualizează lista pentru a verifica ultimul rezultat înainte de a încerca din nou.",
+      "bulkValidationRefresh": "Actualizează lista",
+      "bulkValidationConfirm": "{{action}}: {{count}}. Continui?",
+      "bulkValidationSelectPlayer": "Selectează {{name}}"
     },
     "sponsors": {
       "quotaConfigTitle": "Configurarea cotelor",

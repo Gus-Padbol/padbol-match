@@ -1682,7 +1682,16 @@
       "validationChangeCategory": "✏️ Cambiar categoría",
       "validationViewProfile": "Ver perfil",
       "validationSearchLabel": "Buscar por nombre, apellido o email",
-      "validationGenderLabel": "Género"
+      "validationGenderLabel": "Género",
+      "bulkValidationSelectVisible": "Seleccionar todos los visibles",
+      "bulkValidationSelected": "{{count}} seleccionados",
+      "bulkValidationApprove": "Aprobar seleccionados",
+      "bulkValidationReject": "Rechazar seleccionados",
+      "bulkValidationProgress": "{{completed}} de {{total}} confirmados.",
+      "bulkValidationStopped": "El proceso se detuvo. Actualiza la lista para comprobar el último resultado antes de volver a intentar.",
+      "bulkValidationRefresh": "Actualizar lista",
+      "bulkValidationConfirm": "{{action}}: {{count}}. ¿Continuar?",
+      "bulkValidationSelectPlayer": "Seleccionar a {{name}}"
     },
     "sponsors": {
       "quotaConfigTitle": "Configuración de cupos",
