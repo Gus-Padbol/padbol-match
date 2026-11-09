@@ -3575,6 +3575,14 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 }
 
 @media (max-width: 760px) {
+  /* Perfil + relación + ficha: sin scroll lateral en 360-390 px. */
+  .admin-jugadores-table {
+    min-width: 0;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .admin-jugadores-table__at,
   .admin-jugadores-table__contact,
   .admin-jugadores-table__activity {
     display: none;
@@ -3582,14 +3590,33 @@ html.theme-dark .admin-hub-personalizar-root .admin-hub-editor-card {
 
   .admin-jugadores-table th,
   .admin-jugadores-table td {
-    padding: 9px 7px;
+    padding: 9px 6px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
+  .admin-jugadores-table th {
+    font-size: 11px;
+    letter-spacing: 0;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
   .admin-jugadores-table th:first-child,
   .admin-jugadores-table td:first-child {
-    width: 32%;
+    width: 38%;
+  }
+
+  .admin-jugadores-table__profile {
+    width: 30%;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .admin-jugadores-table__profile-link {
+    min-height: 28px;
+    padding: 0 6px;
+    font-size: 12px;
   }
 }
 

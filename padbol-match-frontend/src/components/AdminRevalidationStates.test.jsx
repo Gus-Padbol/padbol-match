@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AdminClasesClubSection from './AdminClasesClubSection';
 import AdminJugadoresSection from './AdminJugadoresSection';
 import { fetchAdminClases, fetchAdminProfesores } from '../utils/clasesAdminApi';
@@ -12,11 +12,15 @@ jest.mock('../i18n/adminTranslation', () => {
 jest.mock('../utils/clasesAdminApi',()=>({fetchAdminClases:jest.fn(),fetchAdminProfesores:jest.fn(),crearClaseAdmin:jest.fn(),fetchAdminClaseAsistencia:jest.fn(),patchAdminClaseAsistencia:jest.fn(),patchClaseActivoAdmin:jest.fn()}));
 jest.mock('../utils/adminJugadoresApi',()=>({...jest.requireActual('../utils/adminJugadoresApi'),fetchAdminJugadoresList:jest.fn()}));
 beforeEach(()=>jest.clearAllMocks());
-test('sin sede elegida solicita selección sin afirmar que no existen jugadores',async()=>{
+test('sin sede elegida el super admin lista todos los jugadores',async()=>{
+ fetchAdminJugadoresList.mockResolvedValue({ items: [], total: 0, total_pages: 1, scope: 'global' });
  render(<AdminJugadoresSection accessToken="fixture-token" isSuperAdmin sedesMap={{}}/>);
- expect(await screen.findByRole('alert')).toHaveTextContent('Selecciona una sede');
+ expect(await screen.findByText('Todavía no hay jugadores registrados.')).toBeInTheDocument();
+ expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+ expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(1);
+ expect(fetchAdminJugadoresList.mock.calls[0][0].sedeId).toBeUndefined();
+ expect(screen.getByRole('option',{name:'Todos los jugadores'})).toBeInTheDocument();
  expect(screen.queryByText('No hay jugadores con historial en esta sede.')).not.toBeInTheDocument();
- expect(fetchAdminJugadoresList).not.toHaveBeenCalled();
 });
 test('clases oculta SQL y el vacío falso y permite reintentar',async()=>{
  fetchAdminClases.mockResolvedValue([]);fetchAdminProfesores.mockRejectedValueOnce(new Error('column profesores.especialidad does not exist')).mockResolvedValue([]);
@@ -30,18 +34,22 @@ test('errores operativos se conservan y detalles internos se sustituyen',()=>{
  expect(adminErrorMessage(new Error('Could not find table public.sede_programas_beneficios in schema cache'),'Error de carga')).toBe('Error de carga');
 });
 
-test('el selector respeta la ausencia de sede incluso si hay sedes disponibles', async () => {
+test('el selector alterna Todos ↔ sede y envía sede_id sólo al elegir sede', async () => {
  fetchAdminJugadoresList.mockResolvedValue({ items: [], total: 0, total_pages: 1 });
  render(<AdminJugadoresSection accessToken="fixture-token" isSuperAdmin sedesMap={{ 7: { id: 7, nombre: 'Club siete' } }} />);
- expect(await screen.findByRole('alert')).toHaveTextContent('Selecciona una sede');
- expect(fetchAdminJugadoresList).not.toHaveBeenCalled();
+ expect(await screen.findByText('Todavía no hay jugadores registrados.')).toBeInTheDocument();
+ expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(1);
+ expect(fetchAdminJugadoresList.mock.calls[0][0].sedeId).toBeUndefined();
+
  const venueSelector = screen.getByRole('combobox', { name: 'admin.jugadores.sedeLabel' });
  fireEvent.change(venueSelector, { target: { value: '7' } });
  expect(await screen.findByText('No hay jugadores con historial en esta sede.')).toBeInTheDocument();
- expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(1);
+ expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(2);
+ expect(fetchAdminJugadoresList.mock.calls[1][0].sedeId).toBe('7');
+
  fireEvent.change(venueSelector, { target: { value: '' } });
- expect(await screen.findByRole('alert')).toHaveTextContent('Selecciona una sede');
- expect(screen.queryByText('No hay jugadores con historial en esta sede.')).not.toBeInTheDocument();
+ await waitFor(() => expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(3));
+ expect(await screen.findByText('Todavía no hay jugadores registrados.')).toBeInTheDocument();
+ expect(fetchAdminJugadoresList.mock.calls[2][0].sedeId).toBeUndefined();
  expect(venueSelector).toHaveValue('');
- expect(fetchAdminJugadoresList).toHaveBeenCalledTimes(1);
 });

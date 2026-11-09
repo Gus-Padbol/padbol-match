@@ -1388,8 +1388,13 @@
       "activityCol": "Last activity",
       "vinculacionHistorial": "Has venue history",
       "vinculacionRegistrado": "Registered on Padbol Match",
+      "vinculacionVinculado": "Mit Standort verknüpft",
       "vinculacionSinHistorial": "No history",
       "vinculacionNote": "Booking history and formal venue membership are combined. You can link or unlink players without losing their history.",
+      "allPlayers": "Alle Spieler",
+      "subtitleAll": "Alle registrierten Spieler, mit oder ohne Standort. Wähle einen Standort zum Filtern.",
+      "emptyAll": "Noch keine registrierten Spieler.",
+      "minChars": "Mindestens 2 Zeichen zum Suchen eingeben.",
       "viewProfile": "View profile",
       "fichaTitle": "Player card",
       "pageOf": "Page {{page}} of {{total}} ({{count}})",
@@ -1402,6 +1407,9 @@
       "sortNameDesc": "Name Z–A",
       "sortActivityDesc": "Recent activity",
       "sortActivityAsc": "Oldest activity",
+      "sortRegisteredDesc": "Neueste Registrierung",
+      "sortRegisteredAsc": "Älteste Registrierung",
+      "registeredCol": "Registrierungsdatum",
       "fichaLinkBlocked": "Formal venue link/unlink is not available in Backend yet. The current relationship is inferred from booking history."
     },
     "membresias": {

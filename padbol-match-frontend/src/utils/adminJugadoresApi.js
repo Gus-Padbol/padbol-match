@@ -13,6 +13,17 @@ export function normalizeAdminJugadoresSearchItems(json) {
   return [];
 }
 
+export function normalizeAdminJugadoresListResponse(json) {
+  return {
+    items: Array.isArray(json?.items) ? json.items : [],
+    total: Number(json?.total) || 0,
+    total_pages: Number(json?.total_pages) || 1,
+    page: Number(json?.page) || 1,
+    limit: Number(json?.limit) || DEFAULT_LIMIT,
+    scope: json?.scope === 'global' ? 'global' : 'sede',
+  };
+}
+
 export function parseAdminJugadoresApiError(status, json) {
   const msg = json?.error || json?.message || null;
   if (status === 401) return msg || 'Sesión expirada. Volvé a iniciar sesión (401).';
@@ -29,6 +40,8 @@ export async function fetchAdminJugadoresList({
   q = '',
   page = 1,
   limit = DEFAULT_LIMIT,
+  vinculacion = '',
+  orden = '',
 }) {
   if (!accessToken) {
     const err = new Error('Sesión expirada. Volvé a iniciar sesión.');
@@ -38,6 +51,8 @@ export async function fetchAdminJugadoresList({
   const params = new URLSearchParams();
   if (sedeId != null && sedeId !== '') params.set('sede_id', String(sedeId));
   if (q) params.set('q', q);
+  if (vinculacion) params.set('vinculacion', String(vinculacion));
+  if (orden) params.set('orden', String(orden));
   params.set('page', String(page));
   params.set('limit', String(limit));
 
@@ -98,6 +113,7 @@ export function formatJugadorVinculacionLabel(vinculacion, t) {
   const v = String(vinculacion || '').toLowerCase();
   if (v === 'con_historial') return t('admin.jugadores.vinculacionHistorial');
   if (v === 'registrado') return t('admin.jugadores.vinculacionRegistrado');
+  if (v === 'vinculado') return t('admin.jugadores.vinculacionVinculado');
   return t('admin.jugadores.vinculacionSinHistorial');
 }
 

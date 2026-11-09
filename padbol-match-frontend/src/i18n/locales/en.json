@@ -2875,8 +2875,13 @@
       "activityCol": "Last activity",
       "vinculacionHistorial": "Has venue history",
       "vinculacionRegistrado": "Registered on Padbol Match",
+      "vinculacionVinculado": "Linked to the venue",
       "vinculacionSinHistorial": "No history",
       "vinculacionNote": "This list combines registered players and their history at the venue. Venue membership changes are not managed in this view.",
+      "allPlayers": "All players",
+      "subtitleAll": "All registered players, with or without a venue. Choose a venue to filter.",
+      "emptyAll": "No registered players yet.",
+      "minChars": "Type at least 2 characters to search.",
       "viewProfile": "View profile",
       "fichaTitle": "Player card",
       "pageOf": "Page {{page}} of {{total}} ({{count}})",
@@ -2889,6 +2894,9 @@
       "sortNameDesc": "Name Z–A",
       "sortActivityDesc": "Recent activity",
       "sortActivityAsc": "Oldest activity",
+      "sortRegisteredDesc": "Newest registration",
+      "sortRegisteredAsc": "Oldest registration",
+      "registeredCol": "Registration date",
       "fichaLinkBlocked": "This profile displays the player’s venue relationship and history. It does not change that relationship."
     },
     "membresias": {

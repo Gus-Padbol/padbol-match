@@ -2511,8 +2511,13 @@
       "activityCol": "Última actividad",
       "vinculacionHistorial": "Con historial en sede",
       "vinculacionRegistrado": "Registrado en Padbol Match",
+      "vinculacionVinculado": "Vinculado a la sede",
       "vinculacionSinHistorial": "Sin historial",
       "vinculacionNote": "La lista reúne jugadores registrados y su historial en la sede. Los cambios de relación con la sede no se gestionan en esta vista.",
+      "allPlayers": "Todos los jugadores",
+      "subtitleAll": "Todos los jugadores registrados, con o sin sede. Elige una sede para filtrar.",
+      "emptyAll": "Todavía no hay jugadores registrados.",
+      "minChars": "Escribe al menos 2 caracteres para buscar.",
       "viewProfile": "Ver perfil",
       "fichaTitle": "Ficha del jugador",
       "pageOf": "Página {{page}} de {{total}} ({{count}})",
@@ -2525,6 +2530,9 @@
       "sortNameDesc": "Nombre Z–A",
       "sortActivityDesc": "Actividad reciente",
       "sortActivityAsc": "Actividad antigua",
+      "sortRegisteredDesc": "Registro más reciente",
+      "sortRegisteredAsc": "Registro más antiguo",
+      "registeredCol": "Fecha de registro",
       "fichaLinkBlocked": "Esta ficha permite consultar la relación del jugador con la sede y su historial. No modifica esa relación."
     },
     "membresias": {

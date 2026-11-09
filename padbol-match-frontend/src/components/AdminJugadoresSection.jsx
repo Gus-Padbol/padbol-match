@@ -1,16 +1,18 @@
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useSafeTranslation } from '../i18n/adminTranslation';
 import { padbolLangToIntlLocale } from '../utils/padbolLang';
 import { pathJugadorPerfilPublico } from '../utils/jugadorPerfilPublicoUrl';
 import {
   fetchAdminJugadoresList,
-  filterAdminJugadoresByVinculacion,
   formatJugadorActivity,
   formatJugadorUsername,
   formatJugadorVinculacionLabel,
+  normalizeAdminJugadoresListResponse,
   searchAdminJugadores,
-  sortAdminJugadoresItems,
 } from '../utils/adminJugadoresApi';
+
+const EMPTY_LIST = { items: [], total: 0, total_pages: 1, scope: 'sede' };
+const MIN_SEARCH_CHARS = 2;
 
 const inputStyle = {
   width: '100%',
@@ -275,15 +277,26 @@ export default function AdminJugadoresSection({
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [data, setData] = useState({ items: [], total: 0, total_pages: 1 });
+  const [searchHint, setSearchHint] = useState('');
+  const [data, setData] = useState(EMPTY_LIST);
   const [ficha, setFicha] = useState(null);
   const debounceRef = useRef(null);
+  const reqIdRef = useRef(0);
 
   useEffect(() => {
     if (sedeIdProp != null && sedeIdProp !== '' && esAdminClub) {
       setSedeId(String(sedeIdProp));
     }
   }, [sedeIdProp, esAdminClub]);
+
+  // Any scope/auth/base change closes the open player card: never keep the
+  // previous scope's contact data in the modal.
+  useEffect(() => {
+    setFicha(null);
+  }, [accessToken, apiBaseUrl, canSelectSede, esAdminClub, isSuperAdmin, sedeId]);
+
+  // Ignore in-flight responses after unmount (late responses).
+  useEffect(() => () => { reqIdRef.current += 1; }, []);
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -294,47 +307,77 @@ export default function AdminJugadoresSection({
     return () => { if (debounceRef.current) window.clearTimeout(debounceRef.current); };
   }, [q]);
 
+  const isGlobalScope = Boolean(isSuperAdmin) && !sedeId;
+  const needsSedeChoice = !isSuperAdmin && canSelectSede;
+
   const load = useCallback(async () => {
+    const reqId = ++reqIdRef.current;
+
     if (!accessToken) {
+      setData(EMPTY_LIST);
+      setSearchHint('');
+      setLoading(false);
       setError(t('admin.formularios.loginAgainAgain'));
       return;
     }
-    if (!sedeId) {
-      setData({ items: [], total: 0, total_pages: 1 });
-      setError(isSuperAdmin || canSelectSede ? t('admin.jugadores.selectSede') : '');
+
+    if (needsSedeChoice && !sedeId) {
+      setData(EMPTY_LIST);
+      setSearchHint('');
+      setLoading(false);
+      setError(t('admin.jugadores.selectSede'));
       return;
     }
+
+    if (!isSuperAdmin && !sedeId) {
+      setData(EMPTY_LIST);
+      setSearchHint('');
+      setLoading(false);
+      setError(t('admin.jugadores.forbidden'));
+      return;
+    }
+
+    const trimmed = qDebounced.trim().replace(/^@+/, '');
+    if (trimmed.length === 1) {
+      setData(EMPTY_LIST);
+      setLoading(false);
+      setError('');
+      setSearchHint(t('admin.jugadores.minChars', 'Escribe al menos 2 caracteres para buscar.'));
+      return;
+    }
+
+    setSearchHint('');
     setLoading(true);
     setError('');
     try {
       const json = await fetchAdminJugadoresList({
         apiBaseUrl,
         accessToken,
-        sedeId,
+        sedeId: sedeId || undefined,
         q: qDebounced,
         page,
         limit: 20,
+        vinculacion: isGlobalScope ? '' : vinculacionFilter,
+        orden: sortKey,
       });
-      setData({
-        items: Array.isArray(json.items) ? json.items : [],
-        total: Number(json.total) || 0,
-        total_pages: Number(json.total_pages) || 1,
-      });
+      if (reqId !== reqIdRef.current) return;
+      setData(normalizeAdminJugadoresListResponse(json));
     } catch (err) {
-      setData({ items: [], total: 0, total_pages: 1 });
+      if (reqId !== reqIdRef.current) return;
+      setData(EMPTY_LIST);
       if (err.status === 403) setError(t('admin.jugadores.forbidden'));
       else setError(err.message || t('admin.jugadores.loadError'));
     } finally {
-      setLoading(false);
+      if (reqId === reqIdRef.current) setLoading(false);
     }
-  }, [accessToken, apiBaseUrl, canSelectSede, isSuperAdmin, page, qDebounced, sedeId, t]);
+  }, [accessToken, apiBaseUrl, isGlobalScope, isSuperAdmin, needsSedeChoice, page, qDebounced, sedeId, sortKey, t, vinculacionFilter]);
 
   useEffect(() => { load(); }, [load]);
 
-  const displayItems = useMemo(() => {
-    const filtered = filterAdminJugadoresByVinculacion(data.items, vinculacionFilter);
-    return sortAdminJugadoresItems(filtered, sortKey);
-  }, [data.items, sortKey, vinculacionFilter]);
+  // The API already filters/sorts before paginating; never re-sort a page.
+  const displayItems = data.items;
+
+  const hasActiveSearch = qDebounced.trim().replace(/^@+/, '').length >= MIN_SEARCH_CHARS;
 
   return (
     <div className="section">
@@ -342,7 +385,9 @@ export default function AdminJugadoresSection({
         <div>
           <h2 style={{ margin: '0 0 6px' }}>{t('admin.tabs.jugadores')}</h2>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', maxWidth: 560 }}>
-            {t('admin.jugadores.subtitle')}
+            {isGlobalScope
+              ? t('admin.jugadores.subtitleAll', 'Todos los jugadores registrados, con o sin sede. Elige una sede para filtrar.')
+              : t('admin.jugadores.subtitle')}
           </p>
         </div>
         <button
@@ -371,12 +416,34 @@ export default function AdminJugadoresSection({
           marginBottom: 14,
         }}
       >
-        {isSuperAdmin || canSelectSede ? (
+        {isSuperAdmin ? (
           <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
             {t('admin.jugadores.sedeLabel')}
             <select
               value={sedeId}
-              onChange={(e) => { setSedeId(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSedeId(e.target.value);
+                setPage(1);
+                setVinculacionFilter('');
+              }}
+              style={inputStyle}
+            >
+              <option value="">{t('admin.jugadores.allPlayers', 'Todos los jugadores')}</option>
+              {sedesList.map((s) => (
+                <option key={s.id} value={String(s.id)}>{s.nombre}</option>
+              ))}
+            </select>
+          </label>
+        ) : canSelectSede ? (
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
+            {t('admin.jugadores.sedeLabel')}
+            <select
+              value={sedeId}
+              onChange={(e) => {
+                setSedeId(e.target.value);
+                setPage(1);
+                setVinculacionFilter('');
+              }}
               style={inputStyle}
             >
               <option value="">{t('admin.jugadores.selectSede')}</option>
@@ -406,68 +473,122 @@ export default function AdminJugadoresSection({
           />
         </label>
 
-        <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
-          {t('admin.jugadores.vinculacionFilter', 'Estado de relación')}
-          <select
-            value={vinculacionFilter}
-            onChange={(e) => setVinculacionFilter(e.target.value)}
-            style={inputStyle}
-          >
-            <option value="">{t('admin.jugadores.filterAll', 'Todos')}</option>
-            <option value="con_historial">{t('admin.jugadores.vinculacionHistorial')}</option>
-            <option value="registrado">{t('admin.jugadores.vinculacionRegistrado')}</option>
-          </select>
-        </label>
+        {!isGlobalScope ? (
+          <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
+            {t('admin.jugadores.vinculacionFilter', 'Estado de relación')}
+            <select
+              value={vinculacionFilter}
+              onChange={(e) => { setVinculacionFilter(e.target.value); setPage(1); }}
+              style={inputStyle}
+            >
+              <option value="">{t('admin.jugadores.filterAll', 'Todos')}</option>
+              <option value="con_historial">{t('admin.jugadores.vinculacionHistorial')}</option>
+              <option value="vinculado">{t('admin.jugadores.vinculacionVinculado', 'Vinculado a la sede')}</option>
+            </select>
+          </label>
+        ) : null}
 
         <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 800 }}>
           {t('admin.jugadores.sortLabel', 'Orden')}
           <select
             value={sortKey}
-            onChange={(e) => setSortKey(e.target.value)}
+            onChange={(e) => { setSortKey(e.target.value); setPage(1); }}
             style={inputStyle}
           >
             <option value="name_asc">{t('admin.jugadores.sortNameAsc', 'Nombre A–Z')}</option>
             <option value="name_desc">{t('admin.jugadores.sortNameDesc', 'Nombre Z–A')}</option>
-            <option value="activity_desc">{t('admin.jugadores.sortActivityDesc', 'Actividad reciente')}</option>
-            <option value="activity_asc">{t('admin.jugadores.sortActivityAsc', 'Actividad antigua')}</option>
+            <option value="activity_desc">
+              {isGlobalScope
+                ? t('admin.jugadores.sortRegisteredDesc', 'Registro más reciente')
+                : t('admin.jugadores.sortActivityDesc', 'Actividad reciente')}
+            </option>
+            <option value="activity_asc">
+              {isGlobalScope
+                ? t('admin.jugadores.sortRegisteredAsc', 'Registro más antiguo')
+                : t('admin.jugadores.sortActivityAsc', 'Actividad antigua')}
+            </option>
           </select>
         </label>
       </div>
 
-      <p
-        style={{
-          fontSize: 12,
-          color: 'var(--text-secondary)',
-          marginTop: 0,
-          lineHeight: 1.45,
-          padding: '10px 12px',
-          borderRadius: 8,
-          border: '1px solid var(--border)',
-          background: 'var(--bg-page)',
-        }}
-      >
-        {t('admin.jugadores.vinculacionNote')}
-      </p>
-
-      {error ? (
-        <div role="alert" style={{ color: '#b91c1c', fontWeight: 700, marginBottom: 12 }}>{error}</div>
+      {!isGlobalScope ? (
+        <p
+          style={{
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+            marginTop: 0,
+            lineHeight: 1.45,
+            padding: '10px 12px',
+            borderRadius: 8,
+            border: '1px solid var(--border)',
+            background: 'var(--bg-page)',
+          }}
+        >
+          {t('admin.jugadores.vinculacionNote')}
+        </p>
       ) : null}
 
       {loading ? (
-        <p style={{ color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
-      ) : !sedeId || error ? null : displayItems.length === 0 ? (
-        <p style={{ color: 'var(--text-secondary)' }}>{t('admin.jugadores.empty')}</p>
+        <p role="status" style={{ color: 'var(--text-secondary)' }}>{t('admin.common.loadingEllipsis')}</p>
+      ) : error ? (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            gap: 10,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            color: '#b91c1c',
+            fontWeight: 700,
+            marginBottom: 12,
+          }}
+        >
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={load}
+            style={{
+              padding: '7px 12px',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'var(--bg-input)',
+              color: 'var(--text-primary)',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {t('general.retry', 'Reintentar')}
+          </button>
+        </div>
+      ) : searchHint ? (
+        <p style={{ color: 'var(--text-secondary)' }}>{searchHint}</p>
+      ) : displayItems.length === 0 ? (
+        <p style={{ color: 'var(--text-secondary)' }}>
+          {hasActiveSearch
+            ? t('admin.formularios.noPlayerSearchMatch', 'Ningún jugador coincide con la búsqueda.')
+            : isGlobalScope
+              ? t('admin.jugadores.emptyAll', 'Todavía no hay jugadores registrados.')
+              : t('admin.jugadores.empty')}
+        </p>
       ) : (
         <div className="admin-jugadores-table-wrap">
           <table className="reservas-table admin-jugadores-table">
             <thead>
               <tr>
                 <th>{t('admin.reservas.player')}</th>
-                <th>@</th>
-                <th className="admin-jugadores-table__contact">{t('admin.formularios.emailLabel')}</th>
-                <th className="admin-jugadores-table__contact">{t('admin.jugadores.phoneCol')}</th>
+                <th className="admin-jugadores-table__at">@</th>
+                {!isGlobalScope ? (
+                  <>
+                    <th className="admin-jugadores-table__contact">{t('admin.formularios.emailLabel')}</th>
+                    <th className="admin-jugadores-table__contact">{t('admin.jugadores.phoneCol')}</th>
+                  </>
+                ) : null}
                 <th>{t('admin.jugadores.vinculacionCol')}</th>
-                <th className="admin-jugadores-table__activity">{t('admin.jugadores.activityCol')}</th>
+                <th className="admin-jugadores-table__activity">
+                  {isGlobalScope
+                    ? t('admin.jugadores.registeredCol', 'Fecha de registro')
+                    : t('admin.jugadores.activityCol')}
+                </th>
                 <th className="admin-jugadores-table__profile">{t('admin.metricas.profileCol')}</th>
               </tr>
             </thead>
@@ -478,7 +599,7 @@ export default function AdminJugadoresSection({
                   user_id: j.user_id,
                 });
                 return (
-                  <tr key={j.user_id || j.email}>
+                  <tr key={j.row_key || j.user_id || j.email || j.display_name}>
                     <td style={{ fontWeight: 700 }}>
                       <button
                         type="button"
@@ -496,9 +617,13 @@ export default function AdminJugadoresSection({
                         {j.display_name}
                       </button>
                     </td>
-                    <td style={{ fontSize: 13 }}>{formatJugadorUsername(j.username) || '—'}</td>
-                    <td className="admin-jugadores-table__contact admin-jugadores-table__email" style={{ fontSize: 13 }}>{j.email || '—'}</td>
-                    <td className="admin-jugadores-table__contact admin-jugadores-table__phone" style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
+                    <td className="admin-jugadores-table__at" style={{ fontSize: 13 }}>{formatJugadorUsername(j.username) || '—'}</td>
+                    {!isGlobalScope ? (
+                      <>
+                        <td className="admin-jugadores-table__contact admin-jugadores-table__email" style={{ fontSize: 13 }}>{j.email || '—'}</td>
+                        <td className="admin-jugadores-table__contact admin-jugadores-table__phone" style={{ fontSize: 13 }}>{j.telefono || '—'}</td>
+                      </>
+                    ) : null}
                     <td style={{ fontSize: 12 }}>{formatJugadorVinculacionLabel(j.vinculacion, t)}</td>
                     <td className="admin-jugadores-table__activity" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatJugadorActivity(j.last_activity_at, locale) || '—'}</td>
                     <td className="admin-jugadores-table__profile" style={{ fontSize: 13 }}>
@@ -515,6 +640,12 @@ export default function AdminJugadoresSection({
           </table>
         </div>
       )}
+
+      {!loading && !error && !searchHint && displayItems.length > 0 && data.total_pages <= 1 ? (
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 12 }}>
+          {t('admin.jugadores.pageOf', { page, total: data.total_pages, count: data.total })}
+        </p>
+      ) : null}
 
       {data.total_pages > 1 ? (
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
@@ -571,14 +702,22 @@ export default function AdminJugadoresSection({
             <dl style={{ display: 'grid', gap: 8, margin: '0 0 14px', fontSize: 14 }}>
               <div><dt style={{ fontWeight: 800 }}>{t('admin.reservas.player')}</dt><dd style={{ margin: 0 }}>{ficha.display_name}</dd></div>
               <div><dt style={{ fontWeight: 800 }}>@</dt><dd style={{ margin: 0 }}>{formatJugadorUsername(ficha.username) || '—'}</dd></div>
-              <div><dt style={{ fontWeight: 800 }}>{t('admin.formularios.emailLabel')}</dt><dd style={{ margin: 0 }}>{ficha.email || '—'}</dd></div>
-              <div><dt style={{ fontWeight: 800 }}>{t('admin.jugadores.phoneCol')}</dt><dd style={{ margin: 0 }}>{ficha.telefono || '—'}</dd></div>
+              {!isGlobalScope ? (
+                <>
+                  <div><dt style={{ fontWeight: 800 }}>{t('admin.formularios.emailLabel')}</dt><dd style={{ margin: 0 }}>{ficha.email || '—'}</dd></div>
+                  <div><dt style={{ fontWeight: 800 }}>{t('admin.jugadores.phoneCol')}</dt><dd style={{ margin: 0 }}>{ficha.telefono || '—'}</dd></div>
+                </>
+              ) : null}
               <div>
                 <dt style={{ fontWeight: 800 }}>{t('admin.jugadores.vinculacionCol')}</dt>
                 <dd style={{ margin: 0 }}>{formatJugadorVinculacionLabel(ficha.vinculacion, t)}</dd>
               </div>
               <div>
-                <dt style={{ fontWeight: 800 }}>{t('admin.jugadores.activityCol')}</dt>
+                <dt style={{ fontWeight: 800 }}>
+                  {isGlobalScope
+                    ? t('admin.jugadores.registeredCol', 'Fecha de registro')
+                    : t('admin.jugadores.activityCol')}
+                </dt>
                 <dd style={{ margin: 0 }}>{formatJugadorActivity(ficha.last_activity_at, locale) || '—'}</dd>
               </div>
             </dl>
