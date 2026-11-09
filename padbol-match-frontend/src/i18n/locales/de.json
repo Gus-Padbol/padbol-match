@@ -1568,7 +1568,7 @@
     "countriesEmpty": "Noch keine abgeschlossenen und veröffentlichten Auswahl-Turniere.",
     "countriesEmptyHint": "Das Länderranking erscheint, sobald die Nations-Endergebnisse veröffentlicht sind.",
     "countriesPending": "Ausstehend",
-    "countriesPendingNote": "{{count}} Turnier(e) mit ausstehender Punktebestätigung.",
+    "countriesPendingNote": "{{count}} Punktebeitrag/Punktebeiträge warten auf Bestätigung.",
     "countriesShown": "{{count}} Länder angezeigt",
     "countriesShown_one": "{{count}} Land angezeigt",
     "countriesTableAria": "Kumuliertes Länderranking",

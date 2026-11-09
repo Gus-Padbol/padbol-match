@@ -71,4 +71,13 @@ describe('individual rankings localization', () => {
     expect(t('ranking.countriesTieNote')).toContain('poziție');
     expect(t('ranking.countriesPending')).toBe('În așteptare');
   });
+
+  test('pending country copy counts contributions, never tournaments', () => {
+    const tournamentWord = /torneo|tournament|turneu|turnaj|torneio|tournoi|turnier/i;
+    ['en', 'es', 'ro', 'it', 'de', 'fr', 'pt', 'ar', 'cs'].forEach((language) => {
+      const value = i18n.getFixedT(language)('ranking.countriesPendingNote', { count: 15 });
+      expect(value).not.toMatch(tournamentWord);
+      expect(value).toContain('15');
+    });
+  });
 });

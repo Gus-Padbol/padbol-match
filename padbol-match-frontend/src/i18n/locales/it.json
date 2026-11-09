@@ -1570,7 +1570,7 @@
     "countriesEmpty": "Non ci sono ancora tornei di selezioni conclusi e pubblicati.",
     "countriesEmptyHint": "La classifica dei paesi appare quando vengono pubblicati i risultati finali Nations.",
     "countriesPending": "In attesa",
-    "countriesPendingNote": "{{count}} torneo/i con punti in attesa di conferma.",
+    "countriesPendingNote": "{{count}} contributo/i di punti in attesa di conferma.",
     "countriesShown": "{{count}} paesi mostrati",
     "countriesShown_one": "{{count}} paese mostrato",
     "countriesTableAria": "Classifica accumulata dei paesi",

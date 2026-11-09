@@ -15,7 +15,7 @@ jest.mock('../../i18n/tSafe', () => {
     'ranking.tournaments': 'Torneos',
     'ranking.points': 'Puntos',
     'ranking.countriesPending': 'Pendiente',
-    'ranking.countriesPendingNote': '{{count}} torneos con puntos pendientes',
+    'ranking.countriesPendingNote': 'Contribuciones de puntos pendientes: {{count}}',
     'ranking.countriesShown': '{{count}} países mostrados',
     'ranking.countriesTieNote': 'Los países con los mismos puntos comparten la misma posición.',
   };
@@ -69,7 +69,28 @@ test('renders tied positions, a real zero and pending points without inventing a
   // A missing award is pending, never zero.
   expect(within(bodyRows[3]).getByText('Pendiente')).toBeInTheDocument();
   expect(within(bodyRows[3]).getByText('—')).toBeInTheDocument();
-  expect(screen.getByText('1 torneos con puntos pendientes')).toBeInTheDocument();
+  expect(screen.getByText('Contribuciones de puntos pendientes: 1')).toBeInTheDocument();
+});
+
+test('pending footer counts contributions, not tournaments, when many countries share one event', () => {
+  const isos = ['AR', 'IT', 'ES', 'FR', 'GB', 'US', 'BR', 'DE', 'PT', 'BE', 'NL', 'CH', 'AT', 'AU', 'UY'];
+  const pendingFromSameTournament = isos.map((pais) => ({
+    pais,
+    puntos_total: 0,
+    torneos_count: 0,
+    // The backend reports one missing country-tournament award per country.
+    torneos_pendientes: 1,
+    posicion: null,
+    pendiente: true,
+    torneos: [],
+  }));
+
+  render(<CountryRankingTable items={pendingFromSameTournament} />);
+
+  // 15 countries pending in one event are 15 pending contributions, not 15 tournaments.
+  expect(screen.getByText('Contribuciones de puntos pendientes: 15')).toBeInTheDocument();
+  expect(screen.queryByText(/15 torneos/i)).toBeNull();
+  expect(screen.queryByText(/torneos con puntos pendientes/i)).toBeNull();
 });
 
 test('narrow screens drop the tournaments column but keep country and points', () => {

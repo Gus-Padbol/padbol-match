@@ -96,7 +96,10 @@ export default function CountryRankingTable({
     );
   }
 
-  const pendingTournaments = items.reduce((total, row) => total + (row.torneos_pendientes || 0), 0);
+  // A pending row is one country-tournament award still missing. Several
+  // countries pending in the SAME tournament are several contributions, not
+  // several tournaments, so the footer must name contributions, never events.
+  const pendingContributions = items.reduce((total, row) => total + (row.torneos_pendientes || 0), 0);
 
   return (
     <>
@@ -170,8 +173,8 @@ export default function CountryRankingTable({
       </table>
       <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'var(--text-secondary)', padding: '0 12px 16px' }}>
         <div>{t('ranking.countriesShown', { count: items.length })}</div>
-        {pendingTournaments > 0 ? (
-          <div style={{ marginTop: '4px' }}>{t('ranking.countriesPendingNote', { count: pendingTournaments })}</div>
+        {pendingContributions > 0 ? (
+          <div style={{ marginTop: '4px' }}>{t('ranking.countriesPendingNote', { count: pendingContributions })}</div>
         ) : null}
         <div style={{ marginTop: '4px', opacity: 0.9 }}>{t('ranking.countriesTieNote')}</div>
       </div>

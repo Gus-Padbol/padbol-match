@@ -1568,7 +1568,7 @@
     "countriesEmpty": "Aucun tournoi de sélections terminé et publié pour le moment.",
     "countriesEmptyHint": "Le classement des pays apparaît dès que les résultats finaux Nations sont publiés.",
     "countriesPending": "En attente",
-    "countriesPendingNote": "{{count}} tournoi(s) avec des points en attente de confirmation.",
+    "countriesPendingNote": "{{count}} contribution(s) de points en attente de confirmation.",
     "countriesShown": "{{count}} pays affichés",
     "countriesShown_one": "{{count}} pays affiché",
     "countriesTableAria": "Classement cumulé des pays",

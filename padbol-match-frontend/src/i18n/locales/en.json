@@ -3173,7 +3173,7 @@
     "countriesEmpty": "No completed and published selection tournaments yet.",
     "countriesEmptyHint": "The country ranking appears once Nations final results are published.",
     "countriesPending": "Pending",
-    "countriesPendingNote": "{{count}} tournament(s) with points pending confirmation.",
+    "countriesPendingNote": "{{count}} pending point contribution(s) awaiting confirmation.",
     "countriesShown": "{{count}} countries shown",
     "countriesShown_one": "{{count}} country shown",
     "countriesTableAria": "Accumulated country ranking",

@@ -1597,7 +1597,7 @@
     "countriesEmpty": "لا توجد بعد بطولات منتخبات منتهية ومنشورة.",
     "countriesEmptyHint": "يظهر ترتيب الدول عند نشر النتائج النهائية لبطولات Nations.",
     "countriesPending": "قيد الانتظار",
-    "countriesPendingNote": "{{count}} بطولة بنقاط قيد التأكيد.",
+    "countriesPendingNote": "{{count}} مساهمة نقاط قيد التأكيد.",
     "countriesShown": "{{count}} دولة معروضة",
     "countriesShown_one": "{{count}} دولة معروضة",
     "countriesTableAria": "الترتيب التراكمي للدول",

@@ -1575,7 +1575,7 @@
     "countriesEmpty": "Încă nu există turnee de selecții finalizate și publicate.",
     "countriesEmptyHint": "Clasamentul țărilor apare după publicarea rezultatelor finale Nations.",
     "countriesPending": "În așteptare",
-    "countriesPendingNote": "{{count}} turneu/turnee cu puncte în așteptarea confirmării.",
+    "countriesPendingNote": "{{count}} contribuție/contribuții de puncte în așteptarea confirmării.",
     "countriesShown": "{{count}} țări afișate",
     "countriesShown_one": "{{count}} țară afișată",
     "countriesTableAria": "Clasament acumulat pe țări",

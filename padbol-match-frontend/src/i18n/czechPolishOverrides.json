@@ -437,7 +437,7 @@
     "countriesEmpty": "Zatím nejsou žádné dokončené a zveřejněné turnaje výběrů.",
     "countriesEmptyHint": "Žebříček zemí se zobrazí po zveřejnění konečných výsledků Nations.",
     "countriesPending": "Čeká na potvrzení",
-    "countriesPendingNote": "{{count}} turnajů s body čekajícími na potvrzení.",
+    "countriesPendingNote": "{{count}} příspěvků bodů čeká na potvrzení.",
     "countriesShown": "Zobrazeno zemí: {{count}}",
     "countriesShown_one": "Zobrazena {{count}} země",
     "countriesTableAria": "Kumulativní žebříček zemí",
