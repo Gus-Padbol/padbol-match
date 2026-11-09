@@ -80,4 +80,16 @@ describe('individual rankings localization', () => {
       expect(value).toContain('15');
     });
   });
+
+  test('country empty copy is limited to the ranking and never claims there were no tournaments', () => {
+    const es = i18n.getFixedT('es');
+    expect(es('ranking.countriesEmpty')).toContain('resultados verificados');
+    expect(es('ranking.countriesEmpty')).not.toMatch(/torneos finalizados y publicados/i);
+    expect(es('ranking.countriesEmptyHint')).toMatch(/resultados finales/i);
+    expect(es('ranking.countriesEmptyHint')).not.toMatch(/import|históric/i);
+
+    const en = i18n.getFixedT('en');
+    expect(en('ranking.countriesEmpty')).toContain('verified results');
+    expect(en('ranking.countriesEmptyHint')).not.toMatch(/import|historical/i);
+  });
 });

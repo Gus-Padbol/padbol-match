@@ -8,8 +8,8 @@ jest.mock('../../i18n/tSafe', () => {
     'ranking.countriesLoading': 'Cargando ranking de países…',
     'ranking.countriesError': 'No se pudo cargar el ranking de países.',
     'ranking.countriesRetry': 'Reintentar',
-    'ranking.countriesEmpty': 'Aún no hay torneos de selecciones finalizados y publicados.',
-    'ranking.countriesEmptyHint': 'El ranking de países aparece cuando se publican resultados finales de Nations.',
+    'ranking.countriesEmpty': 'Todavía no hay resultados verificados para mostrar en el ranking de países.',
+    'ranking.countriesEmptyHint': 'Solo se muestran resultados finales con país y puntos comprobados.',
     'ranking.countriesTableAria': 'Ranking acumulado de países',
     'ranking.country': 'País',
     'ranking.tournaments': 'Torneos',
@@ -39,7 +39,8 @@ test('loading and empty states stay explicit', () => {
   expect(screen.getByRole('status')).toHaveTextContent('Cargando ranking de países…');
 
   rerender(<CountryRankingTable items={[]} />);
-  expect(screen.getByRole('status')).toHaveTextContent('Aún no hay torneos de selecciones finalizados y publicados.');
+  expect(screen.getByRole('status')).toHaveTextContent('Todavía no hay resultados verificados para mostrar en el ranking de países.');
+  expect(screen.getByText('Solo se muestran resultados finales con país y puntos comprobados.')).toBeInTheDocument();
   expect(screen.queryByRole('table')).toBeNull();
 });
 
