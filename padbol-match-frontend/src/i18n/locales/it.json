@@ -1559,7 +1559,22 @@
     "privacidad": "politica sulla riservatezza"
   },
   "ranking": {
-    "titulo": "Classifica"
+    "titulo": "Classifica",
+    "viewPlayers": "Giocatori",
+    "viewCountries": "Paesi",
+    "viewModeAria": "Scegli la classifica dei giocatori o dei paesi",
+    "countriesDefault": "Classifica accumulata dei paesi · {{sport}} · ogni selezione aggiunge i punti approvati una volta per torneo, indipendentemente dalla dimensione della rosa.",
+    "countriesLoading": "Caricamento classifica dei paesi…",
+    "countriesError": "Impossibile caricare la classifica dei paesi.",
+    "countriesRetry": "Riprova",
+    "countriesEmpty": "Non ci sono ancora tornei di selezioni conclusi e pubblicati.",
+    "countriesEmptyHint": "La classifica dei paesi appare quando vengono pubblicati i risultati finali Nations.",
+    "countriesPending": "In attesa",
+    "countriesPendingNote": "{{count}} torneo/i con punti in attesa di conferma.",
+    "countriesShown": "{{count}} paesi mostrati",
+    "countriesShown_one": "{{count}} paese mostrato",
+    "countriesTableAria": "Classifica accumulata dei paesi",
+    "countriesTieNote": "I paesi con gli stessi punti condividono la stessa posizione."
   },
   "equipos": {
     "titulo": "Attrezzatura",

@@ -1557,7 +1557,22 @@
     "privacidad": "Datenschutzrichtlinie"
   },
   "ranking": {
-    "titulo": "Rang"
+    "titulo": "Rang",
+    "viewPlayers": "Spieler",
+    "viewCountries": "Länder",
+    "viewModeAria": "Spieler- oder Länderranking wählen",
+    "countriesDefault": "Kumuliertes Länderranking · {{sport}} · jede Auswahl erhält ihre bestätigten Punkte einmal pro Turnier, unabhängig von der Kaderstärke.",
+    "countriesLoading": "Länderranking wird geladen…",
+    "countriesError": "Das Länderranking konnte nicht geladen werden.",
+    "countriesRetry": "Erneut versuchen",
+    "countriesEmpty": "Noch keine abgeschlossenen und veröffentlichten Auswahl-Turniere.",
+    "countriesEmptyHint": "Das Länderranking erscheint, sobald die Nations-Endergebnisse veröffentlicht sind.",
+    "countriesPending": "Ausstehend",
+    "countriesPendingNote": "{{count}} Turnier(e) mit ausstehender Punktebestätigung.",
+    "countriesShown": "{{count}} Länder angezeigt",
+    "countriesShown_one": "{{count}} Land angezeigt",
+    "countriesTableAria": "Kumuliertes Länderranking",
+    "countriesTieNote": "Länder mit gleicher Punktzahl teilen sich dieselbe Position."
   },
   "equipos": {
     "titulo": "Ausrüstung",

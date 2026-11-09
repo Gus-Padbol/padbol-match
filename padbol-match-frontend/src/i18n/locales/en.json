@@ -3162,7 +3162,22 @@
     "tournamentTypeFilterAria": "Filter ranking by tournament type: Male, Female or Mixed",
     "apply": "Apply",
     "clearAll": "Clear all",
-    "loadVenuesError": "We couldn't load the venues."
+    "loadVenuesError": "We couldn't load the venues.",
+    "viewPlayers": "Players",
+    "viewCountries": "Countries",
+    "viewModeAria": "Choose the player or country ranking",
+    "countriesDefault": "Accumulated country ranking · {{sport}} · each selection adds its approved points once per tournament, regardless of roster size.",
+    "countriesLoading": "Loading country ranking…",
+    "countriesError": "We couldn't load the country ranking.",
+    "countriesRetry": "Retry",
+    "countriesEmpty": "No completed and published selection tournaments yet.",
+    "countriesEmptyHint": "The country ranking appears once Nations final results are published.",
+    "countriesPending": "Pending",
+    "countriesPendingNote": "{{count}} tournament(s) with points pending confirmation.",
+    "countriesShown": "{{count}} countries shown",
+    "countriesShown_one": "{{count}} country shown",
+    "countriesTableAria": "Accumulated country ranking",
+    "countriesTieNote": "Countries with the same points share the same position."
   },
   "scoreboardDisplay": {
     "loading": "Loading scoreboard…",

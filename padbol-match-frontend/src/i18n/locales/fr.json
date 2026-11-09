@@ -1557,7 +1557,22 @@
     "privacidad": "politique de confidentialité"
   },
   "ranking": {
-    "titulo": "Classement"
+    "titulo": "Classement",
+    "viewPlayers": "Joueurs",
+    "viewCountries": "Pays",
+    "viewModeAria": "Choisir le classement des joueurs ou des pays",
+    "countriesDefault": "Classement cumulé des pays · {{sport}} · chaque sélection ajoute ses points approuvés une fois par tournoi, quel que soit l'effectif.",
+    "countriesLoading": "Chargement du classement des pays…",
+    "countriesError": "Impossible de charger le classement des pays.",
+    "countriesRetry": "Réessayer",
+    "countriesEmpty": "Aucun tournoi de sélections terminé et publié pour le moment.",
+    "countriesEmptyHint": "Le classement des pays apparaît dès que les résultats finaux Nations sont publiés.",
+    "countriesPending": "En attente",
+    "countriesPendingNote": "{{count}} tournoi(s) avec des points en attente de confirmation.",
+    "countriesShown": "{{count}} pays affichés",
+    "countriesShown_one": "{{count}} pays affiché",
+    "countriesTableAria": "Classement cumulé des pays",
+    "countriesTieNote": "Les pays ayant les mêmes points partagent la même position."
   },
   "equipos": {
     "titulo": "Équipement",

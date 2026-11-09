@@ -3,6 +3,10 @@ import path from 'path';
 import i18n from './index';
 
 const source = fs.readFileSync(path.join(__dirname, '..', 'pages', 'Rankings.jsx'), 'utf8');
+const countrySource = fs.readFileSync(
+  path.join(__dirname, '..', 'components', 'ranking', 'CountryRankingTable.jsx'),
+  'utf8',
+);
 
 describe('individual rankings localization', () => {
   const keys = [
@@ -14,6 +18,10 @@ describe('individual rankings localization', () => {
     'state', 'region', 'stateRegion', 'city', 'category', 'tournamentType',
     'localCountryAria', 'localSubdivisionAria', 'localCityAria', 'nationalCountryAria',
     'categoryFilterAria', 'tournamentTypeFilterAria', 'apply', 'clearAll', 'loadVenuesError',
+    'viewPlayers', 'viewCountries', 'viewModeAria', 'countriesDefault', 'countriesLoading',
+    'countriesError', 'countriesRetry', 'countriesEmpty', 'countriesEmptyHint',
+    'countriesPending', 'countriesPendingNote', 'countriesShown', 'countriesTableAria',
+    'countriesTieNote',
   ];
 
   test.each(['en', 'es', 'ro', 'cs'])('%s resolves the complete individual-ranking view', (language) => {
@@ -41,5 +49,26 @@ describe('individual rankings localization', () => {
     expect(t('ranking.player')).toBe('Jucător');
     expect(t('ranking.playersShown', { count: 2 })).toContain('jucători');
     expect(t('ranking.internationalDefault', { sport: 'Padbol', category: '' })).toContain('Clasament FIPA');
+  });
+
+  test('the country view shares the Rankings page with the individual view', () => {
+    expect(source).toContain('fetchNationsCountryRanking');
+    expect(source).toContain('<CountryRankingTable');
+    expect(source).toContain("rankingView === 'paises'");
+    expect(source).toContain("viewCountries");
+  });
+
+  test('the country table contains no embedded Spanish user interface', () => {
+    [
+      'Cargando ranking de países', 'No se pudo cargar', 'Pendiente',
+      'Reintentar', 'Ranking acumulado de países', 'comparten la misma posición',
+    ].forEach((literal) => expect(countrySource).not.toContain(literal));
+  });
+
+  test('Romanian localizes the accumulated country view', () => {
+    const t = i18n.getFixedT('ro');
+    expect(t('ranking.viewCountries')).toBe('Țări');
+    expect(t('ranking.countriesTieNote')).toContain('poziție');
+    expect(t('ranking.countriesPending')).toBe('În așteptare');
   });
 });

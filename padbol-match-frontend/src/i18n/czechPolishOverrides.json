@@ -425,5 +425,22 @@
   "reservas": {
     "confirmFreeBooking": "Potvrdit bezplatnou rezervaci",
     "freeBookingConfirmed": "Bezplatná rezervace potvrzena. Číslo rezervace: {{id}}."
+  },
+  "ranking": {
+    "viewPlayers": "Hráči",
+    "viewCountries": "Země",
+    "viewModeAria": "Vyberte žebříček hráčů nebo zemí",
+    "countriesDefault": "Kumulativní žebříček zemí · {{sport}} · každý výběr přidá své schválené body jednou za turnaj, bez ohledu na velikost soupisky.",
+    "countriesLoading": "Načítání žebříčku zemí…",
+    "countriesError": "Žebříček zemí se nepodařilo načíst.",
+    "countriesRetry": "Zkusit znovu",
+    "countriesEmpty": "Zatím nejsou žádné dokončené a zveřejněné turnaje výběrů.",
+    "countriesEmptyHint": "Žebříček zemí se zobrazí po zveřejnění konečných výsledků Nations.",
+    "countriesPending": "Čeká na potvrzení",
+    "countriesPendingNote": "{{count}} turnajů s body čekajícími na potvrzení.",
+    "countriesShown": "Zobrazeno zemí: {{count}}",
+    "countriesShown_one": "Zobrazena {{count}} země",
+    "countriesTableAria": "Kumulativní žebříček zemí",
+    "countriesTieNote": "Země se stejným počtem bodů sdílejí stejné pořadí."
   }
 }

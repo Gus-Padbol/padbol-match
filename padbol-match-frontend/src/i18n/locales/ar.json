@@ -1586,7 +1586,22 @@
     "privacidad": "سياسة الخصوصية"
   },
   "ranking": {
-    "titulo": "تصنيف"
+    "titulo": "تصنيف",
+    "viewPlayers": "اللاعبون",
+    "viewCountries": "الدول",
+    "viewModeAria": "اختر ترتيب اللاعبين أو الدول",
+    "countriesDefault": "الترتيب التراكمي للدول · {{sport}} · كل منتخب يضيف نقاطه المعتمدة مرة واحدة لكل بطولة، بغض النظر عن حجم القائمة.",
+    "countriesLoading": "جارٍ تحميل ترتيب الدول…",
+    "countriesError": "تعذّر تحميل ترتيب الدول.",
+    "countriesRetry": "إعادة المحاولة",
+    "countriesEmpty": "لا توجد بعد بطولات منتخبات منتهية ومنشورة.",
+    "countriesEmptyHint": "يظهر ترتيب الدول عند نشر النتائج النهائية لبطولات Nations.",
+    "countriesPending": "قيد الانتظار",
+    "countriesPendingNote": "{{count}} بطولة بنقاط قيد التأكيد.",
+    "countriesShown": "{{count}} دولة معروضة",
+    "countriesShown_one": "{{count}} دولة معروضة",
+    "countriesTableAria": "الترتيب التراكمي للدول",
+    "countriesTieNote": "الدول ذات النقاط المتساوية تتشارك المركز نفسه."
   },
   "equipos": {
     "titulo": "معدات",

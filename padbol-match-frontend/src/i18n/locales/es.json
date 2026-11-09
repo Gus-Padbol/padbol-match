@@ -2806,7 +2806,22 @@
     "tournamentTypeFilterAria": "Filtrar ranking por tipo de torneo: Masculino, Femenino o Mixto",
     "apply": "Aplicar",
     "clearAll": "Limpiar todo",
-    "loadVenuesError": "No se pudieron cargar las sedes."
+    "loadVenuesError": "No se pudieron cargar las sedes.",
+    "viewPlayers": "Jugadores",
+    "viewCountries": "Países",
+    "viewModeAria": "Elegir ranking de jugadores o de países",
+    "countriesDefault": "Ranking acumulado de países · {{sport}} · cada selección suma sus puntos aprobados una vez por torneo, sin depender del tamaño del plantel.",
+    "countriesLoading": "Cargando ranking de países…",
+    "countriesError": "No se pudo cargar el ranking de países.",
+    "countriesRetry": "Reintentar",
+    "countriesEmpty": "Aún no hay torneos de selecciones finalizados y publicados.",
+    "countriesEmptyHint": "El ranking de países aparece cuando se publican resultados finales de Nations.",
+    "countriesPending": "Pendiente",
+    "countriesPendingNote": "{{count}} torneo(s) con puntos pendientes de confirmación.",
+    "countriesShown": "{{count}} países mostrados",
+    "countriesShown_one": "{{count}} país mostrado",
+    "countriesTableAria": "Ranking acumulado de países",
+    "countriesTieNote": "Los países con los mismos puntos comparten la misma posición."
   },
   "scoreboardDisplay": {
     "loading": "Cargando marcador…",

@@ -1564,7 +1564,22 @@
     "privacidad": "Politica de confidențialitate"
   },
   "ranking": {
-    "titulo": "Clasament"
+    "titulo": "Clasament",
+    "viewPlayers": "Jucători",
+    "viewCountries": "Țări",
+    "viewModeAria": "Alege clasamentul jucătorilor sau al țărilor",
+    "countriesDefault": "Clasament acumulat pe țări · {{sport}} · fiecare selecție adaugă punctele aprobate o dată pe turneu, indiferent de mărimea lotului.",
+    "countriesLoading": "Se încarcă clasamentul țărilor…",
+    "countriesError": "Nu am putut încărca clasamentul țărilor.",
+    "countriesRetry": "Reîncearcă",
+    "countriesEmpty": "Încă nu există turnee de selecții finalizate și publicate.",
+    "countriesEmptyHint": "Clasamentul țărilor apare după publicarea rezultatelor finale Nations.",
+    "countriesPending": "În așteptare",
+    "countriesPendingNote": "{{count}} turneu/turnee cu puncte în așteptarea confirmării.",
+    "countriesShown": "{{count}} țări afișate",
+    "countriesShown_one": "{{count}} țară afișată",
+    "countriesTableAria": "Clasament acumulat pe țări",
+    "countriesTieNote": "Țările cu aceleași puncte împart aceeași poziție."
   },
   "equipos": {
     "titulo": "Echipamente",

@@ -14,6 +14,8 @@ import { supabase } from '../supabaseClient';
 import { nombreCompletoJugadorPerfil, formatAliasConArroba } from '../utils/jugadorPerfil';
 import ModalJugador, { hintFromRankingPlayer } from '../components/ModalJugador';
 import HubSponsorsTicker from '../components/HubSponsorsTicker';
+import CountryRankingTable from '../components/ranking/CountryRankingTable';
+import { fetchNationsCountryRanking } from '../utils/nationsCountryRankingApi';
 import { IconGeroFiltros } from '../components/icons/GeroIcons';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { useAuth } from '../context/AuthContext';
@@ -351,6 +353,13 @@ export default function Rankings() {
   /** Si el fetch falla (red, timeout, 5xx), mostramos vacío amigable en lugar del mensaje de error técnico. */
   const [rankingSinDatosDisponibles, setRankingSinDatosDisponibles] = useState(false);
 
+  /** Selector individual/países: el ranking de países es acumulado y no reusa el contrato FIPA. */
+  const [rankingView, setRankingView] = useState('jugadores');
+  const [countryRanking, setCountryRanking] = useState([]);
+  const [countryRankingLoading, setCountryRankingLoading] = useState(false);
+  const [countryRankingError, setCountryRankingError] = useState(false);
+  const [countryRankingReload, setCountryRankingReload] = useState(0);
+
   const [localPais, setLocalPais] = useState('');
   const [localProvincia, setLocalProvincia] = useState('');
   const [localCiudad, setLocalCiudad] = useState('');
@@ -584,6 +593,37 @@ export default function Rankings() {
     }
   }, [rankingDeporte, activeTab]);
 
+  useEffect(() => {
+    if (rankingDeporte !== TORNEO_DEPORTE_PADBOL && rankingView !== 'jugadores') {
+      setRankingView('jugadores');
+    }
+  }, [rankingDeporte, rankingView]);
+
+  useEffect(() => {
+    if (rankingView !== 'paises' || rankingDeporte !== TORNEO_DEPORTE_PADBOL) return undefined;
+    let cancelled = false;
+    setCountryRankingLoading(true);
+    setCountryRankingError(false);
+    (async () => {
+      try {
+        const items = await fetchNationsCountryRanking();
+        if (cancelled) return;
+        setCountryRanking(Array.isArray(items) ? items : []);
+        setCountryRankingError(false);
+      } catch (e) {
+        if (cancelled) return;
+        console.error('[Rankings] fetchNationsCountryRanking', e);
+        setCountryRanking([]);
+        setCountryRankingError(true);
+      } finally {
+        if (!cancelled) setCountryRankingLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rankingView, rankingDeporte, countryRankingReload]);
+
   // ── Styles ──────────────────────────────────────────────────────────────────
 
   const containerStyle = useMemo(
@@ -707,7 +747,51 @@ export default function Rankings() {
           ) : null}
         </div>
 
+        {/* Individual / countries selector */}
+        {rankingDeporte === TORNEO_DEPORTE_PADBOL ? (
+          <div
+            role="group"
+            aria-label={t('ranking.viewModeAria')}
+            style={{
+              display: 'flex',
+              gap: '4px',
+              background: 'var(--pm-color-muted-bg)',
+              borderRadius: '12px',
+              padding: '4px',
+              marginBottom: '12px',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {[
+              { id: 'jugadores', labelKey: 'viewPlayers' },
+              { id: 'paises', labelKey: 'viewCountries' },
+            ].map((view) => (
+              <button
+                key={view.id}
+                type="button"
+                aria-pressed={rankingView === view.id}
+                onClick={() => setRankingView(view.id)}
+                style={{
+                  flex: 1,
+                  padding: '9px 10px',
+                  border: 'none',
+                  borderRadius: '9px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: rankingView === view.id ? '700' : '500',
+                  background: rankingView === view.id ? 'var(--accent)' : 'transparent',
+                  color: rankingView === view.id ? '#ffffff' : 'var(--text-secondary)',
+                  transition: 'all 0.18s',
+                }}
+              >
+                {t(`ranking.${view.labelKey}`)}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {/* Tab bar */}
+        {rankingView === 'jugadores' ? (
         <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', background: 'var(--pm-color-muted-bg)', borderRadius: '12px', padding: '4px', marginBottom: '12px', border: '1px solid var(--border)' }}>
           {tabsForDeporte.map((tab) => (
             <button
@@ -741,7 +825,10 @@ export default function Rankings() {
             </button>
           ))}
         </div>
+        ) : null}
 
+        {rankingView === 'jugadores' ? (
+        <>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
           <button
             type="button"
@@ -797,6 +884,14 @@ export default function Rankings() {
               category: selectedCategoria ? t('ranking.categorySuffix', { category: selectedCategoria }) : '',
             })}
         </div>
+        </>
+        ) : null}
+
+        {rankingView === 'paises' ? (
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+            {t('ranking.countriesDefault', { sport: rankingSportLabel })}
+          </div>
+        ) : null}
 
         {tickerSponsors?.length > 0 ? (
           <div style={{ marginBottom: '14px' }}>
@@ -805,6 +900,17 @@ export default function Rankings() {
         ) : null}
 
         {/* Table card */}
+        {rankingView === 'paises' ? (
+          <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)', border: '1px solid var(--border)' }}>
+            <CountryRankingTable
+              items={countryRanking}
+              loading={countryRankingLoading}
+              error={countryRankingError}
+              onRetry={() => setCountryRankingReload((value) => value + 1)}
+              narrow={narrow}
+            />
+          </div>
+        ) : (
         <div style={{ background: 'var(--bg-card)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)', border: '1px solid var(--border)' }}>
           {loading ? (
             <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '15px' }}>
@@ -962,9 +1068,10 @@ export default function Rankings() {
             </table>
           )}
         </div>
+        )}
 
         {/* Footer note */}
-        {rankings.length > 0 && (
+        {rankingView === 'jugadores' && rankings.length > 0 && (
           <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '11px', color: 'var(--text-secondary)' }}>
             {t('ranking.playersShown', { count: rankings.length })}
             {selectedCategoria && t('ranking.categorySuffix', { category: selectedCategoria })}
