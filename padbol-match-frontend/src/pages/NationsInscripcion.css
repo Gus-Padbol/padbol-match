@@ -1,0 +1,929 @@
+/* Nations Cup · inscripción pública.
+   Todo el estilo vive bajo `.nations-page` y sus clases `nations-*` para no tocar otras pantallas. */
+
+.nations-page {
+  --nations-accent: #e11b22;
+  --nations-accent-strong: #c41219;
+  --nations-line: var(--border, #e2e8f0);
+  --nations-muted: var(--text-secondary, #64748b);
+  --nations-card-pad: clamp(22px, 5vw, 40px);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100dvh;
+  padding: clamp(20px, 5vw, 56px) max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
+  background:
+    radial-gradient(1100px 460px at 88% -12%, rgba(225, 27, 34, 0.14), transparent 62%),
+    radial-gradient(820px 420px at -8% 108%, rgba(15, 23, 42, 0.055), transparent 62%),
+    var(--bg-page, #f8f9fa);
+  color: var(--text-primary, #0f172a);
+  font-family: inherit;
+}
+
+.nations-page *,
+.nations-page *::before,
+.nations-page *::after {
+  box-sizing: border-box;
+}
+
+.nations-shell {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── Barra de marca ───────────────────────────────────────────────────────── */
+
+.nations-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 0 4px;
+}
+
+.nations-brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.nations-brand__logo {
+  display: block;
+  width: 164px;
+  max-width: 100%;
+  height: 32px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.nations-brand__logo--dark {
+  display: none;
+}
+
+html.theme-dark .nations-brand__logo--light {
+  display: none;
+}
+
+html.theme-dark .nations-brand__logo--dark {
+  display: block;
+}
+
+.nations-event-chip {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid rgba(225, 27, 34, 0.28);
+  border-radius: 999px;
+  background: rgba(225, 27, 34, 0.07);
+  color: var(--nations-accent);
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Tarjeta ──────────────────────────────────────────────────────────────── */
+
+.nations-card {
+  position: relative;
+  overflow: hidden;
+  padding: var(--nations-card-pad);
+  border: 1px solid var(--nations-line);
+  border-radius: 26px;
+  background: var(--bg-card, #fff);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.nations-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--nations-accent), #f97316 58%, #fbbf24);
+}
+
+.nations-card--center {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.nations-card--center .nations-title,
+.nations-card--center .nations-intro {
+  text-align: center;
+}
+
+.nations-card--center .nations-intro {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.nations-card--center .nations-button {
+  max-width: 320px;
+}
+
+.nations-card--loading {
+  display: grid;
+  justify-items: center;
+  gap: 15px;
+  padding-top: clamp(38px, 8vw, 58px);
+  padding-bottom: clamp(38px, 8vw, 58px);
+  text-align: center;
+}
+
+.nations-icon-badge {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: 8px 0 14px;
+  border: 1px solid rgba(225, 27, 34, 0.22);
+  border-radius: 17px;
+  background: rgba(225, 27, 34, 0.08);
+  color: var(--nations-accent);
+}
+
+.nations-icon-badge svg {
+  width: 24px;
+  height: 24px;
+}
+
+.nations-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--nations-accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.nations-eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.nations-title {
+  margin: 11px 0 13px;
+  color: var(--text-primary, #0f172a) !important;
+  font-size: clamp(30px, 7vw, 42px);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  line-height: 1.03;
+  text-align: left;
+  text-wrap: balance;
+  -webkit-text-fill-color: currentColor;
+}
+
+.nations-intro {
+  max-width: 46ch;
+  margin: 0 0 25px;
+  color: var(--nations-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── Avisos de contexto ───────────────────────────────────────────────────── */
+
+.nations-alerts {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.nations-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 14px;
+  border: 1px solid var(--nations-line);
+  border-radius: 14px;
+  background: var(--bg-page, #f8f9fa);
+  color: var(--text-primary, #0f172a);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.nations-alert p {
+  margin: 0;
+}
+
+.nations-alert__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+.nations-alert__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nations-alert__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.nations-alert--warning {
+  border-color: rgba(245, 158, 11, 0.42);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.nations-alert--warning .nations-alert__icon {
+  color: #b45309;
+}
+
+.nations-alert--info {
+  border-color: rgba(225, 27, 34, 0.24);
+  background: rgba(225, 27, 34, 0.055);
+}
+
+.nations-alert--error {
+  border-color: rgba(225, 27, 34, 0.36);
+  background: rgba(225, 27, 34, 0.08);
+}
+
+.nations-alert--error .nations-alert__icon {
+  color: var(--nations-accent);
+}
+
+.nations-alert .nations-spinner {
+  flex: 0 0 18px;
+  margin-top: 1px;
+}
+
+.nations-text-button {
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--nations-accent);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.nations-text-button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.nations-text-button:focus-visible {
+  outline: 3px solid rgba(225, 27, 34, 0.24);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Formulario ───────────────────────────────────────────────────────────── */
+
+.nations-form {
+  display: grid;
+  gap: 18px;
+}
+
+.nations-field {
+  display: grid;
+  gap: 8px;
+}
+
+.nations-label {
+  color: var(--text-primary, #0f172a);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.nations-input,
+.nations-select {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 15px;
+  border: 1.5px solid var(--nations-line);
+  border-radius: 14px;
+  background: var(--bg-input, #fff);
+  color: var(--text-primary, #0f172a);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.25;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.nations-input::placeholder {
+  color: var(--input-placeholder, #94a3b8);
+  opacity: 1;
+}
+
+.nations-input:hover,
+.nations-select:hover {
+  border-color: rgba(225, 27, 34, 0.32);
+}
+
+.nations-input:focus,
+.nations-select:focus,
+.nations-input:focus-visible,
+.nations-select:focus-visible {
+  outline: none;
+  border-color: var(--nations-accent);
+  box-shadow: 0 0 0 4px rgba(225, 27, 34, 0.14);
+}
+
+.nations-select-wrap {
+  position: relative;
+}
+
+.nations-select {
+  padding-right: 46px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.nations-select__chevron {
+  position: absolute;
+  top: calc(50% - 5px);
+  right: 18px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--nations-muted);
+  border-bottom: 2px solid var(--nations-muted);
+  pointer-events: none;
+  transform: rotate(45deg);
+}
+
+.nations-fieldset {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.nations-fieldset legend {
+  padding: 0;
+  margin: 0 0 2px;
+}
+
+/* Radios nativos, presentación en tarjetas. */
+.nations-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.nations-option {
+  position: relative;
+  display: block;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.nations-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nations-option__surface {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 10px 8px;
+  border: 1.5px solid var(--nations-line);
+  border-radius: 14px;
+  background: var(--bg-page, #f8f9fa);
+  color: var(--text-primary, #0f172a);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nations-option:hover .nations-option__surface {
+  border-color: rgba(225, 27, 34, 0.34);
+}
+
+.nations-option input:checked + .nations-option__surface {
+  border-color: var(--nations-accent);
+  background: rgba(225, 27, 34, 0.08);
+  box-shadow: inset 0 0 0 1px var(--nations-accent);
+}
+
+.nations-option input:focus-visible + .nations-option__surface {
+  outline: 3px solid rgba(225, 27, 34, 0.24);
+  outline-offset: 2px;
+}
+
+.nations-option__dot {
+  position: relative;
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--nations-line);
+  border-radius: 50%;
+  background: var(--bg-card, #fff);
+}
+
+.nations-option input:checked + .nations-option__surface .nations-option__dot {
+  border-color: var(--nations-accent);
+}
+
+.nations-option input:checked + .nations-option__surface .nations-option__dot::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: var(--nations-accent);
+}
+
+.nations-option__text {
+  min-width: 0;
+}
+
+/* Checkboxes legales, con foco visible sobre la caja. */
+.nations-check {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 15px;
+  border: 1.5px solid var(--nations-line);
+  border-radius: 14px;
+  background: var(--bg-page, #f8f9fa);
+  color: var(--nations-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.nations-check:hover {
+  border-color: rgba(225, 27, 34, 0.3);
+}
+
+.nations-check input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nations-check__box {
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border: 2px solid var(--nations-line);
+  border-radius: 7px;
+  background: var(--bg-card, #fff);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.nations-check__box::after {
+  content: '';
+  width: 10px;
+  height: 6px;
+  border-left: 2.5px solid #fff;
+  border-bottom: 2.5px solid #fff;
+  transform: rotate(-45deg) translateY(-1px) scale(0);
+  transition: transform 0.12s ease;
+}
+
+.nations-check input:checked + .nations-check__box {
+  border-color: var(--nations-accent);
+  background: var(--nations-accent);
+}
+
+.nations-check input:checked + .nations-check__box::after {
+  transform: rotate(-45deg) translateY(-1px) scale(1);
+}
+
+.nations-check input:focus-visible + .nations-check__box {
+  outline: 3px solid rgba(225, 27, 34, 0.24);
+  outline-offset: 2px;
+}
+
+.nations-check--guardian {
+  border-color: rgba(245, 158, 11, 0.36);
+  background: rgba(245, 158, 11, 0.075);
+}
+
+.nations-check__text {
+  min-width: 0;
+}
+
+/* ── Botones ──────────────────────────────────────────────────────────────── */
+
+.nations-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--nations-accent);
+  box-shadow: 0 12px 24px rgba(225, 27, 34, 0.24);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.nations-button:hover {
+  background: var(--nations-accent-strong);
+  box-shadow: 0 16px 30px rgba(225, 27, 34, 0.28);
+  transform: translateY(-1px);
+}
+
+.nations-button:active {
+  box-shadow: 0 8px 16px rgba(225, 27, 34, 0.22);
+  transform: translateY(0);
+}
+
+.nations-button:focus-visible {
+  outline: 3px solid rgba(225, 27, 34, 0.28);
+  outline-offset: 3px;
+}
+
+.nations-button:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nations-button--success {
+  background: #16a34a;
+  box-shadow: 0 12px 24px rgba(22, 163, 74, 0.22);
+}
+
+.nations-button--success:hover {
+  background: #15803d;
+  box-shadow: 0 16px 30px rgba(22, 163, 74, 0.26);
+}
+
+.nations-button--secondary {
+  border: 1.5px solid rgba(225, 27, 34, 0.5);
+  background: transparent;
+  box-shadow: none;
+  color: var(--nations-accent);
+}
+
+.nations-button--secondary:hover {
+  background: rgba(225, 27, 34, 0.07);
+  box-shadow: none;
+}
+
+.nations-button__arrow {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+
+.nations-button__arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Estados (pendiente / aprobada / rechazada) ───────────────────────────── */
+
+.nations-status {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--nations-line);
+  border-radius: 18px;
+  background: var(--bg-page, #f8f9fa);
+}
+
+.nations-status__head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.nations-status__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+}
+
+.nations-status__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.nations-status__icon--pending {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.nations-status__icon--approved {
+  background: rgba(22, 163, 74, 0.14);
+  color: #15803d;
+}
+
+.nations-status__icon--rejected {
+  background: rgba(225, 27, 34, 0.1);
+  color: var(--nations-accent);
+}
+
+.nations-status h2 {
+  margin: 0;
+  color: var(--text-primary, #0f172a) !important;
+  font-size: 20px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  -webkit-text-fill-color: currentColor;
+}
+
+.nations-status p {
+  margin: 0;
+  color: var(--nations-muted);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.nations-status__note {
+  padding-top: 12px;
+  border-top: 1px solid var(--nations-line);
+  font-size: 13px !important;
+}
+
+.nations-status--pending {
+  border-color: rgba(245, 158, 11, 0.36);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.1), var(--bg-card, #fff));
+}
+
+.nations-status--approved {
+  border-color: rgba(22, 163, 74, 0.34);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.09), var(--bg-card, #fff));
+}
+
+.nations-status--rejected {
+  border-color: rgba(225, 27, 34, 0.3);
+  background: linear-gradient(180deg, rgba(225, 27, 34, 0.075), var(--bg-card, #fff));
+}
+
+.nations-status .nations-button {
+  width: auto;
+  min-width: 210px;
+  max-width: 300px;
+  margin-top: 3px;
+}
+
+/* ── Carga ────────────────────────────────────────────────────────────────── */
+
+.nations-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: nations-spin 0.8s linear infinite;
+}
+
+.nations-spinner--brand {
+  border-color: rgba(225, 27, 34, 0.2);
+  border-top-color: var(--nations-accent);
+}
+
+.nations-spinner--button {
+  flex: 0 0 20px;
+}
+
+.nations-loading-text {
+  margin: 0;
+  color: var(--nations-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nations-skeleton {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+  margin-top: 4px;
+}
+
+.nations-skeleton span {
+  display: block;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bg-page, #f8f9fa) 0%, rgba(148, 163, 184, 0.28) 50%, var(--bg-page, #f8f9fa) 100%);
+  background-size: 220% 100%;
+  animation: nations-shimmer 1.5s ease-in-out infinite;
+}
+
+.nations-skeleton span:nth-child(2) {
+  width: 82%;
+}
+
+.nations-skeleton span:nth-child(3) {
+  width: 64%;
+}
+
+@keyframes nations-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes nations-shimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+/* ── Tema oscuro ──────────────────────────────────────────────────────────── */
+
+html.theme-dark .nations-page {
+  background:
+    radial-gradient(950px 460px at 88% -12%, rgba(225, 27, 34, 0.22), transparent 62%),
+    radial-gradient(760px 420px at -8% 108%, rgba(56, 189, 248, 0.055), transparent 62%),
+    var(--bg-page, #0f172a);
+}
+
+html.theme-dark .nations-card {
+  border-color: #334155;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.46), 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+html.theme-dark .nations-option__surface,
+html.theme-dark .nations-check,
+html.theme-dark .nations-alert,
+html.theme-dark .nations-status {
+  background: #111b2f;
+  border-color: #334155;
+}
+
+html.theme-dark .nations-option input:checked + .nations-option__surface {
+  border-color: var(--nations-accent);
+  background: rgba(225, 27, 34, 0.16);
+}
+
+html.theme-dark .nations-alert--warning {
+  border-color: rgba(245, 158, 11, 0.46);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+html.theme-dark .nations-alert--error {
+  border-color: rgba(225, 27, 34, 0.5);
+  background: rgba(225, 27, 34, 0.12);
+}
+
+html.theme-dark .nations-status--pending {
+  border-color: rgba(245, 158, 11, 0.42);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.12), #1e293b);
+}
+
+html.theme-dark .nations-status--approved {
+  border-color: rgba(22, 163, 74, 0.42);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.12), #1e293b);
+}
+
+html.theme-dark .nations-status--rejected {
+  border-color: rgba(225, 27, 34, 0.45);
+  background: linear-gradient(180deg, rgba(225, 27, 34, 0.12), #1e293b);
+}
+
+html.theme-dark .nations-check__box,
+html.theme-dark .nations-option__dot {
+  background: #1e293b;
+}
+
+html.theme-dark .nations-status__icon--pending {
+  color: #fbbf24;
+}
+
+html.theme-dark .nations-status__icon--approved {
+  color: #4ade80;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .nations-page {
+    padding-top: 18px;
+    padding-bottom: 36px;
+  }
+
+  .nations-card {
+    border-radius: 22px;
+    padding: 24px 20px;
+  }
+
+  .nations-title {
+    font-size: clamp(28px, 8.5vw, 36px);
+  }
+}
+
+@media (max-width: 560px) {
+  .nations-options {
+    grid-template-columns: 1fr;
+  }
+
+  .nations-option__surface {
+    justify-content: flex-start;
+    min-height: 50px;
+    padding: 13px 14px;
+    text-align: left;
+  }
+
+  .nations-status {
+    padding: 17px;
+  }
+
+  .nations-status .nations-button {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .nations-page {
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+  }
+
+  .nations-card {
+    padding: 21px 15px;
+  }
+
+  .nations-brand__logo {
+    width: 142px;
+    height: 28px;
+  }
+
+  .nations-event-chip {
+    padding: 6px 8px;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+  }
+
+  .nations-title {
+    font-size: 27px;
+  }
+
+  .nations-intro {
+    font-size: 14.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nations-button,
+  .nations-option__surface,
+  .nations-check,
+  .nations-check__box,
+  .nations-check__box::after {
+    transition: none;
+  }
+
+  .nations-spinner {
+    animation-duration: 1.6s;
+  }
+
+  .nations-skeleton span {
+    animation: none;
+  }
+}

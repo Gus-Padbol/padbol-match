@@ -3,11 +3,14 @@ import {Link, useParams} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import {useSafeTranslation} from '../i18n/tSafe';
 import {PAISES_TELEFONO_PRINCIPALES} from '../constants/paisesTelefono';
+import './NationsInscripcion.css';
 
 const COPY = {
   es: {
+    event: 'Nations Cup',
+    eyebrow: 'Inscripción',
     title: 'Completa tus datos para la Nations Cup',
-    intro: 'Envías una solicitud privada. La organización revisa tu identidad antes de habilitarte.',
+    intro: 'Inscríbete a la Nations Cup. Revisamos tu solicitud antes de activar tu participación.',
     verifyEmail: 'Verifica tu email antes de enviar la solicitud. Revisa tu correo.',
     signIn: 'Inicia sesión con tu cuenta verificada para continuar.',
     signInCta: 'Ingresar',
@@ -21,10 +24,13 @@ const COPY = {
     consent: 'Autorizo el uso de mis datos para la revisión de esta inscripción.',
     submit: 'Enviar solicitud',
     sending: 'Enviando…',
+    pendingBadge: 'Pendiente',
     pending: 'Solicitud recibida. Queda pendiente de revisión de la organización.',
-    pendingNote: 'No se habilita automáticamente por nombre y país.',
+    pendingNote: 'La organización está revisando tu solicitud. No necesitas enviarla otra vez.',
+    approvedBadge: 'Aprobada',
     approved: 'Tu solicitud fue aprobada. Ya puedes entrar a tu perfil.',
     approvedCta: 'Ir a mi perfil',
+    rejectedBadge: 'Rechazada',
     rejected: 'La solicitud no fue aprobada. Puedes corregir los datos y enviar una nueva.',
     newRequest: 'Enviar nueva solicitud',
     conflict: 'Ya tienes una solicitud activa para este evento. Revisa el estado o espera la revisión.',
@@ -32,10 +38,13 @@ const COPY = {
     restore: 'Recuperando tu solicitud…',
     required: 'Completa nombre, país y edad.',
     countryList: 'Selecciona tu país',
+    retry: 'Reintentar',
   },
   en: {
+    event: 'Nations Cup',
+    eyebrow: 'Registration',
     title: 'Complete your details for the Nations Cup',
-    intro: 'You are sending a private request. The organisation reviews your identity before activation.',
+    intro: 'Register for the Nations Cup. We review your request before activating your participation.',
     verifyEmail: 'Verify your email before sending the request. Check your inbox.',
     signIn: 'Sign in with your verified account to continue.',
     signInCta: 'Sign in',
@@ -49,10 +58,13 @@ const COPY = {
     consent: 'I authorise the use of my data to review this registration.',
     submit: 'Send request',
     sending: 'Sending…',
+    pendingBadge: 'Pending',
     pending: 'Request received. It is pending review by the organisation.',
-    pendingNote: 'It is not activated automatically by name and country.',
+    pendingNote: 'The organisation is reviewing your request. You do not need to send it again.',
+    approvedBadge: 'Approved',
     approved: 'Your request was approved. You can open your profile.',
     approvedCta: 'Go to my profile',
+    rejectedBadge: 'Rejected',
     rejected: 'The request was not approved. You can fix the details and send a new one.',
     newRequest: 'Send a new request',
     conflict: 'You already have an active request for this event. Check its status or wait for review.',
@@ -60,10 +72,13 @@ const COPY = {
     restore: 'Restoring your request…',
     required: 'Complete name, country and age.',
     countryList: 'Select your country',
+    retry: 'Try again',
   },
   it: {
+    event: 'Nations Cup',
+    eyebrow: 'Iscrizione',
     title: 'Completa i tuoi dati per la Nations Cup',
-    intro: 'Invii una richiesta privata. L’organizzazione verifica la tua identità prima di attivarti.',
+    intro: 'Iscriviti alla Nations Cup. Esaminiamo la tua richiesta prima di attivare la partecipazione.',
     verifyEmail: 'Verifica la tua email prima di inviare la richiesta. Controlla la posta.',
     signIn: 'Accedi con il tuo account verificato per continuare.',
     signInCta: 'Accedi',
@@ -77,10 +92,13 @@ const COPY = {
     consent: 'Autorizzo l’uso dei miei dati per la revisione di questa iscrizione.',
     submit: 'Invia richiesta',
     sending: 'Invio…',
+    pendingBadge: 'In attesa',
     pending: 'Richiesta ricevuta. È in attesa di revisione da parte dell’organizzazione.',
-    pendingNote: 'Non viene attivata automaticamente per nome e paese.',
+    pendingNote: 'L’organizzazione sta esaminando la tua richiesta. Non devi inviarla di nuovo.',
+    approvedBadge: 'Approvata',
     approved: 'La richiesta è stata approvata. Puoi aprire il tuo profilo.',
     approvedCta: 'Vai al mio profilo',
+    rejectedBadge: 'Rifiutata',
     rejected: 'La richiesta non è stata approvata. Puoi correggere i dati e inviarne una nuova.',
     newRequest: 'Invia una nuova richiesta',
     conflict: 'Hai già una richiesta attiva per questo evento. Controlla lo stato o attendi la revisione.',
@@ -88,6 +106,7 @@ const COPY = {
     restore: 'Recupero della richiesta…',
     required: 'Completa nome, paese ed età.',
     countryList: 'Seleziona il tuo paese',
+    retry: 'Riprova',
   },
 };
 
@@ -107,9 +126,94 @@ const COUNTRIES = PAISES_TELEFONO_PRINCIPALES
   .map(({nombre, bandera}) => [ISO[nombre], `${bandera || ''} ${nombre}`.trim()])
   .filter(([code]) => Boolean(code));
 
+/**
+ * Nations Cup Nápoles 2026: la nómina del evento son 15 selecciones (PDF
+ * Draw & Group Match Scheduling p.1; contraste en
+ * task-4/NATIONS-PDF-contraste-20261108.txt). Este catálogo se aplica sólo al
+ * slug exacto; el resto de los eventos conserva el catálogo mundial de la app.
+ */
+const NAPOLI_2026_SLUG = 'nations-cup-napoli-2026';
+const NAPOLI_2026_COUNTRIES = [
+  {code: 'RO', flag: '🇷🇴', names: {es: 'Rumania', en: 'Romania', it: 'Romania'}},
+  {code: 'ES', flag: '🇪🇸', names: {es: 'España', en: 'Spain', it: 'Spagna'}},
+  {code: 'PT', flag: '🇵🇹', names: {es: 'Portugal', en: 'Portugal', it: 'Portogallo'}},
+  {code: 'QA', flag: '🇶🇦', names: {es: 'Catar', en: 'Qatar', it: 'Qatar'}},
+  {code: 'IT', flag: '🇮🇹', names: {es: 'Italia', en: 'Italy', it: 'Italia'}},
+  {code: 'DE', flag: '🇩🇪', names: {es: 'Alemania', en: 'Germany', it: 'Germania'}},
+  {code: 'FR', flag: '🇫🇷', names: {es: 'Francia', en: 'France', it: 'Francia'}},
+  {code: 'BE', flag: '🇧🇪', names: {es: 'Bélgica', en: 'Belgium', it: 'Belgio'}},
+  {code: 'AT', flag: '🇦🇹', names: {es: 'Austria', en: 'Austria', it: 'Austria'}},
+  {code: 'EG', flag: '🇪🇬', names: {es: 'Egipto', en: 'Egypt', it: 'Egitto'}},
+  {code: 'AE', flag: '🇦🇪', names: {es: 'Emiratos Árabes Unidos', en: 'United Arab Emirates', it: 'Emirati Arabi Uniti'}},
+  {code: 'MX', flag: '🇲🇽', names: {es: 'México', en: 'Mexico', it: 'Messico'}},
+  {code: 'SE', flag: '🇸🇪', names: {es: 'Suecia', en: 'Sweden', it: 'Svezia'}},
+  {code: 'UA', flag: '🇺🇦', names: {es: 'Ucrania', en: 'Ukraine', it: 'Ucraina'}},
+  {code: 'DK', flag: '🇩🇰', names: {es: 'Dinamarca', en: 'Denmark', it: 'Danimarca'}},
+];
+
 const keyFor = (actor, slug) => `nationsProfileRequest:${actor}:${slug}`;
 function newRequestId() {
   try { return crypto.randomUUID(); } catch { return `req-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`; }
+}
+
+/** Iconos locales, sin dependencias: refuerzan cada estado sin sumar copy. */
+function NationsIcon({name}) {
+  const common = {
+    width: 20,
+    height: 20,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': 'true',
+    focusable: 'false',
+  };
+  switch (name) {
+    case 'clock':
+      return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
+    case 'check':
+      return <svg {...common}><path d="m5 12 4.2 4.2L19 6.5" /></svg>;
+    case 'x':
+      return <svg {...common}><path d="m6 6 12 12M18 6 6 18" /></svg>;
+    case 'alert':
+      return <svg {...common}><path d="M12 8v5" /><path d="M12 17h.01" /><circle cx="12" cy="12" r="9" /></svg>;
+    case 'lock':
+      return <svg {...common}><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
+    case 'arrow':
+      return <svg {...common}><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></svg>;
+    default:
+      return null;
+  }
+}
+
+/** Marco común: marca, evento y tarjeta central con ancho contenido. */
+function NationsPageShell({eventLabel, children}) {
+  return (
+    <main className="nations-page">
+      <div className="nations-shell">
+        <header className="nations-topbar">
+          <div className="nations-brand">
+            <img
+              className="nations-brand__logo nations-brand__logo--light"
+              src="/brand/oficial-2026/padbol-internacional-light.svg"
+              alt="Padbol Match"
+              decoding="async"
+            />
+            <img
+              className="nations-brand__logo nations-brand__logo--dark"
+              src="/brand/oficial-2026/padbol-internacional-dark.svg"
+              alt="Padbol Match"
+              decoding="async"
+            />
+          </div>
+          <span className="nations-event-chip">{eventLabel}</span>
+        </header>
+        {children}
+      </div>
+    </main>
+  );
 }
 
 export default function NationsInscripcion() {
@@ -119,6 +223,9 @@ export default function NationsInscripcion() {
   const lang = (i18n?.language || 'es').slice(0, 2);
   const t = COPY[lang] || COPY.es;
   const actorId = session?.user?.id || null;
+  const countryOptions = slug === NAPOLI_2026_SLUG
+    ? NAPOLI_2026_COUNTRIES.map(({code, flag, names}) => [code, `${flag} ${names[lang] || names.es}`.trim()])
+    : COUNTRIES;
 
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState(false);
@@ -132,6 +239,9 @@ export default function NationsInscripcion() {
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const epoch = useRef(0);
+  // Guarda síncrona: React puede no haber aplicado `sending` cuando llega el segundo click.
+  // Evita un segundo POST con el mismo request_id mientras el primero sigue en vuelo.
+  const sendingRef = useRef(false);
 
   // El id vive en estado: al pedir una nueva solicitud DESPUES de un rechazo debe cambiar en
   // memoria, no solo en sessionStorage (bug real: se reenviaba el id rechazado => 409).
@@ -155,6 +265,7 @@ export default function NationsInscripcion() {
   // Cambio de actor o de evento: se limpia todo el estado local y se ignoran respuestas viejas.
   useEffect(() => {
     epoch.current += 1;
+    sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setConsent(false); setSending(false);
   }, [actorId, slug]);
@@ -168,13 +279,18 @@ export default function NationsInscripcion() {
     // Tras "nueva solicitud" no se re-restaura la rechazada (evita tapar el formulario).
     if (ignoreServerStatus) return;
     const ticket = epoch.current;
+    setRestoreError(false);
     setRestoring(true);
     try {
       const res = await fetch(`${apiBase}/api/nations-activation/events/${encodeURIComponent(slug)}/profile-request`, {
         headers: token ? {Authorization: `Bearer ${token}`} : {},
       });
       if (ticket !== epoch.current) return;
-      if (!res.ok) return;
+      if (!res.ok) {
+        // 5xx: el estado no se pudo verificar. Se ofrece reintentar el GET, nunca reenviar el POST.
+        if (res.status >= 500) setRestoreError(true);
+        return;
+      }
       const body = await res.json().catch(() => null);
       if (ticket !== epoch.current) return;
       const latest = Array.isArray(body?.requests) ? body.requests[0] : null;
@@ -191,11 +307,13 @@ export default function NationsInscripcion() {
   const submit = async (event) => {
     event.preventDefault();
     const idActual = (actorId && slug && sessionStorage.getItem(keyFor(actorId, slug))) || requestId;
-    if (sending || !idActual || restoring) return;
+    if (sending || sendingRef.current || !idActual || restoring) return;
     setError(null);
+    setRestoreError(false);
     if (!name.trim() || !country) { setError(t.required); return; }
     if (age === 'menor' && !guardianConsent) { setError(t.required); return; }
     if (!consent) { setError(t.required); return; }
+    sendingRef.current = true;
     setSending(true);
     const ticket = epoch.current;
     try {
@@ -220,7 +338,10 @@ export default function NationsInscripcion() {
     } catch {
       if (ticket === epoch.current) setError(t.error);
     } finally {
-      if (ticket === epoch.current) setSending(false);
+      if (ticket === epoch.current) {
+        sendingRef.current = false;
+        setSending(false);
+      }
     }
   };
 
@@ -230,80 +351,200 @@ export default function NationsInscripcion() {
     sessionStorage.setItem(keyFor(actorId, slug), fresh);
     setRequestId(fresh);
     setIgnoreServerStatus(true);
-    setStatus(null); setError(null);
+    setStatus(null); setError(null); setRestoreError(false);
   };
 
-  if (loading) return <main className="nations-form"><p>{t.restore}</p></main>;
+  // Reintento manual sólo del GET de restauración. No toca request_id, edad, consentimiento ni payload.
+  const retryRestore = () => {
+    if (restoring) return;
+    loadStatus();
+  };
+
+  if (loading) {
+    return (
+      <NationsPageShell eventLabel={t.event}>
+        <section className="nations-card nations-card--loading" aria-busy="true">
+          <span className="nations-spinner nations-spinner--brand" aria-hidden="true" />
+          <p className="nations-loading-text" role="status">{t.restore}</p>
+          <div className="nations-skeleton" aria-hidden="true">
+            <span /><span /><span />
+          </div>
+        </section>
+      </NationsPageShell>
+    );
+  }
 
   if (!session?.user) {
     const back = encodeURIComponent(`/nations-cup/${slug}/inscripcion`);
     return (
-      <main className="nations-form">
-        <h1>{t.title}</h1>
-        <p>{t.signIn}</p>
-        <Link to={`/login?redirect=${back}`}>{t.signInCta}</Link>
-      </main>
+      <NationsPageShell eventLabel={t.event}>
+        <section className="nations-card nations-card--center" aria-labelledby="nations-title">
+          <span className="nations-icon-badge" aria-hidden="true"><NationsIcon name="lock" /></span>
+          <h1 className="nations-title" id="nations-title">{t.title}</h1>
+          <p className="nations-intro">{t.signIn}</p>
+          <Link className="nations-button" to={`/login?redirect=${back}`}>{t.signInCta}</Link>
+        </section>
+      </NationsPageShell>
     );
   }
 
+  const statusView =
+    status === 'pendiente' || status === 'en_revision'
+      ? 'pending'
+      : status === 'aprobada'
+        ? 'approved'
+        : status === 'rechazada'
+          ? 'rejected'
+          : null;
+
   return (
-    <main className="nations-form">
-      <h1>{t.title}</h1>
-      <p>{t.intro}</p>
+    <NationsPageShell eventLabel={t.event}>
+      <section className="nations-card" aria-labelledby="nations-title">
+        <span className="nations-eyebrow">{t.eyebrow}</span>
+        <h1 className="nations-title" id="nations-title">{t.title}</h1>
+        <p className="nations-intro">{t.intro}</p>
 
-      {restoring ? <p role="status">{t.restore}</p> : null}
-      {restoreError ? <p role="alert">{t.error}</p> : null}
-      {!emailVerified ? <p role="alert">{t.verifyEmail}</p> : null}
-
-      {status === 'pendiente' || status === 'en_revision' ? (
-        <section role="status">
-          <p>{t.pending}</p>
-          <p className="nations-form__note">{t.pendingNote}</p>
-        </section>
-      ) : status === 'aprobada' ? (
-        <section role="status">
-          <p>{t.approved}</p>
-          <Link to="/mi-perfil">{t.approvedCta}</Link>
-        </section>
-      ) : status === 'rechazada' ? (
-        <section role="alert">
-          <p>{t.rejected}</p>
-          <button type="button" onClick={startNew}>{t.newRequest}</button>
-        </section>
-      ) : (
-        <form onSubmit={submit}>
-          {error ? <p role="alert">{error}</p> : null}
-          <label>{t.name}
-            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={100} />
-          </label>
-          <label>{t.country}
-            <select value={country} onChange={(e) => setCountry(e.target.value)}>
-              <option value="">{t.countryList}</option>
-              {COUNTRIES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
-            </select>
-          </label>
-          <fieldset>
-            <legend>{t.age}</legend>
-            {[['adulto', t.adult], ['menor', t.minor], ['desconocido', t.unknown]].map(([value, label]) => (
-              <label key={value}>
-                <input type="radio" name="age" value={value} checked={age === value} onChange={() => setAge(value)} />
-                {label}
-              </label>
-            ))}
-          </fieldset>
-          {age === 'menor' ? (
-            <label>
-              <input type="checkbox" checked={guardianConsent} onChange={(e) => setGuardianConsent(e.target.checked)} />
-              {t.guardian}
-            </label>
+        <div className="nations-alerts">
+          {!emailVerified ? (
+            <div className="nations-alert nations-alert--warning" role="alert">
+              <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+              <p>{t.verifyEmail}</p>
+            </div>
           ) : null}
-          <label>
-            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-            {t.consent}
-          </label>
-          <button type="submit" disabled={sending || restoring || !emailVerified}>{sending ? t.sending : t.submit}</button>
-        </form>
-      )}
-    </main>
+          {restoring ? (
+            <div className="nations-alert nations-alert--info" role="status">
+              <span className="nations-spinner nations-spinner--brand" aria-hidden="true" />
+              <p>{t.restore}</p>
+            </div>
+          ) : null}
+          {restoreError ? (
+            <div className="nations-alert nations-alert--error" role="alert">
+              <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+              <div className="nations-alert__body">
+                <p>{t.error}</p>
+                <button className="nations-text-button" type="button" onClick={retryRestore} disabled={restoring}>
+                  {t.retry}
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {statusView === 'pending' ? (
+          <section className="nations-status nations-status--pending" role="status">
+            <div className="nations-status__head">
+              <span className="nations-status__icon nations-status__icon--pending" aria-hidden="true"><NationsIcon name="clock" /></span>
+              <h2>{t.pendingBadge}</h2>
+            </div>
+            <p>{t.pending}</p>
+            <p className="nations-status__note">{t.pendingNote}</p>
+          </section>
+        ) : statusView === 'approved' ? (
+          <section className="nations-status nations-status--approved" role="status">
+            <div className="nations-status__head">
+              <span className="nations-status__icon nations-status__icon--approved" aria-hidden="true"><NationsIcon name="check" /></span>
+              <h2>{t.approvedBadge}</h2>
+            </div>
+            <p>{t.approved}</p>
+            <Link className="nations-button nations-button--success" to="/mi-perfil">{t.approvedCta}</Link>
+          </section>
+        ) : statusView === 'rejected' ? (
+          <section className="nations-status nations-status--rejected" role="alert">
+            <div className="nations-status__head">
+              <span className="nations-status__icon nations-status__icon--rejected" aria-hidden="true"><NationsIcon name="x" /></span>
+              <h2>{t.rejectedBadge}</h2>
+            </div>
+            <p>{t.rejected}</p>
+            <button className="nations-button nations-button--secondary" type="button" onClick={startNew}>
+              {t.newRequest}
+            </button>
+          </section>
+        ) : (
+          <form className="nations-form" onSubmit={submit} aria-busy={sending || restoring}>
+            {error ? (
+              <div className="nations-alert nations-alert--error" role="alert">
+                <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+                <p>{error}</p>
+              </div>
+            ) : null}
+
+            <div className="nations-field">
+              <label className="nations-label" htmlFor="nations-name">{t.name}</label>
+              <input
+                className="nations-input"
+                id="nations-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+                maxLength={100}
+              />
+            </div>
+
+            <div className="nations-field">
+              <label className="nations-label" htmlFor="nations-country">{t.country}</label>
+              <div className="nations-select-wrap">
+                <select
+                  className="nations-select"
+                  id="nations-country"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                >
+                  <option value="">{t.countryList}</option>
+                  {countryOptions.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                </select>
+                <span className="nations-select__chevron" aria-hidden="true" />
+              </div>
+            </div>
+
+            <fieldset className="nations-fieldset">
+              <legend className="nations-label">{t.age}</legend>
+              <div className="nations-options">
+                {[['adulto', t.adult], ['menor', t.minor], ['desconocido', t.unknown]].map(([value, label]) => (
+                  <label className="nations-option" key={value}>
+                    <input type="radio" name="age" value={value} checked={age === value} onChange={() => setAge(value)} />
+                    <span className="nations-option__surface">
+                      <span className="nations-option__dot" aria-hidden="true" />
+                      <span className="nations-option__text">{label}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            {age === 'menor' ? (
+              <label className="nations-check nations-check--guardian">
+                <input type="checkbox" checked={guardianConsent} onChange={(e) => setGuardianConsent(e.target.checked)} />
+                <span className="nations-check__box" aria-hidden="true" />
+                <span className="nations-check__text">{t.guardian}</span>
+              </label>
+            ) : null}
+
+            <label className="nations-check">
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+              <span className="nations-check__box" aria-hidden="true" />
+              <span className="nations-check__text">{t.consent}</span>
+            </label>
+
+            <button
+              className="nations-button"
+              type="submit"
+              disabled={sending || restoring || !emailVerified}
+            >
+              {sending ? (
+                <>
+                  <span className="nations-spinner nations-spinner--button" aria-hidden="true" />
+                  {t.sending}
+                </>
+              ) : (
+                <>
+                  {t.submit}
+                  <span className="nations-button__arrow" aria-hidden="true"><NationsIcon name="arrow" /></span>
+                </>
+              )}
+            </button>
+          </form>
+        )}
+      </section>
+    </NationsPageShell>
   );
 }
