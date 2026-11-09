@@ -1,4 +1,6 @@
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
 import {render, screen, fireEvent, waitFor, act} from '@testing-library/react';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import NationsInscripcion from './NationsInscripcion';
@@ -115,6 +117,17 @@ test('envía payload correcto y muestra recepción pendiente sin afirmar coincid
   expect(document.body.textContent).not.toMatch(/coincidencia encontrada|encontramos tu perfil/i);
 });
 
+test('faltando consentimiento el aviso no afirma que falte edad', async () => {
+  mount();
+  await waitReady();
+  fillIdentity();
+  send();
+  expect(posts()).toHaveLength(0);
+  const alert = screen.getByRole('alert');
+  expect(alert).toHaveTextContent('Completa los datos y las autorizaciones obligatorias.');
+  expect(alert).not.toHaveTextContent(/edad/i);
+});
+
 test('menor exige autorización declarada del responsable y la revela sólo para menores', async () => {
   mount();
   await waitReady();
@@ -127,7 +140,8 @@ test('menor exige autorización declarada del responsable y la revela sólo para
   acceptConsent();
   send();
   expect(posts()).toHaveLength(0);
-  expect(screen.getByRole('alert')).toHaveTextContent(/Completa nombre, país y edad/);
+  expect(screen.getByRole('alert')).toHaveTextContent(/Completa los datos y las autorizaciones obligatorias/);
+  expect(screen.getByRole('alert')).not.toHaveTextContent(/edad/i);
 
   fireEvent.click(guardian);
   fireEvent.click(screen.getByLabelText('Mayor de edad'));
@@ -264,7 +278,8 @@ test('fallo de red al restaurar muestra aviso y permite reintentar sin recargar'
     .mockRejectedValueOnce(new Error('network'))
     .mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'pendiente'}]})});
   mount();
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/No pudimos enviar|solicitud/i));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/No pudimos consultar tu solicitud/));
+  expect(screen.getByRole('alert')).not.toHaveTextContent(/No pudimos enviar/);
   expect(screen.getByRole('button', {name: 'Reintentar'})).toBeEnabled();
 
   fireEvent.click(screen.getByRole('button', {name: 'Reintentar'}));
@@ -280,7 +295,7 @@ test('restauración 503 muestra aviso y reintenta sólo por GET, sin POST', asyn
     .mockResolvedValueOnce({ok: false, status: 503, json: async () => ({})})
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'pendiente'}]})});
   mount();
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/No pudimos enviar/));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/No pudimos consultar tu solicitud/));
   expect(posts()).toHaveLength(0);
 
   fireEvent.click(screen.getByRole('button', {name: 'Reintentar'}));
@@ -402,4 +417,53 @@ test('copy EN/IT disponible para etiquetas y CTA', async () => {
   expect(screen.getByRole('heading', {level: 1})).toHaveTextContent('Completa i tuoi dati per la Nations Cup');
   expect(screen.getByLabelText('Nome e cognome')).toBeInTheDocument();
   expect(screen.getByRole('button', {name: 'Invia richiesta'})).toBeInTheDocument();
+});
+
+test('copy de autorizaciones y consulta de solicitud en ES/EN/IT', async () => {
+  const copy = {
+    es: {
+      required: 'Completa los datos y las autorizaciones obligatorias.',
+      restore: 'No pudimos consultar tu solicitud. Reintenta en unos minutos.',
+      name: 'Nombre y apellido', country: 'País', adult: 'Mayor de edad', button: 'Enviar solicitud',
+    },
+    en: {
+      required: 'Complete the details and required authorisations.',
+      restore: 'We could not check your request. Try again in a few minutes.',
+      name: 'Full name', country: 'Country', adult: 'Adult', button: 'Send request',
+    },
+    it: {
+      required: 'Completa i dati e le autorizzazioni obbligatorie.',
+      restore: 'Non siamo riusciti a controllare la tua richiesta. Riprova tra qualche minuto.',
+      name: 'Nome e cognome', country: 'Paese', adult: 'Maggiorenne', button: 'Invia richiesta',
+    },
+  };
+  for (const lang of ['es', 'en', 'it']) {
+    mockLanguage = lang;
+    mockFetch.mockRejectedValueOnce(new Error('network'));
+    const restoreView = mount();
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(copy[lang].restore));
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/enviar|send|inviare/i);
+    restoreView.unmount();
+    sessionStorage.clear();
+
+    mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: []})});
+    const formView = mount();
+    await waitReady(copy[lang].button);
+    fireEvent.change(screen.getByLabelText(copy[lang].name), {target: {value: 'Jugador Ficticio'}});
+    fireEvent.change(screen.getByLabelText(copy[lang].country), {target: {value: 'IT'}});
+    fireEvent.click(screen.getByLabelText(copy[lang].adult));
+    fireEvent.click(screen.getByRole('button', {name: copy[lang].button}));
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent(copy[lang].required);
+    expect(alert).not.toHaveTextContent(/edad|\bage\b|età/i);
+    expect(posts()).toHaveLength(0);
+    formView.unmount();
+    sessionStorage.clear();
+  }
+});
+
+test('dark: textos rojos pequeños usan un tono claro scoped', () => {
+  const css = fs.readFileSync(path.join(__dirname, 'NationsInscripcion.css'), 'utf8');
+  expect(css).toMatch(/html\.theme-dark \.nations-eyebrow,[\s\S]*?html\.theme-dark \.nations-text-button\s*\{[^}]*color:\s*#ff8d91/i);
+  expect(css).toMatch(/html\.theme-dark \.nations-event-chip\s*\{[^}]*color:\s*#ff8d91/i);
 });

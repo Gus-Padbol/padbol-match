@@ -35,8 +35,9 @@ const COPY = {
     newRequest: 'Enviar nueva solicitud',
     conflict: 'Ya tienes una solicitud activa para este evento. Revisa el estado o espera la revisión.',
     error: 'No pudimos enviar la solicitud. Reintenta en unos minutos.',
+    restoreError: 'No pudimos consultar tu solicitud. Reintenta en unos minutos.',
     restore: 'Recuperando tu solicitud…',
-    required: 'Completa nombre, país y edad.',
+    required: 'Completa los datos y las autorizaciones obligatorias.',
     countryList: 'Selecciona tu país',
     retry: 'Reintentar',
   },
@@ -69,8 +70,9 @@ const COPY = {
     newRequest: 'Send a new request',
     conflict: 'You already have an active request for this event. Check its status or wait for review.',
     error: 'We could not send the request. Try again in a few minutes.',
+    restoreError: 'We could not check your request. Try again in a few minutes.',
     restore: 'Restoring your request…',
-    required: 'Complete name, country and age.',
+    required: 'Complete the details and required authorisations.',
     countryList: 'Select your country',
     retry: 'Try again',
   },
@@ -103,8 +105,9 @@ const COPY = {
     newRequest: 'Invia una nuova richiesta',
     conflict: 'Hai già una richiesta attiva per questo evento. Controlla lo stato o attendi la revisione.',
     error: 'Non siamo riusciti a inviare la richiesta. Riprova tra qualche minuto.',
+    restoreError: 'Non siamo riusciti a controllare la tua richiesta. Riprova tra qualche minuto.',
     restore: 'Recupero della richiesta…',
-    required: 'Completa nome, paese ed età.',
+    required: 'Completa i dati e le autorizzazioni obbligatorie.',
     countryList: 'Seleziona il tuo paese',
     retry: 'Riprova',
   },
@@ -421,7 +424,7 @@ export default function NationsInscripcion() {
             <div className="nations-alert nations-alert--error" role="alert">
               <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
               <div className="nations-alert__body">
-                <p>{t.error}</p>
+                <p>{t.restoreError}</p>
                 <button className="nations-text-button" type="button" onClick={retryRestore} disabled={restoring}>
                   {t.retry}
                 </button>

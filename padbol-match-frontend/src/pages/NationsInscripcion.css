@@ -788,6 +788,28 @@ html.theme-dark .nations-card {
   box-shadow: 0 28px 70px rgba(0, 0, 0, 0.46), 0 2px 8px rgba(0, 0, 0, 0.22);
 }
 
+/* Textos rojos pequeños sobre superficies oscuras: #e11b22 no llega a 4.5:1.
+   #ff8d91 queda ~6.6:1 sobre la tarjeta y no altera el fondo rojo del CTA. */
+html.theme-dark .nations-eyebrow,
+html.theme-dark .nations-text-button {
+  color: #ff8d91;
+}
+
+html.theme-dark .nations-event-chip {
+  border-color: rgba(255, 141, 145, 0.4);
+  background: rgba(225, 27, 34, 0.16);
+  color: #ff8d91;
+}
+
+html.theme-dark .nations-button--secondary {
+  border-color: rgba(255, 141, 145, 0.5);
+  color: #ff8d91;
+}
+
+html.theme-dark .nations-status__icon--rejected {
+  color: #ff8d91;
+}
+
 html.theme-dark .nations-option__surface,
 html.theme-dark .nations-check,
 html.theme-dark .nations-alert,
