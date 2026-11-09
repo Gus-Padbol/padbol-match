@@ -137,7 +137,7 @@ export default function TournamentParticipantsPanel({ apiBaseUrl, torneoId, auth
     <h3>{text('Inscripciones y planteles', 'Registrations and rosters')}</h3>
     {!catalog.teams.length ? <p>{text('Todavía no hay equipos inscritos.', 'No teams have registered yet.')}</p> : <>
       <div className="participant-teams-toolbar">
-        <p className="participant-teams-summary">{text(`${teamCount} equipos · ${identifiedCount} participantes identificados · ${registeredPendingCount} plazas pendientes registradas · ${missingMinimumCount} faltantes para el mínimo`, `${teamCount} teams · ${identifiedCount} identified participants · ${registeredPendingCount} registered pending places · ${missingMinimumCount} missing for the minimum`)}</p>
+        <p className="participant-teams-summary">{text(`${teamCount} equipos · ${identifiedCount} participantes identificados · plazas pendientes registradas: ${registeredPendingCount} · faltantes para el mínimo: ${missingMinimumCount}`, `${teamCount} teams · ${identifiedCount} identified participants · registered pending places: ${registeredPendingCount} · missing for minimum: ${missingMinimumCount}`)}</p>
         <div className="participant-teams-actions">
           <button type="button" onClick={() => setOpenTeams(Object.fromEntries(catalog.teams.map(team => [team.id, true])))}>{text('Expandir todos', 'Expand all')}</button>
           <button type="button" onClick={() => setOpenTeams(Object.fromEntries(catalog.teams.map(team => [team.id, false])))}>{text('Contraer todos', 'Collapse all')}</button>

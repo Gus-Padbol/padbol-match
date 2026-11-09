@@ -95,7 +95,7 @@ test('muestra totales de equipos, identificados y plazas, y expande/contrae todo
   };
   readTournamentParticipants.mockResolvedValue({ ...catalog, teams: [team, secondTeam] });
   mount();
-  expect(await screen.findByText('2 equipos · 2 participantes identificados · 2 plazas pendientes registradas · 1 faltantes para el mínimo')).toBeInTheDocument();
+  expect(await screen.findByText('2 equipos · 2 participantes identificados · plazas pendientes registradas: 2 · faltantes para el mínimo: 1')).toBeInTheDocument();
   const details = () => Array.from(document.querySelectorAll('details.participant-team'));
   expect(details()).toHaveLength(2);
   expect(details().every((d) => d.open)).toBe(false);
