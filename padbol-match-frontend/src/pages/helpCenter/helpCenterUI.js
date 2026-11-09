@@ -40,6 +40,9 @@ export const HELP_UI = {
     loading: 'Cargando…',
     skipToContent: 'Saltar al contenido',
     searchResults: 'Resultados de la búsqueda',
+    adminGuideTitle: 'Guía del administrador',
+    adminGuideLead: 'Si administras una sede, entra con tu cuenta. El servidor valida tu rol antes de mostrar la guía.',
+    adminGuideAction: 'Abrir guía del administrador',
   },
   en: {
     brand: 'Padbol Match',
@@ -80,6 +83,9 @@ export const HELP_UI = {
     loading: 'Loading…',
     skipToContent: 'Skip to content',
     searchResults: 'Search results',
+    adminGuideTitle: 'Administrator guide',
+    adminGuideLead: 'If you manage a venue, sign in with your account. The server validates your role before showing the guide.',
+    adminGuideAction: 'Open administrator guide',
   },
   pt: {
     brand: 'Padbol Match',
@@ -120,6 +126,9 @@ export const HELP_UI = {
     loading: 'Carregando…',
     skipToContent: 'Ir para o conteúdo',
     searchResults: 'Resultados da busca',
+    adminGuideTitle: 'Guia do administrador',
+    adminGuideLead: 'Se você administra uma sede, entre com sua conta. O servidor valida seu papel antes de mostrar a guia.',
+    adminGuideAction: 'Abrir guia do administrador',
   },
 };
 

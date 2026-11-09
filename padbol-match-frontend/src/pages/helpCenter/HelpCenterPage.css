@@ -357,3 +357,7 @@
 @media (prefers-reduced-motion: reduce) {
   .hc-result { transition: none; }
 }
+
+.hc-admin-guide { margin: 28px 0; padding: 18px; border: 1px solid var(--hc-border, #cbd5e1); border-radius: 12px; background: #f8fafc; }
+.hc-admin-guide h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.hc-admin-guide p { margin: 0 0 12px; color: #475569; line-height: 1.5; }

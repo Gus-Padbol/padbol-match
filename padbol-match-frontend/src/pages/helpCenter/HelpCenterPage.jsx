@@ -106,6 +106,12 @@ export default function HelpCenterPage() {
             )}
           </section>
 
+          <section className="hc-admin-guide" aria-labelledby="hc-admin-guide-title">
+            <h2 id="hc-admin-guide-title">{copy.adminGuideTitle}</h2>
+            <p>{copy.adminGuideLead}</p>
+            <Link className="hc-button" to="/ayuda/administracion">{copy.adminGuideAction}</Link>
+          </section>
+
           <SupportCard copy={copy} />
         </main>
       </div>

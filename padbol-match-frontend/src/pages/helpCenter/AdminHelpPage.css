@@ -1,0 +1,29 @@
+.admin-help-page { min-height: 100vh; }
+.admin-help-header { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+.admin-help-controls { display:grid; gap:12px; grid-template-columns:minmax(0,1fr) auto; align-items:end; margin:18px 0; }
+.admin-help-search { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.admin-help-search input { box-sizing:border-box; width:100%; max-width:100%; min-width:0; flex:1 1 220px; border:1px solid var(--hc-border, #cbd5e1); border-radius:10px; padding:10px 12px; background:#fff; color:#0f172a; }
+.admin-help-langs { display:flex; gap:6px; flex-wrap:wrap; }
+.admin-help-langs button { border:1px solid var(--hc-border, #cbd5e1); background:#fff; color:#0f172a; border-radius:8px; padding:7px 10px; cursor:pointer; }
+.admin-help-langs button[aria-pressed="true"] { background:#0f172a; color:#fff; border-color:#0f172a; }
+.admin-help-categories { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px; }
+.admin-help-categories button { border:1px solid var(--hc-border, #cbd5e1); background:#fff; color:#0f172a; border-radius:999px; padding:7px 11px; cursor:pointer; }
+.admin-help-categories button[aria-pressed="true"] { background:#e2e8f0; border-color:#0f172a; }
+.admin-help-results { display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
+.admin-help-card { display:grid; gap:8px; border:1px solid var(--hc-border, #cbd5e1); border-radius:14px; padding:16px; background:#fff; color:#0f172a; text-decoration:none; }
+.admin-help-card:hover, .admin-help-card:focus-visible { border-color:#0f172a; outline:2px solid #0f172a; outline-offset:2px; }
+.admin-help-card h3 { margin:0; font-size:1.05rem; }
+.admin-help-card p { margin:0; color:#475569; line-height:1.45; }
+.admin-help-meta { display:flex; gap:8px; flex-wrap:wrap; color:#334155; font-size:.78rem; font-weight:700; }
+.admin-help-state { padding:14px; border:1px solid var(--hc-border, #cbd5e1); border-radius:12px; background:#f8fafc; }
+.admin-help-detail { display:grid; gap:18px; }
+.admin-help-detail h1 { margin:0; }
+.admin-help-detail ul, .admin-help-detail ol { padding-left:1.25rem; display:grid; gap:8px; line-height:1.55; }
+.admin-help-limit { border-left:4px solid #b45309; background:#fffbeb; padding:12px 14px; border-radius:8px; }
+.admin-help-source { color:#475569; font-size:.82rem; overflow-wrap:anywhere; }
+.admin-help-back { display:inline-flex; gap:6px; align-items:center; color:#0f172a; font-weight:700; text-decoration:none; margin-bottom:14px; }
+@media (max-width: 700px) {
+  .admin-help-controls { grid-template-columns:1fr; }
+  .admin-help-results { grid-template-columns:1fr; }
+  .admin-help-page { padding-bottom: 28px; }
+}
