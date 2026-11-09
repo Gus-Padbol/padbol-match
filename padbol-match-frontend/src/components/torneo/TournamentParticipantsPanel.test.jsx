@@ -80,3 +80,41 @@ test('switching accounts clears administrative capabilities and reloads the cata
   await screen.findByText('La inscripción está cerrada. Puedes consultar los equipos y sus estados.');
   expect(screen.queryByText('Equipos y participantes')).not.toBeInTheDocument();
 });
+
+
+test('muestra totales de equipos, identificados y plazas, y expande/contrae todos', async () => {
+  const secondTeam = {
+    id: 100, nombre: 'QA Equipo Dos', inscripcion_estado: 'confirmado',
+    habilitacion_deportiva: { habilitado: true, minimos: 2, faltantes: 0 },
+    participants: [
+      { id: 'p1', nombre: 'QA Uno', tipo_identidad: 'generico', ranking_oficial_elegible: false },
+      { id: 'p2', nombre: 'QA Dos', tipo_identidad: 'generico', ranking_oficial_elegible: false },
+      { id: 'p3', tipo_identidad: 'plaza_pendiente', can_edit: true, ranking_oficial_elegible: false },
+    ],
+  };
+  readTournamentParticipants.mockResolvedValue({ ...catalog, teams: [team, secondTeam] });
+  mount();
+  expect(await screen.findByText('2 equipos · 2 participantes identificados · 2 plazas pendientes')).toBeInTheDocument();
+  const details = () => Array.from(document.querySelectorAll('details.participant-team'));
+  expect(details()).toHaveLength(2);
+  expect(details().every((d) => d.open)).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Expandir todos' }));
+  expect(details().every((d) => d.open)).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Contraer todos' }));
+  expect(details().every((d) => d.open)).toBe(false);
+});
+
+test('un equipo que cumple el mínimo no se presenta como plantel completo', async () => {
+  const fullMinimum = {
+    id: 101, nombre: 'QA Mínimo', inscripcion_estado: 'confirmado',
+    habilitacion_deportiva: { habilitado: true, minimos: 2, faltantes: 0 },
+    participants: [
+      { id: 'p1', nombre: 'QA Uno', tipo_identidad: 'generico', ranking_oficial_elegible: false },
+      { id: 'p2', nombre: 'QA Dos', tipo_identidad: 'generico', ranking_oficial_elegible: false },
+    ],
+  };
+  readTournamentParticipants.mockResolvedValue({ ...catalog, teams: [fullMinimum] });
+  mount();
+  expect(await screen.findByText(/QA Mínimo — Cumple el mínimo para jugar/)).toBeInTheDocument();
+  expect(screen.getByText(/no implica plantel completo/)).toBeInTheDocument();
+});

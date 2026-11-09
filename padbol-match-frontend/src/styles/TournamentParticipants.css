@@ -20,5 +20,19 @@
 
 .tournament-participants h2, .tournament-participants h3, .tournament-participants legend { color: var(--text-primary); }
 
+
+.tournament-participants .participant-teams-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 12px 0; }
+.tournament-participants .participant-teams-summary { margin: 0; color: var(--text-primary); font-weight: 600; }
+.tournament-participants .participant-teams-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tournament-participants .participant-teams-actions button { margin: 0; }
+@media (max-width: 560px) {
+  .tournament-participants .participant-teams-toolbar { display: block; }
+  .tournament-participants .participant-teams-actions { display: grid; grid-template-columns: 1fr 1fr; margin-top: 10px; }
+  .tournament-participants .participant-teams-actions button { width: 100%; margin: 0; }
+}
+@media (max-width: 380px) {
+  .tournament-participants .participant-teams-actions { grid-template-columns: 1fr; }
+}
+
 .tournament-context-nav { width: 100%; max-width: 1100px; box-sizing: border-box; margin: 0 auto; padding: 12px; }
 .tournament-context-nav button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--border-color, #64748b); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font: inherit; cursor: pointer; }

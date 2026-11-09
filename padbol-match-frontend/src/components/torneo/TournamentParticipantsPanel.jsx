@@ -16,6 +16,7 @@ export default function TournamentParticipantsPanel({ apiBaseUrl, torneoId, auth
   const [includeCaptain, setIncludeCaptain] = useState(null);
   const [review, setReview] = useState(false);
   const [completionNames, setCompletionNames] = useState({});
+  const [openTeams, setOpenTeams] = useState({});
   const epoch = useRef(0);
   const pending = useRef(false);
   const requests = useRef(new Map());
@@ -31,6 +32,7 @@ export default function TournamentParticipantsPanel({ apiBaseUrl, torneoId, auth
     epoch.current += 1;
     const mine = epoch.current;
     setCatalog(null); setError(''); setMessage(''); setName(''); setRows([]); setIncludeCaptain(null); setReview(false); setCompletionNames({});
+    setOpenTeams({});
     pending.current = false; setBusy(false); requests.current.clear();
     if (authenticated) {
       readTournamentParticipants(apiBaseUrl, torneoId).then(fresh => {
@@ -93,6 +95,13 @@ export default function TournamentParticipantsPanel({ apiBaseUrl, torneoId, auth
   const validRows = rows.every(r => r.kind === 'plaza_pendiente' || (r.kind === 'generico' ? r.name.trim() : r.participantId));
   const canReview = !busy && name.trim() && total > 0 && total <= catalog.limits.max_jugadores && validRows;
   const payload = () => ({ request_id: requestId('registration'), nombre: name.trim(), incluir_capitan: captainIncluded, participantes: rows.map(r => r.kind === 'existente' ? { participante_id: r.participantId } : { tipo_identidad: r.kind, ...(r.name.trim() ? { nombre: r.name.trim() } : {}) }) });
+  const teamCount = catalog.teams.length;
+  const identifiedCount = catalog.teams.reduce((sum, t) => sum + (t.participants || []).filter(p => p.tipo_identidad !== 'plaza_pendiente').length, 0);
+  const pendingCount = catalog.teams.reduce((sum, t) => {
+    const explicit = (t.participants || []).filter(p => p.tipo_identidad === 'plaza_pendiente').length;
+    const missing = Number(t.habilitacion_deportiva?.faltantes);
+    return sum + Math.max(explicit, Number.isFinite(missing) ? missing : 0);
+  }, 0);
   const identityLabel = p => !p.participante_id && !p.tipo_identidad ? text('Participante del plantel previo', 'Participant from the previous roster') : p.tipo_identidad === 'plaza_pendiente' ? text('Plaza por completar', 'Unfilled place') : p.estado_vinculacion === 'vinculado' ? text('Perfil vinculado', 'Linked profile') : text('Participante sin cuenta vinculada', 'Participant without a linked account');
 
   return <section className="tournament-participants" aria-label={text('Inscripción y participantes', 'Registration and participants')}>
@@ -124,15 +133,24 @@ export default function TournamentParticipantsPanel({ apiBaseUrl, torneoId, auth
       </div> : <button type="button" disabled={!canReview} onClick={() => setReview(true)}>{text('Revisar inscripción', 'Review registration')}</button>}
     </fieldset> : <p>{text('La inscripción está cerrada. Puedes consultar los equipos y sus estados.', 'Registration is closed. You can view teams and their status.')}</p>}
     <h3>{text('Inscripciones y planteles', 'Registrations and rosters')}</h3>
-    {!catalog.teams.length ? <p>{text('Todavía no hay equipos inscritos.', 'No teams have registered yet.')}</p> : catalog.teams.map(team => <details className="participant-team" key={team.id}>
-      <summary>{team.nombre} — {team.habilitacion_deportiva?.habilitado ? text('Plantel completo para jugar', 'Playing roster complete') : text('Plantel por completar', 'Roster to complete')}</summary>
-      <p>{text('Inscripción registrada', 'Registration recorded')} · {team.habilitacion_deportiva?.habilitado ? text('Mínimo de participantes completo', 'Minimum roster complete') : text(`Faltan ${team.habilitacion_deportiva?.faltantes ?? '—'} participantes identificados`, `${team.habilitacion_deportiva?.faltantes ?? '—'} identified participants still needed`)}</p>
+    {!catalog.teams.length ? <p>{text('Todavía no hay equipos inscritos.', 'No teams have registered yet.')}</p> : <>
+      <div className="participant-teams-toolbar">
+        <p className="participant-teams-summary">{text(`${teamCount} equipos · ${identifiedCount} participantes identificados · ${pendingCount} plazas pendientes`, `${teamCount} teams · ${identifiedCount} identified participants · ${pendingCount} pending places`)}</p>
+        <div className="participant-teams-actions">
+          <button type="button" onClick={() => setOpenTeams(Object.fromEntries(catalog.teams.map(team => [team.id, true])))}>{text('Expandir todos', 'Expand all')}</button>
+          <button type="button" onClick={() => setOpenTeams(Object.fromEntries(catalog.teams.map(team => [team.id, false])))}>{text('Contraer todos', 'Collapse all')}</button>
+        </div>
+      </div>
+      {catalog.teams.map(team => <details className="participant-team" key={team.id} open={Boolean(openTeams[team.id])} onToggle={(e) => { const open = e.currentTarget.open; setOpenTeams(prev => prev[team.id] === open ? prev : {...prev, [team.id]: open}); }}>
+      <summary>{team.nombre} — {team.habilitacion_deportiva?.habilitado ? text('Cumple el mínimo para jugar', 'Meets the minimum to play') : text('Plantel por completar', 'Roster to complete')}</summary>
+      <p>{text('Inscripción registrada', 'Registration recorded')} · {team.habilitacion_deportiva?.habilitado ? text('Cumple el mínimo de participantes para jugar; no implica plantel completo.', 'Meets the minimum players to play; this does not mean a full roster.') : text(`Faltan ${team.habilitacion_deportiva?.faltantes ?? '—'} participantes identificados`, `${team.habilitacion_deportiva?.faltantes ?? '—'} identified participants still needed`)}</p>
       <ul>{(team.participants || []).map((p, index) => <li key={p.id || p.participante_id || p.user_id || index}>
         <strong>{p.nombre || text('Plaza pendiente', 'Unfilled place')}</strong><span>{identityLabel(p)} · {!p.participante_id && !p.tipo_identidad ? text('Ranking según registro previo', 'Ranking according to the previous record') : p.ranking_oficial_elegible === true ? text('Elegible para ranking oficial', 'Eligible for official ranking') : p.ranking_oficial_elegible === false ? text('Sin acreditación para ranking oficial', 'Not accredited for official ranking') : text('Ranking según registro previo', 'Ranking according to the previous record')}</span>
         {p.can_edit && p.tipo_identidad === 'plaza_pendiente' ? <div><label htmlFor={`complete-participant-${p.id}`}>{text('Completar nombre del participante', 'Complete participant name')}</label><input id={`complete-participant-${p.id}`} maxLength={160} value={completionNames[p.id] || ''} disabled={busy} onChange={e => setCompletionNames({ ...completionNames, [p.id]: e.target.value })} /><button type="button" disabled={busy || !completionNames[p.id]?.trim()} onClick={() => void perform(() => tournamentParticipantRequest(apiBaseUrl, torneoId, `/participantes/${p.id}`, { request_id: requestId(`complete:${p.id}:${completionNames[p.id]}`), nombre: completionNames[p.id].trim(), tipo_identidad: 'generico' }, 'PATCH'), text('Participante completado; su ranking continúa sin acreditar.', 'Participant completed; ranking remains unaccredited.'), fresh => fresh.participants.some(item => item.id === p.id && item.tipo_identidad === 'generico' && item.nombre === completionNames[p.id].trim()))}>{text('Guardar participante', 'Save participant')}</button></div> : null}
         {p.can_claim ? <button type="button" disabled={busy} onClick={() => void perform(() => tournamentParticipantRequest(apiBaseUrl, torneoId, `/participantes/${p.id}/vinculacion`, { request_id: requestId(`claim:${p.id}`) }), text('Solicitud enviada al club. La vinculación no acredita puntos por sí sola.', 'Request sent to the club. Linking does not grant points by itself.'), (fresh, result) => result.solicitud?.participante_id === p.id && fresh.link_requests?.some(item => item.id === result.solicitud.id && item.participante_id === p.id && item.estado === result.solicitud.estado))}>{text('Solicitar vinculación a mi perfil', 'Request link to my profile')}</button> : null}
       </li>)}</ul>
     </details>)}
+    </>}
     {catalog.can_manage && catalog.link_requests?.some(r => r.estado === 'pendiente') ? <section aria-label={text('Vinculaciones por revisar', 'Link requests to review')}><h3>{text('Vinculaciones por revisar', 'Link requests to review')}</h3><p>{text('Comprueba la identidad antes de aprobar. Vincular un perfil no acredita ranking ni asigna puntos anteriores.', 'Check identity before approving. Linking a profile does not grant ranking accreditation or previous points.')}</p>{catalog.link_requests.filter(r => r.estado === 'pendiente').map(r => <div className="participant-entry" key={r.id}><strong>{r.nombre_solicitante}</strong><span>{catalog.participants.find(p => p.id === r.participante_id)?.nombre || text('Participante del torneo', 'Tournament participant')}</span>{['aprobar', 'rechazar'].map(decision => <button key={decision} type="button" disabled={busy} onClick={() => void perform(() => tournamentParticipantRequest(apiBaseUrl, torneoId, `/vinculaciones/${r.id}/resolver`, { request_id: requestId(`resolve:${r.id}:${decision}`), decision }), text('Decisión guardada. La acreditación deportiva sigue siendo independiente.', 'Decision saved. Sports accreditation remains independent.'), fresh => fresh.link_requests?.some(item => item.id === r.id && item.estado === (decision === 'aprobar' ? 'aprobado' : 'rechazado')))}>{decision === 'aprobar' ? text('Aprobar vinculación', 'Approve link') : text('Rechazar solicitud', 'Reject request')}</button>)}</div>)}</section> : null}
     <TournamentAccreditationPanel key={`${torneoId}:${authIdentityKey || ''}`} catalog={catalog} busy={busy} text={text} perform={perform} requestId={requestId} request={(path, body) => tournamentParticipantRequest(apiBaseUrl, torneoId, path, body)} />
     {error ? <p role="alert">{error}</p> : null}{message ? <p role="status">{message}</p> : null}
