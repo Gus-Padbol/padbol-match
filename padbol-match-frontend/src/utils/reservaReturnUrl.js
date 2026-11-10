@@ -245,6 +245,25 @@ export function safeFipaDocumentsPathFromLoginRedirect(loginSearch) {
   return pathOnly === '/fipa/documentos' ? path : null;
 }
 
+function isNationsInscripcionPath(path) {
+  const raw = String(path || '').trim();
+  if (/[?#]/.test(raw)) return false;
+  return /^\/nations-cup\/[a-z0-9][a-z0-9-]{2,79}\/inscripcion\/?$/.test(raw);
+}
+
+/** `?redirect=` seguro de vuelta a la inscripción Nations (sin query externa ni open redirect). */
+export function safeNationsInscripcionPathFromLoginRedirect(loginSearch) {
+  const path = decodeLoginRedirectParam(loginSearch);
+  if (!path || !isNationsInscripcionPath(path)) return null;
+  return String(path).trim().replace(/\/+$/, '');
+}
+
+/** Destino permitido para el email de confirmación de signup (FIPA o Nations). */
+export function resolveSignUpEmailRedirectPath(loginSearch) {
+  return safeFipaDocumentsPathFromLoginRedirect(loginSearch)
+    || safeNationsInscripcionPathFromLoginRedirect(loginSearch);
+}
+
 export function savePartidosBuscarReturnUrl(pathnameAndSearch) {
   try {
     if (typeof window === 'undefined') return;
@@ -286,6 +305,8 @@ export function resolvePostLoginNavigatePath(loginSearch) {
   if (fromCommercialCrm) return fromCommercialCrm;
   const fromFipaDocuments = safeFipaDocumentsPathFromLoginRedirect(loginSearch);
   if (fromFipaDocuments) return fromFipaDocuments;
+  const fromNationsInscripcion = safeNationsInscripcionPathFromLoginRedirect(loginSearch);
+  if (fromNationsInscripcion) return fromNationsInscripcion;
   if (peekReservaPendienteArmar()) {
     console.log('[PM ArmarPartido restore] post-login → /armar-partido (reserva_pendiente)');
     return '/armar-partido';

@@ -44,6 +44,7 @@ test('el slug exacto fuerza inglés, header y subtítulo exactos aunque el idiom
   await waitReady();
   expect(screen.getByRole('heading', {level: 1})).toHaveTextContent('Complete your details for the 5th Nations Cup');
   expect(screen.getByText('Naples · Mostra d’Oltremare · November 20–22, 2026')).toBeInTheDocument();
+  expect(screen.getByText(/received immediately/)).toBeInTheDocument();
   expect(screen.getByLabelText('Full name')).toBeInTheDocument();
   expect(screen.getByLabelText('Country')).toBeInTheDocument();
   expect(screen.getByLabelText('I confirm that I am 18 or older')).toBeInTheDocument();
@@ -88,7 +89,7 @@ test('recorrido sintético sin cuenta -> login verificado -> solicitud pendiente
   await waitReady();
   fillNaples();
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
-  await waitFor(() => expect(screen.getByText(/Request received/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
   expect(screen.queryByText(/approved|activated/i)).not.toBeInTheDocument();
 });
 
@@ -110,7 +111,7 @@ test('exige confirmar 18+ y consentimiento; no envía sin ambos', async () => {
   expect(mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(0);
 });
 
-test('envía age_status adulto, booleanos seguros y muestra pendiente sin prometer activación', async () => {
+test('envía age_status adulto, booleanos seguros y muestra recibida con acceso al perfil sin prometer activación', async () => {
   mockFetch
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: []})})
     .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})});
@@ -118,7 +119,7 @@ test('envía age_status adulto, booleanos seguros y muestra pendiente sin promet
   await waitReady();
   fillNaples();
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
-  await waitFor(() => expect(screen.getByText(/Request received/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
   const post = mockFetch.mock.calls.find(([, opts]) => opts?.method === 'POST');
   const payload = JSON.parse(post[1].body);
   expect(payload).toMatchObject({
@@ -129,7 +130,13 @@ test('envía age_status adulto, booleanos seguros y muestra pendiente sin promet
     profile_consent: true,
   });
   expect(payload.request_id).toMatch(/^[A-Za-z0-9_-]{8,120}$/);
-  expect(screen.getByText(/Activation is not automatic/)).toBeInTheDocument();
+  expect(screen.getByText(/Your Nations link is still pending/)).toBeInTheDocument();
+  expect(screen.getByText(/does not activate your Nations participation/)).toBeInTheDocument();
+  expect(screen.getByText(/reconcile your Nations points and historical record later/)).toBeInTheDocument();
+  expect(screen.getByText(/use your Padbol Match profile normally/)).toBeInTheDocument();
+  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', '/mi-perfil');
+  expect(document.body.textContent).not.toMatch(/reviews your registration before activation|Activation is not automatic|pending review by the organisation/i);
+  expect(document.body.textContent).not.toMatch(/Nations participation is active|Nations participation activated/i);
   expect(document.body.textContent).not.toMatch(/activated automatically by name and country|match found/i);
 });
 
@@ -142,7 +149,7 @@ test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', a
   fillNaples();
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Only players aged 18 or older/));
-  expect(screen.queryByText(/Request received/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Registration received/)).not.toBeInTheDocument();
 });
 
 test('países de Nápoles en inglés: exactamente 15 + placeholder', async () => {
@@ -176,7 +183,7 @@ test('otros slugs conservan el formulario, catálogo e idioma anteriores', async
 test('estados pendiente, aprobada y rechazada en inglés', async () => {
   mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'pendiente'}]})});
   const first = mount();
-  await waitFor(() => expect(screen.getByText(/Request received/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
   first.unmount();
   sessionStorage.clear();
 
@@ -247,7 +254,7 @@ test('503 al restaurar avisa en inglés, reintenta sólo GET y puede recuperar p
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/We could not check your request/));
   expect(screen.getByRole('button', {name: 'Try again'})).toBeEnabled();
   fireEvent.click(screen.getByRole('button', {name: 'Try again'}));
-  await waitFor(() => expect(screen.getByText(/Request received/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
   expect(mockFetch.mock.calls.filter(([, opts]) => !opts?.method)).toHaveLength(2);
   expect(mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(0);
 });
@@ -283,7 +290,7 @@ test('rechazo permite nueva solicitud con request_id distinto y conserva el fluj
   fireEvent.click(screen.getByRole('button', {name: 'Send a new request'}));
   fillNaples();
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
-  await waitFor(() => expect(screen.getByText(/Request received/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
   const posts = mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST').map(([, opts]) => JSON.parse(opts.body).request_id);
   expect(posts).toHaveLength(1);
   expect(posts[0]).not.toBe('req-rechazado-01');
@@ -306,7 +313,7 @@ test('reintento tras error de red reutiliza el mismo request_id', async () => {
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/We could not send the request/));
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
-  await waitFor(() => expect(screen.getByText(/Request received/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
   expect(sent).toHaveLength(2);
   expect(sent[0]).toBe(sent[1]);
 });

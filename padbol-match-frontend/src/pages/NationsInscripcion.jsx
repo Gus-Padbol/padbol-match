@@ -48,7 +48,7 @@ const COPY = {
     titleNaples: 'Complete your details for the 5th Nations Cup',
     subtitleNaples: 'Naples · Mostra d’Oltremare · November 20–22, 2026',
     intro: 'Register for the Nations Cup. We review your request before activating your participation.',
-    introNaples: 'Register for the 5th Nations Cup. The organisation reviews your registration before activation.',
+    introNaples: 'Register for the 5th Nations Cup. Your registration is received immediately; your Padbol Match profile remains available while the Nations link and points are reconciled later.',
     verifyEmail: 'Verify your email before sending the request. Check your inbox.',
     signIn: 'Sign in with your verified account to continue.',
     signInCta: 'Sign in',
@@ -69,8 +69,10 @@ const COPY = {
     submit: 'Send request',
     sending: 'Sending…',
     pendingBadge: 'Pending',
+    pendingBadgeNaples: 'Received',
     pending: 'Request received. It is pending review by the organisation.',
-    pendingNoteNaples: 'Activation is not automatic while the organisation reviews your registration.',
+    pendingNaples: 'Registration received. Your Nations link is still pending; this does not activate your Nations participation.',
+    pendingNoteNaples: 'You can use your Padbol Match profile normally. The organisation will reconcile your Nations points and historical record later. You do not need to send the registration again.',
     pendingNote: 'The organisation is reviewing your request. You do not need to send it again.',
     approvedBadge: 'Approved',
     approved: 'Your request was approved. You can open your profile.',
@@ -460,10 +462,11 @@ export default function NationsInscripcion() {
           <section className="nations-status nations-status--pending" role="status">
             <div className="nations-status__head">
               <span className="nations-status__icon nations-status__icon--pending" aria-hidden="true"><NationsIcon name="clock" /></span>
-              <h2>{t.pendingBadge}</h2>
+              <h2>{isNaples2026 ? t.pendingBadgeNaples : t.pendingBadge}</h2>
             </div>
-            <p>{t.pending}</p>
+            <p>{isNaples2026 ? t.pendingNaples : t.pending}</p>
             <p className="nations-status__note">{isNaples2026 ? t.pendingNoteNaples : t.pendingNote}</p>
+            {isNaples2026 ? <Link className="nations-button" to="/mi-perfil">{t.approvedCta}</Link> : null}
           </section>
         ) : statusView === 'approved' ? (
           <section className="nations-status nations-status--approved" role="status">

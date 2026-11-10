@@ -19,6 +19,7 @@ import { supabase } from '../supabaseClient';
 import {
   RESERVA_RETURN_STORAGE_KEY,
   resolvePostLoginNavigatePath,
+  resolveSignUpEmailRedirectPath,
   peekReservaLoginGateMessage,
   safeAdminPathFromLoginRedirect,
   safeCommercialCrmPathFromLoginRedirect,
@@ -499,7 +500,7 @@ export default function AccesoCuenta() {
         kind: 'signUp',
         email: em,
         password,
-        emailRedirectPath: safeFipaDocumentsPathFromLoginRedirect(location.search),
+        emailRedirectPath: resolveSignUpEmailRedirectPath(location.search),
         options: {
           data: signUpMeta,
         },
