@@ -31,6 +31,7 @@ import { PAISES_TELEFONO_PRINCIPALES } from '../constants/paisesTelefono';
 import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import { digitsOnly } from '../utils/authIdentidad';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
+import {applyRequestedEnglishLanguage} from '../utils/loginLanguage';
 import { requestPasswordlessAccess, passwordlessAccessErrorTranslationKey } from '../utils/passwordlessAccess';
 import { assessAgeEligibility } from '../utils/ageEligibility';
 import { resolveRoleAwarePostLoginPath } from '../utils/postLoginDestination';
@@ -153,9 +154,10 @@ function accesoRegFieldStyle(mb = '14px') {
 }
 
 export default function AccesoCuenta() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  useEffect(() => applyRequestedEnglishLanguage(location.search, i18n), [location.search, i18n]);
   const { navDock } = useHubNavLayout();
   const { refreshSession, session, loading } = useAuth();
 

@@ -45,7 +45,10 @@ const COPY = {
     event: 'Nations Cup',
     eyebrow: 'Registration',
     title: 'Complete your details for the Nations Cup',
+    titleNaples: 'Complete your details for the 5th Nations Cup',
+    subtitleNaples: 'Naples · Mostra d’Oltremare · November 20–22, 2026',
     intro: 'Register for the Nations Cup. We review your request before activating your participation.',
+    introNaples: 'Register for the 5th Nations Cup. The organisation reviews your registration before activation.',
     verifyEmail: 'Verify your email before sending the request. Check your inbox.',
     signIn: 'Sign in with your verified account to continue.',
     signInCta: 'Sign in',
@@ -57,10 +60,17 @@ const COPY = {
     unknown: 'Prefer not to say',
     guardian: 'I declare I am the responsible adult for the minor and authorise participation.',
     consent: 'I authorise the use of my data to review this registration.',
+    consentNaples: 'I agree to the use of my name, country, age confirmation and account details to process my Nations Cup registration.',
+    adultConfirm: 'I confirm that I am 18 or older',
+    requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
+    adultOnlyError: 'Only players aged 18 or older can register for this event.',
+    submitNaples: 'Submit registration',
+    sendingNaples: 'Submitting…',
     submit: 'Send request',
     sending: 'Sending…',
     pendingBadge: 'Pending',
     pending: 'Request received. It is pending review by the organisation.',
+    pendingNoteNaples: 'Activation is not automatic while the organisation reviews your registration.',
     pendingNote: 'The organisation is reviewing your request. You do not need to send it again.',
     approvedBadge: 'Approved',
     approved: 'Your request was approved. You can open your profile.',
@@ -223,9 +233,15 @@ export default function NationsInscripcion() {
   const {slug = ''} = useParams();
   const {session, loading} = useAuth();
   const {i18n} = useSafeTranslation();
-  const lang = (i18n?.language || 'es').slice(0, 2);
+  const isNaples2026 = slug === NAPOLI_2026_SLUG;
+  const lang = isNaples2026 ? 'en' : (i18n?.language || 'es').slice(0, 2);
   const t = COPY[lang] || COPY.es;
   const actorId = session?.user?.id || null;
+  const title = isNaples2026 ? t.titleNaples : t.title;
+  const intro = isNaples2026 ? t.introNaples : t.intro;
+  const consentCopy = isNaples2026 ? t.consentNaples : t.consent;
+  const submitLabel = isNaples2026 ? t.submitNaples : t.submit;
+  const sendingLabel = isNaples2026 ? t.sendingNaples : t.sending;
   const countryOptions = slug === NAPOLI_2026_SLUG
     ? NAPOLI_2026_COUNTRIES.map(({code, flag, names}) => [code, `${flag} ${names[lang] || names.es}`.trim()])
     : COUNTRIES;
@@ -238,6 +254,7 @@ export default function NationsInscripcion() {
   const [country, setCountry] = useState('');
   const [age, setAge] = useState('desconocido');
   const [guardianConsent, setGuardianConsent] = useState(false);
+  const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
@@ -270,7 +287,7 @@ export default function NationsInscripcion() {
     epoch.current += 1;
     sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
-    setGuardianConsent(false); setConsent(false); setSending(false);
+    setGuardianConsent(false); setAdultConfirmed(false); setConsent(false); setSending(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
@@ -313,9 +330,13 @@ export default function NationsInscripcion() {
     if (sending || sendingRef.current || !idActual || restoring) return;
     setError(null);
     setRestoreError(false);
-    if (!name.trim() || !country) { setError(t.required); return; }
-    if (age === 'menor' && !guardianConsent) { setError(t.required); return; }
-    if (!consent) { setError(t.required); return; }
+    if (!name.trim() || !country) { setError(isNaples2026 ? t.requiredNaples : t.required); return; }
+    if (isNaples2026) {
+      if (!adultConfirmed) { setError(t.requiredNaples); return; }
+    } else if (age === 'menor' && !guardianConsent) {
+      setError(t.required); return;
+    }
+    if (!consent) { setError(isNaples2026 ? t.requiredNaples : t.required); return; }
     sendingRef.current = true;
     setSending(true);
     const ticket = epoch.current;
@@ -327,8 +348,8 @@ export default function NationsInscripcion() {
           request_id: idActual,
           declared_name: name.trim(),
           declared_country: country,
-          age_status: age,
-          guardian_consent: age === 'menor' ? guardianConsent : false,
+          age_status: isNaples2026 ? 'adulto' : age,
+          guardian_consent: isNaples2026 ? false : (age === 'menor' ? guardianConsent : false),
           profile_consent: consent,
         }),
       });
@@ -336,7 +357,7 @@ export default function NationsInscripcion() {
       const body = await res.json().catch(() => null);
       if (ticket !== epoch.current) return;
       if (res.status === 409) { setError(t.conflict); return; }
-      if (!res.ok) { setError(t.error); return; }
+      if (!res.ok) { setError(isNaples2026 && body?.code === 'ADULT_ONLY' ? t.adultOnlyError : t.error); return; }
       setStatus(body?.status || 'pendiente');
     } catch {
       if (ticket === epoch.current) setError(t.error);
@@ -383,9 +404,10 @@ export default function NationsInscripcion() {
       <NationsPageShell eventLabel={t.event}>
         <section className="nations-card nations-card--center" aria-labelledby="nations-title">
           <span className="nations-icon-badge" aria-hidden="true"><NationsIcon name="lock" /></span>
-          <h1 className="nations-title" id="nations-title">{t.title}</h1>
+          <h1 className="nations-title" id="nations-title">{title}</h1>
+          {isNaples2026 ? <p className="nations-intro">{t.subtitleNaples}</p> : null}
           <p className="nations-intro">{t.signIn}</p>
-          <Link className="nations-button" to={`/login?redirect=${back}`}>{t.signInCta}</Link>
+          <Link className="nations-button" to={isNaples2026 ? `/login?redirect=${back}&lang=en` : `/login?redirect=${back}`}>{t.signInCta}</Link>
         </section>
       </NationsPageShell>
     );
@@ -404,8 +426,9 @@ export default function NationsInscripcion() {
     <NationsPageShell eventLabel={t.event}>
       <section className="nations-card" aria-labelledby="nations-title">
         <span className="nations-eyebrow">{t.eyebrow}</span>
-        <h1 className="nations-title" id="nations-title">{t.title}</h1>
-        <p className="nations-intro">{t.intro}</p>
+        <h1 className="nations-title" id="nations-title">{title}</h1>
+        {isNaples2026 ? <p className="nations-intro nations-subtitle">{t.subtitleNaples}</p> : null}
+        <p className="nations-intro">{intro}</p>
 
         <div className="nations-alerts">
           {!emailVerified ? (
@@ -440,7 +463,7 @@ export default function NationsInscripcion() {
               <h2>{t.pendingBadge}</h2>
             </div>
             <p>{t.pending}</p>
-            <p className="nations-status__note">{t.pendingNote}</p>
+            <p className="nations-status__note">{isNaples2026 ? t.pendingNoteNaples : t.pendingNote}</p>
           </section>
         ) : statusView === 'approved' ? (
           <section className="nations-status nations-status--approved" role="status">
@@ -499,33 +522,43 @@ export default function NationsInscripcion() {
               </div>
             </div>
 
-            <fieldset className="nations-fieldset">
-              <legend className="nations-label">{t.age}</legend>
-              <div className="nations-options">
-                {[['adulto', t.adult], ['menor', t.minor], ['desconocido', t.unknown]].map(([value, label]) => (
-                  <label className="nations-option" key={value}>
-                    <input type="radio" name="age" value={value} checked={age === value} onChange={() => setAge(value)} />
-                    <span className="nations-option__surface">
-                      <span className="nations-option__dot" aria-hidden="true" />
-                      <span className="nations-option__text">{label}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            {age === 'menor' ? (
-              <label className="nations-check nations-check--guardian">
-                <input type="checkbox" checked={guardianConsent} onChange={(e) => setGuardianConsent(e.target.checked)} />
+            {isNaples2026 ? (
+              <label className="nations-check">
+                <input type="checkbox" checked={adultConfirmed} onChange={(e) => setAdultConfirmed(e.target.checked)} />
                 <span className="nations-check__box" aria-hidden="true" />
-                <span className="nations-check__text">{t.guardian}</span>
+                <span className="nations-check__text">{t.adultConfirm}</span>
               </label>
-            ) : null}
+            ) : (
+              <>
+                <fieldset className="nations-fieldset">
+                  <legend className="nations-label">{t.age}</legend>
+                  <div className="nations-options">
+                    {[['adulto', t.adult], ['menor', t.minor], ['desconocido', t.unknown]].map(([value, label]) => (
+                      <label className="nations-option" key={value}>
+                        <input type="radio" name="age" value={value} checked={age === value} onChange={() => setAge(value)} />
+                        <span className="nations-option__surface">
+                          <span className="nations-option__dot" aria-hidden="true" />
+                          <span className="nations-option__text">{label}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                {age === 'menor' ? (
+                  <label className="nations-check nations-check--guardian">
+                    <input type="checkbox" checked={guardianConsent} onChange={(e) => setGuardianConsent(e.target.checked)} />
+                    <span className="nations-check__box" aria-hidden="true" />
+                    <span className="nations-check__text">{t.guardian}</span>
+                  </label>
+                ) : null}
+              </>
+            )}
 
             <label className="nations-check">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
               <span className="nations-check__box" aria-hidden="true" />
-              <span className="nations-check__text">{t.consent}</span>
+              <span className="nations-check__text">{consentCopy}</span>
             </label>
 
             <button
@@ -536,11 +569,11 @@ export default function NationsInscripcion() {
               {sending ? (
                 <>
                   <span className="nations-spinner nations-spinner--button" aria-hidden="true" />
-                  {t.sending}
+                  {sendingLabel}
                 </>
               ) : (
                 <>
-                  {t.submit}
+                  {submitLabel}
                   <span className="nations-button__arrow" aria-hidden="true"><NationsIcon name="arrow" /></span>
                 </>
               )}

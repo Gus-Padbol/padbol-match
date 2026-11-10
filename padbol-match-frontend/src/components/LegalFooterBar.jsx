@@ -19,6 +19,9 @@ export default function LegalFooterBar() {
   const { navDock } = useHubNavLayout();
   const { t } = useTranslation();
   if (!isLegalFooterGlobalBarVisiblePathname(pathname)) return null;
+  const isNaplesEnglish = String(pathname || '').replace(/\/+$/, '') === '/nations-cup/nations-cup-napoli-2026/inscripcion';
+  const copy = (key, english) => (isNaplesEnglish ? english : t(key));
+  const deletionLabel = isNaplesEnglish ? 'Delete your account' : t('accountDeletion.title');
 
   const linkColor =
     theme === 'dark' ? '#cbd5e1' : '#475569';
@@ -58,23 +61,23 @@ export default function LegalFooterBar() {
   return (
     <footer role="contentinfo" style={footerStyle}>
       <nav
-        aria-label={t('legal.terminos')}
+        aria-label={copy('legal.terminos', 'Terms and Conditions')}
         style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '14px' }}
       >
         <Link to="/terminos" style={linkBase}>
-          {t('legal.terminos')}
+          {copy('legal.terminos', 'Terms and Conditions')}
         </Link>
         <Link to="/privacidad" style={linkBase}>
-          {t('legal.privacidad')}
+          {copy('legal.privacidad', 'Privacy Policy')}
         </Link>
         <Link to="/eliminar-cuenta" style={linkBase}>
-          {t('accountDeletion.title')}
+          {deletionLabel}
         </Link>
       </nav>
       <p style={companyStyle}>
         © 2026 Padbol.{' '}
         <a href="https://padbol.com/company" style={linkBase}>
-          {t('publicSite.footer.legalOwner')}
+          {copy('publicSite.footer.legalOwner', 'Operated by ENTERTAINMENT SPORT SERVICE LLC.')}
         </a>
       </p>
     </footer>
