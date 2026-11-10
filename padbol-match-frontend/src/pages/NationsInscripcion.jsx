@@ -650,12 +650,7 @@ export default function NationsInscripcion() {
                       className="nations-select"
                       id="nations-selector-name"
                       value={selected?.selectionId || ''}
-                      onChange={(e) => {
-                        const found = selector.find((p) => p.selectionId === e.target.value) || null;
-                        setSelected(found);
-                        if (found) { setName(found.name); setCountry(found.country); } else { setName(''); setCountry(''); }
-                        setReported(false); setReportError(false); setReporting(false); reportToken.current = '';
-                      }}
+                      onChange={(e) => chooseSelection(e.target.value)}
                       disabled={selectorLoading || selectorError}
                     >
                       <option value="">{t.selectorPlaceholder}</option>

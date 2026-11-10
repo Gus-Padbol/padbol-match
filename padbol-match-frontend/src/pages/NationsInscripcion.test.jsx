@@ -314,6 +314,36 @@ test('permite ver y seleccionar el nombre antes del login y lo restaura al volve
   expect(JSON.parse(post[1].body).selection_id).toBe(selectionId);
 });
 
+test('selector autenticado persiste A→B y el vacío borra la selección al remontar', async () => {
+  const a = '1'.repeat(32);
+  const b = '2'.repeat(32);
+  mockFetch.mockImplementation(async (url) => {
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId: a, name: 'Player A', country: 'IT'}, {selectionId: b, name: 'Player B', country: 'IT'}]})};
+    return emptyProfile;
+  });
+  const view = mount();
+  await waitReady();
+  await waitFor(() => expect(screen.getByLabelText('Select your name')).toBeEnabled());
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: a}});
+  expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toContain(a);
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: b}});
+  expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toContain(b);
+  view.unmount();
+
+  const remounted = mount();
+  await waitReady();
+  await waitFor(() => expect(screen.getByLabelText('Select your name')).toHaveValue(b));
+  expect(screen.getByLabelText('Full name')).toHaveValue('Player B');
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toBeNull();
+  remounted.unmount();
+
+  mount();
+  await waitReady();
+  await waitFor(() => expect(screen.getByLabelText('Select your name')).toHaveValue(''));
+  expect(screen.getByLabelText('Full name')).toHaveValue('');
+});
+
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {
   mockFetch.mockImplementation(async (url, opts) => {
     if (String(url).includes('/selector')) return emptySelector;
