@@ -230,10 +230,14 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
     expect(document.querySelector('#nosotros')).toBeTruthy();
     expect(document.querySelector('#descargar')).toBeTruthy();
-    expect(screen.getByText('App Store').closest('a')).toBeNull();
-    expect(screen.getByText('Google Play').closest('a')).toBeNull();
-    expect(screen.getAllByText('Aún no disponible en tiendas').length).toBeGreaterThanOrEqual(2);
-    expect(document.body.textContent).toMatch(/próximamente/i);
+    const appStore = screen.getByText('App Store').closest('a');
+    const googlePlay = screen.getByText('Google Play').closest('a');
+    expect(appStore).toHaveAttribute('href', 'https://apps.apple.com/app/id6814243035');
+    expect(googlePlay).toHaveAttribute('href', 'https://play.google.com/store/apps/details?id=com.padbolmatch.app');
+    expect(appStore).toHaveAttribute('target', '_blank');
+    expect(googlePlay).toHaveAttribute('target', '_blank');
+    expect(appStore).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(googlePlay).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('explica el recorrido reconocido y el marcador inteligente', () => {

@@ -20,7 +20,7 @@ export default function DownloadSection() {
         <div className="ps-store-list" data-ps-reveal>
           {config.stores.map(({ key, url }) => (
             url ? (
-              <a className="ps-store" href={url} key={key} rel="noreferrer">
+              <a className="ps-store" href={url} key={key} target="_blank" rel="noopener noreferrer">
                 <strong>{text(`publicSite.download.${key}`)}</strong>
               </a>
             ) : (

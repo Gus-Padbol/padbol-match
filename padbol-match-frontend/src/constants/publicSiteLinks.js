@@ -1,6 +1,6 @@
 /**
  * Enlaces y anchors de la web pública (`/plataforma`).
- * App Store / Google Play: sin URLs aprobadas → UI no activa.
+ * App Store / Google Play: URLs oficiales verificadas desde padbol.com.
  */
 
 export const PUBLIC_SITE_PATH = '/plataforma';
@@ -33,6 +33,6 @@ export const PUBLIC_SITE_ANCHORS = {
 
 /** Stores: null = no presentar como enlace activo. */
 export const PUBLIC_SITE_STORE_LINKS = {
-  appStore: null,
-  googlePlay: null,
+  appStore: 'https://apps.apple.com/app/id6814243035',
+  googlePlay: 'https://play.google.com/store/apps/details?id=com.padbolmatch.app',
 };

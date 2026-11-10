@@ -20,14 +20,14 @@ describe('publicSite links + shell isolation', () => {
     expect(PUBLIC_SITE_CTA.login).toBe('/acceso');
   });
 
-  it('define anchors futuros sin stores aprobados', () => {
+  it('define anchors y enlaces oficiales de tiendas', () => {
     expect(PUBLIC_SITE_ANCHORS.platform).toBe('#que-es');
     expect(PUBLIC_SITE_ANCHORS.players).toBe('#jugadores');
     expect(PUBLIC_SITE_ANCHORS.community).toBe('#comunidad-partidos');
     expect(PUBLIC_SITE_ANCHORS.venues).toBe('#sedes');
     expect(PUBLIC_SITE_ANCHORS.download).toBe('#descargar');
-    expect(PUBLIC_SITE_STORE_LINKS.appStore).toBeNull();
-    expect(PUBLIC_SITE_STORE_LINKS.googlePlay).toBeNull();
+    expect(PUBLIC_SITE_STORE_LINKS.appStore).toBe('https://apps.apple.com/app/id6814243035');
+    expect(PUBLIC_SITE_STORE_LINKS.googlePlay).toBe('https://play.google.com/store/apps/details?id=com.padbolmatch.app');
   });
 
   it('oculta BottomNav y pie legal global en /plataforma', () => {
