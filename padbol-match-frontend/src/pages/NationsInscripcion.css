@@ -949,3 +949,14 @@ html.theme-dark .nations-status__icon--approved {
     animation: none;
   }
 }
+
+/* Selector declarativo Napoli: nombres adultos, sin cuentas ni historial. */
+.nations-selector {
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-page);
+}
+.nations-selector .nations-field:last-of-type { margin-bottom: 8px; }
+.nations-selector .nations-status__note { margin-top: 8px; }

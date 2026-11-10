@@ -62,6 +62,24 @@ const COPY = {
     consent: 'I authorise the use of my data to review this registration.',
     consentNaples: 'I agree to the use of my name, country, age confirmation and account details to process my Nations Cup registration.',
     adultConfirm: 'I confirm that I am 18 or older',
+    selectorTitle: 'Find your name on the list',
+    selectorCountry: 'Filter by country',
+    selectorAllCountries: 'All countries',
+    selectorName: 'Select your name',
+    selectorPlaceholder: 'Choose your name',
+    selectorSelected: 'Selected',
+    selectorLoading: 'Loading the list of adult players...',
+    selectorError: 'We could not load the player list. Try again.',
+    selectorEmpty: 'No players are available in this list. Contact the organisation.',
+    selectorRequired: 'Select your name from the list before submitting.',
+    selectorReport: 'Report duplicate',
+    selectorReported: 'Report received. The organisation will review it.',
+    selectorReportError: 'We could not send the report. Try again.',
+    selectorReportRetry: 'Retry report',
+    selectorFallback: 'The list is not available right now. You can complete your name and country; the registration will stay pending for reconciliation. Do not use another person\'s data.',
+    selectorPublicNote: 'Names and countries only. Select your name, then sign in to complete the registration. Selecting does not claim an account or transfer any profile.',
+    selectorConflict: 'This name has more than one declaration. The organisation will reconcile it; no account or linked profile is assigned.',
+    selectorNote: 'The event is 18+. This list shows name and country only and excludes registered minors; age-unverified entries are not treated as verified adults. Selecting your name does not link this account or give access to another player\'s profile, history or points.',
     requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
     adultOnlyError: 'Only players aged 18 or older can register for this event.',
     submitNaples: 'Submit registration',
@@ -257,6 +275,18 @@ export default function NationsInscripcion() {
   const [age, setAge] = useState('desconocido');
   const [guardianConsent, setGuardianConsent] = useState(false);
   const [adultConfirmed, setAdultConfirmed] = useState(false);
+  const [selector, setSelector] = useState([]);
+  const [selectorLoading, setSelectorLoading] = useState(false);
+  const [selectorError, setSelectorError] = useState(false);
+  const [selectorAttempt, setSelectorAttempt] = useState(0);
+  const [selectorCountry, setSelectorCountry] = useState('');
+  const [selected, setSelected] = useState(null);
+  const [selectionStatus, setSelectionStatus] = useState(null);
+  const [reported, setReported] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const [reportError, setReportError] = useState(false);
+  const reportToken = useRef('');
+  const reportSeq = useRef(0);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
@@ -290,11 +320,62 @@ export default function NationsInscripcion() {
     sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setAdultConfirmed(false); setConsent(false); setSending(false);
+    setSelected(null); setSelectionStatus(null); setSelectorCountry(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
   const token = session?.access_token || null;
   const emailVerified = Boolean(session?.user?.email_confirmed_at || session?.user?.confirmed_at);
+  const selectorStorageKey = isNaples2026 && slug ? `nationsSelector:${slug}` : null;
+
+  const persistSelection = (participant) => {
+    if (!selectorStorageKey) return;
+    try {
+      if (participant) sessionStorage.setItem(selectorStorageKey, JSON.stringify(participant));
+      else sessionStorage.removeItem(selectorStorageKey);
+    } catch { /* ignore */ }
+  };
+
+  const chooseSelection = (selectionId) => {
+    const found = selector.find((p) => p.selectionId === selectionId) || null;
+    setSelected(found);
+    if (found) { setName(found.name); setCountry(found.country); } else { setName(''); setCountry(''); }
+    setReported(false); setReportError(false); setReporting(false); reportToken.current = '';
+    persistSelection(found);
+  };
+
+  // La selección local pre-login no es un claim: se restaura al volver del login y el backend la valida al enviar.
+  useEffect(() => {
+    if (!selectorStorageKey) return;
+    try {
+      const raw = sessionStorage.getItem(selectorStorageKey);
+      if (!raw) return;
+      const stored = JSON.parse(raw);
+      if (stored?.selectionId) {
+        setSelected(stored);
+        setName(stored.name || '');
+        setCountry(stored.country || '');
+      }
+    } catch { /* ignore */ }
+  }, [selectorStorageKey, actorId]);
+
+  useEffect(() => {
+    if (!isNaples2026) { setSelector([]); return undefined; }
+    let cancelled = false;
+    setSelectorLoading(true);
+    setSelectorError(false);
+    fetch(`${apiBase}/api/nations-activation/events/${encodeURIComponent(slug)}/selector`, {
+      headers: token ? {Authorization: `Bearer ${token}`} : {},
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('SELECTOR_UNAVAILABLE');
+        const body = await res.json().catch(() => null);
+        if (!cancelled) setSelector(Array.isArray(body?.participants) ? body.participants : []);
+      })
+      .catch(() => { if (!cancelled) setSelectorError(true); })
+      .finally(() => { if (!cancelled) setSelectorLoading(false); });
+    return () => { cancelled = true; };
+  }, [isNaples2026, apiBase, slug, token, selectorAttempt]);
 
   const loadStatus = useCallback(async () => {
     if (!actorId || !slug) return;
@@ -316,7 +397,7 @@ export default function NationsInscripcion() {
       const body = await res.json().catch(() => null);
       if (ticket !== epoch.current) return;
       const latest = Array.isArray(body?.requests) ? body.requests[0] : null;
-      if (latest && !ignoreServerStatus) { setStatus(latest.status); if (latest.age_status) setAge(latest.age_status); }
+      if (latest && !ignoreServerStatus) { setStatus(latest.status); setSelectionStatus(latest.selection_status || null); if (latest.age_status) setAge(latest.age_status); }
     } catch {
       if (ticket === epoch.current) setRestoreError(true);
     } finally {
@@ -332,6 +413,7 @@ export default function NationsInscripcion() {
     if (sending || sendingRef.current || !idActual || restoring) return;
     setError(null);
     setRestoreError(false);
+    if (isNaples2026 && selector.length > 0 && !selected) { setError(t.selectorRequired); return; }
     if (!name.trim() || !country) { setError(isNaples2026 ? t.requiredNaples : t.required); return; }
     if (isNaples2026) {
       if (!adultConfirmed) { setError(t.requiredNaples); return; }
@@ -353,6 +435,7 @@ export default function NationsInscripcion() {
           age_status: isNaples2026 ? 'adulto' : age,
           guardian_consent: isNaples2026 ? false : (age === 'menor' ? guardianConsent : false),
           profile_consent: consent,
+          ...(isNaples2026 && selected ? {selection_id: selected.selectionId} : {}),
         }),
       });
       if (ticket !== epoch.current) return;
@@ -361,6 +444,8 @@ export default function NationsInscripcion() {
       if (res.status === 409) { setError(t.conflict); return; }
       if (!res.ok) { setError(isNaples2026 && body?.code === 'ADULT_ONLY' ? t.adultOnlyError : t.error); return; }
       setStatus(body?.status || 'pendiente');
+      setSelectionStatus(body?.selectionStatus || null);
+      if (isNaples2026) persistSelection(null);
     } catch {
       if (ticket === epoch.current) setError(t.error);
     } finally {
@@ -408,6 +493,36 @@ export default function NationsInscripcion() {
           <span className="nations-icon-badge" aria-hidden="true"><NationsIcon name="lock" /></span>
           <h1 className="nations-title" id="nations-title">{title}</h1>
           {isNaples2026 ? <p className="nations-intro">{t.subtitleNaples}</p> : null}
+          {isNaples2026 ? (
+            <section className="nations-selector" aria-labelledby="nations-public-selector-title">
+              <h2 className="nations-label" id="nations-public-selector-title">{t.selectorTitle}</h2>
+              <p className="nations-status__note">{t.selectorPublicNote}</p>
+              {selectorError ? <p role="alert">{t.selectorError}</p> : null}
+              {selectorLoading ? <p role="status">{t.selectorLoading}</p> : null}
+              {!selectorLoading && !selectorError && !selector.length ? <p role="status">{t.selectorEmpty}</p> : null}
+              <div className="nations-field">
+                <label className="nations-label" htmlFor="nations-public-selector-country">{t.selectorCountry}</label>
+                <div className="nations-select-wrap">
+                  <select className="nations-select" id="nations-public-selector-country" value={selectorCountry} onChange={(e) => { setSelectorCountry(e.target.value); chooseSelection(''); }}>
+                    <option value="">{t.selectorAllCountries}</option>
+                    {countryOptions.filter(([code]) => selector.some((p) => p.country === code)).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                  </select>
+                  <span className="nations-select__chevron" aria-hidden="true" />
+                </div>
+              </div>
+              <div className="nations-field">
+                <label className="nations-label" htmlFor="nations-public-selector-name">{t.selectorName}</label>
+                <div className="nations-select-wrap">
+                  <select className="nations-select" id="nations-public-selector-name" value={selected?.selectionId || ''} onChange={(e) => chooseSelection(e.target.value)} disabled={selectorLoading || selectorError}>
+                    <option value="">{t.selectorPlaceholder}</option>
+                    {selector.filter((p) => !selectorCountry || p.country === selectorCountry).map((p) => <option key={p.selectionId} value={p.selectionId}>{p.name} · {p.country}</option>)}
+                  </select>
+                  <span className="nations-select__chevron" aria-hidden="true" />
+                </div>
+              </div>
+              {selected ? <p role="status"><strong>{t.selectorSelected}:</strong> {selected.name} · {selected.country}</p> : null}
+            </section>
+          ) : null}
           <p className="nations-intro">{t.signIn}</p>
           <Link className="nations-button" to={isNaples2026 ? `/login?redirect=${back}&lang=en` : `/login?redirect=${back}`}>{t.signInCta}</Link>
         </section>
@@ -466,6 +581,12 @@ export default function NationsInscripcion() {
             </div>
             <p>{isNaples2026 ? t.pendingNaples : t.pending}</p>
             <p className="nations-status__note">{isNaples2026 ? t.pendingNoteNaples : t.pendingNote}</p>
+            {isNaples2026 && selectionStatus === 'en_conflicto' ? (
+              <div className="nations-alert nations-alert--warning" role="status">
+                <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+                <p>{t.selectorConflict}</p>
+              </div>
+            ) : null}
             {isNaples2026 ? <Link className="nations-button" to="/mi-perfil">{t.approvedCta}</Link> : null}
           </section>
         ) : statusView === 'approved' ? (
@@ -497,33 +618,107 @@ export default function NationsInscripcion() {
               </div>
             ) : null}
 
-            <div className="nations-field">
-              <label className="nations-label" htmlFor="nations-name">{t.name}</label>
-              <input
-                className="nations-input"
-                id="nations-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-                maxLength={100}
-              />
-            </div>
+            {isNaples2026 ? (
+              <section className="nations-selector" aria-labelledby="nations-selector-title">
+                <h2 className="nations-label" id="nations-selector-title">{t.selectorTitle}</h2>
+                <p className="nations-status__note">{t.selectorNote}</p>
+                {selectorError ? (
+                  <div className="nations-alert nations-alert--error" role="alert">
+                    <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+                    <div className="nations-alert__body">
+                      <p>{t.selectorError}</p>
+                      <button className="nations-text-button" type="button" onClick={() => setSelectorAttempt((n) => n + 1)}>{t.retry}</button>
+                    </div>
+                  </div>
+                ) : null}
+                {selectorLoading ? <p role="status">{t.selectorLoading}</p> : null}
+                {!selectorLoading && !selectorError && !selector.length ? (<><p role="status">{t.selectorEmpty}</p><p className="nations-status__note">{t.selectorFallback}</p></>) : null}
+                <div className="nations-field">
+                  <label className="nations-label" htmlFor="nations-selector-country">{t.selectorCountry}</label>
+                  <div className="nations-select-wrap">
+                    <select className="nations-select" id="nations-selector-country" value={selectorCountry} onChange={(e) => { setSelectorCountry(e.target.value); chooseSelection(''); }}>
+                      <option value="">{t.selectorAllCountries}</option>
+                      {countryOptions.filter(([code]) => selector.some((p) => p.country === code)).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                    </select>
+                    <span className="nations-select__chevron" aria-hidden="true" />
+                  </div>
+                </div>
+                <div className="nations-field">
+                  <label className="nations-label" htmlFor="nations-selector-name">{t.selectorName}</label>
+                  <div className="nations-select-wrap">
+                    <select
+                      className="nations-select"
+                      id="nations-selector-name"
+                      value={selected?.selectionId || ''}
+                      onChange={(e) => {
+                        const found = selector.find((p) => p.selectionId === e.target.value) || null;
+                        setSelected(found);
+                        if (found) { setName(found.name); setCountry(found.country); } else { setName(''); setCountry(''); }
+                        setReported(false); setReportError(false); setReporting(false); reportToken.current = '';
+                      }}
+                      disabled={selectorLoading || selectorError}
+                    >
+                      <option value="">{t.selectorPlaceholder}</option>
+                      {selector.filter((p) => !selectorCountry || p.country === selectorCountry).map((p) => (
+                        <option key={p.selectionId} value={p.selectionId}>{p.name} · {p.country}</option>
+                      ))}
+                    </select>
+                    <span className="nations-select__chevron" aria-hidden="true" />
+                  </div>
+                </div>
+                {selected ? (
+                  <div className="nations-status__note" role="status">
+                    <strong>{t.selectorSelected}:</strong> {selected.name} · {selected.country}
+                    <button
+                      className="nations-text-button"
+                      type="button"
+                      disabled={reported || reporting}
+                      onClick={async () => {
+                        if (reporting || !selected) return;
+                        const tokenForReport = `${actorId}:${slug}:${selected.selectionId}:${++reportSeq.current}`;
+                        reportToken.current = tokenForReport;
+                        setReporting(true); setReportError(false);
+                        try {
+                          const res = await fetch(`${apiBase}/api/nations-activation/events/${encodeURIComponent(slug)}/selector/report`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {})},
+                            body: JSON.stringify({selection_id: selected.selectionId}),
+                          });
+                          if (reportToken.current === tokenForReport) {
+                            if (res.ok) setReported(true);
+                            else setReportError(true);
+                          }
+                        } catch {
+                          if (reportToken.current === tokenForReport) setReportError(true);
+                        } finally {
+                          if (reportToken.current === tokenForReport) setReporting(false);
+                        }
+                      }}
+                    >
+                      {reported ? t.selectorReported : reportError ? t.selectorReportRetry : reporting ? t.sendingNaples : t.selectorReport}
+                    </button>
+                    {reportError ? <span role="alert">{t.selectorReportError}</span> : null}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
 
-            <div className="nations-field">
-              <label className="nations-label" htmlFor="nations-country">{t.country}</label>
-              <div className="nations-select-wrap">
-                <select
-                  className="nations-select"
-                  id="nations-country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                >
-                  <option value="">{t.countryList}</option>
-                  {countryOptions.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
-                </select>
-                <span className="nations-select__chevron" aria-hidden="true" />
-              </div>
-            </div>
+            <>
+                <div className="nations-field">
+                  <label className="nations-label" htmlFor="nations-name">{t.name}</label>
+                  <input className="nations-input" id="nations-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={100} readOnly={isNaples2026 && selector.length > 0} />
+                </div>
+                <div className="nations-field">
+                  <label className="nations-label" htmlFor="nations-country">{t.country}</label>
+                  <div className="nations-select-wrap">
+                    <select className="nations-select" id="nations-country" value={country} onChange={(e) => setCountry(e.target.value)} disabled={isNaples2026 && selector.length > 0}>
+                      <option value="">{t.countryList}</option>
+                      {countryOptions.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                    </select>
+                    <span className="nations-select__chevron" aria-hidden="true" />
+                  </div>
+                </div>
+            </>
 
             {isNaples2026 ? (
               <label className="nations-check">
@@ -567,7 +762,7 @@ export default function NationsInscripcion() {
             <button
               className="nations-button"
               type="submit"
-              disabled={sending || restoring || !emailVerified}
+              disabled={sending || restoring || !emailVerified || (isNaples2026 && selectorLoading)}
             >
               {sending ? (
                 <>

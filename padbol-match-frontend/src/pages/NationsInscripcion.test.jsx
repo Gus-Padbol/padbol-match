@@ -23,6 +23,8 @@ const mount = (slug = 'nations-cup-napoli-2026') => render(appTree(slug));
 const waitReady = async (buttonName = 'Submit registration') => {
   await waitFor(() => expect(screen.getByRole('button', {name: buttonName})).toBeEnabled());
 };
+const emptySelector = {ok: true, status: 200, json: async () => ({ok: true, participants: []})};
+const emptyProfile = {ok: true, status: 200, json: async () => ({ok: true, requests: []})};
 const fillNaples = () => {
   fireEvent.change(screen.getByLabelText('Full name'), {target: {value: 'Synthetic Player'}});
   fireEvent.change(screen.getByLabelText('Country'), {target: {value: 'IT'}});
@@ -112,9 +114,11 @@ test('exige confirmar 18+ y consentimiento; no envía sin ambos', async () => {
 });
 
 test('envía age_status adulto, booleanos seguros y muestra recibida con acceso al perfil sin prometer activación', async () => {
-  mockFetch
-    .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: []})})
-    .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})});
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return emptySelector;
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})};
+    return emptyProfile;
+  });
   mount();
   await waitReady();
   fillNaples();
@@ -140,10 +144,182 @@ test('envía age_status adulto, booleanos seguros y muestra recibida con acceso 
   expect(document.body.textContent).not.toMatch(/activated automatically by name and country|match found/i);
 });
 
+test('selector de nombres envía id opaco, permite reportar duplicado y no expone cuenta', async () => {
+  const selectionId = 'a'.repeat(32);
+  const seen = [];
+  mockFetch.mockImplementation(async (url, opts) => {
+    seen.push(String(url));
+    if (String(url).includes('/selector/report')) return {ok: true, status: 200, json: async () => ({ok: true, reported: true})};
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId, name: 'List Player', country: 'IT'}]})};
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente', selectionStatus: 'declarada'})};
+    return emptyProfile;
+  });
+  mount();
+  await waitReady();
+  expect(screen.getByRole('heading', {name: 'Find your name on the list'})).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Filter by country'), {target: {value: 'IT'}});
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
+  expect(screen.getByLabelText('Full name')).toHaveValue('List Player');
+  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
+  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
+  fireEvent.click(screen.getByRole('button', {name: 'Report duplicate'}));
+  await waitFor(() => expect(screen.getByText(/Report received/)).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
+  const post = mockFetch.mock.calls.find(([url, opts]) => String(url).endsWith('/profile-request') && opts?.method === 'POST');
+  const payload = JSON.parse(post[1].body);
+  expect(payload.selection_id).toBe(selectionId);
+  expect(payload.declared_name).toBe('List Player');
+  expect(payload.declared_country).toBe('IT');
+  expect(payload).not.toHaveProperty('participant_id');
+  expect(payload).not.toHaveProperty('linked_user_id');
+});
+
+test('cambiar país o volver al placeholder limpia la selección y no envía el jugador anterior', async () => {
+  const selectionId = 'b'.repeat(32);
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId, name: 'List Player', country: 'IT'}]})};
+    return opts?.method === 'POST' ? emptyProfile : emptyProfile;
+  });
+  mount();
+  await waitReady();
+  fireEvent.change(screen.getByLabelText('Filter by country'), {target: {value: 'IT'}});
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
+  expect(screen.getByLabelText('Full name')).toHaveValue('List Player');
+  fireEvent.change(screen.getByLabelText('Filter by country'), {target: {value: 'RO'}});
+  expect(screen.getByLabelText('Full name')).toHaveValue('');
+  expect(screen.getByLabelText('Country')).toHaveValue('');
+  expect(screen.queryByText(/Selected:/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
+  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  expect(screen.getByRole('alert')).toHaveTextContent(/Select your name from the list/);
+  expect(mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(0);
+});
+
+test('reporte falla con error visible y permite reintentar; no marca recibido en el primer fallo', async () => {
+  const selectionId = 'c'.repeat(32);
+  let reportCalls = 0;
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector/report')) {
+      reportCalls += 1;
+      return reportCalls === 1 ? {ok: false, status: 500, json: async () => ({})} : {ok: true, status: 200, json: async () => ({ok: true, reported: true})};
+    }
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId, name: 'List Player', country: 'IT'}]})};
+    return emptyProfile;
+  });
+  mount();
+  await waitReady();
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
+  fireEvent.click(screen.getByRole('button', {name: 'Report duplicate'}));
+  await waitFor(() => expect(screen.getByText(/We could not send the report/)).toBeInTheDocument());
+  expect(screen.queryByText(/Report received/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: 'Retry report'}));
+  await waitFor(() => expect(screen.getByText(/Report received/)).toBeInTheDocument());
+  expect(reportCalls).toBe(2);
+});
+
+test('una respuesta vieja de reporte no marca recibido en la cuenta nueva', async () => {
+  const selectionId = 'd'.repeat(32);
+  let resolveReport;
+  mockFetch.mockImplementation(async (url) => {
+    if (String(url).includes('/selector/report')) return new Promise((resolve) => { resolveReport = resolve; });
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId, name: 'List Player', country: 'IT'}]})};
+    return emptyProfile;
+  });
+  const view = mount();
+  await waitReady();
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
+  fireEvent.click(screen.getByRole('button', {name: 'Report duplicate'}));
+  mockUseAuth.mockReturnValue({session: {user: {id: 'actor-2', email_confirmed_at: '2026-01-01'}, access_token: 'tok2'}, loading: false});
+  view.rerender(appTree());
+  await waitReady();
+  await act(async () => {
+    resolveReport({ok: true, status: 200, json: async () => ({ok: true, reported: true})});
+    await Promise.resolve();
+  });
+  expect(screen.queryByText(/Report received/)).not.toBeInTheDocument();
+});
+
+test('muestra conflicto genérico tras submit y al restaurar sin revelar otro actor', async () => {
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return emptySelector;
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente', selectionStatus: 'en_conflicto'})};
+    return emptyProfile;
+  });
+  const view = mount();
+  await waitReady();
+  fillNaples();
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/more than one declaration/)).toBeInTheDocument());
+  expect(screen.getByText(/no account or linked profile/)).toBeInTheDocument();
+  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', '/mi-perfil');
+  view.unmount();
+
+  mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'pendiente', selection_status: 'en_conflicto'}]})});
+  mount();
+  await waitFor(() => expect(screen.getByText(/more than one declaration/)).toBeInTheDocument());
+});
+
+test('cambiar nombre con reporte pendiente resetea reporting y no marca la selección nueva', async () => {
+  const selectionId = 'e'.repeat(32);
+  let resolveReport;
+  mockFetch.mockImplementation(async (url) => {
+    if (String(url).includes('/selector/report')) return new Promise((resolve) => { resolveReport = resolve; });
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId, name: 'List Player', country: 'IT'}]})};
+    return emptyProfile;
+  });
+  mount();
+  await waitReady();
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
+  expect(screen.getByLabelText('Full name')).toHaveAttribute('readonly');
+  expect(screen.getByLabelText('Country')).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', {name: 'Report duplicate'}));
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
+  expect(screen.getByRole('button', {name: 'Report duplicate'})).toBeEnabled();
+  await act(async () => {
+    resolveReport({ok: true, status: 200, json: async () => ({ok: true, reported: true})});
+    await Promise.resolve();
+  });
+  expect(screen.queryByText(/Report received/)).not.toBeInTheDocument();
+});
+
+test('permite ver y seleccionar el nombre antes del login y lo restaura al volver', async () => {
+  const selectionId = 'f'.repeat(32);
+  mockUseAuth.mockReturnValue({session: null, loading: false});
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId, name: 'Pre Login Player', country: 'IT'}]})};
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})};
+    return emptyProfile;
+  });
+  const view = mount();
+  expect(await screen.findByRole('heading', {name: 'Find your name on the list'})).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByLabelText('Select your name')).toBeEnabled());
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
+  expect(screen.getAllByText(/Pre Login Player/).length).toBeGreaterThan(0);
+  expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toContain(selectionId);
+  expect(screen.getByRole('link', {name: 'Sign in'})).toHaveAttribute('href', expect.stringContaining('lang=en'));
+
+  mockUseAuth.mockReturnValue({session: {user: {id: 'new-player', email_confirmed_at: '2026-01-01'}, access_token: 'tok'}, loading: false});
+  view.rerender(appTree());
+  await waitReady();
+  expect(screen.getByLabelText('Full name')).toHaveValue('Pre Login Player');
+  expect(screen.getByLabelText('Select your name')).toHaveValue(selectionId);
+  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
+  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
+  const post = mockFetch.mock.calls.find(([url, opts]) => String(url).endsWith('/profile-request') && opts?.method === 'POST');
+  expect(JSON.parse(post[1].body).selection_id).toBe(selectionId);
+});
+
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {
-  mockFetch
-    .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: []})})
-    .mockResolvedValueOnce({ok: false, status: 400, json: async () => ({code: 'ADULT_ONLY'})});
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return emptySelector;
+    if (opts?.method === 'POST') return {ok: false, status: 400, json: async () => ({code: 'ADULT_ONLY'})};
+    return emptyProfile;
+  });
   mount();
   await waitReady();
   fillNaples();
@@ -209,15 +385,20 @@ test('email no verificado y error de restauración en inglés', async () => {
   first.unmount();
 
   mockUseAuth.mockReturnValue({session: {user: {id: 'actor-4', email_confirmed_at: '2026-01-01'}, access_token: 'tok4'}, loading: false});
-  mockFetch.mockRejectedValueOnce(new Error('network'));
+  mockFetch.mockImplementation(async (url) => {
+    if (String(url).includes('/selector')) return emptySelector;
+    throw new Error('network');
+  });
   mount();
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/We could not check your request/));
 });
 
 test('doble click no duplica el envío y 409 se explica en inglés', async () => {
-  mockFetch
-    .mockResolvedValueOnce({ok: true, status: 200, json: async () => ({ok: true, requests: []})})
-    .mockResolvedValueOnce({ok: false, status: 409, json: async () => ({code: 'REQUEST_CONFLICT'})});
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return emptySelector;
+    if (opts?.method === 'POST') return {ok: false, status: 409, json: async () => ({code: 'REQUEST_CONFLICT'})};
+    return emptyProfile;
+  });
   mount();
   await waitReady();
   fillNaples();
@@ -247,23 +428,35 @@ test('estado de carga de auth se muestra en inglés y sin formulario', () => {
 });
 
 test('503 al restaurar avisa en inglés, reintenta sólo GET y puede recuperar pendiente', async () => {
-  mockFetch
-    .mockResolvedValueOnce({ok: false, status: 503, json: async () => ({})})
-    .mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'pendiente'}]})});
+  let profileGetCalls = 0;
+  mockFetch.mockImplementation(async (url) => {
+    if (String(url).includes('/selector')) return emptySelector;
+    profileGetCalls += 1;
+    if (profileGetCalls === 1) return {ok: false, status: 503, json: async () => ({})};
+    return {ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'pendiente'}]})};
+  });
   mount();
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/We could not check your request/));
   expect(screen.getByRole('button', {name: 'Try again'})).toBeEnabled();
   fireEvent.click(screen.getByRole('button', {name: 'Try again'}));
   await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
-  expect(mockFetch.mock.calls.filter(([, opts]) => !opts?.method)).toHaveLength(2);
+  expect(mockFetch.mock.calls.filter(([url, opts]) => !opts?.method && !String(url).includes('/selector'))).toHaveLength(2);
   expect(mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(0);
 });
 
 test('una respuesta vieja de restauración no pisa el cambio de actor', async () => {
   let resolveOld;
-  mockFetch.mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+  let profileStarted = false;
+  mockFetch.mockImplementation((url) => {
+    if (String(url).includes('/selector')) return Promise.resolve(emptySelector);
+    if (!profileStarted) {
+      profileStarted = true;
+      return new Promise((resolve) => { resolveOld = resolve; });
+    }
+    return Promise.resolve(emptyProfile);
+  });
   const view = mount();
-  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Restoring your request…'));
+  await waitFor(() => expect(screen.getByText('Restoring your request…')).toBeInTheDocument());
   mockUseAuth.mockReturnValue({session: {user: {id: 'actor-2', email_confirmed_at: '2026-01-01'}, access_token: 'tok2'}, loading: false});
   view.rerender(appTree());
   await waitReady();
