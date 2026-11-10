@@ -79,6 +79,19 @@ test('un slug genérico conserva el login en su idioma y sin lang=en', () => {
   expect(link).not.toHaveAttribute('href', expect.stringContaining('lang=en'));
 });
 
+test('recorrido sintético sin cuenta -> login verificado -> solicitud pendiente', async () => {
+  mockUseAuth.mockReturnValue({session: null, loading: false});
+  const view = mount();
+  expect(screen.getByRole('link', {name: 'Sign in'})).toHaveAttribute('href', expect.stringContaining('lang=en'));
+  mockUseAuth.mockReturnValue({session: {user: {id: 'new-player', email_confirmed_at: '2026-01-01'}, access_token: 'tok'}, loading: false});
+  view.rerender(appTree());
+  await waitReady();
+  fillNaples();
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/Request received/)).toBeInTheDocument());
+  expect(screen.queryByText(/approved|activated/i)).not.toBeInTheDocument();
+});
+
 test('exige confirmar 18+ y consentimiento; no envía sin ambos', async () => {
   mount();
   await waitReady();
