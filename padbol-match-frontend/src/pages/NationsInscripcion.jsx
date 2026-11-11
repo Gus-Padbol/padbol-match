@@ -79,7 +79,9 @@ const COPY = {
     selectorFallback: 'No adult-verified names are available. You can submit your name and country for individual age verification; the request stays pending and does not activate participation. Do not use another person\'s data.',
     selectorPublicNote: 'Names and countries only. Select your name, then sign in to complete the registration. Selecting does not claim an account or transfer any profile.',
     selectorConflict: 'This name has more than one declaration. The organisation will reconcile it; no account or linked profile is assigned.',
-    selectorNote: 'The event is 18+. This list shows name and country only for adult-verified participants and excludes unknown ages and registered minors. Selecting your name does not link this account or give access to another player\'s profile, history or points.',
+    verificationPending: 'Registration received. Age verification is pending; your Nations participation is not active yet.',
+    selectorSearch: 'Search by name or country',
+    selectorNote: 'This list shows name and country only, including age-unverified participants. Selecting your name does not link this account or give access to another player\'s profile, history or points; age is verified individually later.',
     requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
     adultOnlyError: 'Only players aged 18 or older can register for this event.',
     submitNaples: 'Submit registration',
@@ -281,6 +283,7 @@ export default function NationsInscripcion() {
   const [selectorAttempt, setSelectorAttempt] = useState(0);
   const [selectorReady, setSelectorReady] = useState(false);
   const [selectorCountry, setSelectorCountry] = useState('');
+  const [selectorQuery, setSelectorQuery] = useState('');
   const [selected, setSelected] = useState(null);
   const [selectionStatus, setSelectionStatus] = useState(null);
   const [reported, setReported] = useState(false);
@@ -321,7 +324,7 @@ export default function NationsInscripcion() {
     sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setAdultConfirmed(false); setConsent(false); setSending(false);
-    setSelected(null); setSelectionStatus(null); setSelectorReady(false); setSelectorCountry(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
+    setSelected(null); setSelectionStatus(null); setSelectorReady(false); setSelectorCountry(''); setSelectorQuery(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
@@ -335,6 +338,15 @@ export default function NationsInscripcion() {
       if (participant) sessionStorage.setItem(selectorStorageKey, JSON.stringify(participant));
       else sessionStorage.removeItem(selectorStorageKey);
     } catch { /* ignore */ }
+  };
+
+  const countryLabelFor = (code) => (countryOptions.find(([c]) => c === code)?.[1] || code);
+  const selectorMatches = (participant) => {
+    if (selectorCountry && participant.country !== selectorCountry) return false;
+    const q = selectorQuery.trim().toLowerCase();
+    if (!q) return true;
+    return String(participant.name || '').toLowerCase().includes(q)
+      || countryLabelFor(participant.country).toLowerCase().includes(q);
   };
 
   const chooseSelection = (selectionId) => {
@@ -511,6 +523,10 @@ export default function NationsInscripcion() {
               {selectorLoading ? <p role="status">{t.selectorLoading}</p> : null}
               {!selectorLoading && !selectorError && !selector.length ? <p role="status">{t.selectorEmpty}</p> : null}
               <div className="nations-field">
+                <label className="nations-label" htmlFor="nations-public-selector-search">{t.selectorSearch}</label>
+                <input className="nations-input" id="nations-public-selector-search" value={selectorQuery} onChange={(e) => setSelectorQuery(e.target.value)} />
+              </div>
+              <div className="nations-field">
                 <label className="nations-label" htmlFor="nations-public-selector-country">{t.selectorCountry}</label>
                 <div className="nations-select-wrap">
                   <select className="nations-select" id="nations-public-selector-country" value={selectorCountry} onChange={(e) => { setSelectorCountry(e.target.value); chooseSelection(''); }}>
@@ -525,7 +541,7 @@ export default function NationsInscripcion() {
                 <div className="nations-select-wrap">
                   <select className="nations-select" id="nations-public-selector-name" value={selected?.selectionId || ''} onChange={(e) => chooseSelection(e.target.value)} disabled={selectorLoading || selectorError}>
                     <option value="">{t.selectorPlaceholder}</option>
-                    {selector.filter((p) => !selectorCountry || p.country === selectorCountry).map((p) => <option key={p.selectionId} value={p.selectionId}>{p.name} · {p.country}</option>)}
+                    {selector.filter(selectorMatches).map((p) => <option key={p.selectionId} value={p.selectionId}>{p.name} · {p.country}</option>)}
                   </select>
                   <span className="nations-select__chevron" aria-hidden="true" />
                 </div>
@@ -591,6 +607,12 @@ export default function NationsInscripcion() {
             </div>
             <p>{isNaples2026 ? t.pendingNaples : t.pending}</p>
             <p className="nations-status__note">{isNaples2026 ? t.pendingNoteNaples : t.pendingNote}</p>
+            {isNaples2026 && selectionStatus === 'verificacion_pendiente' ? (
+              <div className="nations-alert nations-alert--warning" role="status">
+                <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+                <p>{t.verificationPending}</p>
+              </div>
+            ) : null}
             {isNaples2026 && selectionStatus === 'en_conflicto' ? (
               <div className="nations-alert nations-alert--warning" role="status">
                 <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
@@ -644,6 +666,10 @@ export default function NationsInscripcion() {
                 {selectorLoading ? <p role="status">{t.selectorLoading}</p> : null}
                 {!selectorLoading && !selectorError && !selector.length ? (<><p role="status">{t.selectorEmpty}</p><p className="nations-status__note">{t.selectorFallback}</p></>) : null}
                 <div className="nations-field">
+                  <label className="nations-label" htmlFor="nations-selector-search">{t.selectorSearch}</label>
+                  <input className="nations-input" id="nations-selector-search" value={selectorQuery} onChange={(e) => setSelectorQuery(e.target.value)} />
+                </div>
+                <div className="nations-field">
                   <label className="nations-label" htmlFor="nations-selector-country">{t.selectorCountry}</label>
                   <div className="nations-select-wrap">
                     <select className="nations-select" id="nations-selector-country" value={selectorCountry} onChange={(e) => { setSelectorCountry(e.target.value); chooseSelection(''); }}>
@@ -664,7 +690,7 @@ export default function NationsInscripcion() {
                       disabled={selectorLoading || selectorError}
                     >
                       <option value="">{t.selectorPlaceholder}</option>
-                      {selector.filter((p) => !selectorCountry || p.country === selectorCountry).map((p) => (
+                      {selector.filter(selectorMatches).map((p) => (
                         <option key={p.selectionId} value={p.selectionId}>{p.name} · {p.country}</option>
                       ))}
                     </select>

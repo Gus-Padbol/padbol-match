@@ -442,6 +442,43 @@ test('lista adulta vacía ofrece verificación individual sin activar ni convert
   expect(payload.age_status).toBe('adulto');
 });
 
+test('recorrido completo 54/15: buscar, seleccionar desconocido, login, ficha y verificación pendiente', async () => {
+  const countries = ['RO','ES','PT','QA','IT','DE','FR','BE','AT','EG','AE','MX','SE','UA','DK'];
+  const participants = Array.from({length: 54}, (_, i) => {
+    const n = String(i + 1).padStart(2, '0');
+    return {selectionId: `${String(i + 101).padStart(32, '0')}`, name: `Player ${n}`, country: countries[i % countries.length]};
+  });
+  const chosen = participants[41];
+  mockUseAuth.mockReturnValue({session: null, loading: false});
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants})};
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente', selectionStatus: 'verificacion_pendiente'})};
+    return emptyProfile;
+  });
+  const view = mount();
+  await waitFor(() => expect(screen.getByLabelText('Search by name or country')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByLabelText('Select your name').querySelectorAll('option')).toHaveLength(55));
+  fireEvent.change(screen.getByLabelText('Search by name or country'), {target: {value: 'Player 42'}});
+  expect(screen.getByLabelText('Select your name').querySelectorAll('option')).toHaveLength(2);
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: chosen.selectionId}});
+  expect(screen.getAllByText(/Player 42/).length).toBeGreaterThan(0);
+  mockUseAuth.mockReturnValue({session: {user: {id: 'new-player', email_confirmed_at: '2026-01-01'}, access_token: 'tok'}, loading: false});
+  view.rerender(appTree());
+  await waitReady();
+  expect(screen.getByLabelText('Full name')).toHaveValue('Player 42');
+  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
+  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/Age verification is pending/)).toBeInTheDocument());
+  expect(screen.getByText(/not active yet/)).toBeInTheDocument();
+  expect(screen.queryByText(/participation is active/i)).not.toBeInTheDocument();
+  const post = mockFetch.mock.calls.find(([url, opts]) => String(url).endsWith('/profile-request') && opts?.method === 'POST');
+  const payload = JSON.parse(post[1].body);
+  expect(payload.selection_id).toBe(chosen.selectionId);
+  expect(payload.declared_name).toBe('Player 42');
+  expect(payload.declared_country).toBe(chosen.country);
+});
+
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {
   mockFetch.mockImplementation(async (url, opts) => {
     if (String(url).includes('/selector')) return emptySelector;
