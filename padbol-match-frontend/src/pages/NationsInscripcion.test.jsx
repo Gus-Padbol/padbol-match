@@ -522,6 +522,29 @@ test('solicitud previa pendiente conserva receipt y muestra ficha incompleta edi
   expect(screen.queryByText(/Your official player profile is incomplete/)).not.toBeInTheDocument();
 });
 
+test('historial por convocado muestra exacto, cero y ambiguo sin IDs ni FIPA link', async () => {
+  const id = 'a1'.repeat(16);
+  let history = {ok: true, status: 'matched', puntos: 2180, posicion: 3};
+  mockFetch.mockImplementation(async (url) => {
+    if (String(url).includes('/history')) return {ok: true, status: 200, json: async () => history};
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId: id, name: 'History Player', country: 'IT'}]})};
+    return emptyProfile;
+  });
+  mount();
+  await waitReady();
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: id}});
+  await waitFor(() => expect(screen.getByText(/Official FIPA history: 2180 pts/)).toBeInTheDocument());
+  expect(document.body.textContent).not.toMatch(/source_key|user_id|fipa\/reclamar/);
+  history = {ok: true, status: 'zero', puntos: 0, posicion: null};
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: id}});
+  await waitFor(() => expect(screen.getByText(/No prior FIPA history: 0 points/)).toBeInTheDocument());
+  history = {ok: true, status: 'ambiguous', puntos: null, posicion: null};
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: id}});
+  await waitFor(() => expect(screen.getByText(/requires administrative coordination/)).toBeInTheDocument());
+});
+
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {
   mockFetch.mockImplementation(async (url, opts) => {
     if (String(url).includes('/selector')) return emptySelector;

@@ -85,6 +85,10 @@ const COPY = {
     completeProfileCta: 'Complete player profile',
     selectorSearch: 'Search by name or country',
     pointsNote: 'The organisation manages Nations history from the official FIPA source. If no prior history exists, it counts as 0; you do not need a separate FIPA claim.',
+    fipaPoints: 'Official FIPA history:',
+    noFipaHistory: 'No prior FIPA history: 0 points.',
+    historyAmbiguous: 'This history requires administrative coordination; no points are assigned here.',
+    historyUnavailable: 'Official history is temporarily unavailable.',
     selectorNote: 'This list shows name and country only, including age-unverified participants. Selecting your name does not link this account or give access to another player\'s profile, history or points; age is verified individually later.',
     requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
     adultOnlyError: 'Only players aged 18 or older can register for this event.',
@@ -293,6 +297,10 @@ export default function NationsInscripcion() {
   const [reported, setReported] = useState(false);
   const [profileIncomplete, setProfileIncomplete] = useState(false);
   const [profileReadiness, setProfileReadiness] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+  const historySeq = useRef(0);
   const [reporting, setReporting] = useState(false);
   const [reportError, setReportError] = useState(false);
   const reportToken = useRef('');
@@ -330,7 +338,7 @@ export default function NationsInscripcion() {
     sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setAdultConfirmed(false); setConsent(false); setSending(false);
-    setSelected(null); setSelectionStatus(null); setProfileIncomplete(false); setProfileReadiness(null); setSelectorReady(false); setSelectorCountry(''); setSelectorQuery(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
+    setSelected(null); setSelectionStatus(null); setProfileIncomplete(false); setProfileReadiness(null); setHistory(null); setHistoryError(false); setHistoryLoading(false); historySeq.current += 1; setSelectorReady(false); setSelectorCountry(''); setSelectorQuery(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
@@ -354,6 +362,25 @@ export default function NationsInscripcion() {
     return String(participant.name || '').toLowerCase().includes(q)
       || countryLabelFor(participant.country).toLowerCase().includes(q);
   };
+
+  const loadHistory = useCallback(async (selectionId) => {
+    const seq = ++historySeq.current;
+    if (!selectionId) { setHistory(null); setHistoryError(false); setHistoryLoading(false); return; }
+    setHistoryLoading(true); setHistoryError(false);
+    try {
+      const res = await fetch(`${apiBase}/api/nations-activation/events/${encodeURIComponent(slug)}/selector/${encodeURIComponent(selectionId)}/history`);
+      if (seq !== historySeq.current) return;
+      const body = await res.json().catch(() => null);
+      if (!res.ok) { setHistory(null); setHistoryError(true); return; }
+      setHistory(body);
+    } catch { if (seq === historySeq.current) { setHistory(null); setHistoryError(true); } }
+    finally { if (seq === historySeq.current) setHistoryLoading(false); }
+  }, [apiBase, slug]);
+
+  useEffect(() => {
+    if (selected?.selectionId) void loadHistory(selected.selectionId);
+    else { setHistory(null); setHistoryError(false); setHistoryLoading(false); }
+  }, [selected?.selectionId, loadHistory]);
 
   const chooseSelection = (selectionId) => {
     const found = selector.find((p) => p.selectionId === selectionId) || null;
@@ -556,6 +583,11 @@ export default function NationsInscripcion() {
                 </div>
               </div>
               {selected ? <p role="status"><strong>{t.selectorSelected}:</strong> {selected.name} · {selected.country}</p> : null}
+              {historyLoading ? <p role="status">{t.sending}</p> : null}
+              {!historyLoading && history?.status === 'matched' ? <p>{t.fipaPoints} {history.puntos} pts</p> : null}
+              {!historyLoading && history?.status === 'zero' ? <p>{t.noFipaHistory}</p> : null}
+              {!historyLoading && history?.status === 'ambiguous' ? <p>{t.historyAmbiguous}</p> : null}
+              {!historyLoading && historyError ? <p>{t.historyUnavailable}</p> : null}
             </section>
           ) : null}
           <p className="nations-intro">{t.signIn}</p>
@@ -735,6 +767,11 @@ export default function NationsInscripcion() {
                 {selected ? (
                   <div className="nations-status__note" role="status">
                     <strong>{t.selectorSelected}:</strong> {selected.name} · {selected.country}
+                    {historyLoading ? <span> {t.sending}</span> : null}
+                    {!historyLoading && history?.status === 'matched' ? <span> · {t.fipaPoints} {history.puntos} pts</span> : null}
+                    {!historyLoading && history?.status === 'zero' ? <span> · {t.noFipaHistory}</span> : null}
+                    {!historyLoading && history?.status === 'ambiguous' ? <span> · {t.historyAmbiguous}</span> : null}
+                    {!historyLoading && historyError ? <span> · {t.historyUnavailable}</span> : null}
                     <button
                       className="nations-text-button"
                       type="button"
