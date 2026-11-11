@@ -1674,6 +1674,7 @@ export default function MiPerfil() {
       const aliasTrim = aliasPerfilExistente || String(formData.alias || '').trim();
       const payload = {
         lateralidad: formData.lateralidad,
+        posicion_cancha: formData.posicion_cancha || null,
         nivel: formData.nivel,
         genero: genTrim,
         pendiente_validacion: true,

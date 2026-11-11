@@ -206,6 +206,14 @@ test('handleGuardar real: upload OK + DB error/reload fail never succeeds',async
   expect(s2.state.error).toBeTruthy();expect(s2.state.success).toBeFalsy();expect(s2.sandbox.setPerfil).not.toHaveBeenCalled();
 });
 
+test('handleGuardar real: persiste posicion_cancha del formulario existente',async()=>{
+  const db=makeDb({write:{data:[{id:1,user_id:OWN,foto_url:'new'}],error:null},reload:{data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'new',posicion_cancha:'izquierda'},error:null}});
+  const s=makeSandbox(db);s.sandbox.formData.posicion_cancha='izquierda';
+  await build('handleGuardar',s.proxy)({preventDefault(){}});
+  expect(db.calls.update.posicion_cancha).toBe('izquierda');
+  expect(s.state.error).toBeFalsy();expect(s.state.success).toBeTruthy();
+});
+
 test('handleGuardar real: successful save rereads same id before state/cache/success',async()=>{
   const db=makeDb({write:{data:[{id:1,user_id:OWN,foto_url:'new'}],error:null},reload:{data:{id:1,user_id:OWN,email:'qa@example.invalid',foto_url:'new'},error:null}});
   const s=makeSandbox(db);const fn=build('handleGuardar',s.proxy);await fn({preventDefault(){}});
