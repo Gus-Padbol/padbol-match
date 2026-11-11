@@ -5,7 +5,7 @@ import useUserRole from '../hooks/useUserRole';
 import {getApiBaseUrl} from '../utils/apiPublicBaseUrl';
 
 const STAFF = new Set(['super_admin', 'admin_club', 'admin_sede']);
-const newId = () => (globalThis.crypto?.randomUUID ? globalThis.newId() : `qa-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+const newId = () => (typeof window !== 'undefined' && window.crypto?.randomUUID ? window.crypto.randomUUID() : `qa-${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
 /** Panel staff mínimo para operar el marcador durable ya generado/activado. */
 export default function AdminNationsMarkerDurable() {
