@@ -138,7 +138,7 @@ test('envía age_status adulto, booleanos seguros y muestra recibida con acceso 
   expect(screen.getByText(/does not activate your Nations participation/)).toBeInTheDocument();
   expect(screen.getByText(/reconcile your Nations points and historical record later/)).toBeInTheDocument();
   expect(screen.getByText(/use your Padbol Match profile normally/)).toBeInTheDocument();
-  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', '/mi-perfil');
+  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
   expect(document.body.textContent).not.toMatch(/reviews your registration before activation|Activation is not automatic|pending review by the organisation/i);
   expect(document.body.textContent).not.toMatch(/Nations participation is active|Nations participation activated/i);
   expect(document.body.textContent).not.toMatch(/activated automatically by name and country|match found/i);
@@ -253,7 +253,7 @@ test('muestra conflicto genérico tras submit y al restaurar sin revelar otro ac
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
   await waitFor(() => expect(screen.getByText(/more than one declaration/)).toBeInTheDocument());
   expect(screen.getByText(/no account or linked profile/)).toBeInTheDocument();
-  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', '/mi-perfil');
+  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
   view.unmount();
 
   mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'pendiente', selection_status: 'en_conflicto'}]})});
@@ -597,7 +597,7 @@ test('estados pendiente, aprobada y rechazada en inglés', async () => {
   mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [{status: 'aprobada'}]})});
   const second = mount();
   await waitFor(() => expect(screen.getByText(/Your request was approved/)).toBeInTheDocument());
-  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', '/mi-perfil');
+  expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
   second.unmount();
   sessionStorage.clear();
 
