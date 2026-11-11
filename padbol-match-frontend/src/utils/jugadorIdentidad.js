@@ -272,7 +272,7 @@ export function buildIdentidadPutPayload(
 
 export function validateIdentidadForm(
   form,
-  { hasExistingDocument, replaceDocument, perfil, whatsappFallback = '' } = {},
+  { hasExistingDocument, replaceDocument, perfil, whatsappFallback = '', requireCategoria = false } = {},
 ) {
   const errors = [...validatePerfilParaIdentidad(perfil, { whatsappFallback })];
 
@@ -298,7 +298,7 @@ export function validateIdentidadForm(
   if (!String(form.nacionalidad || '').trim()) {
     errors.push('Seleccioná tu nacionalidad.');
   }
-  if (!String(form.categoria_deportiva || '').trim()) {
+  if (requireCategoria && !String(form.categoria_deportiva || '').trim()) {
     errors.push('Seleccioná tu categoría deportiva.');
   }
 

@@ -3001,6 +3001,7 @@ export default function MiPerfil() {
       <JugadorFichaTorneosSection
         perfil={perfil}
         whatsappFallback={String(cuentaDeSesion?.whatsapp || '').trim()}
+        requireCategoriaDeportiva={esContextoNacionesNapoli}
       />
 
       {/* Ficha detail card */}

@@ -18,7 +18,7 @@ import {
 } from '../utils/jugadorIdentidad';
 import './JugadorFichaTorneosSection.css';
 
-export default function JugadorFichaTorneosSection({ perfil = null, whatsappFallback = '' }) {
+export default function JugadorFichaTorneosSection({ perfil = null, whatsappFallback = '', requireCategoriaDeportiva = false }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -86,6 +86,7 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
       replaceDocument,
       perfil,
       whatsappFallback,
+      requireCategoria: requireCategoriaDeportiva,
     });
     if (errors.length) {
       setErrorMsg(errors[0]);

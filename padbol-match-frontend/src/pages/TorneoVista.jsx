@@ -849,7 +849,8 @@ export default function TorneoVista() {
       </div>
     ) : null;
   const nationsEnabled = Boolean(torneo?.plan_nations || nationsState?.config);
-  const adminEnterButton = torneo && isAdmin && !fromAdmin ? (
+  const adminRolPersistido = ['super_admin', 'admin_club', 'admin_nacional'].includes(String(rol || '').toLowerCase());
+  const adminEnterButton = torneo && !fromAdmin && (isAdmin || adminRolPersistido) ? (
     <div style={{ margin: '0 0 12px', textAlign: 'center' }}>
       <button
         type="button"
