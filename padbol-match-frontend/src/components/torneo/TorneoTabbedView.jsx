@@ -242,6 +242,8 @@ export default function TorneoTabbedView({
   clasificacionFinalFilas = null,
   nationsEnabled = false,
   nationsState = null,
+  nationsParticipants = [],
+  nationsParticipantsUnavailable = false,
   /** CTA inscripción encima de la lista de equipos (jugador). */
   equiposTabHeader = null,
   /** Contenido extra bajo la lista de equipos (inscripción en FormEquipos). */
@@ -1221,7 +1223,7 @@ export default function TorneoTabbedView({
   );
 
   const renderTabGrupos = () => {
-    if (nationsEnabled) return <NationsStandings data={nationsState} equipos={equipos}/>;
+    if (nationsEnabled) return <NationsStandings data={nationsState} equipos={equipos} participants={nationsParticipants} participantsUnavailable={nationsParticipantsUnavailable}/>;
     const openEq = (row) => setModalEquipo(equipos.find((e) => e.id === row.id) || row);
     if (esGruposKnockout) {
       if (grupos.length === 0) {

@@ -1,8 +1,9 @@
 import React from 'react';
+import {countryFlagFromIso} from '../../utils/countryRankingDisplay';
 import {useSafeTranslation} from '../../i18n/tSafe';
 
 /** Renders only server-confirmed tables: never applies legacy tournament tie rules. */
-export default function NationsStandings({data, equipos = []}) {
+export default function NationsStandings({data, equipos = [], participants = [], participantsUnavailable = false}) {
   const {i18n} = useSafeTranslation();
   const text = (es,en) => String(i18n.language).startsWith('en') ? en : es;
   if (!data) return <p role="status">{text('Consultando posiciones confirmadas…','Loading confirmed standings…')}</p>;
@@ -14,13 +15,23 @@ export default function NationsStandings({data, equipos = []}) {
   </div>;
   const groups = Array.isArray(data.groups) ? data.groups : [];
   return <section className="nations-cup nations-standings" aria-label={text('Posiciones confirmadas','Confirmed standings')}>
-    {groups.length ? <div className="nations-cup__draw-groups">
-      <h3>{text('Grupos del sorteo','Draw groups')}</h3>
-      {groups.map(group => <div key={group.label} className="nations-cup__draw-group">
-        <h4>{text('Grupo','Group')} {group.label}</h4>
-        <ol>{(group.team_ids || []).map(id => <li key={id}>{names.get(String(id)) || text('Equipo no identificado','Unidentified team')}</li>)}</ol>
+    {groups.length ? <div className="grupos-container">
+      {groups.map(group => <div key={group.label} className="torneo-grupos-block">
+        <h3 className="torneo-grupos-block__title">{text('Grupo','Group')} {group.label}</h3>
+        <div className="torneo-grupos-table-wrap">
+          <table className="torneo-grupos-table nations-public-roster">
+            <thead><tr><th className="torneo-grupos-th">{text('País','Country')}</th><th className="torneo-grupos-th">{text('Convocados','Players')}</th></tr></thead>
+            <tbody>{(group.team_ids || []).map(id => {
+              const country = data.config?.country_by_team?.[String(id)];
+              const players = country ? participants.filter(player => player.country === country) : [];
+              return <tr key={id}>
+                <td className="torneo-grupos-td"><span className="torneo-grupos-equipo-nombre"><span aria-hidden="true">{countryFlagFromIso(country)}</span> {names.get(String(id)) || text('Equipo no identificado','Unidentified team')}</span></td>
+                <td className="torneo-grupos-td">{players.length ? <ul>{players.map(player => <li key={player.selectionId}>{player.name}</li>)}</ul> : <span>{participantsUnavailable ? text('Nómina no disponible temporalmente.','Player list temporarily unavailable.') : text('Nómina pendiente de confirmar.','Player list awaiting confirmation.')}</span>}</td>
+              </tr>;
+            })}</tbody>
+          </table>
+        </div>
       </div>)}
-      <p>{text('Sorteo confirmado. Las posiciones se mostrarán cuando haya resultados.','Draw confirmed. Standings will appear once results exist.')}</p>
     </div> : null}
     {(data.standings || []).map(group => <div key={group.group}><h3>{text('Posiciones del grupo','Group standings')} {group.group}</h3>{table(group.rows)}</div>)}
     {!data.standings?.length ? <p>{text('Las posiciones aún no están disponibles.','Standings are not available yet.')}</p> : null}

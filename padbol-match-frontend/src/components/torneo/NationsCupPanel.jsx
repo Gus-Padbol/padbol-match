@@ -7,7 +7,7 @@ import { mutateNationsCup, nationsCupRequestId, NATIONS_STANDINGS_RULES, readNat
 import { nationsCupScheduleInstant, nationsCupScheduleLocal } from '../../utils/nationsCupScheduleTime';
 
 const GROUPS = ['A','B','C'];
-export default function NationsCupPanel({ apiBaseUrl, torneo, equipos = [], accessToken, onConfirmed, onState, management = false, navigate, refreshKey = '' }) {
+export default function NationsCupPanel({ apiBaseUrl, torneo, equipos = [], accessToken, onConfirmed, onState, management = false, navigate, refreshKey = '', participants = [], participantsUnavailable = false }) {
   const { i18n } = useSafeTranslation();
   const en = String(i18n.language).startsWith('en');
   const text = (es, english) => en ? english : es;
@@ -155,7 +155,7 @@ export default function NationsCupPanel({ apiBaseUrl, torneo, equipos = [], acce
         {candidates.map(eq=><label key={eq.id}>{eq.nombre}<select disabled={!cap('can_draw')} value={assignments[String(eq.id)]||''} onChange={e=>setAssignments(prev=>({...prev,[eq.id]:e.target.value}))}><option value="">{text('Elegir grupo','Choose group')}</option>{GROUPS.map(group=><option key={group}>{group}</option>)}</select></label>)}
         <button disabled={!cap('can_draw')} onClick={draw}>{text('Confirmar sorteo de tres grupos','Confirm three-group draw')}</button>
       </>}
-      <NationsStandings data={data} equipos={management ? equipos : []}/>
+      <NationsStandings data={data} equipos={management ? equipos : []} participants={participants} participantsUnavailable={participantsUnavailable}/>
       {data.ties.map(tie=><fieldset key={tie.scope}><legend>{text('Empate pendiente','Unresolved tie')}: {tie.scope}</legend>{tie.team_ids.map((_,idx)=><label key={idx}>{text('Orden aprobado','Approved order')} {idx+1}<select disabled={!cap('can_resolve_ties')} value={resolutions[tie.scope]?.order?.[idx]||''} onChange={e=>setResolutions(prev=>({...prev,[tie.scope]:{...prev[tie.scope],order:{...prev[tie.scope]?.order,[idx]:e.target.value}}}))}><option value="">{text('Seleccionar equipo','Select team')}</option>{tie.team_ids.map(id=><option key={id} value={id}>{name(id)}</option>)}</select></label>)}<label>{text('Motivo de la decisión aprobada','Reason for the approved decision')}<textarea disabled={!cap('can_resolve_ties')} value={resolutions[tie.scope]?.reason||''} onChange={e=>setResolutions(prev=>({...prev,[tie.scope]:{...prev[tie.scope],reason:e.target.value}}))}/></label></fieldset>)}
       {data.ties.length?<button disabled={!cap('can_resolve_ties')} onClick={()=>advance('resolveTies')}>{text('Guardar decisiones de desempate','Save tie decisions')}</button>:null}
       <button disabled={!cap('can_advance')||data.ties.length>0} onClick={()=>advance('advance')}>{text('Confirmar avance de fase','Confirm phase advancement')}</button>

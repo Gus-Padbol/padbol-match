@@ -86,6 +86,22 @@ export default function TorneoVista() {
   const [equipos, setEquipos] = useState([]);
   const [nationsSlug, setNationsSlug] = useState(null);
   const [nationsRegistrationEnabled, setNationsRegistrationEnabled] = useState(false);
+  const [nationsPublicParticipants, setNationsPublicParticipants] = useState([]);
+  const [nationsParticipantsUnavailable, setNationsParticipantsUnavailable] = useState(false);
+  useEffect(() => {
+    setNationsPublicParticipants([]); setNationsParticipantsUnavailable(false);
+    if (Number(torneoId) !== 57 || !nationsRegistrationEnabled || nationsSlug !== 'nations-cup-napoli-2026') return undefined;
+    let cancelled = false;
+    fetch(`${apiBaseUrlTorneo}/api/nations-activation/events/${nationsSlug}/selector`)
+      .then(async response => { if (!response.ok) throw new Error('PUBLIC_SELECTOR_UNAVAILABLE'); return response.json(); })
+      .then(data => {
+        if (cancelled) return;
+        if (data?.ok !== true || !Array.isArray(data.participants)) throw new Error('PUBLIC_SELECTOR_INVALID');
+        setNationsPublicParticipants(data.participants.filter(p => typeof p?.selectionId === 'string' && typeof p?.name === 'string' && /^[A-Z]{2}$/.test(p?.country || ''))
+          .map(({selectionId, name, country}) => ({selectionId, name, country})));
+      }).catch(() => { if (!cancelled) { setNationsPublicParticipants([]); setNationsParticipantsUnavailable(true); } });
+    return () => { cancelled = true; };
+  }, [torneoId, nationsRegistrationEnabled, nationsSlug]);
   const esNations = torneo?.modalidad_plantel === 'selecciones';
   // Sin slug NO se cae al formulario generico: la inscripcion Nations es privada y distinta.
   const inscripcionPath = nationsSlug
@@ -1305,13 +1321,15 @@ export default function TorneoVista() {
         <AppHeader title={torneoHeaderTitle} showBack contentMaxWidth={HUB_INSTAGRAM_COLUMN_MAX_WIDTH_PX} />
         {torneo && ((isPadbolSelection(torneo) && fromAdmin) || nationsEnabled) ? <details className="torneo-nations-details" open={fromAdmin || undefined}><summary>{t('torneos.nations.details', {defaultValue:'Reglamento y organización de Nations Cup'})}</summary><NationsCupPanel
           key={`nations-${torneoId}`} apiBaseUrl={apiBaseUrlTorneo} torneo={torneo} equipos={equipos}
-          accessToken={session?.access_token} management={fromAdmin} navigate={navigate} refreshKey={JSON.stringify(partidos)} onConfirmed={recargarDatosTorneo} onState={setNationsState}
+          accessToken={session?.access_token} management={fromAdmin} participants={nationsPublicParticipants} participantsUnavailable={nationsParticipantsUnavailable} navigate={navigate} refreshKey={JSON.stringify(partidos)} onConfirmed={recargarDatosTorneo} onState={setNationsState}
         /></details> : null}
         <TorneoTabbedView
           key={String(torneoId)}
           torneo={torneo}
           nationsEnabled={nationsEnabled}
           nationsState={nationsState}
+          nationsParticipants={nationsPublicParticipants}
+          nationsParticipantsUnavailable={nationsParticipantsUnavailable}
           equipos={equipos}
           partidos={partidos}
           setPartidos={setPartidos}

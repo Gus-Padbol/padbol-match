@@ -12,3 +12,10 @@
 .nations-cup{inline-size:100%;max-inline-size:100%}.nations-cup__table{inline-size:100%;min-inline-size:0;max-inline-size:100%;box-sizing:border-box}
 
 .nations-cup__table:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.nations-cup__scroll-hint{font-size:.85rem;max-inline-size:100%;white-space:normal}
+
+/* Existing tournament group table, with public roster columns rather than invented results. */
+.nations-cup table.nations-public-roster{min-width:0;table-layout:fixed}
+.nations-public-roster th:first-child,.nations-public-roster td:first-child{width:42%}
+.nations-cup .nations-public-roster th,.nations-cup .nations-public-roster td{white-space:normal;overflow-wrap:anywhere;vertical-align:top;padding:12px 10px}
+.nations-public-roster .torneo-grupos-equipo-nombre{white-space:normal;max-width:none}
+.nations-public-roster ul{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px;line-height:1.4}

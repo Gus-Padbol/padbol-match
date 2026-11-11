@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import TorneoVista from './TorneoVista';
 const mockNavigate=jest.fn();
 let mockTournamentId='9';
+let mockLastTabbedProps=null;
 jest.mock('react-router-dom',()=>({...jest.requireActual('react-router-dom'),useParams:()=>({torneoId:mockTournamentId}),useNavigate:()=>mockNavigate}));
 jest.mock('../i18n/tSafe',()=>{const t=(key,args)=>args?.defaultValue||key;return {useSafeTranslation:()=>({t,i18n:{language:'es'}})};});
 jest.mock('../context/AuthContext',()=>{const auth={session:{user:{id:'00000000-0000-4000-8000-000000000001',email:'qa@fixture.invalid'},access_token:'synthetic-fixture'},userProfile:{nombre:'QA',nivel:'Inicial'},loading:false};return {useAuth:()=>auth};});
@@ -14,7 +15,7 @@ jest.mock('../hooks/useSponsor',()=>({useSponsor:()=>({sponsor:null})}));
 jest.mock('../components/AppHeader',()=>()=>null);
 jest.mock('../components/BottomNav',()=>()=>null);
 jest.mock('../supabaseClient',()=>({supabase:{from:()=>({select:()=>({eq:()=>({order:async()=>({data:[],error:null})})})}),auth:{getSession:jest.fn(async()=>({data:{session:{access_token:'synthetic-fixture'}}}))}}}));
-jest.mock('../components/torneo/TorneoTabbedView',()=>{const actual=jest.requireActual('../components/torneo/TorneoTabbedView');return {...actual,__esModule:true,default:props=>require('react').createElement('div',null,props.adminTorneoBar,props.bannerAntesTabs)};});
+jest.mock('../components/torneo/TorneoTabbedView',()=>{const actual=jest.requireActual('../components/torneo/TorneoTabbedView');return {...actual,__esModule:true,default:props=>{mockLastTabbedProps=props;return require('react').createElement('div',null,props.adminTorneoBar,props.bannerAntesTabs);}};});
 let mode;
 beforeEach(()=>{
  require('../supabaseClient').supabase.auth.getSession.mockResolvedValue({data:{session:{access_token:'synthetic-fixture'}}});
@@ -94,4 +95,16 @@ test.each([null,{ok:false},{ok:true,slug:'other-event'}])('Napoli registration s
  render(<MemoryRouter initialEntries={['/torneo/57']}><TorneoVista/></MemoryRouter>);
  await waitFor(()=>expect(fetch.mock.calls.some(([u])=>u.includes('/by-torneo/57'))).toBe(true));
  expect(screen.queryByRole('button',{name:'Completar ficha e inscribirme'})).not.toBeInTheDocument();
+});
+
+test('Napoli loads its public selector once and passes only public player fields to group presentation',async()=>{
+ mockTournamentId='57';fetch.mockImplementation(async url=>({ok:true,status:200,json:async()=>{
+ if(url.endsWith('/api/torneos/57'))return {id:57,nombre:'Napoli',deporte:'padbol',modalidad_plantel:'selecciones',estado:'en_curso',fecha_inicio:'2027-11-22',sede_id:7};
+ if(url.includes('/by-torneo/57'))return {ok:true,slug:'nations-cup-napoli-2026'};
+ if(url.endsWith('/selector'))return {ok:true,participants:[{selectionId:'public-id',country:'IT',name:'Public player',email:'private@example.invalid',numero_documento:'private'}]};return [];
+ }}));
+ render(<MemoryRouter initialEntries={['/torneo/57']}><TorneoVista/></MemoryRouter>);
+ await waitFor(()=>expect(mockLastTabbedProps.nationsParticipants).toEqual([{selectionId:'public-id',country:'IT',name:'Public player'}]));
+ expect(fetch.mock.calls.filter(([url])=>url.endsWith('/selector'))).toHaveLength(1);
+ expect(screen.queryByText('private@example.invalid')).not.toBeInTheDocument();
 });
