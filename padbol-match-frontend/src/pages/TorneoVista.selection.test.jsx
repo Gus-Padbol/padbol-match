@@ -3,7 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import TorneoVista from './TorneoVista';
 const mockNavigate=jest.fn();
-jest.mock('react-router-dom',()=>({...jest.requireActual('react-router-dom'),useParams:()=>({torneoId:'9'}),useNavigate:()=>mockNavigate}));
+let mockTournamentId='9';
+jest.mock('react-router-dom',()=>({...jest.requireActual('react-router-dom'),useParams:()=>({torneoId:mockTournamentId}),useNavigate:()=>mockNavigate}));
 jest.mock('../i18n/tSafe',()=>{const t=(key,args)=>args?.defaultValue||key;return {useSafeTranslation:()=>({t,i18n:{language:'es'}})};});
 jest.mock('../context/AuthContext',()=>{const auth={session:{user:{id:'00000000-0000-4000-8000-000000000001',email:'qa@fixture.invalid'},access_token:'synthetic-fixture'},userProfile:{nombre:'QA',nivel:'Inicial'},loading:false};return {useAuth:()=>auth};});
 jest.mock('../context/HubNavLayoutContext',()=>({useHubNavLayout:()=>({navDock:'bottom'})}));
@@ -12,12 +13,12 @@ jest.mock('../hooks/useUserRole',()=>({__esModule:true,default:()=>({rol:mockRol
 jest.mock('../hooks/useSponsor',()=>({useSponsor:()=>({sponsor:null})}));
 jest.mock('../components/AppHeader',()=>()=>null);
 jest.mock('../components/BottomNav',()=>()=>null);
-jest.mock('../supabaseClient',()=>({supabase:{auth:{getSession:jest.fn(async()=>({data:{session:{access_token:'synthetic-fixture'}}}))}}}));
+jest.mock('../supabaseClient',()=>({supabase:{from:()=>({select:()=>({eq:()=>({order:async()=>({data:[],error:null})})})}),auth:{getSession:jest.fn(async()=>({data:{session:{access_token:'synthetic-fixture'}}}))}}}));
 jest.mock('../components/torneo/TorneoTabbedView',()=>{const actual=jest.requireActual('../components/torneo/TorneoTabbedView');return {...actual,__esModule:true,default:props=>require('react').createElement('div',null,props.adminTorneoBar,props.bannerAntesTabs)};});
 let mode;
 beforeEach(()=>{
  require('../supabaseClient').supabase.auth.getSession.mockResolvedValue({data:{session:{access_token:'synthetic-fixture'}}});
- mode='selecciones';mockRole='jugador';mockNavigate.mockClear();
+ mockTournamentId='9';mode='selecciones';mockRole='jugador';mockNavigate.mockClear();
  global.fetch=jest.fn(async url=>({ok:true,status:200,json:async()=>{
   if(url.endsWith('/api/torneos/9'))return {id:9,nombre:'Torneo QA',deporte:'padbol',modalidad_plantel:mode,estado:'abierto',fecha_inicio:'2027-11-22',sede_id:7};
   if(url.endsWith('/busca-dupla/me'))return {enrolled:false};
@@ -74,3 +75,23 @@ test('real admin page cancels inline without PUT and confirms persisted opening 
   expect(catalog.general.loading.trim()).not.toBe('');
   expect(catalog.general.loading).not.toMatch(/^(common|general)\.loading$/);
  });
+
+test.each(['en_curso','finalizado','cancelado'])('Napoli registration is event-enabled independently of tournament state: %s',async estado=>{
+ mockTournamentId='57';fetch.mockImplementation(async url=>({ok:true,status:200,json:async()=>{
+  if(url.endsWith('/api/torneos/57'))return {id:57,nombre:'Napoli',deporte:'padbol',modalidad_plantel:'selecciones',estado,fecha_inicio:'2027-11-22',sede_id:7};
+  if(url.includes('/by-torneo/57'))return {ok:true,slug:'nations-cup-napoli-2026'};return [];
+ }}));
+ render(<MemoryRouter initialEntries={['/torneo/57']}><TorneoVista/></MemoryRouter>);
+ await waitFor(()=>expect(fetch.mock.calls.some(([u])=>u.includes('/by-torneo/57'))).toBe(true));
+ if(estado==='en_curso'){
+  const cta=await screen.findByRole('button',{name:'Completar ficha e inscribirme'});fireEvent.click(cta);
+  expect(mockNavigate).toHaveBeenCalledWith('/nations-cup/nations-cup-napoli-2026/inscripcion');
+ }else expect(screen.queryByRole('button',{name:'Completar ficha e inscribirme'})).not.toBeInTheDocument();
+});
+
+test.each([null,{ok:false},{ok:true,slug:'other-event'}])('Napoli registration stays closed without its enabled event binding: %j',async binding=>{
+ mockTournamentId='57';fetch.mockImplementation(async url=>({ok:true,status:200,json:async()=>url.endsWith('/api/torneos/57')?{id:57,nombre:'Napoli',deporte:'padbol',modalidad_plantel:'selecciones',estado:'en_curso',fecha_inicio:'2027-11-22',sede_id:7}:url.includes('/by-torneo/57')?binding:[]}));
+ render(<MemoryRouter initialEntries={['/torneo/57']}><TorneoVista/></MemoryRouter>);
+ await waitFor(()=>expect(fetch.mock.calls.some(([u])=>u.includes('/by-torneo/57'))).toBe(true));
+ expect(screen.queryByRole('button',{name:'Completar ficha e inscribirme'})).not.toBeInTheDocument();
+});

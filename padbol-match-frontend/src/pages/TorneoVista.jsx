@@ -85,6 +85,7 @@ export default function TorneoVista() {
   const selectionModeRef = useRef(false);
   const [equipos, setEquipos] = useState([]);
   const [nationsSlug, setNationsSlug] = useState(null);
+  const [nationsRegistrationEnabled, setNationsRegistrationEnabled] = useState(false);
   const esNations = torneo?.modalidad_plantel === 'selecciones';
   // Sin slug NO se cae al formulario generico: la inscripcion Nations es privada y distinta.
   const inscripcionPath = nationsSlug
@@ -93,11 +94,12 @@ export default function TorneoVista() {
   const inscripcionDeshabilitada = esNations && !nationsSlug;
   useEffect(() => {
     let cancelado = false;
+    setNationsSlug(null); setNationsRegistrationEnabled(false);
     if (!torneoId) return undefined;
     fetch(`${apiBaseUrlTorneo}/api/nations-activation/by-torneo/${torneoId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (!cancelado && data?.ok) setNationsSlug(data.slug || null); })
-      .catch(() => { if (!cancelado) setNationsSlug(null); });
+      .then((data) => { if (!cancelado) { setNationsSlug(data?.ok ? data.slug || null : null); setNationsRegistrationEnabled(data?.ok === true && data.slug === 'nations-cup-napoli-2026'); } })
+      .catch(() => { if (!cancelado) { setNationsSlug(null); setNationsRegistrationEnabled(false); } });
     return () => { cancelado = true; };
   }, [torneoId]);
   const [sedesMap, setSedesMap] = useState({});
@@ -850,6 +852,17 @@ export default function TorneoVista() {
       </div>
     ) : null;
   const nationsEnabled = Boolean(torneo?.plan_nations || nationsState?.config);
+  const naplesRegistrationEntry = Number(torneo?.id) === 57 && esNations
+    && nationsSlug === 'nations-cup-napoli-2026' && nationsRegistrationEnabled
+    && !modoAdminExplicitoEnVista && !torneoPasadoCalendario
+    && !['finalizado', 'cancelado'].includes(estadoTorneoLower) ? (
+      <div className="torneo-inscripcion-jugador-banner">
+        <button type="button" className="torneo-inscripcion-jugador-banner__cta torneo-btn-inscribirse-verde"
+          onClick={() => navigate(inscripcionPath)}>
+          {t('torneos.nations.completeRegistration', {defaultValue: 'Completar ficha e inscribirme'})}
+        </button>
+      </div>
+    ) : null;
   const adminEnterButton = canShowNationsAdminEntry({torneo, rol, isAdmin, fromAdmin}) ? (
     <div style={{ margin: '0 0 12px', textAlign: 'center' }}>
       <button
@@ -1316,7 +1329,7 @@ export default function TorneoVista() {
           bannerAntesTabs={
             <>
               {adminEnterButton}
-              {bannerInscripcionJugador}
+              {naplesRegistrationEntry || bannerInscripcionJugador}
               {buscaDuplaSeccion}
             </>
           }
