@@ -382,7 +382,7 @@ export default function NationsInscripcion() {
         const body = await res.json().catch(() => null);
         if (!cancelled) { setSelector(Array.isArray(body?.participants) ? body.participants : []); setSelectorReady(true); }
       })
-      .catch(() => { if (!cancelled) { setSelectorError(true); setSelectorReady(true); } })
+      .catch(() => { if (!cancelled) { setSelector([]); setSelectorError(true); setSelectorReady(true); } })
       .finally(() => { if (!cancelled) setSelectorLoading(false); });
     return () => { cancelled = true; };
   }, [isNaples2026, apiBase, slug, token, selectorAttempt]);
