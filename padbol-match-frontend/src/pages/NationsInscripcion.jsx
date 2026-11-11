@@ -432,13 +432,13 @@ export default function NationsInscripcion() {
   const emailVerified = Boolean(session?.user?.email_confirmed_at || session?.user?.confirmed_at);
   const selectorStorageKey = isNaples2026 && slug ? `nationsSelector:${slug}` : null;
 
-  const persistSelection = (participant) => {
+  const persistSelection = useCallback((participant) => {
     if (!selectorStorageKey) return;
     try {
       if (participant) sessionStorage.setItem(selectorStorageKey, JSON.stringify(participant));
       else sessionStorage.removeItem(selectorStorageKey);
     } catch { /* ignore */ }
-  };
+  }, [selectorStorageKey]);
 
   const countryLabelFor = (code) => (countryOptions.find(([c]) => c === code)?.[1] || code);
   const selectorMatches = (participant) => {
@@ -497,7 +497,7 @@ export default function NationsInscripcion() {
     if (!selector.some((p) => p.selectionId === selected.selectionId)) {
       setSelected(null); setName(''); setCountry(''); persistSelection(null);
     }
-  }, [isNaples2026, selectorReady, selector, selected]);
+  }, [isNaples2026, selectorReady, selector, selected, persistSelection]);
 
   useEffect(() => {
     if (!isNaples2026) { setSelector([]); return undefined; }

@@ -12,7 +12,16 @@ export default function NationsStandings({data, equipos = []}) {
     <table><thead><tr>{[seeded ? text('Siembra','Seed') : text('Posición','Place'),text('Equipo','Team'),text('Grupo','Group'),'PJ','PTS','DS','SG','DG','GG'].map(label => <th key={label}>{label}</th>)}</tr></thead>
     <tbody>{rows.map(row => <tr key={`${row.group}-${row.equipo_id}`}><td>{(seeded ? row.seed : row.position) ?? '—'}</td><td>{names.get(String(row.equipo_id)) || text('Equipo no identificado','Unidentified team')}</td><td>{row.group || '—'}</td>{['jugados','puntos','diferencia_sets','sets_favor','diferencia_games','games_favor'].map(key => <td key={key}>{row[key] ?? '—'}</td>)}</tr>)}</tbody></table>
   </div>;
+  const groups = Array.isArray(data.groups) ? data.groups : [];
   return <section className="nations-cup nations-standings" aria-label={text('Posiciones confirmadas','Confirmed standings')}>
+    {groups.length ? <div className="nations-cup__draw-groups">
+      <h3>{text('Grupos del sorteo','Draw groups')}</h3>
+      {groups.map(group => <div key={group.label} className="nations-cup__draw-group">
+        <h4>{text('Grupo','Group')} {group.label}</h4>
+        <ol>{(group.team_ids || []).map(id => <li key={id}>{names.get(String(id)) || text('Equipo no identificado','Unidentified team')}</li>)}</ol>
+      </div>)}
+      <p>{text('Sorteo confirmado. Las posiciones se mostrarán cuando haya resultados.','Draw confirmed. Standings will appear once results exist.')}</p>
+    </div> : null}
     {(data.standings || []).map(group => <div key={group.group}><h3>{text('Posiciones del grupo','Group standings')} {group.group}</h3>{table(group.rows)}</div>)}
     {!data.standings?.length ? <p>{text('Las posiciones aún no están disponibles.','Standings are not available yet.')}</p> : null}
     {data.thirds?.length ? <><h3>{text('Comparación de terceros','Third-place comparison')}</h3>{table(data.thirds)}</> : null}
