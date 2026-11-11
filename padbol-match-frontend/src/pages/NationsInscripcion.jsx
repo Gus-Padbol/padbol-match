@@ -84,7 +84,7 @@ const COPY = {
     profileMissingFields: 'Missing fields:',
     completeProfileCta: 'Complete player profile',
     selectorSearch: 'Search by name or country',
-    pointsNote: 'Nations history is associated by canonical name and country. If no prior history exists, it counts as 0; you do not need a separate FIPA claim.',
+    pointsNote: 'The organisation manages Nations history from the official FIPA source. If no prior history exists, it counts as 0; you do not need a separate FIPA claim.',
     selectorNote: 'This list shows name and country only, including age-unverified participants. Selecting your name does not link this account or give access to another player\'s profile, history or points; age is verified individually later.',
     requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
     adultOnlyError: 'Only players aged 18 or older can register for this event.',

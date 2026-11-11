@@ -301,6 +301,7 @@ export default function MiPerfil() {
   const [searchParams] = useSearchParams();
   const torneoIdPerfil = searchParams.get('id');
   const redirectAfterAuth = searchParams.get('redirect') || '';
+  const esContextoNacionesNapoli = String(redirectAfterAuth).startsWith('/nations-cup/');
   const torneoIdValido = Boolean(torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil)));
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2671,7 +2672,7 @@ export default function MiPerfil() {
         </div>
       ) : null}
 
-      {!ocultarUiJugadorPorAdmin ? <OfficialFipaProfile accessToken={session?.access_token} /> : null}
+      {!ocultarUiJugadorPorAdmin && !esContextoNacionesNapoli ? <OfficialFipaProfile accessToken={session?.access_token} /> : null}
 
       <ReputacionJugadorPanel
         apiBaseUrl={API_BASE_URL}
