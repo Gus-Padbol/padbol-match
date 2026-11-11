@@ -33,8 +33,8 @@ beforeEach(() => { mockRole = 'super_admin'; });
 test('staff ejecuta start, pause, resume y substitución con epoch/revision frescos', async () => {
   const state = installFetch();
   mount();
-  await waitFor(() => expect(screen.getByRole('button', {name: 'Iniciar marcador durable'})).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', {name: 'Iniciar marcador durable'}));
+  await waitFor(() => expect(screen.getByRole('button', {name: 'Iniciar reloj y línea base'})).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', {name: 'Iniciar reloj y línea base'}));
   await waitFor(() => expect(global.fetch.mock.calls.some(([url, o]) => String(url).endsWith('/start') && o?.method === 'POST')).toBe(true));
   const startPost = global.fetch.mock.calls.find(([url, o]) => String(url).endsWith('/start') && o?.method === 'POST');
   expect(JSON.parse(startPost[1].body)).not.toHaveProperty('epoch');

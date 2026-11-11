@@ -11,6 +11,7 @@ const COPY = {
     eyebrow: 'Inscripción',
     title: 'Completa tus datos para la Nations Cup',
     intro: 'Inscríbete a la Nations Cup. Revisamos tu solicitud antes de activar tu participación.',
+    introNaples: 'Inscríbete a la 5.ª Nations Cup. Elegí tu nombre, completá tu ficha e inscribite. El historial oficial que ya existe se conserva; si no hay historial, empezás en 0. No necesitás vincular puntos FIPA.',
     verifyEmail: 'Verifica tu email antes de enviar la solicitud. Revisa tu correo.',
     signIn: 'Inicia sesión con tu cuenta verificada para continuar.',
     signInCta: 'Ingresar',
@@ -27,6 +28,17 @@ const COPY = {
     pendingBadge: 'Pendiente',
     pending: 'Solicitud recibida. Queda pendiente de revisión de la organización.',
     pendingNote: 'La organización está revisando tu solicitud. No necesitas enviarla otra vez.',
+    pendingNoteNaples: 'Solicitud recibida. Tu selección está guardada; no necesitas enviarla otra vez.',
+    profileIncomplete: 'Tu ficha oficial está incompleta. Completá estos campos antes de inscribirte; los datos guardados se reutilizan y podés editarlos.',
+    profileMissingFields: 'Campos faltantes:',
+    completeProfileCta: 'Completar ficha',
+    pointsNote: 'Si ya tenés historial oficial, se conserva; si no, contás desde 0. No tenés que reclamar ni vincular puntos.',
+    selectorPublicNote: 'Elegí tu nombre de la lista. Después iniciá sesión para completar la ficha e inscribirte.',
+    selectorNote: 'La lista muestra nombre y país. Elegir tu nombre no vincula tu cuenta ni da acceso al perfil, historial o puntos de otra persona; la edad se verifica después.',
+    fipaPoints: 'Historial oficial:',
+    noFipaHistory: 'Sin historial previo: 0 puntos.',
+    historyAmbiguous: 'La organización revisará este historial; no se asignan puntos aquí.',
+    historyUnavailable: 'El historial oficial no está disponible temporalmente.',
     approvedBadge: 'Aprobada',
     approved: 'Tu solicitud fue aprobada. Ya puedes entrar a tu perfil.',
     approvedCta: 'Ir a mi perfil',
@@ -48,7 +60,7 @@ const COPY = {
     titleNaples: 'Complete your details for the 5th Nations Cup',
     subtitleNaples: 'Naples · Mostra d’Oltremare · November 20–22, 2026',
     intro: 'Register for the Nations Cup. We review your request before activating your participation.',
-    introNaples: 'Register for the 5th Nations Cup. Your registration is received immediately; your Padbol Match profile remains available while the Nations link and points are reconciled later.',
+    introNaples: 'Register for the 5th Nations Cup. Choose your name, complete your player profile and register. Existing official history is preserved; if there is no history, you start at 0. You do not need to link FIPA points.',
     verifyEmail: 'Verify your email before sending the request. Check your inbox.',
     signIn: 'Sign in with your verified account to continue.',
     signInCta: 'Sign in',
@@ -77,19 +89,19 @@ const COPY = {
     selectorReportError: 'We could not send the report. Try again.',
     selectorReportRetry: 'Retry report',
     selectorFallback: 'No adult-verified names are available. You can submit your name and country for individual age verification; the request stays pending and does not activate participation. Do not use another person\'s data.',
-    selectorPublicNote: 'Names and countries only. Select your name, then sign in to complete the registration. Selecting does not claim an account or transfer any profile.',
+    selectorPublicNote: 'Choose your name from the list, then sign in to complete your profile and register.',
     selectorConflict: 'This name has more than one declaration. The organisation will reconcile it; no account or linked profile is assigned.',
     verificationPending: 'Registration received. Age verification is pending; your Nations participation is not active yet.',
     profileIncomplete: 'Your official player profile is incomplete. Complete these fields before registering; saved data is reused and editable.',
     profileMissingFields: 'Missing fields:',
     completeProfileCta: 'Complete player profile',
     selectorSearch: 'Search by name or country',
-    pointsNote: 'The organisation manages Nations history from the official FIPA source. If no prior history exists, it counts as 0; you do not need a separate FIPA claim.',
+    pointsNote: 'Existing official history is preserved; if there is no history, you start at 0. You do not need to claim or link FIPA points.',
     fipaPoints: 'Official FIPA history:',
     noFipaHistory: 'No prior FIPA history: 0 points.',
-    historyAmbiguous: 'This history requires administrative coordination; no points are assigned here.',
+    historyAmbiguous: 'The organisation will review this history; no points are assigned here.',
     historyUnavailable: 'Official history is temporarily unavailable.',
-    selectorNote: 'This list shows name and country only, including age-unverified participants. Selecting your name does not link this account or give access to another player\'s profile, history or points; age is verified individually later.',
+    selectorNote: 'The list shows name and country. Choosing your name does not link your account or give access to another person\'s profile, history or points; age is verified separately.',
     requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
     adultOnlyError: 'Only players aged 18 or older can register for this event.',
     submitNaples: 'Submit registration',
@@ -99,8 +111,8 @@ const COPY = {
     pendingBadge: 'Pending',
     pendingBadgeNaples: 'Received',
     pending: 'Request received. It is pending review by the organisation.',
-    pendingNaples: 'Registration received. Your Nations link is still pending; this does not activate your Nations participation.',
-    pendingNoteNaples: 'You can use your Padbol Match profile normally. The organisation will reconcile your Nations points and historical record later. You do not need to send the registration again.',
+    pendingNaples: 'Registration received. Your selection is saved; this does not activate your Nations participation.',
+    pendingNoteNaples: 'Solicitud recibida. Tu selección está guardada; no necesitas enviarla otra vez.',
     pendingNote: 'The organisation is reviewing your request. You do not need to send it again.',
     approvedBadge: 'Approved',
     approved: 'Your request was approved. You can open your profile.',
@@ -121,6 +133,7 @@ const COPY = {
     eyebrow: 'Iscrizione',
     title: 'Completa i tuoi dati per la Nations Cup',
     intro: 'Iscriviti alla Nations Cup. Esaminiamo la tua richiesta prima di attivare la partecipazione.',
+    introNaples: 'Iscriviti alla 5ª Nations Cup. Scegli il tuo nome, completa la scheda e iscriviti. Lo storico ufficiale esistente viene conservato; se non c\'è storico, parti da 0. Non devi collegare punti FIPA.',
     verifyEmail: 'Verifica la tua email prima di inviare la richiesta. Controlla la posta.',
     signIn: 'Accedi con il tuo account verificato per continuare.',
     signInCta: 'Accedi',
@@ -137,6 +150,17 @@ const COPY = {
     pendingBadge: 'In attesa',
     pending: 'Richiesta ricevuta. È in attesa di revisione da parte dell’organizzazione.',
     pendingNote: 'L’organizzazione sta esaminando la tua richiesta. Non devi inviarla di nuovo.',
+    pendingNoteNaples: 'Solicitud recibida. Tu selección está guardada; no necesitas enviarla otra vez.',
+    profileIncomplete: 'La tua scheda ufficiale è incompleta. Completa questi campi prima di iscriverti; i dati salvati vengono riutilizzati e puoi modificarli.',
+    profileMissingFields: 'Campi mancanti:',
+    completeProfileCta: 'Completa la scheda',
+    pointsNote: 'Lo storico ufficiale esistente viene conservato; se non c\'è storico, parti da 0. Non devi richiedere o collegare punti FIPA.',
+    selectorPublicNote: 'Scegli il tuo nome dalla lista, poi accedi per completare la scheda e iscriverti.',
+    selectorNote: 'La lista mostra nome e paese. Scegliere il tuo nome non collega l\'account né dà accesso al profilo, storico o punti di un\'altra persona; l\'età viene verificata separatamente.',
+    fipaPoints: 'Storico ufficiale:',
+    noFipaHistory: 'Nessuno storico precedente: 0 punti.',
+    historyAmbiguous: 'L’organizzazione esaminerà questo storico; qui non vengono assegnati punti.',
+    historyUnavailable: 'Lo storico ufficiale non è temporaneamente disponibile.',
     approvedBadge: 'Approvata',
     approved: 'La richiesta è stata approvata. Puoi aprire il tuo profilo.',
     approvedCta: 'Vai al mio profilo',
@@ -175,6 +199,14 @@ const COUNTRIES = PAISES_TELEFONO_PRINCIPALES
  * task-4/NATIONS-PDF-contraste-20261108.txt). Este catálogo se aplica sólo al
  * slug exacto; el resto de los eventos conserva el catálogo mundial de la app.
  */
+const MISSING_FIELD_LABELS = {
+  es: {nombre:'Nombre',apellido:'Apellido',telefono:'Teléfono',email:'Email',pais:'País',ciudad:'Ciudad',nivel:'Nivel',lateralidad:'Lateralidad',posicion_cancha:'Posición en cancha',fecha_nacimiento:'Fecha de nacimiento',tipo_documento:'Tipo de documento',numero_documento:'Número de documento',nacionalidad:'Nacionalidad',genero:'Género',pais_documento:'País del documento',categoria_deportiva:'Categoría deportiva'},
+  en: {nombre:'Name',apellido:'Surname',telefono:'Phone',email:'Email',pais:'Country',ciudad:'City',nivel:'Level',lateralidad:'Laterality',posicion_cancha:'Court position',fecha_nacimiento:'Date of birth',tipo_documento:'Document type',numero_documento:'Document number',nacionalidad:'Nationality',genero:'Gender',pais_documento:'Document country',categoria_deportiva:'Sports category'},
+  pt: {nombre:'Nome',apellido:'Sobrenome',telefono:'Telefone',email:'Email',pais:'País',ciudad:'Cidade',nivel:'Nível',lateralidad:'Lateralidade',posicion_cancha:'Posição em quadra',fecha_nacimiento:'Data de nascimento',tipo_documento:'Tipo de documento',numero_documento:'Número do documento',nacionalidad:'Nacionalidade',genero:'Gênero',pais_documento:'País do documento',categoria_deportiva:'Categoria esportiva'},
+  it: {nombre:'Nome',apellido:'Cognome',telefono:'Telefono',email:'Email',pais:'Paese',ciudad:'Città',nivel:'Livello',lateralidad:'Lateralità',posicion_cancha:'Posizione in campo',fecha_nacimiento:'Data di nascita',tipo_documento:'Tipo di documento',numero_documento:'Numero del documento',nacionalidad:'Nazionalità',genero:'Genere',pais_documento:'Paese del documento',categoria_deportiva:'Categoria sportiva'},
+};
+const missingFieldLabels = (keys, lang) => (Array.isArray(keys) ? keys : []).map((key) => MISSING_FIELD_LABELS[lang]?.[key] || MISSING_FIELD_LABELS.es[key] || key).join(', ');
+
 const NAPOLI_2026_SLUG = 'nations-cup-napoli-2026';
 const NAPOLI_2026_COUNTRIES = [
   {code: 'RO', flag: '🇷🇴', names: {es: 'Rumania', en: 'Romania', it: 'Romania'}},
@@ -665,7 +697,7 @@ export default function NationsInscripcion() {
                 <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
                 <div className="nations-alert__body">
                   <p>{t.profileIncomplete}</p>
-                  <p><strong>{t.profileMissingFields}</strong> {(profileReadiness.missing || []).join(', ')}</p>
+                  <p><strong>{t.profileMissingFields}</strong> {missingFieldLabels(profileReadiness.missing, lang)}</p>
                   <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.completeProfileCta}</Link>
                 </div>
               </div>
@@ -699,7 +731,7 @@ export default function NationsInscripcion() {
                 <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
                 <div className="nations-alert__body">
                   <p>{t.profileIncomplete}</p>
-                  <p><strong>{t.profileMissingFields}</strong> {(profileReadiness.missing || []).join(', ')}</p>
+                  <p><strong>{t.profileMissingFields}</strong> {missingFieldLabels(profileReadiness.missing, lang)}</p>
                   <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.completeProfileCta}</Link>
                 </div>
               </div>

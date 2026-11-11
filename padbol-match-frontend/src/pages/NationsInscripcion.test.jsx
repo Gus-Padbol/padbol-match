@@ -46,7 +46,7 @@ test('el slug exacto fuerza inglés, header y subtítulo exactos aunque el idiom
   await waitReady();
   expect(screen.getByRole('heading', {level: 1})).toHaveTextContent('Complete your details for the 5th Nations Cup');
   expect(screen.getByText('Naples · Mostra d’Oltremare · November 20–22, 2026')).toBeInTheDocument();
-  expect(screen.getByText(/received immediately/)).toBeInTheDocument();
+  expect(screen.getByText(/Choose your name, complete your player profile and register/)).toBeInTheDocument();
   expect(screen.getByLabelText('Full name')).toBeInTheDocument();
   expect(screen.getByLabelText('Country')).toBeInTheDocument();
   expect(screen.getByLabelText('I confirm that I am 18 or older')).toBeInTheDocument();
@@ -134,10 +134,9 @@ test('envía age_status adulto, booleanos seguros y muestra recibida con acceso 
     profile_consent: true,
   });
   expect(payload.request_id).toMatch(/^[A-Za-z0-9_-]{8,120}$/);
-  expect(screen.getByText(/Your Nations link is still pending/)).toBeInTheDocument();
+  expect(screen.getByText(/Your selection is saved/)).toBeInTheDocument();
   expect(screen.getByText(/does not activate your Nations participation/)).toBeInTheDocument();
-  expect(screen.getByText(/reconcile your Nations points and historical record later/)).toBeInTheDocument();
-  expect(screen.getByText(/use your Padbol Match profile normally/)).toBeInTheDocument();
+  expect(screen.getByText(/Solicitud recibida\. Tu selección está guardada; no necesitas enviarla otra vez\./)).toBeInTheDocument();
   expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
   expect(document.body.textContent).not.toMatch(/reviews your registration before activation|Activation is not automatic|pending review by the organisation/i);
   expect(document.body.textContent).not.toMatch(/Nations participation is active|Nations participation activated/i);
@@ -505,7 +504,7 @@ test('solicitud previa pendiente conserva receipt y muestra ficha incompleta edi
   const view = mount();
   await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
   expect(screen.getByText(/Your official player profile is incomplete/)).toBeInTheDocument();
-  expect(screen.getByText(/ciudad, fecha_nacimiento/)).toBeInTheDocument();
+  expect(screen.getByText(/City, Date of birth/)).toBeInTheDocument();
   const cta = screen.getByRole('link', {name: 'Complete player profile'});
   expect(cta).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
   expect(cta.getAttribute('href')).not.toContain('fipa');
@@ -542,7 +541,7 @@ test('historial por convocado muestra exacto, cero y ambiguo sin IDs ni FIPA lin
   history = {ok: true, status: 'ambiguous', puntos: null, posicion: null};
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: id}});
-  await waitFor(() => expect(screen.getByText(/requires administrative coordination/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText(/will review this history/)).toBeInTheDocument());
 });
 
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {

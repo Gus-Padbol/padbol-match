@@ -103,12 +103,12 @@ export default function AdminNationsMarkerDurable() {
   return (
     <main className="admin-nations">
       <h1>Marcador durable Nations</h1>
-      <p>Usa un marcador ya generado y activado en el panel legacy. Esta pantalla no genera, activa ni controla el reloj legacy.</p>
+      <p>Usa un marcador ya generado y activado en el panel legacy. Esta pantalla no genera ni activa canchas. Primero iniciá el reloj y la línea base durable; no uses el botón “Iniciar” legacy antes de este paso.</p>
       <p>Scoreboard: <code>{scoreboardId}</code> · rol: {rol} · revisión: {revision} · epoch: {epoch} · estado: {trackingStatus || '—'}</p>
       <p><Link to="/admin/nations-activacion">Volver a generación/activación legacy</Link></p>
       {error ? <p role="alert">{error}</p> : null}
       {busy ? <p role="status">Operación en curso…</p> : null}
-      <button type="button" disabled={busy || !context?.canStart} onClick={start}>Iniciar marcador durable</button>
+      <button type="button" disabled={busy || !context?.canStart} onClick={start}>Iniciar reloj y línea base</button>
       <button type="button" disabled={busy} onClick={() => global('pause')}>Pausar</button>
       <button type="button" disabled={busy} onClick={() => global('resume')}>Reanudar</button>
       <button type="button" disabled={busy} onClick={() => global('close')}>Cerrar</button>
