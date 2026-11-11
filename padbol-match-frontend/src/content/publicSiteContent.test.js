@@ -39,10 +39,10 @@ describe('publicSite content structure', () => {
     expect(PUBLIC_SITE_NAV_ITEMS.at(-1).key).toBe('download');
   });
 
-  it('mantiene stores sin URL y CTAs sobre rutas internas reales', () => {
+  it('mantiene URLs reales de stores y CTAs sobre rutas internas reales', () => {
     expect(PUBLIC_SITE_SECTIONS.download.stores).toEqual([
-      { key: 'appStore', url: null },
-      { key: 'googlePlay', url: null },
+      { key: 'appStore', url: 'https://apps.apple.com/app/id6814243035' },
+      { key: 'googlePlay', url: 'https://play.google.com/store/apps/details?id=com.padbolmatch.app' },
     ]);
     expect(PUBLIC_SITE_SECTIONS.contact.ctas.map(({ to }) => to)).toEqual([
       '/administradores',
