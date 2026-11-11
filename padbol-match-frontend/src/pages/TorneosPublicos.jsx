@@ -55,6 +55,13 @@ import {
 
 const API_BASE_TORNEOS = getApiBaseUrl();
 
+/** Public catalog only: legacy NULL rows remain real; test rows stay out of every page. */
+export function readPublicTournamentCatalog(client) {
+  return client.from('torneos').select('*')
+    .or('es_prueba.eq.false,es_prueba.is.null')
+    .order('fecha_inicio', {ascending: false});
+}
+
 function formatoEquipoLineaTorneoPublico(t) {
   return etiquetaFormatoEquipoResuelto(t);
 }
@@ -246,7 +253,7 @@ export default function TorneosPublicos() {
 
     const [{ data: torneosData, error: torneosError }, { data: sedesData, error: sedesError }] =
       await Promise.all([
-        supabase.from('torneos').select('*').order('fecha_inicio', { ascending: false }),
+        readPublicTournamentCatalog(supabase),
         supabase.from('sedes').select('id,nombre,ciudad,pais,latitud,longitud'),
       ]);
 
