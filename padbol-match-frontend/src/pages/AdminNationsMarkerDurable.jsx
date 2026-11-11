@@ -103,7 +103,7 @@ export default function AdminNationsMarkerDurable() {
   return (
     <main className="admin-nations">
       <h1>Marcador durable Nations</h1>
-      <p>Usa un marcador ya generado y activado en el panel legacy. Esta pantalla no genera ni activa canchas. Primero iniciá el reloj y la línea base durable; no uses el botón “Iniciar” legacy antes de este paso.</p>
+      <p>Usa un marcador ya generado y activado en el panel legacy. Esta pantalla no genera ni activa canchas. Primero inicia el reloj y la línea base durable; no uses el botón “Iniciar” legacy antes de este paso.</p>
       <p>Scoreboard: <code>{scoreboardId}</code> · rol: {rol} · revisión: {revision} · epoch: {epoch} · estado: {trackingStatus || '—'}</p>
       <p><Link to="/admin/nations-activacion">Volver a generación/activación legacy</Link></p>
       {error ? <p role="alert">{error}</p> : null}
