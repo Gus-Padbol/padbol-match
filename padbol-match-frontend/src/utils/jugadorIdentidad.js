@@ -106,6 +106,7 @@ export function parseIdentidadFromApi(body) {
       tipo_documento: '',
       pais_documento: '',
       nacionalidad: '',
+      categoria_deportiva: '',
       genero: '',
       telefono: '',
       contacto_emergencia_nombre: '',
@@ -128,6 +129,7 @@ export function parseIdentidadFromApi(body) {
     tipo_documento: String(raw.tipo_documento || '').trim().toLowerCase(),
     pais_documento: String(raw.pais_documento || '').trim().toUpperCase().slice(0, 2),
     nacionalidad: String(raw.nacionalidad || '').trim().toUpperCase().slice(0, 2),
+    categoria_deportiva: String(raw.categoria_deportiva || '').trim(),
     genero: String(raw.genero || '').trim().toLowerCase(),
     telefono: String(raw.telefono || '').trim(),
     contacto_emergencia_nombre: String(raw.contacto_emergencia_nombre || '').trim(),
@@ -146,6 +148,7 @@ export function emptyIdentidadForm() {
     pais_documento: 'AR',
     numero_documento: '',
     nacionalidad: 'AR',
+    categoria_deportiva: '',
     genero: '',
     telefono: '',
     contacto_emergencia_nombre: '',
@@ -161,6 +164,7 @@ export function identidadToForm(parsed) {
     pais_documento: parsed.pais_documento || 'AR',
     numero_documento: '',
     nacionalidad: parsed.nacionalidad || 'AR',
+    categoria_deportiva: parsed.categoria_deportiva || '',
     genero: parsed.genero || '',
     telefono: parsed.telefono || '',
     contacto_emergencia_nombre: parsed.contacto_emergencia_nombre || '',
@@ -249,6 +253,7 @@ export function buildIdentidadPutPayload(
     tipo_documento: String(form.tipo_documento || '').trim().toLowerCase(),
     pais_documento: String(form.pais_documento || '').trim().toUpperCase().slice(0, 2),
     nacionalidad: String(form.nacionalidad || '').trim().toUpperCase().slice(0, 2),
+    categoria_deportiva: String(form.categoria_deportiva || '').trim(),
     genero: fromPerfil.genero || String(form.genero || '').trim().toLowerCase(),
     telefono: fromPerfil.telefono || String(form.telefono || '').trim(),
     contacto_emergencia_nombre: String(form.contacto_emergencia_nombre || '').trim(),
@@ -292,6 +297,9 @@ export function validateIdentidadForm(
 
   if (!String(form.nacionalidad || '').trim()) {
     errors.push('Seleccioná tu nacionalidad.');
+  }
+  if (!String(form.categoria_deportiva || '').trim()) {
+    errors.push('Seleccioná tu categoría deportiva.');
   }
 
   const needsDocument = !hasExistingDocument || replaceDocument;

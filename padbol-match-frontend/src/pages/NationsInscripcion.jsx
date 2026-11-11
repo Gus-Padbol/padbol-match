@@ -80,7 +80,11 @@ const COPY = {
     selectorPublicNote: 'Names and countries only. Select your name, then sign in to complete the registration. Selecting does not claim an account or transfer any profile.',
     selectorConflict: 'This name has more than one declaration. The organisation will reconcile it; no account or linked profile is assigned.',
     verificationPending: 'Registration received. Age verification is pending; your Nations participation is not active yet.',
+    profileIncomplete: 'Your official player profile is incomplete. Complete these fields before registering; saved data is reused and editable.',
+    profileMissingFields: 'Missing fields:',
+    completeProfileCta: 'Complete player profile',
     selectorSearch: 'Search by name or country',
+    pointsNote: 'Nations history is associated by canonical name and country. If no prior history exists, it counts as 0; you do not need a separate FIPA claim.',
     selectorNote: 'This list shows name and country only, including age-unverified participants. Selecting your name does not link this account or give access to another player\'s profile, history or points; age is verified individually later.',
     requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
     adultOnlyError: 'Only players aged 18 or older can register for this event.',
@@ -287,6 +291,8 @@ export default function NationsInscripcion() {
   const [selected, setSelected] = useState(null);
   const [selectionStatus, setSelectionStatus] = useState(null);
   const [reported, setReported] = useState(false);
+  const [profileIncomplete, setProfileIncomplete] = useState(false);
+  const [profileReadiness, setProfileReadiness] = useState(null);
   const [reporting, setReporting] = useState(false);
   const [reportError, setReportError] = useState(false);
   const reportToken = useRef('');
@@ -324,7 +330,7 @@ export default function NationsInscripcion() {
     sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setAdultConfirmed(false); setConsent(false); setSending(false);
-    setSelected(null); setSelectionStatus(null); setSelectorReady(false); setSelectorCountry(''); setSelectorQuery(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
+    setSelected(null); setSelectionStatus(null); setProfileIncomplete(false); setProfileReadiness(null); setSelectorReady(false); setSelectorCountry(''); setSelectorQuery(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
@@ -419,6 +425,7 @@ export default function NationsInscripcion() {
       const body = await res.json().catch(() => null);
       if (ticket !== epoch.current) return;
       const latest = Array.isArray(body?.requests) ? body.requests[0] : null;
+      if (body?.profile_readiness) setProfileReadiness(body.profile_readiness);
       if (latest && !ignoreServerStatus) { setStatus(latest.status); setSelectionStatus(latest.selection_status || null); if (latest.age_status) setAge(latest.age_status); }
     } catch {
       if (ticket === epoch.current) setRestoreError(true);
@@ -463,6 +470,7 @@ export default function NationsInscripcion() {
       if (ticket !== epoch.current) return;
       const body = await res.json().catch(() => null);
       if (ticket !== epoch.current) return;
+      if (res.status === 409 && body?.code === 'PLAYER_PROFILE_INCOMPLETE') { setProfileIncomplete(true); setError(t.profileIncomplete); return; }
       if (res.status === 409) { setError(t.conflict); return; }
       if (!res.ok) { setError(isNaples2026 && body?.code === 'ADULT_ONLY' ? t.adultOnlyError : t.error); return; }
       setStatus(body?.status || 'pendiente');
@@ -519,6 +527,7 @@ export default function NationsInscripcion() {
             <section className="nations-selector" aria-labelledby="nations-public-selector-title">
               <h2 className="nations-label" id="nations-public-selector-title">{t.selectorTitle}</h2>
               <p className="nations-status__note">{t.selectorPublicNote}</p>
+              <p className="nations-status__note">{t.pointsNote}</p>
               {selectorError ? <p role="alert">{t.selectorError}</p> : null}
               {selectorLoading ? <p role="status">{t.selectorLoading}</p> : null}
               {!selectorLoading && !selectorError && !selector.length ? <p role="status">{t.selectorEmpty}</p> : null}
@@ -619,6 +628,16 @@ export default function NationsInscripcion() {
                 <p>{t.selectorConflict}</p>
               </div>
             ) : null}
+            {isNaples2026 && profileReadiness?.complete === false ? (
+              <div className="nations-alert nations-alert--warning" role="alert">
+                <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+                <div className="nations-alert__body">
+                  <p>{t.profileIncomplete}</p>
+                  <p><strong>{t.profileMissingFields}</strong> {(profileReadiness.missing || []).join(', ')}</p>
+                  <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.completeProfileCta}</Link>
+                </div>
+              </div>
+            ) : null}
             {isNaples2026 ? <Link className="nations-button" to="/mi-perfil">{t.approvedCta}</Link> : null}
           </section>
         ) : statusView === 'approved' ? (
@@ -643,17 +662,33 @@ export default function NationsInscripcion() {
           </section>
         ) : (
           <form className="nations-form" onSubmit={submit} aria-busy={sending || restoring}>
+            {isNaples2026 && profileReadiness?.complete === false ? (
+              <div className="nations-alert nations-alert--warning" role="alert">
+                <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
+                <div className="nations-alert__body">
+                  <p>{t.profileIncomplete}</p>
+                  <p><strong>{t.profileMissingFields}</strong> {(profileReadiness.missing || []).join(', ')}</p>
+                  <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.completeProfileCta}</Link>
+                </div>
+              </div>
+            ) : null}
             {error ? (
               <div className="nations-alert nations-alert--error" role="alert">
                 <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
                 <p>{error}</p>
               </div>
             ) : null}
+            {profileIncomplete ? (
+              <Link className="nations-button nations-button--secondary" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>
+                {t.completeProfileCta}
+              </Link>
+            ) : null}
 
             {isNaples2026 ? (
               <section className="nations-selector" aria-labelledby="nations-selector-title">
                 <h2 className="nations-label" id="nations-selector-title">{t.selectorTitle}</h2>
                 <p className="nations-status__note">{t.selectorNote}</p>
+                <p className="nations-status__note">{t.pointsNote}</p>
                 {selectorError ? (
                   <div className="nations-alert nations-alert--error" role="alert">
                     <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
@@ -793,7 +828,7 @@ export default function NationsInscripcion() {
             <button
               className="nations-button"
               type="submit"
-              disabled={sending || restoring || !emailVerified || (isNaples2026 && selectorLoading)}
+              disabled={sending || restoring || !emailVerified || (isNaples2026 && selectorLoading) || (isNaples2026 && profileReadiness?.complete === false)}
             >
               {sending ? (
                 <>

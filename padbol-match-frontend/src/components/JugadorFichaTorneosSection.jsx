@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { API_BASE, getAuthHeaders } from '../utils/scoreboardApi';
+import { categoriasNivelPorGenero } from '../constants/jugadorCategoria';
 import {
   TIPO_DOCUMENTO_OPTIONS,
   PAISES_ISO_OPTIONS,
@@ -319,6 +320,21 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
               {PAISES_ISO_OPTIONS.map((p) => (
                 <option key={p.code} value={p.code}>{p.label}</option>
               ))}
+            </select>
+          </div>
+
+          <div className="jugador-ficha-torneos__field jugador-ficha-torneos__field--last">
+            <label className="jugador-ficha-torneos__label" htmlFor="ficha-categoria-deportiva">Categoría deportiva</label>
+            <select
+              id="ficha-categoria-deportiva"
+              name="categoria_deportiva"
+              value={form.categoria_deportiva}
+              onChange={handleChange}
+              disabled={formDisabled}
+              className="jugador-ficha-torneos__select"
+            >
+              <option value="">Seleccionar</option>
+              {categoriasNivelPorGenero(perfil?.genero).map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>

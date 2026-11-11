@@ -45,6 +45,7 @@ const ReservaForm = lazy(() => import('./pages/ReservaForm'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const TorneoCrear = lazy(() => import('./pages/TorneoCrear'));
 const AdminNationsActivation = lazy(() => import('./pages/AdminNationsActivation'));
+const AdminNationsMarkerDurable = lazy(() => import('./pages/AdminNationsMarkerDurable'));
 const FormEquipos = lazy(() => import('./pages/FormEquipos'));
 const MiPerfil = lazy(() => import('./pages/MiPerfil'));
 const RecorridoExterno = lazy(() => import('./pages/RecorridoExterno'));
@@ -488,6 +489,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <AdminNationsActivation />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/nations-marker/:scoreboardId"
+          element={
+            <ProtectedRoute>
+              <AdminNationsMarkerDurable />
             </ProtectedRoute>
           }
         />

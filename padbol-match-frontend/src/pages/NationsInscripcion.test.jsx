@@ -479,6 +479,49 @@ test('recorrido completo 54/15: buscar, seleccionar desconocido, login, ficha y 
   expect(payload.declared_country).toBe(chosen.country);
 });
 
+test('ficha incompleta bloquea la inscripción y ofrece completar perfil propio sin FIPA', async () => {
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return emptySelector;
+    if (opts?.method === 'POST') return {ok: false, status: 409, json: async () => ({code: 'PLAYER_PROFILE_INCOMPLETE', missing: ['ciudad']})};
+    return emptyProfile;
+  });
+  mount();
+  await waitReady();
+  fillNaples();
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/official player profile is incomplete/));
+  const cta = screen.getByRole('link', {name: 'Complete player profile'});
+  expect(cta).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
+  expect(cta.getAttribute('href')).not.toContain('fipa');
+  expect(screen.queryByText(/Registration received/)).not.toBeInTheDocument();
+  expect(mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(1);
+});
+
+test('solicitud previa pendiente conserva receipt y muestra ficha incompleta editable sin duplicar', async () => {
+  mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({
+    ok: true, requests: [{status: 'pendiente'}],
+    profile_readiness: {complete: false, missing: ['ciudad', 'fecha_nacimiento']},
+  })});
+  const view = mount();
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
+  expect(screen.getByText(/Your official player profile is incomplete/)).toBeInTheDocument();
+  expect(screen.getByText(/ciudad, fecha_nacimiento/)).toBeInTheDocument();
+  const cta = screen.getByRole('link', {name: 'Complete player profile'});
+  expect(cta).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
+  expect(cta.getAttribute('href')).not.toContain('fipa');
+  expect(screen.getByRole('link', {name: 'Go to my profile'})).toBeInTheDocument();
+  expect(mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(0);
+  view.unmount();
+
+  mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({
+    ok: true, requests: [{status: 'pendiente'}],
+    profile_readiness: {complete: true, missing: []},
+  })});
+  mount();
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
+  expect(screen.queryByText(/Your official player profile is incomplete/)).not.toBeInTheDocument();
+});
+
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {
   mockFetch.mockImplementation(async (url, opts) => {
     if (String(url).includes('/selector')) return emptySelector;
