@@ -79,7 +79,7 @@ const COPY = {
     selectorFallback: 'The list is not available right now. You can complete your name and country; the registration will stay pending for reconciliation. Do not use another person\'s data.',
     selectorPublicNote: 'Names and countries only. Select your name, then sign in to complete the registration. Selecting does not claim an account or transfer any profile.',
     selectorConflict: 'This name has more than one declaration. The organisation will reconcile it; no account or linked profile is assigned.',
-    selectorNote: 'The event is 18+. This list shows name and country only and excludes registered minors; age-unverified entries are not treated as verified adults. Selecting your name does not link this account or give access to another player\'s profile, history or points.',
+    selectorNote: 'The event is 18+. This list shows name and country only for adult-verified participants and excludes unknown ages and registered minors. Selecting your name does not link this account or give access to another player\'s profile, history or points.',
     requiredNaples: 'Complete your name, country, confirm that you are 18 or older and consent to the use of your data.',
     adultOnlyError: 'Only players aged 18 or older can register for this event.',
     submitNaples: 'Submit registration',
