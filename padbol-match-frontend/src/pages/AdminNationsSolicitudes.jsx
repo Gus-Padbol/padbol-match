@@ -16,6 +16,9 @@ export default function AdminNationsSolicitudes() {
   const [identity, setIdentity] = useState(false);
   const [guardian, setGuardian] = useState(false);
   const [evidence, setEvidence] = useState('');
+  const [ageMethod, setAgeMethod] = useState('');
+  const [ageReference, setAgeReference] = useState('');
+  const [ageMessage, setAgeMessage] = useState('');
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const epoch = useRef(0);
@@ -57,6 +60,37 @@ export default function AdminNationsSolicitudes() {
   const resumen = selected
     ? `${selected.declared_name} (${selected.declared_country}) · ${selected.age_status} · persona: ${matched || 'sin seleccionar'}`
     : '';
+
+  const verificarEdad = async () => {
+    if (busy || !selected) return;
+    setError(null); setAgeMessage('');
+    const method = ageMethod.trim();
+    const reference = ageReference.trim();
+    if (!/^[a-z0-9_]{2,40}$/.test(method) || !/^[A-Za-z0-9._:/-]{4,120}$/.test(reference)) {
+      setError('Indica método y referencia opaca de la verificación.'); return;
+    }
+    setBusy(true);
+    const ticket = epoch.current;
+    try {
+      const res = await fetch(`${API}/api/admin/nations-activation/events/${slug}/profile-requests/${selected.id}/verify-age`, {
+        method: 'POST',
+        headers: {...headers, 'Content-Type': 'application/json'},
+        body: JSON.stringify({verification_method: method, verification_reference: reference}),
+      });
+      if (ticket !== epoch.current) return;
+      if (res.status === 403) { setAccess(false); return; }
+      if (res.status === 409) { setError('La solicitud no se puede verificar en su estado actual.'); await cargar(); return; }
+      if (!res.ok) { setError('No pudimos verificar la edad.'); return; }
+      setAgeMessage('Edad verificada. La solicitud sigue pendiente del vínculo final.');
+      setAgeMethod(''); setAgeReference('');
+      setBusy(false);
+      await cargar();
+    } catch {
+      if (ticket === epoch.current) setError('Error de red. Reintenta.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const decidir = async (decision) => {
     if (busy || !selected) return;
@@ -133,6 +167,20 @@ export default function AdminNationsSolicitudes() {
           <label><input type="checkbox" checked={identity} onChange={(e) => setIdentity(e.target.checked)} /> Verifiqué la identidad</label>
           {selected.age_status === 'menor' ? (
             <label><input type="checkbox" checked={guardian} onChange={(e) => setGuardian(e.target.checked)} /> Verifiqué al responsable</label>
+          ) : null}
+          {selected.age_status === 'desconocido' && selected.age_verification_status !== 'verificada' ? (
+            <section>
+              <h3>Verificación individual de edad</h3>
+              <p>No se guarda DOB ni documento: sólo método y referencia opaca.</p>
+              <label>Método
+                <input value={ageMethod} onChange={(e) => setAgeMethod(e.target.value)} placeholder="manual_roster" />
+              </label>
+              <label>Referencia opaca
+                <input value={ageReference} onChange={(e) => setAgeReference(e.target.value)} placeholder="case-2026-001" />
+              </label>
+              <button type="button" disabled={busy} onClick={verificarEdad}>Verificar edad</button>
+              {ageMessage ? <p role="status">{ageMessage}</p> : null}
+            </section>
           ) : null}
           <label>Evidencia / nota (mínimo 20 caracteres)
             <textarea value={evidence} onChange={(e) => setEvidence(e.target.value)} />
