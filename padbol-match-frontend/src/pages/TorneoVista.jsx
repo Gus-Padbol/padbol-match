@@ -24,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { useHubNavLayout } from '../context/HubNavLayoutContext';
 import { authUrlWithRedirect } from '../utils/authLoginRedirect';
 import useUserRole from '../hooks/useUserRole';
+import { canShowNationsAdminEntry } from '../utils/nationsAdminEntry';
 import { supabase } from '../supabaseClient';
 import { estadoTorneoNormalizado } from '../utils/torneoEstadoFiltroPills';
 import { torneoFechaInicioEsPasadaCalendario } from '../utils/torneoFechaInicioArt';
@@ -849,8 +850,7 @@ export default function TorneoVista() {
       </div>
     ) : null;
   const nationsEnabled = Boolean(torneo?.plan_nations || nationsState?.config);
-  const adminRolPersistido = ['super_admin', 'admin_club', 'admin_nacional'].includes(String(rol || '').toLowerCase());
-  const adminEnterButton = torneo && !fromAdmin && (isAdmin || adminRolPersistido) ? (
+  const adminEnterButton = canShowNationsAdminEntry({torneo, rol, isAdmin, fromAdmin}) ? (
     <div style={{ margin: '0 0 12px', textAlign: 'center' }}>
       <button
         type="button"
