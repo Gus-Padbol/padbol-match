@@ -4,6 +4,7 @@
  * No publica nombres: roster_publication_approved se envía siempre en false.
  */
 import React, {useCallback, useMemo, useRef, useState} from 'react';
+import {Link} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
 import {getApiBaseUrl} from '../utils/apiPublicBaseUrl';
@@ -37,6 +38,7 @@ export default function AdminNationsActivation() {
   const [recibo, setRecibo] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [durableScoreboardId, setDurableScoreboardId] = useState('');
 
   const filas = useMemo(() => parseRows(texto), [texto]);
   const erroresFilas = filas.errores || [];
@@ -253,6 +255,15 @@ export default function AdminNationsActivation() {
           ) : <p style={{margin: '8px 0 0'}}>Evento: {recibo.event?.slug}</p>}
         </div>
       ) : null}
+
+      <section style={{marginTop: 16}}>
+        <h3>Marcador durable</h3>
+        <p>Usa un scoreboard ya generado/activado. Esta sección no genera ni activa canchas.</p>
+        <label>Scoreboard ID
+          <input value={durableScoreboardId} onChange={(e) => setDurableScoreboardId(e.target.value)} placeholder="UUID del scoreboard" />
+        </label>
+        {durableScoreboardId.trim() ? <Link to={`/admin/nations-marker/${encodeURIComponent(durableScoreboardId.trim())}`}>Abrir panel durable</Link> : null}
+      </section>
     </section>
   );
 }

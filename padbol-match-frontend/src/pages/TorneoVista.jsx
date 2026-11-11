@@ -849,6 +849,17 @@ export default function TorneoVista() {
       </div>
     ) : null;
   const nationsEnabled = Boolean(torneo?.plan_nations || nationsState?.config);
+  const adminEnterButton = torneo && isAdmin && !fromAdmin ? (
+    <div style={{ margin: '0 0 12px', textAlign: 'center' }}>
+      <button
+        type="button"
+        className="btn-agregar-jugadores"
+        onClick={() => navigate(`${location.pathname}?gestion=1`, {state: {...(location.state || {}), fromAdmin: true}})}
+      >
+        Administrar torneo
+      </button>
+    </div>
+  ) : null;
   const adminTorneoBar =
     torneo &&
     isAdminGestionEnEstaVista &&
@@ -1303,6 +1314,7 @@ export default function TorneoVista() {
           adminTorneoBar={adminTorneoBar}
           bannerAntesTabs={
             <>
+              {adminEnterButton}
               {bannerInscripcionJugador}
               {buscaDuplaSeccion}
             </>
