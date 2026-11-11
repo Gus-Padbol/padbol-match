@@ -64,7 +64,7 @@ export default function AdminNationsMarkerDurable() {
     try {
       const res = await fetch(`${api}/api/nations/marker/${encodeURIComponent(scoreboardId)}${path}`, {method: 'POST', headers, body: JSON.stringify(body)});
       const result = await res.json().catch(() => null);
-      if (!res.ok) { setError(result?.code || `HTTP_${res.status}`); await load(); return; }
+      if (!res.ok) { const code = result?.code || `HTTP_${res.status}`; await load(); setError(code); return; }
       if (afterSuccess) afterSuccess();
       await load();
     } catch { setError('NETWORK_ERROR'); }
@@ -89,7 +89,7 @@ export default function AdminNationsMarkerDurable() {
         method: 'POST', headers, body: JSON.stringify({requestId: keys.current[side === 'A' ? 'pointA' : 'pointB'], epoch}),
       });
       const result = await res.json().catch(() => null);
-      if (!res.ok) { setError(result?.code || `HTTP_${res.status}`); await load(); return; }
+      if (!res.ok) { const code = result?.code || `HTTP_${res.status}`; await load(); setError(code); return; }
       keys.current[side === 'A' ? 'pointA' : 'pointB'] = newId();
       await load();
     } catch { setError('NETWORK_ERROR'); }

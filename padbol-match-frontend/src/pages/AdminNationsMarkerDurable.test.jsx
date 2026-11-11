@@ -75,3 +75,19 @@ test('punto usa epoch y requestId estable del contrato', async () => {
   expect(body.epoch).toBe(0);
   expect(body).not.toHaveProperty('actor');
 });
+
+
+test('un POST fallido conserva el error aunque el GET posterior sea exitoso', async () => {
+  installFetch();
+  global.fetch.mockImplementation(async (url, opts) => {
+    if (String(url).endsWith('/context')) return {ok: true, json: async () => context};
+    if (String(url).includes('?teamId=')) return {ok: true, json: async () => ({matchRevision: 0, gamesEpoch: 0, trackingStatus: 'active'})};
+    if (opts?.method === 'POST') return {ok: false, status: 409, json: async () => ({code: 'REVISION_CONFLICT'})};
+    return {ok: true, json: async () => ({})};
+  });
+  mount();
+  await waitFor(() => expect(screen.getByRole('button', {name: 'Pausar'})).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', {name: 'Pausar'}));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('REVISION_CONFLICT'));
+  expect(screen.getByRole('alert')).toHaveTextContent('REVISION_CONFLICT');
+});
