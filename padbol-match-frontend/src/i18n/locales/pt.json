@@ -383,6 +383,7 @@
         "master_50": "Mestre 50"
       },
       "categoriaNivel": {
+        "Elite": "Elite",
         "Libre": "Gratuito (todas as categorias)",
         "Amateur": "Amador",
         "Principiante": "Novato",

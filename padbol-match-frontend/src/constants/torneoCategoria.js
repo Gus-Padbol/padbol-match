@@ -3,6 +3,7 @@ export const CATEGORIA_TORNEO_DEFAULT = 'Libre';
 
 export const TORNEO_CATEGORIA_OPTIONS = [
   { value: 'Libre', label: 'Libre (todas las categorías)' },
+  { value: 'Elite', label: 'Elite' },
   { value: '1ra', label: '1ra' },
   { value: '2da', label: '2da' },
   { value: '3ra', label: '3ra' },

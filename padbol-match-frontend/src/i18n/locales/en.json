@@ -662,6 +662,7 @@
         "padboleros": "Padbolers"
       },
       "categoriaNivel": {
+        "Elite": "Elite",
         "Libre": "Open (all categories)",
         "Amateur": "Amateur",
         "Principiante": "Beginner",
