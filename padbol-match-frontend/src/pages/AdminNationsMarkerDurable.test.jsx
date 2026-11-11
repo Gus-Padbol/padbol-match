@@ -1,5 +1,5 @@
 import React from 'react';
-import {render, screen, fireEvent, waitFor} from '@testing-library/react';
+import {render, screen, fireEvent, waitFor, within} from '@testing-library/react';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import AdminNationsMarkerDurable from './AdminNationsMarkerDurable';
 
@@ -127,4 +127,33 @@ test('uncertain change retries its identical atomic payload and key after refres
 test.each([false,true])('server denial or clock mismatch keeps changes closed: drift %s',async drift=>{
  installFetch();const original=fetch.getMockImplementation();fetch.mockImplementation(async(u,o)=>String(u).includes('?teamId=')?{ok:true,json:async()=>({matchRevision:0,gamesEpoch:0,trackingStatus:'active',...(drift?{code:'CLOCK_OUT_OF_SYNC'}:{}),substitution_window:{allowed:drift,reason:drift?null:'CHANGE_ENDS_REQUIRED',completed_games:2,set_number:1}})}:original(u,o));
  mount();await waitFor(()=>expect(fetch.mock.calls.some(([u])=>u.includes('?teamId='))).toBe(true));expect(screen.getByRole('button',{name:'Registrar cambio'})).toBeDisabled();
+});
+
+const effectiveContext = {...context, teamIds:['team-a','team-b'], teams:{
+ 'team-a':{lineup:{iniciales:['a1','a2'],suplentes:['a3'],revision:1},players:[{id:'a1',name:'Baseline A1'},{id:'a2',name:'Current A2'},{id:'a3',name:'Current A3'}]},
+ 'team-b':{lineup:{iniciales:['b1','b2'],suplentes:[],revision:1},players:[{id:'b1',name:'Current B1'},{id:'b2',name:'Current B2'}]}
+}};
+function effectiveResponse(team,status='active') { return {matchRevision:5,gamesEpoch:0,trackingStatus:status,state:{active:team==='team-a'?['a3','a2']:['b1','b2'],revision:2,events:team==='team-a'?[{type:'substitution',eventId:'e1',outId:'a1',inId:'a3',serverAt:1794434000000,revision:2}]:[]}}; }
+test('shows effective pair and change history separately from the baseline, then clears it on team change',async()=>{
+ global.fetch=jest.fn(async url=>({ok:true,json:async()=>String(url).endsWith('/context')?effectiveContext:effectiveResponse(String(url).includes('team-b')?'team-b':'team-a')}));
+ mount();const region=screen.getByRole('region',{name:'Estado efectivo del equipo'});
+ await waitFor(()=>expect(within(region).getByText('Current A2')).toBeInTheDocument());
+ const lists=within(region).getAllByRole('list');expect(lists[0]).toHaveTextContent('Current A3');expect(lists[0]).not.toHaveTextContent('Baseline A1');
+ expect(lists[1]).toHaveTextContent('Baseline A1 → Current A3');expect(lists[1]).toHaveTextContent('revisión 2');
+ fireEvent.change(screen.getByLabelText('Equipo'),{target:{value:'team-b'}});
+ expect(within(region).queryByText('Current A2')).not.toBeInTheDocument();
+ await waitFor(()=>expect(within(region).getByText('Current B1')).toBeInTheDocument());
+ expect(within(region).queryByText(/Baseline A1/)).not.toBeInTheDocument();
+});
+test.each(['error','reset_pending'])('clears effective pair when next team read is %s',async mode=>{
+ global.fetch=jest.fn(async url=>{
+  if(String(url).endsWith('/context'))return {ok:true,json:async()=>effectiveContext};
+  if(String(url).includes('team-b'))return mode==='error'?{ok:false,status:503,json:async()=>({code:'STORE_UNAVAILABLE'})}:{ok:true,json:async()=>effectiveResponse('team-b','reset_pending')};
+  return {ok:true,json:async()=>effectiveResponse('team-a')};
+ });
+ mount();const region=screen.getByRole('region',{name:'Estado efectivo del equipo'});
+ await waitFor(()=>expect(within(region).getByText('Current A2')).toBeInTheDocument());
+ fireEvent.change(screen.getByLabelText('Equipo'),{target:{value:'team-b'}});
+ await waitFor(()=>expect(within(region).getByText(/Estado efectivo no disponible/)).toBeInTheDocument());
+ expect(within(region).queryByText('Current A2')).not.toBeInTheDocument();expect(within(region).queryByText('Current B1')).not.toBeInTheDocument();
 });

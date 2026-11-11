@@ -17,6 +17,8 @@ export default function AdminNationsMarkerDurable() {
   const token = session?.access_token || '';
   const headers = useMemo(() => ({...(token ? {Authorization: `Bearer ${token}`} : {}), 'Content-Type': 'application/json'}), [token]);
   const [context, setContext] = useState(null);
+  const [effectiveMarker, setEffectiveMarker] = useState(null);
+  const loadSequence = useRef(0);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [teamId, setTeamId] = useState('');
@@ -37,10 +39,12 @@ export default function AdminNationsMarkerDurable() {
 
   const load = useCallback(async () => {
     if (!scoreboardId || !token) return;
-    setBusy(true); setSubstitutionWindow(null);
+    const sequence = ++loadSequence.current;
+    setBusy(true); setSubstitutionWindow(null); setEffectiveMarker(null);
     try {
       const ctxRes = await fetch(`${api}/api/nations/marker/${encodeURIComponent(scoreboardId)}/context`, {headers});
       const ctx = await ctxRes.json().catch(() => null);
+      if (sequence !== loadSequence.current) return;
       if (!ctxRes.ok) { setError(ctx?.code || 'CONTEXT_FAILED'); return; }
       setContext(ctx);
       setSubstitutionWindow(null);
@@ -50,6 +54,7 @@ export default function AdminNationsMarkerDurable() {
       if (!tid) { setRevision(0); setTrackingStatus(''); return; }
       const markerRes = await fetch(`${api}/api/nations/marker/${encodeURIComponent(scoreboardId)}?teamId=${encodeURIComponent(tid)}`, {headers});
       const marker = await markerRes.json().catch(() => null);
+      if (sequence !== loadSequence.current) return;
       if (markerRes.status === 409 && marker?.code === 'TRACKING_NOT_STARTED') {
         setRevision(0); setTrackingStatus('not_started'); return;
       }
@@ -57,14 +62,18 @@ export default function AdminNationsMarkerDurable() {
       setSubstitutionWindow(marker?.code === 'CLOCK_OUT_OF_SYNC' ? null : marker?.substitution_window || null);
       setRevision(Number(marker?.matchRevision ?? 0));
       setEpoch(Number(marker?.gamesEpoch ?? ctx?.gamesEpoch ?? 0));
-      setTrackingStatus(String(marker?.trackingStatus ?? ctx?.trackingStatus ?? ''));
+      const status = String(marker?.trackingStatus ?? ctx?.trackingStatus ?? '');
+      setTrackingStatus(status);
+      if (status === 'active' && marker?.code !== 'CLOCK_OUT_OF_SYNC' && Array.isArray(marker?.state?.active) && Array.isArray(marker?.state?.events)) {
+        setEffectiveMarker({scoreboardId, teamId: tid, state: marker.state});
+      }
       setError('');
-    } catch { setError('NETWORK_ERROR'); }
-    finally { setBusy(false); }
+    } catch { if (sequence === loadSequence.current) { setEffectiveMarker(null); setError('NETWORK_ERROR'); } }
+    finally { if (sequence === loadSequence.current) setBusy(false); }
   }, [api, headers, scoreboardId, teamId, token]);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { subAttempt.current = null; setSubstitutionWindow(null); setOutId(''); setInId(''); setOutId2(''); setInId2(''); setSecondSwap(false); keys.current.sub = newId(); keys.current.subEvent = newId(); }, [scoreboardId, token]);
+  useEffect(() => { load(); return () => { loadSequence.current += 1; }; }, [load]);
+  useEffect(() => { subAttempt.current = null; setEffectiveMarker(null); setContext(null); setSubstitutionWindow(null); setOutId(''); setInId(''); setOutId2(''); setInId2(''); setSecondSwap(false); keys.current.sub = newId(); keys.current.subEvent = newId(); }, [scoreboardId, token]);
 
   const run = async (path, body, afterSuccess, afterRejected) => {
     if (busy || !token) return;
@@ -75,7 +84,7 @@ export default function AdminNationsMarkerDurable() {
       if (!res.ok) { const code = result?.code || `HTTP_${res.status}`; if (res.status >= 400 && res.status < 500 && afterRejected) afterRejected(); await load(); setError(code); return; }
       if (afterSuccess) afterSuccess();
       await load();
-    } catch { setError('NETWORK_ERROR'); }
+    } catch { setEffectiveMarker(null); setError('NETWORK_ERROR'); }
     finally { setBusy(false); }
   };
   const start = () => run('/start', {idempotencyKey: keys.current.start, payload: {}}, () => { keys.current.start = newId(); });
@@ -109,9 +118,13 @@ export default function AdminNationsMarkerDurable() {
       if (!res.ok) { const code = result?.code || `HTTP_${res.status}`; await load(); setError(code); return; }
       keys.current[side === 'A' ? 'pointA' : 'pointB'] = newId();
       await load();
-    } catch { setError('NETWORK_ERROR'); }
+    } catch { setEffectiveMarker(null); setError('NETWORK_ERROR'); }
     finally { setBusy(false); }
   };
+
+  const effective = effectiveMarker?.scoreboardId === scoreboardId && effectiveMarker?.teamId === teamId ? effectiveMarker.state : null;
+  const playerName = id => context?.teams?.[teamId]?.players?.find(player => String(player.id) === String(id))?.name || 'Jugador no identificado';
+  const changes = effective?.events?.filter(event => event.type === 'substitution').slice(-6).reverse() || [];
 
   if (loading || roleLoading) return <main className="admin-nations"><p>Cargando…</p></main>;
   if (!session?.user) return <main className="admin-nations"><p>Inicia sesión con una cuenta staff.</p></main>;
@@ -137,7 +150,7 @@ export default function AdminNationsMarkerDurable() {
           ? `Cambio de lado: game ${substitutionWindow.completed_games} terminado. Puedes sustituir uno o ambos jugadores.`
           : 'Los cambios se habilitan al terminar un game impar, en la ventana de cambio de lado.'}</p>
         <label>Equipo
-          <select disabled={busy || Boolean(subAttempt.current)} value={teamId} onChange={(e) => { setTeamId(e.target.value); setSubstitutionWindow(null); setOutId(''); setInId(''); setOutId2(''); setInId2(''); }}>
+          <select disabled={busy || Boolean(subAttempt.current)} value={teamId} onChange={(e) => { setEffectiveMarker(null); setTeamId(e.target.value); setSubstitutionWindow(null); setOutId(''); setInId(''); setOutId2(''); setInId2(''); }}>
             <option value="">Seleccionar</option>
             {(context?.teamIds || []).map((id) => <option key={id} value={id}>{id}</option>)}
           </select>
@@ -149,8 +162,19 @@ export default function AdminNationsMarkerDurable() {
           <label>Segundo jugador que entra <input disabled={busy || Boolean(subAttempt.current)} value={inId2} onChange={e => setInId2(e.target.value)} /></label></> : null}
         <button type="button" disabled={busy || (!subAttempt.current && substitutionWindow?.allowed !== true)} onClick={substitute}>{subAttempt.current ? 'Reintentar el mismo cambio' : 'Registrar cambio'}</button>
       </section>
+      <section aria-label="Estado efectivo del equipo">
+        <h2>Pareja actual</h2>
+        {effective ? <><p>Revisión del equipo: {effective.revision}</p>
+          <ul>{effective.active.map(id => <li key={id}>{playerName(id)}</li>)}</ul>
+          <h3>Últimos cambios</h3>
+          {changes.length ? <ul>{changes.map(event => <li key={event.eventId}>
+            {playerName(event.outId)} → {playerName(event.inId)} · revisión {event.revision}
+            {Number.isFinite(event.serverAt) ? <> · <time dateTime={new Date(event.serverAt).toISOString()}>{new Date(event.serverAt).toLocaleTimeString()}</time></> : null}
+          </li>)}</ul> : <p>Sin cambios registrados.</p>}
+        </> : <p>Estado efectivo no disponible. Actualiza el equipo antes de operar.</p>}
+      </section>
       <section>
-        <h2>Contexto</h2>
+        <h2>Contexto inicial y alineación de referencia</h2>
         <pre style={{whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'}}>{context ? JSON.stringify(context, null, 2) : 'Sin contexto'}</pre>
       </section>
     </main>
