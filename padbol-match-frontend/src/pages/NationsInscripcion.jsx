@@ -76,7 +76,7 @@ const COPY = {
     selectorReported: 'Report received. The organisation will review it.',
     selectorReportError: 'We could not send the report. Try again.',
     selectorReportRetry: 'Retry report',
-    selectorFallback: 'The list is not available right now. You can complete your name and country; the registration will stay pending for reconciliation. Do not use another person\'s data.',
+    selectorFallback: 'No adult-verified names are available. You can submit your name and country for individual age verification; the request stays pending and does not activate participation. Do not use another person\'s data.',
     selectorPublicNote: 'Names and countries only. Select your name, then sign in to complete the registration. Selecting does not claim an account or transfer any profile.',
     selectorConflict: 'This name has more than one declaration. The organisation will reconcile it; no account or linked profile is assigned.',
     selectorNote: 'The event is 18+. This list shows name and country only for adult-verified participants and excludes unknown ages and registered minors. Selecting your name does not link this account or give access to another player\'s profile, history or points.',

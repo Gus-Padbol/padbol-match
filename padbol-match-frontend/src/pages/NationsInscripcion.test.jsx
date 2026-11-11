@@ -420,6 +420,28 @@ test('un refetch fallido tras lista válida limpia la selección y no envía id 
   expect(selectorCalls).toBe(2);
 });
 
+test('lista adulta vacía ofrece verificación individual sin activar ni convertir edad', async () => {
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: []})};
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente', selectionStatus: 'sin_seleccion'})};
+    return emptyProfile;
+  });
+  mount();
+  await waitReady();
+  expect(screen.getByText(/individual age verification/)).toBeInTheDocument();
+  expect(screen.getByText(/does not activate participation/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Full name'), {target: {value: 'Unknown Age Player'}});
+  fireEvent.change(screen.getByLabelText('Country'), {target: {value: 'IT'}});
+  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
+  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
+  const post = mockFetch.mock.calls.find(([url, opts]) => String(url).endsWith('/profile-request') && opts?.method === 'POST');
+  const payload = JSON.parse(post[1].body);
+  expect(payload).not.toHaveProperty('selection_id');
+  expect(payload.age_status).toBe('adulto');
+});
+
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {
   mockFetch.mockImplementation(async (url, opts) => {
     if (String(url).includes('/selector')) return emptySelector;
