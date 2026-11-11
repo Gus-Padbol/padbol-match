@@ -5,7 +5,7 @@ import {useSafeTranslation} from '../i18n/tSafe';
 import {PAISES_TELEFONO_PRINCIPALES} from '../constants/paisesTelefono';
 import './NationsInscripcion.css';
 
-const COPY = {
+export const COPY = {
   es: {
     event: 'Nations Cup',
     eyebrow: 'Inscripción',
@@ -111,8 +111,8 @@ const COPY = {
     pendingBadge: 'Pending',
     pendingBadgeNaples: 'Received',
     pending: 'Request received. It is pending review by the organisation.',
-    pendingNaples: 'Registration received. Your selection is saved; this does not activate your Nations participation.',
-    pendingNoteNaples: 'Solicitud recibida. Tu selección está guardada; no necesitas enviarla otra vez.',
+    pendingNaples: 'Registration submitted. Your selection is saved; this does not activate your Nations participation.',
+    pendingNoteNaples: 'Registration received. Your selection is saved; you do not need to send it again.',
     pendingNote: 'The organisation is reviewing your request. You do not need to send it again.',
     approvedBadge: 'Approved',
     approved: 'Your request was approved. You can open your profile.',
@@ -150,7 +150,7 @@ const COPY = {
     pendingBadge: 'In attesa',
     pending: 'Richiesta ricevuta. È in attesa di revisione da parte dell’organizzazione.',
     pendingNote: 'L’organizzazione sta esaminando la tua richiesta. Non devi inviarla di nuovo.',
-    pendingNoteNaples: 'Solicitud recibida. Tu selección está guardada; no necesitas enviarla otra vez.',
+    pendingNoteNaples: 'Richiesta ricevuta. La tua selezione è salvata; non devi inviarla di nuovo.',
     profileIncomplete: 'La tua scheda ufficiale è incompleta. Completa questi campi prima di iscriverti; i dati salvati vengono riutilizzati e puoi modificarli.',
     profileMissingFields: 'Campi mancanti:',
     completeProfileCta: 'Completa la scheda',
@@ -177,7 +177,55 @@ const COPY = {
   },
 };
 
-// Catálogo mundial estático de la app (40 países), NO la nómina del torneo.
+COPY.pt = {
+  ...COPY.es,
+  eyebrow: 'Inscrição',
+  title: 'Complete seus dados para a Nations Cup',
+  intro: 'Inscreva-se na Nations Cup. Revisamos sua solicitação antes de ativar sua participação.',
+  introNaples: 'Inscreva-se na 5ª Nations Cup. Escolha seu nome, complete sua ficha e inscreva-se. O histórico oficial existente é preservado; se não houver histórico, você começa em 0. Você não precisa vincular pontos FIPA.',
+  verifyEmail: 'Verifique seu email antes de enviar a solicitação. Confira sua caixa de entrada.',
+  signIn: 'Entre com sua conta verificada para continuar.',
+  signInCta: 'Entrar',
+  name: 'Nome e sobrenome',
+  country: 'País',
+  age: 'Idade',
+  adult: 'Maior de idade',
+  minor: 'Menor de idade',
+  unknown: 'Prefiro não informar',
+  guardian: 'Declaro que sou responsável pelo menor e autorizo sua participação.',
+  consent: 'Autorizo o uso dos meus dados para revisar esta inscrição.',
+  submit: 'Enviar solicitação',
+  sending: 'Enviando…',
+  pendingBadge: 'Pendente',
+  pending: 'Solicitação recebida. Está pendente de revisão pela organização.',
+  pendingNote: 'A organização está revisando sua solicitação. Você não precisa enviá-la novamente.',
+  pendingNoteNaples: 'Solicitação recebida. Sua seleção está salva; você não precisa enviá-la novamente.',
+  profileIncomplete: 'Sua ficha oficial está incompleta. Complete estes campos antes de se inscrever; os dados salvos são reutilizados e você pode editá-los.',
+  profileMissingFields: 'Campos faltantes:',
+  completeProfileCta: 'Completar ficha',
+  pointsNote: 'Se você já tem histórico oficial, ele é preservado; se não tiver, começa em 0. Você não precisa reivindicar nem vincular pontos FIPA.',
+  selectorPublicNote: 'Escolha seu nome na lista e depois entre para completar a ficha e se inscrever.',
+  selectorNote: 'A lista mostra nome e país. Escolher seu nome não vincula sua conta nem dá acesso ao perfil, histórico ou pontos de outra pessoa; a idade é verificada depois.',
+  fipaPoints: 'Histórico oficial:',
+  noFipaHistory: 'Sem histórico anterior: 0 pontos.',
+  historyAmbiguous: 'A organização revisará este histórico; nenhum ponto é atribuído aqui.',
+  historyUnavailable: 'O histórico oficial está temporariamente indisponível.',
+  approvedBadge: 'Aprovada',
+  approved: 'Sua solicitação foi aprovada. Você pode abrir seu perfil.',
+  approvedCta: 'Ir para meu perfil',
+  rejectedBadge: 'Rejeitada',
+  rejected: 'A solicitação não foi aprovada. Você pode corrigir os dados e enviar uma nova.',
+  newRequest: 'Enviar nova solicitação',
+  conflict: 'Você já tem uma solicitação ativa para este evento. Confira o status ou aguarde a revisão.',
+  error: 'Não foi possível enviar a solicitação. Tente novamente em alguns minutos.',
+  restoreError: 'Não foi possível consultar sua solicitação. Tente novamente em alguns minutos.',
+  restore: 'Recuperando sua solicitação…',
+  required: 'Complete os dados e as autorizações obrigatórias.',
+  countryList: 'Selecione seu país',
+  retry: 'Tentar novamente',
+};
+
+// Catálogo mundial estático da app (40 países), NO la nómina del torneo.
 const ISO = {
   Argentina:'AR', España:'ES', Italia:'IT', Francia:'FR', Alemania:'DE', Rumania:'RO', Austria:'AT',
   'Estados Unidos':'US', Brasil:'BR', Uruguay:'UY', Chile:'CL', Colombia:'CO', Perú:'PE', México:'MX',

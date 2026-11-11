@@ -134,9 +134,9 @@ test('envía age_status adulto, booleanos seguros y muestra recibida con acceso 
     profile_consent: true,
   });
   expect(payload.request_id).toMatch(/^[A-Za-z0-9_-]{8,120}$/);
-  expect(screen.getByText(/Your selection is saved/)).toBeInTheDocument();
+  expect(screen.getByText(/Registration received\. Your selection is saved/)).toBeInTheDocument();
   expect(screen.getByText(/does not activate your Nations participation/)).toBeInTheDocument();
-  expect(screen.getByText(/Solicitud recibida\. Tu selección está guardada; no necesitas enviarla otra vez\./)).toBeInTheDocument();
+  expect(screen.getByText(/Registration received\. Your selection is saved/)).toBeInTheDocument();
   expect(screen.getByRole('link', {name: 'Go to my profile'})).toHaveAttribute('href', expect.stringContaining('/mi-perfil?redirect='));
   expect(document.body.textContent).not.toMatch(/reviews your registration before activation|Activation is not automatic|pending review by the organisation/i);
   expect(document.body.textContent).not.toMatch(/Nations participation is active|Nations participation activated/i);
