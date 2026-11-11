@@ -390,7 +390,7 @@ test('un refetch fallido tras lista válida limpia la selección y no envía id 
   const selectionId = '7'.repeat(32);
   let selectorCalls = 0;
   mockFetch.mockImplementation(async (url, opts) => {
-    if (String(url).includes('/selector')) {
+    if (String(url).includes('/selector') && !String(url).includes('/history')) {
       selectorCalls += 1;
       if (selectorCalls === 1) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId, name: 'Player Loaded', country: 'IT'}]})};
       throw new Error('refetch failed');
