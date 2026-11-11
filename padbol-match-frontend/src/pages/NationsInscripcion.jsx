@@ -279,6 +279,7 @@ export default function NationsInscripcion() {
   const [selectorLoading, setSelectorLoading] = useState(false);
   const [selectorError, setSelectorError] = useState(false);
   const [selectorAttempt, setSelectorAttempt] = useState(0);
+  const [selectorReady, setSelectorReady] = useState(false);
   const [selectorCountry, setSelectorCountry] = useState('');
   const [selected, setSelected] = useState(null);
   const [selectionStatus, setSelectionStatus] = useState(null);
@@ -320,7 +321,7 @@ export default function NationsInscripcion() {
     sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setAdultConfirmed(false); setConsent(false); setSending(false);
-    setSelected(null); setSelectionStatus(null); setSelectorCountry(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
+    setSelected(null); setSelectionStatus(null); setSelectorReady(false); setSelectorCountry(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
@@ -359,9 +360,18 @@ export default function NationsInscripcion() {
     } catch { /* ignore */ }
   }, [selectorStorageKey, actorId]);
 
+  // Si la lista cargó vacía/falló, la selección guardada ya no es válida: no enviar un id obsoleto.
+  useEffect(() => {
+    if (!isNaples2026 || !selectorReady || !selected) return;
+    if (!selector.some((p) => p.selectionId === selected.selectionId)) {
+      setSelected(null); setName(''); setCountry(''); persistSelection(null);
+    }
+  }, [isNaples2026, selectorReady, selector, selected]);
+
   useEffect(() => {
     if (!isNaples2026) { setSelector([]); return undefined; }
     let cancelled = false;
+    setSelectorReady(false);
     setSelectorLoading(true);
     setSelectorError(false);
     fetch(`${apiBase}/api/nations-activation/events/${encodeURIComponent(slug)}/selector`, {
@@ -370,9 +380,9 @@ export default function NationsInscripcion() {
       .then(async (res) => {
         if (!res.ok) throw new Error('SELECTOR_UNAVAILABLE');
         const body = await res.json().catch(() => null);
-        if (!cancelled) setSelector(Array.isArray(body?.participants) ? body.participants : []);
+        if (!cancelled) { setSelector(Array.isArray(body?.participants) ? body.participants : []); setSelectorReady(true); }
       })
-      .catch(() => { if (!cancelled) setSelectorError(true); })
+      .catch(() => { if (!cancelled) { setSelectorError(true); setSelectorReady(true); } })
       .finally(() => { if (!cancelled) setSelectorLoading(false); });
     return () => { cancelled = true; };
   }, [isNaples2026, apiBase, slug, token, selectorAttempt]);

@@ -344,6 +344,48 @@ test('selector autenticado persiste A→B y el vacío borra la selección al rem
   expect(screen.getByLabelText('Full name')).toHaveValue('');
 });
 
+test('selección guardada obsoleta se limpia con lista vacía y el fallback no envía selection_id', async () => {
+  const stale = '9'.repeat(32);
+  sessionStorage.setItem('nationsSelector:nations-cup-napoli-2026', JSON.stringify({selectionId: stale, name: 'Stale Player', country: 'IT'}));
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: []})};
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})};
+    return emptyProfile;
+  });
+  const view = mount();
+  await waitReady();
+  await waitFor(() => expect(screen.getByLabelText('Select your name')).toHaveValue(''));
+  expect(screen.getByLabelText('Full name')).toHaveValue('');
+  expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Full name'), {target: {value: 'Fallback Player'}});
+  fireEvent.change(screen.getByLabelText('Country'), {target: {value: 'IT'}});
+  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
+  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
+  const post = mockFetch.mock.calls.find(([url, opts]) => String(url).endsWith('/profile-request') && opts?.method === 'POST');
+  expect(JSON.parse(post[1].body)).not.toHaveProperty('selection_id');
+  view.unmount();
+
+  const valid = '8'.repeat(32);
+  sessionStorage.setItem('nationsSelector:nations-cup-napoli-2026', JSON.stringify({selectionId: valid, name: 'Valid Player', country: 'IT'}));
+  mockFetch.mockImplementation(async (url, opts) => {
+    if (String(url).includes('/selector')) return {ok: true, status: 200, json: async () => ({ok: true, participants: [{selectionId: valid, name: 'Valid Player', country: 'IT'}]})};
+    if (opts?.method === 'POST') return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})};
+    return emptyProfile;
+  });
+  mount();
+  await waitReady();
+  await waitFor(() => expect(screen.getByLabelText('Select your name')).toHaveValue(valid));
+  expect(screen.getByLabelText('Full name')).toHaveValue('Valid Player');
+  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
+  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
+  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
+  await waitFor(() => expect(screen.getByText(/Registration received/)).toBeInTheDocument());
+  const validPost = mockFetch.mock.calls.filter(([url, opts]) => String(url).endsWith('/profile-request') && opts?.method === 'POST').at(-1);
+  expect(JSON.parse(validPost[1].body).selection_id).toBe(valid);
+});
+
 test('el error ADULT_ONLY del backend se explica en inglés sin éxito falso', async () => {
   mockFetch.mockImplementation(async (url, opts) => {
     if (String(url).includes('/selector')) return emptySelector;
