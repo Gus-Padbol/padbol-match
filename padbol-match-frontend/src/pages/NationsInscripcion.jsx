@@ -670,7 +670,7 @@ export default function NationsInscripcion() {
                 </div>
               </div>
             ) : null}
-            {isNaples2026 ? <Link className="nations-button" to="/mi-perfil">{t.approvedCta}</Link> : null}
+            {isNaples2026 ? <Link className="nations-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.approvedCta}</Link> : null}
           </section>
         ) : statusView === 'approved' ? (
           <section className="nations-status nations-status--approved" role="status">
@@ -679,7 +679,7 @@ export default function NationsInscripcion() {
               <h2>{t.approvedBadge}</h2>
             </div>
             <p>{t.approved}</p>
-            <Link className="nations-button nations-button--success" to="/mi-perfil">{t.approvedCta}</Link>
+            <Link className="nations-button nations-button--success" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.approvedCta}</Link>
           </section>
         ) : statusView === 'rejected' ? (
           <section className="nations-status nations-status--rejected" role="alert">

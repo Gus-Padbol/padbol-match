@@ -18,7 +18,7 @@ import {
 } from '../utils/jugadorIdentidad';
 import './JugadorFichaTorneosSection.css';
 
-export default function JugadorFichaTorneosSection({ perfil = null, whatsappFallback = '', requireCategoriaDeportiva = false }) {
+export default function JugadorFichaTorneosSection({ perfil = null, whatsappFallback = '', requireCategoriaDeportiva = false, onSaved = null }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -119,6 +119,7 @@ export default function JugadorFichaTorneosSection({ perfil = null, whatsappFall
       setSuccessMsg('✅ Ficha guardada correctamente');
       setReplaceDocument(false);
       await loadIdentidad();
+      await onSaved?.();
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
       setErrorMsg(err.message || 'Error al guardar');

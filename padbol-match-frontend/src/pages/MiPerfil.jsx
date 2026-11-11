@@ -6,6 +6,7 @@ import { reservaInicioMs, puedeCancelarReservaJugador, cancelarReservaJugador, f
 import { fetchPublicPlayerSummary, searchPublicPlayerSummaries } from '../utils/perfilPublicoApi';
 import { checkRegistrationAliasAvailability } from '../utils/registroAliasApi';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
+import { getAuthHeaders } from '../utils/scoreboardApi';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
@@ -302,6 +303,24 @@ export default function MiPerfil() {
   const torneoIdPerfil = searchParams.get('id');
   const redirectAfterAuth = searchParams.get('redirect') || '';
   const esContextoNacionesNapoli = String(redirectAfterAuth).startsWith('/nations-cup/');
+  const napoliSlug = useMemo(() => {
+    const m = String(redirectAfterAuth).match(/^\/nations-cup\/([^/]+)\/inscripcion/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }, [redirectAfterAuth]);
+  const confirmNapoliReadiness = useCallback(async () => {
+    if (!esContextoNacionesNapoli || !napoliSlug) return false;
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/nations-activation/events/${encodeURIComponent(napoliSlug)}/profile-readiness`, {headers});
+      const body = await res.json().catch(() => null);
+      return res.ok && body?.complete === true;
+    } catch { return false; }
+  }, [esContextoNacionesNapoli, napoliSlug]);
+  const handleFichaTorneoSaved = useCallback(async () => {
+    if (!await confirmNapoliReadiness()) return;
+    setSuccessMsg('✅ Perfil completo');
+    setTimeout(() => navigate(redirectAfterAuth, {replace: true}), 450);
+  }, [confirmNapoliReadiness, navigate, redirectAfterAuth]);
   const torneoIdValido = Boolean(torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil)));
   const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -475,6 +494,7 @@ export default function MiPerfil() {
     genero: '',
     apodo: '',
     lateralidad: 'Diestro',
+    posicion_cancha: '',
     nivel: 'Principiante',
     pais: '',
     localidad: '',
@@ -829,6 +849,7 @@ export default function MiPerfil() {
             String(data.apodo ?? '').trim() ||
             (data.nombre_saludo != null ? String(data.nombre_saludo) : ''),
           lateralidad: data.lateralidad || 'Diestro',
+          posicion_cancha: data.posicion_cancha != null ? String(data.posicion_cancha) : '',
           nivel: data.nivel || 'Principiante',
           pais: data.pais || '',
           localidad: data.localidad != null ? String(data.localidad) : '',
@@ -1485,6 +1506,7 @@ export default function MiPerfil() {
       const apodoReg = String(formData.apodo || '').trim();
       const payload = {
         lateralidad: formData.lateralidad,
+        posicion_cancha: formData.posicion_cancha || null,
         nivel: formData.nivel,
         genero: genReg,
         pendiente_validacion: true,
@@ -1817,7 +1839,8 @@ export default function MiPerfil() {
       setPassRegistroTorneo2('');
 
       const target = normalizeTorneoPostPerfilPath(redirectAfterAuth, torneoIdValido ? torneoIdPerfil : '');
-      if (isPerfilTorneoCompleto() && target && target !== '/home' && target !== '/') {
+      const fichaCompleta = esContextoNacionesNapoli ? await confirmNapoliReadiness() : isPerfilTorneoCompleto();
+      if (fichaCompleta && target && target !== '/home' && target !== '/') {
         setSuccessMsg(target.startsWith('/torneo/') ? MSG_CUENTA_Y_FICHA_OK : '✅ Perfil guardado');
         setEditando(false);
         await new Promise((r) => setTimeout(r, 450));
@@ -3002,6 +3025,7 @@ export default function MiPerfil() {
         perfil={perfil}
         whatsappFallback={String(cuentaDeSesion?.whatsapp || '').trim()}
         requireCategoriaDeportiva={esContextoNacionesNapoli}
+        onSaved={handleFichaTorneoSaved}
       />
 
       {/* Ficha detail card */}
@@ -3374,6 +3398,19 @@ export default function MiPerfil() {
               <option value="Ambidiestro">{t('perfil.ambidiestro')}</option>
             </select>
             {fichErrP('lateralidad')}
+
+            <label style={labelStyle}>Posición en cancha</label>
+            <select
+              name="posicion_cancha"
+              value={formData.posicion_cancha}
+              onChange={handleChange}
+              style={{ ...inputStyle, marginBottom: '14px' }}
+            >
+              <option value="">Seleccionar</option>
+              <option value="derecha">Derecha</option>
+              <option value="izquierda">Izquierda</option>
+              <option value="ambas">Ambas</option>
+            </select>
 
             <label style={labelStyle}>{t('perfil.categoryLabel')} {reqAst}</label>
             <select
