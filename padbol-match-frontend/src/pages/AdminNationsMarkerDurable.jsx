@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Link, useParams} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import useUserRole from '../hooks/useUserRole';
@@ -15,6 +15,7 @@ export default function AdminNationsMarkerDurable() {
   const {rol, loading: roleLoading} = useUserRole(currentCliente);
   const api = getApiBaseUrl();
   const token = session?.access_token || '';
+  const headers = useMemo(() => ({...(token ? {Authorization: `Bearer ${token}`} : {}), 'Content-Type': 'application/json'}), [token]);
   const [context, setContext] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -22,41 +23,77 @@ export default function AdminNationsMarkerDurable() {
   const [outId, setOutId] = useState('');
   const [inId, setInId] = useState('');
   const [revision, setRevision] = useState(0);
+  const [epoch, setEpoch] = useState(0);
+  const [trackingStatus, setTrackingStatus] = useState('');
+  const keys = useRef({
+    start: newId(), pause: newId(), resume: newId(), close: newId(),
+    sub: newId(), subEvent: newId(), pointA: newId(), pointB: newId(),
+  });
 
-  const headers = useMemo(() => ({... (token ? {Authorization: `Bearer ${token}`} : {}), 'Content-Type': 'application/json'}), [token]);
   const load = useCallback(async () => {
     if (!scoreboardId || !token) return;
-    setError(''); setBusy(true);
+    setBusy(true);
     try {
-      const res = await fetch(`${api}/api/nations/marker/${encodeURIComponent(scoreboardId)}/context`, {headers});
-      const body = await res.json().catch(() => null);
-      if (!res.ok) { setError(body?.code || 'CONTEXT_FAILED'); return; }
-      setContext(body);
-      setRevision(0);
+      const ctxRes = await fetch(`${api}/api/nations/marker/${encodeURIComponent(scoreboardId)}/context`, {headers});
+      const ctx = await ctxRes.json().catch(() => null);
+      if (!ctxRes.ok) { setError(ctx?.code || 'CONTEXT_FAILED'); return; }
+      setContext(ctx);
+      const tid = teamId || String(ctx?.membership?.A ?? ctx?.teamIds?.[0] ?? '');
+      if (tid && !teamId) setTeamId(tid);
+      setEpoch(Number(ctx?.gamesEpoch ?? 0));
+      if (!tid) { setRevision(0); setTrackingStatus(''); return; }
+      const markerRes = await fetch(`${api}/api/nations/marker/${encodeURIComponent(scoreboardId)}?teamId=${encodeURIComponent(tid)}`, {headers});
+      const marker = await markerRes.json().catch(() => null);
+      if (markerRes.status === 409 && marker?.code === 'TRACKING_NOT_STARTED') {
+        setRevision(0); setTrackingStatus('not_started'); return;
+      }
+      if (!markerRes.ok) { setError(marker?.code || `MARKER_${markerRes.status}`); return; }
+      setRevision(Number(marker?.matchRevision ?? 0));
+      setEpoch(Number(marker?.gamesEpoch ?? ctx?.gamesEpoch ?? 0));
+      setTrackingStatus(String(marker?.trackingStatus ?? ctx?.trackingStatus ?? ''));
+      setError('');
     } catch { setError('NETWORK_ERROR'); }
     finally { setBusy(false); }
-  }, [api, headers, scoreboardId, token]);
+  }, [api, headers, scoreboardId, teamId, token]);
 
   useEffect(() => { load(); }, [load]);
-  const command = async (path, body) => {
+
+  const run = async (path, body, afterSuccess) => {
     if (busy || !token) return;
     setBusy(true); setError('');
     try {
       const res = await fetch(`${api}/api/nations/marker/${encodeURIComponent(scoreboardId)}${path}`, {method: 'POST', headers, body: JSON.stringify(body)});
       const result = await res.json().catch(() => null);
-      if (!res.ok) { setError(result?.code || `HTTP_${res.status}`); return; }
+      if (!res.ok) { setError(result?.code || `HTTP_${res.status}`); await load(); return; }
+      if (afterSuccess) afterSuccess();
       await load();
     } catch { setError('NETWORK_ERROR'); }
     finally { setBusy(false); }
   };
-  const start = () => command('/start', {idempotencyKey: newId(), payload: {}});
-  const global = (type) => command('/global/commands', {type, idempotencyKey: newId(), expectedRevision: revision});
+  const start = () => run('/start', {idempotencyKey: keys.current.start, payload: {}}, () => { keys.current.start = newId(); });
+  const global = (type) => run('/global/commands', {
+    type, idempotencyKey: keys.current[type], expectedRevision: revision, epoch,
+  }, () => { keys.current[type] = newId(); });
   const substitute = () => {
     if (!teamId || !outId.trim() || !inId.trim()) { setError('TEAM_OUT_IN_REQUIRED'); return; }
-    command(`/team/${encodeURIComponent(teamId)}/commands`, {
-      type: 'substitution', eventId: newId(), idempotencyKey: newId(),
-      expectedRevision: revision, outId: outId.trim(), inId: inId.trim(),
-    });
+    run(`/team/${encodeURIComponent(teamId)}/commands`, {
+      type: 'substitution', eventId: keys.current.subEvent, idempotencyKey: keys.current.sub,
+      expectedRevision: revision, epoch, outId: outId.trim(), inId: inId.trim(),
+    }, () => { keys.current.sub = newId(); keys.current.subEvent = newId(); });
+  };
+  const scorePoint = async (side) => {
+    if (busy || !token) return;
+    setBusy(true); setError('');
+    try {
+      const res = await fetch(`${api}/api/scoreboard/partidos/${encodeURIComponent(scoreboardId)}/punto/${side}`, {
+        method: 'POST', headers, body: JSON.stringify({requestId: keys.current[side === 'A' ? 'pointA' : 'pointB'], epoch}),
+      });
+      const result = await res.json().catch(() => null);
+      if (!res.ok) { setError(result?.code || `HTTP_${res.status}`); await load(); return; }
+      keys.current[side === 'A' ? 'pointA' : 'pointB'] = newId();
+      await load();
+    } catch { setError('NETWORK_ERROR'); }
+    finally { setBusy(false); }
   };
 
   if (loading || roleLoading) return <main className="admin-nations"><p>Cargando…</p></main>;
@@ -66,8 +103,8 @@ export default function AdminNationsMarkerDurable() {
   return (
     <main className="admin-nations">
       <h1>Marcador durable Nations</h1>
-      <p>Usa un marcador ya generado y activado en el panel legacy. Esta pantalla no genera ni activa canchas.</p>
-      <p>Scoreboard: <code>{scoreboardId}</code> · rol: {rol} · revisión: {revision}</p>
+      <p>Usa un marcador ya generado y activado en el panel legacy. Esta pantalla no genera, activa ni controla el reloj legacy.</p>
+      <p>Scoreboard: <code>{scoreboardId}</code> · rol: {rol} · revisión: {revision} · epoch: {epoch} · estado: {trackingStatus || '—'}</p>
       <p><Link to="/admin/nations-activacion">Volver a generación/activación legacy</Link></p>
       {error ? <p role="alert">{error}</p> : null}
       {busy ? <p role="status">Operación en curso…</p> : null}
@@ -75,6 +112,8 @@ export default function AdminNationsMarkerDurable() {
       <button type="button" disabled={busy} onClick={() => global('pause')}>Pausar</button>
       <button type="button" disabled={busy} onClick={() => global('resume')}>Reanudar</button>
       <button type="button" disabled={busy} onClick={() => global('close')}>Cerrar</button>
+      <button type="button" disabled={busy} onClick={() => scorePoint('A')}>Punto A</button>
+      <button type="button" disabled={busy} onClick={() => scorePoint('B')}>Punto B</button>
       <section>
         <h2>Cambio</h2>
         <label>Equipo
