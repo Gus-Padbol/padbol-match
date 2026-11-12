@@ -12,7 +12,7 @@ afterEach(()=>{if(previous===undefined)delete process.env.REACT_APP_APP_VARIANT;
 test('public demo shows the same fictional names, larger on-court portraits and separate bench from server roles',()=>{
  const original=JSON.stringify(board);const {container,rerender}=render(<ScoreboardBoard partido={board} timerSeconds={45}/>);
  const court=screen.getAllByRole('list',{name:'On court'}),bench=screen.getAllByRole('list',{name:'Bench'});
- expect(court).toHaveLength(2);expect(bench).toHaveLength(2);expect(within(court[0]).getByText('Marco Rossi')).toBeInTheDocument();expect(within(bench[0]).getByText('Paolo Conti')).toBeInTheDocument();
+ expect(screen.getByText('Court 1 · Naples 2026 · Demo')).toBeInTheDocument();expect(court).toHaveLength(2);expect(bench).toHaveLength(2);expect(within(court[0]).getByText('Marco Rossi')).toBeInTheDocument();expect(within(bench[0]).getByText('Paolo Conti')).toBeInTheDocument();
  expect(screen.getAllByRole('img',{name:/Demo portrait of/})).toHaveLength(8);expect(container.querySelector('img[src="https://private.invalid/personal.jpg"]')).toBeNull();expect(fetchJugadoresTemp).not.toHaveBeenCalled();
  const swapped={...board,equipo_a_jugadores:board.equipo_a_jugadores.map(p=>({...p,role:p.role==='on_court'?'bench':'on_court'}))};
  rerender(<ScoreboardBoard partido={swapped} timerSeconds={46}/>);

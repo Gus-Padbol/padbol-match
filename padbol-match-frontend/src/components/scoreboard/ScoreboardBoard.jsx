@@ -325,6 +325,7 @@ export default function ScoreboardBoard({
     ? {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'}
     : ({es:{active:'En cancha',bench:'Suplentes',roster:'Plantel',unavailable:'Alineación actual no disponible'},en:{active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'},pt:{active:'Em quadra',bench:'Reservas',roster:'Elenco',unavailable:'Escalação atual indisponível'},it:{active:'In campo',bench:'Panchina',roster:'Rosa',unavailable:'Formazione attuale non disponibile'}})[(i18n?.language || 'es').slice(0,2)] || {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'};
   const display = partido.display || {};
+  const venueHeader=formatScoreboardVenueHeader(partido).replace(/^Cancha\b/,lineup.isNations?'Court':'Cancha');
   const torneoNombre = String(partido?.torneo_nombre || '').trim();
   const logoTorneoUrl = String(partido?.logo_torneo_url || '').trim();
   const hasTorneoBrand = Boolean(torneoNombre || logoTorneoUrl);
@@ -447,7 +448,7 @@ export default function ScoreboardBoard({
 
         <section className="sb-center">
           <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} preserveCase={lineup.isNations} />
-          {lineup.isNations && formatScoreboardVenueHeader(partido) ? <p className="sb-nations-venue">{formatScoreboardVenueHeader(partido)}</p> : null}
+          {lineup.isNations && venueHeader ? <p className="sb-nations-venue">{venueHeader}</p> : null}
 
           <div className="sb-center__block">
             {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
