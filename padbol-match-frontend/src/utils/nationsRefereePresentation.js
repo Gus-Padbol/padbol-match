@@ -23,7 +23,7 @@ export function nationsDemoPublicBoard(board, options) {
  const isNations=['current','unavailable'].includes(board?.nations_lineup_status);
  const presentation=nationsRefereePresentation({mode:isNations?'nations':'legacy',board},options);
  if(!presentation.isDemo)return board;
- const next={...board,torneo_nombre:presentation.title,equipo_a_nombre:presentation.teamName('A'),equipo_b_nombre:presentation.teamName('B'),sede_nombre:'Naples 2026 · Demo',cancha_nombre:'Court 1'};
+ const next={...board,torneo_nombre:presentation.title,equipo_a_nombre:presentation.teamName('A'),equipo_b_nombre:presentation.teamName('B'),sede_nombre:'Naples 2026 · Demo',cancha:'1',cancha_nombre:'Court 1'};
  for(const side of ['a','b'])next[`equipo_${side}_jugadores`]=(board[`equipo_${side}_jugadores`]||[]).map(player=>{
   const raw=player.nombre??player.name;
   return {...player,nombre:presentation.playerName({name:raw}),name:presentation.playerName({name:raw}),demoPortraitIndex:Object.keys(DEMO_NAMES).indexOf(raw)};
