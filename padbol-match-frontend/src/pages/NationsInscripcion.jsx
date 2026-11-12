@@ -358,9 +358,7 @@ export default function NationsInscripcion() {
   const consentCopy = isNaples2026 ? t.consentNaples : t.consent;
   const submitLabel = isNaples2026 ? t.submitNaples : t.submit;
   const sendingLabel = isNaples2026 ? t.sendingNaples : t.sending;
-  const countryOptions = slug === NAPOLI_2026_SLUG
-    ? NAPOLI_2026_COUNTRIES.map(({code, flag, names}) => [code, `${flag} ${names[lang] || names.es}`.trim()])
-    : COUNTRIES;
+
 
   const [restoring, setRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState(false);
@@ -372,6 +370,13 @@ export default function NationsInscripcion() {
   const [guardianConsent, setGuardianConsent] = useState(false);
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [selector, setSelector] = useState([]);
+  const canonicalCountryOptions = slug === NAPOLI_2026_SLUG
+    ? NAPOLI_2026_COUNTRIES.map(({code, flag, names}) => [code, `${flag} ${names[lang] || names.es}`.trim()])
+    : COUNTRIES;
+  // QA-only nominations may include additional vetted countries; production stays canonical 15.
+  const countryOptions = isNaples2026 && process.env.REACT_APP_APP_VARIANT === 'qa'
+    ? [...canonicalCountryOptions, ...COUNTRIES.filter(([code]) => selector.some(p => p.country === code) && !canonicalCountryOptions.some(([existing]) => existing === code))]
+    : canonicalCountryOptions;
   const [selectorLoading, setSelectorLoading] = useState(false);
   const [selectorError, setSelectorError] = useState(false);
   const [selectorAttempt, setSelectorAttempt] = useState(0);
@@ -663,7 +668,7 @@ export default function NationsInscripcion() {
                 <div className="nations-select-wrap">
                   <select className="nations-select" id="nations-public-selector-name" value={selected?.selectionId || ''} onChange={(e) => chooseSelection(e.target.value)} disabled={selectorLoading || selectorError}>
                     <option value="">{t.selectorPlaceholder}</option>
-                    {selector.filter(selectorMatches).map((p) => <option key={p.selectionId} value={p.selectionId}>{p.name} · {p.country}</option>)}
+                    {selector.filter(selectorMatches).map((p) => <option key={p.selectionId} value={p.selectionId}>{p.name} · {process.env.REACT_APP_APP_VARIANT === 'qa' ? countryLabelFor(p.country) : p.country}</option>)}
                   </select>
                   <span className="nations-select__chevron" aria-hidden="true" />
                 </div>
@@ -844,7 +849,7 @@ export default function NationsInscripcion() {
                     >
                       <option value="">{t.selectorPlaceholder}</option>
                       {selector.filter(selectorMatches).map((p) => (
-                        <option key={p.selectionId} value={p.selectionId}>{p.name} · {p.country}</option>
+                        <option key={p.selectionId} value={p.selectionId}>{p.name} · {process.env.REACT_APP_APP_VARIANT === 'qa' ? countryLabelFor(p.country) : p.country}</option>
                       ))}
                     </select>
                     <span className="nations-select__chevron" aria-hidden="true" />

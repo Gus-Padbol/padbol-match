@@ -746,3 +746,29 @@ test('tema oscuro conserva el contraste scoped del formulario', () => {
   expect(css).toMatch(/html\.theme-dark \.nations-eyebrow[\s\S]*?#ff8d91/i);
   expect(css).toMatch(/html\.theme-dark \.nations-event-chip\s*\{[^}]*#ff8d91/i);
 });
+
+test.each(['qa', 'production'])('Argentina nomination country is available only in the QA catalogue (%s)', async variant => {
+ const previous=process.env.REACT_APP_APP_VARIANT;process.env.REACT_APP_APP_VARIANT=variant;
+ try {
+  mockFetch.mockImplementation(async url => String(url).includes('/selector')
+   ? {ok:true,status:200,json:async()=>({ok:true,participants:[{selectionId:'00000000-0000-4000-8000-0000000000cc',name:'Nicolás Renedo',country:'AR'},{selectionId:'00000000-0000-4000-8000-0000000000dd',name:'Italian Fixture',country:'IT'}]})}
+   : {ok:true,status:200,json:async()=>({ok:true,requests:[]})});
+  mount();
+  await waitFor(()=>expect(screen.getByLabelText('Select your name')).toBeEnabled());
+  const filter=screen.getByLabelText('Filter by country');
+  const declared=screen.getByLabelText('Country');
+  if(variant==='qa'){
+   await waitFor(()=>expect(Array.from(filter.options).some(o=>o.value==='AR')).toBe(true));
+   fireEvent.change(filter,{target:{value:'AR'}});
+   const names=screen.getByLabelText('Select your name');
+   expect(names.textContent).toMatch(/Nicolás Renedo.*Argentina/);expect(names.textContent).not.toMatch(/Italian Fixture/);
+   fireEvent.change(names,{target:{value:'00000000-0000-4000-8000-0000000000cc'}});
+   expect(declared.value).toBe('AR');
+   expect(Array.from(declared.options).filter(o=>o.value==='AR')).toHaveLength(1);
+  }else{
+   expect(Array.from(filter.options).some(o=>o.value==='AR')).toBe(false);
+   expect(declared.options).toHaveLength(16);
+   expect(Array.from(declared.options).some(o=>o.value==='AR')).toBe(false);
+  }
+ }finally{if(previous===undefined)delete process.env.REACT_APP_APP_VARIANT;else process.env.REACT_APP_APP_VARIANT=previous;}
+});
