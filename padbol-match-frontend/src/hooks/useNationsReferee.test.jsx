@@ -46,3 +46,28 @@ test('acknowledged save with a failed refresh is never retried; it stays locked 
  client.read.mockResolvedValueOnce({...snapshot,revision:3});await act(async()=>{await result.current.refresh();});
  expect(result.current.syncing).toBe(false);expect(result.current.error).toBe('');expect(result.current.snapshot.revision).toBe(3);
 });
+
+test('a slow periodic read is not starved by subsequent five-second polls',async()=>{
+ jest.useFakeTimers();let finish;
+ try {
+  const {result,unmount}=renderHook(()=>useNationsReferee({scoreboardId:'one'}));await act(async()=>{});
+  client.read.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));
+  await act(async()=>{jest.advanceTimersByTime(5000);});expect(client.read).toHaveBeenCalledTimes(2);
+  await act(async()=>{jest.advanceTimersByTime(15000);});expect(client.read).toHaveBeenCalledTimes(2);
+  await act(async()=>{finish({...snapshot,revision:5});});expect(result.current.snapshot.revision).toBe(5);
+  await act(async()=>{jest.advanceTimersByTime(5000);});expect(client.read).toHaveBeenCalledTimes(3);unmount();
+ }finally{jest.useRealTimers();}
+});
+test('a pre-command poll cannot confirm or replace the fresh post-acknowledgement snapshot',async()=>{
+ jest.useFakeTimers();let finishRead,finishSend;
+ try {
+  const {result,unmount}=renderHook(()=>useNationsReferee({scoreboardId:'one'}));await act(async()=>{});
+  client.read.mockImplementationOnce(()=>new Promise(resolve=>{finishRead=resolve;})).mockResolvedValueOnce({...snapshot,revision:3});
+  await act(async()=>{jest.advanceTimersByTime(5000);});
+  client.send.mockImplementationOnce(()=>new Promise(resolve=>{finishSend=resolve;}));
+  let action;act(()=>{action=result.current.act('substitution',{swaps:[]});});
+  await act(async()=>{finishRead({...snapshot,revision:99});});expect(result.current.snapshot.revision).toBe(2);
+  await act(async()=>{finishSend({revision:3});await action;});
+  expect(client.read).toHaveBeenCalledTimes(3);expect(result.current.snapshot.revision).toBe(3);expect(result.current.syncing).toBe(false);unmount();
+ }finally{jest.useRealTimers();}
+});
