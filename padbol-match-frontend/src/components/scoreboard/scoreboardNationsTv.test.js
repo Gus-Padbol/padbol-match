@@ -9,7 +9,8 @@ const css = fs.readFileSync(path.join(__dirname, '../../styles/ScoreboardDisplay
 
 test('Nations TV is English and identity-safe', () => {
   expect(board).toContain("active:'On court'");
-  expect(board).toContain("bench:'Substitutes'");
+  expect(board).toContain("bench:'Bench'");
+  expect(board).not.toContain("bench:'Substitutes'");
   expect(board).toContain('aria-label="Serving"');
   expect(board).toContain('>Serving</span>');
   expect(board).toContain('>Time</span>');

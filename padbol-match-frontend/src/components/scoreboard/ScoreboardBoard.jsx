@@ -319,7 +319,7 @@ export default function ScoreboardBoard({
   const {i18n} = useSafeTranslation();
   const lineup = nationsTvLineup(partido);
   const copy = lineup.isNations
-    ? {active:'On court',bench:'Substitutes',roster:'Roster',unavailable:'Current lineup unavailable'}
+    ? {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'}
     : ({es:{active:'En cancha',bench:'Suplentes',roster:'Plantel',unavailable:'Alineación actual no disponible'},en:{active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'},pt:{active:'Em quadra',bench:'Reservas',roster:'Elenco',unavailable:'Escalação atual indisponível'},it:{active:'In campo',bench:'Panchina',roster:'Rosa',unavailable:'Formazione attuale non disponibile'}})[(i18n?.language || 'es').slice(0,2)] || {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'};
   const display = partido.display || {};
   const torneoNombre = String(partido?.torneo_nombre || '').trim();

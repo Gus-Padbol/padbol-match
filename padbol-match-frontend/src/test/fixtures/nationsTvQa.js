@@ -34,3 +34,16 @@ export function isQaNationsTvFixture({variant, mode, scoreboardId} = {}) {
     && mode === 'nations'
     && scoreboardId === QA_NATIONS_BOARD_ID;
 }
+
+export function canChangeQaPair(team) {
+  return Boolean(team && team.active?.length === 2 && team.bench?.length === 2);
+}
+
+export function changeQaPair(team) {
+  if (!canChangeQaPair(team)) return null;
+  return {
+    ...team,
+    active: team.active.map((player, index) => ({...player, role: 'bench', ...team.bench[index]})),
+    bench: team.bench.map((player, index) => ({...player, role: 'on_court', ...team.active[index]})),
+  };
+}
