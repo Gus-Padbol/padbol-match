@@ -20,3 +20,6 @@ test('fresh signup placeholder is replaced by declared selection prefill while a
  expect(nationsProfileDraft({nombre:'Jugador',apellido:null},{name:'Gustavo Miguens',country:'AR'})).toMatchObject({nombre:'Gustavo',apellido:'Miguens'});
  expect(nationsProfileDraft({nombre:'Own',apellido:'Existing'},{name:'Public Selected',country:'IT'})).toMatchObject({nombre:'Own',apellido:'Existing'});
 });
+
+ test('complete draft preserves existing compound given names matching canonical selection',()=>{const {nationsCompleteDraft}=require('./nationsEssentialProfile');expect(nationsCompleteDraft({nombre:'Juan Pablo',apellido:'García'},{name:'JUAN PABLO GARCIA',country:'AR'})).toMatchObject({nombre:'Juan Pablo',apellido:'García',pais:'AR'});});
+test('complete draft reuses an already saved private contact without inventing private fields',()=>{const {nationsCompleteDraft}=require('./nationsEssentialProfile');expect(nationsCompleteDraft({},null,{telefono:'+39123456789'})).toMatchObject({telefono:'+39123456789',fecha_nacimiento:'',tipo_documento:'',nacionalidad:'',numero_documento:''});});
