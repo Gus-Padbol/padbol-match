@@ -15,6 +15,7 @@ import CommercialAdvisorAccess from '../components/CommercialAdvisorAccess';
 import { createCommercialAssignmentsApi } from '../utils/commercialAssignmentsApi';
 import CrmReplyTextarea from '../components/CrmReplyTextarea';
 import CrmEmailHistory from '../components/CrmEmailHistory';
+import CrmWelcomeStatus from '../components/CrmWelcomeStatus';
 import CrmMessageTranslation from '../components/CrmMessageTranslation';
 import CommercialAdvisorFilter, {matchesAdvisor} from '../components/CommercialAdvisorFilter';
 import './WhatsappCrmDemo.css';
@@ -965,6 +966,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                     {item.short_ticket_reference || item.ticket_reference ? <p>N.º de ticket: {item.short_ticket_reference || item.ticket_reference}</p> : null}
                     {needsEnglishHumanAttention(item) ? <p className="wa-language-attention">Atención humana en inglés pendiente</p> : null}
                     <footer><span className={`wa-pill wa-pill--${statusTone[effectiveState(item)] || 'blue'}`}>{displayState(item)}</span><ChannelIcon channel={item.source_channel} /></footer>
+                    {item.source_channel === 'email' && (commercialOnly || conversationArea(item) === 'commercial') ? <CrmWelcomeStatus welcome={item.commercial_welcome} compact /> : null}
                   </div>
                 </button>
               ))}
@@ -992,6 +994,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
                   </div></details> : null}
                   <span className={`wa-pill wa-pill--${statusTone[effectiveState(active)] || 'blue'}`}>{displayState(active)}</span>
                 </header>
+                {isCommercial ? <CrmWelcomeStatus welcome={active.commercial_welcome} /> : null}
                 {isCommercial ? <section className="wa-lead-highlights" aria-label="Datos principales del lead">
                   <div><span>Inversión declarada</span><strong>{leadHighlights.investment}</strong></div>
                   <div><span>Calificación</span><strong>{leadHighlights.score}</strong></div>

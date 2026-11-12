@@ -1,0 +1,26 @@
+.crm-welcome-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem .75rem;
+  margin-top: .6rem;
+  padding: .55rem .7rem;
+  border: 1px solid #d9dfe5;
+  border-radius: .65rem;
+  background: #f5f7fa;
+  color: #435166;
+  font-size: .8rem;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.crm-welcome-status__send { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .5rem; }
+.crm-welcome-status__send time { font-size: .92em; font-weight: 400; }
+.crm-welcome-status--sent { background: #eaf8ef; border-color: #b7dfc5; color: #17663a; }
+.crm-welcome-status--processing { background: #fff7df; border-color: #ebd58f; color: #77580c; }
+.crm-welcome-status--needs_review { background: #fff0e8; border-color: #edc6ad; color: #8d4117; }
+.crm-welcome-status__response { color: #435166; font-weight: 500; }
+.crm-welcome-status--compact { padding: .35rem .45rem; gap: .2rem .45rem; font-size: .75rem; }
+.wa-demo .wa-conversation-copy > .crm-welcome-status { flex-wrap: wrap; justify-content: flex-start; gap: .2rem .45rem; }
+.wa-demo .crm-welcome-status .crm-welcome-status__send strong { color: inherit; font-size: inherit; white-space: normal; overflow: visible; text-overflow: clip; }
+.wa-demo .crm-welcome-status .crm-welcome-status__send time { color: inherit; font-size: .92em; max-width: none; overflow: visible; }

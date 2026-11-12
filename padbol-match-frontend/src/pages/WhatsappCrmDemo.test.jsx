@@ -76,6 +76,34 @@ describe('CRM histórico unificado', () => {
     crmAdminApi.createNextGenerationVenueApplication.mockResolvedValue({ venueApplication: { id: 'venue-app-1' }, created: true });
   });
 
+  test('la tarjeta y ficha muestran la bienvenida confirmada sin activar envíos', async () => {
+    crmAdminApi.inbox.mockResolvedValue({items:[{
+      id:'welcome-visible', estado:'nuevo', source_channel:'email', origin:'web_form:business',
+      identity_used:'welcome@example.test', subject:'Consulta de canchas', inbound_body:'Quiero conocer el proyecto',
+      created_at:'2026-11-12T16:24:47Z',
+      commercial_welcome:{status:'sent',sent_at:'2026-11-12T16:24:48Z',response_state:'no_reply_registered'},
+    }]});
+    render(<WhatsappCrmDemo />);
+    expect(await screen.findAllByText('Bienvenida enviada')).toHaveLength(2);
+    expect(screen.getAllByText('Esperando respuesta')).toHaveLength(2);
+    const list = screen.getByRole('region', {name:'Listado de conversaciones'});
+    expect(within(list).getByText('Bienvenida enviada')).toBeInTheDocument();
+    expect(crmAdminApi.reply).not.toHaveBeenCalled();
+    expect(crmAdminApi.addActivity).not.toHaveBeenCalled();
+  });
+
+  test('una ficha de soporte no presenta estados comerciales incluso si llega un campo inesperado', async () => {
+    crmAdminApi.inbox.mockResolvedValue({items:[{
+      id:'support-welcome',estado:'nuevo',source_channel:'email',origin:'support_email',identity_used:'support@example.test',
+      subject:'Soporte técnico',inbound_body:'Consulta de soporte',
+      commercial_welcome:{status:'sent',sent_at:'2026-11-12T16:24:48Z',response_state:'no_reply_registered'},
+    }]});
+    render(<WhatsappCrmDemo />);
+    await screen.findByRole('region', {name:'Listado de conversaciones'});
+    expect(screen.queryByText('Bienvenida enviada')).not.toBeInTheDocument();
+    expect(screen.queryByText('Esperando respuesta')).not.toBeInTheDocument();
+  });
+
   test('la ficha muestra solo el origen del interesado, separado de la actividad comercial', async () => {
     crmAdminApi.activities.mockRejectedValueOnce(Error('synthetic503')).mockResolvedValue([]);
     crmAdminApi.inbox.mockResolvedValueOnce({items:[{
