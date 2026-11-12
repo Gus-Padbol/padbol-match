@@ -11,18 +11,15 @@ test('tap court player then named bench player sends one atomic substitution, wi
  const c=controller();render(<NationsRefereePanel controller={c}/>);
  expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Italia vs España');expect(screen.queryByText(/private-/)).toBeNull();expect(screen.queryByRole('combobox')).toBeNull();
  fireEvent.click(screen.getByRole('button',{name:'Replace Ana for Italia'}));
- const bench=screen.getByRole('region',{name:'Substitutes for Italia'});
+ const bench=screen.getByRole('region',{name:'Bench for Italia'});
  await act(async()=>fireEvent.click(within(bench).getByRole('button',{name:/Clara/})));
  expect(c.act).toHaveBeenCalledWith('substitution',{teamId:'1',swaps:[{outId:'private-a',inId:'private-c'}]});
 });
-test('with more than two substitutes Change pair lets the referee choose and emits one atomic command',async()=>{
- const c=controller({snapshot:{...snapshot,context:{...snapshot.context,teams:{...snapshot.context.teams,2:{players:[...players,{id:'private-e',name:'Elena'}]}}}}});render(<NationsRefereePanel controller={c}/>);
- fireEvent.click(screen.getByRole('button',{name:'Change pair · España'}));
- const bench=screen.getByRole('region',{name:'Substitutes for España'});
- await act(async()=>fireEvent.click(within(bench).getByRole('button',{name:/Clara/})));
- expect(c.act).not.toHaveBeenCalled();
- await act(async()=>fireEvent.click(within(bench).getByRole('button',{name:/Dina/})));
- expect(c.act).toHaveBeenCalledTimes(1);expect(c.act).toHaveBeenCalledWith('substitution',{teamId:'2',swaps:[{outId:'private-a',inId:'private-c'},{outId:'private-b',inId:'private-d'}]});
+test('Change pair is unavailable if the confirmed bench does not contain exactly two players',()=>{
+ const c=controller({snapshot:{...snapshot,context:{...snapshot.context,teams:{...snapshot.context.teams,2:{players:[...players,{id:'private-e',name:'Elena'}]}}}}});
+ render(<NationsRefereePanel controller={c}/>);
+ expect(screen.getByRole('button',{name:'Change pair · España'})).toBeDisabled();
+ fireEvent.click(screen.getByRole('button',{name:'Change pair · España'}));expect(c.act).not.toHaveBeenCalled();
 });
 test.each([
  ['mid-game',{window:{allowed:false}}],['paused',{board:{...snapshot.board,cronometro_pausado:true}}],['drift',{clockSynced:false}],['incoherent',{coherent:false}],['terminal',{board:{...snapshot.board,estado:'terminado',sets_a:2}}],['no baseline',{context:{...snapshot.context,hasBaseline:false}}]
@@ -38,9 +35,9 @@ test('uncertain command freezes court and retries same controller intent, not a 
 });
 test('an authoritative revision change clears draft bench before another selection',()=>{
  const c=controller();const {rerender}=render(<NationsRefereePanel controller={c}/>);
- fireEvent.click(screen.getByRole('button',{name:'Replace Ana for Italia'}));expect(screen.getByRole('region',{name:'Substitutes for Italia'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Replace Ana for Italia'}));expect(screen.getByRole('region',{name:'Bench for Italia'})).toBeInTheDocument();
  rerender(<NationsRefereePanel controller={controller({snapshot:{...snapshot,markers:snapshot.markers.map(m=>({...m,state:{...m.state,revision:2}}))}})}/>);
- expect(within(screen.getByRole('region',{name:'Substitutes for Italia'})).getByRole('button',{name:/Clara/})).toBeDisabled();
+ expect(within(screen.getByRole('region',{name:'Bench for Italia'})).getByRole('button',{name:/Clara/})).toBeDisabled();
 });
 test('natural terminal shows final result and close action despite frozen clock; points stay disabled',()=>{
  const c=controller({snapshot:{...snapshot,clockSynced:false,window:null,board:{...snapshot.board,estado:'terminado',sets_a:2}}});render(<NationsRefereePanel controller={c}/>);
@@ -61,7 +58,7 @@ test('legacy mode keeps old team cards and never renders tactical court',()=>{
 
 test('both benches remain visible before selecting a player, names readable but no accidental change',()=>{
  const c=controller();render(<NationsRefereePanel controller={c}/>);
- for(const team of ['Italia','España']){const bench=screen.getByRole('region',{name:`Substitutes for ${team}`});expect(within(bench).getByRole('button',{name:/Clara/})).toBeDisabled();expect(within(bench).getByRole('button',{name:/Dina/})).toBeDisabled();}
+ for(const team of ['Italia','España']){const bench=screen.getByRole('region',{name:`Bench for ${team}`});expect(within(bench).getByRole('button',{name:/Clara/})).toBeDisabled();expect(within(bench).getByRole('button',{name:/Dina/})).toBeDisabled();}
  expect(c.act).not.toHaveBeenCalled();
 });
 
@@ -69,7 +66,7 @@ test('court swaps immediately during a delayed save, then rolls back a rejected 
  let finish;const c=controller({act:jest.fn(()=>new Promise(resolve=>{finish=resolve;}))});
  render(<NationsRefereePanel controller={c}/>);
  fireEvent.click(screen.getByRole('button',{name:'Replace Ana for Italia'}));
- fireEvent.click(within(screen.getByRole('region',{name:'Substitutes for Italia'})).getByRole('button',{name:/Clara/}));
+ fireEvent.click(within(screen.getByRole('region',{name:'Bench for Italia'})).getByRole('button',{name:/Clara/}));
  expect(screen.queryByRole('button',{name:'Replace Ana for Italia'})).toBeNull();
  expect(screen.getByRole('button',{name:'Replace Clara for Italia'})).toBeDisabled();
  expect(screen.getByRole('status')).toHaveTextContent('Saving change');
@@ -81,7 +78,7 @@ test('court swaps immediately during a delayed save, then rolls back a rejected 
 test('two players enter the court together immediately while one atomic pair save is pending',async()=>{
  let finish;const c=controller({act:jest.fn(()=>new Promise(resolve=>{finish=resolve;}))});render(<NationsRefereePanel controller={c}/>);
  fireEvent.click(screen.getByRole('button',{name:'Change pair · España'}));
- const bench=screen.getByRole('region',{name:'Substitutes for España'});
+ const bench=screen.getByRole('region',{name:'Bench for España'});
  expect(within(bench).getByRole('button',{name:/Ana/})).toBeDisabled();
  expect(screen.getByRole('button',{name:'Replace Clara for España'})).toBeDisabled();
  expect(screen.getByRole('button',{name:'Replace Dina for España'})).toBeDisabled();
@@ -101,7 +98,7 @@ test('demo renders clean fictional names but submits the original team and playe
   const c=controller({snapshot:demo});render(<NationsRefereePanel controller={c}/>);
   expect(screen.getByText('Nations Cup · Demo')).toBeInTheDocument();expect(screen.queryByText(/SYNTHETIC/)).toBeNull();expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Italy vs Spain');
   fireEvent.click(screen.getByRole('button',{name:'Replace Marco Rossi for Italy'}));
-  await act(async()=>fireEvent.click(within(screen.getByRole('region',{name:'Substitutes for Italy'})).getByRole('button',{name:/Paolo Conti/})));
+  await act(async()=>fireEvent.click(within(screen.getByRole('region',{name:'Bench for Italy'})).getByRole('button',{name:/Paolo Conti/})));
   expect(c.act).toHaveBeenCalledWith('substitution',{teamId:'1',swaps:[{outId:'private-a',inId:'private-c'}]});
  }finally{if(previous===undefined)delete process.env.REACT_APP_APP_VARIANT;else process.env.REACT_APP_APP_VARIANT=previous;}
 });
