@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "node scripts/build-hosted-qa.cjs",
   "outputDirectory": "build",
   "framework": "create-react-app",
   "headers": [
