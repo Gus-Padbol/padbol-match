@@ -14,29 +14,31 @@ export default function useNationsReferee({scoreboardId,controlToken,accessToken
  const identity=controlToken?null:authUserId;
  const client=useMemo(()=>createNationsRefereeClient({apiBase:getApiBaseUrl(),scoreboardId,controlToken,authUserId:identity,getAccessToken:()=>bearerRef.current}),[scoreboardId,controlToken,identity]);
  const [snapshot,setSnapshot]=useState(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[pending,setPending]=useState(null),[syncing,setSyncing]=useState(false),[feedback,setFeedback]=useState('');
- const syncRequired=useRef(false);
+ const syncRequired=useRef(false),confirmedFeedback=useRef('Saved.');
  const pendingRef=useRef(null),inFlight=useRef(false),readingRef=useRef(0),sequence=useRef(0),mounted=useRef(true),clientRef=useRef(client);
  clientRef.current=client;
  const invalidate=useCallback(()=>{sequence.current+=1;},[]);
  const load=useCallback(async()=>{
   const ticket=++sequence.current;
   readingRef.current=ticket;
-  try {const value=await client.read();if(mounted.current&&clientRef.current===client&&ticket===sequence.current){setSnapshot(value);if(syncRequired.current){syncRequired.current=false;setSyncing(false);setError('');setFeedback('Change confirmed.');}}return value;}
+  try {const value=await client.read();if(mounted.current&&clientRef.current===client&&ticket===sequence.current){setSnapshot(value);if(syncRequired.current){syncRequired.current=false;setSyncing(false);setError('');setFeedback(confirmedFeedback.current);}}return value;}
   catch(e){if(mounted.current&&clientRef.current===client&&ticket===sequence.current){if(!syncRequired.current)setSnapshot(null);setError(syncRequired.current?'Saved. Waiting for the updated scoreboard.':refereeMessage(e));}throw e;}
   finally {if(readingRef.current===ticket)readingRef.current=0;if(mounted.current&&clientRef.current===client&&ticket===sequence.current)setLoading(false);}
  },[client]);
  useEffect(()=>{mounted.current=true;setSnapshot(null);setLoading(true);setBusy(false);setError('');setPending(null);setSyncing(false);setFeedback('');syncRequired.current=false;pendingRef.current=null;inFlight.current=false;readingRef.current=0;
   void load().catch(()=>{});const timer=setInterval(()=>{if(!inFlight.current&&!readingRef.current)void load().catch(()=>{});},5000);
   return()=>{mounted.current=false;invalidate();clearInterval(timer);};},[load,invalidate]);
+ useEffect(()=>{if(busy||syncing||!['Substitution saved.','Saved.'].includes(feedback))return;const timer=setTimeout(()=>setFeedback(''),4000);return()=>clearTimeout(timer);},[busy,syncing,feedback]);
  const act=useCallback(async(kind,payload={})=>{
   if(inFlight.current||syncRequired.current||!snapshot)return false;
   inFlight.current=true;invalidate();setBusy(true);setError('');setFeedback(kind==='substitution'?'Saving change…':'Saving…');
   const origin=client;
   try {
    if(!pendingRef.current){pendingRef.current=client.attempt(kind,snapshot,payload);setPending(pendingRef.current);}
+   confirmedFeedback.current=kind==='substitution'||pendingRef.current.body?.type==='substitution'?'Substitution saved.':'Saved.';
    await origin.send(pendingRef.current);
    if(clientRef.current!==origin)return false;
-   pendingRef.current=null;setPending(null);syncRequired.current=true;setSyncing(true);setFeedback('Saved. Updating scoreboard…');
+   pendingRef.current=null;setPending(null);syncRequired.current=true;setSyncing(true);setFeedback(confirmedFeedback.current==='Substitution saved.'?confirmedFeedback.current:'Saved. Updating scoreboard…');
    await load().catch(()=>{});return true;
   }catch(e){
    if(clientRef.current!==origin)return false;

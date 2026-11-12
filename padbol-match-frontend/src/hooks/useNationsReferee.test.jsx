@@ -71,3 +71,14 @@ test('a pre-command poll cannot confirm or replace the fresh post-acknowledgemen
   expect(client.read).toHaveBeenCalledTimes(3);expect(result.current.snapshot.revision).toBe(3);expect(result.current.syncing).toBe(false);unmount();
  }finally{jest.useRealTimers();}
 });
+
+test('green substitution acknowledgement appears only after send succeeds and clears four seconds after refresh',async()=>{
+ let finishSend,finishRead;const {result,unmount}=renderHook(()=>useNationsReferee({scoreboardId:'one'}));await waitFor(()=>expect(result.current.loading).toBe(false));
+ jest.useFakeTimers();try{
+  client.send.mockImplementationOnce(()=>new Promise(resolve=>{finishSend=resolve;}));client.read.mockImplementationOnce(()=>new Promise(resolve=>{finishRead=resolve;}));
+  let action;act(()=>{action=result.current.act('substitution',{swaps:[]});});expect(result.current.feedback).toBe('Saving change…');
+  await act(async()=>{finishSend({revision:3});});expect(result.current.feedback).toBe('Substitution saved.');expect(result.current.syncing).toBe(true);
+  await act(async()=>{finishRead({...snapshot,revision:3});await action;});expect(result.current.feedback).toBe('Substitution saved.');
+  await act(async()=>{jest.advanceTimersByTime(4000);});expect(result.current.feedback).toBe('');unmount();
+ }finally{jest.useRealTimers();}
+});

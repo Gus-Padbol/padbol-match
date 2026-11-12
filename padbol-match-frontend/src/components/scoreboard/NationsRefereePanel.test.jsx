@@ -107,3 +107,12 @@ test('demo renders clean fictional names but submits the original team and playe
   expect(c.act).toHaveBeenCalledWith('substitution',{teamId:'1',swaps:[{outId:'private-a',inId:'private-c'}]});
  }finally{if(previous===undefined)delete process.env.REACT_APP_APP_VARIANT;else process.env.REACT_APP_APP_VARIANT=previous;}
 });
+
+test('only a confirmed substitution displays the prominent green saved status',()=>{
+ const {rerender}=render(<NationsRefereePanel controller={controller({busy:true,feedback:'Saving change…'})}/>);
+ expect(screen.getByRole('status')).not.toHaveClass('nt-window--confirmed');
+ rerender(<NationsRefereePanel controller={controller({syncing:true,feedback:'Substitution saved.'})}/>);
+ expect(screen.getByRole('status')).toHaveClass('nt-window--confirmed');expect(screen.getByRole('status')).toHaveTextContent('✓ Substitution saved');
+ rerender(<NationsRefereePanel controller={controller({error:'Change rejected',feedback:''})}/>);
+ expect(screen.getByRole('status')).not.toHaveClass('nt-window--confirmed');
+});
