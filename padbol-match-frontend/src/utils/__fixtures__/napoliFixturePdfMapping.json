@@ -1,0 +1,311 @@
+{
+  "source_pdf": "FIPA_Nations_Cup_2026_Draw_Scheduling_Final_Pot5_2plus2.pdf",
+  "source_page": 5,
+  "day_allocation": {
+    "Friday": 21,
+    "SaturdayMorning": 9
+  },
+  "chronological_order_required": false,
+  "matches": [
+    {
+      "group": "A",
+      "fixture": 1,
+      "codes": "2A–5A",
+      "match_id": 584,
+      "a": "Alemania",
+      "b": "Dinamarca",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 2,
+      "codes": "3A–4A",
+      "match_id": 585,
+      "a": "Francia",
+      "b": "Egipto",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 3,
+      "codes": "2A–3A",
+      "match_id": 582,
+      "a": "Alemania",
+      "b": "Francia",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 4,
+      "codes": "1A–4A",
+      "match_id": 580,
+      "a": "Rumania",
+      "b": "Egipto",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 5,
+      "codes": "1A–3A",
+      "match_id": 579,
+      "a": "Rumania",
+      "b": "Francia",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 6,
+      "codes": "1A–2A",
+      "match_id": 578,
+      "a": "Rumania",
+      "b": "Alemania",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 7,
+      "codes": "4A–5A",
+      "match_id": 587,
+      "a": "Egipto",
+      "b": "Dinamarca",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 8,
+      "codes": "1A–5A",
+      "match_id": 581,
+      "a": "Rumania",
+      "b": "Dinamarca",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 9,
+      "codes": "3A–5A",
+      "match_id": 586,
+      "a": "Francia",
+      "b": "Dinamarca",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "A",
+      "fixture": 10,
+      "codes": "2A–4A",
+      "match_id": 583,
+      "a": "Alemania",
+      "b": "Egipto",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 1,
+      "codes": "2B–5B",
+      "match_id": 594,
+      "a": "Qatar",
+      "b": "Suecia",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 2,
+      "codes": "3B–4B",
+      "match_id": 595,
+      "a": "Bélgica",
+      "b": "México",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 3,
+      "codes": "2B–3B",
+      "match_id": 592,
+      "a": "Qatar",
+      "b": "Bélgica",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 4,
+      "codes": "1B–4B",
+      "match_id": 590,
+      "a": "Portugal",
+      "b": "México",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 5,
+      "codes": "1B–3B",
+      "match_id": 589,
+      "a": "Portugal",
+      "b": "Bélgica",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 6,
+      "codes": "1B–2B",
+      "match_id": 588,
+      "a": "Portugal",
+      "b": "Qatar",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 7,
+      "codes": "4B–5B",
+      "match_id": 597,
+      "a": "México",
+      "b": "Suecia",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 8,
+      "codes": "1B–5B",
+      "match_id": 591,
+      "a": "Portugal",
+      "b": "Suecia",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 9,
+      "codes": "3B–5B",
+      "match_id": 596,
+      "a": "Bélgica",
+      "b": "Suecia",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "B",
+      "fixture": 10,
+      "codes": "2B–4B",
+      "match_id": 593,
+      "a": "Qatar",
+      "b": "México",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 1,
+      "codes": "2C–5C",
+      "match_id": 604,
+      "a": "Italia",
+      "b": "Ucrania",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 2,
+      "codes": "3C–4C",
+      "match_id": 605,
+      "a": "Austria",
+      "b": "Emiratos Árabes Unidos",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 3,
+      "codes": "2C–3C",
+      "match_id": 602,
+      "a": "Italia",
+      "b": "Austria",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 4,
+      "codes": "1C–4C",
+      "match_id": 600,
+      "a": "España",
+      "b": "Emiratos Árabes Unidos",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 5,
+      "codes": "1C–3C",
+      "match_id": 599,
+      "a": "España",
+      "b": "Austria",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 6,
+      "codes": "1C–2C",
+      "match_id": 598,
+      "a": "España",
+      "b": "Italia",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 7,
+      "codes": "4C–5C",
+      "match_id": 607,
+      "a": "Emiratos Árabes Unidos",
+      "b": "Ucrania",
+      "day": "2026-11-20",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 8,
+      "codes": "1C–5C",
+      "match_id": 601,
+      "a": "España",
+      "b": "Ucrania",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 9,
+      "codes": "3C–5C",
+      "match_id": 606,
+      "a": "Austria",
+      "b": "Ucrania",
+      "day": "2026-11-21",
+      "current_time": null
+    },
+    {
+      "group": "C",
+      "fixture": 10,
+      "codes": "2C–4C",
+      "match_id": 603,
+      "a": "Italia",
+      "b": "Emiratos Árabes Unidos",
+      "day": "2026-11-21",
+      "current_time": null
+    }
+  ]
+}

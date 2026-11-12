@@ -1,3 +1,4 @@
+import fixtureMapping from '../../utils/__fixtures__/napoliFixturePdfMapping.json';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -35,4 +36,22 @@ test('a completed match preserves legacy earned positions instead of forcing dra
  fireEvent.click(screen.getByRole('button',{name:'torneos.vista.tabGrupos'}));
  const rows=container.querySelector('.torneo-grupos-block').querySelectorAll('.torneo-grupos-equipo-nombre');
  expect(rows[0].textContent).toBe('Francia');
+});
+
+const fixtures=fixtureMapping.matches.map(row=>({id:row.match_id,grupo:row.group,equipo_a_id:Number(Object.keys(names).find(id=>names[id]===row.a)),equipo_b_id:Number(Object.keys(names).find(id=>names[id]===row.b)),estado:'pendiente',fecha_hora:null,court_id:null}));
+test('fixture renders the30 existing match links by Friday21 and Saturday9, with pairing references and no invented times/courts',()=>{
+ const {container}=setup(fixtures);
+ fireEvent.click(screen.getByRole('button',{name:'torneos.vista.tabFixture'}));
+ const friday=screen.getByRole('region',{name:'Viernes 20 de noviembre'}),saturday=screen.getByRole('region',{name:'Sábado 21 de noviembre · por la mañana'});
+ expect(friday.querySelectorAll('.torneo-match-link')).toHaveLength(21);expect(saturday.querySelectorAll('.torneo-match-link')).toHaveLength(9);
+ const links=Array.from(container.querySelectorAll('.torneo-match-link'));expect(new Set(links.map(node=>node.getAttribute('href'))).size).toBe(30);
+ expect(screen.getByText('Partido 1 · 2A–5A')).toBeInTheDocument();expect(screen.getByText('Partido 10 · 2C–4C')).toBeInTheDocument();
+ expect(screen.getAllByText('Cancha por confirmar')).toHaveLength(30);expect(screen.getAllByText(/Horario por confirmar/)).toHaveLength(30);
+ expect(container.textContent).toContain('no el orden de juego');
+});
+test('fixture respects actual Saturday afternoon scheduling and assigned cancha_id without claiming morning/TBC court',()=>{
+ const {container}=setup([{...fixtures.find(match=>match.id===584),fecha_hora:'2026-11-21T14:00:00Z',cancha_id:123}]);
+ fireEvent.click(screen.getByRole('button',{name:'torneos.vista.tabFixture'}));
+ expect(screen.getByRole('region',{name:'Sábado 21 de noviembre'})).toBeInTheDocument();expect(screen.queryByRole('region',{name:/por la mañana/})).toBeNull();
+ expect(screen.getByText('Cancha asignada')).toBeInTheDocument();expect(screen.queryByText('Cancha por confirmar')).toBeNull();expect(container.textContent).toContain('15:00');
 });

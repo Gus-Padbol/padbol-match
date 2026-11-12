@@ -1,3 +1,4 @@
+import {napoliFixturePresentation,napoliFixtureDayLabel} from '../../utils/napoliFixturePresentation';
 import {napoliDrawTeams,napoliDrawPending} from '../../utils/napoliDrawPresentation';
 import { tournamentRosterPresentation } from '../../utils/tournamentRosterPresentation';
 import TournamentMatchOperations from './TournamentMatchOperations';
@@ -1300,7 +1301,9 @@ export default function TorneoTabbedView({
     );
   };
 
-  const renderFixtureLine = (partido) => {
+  const fixturePresentation = napoliFixturePresentation({torneo,partidos:partidosOrdenados,equipos,state:nationsState});
+  const fixtureEnglish=String(i18n?.language).startsWith('en');
+  const renderFixtureLine = (partido, reference = null) => {
     const eqA = equipoPorId(equipos, partido.equipo_a_id);
     const eqB = equipoPorId(equipos, partido.equipo_b_id);
     const na = nombreEquipoMostrado(eqA || {});
@@ -1309,8 +1312,8 @@ export default function TorneoTabbedView({
     const pendiente = !tieneResultado && String(partido.estado || '').toLowerCase() !== 'finalizado';
     const marcadorDetalle = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : '';
     const fh = partido.fecha_hora
-      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
-      : '—';
+      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState)||reference?.timeZone)
+      : reference?(fixtureEnglish?'Time to be confirmed':'Horario por confirmar'):'—';
     const marcadorVal = tieneResultado ? validarMarcadorSetsPartido(partido) : null;
     const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
     const ganaA = marcadorVal?.valido && marcadorVal.sgA > marcadorVal.sgB;
@@ -1327,6 +1330,8 @@ export default function TorneoTabbedView({
         onClick={event => handlePartidoLink(event, partido)}
       >
         <div className="partido-content" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px', flex: 1 }}>
+          {reference?<strong>{fixtureEnglish?'Match':'Partido'} {reference.number} · {reference.codes}</strong>:null}
+          {reference?<span style={{fontSize:'13px',color:'var(--text-secondary)'}}>{typeof partido.cancha==='string'&&partido.cancha.trim()?partido.cancha:(partido.court_id!=null||partido.cancha_id!=null)?(fixtureEnglish?'Court assigned':'Cancha asignada'):(fixtureEnglish?'Court to be confirmed':'Cancha por confirmar')}</span>:null}
           {pendiente ? (
             <>
               <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -1402,7 +1407,14 @@ export default function TorneoTabbedView({
       {partidosOrdenados.length === 0 ? (
         <p className="sin-partidos">{t('torneos.vista.sinPartidos')}</p>
       ) : (
-        <div className="lista-partidos">{partidosOrdenados.map(renderFixtureLine)}</div>
+        fixturePresentation ? <>
+          <p>{fixtureEnglish?'Match numbers identify pairings, not the running order. Unpublished times and courts are to be confirmed.':'La numeración identifica cruces, no el orden de juego. Los horarios y las canchas no publicados están por confirmar.'}</p>
+          {fixturePresentation.sections.map(section=><section key={`${section.day}-${section.morning}`} aria-label={napoliFixtureDayLabel(section,i18n?.language)}>
+            <h3>{napoliFixtureDayLabel(section,i18n?.language)}</h3>
+            {section.groups.map(group=><div key={group.group}><h4>{fixtureEnglish?'Group':'Grupo'} {group.group}</h4><div className="lista-partidos">{group.matches.map(row=>renderFixtureLine(row.match,row))}</div></div>)}
+          </section>)}
+          {fixturePresentation.other.length?<div className="lista-partidos">{fixturePresentation.other.map(match=>renderFixtureLine(match))}</div>:null}
+        </> : <div className="lista-partidos">{partidosOrdenados.map(match=>renderFixtureLine(match))}</div>
       )}
     </div>
   );
