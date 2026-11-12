@@ -20,7 +20,7 @@ function extractHandler(name){
     if(!node||typeof node!=='object')return;
     if(node.type==='VariableDeclarator'&&node.id?.name===name){
       let init=node.init;
-      if(init?.type==='CallExpression'&&init.callee?.name==='useCallback')init=init.arguments[0];
+      if(init?.type==='CallExpression'&&['useCallback','useMemo'].includes(init.callee?.name))init=init.arguments[0];
       found=generate(init).code;
     }
     for(const [k,v] of Object.entries(node)){
@@ -388,4 +388,21 @@ test('same-UID load started during save cannot overwrite date after PUT commit',
  get.resolve('1990-01-01');await loading;
  expect(s.sandbox.birthDateSnapshotRef.current.date).toBeNull();
  expect(s.sandbox.setPerfil).toHaveBeenCalledTimes(1);expect(s.sandbox.setPerfil).toHaveBeenLastCalledWith(expect.objectContaining({fecha_nacimiento:null}));
+});
+
+test.each([true,false])('Napoli notice follows authoritative readiness complete=%s without changing its gate',async complete=>{
+ const sandbox={esContextoNacionesNapoli:true,napoliSlug:'nations-cup-napoli-2026',session:{user:{id:OWN}},napoliReadinessRequest:{current:0},napoliReadiness:null,
+  getAuthHeaders:async()=>({Authorization:'Bearer fixture'}),API_BASE_URL:'https://qa.example',fetch:jest.fn(async()=>({ok:true,json:async()=>({complete})})),
+  location:{state:null},torneoIdValido:false,redirectAfterAuth:'/nations-cup/nations-cup-napoli-2026/inscripcion',t:()=> 'Complete your profile, including WhatsApp, to continue.'};
+ sandbox.setNapoliReadiness=value=>{sandbox.napoliReadiness=value;};
+ expect(await build('confirmNapoliReadiness',sandbox)()).toBe(complete);
+ expect(sandbox.fetch).toHaveBeenCalledTimes(1);
+ expect(build('avisoPerfilTorneoMsg',sandbox)()).toBe(complete?'':'Complete your profile, including WhatsApp, to continue.');
+});
+test('unknown/failed readiness, other user and other redirects retain the existing prompt',async()=>{
+ const base={location:{state:null},torneoIdValido:false,redirectAfterAuth:'/nations-cup/nations-cup-napoli-2026/inscripcion',napoliSlug:'nations-cup-napoli-2026',session:{user:{id:OWN}},napoliReadiness:null,t:()=> 'Existing prompt'};
+ for(const extra of [{},{napoliReadiness:{slug:base.napoliSlug,actorId:OTHER,complete:true}},{napoliSlug:'other-event',napoliReadiness:{slug:'other-event',actorId:OWN,complete:true}}])expect(build('avisoPerfilTorneoMsg',{...base,...extra})()).toBe('Existing prompt');
+ const sandbox={...base,esContextoNacionesNapoli:true,napoliReadinessRequest:{current:0},getAuthHeaders:async()=>({}),API_BASE_URL:'https://qa.example',fetch:async()=>{throw Error('network')},setNapoliReadiness:jest.fn()};
+ expect(await build('confirmNapoliReadiness',sandbox)()).toBe(false);
+ expect(sandbox.setNapoliReadiness).toHaveBeenCalledWith({slug:base.napoliSlug,actorId:OWN,complete:false});
 });
