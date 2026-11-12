@@ -15,16 +15,23 @@ export function createNationsRefereeClient({apiBase = '', scoreboardId, controlT
     async read() {
       const board = await request(boardPath);
       if (!board?.id) throw Error('REFEREE_CONTEXT_INVALID');
+      let hiddenTournament = false;
       if (!tokenMode) {
         if (!board.torneo_id && !board.partido_torneo_id) return {mode:'legacy',board};
         if (board.torneo_id) {
-        const tournament = await request(`/api/torneos/${encodeURIComponent(board.torneo_id)}`);
-        if (tournament?.modalidad_plantel !== 'selecciones' && !tournament?.plan_nations) return {mode:'legacy',board};
+        try {
+          const tournament = await request(`/api/torneos/${encodeURIComponent(board.torneo_id)}`);
+          if (tournament?.modalidad_plantel !== 'selecciones' && !tournament?.plan_nations) return {mode:'legacy',board};
+        } catch (error) {
+          if (error.status !== 404) throw error;
+          // A hidden QA catalog entry cannot classify an authorized match as legacy.
+          hiddenTournament = true;
+        }
         }
       }
       let context;
       try { context = await request(`${durablePath}/context`); }
-      catch (error) { if (error.status === 403 && error.code === 'NOT_NATIONS_TOURNAMENT') return {mode:tokenMode?'legacy-token':'legacy',board}; throw error; }
+      catch (error) { if (!hiddenTournament && error.status === 403 && error.code === 'NOT_NATIONS_TOURNAMENT') return {mode:tokenMode?'legacy-token':'legacy',board}; throw error; }
       if (String(context?.scoreboardId) !== String(board.id) || !context?.membership?.A || !context?.membership?.B) throw Error('REFEREE_CONTEXT_INVALID');
       const teams = [String(context.membership.A), String(context.membership.B)];
       if (teams[0] === teams[1] || teams.some(id => !context.teams?.[id])) throw Error('REFEREE_CONTEXT_INVALID');
