@@ -64,3 +64,111 @@
   border-radius: 8px; background: var(--sc-bg); color: var(--sc-text); font: inherit;
 }
 .nations-referee-panel .nations-referee-link a { color: #93c5fd; padding: .7rem 0; }
+/* Tactical operator-only scope; public/TV and legacy controls are untouched. */
+.nations-referee-panel--tactical{max-width:900px;margin:auto;padding:12px}
+.nations-referee-panel--tactical .sc-header{padding:14px;margin-bottom:12px;border-radius:16px}
+.nations-referee-panel--tactical .sc-header__torneo{font-size:11px;letter-spacing:.1em;margin:0 0 5px}
+.nations-referee-panel--tactical .sc-header__title{font-size:clamp(18px,3vw,25px);margin:0 0 5px;line-height:1.2}
+.nations-referee-panel--tactical .sc-header__meta{font-size:12px;margin:0}
+.nations-referee-panel--tactical .sc-timer-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.nations-referee-panel--tactical .sc-timer{font-size:25px;font-variant-numeric:tabular-nums;margin-right:auto}
+.nations-referee-panel--tactical .sc-timer-btn{min-height:44px;padding:9px 14px}
+.nations-referee-panel--tactical .nt-scores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.nations-referee-panel--tactical .nt-score{min-width:0;padding:14px;text-align:center;border:1px solid #355379;border-radius:16px;background:linear-gradient(150deg,#172c48,#101b2c)}
+.nations-referee-panel--tactical .nt-score--b{background:linear-gradient(150deg,#39243a,#1f172a);border-color:#6a425f}
+.nations-referee-panel--tactical .nt-score h2{margin:0;font-size:clamp(15px,2vw,20px);overflow-wrap:anywhere}
+.nations-referee-panel--tactical .nt-score__points{display:block;font-size:clamp(48px,9vw,76px);line-height:1.1;font-variant-numeric:tabular-nums;margin:8px 0}
+.nations-referee-panel--tactical .nt-score p{margin:8px 0 12px;font-size:13px;color:#c5d1e2}
+.nations-referee-panel--tactical .nt-score p b{font-size:20px;color:white}
+.nations-referee-panel--tactical .nt-score p span{margin:0 6px}
+.nations-referee-panel--tactical button.nt-point{width:100%;min-height:48px;background:#205ec3;border-color:#5488df;font-size:17px}
+.nations-referee-panel--tactical .nt-score--b button.nt-point{background:#913e73;border-color:#ba669b}
+.nations-referee-panel--tactical .nt-tactics{padding:12px;border:1px solid var(--sc-border);border-radius:16px;background:#101c2b}
+.nations-referee-panel--tactical .nt-tactics__heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.nations-referee-panel--tactical .nt-tactics h2{margin:0;font-size:17px}
+.nations-referee-panel--tactical .nt-tactics h3{margin:0;font-size:14px;line-height:1.4}
+.nations-referee-panel--tactical .nt-tactics__heading>span{color:#bdcce0;font-size:12px;text-align:right}
+.nations-referee-panel--tactical .nt-court{position:relative;width:100%;aspect-ratio:10/6;overflow:hidden;border:2px solid #839bb9;border-radius:10px}
+.nations-referee-panel--tactical .nt-court__floor{position:absolute;inset:0;width:100%;height:100%}
+.nations-referee-panel--tactical .nt-court__half{position:absolute;width:40%;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-around;align-items:center;padding:2% 0}
+.nations-referee-panel--tactical .nt-court__half--a{left:2%}
+.nations-referee-panel--tactical .nt-court__half--b{right:2%}
+.nations-referee-panel--tactical button.nt-player{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:94%;min-height:64px;padding:4px;border:1px solid transparent;background:#071b45b8;border-radius:10px}
+.nations-referee-panel--tactical button.nt-player:disabled{opacity:.9}
+.nations-referee-panel--tactical button.nt-player.is-selected{border-color:#ffe58f;background:#143b72;box-shadow:0 0 0 2px #ffe58f66}
+.nations-referee-panel--tactical .nt-player__avatar{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#e5edf7;color:#12315c;font-weight:800;font-size:12px}
+.nations-referee-panel--tactical .nt-player__name{font-size:12px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.nations-referee-panel--tactical .nt-window,.nations-referee-panel--tactical .nt-hint{color:#b9c7db;font-size:13px;line-height:1.5;margin:12px 0}
+.nations-referee-panel--tactical .nt-pair-actions,.nations-referee-panel--tactical .nt-bench__players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.nations-referee-panel--tactical .nt-pair-actions button{font-size:12px;padding:9px}
+.nations-referee-panel--tactical .nt-bench{margin-top:14px;padding-top:14px;border-top:1px solid #526681}
+.nations-referee-panel--tactical .nt-bench__players button{overflow-wrap:anywhere}
+.nations-referee-panel--tactical .nt-bench__players small{display:block;margin-top:5px;font-size:11px;color:#b9c7db}
+.nations-referee-panel--tactical .nt-bench__players button[aria-pressed=true]{border-color:#ffe58f;background:#263d59}
+.nations-referee-panel--tactical .nt-more{display:flex;flex-wrap:wrap;width:100%;gap:8px}
+.nations-referee-panel--tactical .nt-result{margin:12px 0;padding:18px;border:1px solid #538d70;border-radius:14px;background:#14352b;text-align:center}
+.nations-referee-panel--tactical .nt-result h2{margin:0 0 8px;font-size:20px}
+.nations-referee-panel--tactical .nt-result p{margin:6px 0}
+.nations-referee-panel--tactical .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(min-width:700px){.nations-referee-panel--tactical .nt-player__avatar{width:44px;height:44px;font-size:16px}.nations-referee-panel--tactical .nt-player__name{font-size:16px}.nations-referee-panel--tactical button.nt-player{min-height:100px;max-width:210px}}
+@media(max-width:420px){.nations-referee-panel--tactical{padding:10px}.nations-referee-panel--tactical .nt-tactics{padding:10px}.nations-referee-panel--tactical .sc-timer{font-size:22px}.nations-referee-panel--tactical .nt-score{padding:12px 9px}}
+
+.nations-referee-panel--tactical .nt-serving{display:inline-block;color:#ffe58f;font-size:12px;font-weight:700}
+
+.nations-referee-panel--tactical .nt-score button.nt-point{background:#205ec3;border-color:#5488df}
+.nations-referee-panel--tactical .nt-score--b button.nt-point{background:#913e73;border-color:#ba669b}
+
+.nations-referee-panel--tactical .nt-benches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.nations-referee-panel--tactical .nt-bench{min-width:0;padding:12px 8px;border:1px solid #355379;border-radius:12px;background:#14283f}
+.nations-referee-panel--tactical .nt-bench--b{border-color:#6a425f;background:#302036}
+.nations-referee-panel--tactical .nt-bench.is-selected{outline:2px solid #ffe58f}
+.nations-referee-panel--tactical .nt-bench h3{margin-bottom:10px;font-size:13px}
+.nations-referee-panel--tactical .nt-bench__players{grid-template-columns:minmax(0,1fr)}
+.nations-referee-panel--tactical .nt-bench__players button{min-height:52px;padding:9px 5px;font-size:13px}
+.nations-referee-panel--tactical .nt-bench__players button:disabled{opacity:.85}
+.nations-referee-panel--tactical .nt-cancel{margin-bottom:10px}
+
+/* One-screen primary workspace: redundant title removed, never crop primary controls. */
+.nations-referee-panel--tactical{padding:8px}
+.nations-referee-panel--tactical>header.sc-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px;margin-bottom:6px;align-items:center}
+.nations-referee-panel--tactical>header .sc-header__torneo{font-size:10px;line-height:1.25;letter-spacing:.04em;margin:0}
+.nations-referee-panel--tactical>header .sc-header__meta{font-size:10px;line-height:1.2}
+.nations-referee-panel--tactical>header .sc-timer-bar{grid-column:2;grid-row:1/4;gap:6px;margin:0;flex-wrap:nowrap}
+.nations-referee-panel--tactical .sc-timer{font-size:20px;letter-spacing:0}
+.nations-referee-panel--tactical .sc-timer-btn{padding:8px;font-size:13px}
+.nations-referee-panel--tactical .nt-scores{gap:8px;margin:6px 0}
+.nations-referee-panel--tactical .nt-score{padding:6px 7px}
+.nations-referee-panel--tactical .nt-score h2{font-size:13px;line-height:1.15;min-height:15px}
+.nations-referee-panel--tactical .nt-score button.nt-point{margin:4px 0;min-height:64px;padding:3px;width:100%;line-height:1}
+.nations-referee-panel--tactical .nt-score__points{font-size:40px;line-height:1;margin:0}
+.nations-referee-panel--tactical .nt-point>span{font-size:11px;display:block;margin-top:3px}
+.nations-referee-panel--tactical .nt-score p{margin:0;font-size:11px;line-height:18px}
+.nations-referee-panel--tactical .nt-score p b{font-size:15px}
+.nations-referee-panel--tactical .nt-tactics{padding:8px}
+.nations-referee-panel--tactical .nt-tactics__heading{margin-bottom:5px}
+.nations-referee-panel--tactical .nt-tactics h2{font-size:15px}
+.nations-referee-panel--tactical .nt-court{max-width:260px;margin:auto}
+.nations-referee-panel--tactical button.nt-player{min-height:50px;padding:2px;gap:2px}
+.nations-referee-panel--tactical .nt-player__avatar{width:22px;height:22px;font-size:10px}
+.nations-referee-panel--tactical .nt-player__name{font-size:11px;line-height:1.15}
+.nations-referee-panel--tactical .nt-window{margin:5px 0;font-size:11px;line-height:1.3}
+.nations-referee-panel--tactical .nt-hint{margin:4px 0;font-size:12px;line-height:1.3}
+.nations-referee-panel--tactical .nt-pair-actions{gap:6px}
+.nations-referee-panel--tactical .nt-pair-actions button{min-height:44px;padding:5px;font-size:11px}
+.nations-referee-panel--tactical .nt-benches{gap:6px}
+.nations-referee-panel--tactical .nt-bench{margin-top:6px;padding:6px}
+.nations-referee-panel--tactical .nt-bench h3{font-size:11px;margin:0 0 4px;line-height:1.25}
+.nations-referee-panel--tactical .nt-bench__players{gap:4px}
+.nations-referee-panel--tactical .nt-bench__players button{min-height:44px;font-size:12px;padding:5px 3px}
+.nations-referee-panel--tactical .nt-bench__players small{display:none}
+.nations-referee-panel--tactical .nations-referee-actions{padding:5px;margin:6px 0 0}
+.nations-referee-panel--tactical .nations-referee-actions>button{min-height:44px;padding:6px}
+@media(min-width:700px){.nations-referee-panel--tactical .nt-court{max-width:300px}.nations-referee-panel--tactical button.nt-player{min-height:56px}.nations-referee-panel--tactical .nt-player__name{font-size:12px}}
+@media(min-width:700px) and (min-height:900px){.nations-referee-panel--tactical .nt-court{max-width:380px}.nations-referee-panel--tactical button.nt-player{min-height:72px}.nations-referee-panel--tactical .nt-player__name{font-size:14px}}
+
+/* Equal player cards: names may wrap, but never resize the court targets. */
+.nations-referee-panel--tactical{--nt-player-card-height:56px}
+.nations-referee-panel--tactical button.nt-player{height:var(--nt-player-card-height);min-height:var(--nt-player-card-height);max-height:var(--nt-player-card-height);flex-shrink:0;border:1px solid #d9e7ff26;border-radius:8px;background:#0c203dcc;box-shadow:0 2px 5px #0002}
+.nations-referee-panel--tactical .nt-player__name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-align:center;max-width:100%}
+@media(min-width:700px){.nations-referee-panel--tactical{--nt-player-card-height:64px}}
+@media(min-width:700px) and (min-height:900px){.nations-referee-panel--tactical{--nt-player-card-height:76px}}

@@ -1,4 +1,6 @@
-import React,{useState} from 'react';
+import React,{useState,useEffect} from 'react';
+import NationsTacticalCourt from './NationsTacticalCourt';
+import {formatGameScore} from '../../pages/ScoreboardControl';
 import ScoreboardTeamCards from './ScoreboardTeamCards';
 import {formatTimer} from '../../pages/ScoreboardControl';
 import useServerCronometro from '../../hooks/useServerCronometro';
@@ -9,15 +11,14 @@ import NationsRefereeLink from './NationsRefereeLink';
 
 export default function NationsRefereePanel({controller,allowIssueLink=false}) {
  const {snapshot,loading,busy,error,pending,act,refresh}=controller;
- const [side,setSide]=useState('A'),[second,setSecond]=useState(false),[out1,setOut1]=useState(''),[in1,setIn1]=useState(''),[out2,setOut2]=useState(''),[in2,setIn2]=useState('');
+ const [choice,setChoice]=useState(null),[pair,setPair]=useState([]),[more,setMore]=useState(false);
  const board=snapshot?.board;
+ const selectionKey=JSON.stringify([board?.id,snapshot?.epoch,snapshot?.window,snapshot?.markers?.map(m=>[m.teamId,m.state?.revision,m.state?.active])]);
+ useEffect(()=>{setChoice(null);setPair([]);},[selectionKey]);
  const seconds=useServerCronometro(board);
  if(loading)return <main className="sc-control nations-referee-panel"><p role="status">Cargando el panel del árbitro…</p></main>;
  if(!board)return <main className="sc-control nations-referee-panel"><p role="alert">{error||'Marcador no disponible.'}</p><button onClick={refresh}>Actualizar marcador</button></main>;
  const nations=snapshot.mode==='nations',context=snapshot.context,baseline=context?.hasBaseline;
- const id=context?.membership?.[side],marker=snapshot.markers?.find(m=>String(m.teamId)===String(id));
- const players=context?.teams?.[id]?.players||[],active=marker?.state?.active||[];
- const starters=players.filter(p=>active.includes(p.id)),bench=players.filter(p=>!active.includes(p.id));
  const terminal=['terminado','finalizado'].includes(board.estado)||board.sets_a>=2||board.sets_b>=2;
  const paused=board.cronometro_pausado===true;
  const running=board.estado==='en_curso'&&!paused&&Boolean(board.cronometro_inicio);
@@ -29,36 +30,57 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
   const tid=context.membership[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid));
   if(m?.state?.active)view[`equipo_${s.toLowerCase()}_jugadores`]=(context.teams[tid]?.players||[]).filter(p=>m.state.active.includes(p.id));
  }
- const options=(list,exclude)=>list.filter(p=>p.id!==exclude).map(p=><option key={p.id} value={p.id}>{p.name}{p.dorsal?` · ${p.dorsal}`:''}</option>);
- const submit=async()=>{
-  const swaps=[{outId:out1,inId:in1},...(second?[{outId:out2,inId:in2}]:[])];
-  if(swaps.some(s=>!s.outId||!s.inId))return;
-  if(await act('substitution',{teamId:id,swaps})){setOut1('');setIn1('');setOut2('');setIn2('');setSecond(false);}
+ const teams=Object.fromEntries(['A','B'].map(s=>{const tid=context?.membership?.[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid)),roster=context?.teams?.[tid]?.players||[],ids=m?.state?.active||[];return [s,{id:tid,name:board[`equipo_${s.toLowerCase()}_nombre`]||`Equipo ${s}`,active:roster.filter(p=>ids.includes(p.id)),bench:roster.filter(p=>!ids.includes(p.id))}];}));
+ const canChange=!locked&&nations&&baseline&&coherent&&clockReady&&running&&!terminal&&snapshot.window?.allowed===true;
+ const choosePlayer=(s,outId)=>{if(!canChange)return;setChoice({side:s,outId,mode:'single'});setPair([]);};
+ const chooseBench=async player=>{
+  if(!canChange||!choice)return;
+  const team=teams[choice.side];
+  if(!team.bench.some(p=>p.id===player.id))return;
+  if(choice.mode==='pair'){
+   const next=pair.includes(player.id)?pair.filter(id=>id!==player.id):[...pair,player.id];setPair(next);
+   if(next.length===2&&team.active.length===2){if(await act('substitution',{teamId:team.id,swaps:team.active.map((p,i)=>({outId:p.id,inId:next[i]}))})){setChoice(null);setPair([]);}}
+  }else if(team.active.some(p=>p.id===choice.outId)){
+   if(await act('substitution',{teamId:team.id,swaps:[{outId:choice.outId,inId:player.id}]}))setChoice(null);
+  }
  };
- return <main className="sc-control nations-referee-panel">
-  <header className="sc-header"><p className="sc-header__torneo">{board.torneo_nombre||'Marcador'}</p><h1 className="sc-header__title">{board.equipo_a_nombre} vs {board.equipo_b_nombre}</h1><p className="sc-header__meta">{formatScoreboardVenueHeader(board)}</p>
+ return <main className={`sc-control nations-referee-panel${nations?' nations-referee-panel--tactical':''}`}>
+  <header className="sc-header"><p className="sc-header__torneo">{board.torneo_nombre||'Marcador'}</p><h1 className={`sc-header__title${nations?' sr-only':''}`}>{board.equipo_a_nombre} vs {board.equipo_b_nombre}</h1><p className="sc-header__meta">{formatScoreboardVenueHeader(board)}</p>
    <div className="sc-timer-bar"><span className="sc-timer">{formatTimer(seconds)}</span>
-    <button className="sc-timer-btn sc-timer-btn--start" disabled={locked||terminal||running||!coherent||!clockReady||(nations&&!baseline&&!context.canStart)} onClick={()=>act(nations?(baseline?'resume':'start'):(paused?'resume':'start'))}>{nations&&!baseline?'Iniciar partido':paused?'Reanudar':'Iniciar partido'}</button>
-    <button className="sc-timer-btn sc-timer-btn--pause" disabled={locked||!running||terminal||!coherent||!clockReady} onClick={()=>act('pause')}>Pausar</button>
+    {(!nations||(!running&&!terminal))?<button className="sc-timer-btn sc-timer-btn--start" disabled={locked||terminal||running||!coherent||!clockReady||(nations&&!baseline&&!context.canStart)} onClick={()=>act(nations?(baseline?'resume':'start'):(paused?'resume':'start'))}>{nations&&!baseline?'Iniciar partido':paused?'Reanudar':'Iniciar partido'}</button>:null}
+    {(!nations||running)?<button className="sc-timer-btn sc-timer-btn--pause" disabled={locked||!running||terminal||!coherent||!clockReady} onClick={()=>act('pause')}>Pausar</button>:null}
    </div>
   </header>
   {error?<p className="sc-error" role="alert">{error}</p>:null}
   {pending?<div className="nations-referee-notice" role="alert"><p>La respuesta no está confirmada. Conservamos exactamente el mismo intento.</p><button disabled={busy} onClick={()=>act('retry')}>Reintentar el mismo intento</button></div>:null}
-  {nations&&allowIssueLink?<NationsRefereeLink key={board.id} scoreboardId={board.id} disabled={locked} onIssued={refresh}/>:null}
-  <ScoreboardTeamCards partido={view} disabled={!canScore} onPoint={s=>act('point',{side:s})}/>
-  {nations?<section className="sc-header nations-referee-substitutions" aria-label="Sustituciones"><h2>Cambio de lado</h2>
-   <p role="status">{snapshot.window?.allowed?`Game ${snapshot.window.completed_games} del set ${snapshot.window.set_number} terminado. Puedes sustituir uno o ambos jugadores.`:'Espera al final de un game impar del set. No se hacen cambios durante un punto, un tie-break o una pausa.'}</p>
-   <label>Selección <select value={side} disabled={locked} onChange={e=>{setSide(e.target.value);setOut1('');setIn1('');setOut2('');setIn2('');setSecond(false);}}>{['A','B'].map(s=><option key={s} value={s}>{board[`equipo_${s.toLowerCase()}_nombre`]}</option>)}</select></label>
-   <p>En cancha: {starters.map(p=>p.name).join(' · ')||'Alineación pendiente'}</p>
-   {bench.length?<><label>Sale <select aria-label="Jugador que sale" disabled={locked} value={out1} onChange={e=>setOut1(e.target.value)}><option value="">Seleccionar jugador</option>{options(starters,out2)}</select></label>
-    <label>Entra <select aria-label="Jugador que entra" disabled={locked} value={in1} onChange={e=>setIn1(e.target.value)}><option value="">Seleccionar suplente</option>{options(bench,in2)}</select></label>
-    {bench.length>=2?<label className="nations-referee-both"><input type="checkbox" checked={second} disabled={locked} onChange={e=>{setSecond(e.target.checked);setOut2('');setIn2('');}}/>Sustituir ambos jugadores</label>:null}
-    {second?<><label>Segundo jugador que sale <select aria-label="Segundo jugador que sale" disabled={locked} value={out2} onChange={e=>setOut2(e.target.value)}><option value="">Seleccionar jugador</option>{options(starters,out1)}</select></label><label>Segundo jugador que entra <select aria-label="Segundo jugador que entra" disabled={locked} value={in2} onChange={e=>setIn2(e.target.value)}><option value="">Seleccionar suplente</option>{options(bench,in1)}</select></label></>:null}
-    <button disabled={locked||!snapshot.window?.allowed||!out1||!in1||(second&&(!out2||!in2))} onClick={submit}>Registrar cambio</button></>:<p>No hay suplentes disponibles en esta alineación.</p>}
-  </section>:null}
-  <section className="sc-header nations-referee-actions"><button disabled={locked||!running||terminal||!coherent||!clockReady||(nations&&!baseline)} onClick={()=>act('undo')}>Deshacer último punto</button>
-   {nations?<button disabled={locked||!terminal||!baseline||!coherent||snapshot.markers.every(m=>['closed','corrected'].includes(m.state?.status))} onClick={()=>act('close')}>Cerrar seguimiento del partido terminado</button>:null}
-   <button disabled={busy} onClick={refresh}>Actualizar marcador</button>
+  {nations?<>
+   <section className="nt-scores" aria-label="Tanteo del partido">{['A','B'].map(s=><article key={s} className={`nt-score nt-score--${s.toLowerCase()}`}>
+    <h2>{teams[s].name}{board.saque_actual===s?<span className="nt-serving"> · Saca</span>:null}</h2>
+    <button className="nt-point" aria-label={`+ Punto ${teams[s].name}`} disabled={!canScore} onClick={()=>act('point',{side:s})}><strong className="nt-score__points" aria-label={`Puntos de ${teams[s].name}`}>{formatGameScore(board.display||{},s)}</strong><span>+ Punto</span></button>
+    <p><b>{board[`games_${s.toLowerCase()}`]||0}</b> games <span>·</span> <b>{board[`sets_${s.toLowerCase()}`]||0}</b> sets</p>
+   </article>)}</section>
+   {terminal?<section className="nt-result" aria-label="Resultado final"><h2>Partido terminado</h2><p>{teams.A.name} {board.sets_a}–{board.sets_b} {teams.B.name}</p><p>El resultado se conserva. No se pueden añadir puntos.</p></section>:null}
+   <section className="nt-tactics" aria-label="Sustituciones">
+    <div className="nt-tactics__heading"><h2>En cancha</h2><span>{paused?'En pausa':terminal?'Finalizado':snapshot.window?.allowed?'Cambio de lado':'En juego'}</span></div>
+    <NationsTacticalCourt teams={teams} disabled={!canChange} selected={choice} onPlayer={choosePlayer}/>
+    <p role="status" className="nt-window">{snapshot.window?.allowed&&!paused&&!terminal?`Game ${snapshot.window.completed_games} · set ${snapshot.window.set_number}. Toca jugador → suplente.`:'Cambios: al terminar game impar (1, 3, 5, 7). No durante punto, tie-break o pausa.'}</p>
+    <div className="nt-pair-actions">{['A','B'].map(s=><button key={s} type="button" disabled={!canChange||teams[s].bench.length<2||teams[s].active.length!==2} onClick={()=>{setChoice({side:s,mode:'pair'});setPair([]);}}>Cambiar pareja · {teams[s].name}</button>)}</div>
+    {choice?<p className="nt-hint">{(choice.mode==='pair'?`Elige dos suplentes de ${teams[choice.side].name}.`:`Elige quién entra por ${teams[choice.side].active.find(p=>p.id===choice.outId)?.name||'el jugador'}.`)}</p>:null}
+    {choice?<button className="nt-cancel" disabled={locked} onClick={()=>{setChoice(null);setPair([]);}}>Cancelar cambio</button>:null}
+    <div className="nt-benches">{['A','B'].map(s=><section key={s} className={`nt-bench nt-bench--${s.toLowerCase()}${choice?.side===s?' is-selected':''}`} aria-label={`Suplentes de ${teams[s].name}`}>
+     <h3>Suplentes · {teams[s].name}</h3><div className="nt-bench__players">{teams[s].bench.map(p=><button key={p.id} disabled={!canChange||choice?.side!==s} aria-pressed={choice?.side===s&&pair.includes(p.id)} onClick={()=>chooseBench(p)}>{p.name}<small>{choice?.side===s&&pair.includes(p.id)?'Seleccionado':'Suplente'}</small></button>)}</div>{!teams[s].bench.length?<p>No hay suplentes disponibles.</p>:null}
+    </section>)}</div>
+
+   </section>
+  </>:<ScoreboardTeamCards partido={view} disabled={!canScore} onPoint={s=>act('point',{side:s})}/>}
+  <section className="sc-header nations-referee-actions">
+   {nations&&terminal?<button disabled={locked||!baseline||!coherent||snapshot.markers.every(m=>['closed','corrected'].includes(m.state?.status))} onClick={()=>act('close')}>Cerrar seguimiento del partido terminado</button>:null}
+   {!nations?<><button disabled={locked||!running||terminal||!coherent||!clockReady} onClick={()=>act('undo')}>Deshacer último punto</button><button disabled={busy} onClick={refresh}>Actualizar marcador</button></>:null}
+   {nations?<button aria-expanded={more} aria-controls="nt-more" onClick={()=>setMore(!more)}>Más</button>:null}
+   {more?<div id="nt-more" className="nt-more"><button disabled={locked||!running||terminal||!coherent||!clockReady||(nations&&!baseline)} onClick={()=>act('undo')}>Deshacer último punto</button><button disabled={busy} onClick={refresh}>Actualizar marcador</button>
+    {nations&&!terminal?<button disabled onClick={()=>act('close')}>Cerrar seguimiento del partido terminado</button>:null}
+    {nations&&allowIssueLink?<NationsRefereeLink key={board.id} scoreboardId={board.id} disabled={locked} onIssued={refresh}/>:null}
+   </div>:null}
   </section>
  </main>;
 }
