@@ -978,3 +978,8 @@
   .sb-display--nations .sb-nations-marquee__group{justify-content:flex-start}
   .sb-display--nations .sb-nations-marquee__group[aria-hidden="true"]{display:none}
 }
+
+/* Tournament crest sits before the name, with room reserved in the TV header. */
+.sb-display--nations .sb-tournament-brand--logo-and-name { flex-direction: row; gap: clamp(10px, 1.3vw, 22px); }
+.sb-display--nations .sb-tournament-brand__torneo-logo { flex: 0 0 auto; width: clamp(48px, 7vw, 96px); max-height: 12vh; }
+.sb-display--nations .sb-tournament-brand__name--small { min-width: 0; max-width: 80%; margin: 0; padding: 0; font-size: clamp(16px, 1.8vw, 30px); letter-spacing: .12em; }
