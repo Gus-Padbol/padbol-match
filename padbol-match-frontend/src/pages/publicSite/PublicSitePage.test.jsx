@@ -230,14 +230,16 @@ describe('/plataforma public site', () => {
     expect(screen.getAllByRole('link', { name: 'Ingresar' })[0]).toHaveAttribute('href', '/acceso');
     expect(document.querySelector('#nosotros')).toBeTruthy();
     expect(document.querySelector('#descargar')).toBeTruthy();
-    const appStore = screen.getByText('App Store').closest('a');
-    const googlePlay = screen.getByText('Google Play').closest('a');
-    expect(appStore).toHaveAttribute('href', 'https://apps.apple.com/app/id6814243035');
-    expect(googlePlay).toHaveAttribute('href', 'https://play.google.com/store/apps/details?id=com.padbolmatch.app');
-    expect(appStore).toHaveAttribute('target', '_blank');
-    expect(googlePlay).toHaveAttribute('target', '_blank');
-    expect(appStore).toHaveAttribute('rel', 'noopener noreferrer');
-    expect(googlePlay).toHaveAttribute('rel', 'noopener noreferrer');
+    const appStore = screen.getAllByRole('link', { name: 'App Store' });
+    const googlePlay = screen.getAllByRole('link', { name: 'Google Play' });
+    expect(appStore).toHaveLength(2);
+    expect(googlePlay).toHaveLength(2);
+    appStore.forEach(link => expect(link).toHaveAttribute('href', 'https://apps.apple.com/app/id6814243035'));
+    googlePlay.forEach(link => expect(link).toHaveAttribute('href', 'https://play.google.com/store/apps/details?id=com.padbolmatch.app'));
+    appStore.forEach(link => expect(link).toHaveAttribute('target', '_blank'));
+    googlePlay.forEach(link => expect(link).toHaveAttribute('target', '_blank'));
+    appStore.forEach(link => expect(link).toHaveAttribute('rel', 'noopener noreferrer'));
+    googlePlay.forEach(link => expect(link).toHaveAttribute('rel', 'noopener noreferrer'));
   });
 
   it('explica el recorrido reconocido y el marcador inteligente', () => {

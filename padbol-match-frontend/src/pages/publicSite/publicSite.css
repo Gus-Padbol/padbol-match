@@ -5453,3 +5453,7 @@ html.public-site-active #root {
     right: 10px;
   }
 }
+
+.public-site-footer__downloads { margin-top: 36px; text-align: center; }
+.public-site-footer__downloads h2 { font-size: 1.2rem; color: #fff; }
+.public-site-footer__downloads .ps-download__stores { margin: 18px auto 28px; }

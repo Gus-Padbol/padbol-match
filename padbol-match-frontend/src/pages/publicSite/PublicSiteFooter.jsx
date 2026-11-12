@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { PUBLIC_SITE_NAV_ITEMS } from '../../content/publicSiteContent';
-import { PUBLIC_SITE_CTA, PUBLIC_SITE_PATH } from '../../constants/publicSiteLinks';
+import { PUBLIC_SITE_CTA, PUBLIC_SITE_PATH, PUBLIC_SITE_STORE_LINKS } from '../../constants/publicSiteLinks';
 import { ES_FALLBACKS, useSafeTranslation } from '../../i18n/tSafe';
 
 export default function PublicSiteFooter() {
@@ -48,6 +48,16 @@ export default function PublicSiteFooter() {
               ))}
             </ul>
           </nav>
+        </div>
+        <div className="public-site-footer__downloads">
+          <h2>{text('publicSite.download.title')}</h2>
+          <div className="ps-download__stores">
+            {Object.entries(PUBLIC_SITE_STORE_LINKS).map(([key, url]) => (
+              <a key={key} href={url} className="ps-store" target="_blank" rel="noopener noreferrer">
+                <strong>{text(`publicSite.download.${key}`)}</strong>
+              </a>
+            ))}
+          </div>
         </div>
         <div className="public-site-footer__bottom">
           <div className="public-site-footer__language">
