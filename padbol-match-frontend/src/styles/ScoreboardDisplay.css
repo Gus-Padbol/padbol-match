@@ -926,9 +926,6 @@
 .sb-timer__label { display: block; font-size: clamp(10px, 1.15vh, 14px); letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.65); margin-bottom: .2vh; }
 .sb-display--fit .sb-footer { height: var(--sb-footer-height); min-height: var(--sb-footer-height); }
 .sb-display--fit .sb-ticker-logo { height: clamp(30px, 4.8vh, 48px); }
-.sb-ticker-track--nations{justify-content:center;overflow:visible}
-.sb-ticker-content--nations{animation:none;justify-content:center;width:100%;gap:0}
-.sb-ticker-logo--nations{height:clamp(30px,4.8vh,48px);max-width:100%;object-fit:contain}
 .sb-display--fit .sb-ticker-content { gap: clamp(48px, 6vw, 120px); }
 .sb-lineup { display: flex; flex-direction: column; width: 100%; flex: 1; min-height: 0; }
 .sb-lineup__label { font-size: clamp(12px, 1.15vw, 21px); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.65); margin: 0 0 1.2vh; }
@@ -950,5 +947,23 @@
 .sb-display--nations .sb-tournament-brand__name{text-transform:none}
 
 .sb-demo-portrait{background-repeat:no-repeat;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.22)}
-.sb-display--nations .sb-players--active .sb-demo-portrait{width:clamp(64px,12vh,128px);height:clamp(64px,12vh,128px);border-color:#c4c9cf;box-shadow:0 0 0 3px #c4c9cf}
+.sb-display--nations .sb-players--active .sb-demo-portrait{width:clamp(64px,12vh,128px);height:clamp(64px,12vh,128px)}
+.sb-display--nations .sb-players--active .sb-player__avatar{border-radius:50%;border-color:#22c55e;box-shadow:0 0 0 3px #22c55e}
 .sb-display--nations .sb-players--bench .sb-demo-portrait{width:clamp(32px,5vh,54px);height:clamp(32px,5vh,54px);opacity:.85}
+
+/* Two equal groups make a continuous strip without changing the scoreboard layout. */
+.sb-display--nations .sb-nations-footer-brand{display:flex;align-items:center;flex:0 0 auto;padding:0 2vw;border-right:1px solid #ffffff26;height:70%}
+.sb-display--nations .sb-nations-footer-brand img{display:block;width:clamp(120px,16vw,220px);height:clamp(28px,4.8vh,48px);object-fit:contain}
+.sb-display--nations .sb-nations-marquee{flex:1;min-width:0;overflow:hidden}
+.sb-display--nations .sb-nations-marquee__content{display:flex;align-items:center;width:max-content;min-width:200%;animation:sb-nations-marquee 32s linear infinite;will-change:transform}
+.sb-display--nations .sb-nations-marquee:is(:hover,:focus-within) .sb-nations-marquee__content{animation-play-state:paused}
+.sb-display--nations .sb-nations-marquee__group{display:flex;flex:1 0 auto;align-items:center;justify-content:space-around;gap:clamp(36px,5vw,96px);padding:0 clamp(18px,2.5vw,48px)}
+.sb-display--nations .sb-nations-marquee__sponsor{display:flex;align-items:center;flex:0 0 auto;gap:12px;white-space:nowrap;color:#eee;font-size:clamp(16px,1.7vw,24px)}
+.sb-display--nations .sb-nations-marquee__logo{display:block;flex:0 0 auto;width:auto;max-width:clamp(160px,20vw,280px);height:clamp(28px,4.8vh,48px);object-fit:contain}
+@keyframes sb-nations-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){
+  .sb-display--nations .sb-nations-marquee{overflow-x:auto}
+  .sb-display--nations .sb-nations-marquee__content{animation:none;transform:none;will-change:auto;min-width:0}
+  .sb-display--nations .sb-nations-marquee__group{justify-content:flex-start}
+  .sb-display--nations .sb-nations-marquee__group[aria-hidden="true"]{display:none}
+}

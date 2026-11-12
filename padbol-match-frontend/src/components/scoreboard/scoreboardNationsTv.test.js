@@ -23,12 +23,13 @@ test('Nations TV is English and identity-safe', () => {
   expect(css).toContain('.sb-display--nations .sb-lineup__label,.sb-display--nations .sb-timer__label{text-transform:none');
 });
 
-test('fit mode and tight footer stay scoped to Nations; legacy keeps its original footer', () => {
+test('fit mode and moving white footer stay scoped to Nations; legacy keeps its original footer', () => {
   expect(board).toContain("lineup.isNations ? ' sb-display--fit sb-display--nations' : ''");
-  expect(board).toContain('src="/brand/padbol-match-logo-on-dark-tight.png"');
+  expect(board).toContain('lineup.isNations ? <NationsScoreboardTicker sponsors={sponsors} />');
   expect(board).toContain('src="/brand/padbol-match-logo-on-dark.png"');
-  expect(board).toContain('sb-ticker-track--nations');
-  expect(board).toContain('sb-ticker-logo--nations');
+  expect(css).toContain('animation:sb-nations-marquee 32s linear infinite');
+  expect(css).toContain('@media(prefers-reduced-motion:reduce)');
+  expect(css).toContain('.sb-display--nations .sb-nations-marquee__content{animation:none;transform:none;will-change:auto;min-width:0}');
 });
 
 test('Nations load errors use the English fallback only after the DTO identifies Nations', () => {

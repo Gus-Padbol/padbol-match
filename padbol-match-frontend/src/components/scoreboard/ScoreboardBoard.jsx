@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import NationsScoreboardTicker from './NationsScoreboardTicker';
 import {useSafeTranslation} from '../../i18n/tSafe';
 import {nationsDemoPublicBoard,nationsRefereePresentation} from '../../utils/nationsRefereePresentation';
 import {nationsTvLineup} from '../../utils/scoreboardNationsLineup';
@@ -533,16 +534,7 @@ export default function ScoreboardBoard({
       </div>
 
       <footer className="sb-footer" aria-label="Padbol Match">
-        <div className={`sb-ticker-track${lineup.isNations ? ' sb-ticker-track--nations' : ''}`}>
-          {lineup.isNations ? (
-            <div className="sb-ticker-content sb-ticker-content--nations">
-              <img
-                src="/brand/padbol-match-logo-on-dark-tight.png"
-                alt="Padbol Match"
-                className="sb-ticker-logo sb-ticker-logo--nations"
-              />
-            </div>
-          ) : (
+        {lineup.isNations ? <NationsScoreboardTicker sponsors={sponsors} /> : <div className="sb-ticker-track">
             <div className="sb-ticker-content">
               {TICKER_LOGOS.map((index) => (
                 <img
@@ -553,8 +545,7 @@ export default function ScoreboardBoard({
                 />
               ))}
             </div>
-          )}
-        </div>
+        </div>}
       </footer>
     </div>
   );
