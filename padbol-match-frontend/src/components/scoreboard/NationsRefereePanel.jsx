@@ -10,11 +10,14 @@ import './NationsRefereePanel.css';
 import NationsRefereeLink from './NationsRefereeLink';
 
 export default function NationsRefereePanel({controller,allowIssueLink=false}) {
- const {snapshot,loading,busy,error,pending,act,refresh}=controller;
+ const {snapshot,loading,busy,error,pending,syncing=false,feedback='',act,refresh}=controller;
  const [choice,setChoice]=useState(null),[pair,setPair]=useState([]),[more,setMore]=useState(false);
+ const [preview,setPreview]=useState(null);
  const board=snapshot?.board;
  const selectionKey=JSON.stringify([board?.id,snapshot?.epoch,snapshot?.window,snapshot?.markers?.map(m=>[m.teamId,m.state?.revision,m.state?.active])]);
  useEffect(()=>{setChoice(null);setPair([]);},[selectionKey]);
+ useEffect(()=>{if(!busy&&!syncing)setPreview(null);},[busy,syncing,snapshot]);
+ useEffect(()=>{setPreview(null);},[board?.id,snapshot?.epoch]);
  const seconds=useServerCronometro(board);
  if(loading)return <main className="sc-control nations-referee-panel"><p role="status">Loading the referee panel…</p></main>;
  if(!board)return <main className="sc-control nations-referee-panel"><p role="alert">{error||'Scoreboard unavailable.'}</p><button onClick={refresh}>Refresh scoreboard</button></main>;
@@ -22,7 +25,7 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
  const terminal=['terminado','finalizado'].includes(board.estado)||board.sets_a>=2||board.sets_b>=2;
  const paused=board.cronometro_pausado===true;
  const running=board.estado==='en_curso'&&!paused&&Boolean(board.cronometro_inicio);
- const locked=busy||Boolean(pending),coherent=!nations||snapshot.coherent;
+ const locked=busy||syncing||Boolean(pending)||Boolean(preview),coherent=!nations||snapshot.coherent;
  const clockReady=!nations||snapshot.clockSynced!==false;
  const canScore=!locked&&!terminal&&running&&coherent&&clockReady&&(!nations||baseline);
  const view={...board};
@@ -30,8 +33,14 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
   const tid=context.membership[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid));
   if(m?.state?.active)view[`equipo_${s.toLowerCase()}_jugadores`]=(context.teams[tid]?.players||[]).filter(p=>m.state.active.includes(p.id));
  }
- const teams=Object.fromEntries(['A','B'].map(s=>{const tid=context?.membership?.[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid)),roster=context?.teams?.[tid]?.players||[],ids=m?.state?.active||[];return [s,{id:tid,name:board[`equipo_${s.toLowerCase()}_nombre`]||`Team ${s}`,active:roster.filter(p=>ids.includes(p.id)),bench:roster.filter(p=>!ids.includes(p.id))}];}));
+ const teams=Object.fromEntries(['A','B'].map(s=>{const tid=context?.membership?.[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid)),roster=context?.teams?.[tid]?.players||[],ids=preview?.side===s?preview.ids:m?.state?.active||[];return [s,{id:tid,name:board[`equipo_${s.toLowerCase()}_nombre`]||`Team ${s}`,active:roster.filter(p=>ids.includes(p.id)),bench:roster.filter(p=>!ids.includes(p.id))}];}));
  const canChange=!locked&&nations&&baseline&&coherent&&clockReady&&running&&!terminal&&snapshot.window?.allowed===true;
+ const submitChange=async(side,swaps)=>{
+  const team=teams[side];
+  setPreview({side,ids:team.active.map(p=>swaps.find(s=>s.outId===p.id)?.inId||p.id)});
+  setChoice(null);setPair([]);
+  if(!await act('substitution',{teamId:team.id,swaps}))setPreview(null);
+ };
  const choosePlayer=(s,outId)=>{if(!canChange)return;setChoice({side:s,outId,mode:'single'});setPair([]);};
  const chooseBench=async player=>{
   if(!canChange||!choice)return;
@@ -39,9 +48,9 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
   if(!team.bench.some(p=>p.id===player.id))return;
   if(choice.mode==='pair'){
    const next=pair.includes(player.id)?pair.filter(id=>id!==player.id):[...pair,player.id];setPair(next);
-   if(next.length===2&&team.active.length===2){if(await act('substitution',{teamId:team.id,swaps:team.active.map((p,i)=>({outId:p.id,inId:next[i]}))})){setChoice(null);setPair([]);}}
+   if(next.length===2&&team.active.length===2)await submitChange(choice.side,team.active.map((p,i)=>({outId:p.id,inId:next[i]})));
   }else if(team.active.some(p=>p.id===choice.outId)){
-   if(await act('substitution',{teamId:team.id,swaps:[{outId:choice.outId,inId:player.id}]}))setChoice(null);
+   await submitChange(choice.side,[{outId:choice.outId,inId:player.id}]);
   }
  };
  return <main className={`sc-control nations-referee-panel${nations?' nations-referee-panel--tactical':''}`}>
@@ -52,7 +61,7 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
    </div>
   </header>
   {error?<p className="sc-error" role="alert">{error}</p>:null}
-  {pending?<div className="nations-referee-notice" role="alert"><p>The response is unconfirmed. The original attempt is saved.</p><button disabled={busy} onClick={()=>act('retry')}>Retry the same attempt</button></div>:null}
+  {pending&&!busy?<div className="nations-referee-notice" role="alert"><p>The response is unconfirmed. The original attempt is saved.</p><button disabled={busy} onClick={()=>act('retry')}>Retry the same attempt</button></div>:null}
   {nations?<>
    <section className="nt-scores" aria-label="Match score">{['A','B'].map(s=><article key={s} className={`nt-score nt-score--${s.toLowerCase()}`}>
     <h2>{teams[s].name}{board.saque_actual===s?<span className="nt-serving"> · Serving</span>:null}</h2>
@@ -63,7 +72,7 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
    <section className="nt-tactics" aria-label="Substitutions">
     <div className="nt-tactics__heading"><h2>On court</h2><span>{paused?'Paused':terminal?'Finished':snapshot.window?.allowed?'Change of ends':'In play'}</span></div>
     <NationsTacticalCourt teams={teams} disabled={!canChange} selected={choice} onPlayer={choosePlayer}/>
-    <p role="status" className="nt-window">{snapshot.window?.allowed&&!paused&&!terminal?`Game ${snapshot.window.completed_games} · set ${snapshot.window.set_number}. Tap player → substitute.`:'Substitute after an odd game (1, 3, 5, 7), never during a point, tie-break or pause.'}</p>
+    <p role="status" className="nt-window">{preview||busy||syncing?feedback||'Saving change…':snapshot.window?.allowed&&!paused&&!terminal?`Game ${snapshot.window.completed_games} · set ${snapshot.window.set_number}. Tap player → substitute.`:'Substitute after an odd game (1, 3, 5, 7), never during a point, tie-break or pause.'}</p>
     <div className="nt-pair-actions">{['A','B'].map(s=><button key={s} type="button" disabled={!canChange||teams[s].bench.length<2||teams[s].active.length!==2} onClick={()=>{setChoice({side:s,mode:'pair'});setPair([]);}}>Change pair · {teams[s].name}</button>)}</div>
     {choice?<p className="nt-hint">{(choice.mode==='pair'?`Choose two substitutes for ${teams[choice.side].name}.`:`Choose who replaces ${teams[choice.side].active.find(p=>p.id===choice.outId)?.name||'the player'}.`)}</p>:null}
     {choice?<button className="nt-cancel" disabled={locked} onClick={()=>{setChoice(null);setPair([]);}}>Cancel substitution</button>:null}

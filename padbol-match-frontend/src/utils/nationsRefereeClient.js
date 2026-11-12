@@ -1,19 +1,29 @@
 /** Existing referee credentials only. Never log control URLs or retry with a new intent. */
-export function createNationsRefereeClient({apiBase = '', scoreboardId, controlToken, accessToken, getAccessToken, fetchImpl = fetch}) {
+export function createNationsRefereeClient({apiBase = '', scoreboardId, controlToken, accessToken, getAccessToken, fetchImpl = fetch, requestTimeoutMs = 12000}) {
   const tokenMode = Boolean(controlToken);
   const boardPath = tokenMode ? `/api/scoreboard/control/${encodeURIComponent(controlToken)}` : `/api/scoreboard/partidos/${encodeURIComponent(scoreboardId)}`;
   const durablePath = tokenMode ? `${boardPath}/nations` : `/api/nations/marker/${encodeURIComponent(scoreboardId)}`;
   async function request(path, body) {
     const bearer = getAccessToken ? getAccessToken() : accessToken;
     const headers = {'Content-Type':'application/json', ...(!tokenMode && bearer ? {Authorization:`Bearer ${bearer}`} : {})};
-    const response = await fetchImpl(`${apiBase}${path}`, {headers, ...(body ? {method:'POST',body:JSON.stringify(body)} : {})});
-    const data = await response.json().catch(() => null);
-    if (!response.ok) throw Object.assign(new Error(data?.code || 'REFEREE_REQUEST_FAILED'), {code:data?.code || 'REFEREE_REQUEST_FAILED',status:response.status});
-    return data;
+    const controller=new AbortController();
+    const deadline=setTimeout(()=>controller.abort(),requestTimeoutMs);
+    try {
+      const response = await fetchImpl(`${apiBase}${path}`, {headers,signal:controller.signal, ...(body ? {method:'POST',body:JSON.stringify(body)} : {})});
+      const data = await response.json().catch(error => {if(controller.signal.aborted)throw error;return null;});
+      if(controller.signal.aborted)throw Object.assign(new Error('REFEREE_TIMEOUT'),{code:'REFEREE_TIMEOUT'});
+      if (!response.ok) throw Object.assign(new Error(data?.code || 'REFEREE_REQUEST_FAILED'), {code:data?.code || 'REFEREE_REQUEST_FAILED',status:response.status});
+      return data;
+    } catch(error) {
+      if(controller.signal.aborted)throw Object.assign(new Error('REFEREE_TIMEOUT'),{code:'REFEREE_TIMEOUT'});
+      throw error;
+    } finally {clearTimeout(deadline);}
   }
   return {
     async read() {
-      const board = await request(boardPath);
+      const initial=tokenMode?await Promise.allSettled([request(boardPath),request(`${durablePath}/context`)]):null;
+      if(initial?.[0].status==='rejected')throw initial[0].reason;
+      const board = initial?initial[0].value:await request(boardPath);
       if (!board?.id) throw Error('REFEREE_CONTEXT_INVALID');
       let hiddenTournament = false;
       if (!tokenMode) {
@@ -30,7 +40,7 @@ export function createNationsRefereeClient({apiBase = '', scoreboardId, controlT
         }
       }
       let context;
-      try { context = await request(`${durablePath}/context`); }
+      try { if(initial?.[1].status==='rejected')throw initial[1].reason;context = initial?initial[1].value:await request(`${durablePath}/context`); }
       catch (error) { if (!hiddenTournament && error.status === 403 && error.code === 'NOT_NATIONS_TOURNAMENT') return {mode:tokenMode?'legacy-token':'legacy',board}; throw error; }
       if (String(context?.scoreboardId) !== String(board.id) || !context?.membership?.A || !context?.membership?.B) throw Error('REFEREE_CONTEXT_INVALID');
       const teams = [String(context.membership.A), String(context.membership.B)];

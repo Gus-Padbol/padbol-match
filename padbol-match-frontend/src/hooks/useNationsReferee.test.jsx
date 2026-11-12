@@ -36,3 +36,13 @@ test('ordinary bearer refresh preserves uncertain intent while requests can use 
  rerender({bearer:'refreshed'});expect(createNationsRefereeClient).toHaveBeenCalledTimes(1);expect(createNationsRefereeClient.mock.calls[0][0].getAccessToken()).toBe('refreshed');
  await act(async()=>{await result.current.act('retry');});expect(client.send.mock.calls[1][0]).toBe(original);
 });
+
+test('acknowledged save with a failed refresh is never retried; it stays locked until authoritative refresh succeeds',async()=>{
+ const {result}=renderHook(()=>useNationsReferee({scoreboardId:'one'}));await waitFor(()=>expect(result.current.loading).toBe(false));
+ client.send.mockResolvedValueOnce({revision:3});client.read.mockRejectedValueOnce(new Error('refresh down'));
+ await act(async()=>{expect(await result.current.act('substitution',{swaps:[]})).toBe(true);});
+ expect(result.current.snapshot).toBe(snapshot);expect(result.current.pending).toBeNull();expect(result.current.syncing).toBe(true);expect(result.current.error).toMatch(/Saved/);
+ await act(async()=>{expect(await result.current.act('retry')).toBe(false);});expect(client.send).toHaveBeenCalledTimes(1);
+ client.read.mockResolvedValueOnce({...snapshot,revision:3});await act(async()=>{await result.current.refresh();});
+ expect(result.current.syncing).toBe(false);expect(result.current.error).toBe('');expect(result.current.snapshot.revision).toBe(3);
+});

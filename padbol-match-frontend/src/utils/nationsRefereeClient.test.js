@@ -46,3 +46,20 @@ test('hidden tournament fallback never grants access or downgrades to legacy on 
 test('catalog auth/server errors do not use hidden-tournament fallback',async()=>{
  for(const status of[401,403,500]){const {client,fetchImpl}=fixture();fetchImpl.mockImplementation(async url=>url.endsWith('/api/torneos/28')?{ok:false,status,json:async()=>({code:'CATALOG_DENIED'})}:ok(board));await expect(client.read()).rejects.toMatchObject({status});expect(fetchImpl.mock.calls.some(([url])=>url.endsWith('/context'))).toBe(false);}
 });
+
+test('private link reads board and context concurrently while preserving authorization failures',async()=>{
+ let release;const held=new Promise(resolve=>{release=resolve;});const {client,fetchImpl}=fixture(true);
+ const normal=fetchImpl.getMockImplementation();fetchImpl.mockImplementation((url,...rest)=>url.endsWith('/opaque-token')?held:normal(url,...rest));
+ const read=client.read();expect(fetchImpl).toHaveBeenCalledTimes(2);expect(fetchImpl.mock.calls[1][0]).toMatch(/context$/);
+ release(ok(board));expect((await read).coherent).toBe(true);
+ const legacy=fixture(true);legacy.fetchImpl.mockImplementation(async url=>url.endsWith('/context')?{ok:false,status:403,json:async()=>({code:'NOT_NATIONS_TOURNAMENT'})}:ok(board));
+ expect((await legacy.client.read()).mode).toBe('legacy-token');
+});
+test('a timed out send keeps the original immutable command available for an identical retry',async()=>{
+ const fetchImpl=jest.fn((_url,{signal})=>new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>reject(new Error('aborted')))));
+ const client=createNationsRefereeClient({controlToken:'opaque-token',fetchImpl,requestTimeoutMs:5});
+ const attempt=client.attempt('substitution',{mode:'nations',epoch:1,revision:2},{teamId:'1',swaps:[{outId:'a',inId:'b'}]},()=> 'same-id');
+ const before=JSON.stringify(attempt);await expect(client.send(attempt)).rejects.toMatchObject({code:'REFEREE_TIMEOUT'});
+ expect(JSON.stringify(attempt)).toBe(before);await expect(client.send(attempt)).rejects.toMatchObject({code:'REFEREE_TIMEOUT'});
+ expect(fetchImpl.mock.calls[1][1].body).toBe(fetchImpl.mock.calls[0][1].body);
+});

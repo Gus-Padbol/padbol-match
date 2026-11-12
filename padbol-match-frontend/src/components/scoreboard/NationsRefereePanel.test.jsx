@@ -64,3 +64,34 @@ test('both benches remain visible before selecting a player, names readable but 
  for(const team of ['Italia','España']){const bench=screen.getByRole('region',{name:`Substitutes for ${team}`});expect(within(bench).getByRole('button',{name:/Clara/})).toBeDisabled();expect(within(bench).getByRole('button',{name:/Dina/})).toBeDisabled();}
  expect(c.act).not.toHaveBeenCalled();
 });
+
+test('court swaps immediately during a delayed save, then rolls back a rejected change without sending twice',async()=>{
+ let finish;const c=controller({act:jest.fn(()=>new Promise(resolve=>{finish=resolve;}))});
+ render(<NationsRefereePanel controller={c}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Replace Ana for Italia'}));
+ fireEvent.click(within(screen.getByRole('region',{name:'Substitutes for Italia'})).getByRole('button',{name:/Clara/}));
+ expect(screen.queryByRole('button',{name:'Replace Ana for Italia'})).toBeNull();
+ expect(screen.getByRole('button',{name:'Replace Clara for Italia'})).toBeDisabled();
+ expect(screen.getByRole('status')).toHaveTextContent('Saving change');
+ expect(c.act).toHaveBeenCalledTimes(1);
+ await act(async()=>{finish(false);});
+ expect(screen.getByRole('button',{name:'Replace Ana for Italia'})).toBeEnabled();
+ expect(c.act).toHaveBeenCalledTimes(1);
+});
+test('two players enter the court together immediately while one atomic pair save is pending',async()=>{
+ let finish;const c=controller({act:jest.fn(()=>new Promise(resolve=>{finish=resolve;}))});render(<NationsRefereePanel controller={c}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Change pair · España'}));
+ const bench=screen.getByRole('region',{name:'Substitutes for España'});
+ fireEvent.click(within(bench).getByRole('button',{name:/Clara/}));
+ expect(screen.getByRole('button',{name:'Replace Ana for España'})).toBeEnabled();
+ fireEvent.click(within(bench).getByRole('button',{name:/Dina/}));
+ expect(screen.getByRole('button',{name:'Replace Clara for España'})).toBeDisabled();
+ expect(screen.getByRole('button',{name:'Replace Dina for España'})).toBeDisabled();
+ expect(c.act).toHaveBeenCalledTimes(1);
+ await act(async()=>{finish(false);});
+});
+test('a request in flight says Saving and never offers the uncertain retry warning',()=>{
+ render(<NationsRefereePanel controller={controller({busy:true,pending:{body:{}},feedback:'Saving change…'})}/>);
+ expect(screen.queryByRole('button',{name:'Retry the same attempt'})).toBeNull();
+ expect(screen.getByRole('status')).toHaveTextContent('Saving change');
+});
