@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import {useSafeTranslation} from '../../i18n/tSafe';
+import {nationsTvLineup} from '../../utils/scoreboardNationsLineup';
+import {formatDisplayName, formatTeamDisplayName} from '../../utils/scoreboardDisplayName';
 import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
@@ -127,7 +130,7 @@ function playerInitial(name) {
   return parts[0].slice(0, 1).toUpperCase();
 }
 
-function PlayerList({ jugadores, teamSide = 'left' }) {
+function PlayerList({ jugadores, teamSide = 'left', label = 'Jugadores', variant = '', showAvatar = true }) {
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
   // Solo registrados con identidad (nombre). No rellenar a 4 ni renderizar placeholders.
   const list = listVisibleScoreboardJugadores(jugadores, 4);
@@ -137,16 +140,17 @@ function PlayerList({ jugadores, teamSide = 'left' }) {
   }
 
   return (
-    <ul className="sb-players" aria-label="Jugadores">
+    <ul className={`sb-players${variant ? ` sb-players--${variant}` : ''}`} aria-label={label}>
       {list.map((j, i) => {
         const jerseyLabel = getScoreboardJerseyLabel(j);
         const isTwoDigit = jerseyLabel != null && jerseyLabel.length >= 2;
-        const displayName = scoreboardPlayerName(j);
+        const rawName = scoreboardPlayerName(j);
+        const displayName = formatDisplayName(rawName);
         const fotoUrl = String(j.foto_url || '').trim();
 
         return (
-          <li key={`${displayName}-${j.slot ?? i}`} className="sb-player">
-            <span className={`sb-player__avatar ${avatarClass}`}>
+          <li key={`${rawName}-${j.slot ?? i}`} className="sb-player">
+            {showAvatar ? <span className={`sb-player__avatar ${avatarClass}`}>
               {fotoUrl ? (
                 <img src={fotoUrl} alt="" className="sb-player__avatar-img" />
               ) : (
@@ -154,7 +158,7 @@ function PlayerList({ jugadores, teamSide = 'left' }) {
                   {playerInitial(displayName)}
                 </span>
               )}
-            </span>
+            </span> : null}
             {jerseyLabel != null ? (
               <span className={`sb-player__num ${isTwoDigit ? 'sb-player__num--two-digit' : ''}`}>
                 {jerseyLabel}
@@ -168,6 +172,14 @@ function PlayerList({ jugadores, teamSide = 'left' }) {
       })}
     </ul>
   );
+}
+
+function NationsPlayerPanel({team, current, side, copy}) {
+  if (!current) return <section className="sb-lineup"><h3 className="sb-lineup__label">{copy.roster}</h3><p className="sb-lineup__notice">{copy.unavailable}</p><PlayerList jugadores={team.roster} teamSide={side} label={copy.roster} showAvatar={false} /></section>;
+  return <div className="sb-lineup">
+    <section><h3 className="sb-lineup__label">{copy.active}</h3><PlayerList jugadores={team.active} teamSide={side} label={copy.active} variant="active" showAvatar={false} /></section>
+    {team.bench.length ? <section className="sb-lineup__bench"><h3 className="sb-lineup__label">{copy.bench}</h3><PlayerList jugadores={team.bench} teamSide={side} label={copy.bench} variant="bench" showAvatar={false} /></section> : null}
+  </div>;
 }
 
 function formatTorneoNombreLines(text) {
@@ -225,12 +237,13 @@ function TournamentBrand({ torneoNombre, logoTorneoUrl }) {
   );
 }
 
-function TeamNameRow({ name, serving, color1, color2 }) {
+function TeamNameRow({ name, serving, color1, color2, showServingLabel = false }) {
   return (
     <div className="sb-team-name-block">
       {/* LED fuera del flujo vertical: no empuja título ni jugadores */}
       {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
       <h1 className="sb-team-name">{name}</h1>
+      {serving && showServingLabel ? <span className="sb-serving-label">Serving</span> : null}
       <div className="sb-team-name-meta">
         <UniformJerseyStrip color1={color1} color2={color2} size="tv" />
       </div>
@@ -302,6 +315,11 @@ export default function ScoreboardBoard({
   timerSeconds = 0,
   onWinnerDismiss,
 }) {
+  const {i18n} = useSafeTranslation();
+  const lineup = nationsTvLineup(partido);
+  const copy = lineup.isNations
+    ? {active:'On court',bench:'Substitutes',roster:'Roster',unavailable:'Current lineup unavailable'}
+    : ({es:{active:'En cancha',bench:'Suplentes',roster:'Plantel',unavailable:'Alineación actual no disponible'},en:{active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'},pt:{active:'Em quadra',bench:'Reservas',roster:'Elenco',unavailable:'Escalação atual indisponível'},it:{active:'In campo',bench:'Panchina',roster:'Rosa',unavailable:'Formazione attuale non disponibile'}})[(i18n?.language || 'es').slice(0,2)] || {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'};
   const display = partido.display || {};
   const torneoNombre = String(partido?.torneo_nombre || '').trim();
   const logoTorneoUrl = String(partido?.logo_torneo_url || '').trim();
@@ -340,16 +358,16 @@ export default function ScoreboardBoard({
   );
 
   const jugadoresA = useMemo(
-    () => mergeJugadoresWithTemp(partido.equipo_a_jugadores, 'A', jugadoresTemp, jerseyFieldsA),
-    [partido.equipo_a_jugadores, jugadoresTemp, jerseyFieldsA],
+    () => lineup.isNations ? partido.equipo_a_jugadores : mergeJugadoresWithTemp(partido.equipo_a_jugadores, 'A', jugadoresTemp, jerseyFieldsA),
+    [partido.equipo_a_jugadores, jugadoresTemp, jerseyFieldsA, lineup.isNations],
   );
   const jugadoresB = useMemo(
-    () => mergeJugadoresWithTemp(partido.equipo_b_jugadores, 'B', jugadoresTemp, jerseyFieldsB),
-    [partido.equipo_b_jugadores, jugadoresTemp, jerseyFieldsB],
+    () => lineup.isNations ? partido.equipo_b_jugadores : mergeJugadoresWithTemp(partido.equipo_b_jugadores, 'B', jugadoresTemp, jerseyFieldsB),
+    [partido.equipo_b_jugadores, jugadoresTemp, jerseyFieldsB, lineup.isNations],
   );
 
   useEffect(() => {
-    if (!partido?.id || terminado) {
+    if (!partido?.id || terminado || lineup.isNations) {
       setJugadoresTemp([]);
       return undefined;
     }
@@ -370,7 +388,7 @@ export default function ScoreboardBoard({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [partido?.id, terminado]);
+  }, [partido?.id, terminado, lineup.isNations]);
 
   useEffect(() => {
     if (!terminado || !winnerName) {
@@ -396,7 +414,7 @@ export default function ScoreboardBoard({
   }
 
   return (
-    <div className={`sb-display${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
+    <div className={`sb-display${lineup.isNations ? ' sb-display--fit sb-display--nations' : ''}${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
       <div className="sb-display__overlay" aria-hidden="true">
         <HexClusterSvg variant="top-right" stroke="rgba(100,180,255,0.12)" />
         <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
@@ -411,12 +429,13 @@ export default function ScoreboardBoard({
         <aside className="sb-panel sb-panel--left">
           <div className="sb-panel__inner">
             <TeamNameRow
-              name={partido.equipo_a_nombre}
+              name={formatTeamDisplayName(partido.equipo_a_nombre)}
               serving={partido.saque_actual === 'A'}
+              showServingLabel={lineup.isNations}
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <PlayerList jugadores={jugadoresA} teamSide="left" />
+            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[0]} current={lineup.current} side="left" copy={copy} /> : <PlayerList jugadores={jugadoresA} teamSide="left" />}</>
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -485,6 +504,7 @@ export default function ScoreboardBoard({
             />
 
             <div className="sb-timer">
+              {lineup.isNations ? <span className="sb-timer__label">Time</span> : null}
               {formatTimerFromSeconds(timerSeconds)}
             </div>
           </div>
@@ -493,12 +513,13 @@ export default function ScoreboardBoard({
         <aside className="sb-panel sb-panel--right">
           <div className="sb-panel__inner">
             <TeamNameRow
-              name={partido.equipo_b_nombre}
+              name={formatTeamDisplayName(partido.equipo_b_nombre)}
               serving={partido.saque_actual === 'B'}
+              showServingLabel={lineup.isNations}
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <PlayerList jugadores={jugadoresB} teamSide="right" />
+            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[1]} current={lineup.current} side="right" copy={copy} /> : <PlayerList jugadores={jugadoresB} teamSide="right" />}</>
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -506,17 +527,27 @@ export default function ScoreboardBoard({
       </div>
 
       <footer className="sb-footer" aria-label="Padbol Match">
-        <div className="sb-ticker-track">
-          <div className="sb-ticker-content">
-            {TICKER_LOGOS.map((index) => (
+        <div className={`sb-ticker-track${lineup.isNations ? ' sb-ticker-track--nations' : ''}`}>
+          {lineup.isNations ? (
+            <div className="sb-ticker-content sb-ticker-content--nations">
               <img
-                key={`ticker-logo-${index}`}
-                src="/brand/padbol-match-logo-on-dark.png"
-                alt={index === 0 ? 'Padbol Match' : ''}
-                className="sb-ticker-logo"
+                src="/brand/padbol-match-logo-on-dark-tight.png"
+                alt="Padbol Match"
+                className="sb-ticker-logo sb-ticker-logo--nations"
               />
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="sb-ticker-content">
+              {TICKER_LOGOS.map((index) => (
+                <img
+                  key={`ticker-logo-${index}`}
+                  src="/brand/padbol-match-logo-on-dark.png"
+                  alt={index === 0 ? 'Padbol Match' : ''}
+                  className="sb-ticker-logo"
+                />
+              ))}
+            </div>
+          )}
         </div>
       </footer>
     </div>

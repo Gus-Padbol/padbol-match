@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import ScoreboardBoard from '../components/scoreboard/ScoreboardBoard';
+import {scoreboardPublicPollInterval} from '../utils/scoreboardNationsLineup';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchSponsors } from '../utils/scoreboardApi';
@@ -13,6 +14,7 @@ export default function ScoreboardDisplay() {
   const [partido, setPartido] = useState(null);
   const [sponsors, setSponsors] = useState([]);
   const [error, setError] = useState('');
+  const isNations = ['current', 'unavailable'].includes(partido?.nations_lineup_status);
 
   const handleUpdate = useCallback((payload) => {
     setPartido(payload);
@@ -28,9 +30,9 @@ export default function ScoreboardDisplay() {
       handleUpdate(p);
       setError('');
     } catch (err) {
-      setError(err.message || t('scoreboardDisplay.matchLoadError'));
+      setError(isNations ? 'Unable to load the match.' : (err.message || t('scoreboardDisplay.matchLoadError')));
     }
-  }, [partidoId, handleUpdate, t]);
+  }, [partidoId, handleUpdate, t, isNations]);
 
   useEffect(() => {
     void fetchPartidoNow();
@@ -50,14 +52,15 @@ export default function ScoreboardDisplay() {
     return () => { cancelled = true; };
   }, [sedeId]);
 
+  const pollInterval = scoreboardPublicPollInterval(partido, wsConnected);
   useEffect(() => {
-    if (wsConnected || !partidoId) return undefined;
+    if (!pollInterval || !partidoId) return undefined;
     void fetchPartidoNow();
     const id = setInterval(() => {
       void fetchPartidoNow();
-    }, 3000);
+    }, pollInterval);
     return () => clearInterval(id);
-  }, [wsConnected, partidoId, fetchPartidoNow]);
+  }, [pollInterval, partidoId, fetchPartidoNow]);
 
   useEffect(() => {
     if (!partidoId || wsConnected) return undefined;

@@ -134,3 +134,5 @@
 .sb-winner-set-box__loser {
   color: rgba(255, 255, 255, 0.35);
 }
+
+.sb-winner__finished{margin:0 0 8px;color:#ffd700;font-size:clamp(12px,1.4vw,18px);font-weight:800;letter-spacing:.08em;text-transform:none}

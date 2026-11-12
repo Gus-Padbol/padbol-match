@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import UniformJerseyStrip from './UniformJerseyStrip';
 import { hasUniformJerseyColors, resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
 import { playVictoryFanfare } from '../../utils/scoreboardVictoryFanfare';
+import {formatTeamDisplayName} from '../../utils/scoreboardDisplayName';
 import '../../styles/ScoreboardDramaticResultScreen.css';
 
 function hexToRgb(hex) {
@@ -44,7 +45,7 @@ export default function ScoreboardDramaticResultScreen({ partido }) {
   return (
     <div className="sb-dramatic" style={glowStyle} role="status" aria-live="polite">
       <div className="sb-dramatic__loser">
-        <h2 className="sb-dramatic__loser-name">{loserName}</h2>
+        <h2 className="sb-dramatic__loser-name">{formatTeamDisplayName(loserName)}</h2>
         <p className="sb-dramatic__loser-sets">
           {loserSets}
           {' '}
@@ -66,7 +67,7 @@ export default function ScoreboardDramaticResultScreen({ partido }) {
             <UniformJerseyStrip color1="#ffffff" color2="#cbd5e1" size="tv-vertical" />
           )}
         </div>
-        <h1 className="sb-dramatic__winner-name">{winnerName}</h1>
+        <h1 className="sb-dramatic__winner-name">{formatTeamDisplayName(winnerName)}</h1>
         <p className="sb-dramatic__sets-score">
           {winnerSets}
           -

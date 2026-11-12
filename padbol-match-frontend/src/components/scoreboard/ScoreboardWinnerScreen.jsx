@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import {formatTeamDisplayName} from '../../utils/scoreboardDisplayName';
 import '../../styles/ScoreboardWinnerScreen.css';
 
 function formatTimerFromSeconds(totalSeconds) {
@@ -111,8 +112,9 @@ export default function ScoreboardWinnerScreen({ partido, timerSeconds = 0, onDi
       <Confetti />
       <div className="sb-winner__content">
         <TrophyIcon />
+        {partido?.nations_lineup_status ? <p className="sb-winner__finished">Match finished</p> : null}
         <h2 className="sb-winner__label">WINNER</h2>
-        <h1 className="sb-winner__name">{winnerName}</h1>
+        <h1 className="sb-winner__name">{formatTeamDisplayName(winnerName)}</h1>
         <p className="sb-winner__sets-score">
           {partido.sets_a}
           {' — '}

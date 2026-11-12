@@ -893,3 +893,54 @@
   color: #ffd700;
   font-weight: 700;
 }
+
+/* Keep the original three-column TV composition inside the actual viewport. */
+.sb-display--fit { --sb-footer-height: clamp(64px, 10vh, 96px); }
+.sb-display--fit .sb-panel--left,
+.sb-display--fit .sb-panel--right {
+  transform: none;
+  padding: clamp(14px, 3vh, 32px) 1.4vw;
+}
+.sb-display--fit .sb-team-name-block {
+  --sb-team-name-fs: clamp(20px, 2.1vw, 38px);
+  margin-bottom: 2vh;
+}
+.sb-display--fit .sb-team-name { font-size: var(--sb-team-name-fs); }
+.sb-display--fit .sb-player { gap: .6vw; margin-bottom: 1.5vh; }
+.sb-display--fit .sb-player__avatar { width: clamp(40px, 8vh, 84px); height: clamp(40px, 8vh, 84px); flex-shrink: 0; }
+.sb-display--fit .sb-player__num { min-width: 2.5vw; min-height: 2.5vw; font-size: 1.5vw; }
+.sb-display--fit .sb-player__name { font-size: clamp(16px, 1.7vw, 30px); }
+.sb-display--fit .sb-center { min-height: 0; padding: 2.8vh 1vw 0; gap: 1vh; }
+.sb-display--fit .sb-tournament-brand { margin: 0; gap: .4vh; max-height: 14vh; }
+.sb-display--fit .sb-tournament-brand__name { transform: none; font-size: clamp(18px, 2vw, 34px); letter-spacing: .18em; }
+.sb-display--fit .sb-tournament-brand__torneo-logo { max-height: 7vh; }
+.sb-display--fit .sb-tournament-brand__name--small { font-size: clamp(14px, 1.4vw, 24px); }
+.sb-display--fit .sb-center__block { flex: 1; min-height: 0; margin: 0; display: grid; grid-template-rows: 24px minmax(0, 1fr) auto auto; }
+.sb-display--fit .sb-score-row { min-height: 0; height: 100%; padding: 0; }
+.sb-display--fit .sb-score { font-size: clamp(100px, 29vh, 320px); }
+.sb-display--fit .sb-score--special { font-size: clamp(40px, 7vw, 100px); }
+.sb-display--fit .sb-sets-history { margin: 1vh 0 0; }
+.sb-display--fit .sb-set-box { height: clamp(62px, 11vh, 118px); min-height: 0; font-size: clamp(30px, 4vw, 70px); }
+.sb-display--fit .sb-set-label { font-size: clamp(14px, 1.35vw, 26px); }
+.sb-display--fit .sb-timer { margin: 1.4vh 0 1.4vh; transform: none; font-size: clamp(20px, 2.8vh, 34px); }
+.sb-timer__label { display: block; font-size: clamp(10px, 1.15vh, 14px); letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.65); margin-bottom: .2vh; }
+.sb-display--fit .sb-footer { height: var(--sb-footer-height); min-height: var(--sb-footer-height); }
+.sb-display--fit .sb-ticker-logo { height: clamp(30px, 4.8vh, 48px); }
+.sb-ticker-track--nations{justify-content:center;overflow:visible}
+.sb-ticker-content--nations{animation:none;justify-content:center;width:100%;gap:0}
+.sb-ticker-logo--nations{height:clamp(30px,4.8vh,48px);max-width:100%;object-fit:contain}
+.sb-display--fit .sb-ticker-content { gap: clamp(48px, 6vw, 120px); }
+.sb-lineup { display: flex; flex-direction: column; width: 100%; flex: 1; min-height: 0; }
+.sb-lineup__label { font-size: clamp(12px, 1.15vw, 21px); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.65); margin: 0 0 1.2vh; }
+.sb-lineup__notice { font-size: clamp(12px, 1vw, 18px); color: rgba(255,255,255,.6); margin: 0 0 1vh; }
+.sb-lineup__bench { margin-top: auto; padding-top: 2vh; border-top: 1px solid rgba(255,255,255,.15); }
+.sb-display--fit .sb-players--active .sb-player { margin-bottom: 2vh; }
+.sb-display--fit .sb-players--bench .sb-player { margin-bottom: 1vh; }
+.sb-display--fit .sb-players--bench .sb-player__avatar { width: clamp(28px, 4.5vh, 48px); height: clamp(28px, 4.5vh, 48px); }
+.sb-display--fit .sb-players--bench .sb-player__name { font-size: clamp(13px, 1.3vw, 24px); }
+.sb-display--fit .sb-players--bench .sb-player__num { min-width: 1.8vw; min-height: 1.8vw; font-size: 1.1vw; }
+
+.sb-display--nations .sb-lineup__label,.sb-display--nations .sb-timer__label{text-transform:none;letter-spacing:.08em}
+.sb-display--nations .sb-team-name,.sb-display--nations .sb-player__name{text-transform:none}
+
+.sb-serving-label{display:block;color:#00ff88;font-size:clamp(10px,1.1vh,14px);letter-spacing:.08em;margin:0 0 .6vh;text-transform:none}
