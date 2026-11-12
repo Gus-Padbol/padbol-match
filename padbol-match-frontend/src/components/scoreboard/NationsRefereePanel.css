@@ -7,7 +7,8 @@
 .nations-referee-panel .sc-header__torneo,
 .nations-referee-panel .sc-header__meta { color: rgba(255, 255, 255, .72); }
 .nations-referee-panel .sc-header__title { overflow-wrap: anywhere; }
-.nations-referee-panel button:not(.sc-point-btn):not(.sc-timer-btn) {
+.nations-referee-panel:not(.nations-referee-panel--tactical) button:not(.sc-point-btn):not(.sc-timer-btn),
+.nations-referee-panel--tactical :where(button:not(.sc-point-btn):not(.sc-timer-btn)) {
   min-height: 44px; padding: .7rem 1rem;
   border: 1px solid var(--sc-border); border-radius: 8px;
   background: var(--sc-card); color: var(--sc-text);
@@ -66,6 +67,8 @@
 .nations-referee-panel .nations-referee-link a { color: #93c5fd; padding: .7rem 0; }
 /* Tactical operator-only scope; public/TV and legacy controls are untouched. */
 .nations-referee-panel--tactical{box-sizing:border-box;max-width:900px;margin:auto;padding:12px}
+.nations-referee-panel--tactical :where(button){box-sizing:border-box}
+.nations-referee-panel--tactical h3{color:var(--sc-text)}
 .nations-referee-panel--tactical .sc-header{padding:14px;margin-bottom:12px;border-radius:16px}
 .nations-referee-panel--tactical .sc-header__torneo{font-size:11px;letter-spacing:.1em;margin:0 0 5px}
 .nations-referee-panel--tactical .sc-header__title{font-size:clamp(18px,3vw,25px);margin:0 0 5px;line-height:1.2}
