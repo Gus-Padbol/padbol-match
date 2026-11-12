@@ -18,6 +18,7 @@ test('Nations TV is English and identity-safe', () => {
   expect((board.match(/showAvatar=\{false\}/g) || []).length).toBe(3);
   expect(board).not.toContain('foto_url={');
   expect(css).toContain('.sb-display--nations .sb-team-name,.sb-display--nations .sb-player__name{text-transform:none}');
+  expect(css).toContain('.sb-display--nations .sb-tournament-brand__name{text-transform:none}');
   expect(css).toContain('.sb-display--nations .sb-lineup__label,.sb-display--nations .sb-timer__label{text-transform:none');
 });
 
