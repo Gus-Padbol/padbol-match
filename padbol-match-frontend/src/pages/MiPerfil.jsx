@@ -307,15 +307,22 @@ export default function MiPerfil() {
     const m = String(redirectAfterAuth).match(/^\/nations-cup\/([^/]+)\/inscripcion/);
     return m ? decodeURIComponent(m[1]) : '';
   }, [redirectAfterAuth]);
+  const [napoliReadiness, setNapoliReadiness] = useState(null);
+  const napoliReadinessRequest = useRef(0);
   const confirmNapoliReadiness = useCallback(async () => {
     if (!esContextoNacionesNapoli || !napoliSlug) return false;
+    const request = ++napoliReadinessRequest.current;
+    const actorId = session?.user?.id || null;
+    const record = complete => { if (request === napoliReadinessRequest.current) setNapoliReadiness({slug: napoliSlug, actorId, complete}); };
     try {
       const headers = await getAuthHeaders();
       const res = await fetch(`${API_BASE_URL}/api/nations-activation/events/${encodeURIComponent(napoliSlug)}/profile-readiness`, {headers});
       const body = await res.json().catch(() => null);
-      return res.ok && body?.complete === true;
-    } catch { return false; }
-  }, [esContextoNacionesNapoli, napoliSlug]);
+      const complete = res.ok && body?.complete === true;
+      record(complete);
+      return complete;
+    } catch { record(false); return false; }
+  }, [esContextoNacionesNapoli, napoliSlug, session?.user?.id]);
   const handleFichaTorneoSaved = useCallback(async () => {
     if (!await confirmNapoliReadiness()) return;
     setSuccessMsg('✅ Perfil completo');
@@ -323,6 +330,12 @@ export default function MiPerfil() {
   }, [confirmNapoliReadiness, navigate, redirectAfterAuth]);
   const torneoIdValido = Boolean(torneoIdPerfil && /^\d+$/.test(String(torneoIdPerfil)));
   const [perfil, setPerfil] = useState(null);
+  useEffect(() => {
+    napoliReadinessRequest.current += 1;
+    setNapoliReadiness(null);
+    if (perfil && session?.user?.id && napoliSlug === 'nations-cup-napoli-2026') void confirmNapoliReadiness();
+    return () => { napoliReadinessRequest.current += 1; };
+  }, [perfil, session?.user?.id, session?.access_token, napoliSlug, confirmNapoliReadiness]);
   const [loading, setLoading] = useState(true);
   const [reservas, setReservas] = useState([]);
   const [misReservasColapsado, setMisReservasColapsado] = useState(false);
@@ -471,8 +484,8 @@ export default function MiPerfil() {
     () =>
       (location.state && location.state.avisoPerfilTorneo) ||
       (torneoIdValido ? t('perfil.flow.completeForTournament') : '') ||
-      (redirectAfterAuth ? t('perfil.flow.completeToContinue') : ''),
-    [location.state, torneoIdValido, redirectAfterAuth, t]
+      (redirectAfterAuth && !(napoliSlug === 'nations-cup-napoli-2026' && napoliReadiness?.slug === napoliSlug && napoliReadiness?.actorId === session?.user?.id && napoliReadiness?.complete === true) ? t('perfil.flow.completeToContinue') : ''),
+    [location.state, torneoIdValido, redirectAfterAuth, t, napoliSlug, napoliReadiness, session?.user?.id]
   );
 
   /** Sin fila o faltan datos obligatorios (foto no obligatoria). */
