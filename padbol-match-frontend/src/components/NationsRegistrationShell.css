@@ -1,0 +1,5 @@
+.nations-essential .nations-select{appearance:auto;-webkit-appearance:menulist;padding-right:16px}
+.nations-essential .nations-text-button{display:inline-block;margin-top:12px}
+
+.nations-essential .nations-card > .nations-field + .nations-field{margin-top:18px}
+.nations-essential .nations-card > .nations-button{margin-top:20px}

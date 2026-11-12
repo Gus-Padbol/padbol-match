@@ -1,3 +1,4 @@
+import {NATIONS_RETURN_PATH} from '../utils/nationsEssentialProfile';
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import './AccesoCuenta.css';
@@ -24,6 +25,7 @@ import {
   safeAdminPathFromLoginRedirect,
   safeCommercialCrmPathFromLoginRedirect,
   safeFipaDocumentsPathFromLoginRedirect,
+  safeNationsInscripcionPathFromLoginRedirect,
   safeRecorridoExternoPathFromLoginRedirect,
 } from '../utils/reservaReturnUrl';
 import { isUserHomeHubPath, scheduleHubEntryScrollReset } from '../utils/hubEntryScrollReset';
@@ -263,7 +265,8 @@ export default function AccesoCuenta() {
     const returnPath = safeCommercialCrmPathFromLoginRedirect(location.search)
       || safeAdminPathFromLoginRedirect(location.search)
       || safeRecorridoExternoPathFromLoginRedirect(location.search)
-      || safeFipaDocumentsPathFromLoginRedirect(location.search);
+      || safeFipaDocumentsPathFromLoginRedirect(location.search)
+      || (safeNationsInscripcionPathFromLoginRedirect(location.search)===NATIONS_RETURN_PATH?NATIONS_RETURN_PATH:null);
     const callbackQuery = returnPath ? `?redirect=${encodeURIComponent(returnPath)}` : '';
     const redirectTo = `${window.location.origin}/auth/callback${callbackQuery}`;
     const { error } = await supabase.auth.signInWithOAuth({
@@ -298,7 +301,8 @@ export default function AccesoCuenta() {
     const returnPath = safeCommercialCrmPathFromLoginRedirect(location.search)
       || safeAdminPathFromLoginRedirect(location.search)
       || safeRecorridoExternoPathFromLoginRedirect(location.search)
-      || safeFipaDocumentsPathFromLoginRedirect(location.search);
+      || safeFipaDocumentsPathFromLoginRedirect(location.search)
+      || (safeNationsInscripcionPathFromLoginRedirect(location.search)===NATIONS_RETURN_PATH?NATIONS_RETURN_PATH:null);
     const callbackQuery = returnPath ? `?redirect=${encodeURIComponent(returnPath)}` : '';
     const redirectTo = `${window.location.origin}/auth/callback${callbackQuery}`;
     const { error } = await supabase.auth.signInWithOAuth({
@@ -342,7 +346,7 @@ export default function AccesoCuenta() {
       }
       const necesitaCompletarPerfil = Boolean(s.user.user_metadata?.profile_completion_required);
       const destinoFinal = destinoTrasLogin;
-      const destinoNavegacion = necesitaCompletarPerfil && !destinoEsBibliotecaFipa
+      const destinoNavegacion = necesitaCompletarPerfil && !destinoEsBibliotecaFipa && destinoFinal!==NATIONS_RETURN_PATH
         ? `/completar-perfil?redirect=${encodeURIComponent(destinoFinal)}`
         : destinoFinal;
       try {
