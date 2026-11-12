@@ -1,0 +1,5 @@
+{
+  "note": "Public browser anon key, not a server secret; exclusively for the guarded QA Preview branch.",
+  "projectRef": "vxikhdulhuvghfqeutnp",
+  "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4aWtoZHVsaHV2Z2hmcWV1dG5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODk0MzcsImV4cCI6MjEwNDU2NTQzN30.A1iNkIbJsFXbrzRJXuMClincI37dPHOMD_ZvlG_sPL0"
+}

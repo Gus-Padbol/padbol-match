@@ -41,7 +41,11 @@ test('backend authorization response is preserved; timeout is generic without se
 });
 test('build sets isolated QA aliases and rejects production branch/key fallback',()=>{
  const key=jwt({role:'anon',ref:'vxikhdulhuvghfqeutnp'});
- const e=qaBuildEnvironment({...env,REACT_APP_SUPABASE_ANON_KEY:key,REACT_APP_API_URL:'https://padbol-backend.onrender.com'});
+ const e=qaBuildEnvironment({...env,REACT_APP_SUPABASE_ANON_KEY:'sb_secret_must_be_overridden',REACT_APP_API_URL:'https://padbol-backend.onrender.com'});
+ assert.ok(e.REACT_APP_SUPABASE_ANON_KEY.startsWith('eyJ'));
  assert.equal(e.REACT_APP_APP_VARIANT,'qa');assert.equal(e.REACT_APP_API_URL,origin);assert.equal(e.REACT_APP_API_BASE_URL,origin);assert.equal(e.REACT_APP_SUPABASE_URL,'https://vxikhdulhuvghfqeutnp.supabase.co');
- for(const bad of [{VERCEL_ENV:'production'},{REACT_APP_SUPABASE_ANON_KEY:jwt({role:'service_role',ref:'vxikhdulhuvghfqeutnp'})},{REACT_APP_SUPABASE_ANON_KEY:jwt({role:'anon',ref:'vpldffhsxhgnmitiikof'})},{REACT_APP_SUPABASE_ANON_KEY:''}])assert.throws(()=>qaBuildEnvironment({...env,REACT_APP_SUPABASE_ANON_KEY:key,...bad}));
+ assert.throws(()=>qaBuildEnvironment({...env,VERCEL_ENV:'production'}));
+ for(const bad of [{role:'service_role',ref:'vxikhdulhuvghfqeutnp'},{role:'anon',ref:'vpldffhsxhgnmitiikof'}])assert.throws(()=>qaBuildEnvironment(env,{projectRef:'vxikhdulhuvghfqeutnp',anonKey:jwt(bad)}));
+ assert.throws(()=>qaBuildEnvironment(env,{projectRef:'vpldffhsxhgnmitiikof',anonKey:key}));
+ assert.throws(()=>qaBuildEnvironment(env,{projectRef:'vxikhdulhuvghfqeutnp',anonKey:'sb_secret_never_allowed'}));
 });

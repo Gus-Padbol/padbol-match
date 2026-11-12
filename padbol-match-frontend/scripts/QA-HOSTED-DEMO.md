@@ -2,7 +2,7 @@
 
 This branch is an isolated Preview of the same application. Do not merge its Vercel build command or API proxy into main.
 
-The build and proxy require `VERCEL_ENV=preview`, `VERCEL_GIT_COMMIT_REF=candidate/qa-demo-gustavo-20261111` and an isolated `VERCEL_URL` under vercel.app. The build sets both API aliases to this Preview and Supabase to project vxikhdulhuvghfqeutnp. Configure the existing QA public anon key as `QA_DEMO_SUPABASE_ANON_KEY` (or the QA legacy anon JWT as `REACT_APP_SUPABASE_ANON_KEY`). Never configure service-role or secret keys. Production defaults fail closed.
+The build and proxy require `VERCEL_ENV=preview`, `VERCEL_GIT_COMMIT_REF=candidate/qa-demo-gustavo-20261111` and an isolated `VERCEL_URL` under vercel.app. The build sets both API aliases to this Preview and Supabase to project vxikhdulhuvghfqeutnp. The explicitly public browser anon key is recorded in qa-demo-public-client.json with its QA project ref; the guarded build validates JWT role anon and exact ref and overrides any inherited project client configuration. It is not a server credential. Service-role or secret keys fail closed.
 
 The API catch-all forwards only `/api/` paths to the fixed QA backend. It does not forward cookies, Origin, arbitrary request headers, redirects, credentials, or arbitrary targets. Authenticated calls require a QA user-token scope and the backend remains responsible for actual JWT signature/session/role authorization. Unsafe browser methods require the exact Preview Origin. The API has no public CORS relaxation and uses no-store responses.
 
