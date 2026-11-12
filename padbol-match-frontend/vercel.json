@@ -41,6 +41,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/qa-proxy?__qa_path=:path*" },
     {
       "source": "/crm-leads",
       "destination": "/crm.html"

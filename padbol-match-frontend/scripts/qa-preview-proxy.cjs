@@ -29,11 +29,19 @@ function createHandler({ env = process.env, fetchImpl = globalThis.fetch } = {})
     const authorization = req.headers.authorization;
     // Scope check only. The QA backend still verifies signature/session/roles.
     if (!validBearer(authorization)) return fail(403, 'QA_USER_TOKEN_REQUIRED');
-    const rawPath = String(req.url || '').split('?')[0];
+    let incoming;
+    try { incoming = new URL(req.url, 'https://preview.invalid'); } catch { return fail(400, 'INVALID_PATH'); }
+    const queryPaths = incoming.searchParams.getAll('__qa_path');
+    const routePath = req.query?.__qa_path;
+    if (queryPaths.length > 1 || Array.isArray(routePath)) return fail(400, 'INVALID_PATH');
+    const path = queryPaths[0] ?? routePath;
+    if (typeof path !== 'string' || !path || (queryPaths.length && routePath !== undefined && path !== routePath)) return fail(400, 'INVALID_PATH');
     let decoded;
-    try { decoded = decodeURIComponent(rawPath); } catch { return fail(400, 'INVALID_PATH'); }
-    if (!decoded.startsWith('/api/') || decoded.includes('\\') || decoded.includes('//') || decoded.split('/').some(s => s === '.' || s === '..') || /[\r\n\0]/.test(decoded) || /%[0-9a-f]{2}/i.test(decoded)) return fail(400, 'INVALID_PATH');
-    const url = new URL(req.url, TARGET);
+    try { decoded = decodeURIComponent(path); } catch { return fail(400, 'INVALID_PATH'); }
+    if (!/^[a-zA-Z0-9_-]/.test(decoded) || decoded.includes('\\') || decoded.includes('//') || decoded.split('/').some(s => s === '.' || s === '..') || /[\r\n\0?#]/.test(decoded) || /%[0-9a-f]{2}/i.test(decoded)) return fail(400, 'INVALID_PATH');
+    incoming.searchParams.delete('__qa_path');
+    const url = new URL('/api/' + decoded, TARGET);
+    url.search = incoming.searchParams.toString();
     if (url.origin !== TARGET || !url.pathname.startsWith('/api/')) return fail(400, 'INVALID_PATH');
     let body;
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {

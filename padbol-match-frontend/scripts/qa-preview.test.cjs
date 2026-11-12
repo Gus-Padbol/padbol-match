@@ -10,7 +10,7 @@ async function run(request, settings = {}) {
  const calls = [];
  const res = { headers: {}, setHeader(k,v) { this.headers[k] = v; }, status(n) { this.code = n; return this; }, json(v) { this.body = v; return this; }, send(v) { this.body = v; return this; } };
  const handler = createHandler({ env, fetchImpl: async (url, options) => { calls.push({url, options}); return new Response('{"ok":true}', {status:200, headers:{'content-type':'application/json','set-cookie':'must-not-forward'}}); }, ...settings });
- await handler({method:'GET', url:'/api/torneos/57?public=true', headers:{}, ...request}, res);
+ await handler({method:'GET', url:'/api/qa-proxy?__qa_path=torneos%2F57&public=true', headers:{}, ...request}, res);
  return { res, calls };
 }
 test('fixed QA target preserves public paths/query and only forwards user bearer/content type', async () => {
@@ -30,7 +30,7 @@ test('unsafe origins, production/service-role tokens, open proxy and large bodie
   {method:'POST',headers:{origin:'https://evil.example'},body:{}},
   {headers:{authorization:`Bearer ${jwt({role:'service_role',iss:'https://vxikhdulhuvghfqeutnp.supabase.co/auth/v1'})}`}},
   {headers:{authorization:`Bearer ${jwt({role:'authenticated',iss:'https://auth.padbolmatch.com/auth/v1'})}`}},
-  {url:'https://evil.example/api/foo'}, {url:'/api/%2e%2e/private'}, {url:'/api/%252e%252e/private'},
+  {url:'/api/qa-proxy'}, {url:'/api/qa-proxy?__qa_path=https%3A%2F%2Fevil.example'}, {url:'/api/qa-proxy?__qa_path=%252e%252e%2Fprivate'}, {url:'/api/qa-proxy?__qa_path=%25252e%25252e%2Fprivate'}, {url:'/api/qa-proxy?__qa_path=a&__qa_path=b'},
   {method:'POST',headers:{origin},body:'a'.repeat(1024*1024+1)}
  ];
  for(const request of cases){const {calls,res}=await run(request);assert.ok(res.code>=400);assert.equal(calls.length,0);}
@@ -48,4 +48,10 @@ test('build sets isolated QA aliases and rejects production branch/key fallback'
  for(const bad of [{role:'service_role',ref:'vxikhdulhuvghfqeutnp'},{role:'anon',ref:'vpldffhsxhgnmitiikof'}])assert.throws(()=>qaBuildEnvironment(env,{projectRef:'vxikhdulhuvghfqeutnp',anonKey:jwt(bad)}));
  assert.throws(()=>qaBuildEnvironment(env,{projectRef:'vpldffhsxhgnmitiikof',anonKey:key}));
  assert.throws(()=>qaBuildEnvironment(env,{projectRef:'vxikhdulhuvghfqeutnp',anonKey:'sb_secret_never_allowed'}));
+});
+
+test('rewrite metadata preserves original query and consumes internal routing parameter only',async()=>{
+ const {res,calls}=await run({url:'/api/nations/test?name=Argentina&x=1&x=2',query:{__qa_path:'nations/test'}});
+ assert.equal(res.code,200);assert.equal(calls[0].url,'https://padbol-backend-qa.onrender.com/api/nations/test?name=Argentina&x=1&x=2');
+ assert.equal(calls[0].url.includes('__qa_path'),false);
 });
