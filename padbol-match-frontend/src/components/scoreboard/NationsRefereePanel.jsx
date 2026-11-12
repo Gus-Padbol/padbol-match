@@ -8,12 +8,14 @@ import {formatScoreboardVenueHeader} from '../../utils/scoreboardVenueLabels';
 import '../../styles/ScoreboardControl.css';
 import './NationsRefereePanel.css';
 import NationsRefereeLink from './NationsRefereeLink';
+import {nationsRefereePresentation} from '../../utils/nationsRefereePresentation';
 
 export default function NationsRefereePanel({controller,allowIssueLink=false}) {
  const {snapshot,loading,busy,error,pending,syncing=false,feedback='',act,refresh}=controller;
  const [choice,setChoice]=useState(null),[pair,setPair]=useState([]),[more,setMore]=useState(false);
  const [preview,setPreview]=useState(null);
  const board=snapshot?.board;
+ const presentation=nationsRefereePresentation(snapshot);
  const selectionKey=JSON.stringify([board?.id,snapshot?.epoch,snapshot?.window,snapshot?.markers?.map(m=>[m.teamId,m.state?.revision,m.state?.active])]);
  useEffect(()=>{setChoice(null);setPair([]);},[selectionKey]);
  useEffect(()=>{if(!busy&&!syncing)setPreview(null);},[busy,syncing,snapshot]);
@@ -33,7 +35,7 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
   const tid=context.membership[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid));
   if(m?.state?.active)view[`equipo_${s.toLowerCase()}_jugadores`]=(context.teams[tid]?.players||[]).filter(p=>m.state.active.includes(p.id));
  }
- const teams=Object.fromEntries(['A','B'].map(s=>{const tid=context?.membership?.[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid)),roster=context?.teams?.[tid]?.players||[],ids=preview?.side===s?preview.ids:m?.state?.active||[];return [s,{id:tid,name:board[`equipo_${s.toLowerCase()}_nombre`]||`Team ${s}`,active:roster.filter(p=>ids.includes(p.id)),bench:roster.filter(p=>!ids.includes(p.id))}];}));
+ const teams=Object.fromEntries(['A','B'].map(s=>{const tid=context?.membership?.[s],m=snapshot.markers?.find(item=>String(item.teamId)===String(tid)),roster=(context?.teams?.[tid]?.players||[]).map(p=>({...p,name:presentation.playerName(p)})),ids=preview?.side===s?preview.ids:m?.state?.active||[];return [s,{id:tid,name:presentation.teamName(s)||`Team ${s}`,active:roster.filter(p=>ids.includes(p.id)),bench:roster.filter(p=>!ids.includes(p.id))}];}));
  const canChange=!locked&&nations&&baseline&&coherent&&clockReady&&running&&!terminal&&snapshot.window?.allowed===true;
  const submitChange=async(side,swaps)=>{
   const team=teams[side];
@@ -54,7 +56,7 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
   }
  };
  return <main className={`sc-control nations-referee-panel${nations?' nations-referee-panel--tactical':''}`}>
-  <header className="sc-header"><p className="sc-header__torneo">{board.torneo_nombre||'Scoreboard'}</p><h1 className={`sc-header__title${nations?' sr-only':''}`}>{board.equipo_a_nombre} vs {board.equipo_b_nombre}</h1><p className="sc-header__meta">{formatScoreboardVenueHeader(board)}</p>
+  <header className="sc-header"><p className="sc-header__torneo">{presentation.title||'Scoreboard'}</p><h1 className={`sc-header__title${nations?' sr-only':''}`}>{presentation.teamName('A')} vs {presentation.teamName('B')}</h1><p className="sc-header__meta">{presentation.venue||formatScoreboardVenueHeader(board)}</p>
    <div className="sc-timer-bar"><span className="sc-timer">{formatTimer(seconds)}</span>
     {(!nations||(!running&&!terminal))?<button className="sc-timer-btn sc-timer-btn--start" disabled={locked||terminal||running||!coherent||!clockReady||(nations&&!baseline&&!context.canStart)} onClick={()=>act(nations?(baseline?'resume':'start'):(paused?'resume':'start'))}>{nations&&!baseline?'Start match':paused?'Resume':'Start match'}</button>:null}
     {(!nations||running)?<button className="sc-timer-btn sc-timer-btn--pause" disabled={locked||!running||terminal||!coherent||!clockReady} onClick={()=>act('pause')}>Pause</button>:null}
