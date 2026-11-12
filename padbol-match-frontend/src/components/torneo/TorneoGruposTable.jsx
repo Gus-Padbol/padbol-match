@@ -1,3 +1,5 @@
+import {selectionRosterPlayers} from '../../utils/padbolSelectionRoster';
+import {tournamentRosterPresentation} from '../../utils/tournamentRosterPresentation';
 import React, { useMemo } from 'react';
 import { useSafeTranslation as useTranslation } from '../../i18n/tSafe';
 import { fotoCapitanEquipo } from '../../utils/equipoOpenJoin';
@@ -40,8 +42,9 @@ export default function TorneoGruposTable({
   clasificadosCount = 2,
   onEquipoClick,
   nombreEquipo,
+  pendingRoster = false,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const equiposMap = useMemo(() => {
     const m = new Map();
@@ -56,6 +59,19 @@ export default function TorneoGruposTable({
     grupoLabel === 'General'
       ? t('torneos.vista.grupoGeneral')
       : t('torneos.vista.grupo', { label: grupoLabel });
+
+  if (pendingRoster) return <div className="torneo-grupos-block">
+    <h3 className="torneo-grupos-block__title">{grupoTitulo}</h3>
+    <div className="torneo-grupos-table-wrap"><table className="torneo-grupos-table nations-public-roster">
+      <thead><tr><th>{String(i18n?.language).startsWith('en')?'Country':'País'}</th><th>{String(i18n?.language).startsWith('en')?'Players':'Convocados'}</th></tr></thead>
+      <tbody>{(tablaRows||[]).map(row=>{
+        const team=equiposMap.get(equipoIdKey(row.id))||row;
+        const players=selectionRosterPlayers(team.jugadores);
+        return <tr key={row.id}><td className="torneo-grupos-td"><span className="torneo-grupos-equipo-nombre">{typeof nombreEquipo==='function'?nombreEquipo(team):team.nombre}</span></td>
+          <td className="torneo-grupos-td">{players.length?<ul>{players.map((player,index)=><li key={index}>{tournamentRosterPresentation(player,i18n?.language).name}</li>)}</ul>:t('torneos.vista.sinJugadores')}</td></tr>;
+      })}</tbody>
+    </table></div>
+  </div>;
 
   const filasActivas = (tablaRows || []).filter((row) => (Number(row.jj) || 0) > 0);
 

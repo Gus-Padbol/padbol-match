@@ -1,3 +1,4 @@
+import {napoliDrawTeams,napoliDrawPending} from '../../utils/napoliDrawPresentation';
 import { tournamentRosterPresentation } from '../../utils/tournamentRosterPresentation';
 import TournamentMatchOperations from './TournamentMatchOperations';
 import NationsStandings from './NationsStandings';
@@ -1020,6 +1021,7 @@ export default function TorneoTabbedView({
       .map((r) => ({ ronda: r, partidos: byRonda[r] }));
   }, [partidosLlave,nationsEnabled]);
 
+  const equiposPresentacion = napoliDrawTeams(equipos, torneo, {partidos,countryByTeam:nationsState?.config?.country_by_team});
   const renderTabEquipos = () => (
     <div style={{ padding: '4px 0 20px' }}>
       {equiposTabHeader}
@@ -1044,7 +1046,7 @@ export default function TorneoTabbedView({
         <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{t('torneos.vista.sinEquipos')}</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {equipos.map((equipo) => {
+          {equiposPresentacion.map((equipo) => {
             const jugadores = safeJugadores(equipo);
             const titulo = nombreEquipoMostrado(equipo);
             const capOk = esUsuarioCapitanDeEquipo(equipo, session);
@@ -1216,6 +1218,7 @@ export default function TorneoTabbedView({
       equipos={equipos}
       partidos={partidos}
       grupoEquipos={grupoEquipos}
+      pendingRoster={napoliDrawPending(torneo,partidos)}
       clasificadosCount={2}
       onEquipoClick={onNombreClick}
       nombreEquipo={nombreEquipoMostrado}
@@ -1273,7 +1276,7 @@ export default function TorneoTabbedView({
           {grupos.map((grupo) => {
             const grupoEquipos = equipos.filter((eq) => equipoGrupoMap[equipoIdKey(eq.id)] === grupo);
             const grupoPartidos = partidosDelGrupo(partidos, grupoEquipos, grupo);
-            const tablaGrupo = buildTablaPosiciones(grupoEquipos, grupoPartidos);
+            const tablaGrupo = napoliDrawTeams(buildTablaPosiciones(grupoEquipos, grupoPartidos), torneo, {partidos,countryByTeam:nationsState?.config?.country_by_team,group:grupo});
             return (
               <div key={grupo}>
                 {renderGrupoTable(grupo, tablaGrupo, openEq, grupoEquipos)}
