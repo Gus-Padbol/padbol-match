@@ -1,6 +1,7 @@
 import React from 'react';
 import {render,screen,fireEvent,act} from '@testing-library/react';
 import NationsRefereePanel from './NationsRefereePanel';
+jest.mock('./NationsRefereeLink',()=>()=> <div>Staff issuer</div>);
 jest.mock('../../hooks/useServerCronometro',()=>()=>22);
 jest.mock('../../pages/ScoreboardControl',()=>({formatTimer:()=> '00:00:22',TeamNameRow:({name})=><h2>{name}</h2>,TeamPlayersBlock:({jugadores})=><div>{jugadores.map(p=>p.name).join(', ')}</div>,gameScoreClassName:()=>'',formatGameScore:()=> '0'}));
 const players=[{id:'private-a',name:'Ana'},{id:'private-b',name:'Bea'},{id:'private-c',name:'Clara'},{id:'private-d',name:'Dina'}];
@@ -26,4 +27,8 @@ test('one replacement uses one named pair and terminal close remains available a
  rerender(<NationsRefereePanel controller={controller({snapshot:{...snapshot,clockSynced:false,window:null,board:{...snapshot.board,estado:'terminado',sets_a:2}}})}/>);
  expect(screen.getByRole('button',{name:'Cerrar seguimiento del partido terminado'})).toBeEnabled();
  expect(screen.getAllByRole('button',{name:'+ POINT'}).every(button=>button.disabled)).toBe(true);
+});
+test('link issuance is absent unless staff entry explicitly enables it',()=>{
+ const {rerender}=render(<NationsRefereePanel controller={controller()}/>);expect(screen.queryByText('Staff issuer')).toBeNull();
+ rerender(<NationsRefereePanel controller={controller()} allowIssueLink/>);expect(screen.getByText('Staff issuer')).toBeInTheDocument();
 });
