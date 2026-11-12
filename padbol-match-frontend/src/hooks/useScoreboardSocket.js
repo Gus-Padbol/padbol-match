@@ -24,11 +24,13 @@ export default function useScoreboardSocket(partidoId, onUpdate, accessToken = n
       return undefined;
     }
 
+    const qaPolling = process.env.REACT_APP_APP_VARIANT === 'qa' && process.env.REACT_APP_QA_SOCKET_POLLING === 'true';
     const socket = io(API_BASE, {
-      transports: ['polling', 'websocket'],
+      transports: qaPolling ? ['polling'] : ['polling', 'websocket'],
+      ...(qaPolling ? { upgrade: false, addTrailingSlash: false } : {}),
       reconnection: true,
       reconnectionAttempts: Infinity,
-      path: '/socket.io',
+      path: qaPolling ? '/api/qa-socket' : '/socket.io',
       ...(accessToken ? {auth:{token:accessToken}} : {}),
     });
     socketRef.current = socket;

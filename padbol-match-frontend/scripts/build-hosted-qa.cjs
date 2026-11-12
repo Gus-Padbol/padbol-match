@@ -4,7 +4,7 @@ const publicQA = require('./qa-demo-public-client.json');
 const { resolveClientEnvironment } = require('../src/config/clientEnvironment.js');
 function qaBuildEnvironment(env, client = publicQA) {
   const origin = previewOrigin(env);
-  const next = { ...env, CI: 'true', REACT_APP_APP_VARIANT: 'qa', REACT_APP_API_BASE_URL: origin, REACT_APP_API_URL: origin,
+  const next = { ...env, CI: 'true', REACT_APP_APP_VARIANT: 'qa', REACT_APP_QA_SOCKET_POLLING: 'true', REACT_APP_API_BASE_URL: origin, REACT_APP_API_URL: origin,
     REACT_APP_SUPABASE_URL: 'https://vxikhdulhuvghfqeutnp.supabase.co',
     REACT_APP_SUPABASE_ANON_KEY: client.anonKey };
   resolveClientEnvironment(next);
