@@ -7,7 +7,10 @@
       "modeHint": "Soupiska má 4 až 8 hráčů. V každém zápase se uvedou 2 hráči základní sestavy a 2 náhradníci; na kurtu vždy hrají 2 a mohou se střídat v lichých gamech. Ruční zadávání setů nezaznamenává střídání po jednotlivých gamech."
     },
     "vista": {
-      "registrationExpired": "Datum zahájení uplynulo · registrace uzavřena"
+      "registrationExpired": "Datum zahájení uplynulo · registrace uzavřena",
+      "categoriaNivel": {
+        "Elite": "Elitní"
+      }
     },
     "nations": {
       "authoritativeStandings": "Potvrzené pořadí, porovnání třetích míst a postupující najdete v panelu Nations Cup. Pravidla tohoto formátu počítá server."

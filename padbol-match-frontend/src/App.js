@@ -90,7 +90,7 @@ const NuevaSede = lazy(() => import('./components/NuevaSede'));
 const InvitarAdminClubPage = lazy(() => import('./pages/InvitarAdminClubPage'));
 const ScoreboardDisplay = lazy(() => import('./pages/ScoreboardDisplay'));
 const ScoreboardCanchaDisplay = lazy(() => import('./pages/ScoreboardCanchaDisplay'));
-const ScoreboardControl = lazy(() => import('./pages/ScoreboardControl'));
+const ScoreboardControl = lazy(() => import('./pages/ScoreboardControlEntry'));
 const ScoreboardJoin = lazy(() => import('./pages/ScoreboardJoin'));
 const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage'));
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
@@ -609,6 +609,7 @@ function App() {
               />
               <Route path="/contenido-campanas" element={<ProtectedRoute><WebLegalConsentGate><ContentWorkspacePage /></WebLegalConsentGate></ProtectedRoute>} />
               <Route path="/crm-leads" element={<ProtectedRoute><WebLegalConsentGate><CommercialCrmPage /></WebLegalConsentGate></ProtectedRoute>} />
+              <Route path="/scoreboard/control/:token" element={<ErrorBoundary label="el panel del árbitro"><ScoreboardControl /></ErrorBoundary>} />
               <Route
                 path="/admin/scoreboard/:partidoId"
                 element={(

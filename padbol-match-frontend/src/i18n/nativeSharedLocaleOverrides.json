@@ -118,7 +118,8 @@
           "1ra": "1",
           "2da": "2",
           "3ra": "3",
-          "Femenino": "Weiblich"
+          "Femenino": "Weiblich",
+          "Elite": "Eliteklasse"
         },
         "venueFallback": "die Spielstätte",
         "rightHanded": "Rechtshänder",
@@ -646,7 +647,8 @@
           "1ra": "١",
           "2da": "٢",
           "3ra": "٣",
-          "Femenino": "أنثى"
+          "Femenino": "أنثى",
+          "Elite": "النخبة"
         },
         "venueFallback": "النادي",
         "rightHanded": "أيمن",
@@ -1174,7 +1176,8 @@
           "1ra": "اول",
           "2da": "دوم",
           "3ra": "سوم",
-          "Femenino": "زن"
+          "Femenino": "زن",
+          "Elite": "نخبگان"
         },
         "venueFallback": "باشگاه",
         "rightHanded": "راست‌دست",
@@ -1702,7 +1705,8 @@
           "1ra": "1e",
           "2da": "2e",
           "3ra": "3e",
-          "Femenino": "Vrouw"
+          "Femenino": "Vrouw",
+          "Elite": "Eliteklasse"
         },
         "venueFallback": "de club",
         "rightHanded": "Rechtshandig",
@@ -2230,7 +2234,8 @@
           "1ra": "1er",
           "2da": "2ème",
           "3ra": "3ème",
-          "Femenino": "Féminin"
+          "Femenino": "Féminin",
+          "Elite": "Élite"
         },
         "venueFallback": "le site",
         "rightHanded": "Droitier",
@@ -2758,7 +2763,8 @@
           "1ra": "1°",
           "2da": "2°",
           "3ra": "3°",
-          "Femenino": "Femminile"
+          "Femenino": "Femminile",
+          "Elite": "Élite"
         },
         "venueFallback": "la sede",
         "rightHanded": "Destrimano",
@@ -3814,7 +3820,8 @@
           "1ra": "1e",
           "2da": "2e",
           "3ra": "3e",
-          "Femenino": "Vrouw"
+          "Femenino": "Vrouw",
+          "Elite": "Eliteklasse"
         },
         "venueFallback": "de club",
         "rightHanded": "Rechtshandig",
@@ -4342,7 +4349,8 @@
           "1ra": "1:a",
           "2da": "2:a",
           "3ra": "3:e",
-          "Femenino": "Kvinna"
+          "Femenino": "Kvinna",
+          "Elite": "Elit"
         },
         "venueFallback": "anläggningen",
         "rightHanded": "Högerhänt",
@@ -4870,7 +4878,8 @@
           "1ra": "1º",
           "2da": "2º",
           "3ra": "3º",
-          "Femenino": "Feminino"
+          "Femenino": "Feminino",
+          "Elite": "Elite"
         },
         "venueFallback": "o local",
         "rightHanded": "Destro",
@@ -5398,7 +5407,8 @@
           "1ra": "1º",
           "2da": "2º",
           "3ra": "3º",
-          "Femenino": "Feminino"
+          "Femenino": "Feminino",
+          "Elite": "Elite"
         },
         "venueFallback": "o recinto",
         "rightHanded": "Destro",
@@ -5926,7 +5936,8 @@
           "1ra": "1η",
           "2da": "2η",
           "3ra": "3η",
-          "Femenino": "Γυναίκα"
+          "Femenino": "Γυναίκα",
+          "Elite": "Ελίτ"
         },
         "venueFallback": "η εγκατάσταση",
         "rightHanded": "Δεξιόχειρας",
@@ -6454,7 +6465,8 @@
           "1ra": "1.",
           "2da": "2.",
           "3ra": "3.",
-          "Femenino": "Nő"
+          "Femenino": "Nő",
+          "Elite": "Elit"
         },
         "venueFallback": "helyszín",
         "rightHanded": "Jobbkezes",
@@ -6982,7 +6994,8 @@
           "1ra": "מקום ראשון",
           "2da": "מקום שני",
           "3ra": "מקום שלישי",
-          "Femenino": "אישה"
+          "Femenino": "אישה",
+          "Elite": "עילית"
         },
         "venueFallback": "המועדון",
         "rightHanded": "יד ימין",
@@ -7510,7 +7523,8 @@
           "1ra": "1.",
           "2da": "2.",
           "3ra": "3.",
-          "Femenino": "Kobieta"
+          "Femenino": "Kobieta",
+          "Elite": "Elita"
         },
         "venueFallback": "obiekt",
         "rightHanded": "Praworęczny",
@@ -8038,7 +8052,8 @@
           "1ra": "1-ше",
           "2da": "2-ге",
           "3ra": "3-тє",
-          "Femenino": "Жіноча"
+          "Femenino": "Жіноча",
+          "Elite": "Еліта"
         },
         "venueFallback": "заклад",
         "rightHanded": "Правша",
@@ -8566,7 +8581,8 @@
           "1ra": "1ste",
           "2da": "2de",
           "3ra": "3de",
-          "Femenino": "Vroulik"
+          "Femenino": "Vroulik",
+          "Elite": "Eliteklas"
         },
         "venueFallback": "die klub",
         "rightHanded": "Regshandig",

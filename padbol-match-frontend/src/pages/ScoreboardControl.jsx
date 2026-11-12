@@ -20,7 +20,7 @@ import { formatScoreboardVenueHeader } from '../utils/scoreboardVenueLabels';
 import { preferNewestScoreboard } from '../utils/scoreboardVersion';
 import '../styles/ScoreboardControl.css';
 
-function formatTimer(seconds) {
+export function formatTimer(seconds) {
   const s = Math.max(0, Number(seconds) || 0);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -28,14 +28,14 @@ function formatTimer(seconds) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-function formatGameScore(display, side) {
+export function formatGameScore(display, side) {
   if (display.mode === 'deuce') return 'DEUCE';
   const val = side === 'A' ? display.displayA : display.displayB;
   if (val === 'VENT.') return 'ADV';
   return val ?? '0';
 }
 
-function gameScoreClassName(display, side) {
+export function gameScoreClassName(display, side) {
   const score = formatGameScore(display, side);
   if (score === 'DEUCE') return 'sc-game-score sc-game-score--deuce';
   if (score === 'ADV') return 'sc-game-score sc-game-score--adv';
@@ -43,7 +43,7 @@ function gameScoreClassName(display, side) {
 }
 
 /** Solo jugadores registrados (2–4). Sin placeholders ni huecos. */
-function TeamPlayersBlock({ jugadores }) {
+export function TeamPlayersBlock({ jugadores }) {
   const list = listVisibleScoreboardJugadores(jugadores, 4);
 
   if (list.length === 0) {
@@ -71,7 +71,7 @@ function getTorneoLabel(partido) {
   return name || 'Partido amistoso';
 }
 
-function TeamNameRow({ name, serving }) {
+export function TeamNameRow({ name, serving }) {
   return (
     <div className="sc-team-name-row">
       {serving ? <span className="sc-team-serve-dot" aria-label="Serving" title="Serving" /> : null}

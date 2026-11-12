@@ -502,7 +502,10 @@
       "inviteToTeam": "Invită în echipă",
       "pendingInvitations": "Invitații trimise în așteptare: {{players}}",
       "tournamentFinishedBanner": "✅ Turneu încheiat",
-      "registrationExpired": "Data de început a trecut · înscriere închisă"
+      "registrationExpired": "Data de început a trecut · înscriere închisă",
+      "categoriaNivel": {
+        "Elite": "Elită"
+      }
     },
     "nations": {
       "authoritativeStandings": "Consultați clasamentul confirmat, comparația locurilor trei și echipele calificate în panoul Nations Cup. Regulile acestui format sunt calculate de server."
