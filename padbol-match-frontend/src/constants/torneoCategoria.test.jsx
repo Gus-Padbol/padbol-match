@@ -17,5 +17,6 @@ test('shared editor choices retain stored Elite and public category filter disti
   expect(CATEGORIA_TORNEO_DEFAULT).toBe('Libre');
   expect(formatCategoriaTorneo('Elite')).toBe('Elite');
   expect(filtrarTorneos([{ id: 57, categoria: 'Elite' }, { id: 23, categoria: 'Libre' }], { nivel: 'Elite' }).map(t => t.id)).toEqual([57]);
-  [es, en, pt].forEach(locale => expect(locale.torneos.vista.categoriaNivel.Elite).toBe('Elite'));
+  expect(es.torneos.vista.categoriaNivel.Elite).toBe('Élite');
+  [en, pt].forEach(locale => expect(locale.torneos.vista.categoriaNivel.Elite).toBe('Elite'));
 });
