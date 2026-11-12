@@ -1,3 +1,4 @@
+import {isActiveSuperTiebreak,superTiebreakSetPoints,visualSetScore,SUPER_TIEBREAK_LABEL} from '../../utils/scoreboardScoringPolicy';
 import React, { useEffect, useState } from 'react';
 import { DEFAULT_SCOREBOARD_COLOR_A, DEFAULT_SCOREBOARD_COLOR_B } from '../../utils/scoreboardTeamColors';
 import { resolveUniformJerseyColors } from '../../utils/scoreboardUniformJersey';
@@ -56,10 +57,10 @@ function getSetCells(partido, side) {
   return [1, 2, 3].map((setNum) => {
     const completedRow = completed.find((row, idx) => (row.set ?? idx + 1) === setNum);
     if (completedRow) {
-      return { value: String(completedRow[key] ?? ''), active: false, future: false, completed: true };
+      return { value: String(visualSetScore(completedRow)[key] ?? ''), stb:Boolean(superTiebreakSetPoints(completedRow)), active: false, future: false, completed: true };
     }
     if (currentSetNum === setNum) {
-      return { value: String(currentGames ?? 0), active: true, future: false, completed: false };
+      return { value: String(isActiveSuperTiebreak(partido)?partido.display[side==='A'?'displayA':'displayB']:currentGames ?? 0), stb:isActiveSuperTiebreak(partido), active: true, future: false, completed: false };
     }
     return { value: '—', active: false, future: true, completed: false };
   });
@@ -88,12 +89,13 @@ function TeamRow({ partido, side, display, serving }) {
           key={`set-${side}-${idx + 1}`}
           className={[
             'sb-scorebug__set',
+            cell.stb ? 'sb-scorebug__set--stb' : '',
             cell.active ? 'sb-scorebug__set--active' : '',
             cell.future ? 'sb-scorebug__set--future' : '',
             cell.completed ? 'sb-scorebug__set--completed' : '',
           ].filter(Boolean).join(' ')}
         >
-          {cell.value}
+          {cell.value}{cell.stb?<small> (STB)</small>:null}
         </div>
       ))}
       <div className={['sb-scorebug__game', gameScoreModifier].filter(Boolean).join(' ')}>
@@ -160,7 +162,7 @@ export default function ScoreboardScoreBug({ partido, timerSeconds = 0 }) {
         />
 
         <div className="sb-scorebug__footer">
-          <span className="sb-scorebug__footer-torneo">{torneoLabel}</span>
+          <span className="sb-scorebug__footer-torneo">{torneoLabel}{isActiveSuperTiebreak(partido)?` · ${SUPER_TIEBREAK_LABEL}`:''}</span>
           <span className="sb-scorebug__footer-timer">{timerLabel}</span>
         </div>
       </div>

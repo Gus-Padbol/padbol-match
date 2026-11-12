@@ -32,3 +32,14 @@ test('link issuance is absent unless staff entry explicitly enables it',()=>{
  const {rerender}=render(<NationsRefereePanel controller={controller()}/>);expect(screen.queryByText('Staff issuer')).toBeNull();
  rerender(<NationsRefereePanel controller={controller()} allowIssueLink/>);expect(screen.getByText('Staff issuer')).toBeInTheDocument();
 });
+
+test('trusted group STB label preserves the server-owned pre-firstpoint change window',()=>{
+ const scoring_policy={id:'napoli_groups_super_tiebreak_10_v1',phase:'groups',best_of:3,deciding_set:'super_tiebreak',target:10,win_by:1};
+ const next={...snapshot,board:{...snapshot.board,sets_a:1,sets_b:1,es_tiebreak:false,scoring_policy,display:{mode:'super_tiebreak',displayA:0,displayB:0}}};
+ const {rerender}=render(<NationsRefereePanel controller={controller({snapshot:next})}/>);
+ expect(screen.getByText('Super tie-break · First to 10')).toBeInTheDocument();
+ fireEvent.change(screen.getByLabelText('Jugador que sale'),{target:{value:'private-a'}});fireEvent.change(screen.getByLabelText('Jugador que entra'),{target:{value:'private-c'}});
+ expect(screen.getByRole('button',{name:'Registrar cambio'})).toBeEnabled();
+ rerender(<NationsRefereePanel controller={controller({snapshot:{...next,window:{allowed:false}}})}/>);
+ expect(screen.getByRole('button',{name:'Registrar cambio'})).toBeDisabled();
+});

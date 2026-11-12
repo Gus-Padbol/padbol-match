@@ -1,3 +1,4 @@
+import {isActiveSuperTiebreak,SUPER_TIEBREAK_LABEL} from '../utils/scoreboardScoringPolicy';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSafeTranslation } from '../i18n/tSafe';
@@ -444,6 +445,7 @@ export default function ScoreboardControl() {
       </header>
 
       {(suspensionEnabled || suspensionResumeEnabled || suspensionPending) && <ScoreboardSuspensionCandidate key={partido.id} partido={partido} pending={suspensionPending} onPending={setSuspensionPending} onConfirmed={acceptPartido} refresh={refreshPartido} allowSuspend={suspensionEnabled} disabled={!(suspensionEnabled || (suspensionResumeEnabled && String(partido.estado || '').toLowerCase() === 'suspendido')) || actionLoading || needsRefresh || terminado || !['en_curso','suspendido'].includes(String(partido.estado || '').toLowerCase())} />}
+      {isActiveSuperTiebreak(partido)?<p role="status">{SUPER_TIEBREAK_LABEL}</p>:null}
       {partido.scoreboard_partial_correction_enabled === true && !terminado && !suspendido && <ScoreboardPartialCorrection partido={partido} disabled={actionLoading || needsRefresh || suspensionPending} onConfirm={confirmPartialCorrection} />}
       {error && <div className="sc-error">{error}</div>}
       {needsRefresh && (

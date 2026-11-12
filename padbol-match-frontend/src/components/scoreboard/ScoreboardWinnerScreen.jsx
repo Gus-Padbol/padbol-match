@@ -1,3 +1,4 @@
+import {superTiebreakSetPoints,visualSetScore} from '../../utils/scoreboardScoringPolicy';
 import React, { useEffect, useMemo } from 'react';
 import '../../styles/ScoreboardWinnerScreen.css';
 
@@ -78,12 +79,14 @@ function WinnerSetHistory({ historial }) {
   return (
     <div className="sb-winner-sets">
       {sets.map((s) => {
-        const aWins = s.a > s.b;
+        const score=visualSetScore(s);
+        const aWins = score.a > score.b;
         return (
           <div key={`winner-set-${s.set}`} className="sb-winner-set-box">
-            <span className={aWins ? 'sb-winner-set-box__winner' : 'sb-winner-set-box__loser'}>{s.a}</span>
+            <span className={aWins ? 'sb-winner-set-box__winner' : 'sb-winner-set-box__loser'}>{score.a}</span>
             {' — '}
-            <span className={!aWins ? 'sb-winner-set-box__winner' : 'sb-winner-set-box__loser'}>{s.b}</span>
+            <span className={!aWins ? 'sb-winner-set-box__winner' : 'sb-winner-set-box__loser'}>{score.b}</span>
+            {superTiebreakSetPoints(s)?<small> (STB)</small>:null}
           </div>
         );
       })}

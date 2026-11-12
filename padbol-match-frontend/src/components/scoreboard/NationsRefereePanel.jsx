@@ -1,3 +1,4 @@
+import {isActiveSuperTiebreak,SUPER_TIEBREAK_LABEL} from '../../utils/scoreboardScoringPolicy';
 import React,{useState} from 'react';
 import ScoreboardTeamCards from './ScoreboardTeamCards';
 import {formatTimer} from '../../pages/ScoreboardControl';
@@ -45,6 +46,7 @@ export default function NationsRefereePanel({controller,allowIssueLink=false}) {
   {error?<p className="sc-error" role="alert">{error}</p>:null}
   {pending?<div className="nations-referee-notice" role="alert"><p>La respuesta no está confirmada. Conservamos exactamente el mismo intento.</p><button disabled={busy} onClick={()=>act('retry')}>Reintentar el mismo intento</button></div>:null}
   {nations&&allowIssueLink?<NationsRefereeLink key={board.id} scoreboardId={board.id} disabled={locked} onIssued={refresh}/>:null}
+  {isActiveSuperTiebreak(board)?<p role="status">{SUPER_TIEBREAK_LABEL}</p>:null}
   <ScoreboardTeamCards partido={view} disabled={!canScore} onPoint={s=>act('point',{side:s})}/>
   {nations?<section className="sc-header nations-referee-substitutions" aria-label="Sustituciones"><h2>Cambio de lado</h2>
    <p role="status">{snapshot.window?.allowed?`Game ${snapshot.window.completed_games} del set ${snapshot.window.set_number} terminado. Puedes sustituir uno o ambos jugadores.`:'Espera al final de un game impar del set. No se hacen cambios durante un punto, un tie-break o una pausa.'}</p>

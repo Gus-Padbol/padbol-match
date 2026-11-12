@@ -1,3 +1,4 @@
+import {superTiebreakSetPoints} from './scoreboardScoringPolicy';
 /** Clave estable para IDs de equipo (evita fallos string vs number en stats). */
 export function equipoIdKey(id) {
   if (id == null || id === '') return '';
@@ -156,9 +157,13 @@ export function resolvePartidoEstadoUi(partido) {
 
 /** Sets en línea neutra: «6-4 / 3-6 / 7-5». */
 export function formatSetsLineaNeutral(partido) {
+  const result=parseResultadoObject(partido);
+  const typed=Array.isArray(result?.historial_sets)?result.historial_sets:Array.isArray(result?.sets)?result.sets:null;
   const sets = parseResultadoPartido(partido);
   return sets
-    .map((set) => {
+    .map((set,index) => {
+      const stb=superTiebreakSetPoints(typed?.[index]);
+      if(stb)return `${stb.a}-${stb.b} (STB)`;
       const parsed = parseSetGames(set);
       if (!parsed) return null;
       return `${parsed.a}-${parsed.b}`;
@@ -345,8 +350,12 @@ export function formatMarcadorPartidoDetalle(partido, nombreA, nombreB) {
   const validacion = validarMarcadorSetsPartido(partido);
   if (!validacion.valido) return '';
 
+  const result=parseResultadoObject(partido);
+  const typed=Array.isArray(result?.historial_sets)?result.historial_sets:Array.isArray(result?.sets)?result.sets:null;
   const trozos = sets
-    .map((set) => {
+    .map((set,index) => {
+      const stb=superTiebreakSetPoints(typed?.[index]);
+      if(stb)return stb.a>stb.b?`${na} ${stb.a}-${stb.b} (STB)`:`${stb.a}-${stb.b} (STB) ${nb}`;
       const parsed = parseSetGames(set);
       if (!parsed) return null;
       const { a, b } = parsed;

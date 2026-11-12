@@ -1,3 +1,4 @@
+import {isActiveSuperTiebreak,superTiebreakSetPoints,visualSetScore,SUPER_TIEBREAK_LABEL} from '../../utils/scoreboardScoringPolicy';
 import React, { useEffect, useMemo, useState } from 'react';
 import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
@@ -238,7 +239,7 @@ function TeamNameRow({ name, serving, color1, color2 }) {
   );
 }
 
-function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
+function SetHistory({ historial, gamesA, gamesB, setsA, setsB, board }) {
   const completedSets = Array.isArray(historial) ? historial : [];
   const currentSetNum = completedSets.length + 1;
   const matchOngoing = setsA < 2 && setsB < 2;
@@ -252,14 +253,15 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
     let itemClass = 'sb-set-history-item sb-set-history-item--future';
 
     if (completed) {
-      const aWins = completed.a > completed.b;
+      const score = visualSetScore(completed);
+      const aWins = score.a > score.b;
       chipClass = 'sb-set-box sb-set-box--done';
       itemClass = 'sb-set-history-item';
       content = (
         <>
-          <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.a}</span>
+          <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{score.a}</span>
           {' – '}
-          <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.b}</span>
+          <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{score.b}</span>
         </>
       );
     } else if (isCurrent) {
@@ -267,9 +269,9 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
       itemClass = 'sb-set-history-item';
       content = (
         <>
-          <span>{gamesA}</span>
+          <span>{isActiveSuperTiebreak(board)?board.display.displayA:gamesA}</span>
           {' – '}
-          <span>{gamesB}</span>
+          <span>{isActiveSuperTiebreak(board)?board.display.displayB:gamesB}</span>
         </>
       );
     }
@@ -282,7 +284,7 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB }) {
 
     return (
       <div key={`set-${setNum}`} className={itemClass}>
-        <span className={labelClass}>{`SET ${setNum}`}</span>
+        <span className={labelClass}>{superTiebreakSetPoints(completed)||(isCurrent&&isActiveSuperTiebreak(board))?'STB':`SET ${setNum}`}</span>
         <div className={chipClass}>{content}</div>
       </div>
     );
@@ -426,7 +428,7 @@ export default function ScoreboardBoard({
           <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} />
 
           <div className="sb-center__block">
-            {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
+            {isActiveSuperTiebreak(partido)?<div className="sb-tiebreak-badge">{SUPER_TIEBREAK_LABEL}</div>:isTiebreak?<div className="sb-tiebreak-badge">Tie-Break</div>:null}
 
             <div
               className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
@@ -477,6 +479,7 @@ export default function ScoreboardBoard({
             )}
 
             <SetHistory
+              board={partido}
               historial={partido.historial_sets}
               gamesA={partido.games_a}
               gamesB={partido.games_b}

@@ -36,3 +36,14 @@ test('ordinary bearer refresh preserves uncertain intent while requests can use 
  rerender({bearer:'refreshed'});expect(createNationsRefereeClient).toHaveBeenCalledTimes(1);expect(createNationsRefereeClient.mock.calls[0][0].getAccessToken()).toBe('refreshed');
  await act(async()=>{await result.current.act('retry');});expect(client.send.mock.calls[1][0]).toBe(original);
 });
+
+test('point refresh retains server STB policy and terminal typed history without local result inference',async()=>{
+ const scoring_policy={id:'napoli_groups_super_tiebreak_10_v1',phase:'groups',best_of:3,deciding_set:'super_tiebreak',target:10,win_by:1};
+ const before={...snapshot,board:{id:'board',sets_a:1,sets_b:1,score_a:9,score_b:9,scoring_policy,display:{mode:'super_tiebreak',displayA:9,displayB:9}}};
+ const after={...before,revision:3,board:{...before.board,sets_a:2,score_a:0,score_b:0,estado:'terminado',display:{displayA:0,displayB:0},historial_sets:[{set:3,a:1,b:0,type:'super_tiebreak',points_a:10,points_b:9,target:10,win_by:1}]}};
+ client.read.mockResolvedValueOnce(before).mockResolvedValueOnce(after);client.send.mockResolvedValueOnce({});
+ const {result}=renderHook(()=>useNationsReferee({scoreboardId:'board'}));await waitFor(()=>expect(result.current.loading).toBe(false));
+ await act(async()=>{await result.current.act('point',{side:'A'});});
+ expect(client.send).toHaveBeenCalledTimes(1);expect(result.current.snapshot.board).toEqual(after.board);
+ expect(result.current.snapshot.board.historial_sets[0].a).toBe(1);expect(result.current.snapshot.board.historial_sets[0].points_b).toBe(9);
+});

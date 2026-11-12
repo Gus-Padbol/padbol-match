@@ -1,3 +1,4 @@
+import {isActiveSuperTiebreak,superTiebreakSetPoints} from '../utils/scoreboardScoringPolicy';
 import React, {useState} from 'react';
 
 export default function ScoreboardPartialCorrection({partido, disabled, onConfirm}) {
@@ -9,6 +10,7 @@ export default function ScoreboardPartialCorrection({partido, disabled, onConfir
   const prepare=()=>{const completed_sets=sets.map(s=>({a:number(s.a),b:number(s.b)}));const games_a=number(gamesA),games_b=number(gamesB),score_a=number(scoreA),score_b=number(scoreB);
     if(!reason.trim()||reason.trim().length>500||!Number.isFinite(Date.parse(partido.updated_at))||[games_a,games_b,score_a,score_b,...completed_sets.flatMap(s=>[s.a,s.b])].some(n=>!Number.isSafeInteger(n)||n<0)){setError('Completa todos los valores y el motivo de la corrección.');return;}
     setError('');setReview({updated_at:version,confirm:true,reason:reason.trim(),completed_sets,games_a,games_b,score_a,score_b,saque_actual:serve,es_tiebreak:tie});};
+  if(isActiveSuperTiebreak(partido)||(partido.historial_sets||[]).some(s=>superTiebreakSetPoints(s)))return <p role="status">Partial correction is unavailable for this super tie-break format.</p>;
   if(!editing)return <button type="button" disabled={disabled} onClick={open}>Corregir marcador parcial</button>;
   return <section aria-label="Corrección de marcador parcial" className="sc-partial-correction"><h2>Corregir marcador parcial</h2><p>Este cambio no termina el partido. Indica el marcador correcto y el motivo.</p>
   {!review?<>{version!==partido.updated_at&&<p role="alert">El marcador cambió. Cancela y vuelve a abrir la corrección para usar los datos actuales.</p>}<p>Sets terminados</p>{sets.map((s,i)=><div key={i}><label>Set {i+1} · {partido.equipo_a_nombre} <input type="number" min="0" max="7" value={s.a} onChange={e=>setSets(rows=>rows.map((v,j)=>j===i?{...v,a:e.target.value}:v))}/></label><label>Set {i+1} · {partido.equipo_b_nombre} <input type="number" min="0" max="7" value={s.b} onChange={e=>setSets(rows=>rows.map((v,j)=>j===i?{...v,b:e.target.value}:v))}/></label><button type="button" onClick={()=>setSets(rows=>rows.filter((_,j)=>j!==i))}>Quitar set {i+1}</button></div>)}
