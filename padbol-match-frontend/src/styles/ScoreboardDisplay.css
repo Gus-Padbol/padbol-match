@@ -923,6 +923,19 @@
 .sb-display--fit .sb-set-box { height: clamp(62px, 11vh, 118px); min-height: 0; font-size: clamp(30px, 4vw, 70px); }
 .sb-display--fit .sb-set-label { font-size: clamp(14px, 1.35vw, 26px); }
 .sb-display--fit .sb-timer { margin: 1.4vh 0 1.4vh; transform: none; font-size: clamp(20px, 2.8vh, 34px); }
+/* The middle set and timer share the center column's horizontal midpoint. */
+.sb-display--nations .sb-timer {
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  color: #fff;
+  font-size: clamp(22px, min(3.6vh, 4vw), 44px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .08em;
+}
+.sb-display--nations .sb-timer__label { color: rgba(255,255,255,.85); }
 .sb-timer__label { display: block; font-size: clamp(10px, 1.15vh, 14px); letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.65); margin-bottom: .2vh; }
 .sb-display--fit .sb-footer { height: var(--sb-footer-height); min-height: var(--sb-footer-height); }
 .sb-display--fit .sb-ticker-logo { height: clamp(30px, 4.8vh, 48px); }
