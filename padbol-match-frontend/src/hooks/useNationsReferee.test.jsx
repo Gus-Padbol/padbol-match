@@ -82,3 +82,25 @@ test('green substitution acknowledgement appears only after send succeeds and cl
   await act(async()=>{jest.advanceTimersByTime(4000);});expect(result.current.feedback).toBe('');unmount();
  }finally{jest.useRealTimers();}
 });
+
+test('point acknowledgement displays the committed score before the slower full refresh, keeping mutations locked',async()=>{
+ const before={...snapshot,board:{id:'board',score_a:0,score_b:0,games_a:1,games_b:0,sets_a:0,sets_b:0,estado:'en_curso',display:{displayA:'0',displayB:'0'}},coherent:true,window:{allowed:true}};
+ const acknowledgement={...before.board,score_a:1,display:{displayA:'15',displayB:'0'},gamesEpoch:1};
+ client.read.mockResolvedValueOnce(before);client.attempt.mockReturnValueOnce({path:'/api/scoreboard/control/private/punto/A',body:{requestId:'same',epoch:1}});
+ const {result}=renderHook(()=>useNationsReferee({scoreboardId:'board'}));await waitFor(()=>expect(result.current.loading).toBe(false));
+ let finishRead;client.send.mockResolvedValueOnce(acknowledgement);client.read.mockImplementationOnce(()=>new Promise(resolve=>{finishRead=resolve;}));
+ let action;await act(async()=>{action=result.current.act('point',{side:'A'});});
+ expect(result.current.snapshot.board.display.displayA).toBe('15');expect(result.current.snapshot.coherent).toBe(false);expect(result.current.snapshot.window).toBeNull();expect(result.current.busy).toBe(true);expect(result.current.syncing).toBe(true);
+ await act(async()=>{finishRead({...before,board:acknowledgement,revision:3});await action;});expect(result.current.snapshot.coherent).toBe(true);expect(client.send).toHaveBeenCalledTimes(1);
+});
+
+test.each(['wrong board','wrong epoch','missing display','partial score'])('point response %s cannot replace the displayed score',async kind=>{
+ const before={...snapshot,board:{id:'board',score_a:0,score_b:0,games_a:1,games_b:0,sets_a:0,sets_b:0,estado:'en_curso',display:{displayA:'0',displayB:'0'}},coherent:true};
+ const ack={...before.board,score_a:1,display:{displayA:'15',displayB:'0'},gamesEpoch:1};
+ if(kind==='wrong board')ack.id='other';if(kind==='wrong epoch')ack.gamesEpoch=2;if(kind==='missing display')delete ack.display;if(kind==='partial score')delete ack.sets_a;
+ client.read.mockResolvedValueOnce(before);client.attempt.mockReturnValueOnce({path:'/api/scoreboard/control/private/punto/A',body:{requestId:'same',epoch:1}});
+ const {result}=renderHook(()=>useNationsReferee({scoreboardId:'board'}));await waitFor(()=>expect(result.current.loading).toBe(false));
+ let finishRead;client.send.mockResolvedValueOnce(ack);client.read.mockImplementationOnce(()=>new Promise(resolve=>{finishRead=resolve;}));
+ let action;await act(async()=>{action=result.current.act('point',{side:'A'});});expect(result.current.snapshot.board.score_a).toBe(0);
+ await act(async()=>{finishRead(before);await action;});expect(client.send).toHaveBeenCalledTimes(1);
+});

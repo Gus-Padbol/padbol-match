@@ -9,6 +9,14 @@ export const refereeMessage = error => ({CHANGE_ENDS_REQUIRED:'Wait until an odd
  CONTROL_TOKEN_INVALID:'The referee link is unavailable.',FORBIDDEN:'You do not have permission to control this scoreboard.',
  REVISION_CONFLICT:'The scoreboard changed. Check the updated state.',GAME_EPOCH_CONFLICT:'The scoreboard changed. Check the updated state.'}[error?.code] || 'The operation could not be confirmed. Refresh or retry the same attempt.');
 
+// Point responses already contain the server-committed score. Never compute tennis rules here.
+function confirmedPointBoard(snapshot, attempt, response) {
+ if(snapshot?.mode!=='nations'||!attempt?.path?.includes('/punto/')||!snapshot.board?.id||response?.id!==snapshot.board.id||response.gamesEpoch!==attempt.body?.epoch)return null;
+ if(!['score_a','score_b','games_a','games_b','sets_a','sets_b'].every(key=>Number.isSafeInteger(response[key])&&response[key]>=0))return null;
+ if(!['en_curso','terminado','finalizado'].includes(response.estado)||!response.display||!['displayA','displayB'].every(key=>typeof response.display[key]==='string'||Number.isFinite(response.display[key])))return null;
+ return response;
+}
+
 export default function useNationsReferee({scoreboardId,controlToken,accessToken,authUserId}) {
  const bearerRef=useRef(accessToken);bearerRef.current=accessToken;
  const identity=controlToken?null:authUserId;
@@ -36,8 +44,11 @@ export default function useNationsReferee({scoreboardId,controlToken,accessToken
   try {
    if(!pendingRef.current){pendingRef.current=client.attempt(kind,snapshot,payload);setPending(pendingRef.current);}
    confirmedFeedback.current=kind==='substitution'||pendingRef.current.body?.type==='substitution'?'Substitution saved.':'Saved.';
-   await origin.send(pendingRef.current);
+   const attempt=pendingRef.current;
+   const acknowledgement=await origin.send(attempt);
    if(clientRef.current!==origin)return false;
+   const confirmedBoard=confirmedPointBoard(snapshot,attempt,acknowledgement);
+   if(confirmedBoard)setSnapshot(current=>current?.board?.id===confirmedBoard.id?{...current,board:confirmedBoard,coherent:false,window:null}:current);
    pendingRef.current=null;setPending(null);syncRequired.current=true;setSyncing(true);setFeedback(confirmedFeedback.current==='Substitution saved.'?confirmedFeedback.current:'Saved. Updating scoreboard…');
    await load().catch(()=>{});return true;
   }catch(e){
