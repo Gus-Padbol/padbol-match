@@ -11,6 +11,8 @@ test('approved public sponsors form two equal groups with only one accessible co
   expect(groups).toHaveLength(2);
   expect(groups[0].innerHTML).toBe(groups[1].innerHTML);
   expect(groups[1]).toHaveAttribute('aria-hidden','true');
+  expect(within(groups[0]).getByRole('img', {name:'Padbol Match'})).toBeInTheDocument();
+  expect(container.querySelector('.sb-nations-footer-brand')).toBeNull();
   expect(within(groups[0]).getByText('Club sponsor')).toBeInTheDocument();
   expect(JSON.stringify(sponsors)).toBe(original);
 });

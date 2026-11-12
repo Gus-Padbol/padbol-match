@@ -952,11 +952,9 @@
 .sb-display--nations .sb-players--bench .sb-demo-portrait{width:clamp(32px,5vh,54px);height:clamp(32px,5vh,54px);opacity:.85}
 
 /* Two equal groups make a continuous strip without changing the scoreboard layout. */
-.sb-display--nations .sb-nations-footer-brand{display:flex;align-items:center;flex:0 0 auto;padding:0 2vw;border-right:1px solid #ffffff26;height:70%}
-.sb-display--nations .sb-nations-footer-brand img{display:block;width:clamp(120px,16vw,220px);height:clamp(28px,4.8vh,48px);object-fit:contain}
 .sb-display--nations .sb-nations-marquee{flex:1;min-width:0;overflow:hidden}
 .sb-display--nations .sb-nations-marquee__content{display:flex;align-items:center;width:max-content;min-width:200%;animation:sb-nations-marquee 32s linear infinite;will-change:transform}
-.sb-display--nations .sb-nations-marquee:is(:hover,:focus-within) .sb-nations-marquee__content{animation-play-state:paused}
+.sb-display--nations .sb-nations-marquee:focus-within .sb-nations-marquee__content{animation-play-state:paused}
 .sb-display--nations .sb-nations-marquee__group{display:flex;flex:1 0 auto;align-items:center;justify-content:space-around;gap:clamp(36px,5vw,96px);padding:0 clamp(18px,2.5vw,48px)}
 .sb-display--nations .sb-nations-marquee__sponsor{display:flex;align-items:center;flex:0 0 auto;gap:12px;white-space:nowrap;color:#eee;font-size:clamp(16px,1.7vw,24px)}
 .sb-display--nations .sb-nations-marquee__logo{display:block;flex:0 0 auto;width:auto;max-width:clamp(160px,20vw,280px);height:clamp(28px,4.8vh,48px);object-fit:contain}

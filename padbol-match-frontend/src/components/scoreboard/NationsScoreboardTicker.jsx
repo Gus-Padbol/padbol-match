@@ -15,15 +15,13 @@ export default function NationsScoreboardTicker({sponsors = []}) {
     .filter(sponsor => !Array.isArray(sponsor.scoreboard_placements) || sponsor.scoreboard_placements.includes('ticker'))
     .slice(0, 10);
   const group = repeat => <div key={repeat} className="sb-nations-marquee__group" aria-hidden={repeat === 1 ? true : undefined}>
+    {approved.length ? <img src={WHITE_LOGO} alt="Padbol Match" className="sb-nations-marquee__logo" /> : null}
     {approved.length ? approved.map((sponsor, index) => <span className="sb-nations-marquee__sponsor" key={sponsor.id || index}>
       {publicLogo(sponsor.logo_url) ? <img src={publicLogo(sponsor.logo_url)} alt="" className="sb-nations-marquee__logo" /> : null}
       <span>{sponsor.nombre.trim().slice(0, 120)}</span>
-    </span>) : [0, 1, 2, 3].map(index => <img key={index} src={WHITE_LOGO} alt="" className="sb-nations-marquee__logo" />)}
+    </span>) : [0, 1, 2, 3].map(index => <img key={index} src={WHITE_LOGO} alt={index === 0 ? 'Padbol Match' : ''} className="sb-nations-marquee__logo" />)}
   </div>;
-  return <>
-    <div className="sb-nations-footer-brand"><img src={WHITE_LOGO} alt="Padbol Match" /></div>
-    <div className="sb-nations-marquee" tabIndex={0} aria-label={approved.length ? 'Sponsors' : 'Padbol Match branding'} title="Focus or hover to pause the strip">
+  return <div className="sb-nations-marquee" tabIndex={0} aria-label={approved.length ? 'Sponsors' : 'Padbol Match branding'} title="Keyboard focus pauses the strip">
       <div className="sb-nations-marquee__content">{[0, 1].map(group)}</div>
-    </div>
-  </>;
+    </div>;
 }
