@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {useSafeTranslation} from '../../i18n/tSafe';
+import {nationsDemoPublicBoard,nationsRefereePresentation} from '../../utils/nationsRefereePresentation';
 import {nationsTvLineup} from '../../utils/scoreboardNationsLineup';
 import {formatDisplayName, formatTeamDisplayName} from '../../utils/scoreboardDisplayName';
 import {formatScoreboardVenueHeader} from '../../utils/scoreboardVenueLabels';
@@ -131,7 +132,7 @@ function playerInitial(name) {
   return parts[0].slice(0, 1).toUpperCase();
 }
 
-function PlayerList({ jugadores, teamSide = 'left', label = 'Jugadores', variant = '', showAvatar = true }) {
+function PlayerList({ jugadores, teamSide = 'left', label = 'Jugadores', variant = '', showAvatar = true, demoPhotos = false }) {
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
   // Solo registrados con identidad (nombre). No rellenar a 4 ni renderizar placeholders.
   const list = listVisibleScoreboardJugadores(jugadores, 4);
@@ -151,7 +152,7 @@ function PlayerList({ jugadores, teamSide = 'left', label = 'Jugadores', variant
 
         return (
           <li key={`${rawName}-${j.slot ?? i}`} className="sb-player">
-            {showAvatar ? <span className={`sb-player__avatar ${avatarClass}`}>
+            {demoPhotos && Number.isInteger(j.demoPortraitIndex) && j.demoPortraitIndex>=0 && j.demoPortraitIndex<8 ? <span className={`sb-player__avatar sb-demo-portrait ${avatarClass}`} role="img" aria-label={`Demo portrait of ${displayName}`} style={{backgroundImage:'url(/demo/nations-demo-portraits-v1.png)',backgroundSize:'400% 200%',backgroundPosition:`${(j.demoPortraitIndex%4)*100/3}% ${j.demoPortraitIndex<4?0:100}%`}} /> : showAvatar ? <span className={`sb-player__avatar ${avatarClass}`}>
               {fotoUrl ? (
                 <img src={fotoUrl} alt="" className="sb-player__avatar-img" />
               ) : (
@@ -175,11 +176,11 @@ function PlayerList({ jugadores, teamSide = 'left', label = 'Jugadores', variant
   );
 }
 
-function NationsPlayerPanel({team, current, side, copy}) {
+function NationsPlayerPanel({team, current, side, copy, demoPhotos=false}) {
   if (!current) return <section className="sb-lineup"><h3 className="sb-lineup__label">{copy.roster}</h3><p className="sb-lineup__notice">{copy.unavailable}</p><PlayerList jugadores={team.roster} teamSide={side} label={copy.roster} showAvatar={false} /></section>;
   return <div className="sb-lineup">
-    <section><h3 className="sb-lineup__label">{copy.active}</h3><PlayerList jugadores={team.active} teamSide={side} label={copy.active} variant="active" showAvatar={false} /></section>
-    {team.bench.length ? <section className="sb-lineup__bench"><h3 className="sb-lineup__label">{copy.bench}</h3><PlayerList jugadores={team.bench} teamSide={side} label={copy.bench} variant="bench" showAvatar={false} /></section> : null}
+    <section><h3 className="sb-lineup__label">{copy.active}</h3><PlayerList jugadores={team.active} teamSide={side} label={copy.active} variant="active" showAvatar={false} demoPhotos={demoPhotos} /></section>
+    {team.bench.length ? <section className="sb-lineup__bench"><h3 className="sb-lineup__label">{copy.bench}</h3><PlayerList jugadores={team.bench} teamSide={side} label={copy.bench} variant="bench" showAvatar={false} demoPhotos={demoPhotos} /></section> : null}
   </div>;
 }
 
@@ -310,13 +311,15 @@ const TICKER_LOGO_COUNT = 4;
 const TICKER_LOGOS = Array.from({ length: TICKER_LOGO_COUNT * 2 }, (_, index) => index);
 
 export default function ScoreboardBoard({
-  partido,
+  partido: rawPartido,
   sponsors = [],
   wsConnected = false,
   timerSeconds = 0,
   onWinnerDismiss,
 }) {
   const {i18n} = useSafeTranslation();
+  const partido=useMemo(()=>nationsDemoPublicBoard(rawPartido),[rawPartido]);
+  const demoPhotos=nationsRefereePresentation({mode:['current','unavailable'].includes(rawPartido?.nations_lineup_status)?'nations':'legacy',board:rawPartido}).isDemo;
   const lineup = nationsTvLineup(partido);
   const copy = lineup.isNations
     ? {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'}
@@ -436,7 +439,7 @@ export default function ScoreboardBoard({
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[0]} current={lineup.current} side="left" copy={copy} /> : <PlayerList jugadores={jugadoresA} teamSide="left" />}</>
+            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[0]} current={lineup.current} side="left" copy={copy} demoPhotos={demoPhotos} /> : <PlayerList jugadores={jugadoresA} teamSide="left" />}</>
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -521,7 +524,7 @@ export default function ScoreboardBoard({
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[1]} current={lineup.current} side="right" copy={copy} /> : <PlayerList jugadores={jugadoresB} teamSide="right" />}</>
+            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[1]} current={lineup.current} side="right" copy={copy} demoPhotos={demoPhotos} /> : <PlayerList jugadores={jugadoresB} teamSide="right" />}</>
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />

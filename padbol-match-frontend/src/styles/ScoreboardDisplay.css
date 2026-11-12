@@ -948,3 +948,7 @@
 .sb-nations-venue{margin:.2vh 0 0;color:rgba(255,255,255,.7);font-size:clamp(12px,1.4vw,20px);letter-spacing:.04em;text-align:center;text-transform:none}
 
 .sb-display--nations .sb-tournament-brand__name{text-transform:none}
+
+.sb-demo-portrait{background-repeat:no-repeat;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.22)}
+.sb-display--nations .sb-players--active .sb-demo-portrait{width:clamp(64px,12vh,128px);height:clamp(64px,12vh,128px)}
+.sb-display--nations .sb-players--bench .sb-demo-portrait{width:clamp(32px,5vh,54px);height:clamp(32px,5vh,54px);opacity:.85}

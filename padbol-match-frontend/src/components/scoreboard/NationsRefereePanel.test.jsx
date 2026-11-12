@@ -96,7 +96,7 @@ test('demo renders clean fictional names but submits the original team and playe
  try {
   const demo={...snapshot,board:{...snapshot.board,id:'60ccb50a-7556-4920-9fd9-dd7ccb6244e9',torneo_nombre:'QA SYNTHETIC',equipo_a_nombre:'QA A',equipo_b_nombre:'QA B'},context:{...snapshot.context,teams:{1:{players:players.map((p,i)=>({...p,name:`QA AE 0${i+1}`}))},2:{players:players.map((p,i)=>({...p,name:`QA AT 0${i+1}`}))}}}};
   const c=controller({snapshot:demo});render(<NationsRefereePanel controller={c}/>);
-  expect(screen.getByText('Nations Cup · Demo')).toBeInTheDocument();expect(screen.queryByText(/SYNTHETIC/)).toBeNull();expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Italy vs Spain');
+  expect(screen.getByText('V Padbol Nations Cup · Naples 2026')).toBeInTheDocument();expect(screen.queryByText(/SYNTHETIC/)).toBeNull();expect(screen.getByRole('heading',{level:1})).toHaveTextContent('Italy vs Spain');
   fireEvent.click(screen.getByRole('button',{name:'Replace Marco Rossi for Italy'}));
   await act(async()=>fireEvent.click(within(screen.getByRole('region',{name:'Bench for Italy'})).getByRole('button',{name:/Paolo Conti/})));
   expect(c.act).toHaveBeenCalledWith('substitution',{teamId:'1',swaps:[{outId:'private-a',inId:'private-c'}]});
