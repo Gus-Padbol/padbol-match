@@ -43,3 +43,21 @@ test('preserva FIPA y no acepta dominios externos en el email de confirmación',
     emailRedirectPath: '//evil.example/nations-cup/nations-cup-napoli-2026/inscripcion',
   })).toBe('https://padbolmatch.com/login');
 });
+
+test.each(['es', 'en', 'pt', 'it'])('keeps only the explicit Naples language through login/signup/email: %s', language => {
+ const target = `${NATIONS}?lang=${language}`;
+ expect(safeNationsInscripcionPathFromLoginRedirect(searchFor(target))).toBe(target);
+ expect(resolvePostLoginNavigatePath(searchFor(target))).toBe(target);
+ expect(resolveSignUpEmailRedirectPath(searchFor(target))).toBe(target);
+ expect(buildSignUpEmailRedirectUrl('https://padbolmatch.com', {emailRedirectPath: target})).toBe(`https://padbolmatch.com/login?redirect=${encodeURIComponent(target)}`);
+});
+test.each(['?lang=fr','?lang=es&next=/admin','?lang=es&lang=en','?lang=ES'])('rejects unapproved Naples language queries: %s', suffix => {
+ expect(safeNationsInscripcionPathFromLoginRedirect(searchFor(NATIONS + suffix))).toBeNull();
+});
+test('other events cannot add a language query', () => {
+ expect(safeNationsInscripcionPathFromLoginRedirect(searchFor('/nations-cup/other-event/inscripcion?lang=es'))).toBeNull();
+});
+
+test('existing fragment normalization never forwards a fragment', () => {
+ expect(safeNationsInscripcionPathFromLoginRedirect(searchFor(NATIONS + '?lang=es#x'))).toBe(NATIONS + '?lang=es');
+});

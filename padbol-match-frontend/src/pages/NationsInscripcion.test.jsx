@@ -14,17 +14,17 @@ jest.mock('../i18n/tSafe', () => ({
   useSafeTranslation: () => ({i18n: {language: mockLanguage}, t: (k) => k}),
 }));
 
-const appTree = (slug = 'nations-cup-napoli-2026') => (
-  <MemoryRouter initialEntries={[`/nations-cup/${slug}/inscripcion`]}>
+const appTree = (slug = 'nations-cup-napoli-2026', search = '') => (
+  <MemoryRouter initialEntries={[`/nations-cup/${slug}/inscripcion${search}`]}>
     <Routes><Route path="/nations-cup/:slug/inscripcion" element={<NationsInscripcion />} /></Routes>
   </MemoryRouter>
 );
 const mount = (slug = 'nations-cup-napoli-2026') => render(appTree(slug));
 const waitReady = async (buttonName = 'Submit registration') => {
-  await waitFor(() => expect(screen.getByRole('button', {name: buttonName})).toBeEnabled());
+  await waitFor(() => { const button = screen.queryByRole('button', {name: buttonName}); if (button) expect(button).toBeEnabled(); else expect(document.querySelector('#nations-selector-name option[value]')?.parentElement?.options.length).toBeGreaterThan(1); });
 };
 const emptySelector = {ok: true, status: 200, json: async () => ({ok: true, participants: []})};
-const emptyProfile = {ok: true, status: 200, json: async () => ({ok: true, requests: []})};
+const emptyProfile = {ok: true, status: 200, json: async () => ({ok: true, requests: [], profile_readiness: {complete: true}})};
 const fillNaples = () => {
   fireEvent.change(screen.getByLabelText('Full name'), {target: {value: 'Synthetic Player'}});
   fireEvent.change(screen.getByLabelText('Country'), {target: {value: 'IT'}});
@@ -37,7 +37,7 @@ beforeEach(() => {
   mockLanguage = 'es';
   sessionStorage.clear();
   global.fetch = mockFetch;
-  mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: []})});
+  mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, requests: [], profile_readiness: {complete: true}})});
   mockUseAuth.mockReturnValue({session: {user: {id: 'actor-1', email_confirmed_at: '2026-01-01'}, access_token: 'tok'}, loading: false});
 });
 
@@ -158,7 +158,7 @@ test('selector de nombres envía id opaco, permite reportar duplicado y no expon
   expect(screen.getByRole('heading', {name: 'Find your name on the list'})).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Filter by country'), {target: {value: 'IT'}});
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
-  expect(screen.getByLabelText('Full name')).toHaveValue('List Player');
+  expect(screen.getByText(/List Player/)).toBeInTheDocument();
   fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
   fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
   fireEvent.click(screen.getByRole('button', {name: 'Report duplicate'}));
@@ -184,15 +184,13 @@ test('cambiar país o volver al placeholder limpia la selección y no envía el 
   await waitReady();
   fireEvent.change(screen.getByLabelText('Filter by country'), {target: {value: 'IT'}});
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
-  expect(screen.getByLabelText('Full name')).toHaveValue('List Player');
+  expect(screen.getByText(/List Player/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: 'Change selected name'}));
   fireEvent.change(screen.getByLabelText('Filter by country'), {target: {value: 'RO'}});
-  expect(screen.getByLabelText('Full name')).toHaveValue('');
-  expect(screen.getByLabelText('Country')).toHaveValue('');
+  expect(document.querySelector('#nations-name')).toBeNull();
+  expect(document.querySelector('#nations-country')).toBeNull();
   expect(screen.queryByText(/Selected:/)).not.toBeInTheDocument();
-  fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
-  fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
-  fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
-  expect(screen.getByRole('alert')).toHaveTextContent(/Select your name from the list/);
+  expect(screen.queryByRole('button', {name:'Submit registration'})).not.toBeInTheDocument();
   expect(mockFetch.mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(0);
 });
 
@@ -271,10 +269,10 @@ test('cambiar nombre con reporte pendiente resetea reporting y no marca la selec
   mount();
   await waitReady();
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
-  expect(screen.getByLabelText('Full name')).toHaveAttribute('readonly');
-  expect(screen.getByLabelText('Country')).toBeDisabled();
+  expect(document.querySelector('#nations-name')).toBeNull();
+  expect(document.querySelector('#nations-country')).toBeNull();
   fireEvent.click(screen.getByRole('button', {name: 'Report duplicate'}));
-  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  fireEvent.click(screen.getByRole('button', {name: 'Change selected name'}));
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: selectionId}});
   expect(screen.getByRole('button', {name: 'Report duplicate'})).toBeEnabled();
   await act(async () => {
@@ -303,8 +301,8 @@ test('permite ver y seleccionar el nombre antes del login y lo restaura al volve
   mockUseAuth.mockReturnValue({session: {user: {id: 'new-player', email_confirmed_at: '2026-01-01'}, access_token: 'tok'}, loading: false});
   view.rerender(appTree());
   await waitReady();
-  expect(screen.getByLabelText('Full name')).toHaveValue('Pre Login Player');
-  expect(screen.getByLabelText('Select your name')).toHaveValue(selectionId);
+  expect(screen.getByText(/Pre Login Player/)).toBeInTheDocument();
+  expect(JSON.parse(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).selectionId).toBe(selectionId);
   fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
   fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
@@ -325,22 +323,23 @@ test('selector autenticado persiste A→B y el vacío borra la selección al rem
   await waitFor(() => expect(screen.getByLabelText('Select your name')).toBeEnabled());
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: a}});
   expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toContain(a);
+  fireEvent.click(screen.getByRole('button', {name: 'Change selected name'}));
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: b}});
   expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toContain(b);
   view.unmount();
 
   const remounted = mount();
   await waitReady();
-  await waitFor(() => expect(screen.getByLabelText('Select your name')).toHaveValue(b));
-  expect(screen.getByLabelText('Full name')).toHaveValue('Player B');
-  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  await waitFor(() => expect(JSON.parse(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).selectionId).toBe(b));
+  expect(screen.getByText(/Player B/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', {name: 'Change selected name'}));
   expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toBeNull();
   remounted.unmount();
 
   mount();
   await waitReady();
   await waitFor(() => expect(screen.getByLabelText('Select your name')).toHaveValue(''));
-  expect(screen.getByLabelText('Full name')).toHaveValue('');
+  expect(document.querySelector('#nations-name')).toBeNull();
 });
 
 test('selección guardada obsoleta se limpia con lista vacía y el fallback no envía selection_id', async () => {
@@ -375,8 +374,8 @@ test('selección guardada obsoleta se limpia con lista vacía y el fallback no e
   });
   mount();
   await waitReady();
-  await waitFor(() => expect(screen.getByLabelText('Select your name')).toHaveValue(valid));
-  expect(screen.getByLabelText('Full name')).toHaveValue('Valid Player');
+  await waitFor(() => expect(JSON.parse(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).selectionId).toBe(valid));
+  expect(screen.getByText(/Valid Player/)).toBeInTheDocument();
   fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
   fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
@@ -455,16 +454,16 @@ test('recorrido completo 54/15: buscar, seleccionar desconocido, login, ficha y 
     return emptyProfile;
   });
   const view = mount();
-  await waitFor(() => expect(screen.getByLabelText('Search by name or country')).toBeInTheDocument());
   await waitFor(() => expect(screen.getByLabelText('Select your name').querySelectorAll('option')).toHaveLength(55));
-  fireEvent.change(screen.getByLabelText('Search by name or country'), {target: {value: 'Player 42'}});
-  expect(screen.getByLabelText('Select your name').querySelectorAll('option')).toHaveLength(2);
+  expect(screen.queryByLabelText('Search by name or country')).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Filter by country'), {target: {value: participants[41].country}});
+  expect(screen.getByLabelText('Select your name').querySelectorAll('option')).toHaveLength(1 + participants.filter(p => p.country === chosen.country).length);
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: chosen.selectionId}});
   expect(screen.getAllByText(/Player 42/).length).toBeGreaterThan(0);
   mockUseAuth.mockReturnValue({session: {user: {id: 'new-player', email_confirmed_at: '2026-01-01'}, access_token: 'tok'}, loading: false});
   view.rerender(appTree());
   await waitReady();
-  expect(screen.getByLabelText('Full name')).toHaveValue('Player 42');
+  expect(screen.getByText(/Player 42/)).toBeInTheDocument();
   fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older'));
   fireEvent.click(screen.getByLabelText(/I agree to the use of my name/));
   fireEvent.click(screen.getByRole('button', {name: 'Submit registration'}));
@@ -535,11 +534,11 @@ test('historial por convocado muestra exacto, cero y ambiguo sin IDs ni FIPA lin
   await waitFor(() => expect(screen.getByText(/Official FIPA history: 2180 pts/)).toBeInTheDocument());
   expect(document.body.textContent).not.toMatch(/source_key|user_id|fipa\/reclamar/);
   history = {ok: true, status: 'zero', puntos: 0, posicion: null};
-  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  fireEvent.click(screen.getByRole('button', {name: 'Change selected name'}));
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: id}});
   await waitFor(() => expect(screen.getByText(/No prior FIPA history: 0 points/)).toBeInTheDocument());
   history = {ok: true, status: 'ambiguous', puntos: null, posicion: null};
-  fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: ''}});
+  fireEvent.click(screen.getByRole('button', {name: 'Change selected name'}));
   fireEvent.change(screen.getByLabelText('Select your name'), {target: {value: id}});
   await waitFor(() => expect(screen.getByText(/will review this history/)).toBeInTheDocument());
 });
@@ -565,7 +564,7 @@ test('países de Nápoles en inglés: exactamente 15 + placeholder', async () =>
   expect(options).toHaveLength(16);
   expect(options[0].value).toBe('');
   expect(options[0].textContent).toBe('Select your country');
-  expect(options.slice(1).map((o) => o.value)).toEqual(['RO','ES','PT','QA','IT','DE','FR','BE','AT','EG','AE','MX','SE','UA','DK']);
+  expect(options.slice(1).map((o) => o.value)).toEqual(['AT','BE','DK','EG','FR','DE','IT','MX','PT','QA','RO','ES','SE','UA','AE']);
   const labels = options.slice(1).map((o) => o.textContent).join(' ');
   expect(labels).toMatch(/Romania/);
   expect(labels).toMatch(/United Arab Emirates/);
@@ -611,7 +610,7 @@ test('email no verificado y error de restauración en inglés', async () => {
   const first = mount();
   await waitFor(() => expect(mockFetch).toHaveBeenCalled());
   expect(screen.getByRole('alert')).toHaveTextContent(/Verify your email/);
-  expect(screen.getByRole('button', {name: 'Submit registration'})).toBeDisabled();
+  expect(screen.queryByRole('button', {name: 'Submit registration'})?.disabled ?? true).toBe(true);
   first.unmount();
 
   mockUseAuth.mockReturnValue({session: {user: {id: 'actor-4', email_confirmed_at: '2026-01-01'}, access_token: 'tok4'}, loading: false});
@@ -728,7 +727,7 @@ test('reintento tras error de red reutiliza el mismo request_id', async () => {
       if (sent.length === 1) throw new Error('network');
       return {ok: true, status: 200, json: async () => ({ok: true, status: 'pendiente'})};
     }
-    return {ok: true, status: 200, json: async () => ({ok: true, requests: []})};
+    return {ok: true, status: 200, json: async () => ({ok: true, requests: [], profile_readiness: {complete: true}})};
   });
   mount();
   await waitReady();
@@ -747,28 +746,83 @@ test('tema oscuro conserva el contraste scoped del formulario', () => {
   expect(css).toMatch(/html\.theme-dark \.nations-event-chip\s*\{[^}]*#ff8d91/i);
 });
 
-test.each(['qa', 'production'])('Argentina nomination country is available only in the QA catalogue (%s)', async variant => {
+ test.each(['es', 'en', 'pt', 'it'])('country and player choices are localized/alphabetical without search: %s', async (language) => {
+  mockUseAuth.mockReturnValue({session: null, loading: false});
+  const participants = [ {selectionId: '1', name: 'Zeta', country: 'DK'}, {selectionId: '2', name: 'Álvaro', country: 'DK'}, {selectionId: '3', name: 'Beta', country: 'DE'} ];
+  mockFetch.mockResolvedValue({ok: true, status: 200, json: async () => ({ok: true, participants})});
+  render(appTree('nations-cup-napoli-2026', `?lang=${language}`));
+  await waitFor(() => expect(document.querySelector('#nations-public-selector-name option[value="1"]')).toBeInTheDocument());
+  expect(document.querySelector('input[id$="selector-search"]')).toBeNull();
+  const countryOptions = [...document.querySelectorAll('#nations-public-selector-country option')].slice(1);
+  const labels = countryOptions.map(o => o.textContent.replace(/^[^\p{L}]+/u, ''));
+  expect(labels).toEqual([...labels].sort((a,b) => a.localeCompare(b, language, {sensitivity: 'base'})));
+  expect(countryOptions.find(o => o.value === 'DK').textContent).toContain('🇩🇰');
+  expect([...document.querySelectorAll('#nations-public-selector-name option')].slice(1).map(o => o.value)).toEqual(['2','3','1']);
+  fireEvent.change(document.querySelector('#nations-public-selector-country'), {target: {value: 'DK'}});
+  expect([...document.querySelectorAll('#nations-public-selector-name option')].slice(1).map(o => o.value)).toEqual(['2','1']);
+  const login = document.querySelector('a[href^="/login"]');
+  expect(new URL(login.href).searchParams.get('redirect')).toBe(`/nations-cup/nations-cup-napoli-2026/inscripcion?lang=${language}`);
+ });
+
+test.each([false, true])('selected authenticated player follows profile/confirmation step from actual readiness=%s', async complete => {
+  const player = {selectionId: 'a'.repeat(32), name: 'Public Roster Name', country: 'DK'};
+  sessionStorage.setItem('nationsSelector:nations-cup-napoli-2026', JSON.stringify(player));
+  mockFetch.mockImplementation(async url => {
+    if (String(url).endsWith('/selector')) return {ok:true,status:200,json:async()=>({ok:true,participants:[player]})};
+    if (String(url).includes('/history')) return {ok:true,status:200,json:async()=>({status:'zero'})};
+    return {ok:true,status:200,json:async()=>({ok:true,requests:[],profile_readiness:{complete,missing:complete?[]:['telefono']}})};
+  });
+  render(appTree('nations-cup-napoli-2026', '?lang=es'));
+  if (!complete) {
+    const cta = await screen.findByRole('link', {name:'Completar mi ficha de jugador'});
+    expect(cta).toHaveClass('nations-button');
+    expect(new URL(cta.href).searchParams.get('redirect')).toBe('/nations-cup/nations-cup-napoli-2026/inscripcion?lang=es');
+    expect(screen.getByRole('heading', {name:'Paso 2 de 3 · Completa tu ficha de jugador'})).toBeInTheDocument();
+    expect(screen.getByText(/Public Roster Name/)).toBeInTheDocument();
+    expect(document.querySelector('#nations-selector-name')).toBeNull();
+    expect(document.querySelector('#nations-name')).toBeNull();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(document.querySelector('button[type="submit"]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name:'Cambiar nombre elegido'}));
+    expect(document.querySelector('#nations-selector-name')).toBeInTheDocument();
+    expect(sessionStorage.getItem('nationsSelector:nations-cup-napoli-2026')).toBeNull();
+  } else {
+    expect(await screen.findByRole('heading', {name:'Paso 3 de 3 · Confirma tu inscripción'})).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+    fireEvent.click(document.querySelector('button[type="submit"]'));
+    expect(mockFetch.mock.calls.filter(([,opts])=>opts?.method==='POST')).toHaveLength(0);
+  }
+});
+
+test.each([null, 'error'])('selected player cannot confirm with unknown/failed readiness: %s', failure => {
+ const player={selectionId:'b'.repeat(32),name:'Public Only',country:'IT'};
+ sessionStorage.setItem('nationsSelector:nations-cup-napoli-2026',JSON.stringify(player));
+ mockFetch.mockImplementation(async url=>{
+  if(String(url).endsWith('/selector'))return {ok:true,status:200,json:async()=>({participants:[player]})};
+  return failure==='error'?{ok:false,status:503,json:async()=>({})}:{ok:true,status:200,json:async()=>({requests:[]})};
+ });
+ const view=mount();
+ return waitFor(()=>{
+  expect(screen.getByText(/Public Only/)).toBeInTheDocument();
+  expect(view.container.querySelector('button[type="submit"]')).toBeNull();
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+ });
+});
+
+test.each(['qa','production'])('Argentina stays QA-only and sorted with the country list: %s', async variant=>{
  const previous=process.env.REACT_APP_APP_VARIANT;process.env.REACT_APP_APP_VARIANT=variant;
  try {
-  mockFetch.mockImplementation(async url => String(url).includes('/selector')
-   ? {ok:true,status:200,json:async()=>({ok:true,participants:[{selectionId:'00000000-0000-4000-8000-0000000000cc',name:'Nicolás Renedo',country:'AR'},{selectionId:'00000000-0000-4000-8000-0000000000dd',name:'Italian Fixture',country:'IT'}]})}
-   : {ok:true,status:200,json:async()=>({ok:true,requests:[]})});
-  mount();
-  await waitFor(()=>expect(screen.getByLabelText('Select your name')).toBeEnabled());
-  const filter=screen.getByLabelText('Filter by country');
-  const declared=screen.getByLabelText('Country');
-  if(variant==='qa'){
-   await waitFor(()=>expect(Array.from(filter.options).some(o=>o.value==='AR')).toBe(true));
-   fireEvent.change(filter,{target:{value:'AR'}});
-   const names=screen.getByLabelText('Select your name');
-   expect(names.textContent).toMatch(/Nicolás Renedo.*Argentina/);expect(names.textContent).not.toMatch(/Italian Fixture/);
-   fireEvent.change(names,{target:{value:'00000000-0000-4000-8000-0000000000cc'}});
-   expect(declared.value).toBe('AR');
-   expect(Array.from(declared.options).filter(o=>o.value==='AR')).toHaveLength(1);
-  }else{
-   expect(Array.from(filter.options).some(o=>o.value==='AR')).toBe(false);
-   expect(declared.options).toHaveLength(16);
-   expect(Array.from(declared.options).some(o=>o.value==='AR')).toBe(false);
-  }
+ mockUseAuth.mockReturnValue({session:null,loading:false});
+ mockFetch.mockResolvedValue({ok:true,status:200,json:async()=>({participants:[{selectionId:'c'.repeat(32),name:'Nicolás Renedo',country:'AR'},{selectionId:'d'.repeat(32),name:'Italian Fixture',country:'IT'}]})});
+ render(appTree('nations-cup-napoli-2026','?lang=es'));
+ await waitFor(()=>expect(document.querySelector('#nations-public-selector-name option[value="'+ 'c'.repeat(32)+'"]')).toBeInTheDocument());
+ const options=[...document.querySelector('#nations-public-selector-country').options];
+ expect(options.filter(o=>o.value==='AR')).toHaveLength(variant==='qa'?1:0);
+ if(variant==='qa'){
+ expect(options.slice(1).map(o=>o.value)).toEqual(['AR','IT']);
+ fireEvent.change(document.querySelector('#nations-public-selector-country'),{target:{value:'AR'}});
+ expect(document.querySelector('#nations-public-selector-name').textContent).toMatch(/Nicolás Renedo.*Argentina/);
+ expect(document.querySelector('#nations-public-selector-name').textContent).not.toMatch(/Italian Fixture/);
+ }
  }finally{if(previous===undefined)delete process.env.REACT_APP_APP_VARIANT;else process.env.REACT_APP_APP_VARIANT=previous;}
 });

@@ -247,6 +247,7 @@ export function safeFipaDocumentsPathFromLoginRedirect(loginSearch) {
 
 function isNationsInscripcionPath(path) {
   const raw = String(path || '').trim();
+  if (/^\/nations-cup\/nations-cup-napoli-2026\/inscripcion\?lang=(es|en|pt|it)$/.test(raw)) return true;
   if (/[?#]/.test(raw)) return false;
   return /^\/nations-cup\/[a-z0-9][a-z0-9-]{2,79}\/inscripcion\/?$/.test(raw);
 }

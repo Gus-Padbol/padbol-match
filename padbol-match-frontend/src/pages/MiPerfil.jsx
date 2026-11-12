@@ -1,3 +1,4 @@
+import {safeNationsInscripcionPathFromLoginRedirect} from '../utils/reservaReturnUrl';
 import { fetchProfileBirthDate, saveChangedProfileBirthDate } from '../utils/profileBirthDateApi';
 import OfficialFipaProfile from '../components/OfficialFipaProfile';
 import { uploadProfileAvatar } from '../utils/profileAvatarUpload';
@@ -303,6 +304,14 @@ export default function MiPerfil() {
   const torneoIdPerfil = searchParams.get('id');
   const redirectAfterAuth = searchParams.get('redirect') || '';
   const esContextoNacionesNapoli = String(redirectAfterAuth).startsWith('/nations-cup/');
+  const fichaNapoliContext = /^\/nations-cup\/nations-cup-napoli-2026\/inscripcion(?:\?lang=(?:es|en|pt|it))?$/.test(safeNationsInscripcionPathFromLoginRedirect(location.search) || '');
+  const fichaNapoliLanguage = new URLSearchParams(redirectAfterAuth.split('?')[1] || '').get('lang') || 'en';
+  const fichaNapoliCopy = ({
+    es: {title:'Ficha de jugador para Nations Cup', note:'Guarda los datos personales y la ficha de torneo con sus respectivos botones Guardar. Cuando ambas estén completas, vuelve para confirmar la inscripción.', back:'Volver a mi inscripción'},
+    en: {title:'Nations Cup player profile', note:'Save your personal details and tournament profile using each section’s Save button. Once both are complete, return to confirm your registration.', back:'Return to my registration'},
+    pt: {title:'Ficha de jogador para Nations Cup', note:'Salve os dados pessoais e a ficha do torneio com os respectivos botões Salvar. Quando ambas estiverem completas, volte para confirmar a inscrição.', back:'Voltar à minha inscrição'},
+    it: {title:'Scheda giocatore per la Nations Cup', note:'Salva i dati personali e la scheda del torneo con i rispettivi pulsanti Salva. Quando entrambe sono complete, torna per confermare l’iscrizione.', back:'Torna alla mia iscrizione'},
+  })[fichaNapoliLanguage];
   const napoliSlug = useMemo(() => {
     const m = String(redirectAfterAuth).match(/^\/nations-cup\/([^/]+)\/inscripcion/);
     return m ? decodeURIComponent(m[1]) : '';
@@ -346,6 +355,7 @@ export default function MiPerfil() {
   const [historialTorneosIncompleto,setHistorialTorneosIncompleto]=useState(false);
   const [mostrarTodosTorneosMiPerfil, setMostrarTodosTorneosMiPerfil] = useState(false);
   const [editando, setEditando] = useState(false);
+  useEffect(() => { if (fichaNapoliContext && session?.user?.id) setEditando(true); }, [fichaNapoliContext, session?.user?.id]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const perfilSubmitLockRef = useRef(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -608,7 +618,7 @@ export default function MiPerfil() {
 
   /** Vista lectura: compañero habitual (`companero_id`) o último torneo (`ultimo_companero_id`). */
   useEffect(() => {
-    if (editando || !perfil) {
+    if (fichaNapoliContext || editando || !perfil) {
       setPerfilCompaneroDisplay(null);
       return;
     }
@@ -626,11 +636,11 @@ export default function MiPerfil() {
     return () => {
       cancelled = true;
     };
-  }, [editando, perfil, perfil?.companero_id, perfil?.ultimo_companero_id]);
+  }, [fichaNapoliContext, editando, perfil, perfil?.companero_id, perfil?.ultimo_companero_id]);
 
   /** Edición: sincronizar fila mostrada al guardar `companero_id`. */
   useEffect(() => {
-    if (!editando) {
+    if (fichaNapoliContext || !editando) {
       setCompaneroSeleccionado(null);
       return;
     }
@@ -647,11 +657,11 @@ export default function MiPerfil() {
     return () => {
       cancelled = true;
     };
-  }, [editando, formData.companero_id]);
+  }, [fichaNapoliContext, editando, formData.companero_id]);
 
   /** Búsqueda de compañero por alias y nombre (debounce). */
   useEffect(() => {
-    if (!editando) {
+    if (fichaNapoliContext || !editando) {
       setCompaneroOpciones([]);
       setCompaneroCargando(false);
       return;
@@ -676,7 +686,7 @@ export default function MiPerfil() {
       }
     }, 280);
     return () => clearTimeout(handle);
-  }, [editando, companeroBusqueda, session?.user?.id, session?.access_token]);
+  }, [fichaNapoliContext, editando, companeroBusqueda, session?.user?.id, session?.access_token]);
 
   /** Comprueba que el alias no esté tomado (debounce 500 ms). Con sesión: excluye el propio `user_id`. */
   useEffect(() => {
@@ -1656,11 +1666,11 @@ export default function MiPerfil() {
       }
 
       const aliasPerfilExistente = String(perfil?.alias || '').trim();
-      if (!aliasPerfilExistente && String(formData.alias || '').trim() && aliasDuplicado) {
+      if (!fichaNapoliContext && !aliasPerfilExistente && String(formData.alias || '').trim() && aliasDuplicado) {
         setErrorMsg(t('perfil.aliasTaken'));
         return;
       }
-      if (!aliasPerfilExistente && String(formData.alias || '').trim() && aliasVerificando) {
+      if (!fichaNapoliContext && !aliasPerfilExistente && String(formData.alias || '').trim() && aliasVerificando) {
         return;
       }
 
@@ -1684,7 +1694,7 @@ export default function MiPerfil() {
 
       const paisGuardado = paisPayloadSegunTorneo(torneoPerfil, formData.pais);
 
-      const aliasTrim = aliasPerfilExistente || String(formData.alias || '').trim();
+      const aliasTrim = fichaNapoliContext ? aliasPerfilExistente : aliasPerfilExistente || String(formData.alias || '').trim();
       const payload = {
         lateralidad: formData.lateralidad,
         posicion_cancha: formData.posicion_cancha || null,
@@ -1707,6 +1717,13 @@ export default function MiPerfil() {
             : null,
         busca_companero: !!formData.busca_companero,
         deportes_preferidos: normalizeDeportesPreferidosArray(formData.deportes_preferidos),
+        ...(fichaNapoliContext ? {
+          apodo: perfil?.apodo ?? null,
+          es_federado: perfil?.es_federado, deportes_preferidos: perfil?.deportes_preferidos,
+          ciudad: String(perfil?.ciudad || '').trim() || String(formData.localidad || '').trim() || null, alias: perfil?.alias ?? null, instagram_url: perfil?.instagram_url ?? null,
+          companero_id: perfil?.companero_id ?? null, ultimo_companero_id: perfil?.ultimo_companero_id ?? null,
+          mostrar_torneos_jugados: perfil?.mostrar_torneos_jugados, busca_companero: perfil?.busca_companero,
+        } : {}),
       };
 
       const userId = session?.user?.id ?? null;
@@ -1735,7 +1752,7 @@ export default function MiPerfil() {
         email: owner,
         nombre: nombreTrim,
         apellido: apellidoTrim || null,
-        apodo: String(formData.apodo || '').trim() || null,
+        apodo: fichaNapoliContext ? (perfil?.apodo ?? null) : String(formData.apodo || '').trim() || null,
         whatsapp: waFinal,
         ...payload,
       };
@@ -1835,7 +1852,7 @@ export default function MiPerfil() {
         nombre: nombreTrim,
         apellido: apellidoTrim,
         genero: genTrim,
-        apodo: String(formData.apodo || '').trim(),
+        apodo: fichaNapoliContext ? (perfil?.apodo ?? null) : String(formData.apodo || '').trim(),
         categoria: String(formData.nivel || '').trim(),
         whatsapp: waFinal,
         email: owner,
@@ -1862,7 +1879,7 @@ export default function MiPerfil() {
         return;
       }
       setSuccessMsg('✅ Perfil guardado');
-      setEditando(false);
+      setEditando(fichaNapoliContext);
       setFichaFieldErrors({});
       setTimeout(() => setSuccessMsg(''), 3000);
     } finally {
@@ -1907,7 +1924,7 @@ export default function MiPerfil() {
   if (authLoading) {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-        <AppHeader title={t('perfil.titulo')} />
+        <AppHeader title={fichaNapoliContext ? fichaNapoliCopy.title : t('perfil.titulo')} />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           {t('perfil.verifyingSession')}
         </div>
@@ -1921,7 +1938,7 @@ export default function MiPerfil() {
       const goAuth = () => navigate(authUrlWithRedirect(authLoginRedirectPath(location)));
       return (
         <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-          <AppHeader title={t('perfil.titulo')} />
+          <AppHeader title={fichaNapoliContext ? fichaNapoliCopy.title : t('perfil.titulo')} />
           <div style={MI_PERFIL_CONTENT_WRAP}>
             {avisoPerfilTorneoMsg ? (
               <div
@@ -2022,7 +2039,7 @@ export default function MiPerfil() {
     };
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-        <AppHeader title={t('perfil.titulo')} />
+        <AppHeader title={fichaNapoliContext ? fichaNapoliCopy.title : t('perfil.titulo')} />
         <div style={MI_PERFIL_CONTENT_WRAP}>
           {avisoPerfilTorneoMsg ? (
             <div
@@ -2602,7 +2619,7 @@ export default function MiPerfil() {
   if (loading) {
     return (
       <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
-        <AppHeader title={t('perfil.titulo')} />
+        <AppHeader title={fichaNapoliContext ? fichaNapoliCopy.title : t('perfil.titulo')} />
         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
           Cargando perfil...
         </div>
@@ -2650,7 +2667,7 @@ export default function MiPerfil() {
   return (
     <div style={miPerfilPageOuterStyle(hubContentPaddingTopCss(location.pathname, navDock), hubMainPaddingBottomCss(location.pathname, navDock))}>
 
-      <AppHeader title={t('perfil.titulo')} />
+      <AppHeader title={fichaNapoliContext ? fichaNapoliCopy.title : t('perfil.titulo')} />
 
     <div style={MI_PERFIL_CONTENT_WRAP}>
       {perfilFaltaCamposEsenciales && !ocultarUiJugadorPorAdmin ? (
@@ -2711,12 +2728,12 @@ export default function MiPerfil() {
 
       {!ocultarUiJugadorPorAdmin && !esContextoNacionesNapoli ? <OfficialFipaProfile accessToken={session?.access_token} /> : null}
 
-      <ReputacionJugadorPanel
+      {!fichaNapoliContext ? <ReputacionJugadorPanel
         apiBaseUrl={API_BASE_URL}
         accessToken={session?.access_token ?? null}
-      />
+      /> : null}
 
-      {!ocultarUiJugadorPorAdmin ? (
+      {!fichaNapoliContext && !ocultarUiJugadorPorAdmin ? (
         <section
           style={{
             marginBottom: 16,
@@ -2762,7 +2779,7 @@ export default function MiPerfil() {
         </div>
       ) : null}
 
-      <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '30px 24px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', marginBottom: '16px', textAlign: 'center', border: '1px solid var(--border)' }}>
+      {!fichaNapoliContext ? <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '30px 24px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', marginBottom: '16px', textAlign: 'center', border: '1px solid var(--border)' }}>
         {/* Foto de perfil: avatar + overlay + input file */}
         <div className="mi-perfil-foto-bloque">
         <input
@@ -2947,12 +2964,12 @@ export default function MiPerfil() {
             {String(perfil.localidad || perfil.ciudad_residencia).trim()}
           </p>
         ) : null}
-        {perfil?.ciudad && (
+        {!fichaNapoliContext && perfil?.ciudad && (
           <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
             {t('perfil.usualClub')}: {perfil.ciudad}
           </p>
         )}
-        {perfil && !editando ? (
+        {!fichaNapoliContext && perfil && !editando ? (
           <p style={{ margin: '0 0 3px', color: 'var(--text-secondary)', fontSize: '13px' }}>
             {perfilCompaneroDisplay?.kind === 'ultimo' ? t('perfil.lastPartner') : t('perfil.regularPartner')}:{' '}
             {perfilCompaneroDisplay?.row && String(perfilCompaneroDisplay.row.alias || '').trim() ? (
@@ -3033,8 +3050,9 @@ export default function MiPerfil() {
         </div>
 
         {successMsg && <p style={{ color: '#4caf50', fontWeight: 'bold', marginTop: '14px', marginBottom: 0 }}>{successMsg}</p>}
-      </div>
+      </div> : null}
 
+      {fichaNapoliContext ? <section aria-label="Nations Cup"><h2>{fichaNapoliCopy.title}</h2><p>{fichaNapoliCopy.note}</p><button type="button" onClick={() => navigate(redirectAfterAuth)}>{fichaNapoliCopy.back}</button></section> : null}
       <JugadorFichaTorneosSection
         perfil={perfil}
         whatsappFallback={String(cuentaDeSesion?.whatsapp || '').trim()}
@@ -3121,10 +3139,10 @@ export default function MiPerfil() {
                 </span>
               } />
               <Row label={t('perfil.lateralidad')} value={etiquetaLateralidadPerfil(t, perfil.lateralidad)} />
-              <Row
+              {!fichaNapoliContext ? <Row
                 label={t('perfil.lookingForPartner')}
                 value={perfil.busca_companero ? t('perfil.lookingForPartnerYes') : t('perfil.no')}
-              />
+              /> : null}
               {fechaNacimientoDesdeDb(perfil.fecha_nacimiento) && (
                 <Row
                   label={t('perfil.birthDate')}
@@ -3184,11 +3202,11 @@ export default function MiPerfil() {
               <option value="">— Elegir —</option>
               <option value="masculino">Masculino</option>
               <option value="femenino">Femenino</option>
-              <option value="otro">{t('perfil.genero.otro')}</option>
-              <option value="open">{t('perfil.genero.open')}</option>
+              {!fichaNapoliContext ? <><option value="otro">{t('perfil.genero.otro')}</option><option value="open">{t('perfil.genero.open')}</option></> : !['', 'masculino', 'femenino'].includes(formData.genero) ? <option value={formData.genero} disabled>{etiquetaGeneroPerfil(t, formData.genero)}</option> : null}
             </select>
             {fichErrP('genero')}
 
+            {!fichaNapoliContext ? <>
             <label style={labelStyle}>{t('perfil.displayName')}</label>
             <input
               type="text"
@@ -3376,6 +3394,7 @@ export default function MiPerfil() {
               Necesitas tener club habitual o sede en tu ficha. Otros te contactan por WhatsApp si tienes número en el perfil o en una reserva.
             </p>
 
+            </> : null}
             <div style={{ marginBottom: '6px', width: '100%' }}>
               <TelefonoPaisCodigoRow
                 sectionHeading={<span style={labelStyle}>WhatsApp</span>}
@@ -3488,6 +3507,7 @@ export default function MiPerfil() {
               autoComplete="address-level2"
             />
 
+            {!fichaNapoliContext ? <>
             <label style={labelStyle}>{t('perfil.usualClub')}</label>
             <div style={{ marginBottom: '14px' }}>
               <SedeBusquedaInput
@@ -3694,6 +3714,7 @@ export default function MiPerfil() {
               Tu último compañero de torneo se actualiza automáticamente
             </p>
 
+            </> : null}
             <label style={labelStyle}>{t('perfil.birthDate')}</label>
             {birthDateNotice && <p role="status">{birthDateNotice}</p>}
             <input type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
@@ -3701,6 +3722,7 @@ export default function MiPerfil() {
             <label style={labelStyle}>{t('perfil.fipaNumberLong')}</label>
             <input type="text" name="numero_fipa" placeholder="Ej: 12345" value={formData.numero_fipa} onChange={handleChange} style={{ ...inputStyle, marginBottom: '14px' }} />
 
+            {!fichaNapoliContext ? <>
             <label style={{ ...labelStyle, marginBottom: '8px' }}>{t('perfil.federatedQuestion')}</label>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '18px' }}>
               <button type="button" onClick={() => setFormData(prev => ({ ...prev, es_federado: true }))}
@@ -3713,6 +3735,7 @@ export default function MiPerfil() {
               </button>
             </div>
 
+            </> : null}
             {errorMsg && <p style={{ color: 'red', marginBottom: '10px' }}>{errorMsg}</p>}
 
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -3720,7 +3743,7 @@ export default function MiPerfil() {
                 type="submit"
                 disabled={
                   isSubmitting ||
-                  (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                  (!fichaNapoliContext && !!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
                 }
                 style={{
                   flex: 1,
@@ -3732,7 +3755,7 @@ export default function MiPerfil() {
                   cursor: 'pointer',
                   fontWeight: 'bold',
                   opacity:
-                    isSubmitting || (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                    isSubmitting || (!fichaNapoliContext && !!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
                       ? 0.6
                       : 1,
                 }}
@@ -3803,7 +3826,7 @@ export default function MiPerfil() {
               </button>
             </div>
 
-            <div
+            {!fichaNapoliContext ? <div
               style={{
                 marginTop: '22px',
                 paddingTop: '18px',
@@ -3840,7 +3863,7 @@ export default function MiPerfil() {
                   type="submit"
                   disabled={
                     isSubmitting ||
-                    (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                    (!fichaNapoliContext && !!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
                   }
                   style={{
                     flex: 1,
@@ -3852,7 +3875,7 @@ export default function MiPerfil() {
                     cursor: 'pointer',
                     fontWeight: 'bold',
                     opacity:
-                      isSubmitting || (!!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
+                      isSubmitting || (!fichaNapoliContext && !!(String(formData.alias || '').trim()) && (aliasVerificando || aliasDuplicado))
                         ? 0.6
                         : 1,
                   }}
@@ -3864,11 +3887,12 @@ export default function MiPerfil() {
                       : '✅ Guardar'}
                 </button>
               </div>
-            </div>
+            </div> : null}
           </form>
         )}
       </div>
 
+      {!fichaNapoliContext ? <>
       {perfil && typeof perfil === 'object' && !editando ? (
         <div
           style={{
@@ -4512,6 +4536,7 @@ export default function MiPerfil() {
           </div>
         ) : null}
       </div>
+      </> : null}
 
       </div>
 

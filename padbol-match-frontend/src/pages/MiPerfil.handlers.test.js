@@ -65,6 +65,7 @@ function makeSandbox(db,{upload=async()=>({error:null}),perfil={id:1,user_id:OWN
   const sandbox={
     console,Math,Date,JSON,URL,setTimeout,clearTimeout,
     t:(k)=>k,
+    fichaNapoliContext:false,
     session:{user:{id:OWN,email:'qa@example.invalid'},access_token:'fixture'},
     sessionOwnerEmail:'qa@example.invalid',
     userProfile:{whatsapp:'+5412345678'},
@@ -405,4 +406,43 @@ test('unknown/failed readiness, other user and other redirects retain the existi
  const sandbox={...base,esContextoNacionesNapoli:true,napoliReadinessRequest:{current:0},getAuthHeaders:async()=>({}),API_BASE_URL:'https://qa.example',fetch:async()=>{throw Error('network')},setNapoliReadiness:jest.fn()};
  expect(await build('confirmNapoliReadiness',sandbox)()).toBe(false);
  expect(sandbox.setNapoliReadiness).toHaveBeenCalledWith({slug:base.napoliSlug,actorId:OWN,complete:false});
+});
+
+test('Naples save preserves hidden club/social/federation/sports values despite differing hidden form defaults', async () => {
+ const preserved={apodo:'Saved Nickname',ciudad:'Existing club',alias:'existing',instagram_url:'https://instagram.com/existing',companero_id:OTHER,ultimo_companero_id:OTHER,mostrar_torneos_jugados:true,busca_companero:true,es_federado:true,deportes_preferidos:['padbol']};
+ const db=makeDb();const s=makeSandbox(db,{perfil:{id:1,user_id:OWN,...preserved}});
+ s.sandbox.fichaNapoliContext=true;
+ s.sandbox.normalizeDeportesPreferidosArray=value=>Array.isArray(value)?value:[];
+ const fn=build('handleGuardar',s.proxy);await fn({preventDefault(){}});
+ expect(db.calls.update).toMatchObject(preserved);
+});
+
+test('Naples explicitly saved residence fills required ciudad only when no previous city exists', async () => {
+ const db=makeDb();const s=makeSandbox(db,{perfil:{id:1,user_id:OWN,alias:'existing',ciudad:null}});
+ s.sandbox.fichaNapoliContext=true;s.sandbox.formData.localidad='  Buenos Aires  ';
+ await build('handleGuardar',s.proxy)({preventDefault(){}});
+ expect(db.calls.update).toMatchObject({ciudad:'Buenos Aires',localidad:'Buenos Aires'});
+});
+
+test.each([true,false])('actual gender control offers M/F for Naples only and preserves a saved legacy value: %s', naples => {
+ const React=require('react');const {renderToStaticMarkup}=require('react-dom/server');
+ const ast=parser.parse(SOURCE,{sourceType:'module',plugins:['jsx']});let control;
+ function walk(node){if(!node||typeof node!=='object')return;if(node.type==='JSXElement'&&node.openingElement.name.name==='select'&&node.openingElement.attributes.some(a=>a.name?.name==='name'&&a.value?.value==='genero'))control=node;for(const v of Object.values(node))if(Array.isArray(v))v.forEach(walk);else if(v&&typeof v==='object')walk(v);}
+ walk(ast);
+ const code=require('@babel/core').transformSync(`(${generate(control).code})`,{plugins:[require.resolve('@babel/plugin-transform-react-jsx')],babelrc:false,configFile:false}).code;
+ const scope={React,fichaNapoliContext:naples,formData:{genero:'otro'},handleChange:()=>{},inputStyle:{},fichErr:()=>false,fichBorder:()=>'',t:k=>k,etiquetaGeneroPerfil:(_t,v)=>v};
+ const element=new Function('scope',`with(scope){return ${code}}`)(scope);
+ const wrapper=document.createElement('div');wrapper.innerHTML=renderToStaticMarkup(element);
+ const choices=[...wrapper.querySelectorAll('option:not([disabled])')].map(o=>o.value);
+ expect(choices).toEqual(naples?['','masculino','femenino']:['','masculino','femenino','otro','open']);
+ expect(wrapper.querySelector('select').value).toBe('otro');
+});
+
+test.each([false,true])('Naples basic save stays editable until both profiles complete, then returns with language: %s', async complete => {
+ const db=makeDb();const s=makeSandbox(db);
+ const target='/nations-cup/nations-cup-napoli-2026/inscripcion?lang=es';
+ Object.assign(s.sandbox,{fichaNapoliContext:true,esContextoNacionesNapoli:true,confirmNapoliReadiness:async()=>complete,normalizeTorneoPostPerfilPath:()=>target,setEditando:jest.fn(),setTimeout:fn=>{fn();return 1;}});
+ await build('handleGuardar',s.proxy)({preventDefault(){}});
+ if(complete)expect(s.sandbox.navigate).toHaveBeenCalledWith(target,{replace:true});
+ else {expect(s.sandbox.navigate).not.toHaveBeenCalled();expect(s.sandbox.setEditando).toHaveBeenCalledWith(true);}
 });

@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Link, useParams} from 'react-router-dom';
+import {Link, useLocation, useParams} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import {useSafeTranslation} from '../i18n/tSafe';
 import {PAISES_TELEFONO_PRINCIPALES} from '../constants/paisesTelefono';
@@ -231,6 +231,13 @@ COPY.pt = {
   retry: 'Tentar novamente',
 };
 
+const JOURNEY_COPY = {
+ es: {step2: 'Paso 2 de 3 · Completa tu ficha de jugador', step3: 'Paso 3 de 3 · Confirma tu inscripción', profile: 'Completar mi ficha de jugador', change: 'Cambiar nombre elegido'},
+ en: {step2: 'Step 2 of 3 · Complete your player profile', step3: 'Step 3 of 3 · Confirm your registration', profile: 'Complete my player profile', change: 'Change selected name'},
+ pt: {step2: 'Etapa 2 de 3 · Complete sua ficha de jogador', step3: 'Etapa 3 de 3 · Confirme sua inscrição', profile: 'Completar minha ficha de jogador', change: 'Alterar nome escolhido'},
+ it: {step2: 'Passaggio 2 di 3 · Completa la tua scheda giocatore', step3: 'Passaggio 3 di 3 · Conferma la tua iscrizione', profile: 'Completa la mia scheda giocatore', change: 'Cambia il nome scelto'},
+};
+
 // Catálogo mundial estático da app (40 países), NO la nómina del torneo.
 const ISO = {
   Argentina:'AR', España:'ES', Italia:'IT', Francia:'FR', Alemania:'DE', Rumania:'RO', Austria:'AT',
@@ -263,21 +270,21 @@ const missingFieldLabels = (keys, lang) => (Array.isArray(keys) ? keys : []).map
 
 const NAPOLI_2026_SLUG = 'nations-cup-napoli-2026';
 const NAPOLI_2026_COUNTRIES = [
-  {code: 'RO', flag: '🇷🇴', names: {es: 'Rumania', en: 'Romania', it: 'Romania'}},
-  {code: 'ES', flag: '🇪🇸', names: {es: 'España', en: 'Spain', it: 'Spagna'}},
-  {code: 'PT', flag: '🇵🇹', names: {es: 'Portugal', en: 'Portugal', it: 'Portogallo'}},
-  {code: 'QA', flag: '🇶🇦', names: {es: 'Catar', en: 'Qatar', it: 'Qatar'}},
-  {code: 'IT', flag: '🇮🇹', names: {es: 'Italia', en: 'Italy', it: 'Italia'}},
-  {code: 'DE', flag: '🇩🇪', names: {es: 'Alemania', en: 'Germany', it: 'Germania'}},
-  {code: 'FR', flag: '🇫🇷', names: {es: 'Francia', en: 'France', it: 'Francia'}},
-  {code: 'BE', flag: '🇧🇪', names: {es: 'Bélgica', en: 'Belgium', it: 'Belgio'}},
-  {code: 'AT', flag: '🇦🇹', names: {es: 'Austria', en: 'Austria', it: 'Austria'}},
-  {code: 'EG', flag: '🇪🇬', names: {es: 'Egipto', en: 'Egypt', it: 'Egitto'}},
-  {code: 'AE', flag: '🇦🇪', names: {es: 'Emiratos Árabes Unidos', en: 'United Arab Emirates', it: 'Emirati Arabi Uniti'}},
-  {code: 'MX', flag: '🇲🇽', names: {es: 'México', en: 'Mexico', it: 'Messico'}},
-  {code: 'SE', flag: '🇸🇪', names: {es: 'Suecia', en: 'Sweden', it: 'Svezia'}},
-  {code: 'UA', flag: '🇺🇦', names: {es: 'Ucrania', en: 'Ukraine', it: 'Ucraina'}},
-  {code: 'DK', flag: '🇩🇰', names: {es: 'Dinamarca', en: 'Denmark', it: 'Danimarca'}},
+  {code: 'RO', flag: '🇷🇴', names: {pt: 'Romênia', es: 'Rumania', en: 'Romania', it: 'Romania'}},
+  {code: 'ES', flag: '🇪🇸', names: {pt: 'Espanha', es: 'España', en: 'Spain', it: 'Spagna'}},
+  {code: 'PT', flag: '🇵🇹', names: {pt: 'Portugal', es: 'Portugal', en: 'Portugal', it: 'Portogallo'}},
+  {code: 'QA', flag: '🇶🇦', names: {pt: 'Catar', es: 'Catar', en: 'Qatar', it: 'Qatar'}},
+  {code: 'IT', flag: '🇮🇹', names: {pt: 'Itália', es: 'Italia', en: 'Italy', it: 'Italia'}},
+  {code: 'DE', flag: '🇩🇪', names: {pt: 'Alemanha', es: 'Alemania', en: 'Germany', it: 'Germania'}},
+  {code: 'FR', flag: '🇫🇷', names: {pt: 'França', es: 'Francia', en: 'France', it: 'Francia'}},
+  {code: 'BE', flag: '🇧🇪', names: {pt: 'Bélgica', es: 'Bélgica', en: 'Belgium', it: 'Belgio'}},
+  {code: 'AT', flag: '🇦🇹', names: {pt: 'Áustria', es: 'Austria', en: 'Austria', it: 'Austria'}},
+  {code: 'EG', flag: '🇪🇬', names: {pt: 'Egito', es: 'Egipto', en: 'Egypt', it: 'Egitto'}},
+  {code: 'AE', flag: '🇦🇪', names: {pt: 'Emirados Árabes Unidos', es: 'Emiratos Árabes Unidos', en: 'United Arab Emirates', it: 'Emirati Arabi Uniti'}},
+  {code: 'MX', flag: '🇲🇽', names: {pt: 'México', es: 'México', en: 'Mexico', it: 'Messico'}},
+  {code: 'SE', flag: '🇸🇪', names: {pt: 'Suécia', es: 'Suecia', en: 'Sweden', it: 'Svezia'}},
+  {code: 'UA', flag: '🇺🇦', names: {pt: 'Ucrânia', es: 'Ucrania', en: 'Ukraine', it: 'Ucraina'}},
+  {code: 'DK', flag: '🇩🇰', names: {pt: 'Dinamarca', es: 'Dinamarca', en: 'Denmark', it: 'Danimarca'}},
 ];
 
 const keyFor = (actor, slug) => `nationsProfileRequest:${actor}:${slug}`;
@@ -350,8 +357,12 @@ export default function NationsInscripcion() {
   const {session, loading} = useAuth();
   const {i18n} = useSafeTranslation();
   const isNaples2026 = slug === NAPOLI_2026_SLUG;
-  const lang = isNaples2026 ? 'en' : (i18n?.language || 'es').slice(0, 2);
+  const location = useLocation();
+  const requestedLanguage = new URLSearchParams(location.search).get('lang');
+  const lang = isNaples2026 ? (['es', 'en', 'it', 'pt'].includes(requestedLanguage) ? requestedLanguage : 'en') : (i18n?.language || 'es').slice(0, 2);
+  const registrationReturn = `/nations-cup/${slug}/inscripcion${isNaples2026 && requestedLanguage === lang ? `?lang=${lang}` : ''}`;
   const t = COPY[lang] || COPY.es;
+  const journey = JOURNEY_COPY[lang] || JOURNEY_COPY.en;
   const actorId = session?.user?.id || null;
   const title = isNaples2026 ? t.titleNaples : t.title;
   const intro = isNaples2026 ? t.introNaples : t.intro;
@@ -371,18 +382,17 @@ export default function NationsInscripcion() {
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [selector, setSelector] = useState([]);
   const canonicalCountryOptions = slug === NAPOLI_2026_SLUG
-    ? NAPOLI_2026_COUNTRIES.map(({code, flag, names}) => [code, `${flag} ${names[lang] || names.es}`.trim()])
+    ? NAPOLI_2026_COUNTRIES.map(({code, flag, names}) => [code, `${flag} ${names[lang] || names.es}`.trim()]).sort((a, b) => a[1].replace(/^[^\p{L}]+/u, '').localeCompare(b[1].replace(/^[^\p{L}]+/u, ''), lang, {sensitivity: 'base'}))
     : COUNTRIES;
   // QA-only nominations may include additional vetted countries; production stays canonical 15.
   const countryOptions = isNaples2026 && process.env.REACT_APP_APP_VARIANT === 'qa'
-    ? [...canonicalCountryOptions, ...COUNTRIES.filter(([code]) => selector.some(p => p.country === code) && !canonicalCountryOptions.some(([existing]) => existing === code))]
+    ? [...canonicalCountryOptions, ...COUNTRIES.filter(([code]) => selector.some(p => p.country === code) && !canonicalCountryOptions.some(([existing]) => existing === code))].sort((a,b) => a[1].replace(/^[^\p{L}]+/u,'').localeCompare(b[1].replace(/^[^\p{L}]+/u,''),lang,{sensitivity:'base'}))
     : canonicalCountryOptions;
   const [selectorLoading, setSelectorLoading] = useState(false);
   const [selectorError, setSelectorError] = useState(false);
   const [selectorAttempt, setSelectorAttempt] = useState(0);
   const [selectorReady, setSelectorReady] = useState(false);
   const [selectorCountry, setSelectorCountry] = useState('');
-  const [selectorQuery, setSelectorQuery] = useState('');
   const [selected, setSelected] = useState(null);
   const [selectionStatus, setSelectionStatus] = useState(null);
   const [reported, setReported] = useState(false);
@@ -429,7 +439,7 @@ export default function NationsInscripcion() {
     sendingRef.current = false;
     setStatus(null); setError(null); setRestoreError(false); setName(''); setCountry(''); setAge('desconocido');
     setGuardianConsent(false); setAdultConfirmed(false); setConsent(false); setSending(false);
-    setSelected(null); setSelectionStatus(null); setProfileIncomplete(false); setProfileReadiness(null); setHistory(null); setHistoryError(false); setHistoryLoading(false); historySeq.current += 1; setSelectorReady(false); setSelectorCountry(''); setSelectorQuery(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
+    setSelected(null); setSelectionStatus(null); setProfileIncomplete(false); setProfileReadiness(null); setHistory(null); setHistoryError(false); setHistoryLoading(false); historySeq.current += 1; setSelectorReady(false); setSelectorCountry(''); setReported(false); setReportError(false); setReporting(false); reportToken.current = ''; setSelectorError(false);
   }, [actorId, slug]);
 
   const apiBase = process.env.REACT_APP_API_URL || '';
@@ -445,14 +455,9 @@ export default function NationsInscripcion() {
     } catch { /* ignore */ }
   }, [selectorStorageKey]);
 
-  const countryLabelFor = (code) => (countryOptions.find(([c]) => c === code)?.[1] || code);
-  const selectorMatches = (participant) => {
-    if (selectorCountry && participant.country !== selectorCountry) return false;
-    const q = selectorQuery.trim().toLowerCase();
-    if (!q) return true;
-    return String(participant.name || '').toLowerCase().includes(q)
-      || countryLabelFor(participant.country).toLowerCase().includes(q);
-  };
+  const countryLabelFor = code => countryOptions.find(([c]) => c === code)?.[1] || code;
+  const selectorMatches = (participant) => !selectorCountry || participant.country === selectorCountry;
+  const orderedSelector = selector.filter(selectorMatches).sort((a, b) => String(a.name).localeCompare(String(b.name), lang, {sensitivity: 'base'}));
 
   const loadHistory = useCallback(async (selectionId) => {
     const seq = ++historySeq.current;
@@ -560,6 +565,7 @@ export default function NationsInscripcion() {
     if (sending || sendingRef.current || !idActual || restoring) return;
     setError(null);
     setRestoreError(false);
+    if (isNaples2026 && selected && profileReadiness?.complete !== true) return;
     if (isNaples2026 && selector.length > 0 && !selected) { setError(t.selectorRequired); return; }
     if (!name.trim() || !country) { setError(isNaples2026 ? t.requiredNaples : t.required); return; }
     if (isNaples2026) {
@@ -588,7 +594,7 @@ export default function NationsInscripcion() {
       if (ticket !== epoch.current) return;
       const body = await res.json().catch(() => null);
       if (ticket !== epoch.current) return;
-      if (res.status === 409 && body?.code === 'PLAYER_PROFILE_INCOMPLETE') { setProfileIncomplete(true); setError(t.profileIncomplete); return; }
+      if (res.status === 409 && body?.code === 'PLAYER_PROFILE_INCOMPLETE') { setProfileReadiness({complete: false, missing: body?.missing || body?.profile_readiness?.missing || []}); setProfileIncomplete(true); setError(t.profileIncomplete); return; }
       if (res.status === 409) { setError(t.conflict); return; }
       if (!res.ok) { setError(isNaples2026 && body?.code === 'ADULT_ONLY' ? t.adultOnlyError : t.error); return; }
       setStatus(body?.status || 'pendiente');
@@ -634,7 +640,7 @@ export default function NationsInscripcion() {
   }
 
   if (!session?.user) {
-    const back = encodeURIComponent(`/nations-cup/${slug}/inscripcion`);
+    const back = encodeURIComponent(registrationReturn);
     return (
       <NationsPageShell eventLabel={t.event}>
         <section className="nations-card nations-card--center" aria-labelledby="nations-title">
@@ -650,10 +656,6 @@ export default function NationsInscripcion() {
               {selectorLoading ? <p role="status">{t.selectorLoading}</p> : null}
               {!selectorLoading && !selectorError && !selector.length ? <p role="status">{t.selectorEmpty}</p> : null}
               <div className="nations-field">
-                <label className="nations-label" htmlFor="nations-public-selector-search">{t.selectorSearch}</label>
-                <input className="nations-input" id="nations-public-selector-search" value={selectorQuery} onChange={(e) => setSelectorQuery(e.target.value)} />
-              </div>
-              <div className="nations-field">
                 <label className="nations-label" htmlFor="nations-public-selector-country">{t.selectorCountry}</label>
                 <div className="nations-select-wrap">
                   <select className="nations-select" id="nations-public-selector-country" value={selectorCountry} onChange={(e) => { setSelectorCountry(e.target.value); chooseSelection(''); }}>
@@ -668,7 +670,7 @@ export default function NationsInscripcion() {
                 <div className="nations-select-wrap">
                   <select className="nations-select" id="nations-public-selector-name" value={selected?.selectionId || ''} onChange={(e) => chooseSelection(e.target.value)} disabled={selectorLoading || selectorError}>
                     <option value="">{t.selectorPlaceholder}</option>
-                    {selector.filter(selectorMatches).map((p) => <option key={p.selectionId} value={p.selectionId}>{p.name} · {process.env.REACT_APP_APP_VARIANT === 'qa' ? countryLabelFor(p.country) : p.country}</option>)}
+                    {orderedSelector.map((p) => <option key={p.selectionId} value={p.selectionId}>{p.name} · {process.env.REACT_APP_APP_VARIANT === 'qa' ? countryLabelFor(p.country) : p.country}</option>)}
                   </select>
                   <span className="nations-select__chevron" aria-hidden="true" />
                 </div>
@@ -682,7 +684,7 @@ export default function NationsInscripcion() {
             </section>
           ) : null}
           <p className="nations-intro">{t.signIn}</p>
-          <Link className="nations-button" to={isNaples2026 ? `/login?redirect=${back}&lang=en` : `/login?redirect=${back}`}>{t.signInCta}</Link>
+          <Link className="nations-button" to={isNaples2026 ? `/login?redirect=${back}&lang=${lang}` : `/login?redirect=${back}`}>{t.signInCta}</Link>
         </section>
       </NationsPageShell>
     );
@@ -757,11 +759,11 @@ export default function NationsInscripcion() {
                 <div className="nations-alert__body">
                   <p>{t.profileIncomplete}</p>
                   <p><strong>{t.profileMissingFields}</strong> {missingFieldLabels(profileReadiness.missing, lang)}</p>
-                  <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.completeProfileCta}</Link>
+                  <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(registrationReturn)}`}>{t.completeProfileCta}</Link>
                 </div>
               </div>
             ) : null}
-            {isNaples2026 ? <Link className="nations-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.approvedCta}</Link> : null}
+            {isNaples2026 ? <Link className="nations-button" to={`/mi-perfil?redirect=${encodeURIComponent(registrationReturn)}`}>{t.approvedCta}</Link> : null}
           </section>
         ) : statusView === 'approved' ? (
           <section className="nations-status nations-status--approved" role="status">
@@ -770,7 +772,7 @@ export default function NationsInscripcion() {
               <h2>{t.approvedBadge}</h2>
             </div>
             <p>{t.approved}</p>
-            <Link className="nations-button nations-button--success" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.approvedCta}</Link>
+            <Link className="nations-button nations-button--success" to={`/mi-perfil?redirect=${encodeURIComponent(registrationReturn)}`}>{t.approvedCta}</Link>
           </section>
         ) : statusView === 'rejected' ? (
           <section className="nations-status nations-status--rejected" role="alert">
@@ -783,15 +785,25 @@ export default function NationsInscripcion() {
               {t.newRequest}
             </button>
           </section>
+        ) : isNaples2026 && selected && profileReadiness?.complete !== true ? (
+          <section className="nations-selector" aria-labelledby="nations-profile-step">
+            <h2 className="nations-label" id="nations-profile-step">{journey.step2}</h2>
+            <p className="nations-status__note"><strong>{t.selectorSelected}:</strong> {selected.name} · {countryOptions.find(([code]) => code === selected.country)?.[1] || selected.country}</p>
+            {profileReadiness?.complete === false ? <><p>{t.profileIncomplete}</p>
+            <p><strong>{t.profileMissingFields}</strong> {missingFieldLabels(profileReadiness.missing, lang)}</p>
+            <Link className="nations-button" to={`/mi-perfil?redirect=${encodeURIComponent(registrationReturn)}`}>{journey.profile}</Link></> : <><p role="status">{restoring ? t.restore : t.restoreError}</p><button className="nations-button" type="button" onClick={retryRestore} disabled={restoring}>{t.retry}</button></>}
+            <button className="nations-text-button" type="button" onClick={() => chooseSelection('')}>{journey.change}</button>
+          </section>
         ) : (
           <form className="nations-form" onSubmit={submit} aria-busy={sending || restoring}>
-            {isNaples2026 && profileReadiness?.complete === false ? (
+            {isNaples2026 && selected && profileReadiness?.complete === true ? <><h2 className="nations-label">{journey.step3}</h2><button className="nations-text-button" type="button" onClick={() => chooseSelection('')}>{journey.change}</button></> : null}
+            {isNaples2026 && selected && profileReadiness?.complete === false ? (
               <div className="nations-alert nations-alert--warning" role="alert">
                 <span className="nations-alert__icon" aria-hidden="true"><NationsIcon name="alert" /></span>
                 <div className="nations-alert__body">
                   <p>{t.profileIncomplete}</p>
                   <p><strong>{t.profileMissingFields}</strong> {missingFieldLabels(profileReadiness.missing, lang)}</p>
-                  <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>{t.completeProfileCta}</Link>
+                  <Link className="nations-text-button" to={`/mi-perfil?redirect=${encodeURIComponent(registrationReturn)}`}>{t.completeProfileCta}</Link>
                 </div>
               </div>
             ) : null}
@@ -802,12 +814,12 @@ export default function NationsInscripcion() {
               </div>
             ) : null}
             {profileIncomplete ? (
-              <Link className="nations-button nations-button--secondary" to={`/mi-perfil?redirect=${encodeURIComponent(`/nations-cup/${slug}/inscripcion`)}`}>
+              <Link className="nations-button nations-button--secondary" to={`/mi-perfil?redirect=${encodeURIComponent(registrationReturn)}`}>
                 {t.completeProfileCta}
               </Link>
             ) : null}
 
-            {isNaples2026 ? (
+            {isNaples2026 && !selected ? (
               <section className="nations-selector" aria-labelledby="nations-selector-title">
                 <h2 className="nations-label" id="nations-selector-title">{t.selectorTitle}</h2>
                 <p className="nations-status__note">{t.selectorNote}</p>
@@ -823,10 +835,6 @@ export default function NationsInscripcion() {
                 ) : null}
                 {selectorLoading ? <p role="status">{t.selectorLoading}</p> : null}
                 {!selectorLoading && !selectorError && !selector.length ? (<><p role="status">{t.selectorEmpty}</p><p className="nations-status__note">{t.selectorFallback}</p></>) : null}
-                <div className="nations-field">
-                  <label className="nations-label" htmlFor="nations-selector-search">{t.selectorSearch}</label>
-                  <input className="nations-input" id="nations-selector-search" value={selectorQuery} onChange={(e) => setSelectorQuery(e.target.value)} />
-                </div>
                 <div className="nations-field">
                   <label className="nations-label" htmlFor="nations-selector-country">{t.selectorCountry}</label>
                   <div className="nations-select-wrap">
@@ -848,13 +856,17 @@ export default function NationsInscripcion() {
                       disabled={selectorLoading || selectorError}
                     >
                       <option value="">{t.selectorPlaceholder}</option>
-                      {selector.filter(selectorMatches).map((p) => (
+                      {orderedSelector.map((p) => (
                         <option key={p.selectionId} value={p.selectionId}>{p.name} · {process.env.REACT_APP_APP_VARIANT === 'qa' ? countryLabelFor(p.country) : p.country}</option>
                       ))}
                     </select>
                     <span className="nations-select__chevron" aria-hidden="true" />
                   </div>
                 </div>
+
+              </section>
+            ) : null}
+
                 {selected ? (
                   <div className="nations-status__note" role="status">
                     <strong>{t.selectorSelected}:</strong> {selected.name} · {selected.country}
@@ -894,10 +906,8 @@ export default function NationsInscripcion() {
                     {reportError ? <span role="alert">{t.selectorReportError}</span> : null}
                   </div>
                 ) : null}
-              </section>
-            ) : null}
-
-            <>
+            {(!isNaples2026 || selected || (!selector.length && !selectorLoading)) ? <>
+            {!selected ? <>
                 <div className="nations-field">
                   <label className="nations-label" htmlFor="nations-name">{t.name}</label>
                   <input className="nations-input" id="nations-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={100} readOnly={isNaples2026 && selector.length > 0} />
@@ -912,7 +922,7 @@ export default function NationsInscripcion() {
                     <span className="nations-select__chevron" aria-hidden="true" />
                   </div>
                 </div>
-            </>
+            </> : null}
 
             {isNaples2026 ? (
               <label className="nations-check">
@@ -970,6 +980,7 @@ export default function NationsInscripcion() {
                 </>
               )}
             </button>
+            </> : null}
           </form>
         )}
       </section>
