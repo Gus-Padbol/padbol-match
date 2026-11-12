@@ -32,7 +32,7 @@ test('changing country clears the selected intent and stale stored IDs never pre
  expect(screen.getByLabelText('Your name')).toHaveValue('');expect(sessionStorage.getItem(nationsSelectionKey)).toBeNull();
 });
 test('existing registration restores one short receipt with profile edit, without forms or duplicate POST',async()=>{
- mockUseAuth.mockReturnValue({session:{user:{id:'actor'},access_token:'own'},loading:false});mockFetch.mockImplementation(async url=>response(String(url).endsWith('/selector')?{participants}:{requests:[{status:'pendiente'}]}));mount();
+ mockUseAuth.mockReturnValue({session:{user:{id:'actor'},access_token:'own'},loading:false});mockFetch.mockImplementation(async url=>response(String(url).endsWith('/selector')?{participants}:{requests:[{status:'pendiente'}],profile_readiness:{complete:true,missing:[]}}));mount();
  expect(await screen.findByText('Registration received')).toBeInTheDocument();expect(screen.getByRole('link',{name:'Edit player details'})).toHaveAttribute('href',NATIONS_PROFILE_PATH);expect(screen.queryByRole('combobox')).toBeNull();expect(mockFetch.mock.calls.every(([,options])=>options?.method!=='POST')).toBe(true);
 });
 test('failed status read never offers another POST, retry is read only',async()=>{
@@ -41,4 +41,8 @@ test('failed status read never offers another POST, retry is read only',async()=
 });
 test('other event slugs retain their existing generic registration and language',async()=>{
  mount('nations-cup-other');expect(screen.getByRole('link',{name:'Ingresar'}).getAttribute('href')).not.toContain('lang=en');
+});
+
+test('an existing incomplete request offers completion of its own ficha without a second registration',async()=>{
+ mockUseAuth.mockReturnValue({session:{user:{id:'actor'},access_token:'own'},loading:false});mockFetch.mockImplementation(async url=>response(String(url).endsWith('/selector')?{participants}:{requests:[{status:'pendiente'}],profile_readiness:{complete:false,missing:['ciudad']}}));mount();expect(await screen.findByText('Complete your player details')).toBeInTheDocument();expect(screen.queryByText('Registration received')).toBeNull();expect(screen.getByRole('link',{name:'Complete player details'})).toHaveAttribute('href',NATIONS_PROFILE_PATH);expect(mockFetch.mock.calls.every(([,options])=>options?.method!=='POST')).toBe(true);
 });

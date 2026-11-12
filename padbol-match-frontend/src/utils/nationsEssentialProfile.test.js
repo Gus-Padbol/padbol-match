@@ -23,3 +23,9 @@ test('fresh signup placeholder is replaced by declared selection prefill while a
 
  test('complete draft preserves existing compound given names matching canonical selection',()=>{const {nationsCompleteDraft}=require('./nationsEssentialProfile');expect(nationsCompleteDraft({nombre:'Juan Pablo',apellido:'García'},{name:'JUAN PABLO GARCIA',country:'AR'})).toMatchObject({nombre:'Juan Pablo',apellido:'García',pais:'AR'});});
 test('complete draft reuses an already saved private contact without inventing private fields',()=>{const {nationsCompleteDraft}=require('./nationsEssentialProfile');expect(nationsCompleteDraft({},null,{telefono:'+39123456789'})).toMatchObject({telefono:'+39123456789',fecha_nacimiento:'',tipo_documento:'',nacionalidad:'',numero_documento:''});});
+
+test('complete ficha uses the same bounded phone/document contract as identity service',()=>{
+ const {nationsCompleteError}=require('./nationsEssentialProfile');
+ const form={nombre:'Juan',apellido:'García',pais:'AR',genero:'masculino',ciudad:'City',nivel:'Elite',lateralidad:'Diestro',posicion_cancha:'derecha',fecha_nacimiento:'1980-01-01',tipo_documento:'pasaporte',pais_documento:'AR',nacionalidad:'AR',categoria_deportiva:'Elite',telefono:'+54 (11) 1234-5678',numero_documento:'ab.12-34/56'};
+ expect(nationsCompleteError(form)).toBe('');expect(nationsCompleteError({...form,telefono:'+54.1112345678'})).toMatch(/contact number/);expect(nationsCompleteError({...form,telefono:'1'.repeat(33)})).toMatch(/contact number/);expect(nationsCompleteError({...form,numero_documento:'A'.repeat(33)})).toMatch(/document number/);expect(nationsCompleteError({...form,numero_documento:'AB@123'})).toMatch(/document number/);
+});

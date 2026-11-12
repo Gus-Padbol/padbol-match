@@ -78,7 +78,7 @@ export default function NationsPlayerProfile() {
    if(!data.identity.tiene_documento)identityPatch.numero_documento=form.numero_documento.trim();
    await request(`${base}/api/jugador/identidad`,{method:'PUT',body:JSON.stringify(identityPatch)});
    const identitySaved=parseIdentidadFromApi(await request(`${base}/api/jugador/identidad`));
-   if(NATIONS_IDENTITY_FIELDS.some(key=>identitySaved[key]!==identityPatch[key])||!identitySaved.tiene_documento)throw new Error('Your tournament details could not be confirmed.');
+   if([...NATIONS_IDENTITY_FIELDS,'genero','telefono'].some(key=>identitySaved[key]!==identityPatch[key])||!identitySaved.tiene_documento)throw new Error('Your tournament details could not be confirmed.');
    const readiness=await request(`${eventPath}/profile-readiness`);
    if(readiness.complete!==true)throw new Error('Your player details could not be confirmed. Try again.');
    if(!data.active) {
@@ -94,7 +94,7 @@ export default function NationsPlayerProfile() {
  const countries=nationsCountryOptions([...PAISES_ISO_OPTIONS.map(row=>row.code),...(data?.participants||[]).map(row=>row.country),form?.pais].filter(Boolean));
  if(form?.pais&&!countries.some(row=>row.code===form.pais))countries.unshift({code:form.pais,name:form.pais,flag:''});
  const countryChoices=countries.map(row=>({value:row.code,label:`${row.flag} ${row.name}`}));
- const renderInput=(name,label,type='text')=><div className="nations-field"><label className="nations-label" htmlFor={`nations-${name}`}>{label}</label><input className="nations-input" id={`nations-${name}`} name={name} type={type} required value={form[name]} onChange={change} maxLength={name==='numero_documento'?80:120}/></div>;
+ const renderInput=(name,label,type='text')=><div className="nations-field"><label className="nations-label" htmlFor={`nations-${name}`}>{label}</label><input className="nations-input" id={`nations-${name}`} name={name} type={type} required value={form[name]} onChange={change} maxLength={name==='numero_documento'?undefined:120}/></div>;
  const renderSelect=(name,label,options)=><div className="nations-field"><label className="nations-label" htmlFor={`nations-${name}`}>{label}</label><select className="nations-select" id={`nations-${name}`} name={name} required value={form[name]} onChange={change}><option value="">Choose</option>{options.map(row=><option key={row.value} value={row.value}>{row.label}</option>)}</select></div>;
  return <NationsRegistrationShell><section className="nations-card">
   <h1 className="nations-title">Player details</h1><p className="nations-intro">Nations Cup · Elite</p>
@@ -117,7 +117,7 @@ export default function NationsPlayerProfile() {
    {!data.active?<><label className="nations-check"><input type="checkbox" name="adult" required/><span className="nations-check__box" aria-hidden="true"/><span className="nations-check__text">I confirm that I am 18 or older.</span></label><label className="nations-check"><input type="checkbox" name="consent" required/><span className="nations-check__box" aria-hidden="true"/><span className="nations-check__text">I agree to the use of my details for this registration.</span></label></>:null}
    {error?<p role="alert">{error}</p>:null}
    <button className="nations-button" type="submit" disabled={busy}>{busy?'Saving…':data.active?'Save player details':'Confirm registration'}</button>
-   <Link className="nations-text-button" to={NATIONS_RETURN_PATH}>Back</Link>
+   <Link className="nations-text-button" to={NATIONS_RETURN_PATH} onClick={()=>{if(!data.active)storeNationsSelection(null);}}>Back</Link>
   </form>:null}
  </section></NationsRegistrationShell>;
 }

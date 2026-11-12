@@ -54,9 +54,9 @@ export function nationsCompleteError(form,hasDocument=false) {
  if(!['masculino','femenino'].includes(form.genero))return 'Choose your competition gender.';
  if([...NATIONS_PLAYER_FIELDS,...NATIONS_IDENTITY_FIELDS].some(key=>!String(form[key]||'').trim()))return 'Complete all required player details.';
  if(!categoriasNivelPorGenero(form.genero).includes(form.nivel)||!categoriasNivelPorGenero(form.genero).includes(form.categoria_deportiva)||!['Diestro','Zurdo','Ambidiestro'].includes(form.lateralidad)||!['derecha','izquierda','ambas'].includes(form.posicion_cancha)||!['dni','pasaporte','cedula','otro'].includes(form.tipo_documento)||!['pais_documento','nacionalidad'].every(key=>/^[A-Z]{2}$/.test(form[key])))return 'Check your player details.';
- if(!/^\+?[\d\s().-]{8,40}$/.test(form.telefono.trim()))return 'Enter your contact number, including the country code.';
+ if((form.telefono.trim().length>32||!/^\+?[0-9()\s-]{6,}$/.test(form.telefono.trim())))return 'Enter your contact number, including the country code.';
  const date=new Date(form.fecha_nacimiento+'T00:00:00Z');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento)||!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==form.fecha_nacimiento||date>new Date())return 'Check your date of birth.';
- if(!hasDocument&&form.numero_documento.trim().length<4)return 'Enter your document number.';
+ if(!hasDocument&&!/^[A-Z0-9]{4,32}$/.test(form.numero_documento.trim().toUpperCase().replace(/[\s.\-/]/g,'')))return 'Enter a valid document number (4–32 letters or numbers).';
  return '';
 }
