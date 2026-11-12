@@ -118,9 +118,9 @@ export function parseIdentidadFromApi(body) {
     };
   }
 
-  const estado = normalizeIdentidadEstado(raw.estado || raw.estado_verificacion);
+  const estado = normalizeIdentidadEstado(raw.identidad_estado || raw.estado || raw.estado_verificacion);
   const masked = String(
-    raw.numero_documento_mascarado || raw.documento_mascarado || '',
+    raw.numero_documento_masked || raw.numero_documento_mascarado || raw.documento_mascarado || '',
   ).trim();
   const tieneDocumento = masked.length >= 4;
 
