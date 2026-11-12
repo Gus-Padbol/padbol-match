@@ -32,3 +32,17 @@ test('linked board missing denormalized tournament never silently falls back to 
  const {client,fetchImpl}=fixture();fetchImpl.mockImplementation(async url=>url.includes('/context')?{ok:false,status:503,json:async()=>({code:'CONTEXT_UNAVAILABLE'})}:ok({...board,torneo_id:null,partido_torneo_id:70}));
  await expect(client.read()).rejects.toMatchObject({code:'CONTEXT_UNAVAILABLE'});
 });
+test('hidden public tournament404 still resolves the normal authorized Nations context',async()=>{
+ const {client,fetchImpl}=fixture();const normal=fetchImpl.getMockImplementation();fetchImpl.mockImplementation(async(...args)=>args[0].endsWith('/api/torneos/28')?{ok:false,status:404,json:async()=>({code:'NOT_FOUND'})}:normal(...args));
+ const s=await client.read();expect(s.mode).toBe('nations');expect(s.coherent).toBe(true);expect(s.window.allowed).toBe(true);
+ expect(fetchImpl.mock.calls.find(([url])=>url.endsWith('/context'))[1].headers.Authorization).toBe('Bearer bearer');
+});
+test('hidden tournament fallback never grants access or downgrades to legacy on denied/broken context',async()=>{
+ for(const [status,code]of [[401,'AUTH_REQUIRED'],[403,'FORBIDDEN'],[403,'NOT_NATIONS_TOURNAMENT'],[503,'CONTEXT_UNAVAILABLE']]){
+  const {client,fetchImpl}=fixture();fetchImpl.mockImplementation(async url=>url.endsWith('/api/torneos/28')?{ok:false,status:404,json:async()=>({code:'NOT_FOUND'})}:url.endsWith('/context')?{ok:false,status,json:async()=>({code})}:ok(board));
+  await expect(client.read()).rejects.toMatchObject({status,code});expect(fetchImpl.mock.calls.some(([url])=>url.includes('?teamId='))).toBe(false);
+ }
+});
+test('catalog auth/server errors do not use hidden-tournament fallback',async()=>{
+ for(const status of[401,403,500]){const {client,fetchImpl}=fixture();fetchImpl.mockImplementation(async url=>url.endsWith('/api/torneos/28')?{ok:false,status,json:async()=>({code:'CATALOG_DENIED'})}:ok(board));await expect(client.read()).rejects.toMatchObject({status});expect(fetchImpl.mock.calls.some(([url])=>url.endsWith('/context'))).toBe(false);}
+});
