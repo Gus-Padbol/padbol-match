@@ -1,6 +1,7 @@
 {
   "buildCommand": "node scripts/build-hosted-qa.cjs",
   "outputDirectory": "build",
+  "functions": { "api/qa-socket.js": { "maxDuration": 60 } },
   "framework": "create-react-app",
   "headers": [
     {
@@ -41,6 +42,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/socket.io/:path*", "destination": "/api/qa-socket" },
     { "source": "/api/:path*", "destination": "/api/qa-proxy?__qa_path=:path*" },
     {
       "source": "/crm-leads",

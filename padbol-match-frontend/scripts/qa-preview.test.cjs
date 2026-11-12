@@ -55,3 +55,11 @@ test('rewrite metadata preserves original query and consumes internal routing pa
  assert.equal(res.code,200);assert.equal(calls[0].url,'https://padbol-backend-qa.onrender.com/api/nations/test?name=Argentina&x=1&x=2');
  assert.equal(calls[0].url.includes('__qa_path'),false);
 });
+
+test('Socket.IO bridge preserves polling handshake/query/body and refuses WebSocket upgrades', async()=>{
+ let r=await run({url:'/socket.io/?EIO=4&transport=polling&sid=fixture-session&t=1'}, {kind:'socket'});
+ assert.equal(r.res.code,200);assert.equal(r.calls[0].url,'https://padbol-backend-qa.onrender.com/socket.io/?EIO=4&transport=polling&sid=fixture-session&t=1');
+ r=await run({url:'/api/qa-socket?EIO=4&transport=polling&sid=fixture-session',method:'POST',headers:{origin,'content-type':'text/plain;charset=UTF-8'},body:'40{"token":"fixture-only"}'},{kind:'socket'});
+ assert.equal(r.res.code,200);assert.equal(r.calls[0].options.body.toString(),'40{"token":"fixture-only"}');
+ for(const request of [{url:'/socket.io/?EIO=4&transport=websocket'},{url:'/socket.io/?EIO=4&transport=polling',headers:{upgrade:'websocket'}},{url:'/socket.io/?EIO=3&transport=polling'}]){r=await run(request,{kind:'socket'});assert.equal(r.res.code,400);assert.equal(r.calls.length,0);}
+});

@@ -16,7 +16,7 @@ function validBearer(value) {
     return p.role === 'authenticated' && p.iss === `https://${QA_REF}.supabase.co/auth/v1` && (!p.ref || p.ref === QA_REF);
   } catch { return false; }
 }
-function createHandler({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
+function createHandler({ env = process.env, fetchImpl = globalThis.fetch, kind = 'api' } = {}) {
   return async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     const fail = (status, code) => res.status(status).json({ ok: false, code });
@@ -31,6 +31,13 @@ function createHandler({ env = process.env, fetchImpl = globalThis.fetch } = {})
     if (!validBearer(authorization)) return fail(403, 'QA_USER_TOKEN_REQUIRED');
     let incoming;
     try { incoming = new URL(req.url, 'https://preview.invalid'); } catch { return fail(400, 'INVALID_PATH'); }
+    let url;
+    if (kind === 'socket') {
+      if (incoming.searchParams.get('transport') !== 'polling' || incoming.searchParams.get('EIO') !== '4' || req.headers.upgrade || !['GET','POST','OPTIONS'].includes(method)) return fail(400, 'QA_POLLING_ONLY');
+      incoming.searchParams.delete('__qa_path');
+      url = new URL('/socket.io/', TARGET);
+      url.search = incoming.searchParams.toString();
+    } else {
     const queryPaths = incoming.searchParams.getAll('__qa_path');
     const routePath = req.query?.__qa_path;
     if (queryPaths.length > 1 || Array.isArray(routePath)) return fail(400, 'INVALID_PATH');
@@ -40,9 +47,10 @@ function createHandler({ env = process.env, fetchImpl = globalThis.fetch } = {})
     try { decoded = decodeURIComponent(path); } catch { return fail(400, 'INVALID_PATH'); }
     if (!/^[a-zA-Z0-9_-]/.test(decoded) || decoded.includes('\\') || decoded.includes('//') || decoded.split('/').some(s => s === '.' || s === '..') || /[\r\n\0?#]/.test(decoded) || /%[0-9a-f]{2}/i.test(decoded)) return fail(400, 'INVALID_PATH');
     incoming.searchParams.delete('__qa_path');
-    const url = new URL('/api/' + decoded, TARGET);
+    url = new URL('/api/' + decoded, TARGET);
     url.search = incoming.searchParams.toString();
     if (url.origin !== TARGET || !url.pathname.startsWith('/api/')) return fail(400, 'INVALID_PATH');
+    }
     let body;
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
       if (Number(req.headers['content-length'] || 0) > LIMIT) return fail(413, 'BODY_TOO_LARGE');
@@ -58,7 +66,7 @@ function createHandler({ env = process.env, fetchImpl = globalThis.fetch } = {})
     if (authorization) headers.Authorization = authorization;
     if (req.headers['content-type']) headers['Content-Type'] = req.headers['content-type'];
     try {
-      const upstream = await fetchImpl(url.toString(), { method, headers, body, signal: AbortSignal.timeout(15000), redirect: 'error' });
+      const upstream = await fetchImpl(url.toString(), { method, headers, body, signal: AbortSignal.timeout(kind === 'socket' ? 40000 : 15000), redirect: 'error' });
       const content = Buffer.from(await upstream.arrayBuffer());
       if (content.length > 8 * LIMIT) return fail(502, 'QA_RESPONSE_TOO_LARGE');
       if (upstream.headers.get('content-type')) res.setHeader('Content-Type', upstream.headers.get('content-type'));
