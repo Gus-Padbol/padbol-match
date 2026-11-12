@@ -63,3 +63,20 @@ test('Socket.IO bridge preserves polling handshake/query/body and refuses WebSoc
  assert.equal(r.res.code,200);assert.equal(r.calls[0].options.body.toString(),'40{"token":"fixture-only"}');
  for(const request of [{url:'/socket.io/?EIO=4&transport=websocket'},{url:'/socket.io/?EIO=4&transport=polling',headers:{upgrade:'websocket'}},{url:'/socket.io/?EIO=3&transport=polling'}]){r=await run(request,{kind:'socket'});assert.equal(r.res.code,400);assert.equal(r.calls.length,0);}
 });
+
+test('pretty rewrite consumes only its matching wildcard capture and preserves teamId',async()=>{
+ for(const [path,query] of [['scoreboard/control/fixture-token/nations/context',''],['scoreboard/control/fixture-token/nations','&teamId=144']]){
+  const r=await run({url:`/api/qa-proxy?__qa_path=${encodeURIComponent(path)}&path=${encodeURIComponent(path)}${query}`});
+  assert.equal(r.res.code,200);assert.equal(r.calls[0].url,`https://padbol-backend-qa.onrender.com/api/${path}${query?'?teamId=144':''}`);
+ }
+});
+test('mismatched or duplicated wildcard capture is rejected before upstream',async()=>{
+ for(const query of ['path=someone-else','path=nations%2Fcontext&path=nations%2Fcontext']){
+  const r=await run({url:`/api/qa-proxy?__qa_path=nations%2Fcontext&${query}`});assert.equal(r.res.code,400);assert.equal(r.calls.length,0);
+ }
+});
+test('arbitrary actor query remains intact so authoritative backend can reject it',async()=>{
+ const path='scoreboard/control/fixture-token/nations/context';let received;
+ const r=await run({url:`/api/qa-proxy?__qa_path=${encodeURIComponent(path)}&path=${encodeURIComponent(path)}&actor=spoofed`},{fetchImpl:async url=>{received=url;return new Response('{"code":"BODY_AUTHORITY_FORBIDDEN"}',{status:400});}});
+ assert.equal(new URL(received).searchParams.get('actor'),'spoofed');assert.equal(new URL(received).searchParams.has('path'),false);assert.equal(r.res.code,400);
+});

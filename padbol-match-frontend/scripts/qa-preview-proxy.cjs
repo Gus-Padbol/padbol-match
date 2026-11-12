@@ -47,6 +47,13 @@ function createHandler({ env = process.env, fetchImpl = globalThis.fetch, kind =
     try { decoded = decodeURIComponent(path); } catch { return fail(400, 'INVALID_PATH'); }
     if (!/^[a-zA-Z0-9_-]/.test(decoded) || decoded.includes('\\') || decoded.includes('//') || decoded.split('/').some(s => s === '.' || s === '..') || /[\r\n\0?#]/.test(decoded) || /%[0-9a-f]{2}/i.test(decoded)) return fail(400, 'INVALID_PATH');
     incoming.searchParams.delete('__qa_path');
+    // Vercel adds the named wildcard capture to the query. Consume only the
+    // exact route we already validated; never discard arbitrary authority input.
+    const captures = incoming.searchParams.getAll('path');
+    if (captures.length) {
+      if (captures.length !== 1 || captures[0] !== decoded) return fail(400, 'INVALID_PATH');
+      incoming.searchParams.delete('path');
+    }
     url = new URL('/api/' + decoded, TARGET);
     url.search = incoming.searchParams.toString();
     if (url.origin !== TARGET || !url.pathname.startsWith('/api/')) return fail(400, 'INVALID_PATH');
