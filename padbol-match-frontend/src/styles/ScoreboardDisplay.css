@@ -944,3 +944,5 @@
 .sb-display--nations .sb-team-name,.sb-display--nations .sb-player__name{text-transform:none}
 
 .sb-serving-label{display:block;color:#00ff88;font-size:clamp(10px,1.1vh,14px);letter-spacing:.08em;margin:0 0 .6vh;text-transform:none}
+
+.sb-nations-venue{margin:.2vh 0 0;color:rgba(255,255,255,.7);font-size:clamp(12px,1.4vw,20px);letter-spacing:.04em;text-align:center;text-transform:none}

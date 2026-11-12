@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {useSafeTranslation} from '../../i18n/tSafe';
 import {nationsTvLineup} from '../../utils/scoreboardNationsLineup';
 import {formatDisplayName, formatTeamDisplayName} from '../../utils/scoreboardDisplayName';
+import {formatScoreboardVenueHeader} from '../../utils/scoreboardVenueLabels';
 import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
@@ -443,6 +444,7 @@ export default function ScoreboardBoard({
 
         <section className="sb-center">
           <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} />
+          {lineup.isNations && formatScoreboardVenueHeader(partido) ? <p className="sb-nations-venue">{formatScoreboardVenueHeader(partido)}</p> : null}
 
           <div className="sb-center__block">
             {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
