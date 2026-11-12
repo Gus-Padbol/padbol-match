@@ -1,0 +1,57 @@
+/* Shared scoreboard tokens, scoped to this adapter: legacy controls are untouched. */
+.nations-referee-panel { color-scheme: dark; }
+.nations-referee-panel .sc-header__title,
+.nations-referee-panel h2,
+.nations-referee-panel p,
+.nations-referee-panel label { color: var(--sc-text); }
+.nations-referee-panel .sc-header__torneo,
+.nations-referee-panel .sc-header__meta { color: rgba(255, 255, 255, .72); }
+.nations-referee-panel .sc-header__title { overflow-wrap: anywhere; }
+.nations-referee-panel button:not(.sc-point-btn):not(.sc-timer-btn) {
+  min-height: 44px; padding: .7rem 1rem;
+  border: 1px solid var(--sc-border); border-radius: 8px;
+  background: var(--sc-card); color: var(--sc-text);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.nations-referee-panel button:not(.sc-point-btn):not(.sc-timer-btn):hover:not(:disabled) {
+  border-color: var(--sc-blue); background: rgba(59, 130, 246, .12);
+}
+.nations-referee-panel button:disabled { opacity: .48; cursor: not-allowed; }
+.nations-referee-panel button:focus-visible,
+.nations-referee-panel select:focus-visible,
+.nations-referee-panel input:focus-visible { outline: 2px solid var(--sc-blue); outline-offset: 3px; }
+.nations-referee-panel .nations-referee-substitutions {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;
+  color: var(--sc-text); background: var(--sc-card);
+}
+.nations-referee-panel .nations-referee-substitutions > h2,
+.nations-referee-panel .nations-referee-substitutions > p,
+.nations-referee-panel .nations-referee-substitutions > button,
+.nations-referee-panel .nations-referee-substitutions > label:first-of-type,
+.nations-referee-panel .nations-referee-substitutions > .nations-referee-both { grid-column: 1 / -1; margin: 0; }
+.nations-referee-panel .nations-referee-substitutions h2 { font-size: 1.2rem; }
+.nations-referee-panel .nations-referee-substitutions p { line-height: 1.5; }
+.nations-referee-panel .nations-referee-substitutions label {
+  display: flex; flex-direction: column; gap: .5rem; min-width: 0; font-weight: 600;
+}
+.nations-referee-panel .nations-referee-substitutions select {
+  display: block; width: 100%; min-width: 0; min-height: 46px; padding: .7rem .8rem;
+  border: 1px solid rgba(255, 255, 255, .28); border-radius: 8px;
+  background: var(--sc-bg); color: var(--sc-text); font: inherit; text-overflow: ellipsis;
+}
+.nations-referee-panel .nations-referee-substitutions select:disabled { opacity: .6; }
+.nations-referee-panel .nations-referee-substitutions .nations-referee-both {
+  flex-direction: row; align-items: center; min-height: 44px;
+}
+.nations-referee-panel .nations-referee-both input { width: 20px; height: 20px; accent-color: var(--sc-blue); }
+.nations-referee-panel .nations-referee-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.nations-referee-panel .nations-referee-notice {
+  padding: 1rem; margin: .75rem 0; background: var(--sc-card);
+  border: 1px solid var(--sc-blue); border-radius: 12px;
+}
+.nations-referee-panel .sc-error { color: #fca5a5; }
+@media (max-width: 600px) {
+  .nations-referee-panel .nations-referee-substitutions { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
+  .nations-referee-panel .nations-referee-actions { flex-direction: column; }
+  .nations-referee-panel .nations-referee-actions button { width: 100%; }
+}
