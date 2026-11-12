@@ -96,7 +96,7 @@
 .nations-referee-panel--tactical .nt-court__half{position:absolute;width:40%;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-around;align-items:center;padding:2% 0}
 .nations-referee-panel--tactical .nt-court__half--a{left:2%}
 .nations-referee-panel--tactical .nt-court__half--b{right:2%}
-.nations-referee-panel--tactical button.nt-player{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:94%;min-height:64px;padding:4px;border:1px solid transparent;background:#071b45b8;border-radius:10px}
+.nations-referee-panel--tactical button.nt-player{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:84%;min-height:64px;padding:4px;border:1px solid transparent;background:#071b45b8;border-radius:10px}
 .nations-referee-panel--tactical button.nt-player:disabled{opacity:.9}
 .nations-referee-panel--tactical button.nt-player.is-selected{border-color:#ffe58f;background:#143b72;box-shadow:0 0 0 2px #ffe58f66}
 .nations-referee-panel--tactical .nt-player__avatar{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#e5edf7;color:#12315c;font-weight:800;font-size:12px}
