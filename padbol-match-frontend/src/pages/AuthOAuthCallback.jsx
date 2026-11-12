@@ -1,3 +1,4 @@
+import {NATIONS_RETURN_PATH} from '../utils/nationsEssentialProfile';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase, AUTH_CALLBACK_FLOW } from '../supabaseClient';
@@ -12,7 +13,7 @@ import { usuarioEnRecuperacion, limpiarRecuperacion, suscribirRecuperacion } fro
 export function resolveOAuthPostLoginPath(destination, needsProfileCompletion) {
   const dest = String(destination || '/');
   const isFipaLibrary = dest.split('?')[0] === '/fipa/documentos';
-  return needsProfileCompletion && !isFipaLibrary
+  return needsProfileCompletion && !isFipaLibrary && dest!==NATIONS_RETURN_PATH
     ? `/completar-perfil?redirect=${encodeURIComponent(dest)}`
     : dest;
 }

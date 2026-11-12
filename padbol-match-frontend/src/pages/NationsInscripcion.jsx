@@ -1,3 +1,4 @@
+import NationsNapoliRegistration from './NationsNapoliRegistration';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Link, useParams} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
@@ -346,6 +347,10 @@ function NationsPageShell({eventLabel, children}) {
 }
 
 export default function NationsInscripcion() {
+  const {slug}=useParams();
+  return slug===NAPOLI_2026_SLUG?<NationsNapoliRegistration/>:<GenericNationsInscripcion/>;
+}
+function GenericNationsInscripcion() {
   const {slug = ''} = useParams();
   const {session, loading} = useAuth();
   const {i18n} = useSafeTranslation();

@@ -1,3 +1,5 @@
+import NationsPlayerProfile from './NationsPlayerProfile';
+import {isNationsEssentialPurpose} from '../utils/nationsEssentialProfile';
 import { fetchProfileBirthDate, saveChangedProfileBirthDate } from '../utils/profileBirthDateApi';
 import OfficialFipaProfile from '../components/OfficialFipaProfile';
 import { uploadProfileAvatar } from '../utils/profileAvatarUpload';
@@ -294,6 +296,10 @@ function puedeMostrarComprobanteMp(r) {
 }
 
 export default function MiPerfil() {
+  const [params]=useSearchParams();
+  return isNationsEssentialPurpose(params)?<NationsPlayerProfile/>:<GeneralMiPerfil/>;
+}
+function GeneralMiPerfil() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();

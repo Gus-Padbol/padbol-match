@@ -25,3 +25,8 @@ describe('retorno OAuth', () => {
     );
   });
 });
+
+test('exact Napoli return reaches its essential player form flow without the generic sports form; other events keep normal onboarding',()=>{
+ const event='/nations-cup/nations-cup-napoli-2026/inscripcion';expect(resolveOAuthPostLoginPath(event,true)).toBe(event);
+ expect(resolveOAuthPostLoginPath('/nations-cup/other/inscripcion',true)).toBe('/completar-perfil?redirect=%2Fnations-cup%2Fother%2Finscripcion');
+});
