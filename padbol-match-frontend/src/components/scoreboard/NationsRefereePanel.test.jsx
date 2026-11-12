@@ -15,8 +15,8 @@ test('tap court player then named bench player sends one atomic substitution, wi
  await act(async()=>fireEvent.click(within(bench).getByRole('button',{name:/Clara/})));
  expect(c.act).toHaveBeenCalledWith('substitution',{teamId:'1',swaps:[{outId:'private-a',inId:'private-c'}]});
 });
-test('Change pair chooses two bench players and emits exactly one two-swap command',async()=>{
- const c=controller();render(<NationsRefereePanel controller={c}/>);
+test('with more than two substitutes Change pair lets the referee choose and emits one atomic command',async()=>{
+ const c=controller({snapshot:{...snapshot,context:{...snapshot.context,teams:{...snapshot.context.teams,2:{players:[...players,{id:'private-e',name:'Elena'}]}}}}});render(<NationsRefereePanel controller={c}/>);
  fireEvent.click(screen.getByRole('button',{name:'Change pair · España'}));
  const bench=screen.getByRole('region',{name:'Substitutes for España'});
  await act(async()=>fireEvent.click(within(bench).getByRole('button',{name:/Clara/})));
@@ -82,9 +82,7 @@ test('two players enter the court together immediately while one atomic pair sav
  let finish;const c=controller({act:jest.fn(()=>new Promise(resolve=>{finish=resolve;}))});render(<NationsRefereePanel controller={c}/>);
  fireEvent.click(screen.getByRole('button',{name:'Change pair · España'}));
  const bench=screen.getByRole('region',{name:'Substitutes for España'});
- fireEvent.click(within(bench).getByRole('button',{name:/Clara/}));
- expect(screen.getByRole('button',{name:'Replace Ana for España'})).toBeEnabled();
- fireEvent.click(within(bench).getByRole('button',{name:/Dina/}));
+ expect(within(bench).getByRole('button',{name:/Ana/})).toBeDisabled();
  expect(screen.getByRole('button',{name:'Replace Clara for España'})).toBeDisabled();
  expect(screen.getByRole('button',{name:'Replace Dina for España'})).toBeDisabled();
  expect(c.act).toHaveBeenCalledTimes(1);
