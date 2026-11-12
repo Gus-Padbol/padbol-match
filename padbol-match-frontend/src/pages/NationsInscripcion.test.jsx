@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import {render, screen, fireEvent, waitFor, act} from '@testing-library/react';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
-import NationsInscripcion from './NationsInscripcion';
+import NationsInscripcion, {COPY} from './NationsInscripcion';
 
 const mockUseAuth = jest.fn();
 const mockFetch = jest.fn();
@@ -825,4 +825,38 @@ test.each(['qa','production'])('Argentina stays QA-only and sorted with the coun
  expect(document.querySelector('#nations-public-selector-name').textContent).not.toMatch(/Italian Fixture/);
  }
  }finally{if(previous===undefined)delete process.env.REACT_APP_APP_VARIANT;else process.env.REACT_APP_APP_VARIANT=previous;}
+});
+
+test.each(['es','en','it','pt'])('complete language contract and rendered registration labels never blank: %s', async language=>{
+ for(const key of Object.keys(COPY.en))expect(COPY[language][key]?.trim()).toBeTruthy();
+ mockUseAuth.mockReturnValue({session:null,loading:false});
+ mockFetch.mockResolvedValue({ok:true,status:200,json:async()=>({participants:[{selectionId:'c'.repeat(32),name:'Public Name',country:'DK'}]})});
+ render(appTree('nations-cup-napoli-2026',`?lang=${language}`));
+ expect(screen.getByRole('heading',{level:1})).toHaveTextContent(COPY[language].titleNaples);
+ expect(screen.getByRole('heading',{level:2})).toHaveTextContent(COPY[language].selectorTitle);
+ expect(screen.getByLabelText(COPY[language].selectorCountry)).toBeInTheDocument();
+ expect(screen.getByLabelText(COPY[language].selectorName)).toBeInTheDocument();
+ expect(document.querySelector('#nations-public-selector-country option[value=""]')).toHaveTextContent(COPY[language].selectorAllCountries);
+ expect(document.querySelector('#nations-public-selector-name option[value=""]')).toHaveTextContent(COPY[language].selectorPlaceholder);
+ expect(screen.getByRole('link',{name:COPY[language].signInCta})).toBeInTheDocument();
+ await waitFor(()=>expect(screen.queryByText(COPY[language].selectorLoading)).not.toBeInTheDocument());
+});
+
+test.each(['es','en','it','pt'].flatMap(language=>[false,true].map(complete=>[language,complete])))('localized authenticated stages have visible headings and actionable controls: %s %s', async (language,complete)=>{
+ const player={selectionId:'d'.repeat(32),name:'Public Chosen',country:'DK'};
+ sessionStorage.setItem('nationsSelector:nations-cup-napoli-2026',JSON.stringify(player));
+ mockFetch.mockImplementation(async url=>String(url).endsWith('/selector')?{ok:true,status:200,json:async()=>({participants:[player]})}:{ok:true,status:200,json:async()=>({requests:[],profile_readiness:{complete,missing:complete?[]:['telefono']}})});
+ const view=render(appTree('nations-cup-napoli-2026',`?lang=${language}`));
+ await waitFor(()=>expect(screen.queryByText(COPY[language].restore)).not.toBeInTheDocument());
+ await waitFor(()=>expect(view.container.querySelector('h2')?.textContent.trim()).toBeTruthy());
+ expect(screen.getByRole('heading',{level:1})).toHaveTextContent(COPY[language].titleNaples);
+ for(const heading of view.container.querySelectorAll('h1,h2'))expect(heading.textContent.trim()).toBeTruthy();
+ if(complete){
+ expect(view.container.querySelector('button[type="submit"]')).toHaveTextContent(COPY[language].submitNaples);
+ expect(screen.getByLabelText(COPY[language].adultConfirm)).toBeInTheDocument();
+ expect(screen.getByLabelText(COPY[language].consentNaples)).toBeInTheDocument();
+ }else{
+ const cta=view.container.querySelector('a.nations-button');expect(cta.textContent.trim()).toBeTruthy();expect(cta.getAttribute('href')).toContain('/mi-perfil?redirect=');
+ expect(view.container.querySelector('button[type="submit"]')).toBeNull();
+ }
 });
