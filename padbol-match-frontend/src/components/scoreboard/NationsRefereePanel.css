@@ -55,3 +55,12 @@
   .nations-referee-panel .nations-referee-actions { flex-direction: column; }
   .nations-referee-panel .nations-referee-actions button { width: 100%; }
 }
+.nations-referee-panel .nations-referee-link h2 { margin-top: 0; font-size: 1.2rem; }
+.nations-referee-panel .nations-referee-link p { line-height: 1.5; }
+.nations-referee-panel .nations-referee-link label { display: block; margin: 1rem 0 .75rem; }
+.nations-referee-panel .nations-referee-link input {
+  display: block; box-sizing: border-box; width: 100%; min-height: 46px;
+  margin-top: .5rem; padding: .7rem; border: 1px solid var(--sc-border);
+  border-radius: 8px; background: var(--sc-bg); color: var(--sc-text); font: inherit;
+}
+.nations-referee-panel .nations-referee-link a { color: #93c5fd; padding: .7rem 0; }
