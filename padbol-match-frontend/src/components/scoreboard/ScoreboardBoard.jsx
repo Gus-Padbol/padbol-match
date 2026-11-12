@@ -183,8 +183,8 @@ function NationsPlayerPanel({team, current, side, copy}) {
   </div>;
 }
 
-function formatTorneoNombreLines(text) {
-  const normalized = String(text || '').trim().toUpperCase();
+function formatTorneoNombreLines(text, preserveCase = false) {
+  const normalized = preserveCase ? String(text || '').trim() : String(text || '').trim().toUpperCase();
   if (!normalized) return [];
   if (normalized.length <= 20) return [normalized];
 
@@ -211,12 +211,12 @@ function formatTorneoNombreLines(text) {
   return line2 ? [line1, line2] : [line1];
 }
 
-function TournamentBrand({ torneoNombre, logoTorneoUrl }) {
+function TournamentBrand({ torneoNombre, logoTorneoUrl, preserveCase = false }) {
   const hasTorneoNombre = Boolean(String(torneoNombre || '').trim());
   const hasTorneoLogo = Boolean(String(logoTorneoUrl || '').trim());
   if (!hasTorneoNombre && !hasTorneoLogo) return null;
 
-  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre) : [];
+  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre, preserveCase) : [];
 
   return (
     <div className={`sb-tournament-brand${hasTorneoLogo && hasTorneoNombre ? ' sb-tournament-brand--logo-and-name' : ''}`}>
@@ -443,7 +443,7 @@ export default function ScoreboardBoard({
         </aside>
 
         <section className="sb-center">
-          <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} />
+          <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} preserveCase={lineup.isNations} />
           {lineup.isNations && formatScoreboardVenueHeader(partido) ? <p className="sb-nations-venue">{formatScoreboardVenueHeader(partido)}</p> : null}
 
           <div className="sb-center__block">
