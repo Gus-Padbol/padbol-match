@@ -19,7 +19,7 @@ test('definitive conflict refreshes state, preserves visible explanation, then a
  const {result}=renderHook(()=>useNationsReferee({scoreboardId:'one'}));await waitFor(()=>expect(result.current.loading).toBe(false));
  client.send.mockRejectedValueOnce({status:409,code:'CHANGE_ENDS_REQUIRED'});
  await act(async()=>{await result.current.act('substitution',{swaps:[]});});
- expect(result.current.pending).toBeNull();expect(result.current.error).toMatch(/game impar/);expect(client.read).toHaveBeenCalledTimes(2);
+ expect(result.current.pending).toBeNull();expect(result.current.error).toMatch(/odd-numbered game/);expect(client.read).toHaveBeenCalledTimes(2);
 });
 test('changing credential discards previous operation and late response cannot replace new board',async()=>{
  let finish;client.send.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));

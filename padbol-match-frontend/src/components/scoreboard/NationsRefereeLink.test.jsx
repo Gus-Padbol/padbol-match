@@ -20,13 +20,13 @@ test('control capability cannot issue; missing session and mismatched board/path
 });
 test('staff action displays and copies only after successful authoritative verification, without browser storage',async()=>{
  const refresh=jest.fn(async()=>{}),storage=jest.spyOn(Storage.prototype,'setItem');const copy=jest.fn(async()=>{});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:copy}});
- render(<NationsRefereeLink scoreboardId="board" onIssued={refresh}/>);expect(screen.queryByLabelText('Enlace privado del árbitro')).toBeNull();
- fireEvent.click(screen.getByRole('button',{name:'Crear enlace del árbitro'}));await screen.findByLabelText('Enlace privado del árbitro');expect(refresh).toHaveBeenCalledTimes(1);expect(screen.getByRole('link',{name:'Abrir panel del árbitro'})).toHaveAttribute('rel','noopener noreferrer');
- fireEvent.click(screen.getByRole('button',{name:'Copiar enlace'}));await screen.findByText('Enlace copiado.');expect(copy).toHaveBeenCalledWith(expect.stringContaining(result.control_path));expect(storage).not.toHaveBeenCalled();storage.mockRestore();
+ render(<NationsRefereeLink scoreboardId="board" onIssued={refresh}/>);expect(screen.queryByLabelText('Private referee link')).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Create referee link'}));await screen.findByLabelText('Private referee link');expect(refresh).toHaveBeenCalledTimes(1);expect(screen.getByRole('link',{name:'Open referee panel'})).toHaveAttribute('rel','noopener noreferrer');
+ fireEvent.click(screen.getByRole('button',{name:'Copy link'}));await screen.findByText('Link copied.');expect(copy).toHaveBeenCalledWith(expect.stringContaining(result.control_path));expect(storage).not.toHaveBeenCalled();storage.mockRestore();
 });
 test('forbidden issuance or failed capability verification never shows a link and keeps a clear error',async()=>{
  fetch.mockReset().mockResolvedValueOnce({ok:false,json:async()=>({code:'FORBIDDEN'})});render(<NationsRefereeLink scoreboardId="board"/>);
- fireEvent.click(screen.getByRole('button',{name:'Crear enlace del árbitro'}));await screen.findByRole('alert');expect(screen.queryByLabelText('Enlace privado del árbitro')).toBeNull();await waitFor(()=>expect(screen.getByRole('button',{name:'Crear enlace del árbitro'})).toBeEnabled());
+ fireEvent.click(screen.getByRole('button',{name:'Create referee link'}));await screen.findByRole('alert');expect(screen.queryByLabelText('Private referee link')).toBeNull();await waitFor(()=>expect(screen.getByRole('button',{name:'Create referee link'})).toBeEnabled());
 });
 test('a minted token with wrong-board or rejected authoritative context remains undisclosed',async()=>{
  fetch.mockReset().mockResolvedValueOnce(ok(result)).mockResolvedValueOnce(ok({scoreboardId:'different'}));await expect(issueRefereeControlLink({scoreboardId:'board'})).rejects.toThrow('REFEREE_LINK_SCOPE_INVALID');

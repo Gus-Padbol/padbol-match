@@ -2,12 +2,12 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {getApiBaseUrl} from '../utils/apiPublicBaseUrl';
 import {createNationsRefereeClient} from '../utils/nationsRefereeClient';
 
-export const refereeMessage = error => ({CHANGE_ENDS_REQUIRED:'Espera a que termine un game impar del set para hacer el cambio.',
- OUT_NOT_ACTIVE:'El jugador que sale ya no está en cancha. Actualiza el marcador.',IN_ALREADY_ACTIVE:'El jugador que entra ya está en cancha.',
- IN_NOT_IN_LINEUP:'Elige un suplente de la alineación confirmada.',SUBSTITUTION_BATCH_INVALID:'Revisa los jugadores de ambos cambios.',
- MATCH_NOT_TERMINATED:'El partido todavía no ha terminado.',AUTH_REQUIRED:'Inicia sesión para operar el marcador.',
- CONTROL_TOKEN_INVALID:'El enlace del árbitro no está disponible.',FORBIDDEN:'No tienes permiso para operar este marcador.',
- REVISION_CONFLICT:'El marcador cambió. Revisa el estado actualizado.',GAME_EPOCH_CONFLICT:'El marcador cambió. Revisa el estado actualizado.'}[error?.code] || 'No se pudo confirmar la operación. Actualiza o reintenta el mismo intento.');
+export const refereeMessage = error => ({CHANGE_ENDS_REQUIRED:'Wait until an odd-numbered game of the set has ended before substituting.',
+ OUT_NOT_ACTIVE:'The outgoing player is no longer on court. Refresh the scoreboard.',IN_ALREADY_ACTIVE:'The incoming player is already on court.',
+ IN_NOT_IN_LINEUP:'Choose a substitute from the confirmed lineup.',SUBSTITUTION_BATCH_INVALID:'Check the players in both substitutions.',
+ MATCH_NOT_TERMINATED:'The match has not finished yet.',AUTH_REQUIRED:'Sign in to control this scoreboard.',
+ CONTROL_TOKEN_INVALID:'The referee link is unavailable.',FORBIDDEN:'You do not have permission to control this scoreboard.',
+ REVISION_CONFLICT:'The scoreboard changed. Check the updated state.',GAME_EPOCH_CONFLICT:'The scoreboard changed. Check the updated state.'}[error?.code] || 'The operation could not be confirmed. Refresh or retry the same attempt.');
 
 export default function useNationsReferee({scoreboardId,controlToken,accessToken,authUserId}) {
  const bearerRef=useRef(accessToken);bearerRef.current=accessToken;
