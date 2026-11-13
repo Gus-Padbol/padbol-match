@@ -15,7 +15,7 @@ const response=(body,status=200)=>({ok:status>=200&&status<300,status,json:async
 const mount=()=>render(<MemoryRouter initialEntries={[NATIONS_PROFILE_PATH]}><Routes><Route path="/mi-perfil" element={<NationsPlayerProfile/>}/><Route path={NATIONS_RETURN_PATH} element={<p>Registration status</p>}/></Routes></MemoryRouter>);
 const posts=()=>mockFetch.mock.calls.filter(([,options])=>options?.method==='POST');
 const puts=()=>mockFetch.mock.calls.filter(([,options])=>options?.method==='PUT');
-const complete=async()=>{await screen.findByLabelText('Competition gender');for(const [label,value] of [['Competition gender','masculino'],['City','Buenos Aires'],['Playing level','Elite'],['Playing hand','Diestro'],['Court position','derecha'],['Date of birth','1980-01-01'],['Nationality','AR'],['Document type','pasaporte'],['Document issuing country','AR'],['Player sporting category','Elite'],['WhatsApp / phone','+5491123456789']])fireEvent.change(screen.getByLabelText(label),{target:{value}});if(screen.queryByLabelText('Document number'))fireEvent.change(screen.getByLabelText('Document number'),{target:{value:'TEST12345'}});if(screen.queryByLabelText('I confirm that I am 18 or older.')){fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older.'));fireEvent.click(screen.getByLabelText('I agree to the use of my details for this registration.'));}};
+const complete=async()=>{await screen.findByLabelText('WhatsApp / phone');for(const [label,value] of [['City','Buenos Aires'],['Date of birth','1980-01-01'],['Nationality','AR'],['Document type','pasaporte'],['Document issuing country','AR'],['WhatsApp / phone','+5491123456789']])fireEvent.change(screen.getByLabelText(label),{target:{value}});if(screen.queryByLabelText('Document number'))fireEvent.change(screen.getByLabelText('Document number'),{target:{value:'TEST12345'}});if(screen.queryByLabelText('I confirm that I am 18 or older.')){fireEvent.click(screen.getByLabelText('I confirm that I am 18 or older.'));fireEvent.click(screen.getByLabelText('I agree to the use of my details for this registration.'));}};
 beforeEach(()=>{
  jest.clearAllMocks();insertOwnProfileRow.mockResolvedValue({data:{id:1,user_id:'actor'},error:null});loadCanonicalProfile.mockResolvedValue({row:{id:1,user_id:'actor'}});sessionStorage.clear();sessionStorage.setItem(nationsSelectionKey,JSON.stringify(selected));
  identity={};profile={nombre:'',apellido:'',pais:'',genero:'',nivel:'Avanzado',categoria_deportiva:'General original'};latest=null;readiness={complete:true,missing:[]};receipt={status:'pendiente',selectionStatus:'verificacion_pendiente'};
@@ -32,15 +32,15 @@ beforeEach(()=>{
  });global.fetch=mockFetch;
 });
 test('complete event-only form reuses selected identity without duplicated name/country inputs',async()=>{
- mount();await screen.findByLabelText('Competition gender');expect(screen.getByLabelText('Selected player')).toHaveTextContent('Gustavo Miguens');expect(screen.queryByLabelText('Name')).toBeNull();expect(screen.queryByLabelText('Country')).toBeNull();
- for(const label of ['City','Playing level','Playing hand','Court position','Date of birth','Nationality','Document type','Document number','Document issuing country','Player sporting category','WhatsApp / phone'])expect(screen.getByLabelText(label)).toBeRequired();
+ mount();await screen.findByLabelText('WhatsApp / phone');expect(screen.getByLabelText('Selected player')).toHaveTextContent('Gustavo Miguens');expect(screen.queryByLabelText('Name')).toBeNull();expect(screen.queryByLabelText('Country')).toBeNull();
+ for(const label of ['City','Date of birth','Nationality','Document type','Document number','Document issuing country','WhatsApp / phone'])expect(screen.getByLabelText(label)).toBeRequired();
  expect(document.body.textContent).not.toMatch(/partner|federat|reserva|instructor|bring your/i);expect(document.querySelectorAll('form')).toHaveLength(1);
 });
 test('complete private ficha saves through own official endpoints before one normal registration',async()=>{
  mount();await complete();fireEvent.submit(document.querySelector('form'));await screen.findByText('Registration status');
- expect(puts()).toHaveLength(2);expect(JSON.parse(puts()[0][1].body)).toMatchObject({nombre:'Gustavo',apellido:'Miguens',pais:'AR',nivel:'Elite',ciudad:'Buenos Aires'});expect(JSON.parse(puts()[1][1].body)).toMatchObject({fecha_nacimiento:'1980-01-01',numero_documento:'TEST12345'});expect(posts()).toHaveLength(1);expect(JSON.parse(posts()[0][1].body).selection_id).toBe(selected.selectionId);
+ expect(puts()).toHaveLength(2);expect(JSON.parse(puts()[0][1].body)).toMatchObject({nombre:'Gustavo',apellido:'Miguens',pais:'AR',ciudad:'Buenos Aires'});expect(JSON.parse(puts()[1][1].body)).toMatchObject({fecha_nacimiento:'1980-01-01',numero_documento:'TEST12345'});expect(posts()).toHaveLength(1);expect(JSON.parse(posts()[0][1].body).selection_id).toBe(selected.selectionId);
 });
-test('incomplete full ficha blocks writes',async()=>{mount();await screen.findByLabelText('Competition gender');fireEvent.change(screen.getByLabelText('Competition gender'),{target:{value:'masculino'}});fireEvent.submit(document.querySelector('form'));expect(await screen.findByRole('alert')).toHaveTextContent('Complete all required');expect(puts()).toHaveLength(0);});
+test('incomplete full ficha blocks writes',async()=>{mount();await screen.findByLabelText('WhatsApp / phone');fireEvent.submit(document.querySelector('form'));expect(await screen.findByRole('alert')).toHaveTextContent('Complete all required');expect(puts()).toHaveLength(0);});
 test('two rapid submits send one registration; unconfirmed network retry retains the same fresh ID after rejection',async()=>{
  latest={status:'rechazada',request_id:'old-rejected'};sessionStorage.setItem(nationsRequestKey('actor'),'old-rejected');
  const original=mockFetch.getMockImplementation();let finish;
@@ -68,7 +68,7 @@ test('a genuinely missing own profile is created through the existing UUID/RLS h
  const original=mockFetch.getMockImplementation();mockFetch.mockImplementation((url,options)=>url.endsWith('/perfil')&&!options?.method?response({},404):original(url,options));
  mount();await complete();fireEvent.submit(document.querySelector('form'));await screen.findByText('Registration status');
  expect(insertOwnProfileRow).toHaveBeenCalledTimes(1);expect(insertOwnProfileRow.mock.calls[0][0]).toMatchObject({userId:'actor',payload:{email:'own@example.test',nombre:'Gustavo',apellido:'Miguens',pais:'AR'}});
- expect(Object.keys(insertOwnProfileRow.mock.calls[0][0].payload).sort()).toEqual(['apellido','email','nombre','pais']);expect(puts()).toHaveLength(2);expect(JSON.parse(puts()[0][1].body).genero).toBe('masculino');expect(posts()).toHaveLength(1);
+ expect(Object.keys(insertOwnProfileRow.mock.calls[0][0].payload).sort()).toEqual(['apellido','email','nombre','pais']);expect(puts()).toHaveLength(2);expect(JSON.parse(puts()[0][1].body)).not.toHaveProperty('genero');expect(posts()).toHaveLength(1);
 });
 test('a duplicate creation race may continue only after canonical reread proves the same session UUID',async()=>{
  const original=mockFetch.getMockImplementation();mockFetch.mockImplementation((url,options)=>url.endsWith('/perfil')&&!options?.method?response({},404):original(url,options));insertOwnProfileRow.mockResolvedValue({error:{code:'23505'}});loadCanonicalProfile.mockResolvedValue({row:{id:1,user_id:'another-actor'}});
@@ -84,11 +84,15 @@ test('profile creation waits for the normal AuthContext profile load and stale a
 });
 
 test('an active own canonical request overrides a different public selection cache',async()=>{
- latest={status:'pendiente',selection:{selectionId:'own-id',name:'Own Canonical Player',country:'IT'}};mount();await screen.findByLabelText('Competition gender');expect(screen.getByLabelText('Selected player')).toHaveTextContent('Own Canonical Player');expect(screen.getByLabelText('Selected player')).not.toHaveTextContent('Gustavo');
+ latest={status:'pendiente',selection:{selectionId:'own-id',name:'Own Canonical Player',country:'IT'}};mount();await screen.findByLabelText('WhatsApp / phone');expect(screen.getByLabelText('Selected player')).toHaveTextContent('Own Canonical Player');expect(screen.getByLabelText('Selected player')).not.toHaveTextContent('Gustavo');
 });
 test('unconfirmed private identity save never sends a registration',async()=>{
  const original=mockFetch.getMockImplementation();mockFetch.mockImplementation((url,options={})=>url.endsWith('/identidad')&&options.method==='PUT'?response({error:'unavailable'},503):original(url,options));mount();await complete();fireEvent.submit(document.querySelector('form'));expect(await screen.findByRole('alert')).toHaveTextContent('Unable to save');expect(posts()).toHaveLength(0);
 });
 test('a future birthdate cannot be saved',async()=>{mount();await complete();fireEvent.change(screen.getByLabelText('Date of birth'),{target:{value:'2099-01-01'}});fireEvent.submit(document.querySelector('form'));expect(await screen.findByRole('alert')).toHaveTextContent('date of birth');expect(puts()).toHaveLength(0);});
 
-test('Back from a fresh ficha clears only the selection intent so the list can be reopened',async()=>{mount();await screen.findByLabelText('Competition gender');fireEvent.click(screen.getByRole('link',{name:'Back'}));await screen.findByText('Registration status');expect(sessionStorage.getItem(nationsSelectionKey)).toBeNull();expect(puts()).toHaveLength(0);expect(posts()).toHaveLength(0);});
+test('Back from a fresh ficha clears only the selection intent so the list can be reopened',async()=>{mount();await screen.findByLabelText('WhatsApp / phone');fireEvent.click(screen.getByRole('link',{name:'Back'}));await screen.findByText('Registration status');expect(sessionStorage.getItem(nationsSelectionKey)).toBeNull();expect(puts()).toHaveLength(0);expect(posts()).toHaveLength(0);});
+
+test('event Male/Elite summary replaces sporting dropdowns without fabricating or overwriting general sporting data',async()=>{
+ profile={...profile,genero:'femenino',nivel:'4ta',lateralidad:'Zurdo',posicion_cancha:'izquierda'};identity={genero:'femenino',categoria_deportiva:'4ta'};mount();await complete();expect(screen.getByText('Nations Cup · Male · Elite')).toBeInTheDocument();expect(screen.getByRole('heading',{name:'Identity details'})).toBeInTheDocument();for(const label of ['Competition gender','Playing level','Playing hand','Court position','Player sporting category'])expect(screen.queryByLabelText(label)).toBeNull();fireEvent.submit(document.querySelector('form'));await screen.findByText('Registration status');for(const [,options]of puts()){const payload=JSON.parse(options.body);for(const key of ['genero','nivel','lateralidad','posicion_cancha','categoria_deportiva'])expect(payload).not.toHaveProperty(key);}expect(profile).toMatchObject({genero:'femenino',nivel:'4ta',lateralidad:'Zurdo',posicion_cancha:'izquierda'});expect(identity.categoria_deportiva).toBe('4ta');
+});

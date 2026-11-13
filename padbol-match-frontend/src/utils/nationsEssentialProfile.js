@@ -1,4 +1,3 @@
-import {categoriasNivelPorGenero} from '../constants/jugadorCategoria';
 import {countryFlagFromIso} from './countryRankingDisplay';
 export const NATIONS_NAPOLI_SLUG='nations-cup-napoli-2026';
 export const NATIONS_RETURN_PATH=`/nations-cup/${NATIONS_NAPOLI_SLUG}/inscripcion`;
@@ -39,8 +38,8 @@ export function nationsProfileDraft(profile={},selected) {
 }
 export const activeNationsRequest=request=>['pendiente','en_revision','aprobada'].includes(request?.status);
 
-export const NATIONS_PLAYER_FIELDS=['ciudad','nivel','lateralidad','posicion_cancha'];
-export const NATIONS_IDENTITY_FIELDS=['fecha_nacimiento','tipo_documento','pais_documento','nacionalidad','categoria_deportiva'];
+export const NATIONS_PLAYER_FIELDS=['ciudad'];
+export const NATIONS_IDENTITY_FIELDS=['fecha_nacimiento','tipo_documento','pais_documento','nacionalidad'];
 export function nationsCompleteDraft(profile,selected,identity={}) {
  const draft=nationsProfileDraft(profile,selected);
  draft.telefono=draft.telefono||identity.telefono||'';
@@ -51,9 +50,8 @@ export function nationsCompleteDraft(profile,selected,identity={}) {
 }
 export function nationsCompleteError(form,hasDocument=false) {
  if(!form.nombre.trim()||!form.apellido.trim()||!form.pais)return 'Your selected player identity is unavailable. Return to registration.';
- if(!['masculino','femenino'].includes(form.genero))return 'Choose your competition gender.';
  if([...NATIONS_PLAYER_FIELDS,...NATIONS_IDENTITY_FIELDS].some(key=>!String(form[key]||'').trim()))return 'Complete all required player details.';
- if(!categoriasNivelPorGenero(form.genero).includes(form.nivel)||!categoriasNivelPorGenero(form.genero).includes(form.categoria_deportiva)||!['Diestro','Zurdo','Ambidiestro'].includes(form.lateralidad)||!['derecha','izquierda','ambas'].includes(form.posicion_cancha)||!['dni','pasaporte','cedula','otro'].includes(form.tipo_documento)||!['pais_documento','nacionalidad'].every(key=>/^[A-Z]{2}$/.test(form[key])))return 'Check your player details.';
+ if(!['dni','pasaporte','cedula','otro'].includes(form.tipo_documento)||!['pais_documento','nacionalidad'].every(key=>/^[A-Z]{2}$/.test(form[key])))return 'Check your player details.';
  if((form.telefono.trim().length>32||!/^\+?[0-9()\s-]{6,}$/.test(form.telefono.trim())))return 'Enter your contact number, including the country code.';
  const date=new Date(form.fecha_nacimiento+'T00:00:00Z');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento)||!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==form.fecha_nacimiento||date>new Date())return 'Check your date of birth.';

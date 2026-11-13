@@ -4,7 +4,6 @@ import React,{useEffect,useRef,useState} from 'react';
 import {Link,useNavigate} from 'react-router-dom';
 import {useAuth} from '../context/AuthContext';
 import {getApiBaseUrl} from '../utils/apiPublicBaseUrl';
-import {categoriasNivelPorGenero} from '../constants/jugadorCategoria';
 import {PAISES_ISO_OPTIONS,parseIdentidadFromApi} from '../utils/jugadorIdentidad';
 import NationsRegistrationShell from '../components/NationsRegistrationShell';
 import {NATIONS_NAPOLI_SLUG,NATIONS_RETURN_PATH,storedNationsSelection,nationsCompleteDraft,nationsCompleteError,NATIONS_PLAYER_FIELDS,NATIONS_IDENTITY_FIELDS,nationsCountryOptions,nationsRequestId,activeNationsRequest,storeNationsSelection} from '../utils/nationsEssentialProfile';
@@ -39,7 +38,7 @@ export default function NationsPlayerProfile() {
  const change=event=>setForm(current=>({...current,[event.target.name]:event.target.value}));
  const submit=async event=>{
   event.preventDefault();if(busyRef.current||!data||!form||!verified)return;
-  const patch={nombre:form.nombre.trim(),apellido:form.apellido.trim(),pais:form.pais.trim(),genero:form.genero};
+  const patch={nombre:form.nombre.trim(),apellido:form.apellido.trim(),pais:form.pais.trim()};
   const validation=nationsCompleteError(form,data.identity.tiene_documento);if(validation){setError(validation);return;}
   for(const key of NATIONS_PLAYER_FIELDS)patch[key]=form[key].trim();
   const fields=new FormData(event.currentTarget);
@@ -74,11 +73,11 @@ export default function NationsPlayerProfile() {
     if(current())setData(previous=>({...previous,profile:saved,profileMissing:false}));
    }
    const identityPatch=Object.fromEntries(NATIONS_IDENTITY_FIELDS.map(key=>[key,form[key].trim()]));
-   identityPatch.genero=form.genero;identityPatch.telefono=patch.telefono;
+   identityPatch.telefono=patch.telefono;
    if(!data.identity.tiene_documento)identityPatch.numero_documento=form.numero_documento.trim();
    await request(`${base}/api/jugador/identidad`,{method:'PUT',body:JSON.stringify(identityPatch)});
    const identitySaved=parseIdentidadFromApi(await request(`${base}/api/jugador/identidad`));
-   if([...NATIONS_IDENTITY_FIELDS,'genero','telefono'].some(key=>identitySaved[key]!==identityPatch[key])||!identitySaved.tiene_documento)throw new Error('Your tournament details could not be confirmed.');
+   if([...NATIONS_IDENTITY_FIELDS,'telefono'].some(key=>identitySaved[key]!==identityPatch[key])||!identitySaved.tiene_documento)throw new Error('Your tournament details could not be confirmed.');
    const readiness=await request(`${eventPath}/profile-readiness`);
    if(readiness.complete!==true)throw new Error('Your player details could not be confirmed. Try again.');
    if(!data.active) {
@@ -97,23 +96,18 @@ export default function NationsPlayerProfile() {
  const renderInput=(name,label,type='text')=><div className="nations-field"><label className="nations-label" htmlFor={`nations-${name}`}>{label}</label><input className="nations-input" id={`nations-${name}`} name={name} type={type} required value={form[name]} onChange={change} maxLength={name==='numero_documento'?undefined:120}/></div>;
  const renderSelect=(name,label,options)=><div className="nations-field"><label className="nations-label" htmlFor={`nations-${name}`}>{label}</label><select className="nations-select" id={`nations-${name}`} name={name} required value={form[name]} onChange={change}><option value="">Choose</option>{options.map(row=><option key={row.value} value={row.value}>{row.label}</option>)}</select></div>;
  return <NationsRegistrationShell><section className="nations-card">
-  <h1 className="nations-title">Player details</h1><p className="nations-intro">Nations Cup · Elite</p>
+  <h1 className="nations-title">Player details</h1><p className="nations-intro">Nations Cup · Male · Elite</p>
   {authLoading||pending?<p role="status">Loading…</p>:!actor?<Link className="nations-button" to={`/login?redirect=${encodeURIComponent(NATIONS_RETURN_PATH)}&lang=en`}>Sign in or create an account</Link>:!verified?<p role="alert">Verify your email to continue.</p>:error&&!data?<div role="alert"><p>{error}</p><button className="nations-button" onClick={()=>setRetry(value=>value+1)}>Try again</button></div>:data&&!data.selected&&!data.active?<Link className="nations-button" to={NATIONS_RETURN_PATH}>Choose your name</Link>:form?<form className="nations-form" onSubmit={submit} aria-busy={busy}>
    <p className="nations-status__note" aria-label="Selected player">{data.selected?.name||`${form.nombre} ${form.apellido}`.trim()||'Player identity unavailable'} · {countries.find(row=>row.code===form.pais)?.name||form.pais}</p>
-   <div className="nations-field"><label className="nations-label" htmlFor="nations-profile-gender">Competition gender</label><select className="nations-select" id="nations-profile-gender" name="genero" required value={form.genero} onChange={change}><option value="">Choose</option><option value="masculino">Male</option><option value="femenino">Female</option></select></div>
    <div className="nations-field"><label className="nations-label" htmlFor="nations-profile-email">Account email</label><input className="nations-input" id="nations-profile-email" type="email" value={session.user.email||''} readOnly/></div>
    <div className="nations-field"><label className="nations-label" htmlFor="nations-profile-phone">WhatsApp / phone</label><input className="nations-input" id="nations-profile-phone" name="telefono" type="tel" autoComplete="tel" required value={form.telefono} onChange={change}/></div>
    {renderInput('ciudad','City')}
-   {renderSelect('nivel','Playing level',categoriasNivelPorGenero(form.genero).map(value=>({value,label:value})))}
-   {renderSelect('lateralidad','Playing hand',[{value:'Diestro',label:'Right-handed'},{value:'Zurdo',label:'Left-handed'},{value:'Ambidiestro',label:'Both'}])}
-   {renderSelect('posicion_cancha','Court position',[{value:'derecha',label:'Right'},{value:'izquierda',label:'Left'},{value:'ambas',label:'Both'}])}
-   <h2>Tournament details</h2>
+   <h2>Identity details</h2>
    {renderInput('fecha_nacimiento','Date of birth','date')}
    {renderSelect('nacionalidad','Nationality',countryChoices)}
    {renderSelect('tipo_documento','Document type',[{value:'dni',label:'National ID'},{value:'pasaporte',label:'Passport'},{value:'cedula',label:'Identity card'},{value:'otro',label:'Other document'}])}
    {renderSelect('pais_documento','Document issuing country',countryChoices)}
    {data.identity.tiene_documento?<p>Document saved: {data.identity.numero_documento_mascarado}</p>:renderInput('numero_documento','Document number')}
-   {renderSelect('categoria_deportiva','Player sporting category',categoriasNivelPorGenero(form.genero).map(value=>({value,label:value})))}
    {!data.active?<><label className="nations-check"><input type="checkbox" name="adult" required/><span className="nations-check__box" aria-hidden="true"/><span className="nations-check__text">I confirm that I am 18 or older.</span></label><label className="nations-check"><input type="checkbox" name="consent" required/><span className="nations-check__box" aria-hidden="true"/><span className="nations-check__text">I agree to the use of my details for this registration.</span></label></>:null}
    {error?<p role="alert">{error}</p>:null}
    <button className="nations-button" type="submit" disabled={busy}>{busy?'Saving…':data.active?'Save player details':'Confirm registration'}</button>
