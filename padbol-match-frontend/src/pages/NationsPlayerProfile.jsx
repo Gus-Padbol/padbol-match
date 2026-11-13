@@ -102,6 +102,7 @@ export default function NationsPlayerProfile() {
    <div className="nations-field"><label className="nations-label" htmlFor="nations-profile-email">Account email</label><input className="nations-input" id="nations-profile-email" type="email" value={session.user.email||''} readOnly/></div>
    <div className="nations-field"><label className="nations-label" htmlFor="nations-profile-phone">WhatsApp / phone</label><input className="nations-input" id="nations-profile-phone" name="telefono" type="tel" autoComplete="tel" required value={form.telefono} onChange={change}/></div>
    {renderInput('ciudad','City')}
+   {renderSelect('pierna_habil','Preferred foot',[{value:'derecha',label:'Right'},{value:'izquierda',label:'Left'},{value:'ambas',label:'Both'}])}
    <h2>Identity details</h2>
    {renderInput('fecha_nacimiento','Date of birth','date')}
    {renderSelect('nacionalidad','Nationality',countryChoices)}
