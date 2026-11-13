@@ -52,7 +52,7 @@ export default function NationsPlayerProfile() {
    const response=await fetch(url,{...options,headers:{Authorization:`Bearer ${capturedToken}`,...(options.body?{'Content-Type':'application/json'}:{})}});
    const body=await response.json().catch(()=>({}));
    if(!current())throw new Error('Session changed. Reopen your player details.');
-   if(!response.ok){const err=new Error(response.status===409?'Your registration needs review. Return to the registration page.':'Unable to save your player details. Try again.');err.code=body.code;throw err;}
+   if(!response.ok){const duplicate=response.status===409&&body.code==='DOCUMENTO_DUPLICADO';const err=new Error(duplicate?'That document is already registered to another account. Use a different document number.':response.status===409?'Your registration needs review. Return to the registration page.':'Unable to save your player details. Try again.');err.code=body.code;throw err;}
    return body;
   };
   try {

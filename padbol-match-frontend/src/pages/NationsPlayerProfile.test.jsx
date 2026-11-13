@@ -89,6 +89,15 @@ test('an active own canonical request overrides a different public selection cac
 test('unconfirmed private identity save never sends a registration',async()=>{
  const original=mockFetch.getMockImplementation();mockFetch.mockImplementation((url,options={})=>url.endsWith('/identidad')&&options.method==='PUT'?response({error:'unavailable'},503):original(url,options));mount();await complete();fireEvent.submit(document.querySelector('form'));expect(await screen.findByRole('alert')).toHaveTextContent('Unable to save');expect(posts()).toHaveLength(0);
 });
+test('a duplicate document is explained without discarding the rest of the typed ficha',async()=>{
+ const original=mockFetch.getMockImplementation();
+ mockFetch.mockImplementation((url,options={})=>url.endsWith('/identidad')&&options.method==='PUT'?response({error:'El documento ya está registrado en otra cuenta',code:'DOCUMENTO_DUPLICADO'},409):original(url,options));
+ mount();await complete();fireEvent.submit(document.querySelector('form'));
+ expect(await screen.findByRole('alert')).toHaveTextContent('already registered to another account');
+ expect(screen.getByLabelText('City')).toHaveValue('Buenos Aires');
+ expect(screen.getByLabelText('Preferred foot')).toHaveValue('derecha');
+ expect(posts()).toHaveLength(0);
+});
 test('a future birthdate cannot be saved',async()=>{mount();await complete();fireEvent.change(screen.getByLabelText('Date of birth'),{target:{value:'2099-01-01'}});fireEvent.submit(document.querySelector('form'));expect(await screen.findByRole('alert')).toHaveTextContent('date of birth');expect(puts()).toHaveLength(0);});
 
 test('Back from a fresh ficha clears only the selection intent so the list can be reopened',async()=>{mount();await screen.findByLabelText('WhatsApp / phone');fireEvent.click(screen.getByRole('link',{name:'Back'}));await screen.findByText('Registration status');expect(sessionStorage.getItem(nationsSelectionKey)).toBeNull();expect(puts()).toHaveLength(0);expect(posts()).toHaveLength(0);});
