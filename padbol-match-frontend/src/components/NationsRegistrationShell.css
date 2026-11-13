@@ -1,9 +1,15 @@
+
 .nations-essential .nations-select{appearance:auto;-webkit-appearance:menulist;padding-right:16px}
 .nations-essential .nations-text-button{display:inline-block;margin-top:12px}
 
 .nations-essential .nations-card > .nations-field + .nations-field{margin-top:18px}
 .nations-essential .nations-card > .nations-button{margin-top:20px}
 
-.nations-essential .nations-brand-rail{display:grid;grid-template-columns:1fr .65fr 1.15fr;align-items:center;gap:16px;min-width:0;flex:1;padding:10px 12px;background:#fff;border-radius:12px}
-.nations-essential .nations-brand-rail img{display:block;width:100%;max-width:100%;height:34px;object-fit:contain}
-@media(max-width:480px){.nations-essential .nations-brand-rail{gap:12px;padding:8px 10px}.nations-essential .nations-brand-rail img{height:30px}.nations-essential .nations-topbar>.nations-event-chip{display:none}}
+.nations-essential .nations-topbar{display:grid;grid-template-columns:minmax(64px,88px) minmax(0,1fr);align-items:center;gap:14px;margin:0 0 14px;padding:0 4px}
+.nations-essential .nations-event-crest{display:block;width:100%;max-width:88px;height:auto;min-width:0}
+.nations-essential .nations-event-heading{min-width:0}
+.nations-essential .nations-event-title{margin:0;color:var(--text-primary,#0f172a);font-size:clamp(17px,4.4vw,23px);font-weight:950;letter-spacing:-.025em;line-height:1.12;overflow-wrap:anywhere}
+.nations-essential .nations-event-meta{margin:5px 0 0;color:var(--text-secondary,#64748b);font-size:clamp(10.5px,2.6vw,12.5px);font-weight:650;line-height:1.4;overflow-wrap:anywhere}
+.nations-essential .nations-brand-rail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr);align-items:center;gap:10px;min-width:0;width:100%;margin:0 0 16px;padding:0 4px;background:none;border-radius:0;overflow:hidden}
+.nations-essential .nations-brand-rail img{display:block;width:100%;min-width:0;max-width:100%;height:28px;object-fit:contain}
+@media(max-width:480px){.nations-essential .nations-topbar{grid-template-columns:56px minmax(0,1fr);gap:10px}.nations-essential .nations-event-crest{max-width:56px}.nations-essential .nations-brand-rail{gap:8px;padding:0 4px}.nations-essential .nations-brand-rail img{height:24px}}
