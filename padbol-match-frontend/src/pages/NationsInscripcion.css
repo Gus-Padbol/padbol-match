@@ -960,3 +960,8 @@ html.theme-dark .nations-status__icon--approved {
 }
 .nations-selector .nations-field:last-of-type { margin-bottom: 8px; }
 .nations-selector .nations-status__note { margin-top: 8px; }
+
+.nations-store-badges{display:flex;flex-direction:column;align-items:center;gap:10px;margin:16px 0}
+.nations-store-badges a{display:inline-flex;max-width:100%;border-radius:8px}
+.nations-store-badges img{display:block;width:auto;max-width:100%;height:48px;object-fit:contain}
+@media(min-width:600px){.nations-store-badges{flex-direction:row;justify-content:center;gap:14px}.nations-store-badges img{height:52px}}
