@@ -34,11 +34,11 @@ export function nationsCountryOptions(codes,language='en') {
 export function nationsProfileDraft(profile={},selected) {
  const parts=String(selected?.name||'').trim().split(/\s+/).filter(Boolean);
  const ownName=String(profile.nombre||'').trim()&&String(profile.apellido||'').trim();
- return {nombre:ownName?profile.nombre:parts[0]||profile.nombre||'',apellido:ownName?profile.apellido:parts.slice(1).join(' ')||profile.apellido||'',pais:selected?.country||profile.pais||'',genero:['masculino','femenino'].includes(profile.genero)?profile.genero:'',telefono:profile.telefono||profile.whatsapp||''};
+ return {nombre:ownName?profile.nombre:parts[0]||profile.nombre||'',apellido:ownName?profile.apellido:parts.slice(1).join(' ')||profile.apellido||'',pais:selected?.country||profile.pais||'',genero:['masculino','femenino'].includes(profile.genero)?profile.genero:'',telefono:profile.telefono||profile.whatsapp||'',pierna_habil:profile.pierna_habil||''};
 }
 export const activeNationsRequest=request=>['pendiente','en_revision','aprobada'].includes(request?.status);
 
-export const NATIONS_PLAYER_FIELDS=['ciudad'];
+export const NATIONS_PLAYER_FIELDS=['ciudad','pierna_habil'];
 export const NATIONS_IDENTITY_FIELDS=['fecha_nacimiento','tipo_documento','pais_documento','nacionalidad'];
 export function nationsCompleteDraft(profile,selected,identity={}) {
  const draft=nationsProfileDraft(profile,selected);
@@ -51,6 +51,7 @@ export function nationsCompleteDraft(profile,selected,identity={}) {
 export function nationsCompleteError(form,hasDocument=false) {
  if(!form.nombre.trim()||!form.apellido.trim()||!form.pais)return 'Your selected player identity is unavailable. Return to registration.';
  if([...NATIONS_PLAYER_FIELDS,...NATIONS_IDENTITY_FIELDS].some(key=>!String(form[key]||'').trim()))return 'Complete all required player details.';
+ if(!['derecha','izquierda','ambas'].includes(String(form.pierna_habil||'').trim().toLowerCase()))return 'Choose your preferred foot.';
  if(!['dni','pasaporte','cedula','otro'].includes(form.tipo_documento)||!['pais_documento','nacionalidad'].every(key=>/^[A-Z]{2}$/.test(form[key])))return 'Check your player details.';
  if((form.telefono.trim().length>32||!/^\+?[0-9()\s-]{6,}$/.test(form.telefono.trim())))return 'Enter your contact number, including the country code.';
  const date=new Date(form.fecha_nacimiento+'T00:00:00Z');
