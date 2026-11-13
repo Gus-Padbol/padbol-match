@@ -1,0 +1,4 @@
+import React from 'react';
+import{render,screen}from'@testing-library/react';
+import NationsRegistrationShell from './NationsRegistrationShell';
+test('Nations-only shell presents the three existing official brands with accessible names',()=>{render(<NationsRegistrationShell><h1>Player details</h1></NationsRegistrationShell>);expect(screen.getAllByRole('img')).toHaveLength(3);expect(screen.getByRole('img',{name:'Padbol'})).toHaveAttribute('src','/brand/oficial-2026/padbol-internacional-light.svg');expect(screen.getByRole('img',{name:'FIPA'})).toHaveAttribute('src','/brand/oficial-2026/fipa-color.png');expect(screen.getByRole('img',{name:'Padbol Match'})).toHaveAttribute('src','/brand/padbol-match-logo-oficial.svg');expect(screen.getByRole('heading',{name:'Player details'})).toBeInTheDocument();});
