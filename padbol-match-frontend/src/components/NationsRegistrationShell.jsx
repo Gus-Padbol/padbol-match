@@ -10,7 +10,7 @@ export default function NationsRegistrationShell({children}) {
     <p className="nations-event-meta">November 20–22, 2026<br/>Mostra d’Oltremare, Naples, Italy</p>
    </div>
   </header>
-  <div className="nations-brand-rail" aria-label="Padbol, FIPA and Padbol Match"><img src="/brand/oficial-2026/padbol-internacional-light.svg" alt="Padbol"/><img src="/brand/oficial-2026/fipa-color.png" alt="FIPA"/><img src="/brand/padbol-match-logo-oficial.svg" alt="Padbol Match"/></div>
   {children}
+  <div className="nations-brand-rail" aria-label="Padbol, FIPA and Padbol Match"><img src="/brand/oficial-2026/padbol-internacional-light.svg" alt="Padbol"/><img src="/brand/oficial-2026/fipa-color.png" alt="FIPA"/><img src="/brand/padbol-match-logo-oficial.svg" alt="Padbol Match"/></div>
  </div></main>;
 }
