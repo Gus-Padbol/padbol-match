@@ -5,11 +5,12 @@
 .nations-essential .nations-card > .nations-field + .nations-field{margin-top:18px}
 .nations-essential .nations-card > .nations-button{margin-top:20px}
 
-.nations-essential .nations-topbar{display:grid;grid-template-columns:minmax(64px,88px) minmax(0,1fr);align-items:center;gap:14px;margin:0 0 14px;padding:0 4px}
-.nations-essential .nations-event-crest{display:block;width:100%;max-width:88px;height:auto;min-width:0}
-.nations-essential .nations-event-heading{min-width:0}
-.nations-essential .nations-event-title{margin:0;color:var(--text-primary,#0f172a);font-size:clamp(17px,4.4vw,23px);font-weight:950;letter-spacing:-.025em;line-height:1.12;overflow-wrap:anywhere}
-.nations-essential .nations-event-meta{margin:5px 0 0;color:var(--text-secondary,#64748b);font-size:clamp(10.5px,2.6vw,12.5px);font-weight:650;line-height:1.4;overflow-wrap:anywhere}
-.nations-essential .nations-brand-rail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr);align-items:center;gap:10px;min-width:0;width:100%;margin:0 0 16px;padding:0 4px;background:none;border-radius:0;overflow:hidden}
+.nations-essential .nations-topbar{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;max-width:560px;margin:0 auto 22px;padding:0}
+.nations-essential .nations-event-crest{display:block;flex:0 0 96px;width:96px;min-width:0;height:auto}
+.nations-essential .nations-event-heading{min-width:0;max-width:400px}
+.nations-essential .nations-event-title{margin:0;color:var(--text-primary,#0f172a);font-size:clamp(18px,4.2vw,23px);font-weight:950;letter-spacing:-.025em;line-height:1.12;overflow-wrap:anywhere}
+.nations-essential .nations-event-meta{margin:6px 0 0;color:var(--text-secondary,#64748b);font-size:clamp(10.5px,2.5vw,12.5px);font-weight:650;line-height:1.45;overflow-wrap:anywhere}
+.nations-essential .nations-brand-rail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr);align-items:center;gap:16px;min-width:0;width:100%;max-width:420px;margin:0 auto 24px;padding:0;background:none;border-radius:0;overflow:hidden}
 .nations-essential .nations-brand-rail img{display:block;width:100%;min-width:0;max-width:100%;height:28px;object-fit:contain}
-@media(max-width:480px){.nations-essential .nations-topbar{grid-template-columns:56px minmax(0,1fr);gap:10px}.nations-essential .nations-event-crest{max-width:56px}.nations-essential .nations-brand-rail{gap:8px;padding:0 4px}.nations-essential .nations-brand-rail img{height:24px}}
+@media(max-width:600px){.nations-essential .nations-topbar{max-width:none;gap:12px;margin-bottom:20px}.nations-essential .nations-event-crest{flex-basis:64px;width:64px}.nations-essential .nations-event-heading{max-width:calc(100% - 76px)}.nations-essential .nations-brand-rail{max-width:360px;gap:12px;margin-bottom:22px}}
+@media(max-width:480px){.nations-essential .nations-topbar{gap:10px}.nations-essential .nations-event-crest{flex-basis:56px;width:56px}.nations-essential .nations-event-heading{max-width:calc(100% - 66px)}.nations-essential .nations-event-title{font-size:17px}.nations-essential .nations-brand-rail{gap:8px;max-width:330px}.nations-essential .nations-brand-rail img{height:24px}}
