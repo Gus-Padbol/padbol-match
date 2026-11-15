@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useState} from 'react';
-const {fetchNationsPostmatch} = require('../utils/nationsPostmatchPure.cjs');
+const {fetchNationsPostmatch} = require('../utils/nationsPostmatchPure.js');
 
 export default function useNationsPostmatch({id, accessToken, baseUrl, active = true}) {
   const scope = useMemo(() => ({id, accessToken, baseUrl}), [id, accessToken, baseUrl]);

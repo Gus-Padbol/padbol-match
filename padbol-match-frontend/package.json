@@ -41,7 +41,7 @@
     "eject": "react-scripts eject",
     "check:environment": "node scripts/check-build-environment.cjs",
     "test:qa-routing": "node scripts/test-qa-api-routing.cjs",
-    "postbuild": "node scripts/emit-crm-shell.js"
+    "postbuild": "node scripts/emit-crm-shell.js && node scripts/check-nations-postmatch-bundle.cjs"
   },
   "eslintConfig": {
     "extends": [

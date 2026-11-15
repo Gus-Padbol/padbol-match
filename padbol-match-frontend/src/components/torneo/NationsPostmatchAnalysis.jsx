@@ -1,7 +1,7 @@
 import React from 'react';
 import {useSafeTranslation} from '../../i18n/tSafe';
 import useNationsPostmatch from '../../hooks/useNationsPostmatch';
-const {formatCourtTime} = require('../../utils/nationsPostmatchPure.cjs');
+const {formatCourtTime} = require('../../utils/nationsPostmatchPure.js');
 
 export default function NationsPostmatchAnalysis({partidoId, accessToken, apiBaseUrl}) {
   const {t} = useSafeTranslation();
