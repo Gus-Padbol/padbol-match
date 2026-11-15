@@ -7,7 +7,7 @@ test('only the exact event return purpose selects the minimal profile; general a
 });
 test('a rejected ID is replaced once, then reused on retry; names retain their original case and diacritics',()=>{
  sessionStorage.setItem(nationsRequestKey('actor'),'rejected');const fresh=nationsRequestId('actor',{rejectedRequestId:'rejected'});expect(fresh).not.toBe('rejected');expect(nationsRequestId('actor',{rejectedRequestId:'rejected'})).toBe(fresh);
- expect(nationsProfileDraft({}, {name:'de la Cruz María',country:'MX'})).toEqual({nombre:'de',apellido:'la Cruz María',pais:'MX',genero:'',telefono:''});
+ expect(nationsProfileDraft({}, {name:'de la Cruz María',country:'MX'})).toEqual({nombre:'de',apellido:'la Cruz María',pais:'MX',genero:'',telefono:'',pierna_habil:''});
 });
 
 test('blocked browser storage keeps a stable per-actor attempt and public selection intent in memory',()=>{
@@ -26,7 +26,9 @@ test('complete draft reuses an already saved private contact without inventing p
 
 test('complete ficha uses the same bounded phone/document contract as identity service',()=>{
  const {nationsCompleteError}=require('./nationsEssentialProfile');
- const form={nombre:'Juan',apellido:'García',pais:'AR',genero:'masculino',ciudad:'City',nivel:'Elite',lateralidad:'Diestro',posicion_cancha:'derecha',fecha_nacimiento:'1980-01-01',tipo_documento:'pasaporte',pais_documento:'AR',nacionalidad:'AR',categoria_deportiva:'Elite',telefono:'+54 (11) 1234-5678',numero_documento:'ab.12-34/56'};
+ const form={nombre:'Juan',apellido:'García',pais:'AR',genero:'masculino',ciudad:'City',pierna_habil:'derecha',nivel:'Elite',lateralidad:'Diestro',posicion_cancha:'derecha',fecha_nacimiento:'1980-01-01',tipo_documento:'pasaporte',pais_documento:'AR',nacionalidad:'AR',categoria_deportiva:'Elite',telefono:'+54 (11) 1234-5678',numero_documento:'ab.12-34/56'};
  expect(nationsCompleteError(form)).toBe('');expect(nationsCompleteError({...form,telefono:'+54.1112345678'})).toMatch(/contact number/);expect(nationsCompleteError({...form,telefono:'1'.repeat(33)})).toMatch(/contact number/);expect(nationsCompleteError({...form,numero_documento:'A'.repeat(33)})).toMatch(/document number/);expect(nationsCompleteError({...form,numero_documento:'AB@123'})).toMatch(/document number/);
 });
-test('event-scoped draft does not invent general hand, position, level or sporting category',()=>{const {nationsCompleteDraft,nationsCompleteError}=require('./nationsEssentialProfile');const draft=nationsCompleteDraft({}, {name:'Test Player',country:'AR'},{fecha_nacimiento:'1980-01-01',tipo_documento:'pasaporte',pais_documento:'AR',nacionalidad:'AR'});for(const key of ['nivel','lateralidad','posicion_cancha','categoria_deportiva'])expect(draft).not.toHaveProperty(key);expect(nationsCompleteError({...draft,ciudad:'City',telefono:'+39123456789',numero_documento:'TEST1234'})).toBe('');});
+test('event-scoped draft does not invent general hand, position, level or sporting category',()=>{const {nationsCompleteDraft,nationsCompleteError}=require('./nationsEssentialProfile');const draft=nationsCompleteDraft({}, {name:'Test Player',country:'AR'},{fecha_nacimiento:'1980-01-01',tipo_documento:'pasaporte',pais_documento:'AR',nacionalidad:'AR'});for(const key of ['nivel','lateralidad','posicion_cancha','categoria_deportiva'])expect(draft).not.toHaveProperty(key);expect(nationsCompleteError({...draft,pierna_habil:'izquierda',ciudad:'City',telefono:'+39123456789',numero_documento:'TEST1234'})).toBe('');});
+
+test('event ficha requires preferred foot and rejects general handedness as a substitute',()=>{const {nationsCompleteDraft,nationsCompleteError}=require('./nationsEssentialProfile');const draft=nationsCompleteDraft({}, {name:'Test Player',country:'AR'},{fecha_nacimiento:'1980-01-01',tipo_documento:'pasaporte',pais_documento:'AR',nacionalidad:'AR'});const form={...draft,ciudad:'City',telefono:'+39123456789',numero_documento:'TEST1234'};expect(nationsCompleteError({...form,lateralidad:'Diestro'})).not.toBe('');expect(nationsCompleteError({...form,pierna_habil:'izquierda'})).toBe('');expect(nationsCompleteError({...form,pierna_habil:'unknown'})).not.toBe('');});
