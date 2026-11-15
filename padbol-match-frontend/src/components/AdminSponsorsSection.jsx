@@ -1,3 +1,4 @@
+import { uploadSponsorMedia } from '../utils/uploadSponsorMedia';
 import { getApiBaseUrl } from '../utils/apiPublicBaseUrl';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../supabaseClient';
@@ -282,6 +283,12 @@ export default function AdminSponsorsSection({
     const safe = String(file.name || 'logo').replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `${Date.now()}_${safe}`;
     try {
+      if (isSuperAdmin) {
+        const publicUrl = await uploadSponsorMedia(file, session?.access_token);
+        setForm((p) => ({ ...p, logo_url: publicUrl }));
+        setMsg(t('admin.sponsors.logoUploaded'));
+        return;
+      }
       const { data: uploadData, error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
         upsert: true,
         contentType: file.type || 'image/jpeg',
@@ -303,6 +310,9 @@ export default function AdminSponsorsSection({
       setForm((p) => ({ ...p, logo_url: publicUrl }));
       setMsg(t('admin.sponsors.logoUploaded'));
       setTimeout(() => setMsg(''), 2500);
+    } catch (error) {
+      setMsg(t('admin.sponsors.uploadError', { message: error.message }));
+      scrollToEl(formCardRef);
     } finally {
       setUploading(false);
     }
@@ -327,6 +337,12 @@ export default function AdminSponsorsSection({
     const safe = String(file.name || 'banner').replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `banners/${Date.now()}_${safe}`;
     try {
+      if (isSuperAdmin) {
+        const publicUrl = await uploadSponsorMedia(file, session?.access_token);
+        setForm((p) => ({ ...p, banner_url: publicUrl }));
+        setMsg(t('admin.sponsors.logoUploaded'));
+        return;
+      }
       const { data: uploadData, error: upErr } = await supabase.storage.from('sponsors').upload(path, file, {
         upsert: true,
         contentType: file.type || 'image/jpeg',
@@ -348,6 +364,9 @@ export default function AdminSponsorsSection({
       setForm((p) => ({ ...p, banner_url: publicUrl }));
       setMsg(t('admin.sponsors.logoUploaded'));
       setTimeout(() => setMsg(''), 2500);
+    } catch (error) {
+      setMsg(t('admin.sponsors.uploadError', { message: error.message }));
+      scrollToEl(formCardRef);
     } finally {
       setUploading(false);
     }
