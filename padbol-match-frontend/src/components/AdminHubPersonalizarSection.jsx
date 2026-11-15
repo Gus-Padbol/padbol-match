@@ -1,6 +1,8 @@
 import { stripAdminEmoji } from '../i18n/adminTranslation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ImageCropModal from './ImageCropModal';
+import HubPhotoEditorModal from './HubPhotoEditorModal';
+import {hubPhotoFrames} from '../utils/hubPhotoFrame';
+import {fetchHubPhotoSource, saveHubPhotoEdit} from '../utils/hubPhotoEditorApi';
 import { defaultHubCardImageForId, fallbackCopyForHubCardId } from '../constants/hubCardDefaults';
 import { DEPORTES_CANCHA_SEDE_OPTIONS } from '../constants/deportesCanchaSede';
 import { HUB_INICIO_CARD_IDS, deporteHubInicioDesdeRow } from '../constants/hubInicioCards';
@@ -65,19 +67,26 @@ function hubEditorNoticeStyle(text) {
   return { color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 };
 }
 
-// Reference phone: 390 × 844, 16 px horizontal inset. Home cards adapt
-// to available height; Jugar uses 160 px (147 on Android). Keep the crop
-// and the preview on the same selected viewport instead of an unrelated 16:9.
-export const HUB_PHOTO_FRAMES = [
-  { id: 'jugar', label: 'Jugar · iPhone', width: 358, height: 160 },
-  { id: 'jugar_android', label: 'Jugar · Android', width: 358, height: 147 },
-  { id: 'inicio', label: 'Inicio · iPhone (referencia)', width: 358, height: 100 },
+// The same image is shared by Home and Jugar in the installed app.
+// Show both renderings; selecting one crop ratio must not hide the other crop.
+export const HUB_PHONE_VIEWS = [
+  {id: 'compact', label: 'iPhone · pantalla compacta', width: 375, height: 812, topInset: 44, bottomInset: 34},
+  {id: 'medium', label: 'iPhone · pantalla mediana', width: 390, height: 844, topInset: 47, bottomInset: 34},
+  {id: 'large', label: 'iPhone · pantalla grande', width: 430, height: 932, topInset: 59, bottomInset: 34},
 ];
 
-function HubPhotoPreview({src, frame, onAdjust, disabled}) {
-  return <><div data-testid="hub-photo-frame" style={{width: '100%', aspectRatio: `${frame.width} / ${frame.height}`, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)', background: '#0f172a'}}>
-    <img src={src} alt="Vista previa del encuadre del hub" style={{display: 'block', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center'}} />
-  </div>
+const HUB_SAFE_FRAMES = HUB_PHONE_VIEWS.flatMap(view => [...hubPhotoFrames(view), ...hubPhotoFrames({...view, isGuest: true})]);
+
+function HubPhotoPreview({src, frames, onAdjust, disabled}) {
+  return <>
+    <div style={{display: 'grid', gap: 10}}>
+      {frames.map(frame => <div key={frame.id}>
+        <span style={{fontSize: 11, color: 'var(--text-secondary)'}}>{frame.label}</span>
+        <div data-testid="hub-photo-frame" style={{width: '100%', aspectRatio: `${frame.width} / ${frame.height}`, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)', background: '#0f172a'}}>
+          <img src={src} alt={`Vista previa ${frame.label}`} style={{display: 'block', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center'}} />
+        </div>
+      </div>)}
+    </div>
     <button type="button" disabled={disabled} onClick={onAdjust} style={{marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: disabled ? 'not-allowed' : 'pointer'}}>Ajustar encuadre</button>
   </>;
 }
@@ -108,7 +117,6 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [msg, setMsg] = useState('');
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
-  const [uploadingId, setUploadingId] = useState(null);
   const fileRef = useRef(null);
   const uploadTargetIdRef = useRef(null);
 
@@ -118,13 +126,11 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [sportSel, setSportSel] = useState(() => DEPORTES_CANCHA_SEDE_OPTIONS[0]?.key || 'padbol');
   const [deporteDrafts, setDeporteDrafts] = useState({});
   const [savingDeporteKey, setSavingDeporteKey] = useState(null);
-  const [uploadingDeporteKey, setUploadingDeporteKey] = useState(null);
   const fileRefDeporte = useRef(null);
   const uploadDeporteTargetRef = useRef(null);
   const [inicioDeporteById, setInicioDeporteById] = useState({});
   const [inicioMsg, setInicioMsg] = useState('');
   const [savingInicioId, setSavingInicioId] = useState(null);
-  const [uploadingInicioId, setUploadingInicioId] = useState(null);
   const fileRefInicio = useRef(null);
   const uploadInicioTargetIdRef = useRef(null);
   const [chiviImagenUrl, setChiviImagenUrl] = useState('');
@@ -140,43 +146,73 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [cropImageSrc, setCropImageSrc] = useState(null);
   const [cropUploadBusy, setCropUploadBusy] = useState(false);
   const pendingUploadRef = useRef(null);
+  const uploadingId = cropUploadBusy && pendingUploadRef.current?.kind === 'legacy' ? pendingUploadRef.current.id : null;
+  const uploadingInicioId = cropUploadBusy && pendingUploadRef.current?.kind === 'inicio' ? pendingUploadRef.current.id : null;
+  const uploadingDeporteKey = cropUploadBusy && pendingUploadRef.current?.kind === 'deporte' ? draftKeyDeporte(pendingUploadRef.current.deporte, pendingUploadRef.current.cardKey) : null;
 
-  const [photoFrameId, setPhotoFrameId] = useState('jugar');
-  const photoFrame = HUB_PHOTO_FRAMES.find(frame => frame.id === photoFrameId) || HUB_PHOTO_FRAMES[0];
-  const hubPhotoAspect = photoFrame.width / photoFrame.height;
+  const [phoneViewId, setPhoneViewId] = useState('medium');
+  const phoneView = HUB_PHONE_VIEWS.find(view => view.id === phoneViewId) || HUB_PHONE_VIEWS[1];
+  const photoFrames = useMemo(() => hubPhotoFrames(phoneView), [phoneView]);
+  const [cropSource, setCropSource] = useState(null);
+  const [sourceLoading, setSourceLoading] = useState(false);
+  const [sourceError, setSourceError] = useState('');
+  const editGenerationRef = useRef(0);
+  const saveInFlightRef = useRef(false);
+  const authScopeRef = useRef({apiBaseUrl, accessToken});
+  authScopeRef.current = {apiBaseUrl, accessToken, imageSrc: cropImageSrc};
 
   const cerrarCropModal = useCallback(() => {
+    editGenerationRef.current += 1;
     pendingUploadRef.current = null;
-    setCropModalOpen(false);
-    setCropImageSrc((prev) => {
+    saveInFlightRef.current = false;
+    setCropModalOpen(false); setCropSource(null); setSourceLoading(false); setCropUploadBusy(false);
+    setCropImageSrc(prev => {
       if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
       return null;
     });
   }, []);
-
-  const abrirCropDesdeUrl = useCallback((src, pending) => {
-    if (!src || !pending) return;
-    pendingUploadRef.current = pending;
-    setCropImageSrc(prev => {
-      if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
-      return src;
-    });
-    setCropError('');
-    setCropModalOpen(true);
+  useEffect(() => { cerrarCropModal(); }, [apiBaseUrl, accessToken, cerrarCropModal]);
+  useEffect(() => () => {
+    editGenerationRef.current += 1;
+    const src = authScopeRef.current.imageSrc;
+    if (src && String(src).startsWith('blob:')) URL.revokeObjectURL(src);
   }, []);
+  useEffect(() => {
+    if (pendingUploadRef.current?.kind === 'deporte' && pendingUploadRef.current.deporte !== sportSel) cerrarCropModal();
+  }, [sportSel, cerrarCropModal]);
+
+  const abrirCropDesdeUrl = useCallback(async (src, pending) => {
+    if (!src || !pending || !accessToken) return;
+    cerrarCropModal();
+    const generation = editGenerationRef.current;
+    pendingUploadRef.current = {...pending, expectedImageUrl: src};
+    setSourceLoading(true); setSourceError('');
+    try {
+      const source = await fetchHubPhotoSource({apiBaseUrl, accessToken, target: pending, expectedImageUrl: src});
+      if (generation !== editGenerationRef.current || authScopeRef.current.accessToken !== accessToken || authScopeRef.current.apiBaseUrl !== apiBaseUrl) return;
+      const savedPhone = HUB_PHONE_VIEWS.find(view => view.width === source.frame?.viewport?.width && view.height === source.frame?.viewport?.height);
+      if (savedPhone) setPhoneViewId(savedPhone.id);
+      setCropSource({sourceId: source.sourceId, originalFile: null, initialPixels: source.frame?.pixels || null});
+      setCropImageSrc(URL.createObjectURL(source.original));
+      setCropError(''); setCropModalOpen(true);
+    } catch (err) {
+      if (generation === editGenerationRef.current) { setSourceError(err?.message || 'No se pudo recuperar el original. Elige su archivo de nuevo.'); pendingUploadRef.current = null; }
+    } finally { if (generation === editGenerationRef.current) setSourceLoading(false); }
+  }, [accessToken, apiBaseUrl, cerrarCropModal]);
 
   const abrirCropDesdeArchivo = useCallback((file, pending) => {
-    if (!file || !pending) return;
-    if (!String(file.type || '').startsWith('image/')) return false;
-    pendingUploadRef.current = pending;
-    setCropImageSrc((prev) => {
-      if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
-    setCropError('');
-    setCropModalOpen(true);
+    if (!file || !pending || !['image/jpeg', 'image/png', 'image/webp'].includes(String(file.type || ''))) return false;
+    if (file.size > 10 * 1024 * 1024) { setSourceError('La foto original supera 10 MB. Elige una imagen más pequeña.'); return true; }
+    cerrarCropModal();
+    const current = pending.kind === 'deporte'
+      ? deporteRows.find(row => row.deporte === pending.deporte && row.card_key === pending.cardKey)?.imagen_url
+      : rows.find(row => String(row.id) === String(pending.id))?.foto_url;
+    pendingUploadRef.current = {...pending, expectedImageUrl: current ?? null};
+    setCropSource({sourceId: null, originalFile: file, initialPixels: null});
+    setCropImageSrc(URL.createObjectURL(file));
+    setCropError(''); setSourceError(''); setCropModalOpen(true);
     return true;
-  }, []);
+  }, [cerrarCropModal, deporteRows, rows]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -431,139 +467,32 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     fileRefDeporte.current?.click();
   };
 
-  // Sube la foto del hub usando el endpoint que SI existe (PATCH /api/hub-config/:id).
-  // El POST /api/hub-config/:id/foto no estaba implementado en el backend, por eso
-  // la imagen nunca se guardaba. Se reduce la imagen antes de enviarla.
-  const subirFotoHubConfig = useCallback(async (id, file) => {
-    setUploadingId(id);
-    setMsg('');
+  const handleCropConfirm = useCallback(async (file, composition) => {
+    const pending = pendingUploadRef.current;
+    if (!pending || !cropSource || !accessToken || saveInFlightRef.current || composition?.originalSrc !== authScopeRef.current.imageSrc) return;
+    const generation = editGenerationRef.current;
+    saveInFlightRef.current = true; setCropError(''); setCropUploadBusy(true);
     try {
-      if (!file || !String(file.type || '').startsWith('image/')) throw new Error('El archivo tiene que ser una imagen.');
-      const dataUrl = await new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-          try {
-            const max = 900;
-            const escala = Math.min(1, max / Math.max(img.width, img.height));
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.round(img.width * escala);
-            canvas.height = Math.round(img.height * escala);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/jpeg', 0.85));
-          } catch (e) { reject(new Error('No se pudo procesar la imagen.')); }
-          finally { URL.revokeObjectURL(url); }
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('No se pudo leer la imagen.')); };
-        img.src = url;
-      });
-      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ foto_url: dataUrl }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t('admin.hub.imageUploadFailed'));
-      // Verificar que quedó guardada releyendo del servidor.
-      const check = await fetch(`${apiBaseUrl}/api/hub-config`, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const rowsNow = await check.json().catch(() => []);
-      const guardada = Array.isArray(rowsNow) && rowsNow.some((r) => String(r.id) === String(id) && r.foto_url);
-      if (!guardada) throw new Error('La foto no quedó guardada. Intenta de nuevo.');
-      setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
-      setMsg(t('admin.hub.imageUploaded'));
-      window.setTimeout(() => setMsg(''), 2500);
-    } catch (error) {
-      setMsg(String(error?.message || t('admin.hub.imageUploadFailed')));
-    } finally {
-      setUploadingId(null);
-    }
-  }, [accessToken, apiBaseUrl, t]);
-
-  const subirFotoHubDeporte = useCallback(async (dep, ck, file) => {
-    const dk = draftKeyDeporte(dep, ck);
-    setUploadingDeporteKey(dk);
-    setDeporteMsg('');
-    try {
-      const fd = new FormData();
-      fd.append('foto', file);
-      const qs = new URLSearchParams({ deporte: dep, card_key: ck });
-      const res = await fetch(`${apiBaseUrl}/api/hub-deporte-config/foto?${qs}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: fd,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t('admin.hub.imageUploadFailed'));
-      const normalized = normalizeHubDeporteRowPayload(data, dep, ck);
-      if (
-        String(data?.deporte || '').trim().toLowerCase() !== dep ||
-        String(data?.card_key || '').trim() !== ck
-      ) {
-        throw new Error(t('admin.hub.wrongSportCardSaved'));
+      const data = await saveHubPhotoEdit({apiBaseUrl, accessToken, target: pending, photo: file, expectedImageUrl: pending.expectedImageUrl,
+        original: cropSource.originalFile, sourceId: cropSource.sourceId,
+        frame: {version: 1, pixels: composition.pixels, viewport: {width: phoneView.width, height: phoneView.height}}});
+      if (generation !== editGenerationRef.current || authScopeRef.current.accessToken !== accessToken || authScopeRef.current.apiBaseUrl !== apiBaseUrl) return;
+      if (pending.kind === 'deporte') {
+        const normalized = normalizeHubDeporteRowPayload(data.row, pending.deporte, pending.cardKey);
+        setDeporteRows(prev => mergeHubDeporteRowIntoList(prev, normalized));
+        setDeporteMsg(t('admin.hub.imageUploaded'));
+      } else {
+        setRows(prev => prev.map(row => String(row.id) === String(pending.id) ? {...row, ...data.row} : row));
+        if (pending.kind === 'inicio') setInicioMsg(t('admin.hub.imageUploaded'));
+        else setMsg(t('admin.hub.imageUploaded'));
       }
-      setDeporteRows((prev) => mergeHubDeporteRowIntoList(prev, normalized));
-      await refreshDeporteRowsSilently();
-      setDeporteMsg(t('admin.hub.imageUploaded'));
-      window.setTimeout(() => setDeporteMsg(''), 2500);
+      cerrarCropModal();
+    } catch (err) {
+      if (generation === editGenerationRef.current) setCropError(err?.message || 'No se pudo guardar la foto y su original. Intenta de nuevo.');
     } finally {
-      setUploadingDeporteKey(null);
+      if (generation === editGenerationRef.current) { saveInFlightRef.current = false; setCropUploadBusy(false); }
     }
-  }, [accessToken, apiBaseUrl, refreshDeporteRowsSilently, t]);
-
-  const subirFotoHubInicio = useCallback(async (id, file) => {
-    setUploadingInicioId(id);
-    setInicioMsg('');
-    try {
-      const fd = new FormData();
-      fd.append('foto', file);
-      const res = await fetch(`${apiBaseUrl}/api/hub-config/${encodeURIComponent(id)}/foto`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: fd,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t('admin.hub.imageUploadFailed'));
-      setRows((prev) => prev.map((r) => (String(r.id) === String(id) ? { ...r, ...data } : r)));
-      setInicioMsg(t('admin.hub.imageUploaded'));
-      window.setTimeout(() => setInicioMsg(''), 2500);
-    } finally {
-      setUploadingInicioId(null);
-    }
-  }, [accessToken, apiBaseUrl, t]);
-
-  const handleCropConfirm = useCallback(
-    async (file) => {
-      const pending = pendingUploadRef.current;
-      if (!pending || !accessToken) return;
-      setCropError('');
-      setCropUploadBusy(true);
-      try {
-        if (pending.kind === 'legacy') {
-          await subirFotoHubConfig(pending.id, file);
-        } else if (pending.kind === 'inicio') {
-          await subirFotoHubInicio(pending.id, file);
-        } else if (pending.kind === 'deporte') {
-          await subirFotoHubDeporte(pending.deporte, pending.cardKey, file);
-        }
-        cerrarCropModal();
-      } catch (err) {
-        const text = err?.message || String(err);
-        setCropError(text);
-        if (pending.kind === 'legacy') setMsg(text);
-        else if (pending.kind === 'inicio') setInicioMsg(text);
-        else setDeporteMsg(text);
-      } finally {
-        setCropUploadBusy(false);
-      }
-    },
-    [
-      accessToken,
-      cerrarCropModal,
-      subirFotoHubConfig,
-      subirFotoHubDeporte,
-      subirFotoHubInicio,
-    ],
-  );
+  }, [accessToken, apiBaseUrl, cropSource, phoneView, cerrarCropModal, t]);
 
   const onFileChange = (e) => {
     const id = uploadTargetIdRef.current;
@@ -667,7 +596,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     const saving = savingDeporteKey === dk;
     const uploading = uploadingDeporteKey === dk;
     return (
-      <div key={dk} className="admin-hub-editor-card" style={cardWrap}>
+      <div key={dk} data-testid={`hub-editor-${dk}`} className="admin-hub-editor-card" style={cardWrap}>
         <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>
           {label}
         </div>
@@ -682,7 +611,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         >
           <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
             <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-            <HubPhotoPreview src={previewUrl} frame={photoFrame} disabled={uploading || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey})} />
+            <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey})} />
           </div>
           <div style={{ flex: '1', minWidth: '200px' }}>
             <button
@@ -766,11 +695,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       </h2>
 
       <div style={cardWrap}>
-        <label htmlFor="hub-photo-frame" style={labelStyle}>Encuadre de la foto</label>
-        <select id="hub-photo-frame" value={photoFrameId} onChange={event => setPhotoFrameId(event.target.value)} style={inputStyle}>
-          {HUB_PHOTO_FRAMES.map(frame => <option key={frame.id} value={frame.id}>{frame.label}</option>)}
+        <label htmlFor="hub-phone-view" style={labelStyle}>Comprobar las vistas del teléfono</label>
+        <select id="hub-phone-view" value={phoneViewId} onChange={event => setPhoneViewId(event.target.value)} style={inputStyle}>
+          {HUB_PHONE_VIEWS.map(view => <option key={view.id} value={view.id}>{view.label}</option>)}
         </select>
-        <p style={{margin: 0, fontSize: 13, lineHeight: 1.45}}>Elige dónde vas a mostrar la foto. La vista previa y el recorte usan el mismo formato. Al cambiar la foto puedes moverla y ajustar el zoom. Inicio se adapta al tamaño del teléfono: deja margen alrededor de las caras.</p>
+        <p style={{margin: 0, fontSize: 13, lineHeight: 1.45}}>La misma foto aparece en Inicio y Jugar. Revisa ambas vistas al acomodarla. Conservamos el original para que puedas volver a editarla.</p>
+        {sourceLoading ? <p role="status">Abriendo la foto original…</p> : null}
+        {sourceError ? <p role="alert" style={{color: '#dc2626'}}>{sourceError}</p> : null}
       </div>
 
       {isSuperAdmin ? (
@@ -919,7 +850,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
                 <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
                   <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-                  <HubPhotoPreview src={previewUrl} frame={photoFrame} disabled={uploading || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'inicio', id: slotId})} />
+                  <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'inicio', id: slotId})} />
                 </div>
                 <div style={{ flex: '1', minWidth: '200px' }}>
                   <button
@@ -1069,7 +1000,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
               <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
                 <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-                <HubPhotoPreview src={previewUrl} frame={photoFrame} disabled={uploadingId === id || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'legacy', id})} />
+                <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploadingId === id || sourceLoading || cropUploadBusy || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'legacy', id})} />
               </div>
               <div style={{ flex: '1', minWidth: '200px' }}>
                 <button
@@ -1139,19 +1070,16 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       })}
 
       </details>
-      <ImageCropModal error={cropError}
+      <HubPhotoEditorModal
+        error={cropError}
         open={cropModalOpen}
-        imageSrc={cropImageSrc}
+        originalSrc={cropImageSrc}
+        initialPixels={cropSource?.initialPixels || null}
+        frames={photoFrames}
+        safeFrames={HUB_SAFE_FRAMES}
         onClose={cerrarCropModal}
         onConfirm={handleCropConfirm}
-        aspect={hubPhotoAspect}
-        cropShape="rect"
-        title={t('admin.hub.cropHubPhoto')}
-        description={`Mueve la foto y ajusta el zoom. El marco muestra lo que quedará visible en ${photoFrame.label}. Deja margen alrededor de las caras para otros tamaños de teléfono.`}
-        confirmLabel={t('admin.hub.confirmAndUpload')}
-        confirmColor="#E11B22"
         busy={cropUploadBusy}
-        zoomInputId="admin-hub-crop-zoom"
       />
     </div>
   );
