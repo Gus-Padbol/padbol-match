@@ -1,0 +1,35 @@
+import {useTranslation} from 'react-i18next';
+const EN={
+ 'Partido':'Match','Por definir':'To be decided','Eliminatoria':'Knockout','Hasta':'Until','pendiente':'pending','programado':'scheduled','en_curso':'in progress','finalizado':'finished','suspendido':'suspended','cancelado':'cancelled',
+ 'Operación exclusiva del torneo':'Tournament operations',
+ 'Nations Cup · Nápoles 2026':'Nations Cup · Naples 2026',
+ 'Acceso limitado al torneo 57. Las cuentas, sedes y rankings generales quedan fuera de este panel.':'Access is limited to tournament 57.',
+ 'Inicia sesión con la cuenta habilitada por la organización.':'Sign in with the account enabled by the organiser.',
+ 'Comprobando tu acceso al torneo…':'Checking your tournament access…',
+ 'Actualizar estado':'Refresh status','Encuentro':'Match','Estado:':'Status:','Horarios en':'Times in','El horario previsto nunca inicia el partido automáticamente.':'The planned time never starts a match automatically.',
+ 'Cancha':'Court','Seleccionar cancha':'Select a court','Programación del encuentro':'Match schedule','Fecha y hora':'Date and time','Duración prevista (minutos)':'Planned duration (minutes)','Guardar programación':'Save schedule',
+ 'Abrir pantalla pública':'Open public display','Crear o renovar control privado':'Create or renew private control','Revocar control del árbitro':'Revoke referee control','Preparar marcador en la cancha elegida':'Prepare scoreboard on selected court',
+ 'Se creará un control nuevo. El enlace anterior dejará de funcionar. ¿Continuar?':'A new control will replace the previous link. Continue?',
+ 'El árbitro perderá el acceso con el enlace actual. ¿Revocar?':'The referee will lose access through the current link. Revoke?',
+ 'Enlace privado: sólo para el árbitro':'Private link: referee only','Abrir control del árbitro':'Open referee control','Copiar enlace privado':'Copy private link',
+ 'Control privado no confirmado.':'Private control could not be confirmed.','Control privado preparado. Sólo debe tenerlo el árbitro.':'Private control is ready. Share it only with the referee.',
+ 'Operación confirmada.':'Operation confirmed.','Enlace privado copiado. Compártelo únicamente con el árbitro.':'Private link copied. Share it only with the referee.',
+ 'No se pudo copiar. Abre el control y copia su dirección.':'Could not copy the link. Open the control and copy its address.',
+ 'Convocados y alineaciones':'Players and lineups','Antes de abrir el marcador: 2 titulares y hasta 2 suplentes por selección. Durante el juego los cambios se realizan desde el control, al terminar un game impar.':'Before preparing the scoreboard: 2 starters and up to 2 substitutes per team. During play, use the referee control for substitutions after an odd game.',
+ 'Titular':'Starter','Suplente':'Substitute','Guardar alineación':'Save lineup','Ante un imprevisto':'If something goes wrong',
+ 'Actualiza el estado antes de repetir una operación que no haya confirmado.':'Refresh the state before retrying an unconfirmed operation.',
+ 'Conserva el marcador existente: no crees otro para el mismo partido.':'Keep the existing scoreboard for this match.',
+ 'Si un teléfono pierde conexión, vuelve a abrir su enlace y comprueba el marcador antes de seguir.':'If a phone disconnects, reopen its link and check the scoreboard before continuing.',
+ 'Si se compartió un control con la persona equivocada, revócalo y emite uno nuevo.':'If the wrong person received a control link, revoke it and issue a new one.',
+ 'No modifiques resultados cerrados ni rankings desde este panel. Conserva la incidencia y contacta a la organización.':'Record incidents involving closed results or rankings and contact the organiser.',
+ 'Responsable del torneo 57':'Tournament 57 operator',
+ 'Habilita únicamente la cuenta verificada de la persona designada. Tendrá operación de Nápoles, sin administración general. El acceso caduca después del evento y puede revocarse aquí.':'Enable the designated person’s verified account for the Naples tournament. Access expires after the event and can be revoked here.',
+ 'Acceso actualizado. No se envió ningún correo ni se modificó el rol general de la cuenta.':'Access updated. The account’s general role is unchanged.',
+ 'Inicia sesión con la cuenta de la organización.':'Sign in with the organiser’s account.',
+ 'Comprobando acceso de la organización…':'Checking organiser access…','Correo del responsable':'Operator email','Habilitar sólo el torneo 57':'Enable tournament 57 only',
+ 'Si todavía no tiene cuenta, debe registrarse normalmente y verificar el correo. No se crean contraseñas ni permisos generales.':'If they do not have an account, they must register and verify their email first.',
+ 'Revocado':'Revoked','Revocar acceso':'Revoke access','Abrir dashboard exclusivo':'Open tournament dashboard',
+};
+export function operatorText(language){return text=>String(language||'en').startsWith('es')?text:EN[text]||text;}
+export function useNationsOperatorText(){const {i18n}=useTranslation();return operatorText(i18n.resolvedLanguage||i18n.language);}
+export const operatorEnglish=EN;

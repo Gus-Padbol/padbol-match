@@ -25,5 +25,5 @@ export default function useServerCronometro(partido) {
   }, [cronometroActivo, serverSeconds, partido?.cronometro_pausado, partido?.cronometro_inicio]);
 
   if (!cronometroActivo) return serverSeconds;
-  return anchor.seconds + Math.floor((nowMs - anchor.at) / 1000);
+  return anchor.seconds + Math.max(0, Math.floor((nowMs - anchor.at) / 1000));
 }

@@ -96,6 +96,9 @@ const ScoreboardScoreBugPage = lazy(() => import('./pages/ScoreboardScoreBugPage
 const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreBugCanchaPage'));
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
 const ContentWorkspacePage = lazy(() => import('./pages/ContentWorkspacePage'));
+const NationsPracticePage = lazy(() => import('./pages/NationsPracticePage'));
+const NationsOperatorDashboard = lazy(() => import('./pages/NationsOperatorDashboard'));
+const NationsOperatorGrants = lazy(() => import('./pages/NationsOperatorGrants'));
 const CommercialCrmPage = lazy(() => import('./pages/CommercialCrmPage'));
 const AdminVenueLandingPage = lazy(() => import('./pages/adminLanding/AdminVenueLandingPage'));
 const VenuePlansPage = lazy(() => import('./pages/adminLanding/VenuePlansPage'));
@@ -575,6 +578,7 @@ function App() {
                   </ErrorBoundary>
                 )}
               />
+              <Route path="/scoreboard/:partidoId" element={<ErrorBoundary label="la pantalla del marcador"><ScoreboardDisplay /></ErrorBoundary>} />
               <Route
                 path="/display/:sedeId/scoreboard/:partidoId"
                 element={(
@@ -607,6 +611,11 @@ function App() {
                   </ErrorBoundary>
                 )}
               />
+              <Route path="/nations/operador" element={<ProtectedRoute><WebLegalConsentGate><ErrorBoundary label="el dashboard del torneo"><NationsOperatorDashboard /></ErrorBoundary></WebLegalConsentGate></ProtectedRoute>} />
+              <Route path="/admin/nations/operadores" element={<ProtectedRoute><WebLegalConsentGate><ErrorBoundary label="los accesos del torneo"><NationsOperatorGrants /></ErrorBoundary></WebLegalConsentGate></ProtectedRoute>} />
+              <Route path="/practica/nations/:eventId" element={<ErrorBoundary label="la práctica Nations"><NationsPracticePage mode="entry" /></ErrorBoundary>} />
+              <Route path="/practica/nations/:eventId/partidos/:boardId" element={<ProtectedRoute><WebLegalConsentGate><ErrorBoundary label="el visor de práctica"><NationsPracticePage mode="viewer" /></ErrorBoundary></WebLegalConsentGate></ProtectedRoute>} />
+              <Route path="/practica/nations/:eventId/arbitro/:boardId" element={<ErrorBoundary label="el control de práctica"><NationsPracticePage mode="control" /></ErrorBoundary>} />
               <Route path="/contenido-campanas" element={<ProtectedRoute><WebLegalConsentGate><ContentWorkspacePage /></WebLegalConsentGate></ProtectedRoute>} />
               <Route path="/crm-leads" element={<ProtectedRoute><WebLegalConsentGate><CommercialCrmPage /></WebLegalConsentGate></ProtectedRoute>} />
               <Route path="/scoreboard/control/:token" element={<ErrorBoundary label="el panel del árbitro"><ScoreboardControl /></ErrorBoundary>} />
