@@ -2223,5 +2223,16 @@
       "sending": "Se trimite…",
       "sendInquiry": "Trimite solicitarea"
     }
+  },
+  "nationsPostmatch": {
+    "title": "Analiza meciului",
+    "pending": "Se pregătește analiza…",
+    "insufficient": "Nu există suficiente date confirmate pentru a analiza acest meci.",
+    "uncertain": "Analiza necesită verificare. Revino mai târziu.",
+    "failed": "Analiza nu a putut fi încărcată. Încearcă din nou.",
+    "signIn": "Autentifică-te pentru a vedea analiza.",
+    "basis": "Pe baza scorului și a schimbărilor înregistrate.",
+    "time": "Timp pe teren",
+    "points": "Punctele echipei"
   }
 }

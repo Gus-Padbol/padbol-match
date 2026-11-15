@@ -2178,5 +2178,16 @@
       },
       "signal": { "eyebrow": "VISION / IA", "title": "ENTRAÎNEMENT\nEN COURS" }
     }
+  },
+  "nationsPostmatch": {
+    "title": "Analyse du match",
+    "pending": "Préparation de l’analyse…",
+    "insufficient": "Les données confirmées sont insuffisantes pour analyser ce match.",
+    "uncertain": "L’analyse nécessite une vérification. Revenez plus tard.",
+    "failed": "Impossible de charger l’analyse. Réessayez.",
+    "signIn": "Connectez-vous pour consulter l’analyse.",
+    "basis": "Basée sur le score et les remplacements enregistrés.",
+    "time": "Temps sur le terrain",
+    "points": "Points de l’équipe"
   }
 }

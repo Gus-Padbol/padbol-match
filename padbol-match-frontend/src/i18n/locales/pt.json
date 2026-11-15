@@ -2186,5 +2186,16 @@
       },
       "signal": { "eyebrow": "VISÃO / IA", "title": "TREINAMENTO\nEM CURSO" }
     }
+  },
+  "nationsPostmatch": {
+    "title": "Análise da partida",
+    "pending": "Preparando a análise…",
+    "insufficient": "Não há dados confirmados suficientes para analisar esta partida.",
+    "uncertain": "A análise precisa de revisão. Consulte novamente mais tarde.",
+    "failed": "Não foi possível carregar a análise. Tente novamente.",
+    "signIn": "Entre para ver a análise.",
+    "basis": "Com base no placar e nas substituições registradas.",
+    "time": "Tempo em quadra",
+    "points": "Pontos da equipe"
   }
 }

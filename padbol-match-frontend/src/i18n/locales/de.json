@@ -2178,5 +2178,16 @@
       },
       "signal": { "eyebrow": "SICHT / KI", "title": "TRAINING\nLÄUFT" }
     }
+  },
+  "nationsPostmatch": {
+    "title": "Spielanalyse",
+    "pending": "Analyse wird vorbereitet…",
+    "insufficient": "Es liegen nicht genügend bestätigte Daten für eine Analyse dieses Spiels vor.",
+    "uncertain": "Die Analyse muss überprüft werden. Bitte später erneut nachsehen.",
+    "failed": "Die Analyse konnte nicht geladen werden. Bitte erneut versuchen.",
+    "signIn": "Melde dich an, um die Analyse anzusehen.",
+    "basis": "Auf Grundlage des erfassten Spielstands und der Auswechslungen.",
+    "time": "Zeit auf dem Feld",
+    "points": "Punkte des Teams"
   }
 }

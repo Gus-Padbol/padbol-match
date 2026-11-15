@@ -1,3 +1,4 @@
+import nationsPostmatchLocales from './nationsPostmatchLocales.json';
 /**
  * Traducciones de primera capa para los mercados que comparten el catálogo
  * inglés como respaldo. Así cada pantalla siempre muestra texto legible y
@@ -2273,3 +2274,7 @@ export const ADDITIONAL_LOCALE_OVERRIDES = {
     },
   ),
 };
+
+for (const [code, phrases] of Object.entries(nationsPostmatchLocales)) {
+  ADDITIONAL_LOCALE_OVERRIDES[code] = {...ADDITIONAL_LOCALE_OVERRIDES[code], nationsPostmatch: phrases};
+}

@@ -4287,5 +4287,16 @@
         "text": "Torneos, campañas, sponsors y propuestas activas hacen visible lo que pasa en tu sede, dentro y fuera de la cancha."
       }
     }
+  },
+  "nationsPostmatch": {
+    "title": "Análisis del partido",
+    "pending": "Preparando el análisis…",
+    "insufficient": "No hay suficientes datos confirmados para analizar este partido.",
+    "uncertain": "El análisis necesita revisión. Vuelve a consultar más tarde.",
+    "failed": "No pudimos cargar el análisis. Vuelve a intentarlo.",
+    "signIn": "Inicia sesión para ver el análisis.",
+    "basis": "Basado en el marcador y los cambios registrados.",
+    "time": "Tiempo en cancha",
+    "points": "Puntos de su equipo"
   }
 }

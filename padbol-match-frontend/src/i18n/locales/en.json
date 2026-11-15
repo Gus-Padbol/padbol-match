@@ -4629,5 +4629,16 @@
         "text": "Tournaments, campaigns, sponsors and active proposals make what happens at your venue visible, on and off the court."
       }
     }
+  },
+  "nationsPostmatch": {
+    "title": "Match analysis",
+    "pending": "Preparing the analysis…",
+    "insufficient": "There is not enough confirmed data to analyse this match.",
+    "uncertain": "The analysis needs review. Please check again later.",
+    "failed": "We could not load the analysis. Please try again.",
+    "signIn": "Sign in to view the analysis.",
+    "basis": "Based on the recorded score and substitutions.",
+    "time": "Time on court",
+    "points": "Team points"
   }
 }

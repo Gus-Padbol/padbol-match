@@ -1,3 +1,4 @@
+import NationsPostmatchAnalysis from './NationsPostmatchAnalysis';
 import {napoliFixturePresentation,napoliFixtureDayLabel} from '../../utils/napoliFixturePresentation';
 import {napoliDrawTeams,napoliDrawPending} from '../../utils/napoliDrawPresentation';
 import { tournamentRosterPresentation } from '../../utils/tournamentRosterPresentation';
@@ -2263,6 +2264,7 @@ export default function TorneoTabbedView({
         resultadoDisabled={selectionMode && !selectionReady[String(selectedPartido?.id)]}
       >
         {isAdmin && !nationsEnabled && selectedPartido && showModalDetallePartido ? <TournamentMatchOperations key={`operations-${torneo?.id ?? torneoId}-${selectedPartido.id}-${selectionReady[String(selectedPartido.id)] ? 'ready' : 'pending'}`} torneoId={torneo?.id ?? torneoId} partidoId={selectedPartido.id} apiBaseUrl={apiBaseUrl} accessToken={session?.access_token} navigate={navigate} onSaved={saved=>{setSelectedPartido(prev=>({...prev,fecha_hora:saved.fecha_hora,cancha:saved.cancha}));setPartidos(prev=>prev.map(p=>String(p.id)===String(saved.partido_id)?{...p,fecha_hora:saved.fecha_hora,cancha:saved.cancha}:p));}} /> : null}
+        {selectionMode && selectedPartido && showModalDetallePartido && ['finalizado', 'terminado'].includes(String(selectedPartido.estado).toLowerCase()) ? <NationsPostmatchAnalysis key={`analysis-${selectedPartido.id}`} partidoId={selectedPartido.id} accessToken={session?.access_token} apiBaseUrl={apiBaseUrl} /> : null}
         {selectionMode && selectedPartido && showModalDetallePartido ? <PadbolSelectionLineups key={`${torneo?.id ?? torneoId}:${selectedPartido.id}`} apiBaseUrl={apiBaseUrl} torneoId={torneo?.id ?? torneoId} partido={selectedPartido} equipos={equipos} onReadyChange={ready => setSelectionReady(prev => prev[String(selectedPartido.id)] === ready ? prev : { ...prev, [String(selectedPartido.id)]: ready })} /> : null}
       </PartidoDetalleModal>
 

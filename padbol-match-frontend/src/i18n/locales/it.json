@@ -2183,5 +2183,16 @@
   },
   "profileCompletion": {
     "storageUnavailable": "Il server non ha potuto preparare il salvataggio del profilo. I tuoi dati non sono errati. Riprova più tardi."
+  },
+  "nationsPostmatch": {
+    "title": "Analisi della partita",
+    "pending": "Preparazione dell’analisi…",
+    "insufficient": "Non ci sono dati confermati sufficienti per analizzare questa partita.",
+    "uncertain": "L’analisi richiede una verifica. Riprova più tardi.",
+    "failed": "Non è stato possibile caricare l’analisi. Riprova.",
+    "signIn": "Accedi per visualizzare l’analisi.",
+    "basis": "Basata sul punteggio e sulle sostituzioni registrate.",
+    "time": "Tempo in campo",
+    "points": "Punti della squadra"
   }
 }
