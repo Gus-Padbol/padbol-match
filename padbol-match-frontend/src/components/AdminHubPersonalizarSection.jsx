@@ -65,6 +65,23 @@ function hubEditorNoticeStyle(text) {
   return { color: 'var(--pm-color-error, #dc2626)', fontWeight: 600 };
 }
 
+// Reference phone: 390 × 844, 16 px horizontal inset. Home cards adapt
+// to available height; Jugar uses 160 px (147 on Android). Keep the crop
+// and the preview on the same selected viewport instead of an unrelated 16:9.
+export const HUB_PHOTO_FRAMES = [
+  { id: 'jugar', label: 'Jugar · iPhone', width: 358, height: 160 },
+  { id: 'jugar_android', label: 'Jugar · Android', width: 358, height: 147 },
+  { id: 'inicio', label: 'Inicio · iPhone (referencia)', width: 358, height: 100 },
+];
+
+function HubPhotoPreview({src, frame, onAdjust, disabled}) {
+  return <><div data-testid="hub-photo-frame" style={{width: '100%', aspectRatio: `${frame.width} / ${frame.height}`, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)', background: '#0f172a'}}>
+    <img src={src} alt="Vista previa del encuadre del hub" style={{display: 'block', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center'}} />
+  </div>
+    <button type="button" disabled={disabled} onClick={onAdjust} style={{marginTop: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: disabled ? 'not-allowed' : 'pointer'}}>Ajustar encuadre</button>
+  </>;
+}
+
 export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, isSuperAdmin = false }) {
   const { t } = useTranslation();
   const hubJugarActionCards = useMemo(
@@ -124,7 +141,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [cropUploadBusy, setCropUploadBusy] = useState(false);
   const pendingUploadRef = useRef(null);
 
-  const HUB_CARD_CROP_ASPECT = 16 / 9;
+  const [photoFrameId, setPhotoFrameId] = useState('jugar');
+  const photoFrame = HUB_PHOTO_FRAMES.find(frame => frame.id === photoFrameId) || HUB_PHOTO_FRAMES[0];
+  const hubPhotoAspect = photoFrame.width / photoFrame.height;
 
   const cerrarCropModal = useCallback(() => {
     pendingUploadRef.current = null;
@@ -133,6 +152,17 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
       return null;
     });
+  }, []);
+
+  const abrirCropDesdeUrl = useCallback((src, pending) => {
+    if (!src || !pending) return;
+    pendingUploadRef.current = pending;
+    setCropImageSrc(prev => {
+      if (prev && String(prev).startsWith('blob:')) URL.revokeObjectURL(prev);
+      return src;
+    });
+    setCropError('');
+    setCropModalOpen(true);
   }, []);
 
   const abrirCropDesdeArchivo = useCallback((file, pending) => {
@@ -650,19 +680,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
             alignItems: 'flex-start',
           }}
         >
-          <div style={{ flex: '0 0 140px' }}>
+          <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
             <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-            <div
-              style={{
-                width: '140px',
-                height: '88px',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                border: '1px solid var(--border)',
-                background: '#64748b center/cover no-repeat',
-                backgroundImage: `url(${previewUrl})`,
-              }}
-            />
+            <HubPhotoPreview src={previewUrl} frame={photoFrame} disabled={uploading || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey})} />
           </div>
           <div style={{ flex: '1', minWidth: '200px' }}>
             <button
@@ -744,6 +764,14 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       <h2 style={{ marginBottom: '16px', paddingBottom: '8px', color: 'var(--text-primary)' }}>
         Personalizar Hub
       </h2>
+
+      <div style={cardWrap}>
+        <label htmlFor="hub-photo-frame" style={labelStyle}>Encuadre de la foto</label>
+        <select id="hub-photo-frame" value={photoFrameId} onChange={event => setPhotoFrameId(event.target.value)} style={inputStyle}>
+          {HUB_PHOTO_FRAMES.map(frame => <option key={frame.id} value={frame.id}>{frame.label}</option>)}
+        </select>
+        <p style={{margin: 0, fontSize: 13, lineHeight: 1.45}}>Elige dónde vas a mostrar la foto. La vista previa y el recorte usan el mismo formato. Al cambiar la foto puedes moverla y ajustar el zoom. Inicio se adapta al tamaño del teléfono: deja margen alrededor de las caras.</p>
+      </div>
 
       {isSuperAdmin ? (
         <div className="admin-hub-editor-card" style={{ ...cardWrap, marginBottom: '22px' }}>
@@ -889,19 +917,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
                 ))}
               </select>
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
-                <div style={{ flex: '0 0 140px' }}>
+                <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
                   <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-                  <div
-                    style={{
-                      width: '140px',
-                      height: '88px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '1px solid var(--border)',
-                      background: '#64748b center/cover no-repeat',
-                      backgroundImage: `url(${previewUrl})`,
-                    }}
-                  />
+                  <HubPhotoPreview src={previewUrl} frame={photoFrame} disabled={uploading || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'inicio', id: slotId})} />
                 </div>
                 <div style={{ flex: '1', minWidth: '200px' }}>
                   <button
@@ -964,6 +982,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         </p>
       ) : null}
       <input
+        data-testid="hub-deporte-file"
         ref={fileRefDeporte}
         type="file"
         accept="image/*"
@@ -1048,19 +1067,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
               {draft.titulo || fb.titulo || 'Tarjeta del hub'}
             </div>
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
-              <div style={{ flex: '0 0 140px' }}>
+              <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
                 <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-                <div
-                  style={{
-                    width: '140px',
-                    height: '88px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border)',
-                    background: '#64748b center/cover no-repeat',
-                    backgroundImage: `url(${previewUrl})`,
-                  }}
-                />
+                <HubPhotoPreview src={previewUrl} frame={photoFrame} disabled={uploadingId === id || !accessToken} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'legacy', id})} />
               </div>
               <div style={{ flex: '1', minWidth: '200px' }}>
                 <button
@@ -1135,10 +1144,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         imageSrc={cropImageSrc}
         onClose={cerrarCropModal}
         onConfirm={handleCropConfirm}
-        aspect={HUB_CARD_CROP_ASPECT}
+        aspect={hubPhotoAspect}
         cropShape="rect"
         title={t('admin.hub.cropHubPhoto')}
-        description={t('admin.hub.cropHubHint')}
+        description={`Mueve la foto y ajusta el zoom. El marco muestra lo que quedará visible en ${photoFrame.label}. Deja margen alrededor de las caras para otros tamaños de teléfono.`}
         confirmLabel={t('admin.hub.confirmAndUpload')}
         confirmColor="#E11B22"
         busy={cropUploadBusy}
