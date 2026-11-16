@@ -88,7 +88,7 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
   const matches = event.data?.matches || [];
   const basePath = `/practica/nations/${encodeURIComponent(eventId)}`;
   return <main className="np-page" dir={['ar','fa','he'].some(code => String(language).startsWith(code)) ? 'rtl' : undefined}>
-    <div className="np-shell"><header className="np-header"><img className="np-brand" src="/brand/padbol-match-logo-on-dark.png" alt="Padbol Match"/><h1>{copy.title}</h1><p>{copy.note}</p></header>
+    <div className="np-shell"><header className="np-header"><img className="np-brand" src="/brand/padbol-match-logo-white-practice.svg" alt="Padbol Match"/><h1>{copy.title}</h1><p>{copy.note}</p></header>
       {!validIds ? <PageError state="expired" copy={copy} refresh={() => {}}/> : mode === 'entry' ? <>
         <h2 className="np-entry-title">{copy.choose}</h2><p className="np-account">{copy.viewerLogin}</p>
         {!event.data ? <PageError state={event.status} copy={copy} refresh={event.refresh}/> : <div className="np-courts">{matches.map((match, index) => <article className="np-court-card" key={match.scoreboard_id}><span className="np-eyebrow">{courtName(match.cancha, index, copy)}</span><h2>{matchName(match, copy)}</h2><Link className="np-button np-button--gold" to={`${basePath}/partidos/${match.scoreboard_id}`}>{copy.view}</Link><Link className="np-text-link" to={`/scoreboard/${match.scoreboard_id}`} target="_blank" rel="noreferrer">{copy.tv}</Link></article>)}</div>}

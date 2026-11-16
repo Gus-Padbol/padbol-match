@@ -2,7 +2,7 @@
 .np-page *{box-sizing:border-box}
 .np-shell{width:min(100%,880px);margin:0 auto}
 .np-header{text-align:center;margin:0 0 28px}
-.np-brand{display:block;width:190px;max-width:75%;height:auto;margin:0 auto}
+.np-brand{display:block;width:190px;max-width:75%;height:auto;margin:0 auto;background:transparent;border:0;padding:0;box-shadow:none;object-fit:contain}
 .np-header h1{font-size:clamp(25px,5vw,38px);margin:22px 0 8px;font-weight:750;letter-spacing:-.03em}
 .np-header p,.np-footer{color:#aaa69e;font-size:13px;line-height:1.6}
 .np-eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:700;color:#d7b86e}
