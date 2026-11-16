@@ -128,10 +128,12 @@ function playerInitial(name) {
   return parts[0].slice(0, 1).toUpperCase();
 }
 
-function PlayerList({ jugadores, teamSide = 'left' }) {
+function PlayerList({ jugadores, teamSide = 'left', practice = false }) {
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
   // Solo registrados con identidad (nombre). No rellenar a 4 ni renderizar placeholders.
-  const list = listVisibleScoreboardJugadores(jugadores, 4);
+  const list = practice
+    ? (Array.isArray(jugadores) ? jugadores : []).filter((j) => j?.on_court === true).slice(0, 4)
+    : listVisibleScoreboardJugadores(jugadores, 4);
 
   if (list.length === 0) {
     return <ul className="sb-players" aria-label="Jugadores" />;
@@ -418,7 +420,7 @@ export default function ScoreboardBoard({
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <PlayerList jugadores={jugadoresA} teamSide="left" />
+            <PlayerList jugadores={jugadoresA} teamSide="left" practice={partido.es_practica === true} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -501,7 +503,7 @@ export default function ScoreboardBoard({
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <PlayerList jugadores={jugadoresB} teamSide="right" />
+            <PlayerList jugadores={jugadoresB} teamSide="right" practice={partido.es_practica === true} />
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />

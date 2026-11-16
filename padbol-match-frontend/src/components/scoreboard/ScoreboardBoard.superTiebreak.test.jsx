@@ -16,3 +16,13 @@ test('production TV shows trusted STB numeric points, ordinary knockout and type
  expect(container.querySelector('.sb-sets-history')).toHaveTextContent('STB10 – 9');
  await act(async()=>{});
 });
+
+
+test('practice board shows only explicit on_court players and hides bench, while normal keeps legacy', () => {
+  const practice = {...board, es_practica: true, equipo_a_jugadores: [{nombre:'Titular Uno',on_court:true},{nombre:'Titular Dos',on_court:true},{nombre:'Banco Uno',on_court:false},{nombre:'Banco Dos',on_court:false}]};
+  const {container, rerender} = render(<ScoreboardBoard partido={practice} />);
+  expect(container.textContent).toContain('Titular Uno'); expect(container.textContent).toContain('Titular Dos');
+  expect(container.textContent).not.toContain('Banco Uno'); expect(container.textContent).not.toContain('Banco Dos');
+  rerender(<ScoreboardBoard partido={{...practice, es_practica:false}} />);
+  expect(container.textContent).toContain('Banco Uno');
+});
