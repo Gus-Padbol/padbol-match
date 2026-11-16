@@ -10484,11 +10484,6 @@ export default function AdminDashboard({
           >
             {fechaActualLarga}
           </p>
-          {isSuperAdmin ? (
-            <button type="button" className="admin-super-header__date" onClick={() => navigate('/admin/nations-activacion')} style={{ margin: '0 0 12px', cursor: 'pointer', textDecoration: 'underline' }}>
-              Naciones — Importar nómina y panel durable
-            </button>
-          ) : null}
           {puedeUsarCampanita ? (
           <div ref={campanitaWrapRef} className={`admin-campanita-wrap${campanitaLoading ? ' admin-campanita-wrap--loading' : ''}`} style={{ position: 'relative', marginBottom: '12px' }}>
             <button
