@@ -17,7 +17,7 @@ describe('Terms and conditions translations', () => {
     expect(source).toContain('LEGAL_ENTITY');
     expect(source).toContain('LEGAL_REGISTERED_ADDRESS');
     expect(source).toContain('LEGAL_CONTACT_EMAIL');
-    expect(LEGAL_ENTITY).toBe('ENTERTAINMENT SPORT SERVICE LLC');
+    expect(LEGAL_ENTITY).toBe('ENTERTAINMENT AND SPORTS SERVICES LLC');
     expect(LEGAL_REGISTERED_ADDRESS).toBe('30 N Gould St Ste R, Sheridan, WY 82801, USA');
     expect(LEGAL_CONTACT_EMAIL).toBe('padbolmatch@padbol.com');
     expect(source).toContain('PADBOL®');

@@ -77,7 +77,7 @@ export default function LegalFooterBar() {
       <p style={companyStyle}>
         © 2026 Padbol.{' '}
         <a href="https://padbol.com/company" style={linkBase}>
-          {copy('publicSite.footer.legalOwner', 'Operated by ENTERTAINMENT SPORT SERVICE LLC.')}
+          {copy('publicSite.footer.legalOwner', 'Operated by ENTERTAINMENT AND SPORTS SERVICES LLC.')}
         </a>
       </p>
     </footer>

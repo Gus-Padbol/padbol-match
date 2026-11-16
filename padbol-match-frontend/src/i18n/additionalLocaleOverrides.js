@@ -227,7 +227,7 @@ const czechPublicSite = {
     copyright: 'Padbol Match. Všechna práva vyhrazena.', community: 'Komunita',
     scoreboard: 'Chytrá výsledková tabule', productOf: 'Produkt Padbol', visitPadbol: 'Navštívit Padbol',
     contactHelp: 'Potřebujete pomoc? Kontaktujte nás', brandAria: 'Přejít na Padbol Match',
-    legalOwner: 'Provozuje ENTERTAINMENT SPORT SERVICE LLC.',
+    legalOwner: 'Provozuje ENTERTAINMENT AND SPORTS SERVICES LLC.',
   },
   paths: { aria: 'Možnosti použití' },
   playerRecord: {

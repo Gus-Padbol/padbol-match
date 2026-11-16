@@ -4,12 +4,12 @@ let mockPathname = '/admin';
 jest.mock('react-router-dom', () => ({ useLocation: () => ({ pathname: mockPathname }), Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a> }));
 jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: 'dark' }) }));
 jest.mock('../context/HubNavLayoutContext', () => ({ useHubNavLayout: () => ({ navDock: 'bottom' }) }));
-jest.mock('../i18n/tSafe', () => ({ useSafeTranslation: () => ({ t: key => key === 'publicSite.footer.legalOwner' ? 'Operado por ENTERTAINMENT SPORT SERVICE LLC.' : key }) }));
+jest.mock('../i18n/tSafe', () => ({ useSafeTranslation: () => ({ t: key => key === 'publicSite.footer.legalOwner' ? 'Operado por ENTERTAINMENT AND SPORTS SERVICES LLC.' : key }) }));
 beforeEach(() => { mockPathname = '/admin'; });
 
 test('el pie conserva una sola puntuación tras el nombre legal', () => {
  const { container } = render(<LegalFooterBar />);
- expect(screen.getByText('Operado por ENTERTAINMENT SPORT SERVICE LLC.')).toBeInTheDocument();
+ expect(screen.getByText('Operado por ENTERTAINMENT AND SPORTS SERVICES LLC.')).toBeInTheDocument();
  expect(container.textContent).not.toContain('LLC..');
  expect(container.querySelector('p').textContent.trim()).toMatch(/LLC\.$/);
 });
@@ -30,6 +30,6 @@ test('el pie de la inscripción de Nápoles se muestra en inglés y no globaliza
   expect(screen.getByText('Terms and Conditions')).toBeInTheDocument();
   expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
   expect(screen.getByText('Delete your account')).toBeInTheDocument();
-  expect(screen.getByText('Operated by ENTERTAINMENT SPORT SERVICE LLC.')).toBeInTheDocument();
+  expect(screen.getByText('Operated by ENTERTAINMENT AND SPORTS SERVICES LLC.')).toBeInTheDocument();
   expect(container.textContent).not.toContain('Términos');
 });
