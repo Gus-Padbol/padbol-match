@@ -365,7 +365,7 @@ export default function UserHome() {
         titulo: t('competir.torneosCard'),
         subtitulo: t('hub.card.torneosSub'),
         to: '/competir',
-        cmsPhotoIds: ['torneos'],
+        cmsPhotoIds: ['torneos_acceso', 'torneos'],
       },
       {
         key: 'armar_partido',

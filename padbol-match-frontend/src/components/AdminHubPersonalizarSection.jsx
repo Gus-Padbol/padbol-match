@@ -148,7 +148,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [deporteMsg, setDeporteMsg] = useState('');
   const [sportSel, setSportSel] = useState(() => DEPORTES_CANCHA_SEDE_OPTIONS[0]?.key || 'padbol');
   const hubOtrasDeporteCards = useMemo(
-    () => [{ key: 'torneos', label: 'Torneos y rankings' }, ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Next Generation · Padbol' }] : [{ key: 'comunidad', label: 'Comunidad' }])],
+    () => [
+      { key: 'torneos_acceso', label: 'Inicio/Jugar · Torneos' },
+      { key: 'torneos', label: 'Interior · Torneos y Rankings' },
+      { key: 'rankings', label: 'Interior · Rankings' },
+      { key: 'mis_partidos', label: 'Interior · Mis partidos' },
+      ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Inicio/Jugar · Next Generation' }] : [{ key: 'comunidad', label: 'Inicio/Jugar · Comunidad' }]),
+    ],
     [t, sportSel],
   );
   const [deporteDrafts, setDeporteDrafts] = useState({});
@@ -642,8 +648,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const renderDeporteCardEditor = (cardKey, label) => {
     const dk = draftKeyDeporte(sportSel, cardKey);
     const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
-    const row = rowDeporteActual(cardKey);
-    const storedUrl = hubDeporteRowImagenUrl(row);
+    const storedRow = rowDeporteActual(cardKey);
+    const row = storedRow || (cardKey === 'torneos_acceso' ? rowDeporteActual('torneos') : null);
+    const storedUrl = hubDeporteRowImagenUrl(storedRow);
     const communityEmpty = cardKey === 'comunidad' && !storedUrl;
     const previewUrl = communityEmpty ? '' : (storedUrl || defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey));
     const saving = savingDeporteKey === dk;

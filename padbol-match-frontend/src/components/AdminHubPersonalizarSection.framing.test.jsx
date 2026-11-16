@@ -75,7 +75,7 @@ test('late original load after changing sport or auth does not open the wrong ph
 
 test('Next Generation opens with stored null CAS, not the preview URL',async()=>{
  renderEditor();await screen.findByLabelText('Comprobar las vistas del teléfono');
- const cardNext=screen.getByText('Next Generation · Padbol').closest('.admin-hub-editor-card');
+ const cardNext=screen.getByText('Inicio/Jugar · Next Generation').closest('.admin-hub-editor-card');
  fireEvent.click(within(cardNext).getByText('Ajustar encuadre'));
  await waitFor(()=>expect(fetchHubPhotoSource).toHaveBeenCalledWith(expect.objectContaining({target:expect.objectContaining({kind:'deporte',deporte:'padbol',card_key:'next_generation'}),expectedImageUrl:null})));
 });
@@ -83,7 +83,7 @@ test('Next Generation opens with stored null CAS, not the preview URL',async()=>
 test('community without image shows gradient state and disables adjust',async()=>{
  renderEditor();await screen.findByLabelText('Comprobar las vistas del teléfono');
  fireEvent.change(screen.getByLabelText('admin.hub.sportForCards'),{target:{value:'padel'}});
- const community=screen.getByText('Comunidad').closest('.admin-hub-editor-card');
+ const community=screen.getByText('Inicio/Jugar · Comunidad').closest('.admin-hub-editor-card');
  expect(within(community).getAllByText('Actualmente sin foto').length).toBeGreaterThan(0);
  expect(within(community).getByText('Ajustar encuadre').disabled).toBe(true);
  expect(within(community).getByText('admin.hub.changePhoto').disabled).toBe(false);
