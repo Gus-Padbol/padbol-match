@@ -85,3 +85,14 @@
 .np-clock{font-size:16px}
 .np-header{margin-bottom:20px}}
 @media(prefers-reduced-motion:reduce){.np-page *{scroll-behavior:auto!important}}
+
+/* Scoped readability: global light-page heading/logo rules must not make
+   practice headings black on the dark practice surface. */
+.np-page .np-header h1{color:#f7f4ed}
+.np-page .np-entry-title{color:#f0d28c}
+.np-page .np-court-card h2{color:#f7f4ed}
+.np-page .np-score h2{color:#f3ead7}
+.np-page .np-mode{color:#f0d28c}
+.np-page .np-players h4{color:#c9c2b2}
+.np-page .np-sets tbody th{color:#f0e7d5}
+.np-page .np-brand{filter:none;background:transparent}
