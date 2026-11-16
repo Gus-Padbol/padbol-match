@@ -102,7 +102,9 @@
 .np-spectator__top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .np-spectator__clock{font:600 12px ui-monospace,SFMono-Regular,monospace;color:#b8b2a5;font-variant-numeric:tabular-nums}
 .np-spectator__score{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:start;text-align:center;background:linear-gradient(150deg,#24231f,#141519);border:1px solid #5a4b2e;border-radius:20px;padding:16px 10px}
-.np-spectator__score::before{content:'–';align-self:center;color:#8a816b;font-size:24px}
+.np-spectator__dash{align-self:center;color:#8a816b;font-size:24px;line-height:1;grid-column:2;grid-row:1}
+.np-spectator__side:first-child{grid-column:1;grid-row:1}
+.np-spectator__side:last-child{grid-column:3;grid-row:1}
 .np-spectator__side{min-width:0}
 .np-spectator__side h2{font-size:clamp(13px,3.4vw,17px);line-height:1.25;margin:0 0 8px;color:#f7f4ed;overflow-wrap:anywhere}
 .np-spectator__side strong{display:block;font-size:clamp(48px,15vw,82px);line-height:1;color:#f0d28c;font-weight:750;font-variant-numeric:tabular-nums}
@@ -112,7 +114,7 @@
 .np-spectator__starters li>span:last-child{overflow-wrap:anywhere}
 .np-spectator__avatar{display:inline-flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;height:24px;border-radius:50%;background:#3b3324;color:#f0d28c;font-size:9px;font-weight:800}
 .np-spectator__sets{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;padding:12px 4px;color:#c0bcae;font-size:12px}
-.np-spectator__sets strong{font-size:18px;color:#f7f4ed;font-variant-numeric:tabular-nums}
+.np-spectator__sets{font-weight:600}
 .np-spectator__sets small{color:#8a816b;font-weight:400}
 .np-spectator__history{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px;color:#aaa69e;font-size:11px}
 .np-spectator__history span{background:#24231f;border:1px solid #49463c;border-radius:999px;padding:3px 8px;white-space:nowrap}

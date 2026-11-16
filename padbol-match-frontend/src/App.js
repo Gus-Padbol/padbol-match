@@ -97,6 +97,7 @@ const ScoreboardScoreBugCanchaPage = lazy(() => import('./pages/ScoreboardScoreB
 const PublicSitePage = lazy(() => import('./pages/publicSite/PublicSitePage'));
 const ContentWorkspacePage = lazy(() => import('./pages/ContentWorkspacePage'));
 const NationsPracticePage = lazy(() => import('./pages/NationsPracticePage'));
+const PracticeSpectatorPreview = lazy(() => import('./components/practice/PracticeSpectatorPreview'));
 const NationsOperatorDashboard = lazy(() => import('./pages/NationsOperatorDashboard'));
 const NationsOperatorGrants = lazy(() => import('./pages/NationsOperatorGrants'));
 const CommercialCrmPage = lazy(() => import('./pages/CommercialCrmPage'));
@@ -579,6 +580,7 @@ function App() {
                 )}
               />
               <Route path="/scoreboard/:partidoId" element={<ErrorBoundary label="la pantalla del marcador"><ScoreboardDisplay /></ErrorBoundary>} />
+              {process.env.NODE_ENV === 'development' ? <Route path="/preview/practica-espectador" element={<PracticeSpectatorPreview />} /> : null}
               <Route
                 path="/display/:sedeId/scoreboard/:partidoId"
                 element={(
