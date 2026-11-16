@@ -126,9 +126,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         key,
         label:
           key === 'reservar'
-            ? t('jugar.reservar')
+            ? 'Reservar cancha'
             : key === 'buscar_partido'
-              ? t('jugar.buscar')
+              ? 'Buscar partido'
               : t('jugar.armar'),
       })),
     [t],
@@ -148,7 +148,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [deporteMsg, setDeporteMsg] = useState('');
   const [sportSel, setSportSel] = useState(() => DEPORTES_CANCHA_SEDE_OPTIONS[0]?.key || 'padbol');
   const hubOtrasDeporteCards = useMemo(
-    () => [{ key: 'torneos', label: t('torneos.titulo') }, ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Next Generation · Padbol' }] : [{ key: 'comunidad', label: 'Comunidad' }])],
+    () => [{ key: 'torneos', label: 'Torneos y rankings' }, ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Next Generation · Padbol' }] : [{ key: 'comunidad', label: 'Comunidad' }])],
     [t, sportSel],
   );
   const [deporteDrafts, setDeporteDrafts] = useState({});
@@ -830,16 +830,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         </div>
       ) : null}
 
-      <h3
-        style={{
-          margin: '0 0 10px',
-          fontSize: '16px',
-          fontWeight: 800,
-          color: 'var(--text-primary)',
-        }}
-      >
-        Pantalla de inicio
-      </h3>
+      <details className="admin-hub-selector-photos">
+      <summary style={{fontWeight:700,padding:12,cursor:'pointer'}}>Fotos del selector de deportes · Web</summary>
+      <p style={{margin:'0 12px 12px',fontSize:13,color:'var(--text-secondary)'}}>Estas 4 fotos pertenecen al selector de deportes de la web; no son las tarjetas de Inicio/Jugar.</p>
       {inicioMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(inicioMsg) }}>
           {stripAdminEmoji(inicioMsg)}
@@ -945,20 +938,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
           );
         })}
       </div>
+      </details>
 
-      <h3
-        style={{
-          margin: '0 0 10px',
-          fontSize: '16px',
-          fontWeight: 800,
-          color: 'var(--text-primary)',
-        }}
-      >
-        {t('admin.hub.jugarScreenTitle')}
-      </h3>
-      <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-        {t('admin.hub.jugarScreenIntro')}
-      </p>
+      <h3 style={{ margin: '0 0 10px', fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>Fotos de la app · Inicio y Jugar</h3>
+      <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>Cinco tarjetas para el deporte elegido: Reservar cancha, Buscar partido, Crear partido, Torneos y rankings, y Next Generation (Padbol) o Comunidad. La app actualiza estas fotos al volver a Inicio.</p>
       {deporteMsg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(deporteMsg) }}>
           {stripAdminEmoji(deporteMsg)}
@@ -1009,15 +992,15 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
           color: 'var(--text-primary)',
         }}
       >
-        {t('admin.hub.hubTorneosCardTitle')}
+        Más tarjetas de Inicio
       </h3>
       <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-        {t('admin.hub.hubTorneosCardIntro')}
+        Las últimas tarjetas de la pantalla de Inicio del deporte elegido.
       </p>
       {deporteLoading ? null : hubOtrasDeporteCards.map(({ key: cardKey, label }) => renderDeporteCardEditor(cardKey, label))}
 
       <details className="admin-hub-legacy-details">
-        <summary style={{fontWeight:700,padding:12,cursor:'pointer'}}>Tarjetas adicionales del hub</summary>
+        <summary style={{fontWeight:700,padding:12,cursor:'pointer'}}>Otras fotos de la web</summary>
       <h3
         style={{
           margin: '28px 0 10px',
@@ -1026,7 +1009,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
           color: 'var(--text-primary)',
         }}
       >
-        Tarjetas adicionales
+        Otras fotos de la web
       </h3>
       {msg ? (
         <p role="status" style={{ fontSize: '14px', marginBottom: '14px', ...hubEditorNoticeStyle(msg) }}>
