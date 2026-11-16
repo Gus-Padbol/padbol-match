@@ -233,7 +233,8 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         try {
           const file = await downloadCurrentHubImage(src);
           if (generation !== editGenerationRef.current) return;
-          pendingUploadRef.current = {...pending, sourceId: null, expectedImageUrl: src};
+          const creatable = pending.kind === 'deporte' && ['next_generation','community'].includes(pending.cardKey || pending.card_key) && !rowDeporteActual(pending.cardKey || pending.card_key);
+          pendingUploadRef.current = {...pending, sourceId: null, expectedImageUrl: creatable ? null : src};
           setCropSource({sourceId: null, originalFile: file, initialPixels: null});
           setCropImageSrc(URL.createObjectURL(file));
           setSourceError(''); setSourceErrorTarget('');

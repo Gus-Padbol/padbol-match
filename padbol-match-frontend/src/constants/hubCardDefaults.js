@@ -8,7 +8,7 @@ export const HUB_CARD_DEFAULT_IMAGES = {
   rankings: 'https://images.unsplash.com/photo-1517649763962-0c62306601b7?w=800&q=80',
   jugar: 'https://images.unsplash.com/photo-1575367420392-2c71baa18656?w=800&q=80',
   torneos_lista: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
-  next_generation: '/brand/next-generation-youth.png',
+  next_generation: 'https://www.padbolmatch.com/brand/next-generation-youth.png',
 };
 
 /** Texto por defecto si el CMS deja título/subtítulo vacíos. */
