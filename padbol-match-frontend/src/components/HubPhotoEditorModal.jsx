@@ -21,7 +21,7 @@ export async function renderHubPhoto(src, pixels) {
 }
 
 export function HubFramingPreview({src, pixels, imageSize, frame}) {
-  if (!pixels || !imageSize) return null;
+  if (!pixels || !imageSize) return <div><strong style={{fontSize: 13}}>{frame.label}</strong></div>;
   const window = centeredCoverWindow(pixels.width, pixels.height, frame);
   return <div>
     <strong style={{fontSize: 13}}>{frame.label}</strong>
@@ -82,7 +82,7 @@ function HubPhotoEditor({open, originalSrc, initialPixels = null, frames, safeFr
   return <div role="dialog" aria-modal="true" aria-labelledby="hub-framing-title" style={{position: 'fixed', inset: 0, zIndex: 20000, background: 'rgba(0,0,0,.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 12}}>
     <div style={{width: '100%', maxWidth: 760, maxHeight: '94vh', overflowY: 'auto', borderRadius: 16, background: 'var(--bg-card)', color: 'var(--text-primary)', padding: 18}}>
       <h3 id="hub-framing-title" style={{marginTop: 0}}>Acomodar la foto del Hub</h3>
-      <p>Mueve la foto y revisa las dos vistas. «Foto completa» añade margen para que no se corten las caras.</p>
+      <p>{frames.length === 1 ? 'Mové la foto y ajustá el recorte. «Foto completa» añade margen para que no se corten las caras.' : 'Mueve la foto y revisa las dos vistas. «Foto completa» añade margen para que no se corten las caras.'}</p>
       {sourceNotice ? <p role="status">{sourceNotice}</p> : null}
       <div style={{height: 260, position: 'relative', background: '#0f172a', borderRadius: 12, overflow: 'hidden'}}>
         <Cropper image={originalSrc} crop={crop} zoom={zoom} minZoom={0.1} maxZoom={3} aspect={master.width / master.height} restrictPosition={false} showGrid={false} onCropChange={setCrop} onZoomChange={setZoom} onCropSizeChange={setCropSize} onCropComplete={(_area, value) => setPixels(value)} onCropAreaChange={(_area, value) => setPixels(value)} initialCroppedAreaPixels={initialPixels || undefined} onMediaLoaded={media => {setImageSize({width: media.naturalWidth, height: media.naturalHeight});setMediaSize(media);}} />

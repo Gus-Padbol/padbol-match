@@ -1124,18 +1124,18 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       })}
 
       </details>
-      <HubPhotoEditorModal
+      {(() => { const pending = pendingUploadRef.current; const interior = ['torneos','rankings','mis_partidos'].includes(pending?.cardKey || pending?.card_key); const modalFrames = interior ? [{...photoFrames[0], id: 'interior', label: 'Vista previa del recorte'}] : photoFrames; return <HubPhotoEditorModal
         error={cropError}
         open={cropModalOpen}
         originalSrc={cropImageSrc}
         initialPixels={cropSource?.initialPixels || null}
-        frames={photoFrames}
-        safeFrames={HUB_SAFE_FRAMES}
+        frames={modalFrames}
+        safeFrames={interior ? modalFrames : HUB_SAFE_FRAMES}
         onClose={cerrarCropModal}
         onConfirm={handleCropConfirm}
         busy={cropUploadBusy}
         sourceNotice={sourceNotice}
-      />
+      />; })()}
     </div>
   );
 }

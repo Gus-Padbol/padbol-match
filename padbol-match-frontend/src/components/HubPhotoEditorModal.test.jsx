@@ -68,3 +68,13 @@ test('onCropAreaChange updates the live pixels without waiting for another CropC
   expect(props.onConfirm).toHaveBeenCalledWith(expect.any(File),expect.objectContaining({pixels:moved}));
   getContext.mockRestore();toBlob.mockRestore();
 });
+
+test('interior destination uses one neutral preview and no Inicio/Jugar labels',()=>{
+ const interior=[{...frames[0],id:'interior',label:'Vista previa del recorte'}];
+ const props={open:true,originalSrc:'https://example.test/original.jpg',frames:interior,safeFrames:interior,onClose:jest.fn(),onConfirm:jest.fn()};
+ render(<HubPhotoEditorModal {...props}/>);
+ expect(screen.queryByText('Inicio')).toBeNull();
+ expect(screen.queryByText('Jugar')).toBeNull();
+ expect(screen.getByText('Vista previa del recorte')).toBeInTheDocument();
+ expect(screen.getByText(/Mové la foto/)).toBeInTheDocument();
+});
