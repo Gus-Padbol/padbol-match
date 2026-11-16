@@ -5,4 +5,6 @@ test('allows exact custom public hub-images host and rejects other/redirect-like
  expect(PRACTICE_IMAGE_ORIGIN(ok.replace('auth.padbolmatch.com','evil.padbolmatch.com'))).toBeNull();
  expect(PRACTICE_IMAGE_ORIGIN('https://auth.padbolmatch.com/storage/v1/object/private/hub-images/a.jpg')).toBeNull();
  expect(PRACTICE_IMAGE_ORIGIN('https://www.padbolmatch.com/brand/next-generation-youth.png')?.pathname).toBe('/brand/next-generation-youth.png');
+ expect(PRACTICE_IMAGE_ORIGIN('https://auth.padbolmatch.com/storage/v1/object/public/content-media/editorial/1790107672954-gmcl8ne7.jpg')?.hostname).toBe('auth.padbolmatch.com');
+ expect(PRACTICE_IMAGE_ORIGIN('https://evil.example/storage/v1/object/public/content-media/editorial/x.jpg')).toBeNull();
 });

@@ -102,8 +102,9 @@ export const PRACTICE_IMAGE_ORIGIN = (url) => {
       || u.hostname === 'vpldffhsxhgnmitiikof.supabase.co';
     if (!allowed) return null;
     if (u.pathname === '/brand/next-generation-youth.png' && u.hostname === 'www.padbolmatch.com') return u;
-    if (!u.pathname.startsWith('/storage/v1/object/public/hub-images/')) return null;
-    return u;
+    const allowedPath = u.pathname.startsWith('/storage/v1/object/public/hub-images/')
+      || (u.hostname === 'auth.padbolmatch.com' && u.pathname.startsWith('/storage/v1/object/public/content-media/editorial/'));
+    return allowedPath ? u : null;
   } catch { return null; }
 };
 async function downloadCurrentHubImage(src) {
@@ -149,14 +150,16 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [sportSel, setSportSel] = useState(() => DEPORTES_CANCHA_SEDE_OPTIONS[0]?.key || 'padbol');
   const hubOtrasDeporteCards = useMemo(
     () => [
-      { key: 'torneos_acceso', label: 'Inicio/Jugar · Torneos' },
-      { key: 'torneos', label: 'Interior · Torneos y Rankings' },
-      { key: 'rankings', label: 'Interior · Rankings' },
-      { key: 'mis_partidos', label: 'Interior · Mis partidos' },
+      { key: 'torneos_acceso', label: 'Inicio · Torneos y Rankings' },
       ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Inicio/Jugar · Next Generation' }] : [{ key: 'comunidad', label: 'Inicio/Jugar · Comunidad' }]),
     ],
     [sportSel],
   );
+  const hubInteriorDeporteCards = [
+    { key: 'torneos', label: 'Dentro de Torneos y Rankings · Torneos' },
+    { key: 'rankings', label: 'Dentro de Torneos y Rankings · Rankings' },
+    { key: 'mis_partidos', label: 'Dentro de Torneos y Rankings · Mis partidos' },
+  ];
   const [deporteDrafts, setDeporteDrafts] = useState({});
   const [savingDeporteKey, setSavingDeporteKey] = useState(null);
   const fileRefDeporte = useRef(null);
@@ -655,6 +658,8 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     const noPhoto = !storedUrl && ['comunidad','rankings','mis_partidos'].includes(cardKey);
     const previewUrl = noPhoto ? '' : (storedUrl || fallbackUrl || defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey));
     const communityEmpty = noPhoto;
+    const interior = ['torneos','rankings','mis_partidos'].includes(cardKey);
+    const previewFrames = interior ? [{...photoFrames[0], label: 'Vista previa del recorte'}] : photoFrames;
     const saving = savingDeporteKey === dk;
     const uploading = uploadingDeporteKey === dk;
     return (
@@ -673,7 +678,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         >
           <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
             <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-            <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken || communityEmpty} loading={sourceLoading && sourceLoadingTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey})} error={sourceErrorTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey}) ? sourceError : ''} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey, expectedImageUrl: storedUrl || null})} />
+            <HubPhotoPreview src={previewUrl} frames={previewFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken || communityEmpty} loading={sourceLoading && sourceLoadingTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey})} error={sourceErrorTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey}) ? sourceError : ''} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey, expectedImageUrl: storedUrl || null})} />
           </div>
           <div style={{ flex: '1', minWidth: '200px' }}>
             <button
@@ -1005,9 +1010,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         Más tarjetas de Inicio
       </h3>
       <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-        Las últimas tarjetas de la pantalla de Inicio del deporte elegido.
+        Acceso desde Inicio/Jugar y tarjetas interiores de Torneos y Rankings.
       </p>
       {deporteLoading ? null : hubOtrasDeporteCards.map(({ key: cardKey, label }) => renderDeporteCardEditor(cardKey, label))}
+
+      <h3 style={{ margin: '24px 0 10px', fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>Dentro de Torneos y Rankings</h3>
+      <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.45 }}>Estas fotos se usan en las tarjetas interiores de Competir; no son las tarjetas de acceso de Inicio.</p>
+      {deporteLoading ? null : hubInteriorDeporteCards.map(({ key: cardKey, label }) => renderDeporteCardEditor(cardKey, label))}
 
       <details className="admin-hub-legacy-details">
         <summary style={{fontWeight:700,padding:12,cursor:'pointer'}}>Otras fotos de la web</summary>
