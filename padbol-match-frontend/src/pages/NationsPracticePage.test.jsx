@@ -1,5 +1,5 @@
 import React from 'react';
-import {render,screen,fireEvent,act} from '@testing-library/react';
+import {render,screen,fireEvent,act,within} from '@testing-library/react';
 import {MemoryRouter,Routes,Route} from 'react-router-dom';
 import NationsPracticePage from './NationsPracticePage';
 import {consumePracticeControl,createNationsPracticeApi,practiceRequestId} from '../utils/nationsPracticeApi';
@@ -9,7 +9,7 @@ jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{user:{id:'normal
 const E='1000000000001', A='70726163-0000-4000-8000-000000000001', B='70726163-0000-4000-8000-000000000002', C='70726163-0000-4000-8000-000000000003';
 const CAP='anonymous-practice-capability-123456789';
 const player=(side,n)=>({id:`${side}${n}`,name:`Jugador ${side}${n}`,nombre:`Jugador ${side}${n}`,on_court:n<3,jersey:n});
-const board=(id=A,score=0)=>({id,torneo_id:Number(E),cancha:id===A?'1':id===B?'2':'3',estado:'en_curso',cronometro_pausado:false,equipo_a_nombre:'Azul',equipo_b_nombre:'Rojo',equipo_a_jugadores:[1,2,3,4].map(n=>player('A',n)),equipo_b_jugadores:[1,2,3,4].map(n=>player('B',n)),display:{displayA:score,displayB:0,cronometroSegundos:65,cronometroActivo:true},score_a:score,score_b:0,games_a:1,games_b:0,sets_a:0,sets_b:0,historial_sets:[],practice_revision:0});
+const board=(id=A,score=0)=>({id,torneo_id:Number(E),cancha:id===A?'1':id===B?'2':'3',estado:'en_curso',cronometro_pausado:false,cronometro_inicio:'2026-11-16T10:00:00Z',equipo_a_nombre:'Azul',equipo_b_nombre:'Rojo',equipo_a_jugadores:[1,2,3,4].map(n=>player('A',n)),equipo_b_jugadores:[1,2,3,4].map(n=>player('B',n)),display:{displayA:score,displayB:0,cronometroSegundos:65,cronometroActivo:true},score_a:score,score_b:0,games_a:1,games_b:0,sets_a:0,sets_b:0,historial_sets:[],practice_revision:0});
 const matches=[A,B,C].map((id,index)=>({id:1000000000101+index,torneo_id:Number(E),scoreboard_id:id,cancha:index+1,equipo_a_nombre:'Azul',equipo_b_nombre:'Rojo'}));
 const control=()=>({board:board(),revision:0,lineups:{A:[1,2,3,4].map(n=>player('A',n)),B:[1,2,3,4].map(n=>player('B',n))},substitution_window:{allowed:true}});
 function apiFor(){let current=control();return {event:jest.fn(async()=>({event:{id:E},matches})),board:jest.fn(async id=>board(id)),control:jest.fn(async()=>current),command:jest.fn(async(id,token,body)=>{current={...current,revision:current.revision+1,board:{...current.board,practice_revision:current.revision+1}};return {board:current.board,revision:current.revision};})};}
@@ -32,20 +32,23 @@ test('normal signed-in reader sees on-court and folded bench, never control acti
  api.board.mockRejectedValueOnce(new Error('network'));
  await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.getByText('Reconnecting…')).toBeInTheDocument();expect(screen.queryByText('LIVE')).toBeNull();
 });
+test('pending practice starts from the tactical panel and never resumes as if already started',async()=>{
+ const api=apiFor();const pending={...control(),board:{...control().board,estado:'pendiente',cronometro_inicio:null,display:{displayA:0,displayB:0},score_a:0,score_b:0}};api.control.mockResolvedValueOnce(pending);mount('control',api);await flush();const start=screen.getByRole('button',{name:'Start match'});expect(start).toBeEnabled();fireEvent.click(start);await flush();expect(api.command.mock.calls[0][2]).toMatchObject({kind:'start'});
+});
 test('private control removes fragment and synchronous double tap sends one CAS command',async()=>{
  const api=apiFor();let resolve;api.command.mockImplementation(()=>new Promise(r=>{resolve=r;}));mount('control',api);await flush();expect(window.location.hash).toBe('');expect(api.control).toHaveBeenCalledWith(A,CAP,expect.any(AbortSignal));
- const add=screen.getByRole('button',{name:'Punto para A'});fireEvent.click(add);fireEvent.click(add);expect(api.command).toHaveBeenCalledTimes(1);expect(api.command.mock.calls[0][2]).toMatchObject({kind:'point',team:'A',expectedRevision:0});
+ const add=screen.getByRole('button',{name:'+ Point Azul'});fireEvent.click(add);fireEvent.click(add);expect(api.command).toHaveBeenCalledTimes(1);expect(api.command.mock.calls[0][2]).toMatchObject({kind:'point',team:'A',expectedRevision:0});
  expect(api.command.mock.calls[0][2].requestId).toMatch(/^[0-9a-f-]{36}$/);await act(async()=>{resolve({board:board(),revision:1});});await flush();
 });
 test('uncertain response retries the identical request id and blocks another point',async()=>{
- const api=apiFor();api.command.mockRejectedValueOnce(new Error('network'));mount('control',api);await flush();fireEvent.click(screen.getByRole('button',{name:'Punto para A'}));await flush();const original=api.command.mock.calls[0][2];
- expect(screen.getByRole('button',{name:'Punto para B'})).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'Comprobar la misma acción'}));await flush();expect(api.command.mock.calls[1][2]).toEqual(original);
+ const api=apiFor();api.command.mockRejectedValueOnce(new Error('network'));mount('control',api);await flush();fireEvent.click(screen.getByRole('button',{name:'+ Point Azul'}));await flush();const original=api.command.mock.calls[0][2];
+ expect(screen.getByRole('button',{name:'+ Point Rojo'})).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'Retry the same attempt'}));await flush();expect(api.command.mock.calls[1][2]).toEqual(original);
 });
 test('CAS conflict refreshes without repeating the point',async()=>{
- const api=apiFor();api.command.mockRejectedValueOnce(Object.assign(new Error('stale'),{status:409}));mount('control',api);await flush();fireEvent.click(screen.getByRole('button',{name:'Punto para A'}));await flush();expect(api.command).toHaveBeenCalledTimes(1);expect(screen.getByRole('alert')).toHaveTextContent('el punto no se repitió');
+ const api=apiFor();api.command.mockRejectedValueOnce(Object.assign(new Error('stale'),{status:409}));mount('control',api);await flush();fireEvent.click(screen.getByRole('button',{name:'+ Point Azul'}));await flush();expect(api.command).toHaveBeenCalledTimes(1);expect(screen.getAllByRole('alert').some(node => /el punto no se repitió/.test(node.textContent || ''))).toBe(true);
 });
-test('two substitutions require distinct outgoing and incoming players',async()=>{
- const api=apiFor();mount('control',api);await flush();fireEvent.click(screen.getByText('Cambio de jugadores'));fireEvent.change(screen.getByLabelText('Sale 1'),{target:{value:'A1'}});fireEvent.change(screen.getByLabelText('Entra 1'),{target:{value:'A3'}});fireEvent.click(screen.getByLabelText('Cambiar dos jugadores'));fireEvent.change(screen.getByLabelText('Sale 2'),{target:{value:'A1'}});fireEvent.change(screen.getByLabelText('Entra 2'),{target:{value:'A4'}});expect(screen.getByRole('button',{name:'Confirmar cambio'})).toBeDisabled();fireEvent.change(screen.getByLabelText('Sale 2'),{target:{value:'A2'}});fireEvent.click(screen.getByRole('button',{name:'Confirmar cambio'}));await flush();expect(api.command.mock.calls[0][2]).toMatchObject({kind:'substitution',team:'A',swaps:[{outId:'A1',inId:'A3'},{outId:'A2',inId:'A4'}]});
+test('tactical court substitution sends one atomic CAS swap from a selected court player',async()=>{
+ const api=apiFor();mount('control',api);await flush();fireEvent.click(screen.getByRole('button',{name:'Replace Jugador A1 for Azul'}));const bench=screen.getByRole('region',{name:'Bench for Azul'});fireEvent.click(within(bench).getByRole('button',{name:/Jugador A3/}));await flush();expect(api.command.mock.calls[0][2]).toMatchObject({kind:'substitution',team:'A',swaps:[{outId:'A1',inId:'A3'}]});
 });
 test('missing capability does not request control or offer scoring',async()=>{
  const api=apiFor();window.history.replaceState({},'',`/practica/nations/${E}/arbitro/${A}`);

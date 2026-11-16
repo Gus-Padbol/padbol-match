@@ -4,7 +4,7 @@ import {useAuth} from '../context/AuthContext';
 import {useSafeTranslation} from '../i18n/tSafe';
 import {consumePracticeControl, createNationsPracticeApi, practiceBoardId, practiceEventId, practiceRequestId} from '../utils/nationsPracticeApi';
 import useNationsPracticeResource from '../hooks/useNationsPracticeResource';
-import PracticeBoard from '../components/practice/PracticeBoard';
+import PracticeRefereePanel from '../components/practice/PracticeRefereePanel';
 import PracticeSpectatorView from '../components/practice/PracticeSpectatorView';
 import {practiceCopy} from '../components/practice/practiceCopy';
 import '../components/practice/PracticeNations.css';
@@ -60,7 +60,7 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
   const board = boardFrom(data);
   const revision = Number(data?.revision ?? board?.practice_revision ?? board?.revision);
   async function command(kind, extra = {}, retryBody = null) {
-    if (!token || commandLock.current || (!Number.isSafeInteger(revision) || revision < 0) || !board) return;
+    if (!token || commandLock.current || (!Number.isSafeInteger(revision) || revision < 0) || !board) return false;
     const ownScope = scope;
     let body;
     try { body = retryBody || {kind, expectedRevision: revision, requestId: practiceRequestId(), ...extra}; } catch { setNotice(copy.commandError); return; }
@@ -73,19 +73,18 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
       if (active.current !== ownScope) return;
       setPending(null); setResetOpen(false);
       resource.publish({...data, ...result});
+      return true;
     } catch (error) {
       if (active.current !== ownScope) return;
-      if (error.status === 409) { setPending(null); setNotice(copy.conflict); resource.refresh(); }
-      else if (!error.status || error.status >= 500) { setPending(body); setNotice(copy.uncertain); resource.refresh(); }
-      else { setPending(null); setNotice(error.status === 401 || error.status === 403 ? copy.forbidden : copy.commandError); resource.refresh(); }
+      if (error.status === 409) { setPending(null); setNotice(copy.conflict); resource.refresh(); return false; }
+      else if (!error.status || error.status >= 500) { setPending(body); setNotice(copy.uncertain); resource.refresh(); return false; }
+      else { setPending(null); setNotice(error.status === 401 || error.status === 403 ? copy.forbidden : copy.commandError); resource.refresh(); return false; }
     } finally {
       clearTimeout(deadline);
       if (active.current === ownScope) { commandLock.current = null; setBusy(false); }
     }
   }
   const canAct = resource.status === 'ready' && !resource.refreshing && !busy && !pending && Number.isSafeInteger(revision) && revision >= 0;
-  const inProgress = board?.estado === 'en_curso';
-  const paused = Boolean(board?.cronometro_pausado);
   const matches = event.data?.matches || [];
   const basePath = `/practica/nations/${encodeURIComponent(eventId)}`;
   return <main className="np-page" dir={['ar','fa','he'].some(code => String(language).startsWith(code)) ? 'rtl' : undefined}>
@@ -99,14 +98,11 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
         {!control && mode !== 'viewer' && <p className="np-account">{session?.user ? copy.account : <>{copy.guest} <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`}>{copy.login}</Link></>}</p>}
         {control && !token ? <p className="np-message" role="alert">{copy.missingControl}</p> : !board ? <PageError state={resource.status} copy={copy} refresh={resource.refresh}/> : <>
           {!control && resource.status !== 'ready' && <button className="np-button" onClick={resource.refresh}>{copy.retry}</button>}
-          {control ? <PracticeBoard board={board} status={resource.status} copy={copy}/> : <PracticeSpectatorView board={board} status={resource.status} copy={copy} courts={matches.map((match,index)=>({id:match.scoreboard_id,label:`Court ${courtName(match.cancha,index,copy).replace(/^Court\s*/,'')}`,href:`${basePath}/partidos/${match.scoreboard_id}`,active:match.scoreboard_id===boardId}))} activeCourt={matches.findIndex(match=>match.scoreboard_id===boardId)+1}/>}
+          {control ? <PracticeRefereePanel data={data} board={board} revision={revision} status={resource.status} busy={busy} pending={pending} notice={notice} onCommand={command} onRefresh={resource.refresh} onRetry={() => pending ? command(pending.kind, {}, pending) : false}/> : <PracticeSpectatorView board={board} status={resource.status} copy={copy} courts={matches.map((match,index)=>({id:match.scoreboard_id,label:`Court ${courtName(match.cancha,index,copy).replace(/^Court\s*/,'')}`,href:`${basePath}/partidos/${match.scoreboard_id}`,active:match.scoreboard_id===boardId}))} activeCourt={matches.findIndex(match=>match.scoreboard_id===boardId)+1}/>}
           {control && <section className="np-controls" aria-label={copy.referee}>
             {notice && <div className="np-message" role="alert"><p>{notice}</p>{pending && <button className="np-button" disabled={busy} onClick={() => command(pending.kind, {}, pending)}>{copy.retrySame}</button>}</div>}
             {resource.refreshing && <p role="status">{copy.refreshing}</p>}
             {resource.status !== 'ready' && <button className="np-button" disabled={busy} onClick={resource.refresh}>{copy.retry}</button>}
-            {board.estado === 'pendiente' ? <button className="np-button np-button--gold np-start" disabled={!canAct} onClick={() => command('start')}>{copy.start}</button> : <div className="np-point-buttons"><button className="np-button np-point np-point--a" disabled={!canAct || !inProgress || paused} onClick={() => command('point', {team:'A'})}>{copy.addA}</button><button className="np-button np-point np-point--b" disabled={!canAct || !inProgress || paused} onClick={() => command('point', {team:'B'})}>{copy.addB}</button></div>}
-            <div className="np-action-row"><button className="np-button" disabled={!canAct || !inProgress} onClick={() => command(paused ? 'resume' : 'pause')}>{paused ? copy.resume : copy.pause}</button><button className="np-button" disabled={!canAct || board.estado === 'pendiente'} onClick={() => command('undo')}>{copy.undo}</button></div>
-            <Substitutions data={data} revision={revision} copy={copy} disabled={!canAct} onCommand={command}/>
             <button className="np-text-button" disabled={!canAct} onClick={() => setResetOpen(true)}>{copy.reset}</button>
             {resetOpen && <div className="np-reset" role="alertdialog" aria-label={copy.resetConfirm}><p>{copy.resetConfirm}</p><label>{copy.format}<select value={format} onChange={e => setFormat(e.target.value)}><option value="groups">{copy.groups}</option><option value="knockout">{copy.knockout}</option></select></label><div className="np-action-row"><button className="np-button" disabled={busy} onClick={() => setResetOpen(false)}>{copy.cancel}</button><button className="np-button np-button--gold" disabled={!canAct} onClick={() => command('reset', {format})}>{copy.resetNow}</button></div></div>}
           </section>}
@@ -115,19 +111,4 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
       {mode !== 'viewer' ? <footer className="np-footer">{copy.note}</footer> : null}
     </div>
   </main>;
-}
-
-function Substitutions({data, revision, copy, disabled, onCommand}) {
-  const [team, setTeam] = useState('A'), [two, setTwo] = useState(false), [values, setValues] = useState(['','','','']);
-  useEffect(() => { setValues(['','','','']); setTwo(false); }, [revision, team]);
-  const players = Array.isArray(data?.lineups?.[team]) ? data.lineups[team] : [];
-  const active = players.filter(player => player.on_court === true), bench = players.filter(player => player.on_court === false);
-  const allowed = data?.substitution_window?.allowed === true;
-  const count = two ? 2 : 1;
-  const valid = values.slice(0,count * 2).every(Boolean) && new Set([values[0], ...(two ? [values[2]] : [])]).size === count && new Set([values[1], ...(two ? [values[3]] : [])]).size === count;
-  const change = (index, value) => setValues(old => old.map((v,i) => i === index ? value : v));
-  return <details className="np-substitutions"><summary>{copy.changes}</summary><p>{copy.changeHint}</p><label>{copy.team}<select value={team} onChange={e => setTeam(e.target.value)}><option value="A">{copy.teamA}</option><option value="B">{copy.teamB}</option></select></label>
-    {[0, ...(two ? [1] : [])].map(index => <div className="np-action-row" key={index}><label>{copy.out} {index + 1}<select value={values[index*2]} disabled={disabled || !allowed} onChange={e => change(index*2,e.target.value)}><option value="">{copy.select}</option>{active.map(player => <option key={player.id} value={player.id}>{player.name || player.nombre}</option>)}</select></label><label>{copy.in} {index + 1}<select value={values[index*2+1]} disabled={disabled || !allowed} onChange={e => change(index*2+1,e.target.value)}><option value="">{copy.select}</option>{bench.map(player => <option key={player.id} value={player.id}>{player.name || player.nombre}</option>)}</select></label></div>)}
-    <label className="np-checkbox"><input type="checkbox" checked={two} disabled={disabled || !allowed || active.length < 2 || bench.length < 2} onChange={e => setTwo(e.target.checked)}/>{copy.two}</label><button className="np-button" disabled={disabled || !allowed || !valid} onClick={() => onCommand('substitution', {team, swaps: Array.from({length:count},(_,index) => ({outId:values[index*2],inId:values[index*2+1]}))})}>{copy.apply}</button>
-  </details>;
 }
