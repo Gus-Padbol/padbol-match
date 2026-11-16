@@ -598,6 +598,14 @@ function App() {
                 )}
               />
               <Route
+                path="/display/event/:eventId/cancha/:cancha"
+                element={(
+                  <ErrorBoundary label="la pantalla TV del scoreboard por cancha de evento">
+                    <ScoreboardCanchaDisplay />
+                  </ErrorBoundary>
+                )}
+              />
+              <Route
                 path="/scorebug/cancha/:sedeId/:cancha"
                 element={(
                   <ErrorBoundary label="el scorebug OBS por cancha">

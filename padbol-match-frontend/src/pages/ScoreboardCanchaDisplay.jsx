@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import ScoreboardBoard from '../components/scoreboard/ScoreboardBoard';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
-import { fetchPartido, fetchPartidoByCancha, fetchSponsors } from '../utils/scoreboardApi';
+import { fetchPartido, fetchPartidoByCancha, fetchPartidoByEventCancha, fetchSponsors } from '../utils/scoreboardApi';
 import { PADBOL_LOGO_ON_DARK } from '../constants/padbolBrandLogo';
 import { resolveScoreboardCanchaLabel } from '../utils/scoreboardVenueLabels';
 import { preferNewestScoreboard } from '../utils/scoreboardVersion';
@@ -23,9 +23,24 @@ function ScoreboardWaitingScreen({ canchaLabel }) {
   );
 }
 
+function ScoreboardNextMatchScreen({ next, canchaLabel }) {
+  const team = side => next?.[`equipo_${side}_nombre`] || (side === 'A' ? 'Team A' : 'Team B');
+  const flag = side => {
+    const iso = String(next?.[`equipo_${side}_pais_iso`] || '').trim().toLowerCase();
+    return /^[a-z]{2}$/.test(iso) ? <img className="sb-next__flag" src={`/brand/flags/${iso}.svg`} alt="" /> : null;
+  };
+  return <div className="sb-waiting sb-next">
+    <img src={PADBOL_LOGO_ON_DARK} alt="Padbol Match" className="sb-waiting__logo" />
+    <p className="sb-next__eyebrow">NEXT MATCH</p>
+    <div className="sb-next__teams">{flag('A')}<strong>{team('A')}</strong><span>vs</span><strong>{team('B')}</strong>{flag('B')}</div>
+    <p className="sb-waiting__cancha">{canchaLabel}</p>
+    <p className="sb-next__wait">Waiting for referee start</p>
+  </div>;
+}
+
 export default function ScoreboardCanchaDisplay() {
   const { t } = useTranslation();
-  const { sedeId, cancha } = useParams();
+  const { sedeId, eventId, cancha } = useParams();
   const canchaFromRoute = useMemo(
     () => decodeURIComponent(String(cancha || '').trim()),
     [cancha],
@@ -37,6 +52,7 @@ export default function ScoreboardCanchaDisplay() {
   );
 
   const [partido, setPartido] = useState(null);
+  const [nextMatch, setNextMatch] = useState(null);
   const [activePartidoId, setActivePartidoId] = useState(null);
   const [sponsors, setSponsors] = useState([]);
   const [error, setError] = useState('');
@@ -92,11 +108,15 @@ export default function ScoreboardCanchaDisplay() {
 
   const pollCancha = useCallback(async () => {
     // Lookup por el valor de ruta/DB (puede ser "Court One"); el label visible ya está normalizado.
-    if (!sedeId || !canchaFromRoute) return;
+    if ((!sedeId && !eventId) || !canchaFromRoute) return;
     const sequence = ++pollSequenceRef.current;
     try {
-      const canchaPartido = await fetchPartidoByCancha(sedeId, canchaFromRoute);
+      const response = eventId
+        ? await fetchPartidoByEventCancha(eventId, canchaFromRoute)
+        : { partido: await fetchPartidoByCancha(sedeId, canchaFromRoute), next: null };
       if (sequence !== pollSequenceRef.current) return;
+      setNextMatch(response.next ?? null);
+      const canchaPartido = response.partido;
       const nextPartidoId = canchaPartido?.id ?? null;
 
       if (!nextPartidoId) {
@@ -125,7 +145,7 @@ export default function ScoreboardCanchaDisplay() {
     } finally {
       if (sequence === pollSequenceRef.current) setPolling(false);
     }
-  }, [sedeId, canchaFromRoute, loadPartidoById, t]);
+  }, [sedeId, eventId, canchaFromRoute, loadPartidoById, t]);
 
   useEffect(() => {
     setPolling(true);
@@ -137,7 +157,7 @@ export default function ScoreboardCanchaDisplay() {
   }, [pollCancha]);
 
   useEffect(() => {
-    if (!sedeId) return undefined;
+    if (!sedeId || eventId) return undefined;
     let cancelled = false;
     (async () => {
       try {
@@ -148,7 +168,7 @@ export default function ScoreboardCanchaDisplay() {
       }
     })();
     return () => { cancelled = true; };
-  }, [sedeId]);
+  }, [sedeId, eventId]);
 
   const refreshActivePartido = useCallback(async () => {
     if (!activePartidoId) return;
@@ -191,6 +211,10 @@ export default function ScoreboardCanchaDisplay() {
 
   if (polling && !partido) {
     return <div className="sb-loading">{t('scoreboardDisplay.loading')}</div>;
+  }
+
+  if (!partido && nextMatch) {
+    return <ScoreboardNextMatchScreen next={nextMatch} canchaLabel={canchaLabel} />;
   }
 
   if (!partido) {

@@ -78,6 +78,14 @@ export async function fetchPartidoByCancha(sedeId, cancha) {
   return normalizeCanchaPartidoResponse(data);
 }
 
+export async function fetchPartidoByEventCancha(eventId, cancha) {
+  const encodedCancha = encodeURIComponent(String(cancha || '').trim());
+  const res = await fetch(`${API_BASE}/api/scoreboard/event/${encodeURIComponent(String(eventId))}/cancha/${encodedCancha}`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.error || 'Error al cargar la pantalla de cancha');
+  return { partido: data?.partido ?? null, next: data?.next ?? null };
+}
+
 export async function fetchPartidoHistorial(partidoId) {
   const headers = await getAuthHeaders();
   const res = await fetch(
