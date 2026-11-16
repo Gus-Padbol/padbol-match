@@ -29,7 +29,7 @@ export default function PracticeSpectatorView({board, status, copy, courts = nul
   const team = side => {
     const iso=teamIso(board,side), flag=flagFor(iso);
     return <div className="np-public__team">
-      <div className="np-public__teamline">{flag ? <span className="np-public__flag" aria-label={iso}>{flag}</span> : null}<h2>{teamName(board, side, copy)}</h2></div>
+      <div className="np-public__teamline">{flag ? <span className="np-public__flag" aria-label={iso}><img src={`/brand/flags/${iso.toLowerCase()}.svg`} alt={flag} /></span> : null}<h2>{teamName(board, side, copy)}</h2></div>
       <strong className="np-public__score">{board?.display?.[`display${side}`] ?? board?.[`score_${side.toLowerCase()}`] ?? 0}</strong>
       {board?.saque_actual === side && live ? <span className="np-public__serve"><span className="np-public__serve-dot" aria-hidden="true">●</span>{copy.serve || 'Serving'}</span> : <span className="np-public__serve" />}
       <ul className="np-public__starters" aria-label={copy.onCourt}>

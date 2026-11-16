@@ -18,7 +18,7 @@ test('flags cover any public ISO from canonical metadata and omit when absent',(
  const copyEn={...copy,live:'Live',serve:'Serving',setsWon:'Sets won',updatedLive:'Updated live'};
  const withIso={...board,equipo_a_pais_iso:'QA',equipo_b_pais_iso:'GB'};
  const {container}=render(<PracticeSpectatorView board={withIso} status="ready" copy={copyEn}/>);
- expect(container.textContent).toContain('🇶🇦'); expect(container.textContent).toContain('🇬🇧');
+ expect(container.querySelector('img[alt="🇶🇦"]')).toHaveAttribute('src','/brand/flags/qa.svg'); expect(container.querySelector('img[alt="🇬🇧"]')).toHaveAttribute('src','/brand/flags/gb.svg');
  const {container:noIso}=render(<PracticeSpectatorView board={{...board,equipo_a_pais_iso:null,equipo_b_pais_iso:null}} status="ready" copy={copyEn}/>);
  expect(noIso.querySelector('.np-public__flag')).toBeNull();
 });
