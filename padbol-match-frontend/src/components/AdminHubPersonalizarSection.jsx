@@ -148,7 +148,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [deporteMsg, setDeporteMsg] = useState('');
   const [sportSel, setSportSel] = useState(() => DEPORTES_CANCHA_SEDE_OPTIONS[0]?.key || 'padbol');
   const hubOtrasDeporteCards = useMemo(
-    () => [{ key: 'torneos', label: t('torneos.titulo') }, ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Next Generation · Padbol' }] : [])],
+    () => [{ key: 'torneos', label: t('torneos.titulo') }, ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Next Generation · Padbol' }] : [{ key: 'comunidad', label: 'Comunidad' }])],
     [t, sportSel],
   );
   const [deporteDrafts, setDeporteDrafts] = useState({});
@@ -233,7 +233,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         try {
           const file = await downloadCurrentHubImage(src);
           if (generation !== editGenerationRef.current) return;
-          const creatable = pending.kind === 'deporte' && ['next_generation','community'].includes(pending.cardKey || pending.card_key) && !rowDeporteActual(pending.cardKey || pending.card_key);
+          const creatable = pending.kind === 'deporte' && ['next_generation','comunidad'].includes(pending.cardKey || pending.card_key) && !rowDeporteActual(pending.cardKey || pending.card_key);
           pendingUploadRef.current = {...pending, sourceId: null, expectedImageUrl: creatable ? null : src};
           setCropSource({sourceId: null, originalFile: file, initialPixels: null});
           setCropImageSrc(URL.createObjectURL(file));
