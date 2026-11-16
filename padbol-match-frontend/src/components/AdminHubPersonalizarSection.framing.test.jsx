@@ -49,7 +49,7 @@ test('cancel does not publish; missing original never opens the already-cropped 
  expect(saveHubPhotoEdit).not.toHaveBeenCalled();expect(screen.queryByRole('dialog')).toBeNull();
  fetchHubPhotoSource.mockRejectedValueOnce(new Error('Esta foto no conserva el original. Elige la foto original.'));
  fireEvent.click(within(card()).getByText('Ajustar encuadre'));
- expect(await screen.findByRole('alert')).toHaveTextContent('Elige la foto original');expect(screen.queryByRole('dialog')).toBeNull();expect(saveHubPhotoEdit).not.toHaveBeenCalled();
+ expect((await screen.findAllByRole('alert')).some((node) => /Elige la foto original/.test(node.textContent || ''))).toBe(true);expect(screen.queryByRole('dialog')).toBeNull();expect(saveHubPhotoEdit).not.toHaveBeenCalled();
 });
 
 test('failed save keeps original and editor open, retry uses the same source and target',async()=>{
