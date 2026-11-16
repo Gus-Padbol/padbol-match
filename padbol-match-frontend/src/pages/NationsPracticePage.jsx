@@ -68,14 +68,18 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
     const controller = new AbortController(); commandController.current = controller;
     const deadline = setTimeout(() => controller.abort(), 15000);
     try {
-      const result = await api.command(boardId, token, body, controller.signal);
-      validBoard(result, boardId, eventId);
-      if (active.current !== ownScope) return;
+      await api.command(boardId, token, body, controller.signal);
+      let confirmed;
+      try { confirmed = await api.control(boardId, token, controller.signal); }
+      catch (error) { throw Object.assign(error, {postApplied:true}); }
+      validBoard(confirmed, boardId, eventId);
+      if (active.current !== ownScope) return false;
       setPending(null); setResetOpen(false);
-      resource.publish({...data, ...result});
+      resource.publish(confirmed);
       return true;
     } catch (error) {
-      if (active.current !== ownScope) return;
+      if (active.current !== ownScope) return false;
+      if (error.postApplied) { setPending(body); setNotice(copy.uncertain); resource.refresh(); return false; }
       if (error.status === 409) { setPending(null); setNotice(copy.conflict); resource.refresh(); return false; }
       else if (!error.status || error.status >= 500) { setPending(body); setNotice(copy.uncertain); resource.refresh(); return false; }
       else { setPending(null); setNotice(error.status === 401 || error.status === 403 ? copy.forbidden : copy.commandError); resource.refresh(); return false; }

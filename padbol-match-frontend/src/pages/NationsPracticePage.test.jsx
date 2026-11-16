@@ -35,6 +35,23 @@ test('normal signed-in reader sees on-court and folded bench, never control acti
 test('pending practice starts from the tactical panel and never resumes as if already started',async()=>{
  const api=apiFor();const pending={...control(),board:{...control().board,estado:'pendiente',cronometro_inicio:null,display:{displayA:0,displayB:0},score_a:0,score_b:0}};api.control.mockResolvedValueOnce(pending);mount('control',api);await flush();const start=screen.getByRole('button',{name:'Start match'});expect(start).toBeEnabled();fireEvent.click(start);await flush();expect(api.command.mock.calls[0][2]).toMatchObject({kind:'start'});
 });
+test('after POST the page publishes authoritative lineups/window before releasing controls',async()=>{
+ const api=apiFor();mount('control',api);await flush();
+ const activeA=[{...player('A',1),on_court:false},{...player('A',2),on_court:true},{...player('A',3),on_court:true},{...player('A',4),on_court:false}]; // A1/A4 bench after swap
+ api.command.mockResolvedValueOnce({board:{...board(),practice_revision:1},revision:1,state:'en_curso'});
+ api.control.mockResolvedValue({board:{...board(),practice_revision:1},revision:1,lineups:{A:activeA,B:[1,2,3,4].map(n=>player('B',n))},substitution_window:{allowed:false}});
+ fireEvent.click(screen.getByRole('button',{name:'+ Point Azul'}));await flush();
+ const bench=screen.getByRole('region',{name:'Bench for Azul'});expect(within(bench).getByRole('button',{name:/Jugador A1/})).toBeInTheDocument();expect(screen.getByText(/Change players after an odd game/)).toBeInTheDocument();
+});
+test('authoritative GET failure after a valid POST keeps the same retry and does not publish stale lineups',async()=>{
+ const api=apiFor();mount('control',api);await flush();
+ api.control.mockRejectedValueOnce(new Error('network after POST'));
+ fireEvent.click(screen.getByRole('button',{name:'+ Point Azul'}));await flush();
+ const first=api.command.mock.calls[0][2];expect(screen.getByRole('button',{name:'Retry the same attempt'})).toBeInTheDocument();
+ api.control.mockRejectedValueOnce(new Error('network after retry'));
+ fireEvent.click(screen.getByRole('button',{name:'Retry the same attempt'}));await flush();
+ expect(api.command.mock.calls[1][2]).toEqual(first);
+});
 test('stale cached board blocks point commands during refresh outage and recovers after authoritative GET',async()=>{
  const api=apiFor();mount('control',api);await flush();const point=screen.getByRole('button',{name:'+ Point Azul'});expect(point).toBeEnabled();
  api.control.mockRejectedValueOnce(new Error('network'));
