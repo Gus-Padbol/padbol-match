@@ -72,3 +72,10 @@ test('late original load after changing sport or auth does not open the wrong ph
  fireEvent.click(within(card()).getByText('Ajustar encuadre'));rerender(<AdminHubPersonalizarSection {...props} accessToken="another-session"/>);
  await act(async()=>resolveSource(source));expect(screen.queryByRole('dialog')).toBeNull();expect(URL.createObjectURL).not.toHaveBeenCalled();
 });
+
+test('Next Generation opens with stored null CAS, not the preview URL',async()=>{
+ renderEditor();await screen.findByLabelText('Comprobar las vistas del teléfono');
+ const cardNext=screen.getByText('Next Generation · Padbol').closest('.admin-hub-editor-card');
+ fireEvent.click(within(cardNext).getByText('Ajustar encuadre'));
+ await waitFor(()=>expect(fetchHubPhotoSource).toHaveBeenCalledWith(expect.objectContaining({target:expect.objectContaining({kind:'deporte',deporte:'padbol',card_key:'next_generation'}),expectedImageUrl:null})));
+});
