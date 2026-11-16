@@ -12,3 +12,14 @@ test('invalid MIME, empty extension and invalid payload fail closed',async()=>{
  expect((await validateHubImageFile(new File(['not-an-image'],'foto.jpg',{type:'image/jpeg'}))).code).toBe('DECODE_FAILED');
  expect((await validateHubImageFile(new File([],'foto.jpg',{type:'image/jpeg'}))).code).toBe('EMPTY_FILE');
 });
+
+import {hubAuthScope} from './AdminHubPersonalizarSection';
+test('auth scope distinguishes same-user token refresh from other user/logout/api base',()=>{
+ const jwt=sub=>'x.'+btoa(JSON.stringify({sub}))+'.y';
+ const a=hubAuthScope({apiBaseUrl:'https://a',accessToken:jwt('u1')});
+ const b=hubAuthScope({apiBaseUrl:'https://a',accessToken:jwt('u1')});
+ const c=hubAuthScope({apiBaseUrl:'https://a',accessToken:jwt('u2')});
+ expect(a.base).toBe(b.base);expect(a.subject).toBe(b.subject);expect(c.subject).not.toBe(a.subject);
+ expect(hubAuthScope({apiBaseUrl:'https://b',accessToken:jwt('u1')}).base).not.toBe(a.base);
+ expect(hubAuthScope({apiBaseUrl:'https://a',accessToken:null}).token).toBe('');
+});

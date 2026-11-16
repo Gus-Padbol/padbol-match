@@ -146,6 +146,19 @@ export async function validateHubImageFile(file) {
   return {ok:true};
 }
 
+export function hubTokenSubject(token) {
+  if (!token) return null;
+  try {
+    const payload = String(token).split('.')[1];
+    if (!payload) return null;
+    const parsed = JSON.parse(atob(payload.replace(/-/g,'+').replace(/_/g,'/')));
+    return typeof parsed?.sub === 'string' && parsed.sub ? parsed.sub : null;
+  } catch { return null; }
+}
+export function hubAuthScope({apiBaseUrl, accessToken}) {
+  const subject = hubTokenSubject(accessToken);
+  return {base:String(apiBaseUrl || ''), subject, token:String(accessToken || ''), known:Boolean(subject)};
+}
 export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, isSuperAdmin = false }) {
   const { t } = useTranslation();
   const hubJugarActionCards = useMemo(
@@ -237,13 +250,22 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       return null;
     });
   }, []);
+  const openedAuthScopeRef = useRef(null);
   const previousTokenRef = useRef(accessToken);
   useEffect(() => {
-    // Token renewal while the picker is open must not close a just-opened editor.
-    // Only invalidate in-flight source loads; an open editor keeps the current auth scope.
-    if (previousTokenRef.current !== accessToken && !cropModalOpen) editGenerationRef.current += 1;
+    const next = hubAuthScope({apiBaseUrl, accessToken});
+    if (!cropModalOpen) {
+      if (previousTokenRef.current !== accessToken) editGenerationRef.current += 1;
+      previousTokenRef.current = accessToken;
+      return;
+    }
+    const opened = openedAuthScopeRef.current;
+    const mustClose = !next.token || !opened || next.base !== opened.base || next.subject !== opened.subject || (!opened.known && next.token !== opened.token);
+    if (mustClose) { cerrarCropModal(); return; }
+    // Same JWT subject, newer token: token refresh within the same operator session.
+    openedAuthScopeRef.current = {...opened, token:next.token, known:next.known};
     previousTokenRef.current = accessToken;
-  }, [accessToken, cropModalOpen]);
+  }, [apiBaseUrl, accessToken, cropModalOpen, cerrarCropModal]);
   useEffect(() => () => {
     editGenerationRef.current += 1;
     const src = authScopeRef.current.imageSrc;
@@ -257,6 +279,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
 
   const abrirCropDesdeUrl = useCallback(async (src, pending) => {
     if (!src || !pending || !accessToken) return;
+    openedAuthScopeRef.current = hubAuthScope({apiBaseUrl, accessToken});
     cerrarCropModal();
     const generation = editGenerationRef.current;
     const normalizedPending = pending.kind === 'deporte' ? {...pending, card_key: pending.cardKey || pending.card_key} : pending;
@@ -303,6 +326,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       setMsg(validation.message); return false;
     }
     if (cropImageSrc && String(cropImageSrc).startsWith('blob:')) URL.revokeObjectURL(cropImageSrc);
+    openedAuthScopeRef.current = hubAuthScope({apiBaseUrl, accessToken});
     editGenerationRef.current += 1;
     const current = pending.expectedImageUrl !== undefined ? pending.expectedImageUrl : pending.kind === 'deporte'
       ? deporteRows.find(row => row.deporte === pending.deporte && row.card_key === pending.cardKey)?.imagen_url
@@ -312,7 +336,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     setCropImageSrc(URL.createObjectURL(file));
     setCropError(''); setSourceError(''); setSourceErrorTarget(''); setSourceLoadingTarget(''); setSourceNotice(''); setCropModalOpen(true);
     return true;
-  }, [deporteRows, rows, cropImageSrc]);
+  }, [deporteRows, rows, cropImageSrc, apiBaseUrl, accessToken]);
 
   const load = useCallback(async () => {
     setLoading(true);
