@@ -83,7 +83,7 @@ function HubPhotoPreview({src, frames, onAdjust, disabled, loading = false, erro
       {frames.map(frame => <div key={frame.id}>
         <span style={{fontSize: 11, color: 'var(--text-secondary)'}}>{frame.label}</span>
         <div data-testid="hub-photo-frame" style={{width: '100%', aspectRatio: `${frame.width} / ${frame.height}`, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)', background: '#0f172a'}}>
-          <img src={src} alt={`Vista previa ${frame.label}`} style={{display: 'block', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center'}} />
+          {src ? <img src={src} alt={`Vista previa ${frame.label}`} style={{display: 'block', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center'}} /> : <div style={{display:'flex',alignItems:'center',justifyContent:'center',width:'100%',height:'100%',background:'linear-gradient(145deg,#243b55,#141e30)',color:'#dbe7f3',fontSize:12,textAlign:'center',padding:8}}>Actualmente sin foto</div>}
         </div>
       </div>)}
     </div>
@@ -643,9 +643,9 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     const dk = draftKeyDeporte(sportSel, cardKey);
     const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
     const row = rowDeporteActual(cardKey);
-    const previewUrl =
-      hubDeporteRowImagenUrl(row) ||
-      defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey);
+    const storedUrl = hubDeporteRowImagenUrl(row);
+    const communityEmpty = cardKey === 'comunidad' && !storedUrl;
+    const previewUrl = communityEmpty ? '' : (storedUrl || defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey));
     const saving = savingDeporteKey === dk;
     const uploading = uploadingDeporteKey === dk;
     return (
@@ -664,7 +664,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         >
           <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
             <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-            <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken} loading={sourceLoading && sourceLoadingTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey})} error={sourceErrorTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey}) ? sourceError : ''} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey, expectedImageUrl: hubDeporteRowImagenUrl(row) || null})} />
+            <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken || communityEmpty} loading={sourceLoading && sourceLoadingTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey})} error={sourceErrorTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey}) ? sourceError : ''} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey, expectedImageUrl: storedUrl || null})} />
           </div>
           <div style={{ flex: '1', minWidth: '200px' }}>
             <button
