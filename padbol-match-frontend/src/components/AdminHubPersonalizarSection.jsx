@@ -93,18 +93,22 @@ function HubPhotoPreview({src, frames, onAdjust, disabled, loading = false, erro
 }
 
 
-const PRACTICE_IMAGE_ORIGIN = (url) => {
+export const PRACTICE_IMAGE_ORIGIN = (url) => {
   try {
     const u = new URL(String(url));
     if (u.protocol !== 'https:' || u.username || u.password || u.hash) return null;
-    if (u.hostname === 'www.padbolmatch.com' || u.hostname.endsWith('.supabase.co')) return u;
-    return null;
+    const allowed = u.hostname === 'auth.padbolmatch.com'
+      || u.hostname === 'www.padbolmatch.com'
+      || u.hostname === 'vpldffhsxhgnmitiikof.supabase.co';
+    if (!allowed) return null;
+    if (!u.pathname.startsWith('/storage/v1/object/public/hub-images/')) return null;
+    return u;
   } catch { return null; }
 };
 async function downloadCurrentHubImage(src) {
   const url = PRACTICE_IMAGE_ORIGIN(src);
-  if (!url || !url.pathname.includes('/storage/v1/object/public/')) throw new Error('La imagen actual no está en un origen permitido.');
-  const response = await fetch(url.href, {credentials: 'omit', cache: 'no-store'});
+  if (!url) throw new Error('La imagen actual no está en un origen permitido.');
+  const response = await fetch(url.href, {credentials: 'omit', cache: 'no-store', redirect: 'error'});
   if (!response.ok) throw new Error('No se pudo descargar la imagen actual.');
   const type = String(response.headers.get('content-type') || '').split(';')[0].toLowerCase();
   if (!['image/jpeg','image/png','image/webp'].includes(type)) throw new Error('La imagen actual no tiene un formato admitido.');
@@ -178,6 +182,8 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [cropSource, setCropSource] = useState(null);
   const [sourceLoading, setSourceLoading] = useState(false);
   const [sourceError, setSourceError] = useState('');
+  const [sourceErrorTarget, setSourceErrorTarget] = useState('');
+  const [sourceLoadingTarget, setSourceLoadingTarget] = useState('');
   const [sourceNotice, setSourceNotice] = useState('');
   const editGenerationRef = useRef(0);
   const saveInFlightRef = useRef(false);
@@ -204,12 +210,14 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     if (pendingUploadRef.current?.kind === 'deporte' && pendingUploadRef.current.deporte !== sportSel) cerrarCropModal();
   }, [sportSel, cerrarCropModal]);
 
+  const targetKey = (pending) => pending?.kind === 'deporte' ? `deporte:${pending.deporte}:${pending.cardKey || pending.card_key}` : `${pending?.kind}:${pending?.id}`;
+
   const abrirCropDesdeUrl = useCallback(async (src, pending) => {
     if (!src || !pending || !accessToken) return;
     cerrarCropModal();
     const generation = editGenerationRef.current;
     pendingUploadRef.current = {...pending, expectedImageUrl: src};
-    setSourceLoading(true); setSourceError('');
+    setSourceLoading(true); setSourceLoadingTarget(targetKey(pending)); setSourceError(''); setSourceErrorTarget(targetKey(pending));
     try {
       const source = await fetchHubPhotoSource({apiBaseUrl, accessToken, target: pending, expectedImageUrl: src});
       if (generation !== editGenerationRef.current || authScopeRef.current.accessToken !== accessToken || authScopeRef.current.apiBaseUrl !== apiBaseUrl) return;
@@ -227,18 +235,19 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
           pendingUploadRef.current = {...pending, sourceId: null, expectedImageUrl: src};
           setCropSource({sourceId: null, originalFile: file, initialPixels: null});
           setCropImageSrc(URL.createObjectURL(file));
-          setSourceError('');
+          setSourceError(''); setSourceErrorTarget('');
           setSourceNotice('Editando la imagen disponible; si faltan partes ya recortadas, cargá la foto original.');
           setCropError('');
           setCropModalOpen(true);
         } catch (fallbackError) {
-          if (generation === editGenerationRef.current) { setSourceError(fallbackError?.message || 'No se pudo abrir la imagen actual.'); pendingUploadRef.current = null; }
+          if (generation === editGenerationRef.current) { setSourceError(fallbackError?.message || 'No se pudo abrir la imagen actual.'); setSourceErrorTarget(targetKey(pending)); pendingUploadRef.current = null; }
         }
       } else if (generation === editGenerationRef.current) {
         setSourceError(err?.message || 'No se pudo recuperar el original. Elegí su archivo de nuevo.');
+        setSourceErrorTarget(targetKey(pending));
         pendingUploadRef.current = null;
       }
-    } finally { if (generation === editGenerationRef.current) setSourceLoading(false); }
+    } finally { if (generation === editGenerationRef.current) { setSourceLoading(false); setSourceLoadingTarget(''); } }
   }, [accessToken, apiBaseUrl, cerrarCropModal]);
 
   const abrirCropDesdeArchivo = useCallback((file, pending) => {
@@ -251,7 +260,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     pendingUploadRef.current = {...pending, expectedImageUrl: current ?? null};
     setCropSource({sourceId: null, originalFile: file, initialPixels: null});
     setCropImageSrc(URL.createObjectURL(file));
-    setCropError(''); setSourceError(''); setSourceNotice(''); setCropModalOpen(true);
+    setCropError(''); setSourceError(''); setSourceErrorTarget(''); setSourceLoadingTarget(''); setSourceNotice(''); setCropModalOpen(true);
     return true;
   }, [cerrarCropModal, deporteRows, rows]);
 
@@ -652,7 +661,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
         >
           <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
             <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-            <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken} loading={sourceLoading} error={sourceError} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey})} />
+            <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken} loading={sourceLoading && sourceLoadingTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey})} error={sourceErrorTarget === targetKey({kind: 'deporte', deporte: sportSel, cardKey}) ? sourceError : ''} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'deporte', deporte: sportSel, cardKey})} />
           </div>
           <div style={{ flex: '1', minWidth: '200px' }}>
             <button
@@ -891,7 +900,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
                 <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
                   <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-                  <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken} loading={sourceLoading} error={sourceError} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'inicio', id: slotId})} />
+                  <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploading || sourceLoading || cropUploadBusy || !accessToken} loading={sourceLoading && sourceLoadingTarget === targetKey({kind: 'inicio', id: slotId})} error={sourceErrorTarget === targetKey({kind: 'inicio', id: slotId}) ? sourceError : ''} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'inicio', id: slotId})} />
                 </div>
                 <div style={{ flex: '1', minWidth: '200px' }}>
                   <button
@@ -1041,7 +1050,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-start' }}>
               <div style={{ flex: '1 1 300px', maxWidth: '390px' }}>
                 <span style={labelStyle}>{t('admin.hub.previewLabel')}</span>
-                <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploadingId === id || sourceLoading || cropUploadBusy || !accessToken} loading={sourceLoading} error={sourceError} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'legacy', id})} />
+                <HubPhotoPreview src={previewUrl} frames={photoFrames} disabled={uploadingId === id || sourceLoading || cropUploadBusy || !accessToken} loading={sourceLoading && sourceLoadingTarget === targetKey({kind: 'legacy', id})} error={sourceErrorTarget === targetKey({kind: 'legacy', id}) ? sourceError : ''} onAdjust={() => abrirCropDesdeUrl(previewUrl, {kind: 'legacy', id})} />
               </div>
               <div style={{ flex: '1', minWidth: '200px' }}>
                 <button
