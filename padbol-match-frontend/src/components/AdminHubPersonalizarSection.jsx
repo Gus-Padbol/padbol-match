@@ -95,12 +95,13 @@ function HubPhotoPreview({src, frames, onAdjust, disabled, loading = false, erro
 
 export const PRACTICE_IMAGE_ORIGIN = (url) => {
   try {
-    const u = new URL(String(url));
+    const u = new URL(String(url), typeof window !== 'undefined' ? window.location.origin : 'https://www.padbolmatch.com');
     if (u.protocol !== 'https:' || u.username || u.password || u.hash) return null;
     const allowed = u.hostname === 'auth.padbolmatch.com'
       || u.hostname === 'www.padbolmatch.com'
       || u.hostname === 'vpldffhsxhgnmitiikof.supabase.co';
     if (!allowed) return null;
+    if (u.pathname === '/brand/next-generation-youth.png' && u.hostname === 'www.padbolmatch.com') return u;
     if (!u.pathname.startsWith('/storage/v1/object/public/hub-images/')) return null;
     return u;
   } catch { return null; }
@@ -133,10 +134,6 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     [t],
   );
 
-  const hubOtrasDeporteCards = useMemo(
-    () => [{ key: 'torneos', label: t('torneos.titulo') }],
-    [t],
-  );
   const [cropError, setCropError] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -150,6 +147,10 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
   const [deporteLoading, setDeporteLoading] = useState(true);
   const [deporteMsg, setDeporteMsg] = useState('');
   const [sportSel, setSportSel] = useState(() => DEPORTES_CANCHA_SEDE_OPTIONS[0]?.key || 'padbol');
+  const hubOtrasDeporteCards = useMemo(
+    () => [{ key: 'torneos', label: t('torneos.titulo') }, ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Next Generation · Padbol' }] : [])],
+    [t, sportSel],
+  );
   const [deporteDrafts, setDeporteDrafts] = useState({});
   const [savingDeporteKey, setSavingDeporteKey] = useState(null);
   const fileRefDeporte = useRef(null);
