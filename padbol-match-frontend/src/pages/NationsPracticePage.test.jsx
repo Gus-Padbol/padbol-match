@@ -35,6 +35,15 @@ test('normal signed-in reader sees on-court and folded bench, never control acti
 test('pending practice starts from the tactical panel and never resumes as if already started',async()=>{
  const api=apiFor();const pending={...control(),board:{...control().board,estado:'pendiente',cronometro_inicio:null,display:{displayA:0,displayB:0},score_a:0,score_b:0}};api.control.mockResolvedValueOnce(pending);mount('control',api);await flush();const start=screen.getByRole('button',{name:'Start match'});expect(start).toBeEnabled();fireEvent.click(start);await flush();expect(api.command.mock.calls[0][2]).toMatchObject({kind:'start'});
 });
+test('stale cached board blocks point commands during refresh outage and recovers after authoritative GET',async()=>{
+ const api=apiFor();mount('control',api);await flush();const point=screen.getByRole('button',{name:'+ Point Azul'});expect(point).toBeEnabled();
+ api.control.mockRejectedValueOnce(new Error('network'));
+ await act(async()=>{jest.advanceTimersByTime(2000);});await flush();
+ expect(screen.getByRole('button',{name:'+ Point Azul'})).toBeDisabled();
+ api.control.mockResolvedValueOnce(control());
+ await act(async()=>{jest.advanceTimersByTime(2000);});await flush();
+ expect(screen.getByRole('button',{name:'+ Point Azul'})).toBeEnabled();
+});
 test('private control removes fragment and synchronous double tap sends one CAS command',async()=>{
  const api=apiFor();let resolve;api.command.mockImplementation(()=>new Promise(r=>{resolve=r;}));mount('control',api);await flush();expect(window.location.hash).toBe('');expect(api.control).toHaveBeenCalledWith(A,CAP,expect.any(AbortSignal));
  const add=screen.getByRole('button',{name:'+ Point Azul'});fireEvent.click(add);fireEvent.click(add);expect(api.command).toHaveBeenCalledTimes(1);expect(api.command.mock.calls[0][2]).toMatchObject({kind:'point',team:'A',expectedRevision:0});

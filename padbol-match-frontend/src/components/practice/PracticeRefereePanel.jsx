@@ -5,7 +5,7 @@ import NationsRefereePanel from '../scoreboard/NationsRefereePanel';
  * Adapter only: maps the existing practice CAS resource to the recovered 19df
  * NationsRefereePanel controller. No new visual implementation and no awards.
  */
-export default function PracticeRefereePanel({data, board, revision, status, busy, pending, notice, onCommand, onRefresh, onRetry, allowIssueLink = false}) {
+export default function PracticeRefereePanel({data, board, revision, status = 'ready', refreshing = false, busy, pending, notice, onCommand, onRefresh, onRetry, allowIssueLink = false}) {
   const controller = useMemo(() => {
     const lineups = data?.lineups || {};
     const players = side => Array.isArray(lineups[side]) ? lineups[side].map(player => ({...player, name: player.name || player.nombre})) : [];
@@ -28,7 +28,7 @@ export default function PracticeRefereePanel({data, board, revision, status, bus
       if (kind === 'close') return false;
       return undefined;
     };
-    return {snapshot, loading: status === 'loading', busy: Boolean(busy), error: notice, pending, syncing: false, feedback: '', act, refresh: onRefresh};
-  }, [data, board, revision, status, busy, pending, notice, onCommand, onRefresh, onRetry]);
+    return {snapshot, loading: status === 'loading', busy: Boolean(busy), error: notice, pending, syncing: Boolean(refreshing) || status !== 'ready', feedback: '', act, refresh: onRefresh};
+  }, [data, board, revision, status, refreshing, busy, pending, notice, onCommand, onRefresh, onRetry]);
   return <NationsRefereePanel controller={controller} allowIssueLink={allowIssueLink}/>;
 }
