@@ -1,13 +1,14 @@
 import {isPadbolSelection} from './padbolSelectionRoster';
 import {napoliDrawPosition} from './napoliDrawPresentation';
+import {tournamentEventInstant} from './tournamentEventTime';
 
 // PDF page 5: reference numbers describe pairings, never chronological start slots.
 const PAIRS=[[2,5],[3,4],[2,3],[1,4],[1,3],[1,2],[4,5],[1,5],[3,5],[2,4]];
 const FRIDAY='2026-11-20',SATURDAY='2026-11-21';
 function confirmedDate(value,timeZone) {
  if(!value)return null;
- const instant=new Date(value);
- if(Number.isNaN(instant.getTime()))return null;
+ const instant=tournamentEventInstant(value);
+ if(!instant)return null;
  try {
   const parts=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'}).formatToParts(instant);
   const part=type=>parts.find(row=>row.type===type)?.value;

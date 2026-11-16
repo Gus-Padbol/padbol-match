@@ -1,0 +1,11 @@
+import React from 'react';import {render,screen} from '@testing-library/react';
+import ScoreboardCanchaDisplay from './ScoreboardCanchaDisplay';
+import {fetchPartidoByEventCancha} from '../utils/scoreboardApi';
+let update;
+jest.mock('react-router-dom',()=>({useParams:()=>({eventId:'57',cancha:'1'})}));
+jest.mock('../i18n/tSafe',()=>({useSafeTranslation:()=>({t:v=>v})}));
+jest.mock('../hooks/useScoreboardSocket',()=>(_id,cb)=>{update=cb;return {connected:true,reconnect:jest.fn()};});
+jest.mock('../hooks/useServerCronometro',()=>()=>0);
+jest.mock('../utils/scoreboardApi',()=>({fetchPartidoByEventCancha:jest.fn(),fetchPartido:jest.fn(),fetchSponsors:jest.fn(async()=>[])}));
+beforeEach(()=>{fetchPartidoByEventCancha.mockResolvedValue({partido:null,next:{id:null,a:{nombre:'España',pais_iso:'ES'},b:{nombre:'Italia',pais_iso:'IT'}}});});
+test('NEXT MATCH renders España/Italia with SVG flags from lowercase DTO',async()=>{const {container}=render(<ScoreboardCanchaDisplay/>);expect(await screen.findByText('NEXT MATCH')).toBeInTheDocument();expect(screen.getByText('España')).toBeInTheDocument();expect(screen.getByText('Italia')).toBeInTheDocument();expect(container.querySelectorAll('.sb-next__flag')).toHaveLength(2);expect([...container.querySelectorAll('img.sb-next__flag')].map(x=>x.getAttribute('src'))).toEqual(['/brand/flags/es.svg','/brand/flags/it.svg']);});

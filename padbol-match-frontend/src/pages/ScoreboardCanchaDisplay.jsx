@@ -24,9 +24,9 @@ function ScoreboardWaitingScreen({ canchaLabel }) {
 }
 
 function ScoreboardNextMatchScreen({ next, canchaLabel }) {
-  const team = side => next?.[`equipo_${side}_nombre`] || (side === 'A' ? 'Team A' : 'Team B');
+  const team = side => next?.[`equipo_${side.toLowerCase()}_nombre`] || next?.[`equipo_${side}_nombre`] || next?.[side.toLowerCase()]?.nombre || (side === 'A' ? 'Team A' : 'Team B');
   const flag = side => {
-    const iso = String(next?.[`equipo_${side}_pais_iso`] || '').trim().toLowerCase();
+    const iso = String(next?.[`equipo_${side.toLowerCase()}_pais_iso`] || next?.[`equipo_${side}_pais_iso`] || next?.[side.toLowerCase()]?.pais_iso || '').trim().toLowerCase();
     return /^[a-z]{2}$/.test(iso) ? <img className="sb-next__flag" src={`/brand/flags/${iso}.svg`} alt="" /> : null;
   };
   return <div className="sb-waiting sb-next">

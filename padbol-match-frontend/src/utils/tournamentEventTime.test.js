@@ -12,3 +12,5 @@ test('persisted event config supplies clock before state loads',()=>{
  expect(tournamentEventTimeZone({plan_nations:{enabled:true,format:'nations_3x5',timezone:'Europe/Rome'}},null)).toBe('Europe/Rome');
  expect(tournamentEventTimeZone({},null)).toBeUndefined();
 });
+
+test('legacy UTC-naive timestamps render 10:30/12:15 in Rome from BA and Rome runtimes',()=>{expect(formatTournamentEventTime('2026-11-20T09:30:00','Europe/Rome')).toContain('10:30');expect(formatTournamentEventTime('2026-11-21T11:15:00','Europe/Rome')).toContain('12:15');});
