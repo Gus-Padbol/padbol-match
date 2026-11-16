@@ -1,5 +1,11 @@
-import {isActiveSuperTiebreak,superTiebreakSetPoints,visualSetScore,SUPER_TIEBREAK_LABEL} from '../../utils/scoreboardScoringPolicy';
 import React, { useEffect, useMemo, useState } from 'react';
+import NationsScoreboardTicker from './NationsScoreboardTicker';
+import {useSafeTranslation} from '../../i18n/tSafe';
+import {nationsDemoPublicBoard,nationsRefereePresentation} from '../../utils/nationsRefereePresentation';
+import {nationsTvLineup} from '../../utils/scoreboardNationsLineup';
+import {isActiveSuperTiebreak, SUPER_TIEBREAK_LABEL} from '../../utils/scoreboardScoringPolicy';
+import {formatDisplayName, formatTeamDisplayName} from '../../utils/scoreboardDisplayName';
+import {formatScoreboardVenueHeader} from '../../utils/scoreboardVenueLabels';
 import ScoreboardDramaticResultScreen from './ScoreboardDramaticResultScreen';
 import ScoreboardWinnerScreen from './ScoreboardWinnerScreen';
 import UniformJerseyStrip from './UniformJerseyStrip';
@@ -128,28 +134,28 @@ function playerInitial(name) {
   return parts[0].slice(0, 1).toUpperCase();
 }
 
-function PlayerList({ jugadores, teamSide = 'left', practice = false }) {
+function PlayerList({ jugadores, teamSide = 'left', label = 'Jugadores', variant = '', showAvatar = true, demoPhotos = false, practice = false }) {
   const avatarClass = teamSide === 'right' ? 'sb-player__avatar--right' : 'sb-player__avatar--left';
   // Solo registrados con identidad (nombre). No rellenar a 4 ni renderizar placeholders.
-  const list = practice
-    ? (Array.isArray(jugadores) ? jugadores : []).filter((j) => j?.on_court === true).slice(0, 4)
-    : listVisibleScoreboardJugadores(jugadores, 4);
+  const practiceList = (Array.isArray(jugadores) ? jugadores : []).filter(j => j?.on_court === true).slice(0, 2);
+  const list = practice ? practiceList : listVisibleScoreboardJugadores(jugadores, 4);
 
   if (list.length === 0) {
     return <ul className="sb-players" aria-label="Jugadores" />;
   }
 
   return (
-    <ul className="sb-players" aria-label="Jugadores">
+    <ul className={`sb-players${variant ? ` sb-players--${variant}` : ''}`} aria-label={label}>
       {list.map((j, i) => {
         const jerseyLabel = getScoreboardJerseyLabel(j);
         const isTwoDigit = jerseyLabel != null && jerseyLabel.length >= 2;
-        const displayName = scoreboardPlayerName(j);
+        const rawName = scoreboardPlayerName(j);
+        const displayName = formatDisplayName(rawName);
         const fotoUrl = String(j.foto_url || '').trim();
 
         return (
-          <li key={`${displayName}-${j.slot ?? i}`} className="sb-player">
-            <span className={`sb-player__avatar ${avatarClass}`}>
+          <li key={`${rawName}-${j.slot ?? i}`} className="sb-player">
+            {demoPhotos && Number.isInteger(j.demoPortraitIndex) && j.demoPortraitIndex>=0 && j.demoPortraitIndex<8 ? <span className={`sb-player__avatar sb-demo-portrait ${avatarClass}`} role="img" aria-label={`Demo portrait of ${displayName}`} style={{backgroundImage:'url(/demo/nations-demo-portraits-v1.png)',backgroundSize:'400% 200%',backgroundPosition:`${(j.demoPortraitIndex%4)*100/3}% ${j.demoPortraitIndex<4?0:100}%`}} /> : showAvatar ? <span className={`sb-player__avatar ${avatarClass}`}>
               {fotoUrl ? (
                 <img src={fotoUrl} alt="" className="sb-player__avatar-img" />
               ) : (
@@ -157,7 +163,7 @@ function PlayerList({ jugadores, teamSide = 'left', practice = false }) {
                   {playerInitial(displayName)}
                 </span>
               )}
-            </span>
+            </span> : null}
             {jerseyLabel != null ? (
               <span className={`sb-player__num ${isTwoDigit ? 'sb-player__num--two-digit' : ''}`}>
                 {jerseyLabel}
@@ -173,8 +179,16 @@ function PlayerList({ jugadores, teamSide = 'left', practice = false }) {
   );
 }
 
-function formatTorneoNombreLines(text) {
-  const normalized = String(text || '').trim().toUpperCase();
+function NationsPlayerPanel({team, current, side, copy, demoPhotos=false}) {
+  if (!current) return <section className="sb-lineup"><h3 className="sb-lineup__label">{copy.roster}</h3><p className="sb-lineup__notice">{copy.unavailable}</p><PlayerList jugadores={team.roster} teamSide={side} label={copy.roster} showAvatar={false} /></section>;
+  return <div className="sb-lineup">
+    <section><h3 className="sb-lineup__label">{copy.active}</h3><PlayerList jugadores={team.active} teamSide={side} label={copy.active} variant="active" showAvatar={false} demoPhotos={demoPhotos} /></section>
+    {team.bench.length ? <section className="sb-lineup__bench"><h3 className="sb-lineup__label">{copy.bench}</h3><PlayerList jugadores={team.bench} teamSide={side} label={copy.bench} variant="bench" showAvatar={false} demoPhotos={demoPhotos} /></section> : null}
+  </div>;
+}
+
+function formatTorneoNombreLines(text, preserveCase = false) {
+  const normalized = preserveCase ? String(text || '').trim() : String(text || '').trim().toUpperCase();
   if (!normalized) return [];
   if (normalized.length <= 20) return [normalized];
 
@@ -201,12 +215,12 @@ function formatTorneoNombreLines(text) {
   return line2 ? [line1, line2] : [line1];
 }
 
-function TournamentBrand({ torneoNombre, logoTorneoUrl }) {
+function TournamentBrand({ torneoNombre, logoTorneoUrl, preserveCase = false }) {
   const hasTorneoNombre = Boolean(String(torneoNombre || '').trim());
   const hasTorneoLogo = Boolean(String(logoTorneoUrl || '').trim());
   if (!hasTorneoNombre && !hasTorneoLogo) return null;
 
-  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre) : [];
+  const torneoLines = hasTorneoNombre ? formatTorneoNombreLines(torneoNombre, preserveCase) : [];
 
   return (
     <div className={`sb-tournament-brand${hasTorneoLogo && hasTorneoNombre ? ' sb-tournament-brand--logo-and-name' : ''}`}>
@@ -228,12 +242,13 @@ function TournamentBrand({ torneoNombre, logoTorneoUrl }) {
   );
 }
 
-function TeamNameRow({ name, serving, color1, color2 }) {
+function TeamNameRow({ name, serving, color1, color2, showServingLabel = false }) {
   return (
     <div className="sb-team-name-block">
       {/* LED fuera del flujo vertical: no empuja título ni jugadores */}
       {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
       <h1 className="sb-team-name">{name}</h1>
+      {serving && showServingLabel ? <span className="sb-serving-label">Serving</span> : null}
       <div className="sb-team-name-meta">
         <UniformJerseyStrip color1={color1} color2={color2} size="tv" />
       </div>
@@ -241,7 +256,7 @@ function TeamNameRow({ name, serving, color1, color2 }) {
   );
 }
 
-function SetHistory({ historial, gamesA, gamesB, setsA, setsB, board }) {
+function SetHistory({ historial, gamesA, gamesB, setsA, setsB, isSuperTiebreak = false, stbPointsA = 0, stbPointsB = 0 }) {
   const completedSets = Array.isArray(historial) ? historial : [];
   const currentSetNum = completedSets.length + 1;
   const matchOngoing = setsA < 2 && setsB < 2;
@@ -254,16 +269,20 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB, board }) {
     let chipClass = 'sb-set-box sb-set-box--future';
     let itemClass = 'sb-set-history-item sb-set-history-item--future';
 
-    if (completed) {
-      const score = visualSetScore(completed);
-      const aWins = score.a > score.b;
+    if (completed?.type === 'super_tiebreak') {
+      const aWins = Number(completed.points_a) > Number(completed.points_b);
+      chipClass = 'sb-set-box sb-set-box--done';
+      itemClass = 'sb-set-history-item';
+      content = <><span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.points_a}</span>{' – '}<span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.points_b}</span></>;
+    } else if (completed) {
+      const aWins = completed.a > completed.b;
       chipClass = 'sb-set-box sb-set-box--done';
       itemClass = 'sb-set-history-item';
       content = (
         <>
-          <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{score.a}</span>
+          <span className={aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.a}</span>
           {' – '}
-          <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{score.b}</span>
+          <span className={!aWins ? 'sb-set-box__winner' : 'sb-set-box__loser'}>{completed.b}</span>
         </>
       );
     } else if (isCurrent) {
@@ -271,9 +290,9 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB, board }) {
       itemClass = 'sb-set-history-item';
       content = (
         <>
-          <span>{isActiveSuperTiebreak(board)?board.display.displayA:gamesA}</span>
+          <span>{isSuperTiebreak ? stbPointsA : gamesA}</span>
           {' – '}
-          <span>{isActiveSuperTiebreak(board)?board.display.displayB:gamesB}</span>
+          <span>{isSuperTiebreak ? stbPointsB : gamesB}</span>
         </>
       );
     }
@@ -286,7 +305,7 @@ function SetHistory({ historial, gamesA, gamesB, setsA, setsB, board }) {
 
     return (
       <div key={`set-${setNum}`} className={itemClass}>
-        <span className={labelClass}>{superTiebreakSetPoints(completed)||(isCurrent&&isActiveSuperTiebreak(board))?'STB':`SET ${setNum}`}</span>
+        <span className={labelClass}>{completed?.type === 'super_tiebreak' || (isCurrent && isSuperTiebreak) ? 'STB' : `SET ${setNum}`}</span>
         <div className={chipClass}>{content}</div>
       </div>
     );
@@ -300,13 +319,21 @@ const TICKER_LOGO_COUNT = 4;
 const TICKER_LOGOS = Array.from({ length: TICKER_LOGO_COUNT * 2 }, (_, index) => index);
 
 export default function ScoreboardBoard({
-  partido,
+  partido: rawPartido,
   sponsors = [],
   wsConnected = false,
   timerSeconds = 0,
   onWinnerDismiss,
 }) {
+  const {i18n} = useSafeTranslation();
+  const partido=useMemo(()=>nationsDemoPublicBoard(rawPartido),[rawPartido]);
+  const demoPhotos=nationsRefereePresentation({mode:['current','unavailable'].includes(rawPartido?.nations_lineup_status)?'nations':'legacy',board:rawPartido}).isDemo;
+  const lineup = nationsTvLineup(partido);
+  const copy = lineup.isNations
+    ? {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'}
+    : ({es:{active:'En cancha',bench:'Suplentes',roster:'Plantel',unavailable:'Alineación actual no disponible'},en:{active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'},pt:{active:'Em quadra',bench:'Reservas',roster:'Elenco',unavailable:'Escalação atual indisponível'},it:{active:'In campo',bench:'Panchina',roster:'Rosa',unavailable:'Formazione attuale non disponibile'}})[(i18n?.language || 'es').slice(0,2)] || {active:'On court',bench:'Bench',roster:'Roster',unavailable:'Current lineup unavailable'};
   const display = partido.display || {};
+  const venueHeader=formatScoreboardVenueHeader(partido).replace(/^Cancha\b/,lineup.isNations?'Court':'Cancha');
   const torneoNombre = String(partido?.torneo_nombre || '').trim();
   const logoTorneoUrl = String(partido?.logo_torneo_url || '').trim();
   const hasTorneoBrand = Boolean(torneoNombre || logoTorneoUrl);
@@ -344,16 +371,16 @@ export default function ScoreboardBoard({
   );
 
   const jugadoresA = useMemo(
-    () => mergeJugadoresWithTemp(partido.equipo_a_jugadores, 'A', jugadoresTemp, jerseyFieldsA),
-    [partido.equipo_a_jugadores, jugadoresTemp, jerseyFieldsA],
+    () => lineup.isNations ? partido.equipo_a_jugadores : mergeJugadoresWithTemp(partido.equipo_a_jugadores, 'A', jugadoresTemp, jerseyFieldsA),
+    [partido.equipo_a_jugadores, jugadoresTemp, jerseyFieldsA, lineup.isNations],
   );
   const jugadoresB = useMemo(
-    () => mergeJugadoresWithTemp(partido.equipo_b_jugadores, 'B', jugadoresTemp, jerseyFieldsB),
-    [partido.equipo_b_jugadores, jugadoresTemp, jerseyFieldsB],
+    () => lineup.isNations ? partido.equipo_b_jugadores : mergeJugadoresWithTemp(partido.equipo_b_jugadores, 'B', jugadoresTemp, jerseyFieldsB),
+    [partido.equipo_b_jugadores, jugadoresTemp, jerseyFieldsB, lineup.isNations],
   );
 
   useEffect(() => {
-    if (!partido?.id || terminado) {
+    if (!partido?.id || terminado || lineup.isNations) {
       setJugadoresTemp([]);
       return undefined;
     }
@@ -374,7 +401,7 @@ export default function ScoreboardBoard({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [partido?.id, terminado]);
+  }, [partido?.id, terminado, lineup.isNations]);
 
   useEffect(() => {
     if (!terminado || !winnerName) {
@@ -400,7 +427,7 @@ export default function ScoreboardBoard({
   }
 
   return (
-    <div className={`sb-display${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
+    <div className={`sb-display${lineup.isNations ? ' sb-display--fit sb-display--nations' : ''}${hasTorneoBrand ? ' sb-display--has-torneo' : ''}`}>
       <div className="sb-display__overlay" aria-hidden="true">
         <HexClusterSvg variant="top-right" stroke="rgba(100,180,255,0.12)" />
         <HexClusterSvg variant="bottom-left" stroke="rgba(255,100,100,0.12)" />
@@ -415,22 +442,25 @@ export default function ScoreboardBoard({
         <aside className="sb-panel sb-panel--left">
           <div className="sb-panel__inner">
             <TeamNameRow
-              name={partido.equipo_a_nombre}
+              name={formatTeamDisplayName(partido.equipo_a_nombre)}
               serving={partido.saque_actual === 'A'}
+              showServingLabel={lineup.isNations}
               color1={uniformA.color1}
               color2={uniformA.color2}
             />
-            <PlayerList jugadores={jugadoresA} teamSide="left" practice={partido.es_practica === true} />
+            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[0]} current={lineup.current} side="left" copy={copy} demoPhotos={demoPhotos} /> : <PlayerList jugadores={jugadoresA} teamSide="left" practice={partido.es_practica === true} />}</>
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
         </aside>
 
         <section className="sb-center">
-          <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} />
+          <TournamentBrand torneoNombre={torneoNombre} logoTorneoUrl={logoTorneoUrl} preserveCase={lineup.isNations} />
+          {lineup.isNations && venueHeader ? <p className="sb-nations-venue">{venueHeader}</p> : null}
 
           <div className="sb-center__block">
-            {isActiveSuperTiebreak(partido)?<div className="sb-tiebreak-badge">{SUPER_TIEBREAK_LABEL}</div>:isTiebreak?<div className="sb-tiebreak-badge">Tie-Break</div>:null}
+            {isTiebreak && <div className="sb-tiebreak-badge">Tie-Break</div>}
+            {isActiveSuperTiebreak(partido) ? <div className="sb-tiebreak-badge">{SUPER_TIEBREAK_LABEL}</div> : null}
 
             <div
               className={`sb-point-indicator ${ultimoPunto ? 'sb-point-indicator--visible' : ''}`}
@@ -481,15 +511,18 @@ export default function ScoreboardBoard({
             )}
 
             <SetHistory
-              board={partido}
               historial={partido.historial_sets}
               gamesA={partido.games_a}
               gamesB={partido.games_b}
               setsA={partido.sets_a}
               setsB={partido.sets_b}
+              isSuperTiebreak={partido.display?.mode === 'super_tiebreak'}
+              stbPointsA={partido.display?.displayA}
+              stbPointsB={partido.display?.displayB}
             />
 
             <div className="sb-timer">
+              {lineup.isNations ? <span className="sb-timer__label">Time</span> : null}
               {formatTimerFromSeconds(timerSeconds)}
             </div>
           </div>
@@ -498,12 +531,13 @@ export default function ScoreboardBoard({
         <aside className="sb-panel sb-panel--right">
           <div className="sb-panel__inner">
             <TeamNameRow
-              name={partido.equipo_b_nombre}
+              name={formatTeamDisplayName(partido.equipo_b_nombre)}
               serving={partido.saque_actual === 'B'}
+              showServingLabel={lineup.isNations}
               color1={uniformB.color1}
               color2={uniformB.color2}
             />
-            <PlayerList jugadores={jugadoresB} teamSide="right" practice={partido.es_practica === true} />
+            <>{lineup.isNations ? <NationsPlayerPanel team={lineup.teams[1]} current={lineup.current} side="right" copy={copy} demoPhotos={demoPhotos} /> : <PlayerList jugadores={jugadoresB} teamSide="right" practice={partido.es_practica === true} />}</>
           </div>
           {/* Reserved for future team logo / banner */}
           <div className="sb-panel__branding" aria-hidden="true" />
@@ -511,18 +545,18 @@ export default function ScoreboardBoard({
       </div>
 
       <footer className="sb-footer" aria-label="Padbol Match">
-        <div className="sb-ticker-track">
-          <div className="sb-ticker-content">
-            {TICKER_LOGOS.map((index) => (
-              <img
-                key={`ticker-logo-${index}`}
-                src="/brand/padbol-match-logo-on-dark.png"
-                alt={index === 0 ? 'Padbol Match' : ''}
-                className="sb-ticker-logo"
-              />
-            ))}
-          </div>
-        </div>
+        {lineup.isNations ? <NationsScoreboardTicker sponsors={sponsors} /> : <div className="sb-ticker-track">
+            <div className="sb-ticker-content">
+              {TICKER_LOGOS.map((index) => (
+                <img
+                  key={`ticker-logo-${index}`}
+                  src="/brand/padbol-match-logo-on-dark.png"
+                  alt={index === 0 ? 'Padbol Match' : ''}
+                  className="sb-ticker-logo"
+                />
+              ))}
+            </div>
+        </div>}
       </footer>
     </div>
   );
