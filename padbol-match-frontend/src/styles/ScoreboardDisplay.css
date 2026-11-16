@@ -983,3 +983,5 @@
 .sb-display--nations .sb-tournament-brand--logo-and-name { flex-direction: row; gap: clamp(10px, 1.3vw, 22px); }
 .sb-display--nations .sb-tournament-brand__torneo-logo { flex: 0 0 auto; width: clamp(48px, 7vw, 96px); max-height: 12vh; }
 .sb-display--nations .sb-tournament-brand__name--small { min-width: 0; max-width: 80%; margin: 0; padding: 0; font-size: clamp(16px, 1.8vw, 30px); letter-spacing: .12em; }
+
+.sb-team-flag{display:inline-block;width:clamp(28px,3.5vw,58px);height:clamp(20px,2.4vw,40px);object-fit:cover;border-radius:6px;margin-right:.45em;vertical-align:middle;box-shadow:0 0 0 1px rgba(255,255,255,.25)}

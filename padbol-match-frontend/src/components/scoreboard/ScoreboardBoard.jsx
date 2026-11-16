@@ -242,12 +242,12 @@ function TournamentBrand({ torneoNombre, logoTorneoUrl, preserveCase = false }) 
   );
 }
 
-function TeamNameRow({ name, serving, color1, color2, showServingLabel = false }) {
+function TeamNameRow({ name, serving, color1, color2, showServingLabel = false, paisIso = null }) {
   return (
     <div className="sb-team-name-block">
       {/* LED fuera del flujo vertical: no empuja título ni jugadores */}
       {serving ? <span className="sb-team-serve-dot" aria-label="Serving" title="Serving" /> : null}
-      <h1 className="sb-team-name">{name}</h1>
+      <h1 className="sb-team-name">{paisIso ? <img className="sb-team-flag" src={`/brand/flags/${String(paisIso).toLowerCase()}.svg`} alt="" /> : null}{name}</h1>
       {serving && showServingLabel ? <span className="sb-serving-label">Serving</span> : null}
       <div className="sb-team-name-meta">
         <UniformJerseyStrip color1={color1} color2={color2} size="tv" />
@@ -443,6 +443,7 @@ export default function ScoreboardBoard({
           <div className="sb-panel__inner">
             <TeamNameRow
               name={formatTeamDisplayName(partido.equipo_a_nombre)}
+              paisIso={partido.equipo_a_pais_iso}
               serving={partido.saque_actual === 'A'}
               showServingLabel={lineup.isNations}
               color1={uniformA.color1}
@@ -532,6 +533,7 @@ export default function ScoreboardBoard({
           <div className="sb-panel__inner">
             <TeamNameRow
               name={formatTeamDisplayName(partido.equipo_b_nombre)}
+              paisIso={partido.equipo_b_pais_iso}
               serving={partido.saque_actual === 'B'}
               showServingLabel={lineup.isNations}
               color1={uniformB.color1}
