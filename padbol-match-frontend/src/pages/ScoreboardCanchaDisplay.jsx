@@ -4,19 +4,19 @@ import ScoreboardBoard from '../components/scoreboard/ScoreboardBoard';
 import useScoreboardSocket from '../hooks/useScoreboardSocket';
 import useServerCronometro from '../hooks/useServerCronometro';
 import { fetchPartido, fetchPartidoByCancha, fetchPartidoByEventCancha, fetchSponsors } from '../utils/scoreboardApi';
-import { PADBOL_LOGO_ON_DARK } from '../constants/padbolBrandLogo';
 import { resolveScoreboardCanchaLabel } from '../utils/scoreboardVenueLabels';
 import { preferNewestScoreboard } from '../utils/scoreboardVersion';
 import { useSafeTranslation as useTranslation } from '../i18n/tSafe';
 import '../styles/ScoreboardDisplay.css';
 
 const CANCHA_POLL_MS = 10000;
+const WAITING_LOGO = '/brand/padbol-match-logo-white-practice.svg';
 
 function ScoreboardWaitingScreen({ canchaLabel }) {
   const { t } = useTranslation();
   return (
     <div className="sb-waiting">
-      <img src={PADBOL_LOGO_ON_DARK} alt="Padbol Match" className="sb-waiting__logo" />
+      <img src={WAITING_LOGO} alt="Padbol Match" className="sb-waiting__logo" />
       <p className="sb-waiting__text">{t('scoreboardDisplay.waiting')}</p>
       <p className="sb-waiting__cancha">{canchaLabel}</p>
     </div>
@@ -30,7 +30,7 @@ function ScoreboardNextMatchScreen({ next, canchaLabel }) {
     return /^[a-z]{2}$/.test(iso) ? <img className="sb-next__flag" src={`/brand/flags/${iso}.svg`} alt="" /> : null;
   };
   return <div className="sb-waiting sb-next">
-    <img src={PADBOL_LOGO_ON_DARK} alt="Padbol Match" className="sb-waiting__logo" />
+    <img src={WAITING_LOGO} alt="Padbol Match" className="sb-waiting__logo" />
     <p className="sb-next__eyebrow">NEXT MATCH</p>
     <div className="sb-next__teams">{flag('A')}<strong>{team('A')}</strong><span>vs</span><strong>{team('B')}</strong>{flag('B')}</div>
     <p className="sb-waiting__cancha">{canchaLabel}</p>
