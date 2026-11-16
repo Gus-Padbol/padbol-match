@@ -597,6 +597,10 @@ function App() {
                   </ErrorBoundary>
                 )}
               />
+              <Route path="/tv/:eventId/:cancha" element={<ErrorBoundary label="la pantalla TV por cancha"><ScoreboardCanchaDisplay /></ErrorBoundary>} />
+              <Route path="/tv/practice/1" element={<Navigate replace to="/scoreboard/91111111-1111-4111-8111-111111111101" />} />
+              <Route path="/tv/practice/2" element={<Navigate replace to="/scoreboard/91111111-1111-4111-8111-111111111102" />} />
+              <Route path="/tv/practice/3" element={<Navigate replace to="/scoreboard/91111111-1111-4111-8111-111111111103" />} />
               <Route
                 path="/display/event/:eventId/cancha/:cancha"
                 element={(
