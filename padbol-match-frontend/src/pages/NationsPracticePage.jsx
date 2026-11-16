@@ -5,6 +5,7 @@ import {useSafeTranslation} from '../i18n/tSafe';
 import {consumePracticeControl, createNationsPracticeApi, practiceBoardId, practiceEventId, practiceRequestId} from '../utils/nationsPracticeApi';
 import useNationsPracticeResource from '../hooks/useNationsPracticeResource';
 import PracticeBoard from '../components/practice/PracticeBoard';
+import PracticeSpectatorView from '../components/practice/PracticeSpectatorView';
 import {practiceCopy} from '../components/practice/practiceCopy';
 import '../components/practice/PracticeNations.css';
 
@@ -98,7 +99,7 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
         {!control && <p className="np-account">{session?.user ? copy.account : <>{copy.guest} <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`}>{copy.login}</Link></>}</p>}
         {control && !token ? <p className="np-message" role="alert">{copy.missingControl}</p> : !board ? <PageError state={resource.status} copy={copy} refresh={resource.refresh}/> : <>
           {!control && resource.status !== 'ready' && <button className="np-button" onClick={resource.refresh}>{copy.retry}</button>}
-          <PracticeBoard board={board} status={resource.status} copy={copy}/>
+          {control ? <PracticeBoard board={board} status={resource.status} copy={copy}/> : <PracticeSpectatorView board={board} status={resource.status} copy={copy}/>}
           {control && <section className="np-controls" aria-label={copy.referee}>
             {notice && <div className="np-message" role="alert"><p>{notice}</p>{pending && <button className="np-button" disabled={busy} onClick={() => command(pending.kind, {}, pending)}>{copy.retrySame}</button>}</div>}
             {resource.refreshing && <p role="status">{copy.refreshing}</p>}

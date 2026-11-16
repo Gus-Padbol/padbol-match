@@ -28,7 +28,7 @@ test('entry exposes exactly three public viewers and TV links, no private capabi
  for(const link of screen.getAllByRole('link'))expect(link.href).not.toContain('control=');
 });
 test('normal signed-in reader sees on-court and folded bench, never control actions; failed refresh removes LIVE',async()=>{
- const api=apiFor();mount('viewer',api);await flush();expect(screen.getByText('Tu cuenta está conectada · Solo lectura')).toBeInTheDocument();expect(screen.getByText('En vivo')).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Punto para A'})).toBeNull();expect(screen.getByRole('group',{name:'Banco de suplentes'})).not.toHaveAttribute('open');
+ const api=apiFor();mount('viewer',api);await flush();expect(screen.getByText('Tu cuenta está conectada · Solo lectura')).toBeInTheDocument();expect(screen.getByText('En vivo')).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Punto para A'})).toBeNull();const benchDetails=screen.getByText('Banco de suplentes').closest('details');expect(benchDetails).not.toHaveAttribute('open');
  api.board.mockRejectedValueOnce(new Error('network'));
  await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.getByText('Sin conexión · Último estado recibido')).toBeInTheDocument();expect(screen.queryByText('En vivo')).toBeNull();
 });
@@ -77,6 +77,6 @@ test('server pause freezes the clock and is never labelled live',async()=>{
  const api=apiFor();api.board.mockResolvedValue({...board(),cronometro_pausado:true,display:{displayA:0,displayB:0,cronometroActivo:false,cronometroSegundos:65}});mount('viewer',api);await flush();expect(screen.getByLabelText('Tiempo de juego')).toHaveTextContent('01:05');expect(screen.getByText('Pausado')).toBeInTheDocument();await act(async()=>{jest.advanceTimersByTime(10000);});await flush();expect(screen.getByLabelText('Tiempo de juego')).toHaveTextContent('01:05');expect(screen.queryByText('En vivo')).toBeNull();
 });
 test('super tiebreak columns use points while ordinary tie break keeps 6-6 games',async()=>{
- const api=apiFor(),history=[{a:6,b:4},{a:3,b:6}];api.board.mockResolvedValue({...board(),games_a:0,games_b:0,sets_a:1,sets_b:1,historial_sets:history,display:{mode:'super_tiebreak',displayA:9,displayB:9}});mount('viewer',api);await flush();expect(screen.getByRole('columnheader',{name:'STB'})).toBeInTheDocument();
- api.board.mockResolvedValue({...board(),games_a:6,games_b:6,sets_a:1,sets_b:1,historial_sets:history,display:{mode:'tiebreak',displayA:9,displayB:9}});await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.queryByRole('columnheader',{name:'STB'})).toBeNull();expect(screen.getByRole('columnheader',{name:'Set 3'})).toBeInTheDocument();
+ const api=apiFor(),history=[{a:6,b:4},{a:3,b:6}];api.board.mockResolvedValue({...board(),games_a:0,games_b:0,sets_a:1,sets_b:1,historial_sets:history,display:{mode:'super_tiebreak',displayA:9,displayB:9}});mount('viewer',api);await flush();expect(screen.getByText('STB')).toBeInTheDocument();
+ api.board.mockResolvedValue({...board(),games_a:6,games_b:6,sets_a:1,sets_b:1,historial_sets:history,display:{mode:'tiebreak',displayA:9,displayB:9}});await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.queryByText('STB')).toBeNull();expect(screen.getByText('Set 3')).toBeInTheDocument();
 });
