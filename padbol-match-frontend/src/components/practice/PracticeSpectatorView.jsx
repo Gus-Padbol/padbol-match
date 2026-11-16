@@ -31,7 +31,7 @@ export default function PracticeSpectatorView({board, status, copy, courts = nul
     return <div className="np-public__team">
       <div className="np-public__teamline">{flag ? <span className="np-public__flag" aria-label={iso}>{flag}</span> : null}<h2>{teamName(board, side, copy)}</h2></div>
       <strong className="np-public__score">{board?.display?.[`display${side}`] ?? board?.[`score_${side.toLowerCase()}`] ?? 0}</strong>
-      {board?.saque_actual === side && live ? <span className="np-public__serve">● {copy.serve || 'Serving'}</span> : <span className="np-public__serve" />}
+      {board?.saque_actual === side && live ? <span className="np-public__serve"><span className="np-public__serve-dot" aria-hidden="true">●</span>{copy.serve || 'Serving'}</span> : <span className="np-public__serve" />}
       <ul className="np-public__starters" aria-label={copy.onCourt}>
         {starters(board, side).map((player, index) => <li key={`${side}-${index}`}><span className="np-public__avatar" aria-hidden="true">{initials(player)}</span><span>{name(player) || copy.onCourt}</span></li>)}
       </ul>
@@ -45,7 +45,7 @@ export default function PracticeSpectatorView({board, status, copy, courts = nul
       <p className="np-public__edition">{(board?.torneo_edicion || '').trim() || ''}</p>
       <div className="np-public__live"><span className={`np-public__dot${live ? ' is-live' : ''}`} />{stateLabel.toUpperCase()}</div>
     </header>
-    {courts?.length ? <div className="np-public__courts" aria-label={copy.choose}>{courts.map((court, index) => court.href ? <Link key={court.id || index} to={court.href} className={`np-public__court${Number(activeCourt) === index + 1 || court.active ? ' is-active' : ''}`}>{court.label || `${copy.court} ${index + 1}`}</Link> : <span key={court.id || index} className={`np-public__court${Number(activeCourt) === index + 1 || court.active ? ' is-active' : ''}`}>{court.label || `${copy.court} ${index + 1}`}</span>)}</div> : null}
+    {courts?.length ? <div className="np-public__courts" aria-label={copy.choose}>{courts.map((court, index) => court.href ? <Link key={court.id || index} to={court.href} className={`np-public__court${Number(activeCourt) === index + 1 || court.active ? ' is-active' : ''}`}>{court.label || `${copy.court} ${index + 1}`}</Link> : court.onSelect ? <button type="button" key={court.id || index} onClick={court.onSelect} className={`np-public__court${Number(activeCourt) === index + 1 ? ' is-active' : ''}`}>{court.label || `${copy.court} ${index + 1}`}</button> : <span key={court.id || index} className={`np-public__court${Number(activeCourt) === index + 1 || court.active ? ' is-active' : ''}`}>{court.label || `${copy.court} ${index + 1}`}</span>)}</div> : null}
     <div className="np-public__card" role="group" aria-label={copy.points}>
       <div className="np-public__teams">{team('A')}<span className="np-public__dash" aria-hidden="true">–</span>{team('B')}</div>
       <div className="np-public__setrow"><span>{activeSet}</span><strong>{copy.games.toUpperCase()} {board?.games_a ?? 0}–{board?.games_b ?? 0}</strong></div>
