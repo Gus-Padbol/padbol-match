@@ -129,14 +129,14 @@
 /* Approved public spectator treatment. Scoped to this component; no referee/TV styles. */
 .np-public{position:relative;isolation:isolate;overflow:hidden;margin:0 auto;max-width:680px;padding:max(24px,env(safe-area-inset-top)) 12px 28px;background:#050505;color:#fff;font-family:'Barlow Condensed',Oswald,Inter,system-ui,sans-serif;text-align:center;border-radius:22px}
 .np-public__rays{position:absolute;inset:0;z-index:-1;background:
- linear-gradient(123deg,transparent 0 31%,rgba(225,20,38,.7) 31.2% 33%,transparent 33.3%),
- linear-gradient(303deg,transparent 0 72%,rgba(238,202,103,.55) 72.2% 73.2%,transparent 73.4%),
- radial-gradient(ellipse at 50% -10%,rgba(244,215,140,.18),transparent 62%),
+ radial-gradient(ellipse at 0 0,rgba(225,20,38,.42) 0,rgba(225,20,38,.12) 18%,transparent 34%),
+ radial-gradient(ellipse at 100% 100%,rgba(238,202,103,.30) 0,rgba(238,202,103,.08) 17%,transparent 30%),
+ radial-gradient(ellipse at 100% 0,rgba(238,202,103,.10),transparent 24%),
  #050505}
 .np-public__header{position:relative;z-index:2;padding:12px 6px 10px;overflow:visible}
 .np-public__brand{display:block;width:min(235px,68%);height:auto;aspect-ratio:auto;margin:0 auto 10px;background:transparent;filter:none;object-fit:contain;overflow:visible}
-.np-public__header h1{margin:4px 0 0;color:#fff;font-family:'Barlow Condensed',Oswald,sans-serif;font-size:clamp(30px,8.5vw,48px);line-height:.94;letter-spacing:.02em;font-weight:800;font-style:italic;text-shadow:0 2px 0 rgba(0,0,0,.65)}
-.np-public__edition{margin:2px 0 9px;color:#f2d27d;font-size:clamp(16px,4.3vw,24px);font-style:italic;font-weight:700}
+.np-public__header h1{margin:4px 0 0;color:#f4d477;background:linear-gradient(180deg,#fff8d9 0%,#f5dd95 42%,#c99a36 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Barlow Condensed',Oswald,sans-serif;font-size:clamp(30px,8.5vw,48px);line-height:.96;letter-spacing:.02em;font-weight:900;font-style:italic;text-shadow:none}
+.np-public__edition{margin:3px 0 10px;color:#f2d27d;font-size:clamp(16px,4.3vw,24px);font-style:italic;font-weight:700;letter-spacing:.02em}
 .np-public__live{display:inline-flex;align-items:center;gap:8px;color:#fff;font-size:13px;font-weight:800;letter-spacing:.08em}
 .np-public__dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:#6c6c6c;flex:0 0 12px}
 .np-public__dot.is-live{background:#25e76b;box-shadow:0 0 10px rgba(37,231,107,.8)}
@@ -144,13 +144,14 @@
 .np-public__court{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:6px 20px;border:1px solid rgba(242,210,125,.6);border-radius:999px;color:#f6f0df;font-size:14px;font-weight:800}
 .np-public__court.is-active{background:linear-gradient(145deg,#f4d989,#d8ae4d);border-color:#f4d989;color:#111}
 .np-public__card{border:1px solid #e4c56f;border-radius:22px;background:rgba(8,8,8,.86);box-shadow:0 0 24px rgba(232,194,99,.12),inset 0 0 20px rgba(232,194,99,.05);overflow:hidden}
-.np-public__teams{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:4px;padding:22px 12px 12px}
+.np-public__teams{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:start;gap:10px;padding:24px 12px 12px}
 .np-public__team{min-width:0}.np-public__team:first-child{grid-column:1;grid-row:1}.np-public__team:last-child{grid-column:3;grid-row:1}
+.np-public__team:last-child .np-public__starters{border-left:1px solid rgba(232,194,99,.28);padding-left:12px}
 .np-public__teamline{display:flex;align-items:center;justify-content:center;gap:7px;min-height:30px}
 .np-public__flag{font-size:clamp(21px,6vw,30px);line-height:1}
 .np-public__team h2{font-size:clamp(18px,4.8vw,27px);line-height:1;color:#fff;font-weight:800;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.np-public__score{display:block;margin:8px 0 0;color:#f4d477;font-family:'Barlow Condensed',Oswald,sans-serif;font-size:clamp(72px,21vw,112px);line-height:.76;font-weight:800;letter-spacing:-.02em;text-shadow:0 3px 0 rgba(0,0,0,.6)}
-.np-public__dash{grid-column:2;grid-row:1;align-self:center;color:#e9cf82;font-size:clamp(34px,8vw,52px);line-height:1;padding-top:44px}
+.np-public__score{display:block;margin:8px 0 0;color:#f4d477;background:linear-gradient(180deg,#fff4c9 0%,#f3d477 48%,#c4932f 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-family:'Barlow Condensed',Oswald,sans-serif;font-size:clamp(72px,21vw,112px);line-height:.76;font-weight:900;font-style:italic;letter-spacing:-.02em;text-shadow:none}
+.np-public__dash{grid-column:2;grid-row:1;align-self:center;justify-self:center;color:#e9cf82;font-size:clamp(34px,8vw,52px);line-height:1;padding:0;transform:translateY(2px)}
 .np-public__serve{display:block;min-height:17px;margin:5px 0 0;color:#38ed7b;font-size:11px;font-weight:700;letter-spacing:.04em}
 .np-public__starters{list-style:none;padding:0;margin:3px 0 0;display:grid;gap:5px;text-align:left}
 .np-public__starters li{display:flex;align-items:center;gap:7px;min-width:0;font-size:clamp(12px,3.2vw,15px);font-weight:650;color:#f3ead8}
