@@ -24,19 +24,19 @@ function mount(mode='viewer',api=apiFor()){
 beforeEach(()=>{Object.defineProperty(window,'crypto',{configurable:true,value:{randomUUID:require('node:crypto').randomUUID}});jest.useFakeTimers();sessionStorage.clear();Object.defineProperty(document,'hidden',{configurable:true,value:false});});
 afterEach(()=>{jest.useRealTimers();});
 test('entry exposes exactly three public viewers and TV links, no private capability',async()=>{
- mount('entry');await flush();expect(screen.getAllByRole('link',{name:'Ver partido'})).toHaveLength(3);expect(screen.getAllByRole('link',{name:'Abrir pantalla'})).toHaveLength(3);
+ mount('entry');await flush();expect(screen.getAllByRole('link',{name:'Watch match'})).toHaveLength(3);expect(screen.getAllByRole('link',{name:'Open display'})).toHaveLength(3);
  for(const link of screen.getAllByRole('link'))expect(link.href).not.toContain('control=');
 });
 test('normal signed-in reader sees on-court and folded bench, never control actions; failed refresh removes LIVE',async()=>{
- const api=apiFor();mount('viewer',api);await flush();expect(screen.getByText('Tu cuenta está conectada · Solo lectura')).toBeInTheDocument();expect(screen.getByText('En vivo')).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Punto para A'})).toBeNull();const benchDetails=screen.getByText('Banco de suplentes').closest('details');expect(benchDetails).not.toHaveAttribute('open');
+ const api=apiFor();mount('viewer',api);await flush();expect(screen.getByText('Your account is connected · Read only')).toBeInTheDocument();expect(screen.getByText('LIVE')).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Punto para A'})).toBeNull();const benchDetails=screen.getByText('Substitutes').closest('details');expect(benchDetails).not.toHaveAttribute('open');
  api.board.mockRejectedValueOnce(new Error('network'));
- await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.getByText('Sin conexión · Último estado recibido')).toBeInTheDocument();expect(screen.queryByText('En vivo')).toBeNull();
+ await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.getByText('Reconnecting…')).toBeInTheDocument();expect(screen.queryByText('LIVE')).toBeNull();
 });
 test('court switching ignores a late response from the old court',async()=>{
  const api=apiFor(),pending=[];api.board.mockImplementation(id=>new Promise(resolve=>pending.push({id,resolve})));
- mount('viewer',api);await flush();fireEvent.click(screen.getByRole('link',{name:'Cancha 2'}));await flush();
- await act(async()=>{pending.find(p=>p.id===B).resolve(board(B,30));});await flush();expect(screen.getByRole('group',{name:'Puntos'})).toHaveTextContent('30');
- await act(async()=>{pending.find(p=>p.id===A).resolve(board(A,15));});await flush();expect(screen.getByRole('group',{name:'Puntos'})).toHaveTextContent('30');expect(screen.getByRole('group',{name:'Puntos'})).not.toHaveTextContent('15');
+ mount('viewer',api);await flush();fireEvent.click(screen.getByRole('link',{name:'Court 2'}));await flush();
+ await act(async()=>{pending.find(p=>p.id===B).resolve(board(B,30));});await flush();expect(screen.getByRole('group',{name:'Points'})).toHaveTextContent('30');
+ await act(async()=>{pending.find(p=>p.id===A).resolve(board(A,15));});await flush();expect(screen.getByRole('group',{name:'Points'})).toHaveTextContent('30');expect(screen.getByRole('group',{name:'Points'})).not.toHaveTextContent('15');
 });
 test('private control removes fragment and synchronous double tap sends one CAS command',async()=>{
  const api=apiFor();let resolve;api.command.mockImplementation(()=>new Promise(r=>{resolve=r;}));mount('control',api);await flush();expect(window.location.hash).toBe('');expect(api.control).toHaveBeenCalledWith(A,CAP,expect.any(AbortSignal));
@@ -62,21 +62,21 @@ test('API keeps capability only in header and request id has secure UUID fallbac
  const history={state:{},replaceState:jest.fn()},storage={setItem:jest.fn()};expect(consumePracticeControl(A,{hash:'#control='+CAP,pathname:'/private',search:''},history,storage)).toBe(CAP);expect(history.replaceState).toHaveBeenCalledWith({},'','/private');
 });
 test('a hung refresh cannot keep the LIVE badge beyond freshness limit',async()=>{
- const api=apiFor();mount('viewer',api);await flush();api.board.mockImplementation(()=>new Promise(()=>{}));await act(async()=>{jest.advanceTimersByTime(7000);});await flush();expect(screen.queryByText('En vivo')).toBeNull();expect(screen.getByText('Sin conexión · Último estado recibido')).toBeInTheDocument();
+ const api=apiFor();mount('viewer',api);await flush();api.board.mockImplementation(()=>new Promise(()=>{}));await act(async()=>{jest.advanceTimersByTime(7000);});await flush();expect(screen.queryByText('LIVE')).toBeNull();expect(screen.getByText('Reconnecting…')).toBeInTheDocument();
 });
 test('visibility resume cannot be overwritten by an old aborted request',async()=>{
  const api=apiFor(),pending=[];api.board.mockImplementation(id=>new Promise(resolve=>pending.push({id,resolve})));mount('viewer',api);await flush();
  await act(async()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
- await act(async()=>{pending[1].resolve(board(A,30));});await flush();expect(screen.getByRole('group',{name:'Puntos'})).toHaveTextContent('30');
- await act(async()=>{pending[0].resolve(board(A,15));});await flush();expect(screen.getByRole('group',{name:'Puntos'})).not.toHaveTextContent('15');
+ await act(async()=>{pending[1].resolve(board(A,30));});await flush();expect(screen.getByRole('group',{name:'Points'})).toHaveTextContent('30');
+ await act(async()=>{pending[0].resolve(board(A,15));});await flush();expect(screen.getByRole('group',{name:'Points'})).not.toHaveTextContent('15');
 });
 test('reset is explicit and carries only practice format after confirmation',async()=>{
  const api=apiFor();mount('control',api);await flush();fireEvent.click(screen.getByRole('button',{name:'Reiniciar esta práctica'}));expect(api.command).not.toHaveBeenCalled();fireEvent.change(screen.getByLabelText('Formato'),{target:{value:'knockout'}});fireEvent.click(screen.getByRole('button',{name:'Sí, reiniciar'}));await flush();expect(api.command.mock.calls[0][2]).toMatchObject({kind:'reset',format:'knockout'});
 });
 test('server pause freezes the clock and is never labelled live',async()=>{
- const api=apiFor();api.board.mockResolvedValue({...board(),cronometro_pausado:true,display:{displayA:0,displayB:0,cronometroActivo:false,cronometroSegundos:65}});mount('viewer',api);await flush();expect(screen.getByLabelText('Tiempo de juego')).toHaveTextContent('01:05');expect(screen.getByText('Pausado')).toBeInTheDocument();await act(async()=>{jest.advanceTimersByTime(10000);});await flush();expect(screen.getByLabelText('Tiempo de juego')).toHaveTextContent('01:05');expect(screen.queryByText('En vivo')).toBeNull();
+ const api=apiFor();api.board.mockResolvedValue({...board(),cronometro_pausado:true,display:{displayA:0,displayB:0,cronometroActivo:false,cronometroSegundos:65}});mount('viewer',api);await flush();expect(screen.getByText('PAUSED')).toBeInTheDocument();await act(async()=>{jest.advanceTimersByTime(10000);});await flush();expect(screen.queryByText('LIVE')).toBeNull();
 });
 test('super tiebreak columns use points while ordinary tie break keeps 6-6 games',async()=>{
  const api=apiFor(),history=[{a:6,b:4},{a:3,b:6}];api.board.mockResolvedValue({...board(),games_a:0,games_b:0,sets_a:1,sets_b:1,historial_sets:history,display:{mode:'super_tiebreak',displayA:9,displayB:9}});mount('viewer',api);await flush();expect(screen.getByText('STB')).toBeInTheDocument();
- api.board.mockResolvedValue({...board(),games_a:6,games_b:6,sets_a:1,sets_b:1,historial_sets:history,display:{mode:'tiebreak',displayA:9,displayB:9}});await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.queryByText('STB')).toBeNull();expect(screen.getByText('Set 3')).toBeInTheDocument();
+ api.board.mockResolvedValue({...board(),games_a:6,games_b:6,sets_a:1,sets_b:1,historial_sets:history,display:{mode:'tiebreak',displayA:9,displayB:9}});await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.queryByText('STB')).toBeNull();expect(screen.getByText('SET 3')).toBeInTheDocument();
 });

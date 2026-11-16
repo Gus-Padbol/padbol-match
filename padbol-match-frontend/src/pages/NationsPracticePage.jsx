@@ -32,9 +32,9 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
   const location = useLocation();
   const {session} = useAuth();
   const {language} = useSafeTranslation();
-  const copy = practiceCopy(language);
   const api = useMemo(() => suppliedApi || createNationsPracticeApi(), [suppliedApi]);
   const control = mode === 'control';
+  const copy = practiceCopy(control ? language : 'en');
   const validIds = useMemo(() => {
     try { practiceEventId(eventId); if (mode !== 'entry') practiceBoardId(boardId); return true; } catch { return false; }
   }, [eventId, boardId, mode]);
