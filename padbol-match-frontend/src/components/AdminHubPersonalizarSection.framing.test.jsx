@@ -2,6 +2,7 @@ import React from 'react';
 import {act, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import AdminHubPersonalizarSection from './AdminHubPersonalizarSection';
 import {fetchHubPhotoSource, saveHubPhotoEdit} from '../utils/hubPhotoEditorApi';
+jest.mock('../utils/cropImage',()=>({createImage:jest.fn(async()=>({naturalWidth:100,naturalHeight:100}))}));
 
 const mockT=key=>key;
 let mockEditorProps;
@@ -13,7 +14,7 @@ const source={sourceId,imageUrl:'https://example.test/output.jpg',frame:{pixels:
 const props={apiBaseUrl:'https://api.example.test',accessToken:'test-session'};
 const renderEditor=()=>render(<AdminHubPersonalizarSection {...props}/>);
 const card=()=>screen.getByTestId('hub-editor-padbol|armar_partido');
-const newPhoto=()=>{const file=new File(['source'],'original.jpg',{type:'image/jpeg'});fireEvent.click(within(card()).getByText('admin.hub.changePhoto'));fireEvent.change(screen.getByTestId('hub-deporte-file'),{target:{files:[file]}});return file;};
+const newPhoto=()=>{const file=new File([new Uint8Array([0xFF,0xD8,0xFF,0xE0,0,0,0,0])],'original.jpg',{type:'image/jpeg'});fireEvent.click(within(card()).getByText('admin.hub.changePhoto'));fireEvent.change(screen.getByTestId('hub-deporte-file'),{target:{files:[file]}});return file;};
 beforeEach(()=>{
  global.fetch=jest.fn(async()=>({ok:true,json:async()=>[]}));
  URL.createObjectURL=jest.fn(()=> 'blob:original-source');URL.revokeObjectURL=jest.fn();
@@ -45,7 +46,7 @@ test('new photo preserves its original; successful save closes and reopen recove
 });
 
 test('cancel does not publish; missing original never opens the already-cropped photo as a source',async()=>{
- renderEditor();await screen.findByLabelText('Comprobar las vistas del teléfono');newPhoto();fireEvent.click(screen.getByText('Cancel edit'));
+ renderEditor();await screen.findByLabelText('Comprobar las vistas del teléfono');newPhoto();await screen.findByRole('dialog');fireEvent.click(screen.getByText('Cancel edit'));
  expect(saveHubPhotoEdit).not.toHaveBeenCalled();expect(screen.queryByRole('dialog')).toBeNull();
  fetchHubPhotoSource.mockRejectedValueOnce(new Error('Esta foto no conserva el original. Elige la foto original.'));
  fireEvent.click(within(card()).getByText('Ajustar encuadre'));
@@ -53,7 +54,7 @@ test('cancel does not publish; missing original never opens the already-cropped 
 });
 
 test('failed save keeps original and editor open, retry uses the same source and target',async()=>{
- renderEditor();await screen.findByLabelText('Comprobar las vistas del teléfono');const file=newPhoto();
+ renderEditor();await screen.findByLabelText('Comprobar las vistas del teléfono');const file=newPhoto();await screen.findByRole('dialog');
  saveHubPhotoEdit.mockRejectedValueOnce(new Error('No se pudo guardar el original'));
  fireEvent.click(screen.getByText('Confirm edit'));expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo guardar el original');
  expect(screen.getByRole('dialog')).toBeInTheDocument();expect(mockEditorProps.originalSrc).toBe('blob:original-source');

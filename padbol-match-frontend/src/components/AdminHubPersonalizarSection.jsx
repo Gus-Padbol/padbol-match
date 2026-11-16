@@ -119,6 +119,33 @@ async function downloadCurrentHubImage(src) {
   return new File([blob], 'imagen-actual.' + (type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : 'jpg'), {type});
 }
 
+const ALLOWED_IMAGE_MIME = new Set(['image/jpeg','image/png','image/webp']);
+const ALLOWED_IMAGE_EXT = /^(jpe?g|png|webp)$/i;
+const imageExtension = name => String(name || '').split('.').pop();
+const INVALID_IMAGE_MESSAGE = 'Elegí una imagen JPG, PNG o WebP válida. No se aceptó el archivo.';
+
+/** Validate both declared MIME (when present) and the real file signature before opening the editor. */
+export async function validateHubImageFile(file) {
+  if (!file || typeof file !== 'object' || !file.size) return {ok:false, code:'EMPTY_FILE', message:'El archivo está vacío o no se pudo leer.'};
+  if (file.size > 10 * 1024 * 1024) return {ok:false, code:'TOO_LARGE', message:'La foto original supera 10 MB. Elegí una imagen más pequeña.'};
+  const type = String(file.type || '').toLowerCase();
+  const ext = imageExtension(file.name);
+  if (type && !ALLOWED_IMAGE_MIME.has(type)) return {ok:false, code:'INVALID_TYPE', message:INVALID_IMAGE_MESSAGE};
+  if (!type && !ALLOWED_IMAGE_EXT.test(ext)) return {ok:false, code:'INVALID_EXTENSION', message:INVALID_IMAGE_MESSAGE};
+  let buffer;
+  try {
+    if (typeof file.arrayBuffer === 'function') buffer = new Uint8Array(await file.arrayBuffer());
+    else buffer = new Uint8Array(await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsArrayBuffer(file); }));
+  } catch { return {ok:false, code:'UNREADABLE', message:INVALID_IMAGE_MESSAGE}; }
+  const isJpeg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+  const isWebp = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+  if (!isJpeg && !isPng && !isWebp) return {ok:false, code:'DECODE_FAILED', message:INVALID_IMAGE_MESSAGE};
+  const expected = type === 'image/png' ? isPng : type === 'image/jpeg' ? isJpeg : type === 'image/webp' ? isWebp : true;
+  if (!expected) return {ok:false, code:'MIME_MISMATCH', message:INVALID_IMAGE_MESSAGE};
+  return {ok:true};
+}
+
 export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, isSuperAdmin = false }) {
   const { t } = useTranslation();
   const hubJugarActionCards = useMemo(
@@ -210,7 +237,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       return null;
     });
   }, []);
-  useEffect(() => { cerrarCropModal(); }, [apiBaseUrl, accessToken, cerrarCropModal]);
+  const previousTokenRef = useRef(accessToken);
+  useEffect(() => {
+    // Token renewal while the picker is open must not close a just-opened editor.
+    // Only invalidate in-flight source loads; an open editor keeps the current auth scope.
+    if (previousTokenRef.current !== accessToken && !cropModalOpen) editGenerationRef.current += 1;
+    previousTokenRef.current = accessToken;
+  }, [accessToken, cropModalOpen]);
   useEffect(() => () => {
     editGenerationRef.current += 1;
     const src = authScopeRef.current.imageSrc;
@@ -262,10 +295,15 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     } finally { if (generation === editGenerationRef.current) { setSourceLoading(false); setSourceLoadingTarget(''); } }
   }, [accessToken, apiBaseUrl, cerrarCropModal]);
 
-  const abrirCropDesdeArchivo = useCallback((file, pending) => {
-    if (!file || !pending || !['image/jpeg', 'image/png', 'image/webp'].includes(String(file.type || ''))) return false;
-    if (file.size > 10 * 1024 * 1024) { setSourceError('La foto original supera 10 MB. Elige una imagen más pequeña.'); return true; }
-    cerrarCropModal();
+  const abrirCropDesdeArchivo = useCallback(async (file, pending) => {
+    if (!file || !pending) return false;
+    const validation = await validateHubImageFile(file);
+    if (!validation.ok) {
+      setSourceError(validation.message); setSourceErrorTarget(targetKey(pending));
+      setMsg(validation.message); return false;
+    }
+    if (cropImageSrc && String(cropImageSrc).startsWith('blob:')) URL.revokeObjectURL(cropImageSrc);
+    editGenerationRef.current += 1;
     const current = pending.expectedImageUrl !== undefined ? pending.expectedImageUrl : pending.kind === 'deporte'
       ? deporteRows.find(row => row.deporte === pending.deporte && row.card_key === pending.cardKey)?.imagen_url
       : rows.find(row => String(row.id) === String(pending.id))?.foto_url;
@@ -274,7 +312,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     setCropImageSrc(URL.createObjectURL(file));
     setCropError(''); setSourceError(''); setSourceErrorTarget(''); setSourceLoadingTarget(''); setSourceNotice(''); setCropModalOpen(true);
     return true;
-  }, [cerrarCropModal, deporteRows, rows]);
+  }, [deporteRows, rows, cropImageSrc]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -556,7 +594,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     }
   }, [accessToken, apiBaseUrl, cropSource, phoneView, cerrarCropModal, t]);
 
-  const onFileChange = (e) => {
+  const onFileChange = async (e) => {
     const id = uploadTargetIdRef.current;
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -566,12 +604,12 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       setMsg(t('admin.formularios.loginAgainUpload'));
       return;
     }
-    if (!abrirCropDesdeArchivo(file, { kind: 'legacy', id })) {
+    if (!(await abrirCropDesdeArchivo(file, { kind: 'legacy', id }))) {
       setMsg(t('admin.formularios.chooseImageFile'));
     }
   };
 
-  const onFileChangeDeporte = (e) => {
+  const onFileChangeDeporte = async (e) => {
     const target = uploadDeporteTargetRef.current;
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -591,7 +629,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       return;
     }
     if (!file) return;
-    if (!abrirCropDesdeArchivo(file, { kind: 'deporte', deporte: dep, cardKey: ck })) {
+    if (!(await abrirCropDesdeArchivo(file, { kind: 'deporte', deporte: dep, cardKey: ck }))) {
       setDeporteMsg(t('admin.formularios.chooseImageFile'));
     }
   };
@@ -631,7 +669,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     fileRefInicio.current?.click();
   };
 
-  const onFileChangeInicio = (e) => {
+  const onFileChangeInicio = async (e) => {
     const id = uploadInicioTargetIdRef.current;
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -641,7 +679,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       setInicioMsg(t('admin.formularios.loginAgainUpload'));
       return;
     }
-    if (!abrirCropDesdeArchivo(file, { kind: 'inicio', id })) {
+    if (!(await abrirCropDesdeArchivo(file, { kind: 'inicio', id }))) {
       setInicioMsg(t('admin.formularios.chooseImageFile'));
     }
   };
