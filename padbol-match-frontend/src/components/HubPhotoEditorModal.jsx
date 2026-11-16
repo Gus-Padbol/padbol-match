@@ -85,7 +85,7 @@ function HubPhotoEditor({open, originalSrc, initialPixels = null, frames, safeFr
       <p>Mueve la foto y revisa las dos vistas. «Foto completa» añade margen para que no se corten las caras.</p>
       {sourceNotice ? <p role="status">{sourceNotice}</p> : null}
       <div style={{height: 260, position: 'relative', background: '#0f172a', borderRadius: 12, overflow: 'hidden'}}>
-        <Cropper image={originalSrc} crop={crop} zoom={zoom} minZoom={0.1} maxZoom={3} aspect={master.width / master.height} restrictPosition={false} showGrid={false} onCropChange={setCrop} onZoomChange={setZoom} onCropSizeChange={setCropSize} onCropComplete={(_area, value) => setPixels(value)} initialCroppedAreaPixels={initialPixels || undefined} onMediaLoaded={media => {setImageSize({width: media.naturalWidth, height: media.naturalHeight});setMediaSize(media);}} />
+        <Cropper image={originalSrc} crop={crop} zoom={zoom} minZoom={0.1} maxZoom={3} aspect={master.width / master.height} restrictPosition={false} showGrid={false} onCropChange={setCrop} onZoomChange={setZoom} onCropSizeChange={setCropSize} onCropComplete={(_area, value) => setPixels(value)} onCropAreaChange={(_area, value) => setPixels(value)} initialCroppedAreaPixels={initialPixels || undefined} onMediaLoaded={media => {setImageSize({width: media.naturalWidth, height: media.naturalHeight});setMediaSize(media);}} />
       </div>
       <div style={{display: 'flex', gap: 12, alignItems: 'center', margin: '14px 0'}}>
         <button type="button" disabled={busy || !mediaSize} onClick={fitWholePhoto}>Foto completa</button>

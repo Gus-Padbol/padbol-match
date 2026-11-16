@@ -52,3 +52,19 @@ test('cancel while composing does not call a stale confirmation after another ed
  await act(async()=>{finishImage({naturalWidth:900,naturalHeight:600});await Promise.resolve();await Promise.resolve();});
  expect(props.onConfirm).not.toHaveBeenCalled();getContext.mockRestore();toBlob.mockRestore();
 });
+
+test('onCropAreaChange updates the live pixels without waiting for another CropComplete', async () => {
+  const image={naturalWidth:900,naturalHeight:600};mockCreateImage.mockResolvedValue(image);
+  const context={fillRect:jest.fn(),drawImage:jest.fn()};
+  const getContext=jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(context);
+  const toBlob=jest.spyOn(HTMLCanvasElement.prototype,'toBlob').mockImplementation(callback=>callback(new Blob(['composed'],{type:'image/jpeg'})));
+  const props={open:true,originalSrc:'https://example.test/original.jpg',frames,safeFrames:frames,onClose:jest.fn(),onConfirm:jest.fn()};
+  render(<HubPhotoEditorModal {...props}/>);
+  act(()=>{mockCropperProps.onMediaLoaded({width:390,height:260,naturalWidth:900,naturalHeight:600});mockCropperProps.onCropSizeChange({width:390,height:390/(355/158.5)});});
+  const moved={x:-44,y:-55,width:900,height:500};
+  act(()=>mockCropperProps.onCropAreaChange({},moved));
+  fireEvent.click(screen.getByText('Guardar encuadre'));
+  await act(async()=>{await Promise.resolve();await Promise.resolve();});
+  expect(props.onConfirm).toHaveBeenCalledWith(expect.any(File),expect.objectContaining({pixels:moved}));
+  getContext.mockRestore();toBlob.mockRestore();
+});
