@@ -89,17 +89,17 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
   const matches = event.data?.matches || [];
   const basePath = `/practica/nations/${encodeURIComponent(eventId)}`;
   return <main className="np-page" dir={['ar','fa','he'].some(code => String(language).startsWith(code)) ? 'rtl' : undefined}>
-    <div className="np-shell"><header className="np-header"><img className="np-brand" src="/brand/padbol-match-logo-white-practice.svg" alt="Padbol Match"/><h1>{copy.title}</h1><p>{copy.note}</p></header>
+    <div className="np-shell">{mode !== 'viewer' ? <header className="np-header"><img className="np-brand" src="/brand/padbol-match-logo-white-practice.svg" alt="Padbol Match"/><h1>{copy.title}</h1><p>{copy.note}</p></header> : null}
       {!validIds ? <PageError state="expired" copy={copy} refresh={() => {}}/> : mode === 'entry' ? <>
         <h2 className="np-entry-title">{copy.choose}</h2><p className="np-account">{copy.viewerLogin}</p>
         {!event.data ? <PageError state={event.status} copy={copy} refresh={event.refresh}/> : <div className="np-courts">{matches.map((match, index) => <article className="np-court-card" key={match.scoreboard_id}><span className="np-eyebrow">{courtName(match.cancha, index, copy)}</span><h2>{matchName(match, copy)}</h2><Link className="np-button np-button--gold" to={`${basePath}/partidos/${match.scoreboard_id}`}>{copy.view}</Link><Link className="np-text-link" to={`/scoreboard/${match.scoreboard_id}`} target="_blank" rel="noreferrer">{copy.tv}</Link></article>)}</div>}
       </> : <>
-        <nav className="np-navigation" aria-label={copy.choose}><Link className="np-text-link" to={basePath}>← {copy.back}</Link>{!control && <div className="np-court-tabs">{matches.map((match, index) => <Link key={match.scoreboard_id} className={`np-court-tab ${match.scoreboard_id === boardId ? 'is-selected' : ''}`} aria-current={match.scoreboard_id === boardId ? 'page' : undefined} to={`${basePath}/partidos/${match.scoreboard_id}`}>{courtName(match.cancha, index, copy)}</Link>)}</div>}</nav>
-        <h2 className="np-mode">{control ? copy.referee : copy.spectator}{board?.cancha ? ` · ${courtName(board.cancha, 0, copy)}` : ''}</h2>
-        {!control && <p className="np-account">{session?.user ? copy.account : <>{copy.guest} <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`}>{copy.login}</Link></>}</p>}
+        {mode !== 'viewer' ? <nav className="np-navigation" aria-label={copy.choose}><Link className="np-text-link" to={basePath}>← {copy.back}</Link>{!control && <div className="np-court-tabs">{matches.map((match, index) => <Link key={match.scoreboard_id} className={`np-court-tab ${match.scoreboard_id === boardId ? 'is-selected' : ''}`} aria-current={match.scoreboard_id === boardId ? 'page' : undefined} to={`${basePath}/partidos/${match.scoreboard_id}`}>{courtName(match.cancha, index, copy)}</Link>)}</div>}</nav> : null}
+        {control ? <h2 className="np-mode">{control ? copy.referee : copy.spectator}{board?.cancha ? ` · ${courtName(board.cancha, 0, copy)}` : ''}</h2> : null}
+        {!control && mode !== 'viewer' && <p className="np-account">{session?.user ? copy.account : <>{copy.guest} <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`}>{copy.login}</Link></>}</p>}
         {control && !token ? <p className="np-message" role="alert">{copy.missingControl}</p> : !board ? <PageError state={resource.status} copy={copy} refresh={resource.refresh}/> : <>
           {!control && resource.status !== 'ready' && <button className="np-button" onClick={resource.refresh}>{copy.retry}</button>}
-          {control ? <PracticeBoard board={board} status={resource.status} copy={copy}/> : <PracticeSpectatorView board={board} status={resource.status} copy={copy}/>}
+          {control ? <PracticeBoard board={board} status={resource.status} copy={copy}/> : <PracticeSpectatorView board={board} status={resource.status} copy={copy} courts={matches.map((match,index)=>({id:match.scoreboard_id,label:`Court ${courtName(match.cancha,index,copy).replace(/^Court\s*/,'')}`,href:`${basePath}/partidos/${match.scoreboard_id}`,active:match.scoreboard_id===boardId}))} activeCourt={matches.findIndex(match=>match.scoreboard_id===boardId)+1}/>}
           {control && <section className="np-controls" aria-label={copy.referee}>
             {notice && <div className="np-message" role="alert"><p>{notice}</p>{pending && <button className="np-button" disabled={busy} onClick={() => command(pending.kind, {}, pending)}>{copy.retrySame}</button>}</div>}
             {resource.refreshing && <p role="status">{copy.refreshing}</p>}
@@ -112,7 +112,7 @@ export default function NationsPracticePage({mode = 'entry', api: suppliedApi}) 
           </section>}
         </>}
       </>}
-      <footer className="np-footer">{copy.note}</footer>
+      {mode !== 'viewer' ? <footer className="np-footer">{copy.note}</footer> : null}
     </div>
   </main>;
 }

@@ -13,3 +13,12 @@ test('public view shows only two starters per side and a collapsed bench without
  expect(container.textContent).not.toContain('01:05');
  expect(container.querySelector('button')).toBeNull();
 });
+
+test('flags cover any public ISO from canonical metadata and omit when absent',()=>{
+ const copyEn={...copy,live:'Live',serve:'Serving',setsWon:'Sets won',updatedLive:'Updated live'};
+ const withIso={...board,equipo_a_pais_iso:'QA',equipo_b_pais_iso:'GB'};
+ const {container}=render(<PracticeSpectatorView board={withIso} status="ready" copy={copyEn}/>);
+ expect(container.textContent).toContain('🇶🇦'); expect(container.textContent).toContain('🇬🇧');
+ const {container:noIso}=render(<PracticeSpectatorView board={{...board,equipo_a_pais_iso:null,equipo_b_pais_iso:null}} status="ready" copy={copyEn}/>);
+ expect(noIso.querySelector('.np-public__flag')).toBeNull();
+});

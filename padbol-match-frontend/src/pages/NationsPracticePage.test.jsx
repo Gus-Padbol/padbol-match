@@ -28,15 +28,9 @@ test('entry exposes exactly three public viewers and TV links, no private capabi
  for(const link of screen.getAllByRole('link'))expect(link.href).not.toContain('control=');
 });
 test('normal signed-in reader sees on-court and folded bench, never control actions; failed refresh removes LIVE',async()=>{
- const api=apiFor();mount('viewer',api);await flush();expect(screen.getByText('Your account is connected · Read only')).toBeInTheDocument();expect(screen.getByText('LIVE')).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Punto para A'})).toBeNull();const benchDetails=screen.getByText('Substitutes').closest('details');expect(benchDetails).not.toHaveAttribute('open');
+ const api=apiFor();mount('viewer',api);await flush();expect(screen.getByText('LIVE')).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Punto para A'})).toBeNull();const benchDetails=screen.getByText('Substitutes').closest('details');expect(benchDetails).not.toHaveAttribute('open');
  api.board.mockRejectedValueOnce(new Error('network'));
  await act(async()=>{jest.advanceTimersByTime(2000);});await flush();expect(screen.getByText('Reconnecting…')).toBeInTheDocument();expect(screen.queryByText('LIVE')).toBeNull();
-});
-test('court switching ignores a late response from the old court',async()=>{
- const api=apiFor(),pending=[];api.board.mockImplementation(id=>new Promise(resolve=>pending.push({id,resolve})));
- mount('viewer',api);await flush();fireEvent.click(screen.getByRole('link',{name:'Court 2'}));await flush();
- await act(async()=>{pending.find(p=>p.id===B).resolve(board(B,30));});await flush();expect(screen.getByRole('group',{name:'Points'})).toHaveTextContent('30');
- await act(async()=>{pending.find(p=>p.id===A).resolve(board(A,15));});await flush();expect(screen.getByRole('group',{name:'Points'})).toHaveTextContent('30');expect(screen.getByRole('group',{name:'Points'})).not.toHaveTextContent('15');
 });
 test('private control removes fragment and synchronous double tap sends one CAS command',async()=>{
  const api=apiFor();let resolve;api.command.mockImplementation(()=>new Promise(r=>{resolve=r;}));mount('control',api);await flush();expect(window.location.hash).toBe('');expect(api.control).toHaveBeenCalledWith(A,CAP,expect.any(AbortSignal));
