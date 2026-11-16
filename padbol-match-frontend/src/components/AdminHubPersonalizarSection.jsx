@@ -649,10 +649,13 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     const dk = draftKeyDeporte(sportSel, cardKey);
     const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
     const storedRow = rowDeporteActual(cardKey);
-    const row = storedRow || (cardKey === 'torneos_acceso' ? rowDeporteActual('torneos') : null);
+    const fallbackRow = cardKey === 'torneos_acceso' ? rowDeporteActual('torneos') : null;
+    const row = storedRow || fallbackRow;
     const storedUrl = hubDeporteRowImagenUrl(storedRow);
-    const communityEmpty = cardKey === 'comunidad' && !storedUrl;
-    const previewUrl = communityEmpty ? '' : (storedUrl || defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey));
+    const fallbackUrl = hubDeporteRowImagenUrl(fallbackRow);
+    const noPhoto = !storedUrl && ['comunidad','rankings','mis_partidos'].includes(cardKey);
+    const previewUrl = noPhoto ? '' : (storedUrl || fallbackUrl || defaultHubCardImageForId(cardKey === 'buscar_partido' ? 'partidos' : cardKey));
+    const communityEmpty = noPhoto;
     const saving = savingDeporteKey === dk;
     const uploading = uploadingDeporteKey === dk;
     return (
