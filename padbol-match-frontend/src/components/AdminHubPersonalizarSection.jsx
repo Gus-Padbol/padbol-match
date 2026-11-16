@@ -155,7 +155,7 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
       { key: 'mis_partidos', label: 'Interior · Mis partidos' },
       ...(sportSel === 'padbol' ? [{ key: 'next_generation', label: 'Inicio/Jugar · Next Generation' }] : [{ key: 'comunidad', label: 'Inicio/Jugar · Comunidad' }]),
     ],
-    [t, sportSel],
+    [sportSel],
   );
   const [deporteDrafts, setDeporteDrafts] = useState({});
   const [savingDeporteKey, setSavingDeporteKey] = useState(null);
@@ -650,7 +650,6 @@ export default function AdminHubPersonalizarSection({ apiBaseUrl, accessToken, i
     const draft = deporteDrafts[dk] || { titulo: '', subtitulo: '' };
     const storedRow = rowDeporteActual(cardKey);
     const fallbackRow = cardKey === 'torneos_acceso' ? rowDeporteActual('torneos') : null;
-    const row = storedRow || fallbackRow;
     const storedUrl = hubDeporteRowImagenUrl(storedRow);
     const fallbackUrl = hubDeporteRowImagenUrl(fallbackRow);
     const noPhoto = !storedUrl && ['comunidad','rankings','mis_partidos'].includes(cardKey);
