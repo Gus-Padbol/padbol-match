@@ -13,7 +13,7 @@ export function createCommercialAssignmentsApi(token) {
       const failure=typeof response.json==='function'?await response.json().catch(()=>({})):{};
       const code=failure.code||failure.error;
       recordCrmSessionRejection(token,response.status,code);
-      const messages={INVALID_FOLLOWUP:'Falta la autorización explícita, su evidencia o el plan de seguimiento verificado.',ADVISOR_REQUEST_DETAILS_CONFLICT:'Ya hay un alta pendiente para este correo. Revisá sus datos y condiciones en la lista antes de habilitarla.',CLOSURE_OUTCOME_REQUIRED:'Selecciona si la venta se concretó o no avanzó.',INVALID_CLOSURE_OUTCOME:'Elige un resultado comercial válido: Venta concretada o No avanzó.',FOLLOWUP_NOT_READY:'El seguimiento todavía no está habilitado. Revisa las plantillas aprobadas y la disponibilidad de envío.',NEXT_CONTACT_REQUIRED:'Indica una fecha y hora futuras para la próxima gestión.'};
+      const messages={INVALID_CASE_EMAIL:'Indica idioma y evidencia de autorización para el seguimiento por email.',CASE_EMAIL_NOT_READY:'El seguimiento por email todavía no está habilitado en el servidor.',CONSENT_REQUIRED:'Falta la confirmación explícita de autorización por email.',DUPLICATE_CONTACT_PLAN:'Ya hay un seguimiento activo para este contacto o correo.',INVALID_FOLLOWUP:'Falta la autorización explícita, su evidencia o el plan de seguimiento verificado.',ADVISOR_REQUEST_DETAILS_CONFLICT:'Ya hay un alta pendiente para este correo. Revisá sus datos y condiciones en la lista antes de habilitarla.',CLOSURE_OUTCOME_REQUIRED:'Selecciona si la venta se concretó o no avanzó.',INVALID_CLOSURE_OUTCOME:'Elige un resultado comercial válido: Venta concretada o No avanzó.',FOLLOWUP_NOT_READY:'El seguimiento todavía no está habilitado. Revisa las plantillas aprobadas y la disponibilidad de envío.',NEXT_CONTACT_REQUIRED:'Indica una fecha y hora futuras para la próxima gestión.'};
       throw Object.assign(new Error('COMMERCIAL_ACTION_UNAVAILABLE'), {status:response.status,code,userMessage:messages[code]});
     }
     return response.json();
@@ -102,5 +102,11 @@ export function createCommercialAssignmentsApi(token) {
       });
     },
     cancelFollowup: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/followup/cancel`, 'POST', {channel}),
+    caseEmailFollowup: (id, channel) => request(`${cases}/${encodeURIComponent(id)}/case-email-followup?channel=${encodeURIComponent(channel)}`),
+    startCaseEmailFollowup: (id, channel, language, consentEvidence) => {
+      if (!['form','whatsapp'].includes(channel) || !['es','en'].includes(language) || typeof consentEvidence !== 'string' || consentEvidence.trim().length < 3) throw Object.assign(new Error('INVALID_CASE_EMAIL'),{code:'INVALID_CASE_EMAIL',userMessage:'Falta la confirmación explícita de autorización por email.'});
+      return request(`${cases}/${encodeURIComponent(id)}/case-email-followup`, 'POST', {channel,language,consentEvidence:consentEvidence.trim()});
+    },
+    cancelCaseEmailFollowup: (id, channel, reason='manual') => request(`${cases}/${encodeURIComponent(id)}/case-email-followup?channel=${encodeURIComponent(channel)}&reason=${encodeURIComponent(reason)}`, 'DELETE'),
   };
 }

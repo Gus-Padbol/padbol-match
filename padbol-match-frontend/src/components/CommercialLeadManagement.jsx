@@ -33,6 +33,7 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
   const [calls, setCalls] = useState([]), [activities, setActivities] = useState([]);
   const [state, setState] = useState('nuevo'), [next, setNext] = useState(''), [advisor, setAdvisor] = useState('');
   const [summary, setSummary] = useState(''), [details, setDetails] = useState('');
+  const [emailPlan,setEmailPlan]=useState(null),[emailConsent,setEmailConsent]=useState(false),[emailEvidence,setEmailEvidence]=useState(''),[emailError,setEmailError]=useState('');
   const [closureOutcome,setClosureOutcome]=useState('');
   const [dictating, setDictating] = useState(false);
   const [nextContact, setNextContact] = useState(''), [reminders, setReminders] = useState('24, 8');
@@ -68,6 +69,8 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
     })().catch(() => { if(active) setError('No se pudo cargar la gestión de esta consulta. Actualiza la ficha para volver a intentarlo.'); });
     return () => {active=false;};
   }, [api, conversation.id, conversation.source_channel, caseItem?.id, caseItem?.channel]);
+  useEffect(()=>{let live=true;setEmailPlan(null);if(!data||state!=='en_espera'||!data.contact?.email||!api.caseEmailFollowup)return undefined;api.caseEmailFollowup(data.id,data.channel).then(plan=>{if(live)setEmailPlan(plan);}).catch(err=>{if(live)setEmailPlan({ready:false,status:'not_ready',reason:err.userMessage||'No se pudo consultar el seguimiento por email.'});});return()=>{live=false;};},[api,data?.id,data?.channel,data?.contact?.email,state]);
+  async function pauseEmail(){if(!data||!api.cancelCaseEmailFollowup)return;setEmailError('');try{await api.cancelCaseEmailFollowup(data.id,data.channel,'manual');const plan=await api.caseEmailFollowup(data.id,data.channel);setEmailPlan(plan);setNotice('Seguimiento por email pausado.');}catch(err){setEmailError(err.userMessage||'No se pudo pausar el seguimiento por email.');}}
   async function saveAssignment(event) {
     event.preventDefault(); if(busy || !data || !advisor || !Number.isSafeInteger(data.version)) return;
     setBusy(true); setError(''); setNotice('');
@@ -94,7 +97,10 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
         await api.completeCall(data.id,call.id,{channel:data.channel,situation:`Estado seleccionado: ${STATE_LABELS[state]}`,discussed:summary.trim(),distinguishing:details.trim() || 'No se agregaron detalles adicionales.'});
       const current = await api.readCase(data.id,data.channel);
       await api.progress(data.id,data.channel,current.version,state,nextStep,date?.toISOString() || null,hours || [24,8],...(state==='cerrado'&&closureOutcome?[closureOutcome]:[]));
-      await refresh(data); await onUpdated?.(); window.dispatchEvent(new Event('commercial-agenda-updated')); setSummary(''); setDetails(''); setNotice('Atención registrada. Estado y próximo paso actualizados.');
+      const wantsEmail=state==='en_espera'&&Boolean(data.contact?.email)&&emailConsent&&emailEvidence.trim().length>=3;
+      let emailActivated=false;
+      if(wantsEmail&&api.startCaseEmailFollowup){try{const plan=await api.startCaseEmailFollowup(data.id,data.channel,'es',emailEvidence.trim());emailActivated=plan?.status==='active';setEmailPlan(plan||{status:'not_ready',ready:false});if(!emailActivated)setEmailError('La gestión se guardó, pero el servidor no confirmó el seguimiento por email.');}catch(err){setEmailError(err.userMessage||'La gestión se guardó, pero el seguimiento por email no se activó. Intenta nuevamente desde esta ficha.');}}
+      await refresh(data); await onUpdated?.(); window.dispatchEvent(new Event('commercial-agenda-updated')); setSummary(''); setDetails(''); setNotice(emailActivated?'Atención registrada y seguimiento por email activo.':'Atención registrada. Estado y próximo paso actualizados.');
     } catch (err) {setError(err.userMessage || 'No se pudo confirmar el registro completo. Actualiza la ficha y revisa el historial antes de volver a guardar.');}
     finally {setBusy(false);}
   }
@@ -114,6 +120,7 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
       {state==='cerrado'&&<label>Resultado comercial<select value={closureOutcome} onChange={e=>setClosureOutcome(e.target.value)} required={data.progressState!=='cerrado'}><option value="">{data.progressState==='cerrado'?'Cierre anterior sin clasificar':'Selecciona el resultado'}</option><option value="venta_concretada">Venta concretada</option><option value="no_avanzo">No avanzó</option></select></label>}
       <label>{state==='cerrado'?'Detalle del cierre':'Próximo paso'}<textarea maxLength={2000} value={next} onChange={e=>setNext(e.target.value)} required={state!=='cerrado'} placeholder={state==='cerrado'?'Opcional: amplía el resumen si hace falta.':'Qué vas a hacer y cuándo. Ej.: llamar el martes a las 15 h.'}/></label>
       {state!=='cerrado' && <div className="commercial-next-chat"><label>Próxima gestión<input type="datetime-local" value={nextContact} onChange={e=>setNextContact(e.target.value)}/></label><small>Hora local: {Intl.DateTimeFormat().resolvedOptions().timeZone}</small>{nextContact && <label>Avisarme estas horas antes<input aria-label="Avisarme estas horas antes" value={reminders} onChange={e=>setReminders(e.target.value)} placeholder="24, 8"/><small>Por defecto: 24 y 8 horas antes. Puedes cambiarlo, por ejemplo a 48, 24, 1.</small></label>}</div>}
+      {state==='en_espera'&&data.contact?.email&&<fieldset className="commercial-email-followup"><legend>Seguimiento por email (3 envíos: día 0, 7 y 14)</legend><p>La próxima gestión con fecha es para el asesor; el plan de email es independiente.</p>{emailPlan?.ready===false||emailPlan?.status==='not_ready'?<p role="status">Servidor no listo: {emailPlan?.reason||'seguimiento email apagado'}.</p>:null}{emailPlan?.status&&!['not_ready'].includes(emailPlan.status)?<p>Estado: <strong>{emailPlan.status}</strong>{emailPlan.plan?.nextAt&&<> · próximo envío: {new Date(emailPlan.plan.nextAt).toLocaleString('es-AR')}</>}</p>:null}{Array.isArray(emailPlan?.outbox)&&emailPlan.outbox.length>0?<ul>{emailPlan.outbox.map(x=><li key={x.step}>Día {[0,7,14][x.step]} · {x.status}{x.error_code?` · ${x.error_code}`:''}</li>)}</ul>:null}{emailPlan?.status==='active'?<button type="button" disabled={busy} onClick={pauseEmail}>Pausar seguimiento email</button>:<><label><input type="checkbox" checked={emailConsent} onChange={e=>setEmailConsent(e.target.checked)}/> Confirmo autorización explícita para enviar estos 3 emails</label><label>Evidencia de autorización<input value={emailEvidence} onChange={e=>setEmailEvidence(e.target.value)} maxLength={2000} placeholder="Ej.: autorizó por llamada del 17/11"/></label></>}{emailError&&<p role="alert">{emailError}</p>}</fieldset>}
       <details><summary>Agregar detalles adicionales (opcional)</summary><label>Detalles adicionales<textarea maxLength={2000} value={details} onChange={e=>setDetails(e.target.value)} placeholder="Solo si necesitas ampliar el resumen."/></label></details>
       {!busy && (!validSummary || (state!=='cerrado' && next.trim().length<3) || (state!=='cerrado' && !nextContact.trim()) || (state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome)) && <p className="commercial-save-help">Para guardar: {!validSummary ? 'escribe un resumen de al menos 3 caracteres. ' : ''}{state!=='cerrado' && next.trim().length<3 ? 'indica el próximo paso. ' : ''}{state!=='cerrado' && !nextContact.trim() ? 'indica la próxima gestión con fecha y hora. ' : ''}{state==='cerrado' && data.progressState!=='cerrado' && !closureOutcome ? 'selecciona el resultado del cierre.' : ''}</p>}
       {state==='cerrado' && <p>Al guardar, la consulta saldrá de la bandeja activa y conservará su historial.</p>}
@@ -122,6 +129,6 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
     {state==='en_espera' && unsavedManagement && <p>Guarda el resumen y el próximo paso para habilitar el seguimiento por WhatsApp.</p>}
     {data.progressState==='en_espera' && state==='en_espera' && !pending && !unsavedManagement && <CommercialFollowupActivation caseId={data.id} channel={data.channel} api={api} active={data.followup?.status==='waiting'} onChanged={()=>refresh(data).then(()=>onUpdated?.()).catch(()=>setError('No se pudo actualizar el seguimiento. Actualiza la ficha.'))}/>}
     {data.nextContactAt && <p className="commercial-scheduled">Próxima gestión guardada: <strong>{new Date(data.nextContactAt).toLocaleString()}</strong></p>}
-    {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}
+    {notice&&<p role="status">{notice}</p>}{error&&<p role="alert">{error}</p>}{emailError&&<p role="alert">La gestión quedó guardada, pero el seguimiento por email no está activo: {emailError}</p>}
   </section>;
 }
