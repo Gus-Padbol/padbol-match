@@ -69,7 +69,7 @@ export default function CommercialLeadManagement({api, conversation, onUpdated, 
     })().catch(() => { if(active) setError('No se pudo cargar la gestión de esta consulta. Actualiza la ficha para volver a intentarlo.'); });
     return () => {active=false;};
   }, [api, conversation.id, conversation.source_channel, caseItem?.id, caseItem?.channel]);
-  useEffect(()=>{let live=true;setEmailPlan(null);if(!data||state!=='en_espera'||!data.contact?.email||!api.caseEmailFollowup)return undefined;api.caseEmailFollowup(data.id,data.channel).then(plan=>{if(live)setEmailPlan(plan);}).catch(err=>{if(live)setEmailPlan({ready:false,status:'not_ready',reason:err.userMessage||'No se pudo consultar el seguimiento por email.'});});return()=>{live=false;};},[api,data?.id,data?.channel,data?.contact?.email,state]);
+  useEffect(()=>{let live=true;setEmailPlan(null);if(!data||state!=='en_espera'||!data.contact?.email||!api.caseEmailFollowup)return undefined;api.caseEmailFollowup(data.id,data.channel).then(plan=>{if(live)setEmailPlan(plan);}).catch(err=>{if(live)setEmailPlan({ready:false,status:'not_ready',reason:err.userMessage||'No se pudo consultar el seguimiento por email.'});});return()=>{live=false;};},[api,data,state]);
   async function pauseEmail(){if(!data||!api.cancelCaseEmailFollowup)return;setEmailError('');try{await api.cancelCaseEmailFollowup(data.id,data.channel,'manual');const plan=await api.caseEmailFollowup(data.id,data.channel);setEmailPlan(plan);setNotice('Seguimiento por email pausado.');}catch(err){setEmailError(err.userMessage||'No se pudo pausar el seguimiento por email.');}}
   async function saveAssignment(event) {
     event.preventDefault(); if(busy || !data || !advisor || !Number.isSafeInteger(data.version)) return;
