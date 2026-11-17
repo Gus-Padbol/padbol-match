@@ -1,5 +1,5 @@
 import CommercialAdminReturn from '../components/CommercialAdminReturn';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import { useAuth } from '../context/AuthContext';
 import WhatsappCrmDemo from './WhatsappCrmDemo';
 import CommercialTeamWorkspace from '../components/CommercialTeamWorkspace';
@@ -7,6 +7,7 @@ import CommercialProspects from '../components/CommercialProspects';
 import CommercialCrmHeader from '../components/CommercialCrmHeader';
 import '../components/CommercialCrmHeader.css';
 import {createCommercialAssignmentsApi} from '../utils/commercialAssignmentsApi';
+import useCommercialWheelScroll from '../utils/useCommercialWheelScroll';
 
 export default function CommercialCrmPage() {
   const { session, signOutAndClear } = useAuth();
@@ -14,6 +15,7 @@ export default function CommercialCrmPage() {
   const api=useMemo(()=>createCommercialAssignmentsApi(token),[token]);
   const [available,setAvailable]=useState(false), [team,setTeam]=useState(false), [view,setView]=useState('inbox'), [role,setRole]=useState(null), [manualRequest,setManualRequest]=useState(0);
   const [openCaseId,setOpenCaseId]=useState(null),[openConversationId,setOpenConversationId]=useState(null),[searchRequest,setSearchRequest]=useState(null);
+  const crmRootRef=useRef(null);
   useEffect(()=>{setAvailable(false);setTeam(false);setRole(null);},[session?.user?.id]);
   // PADBOL CRM se instala como app independiente: este manifest define nombre,
   // icono y start_url propios, de modo que el icono abra el CRM y no el area
@@ -43,7 +45,8 @@ export default function CommercialCrmPage() {
   const openNewLead=()=>{setTeam(true);setView('team');setManualRequest(value=>value+1);};
   const submitSearch=reference=>{setTeam(false);setView('inbox');setSearchRequest({reference,nonce:Date.now()});};
   const inboxLocked=Boolean(available&&view==='inbox'&&!team);
-  return <div className={`crm-page${inboxLocked?' crm-page--inbox':''}`}>
+  useCommercialWheelScroll(crmRootRef, inboxLocked);
+  return <div ref={crmRootRef} className={`crm-page${inboxLocked?' crm-page--inbox':''}`}>
     {!available&&<div className="crm-admin-return-fallback"><CommercialAdminReturn token={token}/></div>}
     {available&&<div className="crm-profile-link" style={{padding:'8px 16px'}}>
       <a href="/perfil" style={{fontWeight:700,color:'#E11B22'}}>Mi perfil de jugador</a>
