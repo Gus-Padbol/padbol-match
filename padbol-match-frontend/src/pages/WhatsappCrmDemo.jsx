@@ -21,6 +21,7 @@ import CommercialAdvisorFilter, {matchesAdvisor} from '../components/CommercialA
 import './WhatsappCrmDemo.css';
 import '../components/CommercialCrmTheme.css';
 import './CrmCommercialRedesign.css';
+import useCommercialWheelScroll from '../utils/useCommercialWheelScroll';
 
 const CRM_IS_QA = String(process.env.REACT_APP_APP_VARIANT || '').toLowerCase() === 'qa';
 
@@ -353,6 +354,8 @@ export function leadAnalysisNotice(status, enabled) {
 }
 
 export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, backInAppHeader=false, headerActions=null, headless=false, searchRequest=null, openConversationId=null } = {}) {
+  const crmScrollRef=useRef(null);
+  useCommercialWheelScroll(crmScrollRef, true);
   const hasPanelExit = Boolean(onBack);
   useEffect(() => {
     if (hasPanelExit) window.scrollTo(0, 0);
@@ -885,7 +888,7 @@ export default function WhatsappCrmDemo({ accessToken, onBack, requiredScope, ba
   const displayState = item => effectiveState(item)==='nuevo' && (item.commercial_management?.assigned_user_id || caseFor(item)?.assignedAdvisor?.id) ? 'Asignado · pendiente de atención' : statusName(effectiveState(item));
 
   return (
-    <main className={`wa-demo${commercialOnly ? ' wa-demo--commercial' : ''}${headless ? ' wa-demo--headless' : ''}${active ? ' wa-demo--lead-open' : ''}`}>
+    <main ref={crmScrollRef} className={`wa-demo${commercialOnly ? ' wa-demo--commercial' : ''}${headless ? ' wa-demo--headless' : ''}${active ? ' wa-demo--lead-open' : ''}`}>
       <header className="wa-topbar">
         <div className="wa-topbar-main">
           {onBack&&!backInAppHeader?<button className="wa-inline-exit" type="button" onClick={onBack}>Volver al panel general</button>:null}
