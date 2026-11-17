@@ -42,7 +42,7 @@ footer{text-align:center;color:#d7c28d;font-weight:700;font-size:12px;letter-spa
 <article class="article">
 <span class="tag">Simulación · Nombres ficticios</span>
 <h1>Italia volvió del abismo</h1>
-<p class="deck">Del 0–9 al 10–9: una remontada de película.</p>
+<p class="deck">Italia ganó el primer set, España reaccionó y llevó el partido al desempate. Allí, con Paolo Conti y Andrea Ricci en cancha, los italianos levantaron un 0–9 y encadenaron diez puntos para cerrar un 2–1 inolvidable. Un final de película, cuando todo parecía perdido.</p>
 <div class="score" aria-label="Italia 2, España 1"><span class="team"><img class="flag" src="/brand/flags/it.svg" alt="">Italia</span><strong class="digits">2 – 1</strong><span class="team"><img class="flag" src="/brand/flags/es.svg" alt="">España</span></div>
 <p class="sets">6–3 &nbsp;·&nbsp; 3–6 &nbsp;·&nbsp; Super tie-break 10–9</p>
 <div class="story" id="story">
@@ -60,7 +60,8 @@ footer{text-align:center;color:#d7c28d;font-weight:700;font-size:12px;letter-spa
 <script>
 const heading=document.querySelector('h1').textContent;
 const articleText=Array.from(document.querySelectorAll('#story p')).map(p=>p.textContent).join('\n\n');
-const shareText=heading+'\n\n'+articleText+'\n\nSimulación con nombres ficticios.\n#Padbol #PadbolMatch';
+const copete=document.querySelector('.deck').textContent;
+const shareText=heading+'\n\n'+copete+'\n\n'+articleText+'\n\nSimulación con nombres ficticios.\n#Padbol #PadbolMatch';
 const notice=document.getElementById('notice');
 async function copyText(){try{await navigator.clipboard.writeText(shareText+'\n\n'+location.href);notice.textContent='Texto y enlace copiados. Ya podés pegarlos donde quieras compartirlos.'}catch(error){notice.textContent='Seleccioná el texto de la nota para copiarlo.'}}
 document.getElementById('copy').addEventListener('click',copyText);
