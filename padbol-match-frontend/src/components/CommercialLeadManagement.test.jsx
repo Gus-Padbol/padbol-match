@@ -139,3 +139,18 @@ test('paused plan stays on advisor action and renders human status, never raw ou
  const api=apiFixture();api.readCase.mockResolvedValue({id:'case',version:4,progressState:'en_espera',assignedAdvisor:{name:'Nico'},contact:{email:'lead@example.test'}});api.caseEmailFollowup=jest.fn().mockResolvedValue({status:'paused',plan:{nextAt:'2099-06-20T14:30:00Z'},outbox:[{step:0,status:'accepted'},{step:1,status:'claimed',error_code:'SEND_UNCONFIRMED'}]});
  render(<CommercialLeadManagement conversation={conversation} api={api}/>);await screen.findByText('Pausado');expect(screen.getByLabelText('Acción de seguimiento')).toHaveValue('advisor');expect(screen.getByText(/Aceptado/)).toBeInTheDocument();expect(screen.getByText(/En proceso/)).toBeInTheDocument();expect(screen.queryByText('active')).not.toBeInTheDocument();expect(screen.queryByText('claimed')).not.toBeInTheDocument();
 });
+
+test('pause uses DELETE and after stopped does not reactivate on next save',async()=>{
+ const api=apiFixture();api.readCase.mockResolvedValue({id:'case',version:4,progressState:'en_espera',assignedAdvisor:{name:'Nico'},contact:{email:'lead@example.test'}});api.caseEmailFollowup=jest.fn().mockResolvedValueOnce({status:'active',plan:{language:'es',nextAt:'2099-06-20T14:30:00Z'},outbox:[{step:0,status:'accepted'}]}).mockResolvedValue({status:'stopped',plan:{language:'es'},outbox:[]});api.cancelCaseEmailFollowup=jest.fn().mockResolvedValue({status:'stopped'});api.startCaseEmailFollowup=jest.fn();
+ render(<CommercialLeadManagement conversation={conversation} api={api}/>);fireEvent.click(await screen.findByRole('button',{name:'Pausar seguimiento email'}));await waitFor(()=>expect(api.cancelCaseEmailFollowup).toHaveBeenCalledWith('case','form','manual'));await screen.findByText(/Seguimiento por email detenido/);expect(screen.getByLabelText('Acción de seguimiento')).toHaveValue('advisor');expect(api.startCaseEmailFollowup).not.toHaveBeenCalled();
+});
+test('stop API failure is visible and does not claim emails are stopped',async()=>{
+ const api=apiFixture();api.readCase.mockResolvedValue({id:'case',version:4,progressState:'en_espera',assignedAdvisor:{name:'Nico'},contact:{email:'lead@example.test'}});api.caseEmailFollowup=jest.fn().mockResolvedValue({status:'active',plan:{language:'es'},outbox:[]});api.cancelCaseEmailFollowup=jest.fn().mockRejectedValue(new Error('stop failed'));
+ render(<CommercialLeadManagement conversation={conversation} api={api}/>);await screen.findByText('Activo');fireEvent.change(screen.getByLabelText('Acción de seguimiento'),{target:{value:'advisor'}});fireEvent.change(screen.getByLabelText('Resumen de la conversación'),{target:{value:'Sólo seguimiento del asesor.'}});fireEvent.change(screen.getByLabelText('Próximo paso'),{target:{value:'Llamar.'}});fireEvent.change(screen.getByLabelText('Próxima gestión'),{target:{value:'2099-06-20T14:30'}});fireEvent.click(screen.getByText('Guardar gestión'));await screen.findByText(/no pudo detenerse/);expect(screen.queryByText(/no se enviarán correos/)).not.toBeInTheDocument();
+});
+
+test('human review never auto-restarts and requires explicit new choice',async()=>{
+ const api=apiFixture();api.readCase.mockResolvedValue({id:'case',version:4,progressState:'en_espera',assignedAdvisor:{name:'Nico'},contact:{email:'lead@example.test'}});api.caseEmailFollowup=jest.fn().mockResolvedValue({status:'human_review',plan:{language:'es'},outbox:[]});api.startCaseEmailFollowup=jest.fn();
+ render(<CommercialLeadManagement conversation={conversation} api={api}/>);await screen.findByText('Revisión humana');expect(screen.getByLabelText('Acción de seguimiento')).toHaveValue('advisor');expect(api.startCaseEmailFollowup).not.toHaveBeenCalled();
+});
+
