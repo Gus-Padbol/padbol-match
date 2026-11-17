@@ -1,3 +1,4 @@
+import {crmNotificationConversation,crmNotificationFromSearch} from '../utils/crmNotificationTarget';
 import CommercialAdminReturn from '../components/CommercialAdminReturn';
 import React, {useEffect, useMemo, useState} from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +14,7 @@ export default function CommercialCrmPage() {
   const token=session?.access_token || '';
   const api=useMemo(()=>createCommercialAssignmentsApi(token),[token]);
   const [available,setAvailable]=useState(false), [team,setTeam]=useState(false), [view,setView]=useState('inbox'), [role,setRole]=useState(null), [manualRequest,setManualRequest]=useState(0);
-  const [openCaseId,setOpenCaseId]=useState(null),[openConversationId,setOpenConversationId]=useState(null),[searchRequest,setSearchRequest]=useState(null);
+  const [openCaseId,setOpenCaseId]=useState(null),[openConversationId,setOpenConversationId]=useState(()=>crmNotificationFromSearch(window.location.search)),[searchRequest,setSearchRequest]=useState(null);
   useEffect(()=>{setAvailable(false);setTeam(false);setRole(null);},[session?.user?.id]);
   // PADBOL CRM se instala como app independiente: este manifest define nombre,
   // icono y start_url propios, de modo que el icono abra el CRM y no el area
@@ -25,10 +26,10 @@ export default function CommercialCrmPage() {
     return () => { if (link && previous) link.setAttribute('href', previous); };
   }, []);
 
-  useEffect(()=>{let active=true;if(token)api.getRole().then(r=>{if(!active)return;if(['manager','advisor'].includes(r.role)){setAvailable(true);setRole(r.role);if(r.role==='advisor')setTeam(true);}else{setAvailable(false);setTeam(false);setRole(null);}}).catch(error=>{if(active&&(error?.status===403||error?.status===404)){setAvailable(false);setTeam(false);setRole(null);}});return ()=>{active=false};},[api,token]);
+  useEffect(()=>{let active=true;if(token)api.getRole().then(r=>{if(!active)return;if(['manager','advisor'].includes(r.role)){setAvailable(true);setRole(r.role);if(r.role==='advisor'&&!openConversationId)setTeam(true);}else{setAvailable(false);setTeam(false);setRole(null);}}).catch(error=>{if(active&&(error?.status===403||error?.status===404)){setAvailable(false);setTeam(false);setRole(null);}});return ()=>{active=false};},[api,token,openConversationId]);
   useEffect(()=>{
     const openNotification=event=>{
-      const id=event?.detail?.conversation_id;
+      const id=crmNotificationConversation(event?.detail?.conversation_id);
       if(!id)return;
       setTeam(false);setView('inbox');setOpenCaseId(null);setOpenConversationId(id);
     };

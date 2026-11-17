@@ -1,0 +1,17 @@
+import React from 'react';
+import {render,screen,fireEvent,waitFor,cleanup} from '@testing-library/react';
+import CommercialCrmPage from '../pages/CommercialCrmPage';
+import AdminWhatsappSection from './AdminWhatsappSection';
+import {crmNotificationFromSearch} from '../utils/crmNotificationTarget';
+const ID='11111111-1111-4111-8111-111111111111';
+jest.mock('../context/AuthContext',()=>({useAuth:()=>({session:{access_token:'test',user:{id:'advisor'}},signOutAndClear:jest.fn()})}));
+jest.mock('../utils/commercialAssignmentsApi',()=>({createCommercialAssignmentsApi:()=>({getRole:async()=>({role:'advisor'})})}));
+jest.mock('./CommercialAdminReturn',()=>()=>null);
+jest.mock('./CommercialCrmHeader',()=>()=> <div>Cabecera CRM</div>);
+jest.mock('./CommercialTeamWorkspace',()=>()=> <div>Equipo</div>);
+jest.mock('./CommercialProspects',()=>()=>null);
+jest.mock('../pages/WhatsappCrmDemo',()=>({openConversationId})=><div data-testid="target">{openConversationId||'none'}</div>);
+afterEach(()=>{cleanup();window.history.replaceState(null,'','/');});
+test('notification URL targets the inbox for an advisor instead of default team workspace',async()=>{window.history.replaceState(null,'','/crm-leads?conversationId='+ID);render(<CommercialCrmPage/>);await screen.findByText('Cabecera CRM');await waitFor(()=>expect(screen.getByTestId('target')).toHaveTextContent(ID));expect(screen.queryByText('Equipo')).not.toBeInTheDocument();});
+test('admin CRM responds to notification clicks without changing lead data',async()=>{window.history.replaceState(null,'','/admin?tab=whatsapp');render(<AdminWhatsappSection/>);await screen.findByText('Cabecera CRM');fireEvent(window,new CustomEvent('crm-open-notification',{detail:{conversation_id:ID}}));expect(screen.getByTestId('target')).toHaveTextContent(ID);});
+test('invalid notification identifiers are ignored',()=>{expect(crmNotificationFromSearch('?conversationId=wrong')).toBeNull();expect(crmNotificationFromSearch('?conversationId='+ID)).toBe(ID);});

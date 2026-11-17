@@ -1,3 +1,4 @@
+import {crmNotificationConversation,crmNotificationFromSearch} from '../utils/crmNotificationTarget';
 import React, {useEffect, useMemo, useState} from 'react';
 import WhatsappCrmDemo from '../pages/WhatsappCrmDemo';
 import CommercialCrmHeader from './CommercialCrmHeader';
@@ -17,7 +18,9 @@ export default function AdminWhatsappSection({ accessToken, onBack, backInAppHea
     api.getRole().then(result=>{if(active&&['manager','advisor'].includes(result.role))setRole(result.role);}).catch(()=>{});
     return()=>{active=false};
   },[api,token]);
-  if(!role) return <WhatsappCrmDemo accessToken={token} onBack={onBack} backInAppHeader={backInAppHeader} />;
+  const [openConversationId,setOpenConversationId]=useState(()=>crmNotificationFromSearch(window.location.search));
+  useEffect(()=>{const open=event=>{const id=crmNotificationConversation(event?.detail?.conversation_id);if(id)setOpenConversationId(id);};window.addEventListener('crm-open-notification',open);return()=>window.removeEventListener('crm-open-notification',open);},[]);
+  if(!role) return <WhatsappCrmDemo openConversationId={openConversationId} accessToken={token} onBack={onBack} backInAppHeader={backInAppHeader} />;
   const go=next=>{
     if(next==='inbox')return;
     window.location.assign('/crm-leads');
@@ -25,6 +28,6 @@ export default function AdminWhatsappSection({ accessToken, onBack, backInAppHea
   const search=reference=>{setSearchRequest({reference,nonce:Date.now()});};
   return <>
     <CommercialCrmHeader view="inbox" role={role} user={session?.user} token={token} api={api} onView={go} onNewLead={()=>window.location.assign('/crm-leads')} onSearch={search} onSignOut={signOutAndClear}/>
-    <WhatsappCrmDemo accessToken={token} onBack={onBack} backInAppHeader={backInAppHeader} headless searchRequest={searchRequest}/>
+    <WhatsappCrmDemo openConversationId={openConversationId} accessToken={token} onBack={onBack} backInAppHeader={backInAppHeader} headless searchRequest={searchRequest}/>
   </>;
 }
