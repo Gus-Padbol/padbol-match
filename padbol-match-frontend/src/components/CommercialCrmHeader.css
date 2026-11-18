@@ -49,9 +49,10 @@
 .crm-page--inbox .wa-crm-body .wa-workspace{flex:1 1 0!important;min-height:0!important;height:auto!important;overflow:hidden!important;margin-top:10px!important}
 .crm-page--inbox .wa-inbox{display:flex!important;flex-direction:column!important;min-height:0!important;max-height:none!important;overflow:hidden!important}
 .crm-page--inbox .wa-list{flex:1 1 0!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain}
-.crm-page--inbox .wa-thread{display:flex!important;flex-direction:column!important;min-height:0!important;overflow:hidden!important}
+.crm-page--inbox .wa-thread{display:block!important;flex:none!important;min-height:0!important;height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain}
 .crm-page--inbox .wa-thread-head,.crm-page--inbox .wa-composer{flex:0 0 auto!important}
-.crm-page--inbox .wa-messages{flex:1 1 0!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain}
+.crm-page--inbox .wa-messages{display:block!important;flex:0 0 auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}
+.crm-page--inbox .wa-composer{position:static!important;height:auto!important}
 .crm-page--inbox .wa-detail{min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain}
 @media(max-width:720px){
   .crm-page--inbox{height:auto;max-height:none;overflow:visible;display:block}
