@@ -42,7 +42,7 @@ a{background:#171319;color:white}
   var requested=String(params.get('lang')||'').toLowerCase();
   var saved='';
   try{saved=String(localStorage.getItem('padbol_share_lang')||'').toLowerCase();}catch(e){}
-  var language=requested==='en'||requested==='es'?requested:(saved==='en'||saved==='es'?saved:(String(navigator.language||'').toLowerCase().startsWith('en')?'en':'es'));
+  var language=requested==='en'||requested==='es'?requested:(saved==='en'||saved==='es'?saved:(String(navigator.language||'').toLowerCase().startsWith('es')?'es':'en'));
   var c=copy[language];
   document.documentElement.lang=language;
   document.title=c.title;
