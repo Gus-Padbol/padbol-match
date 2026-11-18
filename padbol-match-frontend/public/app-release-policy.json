@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "ios": {
+    "version": "1.0.2",
+    "available": true
+  },
+  "android": {
+    "version": "1.0.3",
+    "available": true
+  }
+}
