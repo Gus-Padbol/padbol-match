@@ -1,1 +1,71 @@
-<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compartir Padbol Match</title><style>body{margin:0;background:#080809;color:#fff;font:17px system-ui;text-align:center;padding:36px 22px}main{max-width:440px;margin:auto}img{width:240px;max-width:90%;margin:16px auto 28px}h1{font-size:28px}p{color:#d2cbd0;line-height:1.5}button,a{display:block;box-sizing:border-box;width:100%;padding:16px;margin:14px 0;border-radius:16px;border:1px solid #d6b659;background:#e7cb75;color:#100e09;text-decoration:none;font:700 17px system-ui}a{background:#171319;color:white}#status{min-height:24px}</style><main><img src="/media/public-site/jero/padbol-match-logo-white.svg" alt="Padbol Match"><h1>Seguí la Nations Cup en vivo</h1><p>Partidos y resultados en tu teléfono.<br>Compartí Padbol Match con quienes siguen el torneo.</p><button id="share">Compartir app ↗</button><a href="https://apps.apple.com/app/id6814243035">Descargar en App Store</a><a href="https://play.google.com/store/apps/details?id=com.padbolmatch.app">Descargar en Google Play</a><p id="status" role="status"></p></main><script>const url='https://www.padbolmatch.com/compartir-padbol-match.html';document.getElementById('share').onclick=async()=>{const status=document.getElementById('status');try{if(navigator.share){await navigator.share({title:'Padbol Match',text:'Seguí la Nations Cup y los resultados en vivo en Padbol Match.',url});}else if(navigator.clipboard){await navigator.clipboard.writeText(url);status.textContent='Enlace copiado. Pegalo en WhatsApp o donde quieras compartirlo.';}else{status.textContent=url;}}catch(e){if(e.name!=='AbortError')status.textContent='Podés compartir este enlace: '+url;}};</script></html>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compartir Padbol Match</title>
+<style>
+body{margin:0;background:#080809;color:#fff;font:17px system-ui;text-align:center;padding:36px 22px}
+main{max-width:440px;margin:auto}
+img{width:240px;max-width:90%;margin:16px auto 28px}
+h1{font-size:28px}p{color:#d2cbd0;line-height:1.5}
+button,a{display:block;box-sizing:border-box;width:100%;padding:16px;margin:14px 0;border-radius:16px;border:1px solid #d6b659;background:#e7cb75;color:#100e09;text-decoration:none;font:700 17px system-ui}
+a{background:#171319;color:white}
+#status{min-height:24px}
+.lang{display:flex;justify-content:flex-end;gap:10px;margin:0 0 6px}
+.lang a{display:inline-block;width:auto;margin:0;padding:6px 10px;border-radius:999px;background:transparent;color:#d6b659;border:1px solid #d6b65955;font-size:13px}
+.lang a[aria-current="true"]{background:#d6b659;color:#100e09}
+</style>
+</head>
+<body>
+<main>
+  <nav class="lang" aria-label="Idioma / Language">
+    <a href="?lang=es" data-lang="es">ES</a>
+    <a href="?lang=en" data-lang="en">EN</a>
+  </nav>
+  <img src="/media/public-site/jero/padbol-match-logo-white.svg" alt="Padbol Match">
+  <h1 id="title">Seguí la Nations Cup en vivo</h1>
+  <p id="description">Partidos y resultados en tu teléfono.<br>Compartí Padbol Match con quienes siguen el torneo.</p>
+  <button id="share">Compartir app ↗</button>
+  <a id="ios" href="https://apps.apple.com/app/id6814243035">Descargar en App Store</a>
+  <a id="android" href="https://play.google.com/store/apps/details?id=com.padbolmatch.app">Descargar en Google Play</a>
+  <a id="image" href="/brand/nations-cup-2026/nations-cup-share-es.png" download>Descargar imagen</a>
+  <p id="status" role="status"></p>
+</main>
+<script>
+(function(){
+  var copy={
+    es:{title:'Compartir Padbol Match',heading:'Seguí la Nations Cup en vivo',description:'Partidos y resultados en tu teléfono.<br>Compartí Padbol Match con quienes siguen el torneo.',share:'Compartir app ↗',ios:'Descargar en App Store',android:'Descargar en Google Play',image:'Descargar imagen',shareTitle:'Padbol Match',shareText:'Seguí la Nations Cup y los resultados en vivo en Padbol Match.',copied:'Enlace copiado. Pegalo en WhatsApp o donde quieras compartirlo.',fallback:'Podés compartir este enlace: ',shareError:'No se pudo abrir el menú para compartir. Probá copiar el enlace.'},
+    en:{title:'Share Padbol Match',heading:'Follow the Nations Cup live',description:'Matches and results on your phone.<br>Share Padbol Match with everyone following the tournament.',share:'Share app ↗',ios:'Download on the App Store',android:'Get it on Google Play',image:'Download image',shareTitle:'Padbol Match',shareText:'Follow the Nations Cup and live results on Padbol Match.',copied:'Link copied. Paste it into WhatsApp or wherever you want to share it.',fallback:'You can share this link: ',shareError:'The share menu could not open. Try copying the link.'}
+  };
+  var params=new URLSearchParams(location.search);
+  var requested=String(params.get('lang')||'').toLowerCase();
+  var saved='';
+  try{saved=String(localStorage.getItem('padbol_share_lang')||'').toLowerCase();}catch(e){}
+  var language=requested==='en'||requested==='es'?requested:(saved==='en'||saved==='es'?saved:(String(navigator.language||'').toLowerCase().startsWith('en')?'en':'es'));
+  var c=copy[language];
+  document.documentElement.lang=language;
+  document.title=c.title;
+  document.getElementById('title').textContent=c.heading;
+  document.getElementById('description').innerHTML=c.description;
+  document.getElementById('share').textContent=c.share;
+  document.getElementById('ios').textContent=c.ios;
+  document.getElementById('android').textContent=c.android;
+  document.getElementById('image').textContent=c.image;
+  document.getElementById('image').href='/brand/nations-cup-2026/nations-cup-share-'+language+'.png';
+  document.querySelectorAll('.lang a').forEach(function(a){a.setAttribute('aria-current',String(a.dataset.lang===language));});
+  try{localStorage.setItem('padbol_share_lang',language);}catch(e){}
+  var url='https://www.padbolmatch.com/compartir-padbol-match.html'+(language==='en'?'?lang=en':'?lang=es');
+  document.getElementById('share').onclick=async function(){
+    var status=document.getElementById('status');
+    status.textContent='';
+    try{
+      if(navigator.share){await navigator.share({title:c.shareTitle,text:c.shareText,url:url});}
+      else if(navigator.clipboard){await navigator.clipboard.writeText(url);status.textContent=c.copied;}
+      else{status.textContent=c.fallback+url;}
+    }catch(e){if(e&&e.name!=='AbortError')status.textContent=c.shareError;}
+  };
+}());
+</script>
+</body>
+</html>
