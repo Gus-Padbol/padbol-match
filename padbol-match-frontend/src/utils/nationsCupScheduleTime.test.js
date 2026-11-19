@@ -13,3 +13,8 @@ test('summer time is resolved by the same explicit zone and malformed receipts s
   expect(nationsCupScheduleInstant('2026-07-22T10:30', 'Europe/Rome')).toBe('2026-07-22T08:30:00Z');
   expect(nationsCupScheduleLocal('bad', 'Europe/Rome')).toBe('');
 });
+
+test('naive DB timestamp is UTC before converting to event local input',()=>{
+ expect(nationsCupScheduleLocal('2026-11-20T09:30:00','Europe/Rome')).toBe('2026-11-20T10:30');
+ expect(nationsCupScheduleLocal('2026-11-20T09:30:00','America/Argentina/Buenos_Aires')).toBe('2026-11-20T06:30');
+});

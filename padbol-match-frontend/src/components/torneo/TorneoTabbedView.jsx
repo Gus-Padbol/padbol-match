@@ -1313,7 +1313,7 @@ export default function TorneoTabbedView({
     const pendiente = !tieneResultado && String(partido.estado || '').toLowerCase() !== 'finalizado';
     const marcadorDetalle = tieneResultado ? formatMarcadorPartidoDetalle(partido, na, nb) : '';
     const fh = partido.fecha_hora
-      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState)||reference?.timeZone)
+      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState,partido)||reference?.timeZone)
       : reference?(fixtureEnglish?'Time to be confirmed':'Horario por confirmar'):'—';
     const marcadorVal = tieneResultado ? validarMarcadorSetsPartido(partido) : null;
     const marcadorInvalido = tieneResultado && marcadorVal && !marcadorVal.valido;
@@ -1443,7 +1443,7 @@ export default function TorneoTabbedView({
       ? t('torneos.partidoDetalle.resultadoInvalido', { defaultValue: 'Resultado inválido' })
       : marcadorTxt;
     const fh = partido.fecha_hora
-      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState))
+      ? formatTournamentEventTime(partido.fecha_hora, tournamentEventTimeZone(torneo,nationsState,partido))
       : null;
     return (
       <a

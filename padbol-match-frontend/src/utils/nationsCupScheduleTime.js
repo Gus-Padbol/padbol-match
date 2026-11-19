@@ -20,6 +20,7 @@ export function nationsCupScheduleInstant(localDateTime, timeZone) {
 
 export function nationsCupScheduleLocal(instant, timeZone) {
   if (!IANAZone.isValidZone(timeZone) || typeof instant !== 'string') return '';
-  const value = DateTime.fromISO(instant, { zone: timeZone });
+  // Naive DB timestamps are UTC; convert that instant to the event zone.
+  const value = DateTime.fromISO(instant, { zone: 'utc' }).setZone(timeZone);
   return value.isValid ? value.toFormat("yyyy-MM-dd'T'HH:mm") : '';
 }

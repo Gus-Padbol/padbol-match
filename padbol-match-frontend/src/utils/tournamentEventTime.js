@@ -1,6 +1,18 @@
 /** One event clock for fixture, bracket and match detail, independent of the viewer. */
-export function tournamentEventTimeZone(torneo, state) {
-  return state?.config?.timezone || torneo?.plan_nations?.timezone || torneo?.plan_nations?.config?.timezone || undefined;
+export function tournamentEventTimeZone(torneo, state, partido = null) {
+  const plan = torneo?.plan_nations || torneo?.planNations || torneo?.config?.nations || null;
+  const explicit = partido?.timezone
+    || partido?.slot_timezone
+    || partido?.schedule?.timezone
+    || state?.config?.timezone
+    || plan?.timezone
+    || plan?.config?.timezone
+    || torneo?.timezone
+    || torneo?.config?.timezone
+    || torneo?.sede_timezone;
+  if (explicit) return explicit;
+  // Only the explicit Nations 57 master has a regional fallback. Others keep their own/undefined zone.
+  return String(torneo?.id ?? torneo?.torneo_id ?? '') === '57' ? 'Europe/Rome' : undefined;
 }
 export function tournamentEventInstant(value) {
   if (!value) return null;
