@@ -42,3 +42,10 @@ test('portal footer surfaces server error and blocked popup notice',async()=>{
  const view=render(<ScoreboardFooterContext.Provider value={footer}><TournamentMatchOperations torneoId={91} partidoId={3} apiBaseUrl="https://api.test" accessToken="qa" navigate={jest.fn()}/></ScoreboardFooterContext.Provider>);
  await screen.findByText(/Invitado sin cuenta/);fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'9'}});fireEvent.click(screen.getByText('Abrir marcador ahora',{selector:'button'}));await waitFor(()=>expect(footer.querySelector('[role="alert"]')).toHaveTextContent('Cancha ocupada desde portal'));view.unmount();footer.remove();
 });
+
+test('scheduled hour does not block marker and blocked popup leaves fallback link/notice in footer',async()=>{
+ const {ScoreboardFooterContext}=require('./PartidoDetalleModal');const footer=document.createElement('div');document.body.appendChild(footer);const old={...initial,partido:{...initial.partido,estado:'programado',fecha_hora:'2020-01-01T10:00:00Z'},schedule:{court_id:9,duration_minutes:60}};
+ global.fetch=jest.fn().mockImplementation(async url=>({ok:true,json:async()=>url.endsWith('/operacion')?old:{ok:true,scoreboard_id:'qa-late'}}));window.open.mockReturnValue(null);
+ const view=render(<ScoreboardFooterContext.Provider value={footer}><TournamentMatchOperations torneoId={91} partidoId={3} apiBaseUrl="https://api.test" accessToken="qa" navigate={jest.fn()}/></ScoreboardFooterContext.Provider>);
+ await screen.findByText(/Invitado sin cuenta/);const button=footer.querySelector('button');expect(button).toBeEnabled();fireEvent.click(button);await waitFor(()=>expect(footer.querySelector('a')).toHaveAttribute('href','/admin/scoreboard/qa-late'));expect(footer.querySelector('[role="status"]')).toHaveTextContent(/Marcador listo/);view.unmount();footer.remove();
+});
