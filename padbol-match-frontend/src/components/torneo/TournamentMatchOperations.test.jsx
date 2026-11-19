@@ -35,3 +35,10 @@ test('el acceso para continuar permanece en el pie del diálogo',async()=>{
  unmount();footer.remove();
 });
 test('empty readiness from a bracket waiting for teams explains missing teams after choosing court',async()=>{global.fetch=jest.fn().mockResolvedValue({ok:true,json:async()=>({...initial,equipos:[],can_open:false,requirements:[]})});render(<TournamentMatchOperations torneoId={41} partidoId={3} accessToken="qa"/>);await screen.findByText(/Faltan los equipos de este cruce/);fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'9'}});expect(screen.getByText(/Faltan los equipos de este cruce/)).toHaveTextContent('resultados de los partidos anteriores');expect(screen.getByText('Abrir marcador ahora')).toBeDisabled();expect(fetch).toHaveBeenCalledTimes(1);});
+
+test('portal footer surfaces server error and blocked popup notice',async()=>{
+ const {ScoreboardFooterContext}=require('./PartidoDetalleModal');const footer=document.createElement('div');document.body.appendChild(footer);
+ global.fetch=jest.fn().mockImplementation(async url=>({ok:url.endsWith('/operacion'),json:async()=>url.endsWith('/operacion')?initial:{ok:false,error:'Cancha ocupada desde portal'}}));
+ const view=render(<ScoreboardFooterContext.Provider value={footer}><TournamentMatchOperations torneoId={91} partidoId={3} apiBaseUrl="https://api.test" accessToken="qa" navigate={jest.fn()}/></ScoreboardFooterContext.Provider>);
+ await screen.findByText(/Invitado sin cuenta/);fireEvent.change(screen.getByLabelText('Cancha'),{target:{value:'9'}});fireEvent.click(screen.getByText('Abrir marcador ahora',{selector:'button'}));await waitFor(()=>expect(footer.querySelector('[role="alert"]')).toHaveTextContent('Cancha ocupada desde portal'));view.unmount();footer.remove();
+});
