@@ -147,7 +147,7 @@ export default function AdminNationsMarkerDurable() {
       <section>
         <h2>Cambios en la ventana de cambio de lado</h2>
         <p role="status">{substitutionWindow?.allowed === true
-          ? `Cambio de lado: game ${substitutionWindow.completed_games} terminado. Puedes sustituir uno o ambos jugadores.`
+          ? substitutionWindow.boundary === 'between_sets' ? `Cambio entre sets: set ${substitutionWindow.set_number} terminado. Puedes sustituir uno o ambos jugadores.` : `Cambio de lado: game ${substitutionWindow.completed_games} terminado. Puedes sustituir uno o ambos jugadores.`
           : 'Los cambios se habilitan al terminar un game impar, en la ventana de cambio de lado.'}</p>
         <label>Equipo
           <select disabled={busy || Boolean(subAttempt.current)} value={teamId} onChange={(e) => { setEffectiveMarker(null); setTeamId(e.target.value); setSubstitutionWindow(null); setOutId(''); setInId(''); setOutId2(''); setInId2(''); }}>
