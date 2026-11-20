@@ -37,3 +37,9 @@ test('superadmin conserva Atención / CRM y el compositor completo de notificaci
   expect(notifications).toContain('Una jornada de Next Generation');
   expect(notifications).toContain('Otra sección de la aplicación');
 });
+
+test('Scoreboard sidebar is enabled only for Giacomo sede account', () => {
+  const source = readSource('./AdminDashboard.jsx');
+  expect(source).toContain("GIACOMO_SCOREBOARD_EMAIL = 'giacomo.caneschi23@gmail.com'");
+  expect(source).toContain("rolPanel === 'admin_sede' && currentEmail === GIACOMO_SCOREBOARD_EMAIL");
+});

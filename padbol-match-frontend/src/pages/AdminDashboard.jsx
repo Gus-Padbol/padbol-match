@@ -3438,7 +3438,10 @@ export default function AdminDashboard({
   const sedeIdKey =
     sedeId != null && sedeId !== '' && String(sedeId).trim() !== '' ? String(sedeId) : '';
   const puedeVerConfig  = isSuperAdmin;
-  const puedeVerScoreboard = isSuperAdmin || esAdminClub || esAdminCadena;
+  // Acceso puntual solicitado para el operador de sede de Nápoles: sólo el tab Scoreboard,
+  // sin superadmin ni cambios al resto de sus permisos.
+  const GIACOMO_SCOREBOARD_EMAIL = 'giacomo.caneschi23@gmail.com';
+  const puedeVerScoreboard = isSuperAdmin || esAdminClub || esAdminCadena || (rolPanel === 'admin_sede' && currentEmail === GIACOMO_SCOREBOARD_EMAIL);
   const puedeVerPadCoins = canRoleSeePadCoins(rolPanel);
   const puedeVerMembresias = isSuperAdmin || esAdminClub;
   const puedeVerFinanzas = !esEmpleado;
