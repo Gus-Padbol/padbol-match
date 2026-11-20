@@ -13,6 +13,7 @@ export function createNationsOperatorApi(accessToken,{fetchImpl=fetch,baseUrl=ge
   lineup:(id,team,body)=>request(match(id)+'/equipos/'+Number(team)+'/alineacion',{method:'PUT',body}),
   control:id=>request(match(id)+'/control-token',{method:'POST',body:{}}),
   manualResult:(id,body)=>request(match(id)+'/resultado',{method:'POST',body}),
+  recoverResult:(id,resultado)=>request(match(id)+'/resultado-recuperacion',{method:'POST',body:{resultado}}),
   revokeControl:id=>request(match(id)+'/revoke-control-token',{method:'POST',body:{}}),
   grants:signal=>request('/api/admin/nations/operator-grants',{signal}),
   grant:email=>request('/api/admin/nations/operator-grants',{method:'POST',body:{torneo_id:57,email}}),
