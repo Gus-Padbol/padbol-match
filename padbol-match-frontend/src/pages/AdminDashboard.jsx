@@ -3441,7 +3441,8 @@ export default function AdminDashboard({
   // Acceso puntual solicitado para el operador de sede de Nápoles: sólo el tab Scoreboard,
   // sin superadmin ni cambios al resto de sus permisos.
   const GIACOMO_SCOREBOARD_EMAIL = 'giacomo.caneschi23@gmail.com';
-  const puedeVerScoreboard = isSuperAdmin || esAdminClub || esAdminCadena || (rolPanel === 'admin_sede' && currentEmail === GIACOMO_SCOREBOARD_EMAIL);
+  const isGiacomoScoreboard = rolPanel === 'admin_sede' && currentEmail === GIACOMO_SCOREBOARD_EMAIL;
+  const puedeVerScoreboard = isSuperAdmin || esAdminClub || esAdminCadena || isGiacomoScoreboard;
   const puedeVerPadCoins = canRoleSeePadCoins(rolPanel);
   const puedeVerMembresias = isSuperAdmin || esAdminClub;
   const puedeVerFinanzas = !esEmpleado;
@@ -9701,6 +9702,8 @@ export default function AdminDashboard({
       let filtered = rows;
       if (esAdminClub && sedeIdKey) {
         filtered = rows.filter((s) => mismoIdSede(s.id, sedeIdKey));
+      } else if (isGiacomoScoreboard) {
+        filtered = rows.filter((s) => Number(s.id) === 9);
       }
       const sorted = [...filtered].sort((a, b) =>
         String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es')
@@ -9716,7 +9719,7 @@ export default function AdminDashboard({
     } finally {
       setScoreboardSedesLoading(false);
     }
-  }, [session?.access_token, esAdminClub, sedeIdKey, sbSedeId, t]);
+  }, [session?.access_token, esAdminClub, sedeIdKey, sbSedeId, t, isGiacomoScoreboard]);
 
   useEffect(() => {
     if (!puedeVerScoreboard || activeTab !== 'scoreboard') return;
