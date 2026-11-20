@@ -130,9 +130,9 @@ export default function NationsOperatorDashboard() {
       if (!split && sets[0].b > sets[0].a && sets[1].b > sets[1].a) return {goles_a:0,goles_b:2,historial_sets:sets};
       throw new Error(t('El resultado debe cerrar 2–0 en dos sets.'));
     }
-    const third = sets[2];
-    if (Math.max(third.a, third.b) !== 10) throw new Error(t('El super tiebreak debe terminar 10–n.'));
-    return {goles_a:sets.filter(set=>set.a>set.b).length,goles_b:sets.filter(set=>set.b>set.a).length,historial_sets:sets.map((set,index)=>index===2?{...set,type:'super_tiebreak'}:set)};
+    const third = sets[2], groupPhase = Boolean(match?.grupo);
+    if (groupPhase && Math.max(third.a, third.b) !== 10) throw new Error(t('El super tiebreak debe terminar 10–n.'));
+    return {goles_a:sets.filter(set=>set.a>set.b).length,goles_b:sets.filter(set=>set.b>set.a).length,historial_sets:sets.map((set,index)=>index===2?(groupPhase?{a:set.a>set.b?1:0,b:set.b>set.a?1:0,type:'super_tiebreak',points_a:set.a,points_b:set.b}:set):set)};
   };
   return <main className="nations-operator"><header><p className="nations-operator__eyebrow">{t("Operaci\xF3n exclusiva del torneo")}</p><h1>{t("Nations Cup \xB7 N\xE1poles 2026")}</h1><p>{t("Acceso limitado al torneo 57. Las cuentas, sedes y rankings generales quedan fuera de este panel.")}</p></header>
  {!token ? <p role="alert">{t("Inicia sesi\xF3n con la cuenta habilitada por la organizaci\xF3n.")}</p> : !data && !error ? <p role="status">{t("Comprobando tu acceso al torneo\u2026")}</p> : null}
