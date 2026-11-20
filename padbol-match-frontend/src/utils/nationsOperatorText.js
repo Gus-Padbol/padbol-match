@@ -28,6 +28,16 @@ const EN={
  'Inicia sesión con la cuenta de la organización.':'Sign in with the organiser’s account.',
  'Comprobando acceso de la organización…':'Checking organiser access…','Correo del responsable':'Operator email','Habilitar sólo el torneo 57':'Enable tournament 57 only',
  'Si todavía no tiene cuenta, debe registrarse normalmente y verificar el correo. No se crean contraseñas ni permisos generales.':'If they do not have an account, they must register and verify their email first.',
+ 'Equipo A':'Team A','Equipo B':'Team B',
+ 'Marcador independiente de contingencia':'Independent contingency scoreboard',
+ 'Creá un marcador suelto para jugar ahora. No se vincula al torneo ni suma puntos.':'Create a standalone scoreboard to play now. It is not linked to the tournament and does not add points.',
+ 'Completá cancha, dos equipos y al menos dos jugadores por equipo.':'Complete the court, both teams and at least two players per team.',
+ 'Los dos primeros jugadores de cada equipo son los titulares; los otros dos quedan como suplentes.':'The first two players on each team are starters; the other two are substitutes.',
+ 'Creando…':'Creating…','Crear marcador independiente':'Create independent scoreboard',
+ 'Marcador listo. Compartí estos enlaces:':'Scoreboard ready. Share these links:',
+ 'Control privado del árbitro':'Private referee control','Pantalla pública / TV':'Public display / TV',
+ 'No se pudieron cargar las canchas.':'Could not load courts.','El marcador no fue confirmado.':'The scoreboard was not confirmed.',
+ 'No se pudo crear el marcador.':'Could not create the scoreboard.',
  'Revocado':'Revoked','Revocar acceso':'Revoke access','Abrir dashboard exclusivo':'Open tournament dashboard',
 };
 export function operatorText(language){return text=>String(language||'en').startsWith('es')?text:EN[text]||text;}
