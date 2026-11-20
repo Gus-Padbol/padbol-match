@@ -265,7 +265,7 @@ export default function ScoreboardControl() {
       try {
         const p = await fetchPartido(partidoId,{authenticated:true});
         if (!cancelled) {
-          if (!canAdminScoreboard(rol, p.sede_id, userSedeId)) {
+          if (!canAdminScoreboard(rol, p.sede_id, userSedeId) && p.can_control !== true) {
             setError(t('scoreboard.noPermission', 'No tienes permiso para controlar este scoreboard'));
             setLoading(false);
             return;

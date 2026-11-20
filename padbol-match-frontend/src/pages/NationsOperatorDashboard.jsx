@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { createNationsOperatorApi } from '../utils/nationsOperatorApi';
 import { nationsCupScheduleInstant, nationsCupScheduleLocal } from '../utils/nationsCupScheduleTime';
 import './NationsOperator.css';
+import NationsContingencyScoreboard from '../components/scoreboard/NationsContingencyScoreboard';
 export default function NationsOperatorDashboard() {
  const t=useNationsOperatorText();
   const {
@@ -114,7 +115,8 @@ export default function NationsOperatorDashboard() {
   return <main className="nations-operator"><header><p className="nations-operator__eyebrow">{t("Operaci\xF3n exclusiva del torneo")}</p><h1>{t("Nations Cup \xB7 N\xE1poles 2026")}</h1><p>{t("Acceso limitado al torneo 57. Las cuentas, sedes y rankings generales quedan fuera de este panel.")}</p></header>
  {!token ? <p role="alert">{t("Inicia sesi\xF3n con la cuenta habilitada por la organizaci\xF3n.")}</p> : !data && !error ? <p role="status">{t("Comprobando tu acceso al torneo\u2026")}</p> : null}
  {error && <p role="alert" className="nations-operator__error">{error}</p>}{notice && <p role="status">{notice}</p>}
- {data && <><div className="nations-operator__toolbar"><label>{t("Partido")}<select value={matchId} disabled={busy} onChange={e => setMatchId(e.target.value)}>{data.partidos.map(item => <option key={item.id} value={item.id}>{data.equipos.find(team => String(team.id) === String(item.equipo_a_id))?.nombre || t('Por definir')} — {data.equipos.find(team => String(team.id) === String(item.equipo_b_id))?.nombre || t('Por definir')} · {item.grupo || t('Eliminatoria')} · {t(item.estado)}</option>)}</select></label><button disabled={busy} onClick={() => execute(() => api.dashboard())}>{t("Actualizar estado")}</button></div>
+ {data && <>
+ <NationsContingencyScoreboard /><div className="nations-operator__toolbar"><label>{t("Partido")}<select value={matchId} disabled={busy} onChange={e => setMatchId(e.target.value)}>{data.partidos.map(item => <option key={item.id} value={item.id}>{data.equipos.find(team => String(team.id) === String(item.equipo_a_id))?.nombre || t('Por definir')} — {data.equipos.find(team => String(team.id) === String(item.equipo_b_id))?.nombre || t('Por definir')} · {item.grupo || t('Eliminatoria')} · {t(item.estado)}</option>)}</select></label><button disabled={busy} onClick={() => execute(() => api.dashboard())}>{t("Actualizar estado")}</button></div>
  {match && <><section><h2>{teams.map(team => team.nombre).join(' — ')}</h2><p>{t("Estado:")} {t(match.estado)}. {t("Horarios en")} {data.timezone}. {t("El horario previsto nunca inicia el partido automáticamente.")}</p>
  <label>{t("Cancha")}<select disabled={busy} value={court} onChange={e => setCourt(e.target.value)}><option value="">{t("Seleccionar cancha")}</option>{data.canchas.map(item => <option key={item.id} value={item.id}>{item.nombre || `${t("Cancha")} ${item.orden}`}</option>)}</select></label>
  {editable && !board && <details><summary>{t("Programaci\xF3n del encuentro")}</summary><label>{t("Fecha y hora")}<input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} disabled={busy} /></label><label>{t("Duraci\xF3n prevista (minutos)")}<input type="number" min="1" max="720" value={duration} onChange={e => setDuration(e.target.value)} disabled={busy} /></label><button disabled={busy || !date || !court} onClick={() => execute(() => api.schedule({
