@@ -14,7 +14,8 @@ export default function NationsStandings({data, equipos = [], participants = [],
     <tbody>{rows.map(row => <tr key={`${row.group}-${row.equipo_id}`}><td>{(seeded ? row.seed : row.position) ?? '—'}</td><td>{names.get(String(row.equipo_id)) || text('Equipo no identificado','Unidentified team')}</td><td>{row.group || '—'}</td>{['jugados','puntos','diferencia_sets','sets_favor','diferencia_games','games_favor'].map(key => <td key={key}>{row[key] ?? '—'}</td>)}</tr>)}</tbody></table>
   </div>;
   const groups = Array.isArray(data.groups) ? data.groups : [];
-  return <section className="nations-cup nations-standings" aria-label={text('Posiciones confirmadas','Confirmed standings')}>
+  const partial = data.standings_partial === true;
+  return <section className="nations-cup nations-standings" aria-label={text(partial?'Posiciones en vivo':'Posiciones confirmadas',partial?'Live standings':'Confirmed standings')}>
     {groups.length ? <div className="grupos-container">
       {groups.map(group => <div key={group.label} className="torneo-grupos-block">
         <h3 className="torneo-grupos-block__title">{text('Grupo','Group')} {group.label}</h3>
@@ -33,6 +34,7 @@ export default function NationsStandings({data, equipos = [], participants = [],
         </div>
       </div>)}
     </div> : null}
+    {partial ? <p role="status">{text(`Tabla en vivo: ${data.partial_finalized_matches ?? 0} de ${data.partial_total_matches ?? 30} partidos finalizados. Los clasificados se confirman al cerrar los 30.`,`Live table: ${data.partial_finalized_matches ?? 0} of ${data.partial_total_matches ?? 30} matches finished. Qualifiers are confirmed after all 30.`)}</p> : null}
     {(data.standings || []).map(group => <div key={group.group}><h3>{text('Posiciones del grupo','Group standings')} {group.group}</h3>{table(group.rows)}</div>)}
     {!data.standings?.length ? <p>{text('Las posiciones aún no están disponibles.','Standings are not available yet.')}</p> : null}
     {data.thirds?.length ? <><h3>{text('Comparación de terceros','Third-place comparison')}</h3>{table(data.thirds)}</> : null}

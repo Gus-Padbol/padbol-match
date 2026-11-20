@@ -16,8 +16,7 @@ export default function NationsOperatorDashboard() {
   const [data, setData] = useState(null),
     [matchId, setMatchId] = useState(''),
     [court, setCourt] = useState(''),
-    [manualA, setManualA] = useState(''),
-    [manualB, setManualB] = useState(''),
+    [manualSets, setManualSets] = useState([{a:'',b:''},{a:'',b:''},{a:'',b:''}]),
     [date, setDate] = useState(''),
     [duration, setDuration] = useState('60'),
     [lineups, setLineups] = useState({}),
@@ -119,12 +118,28 @@ export default function NationsOperatorDashboard() {
       }
     };
   });
+  const updateManualSet = (index, side, value) => setManualSets(list => list.map((set, i) => i === index ? {...set, [side]: value} : set));
+  const manualPayload = () => {
+    const sets = manualSets.map(set => ({a:set.a === '' ? null : Number(set.a), b:set.b === '' ? null : Number(set.b)})).filter(set => set.a != null || set.b != null);
+    if (sets.length < 2) throw new Error(t('Completa los games de los dos primeros sets.'));
+    if (sets.some(set => !Number.isInteger(set.a) || !Number.isInteger(set.b) || set.a < 0 || set.b < 0 || set.a === set.b)) throw new Error(t('Cada set debe tener games completos y sin empate.'));
+    const first = sets.slice(0,2), split = first.some(set => set.a > set.b) && first.some(set => set.b > set.a);
+    if (sets.length === 3 && !split) throw new Error(t('El tercer set sólo se usa si los dos primeros quedaron 1–1.'));
+    if (sets.length === 2) {
+      if (!split && sets[0].a > sets[0].b && sets[1].a > sets[1].b) return {goles_a:2,goles_b:0,historial_sets:sets};
+      if (!split && sets[0].b > sets[0].a && sets[1].b > sets[1].a) return {goles_a:0,goles_b:2,historial_sets:sets};
+      throw new Error(t('El resultado debe cerrar 2–0 en dos sets.'));
+    }
+    const third = sets[2];
+    if (Math.max(third.a, third.b) !== 10) throw new Error(t('El super tiebreak debe terminar 10–n.'));
+    return {goles_a:sets.filter(set=>set.a>set.b).length,goles_b:sets.filter(set=>set.b>set.a).length,historial_sets:sets.map((set,index)=>index===2?{...set,type:'super_tiebreak'}:set)};
+  };
   return <main className="nations-operator"><header><p className="nations-operator__eyebrow">{t("Operaci\xF3n exclusiva del torneo")}</p><h1>{t("Nations Cup \xB7 N\xE1poles 2026")}</h1><p>{t("Acceso limitado al torneo 57. Las cuentas, sedes y rankings generales quedan fuera de este panel.")}</p></header>
  {!token ? <p role="alert">{t("Inicia sesi\xF3n con la cuenta habilitada por la organizaci\xF3n.")}</p> : !data && !error ? <p role="status">{t("Comprobando tu acceso al torneo\u2026")}</p> : null}
  {error && <p role="alert" className="nations-operator__error">{error}</p>}{notice && <p role="status">{notice}</p>}
  {data && <>
  {isGiacomoContingency ? <NationsContingencyScoreboard courts={data.canchas} /> : null}<div className="nations-operator__toolbar"><label>{t("Partido")}<select value={matchId} disabled={busy} onChange={e => setMatchId(e.target.value)}>{data.partidos.map(item => <option key={item.id} value={item.id}>{data.equipos.find(team => String(team.id) === String(item.equipo_a_id))?.nombre || t('Por definir')} — {data.equipos.find(team => String(team.id) === String(item.equipo_b_id))?.nombre || t('Por definir')} · {item.grupo || t('Eliminatoria')} · {t(item.estado)}</option>)}</select></label><button disabled={busy} onClick={() => execute(() => api.dashboard())}>{t("Actualizar estado")}</button></div>
-      {data.partidos.find(p => String(p.id) === String(matchId))?.scoreboards?.length === 0 ? <section className="nations-operator__private"><h2>{t("Resultado manual")}</h2><p>{t("Sólo si el partido ya se jugó y tienes la planilla firmada. No inventes ni modifiques un resultado oficial sin planilla.")}</p><label>{t("Sets equipo A")}<input type="number" min="0" max="2" value={manualA} onChange={e=>setManualA(e.target.value)} /></label><label>{t("Sets equipo B")}<input type="number" min="0" max="2" value={manualB} onChange={e=>setManualB(e.target.value)} /></label><button disabled={busy||manualA===''||manualB===''} onClick={() => execute(() => api.manualResult(matchId, manualA, manualB))}>{t("Cargar resultado desde planilla")}</button></section> : null}
+      {data.partidos.find(p => String(p.id) === String(matchId))?.scoreboards?.length === 0 ? <section className="nations-operator__private"><h2>{t("Resultado manual")}</h2><p>{t("Sólo si el partido ya se jugó y tienes la planilla del partido. No inventes ni modifiques un resultado oficial sin planilla.")}</p>{[0,1,2].map(index=><div key={index}><strong>{index===2?t("Set 3 · TB10"):`${t("Set")} ${index+1}`}</strong><label>{t("Equipo A")}<input aria-label={`${index===2?t("Set 3 · TB10"):`${t("Set")} ${index+1}`} ${t("Equipo A")}`} type="number" min="0" value={manualSets[index].a} onChange={e=>updateManualSet(index,'a',e.target.value)} /></label><label>{t("Equipo B")}<input aria-label={`${index===2?t("Set 3 · TB10"):`${t("Set")} ${index+1}`} ${t("Equipo B")}`} type="number" min="0" value={manualSets[index].b} onChange={e=>updateManualSet(index,'b',e.target.value)} /></label></div>)}<button disabled={busy} onClick={() => {try{const body=manualPayload();execute(()=>api.manualResult(matchId,body));}catch(e){setError(e.message);}}}>{t("Cargar resultado desde planilla")}</button></section> : null}
  {match && <><section><h2>{teams.map(team => team.nombre).join(' — ')}</h2><p>{t("Estado:")} {t(match.estado)}. {t("Horarios en")} {data.timezone}. {t("El horario previsto nunca inicia el partido automáticamente.")}</p>
  <label>{t("Cancha")}<select disabled={busy} value={court} onChange={e => setCourt(e.target.value)}><option value="">{t("Seleccionar cancha")}</option>{data.canchas.map(item => <option key={item.id} value={item.id}>{item.nombre || `${t("Cancha")} ${item.orden}`}</option>)}</select></label>
  {editable && !board && <details><summary>{t("Programaci\xF3n del encuentro")}</summary><label>{t("Fecha y hora")}<input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} disabled={busy} /></label><label>{t("Duraci\xF3n prevista (minutos)")}<input type="number" min="1" max="720" value={duration} onChange={e => setDuration(e.target.value)} disabled={busy} /></label><button disabled={busy || !date || !court} onClick={() => execute(() => api.schedule({
