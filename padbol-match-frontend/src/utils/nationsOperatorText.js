@@ -15,7 +15,7 @@ const EN={
  'Control privado no confirmado.':'Private control could not be confirmed.','Control privado preparado. Sólo debe tenerlo el árbitro.':'Private control is ready. Share it only with the referee.',
  'Operación confirmada.':'Operation confirmed.','Enlace privado copiado. Compártelo únicamente con el árbitro.':'Private link copied. Share it only with the referee.',
  'No se pudo copiar. Abre el control y copia su dirección.':'Could not copy the link. Open the control and copy its address.',
- 'Convocados y alineaciones':'Players and lineups','Antes de abrir el marcador: 2 titulares y hasta 2 suplentes por selección. Durante el juego los cambios se realizan desde el control, al terminar un game impar.':'Before preparing the scoreboard: 2 starters and up to 2 substitutes per team. During play, use the referee control for substitutions after an odd game.',
+ 'Convocados y alineaciones':'Players and lineups','Antes de iniciar: 2 titulares y hasta 2 suplentes por selección. Puedes guardar la alineación aunque el marcador ya esté preparado; durante el juego los cambios se realizan desde el control, al terminar un game impar.':'Before starting: 2 starters and up to 2 substitutes per team. You can save the lineup even after the scoreboard is prepared; during play, use the referee control for substitutions after an odd game.',
  'Titular':'Starter','Suplente':'Substitute','Guardar alineación':'Save lineup','Ante un imprevisto':'If something goes wrong',
  'Actualiza el estado antes de repetir una operación que no haya confirmado.':'Refresh the state before retrying an unconfirmed operation.',
  'Conserva el marcador existente: no crees otro para el mismo partido.':'Keep the existing scoreboard for this match.',
