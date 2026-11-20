@@ -14,11 +14,17 @@ test('changing account clears old private dashboard and ignores late responses',
 test('grant form only appears after server confirms organiser permission',async()=>{createNationsOperatorApi.mockReturnValue({grants:jest.fn().mockRejectedValue(Error('Denied'))});render(<NationsOperatorGrants/>);expect(await screen.findByRole('alert')).toHaveTextContent('Denied');expect(screen.queryByLabelText('Operator email')).toBeNull();});
 test('verified grant form submits exactly entered email and can revoke existing access',async()=>{const api={grants:jest.fn().mockResolvedValue({grants:[]}),grant:jest.fn().mockResolvedValue({ok:true})};createNationsOperatorApi.mockReturnValue(api);render(<NationsOperatorGrants/>);const field=await screen.findByLabelText('Operator email');fireEvent.change(field,{target:{value:'person@example.invalid'}});fireEvent.click(screen.getByText('Enable tournament 57 only'));await waitFor(()=>expect(api.grant).toHaveBeenCalledWith('person@example.invalid'));expect(await screen.findByText('Access updated. The account’s general role is unchanged.')).toBeTruthy();});
 
-test('lineups remain editable after the marker exists but before kickoff',async()=>{
- const withBoard={...snapshot,partidos:[{...snapshot.partidos[0],scoreboards:[{id:'board-77'}]}],equipos:[{id:101,nombre:'Italy',jugadores:[{id:'a1',nombre:'A1'},{id:'a2',nombre:'A2'},{id:'a3',nombre:'A3'},{id:'a4',nombre:'A4'}]},{id:102,nombre:'Spain',jugadores:[{id:'b1',nombre:'B1'},{id:'b2',nombre:'B2'}]}]};
- const api={dashboard:jest.fn().mockResolvedValue(withBoard),lineup:jest.fn().mockResolvedValue({ok:true})};createNationsOperatorApi.mockReturnValue(api);
+test('prepare is blocked until both saved lineups exist and a board freezes lineup editing',async()=>{
+ const withBoard={...snapshot,partidos:[{...snapshot.partidos[0],scoreboards:[{id:'board-77'}]}],equipos:[{id:101,nombre:'Italy',jugadores:[{id:'a1',nombre:'A1'},{id:'a2',nombre:'A2'}]},{id:102,nombre:'Spain',jugadores:[{id:'b1',nombre:'B1'},{id:'b2',nombre:'B2'}]}]};
+ const api={dashboard:jest.fn().mockResolvedValue(withBoard),lineup:jest.fn()};createNationsOperatorApi.mockReturnValue(api);
  render(<NationsOperatorDashboard/>);await screen.findByText('Italy — Spain');
- const starters=screen.getAllByRole('checkbox',{name:'Starter'});fireEvent.click(starters[0]);fireEvent.click(starters[1]);
- const saveButtons=screen.getAllByText('Save lineup');expect(saveButtons[0]).toBeEnabled();
- fireEvent.click(saveButtons[0]);await waitFor(()=>expect(api.lineup).toHaveBeenCalled());
+ expect(screen.queryByText('Prepare scoreboard on selected court')).toBeNull();
+ expect(screen.getAllByRole('checkbox',{name:'Starter'})[0]).toBeDisabled();
+});
+
+test('prepare is enabled only with both saved lineups before the board exists',async()=>{
+ const ready={...snapshot,equipos:[{id:101,nombre:'Italy',jugadores:[]},{id:102,nombre:'Spain',jugadores:[]}],alineaciones:[{partido_id:77,equipo_id:101,iniciales:['a1','a2'],suplentes:[],revision:1},{partido_id:77,equipo_id:102,iniciales:['b1','b2'],suplentes:[],revision:1}]};
+ const api={dashboard:jest.fn().mockResolvedValue(ready)};createNationsOperatorApi.mockReturnValue(api);
+ render(<NationsOperatorDashboard/>);await screen.findByText('Italy — Spain');
+ await waitFor(()=>expect(screen.getByText('Prepare scoreboard on selected court').closest('button')).toBeEnabled());
 });

@@ -38,6 +38,9 @@ const EN={
  'Control privado del árbitro':'Private referee control','Pantalla pública / TV':'Public display / TV',
  'No se pudieron cargar las canchas.':'Could not load courts.','El marcador no fue confirmado.':'The scoreboard was not confirmed.',
  'No se pudo crear el marcador.':'Could not create the scoreboard.',
+ 'Resultado manual':'Manual result','Sólo si el partido ya se jugó y tienes la planilla firmada. No inventes ni modifiques un resultado oficial sin planilla.':'Only if the match was already played and you have the signed scoresheet. Do not invent or change an official result without a scoresheet.',
+ 'Sets equipo A':'Sets team A','Sets equipo B':'Sets team B','Cargar resultado desde planilla':'Load result from scoresheet',
+ 'Guarda y confirma ambas alineaciones antes de preparar el marcador.':'Save and confirm both lineups before preparing the scoreboard.',
  'Revocado':'Revoked','Revocar acceso':'Revoke access','Abrir dashboard exclusivo':'Open tournament dashboard',
 };
 export function operatorText(language){return text=>String(language||'en').startsWith('es')?text:EN[text]||text;}
