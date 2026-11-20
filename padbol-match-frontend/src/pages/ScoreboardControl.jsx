@@ -199,7 +199,8 @@ function OptionsModal({
 }
 
 export default function ScoreboardControl() {
-  const { t } = useSafeTranslation();
+  const { t, i18n } = useSafeTranslation();
+  const englishUi = String(i18n?.language || '').startsWith('en');
   const { partidoId } = useParams();
   const navigate = useNavigate();
   const { session, userProfile } = useAuth();
@@ -431,7 +432,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading || needsRefresh || suspensionPending || suspendido || terminado || cronometroActivo}
             onClick={() => handleCronometro('start')}
           >
-            Iniciar partido
+            {englishUi ? 'Start match' : 'Iniciar partido'}
           </button>
           <button
             type="button"
@@ -439,7 +440,7 @@ export default function ScoreboardControl() {
             disabled={actionLoading || needsRefresh || suspensionPending || suspendido || terminado || !cronometroActivo}
             onClick={() => handleCronometro('pause')}
           >
-            Pausar
+            {englishUi ? 'Pause' : 'Pausar'}
           </button>
         </div>
       </header>
@@ -462,7 +463,7 @@ export default function ScoreboardControl() {
             } finally {
               setActionLoading(false);
             }
-          }}>Actualizar marcador</button>
+          }}>{englishUi ? 'Refresh scoreboard' : 'Actualizar marcador'}</button>
         </div>
       )}
 
