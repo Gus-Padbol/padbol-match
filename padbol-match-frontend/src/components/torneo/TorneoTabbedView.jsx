@@ -871,7 +871,7 @@ export default function TorneoTabbedView({
           };
       try {
         if (selectionMode) {
-          if (!selectionReady[String(selectedPartido.id)]) throw new Error('Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.');
+          if (!selectionReady[String(selectedPartido.id)]) throw new Error('Confirma de 2 a 4 jugadores de ambos equipos antes de guardar un resultado.');
           const lineups = await Promise.all([selectedPartido.equipo_a_id, selectedPartido.equipo_b_id].map(equipoId => readSelectionLineup({ apiBaseUrl, torneoId: torneo?.id ?? torneoId, partidoId: selectedPartido.id, equipoId })));
           if (lineups.some(dto => !dto.required || !dto.alineacion)) throw new Error('Las alineaciones de ambos equipos deben estar guardadas antes del resultado.');
         }

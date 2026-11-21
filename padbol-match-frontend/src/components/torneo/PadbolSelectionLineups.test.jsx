@@ -33,7 +33,7 @@ const fillA=()=>{
 };
 const putCalls=()=>fetch.mock.calls.filter(([,opts])=>opts.method==='PUT');
 const savedB=()=>stored.set('33:72',{iniciales:[uuid(11),uuid(12)],suplentes:[uuid(13),uuid(14)],revision:1});
-test('stores only four players with revision and confirms by real GET before readiness; roster stays eight',async()=>{
+test('stores two to four players with revision and confirms by real GET before readiness; roster stays eight',async()=>{
  savedB();const ready=jest.fn();render(<PadbolSelectionLineups {...props} onReadyChange={ready}/>);
  await within(a()).findByLabelText('Inicial 1');fillA();fireEvent.submit(a());
  await within(a()).findByText('Alineación guardada y verificada.');expect(putCalls()).toHaveLength(1);
@@ -52,7 +52,7 @@ test('duplicate or outsider forced declarations never issue a PUT',async()=>{
  const select=within(a()).getByLabelText('Suplente 2');const option=document.createElement('option');option.value=uuid(99);select.appendChild(option);fireEvent.change(select,{target:{value:uuid(99)}});fireEvent.submit(a());expect(await within(a()).findByRole('alert')).toHaveTextContent(/pertenecer/);expect(putCalls()).toHaveLength(0);
 });
 test('auditor/read-only permission cannot save even with forced form submission',async()=>{
- readonly=true;render(<PadbolSelectionLineups {...props}/>);await within(a()).findByLabelText('Inicial 1');expect(within(a()).getByLabelText('Inicial 1')).toBeDisabled();fireEvent.submit(a());expect(putCalls()).toHaveLength(0);expect(within(a()).queryByText('Guardar los cuatro presentados')).not.toBeInTheDocument();
+ readonly=true;render(<PadbolSelectionLineups {...props}/>);await within(a()).findByLabelText('Inicial 1');expect(within(a()).getByLabelText('Inicial 1')).toBeDisabled();fireEvent.submit(a());expect(putCalls()).toHaveLength(0);expect(within(a()).queryByText('Guardar convocados (2 a 4)')).not.toBeInTheDocument();
 });
 test.each([403,409,503])('API error %s preserves composition and blocks result readiness',async status=>{
  failure=response({error:status===409?'La revisión cambió. Recarga.':'No se confirmó el guardado.'},false,status);const ready=jest.fn();render(<PadbolSelectionLineups {...props} onReadyChange={ready}/>);await within(a()).findByLabelText('Inicial 1');fillA();fireEvent.submit(a());await within(a()).findByRole('alert');expect(within(a()).getByLabelText('Inicial 1')).toHaveValue(uuid(1));expect(ready).toHaveBeenLastCalledWith(false);expect(within(a()).queryByText('Alineación guardada y verificada.')).not.toBeInTheDocument();
@@ -88,5 +88,5 @@ test('same mounted panel ignores an old-match successful PUT before issuing its 
  await waitFor(()=>expect(within(a()).getByLabelText('Inicial 1')).toHaveValue(''));
  await new Promise(r=>setTimeout(r,0));expect(fetch).toHaveBeenCalledTimes(count);
  expect(screen.queryByText('Alineación guardada y verificada.')).not.toBeInTheDocument();
- expect(within(a()).getByRole('button',{name:'Guardar los cuatro presentados'})).toBeEnabled();
+ expect(within(a()).getByRole('button',{name:'Guardar convocados (2 a 4)'})).toBeEnabled();
 });

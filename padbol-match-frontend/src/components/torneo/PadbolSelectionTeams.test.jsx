@@ -30,7 +30,7 @@ const props = { apiBaseUrl: 'https://fixture.invalid', torneo, userId: id(1), pr
 const mutations = () => fetch.mock.calls.filter(([, options]) => options.method && options.method !== 'GET');
 test('four confirmed members are ready with capacity eight; captain accepts a real request and verifies reload', async () => {
   render(<PadbolSelectionTeams {...props} />);
-  await screen.findByText(/Al menos cuatro jugadores confirmados/);
+  await screen.findByText(/Al menos dos jugadores confirmados/);
   fireEvent.click(screen.getByText('Gestionar plantel'));
   const form = await screen.findByRole('form', { name: 'Gestionar plantel registrado' });
   const request = await within(form).findByLabelText(/Jugador 5/);
@@ -133,7 +133,7 @@ test('registry guests are visible as four of eight and cannot open the legacy ac
  teams=[{...teams[0],registro_participantes:true,referencias_plantel_disponibles:true,can_manage:false,can_add_profiles:false,can_confirm:false,equipo_abierto:false,jugadores:Array.from({length:8},(_,i)=>({participante_id:id(i+11),user_id:null,nombre:i<4?`Invitado QA ${i}`:'',tipo_identidad:i<4?'generico':'plaza_pendiente',estado:'confirmado'}))}];
  render(<PadbolSelectionTeams apiBaseUrl="https://fixture.invalid" torneo={torneo} userId={id(1)} profileReady/>);
  await screen.findByText('Invitado QA 0');
- expect(screen.getByText(/Al menos cuatro jugadores confirmados/)).toBeInTheDocument();
+ expect(screen.getByText(/Al menos dos jugadores confirmados/)).toBeInTheDocument();
  expect(screen.getByText(/Gestiona estos participantes en Equipos y participantes/)).toBeInTheDocument();
  expect(screen.queryByRole('button',{name:'Gestionar plantel'})).not.toBeInTheDocument();
  expect(screen.queryByRole('button',{name:'Solicitar lugar en el plantel'})).not.toBeInTheDocument();

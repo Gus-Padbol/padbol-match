@@ -109,10 +109,10 @@ test('an administrator entering through the public route retains the existing pu
 
 const selectionIds = Array.from({length:8},(_,i)=>`00000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
 const selectionDto = equipoId => ({ ok:true, torneo_id:28, partido_id:45, equipo_id:equipoId, required:true, can_edit:false, alternancia:'games_impares', plantel:selectionIds.map(user_id=>({user_id,nombre:user_id})), alineacion:{iniciales:selectionIds.slice(0,2),suplentes:selectionIds.slice(2,4),revision:1} });
-test('selection result remains blocked until persisted four-player declarations exist for both teams', async()=>{
+test('selection result remains blocked until persisted 2-to-4-player declarations exist for both teams', async()=>{
  global.fetch.mockImplementation(url=>Promise.resolve({ok:true,status:200,json:async()=>({...selectionDto(url.includes('/71/')?71:72),alineacion:null})}));
  const {container,setPartidos}=setup({mode:'selecciones'});
- await screen.findByText('Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.');
+ await screen.findByText('Confirma de 2 a 4 jugadores de ambos equipos antes de guardar un resultado.');
  const button=screen.getByRole('button',{name:'torneos.partidoDetalle.cargarResultado'});
  expect(button).toBeDisabled();fireEvent.click(button);
  expect(container.querySelector('.form-sets')).not.toBeInTheDocument();expect(setPartidos).not.toHaveBeenCalled();

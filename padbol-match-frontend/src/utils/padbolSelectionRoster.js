@@ -4,7 +4,7 @@ export function isPadbolSelection(torneo) {
     && torneo?.modalidad_plantel === PADBOL_SELECTION_MODE;
 }
 export function selectionRosterCapacityOptions(torneo) {
-  return isPadbolSelection(torneo) ? [4, 5, 6, 7, 8] : [2, 3, 4];
+  return isPadbolSelection(torneo) ? [2, 3, 4, 5, 6, 7, 8] : [2, 3, 4];
 }
 export function selectionRosterPlayers(raw) {
   let rows = raw;
@@ -38,19 +38,24 @@ export function selectionTeamReady(equipo, torneo) {
   const all = selectionRosterPlayers(equipo?.jugadores);
   const valid = confirmedSelectionPlayers(all);
   const capacity = Number(equipo?.cupo_maximo);
-  return Number.isInteger(capacity) && capacity >= 4 && capacity <= 8
-    && all.length >= 4 && all.length <= capacity && valid.length >= 4
+  return Number.isInteger(capacity) && capacity >= 2 && capacity <= 8
+    && all.length >= 2 && all.length <= capacity && valid.length >= 2
     && all.every(player => player?.tipo_identidad === 'plaza_pendiente'
       || (selectionSportingPlayerId(player) && String(player.estado || '').toLowerCase() === 'confirmado'))
     && new Set(valid.map(selectionSportingPlayerId)).size === all.filter(player => player?.tipo_identidad !== 'plaza_pendiente').length;
 }
 export function validateSelectionLineup({ iniciales, suplentes }, plantel) {
-  if (!Array.isArray(iniciales) || iniciales.length !== 2 || !Array.isArray(suplentes) || suplentes.length !== 2) {
-    throw new Error('Presenta exactamente dos jugadores iniciales y dos suplentes.');
+  if (!Array.isArray(iniciales) || iniciales.length !== 2 || !Array.isArray(suplentes) || suplentes.length > 2) {
+    throw new Error('Presenta dos jugadores iniciales y hasta dos suplentes.');
   }
-  const ids = [...iniciales, ...suplentes].map(id => String(id || '').trim().toLowerCase());
-  if (ids.some(id => !UUID.test(id)) || new Set(ids).size !== 4) {
-    throw new Error('Los cuatro jugadores deben estar identificados y no pueden repetirse.');
+  const starters = iniciales.map(id => String(id || '').trim().toLowerCase());
+  if (starters.some(id => !UUID.test(id)) || new Set(starters).size !== 2) {
+    throw new Error('Los dos iniciales deben estar identificados y no pueden repetirse.');
+  }
+  const reserves = suplentes.map(id => String(id || '').trim().toLowerCase()).filter(Boolean);
+  const ids = [...starters, ...reserves];
+  if (ids.length > 4 || reserves.some(id => !UUID.test(id)) || new Set(ids).size !== ids.length) {
+    throw new Error('Presenta entre dos y cuatro jugadores identificados y no pueden repetirse.');
   }
   const allowed = new Set(confirmedSelectionPlayers(plantel).map(selectionSportingPlayerId));
   if (ids.some(id => !allowed.has(id))) throw new Error('Todos los jugadores presentados deben pertenecer al plantel confirmado.');

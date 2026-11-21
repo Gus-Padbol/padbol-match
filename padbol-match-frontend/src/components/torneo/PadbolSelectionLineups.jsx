@@ -26,7 +26,7 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
     readSelectionLineup({ apiBaseUrl, torneoId, partidoId, equipoId }).then(dto => {
       if (cancelled) return;
       if (!dto.required) throw new Error(en ? 'The server did not confirm the selection roster mode.' : 'El servidor no confirmó la modalidad de plantel de selección.');
-      setData(dto); setDraft(dto.alineacion ? { iniciales: [...dto.alineacion.iniciales], suplentes: [...dto.alineacion.suplentes] } : blank());
+      setData(dto); setDraft(dto.alineacion ? { iniciales: [...dto.alineacion.iniciales], suplentes: [...dto.alineacion.suplentes, '', ''].slice(0, 2) } : blank());
       validRef.current(Boolean(dto.alineacion));
     }).catch(err => { if (!cancelled) setError(err.message); }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; if (lifecycle.current === epoch) lifecycle.current++; };
@@ -64,14 +64,14 @@ function TeamLineup({ apiBaseUrl, torneoId, partidoId, equipoId, nombre, onValid
         {['iniciales', 'suplentes'].map(group => <div className="padbol-selection-slots" key={group}>
           <strong>{group === 'iniciales' ? (en ? 'Starting players' : 'Jugadores iniciales') : (en ? 'Substitutes' : 'Suplentes')}</strong>
           {[0, 1].map(slot => <label key={slot}>{group === 'iniciales' ? (en ? 'Starting player' : 'Inicial') : (en ? 'Substitute' : 'Suplente')} {slot + 1}
-            <select value={draft[group][slot]} onChange={event => change(group, slot, event.target.value)} required>
+            <select value={draft[group][slot]} onChange={event => change(group, slot, event.target.value)} required={group === 'iniciales'}>
               <option value="">{en ? 'Choose a roster player' : 'Seleccionar jugador del plantel'}</option>
               {data.plantel.map(player => { const id = selectionSportingPlayerId(player); return id ? <option key={id} value={id} disabled={chosen.includes(id) && draft[group][slot] !== id}>{player.nombre || (en ? 'Registered player' : 'Jugador registrado')}</option> : null; })}
             </select>
           </label>)}
         </div>)}
       </fieldset>
-      {data.can_edit ? <button type="submit" disabled={saving}>{saving ? (en ? 'Saving…' : 'Guardando…') : (en ? 'Save four-player lineup' : 'Guardar los cuatro presentados')}</button>
+      {data.can_edit ? <button type="submit" disabled={saving}>{saving ? (en ? 'Saving…' : 'Guardando…') : (en ? 'Save lineup (2 to 4 players)' : 'Guardar convocados (2 a 4)')}</button>
         : <p>{en ? 'Read only. The captain or authorized administrator can declare the lineup before the match starts.' : 'Solo lectura. El capitán o un administrador autorizado declara la alineación antes de iniciar el partido.'}</p>}
     </> : null}
     {error ? <p role="alert">{error}</p> : null}
@@ -87,11 +87,11 @@ export default function PadbolSelectionLineups({ apiBaseUrl, torneoId, partido, 
   const ids = [partido.equipo_a_id, partido.equipo_b_id];
   const ready = ids.every(id => valid.context === context && valid.teams[String(id)] === true);
   useEffect(() => { callback.current?.(ready); }, [ready]);
-  return <section className="padbol-selection" aria-label={en ? 'Four players per team' : 'Cuatro presentados por equipo'}>
+  return <section className="padbol-selection" aria-label={en ? 'Two to four players per team' : 'De 2 a 4 jugadores por equipo'}>
     <h3>{en ? 'Match lineup' : 'Alineación del partido'}</h3>
-    <p>{en ? 'Each team declares exactly four players: two starting players and two substitutes. Only two play on court at a time. Players may alternate in odd-numbered games.' : 'Cada equipo presenta exactamente cuatro jugadores: dos iniciales y dos suplentes. Siempre juegan dos en cancha. Los jugadores pueden alternar en los games impares.'}</p>
+    <p>{en ? 'Each team declares two starting players and up to two substitutes (2 to 4 players). Only two play on court at a time. Players may alternate in odd-numbered games.' : 'Cada equipo presenta dos iniciales y hasta dos suplentes (2 a 4 jugadores). Siempre juegan dos en cancha. Los jugadores pueden alternar en los games impares.'}</p>
     <p>{en ? 'This declaration is saved separately from the roster. Manual set scores do not track substitutions game by game.' : 'Esta declaración se guarda por separado del plantel. La carga manual de sets no registra los cambios game por game.'}</p>
     <div className="padbol-selection-grid">{ids.map(id => <TeamLineup key={`${torneoId}:${partido.id}:${id}`} apiBaseUrl={apiBaseUrl} torneoId={torneoId} partidoId={partido.id} equipoId={id} nombre={equipos.find(team => String(team.id) === String(id))?.nombre || `${en ? 'Team' : 'Equipo'} ${id}`} onValid={value => setValid(prev => ({ context, teams: { ...(prev.context === context ? prev.teams : {}), [String(id)]: value } }))} />)}</div>
-    {!ready ? <p role="status">{en ? 'Confirm the four players of both teams before saving a result.' : 'Confirma los cuatro presentados de ambos equipos antes de guardar un resultado.'}</p> : null}
+    {!ready ? <p role="status">{en ? 'Confirm 2 to 4 players of both teams before saving a result.' : 'Confirma de 2 a 4 jugadores de ambos equipos antes de guardar un resultado.'}</p> : null}
   </section>;
 }

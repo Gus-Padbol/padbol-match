@@ -67,7 +67,7 @@ export function esTorneoSingles(torneo) {
 
 /** Mínimo de jugadores registrados para considerar el equipo “completo” según el torneo. */
 export function jugadoresMinimosEquipoTorneo(torneo) {
-  if (isPadbolSelection(torneo)) return 4;
+  if (isPadbolSelection(torneo)) return 2;
   const fmt = resolveFormatoEquipoTorneo(torneo);
   if (fmt === TORNEO_FORMATO_SINGLES) return 1;
   if (fmt === TORNEO_FORMATO_EQUIPO_5) return 5;
